@@ -31,7 +31,7 @@
         shows.forEach((show) => {
             let a: any[] = []
 
-            show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide: any) => {
+            show.layouts?.[show.settings?.activeLayout]?.slides?.forEach((layoutSlide: any) => {
                 let slide = show.slides[layoutSlide.id]
                 if (!slide) return
 

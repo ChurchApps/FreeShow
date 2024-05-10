@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, presenterControllerKeys } from "../../../stores"
+    import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, special } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
     import { clearPlayingVideo, isOutCleared, setOutput } from "../../helpers/output"
@@ -113,7 +113,7 @@
         </div>
 
         <div class="combinedButton">
-            <Button disabled={$outLocked || isOutCleared("transition", $outputs)} on:click={() => clear("nextTimer")} title={$dictionary.clear?.nextTimer + ($presenterControllerKeys ? "" : " [F5]")} dark red center>
+            <Button disabled={$outLocked || isOutCleared("transition", $outputs)} on:click={() => clear("nextTimer")} title={$dictionary.clear?.nextTimer + ($special.disablePresenterControllerKeys ? " [F5]" : "")} dark red center>
                 <Icon id="clock" size={1.2} />
             </Button>
             {#if !allCleared}

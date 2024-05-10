@@ -361,12 +361,18 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         templateItems = templateItems.filter((a) => (a.type || "text") !== "text")
     }
 
+    // remove any duplicate values
+    templateItems = templateItems.filter((item) => !newSlideItems.find((a) => JSON.stringify(item) !== JSON.stringify(a)))
+
     // this will ensure the correct order on the remaining items
     let remainingCount = Object.values(sortedTemplateItems).reduce((value, items) => (value += items.length), 0)
+    console.log(sortedTemplateItems, remainingCount)
     let remainingTemplateItems = remainingCount ? templateItems.slice(remainingCount * -1) : []
+    console.log(newSlideItems, remainingTemplateItems)
     // add behind existing items (any textboxes previously on top not in use will not be replaced by any underneath)
     newSlideItems = [...remainingTemplateItems, ...newSlideItems]
     // newSlideItems.push(...remainingTemplateItems)
+    console.log(newSlideItems)
 
     return newSlideItems
 }

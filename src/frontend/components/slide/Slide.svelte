@@ -3,7 +3,26 @@
     import { MAIN } from "../../../types/Channels"
     import type { MediaStyle } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
-    import { activeShow, activeTimers, checkedFiles, dictionary, driveData, fullColors, groupNumbers, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, showsCache, slidesOptions, styles } from "../../stores"
+    import {
+        activeShow,
+        activeTimers,
+        audioFolders,
+        checkedFiles,
+        dictionary,
+        driveData,
+        fullColors,
+        groupNumbers,
+        groups,
+        media,
+        mediaFolders,
+        outputs,
+        overlays,
+        refreshListBoxes,
+        refreshSlideThumbnails,
+        showsCache,
+        slidesOptions,
+        styles,
+    } from "../../stores"
     import { send } from "../../utils/request"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/Editbox.svelte"
@@ -49,38 +68,64 @@
         })
     }
 
+    // auto find media
     $: bg = clone(background || ghostBackground)
     $: cloudId = $driveData.mediaId
     $: if (bg) locateBackground()
-    async function locateBackground() {
-        let showId = $activeShow!.id
+    function locateBackground() {
+        if (!background) return
+
         let mediaId = layoutSlide.background!
+        let folders = Object.values($mediaFolders).map((a) => a.path!)
+        locateFile(mediaId, bg.path, folders, bg)
+    }
+
+    // auto find audio
+    $: audioIds = clone(layoutSlide.audio || [])
+    $: if (audioIds.length) locateAudio()
+    function locateAudio() {
+        let showId = $activeShow!.id
+        let showMedia = $showsCache[showId]?.media
+        let folders = Object.values($audioFolders).map((a) => a.path!)
+
+        audioIds.forEach(async (audioId) => {
+            let audio = showMedia[audioId]
+            console.log(audio, showMedia, audioId)
+            if (!audio?.path) return
+            locateFile(audioId, audio.path, folders, audio)
+        })
+    }
+
+    async function locateFile(fileId: string, path: string, folders: string[], mediaObj: any) {
+        if (!path) return
 
         let checkCloud = cloudId && cloudId !== "default"
         if (checkCloud) {
-            let cloudBg = bg.cloud?.[cloudId]
-            if (cloudBg) bg.path = cloudBg
+            let cloudBg = mediaObj.cloud?.[cloudId]
+            if (cloudBg) path = cloudBg
         }
 
-        if (!background || $checkedFiles.includes(bg.path)) return
+        let id = `${path}_${fileId}`
+        if ($checkedFiles.includes(id)) return
 
-        checkedFiles.set([...$checkedFiles, bg.path])
-        let exists = (await checkMedia(bg.path)) === "true"
+        checkedFiles.set([...$checkedFiles, id])
+        let exists = (await checkMedia(path)) === "true"
+        let showId = $activeShow!.id
 
         // check for other potentially mathing mediaFolders
         if (!exists) {
-            let fileName = getFileName(bg.path)
-            send(MAIN, ["LOCATE_MEDIA_FILE"], { fileName, splittedPath: splitPath(bg.path), folders: Object.values($mediaFolders).map((a) => a.path), ref: { showId, mediaId, cloudId: checkCloud ? cloudId : "" } })
+            let fileName = getFileName(path)
+            send(MAIN, ["LOCATE_MEDIA_FILE"], { fileName, splittedPath: splitPath(path), folders, ref: { showId, mediaId: fileId, cloudId: checkCloud ? cloudId : "" } })
             return
         }
 
         if (!checkCloud) return
 
-        // set cloud path to bg.path
+        // set cloud path to path
         showsCache.update((a) => {
-            let media = a[showId].media[mediaId]
-            if (!media.cloud) a[showId].media[mediaId].cloud = {}
-            a[showId].media[mediaId].cloud![cloudId] = bg.path
+            let media = a[showId].media[fileId]
+            if (!media.cloud) a[showId].media[fileId].cloud = {}
+            a[showId].media[fileId].cloud![cloudId] = path
 
             return a
         })
@@ -110,9 +155,9 @@
         if (!$groupNumbers) return name
 
         // different slides with same name
-        let slides = keysToID(show.slides)
+        let slides = keysToID(show.slides || [])
         // sort by order when just one layout
-        if (Object.keys(show.layouts).length < 2) {
+        if (Object.keys(show.layouts || {}).length < 2) {
             let layoutSlides = Object.values(show.layouts)[0]?.slides?.map(({ id }) => id) || []
             slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
         }
@@ -276,18 +321,20 @@
                     relative={viewMode === "lyrics" && !noQuickEdit}
                 >
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
-                        <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                            <MediaLoader
-                                name={$dictionary.error?.load}
-                                path={bg.path || bg.id || ""}
-                                cameraGroup={bg.cameraGroup || ""}
-                                type={bg.type !== "player" ? bg.type : null}
-                                loadFullImage={!!(bg.path || bg.id)}
-                                ghost={!background}
-                                {mediaStyle}
-                                bind:duration
-                            />
-                        </div>
+                        {#key $refreshSlideThumbnails}
+                            <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
+                                <MediaLoader
+                                    name={$dictionary.error?.load}
+                                    path={bg.path || bg.id || ""}
+                                    cameraGroup={bg.cameraGroup || ""}
+                                    type={bg.type !== "player" ? bg.type : null}
+                                    loadFullImage={!!(bg.path || bg.id)}
+                                    ghost={!background}
+                                    {mediaStyle}
+                                    bind:duration
+                                />
+                            </div>
+                        {/key}
                     {/if}
                     {#if slide.items}
                         {#each slide.items as item, i}

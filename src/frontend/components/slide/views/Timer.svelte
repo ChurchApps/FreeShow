@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeDrawerTab, activeTimers, drawer, drawerTabsData, timers } from "../../../stores"
+    import { activeDrawerTab, activeTimers, drawer, timers } from "../../../stores"
     import { getCurrentTimerValue } from "../../drawer/timers/timers"
+    import { setDrawerTabData } from "../../helpers/historyHelpers"
     import { getStyles } from "../../helpers/style"
     // import { blur } from "svelte/transition"
     import { joinTimeBig } from "../../helpers/time"
@@ -35,10 +36,13 @@
     $: itemColor = getStyles(item?.style)?.color || "white"
 
     $: overflow = getTimerOverflow(currentTime)
-    $: negative = timer?.start! > timer?.end!
+    $: negative = timer?.start! > timer?.end! || currentTime < 0
     function getTimerOverflow(time) {
-        if (!timer.overflow || timer.type !== "counter") return false
         if (!timer.overflow) return false
+
+        if (currentTime < 0) return true
+        if (timer.type !== "counter") return false
+
         let start: number = timer.start!
         let end: number = timer.end!
 
@@ -54,10 +58,7 @@
     function openInDrawer() {
         if (!edit) return
 
-        drawerTabsData.update((a) => {
-            a.calendar.activeSubTab = "timer"
-            return a
-        })
+        setDrawerTabData("calendar", "timer")
         activeDrawerTab.set("calendar")
 
         // open drawer if closed
@@ -75,6 +76,7 @@
             {#if overflow && negative}
                 <span>-</span>
             {/if}
+
             {#if times.length}
                 {#each times as ti, i}
                     <div style="position: relative;display: flex;">

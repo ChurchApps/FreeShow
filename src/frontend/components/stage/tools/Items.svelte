@@ -118,7 +118,7 @@
 
 <style>
     .main :global(button.active) {
-        font-weight: bold;
+        font-weight: 600;
     }
 
     .overflow {

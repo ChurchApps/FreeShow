@@ -380,7 +380,9 @@ const actions: any = {
             showsCache.update((a) => {
                 obj.sel.data.forEach((b: any) => {
                     let ref = GetLayoutRef()[b.index]
-                    let slides = a[get(activeShow)!.id].layouts[a[get(activeShow)!.id].settings.activeLayout].slides
+                    let slides = a[get(activeShow)!.id].layouts?.[a[get(activeShow)!.id]?.settings?.activeLayout]?.slides
+                    if (!slides) return
+
                     if (ref.type === "child") {
                         if (!slides[ref.layoutIndex].children) slides[ref.layoutIndex].children = {}
                         slides[ref.layoutIndex].children[ref.id] = { ...slides[ref.layoutIndex].children[ref.id], disabled: !obj.enabled }
@@ -729,6 +731,8 @@ const actions: any = {
         let slideId = ref[edit.slide || 0]?.id || ""
 
         showsCache.update((a) => {
+            if (!a[showId]?.slides?.[slideId]) return a
+
             a[showId].slides[slideId].items = updateItemText(a[showId].slides[slideId].items)
             return a
         })

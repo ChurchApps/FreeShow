@@ -11,6 +11,9 @@
         empty: {
             shows: "No shows",
         },
+        // edit: {
+        //     transpose: "Transpose",
+        // },
         error: {
             wrongPass: "Wrong password!",
             missingID: "Something went wrong, try again!",
@@ -26,6 +29,11 @@
         console.log(id)
         socket.emit("STAGE", { id, channel: "SHOWS" })
     })
+
+    // select stage by link query
+    const urlParams = new URLSearchParams(window.location.search)
+    const nameQuery = urlParams.get("name")
+    const idQuery = urlParams.get("id")
 
     let id: null | string = null
     let shows: any = null
@@ -87,6 +95,13 @@
                     } else showRef = { id: msg.data[0].id }
                 } else {
                     shows = msg.data
+
+                    if (idQuery) showRef = { id: idQuery }
+                    else if (nameQuery) {
+                        let matchingLayout = shows.find((a: any) => a.name.replaceAll(" ", "").toLowerCase() === nameQuery.toLowerCase())
+                        if (matchingLayout) showRef = { id: matchingLayout.id }
+                    }
+
                     if (showRef) {
                         let index = shows.findIndex((s: any) => s.id === showRef.id)
                         if (index < 0 || shows[index].disabled === true) showRef = null
@@ -149,8 +164,16 @@
 
     let clicked: boolean = false
     const click = (e: any) => {
-        if (!e.target.closest(".clicked")) clicked = !clicked
+        if (e.target.closest(".clicked")) return
+
+        // wait for actions to maybe open
+        setTimeout(() => {
+            if (document.querySelector(".actions")?.children?.length) return
+
+            clicked = !clicked
+        })
     }
+
     let timeout: any = null
     $: {
         if (clicked) {
@@ -177,7 +200,7 @@
     }
 </script>
 
-<svelte:window on:mousedown={click} />
+<svelte:window on:click={click} />
 
 {#if errors.length}
     <div class="error">

@@ -3,6 +3,7 @@
     import type { Item } from "../../../types/Show"
     import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
+    import Button from "./Button.svelte"
     import Icon from "./Icon.svelte"
     import ListView from "./ListView.svelte"
 
@@ -40,7 +41,7 @@
 
     let alignElem: any
     let loopStop = false
-    const MAX_FONT_SIZE = 800
+    const MAX_FONT_SIZE = 800 // $special.max_auto_font_size
     const MIN_FONT_SIZE = 10
 
     $: if (autoSize && loaded) getCustomAutoSize()
@@ -124,14 +125,103 @@
             chordLines[i] = html
         })
     }
+
+    let thisElem: any
+    let actionButtons: boolean = false
+    function toggleActions(e: any) {
+        if (e.target.closest("button")) return
+
+        if (actionButtons) {
+            setTimeout(() => {
+                actionButtons = false
+            }, 20)
+        } else {
+            actionButtons = true
+        }
+    }
+
+    function closeActions(e: any) {
+        if (e.target.closest("button") || e.target.closest(".item") === thisElem) return
+
+        setTimeout(() => {
+            actionButtons = false
+        }, 20)
+    }
+
+    // CHORDS TRANSPOSE
+
+    let defaultChords: any = {}
+    let amountTransposed: number = 0
+    function transpose(action: "up" | "down" | "reset") {
+        if (action === "reset") amountTransposed = 0
+        else if (action === "up") amountTransposed++
+        else if (action === "down") amountTransposed--
+
+        item.lines!.forEach((line) => {
+            if (!line.chords?.length || !line.text) return
+
+            let chords = JSON.parse(JSON.stringify(line.chords || []))
+            chords?.forEach((chord: any) => {
+                if (!defaultChords[chord.id]) defaultChords[chord.id] = chord.key
+
+                let rootNote = defaultChords[chord.id]
+
+                if (action === "reset") {
+                    chord.key = rootNote
+                    return
+                }
+
+                chord.key = transposeChord(rootNote, amountTransposed)
+            })
+
+            line.chords = chords
+        })
+
+        createChordLines()
+    }
+
+    const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    function transposeChord(chord: string, semitones: number) {
+        // split the chord into root note, bass note, and chord quality
+        let [rootNote, bassNote, chordQuality] = chord.match(/([A-G]#?)(\/[A-G]#?)?(.*)/)?.slice(1) || []
+
+        const transposedRootNote = transposeNote(rootNote)
+        if (bassNote) bassNote = "/" + transposeNote(bassNote.slice(1))
+
+        function transposeNote(note: string) {
+            let index = notes.indexOf(note.toUpperCase())
+            let transposedIndex = (index + semitones) % 12
+            if (transposedIndex < 0) transposedIndex += 12
+
+            return notes[transposedIndex]
+        }
+
+        return transposedRootNote + (bassNote || "") + chordQuality
+    }
 </script>
 
+<svelte:window on:click={closeActions} />
+
 <!-- bind:offsetHeight={height} -->
-<div class="item" style={style ? itemStyle : null}>
+<div bind:this={thisElem} class="item" style={style ? itemStyle : null} on:click={toggleActions}>
+    {#if actionButtons}
+        <div class="actions">
+            {#if chordLines.length}
+                <div class="flex">
+                    <p style="margin-right: 8px;">Transpose</p>
+                    <Button on:click={() => transpose("down")} title="Down one" dark>{"-1"}</Button>
+                    <Button on:click={() => transpose("reset")} title="Reset" dark>{"0"}</Button>
+                    <Button on:click={() => transpose("up")} title="Up one" dark>{"+1"}</Button>
+                </div>
+            {/if}
+        </div>
+    {/if}
+
     {#if item.lines}
         <div class="align" style={style ? item.align : null} bind:this={alignElem}>
             <div class="lines" style={style && lineGap ? `gap: ${lineGap}px;` : ""}>
                 {#each item.lines as line, i}
+                    <!-- WIP chords are way bigger than stage preview for some reason -->
                     {#if chordLines[i]}
                         <div class:first={i === 0} class="break chords" style="--chord-size: {stageItem?.chordsData?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || '#FF851B'};--font-size: {fontSize}px;">
                             {@html chordLines[i]}
@@ -195,6 +285,25 @@
 
         height: 150px;
         width: 400px;
+    }
+
+    .actions {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        /* transform: translate(-50%, 100%); */
+        transform: translateX(-50%);
+
+        /* background-color: rgb(0 0 0 / 0.5); */
+        background-color: var(--primary);
+        padding: 5px 10px;
+        font-size: 0.8em;
+        z-index: 2;
+    }
+
+    .flex {
+        display: flex;
+        align-items: center;
     }
 
     .align {

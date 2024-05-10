@@ -123,22 +123,28 @@
     {#if reference}
         <Reference show={$showsCache[showId]} />
     {:else if layouts}
-        <span style="display: flex;overflow-x: auto;">
+        <span style="display: flex;overflow-x: hidden;">
             {#if multipleLayouts}
-                {#each sortedLayouts as layout}
-                    <SelectElem id="layout" data={layout.id} fill={!edit || edit === layout.id}>
-                        <Button
-                            class="context #layout"
-                            on:click={() => {
-                                if (!edit) setLayout(layout.id, { name: layout.name })
-                            }}
-                            active={activeLayout === layout.id}
-                            center
-                        >
-                            <HiddenInput value={layout.name} id={"layout_" + layout.id} on:edit={changeName} bind:edit />
-                        </Button>
-                    </SelectElem>
-                {/each}
+                <span style="display: flex;overflow-x: auto;">
+                    {#each sortedLayouts as layout}
+                        <SelectElem id="layout" data={layout.id} fill={!edit || edit === layout.id}>
+                            <Button
+                                class="context #layout"
+                                on:click={() => {
+                                    if (!edit) setLayout(layout.id, { name: layout.name })
+                                }}
+                                active={activeLayout === layout.id}
+                                center
+                            >
+                                <HiddenInput value={layout.name} id={"layout_" + layout.id} on:edit={changeName} bind:edit />
+                            </Button>
+                        </SelectElem>
+                    {/each}
+                </span>
+
+                <Button on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
+                    <Icon size={1.3} id="add" />
+                </Button>
             {/if}
         </span>
     {:else}
@@ -151,11 +157,14 @@
         </Center>
     {/if}
     <span style="display: flex; align-items: center;position: relative;{multipleLayouts || reference || !layouts ? '' : 'width: 100%;'}">
-        {#if layouts && !reference}
-            <Button disabled={!layoutSlides.length && !multipleLayouts} on:click={addLayout} style="white-space: nowrap;{multipleLayouts ? '' : 'width: 100%;'}" title={$dictionary.show?.new_layout} center>
-                <Icon size={1.3} id="add" right={!$labelsDisabled && !multipleLayouts} />
-                {#if !$labelsDisabled && !multipleLayouts}<T id="show.new_layout" />{/if}
+        {#if !multipleLayouts && layouts && !reference}
+            <!-- WIP left aligned to prevent accidental clicks ? -->
+            <!-- <span style="width: 100%;"> -->
+            <Button disabled={!layoutSlides.length} on:click={addLayout} style="white-space: nowrap;width: 100%;" title={$dictionary.show?.new_layout} center>
+                <Icon size={1.3} id="add" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
             </Button>
+            <!-- </span> -->
         {/if}
 
         <div class="seperator" />

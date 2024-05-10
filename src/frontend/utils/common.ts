@@ -28,8 +28,11 @@ export function focusArea(e: any) {
 // auto save
 let autosaveTimeout: any = null
 export function startAutosave() {
+    if (get(currentWindow)) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
-    if (!convertAutosave[get(autosave)]) {
+
+    let saveInterval = convertAutosave[get(autosave)]
+    if (!saveInterval) {
         autosaveTimeout = null
         return
     }
@@ -38,12 +41,13 @@ export function startAutosave() {
         newToast("$toast.saving")
         save()
         startAutosave()
-    }, convertAutosave[get(autosave)])
+    }, saveInterval)
 }
 
 // error logger
 const ERROR_FILTER = [
     "Failed to execute 'drawImage' on 'CanvasRenderingContext2D'", // canvas media cache
+    "Failed to construct 'ImageData'", // invalid image size
     "Failed to load because no supported source was found.", // media file doesn't exists
     "The element has no supported sources.", // audio error
     "The play() request was interrupted by a call to pause().", // video transitions
@@ -55,7 +59,7 @@ const ERROR_FILTER = [
 ]
 export function logerror(err) {
     let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
-    if (ERROR_FILTER.find((a) => msg.includes(a))) return
+    if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
 
     let log = {
         time: new Date(),

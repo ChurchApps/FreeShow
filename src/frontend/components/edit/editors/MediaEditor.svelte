@@ -20,7 +20,7 @@
 </script>
 
 <div class="parent" style="display: flex;flex-direction: column;height: 100%;">
-    <div class="media" style="flex: 1;overflow: hidden;">
+    <div class="media" style="flex: 1;overflow: hidden;position: relative;">
         <Media {path} {mediaStyle} bind:videoData bind:videoTime mirror />
 
         {#if type === "video"}

@@ -13,7 +13,6 @@ import {
     categories,
     customizedIcons,
     dataPath,
-    defaultProjectName,
     disabledServers,
     drawSettings,
     driveData,
@@ -34,7 +33,6 @@ import {
     overlays,
     playerVideos,
     popupData,
-    presenterControllerKeys,
     projects,
     remotePassword,
     saved,
@@ -170,7 +168,7 @@ const cloudHelpers = {
                 return a
             })
 
-            syncDrive()
+            syncDrive(false, false, true)
             return
         }
 
@@ -192,6 +190,7 @@ const cloudHelpers = {
         if (get(driveData).disableUpload) method = "download"
         if (!method) {
             if (existingData) {
+                // WIP this will show over "initialize" popup
                 activePopup.set("cloud_method")
                 return
             }
@@ -202,7 +201,7 @@ const cloudHelpers = {
             })
         }
 
-        syncDrive()
+        syncDrive(false, false, true)
     },
     SYNC_DATA: ({ changes, closeWhenFinished }) => {
         if (closeWhenFinished) {
@@ -256,7 +255,6 @@ const saveList: { [key in SaveList]: any } = {
     ports: ports,
     disabledServers: disabledServers,
     serverData: serverData,
-    defaultProjectName: defaultProjectName,
     events: events,
     showsPath: showsPath,
     dataPath: dataPath,
@@ -281,7 +279,6 @@ const saveList: { [key in SaveList]: any } = {
     styles: styles,
     overlayCategories: overlayCategories,
     overlays: overlays,
-    presenterControllerKeys: presenterControllerKeys,
     playerVideos: playerVideos,
     remotePassword: remotePassword,
     resized: null,

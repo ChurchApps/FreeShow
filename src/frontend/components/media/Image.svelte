@@ -9,6 +9,9 @@
     function loaded() {
         dispatch("loaded", true)
     }
+
+    // path starting at "/" auto completes to app root, but should be file:// (src="file://{path}")
+    $: if (path[0] === "/") path = `file://${path}`
 </script>
 
 <img

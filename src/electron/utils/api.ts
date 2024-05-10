@@ -33,7 +33,17 @@ function connected(socket: any) {
 
     socket.on("disconnect", () => log("Client disconnected."))
 
-    socket.on("data", (data: any) => receivedData(JSON.parse(data || "{}"), log))
+    socket.on("data", (data: any) => {
+        let parsedData
+        try {
+            parsedData = JSON.parse(data || "{}")
+        } catch (err) {
+            console.log("Could not parse socket data.")
+            return
+        }
+
+        receivedData(parsedData, log)
+    })
 
     ipcMain.on("API_DATA", (_e, msg) => {
         socket.emit("data", msg)

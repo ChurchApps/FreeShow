@@ -101,6 +101,8 @@
 
         function resetAutoSize() {
             showsCache.update((a) => {
+                if (!a[$activeShow!.id]?.slides?.[slideId]?.items?.[activeItems[0] || 0]?.autoFontSize) return a
+
                 delete a[$activeShow!.id].slides[slideId].items[activeItems[0] || 0].autoFontSize
                 return a
             })

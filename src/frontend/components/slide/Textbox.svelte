@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { currentWindow, overlays, showsCache, slidesOptions, templates, variables, volume } from "../../stores"
+    import { currentWindow, overlays, showsCache, slidesOptions, special, templates, variables, volume } from "../../stores"
     import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
     import { getAutoSize } from "../edit/scripts/autoSize"
@@ -118,7 +118,7 @@
     // actions
     $: if ((preview || $currentWindow === "output") && item?.actions) runActions()
     function runActions() {
-        Object.keys(item?.actions).forEach((action) => {
+        Object.keys(item?.actions || {}).forEach((action) => {
             if (actions[action]) actions[action](item?.actions[action])
         })
     }
@@ -148,7 +148,7 @@
 
     let alignElem: any
     let loopStop = false
-    const MAX_FONT_SIZE = 800
+    const MAX_FONT_SIZE = $special.max_auto_font_size ?? 800
     const MIN_FONT_SIZE = 10
 
     let previousItem = "{}"
@@ -228,7 +228,9 @@
             addStyleToElemText(fontSize)
             biggerThanSize = alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth
         }
+        if (chords && lines?.length) lowestValue -= lines.length * 10
         fontSize = lowestValue // prefer lowest value
+        if (fontSize > MAX_FONT_SIZE) fontSize = MAX_FONT_SIZE
 
         function addStyleToElemText(fontSize: number) {
             for (let linesElem of alignElem.children) {
@@ -260,6 +262,8 @@
             })
         } else if (ref.showId) {
             showsCache.update((a) => {
+                if (!a[ref.showId!]) return a
+
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
@@ -320,16 +324,36 @@
         })
     }
 
+    function getPaddingCorrection(stageItem: any) {
+        let result = ""
+        if (stageItem.style?.indexOf("padding") > -1) {
+            let styles = stageItem.style.split(";")
+            styles.forEach((s: string) => {
+                if (s.indexOf("padding") === 0) {
+                    let padding = parseInt(s.split(":")[1].replace("px", "").trim(), 0) * 2
+                    if (padding > 0) result = "width: calc(100% - " + padding + "px); height: calc(100% - " + padding + "px);"
+                }
+            })
+        }
+        setTimeout(getCustomAutoSize, 150)
+        return result
+    }
+
     $: if (chords && !stageItem && item?.auto && fontSize) fontSize *= 0.7
     $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? (fontSize || autoSize) + "px" : fontSize ? fontSize + "px" : ""
 
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
+
+    let paddingCorrection = {}
+    $: paddingCorrection = getPaddingCorrection(stageItem)
 </script>
 
 <OutputTransition transition={hidden ? {} : itemTransition}>
     <div
         class="item"
-        style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
+        style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter
+            ? 'backdrop-filter: ' + backdropFilter + ';'
+            : ''}{animationStyle.item || ''}"
         class:white={key && !lines?.length}
         class:key
         class:addDefaultItemStyle
@@ -343,7 +367,7 @@
                 class:bottomTopScrolling={item?.scrolling?.type === "bottom_top"}
                 class:leftRightScrolling={item?.scrolling?.type === "left_right"}
                 class:rightLeftScrolling={item?.scrolling?.type === "right_left"}
-                style={style ? item.align : null}
+                style="--scrollSpeed: {item?.scrolling?.speed ?? 15}s;{style ? item.align : null}"
                 bind:this={alignElem}
             >
                 <div
@@ -553,16 +577,16 @@
     /* WIP change time */
     /* WIP scroll with overflow too */
     .item .topBottomScrolling {
-        animation: topBottom 15s linear infinite normal;
+        animation: topBottom var(--scrollSpeed) linear infinite normal;
     }
     .item .bottomTopScrolling {
-        animation: bottomTop 15s linear infinite normal;
+        animation: bottomTop var(--scrollSpeed) linear infinite normal;
     }
     .item .leftRightScrolling {
-        animation: leftRight 15s linear infinite normal;
+        animation: leftRight var(--scrollSpeed) linear infinite normal;
     }
     .item .rightLeftScrolling {
-        animation: rightLeft 15s linear infinite normal;
+        animation: rightLeft var(--scrollSpeed) linear infinite normal;
     }
 
     @keyframes topBottom {

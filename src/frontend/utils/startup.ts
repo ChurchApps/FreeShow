@@ -178,7 +178,7 @@ const receiveMAIN: any = {
         activePopup.set("alert")
     },
     CLOSE: () => {
-        if (get(saved)) window.api.send(MAIN, { channel: "CLOSE" })
+        if (get(saved)) saveComplete({ closeWhenFinished: true })
         else activePopup.set("unsaved")
     },
     RECEIVE_MIDI: (msg) => playMidiIn(msg),
@@ -216,7 +216,7 @@ const receiveMAIN: any = {
         newToast("$toast.media_replaced")
         showsCache.update((a) => {
             let media = a[ref.showId].media[ref.mediaId]
-            if (ref.cloud) {
+            if (ref.cloudId) {
                 if (!media.cloud) a[ref.showId].media[ref.mediaId].cloud = {}
                 a[ref.showId].media[ref.mediaId].cloud![ref.cloudId] = path
             } else {
@@ -338,7 +338,7 @@ const receiveOUTPUTasMAIN: any = {
     MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
     MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
     MAIN_VIDEO_ENDED: async (msg) => {
-        if (clearing) return
+        if (!msg || clearing) return
         clearing = true
         setTimeout(() => (clearing = false), msg.duration || 1000)
 
@@ -350,7 +350,7 @@ const receiveOUTPUTasMAIN: any = {
 
         setTimeout(async () => {
             await clearPlayingVideo(msg.id)
-        }, 600) // WAIT FOR NEXT AFTER MEDIA TO FINISH
+        }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH
     },
     // stage
     MAIN_REQUEST_VIDEO_DATA: (data: any) => {

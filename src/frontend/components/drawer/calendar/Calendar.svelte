@@ -221,7 +221,7 @@
                         on:mousemove={(e) => move(e, day)}
                     >
                         <!-- // isSameDay(day, new Date($activeDays[0]))} -->
-                        <span style="font-size: 1.5em;font-weight: bold;">{day.getDate()}</span>
+                        <span style="font-size: 1.5em;font-weight: 600;">{day.getDate()}</span>
                         <span class="events">
                             {#each dayEvents as event, i}
                                 {#if dayEvents.length > 3 && i > 1}

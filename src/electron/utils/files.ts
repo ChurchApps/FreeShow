@@ -291,7 +291,9 @@ export function selectFolder(e: any, msg: { channel: string; title: string | und
 
     // only when initializing
     if (msg.channel === "DATA_SHOWS") {
-        e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder, showsPath: path.join(folder, "Shows") } })
+        let dataPath = folder
+        let showsPath = checkShowsFolder(path.join(folder, "Shows"))
+        e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: dataPath, showsPath } })
         return
     }
 
@@ -340,8 +342,8 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
     let matches: string[] = []
 
     findMatches(true)
-    if (matches.length !== 1) findMatches()
-    if (matches.length !== 1) return
+    if (matches.length < 1) findMatches()
+    if (matches.length < 1) return
 
     toApp(MAIN, { channel: "LOCATE_MEDIA_FILE", data: { path: matches[0], ref } })
 

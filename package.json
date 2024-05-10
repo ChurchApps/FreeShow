@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "1.1.5",
+    "version": "1.1.6",
     "private": true,
     "main": "build/electron/index.js",
     "description": "Show song lyrics and more for free!",
@@ -146,6 +146,7 @@
         "@mapbox/node-pre-gyp": "^1.0.11",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
         "@vimeo/player": "^2.16.4",
+        "chord-transposer": "^3.0.9",
         "cross-env": "^7.0.3",
         "electron-store": "^8.0.1",
         "electron-updater": "^4.6.1",

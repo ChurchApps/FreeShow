@@ -848,7 +848,7 @@
                             class:active={activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}
                         >
-                            <span class="v">{id}</span>{@html content.replaceAll("/ ", " ")}
+                            <span class="v">{id}</span>{@html content?.replaceAll("/ ", " ") || ""}
                         </p>
                     {/each}
                     {#if bibles[0].copyright}

@@ -41,10 +41,15 @@ export function driveConnect(keys: any) {
     }, 100)
 }
 
-export function syncDrive(force: boolean = false, closeWhenFinished: boolean = false) {
-    if (!force && get(driveData).disabled === true) {
-        if (closeWhenFinished) closeApp()
-        return
+export function syncDrive(force: boolean = false, closeWhenFinished: boolean = false, initialize: boolean = false) {
+    if (!force) {
+        if (get(driveData).disabled === true) {
+            if (closeWhenFinished) closeApp()
+            return
+        } else if (!initialize && !closeWhenFinished) {
+            // not startup and not closing
+            return
+        }
     }
 
     let method = get(driveData).initializeMethod

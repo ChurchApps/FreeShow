@@ -5,7 +5,7 @@ import { Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
-import type { ActiveEdit, DefaultProjectNames, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
+import type { ActiveEdit, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { ID, MidiIn, Overlays, ShowList, Shows, Templates, Timer, Transition } from "../types/Show"
@@ -91,6 +91,7 @@ export const editHistory: Writable<any[]> = writable([])
 export const refreshEditSlide: Writable<boolean> = writable(false)
 export const refreshListBoxes: Writable<number> = writable(-1)
 export const triggerAutoSplit: Writable<boolean> = writable(false)
+export const storedEditMenuState: Writable<any> = writable({})
 
 // OTHER
 export const notFound: Writable<any> = writable({ show: [], bible: [] })
@@ -108,6 +109,7 @@ export const deletedShows: Writable<any[]> = writable([])
 export const renamedShows: Writable<any[]> = writable([])
 export const selectAllMedia: Writable<boolean> = writable(false)
 export const openToolsTab: Writable<string> = writable("")
+export const refreshSlideThumbnails: Writable<boolean> = writable(false)
 
 // ----- SAVED VARIABLES -----
 
@@ -173,7 +175,7 @@ export const templates: Writable<Templates> = writable({}) // {default}
 
 // CALENDAR
 export const events: Writable<{ [key: string]: Event }> = writable({}) // {}
-export const calendarAddShow: Writable<string> = writable() // ""
+export const calendarAddShow: Writable<string> = writable("") // ""
 
 // DRAW
 export const drawSettings: Writable<DrawSettings> = writable({}) // {}
@@ -236,8 +238,6 @@ export const remotePassword: Writable<string> = writable("1234") // generate 4 n
 export const companion: Writable<any> = writable({ enabled: false }) // {}
 
 // HIDDEN
-export const defaultProjectName: Writable<DefaultProjectNames> = writable("date") // "date"
-export const presenterControllerKeys: Writable<boolean> = writable(true) // true
 export const videoExtensions: Writable<string[]> = writable(["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"]) // [default]
 export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif", "webp", "avif"]) // [default]
 export const audioExtensions: Writable<string[]> = writable(["mp3", "wav", "m4a", "flac", "wma", "aac", "ogg", "weba", "aiff"])
@@ -339,8 +339,6 @@ export const $ = {
     ports,
     maxConnections,
     remotePassword,
-    defaultProjectName,
-    presenterControllerKeys,
     videoExtensions,
     imageExtensions,
     audioExtensions,

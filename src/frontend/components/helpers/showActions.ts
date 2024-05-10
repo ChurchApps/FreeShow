@@ -554,12 +554,12 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
 // go to next slide if current output slide has nextAfterMedia action
 let nextActive = false
 export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "timer" = "media", outputId: string = "") {
-    if (nextActive) return
+    if (nextActive) return false
 
     nextActive = true
     setTimeout(() => {
         nextActive = false
-    }, 700)
+    }, 600) // MAKE SURE NEXT SLIDE HAS TRANSITIONED
 
     if (!outputId) outputId = getActiveOutputs(get(outputs), true, true, true)[0]
     if (!outputId) return false
@@ -570,7 +570,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     let slideOut = currentOutput.out?.slide
     if (!slideOut) return false
 
-    let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0][slideOut.index]
+    let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0]?.[slideOut.index]
     if (!layoutSlide) return false
 
     // check that current slide has the ended media!
@@ -582,20 +582,20 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
         if (type === "media") {
             if (layoutSlide.data?.background !== currentMediaId) return false
         } else if (type === "audio") {
-            if (!layoutSlide.data?.audio.find((id) => id === currentMediaId)) return false
+            if (!layoutSlide.data?.audio?.find((id) => id === currentMediaId)) return false
         }
     } else if (type === "timer") {
         let slide = _show(slideOut.id).get("slides")[layoutSlide.id]
-        let slideTimer = slide.items.find((a) => a.type === "timer" && a.timerId === endedId)
+        let slideTimer = slide?.items?.find((a) => a.type === "timer" && a.timerId === endedId)
         if (!slideTimer) return false
     }
 
     let nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
     if (!nextAfterMedia) return false
 
-    setTimeout(() => {
-        nextSlide(null, false, false, false, true, outputId, true)
-    }, 500) // has to be higher on low end devices
+    // WIP PAUSE PLAYING VIDEO WHEN ENDED, so it does not loop to start
+    let loop = layoutSlide?.data?.end
+    nextSlide(null, false, false, loop, true, outputId, !loop)
 
     return true
 }

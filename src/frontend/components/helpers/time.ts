@@ -1,4 +1,6 @@
+import { get } from "svelte/store"
 import type { Time } from "../../../types/Main"
+import { dictionary } from "../../stores"
 
 export function secondsToTime(seconds: number): Time {
     // turn to positive (timers have custom negative placed before)
@@ -48,9 +50,8 @@ export function dateToString(date: any, full: boolean = false, d: any = {}): str
 
     let string: string = ""
     if (full) {
-        let weekday = d.weekday ? d.weekday[date.getDay() === 0 ? 7 : date.getDay()] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][date.getDay()]
-        month = d.month ? d.month[date.getMonth() + 1] : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][date.getMonth()]
-        weekday = weekday[0].toUpperCase() + weekday.slice(1, weekday.length)
+        let weekday = getWeekday(date.getDay(), d, true)
+        month = getMonthName(date.getMonth(), d)
 
         // Monday 6. February, 2021
         string = weekday + " " + day + ". " + month + ", " + year
@@ -63,6 +64,21 @@ export function dateToString(date: any, full: boolean = false, d: any = {}): str
 
     // TODO: get format (DD.MM.YY) | YYYY-MM-DD | MM/DD/YYYY
     return string
+}
+
+export function getWeekday(day: number, d = get(dictionary), uppercase: boolean = false) {
+    let weekday = d.weekday ? d.weekday[day === 0 ? 7 : day] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day]
+    if (uppercase) weekday = weekday[0].toUpperCase() + weekday.slice(1, weekday.length)
+
+    return weekday
+}
+
+export function getMonthName(month: number, d = get(dictionary), uppercase: boolean = false) {
+    // this might be upper or lower case depending on the language
+    let monthname = d.month ? d.month[month + 1] : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month]
+    if (uppercase) monthname = monthname[0].toUpperCase() + monthname.slice(1, monthname.length)
+
+    return monthname
 }
 
 export function getDateAndTimeString(time: number) {
@@ -88,7 +104,7 @@ export function format(t: string, { hours, minutes, seconds }: any) {
     return ""
 }
 
-const addZero = (a: number) => ("0" + a).slice(-2)
+export const addZero = (a: number) => ("0" + a).slice(-2)
 // const clip = (a: number) => Math.max(0, Math.min(59, a))
 
 export function splitDate(time: Date) {

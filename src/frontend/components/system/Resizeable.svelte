@@ -13,9 +13,9 @@
     let loaded = false
     onMount(() => {
         setTimeout(() => {
-            width = $resized[id] || 300
+            width = $resized[id] ?? 300
             loaded = true
-        }, 1000)
+        }, 2000)
     })
 
     let move: boolean = false

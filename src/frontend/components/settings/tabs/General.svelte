@@ -16,6 +16,7 @@
         labels: (e: any) => labelsDisabled.set(e.target.checked),
         autoOutput: (e: any) => autoOutput.set(e.target.checked),
         hideCursor: (e: any) => updateSpecial(e.target.checked, "hideCursor"),
+        disablePresenterControllerKeys: (e: any) => updateSpecial(e.target.checked, "disablePresenterControllerKeys"),
     }
 
     const autosaveList: any = [
@@ -35,8 +36,6 @@
             return a
         })
     }
-
-    // const projectNames: any[] = ["date", "today", "sunday", "week", "custom", "blank"].map((id) => ({ name: "$:projectName.${" + id + "}:$", id }))
 
     function reset() {
         setLanguage()
@@ -100,19 +99,12 @@
         <Checkbox checked={$special.hideCursor} on:change={inputs.hideCursor} />
     </div>
 </CombinedInput>
-
-<!-- <hr /> -->
-<!-- <div>
-  <p><T id="settings.default_project_name" /></p>
-  <Dropdown
-    options={projectNames}
-    value={$defaultProjectName}
-    on:click={(e) => {
-      // history?
-      defaultProjectName.set(e.detail.id)
-    }}
-  />
-</div> -->
+<CombinedInput>
+    <p><T id="settings.disable_presenter_controller_keys" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.disablePresenterControllerKeys} on:change={inputs.disablePresenterControllerKeys} />
+    </div>
+</CombinedInput>
 
 <div class="filler" />
 <div class="bottom">

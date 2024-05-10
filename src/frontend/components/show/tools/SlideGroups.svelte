@@ -20,18 +20,18 @@
     }
 
     function orderGroups(a: any, b: any) {
-        const aGroupType = a.group.split(' ')[0];
-        const bGroupType = b.group.split(' ')[0];
+        const aGroupType = a.group.split(" ")[0]
+        const bGroupType = b.group.split(" ")[0]
 
         if (aGroupType !== bGroupType) {
-            return aGroupType.localeCompare(bGroupType);
+            return aGroupType.localeCompare(bGroupType)
         }
 
-        const groupA = parseInt(a.group.split(' ')[1]) || 0;
-        const groupB = parseInt(b.group.split(' ')[1]) || 0;
-        return groupA - groupB;
+        const groupA = parseInt(a.group.split(" ")[1]) || 0
+        const groupB = parseInt(b.group.split(" ")[1]) || 0
+        return groupA - groupB
     }
-    
+
     $: globalGroups = Object.entries($groups).map(([id, group]: any) => {
         let name = group.name
         if (group.default) name = $dictionary.groups?.[group.name]
@@ -145,7 +145,7 @@
         align-items: center;
         justify-content: center;
         font-size: 0.8em;
-        font-weight: bold;
+        font-weight: 600;
         background-color: var(--primary-darker);
         cursor: pointer;
         padding: 0 5px;

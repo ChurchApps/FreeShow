@@ -34,13 +34,29 @@ function XMLtoObject(xml: string): Bible {
         let chapters: any[] = []
 
         if (!Array.isArray(book.CHAPTER)) book.CHAPTER = [book.CHAPTER]
-        book.CHAPTER.forEach((chapter: any) => {
+        book.CHAPTER.forEach((chapter: any, i) => {
             let number = chapter["@cnumber"]
             let verses: any[] = []
 
             if (!Array.isArray(chapter.VERS)) chapter.VERS = [chapter.VERS]
             chapter.VERS.forEach((verse: any) => {
-                let value = verse["#text"]
+                if (name === "Luke" && i === 9) console.log(verse)
+
+                let value = verse["#text"] || ""
+
+                // remove <NOTE></NOTE>
+                while (value.indexOf("<NOTE") > -1) {
+                    value = value.slice(0, value.indexOf("<NOTE")) + value.slice(value.indexOf("</NOTE") + 7)
+                }
+
+                // add styled verses
+                let styledVerses = verse.STYLE || []
+                if (!Array.isArray(styledVerses)) styledVerses = [styledVerses]
+                value += styledVerses.map((a) => a["#text"] || "").join(" ")
+
+                // remove extra styling
+                value = value.replaceAll("\n", "").replaceAll('<BR art="x-p"/>', "")
+
                 verses.push({ number: verse["@vnumber"], value })
             })
 

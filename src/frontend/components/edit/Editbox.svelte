@@ -28,6 +28,7 @@
     import { getAutoSize, getMaxBoxTextSize } from "./scripts/autoSize"
     import { addChords, chordMove } from "./scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
+    import { EditboxHelper } from "./EditboxHelper"
 
     export let item: Item
     export let filter: string = ""
@@ -341,6 +342,12 @@
         setTimeout(updateLines, 10)
     }
 
+    function setCaretDelayed(line: number, pos: number) {
+        setTimeout(() => {
+            setCaret(textElem, { line, pos })
+        }, 10)
+    }
+
     function updateLines(newLines: Line[]) {
         // updateItem = true
         if (!newLines) newLines = getNewLines()
@@ -358,6 +365,9 @@
 
                 if (historyText === linesText) return
             }
+
+            let lastChangedLine = EditboxHelper.determineCaretLine(item?.lines || [], newLines)
+            if (lastChangedLine > -1) setCaretDelayed(lastChangedLine, 0)
 
             history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "none", override: ref.showId + ref.id + index } })
 
@@ -429,6 +439,8 @@
             })
         } else if (ref.showId) {
             showsCache.update((a) => {
+                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[index]) return a
+
                 a[ref.showId!].slides[ref.id].items[index].autoFontSize = autoSize
                 return a
             })
@@ -639,10 +651,12 @@
         })
 
         updateLines(lines)
-        getStyle()
-        // set caret position back
         setTimeout(() => {
-            setCaret(textElem, caret)
+            getStyle()
+            // set caret position back
+            setTimeout(() => {
+                setCaret(textElem, caret)
+            }, 10)
         }, 10)
     }
 
@@ -703,7 +717,7 @@
                     return
                 }
 
-                let value = text.value.trim().replaceAll("\n", "") || ""
+                let value = text.value.trim().replaceAll("\n", "").replaceAll("&nbsp;", " ") || ""
 
                 let letters = value.split("")
                 letters.forEach((letter) => {
@@ -820,6 +834,7 @@ bind:offsetWidth={width} -->
                     if (newLines) item.lines = newLines
                 }}
                 class="edit"
+                class:hidden={chordsMode}
                 class:autoSize={item.auto && autoSize}
                 contenteditable
                 on:keydown={textElemKeydown}
@@ -965,14 +980,14 @@ bind:offsetWidth={width} -->
         /* background-color: var(--secondary-opacity); */
     }
     /* .chordsText {
-    position: absolute;
-    width: 100%;
-    color: transparent !important;
-    user-select: none;
-  }
-  .chordsText:first-child {
-    width: 100%;
-  } */
+  position: absolute;
+  width: 100%;
+  color: transparent !important;
+  user-select: none;
+}
+.chordsText:first-child {
+  width: 100%;
+} */
 
     .align {
         height: 100%;
@@ -1006,10 +1021,13 @@ bind:offsetWidth={width} -->
         justify-content: center;
         /* align-items: center; */
     }
+    .edit.hidden {
+        visibility: hidden;
+    }
 
     /* .edit.tallLines {
-    line-height: 200px;
-  } */
+  line-height: 200px;
+} */
 
     .plain .edit {
         font-size: 1.5em;
@@ -1037,8 +1055,8 @@ bind:offsetWidth={width} -->
     .edit:not(.plain .edit) :global(span) {
         font-size: 100px;
         /* min-height: 100px;
-    min-width: 100px;
-    display: inline-table; */
+  min-width: 100px;
+  display: inline-table; */
     }
 
     /* chords */
@@ -1054,7 +1072,7 @@ bind:offsetWidth={width} -->
     }
     .edit.chords :global(.chord) {
         /* color: var(--chord-color);
-        font-size: var(--chord-size) !important; */
+      font-size: var(--chord-size) !important; */
         bottom: 0;
         transform: translate(-50%, -60%);
         z-index: 2;
@@ -1074,6 +1092,10 @@ bind:offsetWidth={width} -->
     .chordsBreak {
         position: relative;
         line-height: 0;
+
+        /* fix letter spacing */
+        /* letter-spacing: 0.3px; */ /* can't be lower */
+        /* font-kerning: none; */
     }
 
     /* custom svg icon */

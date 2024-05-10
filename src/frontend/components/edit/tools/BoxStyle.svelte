@@ -12,6 +12,7 @@
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
+    import { uid } from "uid"
 
     export let id: ItemType
     export let allSlideItems: Item[] = []
@@ -446,10 +447,13 @@
             })
         })
     }
+
+    let sessionId = ""
+    if (item) sessionId = uid()
 </script>
 
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
 
 {#key box}
-    <EditValues edits={box?.edit} defaultEdits={clone(boxes[id])?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} />
+    <EditValues edits={box?.edit} defaultEdits={clone(boxes[id])?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} {sessionId} />
 {/key}

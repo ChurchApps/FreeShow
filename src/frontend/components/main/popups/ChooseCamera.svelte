@@ -18,6 +18,7 @@
     .cameras {
         display: flex;
         justify-content: center;
+        flex-wrap: wrap;
         padding: 10px;
         gap: 5px;
 

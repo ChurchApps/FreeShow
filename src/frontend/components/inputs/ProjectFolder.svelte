@@ -54,7 +54,7 @@
         font-size: 0.9em;
         /* cursor: pointer; */
         padding: 0.2em 0.8em;
-        font-weight: bold;
+        font-weight: 600;
 
         justify-content: space-between;
     }

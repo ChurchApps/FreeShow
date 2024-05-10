@@ -52,6 +52,7 @@ function downloadFile(filePath: string, file: any) {
 
     // download the media
     const fileStream = fs.createWriteStream(filePath)
+    // WIP this might not download entire video sometimes
     https.get(file.url, (res) => {
         res.pipe(fileStream)
 

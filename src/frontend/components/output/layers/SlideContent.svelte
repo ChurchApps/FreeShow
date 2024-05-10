@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Slide } from "../../../../types/Show"
-    import { currentWindow, templates, textLoaded } from "../../../stores"
+    import { templates, textLoaded } from "../../../stores"
     import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
     import OutputTransition from "./OutputTransition.svelte"
@@ -23,9 +23,7 @@
     export let transitionEnabled: boolean = false
     export let isKeyOutput: boolean = false
 
-    $: duration = transition?.duration || 500
-
-    // WIP text sometimes won't load when changing slides quickly
+    // $: duration = transition?.duration || 500
 
     // LOAD ONE AT A TIME
     let firstActive: boolean = false
@@ -75,8 +73,6 @@
                 // WIP wait for autoSize to finish!
                 let timeoutDuration = 10
                 if (autoSize) timeoutDuration = 400
-                // let font load on initial load
-                if ($currentWindow === "output" && !$textLoaded) timeoutDuration = 2000
 
                 // max 2 seconds loading time...
                 timeout = setTimeout(() => {
@@ -86,7 +82,7 @@
                     textLoaded.set(true)
                 }, timeoutDuration)
             },
-            duration / 4 + 20
+            10 // add a buffer to reduce flickering on rapid changes (duration / 4)
         )
     }
 

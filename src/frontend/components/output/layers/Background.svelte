@@ -26,6 +26,13 @@
     let timeout: any = null
     $: if (data) createBackground()
     function createBackground() {
+        // clearing
+        if (!data.path && !data.id) {
+            background1 = null
+            background2 = null
+            return
+        }
+
         // update existing background, if same
         let activeId = firstActive ? background1?.path || background1?.id : background2?.path || background2?.id
         if (activeId === (data.path || data.id)) {

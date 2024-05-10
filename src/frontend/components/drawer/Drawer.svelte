@@ -4,8 +4,8 @@
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
-    import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
+    import { setDrawerTabData } from "../helpers/historyHelpers"
     import Icon from "../helpers/Icon.svelte"
     import { selectTextOnFocus } from "../helpers/inputActions"
     import T from "../helpers/T.svelte"
@@ -112,10 +112,8 @@
 
             // change to "Show" and "All" when searching when drawer is closed
             if ($drawer.height <= minHeight) {
+                setDrawerTabData("shows", "all")
                 activeDrawerTab.set("shows")
-                let drawerData = clone($drawerTabsData)
-                drawerData.shows.activeSubTab = "all"
-                drawerTabsData.set(drawerData)
             }
         } else if ((e.ctrlKey || e.metaKey) && e.key === "d") {
             if (!$selected?.id && !$activeEdit.items.length) click(null)

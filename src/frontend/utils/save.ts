@@ -11,7 +11,6 @@ import {
     categories,
     customizedIcons,
     dataPath,
-    defaultProjectName,
     deletedShows,
     disabledServers,
     drawSettings,
@@ -44,7 +43,6 @@ import {
     overlays,
     playerVideos,
     ports,
-    presenterControllerKeys,
     projects,
     redoHistory,
     remotePassword,
@@ -99,7 +97,6 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         serverData: get(serverData),
         autosave: get(autosave),
         timeFormat: get(timeFormat),
-        defaultProjectName: get(defaultProjectName),
         // events: get(events),
         showsPath: get(showsPath),
         dataPath: get(dataPath),
@@ -120,7 +117,6 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         outputs: get(outputs),
         sorted: get(sorted),
         styles: get(styles),
-        presenterControllerKeys: get(presenterControllerKeys),
         playerVideos: get(playerVideos),
         remotePassword: get(remotePassword),
         resized: get(resized),
@@ -196,7 +192,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
     window.api.send(STORE, { channel: "SAVE", data: allSavedData })
 }
 
-export function saveComplete({ closeWhenFinished, backup }) {
+export function saveComplete({ closeWhenFinished, backup }: any) {
     saved.set(true)
     newToast("$toast.saved")
 

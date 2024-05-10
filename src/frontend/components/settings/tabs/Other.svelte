@@ -15,6 +15,8 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
+    import NumberInput from "../../inputs/NumberInput.svelte"
 
     onMount(() => {
         getCacheSize()
@@ -53,7 +55,7 @@
 
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (!value) delete a[key]
+            if (key !== "audio_fade_duration" && !value) delete a[key]
             else a[key] = value
 
             return a
@@ -137,6 +139,16 @@
         activePopup.set("alert")
         send(MAIN, ["RESTORE"], { showsPath: $showsPath })
     }
+
+    let projectReplacerTitle = getReplacerTitle()
+    function getReplacerTitle() {
+        let titles: string[] = []
+        projectReplacers.forEach((a) => {
+            titles.push(`${a.title}: {${a.id}}`)
+        })
+
+        return titles.join(", ")
+    }
 </script>
 
 <CombinedInput textWidth={30}>
@@ -195,6 +207,21 @@
 <CombinedInput>
     <p><T id="settings.capitalize_words" /></p>
     <TextInput value={$special.capitalize_words} on:change={(e) => updateTextInput(e, "capitalize_words")} />
+</CombinedInput>
+
+<CombinedInput title={projectReplacerTitle}>
+    <p><T id="settings.default_project_name" /></p>
+    <TextInput value={$special.default_project_name ?? DEFAULT_PROJECT_NAME} on:change={(e) => updateTextInput(e, "default_project_name")} />
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.audio_fade_duration" /></p>
+    <NumberInput value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.max_auto_font_size" /></p>
+    <NumberInput value={$special.max_auto_font_size ?? 800} min={20} max={5000} on:change={(e) => updateSpecial(e.detail, "max_auto_font_size")} />
 </CombinedInput>
 
 <CombinedInput>

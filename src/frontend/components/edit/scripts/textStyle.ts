@@ -138,7 +138,6 @@ export function getSelectionRange(): { start: number; end: number }[] {
         let count: number = 0
 
         new Array(...br.childNodes).forEach((child: any) => {
-            console.log(count, child.innerText)
             if (selection!.containsNode(child, true)) {
                 // if start not set & child is start & (child is not end or end is bigger than start)
                 if (start === null && child === startNode && (child !== endNode || endOffset > startOffset)) {
@@ -192,9 +191,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
     // filter out empty lines
     lines = lines.filter((a) => a.text.length)
 
-    console.log(style)
     if (!style.length && lines.length) style = lines[lines.length - 1].text[lines[lines.length - 1].text.length - 1]?.style || ""
-    console.log(style)
 
     return style
 }

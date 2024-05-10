@@ -43,11 +43,10 @@
     import Trigger from "./popups/Trigger.svelte"
     import ManageColors from "./popups/ManageColors.svelte"
     import AudioStream from "./popups/AudioStream.svelte"
-
-    const disableClose = ["initialize", "cloud_method"]
+    import { disablePopupClose } from "../../utils/shortcuts"
 
     function mousedown(e: any) {
-        if (disableClose.includes(popupId)) return
+        if (disablePopupClose.includes(popupId)) return
 
         if (e.target.classList.contains("popup")) activePopup.set(null)
     }
@@ -119,7 +118,7 @@
                         {/key}
                     {/if}
 
-                    {#if popupId !== "alert" && !disableClose.includes(popupId)}
+                    {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
                         <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 40px;" on:click={() => activePopup.set(null)}>
                             <Icon id="close" size={2} />
                         </Button>
