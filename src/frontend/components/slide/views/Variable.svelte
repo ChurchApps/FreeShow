@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeDrawerTab, drawer, drawerTabsData, variables } from "../../../stores"
+    import { activeDrawerTab, drawer, variables } from "../../../stores"
+    import { setDrawerTabData } from "../../helpers/historyHelpers"
 
     export let id: string = ""
     export let item: null | Item = null
@@ -13,10 +14,7 @@
     function openInDrawer() {
         if (!edit) return
 
-        drawerTabsData.update((a) => {
-            a.calendar.activeSubTab = "variables"
-            return a
-        })
+        setDrawerTabData("calendar", "variables")
         activeDrawerTab.set("overlays")
 
         // open drawer if closed

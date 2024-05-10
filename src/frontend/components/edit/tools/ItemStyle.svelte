@@ -10,6 +10,7 @@
     import { itemEdits } from "../values/item"
     import EditValues from "./EditValues.svelte"
     import { clone } from "../../helpers/array"
+    import { uid } from "uid"
 
     export let allSlideItems: Item[]
     export let item: Item | null
@@ -154,8 +155,11 @@
             })
         })
     }
+
+    let sessionId = ""
+    if (item) sessionId = uid()
 </script>
 
 {#key item}
-    <EditValues edits={itemEditValues} defaultEdits={clone(itemEdits)} styles={data} {item} on:change={updateStyle} />
+    <EditValues edits={itemEditValues} defaultEdits={clone(itemEdits)} styles={data} {item} on:change={updateStyle} {sessionId} />
 {/key}

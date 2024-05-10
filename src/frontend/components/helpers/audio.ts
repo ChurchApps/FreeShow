@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../../types/Channels"
-import { audioChannels, gain, playingAudio, playingVideos, volume } from "../../stores"
+import { audioChannels, gain, playingAudio, playingVideos, special, volume } from "../../stores"
 import { send } from "../../utils/request"
 import { audioAnalyser } from "../output/audioAnalyser"
 import { checkNextAfterMedia } from "./showActions"
@@ -202,7 +202,7 @@ let clearing = false
 export function clearAudio(path: string = "") {
     // let clearTime = get(transitionData).audio.duration
     // TODO: starting audio before previous clear is finished will not start/clear audio
-    const clearTime = 1.5
+    const clearTime = get(special).audio_fade_duration ?? 1.5
 
     if (clearing) return // setTimeout(() => clearAudio(path), clearTime * 1000 + 200)
     if (!Object.keys(get(playingAudio)).length) return
@@ -226,9 +226,12 @@ export function clearAudio(path: string = "") {
             if (tries > 5 || !a[path]?.audio) return deleteAudio(path)
 
             if (a[path].audio.volume > 0.01) {
-                setTimeout(() => {
-                    removeAudio(path, tries + 1)
-                }, 1000)
+                setTimeout(
+                    () => {
+                        removeAudio(path, tries + 1)
+                    },
+                    clearTime ? 1000 : 0
+                )
 
                 return
             }

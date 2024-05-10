@@ -16,6 +16,7 @@
     import FolderPicker from "../../inputs/FolderPicker.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
+    import NumberInput from "../../inputs/NumberInput.svelte"
 
     onMount(() => {
         getCacheSize()
@@ -54,7 +55,7 @@
 
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (!value) delete a[key]
+            if (key !== "audio_fade_duration" && !value) delete a[key]
             else a[key] = value
 
             return a
@@ -211,6 +212,11 @@
 <CombinedInput title={projectReplacerTitle}>
     <p><T id="settings.default_project_name" /></p>
     <TextInput value={$special.default_project_name ?? DEFAULT_PROJECT_NAME} on:change={(e) => updateTextInput(e, "default_project_name")} />
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.audio_fade_duration" /></p>
+    <NumberInput value={$special.audio_fade_duration ?? 1.5} min={0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
 </CombinedInput>
 
 <CombinedInput>

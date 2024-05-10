@@ -1,8 +1,9 @@
 <script lang="ts">
     import type { Show } from "../../../types/Show"
-    import { activeDrawerTab, activeShow, drawer, drawerTabsData, labelsDisabled, openScripture, scriptures, shows } from "../../stores"
+    import { activeDrawerTab, activeShow, drawer, labelsDisabled, openScripture, scriptures, shows } from "../../stores"
     import { createSlides, getDateString, getSelectedEvents, sortDays } from "../drawer/calendar/calendar"
     import { history } from "../helpers/history"
+    import { setDrawerTabData } from "../helpers/historyHelpers"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -36,10 +37,7 @@
 
         openScripture.set(show.reference!.data)
 
-        drawerTabsData.update((a) => {
-            a.scripture.activeSubTab = collection
-            return a
-        })
+        setDrawerTabData("scripture", collection)
         activeDrawerTab.set("scripture")
         // WIP set book, chapter and verses too
 

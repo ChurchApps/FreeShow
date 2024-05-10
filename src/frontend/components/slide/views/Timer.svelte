@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeDrawerTab, activeTimers, drawer, drawerTabsData, timers } from "../../../stores"
+    import { activeDrawerTab, activeTimers, drawer, timers } from "../../../stores"
     import { getCurrentTimerValue } from "../../drawer/timers/timers"
+    import { setDrawerTabData } from "../../helpers/historyHelpers"
     import { getStyles } from "../../helpers/style"
     // import { blur } from "svelte/transition"
     import { joinTimeBig } from "../../helpers/time"
@@ -57,10 +58,7 @@
     function openInDrawer() {
         if (!edit) return
 
-        drawerTabsData.update((a) => {
-            a.calendar.activeSubTab = "timer"
-            return a
-        })
+        setDrawerTabData("calendar", "timer")
         activeDrawerTab.set("calendar")
 
         // open drawer if closed

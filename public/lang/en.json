@@ -864,6 +864,7 @@
         "hide_cursor_in_output": "Hide cursor in output",
         "disable_presenter_controller_keys": "Disable presenter controller keys",
         "default_project_name": "Default project name",
+        "audio_fade_duration": "Audio fade duration",
         "resolution": "Resolution",
         "cropping": "Cropping",
         "frame_rate": "Frame rate",

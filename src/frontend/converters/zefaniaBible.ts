@@ -39,17 +39,20 @@ function XMLtoObject(xml: string): Bible {
             let verses: any[] = []
 
             if (!Array.isArray(chapter.VERS)) chapter.VERS = [chapter.VERS]
-            chapter.VERS.forEach((verse: any, j) => {
-                if (i === 9 && j < 3) console.log(verse)
+            chapter.VERS.forEach((verse: any) => {
+                if (name === "Luke" && i === 9) console.log(verse)
 
                 let value = verse["#text"] || ""
 
-                // remove NOTE (WIP multiple notes in one verse?)
-                let noteStart = value.indexOf("<NOTE")
-                if (noteStart > -1) value = value.slice(0, noteStart) + value.slice(value.indexOf("</NOTE") + 7)
+                // remove <NOTE></NOTE>
+                while (value.indexOf("<NOTE") > -1) {
+                    value = value.slice(0, value.indexOf("<NOTE")) + value.slice(value.indexOf("</NOTE") + 7)
+                }
 
-                // add styles verses (WIP multiple styles)
-                value += verse.STYLE?.["#text"] || ""
+                // add styled verses
+                let styledVerses = verse.STYLE || []
+                if (!Array.isArray(styledVerses)) styledVerses = [styledVerses]
+                value += styledVerses.map((a) => a["#text"] || "").join(" ")
 
                 // remove extra styling
                 value = value.replaceAll("\n", "").replaceAll('<BR art="x-p"/>', "")

@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeDrawerTab, drawer, drawerTabsData, events } from "../../../stores"
+    import { activeDrawerTab, drawer, events } from "../../../stores"
     import { getTime } from "../../drawer/calendar/calendar"
     import { keysToID, sortByTime } from "../../helpers/array"
+    import { setDrawerTabData } from "../../helpers/historyHelpers"
     import { combineDateAndTime } from "../../helpers/time"
 
     export let edit: boolean = false
@@ -73,10 +74,7 @@
     function openInDrawer() {
         if (!edit) return
 
-        drawerTabsData.update((a) => {
-            a.calendar.activeSubTab = "event"
-            return a
-        })
+        setDrawerTabData("calendar", "event")
         activeDrawerTab.set("calendar")
 
         // open drawer if closed

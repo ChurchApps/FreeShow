@@ -118,7 +118,7 @@
     // actions
     $: if ((preview || $currentWindow === "output") && item?.actions) runActions()
     function runActions() {
-        Object.keys(item?.actions).forEach((action) => {
+        Object.keys(item?.actions || {}).forEach((action) => {
             if (actions[action]) actions[action](item?.actions[action])
         })
     }
@@ -261,6 +261,8 @@
             })
         } else if (ref.showId) {
             showsCache.update((a) => {
+                if (!a[ref.showId!]) return a
+
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { activePopup, dictionary, imageExtensions, popupData, variables, videoExtensions } from "../../../stores"
+    import { activePopup, dictionary, imageExtensions, popupData, storedEditMenuState, variables, videoExtensions } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID } from "../../helpers/array"
@@ -29,6 +29,7 @@
     export let lineAlignStyle: any = {}
     export let alignStyle: any = {}
     export let noClosing: boolean = false
+    export let sessionId: string = ""
 
     const inputs: any = {
         fontDropdown: FontDropdown,
@@ -224,6 +225,11 @@
     function checkIsClosed(id: string) {
         if (noClosing) return false
 
+        console.log("NEW", $storedEditMenuState)
+        if ($storedEditMenuState[sessionId]?.[id] !== undefined) {
+            return $storedEditMenuState[sessionId]?.[id]
+        }
+
         let closedVal = closed[id]
         let defaultEdit = defaultEdits?.[id]
         let currentEdit = clone(edits[id])
@@ -265,7 +271,24 @@
             return false
         })
 
-        return !differentValue
+        let state = !differentValue
+
+        if (sessionId) {
+            storedEditMenuState.update((a) => {
+                if (!a[sessionId]) a[sessionId] = {}
+                a[sessionId][id] = state
+
+                return a
+            })
+        }
+
+        return state
+    }
+
+    function updateMenu() {
+        if ($storedEditMenuState[sessionId]) storedEditMenuState.set({})
+        updateClosed = true
+        // WIP some menus won't close on first update
     }
 
     let updateClosed: boolean = false
@@ -292,7 +315,7 @@
             valueChange({ detail: newValue }, input)
         })
 
-        updateClosed = true
+        updateMenu()
     }
 
     function resetAndClose(id: string) {
@@ -320,7 +343,7 @@
             setTimeout(() => resetInput(i + 1), 10)
         }
 
-        updateClosed = true
+        updateMenu()
     }
 
     let cssClosed: boolean = true

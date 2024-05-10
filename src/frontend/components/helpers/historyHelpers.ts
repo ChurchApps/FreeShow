@@ -542,9 +542,11 @@ function clearOverlayOutput(slideId: string) {
     }
 }
 
-function setDrawerTabData(tabId, data) {
+export function setDrawerTabData(tabId, data) {
     drawerTabsData.update((a) => {
+        if (!a[tabId]) a[tabId] = { enabled: true, activeSubTab: "" }
         a[tabId].activeSubTab = data
+
         return a
     })
 }

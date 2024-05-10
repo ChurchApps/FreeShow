@@ -155,9 +155,9 @@
         if (!$groupNumbers) return name
 
         // different slides with same name
-        let slides = keysToID(show.slides)
+        let slides = keysToID(show.slides || [])
         // sort by order when just one layout
-        if (Object.keys(show.layouts).length < 2) {
+        if (Object.keys(show.layouts || {}).length < 2) {
             let layoutSlides = Object.values(show.layouts)[0]?.slides?.map(({ id }) => id) || []
             slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
         }
