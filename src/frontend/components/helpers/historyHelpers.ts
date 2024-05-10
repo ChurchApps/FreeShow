@@ -66,6 +66,15 @@ export const _updaters = {
             if (get(activeStage).id === id) {
                 activeStage.set({ id: null, items: [] })
             }
+
+            // delete any stage output window linked to this stage layout
+            let outputId = Object.entries(get(outputs)).find(([_id, output]) => output.stageOutput === id)?.[0] || ""
+            if (!outputId) return
+
+            outputs.update((a) => {
+                delete a[outputId]
+                return a
+            })
         },
     },
 

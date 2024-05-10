@@ -220,7 +220,6 @@ export async function syncDataDrive(data: any) {
                 return
             }
 
-            // if (id === "SHOWS") shows = driveContent
             if (id === "SYNCED_SETTINGS") bibles = driveContent?.scriptures
 
             toApp(STORE, { channel: id, data: driveContent })
@@ -232,7 +231,6 @@ export async function syncDataDrive(data: any) {
 
         // upload (newest === "local")
         if (data.method === "download") return
-        // if (id === "SHOWS") shows = store.store
         if (id === "SYNCED_SETTINGS") bibles = store.store?.scriptures
 
         let file = createFile(data.mainFolderId, { type: "json", name }, storeContent)
@@ -317,9 +315,6 @@ export async function syncDataDrive(data: any) {
     }
 
     async function syncAllShows() {
-        // if (shows === null) shows = stores.SHOWS.store || null
-        // if (shows === null) return
-
         let showsPath: string = checkShowsFolder(data.path)
         if (!showsPath) return
 
@@ -329,11 +324,11 @@ export async function syncDataDrive(data: any) {
         // download shows
         let driveContent: any = driveFile ? await downloadFile(driveFileId) : null
 
-        let localShows = stores.SHOWS.store
+        let localShows = stores.SHOWS.store || {}
         if (data.method === "download") localShows = {}
         // some might have the same id
         let shows = { ...localShows, ...(driveContent || {}) }
-        console.log("Local shows count:", Object.keys(localShows || {}).length)
+        console.log("Local shows count:", Object.keys(localShows).length)
         console.log("Cloud shows count:", Object.keys(driveContent || {}).length)
 
         let downloadCount: number = 0
@@ -377,7 +372,7 @@ export async function syncDataDrive(data: any) {
                 downloadCount++
 
                 if (data.method !== "download") {
-                    localShows[id] = trimShow({ ...driveContent[id], name: show.name || id })
+                    localShows[id] = trimShow({ ...(driveContent?.[id] || {}), name: show.name || id })
                 }
 
                 return

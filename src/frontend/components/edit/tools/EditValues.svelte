@@ -225,7 +225,6 @@
     function checkIsClosed(id: string) {
         if (noClosing) return false
 
-        console.log("NEW", $storedEditMenuState)
         if ($storedEditMenuState[sessionId]?.[id] !== undefined) {
             return $storedEditMenuState[sessionId]?.[id]
         }
@@ -398,7 +397,7 @@
                             </Button>
                         </CombinedInput>
                     {:else if input.input === "media"}
-                        <MediaPicker id="item" title={input.value} style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
+                        <MediaPicker id={"item_" + sessionId} title={input.value} style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
                             <Icon id="image" right />
                             {#if input.value}
                                 {getFileName(input.value)}

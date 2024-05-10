@@ -216,7 +216,12 @@
 
 <CombinedInput>
     <p><T id="settings.audio_fade_duration" /></p>
-    <NumberInput value={$special.audio_fade_duration ?? 1.5} min={0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
+    <NumberInput value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.max_auto_font_size" /></p>
+    <NumberInput value={$special.max_auto_font_size ?? 800} min={20} max={5000} on:change={(e) => updateSpecial(e.detail, "max_auto_font_size")} />
 </CombinedInput>
 
 <CombinedInput>

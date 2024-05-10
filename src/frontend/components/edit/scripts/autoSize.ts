@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, activeShow } from "../../../stores"
+import { activeEdit, activeShow, special } from "../../../stores"
 import { _show } from "../../helpers/shows"
 import { getStyles } from "../../helpers/style"
 import { addStyleString, getItemLines, getItemText } from "./textStyle"
@@ -93,9 +93,10 @@ export function getAutoSize(item: any, styles: any = null, oneLine: boolean = fa
     return size
 }
 
-const MAX_FONT_SIZE = 800
-const MIN_FONT_SIZE = 10
 export function getMaxBoxTextSize(elem: any, parentElem: HTMLElement) {
+    const MAX_FONT_SIZE = get(special).max_auto_font_size ?? 800
+    const MIN_FONT_SIZE = 10
+
     let invisibleBox = elem.cloneNode(true)
     invisibleBox.classList.add("invisible")
     parentElem.append(invisibleBox)
@@ -121,6 +122,7 @@ export function getMaxBoxTextSize(elem: any, parentElem: HTMLElement) {
         biggerThanSize = invisibleBox.scrollHeight > invisibleBox.offsetHeight || invisibleBox.scrollWidth > invisibleBox.offsetWidth
     }
     fontSize = lowestValue // prefer lowest value
+    if (fontSize > MAX_FONT_SIZE) fontSize = MAX_FONT_SIZE
 
     function addStyleToElemText(fontSize) {
         for (let breakElem of invisibleBox.children) {
