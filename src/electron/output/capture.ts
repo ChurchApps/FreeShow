@@ -5,8 +5,8 @@ import { toApp } from ".."
 import { OUTPUT, OUTPUT_STREAM } from "../../types/Channels"
 import { toServer } from "../servers"
 import { outputWindows, sendToWindow } from "./output"
-import { NDI, sendVideoBufferNDI } from "../ndi/ndi"
 import util from "../ndi/vingester-util"
+import { NdiSender } from "../ndi/NdiSender"
 
 type CaptureOptions = {
     window: BrowserWindow
@@ -150,9 +150,9 @@ function sendFrames(id: string, image: NativeImage, rates: any) {
 export function updateFramerate(id: string) {
     if (!captures[id]) return
 
-    if (NDI[id]) {
+    if (NdiSender.NDI[id]) {
         let ndiFramerate = framerates.unconnected
-        if (NDI[id].status === "connected") ndiFramerate = customFramerates[id]?.ndi || framerates.connected
+        if (NdiSender.NDI[id].status === "connected") ndiFramerate = customFramerates[id]?.ndi || framerates.connected
 
         captures[id].framerates.ndi = parseInt(ndiFramerate)
     }
@@ -191,7 +191,7 @@ function sendBufferToNdi(id: string, image: NativeImage, { size }: any) {
     const ratio = image.getAspectRatio()
 
     // WIP refresh on enable?
-    sendVideoBufferNDI(id, buffer, { size, ratio, framerate: captures[id].framerates.ndi })
+    NdiSender.sendVideoBufferNDI(id, buffer, { size, ratio, framerate: captures[id].framerates.ndi })
 }
 
 // PREVIEW
