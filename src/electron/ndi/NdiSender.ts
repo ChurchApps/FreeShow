@@ -1,8 +1,9 @@
 // import pcmconvert from "pcm-converter"
 import os from "os"
 import { isLinux, toApp } from ".."
-import { updateFramerate } from "../output/capture"
 import util from "./vingester-util"
+import grandiose from "grandiose"
+import { updateFramerate } from "../output/capture"
 
 // WIP - NDI issue on Linux: libndi.so.5: No such file or dialog
 
@@ -35,7 +36,6 @@ export class NdiSender {
 
   static async createSenderNDI(id: string, title: string = "") {
     if (this.ndiDisabled) return
-    const grandiose = require("grandiose")
 
     if (this.NDI[id]) return
     this.NDI[id] = {}
@@ -81,9 +81,7 @@ export class NdiSender {
 
   static async sendVideoBufferNDI(id: string, buffer: any, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
     if (!this.NDI[id]?.sender) return
-
     if (this.ndiDisabled) return
-    const grandiose = require("grandiose")
 
     /*  convert from ARGB (Electron/Chromium on big endian CPU)
         to BGRA (supported input of NDI SDK). On little endian
@@ -133,7 +131,6 @@ export class NdiSender {
     if (!this.NDI[id].sender) return
 
     if (this.ndiDisabled) return
-    const grandiose = require("grandiose")
 
     /*  convert from PCM/signed-16-bit/little-endian data
         to NDI's "PCM/planar/signed-float32/little-endian  */

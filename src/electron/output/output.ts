@@ -5,8 +5,9 @@ import { Output } from "../../types/Output"
 import { Message } from "../../types/Socket"
 import { setDataNDI } from "../ndi/talk"
 import { outputOptions, screenIdentifyOptions } from "../utils/windowOptions"
-import { requestPreview, stageWindows, startCapture, stopCapture, updatePreviewResolution } from "./capture"
+import { startCapture, stopCapture, updatePreviewResolution } from "./capture"
 import { NdiSender } from "../ndi/NdiSender"
+import { CaptureTransmitter } from "./CaptureTransmitter"
 
 export let outputWindows: { [key: string]: BrowserWindow } = {}
 
@@ -20,7 +21,7 @@ async function createOutput(output: Output) {
     outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
     updateBounds(output)
 
-    if (output.stageOutput) stageWindows.push(id)
+    if (output.stageOutput) CaptureTransmitter.stageWindows.push(id)
 
     setTimeout(() => {
         startCapture(id, { ndi: output.ndi || false }, (output as any).rate)
@@ -271,7 +272,7 @@ const outputResponses: any = {
     TO_FRONT: (data: any) => moveToFront(data),
 
     PREVIEW_RESOLUTION: (data: any) => updatePreviewResolution(data),
-    REQUEST_PREVIEW: (data: any) => requestPreview(data),
+    REQUEST_PREVIEW: (data: any) => CaptureTransmitter.requestPreview(data),
 
     IDENTIFY_SCREENS: (data: any) => identifyScreens(data),
 }

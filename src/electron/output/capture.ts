@@ -1,14 +1,11 @@
 import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
-import os from "os"
-import { toApp } from ".."
-import { OUTPUT, OUTPUT_STREAM } from "../../types/Channels"
-import { toServer } from "../servers"
-import { outputWindows, sendToWindow } from "./output"
-import util from "../ndi/vingester-util"
+import { outputWindows } from "./output"
 import { NdiSender } from "../ndi/NdiSender"
+import { CaptureTransmitter } from "./CaptureTransmitter"
 
-type CaptureOptions = {
+export type CaptureOptions = {
+    id: string
     window: BrowserWindow
     subscribed: boolean
     displayFrequency: number
@@ -27,7 +24,7 @@ export const framerates: any = {
 }
 export let customFramerates: any = {}
 
-function getDefaultCapture(window: BrowserWindow): CaptureOptions {
+function getDefaultCapture(window: BrowserWindow, id:string): CaptureOptions {
     let screen: Display = getWindowScreen(window)
     let defaultFramerates = {
         preview: framerates.preview,
@@ -42,6 +39,7 @@ function getDefaultCapture(window: BrowserWindow): CaptureOptions {
         options: { server: false, ndi: false },
         framerates: defaultFramerates,
         framesToSkip: {},
+        id
     }
 }
 
@@ -56,7 +54,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
         return
     }
 
-    if (!captures[id]) captures[id] = getDefaultCapture(window)
+    if (!captures[id]) captures[id] = getDefaultCapture(window, id)
 
     Object.keys(toggle).map((key) => {
         captures[id].options[key] = toggle[key]
@@ -90,7 +88,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
             // limit frames
             if (captures[id].window.webContents.isBeingCaptured()) captures[id].window.webContents.endFrameSubscription()
             let image = await captures[id].window.webContents.capturePage()
-            sendFrames(id, image, { previewFrame: true, serverFrame: true, ndiFrame: true })
+            CaptureTransmitter.sendFrames(captures[id], image, { previewFrame: true, serverFrame: true, ndiFrame: true })
 
             // capture for 60 seconds then get cpu again
             captureCount++
@@ -113,7 +111,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 
         if (checkRate("max")) return sendFrame()
 
-        sendFrames(id, image, { previewFrame, serverFrame, ndiFrame })
+        CaptureTransmitter.sendFrames(captures[id], image, { previewFrame, serverFrame, ndiFrame })
     }
 
     function sendFrame() {
@@ -125,7 +123,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
             if (imageIndex !== currentImage) return
 
             // update if last skipped frame is not a sent frame
-            sendFrames(id, storedFrames[id], { previewFrame: true, serverFrame: true, ndiFrame: true })
+            CaptureTransmitter.sendFrames(captures[id], storedFrames[id], { previewFrame: true, serverFrame: true, ndiFrame: true })
             currentImage = 0
         }
     }
@@ -135,16 +133,6 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
         currentFrames[key] = 0
         return false
     }
-}
-
-function sendFrames(id: string, image: NativeImage, rates: any) {
-    if (!captures[id] || !image) return
-
-    const size = image.getSize()
-
-    if (rates.previewFrame) sendBufferToPreview(id, image, { size })
-    if (rates.serverFrame && captures[id].options.server) sendBufferToServer(id, image)
-    if (rates.ndiFrame && captures[id].options.ndi) sendBufferToNdi(id, image, { size })
 }
 
 export function updateFramerate(id: string) {
@@ -184,43 +172,6 @@ function getWindowScreen(window: BrowserWindow) {
     })
 }
 
-// NDI
-
-function sendBufferToNdi(id: string, image: NativeImage, { size }: any) {
-    const buffer = image.getBitmap()
-    const ratio = image.getAspectRatio()
-
-    // WIP refresh on enable?
-    NdiSender.sendVideoBufferNDI(id, buffer, { size, ratio, framerate: captures[id].framerates.ndi })
-}
-
-// PREVIEW
-
-let previewSize: Size = { width: 320, height: 180 }
-function sendBufferToPreview(id: string, image: NativeImage, options: any) {
-    if (!image) return
-
-    image = resizeImage(image, options.size, previewSize)
-
-    const buffer = image.getBitmap()
-    const size = image.getSize()
-
-    /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
-    if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
-    else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
-
-    let msg = { channel: "PREVIEW", data: { id, buffer, size, originalSize: options.size } }
-    toApp(OUTPUT, msg)
-    sendToStageOutputs(msg)
-    sendToRequested(msg)
-}
-
-export function updatePreviewResolution(data: any) {
-    previewSize = data.size
-
-    if (data.id) sendFrames(data.id, storedFrames[data.id], { previewFrame: true })
-}
-
 export function resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
     if (initialSize.width / initialSize.height >= newSize.width / newSize.height) image = image.resize({ width: newSize.width })
     else image = image.resize({ height: newSize.height })
@@ -228,49 +179,11 @@ export function resizeImage(image: NativeImage, initialSize: Size, newSize: Size
     return image
 }
 
-export let stageWindows: string[] = []
-export function sendToStageOutputs(msg: any) {
-    ;[...new Set(stageWindows)].forEach((id) => sendToWindow(id, msg))
-}
+export let previewSize: Size = { width: 320, height: 180 }
+export function updatePreviewResolution(data: any) {
+    previewSize = data.size
 
-let requestList: any[] = []
-export function requestPreview(data: any) {
-    requestList.push(JSON.stringify(data))
-}
-function sendToRequested(msg: any) {
-    let newList: any[] = []
-
-    ;[...new Set(requestList)].forEach((data: any) => {
-        data = JSON.parse(data)
-
-        if (data.previewId !== msg.data.id) {
-            newList.push(JSON.stringify(data))
-            return
-        }
-
-        sendToWindow(data.id, msg)
-    })
-
-    requestList = newList
-}
-
-// SERVER
-
-// const outputServerSize: Size = { width: 1280, height: 720 }
-function sendBufferToServer(id: string, image: NativeImage) {
-    if (!image) return
-
-    // send output image size
-    // image = resizeImage(image, options.size, outputServerSize)
-
-    const buffer = image.getBitmap()
-    const size = image.getSize()
-
-    /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
-    if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
-    else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
-
-    toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id, buffer, size } })
+    if (data.id) CaptureTransmitter.sendFrames(data.id, storedFrames[data.id], { previewFrame: true })
 }
 
 // STOP
