@@ -11,7 +11,7 @@ export type CaptureOptions = {
     displayFrequency: number
     options: any
     framerates: any
-    framesToSkip: any
+    frameTiming: any
 }
 
 export let captures: { [key: string]: CaptureOptions } = {}
@@ -26,6 +26,7 @@ export let customFramerates: any = {}
 
 function getDefaultCapture(window: BrowserWindow, id:string): CaptureOptions {
     let screen: Display = getWindowScreen(window)
+
     let defaultFramerates = {
         preview: framerates.preview,
         server: framerates.server,
@@ -38,7 +39,7 @@ function getDefaultCapture(window: BrowserWindow, id:string): CaptureOptions {
         displayFrequency: screen.displayFrequency || 60,
         options: { server: false, ndi: false },
         framerates: defaultFramerates,
-        framesToSkip: {},
+        frameTiming: {},
         id
     }
 }
@@ -54,6 +55,8 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
         return
     }
 
+    
+
     if (!captures[id]) captures[id] = getDefaultCapture(window, id)
 
     Object.keys(toggle).map((key) => {
@@ -64,10 +67,17 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 
     if (captures[id].subscribed) return
 
-    console.log("Capture - starting: " + id)
+    //ENABLE TO TRACK NDI FRAME RATES
+    /*
+    console.log("SETTING INTERVAL");
+    setInterval(() => {
+        console.log("NDI FRAMES:", CaptureTransmitter.ndiFrameCount, " - ", id);
+        CaptureTransmitter.ndiFrameCount = 0
+    },1000);
+    */
 
     framerates.preview = rate === "full" ? 60 : 30
-    if (rate !== "optimized") captures[id].window.webContents.beginFrameSubscription(false, processFrame)
+    if (rate !== "optimized") captures[id].window.webContents.beginFrameSubscription(true, processFrame)
     captures[id].subscribed = true
 
     // optimize cpu on low end devices
@@ -95,22 +105,29 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
             setTimeout(cpuCapture, rate === "optimized" ? 2000 : 250)
         } else {
             captureCount = captureAmount
-            if (!captures[id].window.webContents.isBeingCaptured()) captures[id].window.webContents.beginFrameSubscription(false, processFrame)
+            if (!captures[id].window.webContents.isBeingCaptured()) captures[id].window.webContents.beginFrameSubscription(true, processFrame)
         }
     }
 
-    let currentFrames: any = JSON.parse(JSON.stringify(captures[id].framesToSkip))
     let currentImage: number = 0
     let timeout: any = null
+
+    //this is firing 6-7 times per second when not "dirty". It's 12-15 allowing dirty on beginFrameSubscription
+    //Upping NDI framerate to 60 gets 25 NDI frames per second.  I think the browser capture is slowing us down.
     function processFrame(image: NativeImage) {
+        
         storedFrames[id] = image
 
         let previewFrame = !checkRate("preview")
         let serverFrame = !checkRate("server")
         let ndiFrame = !checkRate("ndi")
 
+        //console.log("SKIP NDI FRAME?", !ndiFrame);
+        ndiFrame = true;
+
         if (checkRate("max")) return sendFrame()
 
+        //if (id.toString()=="16f5e84cf0a") console.log("NDI FRAME?", ndiFrame)
         CaptureTransmitter.sendFrames(captures[id], image, { previewFrame, serverFrame, ndiFrame })
     }
 
@@ -129,8 +146,13 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
     }
 
     function checkRate(key: string) {
-        if (currentFrames[key]++ < captures[id].framesToSkip[key]) return true
-        currentFrames[key] = 0
+        const lastFrame = captures[id].frameTiming[key].lastFrame
+        const minMS = captures[id].frameTiming[key].minMS
+        const now = new Date().getTime()
+        if (now - lastFrame < minMS) {
+            captures[id].frameTiming[key].lastFrame = now
+            return true
+        }
         return false
     }
 }
@@ -151,16 +173,17 @@ export function updateFramerate(id: string) {
     if (captures[id].options.server) allRates.push(captures[id].framerates.server)
     let highestFramerate = Math.max(...allRates)
 
-    captures[id].framesToSkip = {
-        max: getFramesToSkip(captures[id].displayFrequency, highestFramerate),
-        preview: getFramesToSkip(captures[id].displayFrequency, captures[id].framerates.preview),
-        server: getFramesToSkip(captures[id].displayFrequency, captures[id].framerates.server),
-        ndi: getFramesToSkip(captures[id].displayFrequency, captures[id].framerates.ndi),
+    console.log("Display Frequency", captures[id].displayFrequency)
+    captures[id].frameTiming = {
+        max: { lastFrame: new Date().getTime(), minMS: getMinMilliseconds(highestFramerate) },
+        preview: { lastFrame: new Date().getTime(), minMS: getMinMilliseconds(captures[id].framerates.preview) },
+        server: { lastFrame: new Date().getTime(), minMS: getMinMilliseconds(captures[id].framerates.server) },
+        ndi: { lastFrame: new Date().getTime(), minMS: getMinMilliseconds(captures[id].framerates.ndi) },
     }
 }
 
-function getFramesToSkip(initialFramerate: number, newFramerate: number) {
-    return newFramerate ? Math.trunc(initialFramerate / newFramerate - 1) : 0
+function getMinMilliseconds(framerate: number) {
+    return 1000 / framerate
 }
 
 function getWindowScreen(window: BrowserWindow) {

@@ -11,6 +11,7 @@ import { CaptureOptions, previewSize } from "./capture"
 export class CaptureTransmitter {
     static stageWindows: string[] = []
     static requestList: any[] = []
+    static ndiFrameCount = 0
 
     static async sendFrames(capture: CaptureOptions, image: NativeImage, rates: any) {
         if (!capture || !image) return
@@ -24,8 +25,7 @@ export class CaptureTransmitter {
     static sendBufferToNdi(capture:CaptureOptions, image: NativeImage, { size }: any) {
         const buffer = image.getBitmap()
         const ratio = image.getAspectRatio()
-
-        console.log("NDI - sending frame: " + capture.id, image.getSize().width, Math.round(Math.random() * 100))
+        this.ndiFrameCount++
         // WIP refresh on enable?
         NdiSender.sendVideoBufferNDI(capture.id, buffer, { size, ratio, framerate: capture.framerates.ndi })
     }
