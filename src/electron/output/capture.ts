@@ -64,7 +64,8 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
     if (captures[id].subscribed) return
 
 
-    CaptureTransmitter.startTransmitting(id);
+    //captures[id].options.ndi = true
+    CaptureTransmitter.startTransmitting(id)
 
     //framerates.preview = rate === "full" ? 60 : 30
     if (rate !== "optimized") captures[id].window.webContents.beginFrameSubscription(true, processFrame)
@@ -112,7 +113,11 @@ export function updateFramerate(id: string) {
         let ndiFramerate = framerates.unconnected
         if (NdiSender.NDI[id].status === "connected") ndiFramerate = customFramerates[id]?.ndi || framerates.connected
 
-        captures[id].framerates.ndi = parseInt(ndiFramerate)
+        if (captures[id].framerates.ndi !== parseInt(ndiFramerate)) {
+            captures[id].framerates.ndi = parseInt(ndiFramerate)
+            CaptureTransmitter.startChannel(id, "ndi")
+        }
+        
     }
 }
 

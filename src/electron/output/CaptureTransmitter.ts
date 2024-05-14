@@ -31,19 +31,35 @@ export class CaptureTransmitter {
         this.startChannel(captureId, "preview")
         if (capture.options.ndi) this.startChannel(captureId, "ndi")
         if (capture.options.server) this.startChannel(captureId, "server")
+
+        if (capture.options.ndi) {
+            //ENABLE TO TRACK NDI FRAME RATES
+    
+            console.log("SETTING INTERVAL");
+            setInterval(() => {
+                console.log("NDI FRAMES:", CaptureTransmitter.ndiFrameCount, " - ", captureId);
+                CaptureTransmitter.ndiFrameCount = 0
+            },1000);
+    
+        }
     }
 
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
-        if (this.channels[combinedKey]) return
+        //if (this.channels[combinedKey]) return
         console.log("STARTING CHANNEL", combinedKey, captures[captureId].framerates[key])
         const interval = 1000 / captures[captureId].framerates[key]
         
-        this.channels[combinedKey] = { 
-            key, 
-            captureId, 
-            timer: setInterval(() => this.handleChannelInterval(captureId, key), interval), 
-            lastImage: storedFrames[captureId] 
+        if (this.channels[combinedKey]?.timer) {
+            clearInterval(this.channels[combinedKey].timer)
+            this.channels[combinedKey].timer = setInterval(() => this.handleChannelInterval(captureId, key), interval)
+        } else {
+            this.channels[combinedKey] = { 
+                key, 
+                captureId, 
+                timer: setInterval(() => this.handleChannelInterval(captureId, key), interval), 
+                lastImage: storedFrames[captureId] 
+            }
         }
     }
 
