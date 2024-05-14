@@ -6,32 +6,91 @@ import { toServer } from "../servers"
 import { sendToWindow } from "./output"
 import util from "../ndi/vingester-util"
 import { NdiSender } from "../ndi/NdiSender"
-import { CaptureOptions, previewSize } from "./capture"
+import { CaptureOptions, captures, previewSize, storedFrames } from "./capture"
+
+
+export type Channel = {
+    key: string
+    captureId: string
+    timer: NodeJS.Timeout
+    lastImage: NativeImage
+}
 
 export class CaptureTransmitter {
+    
     static stageWindows: string[] = []
     static requestList: any[] = []
     static ndiFrameCount = 0
+    static channels: { [key: string]: Channel } = {}
 
+
+    static startTransmitting(captureId: string) {
+        const capture = captures[captureId]
+        if (!capture) return
+        console.log("CAPTURE OPTIONS", capture.options)
+        this.startChannel(captureId, "preview")
+        if (capture.options.ndi) this.startChannel(captureId, "ndi")
+        if (capture.options.server) this.startChannel(captureId, "server")
+    }
+
+    static startChannel(captureId: string, key: string) {
+        const combinedKey = `${captureId}-${key}`
+        if (this.channels[combinedKey]) return
+        console.log("STARTING CHANNEL", combinedKey, captures[captureId].framerates[key])
+        const interval = 1000 / captures[captureId].framerates[key]
+        
+        this.channels[combinedKey] = { 
+            key, 
+            captureId, 
+            timer: setInterval(() => this.handleChannelInterval(captureId, key), interval), 
+            lastImage: storedFrames[captureId] 
+        }
+    }
+
+    static handleChannelInterval(captureId:string, key:string) {
+        //console.log("handleChannelInterval", captureId, key)
+        const combinedKey = `${captureId}-${key}`
+        const channel = this.channels[combinedKey]
+        if (!channel) return
+        const image = storedFrames[captureId]
+        if (!image || channel.lastImage===image) return
+        const size = image.getSize()
+        channel.lastImage = image
+        switch (key) {
+            case "preview":
+                this.sendBufferToPreview(channel.captureId, image, { size })
+                break
+            case "ndi":
+                this.sendBufferToNdi(channel.captureId, image, { size })
+                break
+            case "server":
+                this.sendBufferToServer(captures[captureId], image)
+                break
+        }
+
+    }
+
+    /*
     static async sendFrames(capture: CaptureOptions, image: NativeImage, rates: any) {
         if (!capture || !image) return
         const size = image.getSize()
-        if (rates.previewFrame) this.sendBufferToPreview(capture, image, { size })
+        if (rates.previewFrame) this.sendBufferToPreview(capture.id, image, { size })
         if (rates.serverFrame && capture.options.server) this.sendBufferToServer(capture, image)
-        if (rates.ndiFrame && capture.options.ndi) this.sendBufferToNdi(capture, image, { size })
+        if (rates.ndiFrame && capture.options.ndi) this.sendBufferToNdi(capture.id, image, { size })
     }
+*/
 
     // NDI
-    static sendBufferToNdi(capture:CaptureOptions, image: NativeImage, { size }: any) {
+    static sendBufferToNdi(captureId:string, image: NativeImage, { size }: any) {
         const buffer = image.getBitmap()
         const ratio = image.getAspectRatio()
         this.ndiFrameCount++
         // WIP refresh on enable?
-        NdiSender.sendVideoBufferNDI(capture.id, buffer, { size, ratio, framerate: capture.framerates.ndi })
+        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: captures[captureId].framerates.ndi })
     }
 
     // PREVIEW
-    static sendBufferToPreview(capture:CaptureOptions, image: NativeImage, options: any) {
+    static sendBufferToPreview(captureId:string, image: NativeImage, options: any) {
         if (!image) return
         image = this.resizeImage(image, options.size, previewSize)
 
@@ -42,7 +101,7 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        let msg = { channel: "PREVIEW", data: { id:capture.id, buffer, size, originalSize: options.size } }
+        let msg = { channel: "PREVIEW", data: { id:captureId, buffer, size, originalSize: options.size } }
         toApp(OUTPUT, msg)
         this.sendToStageOutputs(msg)
         this.sendToRequested(msg)
