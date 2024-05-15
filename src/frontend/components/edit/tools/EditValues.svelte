@@ -225,10 +225,6 @@
     function checkIsClosed(id: string) {
         if (noClosing) return false
 
-        if ($storedEditMenuState[sessionId]?.[id] !== undefined) {
-            return $storedEditMenuState[sessionId]?.[id]
-        }
-
         let closedVal = closed[id]
         let defaultEdit = defaultEdits?.[id]
         let currentEdit = clone(edits[id])
@@ -272,30 +268,33 @@
 
         let state = !differentValue
 
-        if (sessionId) {
-            storedEditMenuState.update((a) => {
-                if (!a[sessionId]) a[sessionId] = {}
-                a[sessionId][id] = state
-
-                return a
-            })
-        }
-
         return state
     }
 
     function updateMenu() {
-        if ($storedEditMenuState[sessionId]) storedEditMenuState.set({})
         updateClosed = true
         // WIP some menus won't close on first update
     }
 
     let updateClosed: boolean = false
     function openEdit(id: string) {
+        if ($storedEditMenuState[sessionId]?.[id] !== undefined) {
+            storedEditMenuState.update((a) => {
+                if (!a[sessionId]) {
+                    a[sessionId] = {}
+                }
+                a[sessionId][id] = true
+                return a;
+            })
+            return
+        }
+
         let closedVal = clone(closed[id])
         let currentEdit = clone(edits[id])
 
-        if (!closedVal || !currentEdit) return
+        if (!closedVal || !currentEdit) {
+            return
+        }
         currentEdit = currentEdit.map((a) => lineInputs[a.input] || a).flat()
 
         currentEdit.forEach((input: any) => {
@@ -312,6 +311,13 @@
             if (newValue === undefined) return
 
             valueChange({ detail: newValue }, input)
+        })
+        storedEditMenuState.update((a) => {
+            if (!a[sessionId]) {
+                a[sessionId] = {}
+            }
+            a[sessionId][id] = true
+            return a
         })
 
         updateMenu()
@@ -342,6 +348,14 @@
             setTimeout(() => resetInput(i + 1), 10)
         }
 
+        storedEditMenuState.update((a) => {
+            if (!a[sessionId]) {
+                a[sessionId] = {}
+            }
+            a[sessionId][id] = undefined;
+            return a
+        })
+
         updateMenu()
     }
 
@@ -352,7 +366,7 @@
     {#each Object.keys(edits || {}) as section, i}
         {@const isClosed = checkIsClosed(section)}
         <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
-            {#if isClosed}
+            {#if $storedEditMenuState[sessionId]?.[section] === false || (isClosed && $storedEditMenuState[sessionId]?.[section] === undefined)}
                 <Button on:click={() => openEdit(section)} style="margin-top: 5px;" dark bold={false}>
                     <Icon id={section} right />
                     <p style="font-size: 1.2em;opacity: 1;width: initial;"><T id="edit.{section}" /></p>
@@ -361,9 +375,33 @@
                 {#if section !== "default" && (section !== "CSS" || !cssClosed)}
                     <h6 style="display: flex;justify-content: center;align-items: center;position: relative;">
                         {#if section[0] === section[0].toUpperCase()}
-                            {section}
+                            {#if !noClosing}
+                                <Button style="" on:click={() => {
+                                    storedEditMenuState.update((a) => {
+                                        if (!a[sessionId]) {
+                                            a[sessionId] = {}
+                                        }
+                                        a[sessionId][section] = false
+                                        return a
+                                    })
+                                }}>{section}</Button>
+                            {:else}
+                                {section}
+                            {/if}
                         {:else}
-                            <T id="edit.{section}" />
+                            {#if !noClosing}
+                                <Button style="" on:click={() => {
+                                    storedEditMenuState.update((a) => {
+                                        if (!a[sessionId]) {
+                                            a[sessionId] = {}
+                                        }
+                                        a[sessionId][section] = false
+                                        return a
+                                    })
+                                }}><T id="edit.{section}" /></Button>
+                            {:else}
+                                <T id="edit.{section}" />
+                            {/if}
                         {/if}
 
                         {#if !noClosing && closed[section]}
