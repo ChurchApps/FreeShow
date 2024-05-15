@@ -20,34 +20,31 @@ export class CaptureTransmitter {
     
     static stageWindows: string[] = []
     static requestList: any[] = []
-    static ndiFrameCount = 0
+    //static ndiFrameCount = 0
     static channels: { [key: string]: Channel } = {}
 
 
     static startTransmitting(captureId: string) {
         const capture = captures[captureId]
         if (!capture) return
-        console.log("CAPTURE OPTIONS", capture.options)
         this.startChannel(captureId, "preview")
         if (capture.options.ndi) this.startChannel(captureId, "ndi")
         if (capture.options.server) this.startChannel(captureId, "server")
 
         if (capture.options.ndi) {
             //ENABLE TO TRACK NDI FRAME RATES
-    
+            /*
             console.log("SETTING INTERVAL");
             setInterval(() => {
                 console.log("NDI FRAMES:", CaptureTransmitter.ndiFrameCount, " - ", captureId);
                 CaptureTransmitter.ndiFrameCount = 0
             },1000);
-    
+            */
         }
     }
 
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
-        //if (this.channels[combinedKey]) return
-        console.log("STARTING CHANNEL", combinedKey, captures[captureId].framerates[key])
         const interval = 1000 / captures[captureId].framerates[key]
         
         if (this.channels[combinedKey]?.timer) {
@@ -64,7 +61,6 @@ export class CaptureTransmitter {
     }
 
     static handleChannelInterval(captureId:string, key:string) {
-        //console.log("handleChannelInterval", captureId, key)
         const combinedKey = `${captureId}-${key}`
         const channel = this.channels[combinedKey]
         if (!channel) return
@@ -100,7 +96,7 @@ export class CaptureTransmitter {
     static sendBufferToNdi(captureId:string, image: NativeImage, { size }: any) {
         const buffer = image.getBitmap()
         const ratio = image.getAspectRatio()
-        this.ndiFrameCount++
+        //this.ndiFrameCount++
         // WIP refresh on enable?
         NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: captures[captureId].framerates.ndi })
     }
