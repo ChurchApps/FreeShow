@@ -8,7 +8,6 @@ import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
 import { startBackup } from "./data/backup"
 import { config, stores, updateDataPath, userDataPath } from "./data/store"
-import { stopReceiversNDI } from "./ndi/ndi"
 import { receiveNDI } from "./ndi/talk"
 import { closeAllOutputs, receiveOutput } from "./output/output"
 import { closeServers } from "./servers"
@@ -18,6 +17,7 @@ import { template } from "./utils/menuTemplate"
 import { closeMidiInPorts } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { NdiReceiver } from "./ndi/NdiReceiver"
 
 // ----- STARTUP -----
 
@@ -207,7 +207,7 @@ export async function exitApp() {
     dialogClose = false
 
     await closeAllOutputs()
-    stopReceiversNDI()
+    NdiReceiver.stopReceiversNDI()
 
     closeServers()
     stopApiListener()
