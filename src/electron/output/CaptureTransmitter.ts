@@ -124,8 +124,8 @@ export class CaptureTransmitter {
     }
 
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
-        if (initialSize.width / initialSize.height >= newSize.width / newSize.height) image = image.resize({ width: newSize.width })
-        else image = image.resize({ height: newSize.height })
+        if (initialSize.width / initialSize.height >= newSize.width / newSize.height) image = image.resize({ width: newSize.width, quality: "good" })
+        else image = image.resize({ height: newSize.height, quality: "good" })
 
         return image
     }
@@ -186,5 +186,5 @@ export class CaptureTransmitter {
         if (this.channels[combinedKey].timer) clearInterval(this.channels[combinedKey].timer)
         delete this.channels[combinedKey]
     }
-    
+
 }

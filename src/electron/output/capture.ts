@@ -26,8 +26,10 @@ export let customFramerates: any = {}
 function getDefaultCapture(window: BrowserWindow, id:string): CaptureOptions {
     let screen: Display = getWindowScreen(window)
 
+    const previewFramerate = Math.round(framerates.preview / Object.keys(captures).length)
+
     let defaultFramerates = {
-        preview: framerates.preview,
+        preview: previewFramerate,
         server: framerates.server,
         ndi: framerates.connected,
     }
