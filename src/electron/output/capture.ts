@@ -149,7 +149,7 @@ export function stopAllCaptures() {
 export function stopCapture(id: string) {
     return new Promise((resolve) => {
         if (!captures[id]) return resolve(true)
-
+        CaptureTransmitter.removeAllChannels(id)
         let windowIsRemoved = !captures[id].window || captures[id].window.isDestroyed()
         if (windowIsRemoved) return deleteAndResolve()
 
@@ -167,7 +167,7 @@ export function stopCapture(id: string) {
 
     function endSubscription() {
         if (!captures[id].subscribed) return
-
+        
         captures[id].window.webContents.endFrameSubscription()
         captures[id].subscribed = false
     }

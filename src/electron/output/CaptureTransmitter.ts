@@ -174,4 +174,17 @@ export class CaptureTransmitter {
         this.requestList.push(JSON.stringify(data))
     }
     
+    static removeAllChannels(captureId: string) {
+        Object.keys(this.channels).forEach((key) => {
+            if (key.includes(captureId)) this.removeChannel(captureId, key)
+        })
+    }
+
+    static removeChannel(captureId: string, key: string) {
+        const combinedKey = `${captureId}-${key}`
+        if (!this.channels[combinedKey]) return
+        if (this.channels[combinedKey].timer) clearInterval(this.channels[combinedKey].timer)
+        delete this.channels[combinedKey]
+    }
+    
 }
