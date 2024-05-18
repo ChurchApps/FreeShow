@@ -3,10 +3,11 @@ import { isMac, loadWindowContent, mainWindow, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { Output } from "../../types/Output"
 import { Message } from "../../types/Socket"
-import { createSenderNDI, stopSenderNDI } from "../ndi/ndi"
 import { setDataNDI } from "../ndi/talk"
 import { outputOptions, screenIdentifyOptions } from "../utils/windowOptions"
-import { requestPreview, stageWindows, startCapture, stopCapture, updatePreviewResolution } from "./capture"
+import { startCapture, stopCapture, updatePreviewResolution } from "./capture"
+import { NdiSender } from "../ndi/NdiSender"
+import { CaptureTransmitter } from "./CaptureTransmitter"
 
 export let outputWindows: { [key: string]: BrowserWindow } = {}
 
@@ -20,14 +21,14 @@ async function createOutput(output: Output) {
     outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
     updateBounds(output)
 
-    if (output.stageOutput) stageWindows.push(id)
+    if (output.stageOutput) CaptureTransmitter.stageWindows.push(id)
 
     setTimeout(() => {
         startCapture(id, { ndi: output.ndi || false }, (output as any).rate)
     }, 1200)
 
     // NDI
-    if (output.ndi) await createSenderNDI(id, output.name)
+    if (output.ndi) await NdiSender.createSenderNDI(id, output.name)
     if (output.ndiData) setDataNDI({ id, ...output.ndiData })
 }
 
@@ -81,7 +82,7 @@ export async function closeAllOutputs() {
 
 async function removeOutput(id: string, reopen: any = null) {
     await stopCapture(id)
-    stopSenderNDI(id)
+    NdiSender.stopSenderNDI(id)
 
     if (!outputWindows[id]) return
     if (outputWindows[id].isDestroyed()) {
@@ -220,8 +221,8 @@ function updateBounds(data: any) {
 
 const setValues: any = {
     ndi: async (value: boolean, window: BrowserWindow, id: string) => {
-        if (value) await createSenderNDI(id, window.getTitle())
-        else stopSenderNDI(id)
+        if (value) await NdiSender.createSenderNDI(id, window.getTitle())
+        else NdiSender.stopSenderNDI(id)
 
         setValues.capture({ key: "ndi", value }, window, id)
     },
@@ -271,7 +272,7 @@ const outputResponses: any = {
     TO_FRONT: (data: any) => moveToFront(data),
 
     PREVIEW_RESOLUTION: (data: any) => updatePreviewResolution(data),
-    REQUEST_PREVIEW: (data: any) => requestPreview(data),
+    REQUEST_PREVIEW: (data: any) => CaptureTransmitter.requestPreview(data),
 
     IDENTIFY_SCREENS: (data: any) => identifyScreens(data),
 }
