@@ -191,7 +191,9 @@ export async function syncDataDrive(data: any) {
     if (bibles) await syncBibles(data.dataPath)
 
     // SHOWS
+    let syncStates: any = {}
     await syncAllShows()
+    console.log(JSON.stringify(syncStates))
 
     return changes
 
@@ -337,17 +339,19 @@ export async function syncDataDrive(data: any) {
 
         await Promise.all(Object.entries(shows).map(checkShow))
         async function checkShow([id, show]: any) {
-            let name = (localShows[id]?.name || show.name || id) + ".show"
+            let name = (localShows[id]?.name || show?.name || id) + ".show"
             let localShowPath = path.join(showsPath, name)
 
             let newest = await getNewest({ driveFile, localPath: localShowPath })
+            if (!syncStates[newest]) syncStates[newest] = 0
+            syncStates[newest]++
             if (newest === "same") return
 
             // get existing content
-            let cloudContent = driveContent ? JSON.stringify([id, driveContent[id]]) : null
+            let cloudContent = driveContent?.[id] ? JSON.stringify([id, driveContent[id]]) : null
             let localContent = readFile(localShowPath)
 
-            if (newest === "cloud" && driveContent?.[id]) allShows[id] = driveContent[id]
+            if (newest === "cloud" && cloudContent) allShows[id] = driveContent[id]
             else if (localContent) {
                 try {
                     allShows[id] = JSON.parse(localContent)[1]
@@ -364,15 +368,15 @@ export async function syncDataDrive(data: any) {
 
             // "download" show
             if (cloudContent && (newest === "cloud" || data.method === "download") && data.method !== "upload") {
-                let newName = (show.name || id) + ".show"
-                if (newName !== name) deleteFile(localShowPath) // renamed
+                let newName = (show?.name || id) + ".show"
+                if (localShows[id] && newName !== name) deleteFile(localShowPath) // renamed
                 let newPath = path.join(showsPath, newName)
 
                 writeFile(newPath, cloudContent, id)
                 downloadCount++
 
                 if (data.method !== "download") {
-                    localShows[id] = trimShow({ ...(driveContent?.[id] || {}), name: show.name || id })
+                    localShows[id] = trimShow({ ...(driveContent?.[id] || {}), name: show?.name || id })
                 }
 
                 return

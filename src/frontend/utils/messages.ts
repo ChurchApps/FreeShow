@@ -168,7 +168,7 @@ const cloudHelpers = {
                 return a
             })
 
-            syncDrive(false, false, true)
+            syncDrive(true)
             return
         }
 
@@ -201,7 +201,7 @@ const cloudHelpers = {
             })
         }
 
-        syncDrive(false, false, true)
+        syncDrive(true)
     },
     SYNC_DATA: ({ changes, closeWhenFinished }) => {
         if (closeWhenFinished) {

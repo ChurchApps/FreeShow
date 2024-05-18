@@ -103,8 +103,6 @@
         <Button
             on:click={() => {
                 save()
-                // syncDrive is called by save, but only if it's enabled
-                if ($driveData.disabled) return
                 setTimeout(() => syncDrive(true), 2000)
             }}
             disabled={!validKeys}
