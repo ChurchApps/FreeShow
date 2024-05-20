@@ -48,7 +48,7 @@ export function syncDrive(force: boolean = false, closeWhenFinished: boolean = f
     if (get(driveData).disableUpload) method = "download"
     send(CLOUD, ["SYNC_DATA"], { mainFolderId: get(driveData).mainFolderId, path: get(showsPath), dataPath: get(dataPath), method, closeWhenFinished })
 
-    if (force) {
+    if (force || closeWhenFinished) {
         popupData.set({})
         activePopup.set("cloud_update")
         return

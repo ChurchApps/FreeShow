@@ -8,6 +8,7 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import { saveComplete } from "../../utils/save"
 
     const menus: string[] = ["file", "edit", "view", "help"]
 
@@ -88,7 +89,7 @@
         <Button
             id="close"
             on:click={() => {
-                if ($saved) window.api.send(MAIN, { channel: "CLOSE" })
+                if ($saved) saveComplete({ closeWhenFinished: true })
                 else activePopup.set("unsaved")
             }}
             center

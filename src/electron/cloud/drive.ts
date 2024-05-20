@@ -1,12 +1,13 @@
 import { auth, drive } from "@googleapis/drive"
 import path from "path"
-import { toApp } from ".."
+import { isProd, toApp } from ".."
 import { STORE } from "../../types/Channels"
 import { stores } from "../data/store"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileStats, readFile, writeFile } from "../utils/files"
 import { trimShow } from "../utils/responses"
 
 let driveClient: any = null
+const DEBUG = !isProd
 
 export async function authenticate(keysFilePath: string) {
     let status: any = {}
@@ -193,7 +194,7 @@ export async function syncDataDrive(data: any) {
     // SHOWS
     let syncStates: any = {}
     await syncAllShows()
-    console.log(JSON.stringify(syncStates))
+    if (DEBUG) console.log(JSON.stringify(syncStates))
 
     return changes
 
@@ -227,7 +228,7 @@ export async function syncDataDrive(data: any) {
             toApp(STORE, { channel: id, data: driveContent })
 
             changes.push({ type: "config", action: "download", name })
-            // console.log("DOWNLOADED " + name)
+            if (DEBUG) console.log("DOWNLOADED " + name)
             return
         }
 
@@ -244,7 +245,7 @@ export async function syncDataDrive(data: any) {
         }
 
         changes.push({ type: "config", action: "upload", name })
-        // console.log("UPLOADED " + name)
+        if (DEBUG) console.log("UPLOADED " + name)
         // responses.push(response)
     }
 
@@ -320,6 +321,9 @@ export async function syncDataDrive(data: any) {
         let showsPath: string = checkShowsFolder(data.path)
         if (!showsPath) return
 
+        if (DEBUG) console.log("Path:", data.path)
+        if (DEBUG) console.log("Method:", data.method)
+
         let name: string = SHOWS_CONTENT + ".json"
         let driveFileId = files.find((a: any) => a.name === name)?.id
         let driveFile = await getFile(driveFileId)
@@ -327,11 +331,10 @@ export async function syncDataDrive(data: any) {
         let driveContent: any = driveFile ? await downloadFile(driveFileId) : null
 
         let localShows = stores.SHOWS.store || {}
-        if (data.method === "download") localShows = {}
         // some might have the same id
         let shows = { ...localShows, ...(driveContent || {}) }
-        console.log("Local shows count:", Object.keys(localShows).length)
-        console.log("Cloud shows count:", Object.keys(driveContent || {}).length)
+        if (DEBUG) console.log("Local shows count:", Object.keys(localShows).length)
+        if (DEBUG) console.log("Cloud shows count:", Object.keys(driveContent || {}).length)
 
         let downloadCount: number = 0
         let uploadCount: number = 0
@@ -345,13 +348,17 @@ export async function syncDataDrive(data: any) {
             let newest = await getNewest({ driveFile, localPath: localShowPath })
             if (!syncStates[newest]) syncStates[newest] = 0
             syncStates[newest]++
-            if (newest === "same") return
+            if (newest === "same") {
+                let showContent = driveContent?.[id] || readFile(localShowPath)
+                if (showContent) allShows[id] = showContent
+                return
+            }
 
             // get existing content
             let cloudContent = driveContent?.[id] ? JSON.stringify([id, driveContent[id]]) : null
-            let localContent = readFile(localShowPath)
+            let localContent = readFile(localShowPath, "utf8", true)
 
-            if (newest === "cloud" && cloudContent) allShows[id] = driveContent[id]
+            if ((newest === "cloud" || data.method === "download") && cloudContent) allShows[id] = driveContent[id]
             else if (localContent) {
                 try {
                     allShows[id] = JSON.parse(localContent)[1]
@@ -369,15 +376,15 @@ export async function syncDataDrive(data: any) {
             // "download" show
             if (cloudContent && (newest === "cloud" || data.method === "download") && data.method !== "upload") {
                 let newName = (show?.name || id) + ".show"
-                if (localShows[id] && newName !== name) deleteFile(localShowPath) // renamed
+                if (localShows[id] && newName !== name) {
+                    if (DEBUG) console.log("Rename file:", name, "->", newName)
+                    deleteFile(localShowPath) // renamed
+                }
                 let newPath = path.join(showsPath, newName)
 
                 writeFile(newPath, cloudContent, id)
+                shows[id] = trimShow({ ...(driveContent?.[id] || {}), name: show?.name || id })
                 downloadCount++
-
-                if (data.method !== "download") {
-                    localShows[id] = trimShow({ ...(driveContent?.[id] || {}), name: show?.name || id })
-                }
 
                 return
             }
@@ -385,17 +392,20 @@ export async function syncDataDrive(data: any) {
             // upload shows
             uploadCount++
         }
+        if (DEBUG) console.log("Shows checked!")
 
         if (downloadCount) {
-            console.log("Downloading shows:", downloadCount)
+            if (DEBUG) console.log("Downloading shows:", downloadCount)
             changes.push({ type: "show", action: "download", name, count: downloadCount })
-            if (Object.keys(localShows).length) toApp(STORE, { channel: "SHOWS", data: localShows })
+            if (DEBUG) console.log("Trimmed shows:", Object.keys(shows).length)
+            if (Object.keys(shows).length) toApp(STORE, { channel: "SHOWS", data: shows })
         }
         if (!uploadCount) return
-        console.log("Uploading shows:", uploadCount)
+        if (DEBUG) console.log("Uploading shows:", uploadCount)
 
         // upload shows
         if (data.method === "download") return
+        if (DEBUG) console.log("Drive shows:", Object.keys(allShows).length)
         let file = createFile(data.mainFolderId, { type: "json", name }, JSON.stringify(allShows))
         let response = await uploadFile(file, driveFileId)
 
@@ -409,7 +419,7 @@ export async function syncDataDrive(data: any) {
 }
 
 async function getNewest({ driveFile, localPath }: any) {
-    let storeInfo = getFileStats(localPath)?.stat
+    let storeInfo = getFileStats(localPath, true)?.stat
 
     let driveModified = driveFile ? new Date(driveFile.data.modifiedTime).getTime() : 0
     let storeModified = storeInfo?.mtimeMs || 0

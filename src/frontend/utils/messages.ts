@@ -189,14 +189,15 @@ const cloudHelpers = {
         let method = get(driveData).initializeMethod
         if (get(driveData).disableUpload) method = "download"
         if (!method) {
-            if (existingData) {
-                // WIP this will show over "initialize" popup
-                activePopup.set("cloud_method")
-                return
-            }
+            // you could choose previously, but I don't see a reason anymore as I have implemented "newest file always"
+            // if (existingData) {
+            //     // WIP this will show over "initialize" popup
+            //     activePopup.set("cloud_method")
+            //     return
+            // }
 
             driveData.update((a) => {
-                a.initializeMethod = "upload"
+                a.initializeMethod = existingData ? "done" : "upload"
                 return a
             })
         }

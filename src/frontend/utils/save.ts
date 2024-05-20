@@ -193,8 +193,10 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
 }
 
 export function saveComplete({ closeWhenFinished, backup }: any) {
-    saved.set(true)
-    newToast("$toast.saved")
+    if (!closeWhenFinished) {
+        saved.set(true)
+        newToast("$toast.saved")
+    }
 
     if (backup) return
 
