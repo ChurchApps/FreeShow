@@ -175,7 +175,7 @@
     let timer: any = {}
     $: timer = outputId && $slideTimers[outputId] ? $slideTimers[outputId] : {}
     $: Object.entries($outputs).forEach(([id, output]: any) => {
-        if (!output.enabled || !output.out?.transition || $slideTimers[id]) return
+        if ((Object.keys($outputs)?.length > 1 && !output.enabled) || !output.out?.transition || $slideTimers[id]?.timer) return
 
         newSlideTimer(id, output.out.transition.duration)
     })

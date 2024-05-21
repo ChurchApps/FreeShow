@@ -464,6 +464,22 @@ export const _updaters = {
         select: (id: string) => {
             currentOutputSettings.set(id)
         },
+        // deselect: () => {
+        //     // WIP this is not triggered upon deletion
+        //     // enable output if only 1 left
+        //     let stageOutputIds = Object.keys(get(outputs)).filter((outputId) => get(outputs)[outputId].stageOutput)
+        //     let allNormalOutputs = Object.keys(get(outputs)).filter((outputId) => {
+        //         let output = get(outputs)[outputId]
+        //         return !output.isKeyOutput && !stageOutputIds.includes(outputId)
+        //     })
+
+        //     if (allNormalOutputs.length !== 1) return
+
+        //     outputs.update((a) => {
+        //         a[allNormalOutputs[0]].enabled = true
+        //         return a
+        //     })
+        // },
     },
 }
 

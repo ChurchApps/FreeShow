@@ -7,7 +7,7 @@ export function checkForUpdates(currentVersion: string) {
         .then((a) => {
             if (get(activePopup) !== null) return
 
-            let current = a.filter((a: any) => a.draft === false)[0]
+            let current = a.filter((a: any) => a.draft === false && a.prerelease === false)[0]
             let newVersion = current.tag_name.slice(1)
 
             if (currentVersion !== newVersion) {
