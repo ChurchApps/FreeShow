@@ -168,7 +168,7 @@ const cloudHelpers = {
                 return a
             })
 
-            syncDrive(true)
+            syncDrive()
             return
         }
 

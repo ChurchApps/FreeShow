@@ -1,7 +1,7 @@
 <script lang="ts">
     import { OPEN_FILE } from "../../../../types/Channels"
     import { activePopup, driveData, driveKeys } from "../../../stores"
-    import { driveConnect, syncDrive } from "../../../utils/drive"
+    import { syncDrive } from "../../../utils/drive"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -113,12 +113,13 @@
             <T id="cloud.sync" />
         </Button>
     </CombinedInput>
-    <CombinedInput>
+    <!-- Probably never used: -->
+    <!-- <CombinedInput>
         <Button on:click={() => driveConnect($driveKeys)} disabled={!validKeys} style="width: 100%;" center>
             <Icon id="refresh" right />
             <T id="cloud.reconnect" />
         </Button>
-    </CombinedInput>
+    </CombinedInput> -->
 {:else}
     <br />
     <span class="guide">

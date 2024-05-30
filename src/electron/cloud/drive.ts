@@ -3,7 +3,7 @@ import path from "path"
 import { isProd, toApp } from ".."
 import { STORE } from "../../types/Channels"
 import { stores } from "../data/store"
-import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileStats, readFile, writeFile } from "../utils/files"
+import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileStats, loadShows, readFile, writeFile } from "../utils/files"
 import { trimShow } from "../utils/responses"
 
 let driveClient: any = null
@@ -330,7 +330,7 @@ export async function syncDataDrive(data: any) {
         // download shows
         let driveContent: any = driveFile ? await downloadFile(driveFileId) : null
 
-        let localShows = stores.SHOWS.store || {}
+        let localShows = loadShows({ showsPath }, true)
         // some might have the same id
         let shows = { ...localShows, ...(driveContent || {}) }
         if (DEBUG) console.log("Local shows count:", Object.keys(localShows).length)

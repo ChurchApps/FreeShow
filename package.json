@@ -166,7 +166,7 @@
         "express": "^4.17.2",
         "follow-redirects": "^1.15.2",
         "font-list": "^1.4.5",
-        "genius-lyrics": "^4.4.3",
+        "genius-lyrics": "4.4.6",
         "grandiose": "vassbo/grandiose#fa2ac4b",
         "jzz": "^1.5.9",
         "node-machine-id": "^1.1.12",

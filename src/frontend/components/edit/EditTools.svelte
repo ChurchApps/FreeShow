@@ -49,6 +49,8 @@
         active = "items"
         tabs.text.disabled = true
     } else if (item && tabs.text.disabled) {
+        // open item options when the first one is created (on an empty slide)
+        if (active === "items" && allSlideItems.length === 1) active = "text"
         // TODO: false triggers (arranging items)
         tabs.text.disabled = false
     }

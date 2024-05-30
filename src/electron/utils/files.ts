@@ -389,11 +389,11 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
 
 // LOAD SHOWS
 
-export function loadShows({ showsPath }: any) {
+export function loadShows({ showsPath }: any, returnShows: boolean = false) {
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 
-    let cachedShows = stores.SHOWS.store
+    let cachedShows = stores.SHOWS.store || {}
     let newCachedShows: any = {}
 
     for (const name of filesInFolder) checkShow(name)
@@ -423,6 +423,8 @@ export function loadShows({ showsPath }: any) {
 
         newCachedShows[id] = trimShow({ ...show[1], name: trimmedName })
     }
+
+    if (returnShows) return newCachedShows
 
     // save this (for cloud sync)
     stores.SHOWS.clear()

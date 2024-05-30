@@ -514,6 +514,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         let cloudId = get(driveData).mediaId
                         if (layoutValue.background && cloudId && cloudId !== "default") id = layoutValue.background
 
+                        // find existing
+                        let existingBackgrounds = _show(showId).get("media")
+                        let existingId = Object.keys(existingBackgrounds).find((id) => existingBackgrounds[id].path === background.path)
+                        if (existingId) id = existingId
+
                         let bgId = _show(showId).media().add(background, id)
                         layoutValue.background = bgId
                     }

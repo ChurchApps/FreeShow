@@ -551,7 +551,7 @@
         "main_folder": "Set main folder manually",
         "media_folder": "Cloud media folder",
         "reconnect": "Reconnect",
-        "sync": "Sync",
+        "sync": "Sync now",
         "choose_method_tip": "There is existing data in the cloud. Please choose to either upload from local or download from cloud. The other location will be overwritten.",
         "local": "Local",
         "syncing": "Syncing to cloud",
