@@ -606,6 +606,36 @@
         })
     }
 
+    function splitAllCrlf(lines: Line[]) {
+        let result: Line[] = []
+        lines.forEach((line) => {
+            let splitLines = splitCrlf(line)
+            result.push(...splitLines)
+        })
+        return result
+    }
+
+    function splitCrlf(line: Line) {
+        const result: Line[] = []
+        let newLine = { ...line }
+        newLine.text = []
+
+        line.text.forEach((text) => {
+            let value = text.value
+            let parts = value.replace("\r", "").split("\n")
+            newLine.text.push({ style: text.style, value: parts[0] })
+            if (parts.length > 1) {
+                for (let i = 1; i < parts.length; i++) {
+                    result.push(newLine)
+                    newLine = { ...line }
+                    newLine.text = [{ style: text.style, value: parts[i] }]
+                }
+            }
+        })
+        result.push(newLine)
+        return result
+    }
+
     // timer
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
@@ -650,6 +680,7 @@
             }
         })
 
+        lines = splitAllCrlf(lines)
         updateLines(lines)
         setTimeout(() => {
             getStyle()
