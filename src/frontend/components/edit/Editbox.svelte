@@ -622,8 +622,7 @@
 
         line.text.forEach((text) => {
             let value = text.value
-            let parts = value.split("\r\n")
-            console.log("PARTS ARE:", parts)
+            let parts = value.replace("\r", "").split("\n")
             newLine.text.push({ style: text.style, value: parts[0] })
             if (parts.length > 1) {
                 for (let i = 1; i < parts.length; i++) {
