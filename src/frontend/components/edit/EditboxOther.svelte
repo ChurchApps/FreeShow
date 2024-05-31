@@ -14,9 +14,11 @@
     import Website from "../slide/views/Website.svelte"
     import Clock from "../system/Clock.svelte"
     import Image from "../drawer/media/Image.svelte"
+    import { getAutoSize } from "./scripts/autoSize"
+    import { onMount } from "svelte"
 
     export let item: Item
-    export let autoSize: number
+
     export let ratio: number
     export let ref: {
         type?: "show" | "overlay" | "template"
@@ -24,8 +26,17 @@
         id: string
     }
 
+    let autoSize: number = 0
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
+
+    onMount(() => {
+        setTimeout(() => {
+            autoSize = item?.autoFontSize || 0
+            if (autoSize) return
+            else autoSize = getAutoSize(item)
+        }, 50)
+    })
 </script>
 
 {#if item?.type === "list"}
