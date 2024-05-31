@@ -42,7 +42,7 @@ export function driveConnect(keys: any) {
 }
 
 export function syncDrive(force: boolean = false, closeWhenFinished: boolean = false) {
-    if (!force && (!closeWhenFinished || get(driveData).disabled === true)) return
+    if (!force && get(driveData).disabled === true) return
 
     let method = get(driveData).initializeMethod
     if (get(driveData).disableUpload) method = "download"

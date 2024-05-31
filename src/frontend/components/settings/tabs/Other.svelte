@@ -79,6 +79,7 @@
     let hiddenShows: any[] = []
     let brokenShows: number = 0
     receive(MAIN, {
+        // this will not include newly created shows not saved yet, but it should not be an issue.
         FULL_SHOWS_LIST: (data: any) => (hiddenShows = data || []),
     })
 

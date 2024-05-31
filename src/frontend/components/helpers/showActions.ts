@@ -373,6 +373,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 if (i <= index && !a.data.disabled) {
                     if (a.data.actions?.clearBackground) background = null
                     else if (a.data.background) background = a.data.background
+                    if (a.data.background && _show(showId).get("media")[a.data.background]?.loop === false) background = null
                 }
             })
         }

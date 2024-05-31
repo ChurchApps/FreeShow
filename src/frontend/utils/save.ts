@@ -201,7 +201,7 @@ export function saveComplete({ closeWhenFinished, backup }: any) {
     if (backup) return
 
     let mainFolderId = get(driveData)?.mainFolderId
-    if (!mainFolderId) {
+    if (!mainFolderId || get(driveData)?.disabled === true) {
         if (closeWhenFinished) closeApp()
 
         return

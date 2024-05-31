@@ -46,6 +46,7 @@
             if (i <= $activeEdit.slide! && !a.data.disabled) {
                 if (a.data.actions?.clearBackground) bgId = null
                 else if (a.data.background) bgId = a.data.background
+                if (a.data.background && currentShow && $showsCache[currentShow].media[a.data.background]?.loop === false) bgId = null
             }
         })
     }

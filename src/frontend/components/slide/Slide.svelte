@@ -64,6 +64,7 @@
             if (i <= index) {
                 if (a.actions?.clearBackground && (!a.disabled || i === index)) ghostBackground = null
                 else if (a.background && !a.disabled) ghostBackground = show.media[a.background]
+                if (a.background && show.media[a.background]?.loop === false) ghostBackground = null
             }
         })
     }
