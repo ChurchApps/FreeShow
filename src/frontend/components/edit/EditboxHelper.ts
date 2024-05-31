@@ -106,9 +106,8 @@ export class EditboxHelper {
     return {firstLines, secondLines}
   }
 
-  static getSyleHtml(item:Item, plain:boolean) {
+  static getSyleHtml(item:Item, plain:boolean, currentStyle:string) {
     let html = ""
-    let currentStyle = ""
     let firstTextStyleArchive: string = ""
     let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
     item?.lines?.forEach((line, i) => {
@@ -138,7 +137,7 @@ export class EditboxHelper {
         })
         html += "</div>"
     })
-    return html;
+    return {html, currentStyle};
   }
 
   static getTextStyle(lineText:any) {
