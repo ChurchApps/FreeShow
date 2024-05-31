@@ -100,50 +100,7 @@
     // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
     function cutInTwo({ e, sel, lines, currentIndex, textPos, start }) {
-        let firstLines: Line[] = []
-        let secondLines: Line[] = []
-
-        lines.forEach((line, i) => {
-            if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
-            else firstLines.push({ align: line.align, text: [] })
-
-            textPos = 0
-            line.text?.forEach((text) => {
-                currentIndex += text.value.length
-                if (sel[i]?.start !== undefined) start = sel[i].start
-
-                if (start > -1 && currentIndex >= start) {
-                    if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
-                    let pos = sel[i].start - textPos
-                    if (pos > 0)
-                        firstLines[firstLines.length - 1].text.push({
-                            style: text.style,
-                            value: text.value.slice(0, pos),
-                        })
-                    secondLines[secondLines.length - 1].text.push({
-                        style: text.style,
-                        value: text.value.slice(pos, text.value.length),
-                    })
-                } else {
-                    firstLines[firstLines.length - 1].text.push({
-                        style: text.style,
-                        value: text.value,
-                    })
-                }
-                textPos += text.value.length
-            })
-
-            if (!firstLines.at(-1)?.text.length) firstLines.pop()
-        })
-
-        let defaultLine = [
-            {
-                align: lines[0].align || "",
-                text: [{ style: lines[0].text[0]?.style || "", value: "" }],
-            },
-        ]
-        if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
-        if (!secondLines.length) secondLines = defaultLine
+        let { firstLines, secondLines } = EditboxHelper.cutLinesInTwo({ sel, lines, currentIndex, textPos, start })
 
         if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
         let editItemIndex: number = $activeEdit.items[0] || Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) || 0
@@ -250,7 +207,6 @@
     let html: string = ""
     let previousHTML: string = ""
     let currentStyle: string = ""
-    let firstTextStyleArchive: string = ""
 
     onMount(() => {
         getStyle()
@@ -279,7 +235,7 @@
             let align = line.align.replaceAll(lineBg, "")
             s += align + lineBg
             line.text?.forEach((a) => {
-                s += getTextStyle(a)
+                s += EditboxHelper.getTextStyle(a)
             })
         })
 
@@ -287,50 +243,12 @@
         // && (window.getSelection() === null || window.getSelection()!.type === "None")
         if (currentStyle !== s) getStyle()
     }
-    function getTextStyle(lineText) {
-        let style = lineText.style || ""
-        return style
-    }
 
     $: lineGap = item?.specialStyle?.lineGap
 
     function getStyle() {
         if (!plain && $activeEdit.slide === null) return
-
-        // TODO: empty lines
-        // console.log(html)
-        // console.log(item?.lines)
-
-        html = ""
-        currentStyle = ""
-        let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
-        item?.lines?.forEach((line, i) => {
-            let align = line.align.replaceAll(lineBg, "")
-            currentStyle += align + lineBg
-            let style = align || lineBg ? 'style="' + align + lineBg + '"' : ""
-            html += `<div class="break" ${plain ? "" : style}>`
-
-            // fix removing all text in a line
-            if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""
-            if (!line.text?.length) line.text = [{ style: firstTextStyleArchive || "", value: "" }]
-
-            let currentChords = line.chords || []
-            let textIndex = 0
-
-            line.text?.forEach((a, tIndex) => {
-                currentStyle += getTextStyle(a)
-
-                // SAVE CHORDS (WIP does not work well with more "text" per line)
-                let textEnd = textIndex + a.value.length
-                let textChords = currentChords.filter((a) => a.pos >= textIndex && (a.pos <= textEnd || line.text.length - 1 >= tIndex))
-                textIndex = textEnd
-
-                let style = a.style ? 'style="' + a.style + '"' : ""
-
-                html += `<span ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
-            })
-            html += "</div>"
-        })
+        html = EditboxHelper.getSyleHtml(item, plain)
         previousHTML = html
     }
 
@@ -606,36 +524,6 @@
         })
     }
 
-    function splitAllCrlf(lines: Line[]) {
-        let result: Line[] = []
-        lines.forEach((line) => {
-            let splitLines = splitCrlf(line)
-            result.push(...splitLines)
-        })
-        return result
-    }
-
-    function splitCrlf(line: Line) {
-        const result: Line[] = []
-        let newLine = { ...line }
-        newLine.text = []
-
-        line.text.forEach((text) => {
-            let value = text.value
-            let parts = value.replace("\r", "").split("\n")
-            newLine.text.push({ style: text.style, value: parts[0] })
-            if (parts.length > 1) {
-                for (let i = 1; i < parts.length; i++) {
-                    result.push(newLine)
-                    newLine = { ...line }
-                    newLine.text = [{ style: text.style, value: parts[i] }]
-                }
-            }
-        })
-        result.push(newLine)
-        return result
-    }
-
     // timer
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
@@ -680,7 +568,7 @@
             }
         })
 
-        lines = splitAllCrlf(lines)
+        lines = EditboxHelper.splitAllCrlf(lines)
         updateLines(lines)
         setTimeout(() => {
             getStyle()
