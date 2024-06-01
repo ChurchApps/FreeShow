@@ -1,14 +1,14 @@
 <script lang="ts">
-    import type { Item } from "../../../types/Show"
-    import { activeEdit, dictionary, outputs, overlays, templates, activeShow } from "../../stores"
-    import Button from "../inputs/Button.svelte"
-    import Movebox from "../system/Movebox.svelte"
-    import { menuClick } from "../context/menuClick"
-    import Icon from "../helpers/Icon.svelte"
-    import T from "../helpers/T.svelte"
-    import { _show } from "../helpers/shows"
-    import { clone } from "../helpers/array"
-    import { history } from "../helpers/history"
+    import type { Item } from "../../../../types/Show"
+    import { activeEdit, dictionary, outputs, overlays, templates, activeShow } from "../../../stores"
+    import Button from "../../inputs/Button.svelte"
+    import Movebox from "../../system/Movebox.svelte"
+    import { menuClick } from "../../context/menuClick"
+    import Icon from "../../helpers/Icon.svelte"
+    import T from "../../helpers/T.svelte"
+    import { _show } from "../../helpers/shows"
+    import { clone } from "../../helpers/array"
+    import { history } from "../../helpers/history"
 
     export let item: Item
     export let index: number

@@ -1,4 +1,4 @@
-import type { Item, Line } from "../../../types/Show"
+import type { Item, Line } from "../../../../types/Show"
 
 export class EditboxHelper {
 

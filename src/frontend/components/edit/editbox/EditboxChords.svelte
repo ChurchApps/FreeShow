@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { Item } from "../../../types/Show"
-    import { activePopup, selected } from "../../stores"
-    import { clone } from "../helpers/array"
-    import { addChords } from "./scripts/chords"
+    import type { Item } from "../../../../types/Show"
+    import { activePopup, selected } from "../../../stores"
+    import { clone } from "../../helpers/array"
+    import { addChords } from "./../scripts/chords"
 
     export let item: Item
     export let autoSize: number

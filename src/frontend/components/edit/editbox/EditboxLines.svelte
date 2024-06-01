@@ -1,20 +1,20 @@
 <script lang="ts">
-    import type { Item, Line } from "../../../types/Show"
-    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../stores"
-    import T from "../helpers/T.svelte"
-    import { clone } from "../helpers/array"
-    import { history } from "../helpers/history"
-    import { _show } from "../helpers/shows"
-    import { getAutoSize, getMaxBoxTextSize } from "./scripts/autoSize"
-    import { chordMove } from "./scripts/chords"
-    import { getLineText, getSelectionRange, setCaret } from "./scripts/textStyle"
+    import type { Item, Line } from "../../../../types/Show"
+    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
+    import T from "../../helpers/T.svelte"
+    import { clone } from "../../helpers/array"
+    import { history } from "../../helpers/history"
+    import { _show } from "../../helpers/shows"
+    import { getAutoSize, getMaxBoxTextSize } from "../scripts/autoSize"
+    import { chordMove } from "../scripts/chords"
+    import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import { EditboxHelper } from "./EditboxHelper"
 
     import EditboxChords from "./EditboxChords.svelte"
     import { onMount } from "svelte"
-    import { addToPos } from "../helpers/mover"
+    import { addToPos } from "../../helpers/mover"
     import { uid } from "uid"
-    import { deleteAction } from "../helpers/clipboard"
+    import { deleteAction } from "../../helpers/clipboard"
 
     export let item: Item
     export let ref: {
@@ -400,10 +400,6 @@
 
         return newLines
     }
-
-    // timer
-    let today = new Date()
-    setInterval(() => (today = new Date()), 1000)
 
     function textElemKeydown(e: any) {
         if (e.key === "v" && (e.ctrlKey || e.metaKey)) {

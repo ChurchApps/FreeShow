@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { Item } from "../../../types/Show"
-    import { activeEdit, os, variables } from "../../stores"
-    import { _show } from "../helpers/shows"
+    import type { Item } from "../../../../types/Show"
+    import { activeEdit, os, variables } from "../../../stores"
+    import { _show } from "../../helpers/shows"
     import EditboxPlain from "./EditboxPlain.svelte"
     import EditboxOther from "./EditboxOther.svelte"
     import EditboxLines from "./EditboxLines.svelte"
