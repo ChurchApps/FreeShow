@@ -16,7 +16,7 @@
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
     import Snaplines from "../../system/Snaplines.svelte"
-    import Editbox from "../Editbox.svelte"
+    import Editbox from "../editbox/Editbox.svelte"
 
     $: currentShow = $activeShow?.id
     $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })

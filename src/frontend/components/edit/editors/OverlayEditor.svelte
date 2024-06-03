@@ -12,7 +12,7 @@
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
     import Snaplines from "../../system/Snaplines.svelte"
-    import Editbox from "../Editbox.svelte"
+    import Editbox from "../editbox/Editbox.svelte"
 
     $: currentId = $activeEdit.id!
     $: Slide = $overlays[currentId]
