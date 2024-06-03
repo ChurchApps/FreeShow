@@ -1,7 +1,7 @@
 <script lang="ts">
     import { IMPORT } from "../../../types/Channels"
     import type { Category } from "../../../types/Tabs"
-    import { activePopup, audioFolders, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates } from "../../stores"
+    import { activePopup, audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates } from "../../stores"
     import { send } from "../../utils/request"
     import { keysToID, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -65,6 +65,7 @@
                 { id: "SEPERATOR", name: "" },
                 { id: "microphones", name: "live.microphones", default: true, icon: "microphone" },
                 { id: "audio_streams", name: "live.audio_streams", default: true, icon: "audio_stream" },
+                ...getAudioPlaylists($audioPlaylists),
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($audioFolders), "name") as Button[]),
             ]
@@ -104,6 +105,17 @@
             .sort((a: any, b: any) => (a.api === true && b.api !== true ? 1 : -1))
             .sort((a: any, b: any) => (a.collection !== undefined && b.collection === undefined ? -1 : 1))
 
+    function getAudioPlaylists(playlistUpdater): Button[] {
+        if (!Object.keys(playlistUpdater).length) return []
+
+        let playlists = sortObject(keysToID(playlistUpdater), "name") as Button[]
+        playlists = playlists.map((a) => ({ ...a, icon: "playlist" }))
+        if (!playlists.length) return []
+        console.log("PLAYLISTS", playlists)
+
+        return [{ id: "SEPERATOR", name: "" }, ...playlists]
+    }
+
     let length: any = {}
     if (id) length = {}
     $: {
@@ -131,6 +143,11 @@
         })
 
         length.unlabeled += list.length - totalLength
+    }
+    $: if (id && $audioPlaylists) {
+        Object.keys($audioPlaylists).forEach((id) => {
+            length[id] = $audioPlaylists[id].songs.length
+        })
     }
 
     function keydown(e: KeyboardEvent) {

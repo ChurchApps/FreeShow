@@ -165,7 +165,6 @@ export async function downloadFile(fileId: string) {
     })
 }
 
-const ONE_MINUTE_MS = 60 * 1000
 const SHOWS_CONTENT = "SHOWS_CONTENT"
 const storesToSave = ["EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTINGS", "STAGE_SHOWS", "TEMPLATES", "THEMES", "MEDIA"]
 // don't upload: settings.json, config.json, cache.json, history.json
@@ -418,6 +417,7 @@ export async function syncDataDrive(data: any) {
     }
 }
 
+const TEN_SECONDS_MS = 10 * 1000
 async function getNewest({ driveFile, localPath }: any) {
     let storeInfo = getFileStats(localPath, true)?.stat
 
@@ -425,7 +425,7 @@ async function getNewest({ driveFile, localPath }: any) {
     let storeModified = storeInfo?.mtimeMs || 0
 
     if (!driveModified || storeModified > driveModified) return "local"
-    if (driveModified > storeModified + ONE_MINUTE_MS) return "cloud"
+    if (driveModified > storeModified + TEN_SECONDS_MS) return "cloud"
 
     return "same"
 }

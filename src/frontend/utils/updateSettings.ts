@@ -9,6 +9,7 @@ import {
     activeProject,
     alertUpdates,
     audioFolders,
+    audioPlaylists,
     audioStreams,
     autoOutput,
     autosave,
@@ -256,6 +257,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     variables: (v: any) => variables.set(v),
     triggers: (v: any) => triggers.set(v),
     audioStreams: (v: any) => audioStreams.set(v),
+    audioPlaylists: (v: any) => audioPlaylists.set(v),
     theme: (v: any) => theme.set(v),
     transitionData: (v: any) => transitionData.set(v),
     imageExtensions: (v: any) => {

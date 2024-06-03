@@ -7,6 +7,7 @@ import {
     activeRename,
     activeShow,
     activeStage,
+    audioPlaylists,
     currentOutputSettings,
     dictionary,
     drawerTabsData,
@@ -243,6 +244,7 @@ export const _updaters = {
     },
     category_media: { store: mediaFolders, ...getDefaultCategoryUpdater("media") },
     category_audio: { store: audioFolders, ...getDefaultCategoryUpdater("audio") },
+    audio_playlists: { store: audioPlaylists, ...getDefaultCategoryUpdater("audio"), empty: { name: "", songs: [] } },
 
     overlay: {
         store: overlays,

@@ -97,6 +97,8 @@ export interface MediaStyle {
     toTime?: number
     favourite?: boolean
     audio?: boolean
+    loop?: boolean // audio
+    volume?: number // audio
 }
 
 export type Popups =

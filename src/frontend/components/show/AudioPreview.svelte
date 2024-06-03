@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { activeShow, dictionary, outLocked, playingAudio } from "../../stores"
-    import { clearAudio, getAudioDuration, playAudio } from "../helpers/audio"
+    import { activeShow, dictionary, media, outLocked, playingAudio } from "../../stores"
+    import { clearAudio, getAudioDuration, playAudio, updateVolume } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
@@ -170,27 +170,63 @@
             >
                 <Icon id={"stop"} white size={1.2} />
             </Button>
+            <!-- LOOP -->
             {#if !isMic}
                 <Button
                     center
                     title={$dictionary.media?._loop}
-                    disabled={!$playingAudio[path]}
                     on:click={() => {
-                        if (!$playingAudio[path]) return
-
-                        playingAudio.update((a) => {
-                            a[path].loop = !playing.loop
+                        let loop = !$media[path]?.loop
+                        media.update((a) => {
+                            if (!a[path]) a[path] = {}
+                            a[path].loop = loop
 
                             return a
                         })
                     }}
                 >
-                    <Icon id="loop" white={!playing.loop} size={1.2} />
+                    <Icon id="loop" white={!$media[path]?.loop} size={1.2} />
                 </Button>
             {/if}
-        </div>
+            <!-- VOLUME -->
+            <Button
+                center
+                title={$dictionary.actions?.decrease_volume}
+                disabled={($media[path]?.volume || 1) < 0.06}
+                on:click={() => {
+                    let volume = $media[path]?.volume || 1
+                    media.update((a) => {
+                        if (!a[path]) a[path] = {}
+                        a[path].volume = Math.max(0.05, (volume * 100 - 5) / 100)
 
-        <!-- TODO: individual volume -->
+                        return a
+                    })
+
+                    updateVolume("local")
+                }}
+            >
+                <Icon id="volume_down" white size={1.2} />
+            </Button>
+            <Button
+                center
+                title={$dictionary.actions?.increase_volume}
+                disabled={($media[path]?.volume || 1) >= 1}
+                on:click={() => {
+                    let volume = $media[path]?.volume || 1
+                    media.update((a) => {
+                        if (!a[path]) a[path] = {}
+                        a[path].volume = Math.min(1, (volume * 100 + 5) / 100)
+
+                        return a
+                    })
+
+                    updateVolume("local")
+                }}
+            >
+                <Icon id="volume" white size={1.2} />
+            </Button>
+            <p style="align-content: center;text-align: center;min-width: 50px;padding: 0 5px;">{Math.floor(($media[path]?.volume || 1) * 100)}%</p>
+        </div>
     </div>
 </div>
 

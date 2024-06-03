@@ -48,7 +48,7 @@
         })
     }
 
-    const tools: string[] = ["Focus", "Pointer", "Particles"]
+    const tools: string[] = ["Focus", "Pointer", "Particles", "Paint"]
     let tool = "Focus"
     function changeTool(e: any) {
         tool = e.target.value
@@ -73,7 +73,14 @@
                 <option value={tool}>{tool}</option>
             {/each}
         </select>
+
         <div bind:this={padElem} class="pad" on:mousedown={mousedown} on:touchstart={mousedown} />
+
+        {#if tool === "Paint"}
+            <button on:click={() => sendAction("clear_painting")} title="Clear painting">
+                <Icon id="clear" size={2} white right />
+            </button>
+        {/if}
     </div>
 {:else}
     <div class="controller">
@@ -259,8 +266,14 @@
     }
 
     button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
         border: none;
         cursor: pointer;
+        padding: 5px;
+        border-radius: 5px;
         background-color: var(--primary-darkest);
     }
     button:active {

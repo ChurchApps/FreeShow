@@ -21,7 +21,7 @@ const areaChildren: { [key in DropAreas | string]: string[] } = {
     project: ["show", "media", "audio", "show_drawer", "player"],
     slides: ["slide", "group", "global_group", "screen", "camera", "microphone", "media", "audio", "show"],
     all_slides: [],
-    navigation: ["show", "show_drawer", "media", "overlay", "template"],
+    navigation: ["show", "show_drawer", "media", "audio", "overlay", "template"],
 }
 
 export function validateDrop(id: string, selected: any, children: boolean = false): boolean {

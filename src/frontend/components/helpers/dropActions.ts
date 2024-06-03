@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, audioStreams, categories, drawerTabsData, imageExtensions, media, projects, scriptureSettings, showsCache, videoExtensions } from "../../stores"
+import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, audioPlaylists, audioStreams, categories, drawerTabsData, imageExtensions, media, projects, scriptureSettings, showsCache, videoExtensions } from "../../stores"
 import { addItem } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
@@ -172,6 +172,18 @@ export const dropActions: any = {
                     a[path].favourite = true
                     return a
                 })
+            })
+
+            // return history
+        }
+
+        // audio playlist
+        if (get(audioPlaylists)[drop.data] && drag.id === "audio") {
+            audioPlaylists.update((a) => {
+                let newSongs = drag.data.map((a) => a.path)
+                a[drop.data].songs.push(...newSongs)
+
+                return a
             })
 
             // return history

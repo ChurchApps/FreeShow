@@ -154,6 +154,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_media_button: ["rename", "delete", "SEPERATOR", "system_open"],
     category_audio_button: ["rename", "delete", "SEPERATOR", "system_open"],
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
+    playlist: ["rename", "delete"],
     // CONTENT
     drawer_show: ["newShowPopup", "newShow", "sort_shows_by", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
@@ -178,6 +179,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
     audio_button: ["addToProject", "SEPERATOR", "preview", "favourite", "SEPERATOR", "system_open"],
+    audio_button_playlist: ["preview", "SEPERATOR", "remove"],
     // "addToFirstSlide"
     live_card: ["recording"],
 
