@@ -150,7 +150,17 @@ function getSecondDisplay(bounds: Rectangle) {
     let secondDisplay = displays[1]
     if (amountCoveredByWindow > 0.5) secondDisplay = displays[0]
 
-    return secondDisplay.bounds
+    let newBounds = secondDisplay.bounds
+
+    // window zoomed (sometimes it's correct even with custom scaling, but not always)
+    // if windows overlap then something is wrong with the scaling
+    let scale = secondDisplay.scaleFactor || 1
+    if (scale !== 1 && amountCovered(displays[0].bounds, displays[1].bounds) > 0) {
+        newBounds.width /= scale
+        newBounds.height /= scale
+    }
+
+    return newBounds
 }
 
 function amountCovered(displayBounds: Rectangle, windowBounds: Rectangle) {

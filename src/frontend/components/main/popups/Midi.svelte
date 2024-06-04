@@ -1,8 +1,9 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { activeShow, dictionary, groups, midiIn, popupData, styles } from "../../../stores"
-    import { defaultMidiActionChannels, midiActions, midiInListen, midiNames, midiToNote } from "../../../utils/midi"
+    import { activeShow, midiIn, popupData } from "../../../stores"
+    import { defaultMidiActionChannels, midiActions, midiInListen, midiToNote } from "../../actions/midi"
     import { receive, send } from "../../../utils/request"
+    import CreateAction from "../../actions/CreateAction.svelte"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
@@ -125,22 +126,6 @@
         midiInListen()
     }
 
-    const actionOptions = Object.keys(midiActions).map((id) => ({ id, name: "$:" + (midiNames[id] || "actions." + id) + ":$", translate: true }))
-
-    // TODO: translate name & sort
-    const groupsList = Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))
-
-    $: stylesList = getList($styles)
-    function getList(styles) {
-        let list = Object.entries(styles).map(([id, obj]: any) => {
-            return { ...obj, id }
-        })
-
-        let sortedList = list.sort((a, b) => a.name.localeCompare(b.name))
-
-        return [{ id: null, name: "—" }, ...sortedList]
-    }
-
     function changeAction(e: any) {
         midi.action = e.detail.id
 
@@ -168,6 +153,15 @@
         <p><T id="midi.name" /></p>
         <TextInput style="width: 70%;" value={midi.name} on:change={changeName} />
     </CombinedInput>
+
+    {#if canHaveAction}
+        <br />
+        <CreateAction action={midi.action} actionData={midi.actionData} on:change={(e) => changeAction(e.detail)} />
+    {/if}
+
+    <h3 style="margin-top: 10px;">
+        <T id="popup.midi" />
+    </h3>
 
     <CombinedInput>
         {#if $popupData.type === "in"}
@@ -229,43 +223,6 @@
         <p><T id="midi.channel" /></p>
         <NumberInput value={midi.values.channel} max={255} on:change={(e) => (midi.values.channel = Number(e.detail))} disabled={notActionOrDefaultValues} />
     </CombinedInput>
-
-    {#if canHaveAction}
-        <br />
-
-        {#if midi.action?.includes("index_")}
-            <CombinedInput>
-                <p style="font-size: 0.7em;opacity: 0.8;">
-                    <T id="midi.tip_index_by_velocity" />
-                </p>
-            </CombinedInput>
-        {/if}
-
-        {#if midi.action === "index_select_slide"}
-            <CombinedInput>
-                <p style="font-size: 0.7em;opacity: 0.8;">
-                    <T id="midi.tip_action" />
-                </p>
-            </CombinedInput>
-        {/if}
-
-        <CombinedInput>
-            <p><T id="midi.start_action" /></p>
-            <Dropdown value={midi.action ? "$:" + (midiNames[midi.action] || "actions." + midi.action) + ":$" : "—"} options={actionOptions} on:click={changeAction} />
-        </CombinedInput>
-
-        {#if midi.action === "goto_group"}
-            <CombinedInput>
-                <p><T id="actions.choose_group" /></p>
-                <Dropdown value={groupsList.find((a) => a.id === midi.actionData?.group)?.name || "—"} options={groupsList} on:click={(e) => (midi.actionData = { group: e.detail.id })} />
-            </CombinedInput>
-        {:else if midi.action === "change_output_style"}
-            <CombinedInput>
-                <p><T id="actions.change_output_style" /></p>
-                <Dropdown value={$styles[midi.actionData?.style]?.name || "—"} options={stylesList} on:click={(e) => (midi.actionData = { style: e.detail.id })} />
-            </CombinedInput>
-        {/if}
-    {/if}
 </div>
 
 <!-- <style>

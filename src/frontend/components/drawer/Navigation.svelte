@@ -14,7 +14,7 @@
     import SelectElem from "../system/SelectElem.svelte"
     import NavigationButton from "./NavigationButton.svelte"
 
-    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "templates" | "timers"
+    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "functions" | "templates" | "timers"
 
     interface Button extends Category {
         id: string
@@ -45,10 +45,6 @@
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
                 { id: "SEPERATOR", name: "" },
-                // WIP move to "Special" ?
-                { id: "variables", name: "tabs.variables", default: true, icon: "variable" },
-                { id: "triggers", name: "tabs.triggers", default: true, icon: "trigger" },
-                { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($overlayCategories), "name") as Button[]),
             ]
         } else if (id === "templates") {
@@ -69,15 +65,24 @@
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($audioFolders), "name") as Button[]),
             ]
-        } else if (id === "effects") {
-            buttons = [{ id: "effects", name: "tabs.effects", default: true, icon: "effects" }]
         } else if (id === "scripture") {
             buttons = getBibleVersions()
         } else if (id === "calendar") {
             buttons = [
                 { id: "event", name: "calendar.event", default: true, icon: "calendar" },
                 { id: "show", name: "calendar.show", default: true, icon: "showIcon" },
+                // WIP very few tabs
+            ]
+        } else if (id === "functions") {
+            buttons = [
+                { id: "actions", name: "tabs.actions", default: true, icon: "actions" },
+                { id: "SEPERATOR", name: "" },
                 { id: "timer", name: "tabs.timers", default: true, icon: "timer" },
+                { id: "variables", name: "tabs.variables", default: true, icon: "variable" },
+                { id: "triggers", name: "tabs.triggers", default: true, icon: "trigger" },
+                // WIP effects
+                // { id: "SEPERATOR", name: "" },
+                // { id: "effects", name: "tabs.effects", default: true, icon: "effects" },
             ]
         } else {
             buttons = [
@@ -120,7 +125,7 @@
     if (id) length = {}
     $: {
         let list: any[] = []
-        if (id === "shows") list = Object.values($shows).filter((a: any) => !a.private)
+        if (id === "shows") list = Object.values($shows).filter((a: any) => !a?.private)
         else if (id === "overlays") list = Object.values($overlays)
         else if (id === "templates") list = Object.values($templates)
 

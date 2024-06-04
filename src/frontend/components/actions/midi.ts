@@ -1,14 +1,15 @@
 import { get } from "svelte/store"
-import { MAIN } from "../../types/Channels"
-import { clearAudio } from "../components/helpers/audio"
-import { setOutput } from "../components/helpers/output"
-import { changeOutputStyle, clearAll, clearBackground, clearOverlays, clearSlide, nextSlide, previousSlide, selectProjectShow, updateOut } from "../components/helpers/showActions"
-import { _show } from "../components/helpers/shows"
-import { clearTimers } from "../components/output/clear"
-import { midiIn, shows } from "../stores"
+import { MAIN } from "../../../types/Channels"
+import { clearAudio } from "../helpers/audio"
+import { setOutput } from "../helpers/output"
+import { changeOutputStyle, clearAll, clearBackground, clearOverlays, clearSlide, nextSlide, previousSlide, selectProjectShow, updateOut } from "../helpers/showActions"
+import { _show } from "../helpers/shows"
+import { clearTimers } from "../output/clear"
+import { midiIn, shows } from "../../stores"
 import { gotoGroup, selectProjectByIndex, selectSlideByIndex } from "./apiHelper"
-import { newToast } from "./messages"
-import { send } from "./request"
+import { newToast } from "../../utils/messages"
+import { send } from "../../utils/request"
+import { clone } from "../helpers/array"
 
 export function midiInListen() {
     console.log("MIDI IN LISTEN")
@@ -155,6 +156,24 @@ export function playMidiIn(msg) {
             })
         })
     })
+}
+
+// <= 1.1.6
+export function convertOldMidiToNewAction(action) {
+    if (action.action) {
+        action.triggers = [action.action]
+        delete action.action
+    }
+
+    if (action.values) {
+        action.midi = clone(action)
+        action.midiEnabled = true
+        delete action.type
+        delete action.values
+        delete action.defaultValues
+    }
+
+    return action
 }
 
 export function midiToNote(midi: number) {

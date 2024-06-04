@@ -44,6 +44,7 @@
             if (edit.icon === "template") edit.icon = "templates"
             if (edit.icon === "overlay") edit.icon = "overlays"
 
+            if (!names[type]) return a
             edit.name = names[type](edit.id)
             if (edit.name === undefined) return a
 

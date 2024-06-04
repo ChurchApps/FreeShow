@@ -230,6 +230,7 @@ export const outputs: Writable<Outputs> = writable({}) // {default}
 export const outLocked: Writable<boolean> = writable(false) // false
 
 // MIDI
+// this is repurposed as "actions"
 export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({})
 
 // CONNECTIONS

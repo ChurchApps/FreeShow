@@ -345,8 +345,10 @@ export async function syncDataDrive(data: any) {
             let localShowPath = path.join(showsPath, name)
 
             let newest = await getNewest({ driveFile, localPath: localShowPath })
+            // DEBUG:
             if (!syncStates[newest]) syncStates[newest] = 0
             syncStates[newest]++
+
             if (newest === "same") {
                 let showContent = driveContent?.[id] || readFile(localShowPath)
                 if (showContent) allShows[id] = showContent
@@ -356,6 +358,18 @@ export async function syncDataDrive(data: any) {
             // get existing content
             let cloudContent = driveContent?.[id] ? JSON.stringify([id, driveContent[id]]) : null
             let localContent = readFile(localShowPath, "utf8", true)
+
+            // double check with content timestamp
+            if (newest === "cloud" && cloudContent && localContent) {
+                let actualDrivetime = driveContent[id].timestamps?.modified || 0
+                if (actualDrivetime && actualDrivetime < lastLocalTimestamp) {
+                    newest = "local"
+                    // DEBUG:
+                    syncStates.cloud--
+                    if (!syncStates.localX) syncStates.localX = 0
+                    syncStates.localX++
+                }
+            }
 
             if ((newest === "cloud" || data.method === "download") && cloudContent) allShows[id] = driveContent[id]
             else if (localContent) {
@@ -382,14 +396,27 @@ export async function syncDataDrive(data: any) {
                 let newPath = path.join(showsPath, newName)
 
                 writeFile(newPath, cloudContent, id)
-                shows[id] = trimShow({ ...(driveContent?.[id] || {}), name: show?.name || id })
+
+                let trimmedShow = trimShow({ ...(driveContent?.[id] || {}), name: show?.name || id })
+                if (!trimmedShow) {
+                    delete shows[id]
+                    return
+                }
+
+                shows[id] = trimmedShow
                 downloadCount++
 
                 return
             }
 
-            // upload shows
-            uploadCount++
+            // "upload" show
+            if (localContent) {
+                uploadCount++
+                return
+            }
+
+            // something is wrong with the file
+            if (!cloudContent && !localContent) delete shows[id]
         }
         if (DEBUG) console.log("Shows checked!")
 
@@ -418,11 +445,13 @@ export async function syncDataDrive(data: any) {
 }
 
 const TEN_SECONDS_MS = 10 * 1000
+let lastLocalTimestamp = 0
 async function getNewest({ driveFile, localPath }: any) {
     let storeInfo = getFileStats(localPath, true)?.stat
 
     let driveModified = driveFile ? new Date(driveFile.data.modifiedTime).getTime() : 0
     let storeModified = storeInfo?.mtimeMs || 0
+    lastLocalTimestamp = storeModified
 
     if (!driveModified || storeModified > driveModified) return "local"
     if (driveModified > storeModified + TEN_SECONDS_MS) return "cloud"

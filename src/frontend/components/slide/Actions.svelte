@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, shows } from "../../stores"
+    import { dictionary } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import Button from "../inputs/Button.svelte"
@@ -21,31 +21,38 @@
     //     changeSlideAction("receiveMidi", false)
     // }
 
-    const actionsList = [
-        { id: "animate", title: $dictionary.popup?.animate, icon: "stars", white: true },
-        { id: "startShow", name: ({ id }) => $shows[id]?.name || "", title: $dictionary.preview?._start, icon: "showIcon", white: true },
-        { id: "trigger", title: $dictionary.popup?.trigger, icon: "trigger", white: true },
-        { id: "audioStream", title: $dictionary.popup?.audio_stream, icon: "audio_stream", white: true },
-        { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward", white: true },
-        { id: "startTimer", title: $dictionary.actions?.start_timer, icon: "timer", white: true },
-        { id: "outputStyle", title: $dictionary.actions?.change_output_style, icon: "styles", white: true },
-        { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play", white: true },
-        { id: "sendMidi", title: $dictionary.actions?.send_midi, icon: "music", white: true },
-        { id: "stopTimers", title: $dictionary.actions?.stop_timers, icon: "stop" },
-        { id: "clearBackground", title: $dictionary.clear?.background, icon: "background" },
-        { id: "clearOverlays", title: $dictionary.clear?.overlays, icon: "overlays" },
-        { id: "clearAudio", title: $dictionary.clear?.audio, icon: "audio" },
+    // WIP MIDI use actionsData & get new custom actions
+    const actionsList: any = [
+        { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward" },
+        { id: "animate", title: $dictionary.popup?.animate, icon: "stars" },
+        { id: "action", label: $dictionary.midi?.start_action, icon: "actions" },
+        { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play" },
     ]
+    // const actionsList = [
+    //     { id: "animate", title: $dictionary.popup?.animate, icon: "stars", white: true },
+    //     { id: "startShow", name: ({ id }) => $shows[id]?.name || "", title: $dictionary.preview?._start, icon: "showIcon", white: true },
+    //     { id: "trigger", title: $dictionary.popup?.trigger, icon: "trigger", white: true },
+    //     { id: "audioStream", title: $dictionary.popup?.audio_stream, icon: "audio_stream", white: true },
+    //     { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward", white: true },
+    //     { id: "startTimer", title: $dictionary.actions?.start_timer, icon: "timer", white: true },
+    //     { id: "outputStyle", title: $dictionary.actions?.change_output_style, icon: "styles", white: true },
+    //     { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play", white: true },
+    //     { id: "sendMidi", title: $dictionary.actions?.send_midi, icon: "music", white: true },
+    //     { id: "stopTimers", title: $dictionary.actions?.stop_timers, icon: "stop" },
+    //     { id: "clearBackground", title: $dictionary.clear?.background, icon: "background" },
+    //     { id: "clearOverlays", title: $dictionary.clear?.overlays, icon: "overlays" },
+    //     { id: "clearAudio", title: $dictionary.clear?.audio, icon: "audio" },
+    // ]
 </script>
 
 <div class="icons" style="zoom: {4 / columns};">
     {#each actionsList as action}
         {#if actions[action.id]}
             <div>
-                <div class="button {action.white ? 'white' : ''}">
-                    <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove + ": " + action.title} on:click={() => changeSlideAction(action.id)}>
-                        {#if action.name}
-                            <p>{action.name(actions[action.id])}</p>
+                <div class="button {action.red ? '' : 'white'}">
+                    <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {action.name}" on:click={() => changeSlideAction(action.id)}>
+                        {#if action.getName}
+                            <p>{action.getName(actions[action.id])}</p>
                         {/if}
                         <Icon id={action.icon} size={0.9} white />
                     </Button>

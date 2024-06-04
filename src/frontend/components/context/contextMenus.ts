@@ -82,7 +82,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     disable: { label: "actions.disable", icon: "disable" },
     edit: { label: "menu.edit", icon: "edit" },
     recolor: { label: "actions.recolor", icon: "color" },
-    actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
+    actions: { label: "actions.slide_actions", icon: "actions", items: ["LOAD_actions"] },
     bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_slide"] },
     remove_layers: { label: "actions.remove_layers", icon: "remove_layers", items: ["LOAD_remove_layers"] },
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },

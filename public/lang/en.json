@@ -284,6 +284,8 @@
         "effects": "Effects",
         "scripture": "Scripture",
         "calendar": "Calendar",
+        "functions": "Functions",
+        "actions": "Actions",
         "player": "Player",
         "live": "Live",
         "timers": "Timers",
@@ -350,7 +352,7 @@
         "edit_event": "Edit event",
         "about": "About",
         "history": "History",
-        "midi": "MIDI",
+        "action": "Action",
         "connect": "Connect",
         "cloud_update": "Syncing with cloud",
         "cloud_method": "Data location",
@@ -416,6 +418,7 @@
         "template": "New template",
         "scripture": "New scripture",
         "collection": "New collection",
+        "action": "New action",
         "event": "New event"
     },
     "show": {
@@ -512,7 +515,7 @@
         "change_drawer_item": "Change drawer item",
         "change_drawer_category": "Change drawer category",
         "toggle_drawer": "Toggle drawer",
-        "actions": "Actions",
+        "slide_actions": "Slide actions",
         "clear_history": "Clear history",
         "set_key": "Set key",
         "custom_key": "Set custom value",
@@ -770,6 +773,8 @@
         "seconds": "Seconds"
     },
     "midi": {
+        "midi": "MIDI",
+        "activate": "Can be activated from MIDI input",
         "name": "Name",
         "input": "Input",
         "output": "Output",
@@ -829,7 +834,6 @@
         "groups": "Groups",
         "styles": "Styles",
         "display_settings": "Outputs",
-        "actions": "Actions",
         "display": "Display",
         "connection": "Connection",
         "cloud": "Cloud",

@@ -1,11 +1,11 @@
-import type { TransitionType } from "../../types/Show"
-import { clearAudio, updateVolume } from "../components/helpers/audio"
-import { displayOutputs } from "../components/helpers/output"
-import { changeOutputStyle, clearAll, clearBackground, clearOverlays, clearSlide, nextSlide, previousSlide, restoreOutput, selectProjectShow } from "../components/helpers/showActions"
-import { clearTimers } from "../components/output/clear"
+import type { TransitionType } from "../../../types/Show"
+import { clearAudio, updateVolume } from "../helpers/audio"
+import { displayOutputs } from "../helpers/output"
+import { changeOutputStyle, clearAll, clearBackground, clearOverlays, clearSlide, nextSlide, previousSlide, restoreOutput, selectProjectShow } from "../helpers/showActions"
+import { clearTimers } from "../output/clear"
 import { changeVariable, gotoGroup, moveStageConnection, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
-import { send } from "./request"
-import { updateTransition } from "./transitions"
+import { send } from "../../utils/request"
+import { updateTransition } from "../../utils/transitions"
 
 /// TYPES ///
 

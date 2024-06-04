@@ -88,11 +88,11 @@ import { createData } from "./createData"
 import { setLanguage } from "./language"
 import { listenForUpdates } from "./listeners"
 import { listen, newToast } from "./messages"
-import { playMidiIn } from "./midi"
+import { playMidiIn } from "../components/actions/midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { triggerAction } from "./api"
+import { triggerAction } from "../components/actions/api"
 
 let initialized: boolean = false
 export function startup() {

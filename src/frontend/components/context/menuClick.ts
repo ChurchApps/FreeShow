@@ -47,7 +47,7 @@ import {
     themes,
     triggers,
 } from "../../stores"
-import { moveStageConnection } from "../../utils/apiHelper"
+import { moveStageConnection } from "../actions/apiHelper"
 import { hideDisplay } from "../../utils/common"
 import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
@@ -430,9 +430,9 @@ const actions: any = {
             activePopup.set("trigger")
         } else if (obj.sel.id === "audio_stream") {
             activePopup.set("audio_stream")
-        } else if (obj.sel.id === "midi") {
+        } else if (obj.sel.id === "action") {
             popupData.set(obj.sel.data[0])
-            activePopup.set("midi")
+            activePopup.set("action")
         } else if (obj.contextElem?.classList.value.includes("#event")) {
             eventEdit.set(obj.contextElem.id)
             activePopup.set("edit_event")
@@ -854,22 +854,38 @@ const actions: any = {
 function changeSlideAction(obj: any, id: string) {
     let layoutSlide: number = obj.sel.data[0]?.index || 0
     let ref = _show().layouts("active").ref()[0]
+    if (!ref[layoutSlide]) return
 
+    let actions = clone(ref[layoutSlide].data?.actions) || {}
+
+    if (id === "action") {
+        let id = uid()
+        if (!actions.slideActions) actions.slideActions = []
+        actions.slideActions.push({ id })
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
+
+        popupData.set({ id, mode: "slide", index: layoutSlide, existing: actions.slideActions.map((a) => a.triggers?.[0]) })
+        activePopup.set("action")
+
+        return
+    }
+
+    // WIP MIDI
     if (id.includes("Midi")) {
         let midiId: string = uid()
-        let actions = clone(ref[layoutSlide].data.actions) || {}
 
         if (actions[id]) midiId = actions[id]
         else actions[id] = midiId
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
 
-        let data: any = { id: midiId }
+        let data: any = { id: midiId, mode: "slide", index: layoutSlide }
         // sendMidi | receiveMidi
-        if (id === "receiveMidi") data = { id: midiId, type: "in", index: layoutSlide }
+        if (id === "receiveMidi") data = { id: midiId, mode: "slide_midi" }
 
         popupData.set(data)
-        activePopup.set("midi")
+        activePopup.set("action")
 
         return
     }
@@ -877,7 +893,6 @@ function changeSlideAction(obj: any, id: string) {
     let indexes: number[] = obj.sel.data.map(({ index }) => index)
 
     if (id === "startShow") {
-        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
         let showId: string = actions[id]?.id || get(sortedShowsList)[0]
 
         if (!showId) {
@@ -906,7 +921,6 @@ function changeSlideAction(obj: any, id: string) {
     }
 
     if (id === "outputStyle") {
-        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
         let styleId: string = actions[id] || Object.keys(get(styles))[0]
 
         if (!styleId) {
@@ -927,8 +941,6 @@ function changeSlideAction(obj: any, id: string) {
     }
 
     if (id === "animate") {
-        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
-
         if (!actions[id]) {
             actions[id] = { actions: [{ type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }] }
             history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "animate_slide" } })
@@ -943,7 +955,6 @@ function changeSlideAction(obj: any, id: string) {
     }
 
     if (id === "trigger") {
-        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
         popupData.set({ dropdown: true, index: layoutSlide })
 
         if (!actions[id]) {
@@ -960,7 +971,6 @@ function changeSlideAction(obj: any, id: string) {
     }
 
     if (id === "audioStream") {
-        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
         popupData.set({ dropdown: true, index: layoutSlide })
 
         if (!actions[id]) {

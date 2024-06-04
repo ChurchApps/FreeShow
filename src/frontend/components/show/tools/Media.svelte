@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { activeShow, dictionary, driveData, media, midiIn, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
-    import { playMidiIn } from "../../../utils/midi"
+    import { playMidiIn } from "../../actions/midi"
     import { destroy, receive, send } from "../../../utils/request"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
@@ -267,7 +267,8 @@
         {/if}
 
         {#if midi.length}
-            <h5><T id="popup.midi" /></h5>
+            <!-- WIP MIDI -->
+            <h5><T id="midi.midi" /></h5>
             {#each midi as midi}
                 <SelectElem id="midi" data={midi} draggable>
                     <Button class="context #midi" on:click={() => (midi.sendType === "in" ? playMidiIn(midi) : sendMidi(midi))} style="padding: 8px;width: 100%;" title={midi.name} bold={false}>

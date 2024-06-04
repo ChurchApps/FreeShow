@@ -34,7 +34,7 @@ import {
     volume,
 } from "../stores"
 import { driveConnect } from "./drive"
-import { midiInListen } from "./midi"
+import { midiInListen } from "../components/actions/midi"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
 import { eachConnection, sendData, timedout } from "./sendData"

@@ -1,14 +1,14 @@
 import { get } from "svelte/store"
-import { STAGE } from "../../types/Channels"
-import { keysToID, sortByName } from "../components/helpers/array"
-import { getActiveOutputs, setOutput } from "../components/helpers/output"
-import { playNextGroup, updateOut } from "../components/helpers/showActions"
-import { _show } from "../components/helpers/shows"
-import { activeEdit, activePage, activeProject, activeShow, dictionary, groups, outLocked, outputs, overlays, projects, refreshEditSlide, sortedShowsList, variables } from "../stores"
+import { STAGE } from "../../../types/Channels"
+import { keysToID, sortByName } from "../helpers/array"
+import { getActiveOutputs, setOutput } from "../helpers/output"
+import { playNextGroup, updateOut } from "../helpers/showActions"
+import { _show } from "../helpers/shows"
+import { activeEdit, activePage, activeProject, activeShow, dictionary, groups, outLocked, outputs, overlays, projects, refreshEditSlide, sortedShowsList, variables } from "../../stores"
 import type { API_variable } from "./api"
-import { newToast } from "./messages"
-import { send } from "./request"
-import { getLabelId } from "../components/helpers/show"
+import { newToast } from "../../utils/messages"
+import { send } from "../../utils/request"
+import { getLabelId } from "../helpers/show"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
