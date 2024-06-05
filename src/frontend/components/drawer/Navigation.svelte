@@ -142,6 +142,7 @@
             totalLength += length[button.id]
 
             function checkMatch(a) {
+                if (!a) return a
                 if (button.id === "unlabeled") return a.category === null
                 return a.category === button.id
             }

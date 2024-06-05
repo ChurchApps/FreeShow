@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { popupData } from "../../stores"
+    import { activePopup, popupData } from "../../stores"
     import { translate } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -9,104 +9,90 @@
     import Dropdown from "../inputs/Dropdown.svelte"
     import { actionData } from "./actionData"
     import { API_ACTIONS } from "./api"
+    import CustomInput from "./CustomInput.svelte"
 
     export let list: boolean = false
     export let actionId: string
-    export let trigger: string = ""
+    export let actionValue: any = {}
+    export let existingActions: string[] = []
+    export let actionNameIndex: number = 0
 
     let dispatch = createEventDispatcher()
     function changeAction(e: any) {
         dispatch("change", e)
+        pickAction = false
     }
 
-    const ACTIONS = Object.keys(API_ACTIONS).map((id) => {
-        let data = actionData[id] || {}
-        let name = (data.getName ? data.getName(trigger) : translate(data.name || "")) || id
-        let icon = data.icon || "actions"
-        let common = !!data.common
+    // WIP some actions like "run_action" do you often want more than one... (actions with input's can be added multiple times)
 
-        return { id, name, icon, common }
-    })
+    $: ACTIONS = Object.keys(API_ACTIONS)
+        .map((id) => {
+            let data = actionData[id] || {}
+            let name = (data.getName ? data.getName(actionId) : translate(data.name || "")) || id
+            let icon = data.icon || "actions"
+            let common = !!data.common
 
-    // WIP MIDI OLD:
-
-    // const actionOptions = Object.keys(midiActions).map((id) => ({ id, name: "$:" + (midiNames[id] || "actions." + id) + ":$", translate: true }))
-
-    // const groupsList = sortByName(Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name })))
-
-    // $: stylesList = getStyles($styles)
-    // function getStyles(styles) {
-    //     let list = Object.entries(styles).map(([id, obj]: any) => ({ ...obj, id }))
-    //     return [{ id: null, name: "—" }, ...sortByName(list)]
-    // }
+            return { id, name, icon, common }
+        })
+        .filter(({ id }) => id === actionId || !existingActions.includes(id))
 
     let pickAction: boolean = false
+
+    let input = ""
+    $: if (actionId && !pickAction) loadInputs()
+    function loadInputs() {
+        input = actionData[actionId]?.input || ""
+        console.log("input", input)
+
+        if (input || !list) return
+
+        // close popup if no custom inputs
+        activePopup.set(null)
+    }
+
+    function findName(): string {
+        return ACTIONS.find((a) => a.id === actionId)?.name || actionId || ""
+    }
 </script>
 
-<!-- WIP MIDI full list with icons + trigger "Action" -->
 {#if list}
     {#if actionId && !pickAction}
-        <div style="display: flex;">
+        <div style="display: flex;align-items: center;">
             <Icon id={actionData[actionId]?.icon || "actions"} right />
-            <p>{actionData[actionId]?.name || actionId}</p>
+            <p>{findName()}</p>
         </div>
 
-        <div class="buttons">
-            <Button on:click={() => (pickAction = true)} style="width: 100%;" center>
-                <p>Change action</p>
-            </Button>
-        </div>
+        <Button on:click={() => (pickAction = true)} style="width: 100%;margin-top: 5px;" center dark>
+            <p>Change action</p>
+        </Button>
     {:else}
-        {#each ACTIONS as action}
-            <Button disabled={$popupData.existing.includes(actionId)} on:click={() => changeAction(action)} active={actionId === action.id || $popupData.existing.includes(actionId)} style="width: 100%;" bold={action.common}>
-                <Icon id={action.icon} right />
-                <p>{action.name}</p>
-            </Button>
-        {/each}
+        <div class="buttons">
+            {#each ACTIONS as action}
+                <Button disabled={$popupData.existing.includes(actionId)} on:click={() => changeAction({ ...action, index: 0 })} active={actionId === action.id || $popupData.existing.includes(actionId)} style="width: 100%;" bold={action.common}>
+                    <Icon id={action.icon} right />
+                    <p>{action.name}</p>
+                </Button>
+            {/each}
+        </div>
     {/if}
 {:else}
     <CombinedInput>
-        <p><T id="midi.start_action" /></p>
-        <Dropdown value={actionData[actionId]?.name || actionId || "—"} options={ACTIONS} on:click={(e) => changeAction(e.detail)} />
-    </CombinedInput>
-{/if}
-
-{#if actionId && !pickAction}
-    <!-- WIP MIDI custom inputs -->
-    <!-- TODO: if no custom inputs close popup -->
-{/if}
-
-<!-- {#if action?.includes("index_")}
-    <CombinedInput>
-        <p style="font-size: 0.7em;opacity: 0.8;">
-            <T id="midi.tip_index_by_velocity" />
+        <p>
+            <T id="midi.start_action" />
+            {#if actionNameIndex}#{actionNameIndex}{/if}
         </p>
+        <Dropdown value={findName() || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={(e) => changeAction(e.detail)} />
     </CombinedInput>
 {/if}
 
-{#if action === "index_select_slide"}
-    <CombinedInput>
-        <p style="font-size: 0.7em;opacity: 0.8;">
-            <T id="midi.tip_action" />
-        </p>
-    </CombinedInput>
-{/if} -->
-
-<!-- {#if action === "goto_group"}
-    <CombinedInput>
-        <p><T id="actions.choose_group" /></p>
-        <Dropdown value={groupsList.find((a) => a.id === actionData?.group)?.name || "—"} options={groupsList} on:click={(e) => (actionData = { group: e.detail.id })} />
-    </CombinedInput>
-{:else if action === "change_output_style"}
-    <CombinedInput>
-        <p><T id="actions.change_output_style" /></p>
-        <Dropdown value={$styles[actionData?.style]?.name || "—"} options={stylesList} on:click={(e) => (actionData = { style: e.detail.id })} />
-    </CombinedInput>
-{/if} -->
+{#if input && actionId && !pickAction}
+    <CustomInput inputId={input} value={actionValue} {actionId} on:change={(e) => changeAction({ id: actionId, actionValue: e.detail })} />
+{/if}
 
 <style>
     .buttons {
         display: flex;
+        flex-direction: column;
     }
     .buttons :global(button:nth-child(even)) {
         background-color: rgb(0 0 20 / 0.08);

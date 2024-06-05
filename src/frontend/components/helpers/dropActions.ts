@@ -520,6 +520,25 @@ const slideDrop: any = {
         history.newData = { key: "actions", data, indexes: [drop.index] }
         return history
     },
+    action: ({ drag, drop }: any, history: any) => {
+        history.id = "SHOW_LAYOUT"
+
+        let ref: any = _show().layouts("active").ref()[0][drop.index!]
+        let data: any = ref.data.actions || {}
+        let slideActions = data.slideActions
+
+        let existing = slideActions.find((a) => a.triggers?.[0] === "run_action")
+        // WIP MIDI you should maybe be able to add more than one
+        if (existing) return
+
+        let actionId = drag.data[0].id
+        let action = { id: uid(), name: "Custom Action", triggers: ["run_action"], actionValues: { run_action: actionId } }
+        slideActions.push(action)
+        data.slideActions = slideActions
+
+        history.newData = { key: "actions", data, indexes: [drop.index] }
+        return history
+    },
 }
 
 // HELPERS

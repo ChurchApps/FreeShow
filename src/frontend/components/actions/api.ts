@@ -1,11 +1,13 @@
 import type { TransitionType } from "../../../types/Show"
-import { clearAudio, updateVolume } from "../helpers/audio"
-import { displayOutputs } from "../helpers/output"
-import { changeOutputStyle, clearAll, clearBackground, clearOverlays, clearSlide, nextSlide, previousSlide, restoreOutput, selectProjectShow } from "../helpers/showActions"
-import { clearTimers } from "../output/clear"
-import { changeVariable, gotoGroup, moveStageConnection, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
 import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
+import { clearAudio, updateVolume } from "../helpers/audio"
+import { displayOutputs } from "../helpers/output"
+import { activateTrigger, changeOutputStyle, clearAll, clearBackground, clearOverlays, clearSlide, nextSlide, playSlideTimers, previousSlide, restoreOutput, selectProjectShow, sendMidi, startAudioStream, startShow } from "../helpers/showActions"
+import { stopTimers } from "../helpers/timerTick"
+import { clearTimers } from "../output/clear"
+import { runActionId } from "./actions"
+import { changeVariable, gotoGroup, moveStageConnection, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
 
 /// TYPES ///
 
@@ -19,6 +21,7 @@ type API_index = { index: number }
 type API_boolval = { value?: boolean }
 type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
+type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
     type?: TransitionType // default: "fade"
@@ -33,10 +36,12 @@ export type API_variable = {
     value?: string | number
     variableAction?: "increment" | "decrement"
 }
+export type API_midi = {}
 
 /// ACTIONS ///
 
 // WIP use these for MIDI and Stage/Remote..
+// BC = Not added to Bitfocus Companion yet.
 export const API_ACTIONS = {
     // PROJECT
     index_select_project: (data: API_index) => selectProjectByIndex(data.index),
@@ -46,6 +51,7 @@ export const API_ACTIONS = {
 
     // SHOWS
     name_select_show: (data: API_strval) => selectShowByName(data.value),
+    start_show: (data: API_id) => startShow(data.id), // BC
 
     // PRESENTATION
     next_slide: () => nextSlide({ key: "ArrowRight" }),
@@ -89,11 +95,14 @@ export const API_ACTIONS = {
     // start specific folder (playlist)
     // folder_select_audio: () => ,
     change_volume: (data: API_volume) => updateVolume(data.volume ?? data.gain, data.gain !== undefined),
+    start_audio_stream: (data: API_id) => startAudioStream(data.id), // BC
 
     // TIMERS
     // play / pause playing timers
     // control timer time
     // start specific timer (by name / index)
+    start_slide_timers: (data: API_slide) => playSlideTimers(data), // BC
+    stop_timers: () => stopTimers(), // BC
 
     // VISUAL
     id_select_output_style: (data: API_id) => changeOutputStyle(data.id),
@@ -101,7 +110,9 @@ export const API_ACTIONS = {
 
     // OTHER
     change_variable: (data: API_variable) => changeVariable(data),
-    // trigger "action group" (macro)
+    start_trigger: (data: API_id) => activateTrigger(data.id), // BC
+    send_midi: (data: API_midi) => sendMidi(data), // BC
+    run_action: (data: API_id) => runActionId(data.id), // BC
 }
 
 /// RECEIVER / SENDER ///

@@ -2,7 +2,6 @@
     import { onDestroy } from "svelte"
     import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { activeShow, dictionary, driveData, media, midiIn, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
-    import { playMidiIn } from "../../actions/midi"
     import { destroy, receive, send } from "../../../utils/request"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
@@ -10,7 +9,6 @@
     import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
     import { getExtension, getMediaStyle, getMediaType, isMediaExtension } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
-    import { sendMidi } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import HoverButton from "../../inputs/HoverButton.svelte"
@@ -266,8 +264,8 @@
             {/each}
         {/if}
 
-        {#if midi.length}
-            <!-- WIP MIDI -->
+        <!-- WIP MIDI -->
+        <!-- {#if midi.length}
             <h5><T id="midi.midi" /></h5>
             {#each midi as midi}
                 <SelectElem id="midi" data={midi} draggable>
@@ -277,7 +275,7 @@
                     </Button>
                 </SelectElem>
             {/each}
-        {/if}
+        {/if} -->
     {:else}
         <Center faded>
             <T id="empty.media" />

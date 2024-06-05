@@ -33,30 +33,59 @@
             action = $midiIn[id] || showMidi || action
 
             action = convertOldMidiToNewAction(action)
+
+            // action = clone(action)
+            console.log(action)
         }
 
         if (mode === "slide_midi") action.midiEnabled = true
     }
 
     function updateValue(key: string, e: any) {
-        let value = e.detail ?? e.target?.value ?? e
+        let value = e.detail ?? e.target?.checked ?? e.target?.value ?? e
+        console.log(key, value, e)
         action[key] = value
     }
 
-    function changeAction(e) {
+    let autoActionName = ""
+    function changeAction(e, index: number = -1) {
+        console.log(e.detail)
         let actionId = e.detail.id || ""
         if (!actionId) return
 
-        action.triggers.push(actionId)
+        if (e.detail.index !== undefined) index = e.detail.index
+
+        // update action value instead of action id
+        if (e.detail.actionValue) {
+            if (!action.actionValues) action.actionValues = {}
+            action.actionValues[actionId] = e.detail.actionValue
+            return
+        }
+
+        // remove action id
+        if (actionId === "remove") {
+            if (index === undefined) index = action.triggers.length - 1
+            action.triggers.splice(index)
+            action = action
+            return
+        }
+
+        if (!action.triggers) action.triggers = []
+        // can't set if it exists already
+        if (action.triggers.find((id) => id === actionId)) return
+
+        if (index > -1) action.triggers[index] = actionId
+        else action.triggers.push(actionId)
 
         // set all MIDI values
         if (action.midiEnabled && action.midi?.defaultValues && defaultMidiActionChannels[actionId]) {
             action.midi = { ...action.midi, ...defaultMidiActionChannels[actionId] }
         }
 
-        // auto name
-        if (!action.name && action.triggers.length === 1) {
-            action.name = translate(actionData[actionId]?.name || "") || actionId
+        // auto name (if empty or not changed by user)
+        if (action.name === autoActionName && action.triggers.length === 1) {
+            autoActionName = translate(actionData[actionId]?.name || "") || actionId
+            action.name = autoActionName
         }
 
         // reset velocity
@@ -75,6 +104,8 @@
     $: if (action) saveAction()
     function saveAction() {
         if (!action.name) return
+
+        if (action.midiEnabled && !action.midi) action.midi = actionMidi
 
         if (mode !== "slide") {
             midiIn.update((a) => {
@@ -112,7 +143,7 @@
 
             let currentSlideActionIndex = actions.slideActions.findIndex((a) => a.id === id)
             if (currentSlideActionIndex < 0) return
-            actions.slideActions[currentSlideActionIndex] = action
+            actions.slideActions[currentSlideActionIndex] = { ...action, id }
 
             history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
         }
@@ -125,7 +156,7 @@
 
 <div style="min-width: 45vw;">
     {#if mode === "slide"}
-        <CreateAction actionId={action.triggers?.[0] || ""} trigger={action.triggers?.[0] || ""} on:change={changeAction} list />
+        <CreateAction actionId={action.triggers?.[0] || ""} existingActions={action.triggers || []} actionValue={action.actionValues?.[action.triggers?.[0] || ""]} on:change={changeAction} list />
     {:else}
         <CombinedInput>
             <p><T id="midi.name" /></p>
@@ -133,19 +164,21 @@
         </CombinedInput>
 
         <!-- multiple actions -->
-        {#each action.triggers as actionId}
-            <CreateAction {actionId} on:change={changeAction} />
-        {/each}
-        {#if !action.triggers?.length || addTrigger}
-            <CreateAction actionId="" on:change={changeAction} />
-        {:else}
-            <Button on:click={() => (addTrigger = true)}>
-                <Icon id="add" right />
-                <T id="settings.add" />
-            </Button>
-        {/if}
-        <!-- {#if action.triggers?.length && !addTrigger}
-        {/if} -->
+        <div class="actions" style="margin: 5px 0;">
+            {#each action.triggers as actionId, i}
+                {#key actionId}
+                    <CreateAction {actionId} existingActions={action.triggers} actionValue={action.actionValues?.[actionId]} actionNameIndex={i + 1} on:change={(e) => changeAction(e, i)} />
+                {/key}
+            {/each}
+            {#if !action.triggers?.length || addTrigger}
+                <CreateAction actionId="" existingActions={action.triggers || []} on:change={changeAction} />
+            {:else}
+                <Button on:click={() => (addTrigger = true)} style="width: 100%;" center>
+                    <Icon id="add" right />
+                    <T id="settings.add" />
+                </Button>
+            {/if}
+        </div>
 
         <!-- MIDI -->
 
@@ -159,9 +192,8 @@
             </CombinedInput>
         {/if}
 
-        {#if action.midi}
-            <!-- WIP MIDI set initial value + update action on update -->
-            <MidiValues midi={action.midi || actionMidi} on:change={(e) => updateValue("midi", e)} />
+        {#if action.midiEnabled}
+            <MidiValues midi={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} />
         {/if}
     {/if}
 </div>

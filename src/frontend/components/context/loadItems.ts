@@ -41,6 +41,7 @@ const loadActions = {
 
         let slideActions = [
             { id: "action", label: "midi.start_action", icon: "actions" },
+            // WIP MIDI receiveMidi
             { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
             "SEPERATOR",
             { id: "nextTimer", label: "preview.nextTimer", icon: "clock", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
@@ -51,29 +52,6 @@ const loadActions = {
         ]
 
         return slideActions
-
-        // WIP MIDI
-        // let actions: any = [
-        //     { id: "nextTimer", label: "preview.nextTimer", icon: "clock", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
-        //     { id: "loop", label: "preview.to_start", icon: "restart", enabled: slideRef?.data?.end || false },
-        //     { id: "animate", label: "popup.animate", icon: "stars", enabled: currentActions?.animate || false },
-        //     { id: "startShow", label: "preview._start", icon: "showIcon", enabled: currentActions?.startShow || false },
-        //     { id: "trigger", label: "popup.trigger", icon: "trigger", enabled: currentActions?.trigger || false },
-        //     { id: "audioStream", label: "popup.audio_stream", icon: "audio_stream", enabled: currentActions?.audioStream || false },
-        //     { id: "nextAfterMedia", label: "actions.next_after_media", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
-        //     { id: "startTimer", label: "actions.start_timer", icon: "timer", enabled: currentActions?.startTimer || false },
-        //     { id: "outputStyle", label: "actions.change_output_style", icon: "styles", enabled: currentActions?.outputStyle || false },
-        //     { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
-        //     { id: "sendMidi", label: "actions.send_midi", icon: "music" },
-        // ]
-        // let clearActions: any = [
-        //     { id: "stopTimers", label: "actions.stop_timers", icon: "stop", enabled: currentActions?.stopTimers || false },
-        //     { id: "clearBackground", label: "clear.background", icon: "background", enabled: currentActions?.clearBackground || false },
-        //     { id: "clearOverlays", label: "clear.overlays", icon: "overlays", enabled: currentActions?.clearOverlays || false },
-        //     { id: "clearAudio", label: "clear.audio", icon: "audio", enabled: currentActions?.clearAudio || false },
-        // ]
-
-        // return [...actions, "SEPERATOR", ...clearActions]
     },
     item_actions: () => {
         let slide = getEditSlide()

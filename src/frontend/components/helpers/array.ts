@@ -75,7 +75,7 @@ export function sortObjectNumbers(object: {}[], key: string, reverse: boolean = 
 // move keys to IDs in object and return array
 export function keysToID(object: { [key: string]: any }): any[] {
     if (!object) return []
-    let newObjects: any[] = Object.entries(object).map(([id, a]) => ({ id, ...a }))
+    let newObjects: any[] = Object.entries(object).map(([id, a]) => ({ ...a, id }))
     return newObjects
 }
 

@@ -3,7 +3,8 @@
     import { activePopup, dictionary, labelsDisabled, midiIn, popupData } from "../../../stores"
     import { send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
-    import { convertOldMidiToNewAction, midiToNote, playMidiIn } from "../../actions/midi"
+    import { runAction } from "../../actions/actions"
+    import { convertOldMidiToNewAction, midiToNote } from "../../actions/midi"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID } from "../../helpers/array"
@@ -42,7 +43,7 @@
                 <div class="action">
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
-                        <Button title={$dictionary.media?.play} on:click={() => playMidiIn(action)} dark>
+                        <Button title={$dictionary.media?.play} on:click={() => runAction(action)} dark>
                             <span style="display: flex;align-items: center;width: 100%;">
                                 {#if action.triggers === undefined}
                                     <Icon id="slide" right />
@@ -60,7 +61,7 @@
                                     {/if}
                                 </p>
 
-                                {#if action.midi}
+                                {#if action.midiEnabled && action.midi}
                                     <p style="opacity: 0.8;display: inline;">
                                         <T id="midi.note" />: {action.midi.values?.note} - {midiToNote(action.midi.values?.note)},
                                         {#if action.midi.values?.velocity > -1}<T id="midi.velocity" />: {action.midi.values?.velocity},{/if}

@@ -1,7 +1,6 @@
 import { get } from "svelte/store"
 import { shows } from "../../stores"
 
-// WIP MIDI invert white vs red, change title>name + name>getName
 export const actionData = {
     // PROJECT
     index_select_project: { name: "", icon: "", input: "index" },
@@ -11,7 +10,6 @@ export const actionData = {
 
     // SHOWS
     name_select_show: { name: "", icon: "", input: "strval" },
-    // WIP not yet in API
     start_show: { slideId: "startShow", getName: ({ id }) => get(shows)[id]?.name || "", name: "preview._start", icon: "showIcon", input: "id", common: true },
 
     // PRESENTATION
@@ -41,11 +39,9 @@ export const actionData = {
 
     // AUDIO
     change_volume: { name: "", icon: "", input: "volume" },
-    // WIP not yet in API
     start_audio_stream: { slideId: "audioStream", name: "popup.audio_stream", icon: "audio_stream", input: "id" },
 
     // TIMERS
-    // WIP not yet in API
     start_slide_timers: { slideId: "startTimer", name: "actions.start_timer", icon: "timer", common: true },
     stop_timers: { slideId: "stopTimers", name: "actions.stop_timers", icon: "stop", red: true, common: true },
 
@@ -55,7 +51,7 @@ export const actionData = {
 
     // OTHER
     change_variable: { name: "", icon: "", input: "variable" },
-    // WIP not yet in API
     start_trigger: { slideId: "trigger", name: "popup.trigger", icon: "trigger", input: "id" },
     send_midi: { slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
+    run_action: { name: "", icon: "actions", input: "id" },
 }

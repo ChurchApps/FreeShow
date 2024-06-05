@@ -45,13 +45,15 @@
     // no need for cloud when audio can be stacked
     // $: cloudId = $driveData.mediaId
     // $: audioPath = cloudId && cloudId !== "default" ? audio.cloud?.[cloudId] || audio.path : audio.path
+
+    $: zoom = 4 / columns
 </script>
 
-<div class="icons" style="zoom: {4 / columns};{style}">
+<div class="icons" style="zoom: {zoom};{style}">
     {#if timer.length}
         <div>
             <div class="button">
-                <Button style="padding: 3px;" redHover title={$dictionary.remove?.timer} on:click={() => resetTimer()}>
+                <Button style="padding: 3px;" redHover title="{$dictionary.remove?.timer}{zoom}" on:click={() => resetTimer()}>
                     <Icon id="timer" size={0.9} white />
                 </Button>
             </div>
@@ -63,7 +65,7 @@
     {#if nextTimer}
         <div>
             <div class="button">
-                <Button style="padding: 3px;" redHover title={$dictionary.remove?.nextTimer} on:click={() => removeLayout("nextTimer")}>
+                <Button style="padding: 3px;" redHover title="{$dictionary.remove?.nextTimer}{zoom}" on:click={() => removeLayout("nextTimer")}>
                     <Icon id="clock" size={0.9} white />
                 </Button>
             </div>
@@ -74,7 +76,7 @@
         <!-- WIP move this to Actions.svelte (right side) -->
         <div>
             <div class="button">
-                <Button style="padding: 3px;" redHover title={$dictionary.remove?.to_start} on:click={() => removeLayout("end")}>
+                <Button style="padding: 3px;" redHover title="{$dictionary.remove?.to_start}{zoom}" on:click={() => removeLayout("end")}>
                     <Icon id="restart" size={0.9} white />
                 </Button>
             </div>
@@ -86,7 +88,7 @@
                 <Button
                     style="padding: 3px;"
                     redHover
-                    title={$dictionary.remove?.transition}
+                    title="{$dictionary.remove?.transition}{zoom}"
                     on:click={() => {
                         removeLayout("transition")
                         removeLayout("mediaTransition")
@@ -101,7 +103,7 @@
     {#if layoutSlide.bindings?.length}
         <div>
             <div class="button">
-                <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove_binding} on:click={() => removeLayout("bindings")}>
+                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove_binding}{zoom}" on:click={() => removeLayout("bindings")}>
                     <Icon id="bind" size={0.9} white />
                 </Button>
             </div>
@@ -116,7 +118,7 @@
     {#if background}
         <div>
             <div class="button">
-                <Button style="padding: 3px;" redHover title={$dictionary.remove?.background} on:click={() => removeLayout("background")}>
+                <Button style="padding: 3px;" redHover title="{$dictionary.remove?.background}{zoom}" on:click={() => removeLayout("background")}>
                     <Icon id={["camera", "screen"].includes(background.type) ? background.type : background.path?.includes("http") ? "web" : "image"} size={0.9} white />
                 </Button>
             </div>
@@ -128,7 +130,7 @@
     {#if background && muted && duration}
         <div>
             <div class="button">
-                <Button style="padding: 3px;" redHover title={$dictionary.actions?.unmute} on:click={() => mute()}>
+                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.unmute}{zoom}" on:click={() => mute()}>
                     <Icon id="muted" size={0.9} white />
                 </Button>
             </div>
@@ -137,7 +139,7 @@
     {#if layoutSlide.mics?.length}
         <div>
             <div class="button">
-                <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeLayout("mics")}>
+                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}{zoom}" on:click={() => removeLayout("mics")}>
                     <Icon id="microphone" size={0.9} white />
                 </Button>
             </div>
@@ -151,7 +153,7 @@
     {#if layoutSlide.audio?.length}
         <div>
             <div class="button">
-                <Button style="padding: 3px;" redHover title={$dictionary.remove?.audio} on:click={() => removeLayout("audio")}>
+                <Button style="padding: 3px;" redHover title="{$dictionary.remove?.audio}{zoom}" on:click={() => removeLayout("audio")}>
                     <Icon id="audio" size={0.9} white />
                 </Button>
             </div>
@@ -171,7 +173,7 @@
     {#if layoutSlide.overlays?.length}
         <div>
             <div class="button">
-                <Button style="padding: 3px;" redHover title={$dictionary.remove?.overlays} on:click={() => removeLayout("overlays")}>
+                <Button style="padding: 3px;" redHover title="{$dictionary.remove?.overlays}{zoom}" on:click={() => removeLayout("overlays")}>
                     <Icon id="overlays" size={0.9} white />
                 </Button>
             </div>

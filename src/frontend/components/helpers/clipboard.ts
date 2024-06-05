@@ -192,6 +192,7 @@ const selectActions: any = {
         } else {
             data = showsList.filter((id) => {
                 let show = get(shows)[id]
+                if (!show) return false
                 if (activeTab === show.category) return true
                 if (activeTab !== "unlabeled") return false
                 if (show.category === null || !get(categories)[show.category]) return true

@@ -31,6 +31,10 @@ export function startTimer() {
     }, INTERVAL)
 }
 
+export function stopTimers() {
+    activeTimers.set([])
+}
+
 function increment(timer: any) {
     if (timer.start < timer.end ? timer.currentTime >= timer.end : timer.currentTime <= timer.end) checkNextAfterMedia(timer.id, "timer")
 

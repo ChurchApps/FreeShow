@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
+import { runAction } from "../actions/actions"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import {
     activeEdit,
@@ -9,7 +10,6 @@ import {
     activePopup,
     activeProject,
     activeShow,
-    activeTimers,
     audioStreams,
     driveData,
     lockedOverlays,
@@ -34,8 +34,9 @@ import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
-import { _show } from "./shows"
 import { initializeMetadata } from "./show"
+import { _show } from "./shows"
+import { stopTimers } from "./timerTick"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -350,8 +351,9 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     if (!extra || !data) return
 
     // trigger start show action first
-    if (data.actions?.startShow) {
-        startShow(data.actions.startShow?.id)
+    let startShowId = data.actions?.startShow?.id || data.actions?.slideActions?.actionValues?.start_show?.id
+    if (startShowId) {
+        startShow(startShowId)
         return
     }
 
@@ -460,6 +462,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             setOutput("transition", null, false, outputId)
         }
 
+        // DEPRECATED since <= 1.1.6, but still in use
         // actions per output
         if (data.actions) {
             if (data.actions.clearBackground) setOutput("background", null, false, outputId)
@@ -468,19 +471,46 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     }
 
     // actions
+    // DEPRECATED since <= 1.1.6, but still in use
     if (data.actions) {
         // clear first
-        if (data.actions.stopTimers) activeTimers.set([])
+        if (data.actions.stopTimers) stopTimers()
         if (data.actions.clearAudio) clearAudio()
 
         // startShow is at the top
-        if (data.actions.trigger) activateTrigger(get(triggers)[data.actions.trigger])
+        if (data.actions.trigger) activateTrigger(data.actions.trigger)
         if (data.actions.audioStream) startAudioStream(data.actions.audioStream)
         if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle, data.actions.styleOutputs)
         if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id, overlayIds: data.overlays })
     }
+
+    if (data.actions?.slideActions?.length) {
+        // let values update
+        setTimeout(() => {
+            playSlideActions(data.actions.slideActions, outputIds, index)
+        })
+    }
+}
+
+const runPerOutput = ["clear_background", "clear_overlays"]
+function playSlideActions(actions: any[], outputIds: string[] = [], slideIndex: number = -1) {
+    // run these actions on each active output
+    if (outputIds.length > 1) {
+        runPerOutput.forEach((id) => {
+            let existingIndex = actions.findIndex((a) => a.triggers?.[0] === id)
+            if (existingIndex < 0) return
+
+            outputIds.forEach((outputId) => {
+                if (id.includes("background")) setOutput("background", null, false, outputId)
+                else if (id.includes("overlays")) clearOverlays(outputId)
+            })
+            actions.splice(existingIndex, 1)
+        })
+    }
+
+    actions.forEach((a) => runAction(a, { slideIndex }))
 }
 
 export async function startShow(showId: string) {
@@ -601,11 +631,17 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     return true
 }
 
-function playSlideTimers({ showId, slideId, overlayIds = [] }) {
-    if (showId === "active") showId = get(activeShow)?.id
+export function playSlideTimers({ showId = "active", slideId = "", overlayIds = [] }) {
+    if (!slideId) {
+        let outputRef: any = get(outputs)[getActiveOutputs()[0]]?.out?.slide || {}
+        let layoutRef = _show("active").layouts([outputRef.layout]).ref()[0]
+        slideId = layoutRef[outputRef.index]?.id || ""
+    }
+    console.log(slideId, get(outputs)[getActiveOutputs()[0]])
 
     let showSlides: any = _show(showId).get("slides") || {}
     let slide = showSlides[slideId]
+    console.log(showSlides, slide)
     if (!slide) return
 
     // find all timers in current slide & any overlay placed on the slide
@@ -680,7 +716,9 @@ export function restoreOutput() {
     outputCache.set(null)
 }
 
-export function activateTrigger(trigger) {
+export function activateTrigger(triggerId: string) {
+    let trigger = get(triggers)[triggerId]
+
     if (!customTriggers[trigger?.type]) {
         console.log("Missing trigger:", trigger.type)
         return

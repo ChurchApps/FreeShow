@@ -1,16 +1,19 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../../types/Channels"
+import { midiIn, shows } from "../../stores"
+import { send } from "../../utils/request"
+import { clone } from "../helpers/array"
 import { clearAudio } from "../helpers/audio"
-import { setOutput } from "../helpers/output"
 import { changeOutputStyle, clearAll, clearBackground, clearOverlays, clearSlide, nextSlide, previousSlide, selectProjectShow, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { clearTimers } from "../output/clear"
-import { midiIn, shows } from "../../stores"
 import { gotoGroup, selectProjectByIndex, selectSlideByIndex } from "./apiHelper"
+import type { Midi } from "../../../types/Show"
+import { runAction } from "./actions"
 import { newToast } from "../../utils/messages"
-import { send } from "../../utils/request"
-import { clone } from "../helpers/array"
+import { setOutput } from "../helpers/output"
 
+// WIP MIDI listener
 export function midiInListen() {
     console.log("MIDI IN LISTEN")
 
@@ -114,32 +117,32 @@ export const defaultMidiActionChannels = {
     // index_reset_timer: { type: "noteon", values: { note: 8, velocity: -1, channel: 5 } },
 }
 
-export function playMidiIn(msg) {
-    let midi = get(midiIn)[msg.id]
-    if (!midi) return
+export function receivedMidi(msg) {
+    console.log(msg)
+    let msgAction = get(midiIn)[msg.id]
+    if (!msgAction) return
 
-    let is_index = midi.action?.includes("index_") ?? false
-    if (is_index) {
-        midi.values.velocity = msg.values.velocity
-    } else if (midi.values.velocity < 0) msg.values.velocity = midi.values.velocity
-    if (JSON.stringify(midi.values) !== JSON.stringify(msg.values)) return
+    let action: Midi = convertOldMidiToNewAction(msgAction)
 
-    if (midi.action) {
-        let index = msg.values.velocity
-        // the select slide index from velocity can't select slide 0 as a NoteOn with velocity 0 is detected as NoteOff
-        // velocity of 0 currently bypasses the note on/off
-        if (midi.type !== msg.type && index !== 0) return
+    // get index
+    let hasindex = action.triggers?.[0]?.includes("index_") ?? false
+    let index = msg.values.velocity ?? -1
+    if (action.midi?.values?.velocity && action.midi.values.velocity < 0) index = -1
 
-        if (is_index && index < 0) {
-            newToast("$toast.midi_no_velocity")
-            index = 0
-        }
-        midiActions[midi.action](midi.actionData, index)
+    // the select slide index from velocity can't select slide 0 as a NoteOn with velocity 0 is detected as NoteOff
+    // velocity of 0 currently bypasses the note on/off
+    if (action.midi?.type !== msg.type && index !== 0) return
 
-        return
+    if (hasindex && index < 0) {
+        newToast("$toast.midi_no_velocity")
+        index = 0
     }
 
-    let shows: any[] = midi?.shows || []
+    runAction(action, { midiIndex: index })
+
+    let shows: any[] = action?.shows || []
+    if (!shows?.length) return
+
     let slidePlayed: boolean = false
     shows.forEach(({ id }) => {
         let refs = _show(id).layouts().ref()
