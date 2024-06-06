@@ -37,6 +37,7 @@ import { loadShows } from "./setShow"
 import { initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { stopTimers } from "./timerTick"
+import type { API_output_style } from "../actions/api"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -482,7 +483,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         if (data.actions.audioStream) startAudioStream(data.actions.audioStream)
         if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
-        if (data.actions.outputStyle) changeOutputStyle(data.actions.outputStyle, data.actions.styleOutputs)
+        if (data.actions.outputStyle) changeOutputStyle(data.actions)
         if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id, overlayIds: data.overlays })
     }
 
@@ -519,6 +520,7 @@ export async function startShow(showId: string) {
     let show = await loadShows([showId])
     if (show !== "loaded") return
 
+    if (!get(showsCache)[showId]) return
     let activeLayout = get(showsCache)[showId].settings?.activeLayout || ""
 
     // slideClick() - Slides.svelte
@@ -527,19 +529,19 @@ export async function startShow(showId: string) {
     setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
 }
 
-export function changeOutputStyle(styleId: string, styleOutputs: any = {}) {
-    let type = styleOutputs.type || "active"
-    let outputsList = styleOutputs.outputs
+export function changeOutputStyle({ outputStyle, styleOutputs }: API_output_style) {
+    let type = styleOutputs?.type || "active"
+    let outputsList = styleOutputs?.outputs || []
 
     let chosenOutputs = getActiveOutputs(get(outputs), type === "active")
     chosenOutputs.forEach(changeStyle)
 
     function changeStyle(outputId: string) {
-        if (type === "specific") styleId = outputsList[outputId]
-        if (!styleId) return
+        if (type === "specific") outputStyle = outputsList[outputId]
+        if (!outputStyle) return
 
         outputs.update((a) => {
-            a[outputId].style = styleId
+            a[outputId].style = outputStyle
 
             return a
         })
@@ -718,8 +720,9 @@ export function restoreOutput() {
 
 export function activateTrigger(triggerId: string) {
     let trigger = get(triggers)[triggerId]
+    if (!trigger) return
 
-    if (!customTriggers[trigger?.type]) {
+    if (!customTriggers[trigger.type]) {
         console.log("Missing trigger:", trigger.type)
         return
     }

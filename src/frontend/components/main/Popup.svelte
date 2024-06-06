@@ -15,7 +15,6 @@
     import ChangeOutputValues from "./popups/ChangeOutputValues.svelte"
     import ChooseCamera from "./popups/ChooseCamera.svelte"
     import ChooseScreen from "./popups/ChooseScreen.svelte"
-    import ChooseStyle from "./popups/ChooseStyle.svelte"
     import CloudMethod from "./popups/CloudMethod.svelte"
     import CloudUpdate from "./popups/CloudUpdate.svelte"
     import Color from "./popups/Color.svelte"
@@ -76,7 +75,6 @@
         edit_event: EditEvent,
         choose_screen: ChooseScreen,
         change_output_values: ChangeOutputValues,
-        choose_style: ChooseStyle,
         set_time: SetTime,
         animate: Animate,
         next_timer: NextTimer,

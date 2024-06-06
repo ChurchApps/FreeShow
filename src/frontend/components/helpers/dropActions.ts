@@ -1,17 +1,17 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import type { Show } from "../../../types/Show"
+import { ShowObj } from "../../classes/Show"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
 import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, audioPlaylists, audioStreams, categories, drawerTabsData, imageExtensions, media, projects, scriptureSettings, showsCache, videoExtensions } from "../../stores"
+import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
 import { addItem } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
-import { _show } from "./shows"
-import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
-import type { Show } from "../../../types/Show"
-import { ShowObj } from "../../classes/Show"
 import { checkName } from "./show"
+import { _show } from "./shows"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -525,14 +525,14 @@ const slideDrop: any = {
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
         let data: any = ref.data.actions || {}
-        let slideActions = data.slideActions
+        let slideActions = data.slideActions || []
 
         let existing = slideActions.find((a) => a.triggers?.[0] === "run_action")
         // WIP MIDI you should maybe be able to add more than one
         if (existing) return
 
         let actionId = drag.data[0].id
-        let action = { id: uid(), name: "Custom Action", triggers: ["run_action"], actionValues: { run_action: actionId } }
+        let action = { id: uid(), triggers: ["run_action"], actionValues: { run_action: { id: actionId } } }
         slideActions.push(action)
         data.slideActions = slideActions
 

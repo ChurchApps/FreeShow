@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, drawerTabsData, groups, outputs, overlays, selected, sorted } from "../../stores"
+import { activeEdit, contextData, drawerTabsData, groups, outputs, overlays, selected, sorted } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
@@ -9,6 +9,7 @@ import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
 import { actionData } from "../actions/actionData"
+import { getSlideText } from "../edit/scripts/textStyle"
 
 const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
@@ -69,7 +70,13 @@ const loadActions = {
         return itemActions
     },
     remove_layers: () => {
-        let data: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]?.data
+        let layoutSlide: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index] || {}
+
+        // text content
+        let hasTextContent = getSlideText(_show().slides([layoutSlide.id]).get()[0])
+        setContextData("textContent", hasTextContent)
+
+        let data: any = layoutSlide.data
         if (!data) return []
 
         let showMedia: any = _show().get().media
@@ -131,13 +138,15 @@ const loadActions = {
             let actionItems = slideActions
                 .map((action: any) => ({
                     id: action.id,
-                    label: action.name || "",
-                    translate: false,
-                    icon: actionData[action.id]?.icon || "actions",
+                    label: actionData[action.triggers?.[0]]?.name || "",
+                    icon: actionData[action.triggers?.[0]]?.icon || "actions",
+                    type: "action",
                 }))
                 .sort((a, b) => a.label.localeCompare(b.label))
             media.push(...actionItems)
         }
+
+        setContextData("layers", !!media?.length)
 
         if (media.length) return media
         return [{ label: "empty.general", disabled: true }]
@@ -155,7 +164,7 @@ const loadActions = {
         return items
     },
     bind_slide: (_items, isItem: boolean = false) => {
-        let outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput))
+        let outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput && !a.stageOutput))
 
         outputList = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
         if (isItem) outputList.push("SEPERATOR", { id: "stage", label: "menu.stage" })
@@ -176,6 +185,8 @@ const loadActions = {
             return a
         })
 
+        setContextData("outputList", outputList?.length > 1)
+
         return outputList
     },
     bind_item: () => loadActions.bind_slide([], true),
@@ -186,6 +197,13 @@ const loadActions = {
 
         return values
     },
+}
+
+function setContextData(key: string, data: any) {
+    contextData.update((a) => {
+        a[key] = data
+        return a
+    })
 }
 
 function sortItems(items: ContextMenuItem[], id: "projects" | "shows") {
@@ -219,4 +237,9 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
     let menuItems: [string, ContextMenuItem][] = items.map((a: any) => [a === "SEPERATOR" ? a : id, a])
 
     return menuItems
+}
+
+export function quickLoadItems(id: string) {
+    if (!loadActions[id]) return
+    loadActions[id]([])
 }

@@ -11,17 +11,17 @@
     import NumberInput from "../inputs/NumberInput.svelte"
     import { defaultMidiActionChannels, midiToNote } from "./midi"
     import { uid } from "uid"
+    import type { API_midi } from "./api"
 
-    export let midi
+    export let midi: API_midi
     export let firstActionId: string = ""
     export let type: "input" | "output" = "input"
+    export let playSlide: boolean = false
 
     $: hasActions = !!firstActionId
 
-    // $: if (midi) change()
-
     function setValues(key: string, value: any) {
-        if (!midi.values) midi.values = {}
+        if (!midi.values) midi.values = { note: 0, velocity: type === "input" ? -1 : 0, channel: 1 }
         midi.values[key] = value
         change()
     }
@@ -45,8 +45,6 @@
     } else {
         send(MAIN, ["GET_MIDI_OUTPUTS"])
     }
-
-    $: console.log(type, midi)
 
     let id = uid()
     receive(
@@ -120,9 +118,13 @@
     $: noActionOrDefaultValues = !hasActions || (midi.defaultValues && defaultMidiActionChannels[firstActionId])
 </script>
 
-<h3 style="margin-top: 10px;">
-    <T id="midi.midi" />
-</h3>
+{#if type !== "output"}
+    {#if playSlide}
+        <p style="opacity: 0.8;font-size: 0.8em;text-align: center;margin-bottom: 20px;"><T id="actions.play_on_midi_tip" /></p>
+    {:else}
+        <h3><T id="midi.midi" /></h3>
+    {/if}
+{/if}
 
 <CombinedInput>
     {#if type === "input"}
@@ -134,7 +136,9 @@
     {/if}
 </CombinedInput>
 
-<br />
+{#if type !== "output"}
+    <br />
+{/if}
 
 {#if hasActions}
     <CombinedInput>
@@ -152,37 +156,36 @@
             <Checkbox checked={autoValues} on:change={toggleAutoValues} />
         </div>
     </CombinedInput>
+{/if}
 
-    {#if type === "input" && firstActionId?.includes("index_")}
+<CombinedInput>
+    <p><T id="midi.type" /></p>
+    <Dropdown value={midi.type || "noteon"} options={types} on:click={(e) => setMidi("type", e.detail.name)} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
+</CombinedInput>
+
+<CombinedInput>
+    <p>
+        <T id="midi.note" />
+        <span style="opacity: 0.7;padding: 0 10px;display: flex;align-items: center;">{midiToNote(midi.values?.note ?? 0)}</span>
+    </p>
+    <NumberInput value={midi.values?.note ?? 0} max={127} on:change={(e) => setValues("note", Number(e.detail))} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
+</CombinedInput>
+{#if (!noActionOrDefaultValues && firstActionId?.includes("index_")) || type === "output" || playSlide}
+    {#if type === "input"}
         <CombinedInput>
             <p style="font-size: 0.7em;opacity: 0.8;">
                 <T id="midi.tip_velocity" />
             </p>
         </CombinedInput>
     {/if}
-{/if}
-
-<CombinedInput>
-    <p><T id="midi.type" /></p>
-    <Dropdown value={midi.type} options={types} on:click={(e) => setMidi("type", e.detail.name)} disabled={noActionOrDefaultValues} />
-</CombinedInput>
-
-<CombinedInput>
-    <p>
-        <T id="midi.note" />
-        <span style="opacity: 0.7;padding: 0 10px;display: flex;align-items: center;">{midiToNote(midi.values.note)}</span>
-    </p>
-    <NumberInput value={midi.values.note} max={127} on:change={(e) => setValues("note", Number(e.detail))} disabled={noActionOrDefaultValues} />
-</CombinedInput>
-{#if !noActionOrDefaultValues && firstActionId?.includes("index_")}
     <CombinedInput>
         <p><T id="midi.velocity" /></p>
-        <NumberInput value={midi.values.velocity} min={type === "input" ? -1 : 0} max={127} on:change={(e) => setValues("velocity", Number(e.detail))} />
+        <NumberInput value={midi.values?.velocity ?? (type === "input" ? -1 : 0)} min={type === "input" ? -1 : 0} max={127} on:change={(e) => setValues("velocity", Number(e.detail))} />
     </CombinedInput>
 {/if}
 <CombinedInput>
     <p><T id="midi.channel" /></p>
-    <NumberInput value={midi.values.channel} max={255} on:change={(e) => setValues("channel", Number(e.detail))} disabled={noActionOrDefaultValues} />
+    <NumberInput value={midi.values?.channel ?? 1} min={1} max={16} on:change={(e) => setValues("channel", Number(e.detail))} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
 </CombinedInput>
 
 <style>

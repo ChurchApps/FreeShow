@@ -93,6 +93,7 @@ import { listen, newToast } from "./messages"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { checkStartupActions } from "../components/actions/actions"
 
 let initialized: boolean = false
 export function startup() {
@@ -133,6 +134,7 @@ function startupMain() {
         listenForUpdates()
         listen()
         startTracking()
+        checkStartupActions()
     }, 5000)
 }
 

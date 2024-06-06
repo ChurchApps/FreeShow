@@ -31,8 +31,14 @@ export async function sendMidi(data: any) {
     let port: any = null
     // console.log("OUTPUT", data.output)
 
+    if (!data.type) data.type = "noteon"
+    if (!data.values) data.values = { note: 0, velocity: 0, channel: 1 }
+
+    // send channel 1 as channel 1, and not 0
+    if (data.values.channel) data.values.channel--
+
     try {
-        port = await JZZ().openMidiOut(data.output).or("Could not connect to MIDI out!")
+        port = await JZZ().openMidiOut(data.output).or("Error sending MIDI signal: Could not connect to receiver!")
         if (!port) return
         if (data.type === "noteon") {
             await port.noteOn(data.values.channel, data.values.note, data.values.velocity)
@@ -66,14 +72,15 @@ export function closeMidiInPorts(id: string = "") {
 }
 
 export async function receiveMidi(data: any) {
-    // let port: any = null
     // console.log("INPUT", data.input)
     if (!data.input) return
     if (openedPorts[data.id]) return
 
+    console.log(data)
+
     try {
-        // I want to connect to the input and listen for notes!
-        let port = await JZZ().openMidiIn(data.input).or("MIDI-In: Cannot open!")
+        // connect to the input and listen for notes!
+        let port = await JZZ().openMidiIn(data.input).or("Error opening MIDI listener: Device not found or not supported!")
         // console.log("MIDI-In:", port.name())
 
         if (port.name()) openedPorts[data.id] = port

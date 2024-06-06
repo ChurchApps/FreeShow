@@ -1,87 +1,54 @@
 import { get } from "svelte/store"
 import { MAIN } from "../../../types/Channels"
+import type { Midi } from "../../../types/Show"
 import { midiIn, shows } from "../../stores"
+import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
-import { clearAudio } from "../helpers/audio"
-import { changeOutputStyle, clearAll, clearBackground, clearOverlays, clearSlide, nextSlide, previousSlide, selectProjectShow, updateOut } from "../helpers/showActions"
-import { _show } from "../helpers/shows"
-import { clearTimers } from "../output/clear"
-import { gotoGroup, selectProjectByIndex, selectSlideByIndex } from "./apiHelper"
-import type { Midi } from "../../../types/Show"
-import { runAction } from "./actions"
-import { newToast } from "../../utils/messages"
 import { setOutput } from "../helpers/output"
+import { updateOut } from "../helpers/showActions"
+import { _show } from "../helpers/shows"
+import { runAction } from "./actions"
 
 // WIP MIDI listener
 export function midiInListen() {
     console.log("MIDI IN LISTEN")
 
-    console.log(get(midiIn))
+    Object.entries(get(midiIn)).forEach(([id, action]: any) => {
+        action = convertOldMidiToNewAction(action)
+        if (!action.midi) return
 
-    Object.entries(get(midiIn)).forEach(([id, midi]: any) => {
-        if (midi.shows?.length) {
-            midi.shows.forEach((show) => {
-                if (!shows[show.id]) return
-                // find all slides in current show with this MIDI
-                let layouts: any[] = _show(show.id).layouts().get()
-                let found: boolean = false
-                layouts.forEach((layout) => {
-                    layout.slides.forEach((slide) => {
-                        if (slide.actions?.receiveMidi === id) found = true
-                    })
-                })
-
-                if (!found) {
-                    // remove from midi
-                    midiIn.update((a) => {
-                        delete a[id]
-                        return a
-                    })
-                } else {
-                    if (!midi.input) return
-                    send(MAIN, ["RECEIVE_MIDI"], { id, ...midi })
-                }
-            })
-        } else {
-            send(MAIN, ["RECEIVE_MIDI"], { id, ...midi })
+        if (!action.shows?.length) {
+            send(MAIN, ["RECEIVE_MIDI"], { id, ...action.midi })
+            return
         }
+
+        action.shows.forEach((show) => {
+            if (!shows[show.id]) return
+
+            // find all slides in current show with this MIDI
+            let layouts: any[] = _show(show.id).layouts().get()
+            let found: boolean = false
+            layouts.forEach((layout) => {
+                layout.slides.forEach((slide) => {
+                    if (slide.actions?.receiveMidi === id) found = true
+                })
+            })
+
+            if (!found) {
+                // remove from midi
+                midiIn.update((a) => {
+                    delete a[id]
+                    return a
+                })
+            } else {
+                if (!action.midi?.input) return
+                send(MAIN, ["RECEIVE_MIDI"], { id, ...action.midi })
+            }
+        })
     })
 }
 
-// WIP duplicate og api.ts
-export const midiActions = {
-    next_slide: () => nextSlide({ key: "ArrowRight" }),
-    previous_slide: () => previousSlide({ key: "ArrowLeft" }),
-    next_project_show: () => selectProjectShow("next"),
-    previous_project_show: () => selectProjectShow("previous"),
-    goto_group: (data: any) => gotoGroup(data.group),
-
-    clear_all: () => clearAll(),
-    clear_background: () => clearBackground(),
-    clear_slide: () => clearSlide(),
-    clear_overlays: () => clearOverlays(),
-    clear_audio: () => clearAudio(),
-    clear_next_timer: () => clearTimers(),
-
-    change_output_style: (data: any) => changeOutputStyle(data.style),
-
-    index_select_project: (_, index: number) => selectProjectByIndex(index),
-    index_select_project_show: (_, index: number) => selectProjectShow(index),
-    index_select_slide: (_, index: number) => selectSlideByIndex(index),
-}
-export const midiNames = {
-    next_slide: "preview._next_slide",
-    previous_slide: "preview._previous_slide",
-    next_project_show: "preview._next_show",
-    previous_project_show: "preview._previous_show",
-    clear_all: "clear.all",
-    clear_background: "clear.background",
-    clear_slide: "clear.slide",
-    clear_overlays: "clear.overlays",
-    clear_audio: "clear.audio",
-    clear_next_timer: "clear.nextTimer",
-}
 export const defaultMidiActionChannels = {
     // presentation
     next_slide: { type: "noteon", values: { note: 0, velocity: -1, channel: 1 } },
@@ -169,6 +136,7 @@ export function convertOldMidiToNewAction(action) {
     }
 
     if (action.values) {
+        if (action.values.channel !== undefined) action.values.channel++
         action.midi = clone(action)
         action.midiEnabled = true
         delete action.type

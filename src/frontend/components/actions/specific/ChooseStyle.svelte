@@ -1,15 +1,20 @@
 <script lang="ts">
-    import { outputs, popupData, styles } from "../../../stores"
+    import { createEventDispatcher } from "svelte"
+    import { outputs, styles } from "../../../stores"
+    import { newToast } from "../../../utils/messages"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
-    import { history } from "../../helpers/history"
-    import { _show } from "../../helpers/shows"
+    import { keysToID, sortByName } from "../../helpers/array"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import type { API_output_style } from "../api"
 
-    let currentStyleId = $popupData.id
-    let styleOutputs = $popupData.outputs || { type: "active" }
-    $: currentStyle = $styles[currentStyleId]
+    export let value: API_output_style
+
+    let styleId: string = value.outputStyle || Object.keys($styles)[0]
+    $: if (!styleId) newToast("$toast.empty_styles")
+
+    let styleOutputs = value.styleOutputs || { type: "active" }
+    $: currentStyle = $styles[styleId]
 
     let outputsOptions = [
         { id: "active", name: "$:actions.active_outputs:$" },
@@ -19,24 +24,18 @@
     let outputsList = getList($outputs).filter((a) => !a.isKeyOutput)
     let stylesList = getList($styles)
 
-    function getList(styles) {
-        let list = Object.entries(styles).map(([id, obj]: any) => {
-            return { ...obj, id }
-        })
-
-        return list.sort((a, b) => a.name.localeCompare(b.name))
+    function getList(list) {
+        return sortByName(keysToID(list))
     }
 
-    function updateStyle(key: string, value: any) {
-        let ref = _show().layouts("active").ref()[0]
-        let actions = clone(ref[$popupData.indexes[0]]?.data?.actions) || {}
+    let dispatch = createEventDispatcher()
+    function updateStyle(key: string, newValue: any) {
+        value[key] = newValue
 
-        actions[key] = value
+        if (key === "outputStyle") styleId = newValue
+        else styleOutputs = newValue
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: $popupData.indexes }, location: { page: "show", override: "change_style_slide_" + key } })
-
-        if (key === "outputStyle") currentStyleId = value
-        else styleOutputs = value
+        dispatch("change", value)
     }
 
     function setOutputStyle(outputId: string, styleId: string) {
@@ -53,8 +52,6 @@
     <p><T id="settings.display_settings" /></p>
     <Dropdown value={outputsOptions.find((a) => a.id === styleOutputs.type)?.name || ""} options={outputsOptions} on:click={(e) => updateStyle("styleOutputs", { type: e.detail.id, outputs: styleOutputs.outputs || {} })} />
 </CombinedInput>
-
-<br />
 
 {#if styleOutputs.type === "specific"}
     {#each outputsList as output}

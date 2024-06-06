@@ -171,7 +171,7 @@
         if (!item) return
 
         if (force === true) {
-            let template = $templates[outputStyle.template || ""]
+            let template = $templates[outputStyle.template || ""] || {}
             let firstTextItem = template.items?.find((a) => a.lines)
             let textStyle = firstTextItem?.lines?.[0]?.text?.[0]?.style || ""
             let styleObj = getStyles(textStyle, true)

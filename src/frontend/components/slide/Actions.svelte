@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary } from "../../stores"
+    import { audioStreams, dictionary, midiIn, shows, stageShows, styles, triggers } from "../../stores"
     import { translate } from "../../utils/language"
     import { actionData } from "../actions/actionData"
     import { clone } from "../helpers/array"
@@ -35,6 +35,24 @@
         { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play" },
     ]
 
+    // WIP MIDI convert into new
+    // actionData get slideId and convert into slideActions
+
+    const namedObjects = {
+        run_action: $midiIn,
+        start_show: $shows,
+        start_trigger: $triggers,
+        start_audio_stream: $audioStreams,
+        id_select_stage_layout: $stageShows,
+    }
+    function getActionName(actionId, actionValue) {
+        if (actionId === "change_output_style") {
+            return $styles[actionValue.outputStyle]?.name
+        }
+
+        return namedObjects[actionId]?.[actionValue.id]?.name
+    }
+
     $: zoom = 4 / columns
 </script>
 
@@ -54,21 +72,19 @@
 
     <!-- slide actions -->
     {#if actions.slideActions?.length}
-        {#each Object.keys(actionData) as actionId}
+        {#each actions.slideActions as action}
             <!-- should be always just one trigger on each action when on a slide -->
-            {@const action = actions.slideActions.find((a) => a.triggers?.[0] === actionId)}
+            {@const actionId = action.triggers?.[0] || ""}
+            {@const actionValue = action?.actionValues?.[actionId] || {}}
             {@const customData = actionData[actionId] || {}}
+            {@const customName = getActionName(actionId, actionValue)}
 
-            {#if action}
-                <div class="button {customData.red ? '' : 'white'}">
-                    <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {translate(customData.name)}" {zoom} on:click={() => deleteSlideAction(actionId)}>
-                        {#if customData.getName}
-                            <p>{customData.getName(actions.slideActions.actionValues?.[actionId]?.id)}</p>
-                        {/if}
-                        <Icon id={customData.icon || "actions"} size={0.9} white />
-                    </Button>
-                </div>
-            {/if}
+            <div class="button {customData.red ? '' : 'white'}">
+                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {translate(customData.name)}" {zoom} on:click={() => deleteSlideAction(actionId)}>
+                    {#if customName}<p>{customName}</p>{/if}
+                    <Icon id={customData.icon || "actions"} size={0.9} white />
+                </Button>
+            </div>
         {/each}
     {/if}
 </div>

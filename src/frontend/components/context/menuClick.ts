@@ -14,7 +14,6 @@ import {
     activeRename,
     activeShow,
     audioFolders,
-    audioStreams,
     currentOutputSettings,
     currentWindow,
     dictionary,
@@ -40,19 +39,17 @@ import {
     showsCache,
     slidesOptions,
     sorted,
-    sortedShowsList,
     stageShows,
     styles,
     templates,
     themes,
-    triggers,
 } from "../../stores"
-import { moveStageConnection } from "../actions/apiHelper"
 import { hideDisplay } from "../../utils/common"
 import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
+import { moveStageConnection } from "../actions/apiHelper"
 import { getShortBibleName } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
@@ -494,7 +491,7 @@ const actions: any = {
         }
     },
     remove_layers: (obj: any) => {
-        let type: "image" | "overlays" | "music" | "microphone" = obj.menu.icon
+        let type: "image" | "overlays" | "music" | "microphone" | "action" = obj.menu.type || obj.menu.icon
         let slide: number = obj.sel.data[0].index
         let newData: any = null
 
@@ -516,6 +513,16 @@ const actions: any = {
             // remove clicked
             mics.splice(mics.indexOf(obj.menu.id), 1)
             newData = { key: "mics", data: mics, dataIsArray: true, indexes: [slide] }
+        } else if (type === "action") {
+            let actions = layoutSlide.actions || {}
+            let slideActions = actions.slideActions || []
+
+            let actionId = obj.menu.id
+            let actionIndex = slideActions.findIndex((a) => a.id === actionId)
+            if (actionIndex > -1) slideActions.splice(actionIndex, 1)
+
+            actions.slideActions = slideActions
+            newData = { key: "actions", data: actions, indexes: [slide] }
         }
 
         if (newData) history({ id: "SHOW_LAYOUT", newData })
@@ -871,8 +878,7 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
-    // WIP MIDI
-    if (id.includes("Midi")) {
+    if (id === "receiveMidi") {
         let midiId: string = uid()
 
         if (actions[id]) midiId = actions[id]
@@ -880,9 +886,7 @@ function changeSlideAction(obj: any, id: string) {
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
 
-        let data: any = { id: midiId, mode: "slide", index: layoutSlide }
-        // sendMidi | receiveMidi
-        if (id === "receiveMidi") data = { id: midiId, mode: "slide_midi" }
+        let data: any = { id: midiId, mode: "slide_midi" } // , index: layoutSlide
 
         popupData.set(data)
         activePopup.set("action")
@@ -890,55 +894,74 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
+    // WIP MIDI
+    // if (id.includes("Midi")) {
+    //     let midiId: string = uid()
+
+    //     if (actions[id]) midiId = actions[id]
+    //     else actions[id] = midiId
+
+    //     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
+
+    //     let data: any = { id: midiId, mode: "slide", index: layoutSlide }
+    //     // sendMidi | receiveMidi
+    //     if (id === "receiveMidi") data = { id: midiId, mode: "slide_midi" }
+
+    //     popupData.set(data)
+    //     activePopup.set("action")
+
+    //     return
+    // }
+
     let indexes: number[] = obj.sel.data.map(({ index }) => index)
 
-    if (id === "startShow") {
-        let showId: string = actions[id]?.id || get(sortedShowsList)[0]
+    // if (id === "startShow") {
+    //     let showId: string = actions[id]?.id || get(sortedShowsList)[0]
 
-        if (!showId) {
-            newToast("$empty.shows")
-            return
-        }
+    //     if (!showId) {
+    //         newToast("$empty.shows")
+    //         return
+    //     }
 
-        if (!actions[id]) actions[id] = { id: showId }
+    //     if (!actions[id]) actions[id] = { id: showId }
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
+    //     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
 
-        let data: any = {
-            action: "select_show",
-            active: showId,
-            trigger: (showId: string) => {
-                if (!showId) return
-                actions[id] = { id: showId }
-                history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
-            },
-        }
+    //     let data: any = {
+    //         action: "select_show",
+    //         active: showId,
+    //         trigger: (showId: string) => {
+    //             if (!showId) return
+    //             actions[id] = { id: showId }
+    //             history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
+    //         },
+    //     }
 
-        popupData.set(data)
-        activePopup.set("select_show")
+    //     popupData.set(data)
+    //     activePopup.set("select_show")
 
-        return
-    }
+    //     return
+    // }
 
-    if (id === "outputStyle") {
-        let styleId: string = actions[id] || Object.keys(get(styles))[0]
+    // if (id === "outputStyle") {
+    //     let styleId: string = actions[id] || Object.keys(get(styles))[0]
 
-        if (!styleId) {
-            newToast("$toast.empty_styles")
-            return
-        }
+    //     if (!styleId) {
+    //         newToast("$toast.empty_styles")
+    //         return
+    //     }
 
-        if (!actions[id]) actions[id] = styleId
+    //     if (!actions[id]) actions[id] = styleId
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "change_style_slide" } })
+    //     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "change_style_slide" } })
 
-        let data: any = { id: styleId, outputs: actions.styleOutputs, indexes }
+    //     let data: any = { id: styleId, outputs: actions.styleOutputs, indexes }
 
-        popupData.set(data)
-        activePopup.set("choose_style")
+    //     popupData.set(data)
+    //     activePopup.set("choose_style")
 
-        return
-    }
+    //     return
+    // }
 
     if (id === "animate") {
         if (!actions[id]) {
@@ -954,37 +977,37 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
-    if (id === "trigger") {
-        popupData.set({ dropdown: true, index: layoutSlide })
+    // if (id === "trigger") {
+    //     popupData.set({ dropdown: true, index: layoutSlide })
 
-        if (!actions[id]) {
-            activePopup.set("trigger")
-            return
-        }
+    //     if (!actions[id]) {
+    //         activePopup.set("trigger")
+    //         return
+    //     }
 
-        let data = get(triggers)[actions[id]]
+    //     let data = get(triggers)[actions[id]]
 
-        selected.set({ id: "trigger", data: [{ ...data, id: actions[id] }] })
-        activePopup.set("trigger")
+    //     selected.set({ id: "trigger", data: [{ ...data, id: actions[id] }] })
+    //     activePopup.set("trigger")
 
-        return
-    }
+    //     return
+    // }
 
-    if (id === "audioStream") {
-        popupData.set({ dropdown: true, index: layoutSlide })
+    // if (id === "audioStream") {
+    //     popupData.set({ dropdown: true, index: layoutSlide })
 
-        if (!actions[id]) {
-            activePopup.set("audio_stream")
-            return
-        }
+    //     if (!actions[id]) {
+    //         activePopup.set("audio_stream")
+    //         return
+    //     }
 
-        let data = get(audioStreams)[actions[id]]
+    //     let data = get(audioStreams)[actions[id]]
 
-        selected.set({ id: "audio_stream", data: [{ ...data, id: actions[id] }] })
-        activePopup.set("audio_stream")
+    //     selected.set({ id: "audio_stream", data: [{ ...data, id: actions[id] }] })
+    //     activePopup.set("audio_stream")
 
-        return
-    }
+    //     return
+    // }
 
     if (id === "nextTimer") {
         let nextTimer = clone(ref[layoutSlide]?.data?.nextTimer) || 0

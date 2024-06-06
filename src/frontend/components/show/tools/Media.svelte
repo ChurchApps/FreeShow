@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { MAIN, OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, driveData, media, midiIn, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
+    import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
@@ -110,20 +110,21 @@
         })
     }
 
-    let midi: any[] = []
-    $: showMidi = show?.midi || {}
-    // $activePopup !== "midi" &&
-    $: if (Object.keys(showMidi).length || Object.keys($midiIn).length) {
-        midi = []
-        Object.entries(showMidi).forEach(([id, value]: any) => {
-            midi.push({ id, ...value })
-        })
-        Object.entries($midiIn).forEach(([id, value]: any) => {
-            if (value.shows.find((a) => a.id === $activeShow!.id)) {
-                midi.push({ id, ...value, sendType: "in" })
-            }
-        })
-    } else if (!Object.keys(showMidi).length) midi = []
+    // WIP MIDI get actions
+    // let midi: any[] = []
+    // $: showMidi = show?.midi || {}
+    // // $activePopup !== "midi" &&
+    // $: if (Object.keys(showMidi).length || Object.keys($midiIn).length) {
+    //     midi = []
+    //     Object.entries(showMidi).forEach(([id, value]: any) => {
+    //         midi.push({ id, ...value })
+    //     })
+    //     Object.entries($midiIn).forEach(([id, value]: any) => {
+    //         if (value.shows.find((a) => a.id === $activeShow!.id)) {
+    //             midi.push({ id, ...value, sendType: "in" })
+    //         }
+    //     })
+    // } else if (!Object.keys(showMidi).length) midi = []
 
     // TODO: check if file exists!!!
 
@@ -136,7 +137,7 @@
 <!-- TODO: transition type & duration -->
 
 <div class="main">
-    {#if bgs.length || audio.length || mics.length || midi.length}
+    {#if bgs.length || audio.length || mics.length}
         {#if bgs.length}
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}

@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { activePopup } from "../../stores"
+    import { activePopup, contextData } from "../../stores"
     import ContextChild from "./ContextChild.svelte"
     import ContextItem from "./ContextItem.svelte"
     import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
+    import { quickLoadItems } from "./loadItems"
 
     let contextElem: any = null
     let contextActive: boolean = false
@@ -60,6 +61,25 @@
     const click = (e: MouseEvent) => {
         if (!e.target?.closest(".contextMenu")) contextActive = false
     }
+
+    // preload data (to check if some of the buttons can be hidden)
+    $: if (activeMenu) loadData()
+    function loadData() {
+        activeMenu.forEach((id) => {
+            let items = contextMenuItems[id]?.items || []
+            console.log(items)
+            if (!items[0]?.includes("LOAD")) return
+
+            let firstId = items[0].slice(5, items[0].length)
+            console.log(firstId)
+            quickLoadItems(firstId)
+        })
+    }
+
+    // prevent loop
+    $: outputs = $contextData.outputList
+    $: hasText = $contextData.textContent
+    $: layers = $contextData.layers
 </script>
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} />
@@ -71,7 +91,10 @@
                 {#if id === "SEPERATOR"}
                     <hr />
                 {:else if contextMenuItems[id]?.items}
-                    <ContextChild {id} {contextElem} bind:contextActive {side} translate={activeMenu.length > 2 ? 0 : translate} />
+                    <!-- conditional menus -->
+                    {#if (id !== "bind_to" || outputs) && (id !== "format" || hasText) && (id !== "remove_layers" || layers)}
+                        <ContextChild {id} {contextElem} bind:contextActive {side} translate={activeMenu.length > 2 ? 0 : translate} />
+                    {/if}
                 {:else}
                     <ContextItem {id} {contextElem} bind:contextActive />
                 {/if}

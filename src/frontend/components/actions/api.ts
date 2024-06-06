@@ -22,6 +22,7 @@ type API_boolval = { value?: boolean }
 type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
 type API_slide = { showId?: string | "active"; slideId?: string }
+export type API_output_style = { outputStyle?: string; styleOutputs?: any }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
     type?: TransitionType // default: "fade"
@@ -36,7 +37,17 @@ export type API_variable = {
     value?: string | number
     variableAction?: "increment" | "decrement"
 }
-export type API_midi = {}
+export type API_midi = {
+    input?: string
+    output?: string
+    type: "noteon" | "noteoff"
+    values: {
+        note: number
+        velocity: number
+        channel: number
+    }
+    defaultValues?: boolean // only used by actions
+}
 
 /// ACTIONS ///
 
@@ -58,11 +69,11 @@ export const API_ACTIONS = {
     previous_slide: () => previousSlide({ key: "ArrowLeft" }),
     index_select_slide: (data: API_index) => selectSlideByIndex(data.index),
     name_select_slide: (data: API_strval) => selectSlideByName(data.value),
+    id_select_group: (data: API_id) => gotoGroup(data.id),
     lock_output: (data: API_boolval) => toggleLock(data.value),
     toggle_output_windows: () => displayOutputs(),
     // WIP disable stage ?
     // WIP disable NDI ?
-    id_select_group: (data: API_id) => gotoGroup(data.id),
     // index_select_layout | name_select_layout
 
     // STAGE
@@ -105,7 +116,8 @@ export const API_ACTIONS = {
     stop_timers: () => stopTimers(), // BC
 
     // VISUAL
-    id_select_output_style: (data: API_id) => changeOutputStyle(data.id),
+    id_select_output_style: (data: API_id) => changeOutputStyle({ outputStyle: data.id }),
+    change_output_style: (data: API_output_style) => changeOutputStyle(data),
     change_transition: (data: API_transition) => updateTransition(data),
 
     // OTHER

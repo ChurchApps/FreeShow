@@ -232,6 +232,8 @@ export interface Midi {
     // action?: string
     // actionData?: any
     shows?: any[] // ??
+    startupEnabled?: boolean
+    midiEnabled?: boolean
     midi?: {
         input?: string
         output?: string

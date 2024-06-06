@@ -7,7 +7,7 @@
     import { convertOldMidiToNewAction, midiToNote } from "../../actions/midi"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { keysToID } from "../../helpers/array"
+    import { keysToID, sortByName } from "../../helpers/array"
     import Button from "../../inputs/Button.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
@@ -33,7 +33,7 @@
         activePopup.set("action")
     }
 
-    $: actions = keysToID($midiIn).map(convertOldMidiToNewAction)
+    $: actions = sortByName(keysToID($midiIn)).map(convertOldMidiToNewAction)
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;">
@@ -53,7 +53,7 @@
                                     <Icon id={actionData[action.triggers[0]]?.icon || "actions"} right />
                                 {/if}
 
-                                <p style="width: 350px;">
+                                <p style="width: 350px;" class:startup={action.startupEnabled}>
                                     {action.name}
 
                                     {#if action.midi}
@@ -106,20 +106,23 @@
         flex: 1;
         overflow: auto;
     }
-    .actions :global(.selectElem:not(.isSelected):nth-child(even)) {
+    .actions :global(.action:nth-child(even)) {
         background-color: rgb(0 0 20 / 0.08);
+    }
+    .actions :global(.selectElem button:not(.hover)) {
+        background: transparent;
     }
 
     .action {
         display: flex;
         flex-direction: row;
         width: 100%;
-        min-height: 40px;
+        min-height: 35px;
+    }
+    .startup {
+        color: var(--secondary);
     }
 
-    .action :global(button) {
-        min-height: inherit;
-    }
     .action :global(button:nth-child(1)) {
         width: 100%;
         justify-content: space-between;
