@@ -25,7 +25,7 @@
     } from "../../stores"
     import { send } from "../../utils/request"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
-    import Editbox from "../edit/Editbox.svelte"
+    import Editbox from "../edit/editbox/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone, keysToID } from "../helpers/array"
     import { getContrast } from "../helpers/color"
@@ -64,6 +64,7 @@
             if (i <= index) {
                 if (a.actions?.clearBackground && (!a.disabled || i === index)) ghostBackground = null
                 else if (a.background && !a.disabled) ghostBackground = show.media[a.background]
+                if (a.background && show.media[a.background]?.loop === false) ghostBackground = null
             }
         })
     }

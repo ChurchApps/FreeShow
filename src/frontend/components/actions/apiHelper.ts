@@ -1,14 +1,14 @@
 import { get } from "svelte/store"
-import { STAGE } from "../../types/Channels"
-import { keysToID, sortByName } from "../components/helpers/array"
-import { getActiveOutputs, setOutput } from "../components/helpers/output"
-import { playNextGroup, updateOut } from "../components/helpers/showActions"
-import { _show } from "../components/helpers/shows"
-import { activeEdit, activePage, activeProject, activeShow, dictionary, groups, outLocked, outputs, overlays, projects, refreshEditSlide, sortedShowsList, variables } from "../stores"
+import { STAGE } from "../../../types/Channels"
+import { keysToID, sortByName } from "../helpers/array"
+import { getActiveOutputs, setOutput } from "../helpers/output"
+import { playNextGroup, updateOut } from "../helpers/showActions"
+import { _show } from "../helpers/shows"
+import { activeEdit, activePage, activeProject, activeShow, dictionary, groups, outLocked, outputs, overlays, projects, refreshEditSlide, sortedShowsList, variables } from "../../stores"
 import type { API_variable } from "./api"
-import { newToast } from "./messages"
-import { send } from "./request"
-import { getLabelId } from "../components/helpers/show"
+import { newToast } from "../../utils/messages"
+import { send } from "../../utils/request"
+import { getLabelId } from "../helpers/show"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -74,16 +74,13 @@ export function selectSlideByIndex(index: number) {
 export function selectSlideByName(name: string) {
     let slides = _show().slides().get()
     let sortedSlides = sortByClosestMatch(slides, getLabelId(name), "group")
-    console.log(slides, sortedSlides, name, getLabelId(name))
     if (!sortedSlides[0]) return
 
     let showRef = _show().layouts("active").ref()[0]
-    console.log(showRef)
     if (!showRef) return newToast("$toast.midi_no_show")
 
     let index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
     let slideRef = showRef[index]
-    console.log(index, slideRef)
     if (!slideRef) return
 
     outputSlide(showRef, index)
@@ -114,7 +111,6 @@ export function selectOverlayByName(name: string) {
     if (get(outLocked)) return
 
     let sortedOverlays = sortByClosestMatch(getSortedOverlays(), name)
-    console.log(sortedOverlays)
     let overlayId = sortedOverlays[0]?.id
     if (!overlayId) return
 

@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { Show, ShowList, Shows, Slide } from "../../../types/Show"
 import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
-import { clone, keysToID, removeValues, sortObject } from "./array"
+import { clone, keysToID, removeValues, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
 
 // check if name exists and add number
@@ -97,13 +97,16 @@ export function updateShowsList(shows: Shows) {
 
     let sortType = get(sorted).shows?.type || "name"
     // sort by name regardless if many shows have the same date
-    let sortedShows: any[] = sortObject(showsList, "name")
+    let sortedShows: any[] = []
     if (sortType === "created") {
         sortedShows = showsList.sort((a, b) => b.timestamps?.created - a.timestamps?.created)
     } else if (sortType === "modified") {
         sortedShows = showsList.sort((a, b) => (b.timestamps?.modified || b.timestamps?.created) - (a.timestamps?.modified || a.timestamps?.created))
     } else if (sortType === "used") {
         sortedShows = showsList.sort((a, b) => (b.timestamps?.used || b.timestamps?.created) - (a.timestamps?.used || a.timestamps?.created))
+    } else {
+        // sort by name
+        sortedShows = sortByNameAndNumber(showsList)
     }
 
     let filteredShows: ShowList[] = removeValues(sortedShows, "private", true)

@@ -5,6 +5,7 @@
     import Date from "../../system/Date.svelte"
     import AudioMix from "./AudioMix.svelte"
     import CalendarInfo from "./CalendarInfo.svelte"
+    import FunctionsInfo from "./FunctionsInfo.svelte"
     import MediaInfo from "./MediaInfo.svelte"
     import OverlayInfo from "./OverlayInfo.svelte"
     import ScriptureInfo from "./ScriptureInfo.svelte"
@@ -30,6 +31,8 @@
         <ScriptureInfo {bibles} />
     {:else if !$forceClock && id === "calendar"}
         <CalendarInfo />
+    {:else if !$forceClock && id === "functions"}
+        <FunctionsInfo />
     {:else}
         <Center>
             <Clock />

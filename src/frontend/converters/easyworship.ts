@@ -38,7 +38,7 @@ export function convertEasyWorship(data: any) {
     // close drawer to prevent loading songs
     // drawer.set({ height: 40, stored: null })
 
-    createCategory("EasyWorship")
+    let categoryId = createCategory("EasyWorship")
 
     let songs = data.find((a: any) => a.content.song)?.content.song
     let songsWords = data.find((a: any) => a.content.word)?.content.word
@@ -81,7 +81,7 @@ export function convertEasyWorship(data: any) {
         // if (category === "all" || category === "unlabeled") category = null
 
         let layoutID = uid()
-        let show = new ShowObj(false, "easyworship", layoutID)
+        let show = new ShowObj(false, categoryId, layoutID)
         if (song) {
             show.meta = {
                 title: song?.title || "",

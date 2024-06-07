@@ -26,7 +26,8 @@ function checkLesson(lesson: any) {
         .filter((a: any) => a)
 
     function getFilePath(file: any) {
-        let extension = getFileExtension(file.url)
+        if (file.streamUrl) file.fileType = "video/mp4"
+        let extension = getFileExtension(file.url, file.fileType)
         if (!extension) return
 
         let fileName = file.name
@@ -36,39 +37,107 @@ function checkLesson(lesson: any) {
     }
 }
 
-function getFileExtension(url: string) {
-    if (url.includes(".mp4")) return "mp4"
-    if (url.includes(".jpg") || url.includes(".jpeg")) return "jpg"
-    if (url.includes(".png")) return "png"
+function getFileExtension(url: string, fileType: string = "") {
+    if (fileType.includes("mp4") || url.includes(".mp4")) return "mp4"
+    if (fileType.includes("jpg") || fileType.includes("jpeg") || url.includes(".jpg") || url.includes(".jpeg")) return "jpg"
+    if (fileType.includes("png") || url.includes(".png")) return "png"
 
     return ""
 }
 
 function downloadFile(filePath: string, file: any) {
+    let fileRef = { from: file.url, to: filePath, type: file.type }
+
     if (doesPathExist(filePath)) {
-        console.log(filePath + " exists!")
-        return { from: file.url, to: filePath, type: file.type }
+        // console.log(filePath + " exists!")
+        return fileRef
     }
 
+    addToDownloadQueue({ path: filePath, file })
+
+    return fileRef
+}
+
+let downloadQueue: any[] = []
+function addToDownloadQueue(file: any) {
+    downloadQueue.push(file)
+    startDownload()
+}
+
+let downloading: any = null
+let downloadCount: number = 0
+let errorCount: number = 0
+async function startDownload() {
+    if (downloading) return
+    if (!downloadQueue.length) {
+        if (downloadCount) console.log(`${downloadCount} file(s) downloaded!`)
+        return
+    }
+
+    let timeout = true
+    setTimeout(() => {
+        if (!timeout) return
+        next()
+    }, 8000)
+
+    downloading = downloadQueue.shift()
+
     // download the media
-    const fileStream = fs.createWriteStream(filePath)
-    // WIP this might not download entire video sometimes
-    https.get(file.url, (res) => {
-        res.pipe(fileStream)
+    const fileStream = fs.createWriteStream(downloading.path)
+    const file = downloading.file
+    let url = file.url
 
-        res.on("error", (err) => {
-            console.log(err)
+    if (!url) return next()
+
+    console.log(`Downloading lessons media: ${file.name}`)
+    https
+        .get(url, (res) => {
+            if (res.statusCode !== 200) {
+                console.error(`Failed to download file, status code: ${res.statusCode}`)
+                fs.unlink(downloading.path, () => {})
+                next()
+                return
+            }
+
+            res.pipe(fileStream)
+
+            res.on("error", (err) => {
+                console.log(`Response error: ${err.message}`)
+                retry()
+            })
+
+            fileStream.on("error", (err) => {
+                fs.unlink(downloading.path, () => {})
+                console.error(`File error: ${err.message}`)
+                retry()
+            })
+
+            fileStream.on("finish", () => {
+                fileStream.close()
+                downloadCount++
+
+                next()
+            })
+        })
+        .on("error", (err) => {
+            fs.unlink(downloading.path, () => {})
+            console.error(`Request error: ${err.message}`)
+            retry()
         })
 
-        fileStream.on("error", (err) => {
-            console.log(err)
-        })
+    function next() {
+        if (!timeout) return
 
-        fileStream.on("finish", () => {
-            fileStream.close()
-            console.log("Media: '" + file.name + "', downloaded!")
-        })
-    })
+        timeout = false
+        downloading = null
+        startDownload()
+    }
 
-    return { from: file.url, to: filePath, type: file.type }
+    function retry() {
+        if (errorCount > 5) return
+        errorCount++
+
+        next()
+        addToDownloadQueue(downloading)
+    }
 }

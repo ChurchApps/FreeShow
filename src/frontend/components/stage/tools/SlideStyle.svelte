@@ -93,7 +93,7 @@
 
 <div class="section">
     <CombinedInput>
-        <p><T id="midi.output" /></p>
+        <p><T id="stage.source_output" /></p>
         <Dropdown
             style="width: 100%;"
             options={[{ id: "", name: "—" }, ...outputList]}
@@ -117,6 +117,12 @@
         <p><T id="stage.auto_stretch" /></p>
         <div class="alignRight">
             <Checkbox checked={settings.autoStretch ?? true} on:change={(e) => toggleValue(e, "autoStretch")} />
+        </div>
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="stage.labels" /></p>
+        <div class="alignRight">
+            <Checkbox checked={settings.labels ?? false} on:change={(e) => toggleValue(e, "labels")} />
         </div>
     </CombinedInput>
 

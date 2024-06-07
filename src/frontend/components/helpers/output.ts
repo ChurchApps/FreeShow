@@ -325,11 +325,12 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
 
-        if (templateItem.chords) item.chords = templateItem.chords
-        if (templateItem.actions) item.actions = templateItem.actions
-        if (templateItem.specialStyle) item.specialStyle = templateItem.specialStyle
-        if (templateItem.scrolling) item.scrolling = templateItem.scrolling
-        if (templateItem.bindings) item.bindings = templateItem.bindings
+        // remove exiting styling & add new if set in template
+        const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings"]
+        extraStyles.forEach((style) => {
+            delete item[style]
+            if (templateItem![style]) item[style] = templateItem![style]
+        })
 
         if (type !== "text") return finish()
 
@@ -339,7 +340,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             line.align = templateLine?.align || ""
             line.text?.forEach((text: any, k: number) => {
                 let templateText = templateLine?.text[k] || templateLine?.text[0]
-                text.style = templateText?.style || ""
+                if (text.customType !== "disableTemplate") text.style = templateText?.style || ""
 
                 // add dynamic values
                 if (!text.value?.length && templateText?.value?.[0] === "{") {
@@ -362,17 +363,13 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     }
 
     // remove any duplicate values
-    templateItems = templateItems.filter((item) => !newSlideItems.find((a) => JSON.stringify(item) !== JSON.stringify(a)))
+    templateItems = templateItems.filter((item) => !newSlideItems.find((a) => JSON.stringify(item) === JSON.stringify(a)))
 
     // this will ensure the correct order on the remaining items
     let remainingCount = Object.values(sortedTemplateItems).reduce((value, items) => (value += items.length), 0)
-    console.log(sortedTemplateItems, remainingCount)
     let remainingTemplateItems = remainingCount ? templateItems.slice(remainingCount * -1) : []
-    console.log(newSlideItems, remainingTemplateItems)
     // add behind existing items (any textboxes previously on top not in use will not be replaced by any underneath)
     newSlideItems = [...remainingTemplateItems, ...newSlideItems]
-    // newSlideItems.push(...remainingTemplateItems)
-    console.log(newSlideItems)
 
     return newSlideItems
 }
@@ -403,6 +400,17 @@ function sortItemsByType(items: Item[]) {
     })
 
     return sortedItems
+}
+
+export function getItemsCountByType(items: Item[]) {
+    let sortedItems = sortItemsByType(items)
+    let typeCount: { [key: string]: number } = {}
+
+    Object.keys(sortedItems).forEach((type) => {
+        typeCount[type] = sortedItems[type].length
+    })
+
+    return typeCount
 }
 
 // OUTPUT COMPONENT
@@ -441,7 +449,7 @@ export function setTemplateStyle(outSlide: any, templateId: string | undefined, 
     let slideItems = outSlide?.id === "temp" ? outSlide.tempItems : items
     let templateItems = get(templates)[templateId || ""]?.items || []
 
-    return mergeWithTemplate(slideItems, templateItems)
+    return mergeWithTemplate(slideItems, templateItems, true)
 }
 
 export function getOutputLines(outSlide: any, styleLines: any = 0) {

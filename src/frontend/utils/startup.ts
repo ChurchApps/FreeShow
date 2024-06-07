@@ -1,5 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN, NDI, OPEN_FOLDER, OUTPUT, STARTUP, STORE } from "../../types/Channels"
+import { triggerAction } from "../components/actions/api"
+import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
@@ -88,11 +90,10 @@ import { createData } from "./createData"
 import { setLanguage } from "./language"
 import { listenForUpdates } from "./listeners"
 import { listen, newToast } from "./messages"
-import { playMidiIn } from "./midi"
 import { receive, send } from "./request"
 import { saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { triggerAction } from "./api"
+import { checkStartupActions } from "../components/actions/actions"
 
 let initialized: boolean = false
 export function startup() {
@@ -133,6 +134,7 @@ function startupMain() {
         listenForUpdates()
         listen()
         startTracking()
+        checkStartupActions()
     }, 5000)
 }
 
@@ -181,7 +183,7 @@ const receiveMAIN: any = {
         if (get(saved)) saveComplete({ closeWhenFinished: true })
         else activePopup.set("unsaved")
     },
-    RECEIVE_MIDI: (msg) => playMidiIn(msg),
+    RECEIVE_MIDI: (msg) => receivedMidi(msg),
     DELETE_SHOWS: (a) => {
         if (!a.deleted.length) {
             newToast("$toast.delete_shows_empty")

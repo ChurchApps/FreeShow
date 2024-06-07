@@ -29,11 +29,11 @@ export function doesPathExist(path: string): boolean {
     return false
 }
 
-export function readFile(path: string, encoding: BufferEncoding = "utf8"): string {
+export function readFile(path: string, encoding: BufferEncoding = "utf8", disableLog: boolean = false): string {
     try {
         return fs.readFileSync(path, encoding)
     } catch (err: any) {
-        actionComplete(err, "Error when reading file")
+        if (!disableLog) actionComplete(err, "Error when reading file")
         return ""
     }
 }
@@ -68,12 +68,12 @@ export function renameFile(p: string, oldName: string, newName: string) {
     fs.rename(oldPath, newPath, (err) => actionComplete(err, "Could not rename file"))
 }
 
-export function getFileStats(p: string) {
+export function getFileStats(p: string, disableLog: boolean = false) {
     try {
         const stat: Stats = fs.statSync(p)
         return { path: p, stat, extension: path.extname(p).substring(1), folder: stat.isDirectory() }
     } catch (err) {
-        actionComplete(err, "Error when getting file stats")
+        if (!disableLog) actionComplete(err, "Error when getting file stats")
         return null
     }
 }
@@ -389,11 +389,11 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
 
 // LOAD SHOWS
 
-export function loadShows({ showsPath }: any) {
+export function loadShows({ showsPath }: any, returnShows: boolean = false) {
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 
-    let cachedShows = stores.SHOWS.store
+    let cachedShows = stores.SHOWS.store || {}
     let newCachedShows: any = {}
 
     for (const name of filesInFolder) checkShow(name)
@@ -405,7 +405,7 @@ export function loadShows({ showsPath }: any) {
         // no name results in the id trying to be read leading to show not found
         if (!trimmedName) return
 
-        let matchingShowId = Object.entries(cachedShows).find(([_id, a]: any) => a.name === trimmedName)?.[0]
+        let matchingShowId = Object.entries(cachedShows).find(([_id, a]: any) => a?.name === trimmedName)?.[0]
         if (matchingShowId && !newCachedShows[matchingShowId]) {
             newCachedShows[matchingShowId] = cachedShows[matchingShowId]
             return
@@ -423,6 +423,8 @@ export function loadShows({ showsPath }: any) {
 
         newCachedShows[id] = trimShow({ ...show[1], name: trimmedName })
     }
+
+    if (returnShows) return newCachedShows
 
     // save this (for cloud sync)
     stores.SHOWS.clear()

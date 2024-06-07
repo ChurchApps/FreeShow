@@ -4,7 +4,7 @@ import { MAIN } from "../../types/Channels"
 import { ShowObj } from "../classes/Show"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
-import { checkName } from "../components/helpers/show"
+import { checkName, getLabelId } from "../components/helpers/show"
 import { activeProject, dataPath, projects, refreshSlideThumbnails, videoExtensions } from "../stores"
 import { newToast } from "../utils/messages"
 import { receive, send } from "../utils/request"
@@ -114,7 +114,7 @@ function convertOpenLessonPlaylist(lesson: OlpLesson) {
     function createShow() {
         let layoutId = uid()
         let show = new ShowObj(false, "lessons", layoutId)
-        let showId = uid()
+        let showId = getLabelId(lesson.lessonTitle) || uid()
 
         let name = lesson.lessonTitle
         if (lesson.lessonName !== name) name = `${name} - ${lesson.lessonName}`

@@ -153,6 +153,7 @@ export interface Line {
     text: {
         value: string
         style: string
+        customType?: string // "disableTemplate"
     }[]
     chords?: Chords[]
 }
@@ -227,15 +228,22 @@ export interface Media {
 
 export interface Midi {
     name: string
-    input?: string
-    output?: string
-    action?: string
-    actionData?: any
-    type: "noteon" | "noteoff" | "cc"
-    values: {
-        note: number
-        velocity: number
-        channel: number
+    triggers: string[]
+    actionValues?: any[]
+    // action?: string
+    // actionData?: any
+    shows?: any[] // ??
+    startupEnabled?: boolean
+    midiEnabled?: boolean
+    midi?: {
+        input?: string
+        output?: string
+        type: "noteon" | "noteoff" | "cc"
+        values: {
+            note: number
+            velocity: number
+            channel: number
+        }
     }
 }
 

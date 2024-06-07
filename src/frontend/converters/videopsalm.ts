@@ -90,7 +90,7 @@ const keys = [
     "Language",
 ]
 export function convertVideopsalm(data: any) {
-    createCategory("VideoPsalm")
+    let categoryId = createCategory("VideoPsalm")
 
     let tempShows: any[] = []
 
@@ -131,9 +131,13 @@ export function convertVideopsalm(data: any) {
             alertMessage.set(importingText + " " + i + "/" + content.Songs.length + " (" + percentage + "%)" + "<br>" + title)
 
             let layoutID = uid()
-            let show = new ShowObj(false, "videopsalm", layoutID)
+            let show = new ShowObj(false, categoryId, layoutID)
             let showId = song.Guid || uid()
-            show.name = checkName(title || get(dictionary).main?.unnamed || "Unnamed", showId) || ""
+            let name = title || get(dictionary).main?.unnamed || "Unnamed"
+            let songId = song.ID || ""
+            if (songId && categoryId !== "videopsalm") name = `${songId} - ${name}`
+            console.log(name, song)
+            show.name = checkName(name, showId) || ""
             show.meta = {
                 title: show.name,
                 artist: album || "",
@@ -191,8 +195,7 @@ function fixJSON(s: string) {
     return notKey ? s : s.slice(0, index + 1) + '"' + word + '"'
 }
 
-const VPgroups: any = { V: "verse", C: "chorus", P: "pre_chorus", B: "bridge", T: "tag", I: "intro", O: "outro", N: "break" }
-// S: slide, R: other
+const VPgroups: any = { V: "verse", S: "verse", C: "chorus", R: "chorus", P: "pre_chorus", B: "bridge", T: "tag", I: "intro", O: "outro", N: "break" }
 function createSlides({ Verses, Sequence }: Song) {
     // VerseOrderIndex
     let slides: any = {}

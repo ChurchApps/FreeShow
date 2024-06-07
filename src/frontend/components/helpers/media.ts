@@ -38,11 +38,28 @@ export function getFileName(path: string): string {
     return path
 }
 
+let pathJoiner = "/"
 export function splitPath(path: string): string[] {
     if (!path) return []
-    if (path.indexOf("\\") > -1) return path.split("\\")
-    if (path.indexOf("/") > -1) return path.split("/")
-    return []
+    if (path.indexOf("\\") > -1) pathJoiner = "\\"
+    if (path.indexOf("/") > -1) pathJoiner = "/"
+    return path.split(pathJoiner) || []
+}
+
+export function joinPath(path: string[]): string {
+    return path.join(pathJoiner)
+}
+
+// fix for media files with special characters in file name not playing
+export function encodeFilePath(path: string): string {
+    // already encoded
+    if (path.match(/%\d+/g)) return path
+
+    let splittedPath = splitPath(path)
+    let fileName = splittedPath.pop() || ""
+    let encodedName = encodeURIComponent(fileName)
+
+    return joinPath([...splittedPath, encodedName])
 }
 
 // convert to base64

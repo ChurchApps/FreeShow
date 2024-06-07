@@ -104,7 +104,7 @@
 <style>
     .numberInput {
         display: flex;
-        align-items: center;
+        /* align-items: center; */
         background-color: var(--primary-darker);
         flex-flow: wrap;
         transition: opacity 0.3s;

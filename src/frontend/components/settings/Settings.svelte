@@ -1,7 +1,6 @@
 <script lang="ts">
     import { settingsTab } from "../../stores"
     import T from "../helpers/T.svelte"
-    import Actions from "./tabs/Actions.svelte"
     import Cloud from "./tabs/Cloud.svelte"
     import Connection from "./tabs/Connection.svelte"
     import General from "./tabs/General.svelte"
@@ -29,8 +28,6 @@
             <Styles />
         {:else if $settingsTab === "display_settings"}
             <Outputs />
-        {:else if $settingsTab === "actions"}
-            <Actions />
         {:else if $settingsTab === "connection"}
             <Connection />
         {:else if $settingsTab === "cloud"}

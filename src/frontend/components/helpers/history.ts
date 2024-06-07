@@ -180,6 +180,7 @@ export function history(obj: History, undo: null | boolean = null) {
                 // layout audio
                 let ref = _show(showID).layouts([obj.location!.layout!]).ref()[0][obj.location!.layoutSlide!]
                 let audio = ref?.data?.audio || []
+                if (!ref) return
 
                 if (undo) {
                     _show(showID).media([obj.newData.path]).remove()

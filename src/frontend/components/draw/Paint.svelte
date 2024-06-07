@@ -25,6 +25,8 @@
     })
 
     function redraw() {
+        if (!ctx) return
+
         for (var i = 1; i < lines.length; i++) {
             let previous: any = lines[i - 1]
             let current: any = lines[i]
@@ -46,6 +48,8 @@
 
     $: if (settings.clear) clear()
     function clear() {
+        if (!ctx) return
+
         ctx.clearRect(0, 0, resolution.width, resolution.height)
         lines = []
         paintCache.set([])
@@ -104,7 +108,7 @@
         if ($draw !== null && !mouseDown) mouseDown = true
         else if ($draw === null) mouseDown = false
     }
-    $: if (mouseDown) {
+    $: if (mouseDown && ctx) {
         ctx.beginPath()
         previousPos = $draw
         // ctx.moveTo(previousPos.x, previousPos.y)

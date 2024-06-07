@@ -5,6 +5,7 @@ import {
     activeProject,
     alertUpdates,
     audioFolders,
+    audioPlaylists,
     autoOutput,
     autosave,
     calendarAddShow,
@@ -84,6 +85,7 @@ import { newToast } from "./messages"
 
 export function save(closeWhenFinished: boolean = false, backup: boolean = false) {
     console.log("SAVING...")
+    newToast("$toast.saving")
 
     let settings: { [key in SaveListSettings]: any } = {
         initialized: true,
@@ -147,6 +149,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         variables: get(variables),
         triggers: get(triggers),
         audioStreams: get(audioStreams),
+        audioPlaylists: get(audioPlaylists),
         midiIn: get(midiIn),
         videoMarkers: get(videoMarkers),
         customizedIcons: get(customizedIcons),
@@ -193,13 +196,15 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
 }
 
 export function saveComplete({ closeWhenFinished, backup }: any) {
-    saved.set(true)
-    newToast("$toast.saved")
+    if (!closeWhenFinished) {
+        saved.set(true)
+        newToast("$toast.saved")
+    }
 
     if (backup) return
 
     let mainFolderId = get(driveData)?.mainFolderId
-    if (!mainFolderId) {
+    if (!mainFolderId || get(driveData)?.disabled === true) {
         if (closeWhenFinished) closeApp()
 
         return

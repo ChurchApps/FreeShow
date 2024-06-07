@@ -10,21 +10,23 @@ export function convertPowerpoint(files: any[]) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    createCategory("Presentation", "presentation", { isDefault: true })
+    let categoryId = createCategory("Presentation", "presentation", { isDefault: true })
 
     let tempShows: any[] = []
 
     setTimeout(() => {
         files.forEach(({ name, content }: any) => {
-            let slides: string[][] = []
+            let slides: string[][][] = []
             Object.keys(content).forEach((key) => {
                 if (!key.includes("ppt/slides/slide")) return
 
-                let slide: string[] = []
+                let slide: string[][] = []
+                // textboxes
                 let lists = content[key]?.["p:sld"]?.["p:cSld"]?.[0]?.["p:spTree"]?.[0]?.["p:sp"] || []
                 lists.forEach((list: any) => {
                     if (!list?.["p:txBody"]?.length) return
 
+                    let lines: string[] = []
                     list["p:txBody"][0]?.["a:p"]?.forEach((line: any) => {
                         if (!line?.["a:r"]) return
 
@@ -33,8 +35,9 @@ export function convertPowerpoint(files: any[]) {
                             value += list["a:t"]?.[0] || ""
                         })
 
-                        slide.push(value)
+                        lines.push(value)
                     })
+                    slide.push(lines)
                 })
 
                 slides.push(slide)
@@ -42,7 +45,7 @@ export function convertPowerpoint(files: any[]) {
 
             // create show
             let layoutID = uid()
-            let show: Show = new ShowObj(false, "presentation", layoutID)
+            let show: Show = new ShowObj(false, categoryId, layoutID)
             show.name = checkName(name)
 
             let meta: any = content["docProps/core.xml"]?.["cp:coreProperties"]
@@ -69,7 +72,7 @@ export function convertPowerpoint(files: any[]) {
     }, 10)
 }
 
-function createSlides(slides: string[][]) {
+function createSlides(slides: string[][][]) {
     let slidesObj: { [key: string]: Slide } = {}
     let layouts: any[] = []
 
@@ -77,11 +80,16 @@ function createSlides(slides: string[][]) {
         let id: string = uid()
         layouts.push({ id })
 
-        let items : Item[] = []
-        slide.forEach(line => {
-            items.push({style: "left:50px;top:120px;width:1820px;height:840px;", lines: [{align: "text-align: left;", text: [{ style: "", value: line }]}]})
-        });
-        
+        let items: Item[] = []
+        slide.forEach((textbox) => {
+            let lines: any[] = []
+            textbox.forEach((line) => {
+                lines.push({ align: "text-align: left;", text: [{ style: "", value: line }] })
+            })
+
+            items.push({ style: "left:50px;top:120px;width:1820px;height:840px;", lines })
+        })
+
         slidesObj[id] = {
             group: (i + 1).toString(),
             color: null,

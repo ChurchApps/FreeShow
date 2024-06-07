@@ -29,6 +29,7 @@ export interface StageShows {
                 auto?: boolean
                 style: string
                 align: string
+                label?: string // sending translated label to stage
             }
         }
     }

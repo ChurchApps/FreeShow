@@ -1,17 +1,17 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import type { Show } from "../../../types/Show"
+import { ShowObj } from "../../classes/Show"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, audioStreams, categories, drawerTabsData, imageExtensions, media, projects, scriptureSettings, showsCache, videoExtensions } from "../../stores"
+import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, audioPlaylists, audioStreams, categories, drawerTabsData, imageExtensions, media, projects, scriptureSettings, showsCache, videoExtensions } from "../../stores"
+import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
 import { addItem } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
-import { _show } from "./shows"
-import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
-import type { Show } from "../../../types/Show"
-import { ShowObj } from "../../classes/Show"
 import { checkName } from "./show"
+import { _show } from "./shows"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -177,6 +177,18 @@ export const dropActions: any = {
             // return history
         }
 
+        // audio playlist
+        if (get(audioPlaylists)[drop.data] && drag.id === "audio") {
+            audioPlaylists.update((a) => {
+                let newSongs = drag.data.map((a) => a.path)
+                a[drop.data].songs.push(...newSongs)
+
+                return a
+            })
+
+            // return history
+        }
+
         if (drop.data !== "all" && (drag.id === "overlay" || drag.id === "template")) {
             drag.data.forEach((id: any) => {
                 history({
@@ -266,7 +278,11 @@ const slideDrop: any = {
         history.id = "SLIDES"
         let slides: any[] = drag.data.map((a: any) => ({ id: a.id || uid(), group: removeExtension(a.name || ""), color: null, settings: {}, notes: "", items: [] }))
 
-        data = data.map((a) => ({ ...a, path: a.path || a.id }))
+        let notBackgrounds: any = {}
+        // videos are probably not meant to be background if they are added in bulk
+        if (data.length > 1) notBackgrounds = { muted: false, loop: false }
+
+        data = data.map((a) => ({ ...a, path: a.path || a.id, ...(a.type === "video" ? notBackgrounds : {}) }))
         history.newData = { index: drop.index, data: slides, layout: { backgrounds: data } }
 
         return history
@@ -500,6 +516,27 @@ const slideDrop: any = {
         let data: any = ref.data.actions || {}
         let key = drag.data[0].type === "in" ? "receiveMidi" : "sendMidi"
         data[key] = drag.data[0].id
+
+        history.newData = { key: "actions", data, indexes: [drop.index] }
+        return history
+    },
+    action: ({ drag, drop }: any, history: any) => {
+        history.id = "SHOW_LAYOUT"
+
+        let ref: any = _show().layouts("active").ref()[0][drop.index!]
+        let data: any = ref.data.actions || {}
+        let slideActions = data.slideActions || []
+
+        let existing = slideActions.find((a) => a.triggers?.[0] === "run_action")
+        // WIP MIDI you should maybe be able to add more than one
+        if (existing) return
+
+        let actionId = drag.data[0].id
+        let action = { id: uid(), triggers: ["run_action"], actionValues: { run_action: { id: actionId } } }
+        if (drag.data[0].triggers?.[0]) action = drag.data[0]
+
+        slideActions.push(action)
+        data.slideActions = slideActions
 
         history.newData = { key: "actions", data, indexes: [drop.index] }
         return history

@@ -2,7 +2,7 @@ import { blur, fade, crossfade, fly, scale, slide } from "svelte/transition"
 import type { TransitionType } from "./../../types/Show"
 // import { quintInOut } from "svelte/easing"
 import { backInOut, bounceInOut, circInOut, cubicInOut, elasticInOut, linear, sineInOut } from "svelte/easing"
-import type { API_transition } from "./api"
+import type { API_transition } from "../components/actions/api"
 import { transitionData } from "../stores"
 
 // https://stackoverflow.com/questions/70531875/svelte-crossfade-transition-between-pages

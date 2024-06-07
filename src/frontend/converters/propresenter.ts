@@ -14,7 +14,7 @@ export function convertProPresenter(data: any) {
     alertMessage.set("popup.importing")
     activePopup.set("alert")
 
-    createCategory("ProPresenter")
+    let categoryId = createCategory("ProPresenter")
 
     let tempShows: any[] = []
 
@@ -35,7 +35,7 @@ export function convertProPresenter(data: any) {
             if (!song) return
 
             let layoutID = uid()
-            let show = new ShowObj(false, "propresenter", layoutID)
+            let show = new ShowObj(false, categoryId, layoutID)
             let showId = song["@uuid"] || song.uuid?.string || uid()
             show.name = checkName(song.name === "Untitled" ? name : song.name || name, showId)
 

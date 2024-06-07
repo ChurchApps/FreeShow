@@ -1,10 +1,11 @@
 // Thanks to Dr. Ralf S. Engelschall - Vingester
 
+import { NdiSender } from "./NdiSender"
+
 // const pcmconvert       = require("pcm-convert")
 // const ebml             = require("ebml")
 // const Opus             = require("@discordjs/opus")
 
-import { sendAudioBufferNDI } from "./ndi"
 
 // if (audio) captureAudio()
 
@@ -232,5 +233,5 @@ function processAudio(buffer: Buffer) {
     buffer = opusEncoder.decode(buffer)
 
     let id = "WIP: get_id"
-    sendAudioBufferNDI(id, buffer, { sampleRate, noChannels, bytesForFloat32 })
+    NdiSender.sendAudioBufferNDI(id, buffer, { sampleRate, noChannels, bytesForFloat32 })
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { audioFolders, categories, dictionary, drawerTabsData, mediaFolders, notFound, overlayCategories, scriptures, templateCategories } from "../../stores"
+    import { audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, mediaFolders, notFound, overlayCategories, scriptures, templateCategories } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -20,6 +20,7 @@
         shows: (c: any) => categories.update((a) => setName(a, c)),
         media: (c: any) => mediaFolders.update((a) => setName(a, c)),
         audio: (c: any) => audioFolders.update((a) => setName(a, c)),
+        playlist: (c: any) => audioPlaylists.update((a) => setName(a, c)),
         overlays: (c: any) => overlayCategories.update((a) => setName(a, c)),
         templates: (c: any) => templateCategories.update((a) => setName(a, c)),
         scripture: (c: any) => scriptures.update((a) => setName(a, c, "customName")),
@@ -36,6 +37,7 @@
     }
 
     function changeName(e: any, categoryId: string) {
+        if ($audioPlaylists[categoryId]) id = "playlist"
         if (nameCategories[id]) nameCategories[id]({ name: e.detail.value, id: categoryId })
         else console.log("rename " + id)
     }
@@ -48,7 +50,7 @@
 </script>
 
 <Button
-    class={defaultFolders.includes(category.id) ? "" : `context #category_${id}_button__category_${id}`}
+    class={defaultFolders.includes(category.id) ? "" : $audioPlaylists[category.id] ? "context #playlist" : `context #category_${id}_button__category_${id}`}
     active={category.id === $drawerTabsData[id]?.activeSubTab}
     {red}
     on:click={(e) => {

@@ -56,8 +56,8 @@ export function sortByName(arr: any[]) {
 // sort objects in array alphabeticly
 export function sortObject(object: {}[], key: string): {}[] {
     return object.sort((a: any, b: any) => {
-        let textA: string = a[key]
-        let textB: string = b[key]
+        let textA: string = a[key] || ""
+        let textB: string = b[key] || ""
         if (a.default === true) textA = translate(textA) || textA.slice(textA.indexOf("."))
         if (b.default === true) textB = translate(textB) || textB.slice(textB.indexOf("."))
 
@@ -72,10 +72,26 @@ export function sortObjectNumbers(object: {}[], key: string, reverse: boolean = 
     })
 }
 
+// sort any object.name by numbers in the front of the string
+export function sortByNameAndNumber(array: any[]) {
+    return array.sort((a, b) => {
+        let aName = a.name || ""
+        let bName = b.name || ""
+
+        // get numbers in front of name
+        const numA = parseInt(aName.match(/^\d+/))
+        const numB = parseInt(bName.match(/^\d+/))
+
+        if (numA !== numB) return numA - numB
+
+        return aName.localeCompare(bName)
+    })
+}
+
 // move keys to IDs in object and return array
 export function keysToID(object: { [key: string]: any }): any[] {
     if (!object) return []
-    let newObjects: any[] = Object.entries(object).map(([id, a]) => ({ id, ...a }))
+    let newObjects: any[] = Object.entries(object).map(([id, a]) => ({ ...a, id }))
     return newObjects
 }
 
@@ -112,4 +128,14 @@ export function slowLoop(array, interval, returnFunc) {
             }, interval)
         }
     }
+}
+
+// randomize array items
+export function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[array[i], array[j]] = [array[j], array[i]]
+    }
+
+    return array
 }

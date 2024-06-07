@@ -1,9 +1,11 @@
 <script lang="ts">
-    import { activeStage, outputs, stageShows, timers, variables } from "../../../stores"
-    import { keysToID } from "../../helpers/array"
+    import type { Popups } from "../../../../types/Main"
+    import type { DrawerTabIds } from "../../../../types/Tabs"
+    import { activeDrawerTab, activePage, activePopup, activeStage, drawer, drawerTabsData, outputs, stageShows, timers, variables } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { getActiveOutputs, getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
+    import { keysToID } from "../../helpers/array"
+    import { getActiveOutputs, getResolution } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import Panel from "../../system/Panel.svelte"
@@ -61,6 +63,37 @@
 
     let timersList: any[] = keysToID($timers).sort((a, b) => a.name?.localeCompare(b.name))
     let variablesList: any[] = keysToID($variables).sort((a, b) => a.name?.localeCompare(b.name))
+
+    const drawerPages: { [key: string]: DrawerTabIds } = {
+        timer: "calendar",
+        variables: "overlays",
+    }
+    function openDrawer(id: string) {
+        activePage.set("show")
+
+        // set sub tab
+        let drawerPageId = drawerPages[id]
+        if (!drawerPageId) return
+
+        drawerTabsData.update((a) => {
+            if (!a[drawerPageId]) a[drawerPageId] = { enabled: true, activeSubTab: null }
+            a[drawerPageId].activeSubTab = id
+
+            return a
+        })
+
+        activeDrawerTab.set(drawerPageId)
+
+        // open drawer
+        if ($drawer.height <= 40) {
+            drawer.set({ height: 300, stored: $drawer.height })
+        }
+
+        // create new popup
+        let popupId = id
+        if (popupId === "variables") popupId = "variable"
+        activePopup.set(popupId as Popups)
+    }
 </script>
 
 <div class="main">
@@ -76,8 +109,13 @@
                         </Button>
                     {/each}
                 {:else}
-                    <Center faded>
-                        <T id="empty.general" />
+                    <Center>
+                        <span style="opacity: 0.5;"><T id="empty.general" /></span>
+
+                        <Button on:click={() => openDrawer("timer")} style="width: 100%;margin-top: 5px;" center>
+                            <Icon id="add" right />
+                            <T id="new.timer" />
+                        </Button>
                     </Center>
                 {/if}
             {:else if title === "variables"}
@@ -90,8 +128,13 @@
                         </Button>
                     {/each}
                 {:else}
-                    <Center faded>
-                        <T id="empty.general" />
+                    <Center>
+                        <span style="opacity: 0.5;"><T id="empty.general" /></span>
+
+                        <Button on:click={() => openDrawer("variables")} style="width: 100%;margin-top: 5px;" center>
+                            <Icon id="add" right />
+                            <T id="new.variable" />
+                        </Button>
                     </Center>
                 {/if}
             {:else}

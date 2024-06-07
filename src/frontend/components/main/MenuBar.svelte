@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../types/Channels"
-    import { activePopup, saved } from "../../stores"
+    import { activePopup, saved, special } from "../../stores"
+    import { save } from "../../utils/save"
     import ContextChild from "../context/ContextChild.svelte"
     import ContextItem from "../context/ContextItem.svelte"
     import { contextMenuItems, contextMenuLayouts } from "../context/contextMenus"
@@ -88,8 +89,10 @@
         <Button
             id="close"
             on:click={() => {
-                if ($saved) window.api.send(MAIN, { channel: "CLOSE" })
-                else activePopup.set("unsaved")
+                if ($special.showClosePopup) activePopup.set("unsaved")
+                // save all the time, because $saved does not count for all minor changes
+                // else if ($saved) saveComplete({ closeWhenFinished: true })
+                else save(true)
             }}
             center
         >

@@ -60,8 +60,8 @@
         if (!editEvent.repeatData) editEvent.repeatData = defaultRepeatData
 
         // update show
-        if ($popupData?.action === "select_show" && $popupData?.location === "event" && $popupData?.id) {
-            editEvent.show = $popupData.id
+        if ($popupData?.action === "select_show" && $popupData?.location === "event" && $popupData?.showId) {
+            editEvent.show = $popupData.showId
             selectedShow = showsList.find((a) => a.id === editEvent.show)
             selectedType = types.find((a) => a.id === "show")!
             popupData.set({})
@@ -96,10 +96,9 @@
         }
 
         // update show
-        if ($popupData?.action === "select_show" && $popupData?.location === "event" && $popupData?.id) {
-            console.log($popupData)
+        if ($popupData?.action === "select_show" && $popupData?.location === "event" && $popupData?.showId) {
             editEvent.type = "show"
-            editEvent.show = $popupData.id
+            editEvent.show = $popupData.showId
             selectedShow = showsList.find((a) => a.id === editEvent.show)
             selectedType = types.find((a) => a.id === "show")!
             popupData.set({})

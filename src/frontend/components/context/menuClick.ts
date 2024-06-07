@@ -14,7 +14,6 @@ import {
     activeRename,
     activeShow,
     audioFolders,
-    audioStreams,
     currentOutputSettings,
     currentWindow,
     dictionary,
@@ -40,19 +39,17 @@ import {
     showsCache,
     slidesOptions,
     sorted,
-    sortedShowsList,
     stageShows,
     styles,
     templates,
     themes,
-    triggers,
 } from "../../stores"
-import { moveStageConnection } from "../../utils/apiHelper"
 import { hideDisplay } from "../../utils/common"
 import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
+import { moveStageConnection } from "../actions/apiHelper"
 import { getShortBibleName } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
@@ -282,6 +279,7 @@ const actions: any = {
         if (obj.sel.id !== "category_scripture") return
         let versions: string[] = obj.sel.data
         // remove collections
+        versions = versions.filter((id) => typeof id === "string") // sometimes the bibles object is added
         versions = versions.filter((id) => !Object.entries(get(scriptures)).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
         if (versions.length < 2) return
 
@@ -430,9 +428,9 @@ const actions: any = {
             activePopup.set("trigger")
         } else if (obj.sel.id === "audio_stream") {
             activePopup.set("audio_stream")
-        } else if (obj.sel.id === "midi") {
+        } else if (obj.sel.id === "action") {
             popupData.set(obj.sel.data[0])
-            activePopup.set("midi")
+            activePopup.set("action")
         } else if (obj.contextElem?.classList.value.includes("#event")) {
             eventEdit.set(obj.contextElem.id)
             activePopup.set("edit_event")
@@ -494,7 +492,7 @@ const actions: any = {
         }
     },
     remove_layers: (obj: any) => {
-        let type: "image" | "overlays" | "music" | "microphone" = obj.menu.icon
+        let type: "image" | "overlays" | "music" | "microphone" | "action" = obj.menu.type || obj.menu.icon
         let slide: number = obj.sel.data[0].index
         let newData: any = null
 
@@ -516,6 +514,16 @@ const actions: any = {
             // remove clicked
             mics.splice(mics.indexOf(obj.menu.id), 1)
             newData = { key: "mics", data: mics, dataIsArray: true, indexes: [slide] }
+        } else if (type === "action") {
+            let actions = layoutSlide.actions || {}
+            let slideActions = actions.slideActions || []
+
+            let actionId = obj.menu.id
+            let actionIndex = slideActions.findIndex((a) => a.id === actionId)
+            if (actionIndex > -1) slideActions.splice(actionIndex, 1)
+
+            actions.slideActions = slideActions
+            newData = { key: "actions", data: actions, indexes: [slide] }
         }
 
         if (newData) history({ id: "SHOW_LAYOUT", newData })
@@ -854,81 +862,42 @@ const actions: any = {
 function changeSlideAction(obj: any, id: string) {
     let layoutSlide: number = obj.sel.data[0]?.index || 0
     let ref = _show().layouts("active").ref()[0]
+    if (!ref[layoutSlide]) return
 
-    if (id.includes("Midi")) {
+    let actions = clone(ref[layoutSlide].data?.actions) || {}
+
+    if (id === "action") {
+        let id = uid()
+        if (!actions.slideActions) actions.slideActions = []
+        actions.slideActions.push({ id })
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
+
+        popupData.set({ id, mode: "slide", index: layoutSlide, existing: actions.slideActions.map((a) => a.triggers?.[0]) })
+        activePopup.set("action")
+
+        return
+    }
+
+    if (id === "receiveMidi") {
         let midiId: string = uid()
-        let actions = clone(ref[layoutSlide].data.actions) || {}
 
         if (actions[id]) midiId = actions[id]
         else actions[id] = midiId
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
 
-        let data: any = { id: midiId }
-        // sendMidi | receiveMidi
-        if (id === "receiveMidi") data = { id: midiId, type: "in", index: layoutSlide }
+        let data: any = { id: midiId, mode: "slide_midi" } // , index: layoutSlide
 
         popupData.set(data)
-        activePopup.set("midi")
+        activePopup.set("action")
 
         return
     }
 
     let indexes: number[] = obj.sel.data.map(({ index }) => index)
 
-    if (id === "startShow") {
-        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
-        let showId: string = actions[id]?.id || get(sortedShowsList)[0]
-
-        if (!showId) {
-            newToast("$empty.shows")
-            return
-        }
-
-        if (!actions[id]) actions[id] = { id: showId }
-
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
-
-        let data: any = {
-            action: "select_show",
-            active: showId,
-            trigger: (showId: string) => {
-                if (!showId) return
-                actions[id] = { id: showId }
-                history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
-            },
-        }
-
-        popupData.set(data)
-        activePopup.set("select_show")
-
-        return
-    }
-
-    if (id === "outputStyle") {
-        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
-        let styleId: string = actions[id] || Object.keys(get(styles))[0]
-
-        if (!styleId) {
-            newToast("$toast.empty_styles")
-            return
-        }
-
-        if (!actions[id]) actions[id] = styleId
-
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "change_style_slide" } })
-
-        let data: any = { id: styleId, outputs: actions.styleOutputs, indexes }
-
-        popupData.set(data)
-        activePopup.set("choose_style")
-
-        return
-    }
-
     if (id === "animate") {
-        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
-
         if (!actions[id]) {
             actions[id] = { actions: [{ type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }] }
             history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "animate_slide" } })
@@ -938,40 +907,6 @@ function changeSlideAction(obj: any, id: string) {
 
         popupData.set(data)
         activePopup.set("animate")
-
-        return
-    }
-
-    if (id === "trigger") {
-        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
-        popupData.set({ dropdown: true, index: layoutSlide })
-
-        if (!actions[id]) {
-            activePopup.set("trigger")
-            return
-        }
-
-        let data = get(triggers)[actions[id]]
-
-        selected.set({ id: "trigger", data: [{ ...data, id: actions[id] }] })
-        activePopup.set("trigger")
-
-        return
-    }
-
-    if (id === "audioStream") {
-        let actions = clone(ref[layoutSlide]?.data?.actions) || {}
-        popupData.set({ dropdown: true, index: layoutSlide })
-
-        if (!actions[id]) {
-            activePopup.set("audio_stream")
-            return
-        }
-
-        let data = get(audioStreams)[actions[id]]
-
-        selected.set({ id: "audio_stream", data: [{ ...data, id: actions[id] }] })
-        activePopup.set("audio_stream")
 
         return
     }

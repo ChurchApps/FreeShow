@@ -44,6 +44,7 @@ export type SelectIds =
     | "audio"
     | "overlay"
     | "template"
+    | "action"
     | "effect"
     | "screen"
     | "camera"
@@ -97,6 +98,8 @@ export interface MediaStyle {
     toTime?: number
     favourite?: boolean
     audio?: boolean
+    loop?: boolean // audio
+    volume?: number // audio
 }
 
 export type Popups =
@@ -122,7 +125,6 @@ export type Popups =
     | "edit_event"
     | "choose_screen"
     | "change_output_values"
-    | "choose_style"
     | "set_time"
     | "animate"
     | "next_timer"
@@ -133,7 +135,7 @@ export type Popups =
     | "reset_all"
     | "alert"
     | "history"
-    | "midi"
+    | "action"
     | "connect"
     | "cloud_update"
     | "cloud_method"

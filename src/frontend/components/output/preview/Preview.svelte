@@ -48,6 +48,7 @@
         },
         F2: () => {
             if ($outLocked || $selected.id) return false
+            if ($special.disablePresenterControllerKeys) return false
 
             clearSlide()
             return true
@@ -64,19 +65,17 @@
         },
         PageDown: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+            if ($special.disablePresenterControllerKeys) return
 
-            if (!$special.disablePresenterControllerKeys) {
-                e.preventDefault()
-                nextSlide(e)
-            }
+            e.preventDefault()
+            nextSlide(e)
         },
         PageUp: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+            if ($special.disablePresenterControllerKeys) return
 
-            if (!$special.disablePresenterControllerKeys) {
-                e.preventDefault()
-                previousSlide(e)
-            }
+            e.preventDefault()
+            previousSlide(e)
         },
 
         ArrowRight: (e: any) => {
@@ -101,12 +100,14 @@
         },
         Home: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+            if ($special.disablePresenterControllerKeys) return
 
             e.preventDefault()
             nextSlide(e, true)
         },
         End: (e: any) => {
             if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
+            if ($special.disablePresenterControllerKeys) return
 
             e.preventDefault()
             nextSlide(e, false, true)
@@ -175,7 +176,7 @@
     let timer: any = {}
     $: timer = outputId && $slideTimers[outputId] ? $slideTimers[outputId] : {}
     $: Object.entries($outputs).forEach(([id, output]: any) => {
-        if (!output.enabled || !output.out?.transition || $slideTimers[id]) return
+        if ((Object.keys($outputs)?.length > 1 && !output.enabled) || !output.out?.transition || $slideTimers[id]?.timer) return
 
         newSlideTimer(id, output.out.transition.duration)
     })

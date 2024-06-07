@@ -5,6 +5,7 @@ import { createNewTimer } from "../../drawer/timers/timers"
 import { history } from "../../helpers/history"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
+import { addSlideAction } from "../../actions/actions"
 
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
@@ -19,8 +20,10 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     if (type === "text") newData.lines = [{ align: template?.[0].lines?.[0].align || "", text: [{ value: "", style: template?.[0].lines?.[0].text?.[0].style || "" }] }]
     if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
-    else if (type === "timer") newData.timerId = Object.keys(get(timers))[0] || createNewTimer()
-    else if (type === "clock") newData.clock = { type: "digital", seconds: false }
+    else if (type === "timer") {
+        newData.timerId = Object.keys(get(timers))[0] || createNewTimer()
+        addSlideAction(get(activeEdit).slide ?? -1, "start_slide_timers")
+    } else if (type === "clock") newData.clock = { type: "digital", seconds: false }
     else if (type === "mirror") newData.mirror = {}
     else if (type === "media") newData.src = options.src || ""
     else if (type === "variable") newData.variable = { id: "" }

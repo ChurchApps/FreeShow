@@ -7,7 +7,7 @@ export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "
 
 const areas: { [key in DropAreas | string]: string[] } = {
     all_slides: ["template"],
-    slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "trigger", "audio_stream", "show", "midi"], // group
+    slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "trigger", "audio_stream", "show", "midi", "action"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
     project: ["show_drawer", "media", "audio", "player", "scripture"],
@@ -21,7 +21,7 @@ const areaChildren: { [key in DropAreas | string]: string[] } = {
     project: ["show", "media", "audio", "show_drawer", "player"],
     slides: ["slide", "group", "global_group", "screen", "camera", "microphone", "media", "audio", "show"],
     all_slides: [],
-    navigation: ["show", "show_drawer", "media", "overlay", "template"],
+    navigation: ["show", "show_drawer", "media", "audio", "overlay", "template"],
 }
 
 export function validateDrop(id: string, selected: any, children: boolean = false): boolean {

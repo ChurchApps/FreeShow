@@ -82,7 +82,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     disable: { label: "actions.disable", icon: "disable" },
     edit: { label: "menu.edit", icon: "edit" },
     recolor: { label: "actions.recolor", icon: "color" },
-    actions: { label: "actions.actions", icon: "actions", items: ["LOAD_actions"] },
+    actions: { label: "actions.slide_actions", icon: "actions", items: ["LOAD_actions"] },
     bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_slide"] },
     remove_layers: { label: "actions.remove_layers", icon: "remove_layers", items: ["LOAD_remove_layers"] },
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
@@ -154,6 +154,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_media_button: ["rename", "delete", "SEPERATOR", "system_open"],
     category_audio_button: ["rename", "delete", "SEPERATOR", "system_open"],
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
+    playlist: ["rename", "delete"],
     // CONTENT
     drawer_show: ["newShowPopup", "newShow", "sort_shows_by", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
@@ -178,6 +179,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
     audio_button: ["addToProject", "SEPERATOR", "preview", "favourite", "SEPERATOR", "system_open"],
+    audio_button_playlist: ["preview", "SEPERATOR", "remove"],
     // "addToFirstSlide"
     live_card: ["recording"],
 

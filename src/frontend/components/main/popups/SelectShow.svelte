@@ -36,13 +36,13 @@
     function selectShow(show: any) {
         if ($popupData.action !== "select_show") return
 
-        activePopup.set(null)
-
         if ($popupData.trigger) {
             $popupData.trigger(show.id)
         } else {
-            popupData.set({ ...$popupData, id: show.id })
+            popupData.set({ ...$popupData, showId: show.id })
         }
+
+        activePopup.set($popupData.revert || null)
     }
 
     let showPrivate = false

@@ -12,6 +12,7 @@ import {
     activeShow,
     activeStage,
     audioFolders,
+    audioPlaylists,
     audioStreams,
     categories,
     clipboard,
@@ -191,6 +192,7 @@ const selectActions: any = {
         } else {
             data = showsList.filter((id) => {
                 let show = get(shows)[id]
+                if (!show) return false
                 if (activeTab === show.category) return true
                 if (activeTab !== "unlabeled") return false
                 if (show.category === null || !get(categories)[show.category]) return true
@@ -638,12 +640,32 @@ const deleteActions = {
             return a
         })
     },
+    audio: (data: any) => {
+        // remove audio from playlist
+        let activePlaylist = get(drawerTabsData).audio?.activeSubTab || ""
+        if (!activePlaylist) return
+
+        audioPlaylists.update((a) => {
+            let songs = clone(a[activePlaylist]?.songs || [])
+            data.forEach((song) => {
+                let currentSongIndex = songs.findIndex((a) => a === song.path)
+                if (currentSongIndex >= 0) songs.splice(currentSongIndex, 1)
+            })
+
+            a[activePlaylist].songs = songs
+
+            return a
+        })
+    },
     folder: (data: any) => historyDelete("UPDATE", data, { updater: "project_folder" }),
     project: (data: any) => historyDelete("UPDATE", data, { updater: "project" }),
     stage: (data: any) => historyDelete("UPDATE", data, { updater: "stage" }),
     category_shows: (data: any) => historyDelete("UPDATE", data, { updater: "category_shows" }),
     category_media: (data: any) => historyDelete("UPDATE", data, { updater: "category_media" }),
-    category_audio: (data: any) => historyDelete("UPDATE", data, { updater: "category_audio" }),
+    category_audio: (data: any) => {
+        if (get(audioPlaylists)[data[0]]) historyDelete("UPDATE", data, { updater: "audio_playlists" })
+        else historyDelete("UPDATE", data, { updater: "category_audio" })
+    },
     category_overlays: (data: any) => historyDelete("UPDATE", data, { updater: "category_overlays" }),
     category_templates: (data: any) => historyDelete("UPDATE", data, { updater: "category_templates" }),
     player: (data: any) => historyDelete("UPDATE", data, { updater: "player_video" }),

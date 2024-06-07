@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, drawerTabsData, groups, outputs, overlays, selected, sorted } from "../../stores"
+import { activeEdit, contextData, drawerTabsData, groups, outputs, overlays, selected, sorted } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
@@ -8,6 +8,8 @@ import { clone, keysToID, sortByName } from "../helpers/array"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
+import { actionData } from "../actions/actionData"
+import { getSlideText } from "../edit/scripts/textStyle"
 
 const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
@@ -38,27 +40,18 @@ const loadActions = {
         let slideRef: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]
         let currentActions: any = slideRef?.data?.actions
 
-        let actions: any = [
+        let slideActions = [
+            { id: "action", label: "midi.start_action", icon: "actions" },
+            { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
+            "SEPERATOR",
             { id: "nextTimer", label: "preview.nextTimer", icon: "clock", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
             { id: "loop", label: "preview.to_start", icon: "restart", enabled: slideRef?.data?.end || false },
-            { id: "animate", label: "popup.animate", icon: "stars", enabled: currentActions?.animate || false },
-            { id: "startShow", label: "preview._start", icon: "showIcon", enabled: currentActions?.startShow || false },
-            { id: "trigger", label: "popup.trigger", icon: "trigger", enabled: currentActions?.trigger || false },
-            { id: "audioStream", label: "popup.audio_stream", icon: "audio_stream", enabled: currentActions?.audioStream || false },
             { id: "nextAfterMedia", label: "actions.next_after_media", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
-            { id: "startTimer", label: "actions.start_timer", icon: "timer", enabled: currentActions?.startTimer || false },
-            { id: "outputStyle", label: "actions.change_output_style", icon: "styles", enabled: currentActions?.outputStyle || false },
-            { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
-            { id: "sendMidi", label: "actions.send_midi", icon: "music" },
-        ]
-        let clearActions: any = [
-            { id: "stopTimers", label: "actions.stop_timers", icon: "stop", enabled: currentActions?.stopTimers || false },
-            { id: "clearBackground", label: "clear.background", icon: "background", enabled: currentActions?.clearBackground || false },
-            { id: "clearOverlays", label: "clear.overlays", icon: "overlays", enabled: currentActions?.clearOverlays || false },
-            { id: "clearAudio", label: "clear.audio", icon: "audio", enabled: currentActions?.clearAudio || false },
+            "SEPERATOR",
+            { id: "animate", label: "popup.animate", icon: "stars", enabled: currentActions?.animate || false },
         ]
 
-        return [...actions, "SEPERATOR", ...clearActions]
+        return slideActions
     },
     item_actions: () => {
         let slide = getEditSlide()
@@ -76,7 +69,13 @@ const loadActions = {
         return itemActions
     },
     remove_layers: () => {
-        let data: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]?.data
+        let layoutSlide: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index] || {}
+
+        // text content
+        let hasTextContent = getSlideText(_show().slides([layoutSlide.id]).get()[0])
+        setContextData("textContent", hasTextContent)
+
+        let data: any = layoutSlide.data
         if (!data) return []
 
         let showMedia: any = _show().get().media
@@ -130,6 +129,23 @@ const loadActions = {
             media.push(...micItems)
         }
 
+        // get slide actions
+        let slideActions = data.actions?.slideActions || []
+        if (slideActions.length) {
+            if (media.length) media.push("SEPERATOR")
+            let actionItems = slideActions
+                .map((action: any) => ({
+                    id: action.id,
+                    label: actionData[action.triggers?.[0]]?.name || "",
+                    icon: actionData[action.triggers?.[0]]?.icon || "actions",
+                    type: "action",
+                }))
+                .sort((a, b) => a.label.localeCompare(b.label))
+            media.push(...actionItems)
+        }
+
+        setContextData("layers", !!media?.length)
+
         if (media.length) return media
         return [{ label: "empty.general", disabled: true }]
     },
@@ -146,7 +162,7 @@ const loadActions = {
         return items
     },
     bind_slide: (_items, isItem: boolean = false) => {
-        let outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput))
+        let outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.isKeyOutput && !a.stageOutput))
 
         outputList = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
         if (isItem) outputList.push("SEPERATOR", { id: "stage", label: "menu.stage" })
@@ -167,6 +183,8 @@ const loadActions = {
             return a
         })
 
+        setContextData("outputList", outputList?.length > 1)
+
         return outputList
     },
     bind_item: () => loadActions.bind_slide([], true),
@@ -177,6 +195,13 @@ const loadActions = {
 
         return values
     },
+}
+
+function setContextData(key: string, data: any) {
+    contextData.update((a) => {
+        a[key] = data
+        return a
+    })
 }
 
 function sortItems(items: ContextMenuItem[], id: "projects" | "shows") {
@@ -210,4 +235,9 @@ export function loadItems(id: string): [string, ContextMenuItem][] {
     let menuItems: [string, ContextMenuItem][] = items.map((a: any) => [a === "SEPERATOR" ? a : id, a])
 
     return menuItems
+}
+
+export function quickLoadItems(id: string) {
+    if (!loadActions[id]) return
+    loadActions[id]([])
 }

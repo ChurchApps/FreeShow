@@ -12,7 +12,13 @@
         selected.set({ id: null, data: [] })
         activePopup.set(null)
     }
+
+    function keydown(e: any) {
+        if (e.key === "Enter") deleteSelected()
+    }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <p style="font-weight: bold;"><T id="popup.delete_show_confirmation" /> ({$selected.data.length}):</p>
 <ul style="list-style-position: inside;">

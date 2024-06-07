@@ -56,6 +56,8 @@ function setLanguage(locale: string = "") {
 }
 
 const translate = (id: string, { parts = false } = {}) => {
+    if (typeof id !== "string") return ""
+
     let d = get(dictionary)
 
     if (!parts) {

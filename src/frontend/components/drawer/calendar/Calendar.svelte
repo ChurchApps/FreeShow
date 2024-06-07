@@ -171,7 +171,7 @@
     }
 
     // listen for update
-    $: if ($popupData?.action === "select_show" && $popupData?.location === "event" && $popupData?.id) selectedShow()
+    $: if ($popupData?.action === "select_show" && $popupData?.location === "event" && $popupData?.showId) selectedShow()
     function selectedShow() {
         // let animation finish
         setTimeout(() => activePopup.set("edit_event"), 300)

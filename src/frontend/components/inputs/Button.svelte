@@ -5,6 +5,7 @@
     export let outlineColor: string | null = null
     export let outline: boolean = false
     export let title: string = ""
+    export let zoom: number = 1
     export let center: boolean = false
     export let border: boolean = false
     export let dark: boolean = false
@@ -18,19 +19,19 @@
     let timeout: any = null
     let autoHideTimeout: any = null
     function startTimer() {
-        if (!timeout && title?.length) {
-            if (autoHideTimeout) clearTimeout(autoHideTimeout)
-            timeout = setTimeout(() => {
-                showTooltip = true
-                timeout = null
+        if (timeout || !title?.length) return
 
+        if (autoHideTimeout) clearTimeout(autoHideTimeout)
+        timeout = setTimeout(() => {
+            showTooltip = true
+            timeout = null
+            if (document)
                 // hide after 5 seconds
                 autoHideTimeout = setTimeout(() => {
                     if (!timeout) showTooltip = false
                     autoHideTimeout = null
                 }, 5000)
-            }, tooltipTime)
-        }
+        }, tooltipTime)
     }
 
     $: if ($$props.disabled) hideTooltip()
@@ -74,7 +75,7 @@
     tabindex={active ? -1 : 0}
 >
     {#if showTooltip}
-        <div class="tooltip" transition:fade={{ duration: 200 }} style="left: {mouse.x}px;top: {mouse.y}px;{tooltipStyle}">
+        <div class="tooltip" transition:fade={{ duration: 200 }} style="left: {mouse.x}px;top: {mouse.y}px;{tooltipStyle};zoom: {1 / zoom};">
             {title}
         </div>
     {/if}

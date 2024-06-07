@@ -42,7 +42,7 @@
 </script>
 
 <div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;align-items: flex-start;">
-    <div class="main">
+    <div class="main" style={showGroups.length ? "" : "height: 100%;"}>
         {#if $globalGroupViewEnabled}
             <h4><T id="groups.current" /></h4>
         {/if}

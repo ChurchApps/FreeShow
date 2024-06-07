@@ -16,7 +16,6 @@ const options: any = {
     marginsType: 1,
     pageSize: "A4",
     printBackground: true,
-    // printSelectionOnly: false,
     landscape: false,
 }
 

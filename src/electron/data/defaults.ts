@@ -102,6 +102,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     variables: {},
     triggers: {},
     audioStreams: {},
+    audioPlaylists: {},
     scriptures: {
         kjv: { name: "King James (Authorised) Version", api: true, id: "de4e12af7f28f599-02" },
         asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01" },

@@ -1,10 +1,12 @@
 <script lang="ts">
-    import { activeShow, cachedShowsData, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles } from "../../stores"
+    import { activePage, activeShow, cachedShowsData, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles } from "../../stores"
     import { history } from "../helpers/history"
+    import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
+    import Button from "../inputs/Button.svelte"
     import Loader from "../main/Loader.svelte"
     import Slide from "../slide/Slide.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
@@ -162,6 +164,11 @@
         })
     }
 
+    function createSlide() {
+        history({ id: "SLIDES" })
+        activePage.set("edit")
+    }
+
     // lazy loader
 
     let lazyLoader: number = 1
@@ -282,9 +289,13 @@
                             {/if}
                         {/each}
                     {:else}
-                        <Center faded absolute size={2}>
-                            <T id="empty.slides" />
+                        <Center absolute size={2}>
+                            <span style="opacity: 0.5;"><T id="empty.slides" /></span>
                             <!-- Add slides button -->
+                            <Button on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
+                                <Icon id="add" right />
+                                <T id="new.slide" />
+                            </Button>
                         </Center>
                     {/if}
                 </div>

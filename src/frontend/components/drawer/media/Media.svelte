@@ -7,7 +7,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { splitPath } from "../../helpers/get"
-    import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
+    import { encodeFilePath, getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
@@ -105,6 +105,8 @@
         files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
         files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
+        files = files.map((a) => ({ ...a, path: a.folder ? a.path : encodeFilePath(a.path) }))
+
         filterFiles()
     }
 
@@ -154,6 +156,9 @@
     function filterSearch() {
         fullFilteredFiles = clone(filteredFiles)
         if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(filter(searchValue)))
+
+        // scroll to top
+        document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
     }
 
     let nextScrollTimeout: any = null
@@ -282,7 +287,7 @@
             />
         {:else if fullFilteredFiles.length}
             {#key rootPath}
-                {#key path}
+                {#key path || fullFilteredFiles}
                     {#if $mediaOptions.mode === "grid"}
                         <Grid
                             itemCount={fullFilteredFiles.length}

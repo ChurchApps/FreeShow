@@ -8,6 +8,7 @@ import {
     activePopup,
     activeShow,
     audioFolders,
+    audioPlaylists,
     audioStreams,
     autosave,
     categories,
@@ -40,6 +41,7 @@ import {
     showsCache,
     showsPath,
     slidesOptions,
+    special,
     stageShows,
     styles,
     templateCategories,
@@ -168,7 +170,7 @@ const cloudHelpers = {
                 return a
             })
 
-            syncDrive(false, false, true)
+            syncDrive()
             return
         }
 
@@ -189,19 +191,20 @@ const cloudHelpers = {
         let method = get(driveData).initializeMethod
         if (get(driveData).disableUpload) method = "download"
         if (!method) {
-            if (existingData) {
-                // WIP this will show over "initialize" popup
-                activePopup.set("cloud_method")
-                return
-            }
+            // you could choose previously, but I don't see a reason anymore as I have implemented "newest file always"
+            // if (existingData) {
+            //     // WIP this will show over "initialize" popup
+            //     activePopup.set("cloud_method")
+            //     return
+            // }
 
             driveData.update((a) => {
-                a.initializeMethod = "upload"
+                a.initializeMethod = existingData ? "done" : "upload"
                 return a
             })
         }
 
-        syncDrive(false, false, true)
+        syncDrive(true)
     },
     SYNC_DATA: ({ changes, closeWhenFinished }) => {
         if (closeWhenFinished) {
@@ -292,6 +295,7 @@ const saveList: { [key in SaveList]: any } = {
     variables: variables,
     triggers: triggers,
     audioStreams: audioStreams,
+    audioPlaylists: audioPlaylists,
     theme: theme,
     themes: themes,
     transitionData: transitionData,
@@ -304,6 +308,6 @@ const saveList: { [key in SaveList]: any } = {
     driveKeys: driveKeys,
     driveData: driveData,
     calendarAddShow: null,
-    special: null,
+    special: special,
     companion: null,
 }

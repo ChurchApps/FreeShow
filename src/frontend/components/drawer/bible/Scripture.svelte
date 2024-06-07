@@ -15,7 +15,7 @@
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
     import BibleApiKey from "./BibleApiKey.svelte"
-    import { fetchBible, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
+    import { bookIds, fetchBible, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
 
     export let active: any
     export let bibles: Bible[]
@@ -97,7 +97,7 @@
         let data: any = null
 
         // fix chapterId beeing 0 instead of "GEN.1" for Bible.API
-        if (typeof bookId === "number") bookId = "GEN"
+        if (typeof bookId === "number") bookId = bookIds[bookId] || "GEN"
         if (typeof chapterId === "number") chapterId = bookId + "." + (chapterId + 1)
 
         let objectId = Object.entries($scriptures).find(([_id, a]: any) => a.id === bibleId)?.[0] || ""

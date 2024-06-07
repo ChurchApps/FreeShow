@@ -3,7 +3,7 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { MediaStyle } from "../../../../types/Main"
     import type { OutBackground, Transition } from "../../../../types/Show"
-    import { allOutputs, audioChannels, outputs, playingVideos, videosData, videosTime } from "../../../stores"
+    import { allOutputs, audioChannels, outputs, playingVideos, special, videosData, videosTime } from "../../../stores"
     import { receive, send } from "../../../utils/request"
     import { analyseAudio, getAnalyser } from "../../helpers/audio"
     import { getMediaStyle } from "../../helpers/media"
@@ -134,7 +134,7 @@
         <Camera {id} groupId={data.cameraGroup || ""} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "player"}
         <!-- prevent showing controls in output -->
-        <div class="overlay" />
+        {#if $special.hideCursor}<div class="overlay" />{/if}
         <Player {outputId} {id} bind:videoData bind:videoTime title={data.title} startAt={data.startAt} on:loaded />
     {/if}
 </OutputTransition>

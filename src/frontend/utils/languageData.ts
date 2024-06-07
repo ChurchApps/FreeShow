@@ -17,6 +17,7 @@ export const languages: any = {
     tr: "Türkçe", // Turkish
     fr_FR: "Français", // French
     ru: "Русский", // Russian
+    ko: "한국인", // Korean
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -27,7 +28,7 @@ export const replace: any = {
     en: ["en-US", "en-AU"],
     en_GB: ["en-GB"],
     en_ZM: ["en-ZM"],
-    no: ["nb", "nn"],
+    no: ["no", "nb", "nn"],
     sk: ["sk"],
     es: ["es"],
     pt_BR: ["pt-BR"],
@@ -41,4 +42,5 @@ export const replace: any = {
     tr: ["tr"],
     fr_FR: ["fr", "fr-FR"],
     ru: ["ru"],
+    ko: ["ko"],
 }

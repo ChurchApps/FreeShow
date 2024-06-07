@@ -54,7 +54,7 @@
     }
 
     function click(e: any) {
-        if (e.target?.closest(".submenu") === null) open = !open
+        if (e.target?.closest(".submenu") === null) open = true
     }
 
     function keydown(e: any) {

@@ -1,11 +1,13 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../../types/Channels"
-import { audioChannels, gain, playingAudio, playingVideos, special, volume } from "../../stores"
+import { activePlaylist, audioChannels, audioPlaylists, gain, media, playingAudio, playingVideos, special, volume } from "../../stores"
 import { send } from "../../utils/request"
 import { audioAnalyser } from "../output/audioAnalyser"
+import { clone, shuffleArray } from "./array"
+import { encodeFilePath } from "./media"
 import { checkNextAfterMedia } from "./showActions"
 
-export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0) {
+export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false) {
     let existing: any = get(playingAudio)[path]
     if (existing) {
         if (!pauseIfPlaying) {
@@ -26,11 +28,15 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
         return
     }
 
-    audio = audio || new Audio(path)
+    if (!playMultiple) clearAudio("", false)
+
+    let encodedPath = encodeFilePath(path)
+    audio = audio || new Audio(encodedPath)
     let analyser: any = await getAnalyser(audio, stream)
 
     playingAudio.update((a) => {
         if (!analyser) return a
+
         a[path] = {
             name: name.indexOf(".") > -1 ? name.slice(0, name.lastIndexOf(".")) : name,
             paused: false,
@@ -38,11 +44,13 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
             analyser,
             audio,
         }
+
         return a
     })
 
-    if (analyser.gainNode) analyser.gainNode.gain.value = get(volume) * (get(gain) || 1)
-    else audio.volume = get(volume)
+    let localVolume: number = get(volume) * (get(media)[path]?.volume || 1)
+    if (analyser.gainNode) analyser.gainNode.gain.value = localVolume * (get(gain) || 1)
+    else audio.volume = localVolume
 
     if (startAt > 0) audio.currentTime = startAt
     audio.play()
@@ -51,29 +59,96 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
 }
 
 let unmutedValue = 1
-export function updateVolume(value: number | undefined, changeGain: boolean = false) {
-    // api mute(unmute)
-    if (value === undefined) {
-        value = get(volume) ? 0 : unmutedValue
-        if (!value) unmutedValue = get(volume)
-    }
+export function updateVolume(value: number | undefined | "local", changeGain: boolean = false) {
+    if (value !== "local") {
+        // api mute(unmute)
+        if (value === undefined) {
+            value = get(volume) ? 0 : unmutedValue
+            if (!value) unmutedValue = get(volume)
+        }
 
-    if (changeGain) gain.set(Number(Number(value).toFixed(2)))
-    else volume.set(Number(Number(value).toFixed(2)))
+        if (changeGain) gain.set(Number(Number(value).toFixed(2)))
+        else volume.set(Number(Number(value).toFixed(2)))
+    }
 
     // update volume on playing audio
     playingAudio.update((a) => {
         Object.keys(a).forEach((id) => {
+            let localVolume: number = get(volume) * (get(media)[id]?.volume || 1)
+
             if (a[id].analyser.gainNode) {
-                let gainedValue = get(volume) * (get(gain) || 1)
+                let gainedValue = localVolume * (get(gain) || 1)
                 a[id].analyser.gainNode.gain.value = gainedValue
-            } else a[id].audio.volume = get(volume)
+            } else a[id].audio.volume = localVolume
         })
 
         return a
     })
 
     if (get(volume)) analyseAudio()
+}
+
+// PLAYLIST
+
+export function startPlaylist(id, specificSong: string = "") {
+    if (!id) return
+
+    activePlaylist.set({ id })
+    playlistNext("", specificSong)
+}
+
+export function stopPlaylist() {
+    let activeAudio = get(activePlaylist).active
+    clearAudio(activeAudio)
+}
+
+export function updatePlaylist(id: string, key: string, value: any) {
+    if (!get(audioPlaylists)[id]) return
+
+    audioPlaylists.update((a) => {
+        a[id][key] = value
+        return a
+    })
+}
+
+export function playlistNext(previous: string = "", specificSong: string = "") {
+    let id = get(activePlaylist)?.id
+    console.log("next", previous, get(activePlaylist), get(audioPlaylists))
+    if (!id) return
+
+    let songs = getSongs()
+    console.log(songs)
+
+    let currentSongIndex = songs.findIndex((a) => a === (specificSong || previous))
+    let nextSong = songs[currentSongIndex + (specificSong ? 0 : 1)]
+    console.log(currentSongIndex, nextSong)
+
+    if (!nextSong) nextSong = songs[0]
+    if (!nextSong) return
+
+    activePlaylist.update((a) => {
+        a.active = nextSong
+        return a
+    })
+    playAudio({ path: nextSong })
+
+    function getSongs(): string[] {
+        if (previous && get(activePlaylist)?.songs) return get(activePlaylist).songs
+
+        // generate list
+        let playlist = clone(get(audioPlaylists)[id])
+        let songs = playlist.songs
+
+        let mode = playlist.mode
+        if (mode === "shuffle") songs = shuffleArray(songs)
+
+        activePlaylist.update((a) => {
+            a.songs = songs
+            return a
+        })
+
+        return songs
+    }
 }
 
 let audioStreams: any = {}
@@ -134,9 +209,17 @@ export function analyseAudio() {
 
                     // check if finished
                     if (!audio.paused && audio.audio.currentTime >= audio.audio.duration) {
-                        if (get(playingAudio)[audioPath].loop) {
+                        if (get(media)[audioPath]?.loop) {
                             get(playingAudio)[audioPath].audio.currentTime = 0
                             get(playingAudio)[audioPath].audio.play()
+                        } else if (get(activePlaylist)?.active === audioPath) {
+                            playingAudio.update((a: any) => {
+                                delete a[audioPath]
+                                return a
+                            })
+
+                            playlistNext(audioPath)
+                            return false
                         } else {
                             playingAudio.update((a: any) => {
                                 // a[audioPath].paused = true
@@ -199,7 +282,10 @@ function getHighestNumber(numbers: number[]): number {
 }
 
 let clearing = false
-export function clearAudio(path: string = "") {
+export function clearAudio(path: string = "", clearPlaylist: boolean = true) {
+    // turn off any playlist
+    if (clearPlaylist && (!path || get(activePlaylist)?.active === path)) activePlaylist.set(null)
+
     // let clearTime = get(transitionData).audio.duration
     // TODO: starting audio before previous clear is finished will not start/clear audio
     const clearTime = get(special).audio_fade_duration ?? 1.5

@@ -75,12 +75,9 @@
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
-<div class="item" class:isDisabledVariable style={style + (show.settings.autoStretch === false ? "" : newSizes)} bind:offsetHeight={height} bind:offsetWidth={width}>
+<div class="item" class:border={show?.settings.labels} class:isDisabledVariable style={style + (show.settings.autoStretch === false ? "" : newSizes)} bind:offsetHeight={height} bind:offsetWidth={width}>
     {#if show?.settings.labels}
-        <div class="label">
-            {item.label}
-            <!-- <T id="stage.{id.split('#')[1]}" /> -->
-        </div>
+        <div class="label">{item.label || ""}</div>
     {/if}
 
     {#if id.includes("current_output")}
@@ -129,6 +126,13 @@
 <style>
     .item {
         font-family: Arial, Helvetica, sans-serif;
+
+        /* make label visible */
+        overflow: visible !important;
+    }
+
+    .item.border {
+        border: 3px solid white;
     }
 
     .align {
@@ -148,5 +152,18 @@
 
     .isDisabledVariable {
         display: none;
+    }
+
+    .label {
+        position: absolute;
+        top: 0;
+        transform: translateY(calc(-100% - 3px));
+        width: 100%;
+
+        background: rgb(0 0 0 / 0.5);
+        color: var(--text);
+        font-size: 1em;
+        font-weight: 600;
+        text-align: center;
     }
 </style>

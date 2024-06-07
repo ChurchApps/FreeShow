@@ -9,6 +9,7 @@ export type SaveListSyncedSettings =
     | "variables"
     | "triggers"
     | "audioStreams"
+    | "audioPlaylists"
     | "scriptures"
     | "scriptureSettings"
     | "groups"

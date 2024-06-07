@@ -11,6 +11,7 @@
     import Effects from "./effects/Effects.svelte"
     import Media from "./media/Media.svelte"
     import Timers from "./timers/Timers.svelte"
+    import Actions from "./pages/Actions.svelte"
 
     export let id: string
     export let bibles: any
@@ -37,30 +38,28 @@
         <Shows {id} {active} {searchValue} bind:firstMatch />
     {:else if id === "media"}
         <Media {active} {searchValue} bind:streams />
-    {:else if id === "overlays"}
-        {#if active === "variables"}
-            <Variables {searchValue} />
-        {:else if active === "triggers"}
-            <Triggers {searchValue} />
-        {:else}
-            <Overlays {active} {searchValue} />
-        {/if}
     {:else if id === "audio"}
         <Audio {active} {searchValue} />
-    {:else if id === "effects"}
-        <Effects {active} {searchValue} />
+    {:else if id === "overlays"}
+        <Overlays {active} {searchValue} />
+    {:else if id === "templates"}
+        <Templates {active} {searchValue} />
     {:else if id === "scripture"}
         <Scripture {active} bind:searchValue bind:bibles />
     {:else if id === "calendar"}
-        {#if active === "timer"}
+        <Calendar {active} {searchValue} />
+    {:else if id === "functions"}
+        {#if active === "actions"}
+            <Actions {searchValue} />
+        {:else if active === "timer"}
             <Timers {searchValue} />
-        {:else}
-            <Calendar {active} {searchValue} />
+        {:else if active === "variables"}
+            <Variables {searchValue} />
+        {:else if active === "triggers"}
+            <Triggers {searchValue} />
+        {:else if active === "effects"}
+            <Effects {active} {searchValue} />
         {/if}
-    {:else if id === "templates"}
-        <Templates {active} {searchValue} />
-        <!-- {:else if id === "web"}
-    <Web {active} {searchValue} /> -->
     {/if}
 </div>
 

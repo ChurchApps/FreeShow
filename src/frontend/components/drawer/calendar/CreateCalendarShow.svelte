@@ -15,7 +15,7 @@
         history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
     }
 
-    $: if ($popupData?.action === "select_show" && $popupData?.location === "calendar" && $popupData?.id) selectedShow()
+    $: if ($popupData?.action === "select_show" && $popupData?.location === "calendar" && $popupData?.showId) selectedShow()
     function selectedShow() {
         calendarAddShow.set($popupData.id)
         popupData.set({})

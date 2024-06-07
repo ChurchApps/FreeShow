@@ -79,6 +79,7 @@
     let hiddenShows: any[] = []
     let brokenShows: number = 0
     receive(MAIN, {
+        // this will not include newly created shows not saved yet, but it should not be an issue.
         FULL_SHOWS_LIST: (data: any) => (hiddenShows = data || []),
     })
 
@@ -191,6 +192,13 @@
     <p><T id="settings.user_data_location" /></p>
     <div class="alignRight">
         <Checkbox disabled={!$dataPath} checked={$special.customUserDataLocation || false} on:change={(e) => toggle(e, "customUserDataLocation")} />
+    </div>
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.popup_before_close" /></p>
+    <div class="alignRight">
+        <Checkbox disabled={!$dataPath} checked={$special.showClosePopup || false} on:change={(e) => toggle(e, "showClosePopup")} />
     </div>
 </CombinedInput>
 

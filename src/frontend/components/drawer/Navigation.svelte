@@ -1,7 +1,7 @@
 <script lang="ts">
     import { IMPORT } from "../../../types/Channels"
     import type { Category } from "../../../types/Tabs"
-    import { activePopup, audioFolders, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates } from "../../stores"
+    import { activePopup, audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates } from "../../stores"
     import { send } from "../../utils/request"
     import { keysToID, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -14,7 +14,7 @@
     import SelectElem from "../system/SelectElem.svelte"
     import NavigationButton from "./NavigationButton.svelte"
 
-    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "templates" | "timers"
+    export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "functions" | "templates" | "timers"
 
     interface Button extends Category {
         id: string
@@ -45,10 +45,6 @@
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
                 { id: "SEPERATOR", name: "" },
-                // WIP move to "Special" ?
-                { id: "variables", name: "tabs.variables", default: true, icon: "variable" },
-                { id: "triggers", name: "tabs.triggers", default: true, icon: "trigger" },
-                { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($overlayCategories), "name") as Button[]),
             ]
         } else if (id === "templates") {
@@ -65,18 +61,28 @@
                 { id: "SEPERATOR", name: "" },
                 { id: "microphones", name: "live.microphones", default: true, icon: "microphone" },
                 { id: "audio_streams", name: "live.audio_streams", default: true, icon: "audio_stream" },
+                ...getAudioPlaylists($audioPlaylists),
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(keysToID($audioFolders), "name") as Button[]),
             ]
-        } else if (id === "effects") {
-            buttons = [{ id: "effects", name: "tabs.effects", default: true, icon: "effects" }]
         } else if (id === "scripture") {
             buttons = getBibleVersions()
         } else if (id === "calendar") {
             buttons = [
                 { id: "event", name: "calendar.event", default: true, icon: "calendar" },
                 { id: "show", name: "calendar.show", default: true, icon: "showIcon" },
+                // WIP very few tabs
+            ]
+        } else if (id === "functions") {
+            buttons = [
+                { id: "actions", name: "tabs.actions", default: true, icon: "actions" },
+                { id: "SEPERATOR", name: "" },
                 { id: "timer", name: "tabs.timers", default: true, icon: "timer" },
+                { id: "variables", name: "tabs.variables", default: true, icon: "variable" },
+                { id: "triggers", name: "tabs.triggers", default: true, icon: "trigger" },
+                // WIP effects
+                // { id: "SEPERATOR", name: "" },
+                // { id: "effects", name: "tabs.effects", default: true, icon: "effects" },
             ]
         } else {
             buttons = [
@@ -104,11 +110,22 @@
             .sort((a: any, b: any) => (a.api === true && b.api !== true ? 1 : -1))
             .sort((a: any, b: any) => (a.collection !== undefined && b.collection === undefined ? -1 : 1))
 
+    function getAudioPlaylists(playlistUpdater): Button[] {
+        if (!Object.keys(playlistUpdater).length) return []
+
+        let playlists = sortObject(keysToID(playlistUpdater), "name") as Button[]
+        playlists = playlists.map((a) => ({ ...a, icon: "playlist" }))
+        if (!playlists.length) return []
+        console.log("PLAYLISTS", playlists)
+
+        return [{ id: "SEPERATOR", name: "" }, ...playlists]
+    }
+
     let length: any = {}
     if (id) length = {}
     $: {
         let list: any[] = []
-        if (id === "shows") list = Object.values($shows).filter((a: any) => !a.private)
+        if (id === "shows") list = Object.values($shows).filter((a: any) => !a?.private)
         else if (id === "overlays") list = Object.values($overlays)
         else if (id === "templates") list = Object.values($templates)
 
@@ -125,12 +142,18 @@
             totalLength += length[button.id]
 
             function checkMatch(a) {
+                if (!a) return a
                 if (button.id === "unlabeled") return a.category === null
                 return a.category === button.id
             }
         })
 
         length.unlabeled += list.length - totalLength
+    }
+    $: if (id && $audioPlaylists) {
+        Object.keys($audioPlaylists).forEach((id) => {
+            length[id] = $audioPlaylists[id].songs.length
+        })
     }
 
     function keydown(e: KeyboardEvent) {

@@ -134,6 +134,7 @@ export function getSlides({ bibles, sorted }) {
                 slideArr.lines![0].text.push({
                     value: s + " ",
                     style: verseNumberStyle,
+                    customType: "disableTemplate", // dont let template style verse numbers
                 })
             }
 
@@ -221,6 +222,7 @@ export function getSlides({ bibles, sorted }) {
                 // WIP historyActions - TEMPLATE...
                 slides[i][j].auto = true
                 slides[i][j].lines![0].text.forEach((_, k) => {
+                    if (slides[i][j].lines![0].text[k].customType === "disableTemplate") return
                     slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
                 })
             })
@@ -300,3 +302,73 @@ export function getShortBibleName(name) {
 
     return name || "B"
 }
+
+// this is used to reset the API bookId in collections with other bibles
+export const bookIds: string[] = [
+    "GEN",
+    "EXO",
+    "LEV",
+    "NUM",
+    "DEU",
+    "JOS",
+    "JDG",
+    "RUT",
+    "1SA",
+    "2SA",
+    "1KI",
+    "2KI",
+    "1CH",
+    "2CH",
+    "EZR",
+    "NEH",
+    "EST",
+    "JOB",
+    "PSA",
+    "PRO",
+    "ECC",
+    "SNG",
+    "ISA",
+    "JER",
+    "LAM",
+    "EZK",
+    "DAN",
+    "HOS",
+    "JOL",
+    "AMO",
+    "OBA",
+    "JON",
+    "MIC",
+    "NAM",
+    "HAB",
+    "ZEP",
+    "HAG",
+    "ZEC",
+    "MAL",
+    "MAT",
+    "MRK",
+    "LUK",
+    "JHN",
+    "ACT",
+    "ROM",
+    "1CO",
+    "2CO",
+    "GAL",
+    "EPH",
+    "PHP",
+    "COL",
+    "1TH",
+    "2TH",
+    "1TI",
+    "2TI",
+    "TIT",
+    "PHM",
+    "HEB",
+    "JAS",
+    "1PE",
+    "2PE",
+    "1JN",
+    "2JN",
+    "3JN",
+    "JUD",
+    "REV",
+]

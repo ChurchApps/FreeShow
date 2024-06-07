@@ -138,7 +138,7 @@
 
 <br />
 
-{#if outputsList.length > 1 && !currentOutput.stageOutput}
+{#if (outputsList.length > 1 && !currentOutput.stageOutput) || !currentOutput.enabled}
     <CombinedInput>
         <p><T id="settings.enabled" /></p>
         <div class="alignRight">

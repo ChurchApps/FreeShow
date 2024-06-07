@@ -1,7 +1,7 @@
 <script>
     import YouTube from "svelte-youtube"
     import { MAIN, OUTPUT } from "../../../../types/Channels"
-    import { currentWindow, playerVideos } from "../../../stores"
+    import { currentWindow, playerVideos, special } from "../../../stores"
     import { send } from "../../../utils/request"
     import { createEventDispatcher } from "svelte"
 
@@ -26,7 +26,7 @@
             loop: videoData.loop,
             fs: 0,
             rel: 0,
-            controls: 0,
+            controls: $special.hideCursor ? 0 : 1,
             // cc_load_policy: true
         },
     }

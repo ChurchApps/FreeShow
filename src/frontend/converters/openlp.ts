@@ -29,7 +29,7 @@ export function convertOpenLP(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    createCategory("OpenLP")
+    let categoryId = createCategory("OpenLP")
 
     let tempShows: any[] = []
 
@@ -50,7 +50,7 @@ export function convertOpenLP(data: any) {
 
     function addShow(song: Song) {
         let layoutID = uid()
-        let show = new ShowObj(false, "openlp", layoutID)
+        let show = new ShowObj(false, categoryId, layoutID)
         show.name = checkName(song.title)
 
         show.meta = {
