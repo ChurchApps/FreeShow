@@ -14,6 +14,8 @@
     import HoverButton from "../../inputs/HoverButton.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import { runAction } from "../../actions/actions"
+    import { actionData } from "../../actions/actionData"
 
     $: show = $showsCache[$activeShow!.id]
 
@@ -22,12 +24,14 @@
     let layoutBackgrounds: any[] = []
     let layoutAudio: any[] = []
     let layoutMics: any[] = []
+    let layoutActions: any[] = []
 
     $: {
         if (show) {
             layoutBackgrounds = []
             layoutAudio = []
             layoutMics = []
+            layoutActions = []
 
             let refs = _show("active").layouts().ref()
             refs.forEach((slides: any) => {
@@ -41,6 +45,12 @@
                 layoutMics.push(
                     ...slides
                         .map((a: any) => a.data.mics)
+                        .filter((a: any) => a !== undefined)
+                        .flat()
+                )
+                layoutActions.push(
+                    ...slides
+                        .map((a: any) => a.data.actions?.slideActions)
                         .filter((a: any) => a !== undefined)
                         .flat()
                 )
@@ -110,10 +120,19 @@
         })
     }
 
+    let actions: any[] = []
+    $: if (layoutActions.length) {
+        actions = []
+        layoutActions.forEach((action) => {
+            // check if another exact exists
+            if (actions.find((a) => JSON.stringify(a) === JSON.stringify(action))) return
+
+            actions.push(action)
+        })
+    }
+
     // WIP MIDI get actions
-    // let midi: any[] = []
     // $: showMidi = show?.midi || {}
-    // // $activePopup !== "midi" &&
     // $: if (Object.keys(showMidi).length || Object.keys($midiIn).length) {
     //     midi = []
     //     Object.entries(showMidi).forEach(([id, value]: any) => {
@@ -137,7 +156,7 @@
 <!-- TODO: transition type & duration -->
 
 <div class="main">
-    {#if bgs.length || audio.length || mics.length}
+    {#if bgs.length || audio.length || mics.length || actions.length}
         {#if bgs.length}
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
@@ -265,18 +284,21 @@
             {/each}
         {/if}
 
-        <!-- WIP MIDI -->
-        <!-- {#if midi.length}
-            <h5><T id="midi.midi" /></h5>
-            {#each midi as midi}
-                <SelectElem id="midi" data={midi} draggable>
-                    <Button class="context #midi" on:click={() => (midi.sendType === "in" ? playMidiIn(midi) : sendMidi(midi))} style="padding: 8px;width: 100%;" title={midi.name} bold={false}>
-                        <Icon id={midi.sendType === "in" ? "play" : "music"} size={1.2} right />
-                        <p>{midi.name}</p>
+        {#if actions.length}
+            <h5><T id="tabs.actions" /></h5>
+            {#each actions as action}
+                {@const actionId = action.triggers?.[0] || ""}
+                {@const customData = actionData[actionId] || {}}
+
+                <SelectElem id="action" data={action} draggable>
+                    <!-- class="context #action" -->
+                    <Button on:click={() => runAction(action)} style="padding: 8px;width: 100%;" title={action.name} bold={false}>
+                        <Icon id={customData.icon || "actions"} size={1.2} right />
+                        <p><T id={customData.name} /></p>
                     </Button>
                 </SelectElem>
             {/each}
-        {/if} -->
+        {/if}
     {:else}
         <Center faded>
             <T id="empty.media" />

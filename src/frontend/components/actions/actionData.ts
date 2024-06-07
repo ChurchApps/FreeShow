@@ -12,6 +12,7 @@ export const actionData = {
     // PRESENTATION
     next_slide: { name: "preview._next_slide", icon: "slide" },
     previous_slide: { name: "preview._previous_slide", icon: "slide" },
+    random_slide: { name: "actions.random_slide", icon: "slide" },
     index_select_slide: { name: "actions.index_select_slide", icon: "slide", input: "index" },
     name_select_slide: { name: "actions.name_select_slide", icon: "groups", input: "strval" },
     id_select_group: { name: "actions.id_select_group", icon: "groups", input: "id" },
@@ -37,6 +38,7 @@ export const actionData = {
     // AUDIO
     change_volume: { name: "actions.change_volume", icon: "volume", input: "volume" },
     start_audio_stream: { slideId: "audioStream", name: "actions.start_audio_stream", icon: "audio_stream", input: "id" },
+    start_playlist: { name: "actions.start_playlist", icon: "playlist", input: "id" },
 
     // TIMERS
     start_slide_timers: { slideId: "startTimer", name: "actions.start_slide_timers", icon: "timer" },

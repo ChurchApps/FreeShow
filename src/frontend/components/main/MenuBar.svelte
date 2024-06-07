@@ -1,14 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../types/Channels"
-    import { activePopup, saved } from "../../stores"
+    import { activePopup, saved, special } from "../../stores"
+    import { save } from "../../utils/save"
     import ContextChild from "../context/ContextChild.svelte"
     import ContextItem from "../context/ContextItem.svelte"
     import { contextMenuItems, contextMenuLayouts } from "../context/contextMenus"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
-    import { saveComplete } from "../../utils/save"
 
     const menus: string[] = ["file", "edit", "view", "help"]
 
@@ -89,8 +89,10 @@
         <Button
             id="close"
             on:click={() => {
-                if ($saved) saveComplete({ closeWhenFinished: true })
-                else activePopup.set("unsaved")
+                if ($special.showClosePopup) activePopup.set("unsaved")
+                // save all the time, because $saved does not count for all minor changes
+                // else if ($saved) saveComplete({ closeWhenFinished: true })
+                else save(true)
             }}
             center
         >

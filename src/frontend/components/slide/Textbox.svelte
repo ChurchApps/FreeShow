@@ -392,7 +392,7 @@
                             <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                                 {#each line.text || [] as text}
                                     {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
-                                    <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}">
+                                    <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate' ? text.style : ''}">
                                         {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }) : value}
                                     </span>
                                 {/each}

@@ -153,6 +153,7 @@ export interface Line {
     text: {
         value: string
         style: string
+        customType?: string // "disableTemplate"
     }[]
     chords?: Chords[]
 }

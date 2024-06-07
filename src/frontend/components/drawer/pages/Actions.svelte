@@ -9,6 +9,7 @@
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
     import Button from "../../inputs/Button.svelte"
+    import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
     export let searchValue
@@ -88,9 +89,9 @@
             {/each}
         </div>
     {:else}
-        <p style="text-align: center;opacity: 0.5;padding: 10px;">
+        <Center faded>
             <T id="empty.general" />
-        </p>
+        </Center>
     {/if}
 </div>
 

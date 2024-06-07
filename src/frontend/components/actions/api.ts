@@ -1,9 +1,25 @@
 import type { TransitionType } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
-import { clearAudio, updateVolume } from "../helpers/audio"
+import { clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
 import { displayOutputs } from "../helpers/output"
-import { activateTrigger, changeOutputStyle, clearAll, clearBackground, clearOverlays, clearSlide, nextSlide, playSlideTimers, previousSlide, restoreOutput, selectProjectShow, sendMidi, startAudioStream, startShow } from "../helpers/showActions"
+import {
+    activateTrigger,
+    changeOutputStyle,
+    clearAll,
+    clearBackground,
+    clearOverlays,
+    clearSlide,
+    nextSlide,
+    playSlideTimers,
+    previousSlide,
+    randomSlide,
+    restoreOutput,
+    selectProjectShow,
+    sendMidi,
+    startAudioStream,
+    startShow,
+} from "../helpers/showActions"
 import { stopTimers } from "../helpers/timerTick"
 import { clearTimers } from "../output/clear"
 import { runActionId } from "./actions"
@@ -67,6 +83,7 @@ export const API_ACTIONS = {
     // PRESENTATION
     next_slide: () => nextSlide({ key: "ArrowRight" }),
     previous_slide: () => previousSlide({ key: "ArrowLeft" }),
+    random_slide: () => randomSlide(),
     index_select_slide: (data: API_index) => selectSlideByIndex(data.index),
     name_select_slide: (data: API_strval) => selectSlideByName(data.value),
     id_select_group: (data: API_id) => gotoGroup(data.id),
@@ -107,6 +124,7 @@ export const API_ACTIONS = {
     // folder_select_audio: () => ,
     change_volume: (data: API_volume) => updateVolume(data.volume ?? data.gain, data.gain !== undefined),
     start_audio_stream: (data: API_id) => startAudioStream(data.id), // BC
+    start_playlist: (data: API_id) => startPlaylist(data.id),
 
     // TIMERS
     // play / pause playing timers

@@ -9,7 +9,7 @@
     import { clone } from "../../helpers/array"
     import { startPlaylist, stopPlaylist, updatePlaylist } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
-    import { getFileName, getMediaType } from "../../helpers/media"
+    import { encodeFilePath, getFileName, getMediaType } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import AudioStreams from "../live/AudioStreams.svelte"
@@ -26,7 +26,7 @@
     $: playlist = active && $audioPlaylists[active]
 
     $: isDefault = ["all", "favourites", "microphones", "audio_streams"].includes(active || "")
-    $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active].path! : ""
+    $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path! || "" : ""
     $: path = isDefault || playlist ? "" : rootPath
     $: name =
         active === "all"
@@ -87,8 +87,7 @@
             files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
             files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
-            console.log(files)
-            files = files
+            files = files.map((a) => ({ ...a, path: a.folder ? a.path : encodeFilePath(a.path) }))
 
             // filterFiles()
             scrollElem?.scrollTo(0, 0)
@@ -102,6 +101,9 @@
     function filterSearch() {
         fullFilteredFiles = clone(files)
         if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(filter(searchValue)))
+
+        // scroll to top
+        document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
     }
 
     function keydown(e: any) {

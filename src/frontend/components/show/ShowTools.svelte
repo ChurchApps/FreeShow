@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeShow, labelsDisabled, midiIn, showsCache } from "../../stores"
+    import { activeShow, labelsDisabled, showsCache } from "../../stores"
     import { _show } from "../helpers/shows"
     import Tabs from "../main/Tabs.svelte"
     import Media from "./tools/Media.svelte"
@@ -39,16 +39,18 @@
     }
 
     // media
-    $: if (show || $midiIn) checkMedia()
+    // || $midiIn
+    $: if (show) checkMedia()
     function checkMedia() {
         let refs = _show("active").layouts().ref()
 
         if (refs.find((ref) => ref.find((slide) => slide.data.background))) return (tabs.media.disabled = false)
         if (refs.find((ref) => ref.find((slide) => slide.data.audio))) return (tabs.media.disabled = false)
         if (refs.find((ref) => ref.find((slide) => slide.data.mics))) return (tabs.media.disabled = false)
+        if (refs.find((ref) => ref.find((slide) => slide.data.actions?.slideActions?.length))) return (tabs.media.disabled = false)
 
-        if (Object.keys(show?.midi || {}).length) return (tabs.media.disabled = false)
-        if (Object.values($midiIn).find((value: any) => value.shows?.find((a) => a.id === $activeShow?.id))) return (tabs.media.disabled = false)
+        // if (Object.keys(show?.midi || {}).length) return (tabs.media.disabled = false)
+        // if (Object.values($midiIn).find((value: any) => value.shows?.find((a) => a.id === $activeShow?.id))) return (tabs.media.disabled = false)
 
         return (tabs.media.disabled = true)
     }

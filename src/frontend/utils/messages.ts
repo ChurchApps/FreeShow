@@ -41,6 +41,7 @@ import {
     showsCache,
     showsPath,
     slidesOptions,
+    special,
     stageShows,
     styles,
     templateCategories,
@@ -307,6 +308,6 @@ const saveList: { [key in SaveList]: any } = {
     driveKeys: driveKeys,
     driveData: driveData,
     calendarAddShow: null,
-    special: null,
+    special: special,
     companion: null,
 }

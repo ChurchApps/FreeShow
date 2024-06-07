@@ -8,16 +8,16 @@ import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
 import { startBackup } from "./data/backup"
 import { config, stores, updateDataPath, userDataPath } from "./data/store"
+import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
 import { closeAllOutputs, receiveOutput } from "./output/output"
 import { closeServers } from "./servers"
 import { stopApiListener } from "./utils/api"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileInfo, getFolderContent, loadShows, selectFiles, selectFolder, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
-import { closeMidiInPorts } from "./utils/midi"
+import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-import { NdiReceiver } from "./ndi/NdiReceiver"
 
 // ----- STARTUP -----
 
@@ -212,8 +212,7 @@ export async function exitApp() {
     closeServers()
     stopApiListener()
 
-    // closeVirtualMidi()
-    closeMidiInPorts()
+    stopMidi()
 
     try {
         app.quit()

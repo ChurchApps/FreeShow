@@ -3,8 +3,9 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import { activePlaylist, audioChannels, audioPlaylists, gain, media, playingAudio, playingVideos, special, volume } from "../../stores"
 import { send } from "../../utils/request"
 import { audioAnalyser } from "../output/audioAnalyser"
-import { checkNextAfterMedia } from "./showActions"
 import { clone, shuffleArray } from "./array"
+import { encodeFilePath } from "./media"
+import { checkNextAfterMedia } from "./showActions"
 
 export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false) {
     let existing: any = get(playingAudio)[path]
@@ -29,7 +30,8 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
 
     if (!playMultiple) clearAudio("", false)
 
-    audio = audio || new Audio(path)
+    let encodedPath = encodeFilePath(path)
+    audio = audio || new Audio(encodedPath)
     let analyser: any = await getAnalyser(audio, stream)
 
     playingAudio.update((a) => {
@@ -89,6 +91,8 @@ export function updateVolume(value: number | undefined | "local", changeGain: bo
 // PLAYLIST
 
 export function startPlaylist(id, specificSong: string = "") {
+    if (!id) return
+
     activePlaylist.set({ id })
     playlistNext("", specificSong)
 }

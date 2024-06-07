@@ -74,16 +74,13 @@ export function selectSlideByIndex(index: number) {
 export function selectSlideByName(name: string) {
     let slides = _show().slides().get()
     let sortedSlides = sortByClosestMatch(slides, getLabelId(name), "group")
-    console.log(slides, sortedSlides, name, getLabelId(name))
     if (!sortedSlides[0]) return
 
     let showRef = _show().layouts("active").ref()[0]
-    console.log(showRef)
     if (!showRef) return newToast("$toast.midi_no_show")
 
     let index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
     let slideRef = showRef[index]
-    console.log(index, slideRef)
     if (!slideRef) return
 
     outputSlide(showRef, index)
@@ -114,7 +111,6 @@ export function selectOverlayByName(name: string) {
     if (get(outLocked)) return
 
     let sortedOverlays = sortByClosestMatch(getSortedOverlays(), name)
-    console.log(sortedOverlays)
     let overlayId = sortedOverlays[0]?.id
     if (!overlayId) return
 

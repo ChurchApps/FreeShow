@@ -72,6 +72,22 @@ export function sortObjectNumbers(object: {}[], key: string, reverse: boolean = 
     })
 }
 
+// sort any object.name by numbers in the front of the string
+export function sortByNameAndNumber(array: any[]) {
+    return array.sort((a, b) => {
+        let aName = a.name || ""
+        let bName = b.name || ""
+
+        // get numbers in front of name
+        const numA = parseInt(aName.match(/^\d+/))
+        const numB = parseInt(bName.match(/^\d+/))
+
+        if (numA !== numB) return numA - numB
+
+        return aName.localeCompare(bName)
+    })
+}
+
 // move keys to IDs in object and return array
 export function keysToID(object: { [key: string]: any }): any[] {
     if (!object) return []

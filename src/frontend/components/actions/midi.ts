@@ -92,18 +92,21 @@ export function receivedMidi(msg) {
     let action: Midi = convertOldMidiToNewAction(msgAction)
 
     // get index
-    let hasindex = action.triggers?.[0]?.includes("index_") ?? false
     let index = msg.values.velocity ?? -1
-    if (action.midi?.values?.velocity && action.midi.values.velocity < 0) index = -1
+    if (action.midi?.values?.velocity !== undefined && action.midi.values.velocity < 0) index = -1
 
     // the select slide index from velocity can't select slide 0 as a NoteOn with velocity 0 is detected as NoteOff
     // velocity of 0 currently bypasses the note on/off
     if (action.midi?.type !== msg.type && index !== 0) return
 
+    let hasindex = action.triggers?.[0]?.includes("index_") ?? false
     if (hasindex && index < 0) {
         newToast("$toast.midi_no_velocity")
         index = 0
     }
+
+    // decrease index by one, to make velocity 1 select slide 0 (Labeled 1)
+    if (index > 0) index--
 
     runAction(action, { midiIndex: index })
 

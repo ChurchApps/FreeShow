@@ -279,6 +279,7 @@ const actions: any = {
         if (obj.sel.id !== "category_scripture") return
         let versions: string[] = obj.sel.data
         // remove collections
+        versions = versions.filter((id) => typeof id === "string") // sometimes the bibles object is added
         versions = versions.filter((id) => !Object.entries(get(scriptures)).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
         if (versions.length < 2) return
 
@@ -894,74 +895,7 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
-    // WIP MIDI
-    // if (id.includes("Midi")) {
-    //     let midiId: string = uid()
-
-    //     if (actions[id]) midiId = actions[id]
-    //     else actions[id] = midiId
-
-    //     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
-
-    //     let data: any = { id: midiId, mode: "slide", index: layoutSlide }
-    //     // sendMidi | receiveMidi
-    //     if (id === "receiveMidi") data = { id: midiId, mode: "slide_midi" }
-
-    //     popupData.set(data)
-    //     activePopup.set("action")
-
-    //     return
-    // }
-
     let indexes: number[] = obj.sel.data.map(({ index }) => index)
-
-    // if (id === "startShow") {
-    //     let showId: string = actions[id]?.id || get(sortedShowsList)[0]
-
-    //     if (!showId) {
-    //         newToast("$empty.shows")
-    //         return
-    //     }
-
-    //     if (!actions[id]) actions[id] = { id: showId }
-
-    //     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
-
-    //     let data: any = {
-    //         action: "select_show",
-    //         active: showId,
-    //         trigger: (showId: string) => {
-    //             if (!showId) return
-    //             actions[id] = { id: showId }
-    //             history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "start_show_action" } })
-    //         },
-    //     }
-
-    //     popupData.set(data)
-    //     activePopup.set("select_show")
-
-    //     return
-    // }
-
-    // if (id === "outputStyle") {
-    //     let styleId: string = actions[id] || Object.keys(get(styles))[0]
-
-    //     if (!styleId) {
-    //         newToast("$toast.empty_styles")
-    //         return
-    //     }
-
-    //     if (!actions[id]) actions[id] = styleId
-
-    //     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes }, location: { page: "show", override: "change_style_slide" } })
-
-    //     let data: any = { id: styleId, outputs: actions.styleOutputs, indexes }
-
-    //     popupData.set(data)
-    //     activePopup.set("choose_style")
-
-    //     return
-    // }
 
     if (id === "animate") {
         if (!actions[id]) {
@@ -976,38 +910,6 @@ function changeSlideAction(obj: any, id: string) {
 
         return
     }
-
-    // if (id === "trigger") {
-    //     popupData.set({ dropdown: true, index: layoutSlide })
-
-    //     if (!actions[id]) {
-    //         activePopup.set("trigger")
-    //         return
-    //     }
-
-    //     let data = get(triggers)[actions[id]]
-
-    //     selected.set({ id: "trigger", data: [{ ...data, id: actions[id] }] })
-    //     activePopup.set("trigger")
-
-    //     return
-    // }
-
-    // if (id === "audioStream") {
-    //     popupData.set({ dropdown: true, index: layoutSlide })
-
-    //     if (!actions[id]) {
-    //         activePopup.set("audio_stream")
-    //         return
-    //     }
-
-    //     let data = get(audioStreams)[actions[id]]
-
-    //     selected.set({ id: "audio_stream", data: [{ ...data, id: actions[id] }] })
-    //     activePopup.set("audio_stream")
-
-    //     return
-    // }
 
     if (id === "nextTimer") {
         let nextTimer = clone(ref[layoutSlide]?.data?.nextTimer) || 0

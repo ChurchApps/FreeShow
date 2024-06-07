@@ -10,7 +10,7 @@ export function convertPowerpoint(files: any[]) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    createCategory("Presentation", "presentation", { isDefault: true })
+    let categoryId = createCategory("Presentation", "presentation", { isDefault: true })
 
     let tempShows: any[] = []
 
@@ -45,7 +45,7 @@ export function convertPowerpoint(files: any[]) {
 
             // create show
             let layoutID = uid()
-            let show: Show = new ShowObj(false, "presentation", layoutID)
+            let show: Show = new ShowObj(false, categoryId, layoutID)
             show.name = checkName(name)
 
             let meta: any = content["docProps/core.xml"]?.["cp:coreProperties"]

@@ -2,7 +2,6 @@
     import { activeStage, allOutputs, currentWindow, outputs, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import { getAutoSize } from "../edit/scripts/autoSize"
-    import T from "../helpers/T.svelte"
     import { getActiveOutputs } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import Image from "../media/Image.svelte"
@@ -14,6 +13,7 @@
     import SlideNotes from "./items/SlideNotes.svelte"
     import SlideText from "./items/SlideText.svelte"
     import VideoTime from "./items/VideoTime.svelte"
+    import { getCustomStageLabel } from "./stage"
 
     export let id: string
     export let item: any
@@ -109,6 +109,7 @@
     bind:offsetHeight={height}
     bind:offsetWidth={width}
     class="stage_item item"
+    class:border={currentShow?.settings?.labels}
     class:outline={edit}
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
@@ -117,11 +118,7 @@
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}
-        <div class="label">
-            {#key id}
-                <T id="stage.{id.split('#')[1]}" />
-            {/key}
-        </div>
+        <div class="label">{getCustomStageLabel(id)}</div>
     {/if}
     {#if edit}
         <Movebox {ratio} active={$activeStage.items.includes(id)} />
@@ -180,6 +177,10 @@
         font-family: Arial, Helvetica, sans-serif;
     }
 
+    .item.border {
+        border: 3px solid white;
+    }
+
     .stage_item.outline {
         outline: 5px solid rgb(255 255 255 / 0.2);
     }
@@ -208,5 +209,18 @@
     }
     .isDisabledVariable.isOutput {
         display: none;
+    }
+
+    .label {
+        position: absolute;
+        top: 0;
+        transform: translateY(calc(-100% - 3px));
+        width: 100%;
+
+        background: rgb(0 0 0 / 0.5);
+        color: var(--text);
+        font-size: 3em;
+        font-weight: 600;
+        text-align: center;
     }
 </style>

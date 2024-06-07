@@ -121,6 +121,10 @@ bind:offsetWidth={width} -->
         transition: background-color 0.3s;
         /* cursor: text; */
     }
+    .item:global(.selected .align) {
+        outline: 5px solid var(--secondary-opacity);
+        overflow: visible !important;
+    }
 
     .item.isDisabledVariable {
         opacity: 0.5;

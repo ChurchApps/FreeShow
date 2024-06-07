@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { audioStreams, dictionary, midiIn, shows, stageShows, styles, triggers } from "../../stores"
+    import { audioPlaylists, audioStreams, dictionary, midiIn, shows, stageShows, styles, triggers } from "../../stores"
     import { translate } from "../../utils/language"
     import { actionData } from "../actions/actionData"
     import { clone } from "../helpers/array"
@@ -43,6 +43,7 @@
         start_show: $shows,
         start_trigger: $triggers,
         start_audio_stream: $audioStreams,
+        start_playlist: $audioPlaylists,
         id_select_stage_layout: $stageShows,
     }
     function getActionName(actionId, actionValue) {

@@ -361,7 +361,7 @@
         "manage_colors": "Manage colors",
         "choose_camera": "Choose camera",
         "initialize": "Welcome to FreeShow",
-        "unsaved": "You have not saved yet! Are you sure you want to quit?",
+        "unsaved": "Are you sure you want to quit?",
         "cancel": "Cancel",
         "continue": "Continue",
         "reset_all": "Reset everything",
@@ -537,6 +537,7 @@
         "previous_project_item": "Previous project item",
         "index_select_project_item": "Select project item by index",
         "name_select_show": "Select show by name",
+        "random_slide": "Play random slide",
         "index_select_slide": "Select slide by index",
         "name_select_slide": "Select slide by name",
         "toggle_output_lock": "Toggle output lock",
@@ -547,6 +548,7 @@
         "name_select_overlay": "Select overlay by name",
         "change_volume": "Change volume",
         "start_audio_stream": "Start audio stream",
+        "start_playlist": "Start playlist",
         "start_slide_timers": "Start timers on active slide",
         "id_select_output_style": "Select output style by ID",
         "change_output_style": "Change output style",
@@ -845,7 +847,9 @@
         "font-size": "Font Size",
         "zeros": "Zeros",
         "overrun": "Overrun Color",
-        "auto_stretch": "Auto stretch content"
+        "source_output": "Source output",
+        "auto_stretch": "Auto stretch content",
+        "labels": "Show labels"
     },
     "settings": {
         "general": "General",
@@ -909,6 +913,7 @@
         "show_location": "Show location",
         "data_location": "Data location",
         "user_data_location": "Save user settings at 'Data location'",
+        "popup_before_close": "Always display popup before closing",
         "font": "Font",
         "font_family": "Font family",
         "font_size": "Font size",

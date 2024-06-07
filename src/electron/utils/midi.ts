@@ -27,6 +27,7 @@ export function getMidiInputs() {
         .inputs.map((a: any) => a.name)
 }
 
+let openedOutputPorts: any = {}
 export async function sendMidi(data: any) {
     let port: any = null
     // console.log("OUTPUT", data.output)
@@ -38,11 +39,13 @@ export async function sendMidi(data: any) {
     if (data.values.channel) data.values.channel--
 
     try {
-        port = await JZZ().openMidiOut(data.output).or("Error sending MIDI signal: Could not connect to receiver!")
+        if (!openedOutputPorts[data.output]) openedOutputPorts[data.output] = await JZZ().openMidiOut(data.output).or("Error sending MIDI signal: Could not connect to receiver!")
+        port = openedOutputPorts[data.output]
         if (!port) return
+
         if (data.type === "noteon") {
+            // this might be rendered as note off by some programs if velocity is 0, but that should be fine
             await port.noteOn(data.values.channel, data.values.note, data.values.velocity)
-            // .wait(500).noteOff(data.values.channel, data.values.note)
         } else {
             // data.type === "noteoff"
             await port.noteOff(data.values.channel, data.values.note, data.values.velocity)
@@ -51,26 +54,12 @@ export async function sendMidi(data: any) {
         console.error(err)
     }
 
-    if (!port) return
-    port.close()
+    // closing port caused all 16 channels to send midi off
+    // if (!port) return
+    // port.close()
 }
 
 let openedPorts: any = {}
-
-export function closeMidiInPorts(id: string = "") {
-    if (id && openedPorts[id]) {
-        openedPorts[id].close()
-        delete openedPorts[id]
-        return
-    }
-
-    Object.values(openedPorts).forEach((port: any) => {
-        port.close()
-    })
-
-    openedPorts = {}
-}
-
 export async function receiveMidi(data: any) {
     // console.log("INPUT", data.input)
     if (!data.input) return
@@ -96,4 +85,32 @@ export async function receiveMidi(data: any) {
     } catch (err) {
         console.error(err)
     }
+}
+
+export function stopMidi() {
+    closeMidiInPorts()
+    closeMidiOutPorts()
+    // closeVirtualMidi()
+}
+
+function closeMidiOutPorts() {
+    Object.values(openedOutputPorts).forEach((port: any) => {
+        port.close()
+    })
+
+    openedOutputPorts = {}
+}
+
+export function closeMidiInPorts(id: string = "") {
+    if (id && openedPorts[id]) {
+        openedPorts[id].close()
+        delete openedPorts[id]
+        return
+    }
+
+    Object.values(openedPorts).forEach((port: any) => {
+        port.close()
+    })
+
+    openedPorts = {}
 }

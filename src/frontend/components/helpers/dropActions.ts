@@ -533,6 +533,8 @@ const slideDrop: any = {
 
         let actionId = drag.data[0].id
         let action = { id: uid(), triggers: ["run_action"], actionValues: { run_action: { id: actionId } } }
+        if (drag.data[0].triggers?.[0]) action = drag.data[0]
+
         slideActions.push(action)
         data.slideActions = slideActions
 

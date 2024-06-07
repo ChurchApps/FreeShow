@@ -138,6 +138,7 @@
         if (mode !== "slide") {
             midiIn.update((a) => {
                 if (mode === "slide_midi") {
+                    // WIP MIDI this should show up in the "Actions" tab
                     let shows = a[id]?.shows || []
                     let showId = $popupData.index === undefined ? "" : $activeShow?.id || ""
                     if (showId && !shows.find((a) => a.id === showId)) shows.push({ id: showId })

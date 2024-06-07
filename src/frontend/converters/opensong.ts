@@ -32,7 +32,7 @@ export function convertOpenSong(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    createCategory("OpenSong")
+    let categoryId = createCategory("OpenSong")
 
     let tempShows: any[] = []
 
@@ -42,7 +42,7 @@ export function convertOpenSong(data: any) {
             console.log(song)
 
             let layoutID = uid()
-            let show = new ShowObj(false, "opensong", layoutID)
+            let show = new ShowObj(false, categoryId, layoutID)
             show.name = checkName(song.title)
             show.meta = {
                 title: show.name,
@@ -67,7 +67,7 @@ const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outr
 function createSlides({ lyrics }: Song) {
     let slides: any = {}
     let layout: any[] = []
-    if (!lyrics) return {slides, layout};
+    if (!lyrics) return { slides, layout }
     lyrics.forEach((slide) => {
         let lines = slide.split("\n")
         let group = lines.splice(0, 1)[0]

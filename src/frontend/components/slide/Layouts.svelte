@@ -111,9 +111,11 @@
         <div class="notes" title={$dictionary.tools?.metadata} on:click={() => openTab("metadata")}>
             <Icon id="info" right white />
             <p>
+                <!-- currentStyle.metadataDivider -->
                 {@html Object.values(currentShow.meta)
                     .filter((a) => a.length)
-                    .join("; ")}
+                    .join("; ")
+                    .replaceAll("<br>", " ")}
             </p>
         </div>
     {/if}
@@ -200,7 +202,7 @@
         background-color: var(--primary);
         /* position: absolute;bottom: 0;transform: translateY(-100%); */
         padding: 0 8px;
-        height: 28px;
+        min-height: 28px;
 
         display: flex;
         align-items: center;

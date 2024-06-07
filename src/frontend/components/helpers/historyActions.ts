@@ -9,7 +9,7 @@ import { getItemText } from "../edit/scripts/textStyle"
 import { clone, keysToID } from "./array"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
-import { mergeWithTemplate } from "./output"
+import { getItemsCountByType, mergeWithTemplate } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 
@@ -679,6 +679,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             let show = get(showsCache)[data.remember.showId]
+            if (!show) return
             let slides: any = show.slides || {}
 
             let ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0]
@@ -729,17 +730,30 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                         let newItems = mergeWithTemplate(slide.items, slideTemplate.items, slide.settings?.template ?? createItems, obj.save !== false)
 
-                        // remove items if textbox is empty and not in template
-                        let templateTextboxes = slideTemplate.items.reduce((count, item) => (count += (item.type || "text") === "text" ? 1 : 0), 0)
-                        let slideTextboxes = newItems.reduce((count, item) => (count += (item.type || "text") === "text" ? 1 : 0), 0)
+                        // remove items if not in template (and textbox is empty)
+                        let templateItemCount = getItemsCountByType(slideTemplate.items)
+                        let slideItemCount = getItemsCountByType(newItems)
                         newItems = newItems.filter((a) => {
-                            if (templateTextboxes - slideTextboxes >= 0) return true
-                            if (getItemText(a).length) return true
+                            let type = a.type || "text"
+                            if (templateItemCount[type] - slideItemCount[type] >= 0) return true
+                            if (type === "text" && getItemText(a).length) return true
 
                             // remove item
-                            slideTextboxes--
+                            slideItemCount[type]--
                             return false
                         })
+                        // // remove items if textbox is empty and not in template
+                        // let templateTextboxes = slideTemplate.items.reduce((count, item) => (count += (item.type || "text") === "text" ? 1 : 0), 0)
+                        // let slideTextboxes = newItems.reduce((count, item) => (count += (item.type || "text") === "text" ? 1 : 0), 0)
+                        // newItems = newItems.filter((a) => {
+                        //     if ((a.type || "text") !== "text") return true
+                        //     if (templateTextboxes - slideTextboxes >= 0) return true
+                        //     if (getItemText(a).length) return true
+
+                        //     // remove item
+                        //     slideTextboxes--
+                        //     return false
+                        // })
 
                         a[data.remember.showId].slides[id].items = clone(newItems)
                     })

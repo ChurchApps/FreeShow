@@ -7,14 +7,14 @@ import { ShowObj } from "./../classes/Show"
 import { createCategory, setTempShows } from "./importHelpers"
 
 export function convertPDF(PDFs: any[]) {
-    createCategory("Presentation", "presentation", { isDefault: true })
+    let categoryId = createCategory("Presentation", "presentation", { isDefault: true })
 
     let tempShows: any[] = []
 
     PDFs.forEach(({ name, path, pages }: any) => {
         // create show
         let layoutID = uid()
-        let show: Show = new ShowObj(false, "presentation", layoutID)
+        let show: Show = new ShowObj(false, categoryId, layoutID)
         show.name = checkName(name)
         // let { slidesObj, layouts } = createSlides(slides)
         // create images

@@ -90,6 +90,9 @@
             filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowList[]
             firstMatch = filteredShows[0] || null
 
+            // scroll to top
+            document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
+
             previousSearchValue = clone(sva)
         } else {
             filteredShows = filteredStored

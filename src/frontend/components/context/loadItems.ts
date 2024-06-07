@@ -42,7 +42,6 @@ const loadActions = {
 
         let slideActions = [
             { id: "action", label: "midi.start_action", icon: "actions" },
-            // WIP MIDI receiveMidi
             { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
             "SEPERATOR",
             { id: "nextTimer", label: "preview.nextTimer", icon: "clock", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
@@ -131,7 +130,6 @@ const loadActions = {
         }
 
         // get slide actions
-        // WIP MIDI click to remove!
         let slideActions = data.actions?.slideActions || []
         if (slideActions.length) {
             if (media.length) media.push("SEPERATOR")

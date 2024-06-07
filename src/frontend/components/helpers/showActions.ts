@@ -341,6 +341,40 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
     return index
 }
 
+// go to random slide in current project
+export function randomSlide() {
+    if (get(outLocked)) return
+    if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
+
+    let outputId = getActiveOutputs()[0]
+    let currentOutput: any = get(outputs)[outputId]
+    let slide: null | OutSlide = currentOutput.out?.slide || null
+    let showId = slide?.id || get(activeShow)?.id
+    if (!showId) return
+
+    let layout: any[] = _show(showId)
+        .layouts(slide ? [slide.layout] : "active")
+        .ref()[0]
+
+    let slideCount = layout.length || 0
+    if (slideCount < 2) return
+
+    let currentSlideIndex = slide?.index ?? -1
+
+    // get new random index that is not the currently selected one
+    let randomIndex = -1
+    do {
+        randomIndex = randomNumber(slideCount)
+    } while (randomIndex === currentSlideIndex)
+
+    // play slide
+    setOutput("slide", { id: showId, layout: _show(showId).get("settings.activeLayout"), index: randomIndex }, false)
+    updateOut(showId, currentSlideIndex, layout)
+}
+function randomNumber(end: number) {
+    return Math.floor(Math.random() * end)
+}
+
 export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null) {
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
 

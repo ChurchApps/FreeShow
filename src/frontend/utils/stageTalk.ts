@@ -1,13 +1,14 @@
 import { get } from "svelte/store"
 import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
+import { clone } from "../components/helpers/array"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
+import { getCustomStageLabel } from "../components/stage/stage"
 import { events, media, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
-import { clone } from "../components/helpers/array"
 
 // WIP this should not send to all stage, just connected ids
 export function stageListen() {
@@ -112,6 +113,11 @@ export const receiveSTAGE: any = {
             return a
         })
         show = arrayToObject(filterObjectArray(get(stageShows), ["disabled", "name", "settings", "items"]))[msg.data.id]
+
+        // add labels
+        Object.keys(show.items).map((itemId) => {
+            show.items[itemId].label = getCustomStageLabel(itemId)
+        })
 
         // if (show.disabled) return { id: msg.id, channel: "ERROR", data: "noShow" }
 

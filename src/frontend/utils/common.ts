@@ -3,7 +3,6 @@ import { MAIN, OUTPUT } from "../../types/Channels"
 import { getActiveOutputs } from "../components/helpers/output"
 import { activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, focusedArea, os, outputDisplay, outputs, serverData, special, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
-import { newToast } from "./messages"
 import { send } from "./request"
 import { save } from "./save"
 
@@ -38,7 +37,6 @@ export function startAutosave() {
     }
 
     autosaveTimeout = setTimeout(() => {
-        newToast("$toast.saving")
         save()
         startAutosave()
     }, saveInterval)

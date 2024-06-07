@@ -33,7 +33,6 @@ export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
         if (actionId === "start_slide_timers" && slideIndex > -1) {
             let layoutRef = _show("active").layouts().ref()[0]
             if (layoutRef) {
-                console.log(layoutRef[slideIndex], layoutRef)
                 let overlayIds = layoutRef[slideIndex].data?.overlays
                 triggerData = { overlayIds }
             }

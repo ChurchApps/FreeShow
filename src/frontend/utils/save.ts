@@ -85,6 +85,7 @@ import { newToast } from "./messages"
 
 export function save(closeWhenFinished: boolean = false, backup: boolean = false) {
     console.log("SAVING...")
+    newToast("$toast.saving")
 
     let settings: { [key in SaveListSettings]: any } = {
         initialized: true,

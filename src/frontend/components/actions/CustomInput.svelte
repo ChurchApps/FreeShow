@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { Option } from "../../../types/Main"
-    import { activePopup, audioStreams, dictionary, groups, midiIn, popupData, shows, stageShows, styles, triggers } from "../../stores"
+    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, popupData, shows, stageShows, styles, triggers } from "../../stores"
     import T from "../helpers/T.svelte"
     import { sortByName } from "../helpers/array"
     import { _show } from "../helpers/shows"
@@ -49,6 +49,7 @@
         id_select_group: () => sortByName(Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))),
         id_select_stage_layout: () => convertToOptions($stageShows),
         start_audio_stream: () => convertToOptions($audioStreams),
+        start_playlist: () => convertToOptions($audioPlaylists),
         id_select_output_style: () => [{ id: null, name: "—" }, ...convertToOptions($styles)],
         start_trigger: () => convertToOptions($triggers),
         run_action: () => convertToOptions($midiIn).filter((a) => a.id !== mainId),

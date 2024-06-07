@@ -196,6 +196,13 @@
 </CombinedInput>
 
 <CombinedInput>
+    <p><T id="settings.popup_before_close" /></p>
+    <div class="alignRight">
+        <Checkbox disabled={!$dataPath} checked={$special.showClosePopup || false} on:change={(e) => toggle(e, "showClosePopup")} />
+    </div>
+</CombinedInput>
+
+<CombinedInput>
     <p><T id="settings.preview_frame_rate" /></p>
     <Dropdown options={previewRates} value={previewRates.find((a) => a.id === ($special.previewRate || "auto"))?.name} on:click={(e) => updateSpecial(e.detail.id, "previewRate")} />
 </CombinedInput>
