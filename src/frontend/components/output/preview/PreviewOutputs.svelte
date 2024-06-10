@@ -1,6 +1,6 @@
 <script lang="ts">
     import { outputs } from "../../../stores"
-    import { newToast } from "../../../utils/messages"
+    import { newToast } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"

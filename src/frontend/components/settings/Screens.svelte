@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { MAIN, OUTPUT } from "../../../types/Channels"
     import { activePopup, alertMessage, currentOutputSettings, outputDisplay, outputs } from "../../stores"
-    import { receive, send } from "../../utils/request"
+    import { destroy, receive, send } from "../../utils/request"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -34,32 +35,38 @@
 
     let totalScreensWidth: number = 0
 
+    let listenerId = "SCREENS"
     send(MAIN, ["GET_DISPLAYS"])
     // send(MAIN, ["GET_SCREENS"])
-    receive(MAIN, {
-        GET_DISPLAYS: (d: any) => {
-            // d.push(fakeScreen0)
-            // d.push(fakeScreen)
-            // d.push(fakeScreen2)
-            // d.push(fakeScreen3)
+    receive(
+        MAIN,
+        {
+            GET_DISPLAYS: (d: any) => {
+                // d.push(fakeScreen0)
+                // d.push(fakeScreen)
+                // d.push(fakeScreen2)
+                // d.push(fakeScreen3)
 
-            let sortedScreens = d.sort(sortScreensByPosition)
-            screens = sortedScreens.sort(internalFirst)
+                let sortedScreens = d.sort(sortScreensByPosition)
+                screens = sortedScreens.sort(internalFirst)
 
-            let negativeWidth = screens.reduce((value, current) => (current.bounds.x < 0 ? value + current.bounds.width : value), 0)
-            let positiveWidth = screens.reduce((value, current) => (current.bounds.x >= 0 ? value + current.bounds.width : value), 0)
-            totalScreensWidth = (positiveWidth - negativeWidth) / 2
+                let negativeWidth = screens.reduce((value, current) => (current.bounds.x < 0 ? value + current.bounds.width : value), 0)
+                let positiveWidth = screens.reduce((value, current) => (current.bounds.x >= 0 ? value + current.bounds.width : value), 0)
+                totalScreensWidth = (positiveWidth - negativeWidth) / 2
+            },
+            SET_SCREEN: (d: any) => {
+                if (currentScreen.screen) return
+
+                outputs.update((a) => {
+                    a[screenId!].screen = d.id.toString()
+                    return a
+                })
+            },
+            // GET_SCREENS: (d: any) => (screens = d),
         },
-        SET_SCREEN: (d: any) => {
-            if (currentScreen.screen) return
-
-            outputs.update((a) => {
-                a[screenId!].screen = d.id.toString()
-                return a
-            })
-        },
-        // GET_SCREENS: (d: any) => (screens = d),
-    })
+        listenerId
+    )
+    onDestroy(() => destroy(MAIN, listenerId))
 
     // const fakeScreen0 = {
     //     bounds: { x: -864 - 1536, y: -452, width: 1536, height: 1536 },

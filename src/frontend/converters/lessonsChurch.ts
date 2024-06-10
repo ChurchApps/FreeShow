@@ -6,9 +6,9 @@ import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { checkName, getLabelId } from "../components/helpers/show"
 import { activeProject, dataPath, projects, refreshSlideThumbnails, videoExtensions } from "../stores"
-import { newToast } from "../utils/messages"
-import { receive, send } from "../utils/request"
+import { destroy, receive, send } from "../utils/request"
 import { createCategory, setTempShows } from "./importHelpers"
+import { newToast } from "../utils/common"
 
 type File = {
     name: string
@@ -159,16 +159,28 @@ function convertOlfLessonToOlpType(lesson: OlfLesson) {
 
 async function receiveMessage() {
     return new Promise((resolve, reject) => {
+        let listenerId = uid()
+
         // 5 seconds
         setTimeout(() => {
+            removeListener()
             reject("Timed out!")
         }, 5000)
 
-        receive(MAIN, {
-            REPLACE_MEDIA_PATHS: (msg) => {
-                resolve(msg)
+        receive(
+            MAIN,
+            {
+                REPLACE_MEDIA_PATHS: (msg) => {
+                    removeListener()
+                    resolve(msg)
+                },
             },
-        })
+            listenerId
+        )
+
+        function removeListener() {
+            destroy(MAIN, listenerId)
+        }
     })
 }
 

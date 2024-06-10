@@ -32,6 +32,7 @@ import {
     labelsDisabled,
     language,
     loaded,
+    loadedState,
     lockedOverlays,
     mediaFolders,
     mediaOptions,
@@ -76,6 +77,8 @@ export function updateSyncedSettings(data: any) {
         if (updateList[key as SaveListSyncedSettings]) updateList[key as SaveListSyncedSettings](value)
         else console.log("MISSING: ", key)
     })
+
+    loadedState.set([...get(loadedState), "synced_settings"])
 }
 
 export function updateSettings(data: any) {

@@ -1,5 +1,8 @@
 import { get } from "svelte/store"
-import { OUTPUT, REMOTE } from "../../types/Channels"
+import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
+import { midiInListen } from "../components/actions/midi"
+import { getActiveOutputs } from "../components/helpers/output"
+import { loadShows } from "../components/helpers/setShow"
 import { updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
 import {
     activeProject,
@@ -31,16 +34,20 @@ import {
     timers,
     transitionData,
     variables,
+    visualizerData,
     volume,
 } from "../stores"
 import { driveConnect } from "./drive"
-import { midiInListen } from "../components/actions/midi"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
-import { eachConnection, sendData, timedout } from "./sendData"
-import { getActiveOutputs } from "../components/helpers/output"
+import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
 
-export function listenForUpdates() {
+export function storeSubscriber() {
+    // load new show on show change
+    activeShow.subscribe((a) => {
+        if (a && (a.type === undefined || a.type === "show")) loadShows([a.id])
+    })
+
     shows.subscribe((data) => {
         sendData(REMOTE, { channel: "SHOWS", data })
 
@@ -49,6 +56,9 @@ export function listenForUpdates() {
     })
     showsCache.subscribe((data) => {
         send(OUTPUT, ["SHOWS"], data)
+
+        // STAGE
+        sendData(STAGE, { channel: "SLIDES" })
 
         // REMOTE
 
@@ -90,6 +100,10 @@ export function listenForUpdates() {
 
     events.subscribe((data) => {
         send(OUTPUT, ["EVENTS"], data)
+
+        // STAGE
+        // WIP all stage listeners should not send to all stages, just the connected ids
+        send(STAGE, ["EVENTS"], data)
     })
 
     outputs.subscribe((data) => {
@@ -97,6 +111,11 @@ export function listenForUpdates() {
         // used for stage mirror data
         send(OUTPUT, ["ALL_OUTPUTS"], data)
         sendData(REMOTE, { channel: "OUT" })
+
+        // STAGE
+        sendData(STAGE, { channel: "SLIDES" }, true)
+        // send(STAGE, ["OUTPUTS"], data)
+        // sendBackgroundToStage(a)
     })
     styles.subscribe((data) => {
         send(OUTPUT, ["STYLES"], data)
@@ -106,6 +125,18 @@ export function listenForUpdates() {
     })
     stageShows.subscribe((data) => {
         send(OUTPUT, ["STAGE_SHOWS"], data)
+
+        // STAGE
+        data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
+        timedout(STAGE, { channel: "SHOW", data }, () =>
+            eachConnection(STAGE, "SHOW", (connection) => {
+                if (!connection.active) return
+
+                let currentData = data[connection.active]
+                if (!currentData.settings.resolution?.width) currentData.settings.resolution = { width: 1920, height: 1080 }
+                return currentData
+            })
+        )
     })
 
     draw.subscribe((data) => {
@@ -138,13 +169,23 @@ export function listenForUpdates() {
     })
     mediaCache.subscribe((data) => {
         send(OUTPUT, ["MEDIA_CACHE"], data)
+
+        // STAGE
+        sendData(STAGE, { channel: "SLIDES" }, true)
+        // sendBackgroundToStage(get(outputs))
     })
 
     timers.subscribe((data) => {
         send(OUTPUT, ["TIMERS"], data)
+
+        // STAGE
+        send(STAGE, ["TIMERS"], data)
     })
     variables.subscribe((data) => {
         send(OUTPUT, ["VARIABLES"], data)
+
+        // STAGE
+        send(STAGE, ["VARIABLES"], data)
     })
 
     special.subscribe((data) => {
@@ -158,6 +199,9 @@ export function listenForUpdates() {
 
     timeFormat.subscribe((a) => {
         send(OUTPUT, ["TIME_FORMAT"], a)
+
+        // STAGE
+        send(STAGE, ["DATA"], { timeFormat: a })
     })
 
     projects.subscribe(() => {
@@ -198,4 +242,45 @@ export function listenForUpdates() {
             refreshSlideThumbnails.set(false)
         })
     })
+}
+
+const initalOutputData = {
+    STYLES: get(styles),
+    TRANSITION: get(transitionData),
+    SHOWS: get(showsCache),
+
+    TEMPLATES: get(templates),
+    OVERLAYS: get(overlays),
+    EVENTS: get(events),
+
+    DRAW: { data: get(draw) },
+    DRAW_TOOL: { data: get(drawTool) },
+    DRAW_SETTINGS: get(drawSettings),
+
+    VIZUALISER_DATA: get(visualizerData),
+    MEDIA: get(media),
+    MEDIA_CACHE: get(mediaCache),
+    TIMERS: get(timers),
+    VARIABLES: get(variables),
+    TIME_FORMAT: get(timeFormat),
+
+    SPECIAL: get(special),
+
+    PLAYER_VIDEOS: get(playerVideos),
+    STAGE_SHOWS: get(stageShows),
+
+    // received by Output
+    VOLUME: get(volume),
+}
+
+export function sendInitialOutputData() {
+    Object.keys(initalOutputData).forEach((KEY) => {
+        send(OUTPUT, [KEY], initalOutputData[KEY])
+    })
+
+    setTimeout(() => {
+        send(OUTPUT, ["OUTPUTS"], get(outputs))
+        // used for stage mirror data
+        send(OUTPUT, ["ALL_OUTPUTS"], get(outputs))
+    }, 100)
 }

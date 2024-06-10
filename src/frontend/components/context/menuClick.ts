@@ -44,8 +44,7 @@ import {
     templates,
     themes,
 } from "../../stores"
-import { hideDisplay } from "../../utils/common"
-import { newToast } from "../../utils/messages"
+import { hideDisplay, newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"

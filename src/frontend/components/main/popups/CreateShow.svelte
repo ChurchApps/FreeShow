@@ -1,10 +1,11 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { MAIN } from "../../../../types/Channels"
     import { ShowObj } from "../../../classes/Show"
     import { convertText, getQuickExample } from "../../../converters/txt"
     import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, splitLines } from "../../../stores"
-    import { newToast } from "../../../utils/messages"
-    import { receive, send } from "../../../utils/request"
+    import { newToast } from "../../../utils/common"
+    import { destroy, receive, send } from "../../../utils/request"
     import { sortObject } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -99,26 +100,32 @@
 
     // encode using btoa()
     const blockedWords = ["ZnVjaw==", "Yml0Y2g=", "bmlnZ2E="]
-    receive(MAIN, {
-        SEARCH_LYRICS: (data) => {
-            loading = false
+    let id = "CREATE_SHOW"
+    receive(
+        MAIN,
+        {
+            SEARCH_LYRICS: (data) => {
+                loading = false
 
-            // filter out songs with bad words
-            blockedWords.forEach((eWord) => {
-                let word = atob(eWord)
-                if (data.lyrics.includes(word)) data.lyrics = ""
-            })
+                // filter out songs with bad words
+                blockedWords.forEach((eWord) => {
+                    let word = atob(eWord)
+                    if (data.lyrics.includes(word)) data.lyrics = ""
+                })
 
-            if (!data.lyrics) {
-                newToast("$toast.lyrics_undefined")
-                return
-            }
+                if (!data.lyrics) {
+                    newToast("$toast.lyrics_undefined")
+                    return
+                }
 
-            values.text = data.lyrics
-            activateLyrics = true
-            newToast("$toast.lyrics_copied")
+                values.text = data.lyrics
+                activateLyrics = true
+                newToast("$toast.lyrics_copied")
+            },
         },
-    })
+        id
+    )
+    onDestroy(() => destroy(MAIN, id))
 </script>
 
 <svelte:window on:keydown={keydown} />

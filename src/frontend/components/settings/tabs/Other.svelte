@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { MAIN, STORE } from "../../../../types/Channels"
     import { activePopup, alertMessage, dataPath, dictionary, mediaCache, shows, showsCache, showsPath, special } from "../../../stores"
-    import { newToast } from "../../../utils/messages"
-    import { receive, send } from "../../../utils/request"
+    import { newToast } from "../../../utils/common"
+    import { destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import { restartOutputs } from "../../../utils/updateSettings"
     import Icon from "../../helpers/Icon.svelte"
@@ -78,10 +78,16 @@
     // shows in folder
     let hiddenShows: any[] = []
     let brokenShows: number = 0
-    receive(MAIN, {
-        // this will not include newly created shows not saved yet, but it should not be an issue.
-        FULL_SHOWS_LIST: (data: any) => (hiddenShows = data || []),
-    })
+    let listenerId = "OTHER_SETTINGS"
+    receive(
+        MAIN,
+        {
+            // this will not include newly created shows not saved yet, but it should not be an issue.
+            FULL_SHOWS_LIST: (data: any) => (hiddenShows = data || []),
+        },
+        listenerId
+    )
+    onDestroy(() => destroy(MAIN, listenerId))
 
     $: if (hiddenShows?.length) getBrokenShows()
     function getBrokenShows() {

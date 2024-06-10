@@ -22,7 +22,7 @@
         active={$activeShow?.id === path}
         border
         style="width: 100%;"
-        title={path}
+        title={decodeURIComponent(path)}
         bold={false}
         on:click={(e) => {
             if ($outLocked || e.ctrlKey || e.metaKey) return

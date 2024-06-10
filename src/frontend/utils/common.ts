@@ -1,10 +1,26 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { getActiveOutputs } from "../components/helpers/output"
-import { activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, focusedArea, os, outputDisplay, outputs, serverData, special, version } from "../stores"
+import { activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, focusedArea, os, outputDisplay, outputs, serverData, special, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
+import { removeDuplicates } from "../components/helpers/array"
+
+// create toast popup
+export function newToast(msg: string) {
+    if (!msg) return
+    toastMessages.set(removeDuplicates([...get(toastMessages), msg]))
+}
+
+// async wait (instead of timeouts)
+export function wait(ms: number) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve("ended")
+        }, Number(ms))
+    })
+}
 
 // hide output window
 export function hideDisplay(ctrlKey: boolean = true) {

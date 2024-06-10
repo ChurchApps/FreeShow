@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
     import type { MediaStyle } from "../../../../types/Main"
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { allOutputs, audioChannels, outputs, playingVideos, special, videosData, videosTime } from "../../../stores"
-    import { receive, send } from "../../../utils/request"
+    import { destroy, receive, send } from "../../../utils/request"
     import { analyseAudio, getAnalyser } from "../../helpers/audio"
     import { getMediaStyle } from "../../helpers/media"
     import Player from "../../system/Player.svelte"
@@ -84,9 +84,11 @@
             videoData = { ...outputData, duration: videoData.duration || 0 }
         },
     }
+    let listenerId = "MEDIA_RECEIVE"
     onMount(() => {
-        receive(OUTPUT, videoReceiver)
+        receive(OUTPUT, videoReceiver, listenerId)
     })
+    onDestroy(() => destroy(OUTPUT, listenerId))
 
     // call end just before (to make room for transition) - this also triggers video ended on loop
     $: if (videoData.duration && duration && videoTime >= videoData.duration - duration / 1000 - 0.9) videoEnded()

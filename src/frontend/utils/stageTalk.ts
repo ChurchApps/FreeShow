@@ -5,54 +5,10 @@ import { clone } from "../components/helpers/array"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { events, media, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
+import { events, media, mediaCache, outputs, previewBuffers, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
-import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
-
-// WIP this should not send to all stage, just connected ids
-export function stageListen() {
-    stageShows.subscribe((data: any) => {
-        data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
-        timedout(STAGE, { channel: "SHOW", data }, () =>
-            eachConnection(STAGE, "SHOW", (connection) => {
-                if (!connection.active) return
-
-                let currentData = data[connection.active]
-                if (!currentData.settings.resolution?.width) currentData.settings.resolution = { width: 1920, height: 1080 }
-                return currentData
-            })
-        )
-    })
-    showsCache.subscribe(() => {
-        sendData(STAGE, { channel: "SLIDES" })
-    })
-
-    outputs.subscribe(() => {
-        sendData(STAGE, { channel: "SLIDES" }, true)
-        // send(STAGE, ["OUTPUTS"], data)
-
-        // sendBackgroundToStage(a)
-    })
-    mediaCache.subscribe(() => {
-        sendData(STAGE, { channel: "SLIDES" }, true)
-        // sendBackgroundToStage(get(outputs))
-    })
-
-    timers.subscribe((a) => {
-        send(STAGE, ["TIMERS"], a)
-    })
-    variables.subscribe((a) => {
-        send(STAGE, ["VARIABLES"], a)
-    })
-    events.subscribe((a) => {
-        send(STAGE, ["EVENTS"], a)
-    })
-
-    timeFormat.subscribe((a) => {
-        send(STAGE, ["DATA"], { timeFormat: a })
-    })
-}
+import { arrayToObject, filterObjectArray, sendData } from "./sendData"
 
 export function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
     let currentOutput = updater[outputId]?.out

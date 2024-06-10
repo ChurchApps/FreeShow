@@ -96,7 +96,7 @@
     onDestroy(() => window.api.removeListener(READ_FOLDER, listenerId))
 
     // receive files
-    window.api.receive(READ_FOLDER, receiveContent)
+    window.api.receive(READ_FOLDER, receiveContent, listenerId)
     function receiveContent(msg: any) {
         filesInFolders = (msg.filesInFolders || []).sort((a: any, b: any) => a.name.localeCompare(b.name))
 

@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { ListItem } from "../../../../types/Show"
     import { activePopup, dictionary, popupData } from "../../../stores"
-    import { newToast } from "../../../utils/messages"
+    import { newToast } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"

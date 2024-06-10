@@ -1,10 +1,11 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
-    import { createEventDispatcher, onMount } from "svelte"
-    import { receive, send } from "../../utils/request"
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
+    import { destroy, receive, send } from "../../utils/request"
     import { MAIN } from "../../../types/Channels"
     import { systemFonts } from "../../stores"
     import { removeDuplicates } from "../helpers/array"
+    import { uid } from "uid"
 
     export let system: boolean = false
 
@@ -24,12 +25,18 @@
         else send(MAIN, ["GET_SYSTEM_FONTS"])
     })
 
-    receive(MAIN, {
-        GET_SYSTEM_FONTS: (fonts: string[]) => {
-            systemFonts.set(fonts)
-            addFonts(fonts)
+    let id = uid()
+    receive(
+        MAIN,
+        {
+            GET_SYSTEM_FONTS: (fonts: string[]) => {
+                systemFonts.set(fonts)
+                addFonts(fonts)
+            },
         },
-    })
+        id
+    )
+    onDestroy(() => destroy(MAIN, id))
 
     function addFonts(newFonts: string[]) {
         // join and remove duplicates

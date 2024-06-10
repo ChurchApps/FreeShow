@@ -16,8 +16,9 @@ export interface StageShows {
             background?: boolean
             color?: string
             autoStretch?: string
-            resolution?: boolean
-            size?: Resolution
+            resolution?: Resolution
+            // resolution?: boolean
+            // size?: Resolution
             labels?: boolean
             showLabelIfEmptySlide?: boolean
         }

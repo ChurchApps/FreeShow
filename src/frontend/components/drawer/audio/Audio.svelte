@@ -210,7 +210,7 @@
             <AudioStreams />
         {:else if playlist}
             {#each playlist.songs as song}
-                <AudioFile path={song} name={getFileName(song)} {active} playlist />
+                <AudioFile path={song} name={decodeURIComponent(getFileName(song))} {active} playlist />
             {/each}
         {:else if fullFilteredFiles.length}
             {#key rootPath}

@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { MAIN, STORE } from "../../types/Channels"
 import { clone } from "../components/helpers/array"
 import {
+    activePopup,
     activeProject,
     alertUpdates,
     audioFolders,
@@ -78,10 +79,10 @@ import {
     videoMarkers,
     volume,
 } from "../stores"
-import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
+import type { SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
 import { syncDrive } from "./drive"
-import { newToast } from "./messages"
+import { newToast } from "./common"
 
 export function save(closeWhenFinished: boolean = false, backup: boolean = false) {
     console.log("SAVING...")
@@ -213,6 +214,136 @@ export function saveComplete({ closeWhenFinished, backup }: any) {
     syncDrive(false, closeWhenFinished)
 }
 
+export function initializeClosing() {
+    if (get(special).showClosePopup) activePopup.set("unsaved")
+    // "saved" does not count for all minor changes, but should be fine
+    else if (get(saved)) saveComplete({ closeWhenFinished: true })
+    else save(true)
+}
+
 export function closeApp() {
     window.api.send(MAIN, { channel: "CLOSE" })
+}
+
+// GET SAVED STATE
+
+export function unsavedUpdater() {
+    let cachedValues: any = {}
+    let s = { ...saveList, folders, projects, showsCache, stageShows }
+
+    Object.keys(s).forEach((id) => {
+        if (!s[id]) return
+
+        s[id].subscribe((a: any) => {
+            if (customSavedListener[id] && a) {
+                a = customSavedListener[id](clone(a))
+                let stringObj = JSON.stringify(a)
+                if (cachedValues[id] === stringObj) return
+
+                cachedValues[id] = stringObj
+            }
+
+            saved.set(false)
+        })
+
+        // set cached custom listener on load
+        let store = get(s[id])
+        if (customSavedListener[id] && store) {
+            store = customSavedListener[id](clone(store))
+            cachedValues[id] = JSON.stringify(store)
+        }
+    })
+
+    saved.set(true)
+}
+
+const customSavedListener = {
+    showsCache: (data: any) => {
+        Object.keys(data).forEach((id) => {
+            delete data[id].timestamps
+            delete data[id].settings
+
+            Object.values(data[id].slides).forEach((slide: any) => {
+                delete slide.id
+            })
+        })
+
+        return data
+    },
+    projects: (data: any) => {
+        Object.keys(data).forEach((id) => {
+            data[id].shows.map((show) => {
+                delete show.layout
+            })
+        })
+
+        return data
+    },
+}
+
+const saveList: { [key in SaveList]: any } = {
+    initialized: null,
+    activeProject: null,
+    alertUpdates: alertUpdates,
+    audioFolders: audioFolders,
+    autoOutput: autoOutput,
+    categories: categories,
+    autosave: autosave,
+    timeFormat: timeFormat,
+    maxConnections: maxConnections,
+    ports: ports,
+    disabledServers: disabledServers,
+    serverData: serverData,
+    events: events,
+    showsPath: showsPath,
+    dataPath: dataPath,
+    lockedOverlays: null,
+    drawer: null,
+    drawerTabsData: null,
+    drawSettings: drawSettings,
+    groupNumbers: groupNumbers,
+    fullColors: fullColors,
+    formatNewShow: formatNewShow,
+    groups: groups,
+    imageExtensions: imageExtensions,
+    labelsDisabled: labelsDisabled,
+    language: language,
+    mediaFolders: mediaFolders,
+    mediaOptions: mediaOptions,
+    openedFolders: null,
+    os: null,
+    outLocked: null,
+    outputs: null,
+    sorted: null,
+    styles: styles,
+    overlayCategories: overlayCategories,
+    overlays: overlays,
+    playerVideos: playerVideos,
+    remotePassword: remotePassword,
+    resized: null,
+    scriptures: scriptures,
+    scriptureSettings: scriptureSettings,
+    slidesOptions: slidesOptions,
+    splitLines: splitLines,
+    templateCategories: templateCategories,
+    templates: templates,
+    timers: timers,
+    variables: variables,
+    triggers: triggers,
+    audioStreams: audioStreams,
+    audioPlaylists: audioPlaylists,
+    theme: theme,
+    themes: themes,
+    transitionData: transitionData,
+    videoExtensions: videoExtensions,
+    volume: null,
+    gain: null,
+    midiIn: midiIn,
+    videoMarkers: videoMarkers,
+    customizedIcons: customizedIcons,
+    driveKeys: driveKeys,
+    driveData: driveData,
+    calendarAddShow: null,
+    special: special,
+    companion: null,
 }

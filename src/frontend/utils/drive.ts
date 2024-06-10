@@ -2,9 +2,9 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { CLOUD } from "../../types/Channels"
 import { activePopup, dataPath, driveData, driveKeys, popupData, showsPath } from "../stores"
-import { newToast } from "./messages"
 import { send } from "./request"
 import { save } from "./save"
+import { newToast } from "./common"
 
 export function validateKeys(file: string) {
     let keys = JSON.parse(file)

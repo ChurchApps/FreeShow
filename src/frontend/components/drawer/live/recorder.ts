@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { RECORDER } from "../../../../types/Channels"
 import { activeRecording, currentRecordingStream, dataPath } from "../../../stores"
-import { newToast } from "../../../utils/messages"
+import { newToast } from "../../../utils/common"
 
 let mediaRecorder
 let recordedChunks: any[] = []

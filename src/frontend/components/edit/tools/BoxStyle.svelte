@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { Item, ItemType } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, selected, showsCache, templates } from "../../../stores"
-    import { newToast } from "../../../utils/messages"
+    import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { hexToRgb, splitRgb } from "../../helpers/color"
     import { history } from "../../helpers/history"

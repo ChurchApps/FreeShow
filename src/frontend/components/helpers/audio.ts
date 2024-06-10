@@ -113,15 +113,13 @@ export function updatePlaylist(id: string, key: string, value: any) {
 
 export function playlistNext(previous: string = "", specificSong: string = "") {
     let id = get(activePlaylist)?.id
-    console.log("next", previous, get(activePlaylist), get(audioPlaylists))
     if (!id) return
 
     let songs = getSongs()
-    console.log(songs)
+    if (!songs.length) return
 
     let currentSongIndex = songs.findIndex((a) => a === (specificSong || previous))
     let nextSong = songs[currentSongIndex + (specificSong ? 0 : 1)]
-    console.log(currentSongIndex, nextSong)
 
     if (!nextSong) nextSong = songs[0]
     if (!nextSong) return
@@ -137,6 +135,7 @@ export function playlistNext(previous: string = "", specificSong: string = "") {
 
         // generate list
         let playlist = clone(get(audioPlaylists)[id])
+        if (!playlist) return []
         let songs = playlist.songs
 
         let mode = playlist.mode

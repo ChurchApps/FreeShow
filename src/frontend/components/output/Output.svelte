@@ -12,11 +12,12 @@
     import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, joinMetadata, setTemplateStyle } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import Zoomed from "../slide/Zoomed.svelte"
-    import { updateAnimation, wait } from "./animation"
+    import { updateAnimation } from "./animation"
     import Background from "./layers/Background.svelte"
     import Metadata from "./layers/Metadata.svelte"
     import Overlays from "./layers/Overlays.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
+    import { wait } from "../../utils/common"
 
     export let outputId: string = ""
     export let style = ""

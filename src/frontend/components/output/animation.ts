@@ -1,4 +1,5 @@
 import { activeAnimate } from "../../stores"
+import { wait } from "../../utils/common"
 import { clone } from "../helpers/array"
 
 export async function updateAnimation(animationData: any, currentIndex: number, outSlide: any) {
@@ -85,14 +86,6 @@ const animations = {
         animationData.styles[id].push(style)
         animationData.style[id] = animationData.styles[id].join("") + currentStyle
     },
-}
-
-export function wait(ms: number) {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve("ended")
-        }, Number(ms))
-    })
 }
 
 function removePreviousKeys(array: string[] | undefined, key: string) {

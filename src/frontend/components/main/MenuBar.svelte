@@ -1,8 +1,7 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import { MAIN } from "../../../types/Channels"
-    import { activePopup, saved, special } from "../../stores"
-    import { save } from "../../utils/save"
+    import { saved, windowState } from "../../stores"
+    import { initializeClosing } from "../../utils/save"
     import ContextChild from "../context/ContextChild.svelte"
     import ContextItem from "../context/ContextItem.svelte"
     import { contextMenuItems, contextMenuLayouts } from "../context/contextMenus"
@@ -12,22 +11,13 @@
 
     const menus: string[] = ["file", "edit", "view", "help"]
 
-    let maximized: boolean = false
     let active: boolean = false
     let activeID: null | string = null
     let activeMenu: string[] = []
     let x: number = 0
     let y: number = 30
 
-    onMount(() => {
-        // give time to properly load before requesting window state
-        setTimeout(() => {
-            window.api.send(MAIN, { channel: "MAXIMIZED" })
-        })
-    })
-    window.api.receive(MAIN, (msg: any) => {
-        if (msg.channel === "MAXIMIZED") maximized = msg.data
-    })
+    $: maximized = !!$windowState.maximized
 
     function menu(e: any) {
         let id: string = e.target.id
@@ -86,16 +76,7 @@
         <Button on:click={() => window.api.send(MAIN, { channel: "MAXIMIZE" })} style="transform: rotate(180deg);" center>
             <Icon id={maximized ? "maximized" : "unmaximized"} size={maximized ? 1 : 1.1} white />
         </Button>
-        <Button
-            id="close"
-            on:click={() => {
-                if ($special.showClosePopup) activePopup.set("unsaved")
-                // save all the time, because $saved does not count for all minor changes
-                // else if ($saved) saveComplete({ closeWhenFinished: true })
-                else save(true)
-            }}
-            center
-        >
+        <Button id="close" on:click={initializeClosing} center>
             <Icon id="close" size={1.4} white />
         </Button>
     </div>
