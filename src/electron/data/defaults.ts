@@ -79,6 +79,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     gain: 1,
     driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },
     calendarAddShow: "",
+    metronome: {},
     special: {},
 }
 

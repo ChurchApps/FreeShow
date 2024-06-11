@@ -36,6 +36,7 @@ import {
     lockedOverlays,
     mediaFolders,
     mediaOptions,
+    metronome,
     midiIn,
     openedFolders,
     outLocked,
@@ -278,6 +279,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     customizedIcons: (v: any) => customizedIcons.set(v),
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
+    metronome: (v: any) => metronome.set(v),
     companion: (v: any) => {
         companion.set(v)
 

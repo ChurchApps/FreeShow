@@ -36,6 +36,7 @@ import {
     mediaCache,
     mediaFolders,
     mediaOptions,
+    metronome,
     midiIn,
     openedFolders,
     os,
@@ -134,6 +135,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         gain: get(gain),
         driveData: get(driveData),
         calendarAddShow: get(calendarAddShow),
+        metronome: get(metronome),
         special: get(special),
     }
 
@@ -344,6 +346,7 @@ const saveList: { [key in SaveList]: any } = {
     driveKeys: driveKeys,
     driveData: driveData,
     calendarAddShow: null,
+    metronome: null,
     special: special,
     companion: null,
 }

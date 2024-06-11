@@ -159,6 +159,13 @@
         "online": "Online",
         "recommended": "Recommended"
     },
+    "audio": {
+        "metronome": "Metronome",
+        "toggle_metronome": "Toggle metronome",
+        "tempo": "Tempo",
+        "bpm": "BPM",
+        "beats": "Beats"
+    },
     "menu": {
         "show": "Show",
         "_title_show": "Presenting",

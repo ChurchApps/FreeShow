@@ -61,4 +61,5 @@ export type SaveListSettings =
     | "gain"
     | "driveData"
     | "calendarAddShow"
+    | "metronome"
     | "special"

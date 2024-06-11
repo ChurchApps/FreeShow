@@ -171,6 +171,7 @@ export const audioStreams: Writable<any> = writable({}) // {}
 export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}) // {}
 export const volume: Writable<number> = writable(1) // 1
 export const gain: Writable<number> = writable(1) // 1
+export const metronome: Writable<any> = writable({}) // {}
 
 // PLAYER
 export const playerVideos: Writable<Categories> = writable({}) // {default}
