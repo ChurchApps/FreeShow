@@ -40,6 +40,7 @@ import { outputWindows } from "../output/output"
 import { error_log } from "../data/store"
 import { startRestListener, startWebSocket, stopApiListener } from "./api"
 import checkForUpdates from "./updater"
+import { LyricSearch } from "./LyricSearch"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -277,13 +278,8 @@ function loadFonts() {
 
 // SEARCH_LYRICS
 async function searchLyrics({ artist, title }: any) {
-    const Genius = require("genius-lyrics")
-    const Client = new Genius.Client()
-
-    const songs = await Client.songs.search(title + artist)
-    const lyrics = songs[0] ? await songs[0].lyrics() : ""
-
-    toApp("MAIN", { channel: "SEARCH_LYRICS", data: { lyrics } })
+    const songs = await LyricSearch.searchGenius(artist, title)
+    toApp("MAIN", { channel: "SEARCH_LYRICS", data: songs })
 }
 
 // GET_SCREENS | GET_WINDOWS

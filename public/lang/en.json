@@ -438,7 +438,11 @@
         "lyrics": "Lyrics view",
         "text": "Text edit",
         "update": "Update show",
-        "slide_template": "Slide template"
+        "slide_template": "Slide template",
+        "search_results": "Search Results",
+        "source": "Source",
+        "artist": "Artist",
+        "song": "Song"
     },
     "actions": {
         "rename": "Rename",

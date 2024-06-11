@@ -20,6 +20,13 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../Loader.svelte"
 
+    type LyricSearchResult = {
+        source: string
+        id: string
+        artist: string
+        title: string
+    }
+
     function textToShow() {
         let sections = values.text.split("\n\n").filter((a: any) => a.length)
 
@@ -50,6 +57,8 @@
         text: $quickTextCache.length > 20 ? $quickTextCache : "",
         name: "",
     }
+
+    let songs: LyricSearchResult[] | null = null
 
     function keydown(e: any) {
         if (e.key !== "Enter" || !(e.ctrlKey || e.metaKey)) return
@@ -83,6 +92,7 @@
     }
 
     let showMore: boolean = false
+    let showSearchResults: boolean = false
     let activateLyrics: boolean = !!values.text.length
 
     let loading = false
@@ -99,14 +109,18 @@
     }
 
     // encode using btoa()
-    const blockedWords = ["ZnVjaw==", "Yml0Y2g=", "bmlnZ2E="]
+    //const blockedWords = ["ZnVjaw==", "Yml0Y2g=", "bmlnZ2E="]
     let id = "CREATE_SHOW"
     receive(
         MAIN,
         {
-            SEARCH_LYRICS: (data) => {
+            SEARCH_LYRICS: (data: LyricSearchResult[]) => {
+                console.log("DATA IS", data)
                 loading = false
+                songs = data
+                showSearchResults = true
 
+                /*
                 // filter out songs with bad words
                 blockedWords.forEach((eWord) => {
                     let word = atob(eWord)
@@ -121,6 +135,7 @@
                 values.text = data.lyrics
                 activateLyrics = true
                 newToast("$toast.lyrics_copied")
+                */
             },
         },
         id
@@ -176,6 +191,42 @@
     </CombinedInput>
 {/if}
 
+{#if songs !== null}
+    <Button on:click={() => (showSearchResults = !showSearchResults)} style="margin-top: 10px;" dark center>
+        <Icon id="search" right white={activateLyrics} />
+        <T id="show.search_results" />
+    </Button>
+{/if}
+
+{#if showSearchResults}
+    <div style="height:250px; overflow-y:scroll;">
+        <table class="searchResultTable">
+            <thead>
+                <tr>
+                    <th><T id="show.source" /></th>
+                    <th><T id="show.artist" /></th>
+                    <th><T id="show.song" /></th>
+                </tr>
+            </thead>
+            <tbody>
+                {#if songs}
+                    {#each songs as song}
+                        <tr>
+                            <td>{song.source}</td>
+                            <td>{song.artist}</td>
+                            <td>{song.title}</td>
+                        </tr>
+                    {/each}
+                {:else}
+                    <tr>
+                        <td colspan="3">No songs found</td>
+                    </tr>
+                {/if}
+            </tbody>
+        </table>
+    </div>
+{/if}
+
 <Button on:click={() => (activateLyrics = !activateLyrics)} style="margin-top: 10px;" dark center>
     <Icon id="text" right white={activateLyrics} />
     <T id="show.quick_lyrics" />
@@ -211,5 +262,38 @@
     .search :global(div) {
         width: 25px;
         height: 25px;
+    }
+
+    .searchResultTable {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    .searchResultTable th {
+        text-align: left;
+        font-size: 0.8em;
+        font-weight: bold;
+        padding: 0px 10px;
+    }
+
+    .searchResultTable td {
+        font-size: 0.8em;
+        padding: 0px 10px;
+        overflow: hidden;
+        white-space: noWrap;
+    }
+
+    .searchResultTable td:first-of-type,
+    .searchResultTable th:first-of-type {
+        width: 10%;
+    }
+    .searchResultTable td:nth-of-type(2),
+    .searchResultTable th:nth-of-type(2) {
+        width: 25%;
+    }
+
+    .searchResultTable td:nth-of-type(3),
+    .searchResultTable th:nth-of-type(3) {
+        width: 65%;
     }
 </style>
