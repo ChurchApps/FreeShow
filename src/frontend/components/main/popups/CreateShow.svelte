@@ -22,9 +22,10 @@
 
     type LyricSearchResult = {
         source: string
-        id: string
+        key: string
         artist: string
         title: string
+        originalQuery: string
     }
 
     function textToShow() {
@@ -108,8 +109,13 @@
         loading = true
     }
 
+    function getLyrics(song: LyricSearchResult) {
+        send(MAIN, ["GET_LYRICS"], { song })
+        loading = true
+    }
+
     // encode using btoa()
-    //const blockedWords = ["ZnVjaw==", "Yml0Y2g=", "bmlnZ2E="]
+    const blockedWords = ["ZnVjaw==", "Yml0Y2g=", "bmlnZ2E="]
     let id = "CREATE_SHOW"
     receive(
         MAIN,
@@ -119,8 +125,18 @@
                 loading = false
                 songs = data
                 showSearchResults = true
+            },
+        },
+        id
+    )
+    receive(
+        MAIN,
+        {
+            GET_LYRICS: (data: { lyrics: string }) => {
+                console.log("DATA IS", data)
+                loading = false
+                showSearchResults = false
 
-                /*
                 // filter out songs with bad words
                 blockedWords.forEach((eWord) => {
                     let word = atob(eWord)
@@ -135,7 +151,6 @@
                 values.text = data.lyrics
                 activateLyrics = true
                 newToast("$toast.lyrics_copied")
-                */
             },
         },
         id
@@ -214,7 +229,14 @@
                         <tr>
                             <td>{song.source}</td>
                             <td>{song.artist}</td>
-                            <td>{song.title}</td>
+                            <td>
+                                <a
+                                    href="#void"
+                                    on:click={() => {
+                                        getLyrics(song)
+                                    }}>{song.title}</a
+                                >
+                            </td>
                         </tr>
                     {/each}
                 {:else}
@@ -295,5 +317,10 @@
     .searchResultTable td:nth-of-type(3),
     .searchResultTable th:nth-of-type(3) {
         width: 65%;
+    }
+
+    .searchResultTable a {
+        color: var(--secondary);
+        text-decoration: none;
     }
 </style>

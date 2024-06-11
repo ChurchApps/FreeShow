@@ -1,32 +1,59 @@
 export type LyricSearchResult = {
     source: string,
-    id: string,
+    key: string,
     artist: string,
     title: string
+    originalQuery?: string
 }
 
 export class LyricSearch {
 
-    static searchGenius = async (artist:string, title: string) => {
+    private static getGeniusClient = () => {
         const Genius = require("genius-lyrics")
-        const client = new Genius.Client()
+        return new Genius.Client()
+    }
+
+    static search = async (artist:string, title: string) => {
+        const results = await Promise.all([
+            LyricSearch.searchGenius(artist, title)
+        ])
+        return results.flat()
+    }
+
+    private static searchGenius = async (artist:string, title: string) => {
+        const client = this.getGeniusClient()
         const songs = await client.songs.search(title + artist)
-        return songs.map(LyricSearch.convertGenuisToResult);
+        return songs.map((s:any) => LyricSearch.convertGenuisToResult(s, title + artist));
     }
 
-    static getGeniusLyrics = async (id:string) => {
-        const Genius = require("genius-lyrics")
-        const client = new Genius.Client()
-        const song = await client.songs.get(parseInt(id));
-        return song ? await song.lyrics() : ""
+    static get(song:LyricSearchResult) {
+        if(song.source === "Genius") {
+            return LyricSearch.getGenius(song)
+        }
+        return Promise.resolve("")
     }
 
-    static convertGenuisToResult = (geniusResult:any) => {
+    //Would greatly prefer to just load via url or id, but the api fails often with these methods (malformed json)
+    private static getGenius = async (song:LyricSearchResult) => {
+        const client = this.getGeniusClient()
+        const songs = await client.songs.search(song.originalQuery || "")
+        let result = "";
+        for (let i = 0; i < songs.length; i++) {
+            if (songs[i].id.toString() === song.key) {
+                result = await songs[i].lyrics()
+                break
+            }
+        }
+        return result
+    }
+
+    private static convertGenuisToResult = (geniusResult:any, originalQuery:string) => {
         return {
             source: "Genius",
-            id: geniusResult.id.toString(),
+            key: geniusResult.id.toString(),
             artist: geniusResult.artist.name,
-            title: geniusResult.title
+            title: geniusResult.title,
+            originalQuery: originalQuery
         } as LyricSearchResult
     }
 
