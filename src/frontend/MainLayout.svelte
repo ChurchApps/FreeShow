@@ -88,17 +88,20 @@
 </div>
 
 <style>
-    .column {
+    .column,
+    .row {
         display: flex;
+        justify-content: space-between;
+        /* background: var(--primary-darker); */
+    }
+
+    .column {
         flex-direction: column;
         height: 100%;
-        justify-content: space-between;
     }
 
     .row {
-        display: flex;
         flex: 1;
-        justify-content: space-between;
         overflow: hidden;
     }
 

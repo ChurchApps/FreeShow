@@ -333,7 +333,7 @@ const slideDrop: any = {
     },
     slide: ({ drag, drop }: any, history: any) => {
         history.id = "slide"
-        let ref: any[] = _show().layouts("active").ref()[0]
+        let ref: any[] = _show().layouts("active").ref()[0] || []
 
         let slides = _show().get().slides
         let oldLayout = _show().layouts("active").get()[0].slides
@@ -475,7 +475,7 @@ const slideDrop: any = {
             delete slide.id
             slides[id] = slide
 
-            let parent = ref[newIndex - 1]
+            let parent = ref[newIndex - 1] || { index: -1 }
             if (parent.type === "child") parent = parent.parent
 
             layout = addToPos(layout, [{ id }], parent.index + 1)

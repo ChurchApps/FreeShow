@@ -147,6 +147,7 @@
         font-size: 0.8em;
         font-weight: 600;
         background-color: var(--primary-darker);
+        border-radius: var(--border-radius);
         cursor: pointer;
         padding: 0 5px;
     }

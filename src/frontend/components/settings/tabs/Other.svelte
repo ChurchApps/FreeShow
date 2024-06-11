@@ -200,7 +200,12 @@
         <Checkbox disabled={!$dataPath} checked={$special.customUserDataLocation || false} on:change={(e) => toggle(e, "customUserDataLocation")} />
     </div>
 </CombinedInput>
-
+<CombinedInput>
+    <p><T id="settings.disable_presenter_controller_keys" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.disablePresenterControllerKeys || false} on:change={(e) => toggle(e, "disablePresenterControllerKeys")} />
+    </div>
+</CombinedInput>
 <CombinedInput>
     <p><T id="settings.popup_before_close" /></p>
     <div class="alignRight">
@@ -236,20 +241,6 @@
 <CombinedInput>
     <p><T id="settings.max_auto_font_size" /></p>
     <NumberInput value={$special.max_auto_font_size ?? 800} min={20} max={5000} on:change={(e) => updateSpecial(e.detail, "max_auto_font_size")} />
-</CombinedInput>
-
-<CombinedInput>
-    <Button style="width: 100%;" on:click={() => activePopup.set("manage_icons")}>
-        <Icon id="noIcon" style="border: 0;" right />
-        <p style="padding: 0;"><T id="popup.manage_icons" /></p>
-    </Button>
-</CombinedInput>
-
-<CombinedInput>
-    <Button style="width: 100%;" on:click={() => activePopup.set("manage_colors")}>
-        <Icon id="color" style="border: 0;" right />
-        <p style="padding: 0;"><T id="popup.manage_colors" /></p>
-    </Button>
 </CombinedInput>
 
 <!-- WIP custom metadata order -->
@@ -304,13 +295,10 @@
 </CombinedInput>
 
 <CombinedInput>
-    <Button style="width: 100%;" on:click={backup}>
+    <Button style="width: 50%;" on:click={backup}>
         <Icon id="download" right /><T id="settings.backup_all" />
     </Button>
-</CombinedInput>
-
-<CombinedInput>
-    <Button style="width: 100%;" on:click={restore}>
+    <Button on:click={restore}>
         <Icon id="upload" right /><T id="settings.restore" />
     </Button>
 </CombinedInput>

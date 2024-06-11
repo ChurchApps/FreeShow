@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { alertUpdates, autoOutput, autosave, labelsDisabled, special, timeFormat } from "../../../stores"
+    import { activePopup, alertUpdates, autoOutput, autosave, labelsDisabled, special, timeFormat } from "../../../stores"
     import { setLanguage } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -16,7 +16,6 @@
         labels: (e: any) => labelsDisabled.set(e.target.checked),
         autoOutput: (e: any) => autoOutput.set(e.target.checked),
         hideCursor: (e: any) => updateSpecial(e.target.checked, "hideCursor"),
-        disablePresenterControllerKeys: (e: any) => updateSpecial(e.target.checked, "disablePresenterControllerKeys"),
     }
 
     const autosaveList: any = [
@@ -63,6 +62,7 @@
     <p><T id="settings.autosave" /></p>
     <Dropdown options={autosaveList} value={autosaveList.find((a) => a.id === ($autosave || "never"))?.name || ""} on:click={(e) => autosave.set(e.detail.id)} />
 </CombinedInput>
+
 <CombinedInput>
     <p><T id="settings.use24hClock" /></p>
     <div class="alignRight">
@@ -99,11 +99,16 @@
         <Checkbox checked={$special.hideCursor} on:change={inputs.hideCursor} />
     </div>
 </CombinedInput>
+
 <CombinedInput>
-    <p><T id="settings.disable_presenter_controller_keys" /></p>
-    <div class="alignRight">
-        <Checkbox checked={$special.disablePresenterControllerKeys} on:change={inputs.disablePresenterControllerKeys} />
-    </div>
+    <Button style="width: 50%;" on:click={() => activePopup.set("manage_colors")}>
+        <Icon id="color" style="border: 0;" right />
+        <p style="padding: 0;"><T id="popup.manage_colors" /></p>
+    </Button>
+    <Button on:click={() => activePopup.set("manage_icons")}>
+        <Icon id="star" style="border: 0;" right />
+        <p style="padding: 0;"><T id="popup.manage_icons" /></p>
+    </Button>
 </CombinedInput>
 
 <div class="filler" />

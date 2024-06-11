@@ -749,7 +749,7 @@ const actions: any = {
         function updateItemText(items) {
             let replaced = false
 
-            items[edit.items[0]]?.lines?.[caret.line].text.forEach((text) => {
+            items[edit.items?.[0]]?.lines?.[caret.line].text.forEach((text) => {
                 if (replaced) return
 
                 let value = text.value
@@ -1046,8 +1046,8 @@ export function format(id: string, obj: any, data: any = null) {
 
     if (editing.id) {
         let currentItems: any[] = []
-        if (editing.type === "overlay") currentItems = get(overlays)[editing.id].items
-        if (editing.type === "template") currentItems = get(templates)[editing.id].items
+        if (editing.type === "overlay") currentItems = get(overlays)[editing.id]?.items || []
+        if (editing.type === "template") currentItems = get(templates)[editing.id]?.items || []
 
         let newItems: any[] = []
         currentItems.forEach((item: any) => {

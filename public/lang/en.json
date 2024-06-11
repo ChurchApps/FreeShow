@@ -917,6 +917,7 @@
         "font": "Font",
         "font_family": "Font family",
         "font_size": "Font size",
+        "border_radius": "Border radius",
         "colors": "Colors",
         "add_group": "Add group",
         "group_shortcut": "Shortcut to activate group",

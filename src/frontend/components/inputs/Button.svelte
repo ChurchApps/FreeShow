@@ -95,6 +95,8 @@
         align-items: center;
         padding: 0.2em 0.8em;
 
+        border-radius: var(--border-radius);
+
         transition:
             background-color 0.2s,
             border 0.2s;
@@ -203,6 +205,7 @@
         position: fixed;
         background-color: var(--primary-darkest);
         border: 2px solid var(--primary-lighter);
+        border-radius: var(--border-radius);
         padding: 5px 10px;
         top: 0;
         left: 0;

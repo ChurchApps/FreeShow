@@ -107,6 +107,7 @@
         background-color: var(--primary-darker);
         color: var(--text);
         /* position: relative; */
+        border-radius: var(--border-radius);
     }
 
     div.disabled {
@@ -153,6 +154,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        border-radius: var(--border-radius);
     }
 
     button {

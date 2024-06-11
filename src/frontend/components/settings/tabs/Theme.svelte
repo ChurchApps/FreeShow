@@ -88,7 +88,7 @@
     }
 
     let themeValue: any
-    $: themeValue = $themes[$theme]?.default ? $dictionary.themes[$themes[$theme].name] : $themes[$theme]?.name || ""
+    $: themeValue = $themes[$theme]?.default ? $dictionary.themes?.[$themes[$theme].name] || "" : $themes[$theme]?.name || ""
 
     function resetThemes() {
         theme.set("default")
@@ -108,6 +108,10 @@
 <CombinedInput>
     <p><T id="settings.font_size" /></p>
     <NumberInput value={$themes[$theme]?.font?.size.replace("em", "") ?? 1} inputMultiplier={10} step={0.1} decimals={1} min={0.5} max={2} on:change={(e) => updateTheme(e.detail + "em", "size", "font")} />
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.border_radius" /></p>
+    <NumberInput value={$themes[$theme]?.border?.radius?.replace("px", "") || 0} max={30} step={5} on:change={(e) => updateTheme(e.detail + "px", "radius", "border")} />
 </CombinedInput>
 
 <h3><T id="settings.colors" /></h3>

@@ -40,6 +40,8 @@
         height: 100%;
         overflow: hidden;
         /* box-shadow: inset 0 0 10px 0px rgb(0 0 0 / 30%); */
+
+        border-radius: var(--border-radius);
     }
 
     .edit {

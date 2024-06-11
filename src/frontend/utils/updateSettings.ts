@@ -179,6 +179,7 @@ export function updateThemeValues(themes: any) {
         if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
         document.documentElement.style.setProperty("--font-" + key, value)
     })
+    Object.entries(themes.border || {}).forEach(([key, value]: any) => document.documentElement.style.setProperty("--border-" + key, value))
 }
 
 const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = {

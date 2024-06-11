@@ -153,6 +153,7 @@
     .card {
         position: relative;
         background-color: var(--primary);
+        border-radius: var(--border-radius);
         overflow-y: auto;
 
         min-width: 50%;

@@ -200,6 +200,7 @@
 <style>
     .notes {
         background-color: var(--primary);
+        border-radius: var(--border-radius);
         /* position: absolute;bottom: 0;transform: translateY(-100%); */
         padding: 0 8px;
         min-height: 28px;

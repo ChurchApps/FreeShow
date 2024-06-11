@@ -23,7 +23,7 @@
     $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
     $: showRef = currentSlide ? _show(currentSlide.id).layouts("active").ref()[0] : []
     $: while (next && showRef && showRef[index]?.data?.disabled && index <= showRef.length) index++
-    $: slideId = index !== null ? showRef[index!]?.id || null : null
+    $: slideId = index !== null && showRef ? showRef[index!]?.id || null : null
     $: slide = currentSlide?.id === "temp" && !next ? { items: currentSlide.tempItems } : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null
 
     // $: stageAutoSize = autoSize ? (items[0] ? getAutoSize(items[0], parent) : 0) : fontSize

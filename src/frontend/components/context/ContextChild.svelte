@@ -79,7 +79,7 @@
 
     {#if open}
         <div class="submenu" style="{side}: 0; transform: translate({transform}, {translate ? `calc(-${translate}% + 32px)` : '-10px'});">
-            {#if menu.items?.length}
+            {#if menu?.items?.length}
                 {#each menu.items as itemId}
                     {#if itemId === "SEPERATOR"}
                         <hr />
@@ -124,6 +124,7 @@
         position: absolute;
         transform: translate(100%, -10px);
         background-color: var(--primary);
+        border-radius: var(--border-radius);
         box-shadow: 2px 2px 3px rgb(0 0 0 / 0.2);
         padding: 5px 0;
         z-index: 5000;

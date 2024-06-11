@@ -5,6 +5,7 @@ export interface Themes {
     default?: boolean
     font: any
     colors: any
+    border?: any
 }
 
 export interface Styles {

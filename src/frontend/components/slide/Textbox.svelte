@@ -72,7 +72,7 @@
     onMount(() => {
         setTimeout(() => (loaded = true), 100)
 
-        if (item.type !== "timer") return
+        if (item?.type !== "timer") return
         setInterval(() => (today = new Date()), 500)
     })
 

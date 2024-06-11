@@ -434,7 +434,7 @@ export const _updaters = {
                 updateThemeValues(get(themes)[id])
             }, 100)
 
-            if (!initializing) return
+            if (!initializing || data.key) return
             activeRename.set("theme_" + id)
         },
         deselect: (id: string, data: any) => {

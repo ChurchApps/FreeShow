@@ -108,6 +108,7 @@
         position: fixed;
         min-width: 250px;
         background-color: var(--primary);
+        border-radius: var(--border-radius);
         box-shadow: 1px 1px 3px 2px rgb(0 0 0 / 0.2);
         padding: 5px 0;
         z-index: 5000;

@@ -57,8 +57,8 @@ const loadActions = {
         let slide = getEditSlide()
         if (!slide) return []
 
-        let selectedItems: number[] = get(activeEdit).items
-        let currentItemActions: any = slide.items[selectedItems[0]].actions || {}
+        let selectedItems: number[] = get(activeEdit).items || []
+        let currentItemActions: any = slide.items?.[selectedItems[0]]?.actions || {}
 
         let itemActions: any = [
             { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
