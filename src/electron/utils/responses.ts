@@ -40,6 +40,7 @@ import { outputWindows } from "../output/output"
 import { error_log } from "../data/store"
 import { startRestListener, startWebSocket, stopApiListener } from "./api"
 import checkForUpdates from "./updater"
+import { LyricSearch } from "./LyricSearch"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -115,6 +116,7 @@ const mainResponses: any = {
     SHOWS_PATH: (): string => getDocumentsFolder(),
     DATA_PATH: (): string => getDocumentsFolder(null, ""),
     DISPLAY: (): boolean => false,
+    GET_LYRICS: (data: any): void => { getLyrics(data) },
     GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
     GET_MIDI_INPUTS: (): string[] => getMidiInputs(),
     GET_SCREENS: (): void => getScreens(),
@@ -127,9 +129,7 @@ const mainResponses: any = {
     MAXIMIZED: (): boolean => !!mainWindow?.isMaximized(),
     MINIMIZE: (): void => mainWindow?.minimize(),
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
-    SEARCH_LYRICS: (data: any): void => {
-        searchLyrics(data)
-    },
+    SEARCH_LYRICS: (data: any): void => { searchLyrics(data) },
     SEND_MIDI: (data: any): void => {
         sendMidi(data)
     },
@@ -277,13 +277,15 @@ function loadFonts() {
 
 // SEARCH_LYRICS
 async function searchLyrics({ artist, title }: any) {
-    const Genius = require("genius-lyrics")
-    const Client = new Genius.Client()
+    const songs = await LyricSearch.search(artist, title)
+    toApp("MAIN", { channel: "SEARCH_LYRICS", data: songs })
+}
 
-    const songs = await Client.songs.search(title + artist)
-    const lyrics = songs[0] ? await songs[0].lyrics() : ""
-
-    toApp("MAIN", { channel: "SEARCH_LYRICS", data: { lyrics } })
+// GET_LYRICS
+async function getLyrics({song}: any) {
+    const lyrics = await LyricSearch.get(song)
+    console.log("****LYRICS", lyrics)
+    toApp("MAIN", { channel: "GET_LYRICS", data: { lyrics, source:song.source } })
 }
 
 // GET_SCREENS | GET_WINDOWS

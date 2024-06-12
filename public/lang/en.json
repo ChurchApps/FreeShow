@@ -394,7 +394,7 @@
         "no_name": "No name",
         "media_replaced": "Missing media file replaced with match.",
         "lyrics_undefined": "Could not find any lyrics!",
-        "lyrics_copied": "Lyrics copied from Genius!",
+        "lyrics_copied": "Lyrics copied from ",
         "no_pdf_linux": "Can't export as PDF on Linux.",
         "one_output": "You have to have at least one active output!",
         "empty_cache": "Cache is empty.",
@@ -438,7 +438,11 @@
         "lyrics": "Lyrics view",
         "text": "Text edit",
         "update": "Update show",
-        "slide_template": "Slide template"
+        "slide_template": "Slide template",
+        "search_results": "Search Results",
+        "source": "Source",
+        "artist": "Artist",
+        "song": "Song"
     },
     "actions": {
         "rename": "Rename",
