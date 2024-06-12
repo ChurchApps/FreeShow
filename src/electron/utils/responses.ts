@@ -285,7 +285,7 @@ async function searchLyrics({ artist, title }: any) {
 async function getLyrics({song}: any) {
     const lyrics = await LyricSearch.get(song)
     console.log("****LYRICS", lyrics)
-    toApp("MAIN", { channel: "GET_LYRICS", data: { lyrics } })
+    toApp("MAIN", { channel: "GET_LYRICS", data: { lyrics, source:song.source } })
 }
 
 // GET_SCREENS | GET_WINDOWS

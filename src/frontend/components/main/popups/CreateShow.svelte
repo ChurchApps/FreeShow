@@ -19,6 +19,7 @@
     import TextArea from "../../inputs/TextArea.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../Loader.svelte"
+    import { get } from "svelte/store"
 
     type LyricSearchResult = {
         source: string
@@ -132,7 +133,7 @@
     receive(
         MAIN,
         {
-            GET_LYRICS: (data: { lyrics: string }) => {
+            GET_LYRICS: (data: { lyrics: string; source: string }) => {
                 console.log("DATA IS", data)
                 loading = false
                 showSearchResults = false
@@ -150,7 +151,7 @@
 
                 values.text = data.lyrics
                 activateLyrics = true
-                newToast("$toast.lyrics_copied")
+                newToast(get(dictionary).toast?.lyrics_copied + " " + data.source + "!")
             },
         },
         id

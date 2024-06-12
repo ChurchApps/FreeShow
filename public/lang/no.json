@@ -387,7 +387,7 @@
         "no_name": "Ingen navn",
         "media_replaced": "Manglende mediefil erstattet med match.",
         "lyrics_undefined": "Kunne ikke finne noen sangtekster!",
-        "lyrics_copied": "Sangtekst kopiert fra Genius!",
+        "lyrics_copied": "Sangtekst kopiert fra ",
         "no_pdf_linux": "Kan ikke eksportere som PDF på Linux.",
         "one_output": "Du må ha minst en aktiv utgang!",
         "empty_cache": "Hurtigbuffer er tom.",

@@ -372,7 +372,7 @@
         "no_name": "Žiadny názov",
         "media_replaced": "Chýbajúci media súbor nahradený iným.",
         "lyrics_undefined": "Nenašli sa žiadne texty!",
-        "lyrics_copied": "Texty skopírované z Genius!",
+        "lyrics_copied": "Texty skopírované z ",
         "no_pdf_linux": "Nedá sa exportovať PDF na Linuxe.",
         "one_output": "Musíte mať aspoň jeden aktívny výstup!",
         "empty_cache": "Cache je prázdna.",

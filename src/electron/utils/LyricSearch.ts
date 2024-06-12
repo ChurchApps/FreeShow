@@ -34,10 +34,15 @@ export class LyricSearch {
     }
 
     private static searchGenius = async (artist:string, title: string) => {
-        const client = this.getGeniusClient()
-        const songs = await client.songs.search(title + artist)
-        if (songs.length>3) songs.splice(3, songs.length-3)
-        return songs.map((s:any) => LyricSearch.convertGenuisToResult(s, title + artist));
+        try {
+            const client = this.getGeniusClient()
+            const songs = await client.songs.search(title + artist)
+            if (songs.length>3) songs.splice(3, songs.length-3)
+            return songs.map((s:any) => LyricSearch.convertGenuisToResult(s, title + artist));
+        } catch (ex) {
+            console.log(ex);
+            return []
+        }
     }
 
     //Would greatly prefer to just load via url or id, but the api fails often with these methods (malformed json)
@@ -66,20 +71,23 @@ export class LyricSearch {
 
     //HYMNARY
     private static searchHymnary = async (title: string) => {
-        const url = `https://hymnary.org/search?qu=%20tuneTitle%3A${encodeURIComponent(title)}%20media%3Atext%20in%3Atexts&export=csv`
-        const response = await axios.get(url)
-        const csv = await response.data
-        console.log("CSV", csv)
-        const songs = LyricSearch.CSVToArray(csv, ",")
-        if (songs.length>0) songs.splice(0, 1)
-        if (songs.length>3) songs.splice(3, songs.length-3)
-        console.log("SONGS", songs)
-        return songs.map((s:any) => LyricSearch.convertHymnaryToResult(s, title));
+        try {
+            const url = `https://hymnary.org/search?qu=%20tuneTitle%3A${encodeURIComponent(title)}%20media%3Atext%20in%3Atexts&export=csv`
+            const response = await axios.get(url)
+            const csv = await response.data
+            const songs = LyricSearch.CSVToArray(csv, ",")
+            if (songs.length>0) songs.splice(0, 1)
+            for (let i=songs.length-1; i>=0; i--) if (songs[i].length<7) songs.splice(i, 1)
+            if (songs.length>3) songs.splice(3, songs.length-3)
+            return songs.map((s:any) => LyricSearch.convertHymnaryToResult(s, title));
+        } catch (ex) {
+            console.log(ex);
+            return []
+        }
     }
 
     private static getHymnary = async (song:LyricSearchResult) => {
         const url = `https://hymnary.org/text/${song.key}`
-        console.log("url", url)
         const response = await axios.get(url)
         const html = await response.data
         const regex = /<div property=\"text\">(.*?)<\/div>/sg
@@ -88,8 +96,6 @@ export class LyricSearch {
         let result = ""
         if (match) {
             result = match[0]
-            //result = result.replaceAll("<br />", "\n").replaceAll("\n\n", "\n")
-            console.log("RESULT IS", result)
             result = result.replaceAll("</p>", "\n\n")
             result = result.replace(/<[^>]*>?/gm, '');
 
@@ -104,8 +110,7 @@ export class LyricSearch {
             });
             result = newLines.join("\n")
         }
-        
-        console.log("contents", result)
+
         return result
     }
 
