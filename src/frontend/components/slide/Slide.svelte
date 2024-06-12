@@ -283,6 +283,9 @@
             refreshListBoxes.set(-1)
         }, 100)
     }
+
+    // correct view order based on arranged order in Items.svelte
+    $: invertedItemList = clone(slide.items)?.reverse() || []
 </script>
 
 <!-- TODO: faster loading ? lazy load images? -->
@@ -338,7 +341,7 @@
                         {/key}
                     {/if}
                     {#if slide.items}
-                        {#each slide.items as item, i}
+                        {#each invertedItemList as item, i}
                             {#if item && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
                                 <Textbox
                                     filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
@@ -408,7 +411,7 @@
         <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
             {#key $refreshListBoxes >= 0 && $refreshListBoxes !== index}
                 {#if slide.items}
-                    {#each slide.items as item, itemIndex}
+                    {#each invertedItemList as item, itemIndex}
                         {#if item.lines}
                             <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
                         {/if}

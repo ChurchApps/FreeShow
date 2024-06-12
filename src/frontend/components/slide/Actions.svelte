@@ -50,6 +50,10 @@
         if (actionId === "change_output_style") {
             return $styles[actionValue.outputStyle]?.name
         }
+        if (actionId === "start_metronome") {
+            let beats = (actionValue.beats || 4) === 4 ? "" : " | " + actionValue.beats
+            return (actionValue.tempo || 120) + beats
+        }
 
         return namedObjects[actionId]?.[actionValue.id]?.name
     }

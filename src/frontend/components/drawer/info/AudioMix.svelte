@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { drawer, gain, metronome, volume } from "../../../stores"
+    import { drawer, gain, playingMetronome, volume } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { updateVolume } from "../../helpers/audio"
@@ -26,7 +26,8 @@
         else openedPage = pageId
     }
 
-    $: if ($metronome?.timeout) openedPage = "metronome"
+    $: metronomeActive = !!$playingMetronome
+    $: if (metronomeActive) openedPage = "metronome"
 </script>
 
 <!-- TODO: effects?: https://alemangui.github.io/pizzicato/ -->

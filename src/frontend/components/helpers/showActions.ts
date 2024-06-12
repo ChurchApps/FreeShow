@@ -19,6 +19,7 @@ import {
     outputs,
     overlays,
     playingAudio,
+    playingMetronome,
     projects,
     selected,
     showsCache,
@@ -730,7 +731,8 @@ export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
     if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length)) return
 
-    let allCleared = isOutCleared(null) && !Object.keys(get(playingAudio)).length
+    let audioCleared = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
+    let allCleared = isOutCleared(null) && audioCleared
     if (allCleared) return
 
     // TODO: audio

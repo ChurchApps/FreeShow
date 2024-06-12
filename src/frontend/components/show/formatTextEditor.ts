@@ -8,6 +8,7 @@ import { getGlobalGroup } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import { get } from "svelte/store"
 import { activeShow } from "../../stores"
+import { isEmptyOrSpecial } from "../helpers/output"
 
 export function formatText(e: any) {
     let newSlidesText = e.detail.split("\n\n")
@@ -90,8 +91,6 @@ export function formatText(e: any) {
     let oldLayoutSlides = show.layouts[_show().get("settings.activeLayout")].slides
     let oldLayoutSlideIds: string[] = oldLayoutSlides.map(({ id }) => id)
 
-    // TODO: children with no text will get removed!!!
-
     // add back all slides without text
     let newLayoutSlideIds: string[] = newLayoutSlides.map(({ id }) => id)
     oldLayoutSlideIds.forEach((slideId) => {
@@ -105,6 +104,7 @@ export function formatText(e: any) {
     })
 
     // add back layout data
+    let replacedIds: any = {}
     newLayoutSlides.forEach(({ id }, i) => {
         if (!oldLayoutSlides.length) return
 
@@ -113,27 +113,31 @@ export function formatText(e: any) {
             let idCommingUp = newLayoutSlides.find((a, index) => index > i && a.id === id)
             if (idCommingUp) return
 
-            let currentStyle = oldLayoutSlides[0]
-            let oldSlideChildren: string[] = show.slides[currentStyle.id]?.children || []
+            let oldLayoutSlide = oldLayoutSlides[0]
+            let oldSlideChildren: string[] = show.slides[oldLayoutSlide.id]?.children || []
 
             // find children data
-            if (currentStyle.children) {
+            if (oldLayoutSlide.children) {
                 let newChildrenData: any = {}
                 oldSlideChildren.forEach((oldChildId, i) => {
                     let newChildId = newSlides[id].children?.[i]
                     if (!newChildId) return
 
-                    newChildrenData[newChildId] = currentStyle.children[oldChildId]
+                    replacedIds[newChildId] = oldChildId
+                    newChildrenData[newChildId] = oldLayoutSlide.children[oldChildId]
                 })
-                currentStyle.children = newChildrenData
+                oldLayoutSlide.children = newChildrenData
             }
 
-            newLayoutSlides[i] = { ...currentStyle, id }
+            replacedIds[id] = oldLayoutSlide.id
+            newLayoutSlides[i] = { ...oldLayoutSlide, id }
             oldLayoutSlides.splice(0, 1)
             return
         }
 
-        newLayoutSlides[i] = oldLayoutSlides[matchingLayoutIndex]
+        let oldLayoutSlide = oldLayoutSlides[matchingLayoutIndex]
+        replacedIds[id] = oldLayoutSlide.id
+        newLayoutSlides[i] = oldLayoutSlide
         oldLayoutSlides.splice(0, matchingLayoutIndex + 1)
     })
 
@@ -150,12 +154,38 @@ export function formatText(e: any) {
 
     // remove unused slides that was previously used by current layout
     allOldSlideIds.forEach((slideId) => {
-        if (oldLayoutSlideIds.includes(slideId) && !allUsedSlidesIds.includes(slideId)) delete newSlides[slideId]
+        if (oldLayoutSlideIds.includes(slideId) && !allUsedSlidesIds.includes(slideId)) {
+            // delete children
+            let children = newSlides[slideId].children || []
+            children.forEach((childId) => {
+                delete newSlides[childId]
+            })
+
+            delete newSlides[slideId]
+        }
     })
 
-    // remove "id" key
     Object.keys(newSlides).forEach((slideId) => {
-        delete newSlides[slideId].id
+        let slide = newSlides[slideId]
+
+        // remove "id" key
+        delete slide.id
+
+        // add back old items
+        let oldSlideId = replacedIds[slideId] || slideId
+        let oldItems = show.slides[oldSlideId]?.items || []
+        if (!oldItems.length) return
+
+        let items: Item[] = clone(oldItems)
+        let newItem: Item = slide.items[0]
+        if (newItem) {
+            let textboxItemIndex = getFirstNormalTextboxIndex(oldItems)
+            if (textboxItemIndex < 0) items.push(newItem)
+            else items[textboxItemIndex] = newItem
+        }
+
+        slide.items = items
+        newSlides[slideId] = slide
     })
 
     // remove first slide if no content
@@ -215,7 +245,7 @@ function groupSlides(slides: Slide[]) {
         if (!slideGroups[currentIndex]) slideGroups[currentIndex] = { text: "", slides: [] }
         slideGroups[currentIndex].slides.push(slide)
 
-        let firstTextItem = slide.items.find((a) => (a.type || "text") === "text")
+        let firstTextItem = getFirstNormalTextbox(slide.items)
         if (!firstTextItem) return
 
         let fullOldSlideText = getItemText(firstTextItem)
@@ -226,4 +256,25 @@ function groupSlides(slides: Slide[]) {
     })
 
     return slideGroups
+}
+
+// get first textbox item that has text, is not special or the only one left
+export function getFirstNormalTextboxIndex(items: Item[]) {
+    let selectedItemIndex: number = -1
+
+    items.forEach((item, i) => {
+        if (!item.lines) return
+
+        let special = isEmptyOrSpecial(item)
+        if (special && selectedItemIndex > -1) return
+
+        // set last normal textbox item if multiple (inverted order)
+        selectedItemIndex = i
+    })
+
+    return selectedItemIndex
+}
+
+export function getFirstNormalTextbox(items: Item[]) {
+    return items[getFirstNormalTextboxIndex(items)]
 }

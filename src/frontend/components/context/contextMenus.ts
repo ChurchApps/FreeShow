@@ -89,7 +89,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     chord_list: { label: "edit.chords", icon: "chords", items: ["LOAD_chord_list"] },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
-    item_actions: { label: "actions.actions", icon: "actions", items: ["LOAD_item_actions"] },
+    item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },

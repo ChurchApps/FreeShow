@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, special } from "../../../stores"
+    import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
     import { clearPlayingVideo, isOutCleared, setOutput } from "../../helpers/output"
@@ -12,7 +12,8 @@
     export let activeClear: any
     export let outputId: string
 
-    $: allCleared = isOutCleared(null, $outputs) && !Object.keys($playingAudio).length
+    $: audioCleared = !Object.keys($playingAudio).length && !$playingMetronome
+    $: allCleared = isOutCleared(null, $outputs) && audioCleared
     $: if (allCleared) autoChange = true
 
     let enableRestore: boolean = false
@@ -104,7 +105,7 @@
         </div>
 
         <div class="combinedButton">
-            <Button disabled={$outLocked || !Object.keys($playingAudio).length} on:click={() => clear("audio")} title={$dictionary.clear?.audio + " [F4]"} dark red center>
+            <Button disabled={$outLocked || audioCleared} on:click={() => clear("audio")} title={$dictionary.clear?.audio + " [F4]"} dark red center>
                 <Icon id="audio" size={1.2} />
             </Button>
             {#if !allCleared}

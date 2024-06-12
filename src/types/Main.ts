@@ -42,6 +42,7 @@ export type SelectIds =
     | "stage"
     | "media"
     | "audio"
+    | "metronome"
     | "overlay"
     | "template"
     | "action"

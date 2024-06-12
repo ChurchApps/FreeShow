@@ -13,6 +13,7 @@
     import TextInput from "../inputs/TextInput.svelte"
     import MidiValues from "./MidiValues.svelte"
     import ChooseStyle from "./specific/ChooseStyle.svelte"
+    import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
 
     export let inputId: string
     export let value
@@ -59,11 +60,15 @@
 </script>
 
 {#if inputId === "output_style"}
-    <div style="display: flex;flex-direction: column;">
+    <div class="column">
         <ChooseStyle value={value || {}} on:change={(e) => updateValue("", e)} />
     </div>
 {:else if inputId === "midi"}
     <MidiValues midi={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
+{:else if inputId === "metronome"}
+    <div class="column">
+        <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={(e) => updateValue("", e)} volume={false} />
+    </div>
 {:else}
     <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
         {#if inputId === "index"}
@@ -99,3 +104,10 @@
         {/if}
     </CombinedInput>
 {/if}
+
+<style>
+    .column {
+        display: flex;
+        flex-direction: column;
+    }
+</style>

@@ -39,6 +39,7 @@ export const actionData = {
     change_volume: { name: "actions.change_volume", icon: "volume", input: "volume" },
     start_audio_stream: { slideId: "audioStream", name: "actions.start_audio_stream", icon: "audio_stream", input: "id" },
     start_playlist: { name: "actions.start_playlist", icon: "playlist", input: "id" },
+    start_metronome: { name: "actions.start_metronome", icon: "metronome", input: "metronome" },
 
     // TIMERS
     start_slide_timers: { slideId: "startTimer", name: "actions.start_slide_timers", icon: "timer" },

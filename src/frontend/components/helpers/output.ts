@@ -6,7 +6,7 @@ import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, OutSlide, Show, Transition } from "../../../types/Show"
 import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData } from "../../stores"
 import { send } from "../../utils/request"
-import { getSlideText } from "../edit/scripts/textStyle"
+import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "./array"
 import { clearBackground, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
@@ -387,6 +387,14 @@ export function getTemplateText(value) {
     // if text has {} it will not get removed (useful for preset text, and dynamic values)
     if (value.includes("{")) return value
     return ""
+}
+
+export function isEmptyOrSpecial(item: Item) {
+    let text = getItemText(item)
+    if (!text.length) return true
+    if (getTemplateText(text)) return true
+
+    return false
 }
 
 function sortItemsByType(items: Item[]) {

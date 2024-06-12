@@ -6,6 +6,7 @@ import { audioAnalyser } from "../output/audioAnalyser"
 import { clone, shuffleArray } from "./array"
 import { encodeFilePath } from "./media"
 import { checkNextAfterMedia } from "./showActions"
+import { stopMetronome } from "../drawer/audio/metronome"
 
 export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false) {
     let existing: any = get(playingAudio)[path]
@@ -284,6 +285,9 @@ let clearing = false
 export function clearAudio(path: string = "", clearPlaylist: boolean = true) {
     // turn off any playlist
     if (clearPlaylist && (!path || get(activePlaylist)?.active === path)) activePlaylist.set(null)
+
+    // stop playing metronome
+    if (clearPlaylist && !path) stopMetronome()
 
     // let clearTime = get(transitionData).audio.duration
     // TODO: starting audio before previous clear is finished will not start/clear audio

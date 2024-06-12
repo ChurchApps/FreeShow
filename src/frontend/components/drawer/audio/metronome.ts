@@ -1,18 +1,17 @@
 import { get } from "svelte/store"
-import { gain, metronome, volume } from "../../../stores"
+import { gain, metronome, playingMetronome, volume } from "../../../stores"
 import { clone } from "../../helpers/array"
+import type { API_metronome } from "../../actions/api"
 
 const audioContext = new AudioContext()
 
 const defaultMetronomeValues = {
-    // context: null,
-    timeout: null as any,
     tempo: 120, // BPM
     beats: 4,
     volume: 1,
     // notesPerBeat: 1
 }
-let metronomeValues: any = {}
+let metronomeValues: API_metronome = {}
 
 function initializeValues() {
     metronomeValues = clone(defaultMetronomeValues)
@@ -20,22 +19,33 @@ function initializeValues() {
 }
 
 export function toggleMetronome() {
-    if (metronomeValues.timeout) stopMetronome()
+    if (get(playingMetronome)) stopMetronome()
     else startMetronome()
 }
 
-export function startMetronome(values = {}) {
-    if (get(metronome)?.context) metronomeValues = get(metronome)
+export function startMetronome(values: API_metronome = {}) {
+    if (get(metronome)?.tempo) metronomeValues = get(metronome)
+    if (Object.keys(values).length) {
+        let oldValues = clone(metronomeValues)
+        delete oldValues.volume
+
+        updateMetronome(values, true)
+
+        // return if playing and values are the same
+        let newValues = clone(values)
+        delete newValues.volume
+        if (get(playingMetronome) && JSON.stringify(newValues) === JSON.stringify(oldValues)) return
+    }
+
     if (!metronomeValues.tempo) initializeValues()
-    if (metronomeValues.timeout) stopMetronome()
-    if (Object.keys(values).length) updateMetronome(values, true)
+    if (get(playingMetronome)) stopMetronome()
 
     initializeMetronome()
 }
 
-export function updateMetronome(values, starting: boolean = false) {
-    if (!values.tempo) values.tempo = metronomeValues.tempo
-    if (!starting && values.tempo !== metronomeValues.tempo) return startMetronome(values)
+export function updateMetronome(values: API_metronome, starting: boolean = false) {
+    if (!values.tempo) values.tempo = metronomeValues.tempo || defaultMetronomeValues.tempo
+    if (!starting && get(playingMetronome) && values.tempo !== metronomeValues.tempo) return startMetronome(values)
 
     metronomeValues.tempo = values.tempo
     if (values.beats) metronomeValues.beats = values.beats
@@ -45,9 +55,8 @@ export function updateMetronome(values, starting: boolean = false) {
 }
 
 export function stopMetronome() {
-    clearTimeout(metronomeValues.timeout)
-    metronomeValues.timeout = null
-    metronome.set(metronomeValues)
+    clearTimeout(get(playingMetronome))
+    playingMetronome.set(null)
 
     startTime = 0
     beatsPlayed = 0
@@ -80,7 +89,7 @@ let startTime = 0
 async function initializeMetronome() {
     await setAudioBuffers()
 
-    let beatsPerSecond = 60 / metronomeValues.tempo
+    let beatsPerSecond = 60 / (metronomeValues.tempo || defaultMetronomeValues.tempo)
     timeBetweenEachBeat = beatsPerSecond
 
     scheduleNextNote()
@@ -94,11 +103,13 @@ function scheduleNextNote(time = 0, beat = 1) {
         return
     }
 
-    if (beat > metronomeValues.beats) beat = 1
+    if (beat > (metronomeValues.beats || defaultMetronomeValues.beats)) beat = 1
 
-    metronomeValues.timeout = setTimeout(() => {
-        scheduleNote(beat)
-    }, (time + timeBetweenEachBeat - preScheduleTime) * 1000)
+    playingMetronome.set(
+        setTimeout(() => {
+            scheduleNote(beat)
+        }, (time + timeBetweenEachBeat - preScheduleTime) * 1000)
+    )
 }
 
 let beatsPlayed = 0
@@ -137,45 +148,5 @@ function playNote(time: number, first: boolean = false) {
 let accentVolume = 2
 let secondaryVolume = 1.75
 function getVolume(beatVolume) {
-    return beatVolume * metronomeValues.volume * get(volume) * get(gain)
+    return beatVolume * (metronomeValues.volume || 1) * get(volume) * get(gain)
 }
-
-// const beepLength: number = 0.05
-// function scheduleNoteOsc(beatNumber, time) {
-//     // audio creator
-//     let osc = audioContext.createOscillator()
-//     // volume control
-//     let gainNode = audioContext.createGain()
-
-//     osc.connect(gainNode)
-//     gainNode.connect(audioContext.destination)
-
-//     let mainVolume = getVolume(secondaryVolume)
-
-//     if (beatNumber === twelvelet && accentVolume > 0.25) {
-//         osc.frequency.value = 880.0
-//         gainNode.gain.value = getVolume(accentVolume)
-//     } else if (beatNumber % twelvelet === 0) {
-//         // quarter notes = medium pitch
-//         osc.frequency.value = 440.0
-//         gainNode.gain.value = mainVolume
-//         // } else if (beatNumber % 6 === 0) {
-//         //     // eighth notes
-//         //     osc.frequency.value = 440.0
-//         //     gainNode.gain.value = notesPerBeat > 1 ? mainVolume : 0
-//         // } else if (beatNumber % 4 === 0) {
-//         //     // triplet notes
-//         //     osc.frequency.value = 300.0
-//         //     gainNode.gain.value = notesPerBeat > 2 ? mainVolume : 0
-//         // } else if (beatNumber % 3 === 0) {
-//         //     // sixteenth notes = low pitch
-//         //     osc.frequency.value = 220.0
-//         //     gainNode.gain.value = notesPerBeat > 3 ? mainVolume : 0
-//     } else {
-//         // don't play the remaining twelvelet notes
-//         gainNode.gain.value = 0
-//     }
-
-//     osc.start(time)
-//     osc.stop(time + beepLength)
-// }
