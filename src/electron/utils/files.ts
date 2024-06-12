@@ -9,9 +9,11 @@ import path, { join, parse } from "path"
 import { uid } from "uid"
 import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
 import { stores } from "../data/store"
+import { createThumbnail } from "../data/thumbnails"
 import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./responses"
+import { defaultSettings } from "../data/defaults"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -185,6 +187,7 @@ export function getPaths(): any {
 }
 
 // READ_FOLDER
+const MEDIA_EXTENSIONS = [...defaultSettings.imageExtensions, ...defaultSettings.videoExtensions]
 export function getFolderContent(_e: any, data: any) {
     let folderPath: string = data.path
     let fileList: string[] = readFolder(folderPath)
@@ -198,7 +201,12 @@ export function getFolderContent(_e: any, data: any) {
     for (const name of fileList) {
         let p: string = path.join(folderPath, name)
         let stats: any = getFileStats(p)
-        if (stats) files.push({ ...stats, name })
+        if (stats) files.push({ ...stats, name, thumbnailPath: isMedia() ? createThumbnail(p) : "" })
+
+        function isMedia() {
+            if (stats.folder) return false
+            return MEDIA_EXTENSIONS.includes(stats.extension)
+        }
     }
 
     if (!files.length) {

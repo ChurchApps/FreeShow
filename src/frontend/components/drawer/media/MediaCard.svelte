@@ -7,13 +7,13 @@
     import { clearBackground } from "../../helpers/showActions"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
-    import IntersectionObserver from "./IntersectionObserver.svelte"
     import MediaLoader from "./MediaLoader.svelte"
 
     export let name: string
     export let path: string
     export let type: any
     export let active: string | null
+    export let thumbnailPath: string = ""
     export let thumbnail: boolean = true
 
     $: name = name.slice(0, name.lastIndexOf("."))
@@ -108,11 +108,11 @@
     <SelectElem id="media" data={{ name, path, type }} draggable fill>
         {#if thumbnail}
             <!-- TODO: scrolling fast might skip intersection observer, making a whole row not load -->
-            <IntersectionObserver class="observer" once let:intersecting>
-                {#if intersecting}
-                    <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {name} {mediaStyle} />
-                {/if}
-            </IntersectionObserver>
+            <!-- <IntersectionObserver class="observer" once let:intersecting>
+                {#if intersecting} -->
+            <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} />
+            <!-- {/if}
+            </IntersectionObserver> -->
         {:else}
             <div class="icon">
                 <Icon size={2.5} id={icon} white={type === "image"} />

@@ -149,7 +149,6 @@
         "svelte": "^3.46.0",
         "svelte-check": "^2.2.12",
         "svelte-preprocess": "^4.10.1",
-        "svelte-virtual": "^0.6.2",
         "tslib": "^2.0.0",
         "typescript": "^4.5.4"
     },
@@ -164,6 +163,7 @@
         "electron-updater": "^4.6.1",
         "exif": "^0.6.0",
         "express": "^4.17.2",
+        "ffmpeg-static": "^5.2.0",
         "follow-redirects": "^1.15.2",
         "font-list": "^1.4.5",
         "genius-lyrics": "4.4.6",
@@ -175,6 +175,7 @@
         "pptx2json": "^0.0.8",
         "protobufjs": "^7.2.3",
         "qrcode-generator": "^1.4.4",
+        "simple-thumbnail-ts": "vassbo/simple-thumbnail-ts#5214a3e",
         "sirv-cli": "^1.0.0",
         "socket.io": "^4.4.1",
         "socket.io-client": "^4.4.1",

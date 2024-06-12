@@ -13,6 +13,7 @@
 
     export let name: any = ""
     export let path: string
+    export let thumbnailPath: string = ""
     export let loadFullImage: boolean = false
     export let cameraGroup: string = ""
     export let mediaStyle: MediaStyle = {}
@@ -185,11 +186,13 @@
         setTimeout(() => {
             loaded = false
             retryCount++
-        }, 100)
+        }, 500)
     }
 
     // path starting at "/" auto completes to app root, but should be file://
     $: if (path[0] === "/") path = `file://${path}`
+
+    $: if (thumbnailPath) loaded = true
 </script>
 
 <div class="main" style="aspect-ratio: {customResolution.width}/{customResolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>
@@ -201,6 +204,16 @@
             </div>
         {:else if type === "screen"}
             <Capture screen={{ id: path, name }} streams={[]} background />
+        {:else if thumbnailPath}
+            {#key loaded}
+                <img
+                    src={thumbnailPath}
+                    alt={name}
+                    style="pointer-events: none;position: absolute;filter: {mediaStyle.filter || ''};object-fit: {mediaStyle.fit};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});width: 100%;height: 100%;"
+                    on:error={reload}
+                />
+            {/key}
+            <!-- WIP remove:: -->
         {:else if type === "video"}
             <div class="video" style="filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});overflow: hidden;">
                 <canvas style={getStyleResolution({ width: canvas?.width || 0, height: canvas?.height || 0 }, width, height, mediaStyle.fit)} bind:this={canvas} />

@@ -1,28 +1,28 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
-    import { Grid } from "svelte-virtual"
+    import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
+    import { uid } from "uid"
     import { READ_FOLDER } from "../../../../types/Channels"
     import { activeDrawerOnlineTab, activeEdit, activePopup, activeShow, dictionary, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { clone } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
     import { encodeFilePath, getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import { clearBackground } from "../../helpers/showActions"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import Cameras from "../live/Cameras.svelte"
+    import NDIStreams from "../live/NDIStreams.svelte"
     import Screens from "../live/Screens.svelte"
     import Windows from "../live/Windows.svelte"
     import PlayerVideos from "../player/PlayerVideos.svelte"
     import Folder from "./Folder.svelte"
     import Media from "./MediaCard.svelte"
+    import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
-    import { clone } from "../../helpers/array"
-    import { uid } from "uid"
-    import { onDestroy } from "svelte"
-    import NDIStreams from "../live/NDIStreams.svelte"
-    import { clearBackground } from "../../helpers/showActions"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -78,7 +78,7 @@
                 files = []
                 Object.values($mediaFolders).forEach((data) => window.api.send(READ_FOLDER, { path: data.path }))
             }
-        } else if (path.length) {
+        } else if (path?.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
@@ -228,9 +228,6 @@
     const slidesViews: any = { grid: "list", list: "grid" }
     const nextActiveView: any = { all: "folder", folder: "image", image: "video", video: "all" }
 
-    let gridHeight
-    let gridWidth
-
     let zoomOpened: boolean = false
     function mousedown(e: any) {
         if (e.target.closest(".zoom_container") || e.target.closest("button")) return
@@ -263,7 +260,7 @@
 
 <!-- TODO: autoscroll -->
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel={wheel}>
-    <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;" bind:clientHeight={gridHeight} bind:clientWidth={gridWidth}>
+    <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
         {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <PlayerVideos active={onlineTab} {searchValue} />
         {:else if active === "screens"}
@@ -289,20 +286,13 @@
             {#key rootPath}
                 {#key path || fullFilteredFiles}
                     {#if $mediaOptions.mode === "grid"}
-                        <Grid
-                            itemCount={fullFilteredFiles.length}
-                            itemHeight={gridWidth / $mediaOptions.columns / 1.777 + 25}
-                            itemWidth={gridWidth / $mediaOptions.columns - ($mediaOptions.columns > 8 || $mediaOptions.columns < 4 ? 12 - $mediaOptions.columns : 3)}
-                            height={gridHeight - 1}
-                        >
-                            <div slot="item" let:index let:style {style}>
-                                {#if fullFilteredFiles[index].folder}
-                                    <Folder bind:rootPath={path} name={fullFilteredFiles[index].name} path={fullFilteredFiles[index].path} mode={$mediaOptions.mode} />
-                                {:else}
-                                    <Media name={fullFilteredFiles[index].name} path={fullFilteredFiles[index].path} type={getMediaType(fullFilteredFiles[index].extension)} bind:activeFile {allFiles} {active} />
-                                {/if}
-                            </div>
-                        </Grid>
+                        <MediaGrid items={fullFilteredFiles} columns={$mediaOptions.columns} let:item>
+                            {#if item.folder}
+                                <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} />
+                            {:else}
+                                <Media name={item.name} path={item.path} thumbnailPath={item.thumbnailPath} type={getMediaType(item.extension)} bind:activeFile {allFiles} {active} />
+                            {/if}
+                        </MediaGrid>
                     {:else}
                         <VirtualList items={fullFilteredFiles} let:item={file}>
                             {#if file.folder}
