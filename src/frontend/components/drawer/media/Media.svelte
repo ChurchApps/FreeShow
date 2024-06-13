@@ -290,7 +290,7 @@
                             {#if item.folder}
                                 <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} />
                             {:else}
-                                <Media name={item.name} path={item.path} thumbnailPath={item.thumbnailPath} type={getMediaType(item.extension)} bind:activeFile {allFiles} {active} />
+                                <Media name={item.name} path={item.path} thumbnailPath={$mediaOptions.columns < 3 ? "" : item.thumbnailPath} type={getMediaType(item.extension)} bind:activeFile {allFiles} {active} />
                             {/if}
                         </MediaGrid>
                     {:else}

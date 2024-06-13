@@ -1,93 +1,169 @@
 <script lang="ts">
-    import { clone } from "../../helpers/array"
-
     export let items: any[] = []
     export let columns: number = 1
 
-    $: console.log(items)
+    // let cardWidth: number = 0
+    let cardHeight: number = 0
+    // let totalScrollHeight: number = 0
 
-    // let width: number = 0
-    let viewHeight: number = 0
-
-    // get dimensions
     let customCard: any
-    let cardWidth = 0
-    let cardHeight = 0
-
     let ready: boolean = false
-    let totalScrollHeight: number = 0
-    $: if (customCard) initialize()
+    $: if (customCard && columns) initialize()
     function initialize() {
-        cardWidth = customCard.offsetWidth
+        // cardWidth = customCard.offsetWidth
         cardHeight = customCard.offsetHeight
-        console.log(cardWidth, cardHeight)
-        totalScrollHeight = (cardHeight * items.length) / columns
-        console.log(totalScrollHeight)
-        console.log("READY")
-
-        ready = true
+        // totalScrollHeight = (cardHeight * items.length) / columns
+        setTimeout(() => (ready = true))
     }
 
-    let topHeight: number = 0
-    let bottomHeight: number = 0
-    // WIP DEBUG
-    let margin: number = 20 // 100
+    // calculate new card height on column change
+    // let previousXFill: number = 0
+    // $: if (columns) updateCardHeight()
+    // function updateCardHeight() {
+    //     let newFill = 1 / columns
+
+    //     if (!ready) {
+    //         previousXFill = newFill
+    //         return
+    //     }
+
+    //     let fullSize = cardWidth / previousXFill
+    //     let newWidth = fullSize * newFill
+
+    //     let aspect = cardHeight / cardWidth
+
+    //     cardHeight = newWidth * aspect
+    //     cardWidth = newWidth
+
+    //     previousXFill = newFill
+    // }
 
     let scrollYPos = 0
     let lastUpdate = 0
     function scroll(e) {
-        // console.log(e)
         scrollYPos = e.target.scrollTop
-        // WIP ending
-        // console.log(scrollYPos > totalScrollHeight - viewHeight - 20, scrollYPos, totalScrollHeight - viewHeight)
-        if (scrollYPos > totalScrollHeight - viewHeight - 20) return
-        console.log("SCROLL", scrollYPos)
 
-        topHeight = Math.max(0, scrollYPos - margin)
-        let view = viewHeight + margin * 2
-        bottomHeight = Math.max(0, totalScrollHeight - scrollYPos - view)
-        console.log("TOP - BOTTOM", topHeight, bottomHeight)
-
-        // update if scrolling more than one card up/down
-        if (scrollYPos + cardHeight > lastUpdate || scrollYPos - cardHeight < lastUpdate) {
+        // update if scrolling more than 0.4 card up/down
+        let extraMargin = cardHeight * 0.4
+        if (scrollYPos > lastUpdate + extraMargin || scrollYPos < lastUpdate - extraMargin) {
             lastUpdate = scrollYPos
-            updateVisibleItems()
+            setTimeout(updateVisibleItems)
         }
     }
 
-    let visibleItems: any[] = []
+    const margin: number = 250
+
+    let viewHeight: number = 0
+    let verticalCardsVisible: number = 0
+    $: verticalCardsVisible = Math.ceil((viewHeight + margin * 2) / cardHeight)
+
+    let firstItemIndex: number = 0
+    let lastItemIndex: number = 0
+
+    // update on ready, items changed, or columns changed
     $: if (ready && items && columns) updateVisibleItems(true)
+    function updateVisibleItems(update: boolean = false) {
+        let top = Math.max(0, scrollYPos - margin)
+        let firstVerticalItemIndex = Math.floor(top / cardHeight)
+        let lastVerticalItemIndex = firstVerticalItemIndex + verticalCardsVisible
 
-    function updateVisibleItems(updateScrollHeight: boolean = false) {
-        if (updateScrollHeight) totalScrollHeight = (cardHeight * items.length) / columns
+        let newFirst = firstVerticalItemIndex * columns
+        let newLast = lastVerticalItemIndex * columns + columns
 
-        // let stackedItems = items.length / columns
-        let topItemIndex = Math.floor(topHeight / cardHeight) * columns
-        // let firstVisible = stackedItems * columns
-        let bottomItemIndex = Math.ceil((totalScrollHeight - bottomHeight) / cardHeight) * columns + columns
-        // console.log(topItemIndex, bottomItemIndex)
+        if (update) {
+            firstItemIndex = newFirst
+            lastItemIndex = newLast
+            return
+        }
 
-        let newItems = clone(items)
-        visibleItems = newItems.slice(topItemIndex, bottomItemIndex)
-        // console.log(visibleItems)
+        if (newLast > lastItemIndex) {
+            // scrolling down
+            firstItemIndex = newFirst
+            if (newLast > items.length) {
+                lastItemIndex = items.length
+                return
+            }
+            lastItemIndex = newLast - columns
+
+            slowlyChange("last")
+            return
+        }
+
+        if (newFirst < firstItemIndex) {
+            // scrolling up
+            lastItemIndex = newLast
+            if (newFirst < 1) {
+                firstItemIndex = 0
+                return
+            }
+            firstItemIndex = newFirst + columns - 1
+
+            slowlyChange("first")
+            return
+        }
+    }
+
+    const createTimeout = 500 / columns
+    let timeout: any = null
+    function slowlyChange(type: "last" | "first", steps: number = columns - 1) {
+        if (steps < 1) return
+        else if (timeout) clearTimeout(timeout)
+
+        timeout = setTimeout(() => {
+            if (type === "last") lastItemIndex++
+            else if (type === "first") firstItemIndex--
+
+            slowlyChange(type, steps - 1)
+        }, createTimeout)
+    }
+
+    // let visibleItems: any[] = []
+    // let topHeight: number = 0
+    // let bottomHeight: number = 0
+    // function updateVisibleItems(updateScrollHeight: boolean = false) {
+    //     if (updateScrollHeight) totalScrollHeight = (cardHeight * items.length) / columns
+
+    //     let top = Math.max(0, scrollYPos - margin)
+    //     let firstVerticalItemIndex = Math.floor(top / cardHeight)
+    //     let verticalCardsVisible = Math.ceil((viewHeight + margin * 2) / cardHeight)
+    //     let lastVerticalItemIndex = firstVerticalItemIndex + verticalCardsVisible
+
+    //     let newItems = clone(items)
+    //     let firstItemIndex = firstVerticalItemIndex * columns
+    //     let lastItemIndex = lastVerticalItemIndex * columns + columns
+    //     visibleItems = newItems.slice(firstItemIndex, lastItemIndex)
+
+    //     topHeight = firstVerticalItemIndex * cardHeight
+    //     bottomHeight = totalScrollHeight - lastVerticalItemIndex * cardHeight
+    // }
+
+    let lazyLoader: number = 0
+    $: if (ready && items) lazyLoad(true)
+    function lazyLoad(start: boolean = false) {
+        if (start) lazyLoader = 0
+        lazyLoader++
+
+        if (lazyLoader > lastItemIndex) lazyLoader = items.length
+        else if (lazyLoader < items.length) setTimeout(lazyLoad, 20)
     }
 </script>
 
 <div class="grid" on:scroll={scroll} bind:clientHeight={viewHeight}>
-    {#if !ready}
-        <div class="card invisible" style="width: {100 / columns}%;" bind:this={customCard}>
-            <slot item={clone(items[0])} />
-        </div>
-    {:else}
-        <div class="filler topScroll" style="height: {topHeight}px;"></div>
-        {#each visibleItems as item}
-            <!-- style="width: {width / columns}px;" -->
+    <!-- <div class="filler topScroll" style="height: {topHeight}px;"></div> -->
+    {#each items as item, i}
+        {#if i > lazyLoader || i < firstItemIndex || i > lastItemIndex}
+            <div style="width: {100 / columns}%;height: {cardHeight}px;"></div>
+        {:else if i === firstItemIndex}
+            <div bind:this={customCard} class="card" style="width: {100 / columns}%;">
+                <slot {item} />
+            </div>
+        {:else}
             <div class="card" style="width: {100 / columns}%;">
                 <slot {item} />
             </div>
-        {/each}
-        <div class="filler bottomScroll" style="height: {bottomHeight}px;"></div>
-    {/if}
+        {/if}
+    {/each}
+    <!-- <div class="filler bottomScroll" style="height: {bottomHeight}px;"></div> -->
 </div>
 
 <style>
@@ -101,19 +177,16 @@
         height: 100%;
 
         overflow-y: auto;
+        overflow-x: hidden;
     }
 
     .card {
         display: flex;
         flex-direction: column;
     }
-    .invisible {
-        opacity: 0;
-    }
 
-    .filler {
-        /* WIP DEBUG */
+    /* .filler {
         background-color: red;
-        /* width: 100%; */
-    }
+        width: 100%;
+    } */
 </style>

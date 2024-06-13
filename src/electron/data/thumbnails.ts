@@ -1,17 +1,15 @@
 import { app } from "electron"
+import ffmpegPath from "ffmpeg-static"
 import fs from "fs"
 import path from "path"
-// import ffmpeg from 'ffmpeg-static'
-import ffmpegPath from "ffmpeg-static"
 import SimpleThumbnail from "simple-thumbnail-ts"
 import { doesPathExist } from "../utils/files"
 
 export function createThumbnail(filePath: string, size: number = 250) {
     if (!filePath) return ""
 
-    let outputPath = getThumbnailPath(filePath)
+    let outputPath = getThumbnailPath(filePath, size)
 
-    console.log(filePath, outputPath)
     generateThumbnail(filePath, outputPath, size)
 
     return outputPath
@@ -21,8 +19,13 @@ const s = new SimpleThumbnail()
 async function generateThumbnail(filePath: string, outputPath: string, size: number = 250) {
     if (doesPathExist(outputPath)) return
 
+    // let ext = path.extname(filePath).slice(1)
+    // let isImage = defaultSettings.imageExtensions.includes(ext)
+
     try {
-        await s.generate(filePath, outputPath, size + "x?", { path: ffmpegPath || "", seek: "00:00:10" })
+        await s.generate(filePath, outputPath, size + "x?", { path: ffmpegPath || "", seek: "00:00:05" }) // might not work if video is shorter!!
+        // if (isImage) await s.generate(filePath, outputPath, size + "x?", { path: ffmpegPath || "" })
+        // else await s.generate(filePath, outputPath, size + "x?", { path: ffmpegPath || "", seek: "00:00:10" }) // WIP test video length shorter
     } catch (err) {
         console.error(err)
     }
@@ -35,14 +38,13 @@ function getThumbnailFolderPath() {
     let p: string = path.join(app.getPath("temp"), "freeshow-cache")
     if (!doesPathExist(p)) fs.mkdirSync(p, { recursive: true })
     thumbnailFolderPath = p
-    console.log("TEMP", p)
 
     return p
 }
 
-export function getThumbnailPath(filePath: string) {
+function getThumbnailPath(filePath: string, size: number = 250) {
     let folderPath = thumbnailFolderPath || getThumbnailFolderPath()
-    return path.join(folderPath, hashCode(filePath) + ".jpg")
+    return path.join(folderPath, `${hashCode(filePath)}-${size}.jpg`)
 }
 
 function hashCode(str: string) {
@@ -54,7 +56,6 @@ function hashCode(str: string) {
         hash |= 0 // convert to 32bit integer
     }
 
-    if (hash < 0) return "i1" + hash.toString().slice(1)
-
-    return "a1" + hash.toString()
+    if (hash < 0) return "i" + hash.toString().slice(1)
+    return "a" + hash.toString()
 }

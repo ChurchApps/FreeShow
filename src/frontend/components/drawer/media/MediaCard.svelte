@@ -26,14 +26,16 @@
     let hover: boolean = false
     let duration: number = 0
 
+    const steps: number = 10
     function move(e: any) {
-        if (loaded && videoElem) {
-            let percentage: number = e.offsetX / e.target.offsetWidth
-            let steps: number = 10
+        if (!loaded || !videoElem) return
 
-            let time = duration * ((Math.floor(percentage * steps) * steps + steps) / 100)
-            if (Number(time) === time) videoElem.currentTime = time
-        }
+        let percentage: number = e.offsetX / e.target.offsetWidth
+
+        let time = Math.floor(duration * ((Math.floor(percentage * steps) * steps + steps) / 100))
+        if (time && videoElem.currentTime === time) return
+
+        if (Number(time) === time) videoElem.currentTime = time
     }
 
     $: index = allFiles.findIndex((a) => a === path)
