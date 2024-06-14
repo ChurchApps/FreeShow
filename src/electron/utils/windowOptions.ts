@@ -95,3 +95,14 @@ export const exportOptions: any = {
         autoplayPolicy: "no-user-gesture-required",
     },
 }
+
+export const captureOptions: any = {
+    show: false,
+    resizable: false,
+    frame: false,
+    skipTaskbar: true,
+    webPreferences: {
+        backgroundThrottling: false,
+        autoplayPolicy: "no-user-gesture-required",
+    },
+}

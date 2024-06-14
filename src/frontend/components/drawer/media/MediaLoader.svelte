@@ -56,15 +56,16 @@
     let retryCount = 0
     $: if (path || thumbnailPath) retryCount = 0
     function reload() {
-        if (retryCount > 3) {
+        if (retryCount > 5) {
             loaded = true
             return
         }
         loaded = false
 
+        let time = 500 * (retryCount + 1)
         setTimeout(() => {
             retryCount++
-        }, 500)
+        }, time)
     }
 
     // path starting at "/" auto completes to app root, but should be file://
@@ -87,7 +88,9 @@
                 <img
                     src={type !== "video" && useOriginal ? path : thumbnailPath}
                     alt={name}
-                    style="pointer-events: none;position: absolute;filter: {mediaStyle.filter || ''};object-fit: {mediaStyle.fit};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});width: 100%;height: 100%;"
+                    style="pointer-events: none;position: absolute;filter: {mediaStyle.filter || ''};object-fit: {mediaStyle.fit || 'contain'};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY
+                        ? '-1'
+                        : '1'});width: 100%;height: 100%;"
                     loading="lazy"
                     class:loading={!loaded}
                     on:error={reload}
