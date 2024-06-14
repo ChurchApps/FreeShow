@@ -88,7 +88,7 @@ import { receive, send } from "./request"
 import { closeApp, initializeClosing, saveComplete } from "./save"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { sendInitialOutputData } from "./listeners"
-import { newToast } from "./common"
+import { newToast, startDevMode } from "./common"
 import { syncDrive, validateKeys } from "./drive"
 import type { ClientMessage } from "../../types/Socket"
 import { client } from "./sendData"
@@ -118,7 +118,10 @@ const receiveMAIN: any = {
         version.set(a)
         checkForUpdates(a)
     },
-    IS_DEV: (a: any) => isDev.set(a),
+    IS_DEV: (a: any) => {
+        isDev.set(a)
+        if (a) startDevMode()
+    },
     GET_OS: (a: any) => os.set(a),
     DEVICE_ID: (a: any) => deviceId.set(a),
     DISPLAY: (a: any) => outputDisplay.set(a),

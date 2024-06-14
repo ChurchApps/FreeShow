@@ -101,3 +101,11 @@ export function toggleRemoteStream() {
         send(OUTPUT, ["SET_VALUE"], { id: captureOutputId, key: "capture", value, rate: get(special).previewRate || "auto" })
     }, 1800)
 }
+
+// dev specific commands
+export function startDevMode() {
+    // start svelte inspector
+    const script = document.createElement("script")
+    script.src = "http://localhost:5001/start"
+    document.body.appendChild(script)
+}
