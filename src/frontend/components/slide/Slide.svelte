@@ -30,13 +30,14 @@
     import { clone, keysToID } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { GetLayoutRef } from "../helpers/get"
-    import { checkMedia, getFileName, getMediaStyle, splitPath } from "../helpers/media"
+    import { checkMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import SelectElem from "../system/SelectElem.svelte"
     import Actions from "./Actions.svelte"
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { wait } from "../../utils/common"
 
     export let slide: Slide
     export let layoutSlide: SlideData
@@ -133,6 +134,26 @@
     }
 
     let duration: number = 0
+
+    // LOAD BACKGROUND
+    $: bgPath = bg?.path || bg?.id || ""
+    $: if (bgPath) loadBackground()
+    let backgroundPath: string = ""
+    async function loadBackground() {
+        if (ghostBackground) {
+            await wait(100)
+            backgroundPath = getThumbnailPath(bgPath, mediaSize.slideSize)
+            return
+        }
+
+        if (columns < 3) {
+            backgroundPath = bgPath
+            return
+        }
+
+        let newPath = await loadThumbnail(bgPath, mediaSize.slideSize)
+        if (newPath) backgroundPath = newPath
+    }
 
     let mediaStyle: MediaStyle = {}
     $: if (bg?.path) mediaStyle = getMediaStyle($media[bg.path], currentStyle)
@@ -329,14 +350,15 @@
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
                                 <MediaLoader
                                     name={$dictionary.error?.load}
-                                    path={bg.path || bg.id || ""}
+                                    path={bgPath}
+                                    thumbnailPath={backgroundPath || ""}
                                     cameraGroup={bg.cameraGroup || ""}
                                     type={bg.type !== "player" ? bg.type : null}
-                                    loadFullImage={!!(bg.path || bg.id)}
                                     ghost={!background}
                                     {mediaStyle}
                                     bind:duration
                                 />
+                                <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}
                     {/if}

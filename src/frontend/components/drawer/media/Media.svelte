@@ -76,12 +76,14 @@
             if (active !== prevActive) {
                 prevActive = active
                 files = []
+                fullFilteredFiles = []
                 Object.values($mediaFolders).forEach((data) => window.api.send(READ_FOLDER, { path: data.path }))
             }
         } else if (path?.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
+                fullFilteredFiles = []
                 window.api.send(READ_FOLDER, { path, listFilesInFolders: true })
             }
         } else {
@@ -283,26 +285,24 @@
                 }}
             />
         {:else if fullFilteredFiles.length}
-            {#key rootPath}
-                {#key path || fullFilteredFiles}
-                    {#if $mediaOptions.mode === "grid"}
-                        <MediaGrid items={fullFilteredFiles} columns={$mediaOptions.columns} let:item>
-                            {#if item.folder}
-                                <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} />
-                            {:else}
-                                <Media name={item.name} path={item.path} thumbnailPath={$mediaOptions.columns < 3 ? "" : item.thumbnailPath} type={getMediaType(item.extension)} bind:activeFile {allFiles} {active} />
-                            {/if}
-                        </MediaGrid>
-                    {:else}
-                        <VirtualList items={fullFilteredFiles} let:item={file}>
-                            {#if file.folder}
-                                <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
-                            {:else}
-                                <Media thumbnail={$mediaOptions.mode !== "list"} name={file.name} path={file.path} type={getMediaType(file.extension)} bind:activeFile {allFiles} {active} />
-                            {/if}
-                        </VirtualList>
-                    {/if}
-                {/key}
+            {#key fullFilteredFiles}
+                {#if $mediaOptions.mode === "grid"}
+                    <MediaGrid items={fullFilteredFiles} columns={$mediaOptions.columns} let:item>
+                        {#if item.folder}
+                            <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} />
+                        {:else}
+                            <Media name={item.name} path={item.path} thumbnailPath={$mediaOptions.columns < 3 ? "" : item.thumbnailPath} type={getMediaType(item.extension)} bind:activeFile {allFiles} {active} />
+                        {/if}
+                    </MediaGrid>
+                {:else}
+                    <VirtualList items={fullFilteredFiles} let:item={file}>
+                        {#if file.folder}
+                            <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
+                        {:else}
+                            <Media thumbnail={$mediaOptions.mode !== "list"} name={file.name} path={file.path} type={getMediaType(file.extension)} bind:activeFile {allFiles} {active} />
+                        {/if}
+                    </VirtualList>
+                {/if}
             {/key}
         {:else}
             <Center>

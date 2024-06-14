@@ -2,26 +2,56 @@ import { app } from "electron"
 import ffmpegPath from "ffmpeg-static"
 import fs from "fs"
 import path from "path"
-import SimpleThumbnail from "simple-thumbnail-ts"
+// import SimpleThumbnail from "simple-thumbnail-ts"
+import SimpleThumbnail from "./ffmpegtest"
 import { doesPathExist } from "../utils/files"
+
+export function getThumbnail(data: any) {
+    let output = createThumbnail(data.input, data.size || 500)
+
+    return { ...data, output }
+}
 
 export function createThumbnail(filePath: string, size: number = 250) {
     if (!filePath) return ""
 
     let outputPath = getThumbnailPath(filePath, size)
 
-    generateThumbnail(filePath, outputPath, size)
+    addToGenerateQueue({ input: filePath, output: outputPath, size })
 
     return outputPath
 }
 
+type Thumbnail = { input: string; output: string; size: number }
+let thumbnailQueue: Thumbnail[] = []
+function addToGenerateQueue(data: Thumbnail) {
+    thumbnailQueue.push(data)
+    nextInQueue()
+}
+
+let working = false
+async function nextInQueue() {
+    if (working || !thumbnailQueue[0]) return
+
+    working = true
+    await generateThumbnail(thumbnailQueue.shift()!)
+
+    working = false
+    nextInQueue()
+}
+
+let exists: string[] = []
 const s = new SimpleThumbnail()
-async function generateThumbnail(filePath: string, outputPath: string, size: number = 250) {
-    if (doesPathExist(outputPath)) return
+async function generateThumbnail(data: Thumbnail) {
+    if (exists.includes(data.output) || doesPathExist(data.output)) {
+        exists.push(data.output)
+        return
+    }
 
     try {
-        // WIP seek might not work if video is shorter!! shorter
-        await s.generate(filePath, outputPath, size + "x?", { path: ffmpegPath || "", seek: "00:00:05" })
+        // seek might not work if video is shorter than 3 seconds (but original video will then get rendered instead of thumbnail)
+        await s.generate(data.input, data.output, data.size + "x?", { path: ffmpegPath || "", seek: "00:00:03" })
+        exists.push(data.output)
     } catch (err) {
         console.error(err)
     }

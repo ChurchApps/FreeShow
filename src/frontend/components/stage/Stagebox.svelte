@@ -95,7 +95,14 @@
     $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($outputs, true, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
-    $: currentBackground = sendBackgroundToStage(stageOutputId, $currentWindow ? $allOutputs : $outputs, true)
+
+    $: if (stageOutputId || $allOutputs || $outputs) getCurrentBackground()
+    let currentBackground: any = {}
+    async function getCurrentBackground() {
+        let currentOutputs = $currentWindow ? $allOutputs : $outputs
+        let bg = await sendBackgroundToStage(stageOutputId, currentOutputs, true)
+        currentBackground = bg
+    }
 
     // $: resolution = getResolution(resolution, { $outputs, $styles })
 

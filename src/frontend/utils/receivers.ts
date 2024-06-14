@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, IMPORT, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE, STORE } from "../../types/Channels"
+import type { ClientMessage } from "../../types/Socket"
 import { triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
@@ -49,7 +50,6 @@ import {
     folders,
     isDev,
     media,
-    mediaCache,
     mediaFolders,
     ndiData,
     os,
@@ -67,6 +67,7 @@ import {
     special,
     stageShows,
     styles,
+    tempPath,
     templates,
     textCache,
     theme,
@@ -83,15 +84,14 @@ import {
 } from "../stores"
 import { redoHistory, undoHistory } from "./../stores"
 import { checkForUpdates } from "./checkForUpdates"
+import { newToast } from "./common"
 import { createData } from "./createData"
+import { syncDrive, validateKeys } from "./drive"
+import { sendInitialOutputData } from "./listeners"
 import { receive, send } from "./request"
 import { closeApp, initializeClosing, saveComplete } from "./save"
-import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { sendInitialOutputData } from "./listeners"
-import { newToast } from "./common"
-import { syncDrive, validateKeys } from "./drive"
-import type { ClientMessage } from "../../types/Socket"
 import { client } from "./sendData"
+import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -125,6 +125,9 @@ const receiveMAIN: any = {
     GET_PATHS: (a: any) => {
         // only on first startup
         createData(a)
+    },
+    GET_TEMP_PATHS: (a: any) => {
+        tempPath.set(a.temp)
     },
     MENU: (a: any) => menuClick(a),
     SHOWS_PATH: (a: any) => showsPath.set(a),
@@ -216,7 +219,6 @@ const receiveSTORE: any = {
         if (get(theme) !== "default") updateThemeValues(get(themes)[get(theme)])
     },
     CACHE: (a: any) => {
-        mediaCache.set(a.media || {})
         textCache.set(a.text || {})
     },
     HISTORY: (a: any) => {
@@ -378,7 +380,6 @@ export const receiveOUTPUTasOUTPUT: any = {
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
     MEDIA: (a: any) => media.set(a),
-    MEDIA_CACHE: (a: any) => mediaCache.set(a),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
     TIME_FORMAT: (a: any) => timeFormat.set(a),

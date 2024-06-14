@@ -186,6 +186,16 @@ export function getPaths(): any {
     return paths
 }
 
+const tempPaths = ["temp"]
+export function getTempPaths() {
+    let paths: any = {}
+    tempPaths.forEach((pathId: any) => {
+        paths[pathId] = app.getPath(pathId)
+    })
+
+    return paths
+}
+
 // READ_FOLDER
 const MEDIA_EXTENSIONS = [...defaultSettings.imageExtensions, ...defaultSettings.videoExtensions]
 export function getFolderContent(_e: any, data: any) {

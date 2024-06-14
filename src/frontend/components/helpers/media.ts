@@ -3,9 +3,12 @@ import type { ShowType } from "../../../types/Show"
 // ----- FreeShow -----
 // This is for media/file functions
 
-import type { Styles } from "../../../types/Settings"
-import { audioExtensions, imageExtensions, mediaCache, videoExtensions } from "../../stores"
+import { MAIN } from "../../../types/Channels"
 import type { MediaStyle } from "../../../types/Main"
+import type { Styles } from "../../../types/Settings"
+import { audioExtensions, imageExtensions, loadedMediaThumbnails, tempPath, videoExtensions } from "../../stores"
+import { awaitRequest } from "../../utils/request"
+import { wait } from "../../utils/common"
 
 export function getExtension(path: string): string {
     if (!path) return ""
@@ -38,7 +41,7 @@ export function getFileName(path: string): string {
     return path
 }
 
-let pathJoiner = "/"
+let pathJoiner = ""
 export function splitPath(path: string): string[] {
     if (!path) return []
     if (path.indexOf("\\") > -1) pathJoiner = "\\"
@@ -47,6 +50,7 @@ export function splitPath(path: string): string[] {
 }
 
 export function joinPath(path: string[]): string {
+    if (!pathJoiner) splitPath(path[0])
     return path.join(pathJoiner)
 }
 
@@ -63,12 +67,12 @@ export function encodeFilePath(path: string): string {
 }
 
 // convert to base64
-export async function toDataURL(url: string) {
+async function toDataURL(url: string): Promise<string> {
     return new Promise((resolve: any) => {
         var xhr = new XMLHttpRequest()
         xhr.onload = () => {
             var reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result)
+            reader.onloadend = () => resolve(reader.result?.toString())
             reader.readAsDataURL(xhr.response)
         }
         xhr.open("GET", url)
@@ -96,15 +100,6 @@ export function checkMedia(src: string) {
             elem.onload = () => resolve("true")
         }
 
-        elem.onerror = () => {
-            // remove cached thumbnail
-            mediaCache.update((a) => {
-                delete a[src]
-                return a
-            })
-
-            resolve("false")
-        }
         elem.src = src
     })
 }
@@ -130,4 +125,74 @@ export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
     if (currentStyle?.fit) mediaStyle.fit = currentStyle.fit
 
     return mediaStyle
+}
+
+export const mediaSize = {
+    big: 900, // stage
+    slideSize: 500, // slide + remote
+    drawerSize: 250, // drawer media
+    small: 100, // show tools
+}
+
+export async function loadThumbnail(input: string, size: number) {
+    if (!input) return ""
+
+    let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
+    if (loadedPath) return loadedPath
+
+    let data = await awaitRequest(MAIN, "GET_THUMBNAIL", { input, size })
+    if (!data) return ""
+
+    thumbnailLoaded(data)
+    return data.output as string
+}
+
+export function getThumbnailPath(input: string, size: number) {
+    if (!input) return ""
+
+    let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
+    if (loadedPath) return loadedPath
+
+    return joinPath([get(tempPath), getFileName(hashCode(input), size)])
+
+    function getFileName(path, size) {
+        return `${path}-${size}.jpg`
+    }
+}
+
+// same as electron/thumbnails.ts
+function hashCode(str: string) {
+    if (!str) return ""
+    let hash = 0
+
+    for (let i = 0; i < str.length; i++) {
+        let chr = str.charCodeAt(i)
+        hash = (hash << 5) - hash + chr // bit shift
+        hash |= 0 // convert to 32bit integer
+    }
+
+    if (hash < 0) return "i" + hash.toString().slice(1)
+    return "a" + hash.toString()
+}
+
+export function thumbnailLoaded(data: { input: string; output: string; size: number }) {
+    loadedMediaThumbnails.update((a) => {
+        a[getThumbnailId(data)] = data.output
+        return a
+    })
+}
+
+function getThumbnailId(data: any) {
+    return `${data.input}-${data.size}`
+}
+
+// convert path to base64
+export async function getBase64Path(path: string, size: number = mediaSize.big) {
+    let thumbnailPath = await loadThumbnail(path, size)
+    // wait if thumnail is not generated yet
+    await wait(200)
+    let base64Path = await toDataURL(thumbnailPath)
+
+    // "data:image/png;base64," +
+    return base64Path
 }

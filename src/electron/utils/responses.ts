@@ -9,11 +9,16 @@ import path from "path"
 import { closeMain, isLinux, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
 import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { Show } from "../../types/Show"
-import { closeServers, startServers } from "../servers"
-import { Message } from "./../../types/Socket"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
 import { createPDFWindow, exportProject, exportTXT } from "../data/export"
+import { importShow } from "../data/import"
+import { error_log } from "../data/store"
+import { getThumbnail } from "../data/thumbnails"
+import { outputWindows } from "../output/output"
+import { closeServers, startServers } from "../servers"
+import { Message } from "./../../types/Socket"
+import { startRestListener, startWebSocket, stopApiListener } from "./api"
 import {
     checkShowsFolder,
     dataFolderNames,
@@ -22,6 +27,7 @@ import {
     getDocumentsFolder,
     getPaths,
     getSimularPaths,
+    getTempPaths,
     loadFile,
     locateMediaFile,
     openSystemFolder,
@@ -34,11 +40,7 @@ import {
     selectFolderDialog,
     writeFile,
 } from "./files"
-import { importShow } from "../data/import"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
-import { outputWindows } from "../output/output"
-import { error_log } from "../data/store"
-import { startRestListener, startWebSocket, stopApiListener } from "./api"
 import checkForUpdates from "./updater"
 
 // IMPORT
@@ -122,6 +124,8 @@ const mainResponses: any = {
     GET_DISPLAYS: (): Display[] => screen.getAllDisplays(),
     GET_PATHS: (): any => getPaths(),
     OUTPUT: (_: any, e: any): "true" | "false" => (e.sender.id === mainWindow?.webContents.id ? "false" : "true"),
+    GET_TEMP_PATHS: (): any => getTempPaths(),
+    GET_THUMBNAIL: (data: any): any => getThumbnail(data),
     CLOSE: (): void => closeMain(),
     MAXIMIZE: (): void => maximizeMain(),
     MAXIMIZED: (): boolean => !!mainWindow?.isMaximized(),

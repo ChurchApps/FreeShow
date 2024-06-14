@@ -50,7 +50,7 @@ async function startupMain() {
 }
 
 function getMainData() {
-    send(MAIN, ["VERSION", "IS_DEV", "GET_OS", "DEVICE_ID", "MAXIMIZED", "DISPLAY"])
+    send(MAIN, ["VERSION", "IS_DEV", "GET_OS", "GET_TEMP_PATHS", "DEVICE_ID", "MAXIMIZED", "DISPLAY"])
 }
 
 async function getStoredData() {

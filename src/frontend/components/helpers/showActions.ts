@@ -3,6 +3,7 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { runAction } from "../actions/actions"
+import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import {
     activeEdit,
@@ -38,7 +39,6 @@ import { loadShows } from "./setShow"
 import { initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { stopTimers } from "./timerTick"
-import type { API_output_style } from "../actions/api"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {

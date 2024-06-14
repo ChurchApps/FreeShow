@@ -24,6 +24,7 @@
     export let duration: number = 0
     export let videoElem: any = null
     export let ghost: boolean = false
+    console.log(ghost)
 
     $: if (path) loaded = false
 
@@ -55,7 +56,7 @@
     let retryCount = 0
     $: if (path || thumbnailPath) retryCount = 0
     function reload() {
-        if (ghost || retryCount > 5) {
+        if (retryCount > 3) {
             loaded = true
             return
         }

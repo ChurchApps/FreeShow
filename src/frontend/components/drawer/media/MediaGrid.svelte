@@ -92,7 +92,7 @@
     }
 
     let lazyLoader: number = 0
-    $: if (ready && items) lazyLoad(true)
+    $: if (ready && items?.length) lazyLoad(true)
     function lazyLoad(start: boolean = false) {
         if (start) lazyLoader = 0
         lazyLoader++
@@ -100,17 +100,20 @@
         if (lazyLoader > lastItemIndex) lazyLoader = items.length
         else if (lazyLoader < items.length) setTimeout(lazyLoad, 20)
     }
+
+    // TODO: lagging a bit on scroll when rendering new components
 </script>
 
 <div class="grid" on:scroll={scroll} bind:clientHeight={viewHeight}>
     {#each items as item, i}
-        {#if i > lazyLoader || i < firstItemIndex || i > lastItemIndex}
-            <div style="width: {100 / columns}%;height: {cardHeight}px;"></div>
-        {:else if i === firstItemIndex}
+        {#if i === 0}
             <div bind:this={customCard} class="card" style="width: {100 / columns}%;">
                 <slot {item} />
             </div>
+        {:else if i > lazyLoader || i < firstItemIndex || i > lastItemIndex}
+            <div style="width: {100 / columns}%;height: {cardHeight}px;"></div>
         {:else}
+            <!-- WIP fade in -->
             <div class="card" style="width: {100 / columns}%;">
                 <slot {item} />
             </div>

@@ -109,12 +109,7 @@
 >
     <SelectElem id="media" data={{ name, path, type }} draggable fill>
         {#if thumbnail}
-            <!-- TODO: scrolling fast might skip intersection observer, making a whole row not load -->
-            <!-- <IntersectionObserver class="observer" once let:intersecting>
-                {#if intersecting} -->
             <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} />
-            <!-- {/if}
-            </IntersectionObserver> -->
         {:else}
             <div class="icon">
                 <Icon size={2.5} id={icon} white={type === "image"} />
