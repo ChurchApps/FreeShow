@@ -19,13 +19,9 @@ const s = new SimpleThumbnail()
 async function generateThumbnail(filePath: string, outputPath: string, size: number = 250) {
     if (doesPathExist(outputPath)) return
 
-    // let ext = path.extname(filePath).slice(1)
-    // let isImage = defaultSettings.imageExtensions.includes(ext)
-
     try {
-        await s.generate(filePath, outputPath, size + "x?", { path: ffmpegPath || "", seek: "00:00:05" }) // might not work if video is shorter!!
-        // if (isImage) await s.generate(filePath, outputPath, size + "x?", { path: ffmpegPath || "" })
-        // else await s.generate(filePath, outputPath, size + "x?", { path: ffmpegPath || "", seek: "00:00:10" }) // WIP test video length shorter
+        // WIP seek might not work if video is shorter!! shorter
+        await s.generate(filePath, outputPath, size + "x?", { path: ffmpegPath || "", seek: "00:00:05" })
     } catch (err) {
         console.error(err)
     }

@@ -2,41 +2,15 @@
     export let items: any[] = []
     export let columns: number = 1
 
-    // let cardWidth: number = 0
     let cardHeight: number = 0
-    // let totalScrollHeight: number = 0
 
     let customCard: any
     let ready: boolean = false
     $: if (customCard && columns) initialize()
     function initialize() {
-        // cardWidth = customCard.offsetWidth
         cardHeight = customCard.offsetHeight
-        // totalScrollHeight = (cardHeight * items.length) / columns
         setTimeout(() => (ready = true))
     }
-
-    // calculate new card height on column change
-    // let previousXFill: number = 0
-    // $: if (columns) updateCardHeight()
-    // function updateCardHeight() {
-    //     let newFill = 1 / columns
-
-    //     if (!ready) {
-    //         previousXFill = newFill
-    //         return
-    //     }
-
-    //     let fullSize = cardWidth / previousXFill
-    //     let newWidth = fullSize * newFill
-
-    //     let aspect = cardHeight / cardWidth
-
-    //     cardHeight = newWidth * aspect
-    //     cardWidth = newWidth
-
-    //     previousXFill = newFill
-    // }
 
     let scrollYPos = 0
     let lastUpdate = 0
@@ -117,26 +91,6 @@
         }, createTimeout)
     }
 
-    // let visibleItems: any[] = []
-    // let topHeight: number = 0
-    // let bottomHeight: number = 0
-    // function updateVisibleItems(updateScrollHeight: boolean = false) {
-    //     if (updateScrollHeight) totalScrollHeight = (cardHeight * items.length) / columns
-
-    //     let top = Math.max(0, scrollYPos - margin)
-    //     let firstVerticalItemIndex = Math.floor(top / cardHeight)
-    //     let verticalCardsVisible = Math.ceil((viewHeight + margin * 2) / cardHeight)
-    //     let lastVerticalItemIndex = firstVerticalItemIndex + verticalCardsVisible
-
-    //     let newItems = clone(items)
-    //     let firstItemIndex = firstVerticalItemIndex * columns
-    //     let lastItemIndex = lastVerticalItemIndex * columns + columns
-    //     visibleItems = newItems.slice(firstItemIndex, lastItemIndex)
-
-    //     topHeight = firstVerticalItemIndex * cardHeight
-    //     bottomHeight = totalScrollHeight - lastVerticalItemIndex * cardHeight
-    // }
-
     let lazyLoader: number = 0
     $: if (ready && items) lazyLoad(true)
     function lazyLoad(start: boolean = false) {
@@ -149,7 +103,6 @@
 </script>
 
 <div class="grid" on:scroll={scroll} bind:clientHeight={viewHeight}>
-    <!-- <div class="filler topScroll" style="height: {topHeight}px;"></div> -->
     {#each items as item, i}
         {#if i > lazyLoader || i < firstItemIndex || i > lastItemIndex}
             <div style="width: {100 / columns}%;height: {cardHeight}px;"></div>
@@ -163,7 +116,6 @@
             </div>
         {/if}
     {/each}
-    <!-- <div class="filler bottomScroll" style="height: {bottomHeight}px;"></div> -->
 </div>
 
 <style>
@@ -184,9 +136,4 @@
         display: flex;
         flex-direction: column;
     }
-
-    /* .filler {
-        background-color: red;
-        width: 100%;
-    } */
 </style>
