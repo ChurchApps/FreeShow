@@ -33,7 +33,6 @@ import {
     lockedOverlays,
     maxConnections,
     media,
-    mediaCache,
     mediaFolders,
     mediaOptions,
     metronome,
@@ -82,8 +81,8 @@ import {
 } from "../stores"
 import type { SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
-import { syncDrive } from "./drive"
 import { newToast } from "./common"
+import { syncDrive } from "./drive"
 
 export function save(closeWhenFinished: boolean = false, backup: boolean = false) {
     console.log("SAVING...")
@@ -189,7 +188,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
     // CACHES
     allSavedData = {
         ...allSavedData,
-        CACHE: { media: get(mediaCache), text: get(textCache) },
+        CACHE: { text: get(textCache) },
         HISTORY: { undo: get(undoHistory), redo: get(redoHistory) },
     }
 

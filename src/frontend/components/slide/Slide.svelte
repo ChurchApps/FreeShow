@@ -23,6 +23,7 @@
         slidesOptions,
         styles,
     } from "../../stores"
+    import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/editbox/Editbox.svelte"
@@ -30,7 +31,7 @@
     import { clone, keysToID } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { GetLayoutRef } from "../helpers/get"
-    import { checkMedia, getFileName, getMediaStyle, splitPath } from "../helpers/media"
+    import { checkMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import SelectElem from "../system/SelectElem.svelte"
     import Actions from "./Actions.svelte"
@@ -133,6 +134,27 @@
     }
 
     let duration: number = 0
+
+    // LOAD BACKGROUND
+    $: bgPath = bg?.path || bg?.id || ""
+    $: if (bgPath) loadBackground()
+    let thumbnailPath: string = ""
+    async function loadBackground() {
+        if (ghostBackground) {
+            await wait(100)
+            thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)
+            return
+        }
+
+        // when zoomed in show the full res image
+        // if (columns < 3 && $activePage !== "edit") {
+        //     backgroundPath = bgPath
+        //     return
+        // }
+
+        let newPath = await loadThumbnail(bgPath, mediaSize.slideSize)
+        if (newPath) thumbnailPath = newPath
+    }
 
     let mediaStyle: MediaStyle = {}
     $: if (bg?.path) mediaStyle = getMediaStyle($media[bg.path], currentStyle)
@@ -327,16 +349,8 @@
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader
-                                    name={$dictionary.error?.load}
-                                    path={bg.path || bg.id || ""}
-                                    cameraGroup={bg.cameraGroup || ""}
-                                    type={bg.type !== "player" ? bg.type : null}
-                                    loadFullImage={!!(bg.path || bg.id)}
-                                    ghost={!background}
-                                    {mediaStyle}
-                                    bind:duration
-                                />
+                                <MediaLoader name={$dictionary.error?.load} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration />
+                                <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}
                     {/if}

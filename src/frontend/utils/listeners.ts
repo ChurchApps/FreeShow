@@ -16,7 +16,6 @@ import {
     folders,
     groups,
     media,
-    mediaCache,
     midiIn,
     openedFolders,
     outputs,
@@ -67,8 +66,8 @@ export function storeSubscriber() {
         // TODO: ?
         // send(REMOTE, ["SHOW"], data )
         timedout(REMOTE, { channel: "SHOW", data }, () =>
-            eachConnection(REMOTE, "SHOW", (connection) => {
-                return connection.active ? convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
+            eachConnection(REMOTE, "SHOW", async (connection) => {
+                return connection.active ? await convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
             })
         )
         // TODO: this, timedout +++
@@ -167,13 +166,6 @@ export function storeSubscriber() {
     media.subscribe((data) => {
         send(OUTPUT, ["MEDIA"], data)
     })
-    mediaCache.subscribe((data) => {
-        send(OUTPUT, ["MEDIA_CACHE"], data)
-
-        // STAGE
-        sendData(STAGE, { channel: "SLIDES" }, true)
-        // sendBackgroundToStage(get(outputs))
-    })
 
     timers.subscribe((data) => {
         send(OUTPUT, ["TIMERS"], data)
@@ -259,7 +251,6 @@ const initalOutputData = {
 
     VIZUALISER_DATA: get(visualizerData),
     MEDIA: get(media),
-    MEDIA_CACHE: get(mediaCache),
     TIMERS: get(timers),
     VARIABLES: get(variables),
     TIME_FORMAT: get(timeFormat),

@@ -1,40 +1,26 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN, STORE } from "../../../../types/Channels"
-    import { activePopup, alertMessage, dataPath, dictionary, mediaCache, shows, showsCache, showsPath, special } from "../../../stores"
-    import { newToast } from "../../../utils/common"
+    import { activePopup, alertMessage, dataPath, dictionary, shows, showsCache, showsPath, special } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import { restartOutputs } from "../../../utils/updateSettings"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { formatBytes } from "../../helpers/bytes"
+    import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     onMount(() => {
-        getCacheSize()
+        // getCacheSize()
         // getAudioOutputs()
         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
     })
-
-    let cacheSize: string = "0 Bytes"
-    function getCacheSize() {
-        if (!Object.keys($mediaCache).length) {
-            cacheSize = "0 Bytes"
-            return
-        }
-
-        let str = JSON.stringify($mediaCache)
-        let byteLengthUtf8 = new Blob([str]).size
-        cacheSize = formatBytes(byteLengthUtf8)
-    }
 
     const previewRates = [
         { id: "auto", name: "$:settings.auto:$" },
@@ -117,16 +103,16 @@
     }
 
     // delete media thumbnail cache
-    function deleteCache() {
-        if (!Object.keys($mediaCache).length) {
-            newToast("$toast.empty_cache")
-            return
-        }
+    // function deleteCache() {
+    //     if (!Object.keys($mediaCache).length) {
+    //         newToast("$toast.empty_cache")
+    //         return
+    //     }
 
-        newToast("$toast.deleted_cache")
-        mediaCache.set({})
-        cacheSize = "0 Bytes"
-    }
+    //     newToast("$toast.deleted_cache")
+    //     mediaCache.set({})
+    //     cacheSize = "0 Bytes"
+    // }
 
     // open log
     function openLog() {
@@ -278,7 +264,7 @@
     </CombinedInput>
 {/if}
 
-<CombinedInput>
+<!-- <CombinedInput>
     <Button style="width: 100%;" on:click={deleteCache}>
         <Icon id="delete" style="border: 0;" right />
         <p style="padding: 0;">
@@ -286,7 +272,7 @@
             <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({cacheSize})</span>
         </p>
     </Button>
-</CombinedInput>
+</CombinedInput> -->
 
 <CombinedInput>
     <Button style="width: 100%;" on:click={openLog}>

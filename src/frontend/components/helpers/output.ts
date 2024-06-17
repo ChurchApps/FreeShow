@@ -6,6 +6,7 @@ import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, OutSlide, Show, Transition } from "../../../types/Show"
 import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData } from "../../stores"
 import { send } from "../../utils/request"
+import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "./array"
 import { clearBackground, replaceDynamicValues } from "./showActions"
@@ -47,6 +48,13 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                     // WIP data is sent directly in output, so this is probably not needed
                     send(OUTPUT, ["DATA"], { [id]: videoData })
                     if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
+                }, 100)
+            }
+
+            if (key === "background") {
+                setTimeout(() => {
+                    // update stage background if any
+                    sendBackgroundToStage(id)
                 }, 100)
             }
 

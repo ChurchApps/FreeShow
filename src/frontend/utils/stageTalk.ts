@@ -2,24 +2,27 @@ import { get } from "svelte/store"
 import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { clone } from "../components/helpers/array"
+import { getBase64Path } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { events, media, mediaCache, outputs, previewBuffers, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
+import { events, media, outputs, previewBuffers, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendData } from "./sendData"
 
-export function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
+export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
     let currentOutput = updater[outputId]?.out
     let path = currentOutput?.background?.path || ""
-    if (!path) return
+    if (!path) {
+        send(STAGE, ["BACKGROUND"], { path: "" })
+        return
+    }
 
-    let background = get(mediaCache)[path] || {}
-    let base64path = background.data
+    let base64path = await getBase64Path(path)
     if (!base64path) return
 
-    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next: getNextBackground(currentOutput?.slide) })
+    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next: await getNextBackground(currentOutput?.slide) })
 
     if (returnPath) return bg
 
@@ -27,7 +30,7 @@ export function sendBackgroundToStage(outputId, updater = get(outputs), returnPa
     return
 }
 
-function getNextBackground(currentOutputSlide: any) {
+async function getNextBackground(currentOutputSlide: any) {
     if (!currentOutputSlide?.id) return {}
 
     let layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
@@ -39,8 +42,7 @@ function getNextBackground(currentOutputSlide: any) {
     let bgId = nextLayout.data.background || ""
     let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path
 
-    let background = get(mediaCache)[path] || {}
-    let base64path = background.data
+    let base64path = await getBase64Path(path)
     if (!base64path) return {}
 
     return { path: base64path, mediaStyle: get(media)[path] || {} }

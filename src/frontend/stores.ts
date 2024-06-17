@@ -91,6 +91,8 @@ export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 
 export const sortedShowsList: Writable<ShowList[]> = writable([])
 export const cachedShowsData: Writable<any> = writable({})
 export const quickTextCache: Writable<string> = writable("")
+export const loadedMediaThumbnails: Writable<{ [key: string]: string }> = writable({})
+export const tempPath: Writable<string> = writable("")
 
 // EDIT
 export const editHistory: Writable<any[]> = writable([])
@@ -160,7 +162,6 @@ export const triggers: Writable<{ [key: string]: any }> = writable({}) // {}
 export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
 export const videoMarkers: Writable<{ [key: string]: { name: string; time: number }[] }> = writable({}) // {}
-export const mediaCache: Writable<any> = writable({}) // {}
 export const checkedFiles: Writable<any[]> = writable([])
 
 // OVERLAYS
@@ -313,7 +314,6 @@ export const $ = {
     timers,
     media,
     mediaFolders,
-    mediaCache,
     overlayCategories,
     overlays,
     audioFolders,

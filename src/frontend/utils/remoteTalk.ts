@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
 import { clone } from "../components/helpers/array"
+import { getBase64Path, mediaSize } from "../components/helpers/media"
 import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { clearAll, updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, mediaCache, openedFolders, outLocked, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
+import { activeProject, connections, dictionary, driveData, folders, openedFolders, outLocked, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
 import { sendData } from "./sendData"
 
 // REMOTE
@@ -54,7 +55,7 @@ export const receiveREMOTE: any = {
         console.log(msg)
 
         await loadShows([showID])
-        msg.data = clone({ ...convertBackgrounds(get(showsCache)[showID]), id: showID })
+        msg.data = clone({ ...(await convertBackgrounds(get(showsCache)[showID])), id: showID })
         // send(REMOTE, ["MEDIA"], { media: msg.data.media })
 
         if (msg.id) {
@@ -103,7 +104,7 @@ export const receiveREMOTE: any = {
             if (out && out.id !== "temp") {
                 id = out.id
                 oldOutSlide = id
-                msg.data.show = convertBackgrounds(get(showsCache)[id])
+                msg.data.show = await convertBackgrounds(get(showsCache)[id])
                 msg.data.show.id = id
             }
         }
@@ -143,20 +144,21 @@ export function initializeRemote(id: string) {
     window.api.send(REMOTE, { channel: "OUT", data: out })
 }
 
-export function convertBackgrounds(show) {
+export async function convertBackgrounds(show) {
     if (!show) return {}
 
     show = clone(show)
     // let media = {}
-    Object.keys(show.media || {}).map((id) => {
-        let path = show.media[id].path
-        let cloudId = get(driveData).mediaId
-        if (cloudId && cloudId !== "default") path = show.media[id].cloud?.[cloudId] || path
+    await Promise.all(
+        Object.keys(show.media || {}).map(async (id) => {
+            let path = show.media[id].path
+            let cloudId = get(driveData).mediaId
+            if (cloudId && cloudId !== "default") path = show.media[id].cloud?.[cloudId] || path
 
-        let cachedImage: any = get(mediaCache)[path]
-        if (cachedImage) show.media[id].path = cachedImage.data // "data:image/png;base64," +
-        // let path = await toBase64(path)
-    })
+            let base64Path: string = await getBase64Path(path, mediaSize.slideSize)
+            if (base64Path) show.media[id].path = base64Path
+        })
+    )
 
     return show
 }
