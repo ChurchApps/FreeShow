@@ -23,6 +23,7 @@
         slidesOptions,
         styles,
     } from "../../stores"
+    import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/editbox/Editbox.svelte"
@@ -37,7 +38,6 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
-    import { wait } from "../../utils/common"
 
     export let slide: Slide
     export let layoutSlide: SlideData
@@ -138,21 +138,22 @@
     // LOAD BACKGROUND
     $: bgPath = bg?.path || bg?.id || ""
     $: if (bgPath) loadBackground()
-    let backgroundPath: string = ""
+    let thumbnailPath: string = ""
     async function loadBackground() {
         if (ghostBackground) {
             await wait(100)
-            backgroundPath = getThumbnailPath(bgPath, mediaSize.slideSize)
+            thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)
             return
         }
 
-        if (columns < 3) {
-            backgroundPath = bgPath
-            return
-        }
+        // when zoomed in show the full res image
+        // if (columns < 3 && $activePage !== "edit") {
+        //     backgroundPath = bgPath
+        //     return
+        // }
 
         let newPath = await loadThumbnail(bgPath, mediaSize.slideSize)
-        if (newPath) backgroundPath = newPath
+        if (newPath) thumbnailPath = newPath
     }
 
     let mediaStyle: MediaStyle = {}
@@ -348,16 +349,7 @@
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader
-                                    name={$dictionary.error?.load}
-                                    path={bgPath}
-                                    thumbnailPath={backgroundPath || ""}
-                                    cameraGroup={bg.cameraGroup || ""}
-                                    type={bg.type !== "player" ? bg.type : null}
-                                    ghost={!background}
-                                    {mediaStyle}
-                                    bind:duration
-                                />
+                                <MediaLoader name={$dictionary.error?.load} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration />
                                 <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}

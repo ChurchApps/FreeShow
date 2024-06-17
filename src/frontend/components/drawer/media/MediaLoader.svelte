@@ -9,7 +9,6 @@
     import Camera from "../../output/Camera.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Capture from "../live/Capture.svelte"
-    // import Image from "./Image.svelte"
 
     export let name: any = ""
     export let path: string
@@ -23,8 +22,6 @@
     export let resolution: Resolution | null = null
     export let duration: number = 0
     export let videoElem: any = null
-    export let ghost: boolean = false
-    console.log(ghost)
 
     $: if (path) loaded = false
 
@@ -84,19 +81,21 @@
         {:else if type === "screen"}
             <Capture screen={{ id: path, name }} streams={[]} background />
         {:else}
-            {#key retryCount}
-                <img
-                    src={type !== "video" && useOriginal ? path : thumbnailPath}
-                    alt={name}
-                    style="pointer-events: none;position: absolute;filter: {mediaStyle.filter || ''};object-fit: {mediaStyle.fit || 'contain'};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY
-                        ? '-1'
-                        : '1'});width: 100%;height: 100%;"
-                    loading="lazy"
-                    class:loading={!loaded}
-                    on:error={reload}
-                    on:load={() => (loaded = true)}
-                />
-            {/key}
+            {#if type !== "video" || (thumbnailPath && retryCount <= 5)}
+                {#key retryCount}
+                    <img
+                        src={type !== "video" && useOriginal ? path : thumbnailPath}
+                        alt={name}
+                        style="pointer-events: none;position: absolute;filter: {mediaStyle.filter || ''};object-fit: {mediaStyle.fit || 'contain'};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY
+                            ? '-1'
+                            : '1'});width: 100%;height: 100%;"
+                        loading="lazy"
+                        class:loading={!loaded}
+                        on:error={reload}
+                        on:load={() => (loaded = true)}
+                    />
+                {/key}
+            {/if}
             {#if type === "video" && useOriginal}
                 <video style="pointer-events: none;position: absolute;width: 100%;height: 100%;object-fit: {mediaStyle.fit};" bind:this={videoElem} on:error={reload} src={path} on:canplaythrough={getDuration}>
                     <track kind="captions" />
@@ -114,6 +113,10 @@
         display: flex;
         justify-content: center;
         align-items: center;
+    }
+
+    img {
+        line-break: anywhere;
     }
 
     img.loading {

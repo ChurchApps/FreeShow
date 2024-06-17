@@ -14,7 +14,7 @@ import { downloadMedia } from "../data/downloadMedia"
 import { createPDFWindow, exportProject, exportTXT } from "../data/export"
 import { importShow } from "../data/import"
 import { error_log } from "../data/store"
-import { getThumbnail } from "../data/thumbnails"
+import { getThumbnail, saveImage } from "../data/thumbnails"
 import { outputWindows } from "../output/output"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
@@ -126,6 +126,7 @@ const mainResponses: any = {
     OUTPUT: (_: any, e: any): "true" | "false" => (e.sender.id === mainWindow?.webContents.id ? "false" : "true"),
     GET_TEMP_PATHS: (): any => getTempPaths(),
     GET_THUMBNAIL: (data: any): any => getThumbnail(data),
+    SAVE_IMAGE: (data: any): any => saveImage(data),
     CLOSE: (): void => closeMain(),
     MAXIMIZE: (): void => maximizeMain(),
     MAXIMIZED: (): boolean => !!mainWindow?.isMaximized(),

@@ -7,8 +7,8 @@ import { MAIN } from "../../../types/Channels"
 import type { MediaStyle } from "../../../types/Main"
 import type { Styles } from "../../../types/Settings"
 import { audioExtensions, imageExtensions, loadedMediaThumbnails, tempPath, videoExtensions } from "../../stores"
-import { awaitRequest } from "../../utils/request"
-import { wait } from "../../utils/common"
+import { wait, waitUntilValueIsDefined } from "../../utils/common"
+import { awaitRequest, send } from "../../utils/request"
 
 export function getExtension(path: string): string {
     if (!path) return ""
@@ -128,7 +128,7 @@ export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
 }
 
 export const mediaSize = {
-    big: 900, // stage
+    big: 900, // stage & editor
     slideSize: 500, // slide + remote
     drawerSize: 250, // drawer media
     small: 100, // show tools
@@ -195,4 +195,51 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
 
     // "data:image/png;base64," +
     return base64Path
+}
+
+// CACHE
+
+const jpegQuality = 90 // 0-100
+export function captureCanvas(data: any) {
+    let video = document.createElement("video")
+    video.src = data.input
+
+    let canvas = document.createElement("canvas")
+
+    video.addEventListener("loadeddata", async () => {
+        video.currentTime = video.duration * (data.seek ?? 0.5)
+
+        let newSize = getNewSize({ width: video.videoWidth, height: video.videoHeight }, data.size || {})
+        canvas.width = newSize.width
+        canvas.height = newSize.height
+
+        // wait until loaded
+        await waitUntilValueIsDefined(() => video.readyState === 4, 20)
+
+        captureCanvas()
+    })
+
+    function captureCanvas() {
+        let ctx = canvas.getContext("2d")
+        if (!ctx) return
+
+        ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, canvas.width, canvas.height)
+        let dataURL = canvas.toDataURL("image/jpeg", jpegQuality)
+
+        send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })
+    }
+}
+
+function getNewSize(contentSize: { width: number; height: number }, newSize: { width?: number; height?: number }) {
+    if (!contentSize.width) contentSize.width = 1920
+    if (!contentSize.height) contentSize.height = 1080
+
+    const ratio = contentSize.width / contentSize.height
+
+    let width = newSize.width
+    let height = newSize.height
+    if (!width) width = height ? Math.floor(height * ratio) : contentSize.width
+    if (!height) height = newSize.width ? Math.floor(width / ratio) : contentSize.height
+
+    return { width, height }
 }

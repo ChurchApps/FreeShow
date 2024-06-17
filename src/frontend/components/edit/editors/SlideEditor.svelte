@@ -6,7 +6,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { getMediaStyle } from "../../helpers/media"
+    import { getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
     import { getActiveOutputs, getResolution } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -53,8 +53,17 @@
 
     $: background = bgId && currentShow ? $showsCache[currentShow].media[bgId] : null
     $: cloudId = $driveData.mediaId
-    $: bgPath = cloudId && cloudId !== "default" && background ? background.cloud?.[cloudId] || background.path || "" : background?.path || ""
+    $: backgroundPath = cloudId && cloudId !== "default" && background ? background.cloud?.[cloudId] || background.path || "" : background?.path || ""
     // $: slideOverlays = layoutSlide.overlays || []
+
+    // LOAD BACKGROUND
+    $: bgPath = backgroundPath || background?.id || ""
+    $: if (bgPath) loadBackground()
+    let thumbnailPath: string = ""
+    async function loadBackground() {
+        let newPath = await loadThumbnail(bgPath, mediaSize.big)
+        if (newPath) thumbnailPath = newPath
+    }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
@@ -208,7 +217,7 @@
                     <!-- background -->
                     {#if !altKeyPressed && background}
                         <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter};height: 100%;width: 100%;">
-                            <MediaLoader path={bgPath || background.id || ""} {loadFullImage} type={background.type !== "player" ? background.type : null} {mediaStyle} />
+                            <MediaLoader path={bgPath} {thumbnailPath} {loadFullImage} type={background.type !== "player" ? background.type : null} {mediaStyle} />
                         </div>
                     {/if}
                     <!-- edit -->

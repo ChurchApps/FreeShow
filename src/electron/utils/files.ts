@@ -73,7 +73,7 @@ export function renameFile(p: string, oldName: string, newName: string) {
 export function getFileStats(p: string, disableLog: boolean = false) {
     try {
         const stat: Stats = fs.statSync(p)
-        return { path: p, stat, extension: path.extname(p).substring(1), folder: stat.isDirectory() }
+        return { path: p, stat, extension: path.extname(p).substring(1).toLowerCase(), folder: stat.isDirectory() }
     } catch (err) {
         if (!disableLog) actionComplete(err, "Error when getting file stats")
         return null

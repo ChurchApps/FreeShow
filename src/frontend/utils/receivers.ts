@@ -7,7 +7,7 @@ import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
-import { getFileName } from "../components/helpers/media"
+import { captureCanvas, getFileName } from "../components/helpers/media"
 import { clearPlayingVideo, getActiveOutputs } from "../components/helpers/output"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -195,6 +195,9 @@ const receiveMAIN: any = {
 
     // TOP BAR
     MAXIMIZED: (data: boolean) => windowState.set({ ...windowState, maximized: data }),
+
+    // MEDIA CACHE
+    CAPTURE_CANVAS: (data: any) => captureCanvas(data),
 }
 
 const receiveSTORE: any = {
