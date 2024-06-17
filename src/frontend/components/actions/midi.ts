@@ -97,7 +97,10 @@ export function receivedMidi(msg) {
 
     // the select slide index from velocity can't select slide 0 as a NoteOn with velocity 0 is detected as NoteOff
     // velocity of 0 currently bypasses the note on/off
-    if (action.midi?.type !== msg.type && index !== 0) return
+    const diff_type = action.midi?.type !== msg.type
+    const diff_note = msg.values.note !== action.midi?.values.note
+    const diff_channel = msg.values.channel !== action.midi?.values.channel
+    if ((diff_type || diff_note || diff_channel) && index !== 0) return
 
     let hasindex = action.triggers?.[0]?.includes("index_") ?? false
     if (hasindex && index < 0) {
