@@ -77,7 +77,8 @@ export function convertOpenLP(data: any) {
     }
 }
 
-const OLPgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }
+// Verse, Chorus, Bridge, Pre-Chorus, Intro, Ending, Other
+const OLPgroups: any = { V: "verse", C: "chorus", P: "pre_chorus", B: "bridge", O: "tag", I: "intro", E: "outro" }
 function createSlides({ verseOrder, lyrics }: Song) {
     let slides: any = {}
     let layout: any[] = []
@@ -175,45 +176,64 @@ function getSong(song: any, content: any) {
 // XML
 
 function XMLtoObject(xml: string) {
-    let parser = new DOMParser()
+    let song = xml2json(xml).song || {}
 
-    // remove first line (standalone attribute): <?xml version="1.0" encoding="UTF-8"?> / <?xml-stylesheet href="stylesheets.css" type="text/css"?>
-    while (xml.indexOf("<?xml") >= 0) {
-        let splitted = xml.split("\n")
-        xml = splitted.slice(1, splitted.length).join("\n")
+    let lyrics = song.lyrics || {}
+    let properties = song.properties || {}
+
+    let newSong: Song = {
+        title: properties.titles?.title || "",
+        notes: song["#comment"] || properties.comments?.map((comment) => comment["#text"] || "").join("\n") || "",
+        // created: song["@createDate"],
+        modified: song["@modifiedDate"],
+        copyright: properties.copyright || "",
+        ccli: properties.ccliNo || "",
+        authors: getAuthors(),
+        verseOrder: formatVerseOrder(properties.verseOrder || ""),
+        lyrics: getLyrics(),
     }
 
-    let xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
+    return newSong
 
-    let properties = getChild(xmlDoc, "properties")
-    let lyrics = getChild(xmlDoc, "lyrics")
+    function getAuthors() {
+        let currentSongAuthors = properties.authors?.author || []
+        if (!Array.isArray(currentSongAuthors)) currentSongAuthors = [currentSongAuthors]
 
-    let object: Song = {
-        title: getChild(getChild(properties, "titles"), "title").textContent || "",
-        modified: xmlDoc.getAttribute("modifiedDate") || "",
-        verseOrder: getChild(properties, "verseOrder").textContent || "",
-        authors: getChild(properties, "authors").children
-            ? [...getChild(properties, "authors").children].map((a: any) => ({
-                  type: a.getAttribute("type") ? a.getAttribute("type") : "words",
-                  name: a.textContent,
-              }))
-            : [],
-        notes: getChild(properties, "comments").children ? [...getChild(properties, "comments").children].map((comment) => comment.textContent).join("\n") : "",
-        copyright: getChild(properties, "copyright").textContent || "",
-        ccli: getChild(properties, "ccliNo").textContent || "",
-        lyrics: [...lyrics.getElementsByTagName("verse")].map((verse) => ({
-            name: verse.getAttribute("name")!,
-            lines: getChild(verse, "lines")
-                ?.innerHTML.toString()
-                .replaceAll('xmlns="http://openlyrics.info/namespace/2009/song"', "")
-                .replaceAll("<br/>", "<br />")
-                .replaceAll("\n", "<br />")
-                ?.split("<br />")
-                .filter((a) => a.trim().length),
-        })),
+        let authors: any[] = []
+        authors = currentSongAuthors.map((author) => ({ name: author["#text"] || "", type: author["@type"] || "words" }))
+
+        return authors
     }
 
-    return object
+    function formatVerseOrder(verseOrder: string) {
+        const hasNumber = /\d+$/
+        verseOrder = verseOrder.split(" ").map(format).join(" ")
+        function format(id) {
+            if (!hasNumber.test(id)) id += "1"
+            return id
+        }
+
+        return verseOrder
+    }
+
+    function getLyrics() {
+        lyrics = song.lyrics?.verse || []
+        if (!Array.isArray(lyrics)) lyrics = [lyrics]
+
+        lyrics = lyrics.map((a) => ({ name: a["@name"], lines: getLines(a.lines || "") }))
+
+        return lyrics
+    }
+
+    function getLines(lines: string) {
+        let newLines: string[] = []
+
+        // remove unused line seperator char
+        lines = lines.replaceAll("&#8232;", "")
+        // find line breaks
+        lines = lines.replaceAll('xmlns="http://openlyrics.info/namespace/2009/song"', "").replaceAll("<br/>", "\n").replaceAll("<br />", "\n")
+        newLines = lines.split("\n")
+
+        return newLines
+    }
 }
-
-const getChild = (parent: any, name: string) => parent.getElementsByTagName(name)[0] || {}

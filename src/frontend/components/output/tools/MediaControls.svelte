@@ -92,7 +92,7 @@
         {#if background?.type === "player"}
             <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
         {:else}
-            <p>{mediaName}</p>
+            <p>{decodeURIComponent(mediaName)}</p>
         {/if}
     </span>
 

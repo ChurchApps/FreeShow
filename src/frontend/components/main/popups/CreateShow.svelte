@@ -215,29 +215,26 @@
 {/if}
 
 {#if showSearchResults}
-    <div style="height:250px; overflow-y:scroll;">
+    <div style="max-height: 250px;overflow-y: auto;">
         <table class="searchResultTable">
             <thead>
                 <tr>
-                    <th><T id="show.source" /></th>
-                    <th><T id="show.artist" /></th>
                     <th><T id="show.song" /></th>
+                    <th><T id="show.artist" /></th>
+                    <th><T id="show.source" /></th>
                 </tr>
             </thead>
             <tbody>
                 {#if songs}
                     {#each songs as song}
-                        <tr>
-                            <td>{song.source}</td>
+                        <tr
+                            on:click={() => {
+                                getLyrics(song)
+                            }}
+                        >
+                            <td class="title">{song.title}</td>
                             <td>{song.artist}</td>
-                            <td>
-                                <a
-                                    href="#void"
-                                    on:click={() => {
-                                        getLyrics(song)
-                                    }}>{song.title}</a
-                                >
-                            </td>
+                            <td>{song.source}</td>
                         </tr>
                     {/each}
                 {:else}
@@ -290,38 +287,48 @@
     .searchResultTable {
         width: 100%;
         table-layout: fixed;
+        border-spacing: 0;
     }
 
     .searchResultTable th {
         text-align: left;
         font-size: 0.8em;
         font-weight: bold;
-        padding: 0px 10px;
+        padding: 2px 10px;
     }
 
     .searchResultTable td {
         font-size: 0.8em;
-        padding: 0px 10px;
+        padding: 2px 10px;
         overflow: hidden;
         white-space: noWrap;
     }
 
+    .searchResultTable tbody tr:nth-child(odd) {
+        background-color: var(--hover);
+    }
+
+    .searchResultTable tbody tr:hover {
+        background-color: var(--focus);
+        cursor: pointer;
+    }
+
     .searchResultTable td:first-of-type,
     .searchResultTable th:first-of-type {
-        width: 10%;
+        width: 64%;
     }
     .searchResultTable td:nth-of-type(2),
     .searchResultTable th:nth-of-type(2) {
-        width: 25%;
+        width: 22%;
     }
 
     .searchResultTable td:nth-of-type(3),
     .searchResultTable th:nth-of-type(3) {
-        width: 65%;
+        width: 14%;
     }
 
-    .searchResultTable a {
+    .searchResultTable .title {
+        font-weight: 600;
         color: var(--secondary);
-        text-decoration: none;
     }
 </style>

@@ -75,12 +75,12 @@
     }
 
     function createBiblesList() {
-        let selectedScriptureData = $scriptures[active] || Object.values($scriptures).find((a) => a.id === active)
+        let selectedScriptureData = $scriptures[active]
         if (!selectedScriptureData) return
 
-        let versions: string[] = [active]
+        let versions: string[] = [selectedScriptureData.id || active]
         if (selectedScriptureData.collection?.versions) versions = selectedScriptureData.collection.versions
-        firstBibleId = versions[0] || active
+        firstBibleId = versions[0]
 
         bibles = versions.map((id) => {
             return { id, version: null, book: null, chapter: null, verses: [], activeVerses: [] }
@@ -88,8 +88,8 @@
     }
 
     function getBibleId(index: number, bible: any = null) {
-        let selectedScriptureData = $scriptures[active] || Object.values($scriptures).find((a) => a.id === active)
-        return bible?.id || selectedScriptureData?.collection?.versions?.[index] || active
+        let selectedScriptureData = $scriptures[active]
+        return selectedScriptureData?.id || selectedScriptureData?.collection?.versions?.[index] || bible?.id || active
     }
 
     async function loadAPIBible(bibleId: string, load: string, index: number = 0) {
