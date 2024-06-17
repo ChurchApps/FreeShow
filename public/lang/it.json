@@ -387,7 +387,7 @@
         "no_name": "Nessun nome",
         "media_replaced": "Missing media file replaced with match.",
         "lyrics_undefined": "Impossibile trovare alcun testo!",
-        "lyrics_copied": "Testi copiati da Genius!",
+        "lyrics_copied": "Testi copiati da ",
         "no_pdf_linux": "Impossibile esportare come PDF su Linux.",
         "one_output": "Devi avere almeno un output attivo!",
         "empty_cache": "La cache è vuota.",
