@@ -92,6 +92,7 @@ import { receive, send } from "./request"
 import { closeApp, initializeClosing, saveComplete } from "./save"
 import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { convertSoftProjector } from "../converters/softprojector"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -511,15 +512,19 @@ const receiveIMPORT: any = {
     word: (a: any) => convertTexts(a),
     freeshow: (a: any) => importShow(a),
     freeshow_project: (a: any) => importProject(a),
+    // Other programs
+    propresenter: (a: any) => convertProPresenter(a),
     easyworship: (a: any) => convertEasyWorship(a),
     videopsalm: (a: any) => convertVideopsalm(a),
     openlp: (a: any) => convertOpenLP(a),
     opensong: (a: any) => convertOpenSong(a),
-    propresenter: (a: any) => convertProPresenter(a),
+    softprojector: (a: any) => convertSoftProjector(a),
     chordpro: (a: any) => convertChordPro(a),
+    // Bibles
     freeshow_bible: (a: any) => importFSB(a),
     beblia_bible: (a: any) => convertBebliaBible(a),
     zefania_bible: (a: any) => convertZefaniaBible(a),
     opensong_bible: (a: any) => convertOpenSongBible(a),
+    // Special
     lessons: (a: any) => convertLessonsPresentation(a),
 }

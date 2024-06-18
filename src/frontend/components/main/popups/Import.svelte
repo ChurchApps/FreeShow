@@ -28,6 +28,7 @@
         },
         { name: "OpenLP/OpenLyrics", extensions: ["xml", "sqlite"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
+        { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
     ]
 
@@ -108,6 +109,8 @@
 
     img {
         height: 100px;
+        max-width: 100%;
+        object-fit: contain;
         padding: 10px;
     }
 
