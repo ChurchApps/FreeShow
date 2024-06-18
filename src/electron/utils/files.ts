@@ -112,7 +112,7 @@ const appFolderName = "FreeShow"
 export function getDocumentsFolder(p: any = null, folderName: string = "Shows"): string {
     let folderPath = [app.getPath("documents"), appFolderName]
     if (folderName) folderPath.push(folderName)
-    if (!p) p = path.resolve(...folderPath)
+    if (!p) p = path.join(...folderPath)
     if (!doesPathExist(p)) p = fs.mkdirSync(p, { recursive: true })
 
     return p
@@ -198,7 +198,7 @@ export function getTempPaths() {
 
 // READ_FOLDER
 const MEDIA_EXTENSIONS = [...defaultSettings.imageExtensions, ...defaultSettings.videoExtensions]
-export function getFolderContent(_e: any, data: any) {
+export function getFolderContent(data: any) {
     let folderPath: string = data.path
     let fileList: string[] = readFolder(folderPath)
 
@@ -302,7 +302,7 @@ function similarity(str1: string, str2: string) {
 }
 
 // OPEN_FOLDER
-export function selectFolder(e: any, msg: { channel: string; title: string | undefined; path: string | undefined }) {
+export function selectFolder(msg: { channel: string; title: string | undefined; path: string | undefined }, e: any) {
     let folder: any = selectFolderDialog(msg.title, msg.path)
 
     if (!folder) return
@@ -324,7 +324,7 @@ export function selectFolder(e: any, msg: { channel: string; title: string | und
 }
 
 // OPEN_FILE
-export function selectFiles(e: any, msg: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }) {
+export function selectFiles(msg: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }, e: any) {
     let files: any = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
     if (!files) return
 
@@ -338,7 +338,7 @@ export function selectFiles(e: any, msg: { id: string; channel: string; title?: 
 }
 
 // FILE_INFO
-export function getFileInfo(e: any, filePath: string) {
+export function getFileInfo(filePath: string, e: any) {
     let stats: any = getFileStats(filePath)
     if (stats) e.reply(FILE_INFO, stats)
 }

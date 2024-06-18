@@ -74,7 +74,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         text: { type: "fade", duration: 500, easing: "sine" },
         media: { type: "fade", duration: 800, easing: "sine" },
     },
-    os: { platform: "", name: "Computer" },
     volume: 1,
     gain: 1,
     driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },

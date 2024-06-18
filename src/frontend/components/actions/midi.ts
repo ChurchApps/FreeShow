@@ -10,16 +10,15 @@ import { _show } from "../helpers/shows"
 import { runAction } from "./actions"
 import { newToast } from "../../utils/common"
 
-// WIP MIDI listener
 export function midiInListen() {
-    console.log("MIDI IN LISTEN")
-
     Object.entries(get(midiIn)).forEach(([id, action]: any) => {
         action = convertOldMidiToNewAction(action)
         if (!action.midi) return
 
         if (!action.shows?.length) {
+            console.info("MIDI INPUT LISTENER: ", action.midi)
             send(MAIN, ["RECEIVE_MIDI"], { id, ...action.midi })
+
             return
         }
 
@@ -43,6 +42,8 @@ export function midiInListen() {
                 })
             } else {
                 if (!action.midi?.input) return
+
+                console.info("MIDI INPUT LISTENER: ", action.midi)
                 send(MAIN, ["RECEIVE_MIDI"], { id, ...action.midi })
             }
         })

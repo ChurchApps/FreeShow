@@ -1,5 +1,5 @@
 import { BrowserWindow, Rectangle, screen } from "electron"
-import { isMac, loadWindowContent, mainWindow, toApp } from ".."
+import { isMac, loadWindowContent, mainWindow, OUTPUT_CONSOLE, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { Output } from "../../types/Output"
 import { Message } from "../../types/Socket"
@@ -40,6 +40,7 @@ function createOutputWindow(options: any, id: string, name: string) {
         options.resizable = true
     }
 
+    if (OUTPUT_CONSOLE) options.webPreferences.devTools = true
     let window: BrowserWindow | null = new BrowserWindow(options)
 
     // only win & linux
@@ -56,7 +57,7 @@ function createOutputWindow(options: any, id: string, name: string) {
     setWindowListeners(window, { id, name })
 
     // open devtools
-    // if (!isProd) window.webContents.openDevTools()
+    if (OUTPUT_CONSOLE) window.webContents.openDevTools({ mode: "detach" })
 
     return window
 }

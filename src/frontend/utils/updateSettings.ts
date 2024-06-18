@@ -76,7 +76,7 @@ export function updateSyncedSettings(data: any) {
 
     Object.entries(data).forEach(([key, value]: any) => {
         if (updateList[key as SaveListSyncedSettings]) updateList[key as SaveListSyncedSettings](value)
-        else console.log("MISSING: ", key)
+        else console.info("RECEIVED UNKNOWN SETTINGS KEY:", key)
     })
 
     loadedState.set([...get(loadedState), "synced_settings"])
@@ -87,7 +87,7 @@ export function updateSettings(data: any) {
 
     Object.entries(data).forEach(([key, value]: any) => {
         if (updateList[key as SaveListSettings]) updateList[key as SaveListSettings](value)
-        else console.log("MISSING: ", key)
+        else console.info("RECEIVED UNKNOWN SETTINGS KEY:", key)
     })
 
     if (get(currentWindow)) return
@@ -214,7 +214,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         // start overlays
         setOutput("overlays", v, false, null, true)
     },
-    os: (v: any) => console.log("saved os:", v),
     language: (v: any) => {
         language.set(v)
         setLanguage(v)

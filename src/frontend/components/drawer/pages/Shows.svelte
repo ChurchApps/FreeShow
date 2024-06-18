@@ -108,13 +108,15 @@
         return matching
     }
 
-    // this is useless with the virtual list
-    let scrollElem: any
-    let offset: number = -1
-    console.log(id)
-    // $: {
-    //     if (id && $activeShow !== null) {
-    //         if (id === "shows" && $activeShow.type === null && scrollElem) offset = scrollElem.querySelector("#" + $activeShow.id)?.offsetTop - scrollElem.offsetTop
+    // auto scroll to active show in the virtual list
+    // WIP this does not work because the show buttons does not exist unless they are in view
+    if (id) {
+    }
+    // $: if (id === "shows" && $activeShow !== null && ($activeShow.type || "show") === "show") {
+    //     let scrollElem: any = document.querySelector("svelte-virtual-list-viewport")
+    //     if (scrollElem) {
+    //         let elemTop = scrollElem.querySelector("#show_" + $activeShow.id)?.closest("svelte-virtual-list-row")?.offsetTop || 0
+    //         scrollElem.scrollTo(0, elemTop - scrollElem.offsetTop)
     //     }
     // }
 
@@ -144,7 +146,7 @@
 
 <svelte:window on:keydown={keydown} />
 
-<Autoscroll {offset} bind:scrollElem style="overflow-y: auto;flex: 1;">
+<Autoscroll style="overflow-y: auto;flex: 1;">
     <div class="column context #drawer_show">
         {#if filteredShows.length}
             <!-- reload list when changing category -->

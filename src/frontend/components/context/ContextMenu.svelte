@@ -67,11 +67,9 @@
     function loadData() {
         activeMenu.forEach((id) => {
             let items = contextMenuItems[id]?.items || []
-            console.log(items)
             if (!items[0]?.includes("LOAD")) return
 
             let firstId = items[0].slice(5, items[0].length)
-            console.log(firstId)
             quickLoadItems(firstId)
         })
     }

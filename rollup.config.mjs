@@ -52,7 +52,7 @@ function mainApp() {
                 },
                 onwarn: handleWarnings,
             }),
-            startSvelteInspector(inspectorConfig),
+            !production && startSvelteInspector(inspectorConfig),
             // extract any component CSS out into a separate file - better for performance
             css({
                 output: "bundle.css",

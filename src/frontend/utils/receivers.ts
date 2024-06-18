@@ -100,7 +100,6 @@ export function setupMainReceivers() {
     receive(IMPORT, receiveIMPORT)
     receive(OPEN_FOLDER, receiveFOLDER)
     receive(OPEN_FILE, receiveFILE)
-    receive(OPEN_FILE, receiveFILE)
     receive(NDI, receiveNDI)
     receive(CLOUD, receiveCLOUD)
 }
@@ -124,7 +123,6 @@ const receiveMAIN: any = {
     },
     GET_OS: (a: any) => os.set(a),
     DEVICE_ID: (a: any) => deviceId.set(a),
-    DISPLAY: (a: any) => outputDisplay.set(a),
     GET_PATHS: (a: any) => {
         // only on first startup
         createData(a)

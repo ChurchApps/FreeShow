@@ -66,7 +66,6 @@ import { updateShowsList } from "../helpers/show"
 import { dynamicValueText, sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
-import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
@@ -252,12 +251,12 @@ const actions: any = {
         }
 
         if (obj.contextElem.classList.contains("#category_media")) {
-            window.api.send(OPEN_FOLDER, { channel: "MEDIA", title: get(dictionary).new?.folder })
+            send(MAIN, ["OPEN_FOLDER"], { channel: "MEDIA", title: get(dictionary).new?.folder })
             return
         }
 
         if (obj.contextElem.classList.contains("#category_audio")) {
-            window.api.send(OPEN_FOLDER, { channel: "AUDIO", title: get(dictionary).new?.folder })
+            send(MAIN, ["OPEN_FOLDER"], { channel: "AUDIO", title: get(dictionary).new?.folder })
             return
         }
     },

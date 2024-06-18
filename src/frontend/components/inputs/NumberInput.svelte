@@ -85,7 +85,7 @@
     }}
 />
 
-<span class="numberInput" {style} on:mousedown={mousedown} on:wheel={wheel} class:disabled class:outline>
+<span class="numberInput" {style} on:mousedown={mousedown} on:wheel|passive={wheel} class:disabled class:outline>
     {#if buttons}
         <Button id="decrement" on:click={(e) => decrement(e.ctrlKey || e.metaKey ? step * 10 : step)} center style={"flex: 1;"} disabled={disabled || Number(value) - step < min}>
             <Icon id="remove" size={1.2} white />

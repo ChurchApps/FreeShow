@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { READ_FOLDER } from "../../../../types/Channels"
+    import { MAIN, READ_FOLDER } from "../../../../types/Channels"
     import { activePlaylist, audioFolders, audioPlaylists, dictionary, media } from "../../../stores"
-    import { destroy } from "../../../utils/request"
+    import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
@@ -58,13 +58,13 @@
             if (active !== prevActive) {
                 prevActive = active
                 files = []
-                Object.values($audioFolders).forEach((data) => window.api.send(READ_FOLDER, { path: data.path }))
+                Object.values($audioFolders).forEach((data) => send(MAIN, ["READ_FOLDER"], { path: data.path }))
             }
         } else if (path.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
-                window.api.send(READ_FOLDER, { path, listFilesInFolders: true })
+                send(MAIN, ["READ_FOLDER"], { path, listFilesInFolders: true })
             }
         } else {
             // microphones & audio_streams

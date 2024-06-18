@@ -9,6 +9,11 @@ const app = express()
 let servers: any = {}
 const DEFAULT_PORTS = { WebSocket: 5505, REST: 5506 }
 
+export function startWebSocketAndRest(port: number | undefined) {
+    startRestListener(port ? port + 1 : 0)
+    startWebSocket(port)
+}
+
 // WEBSOCKET
 
 export function startWebSocket(PORT: number | undefined) {

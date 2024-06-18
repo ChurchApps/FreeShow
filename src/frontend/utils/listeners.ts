@@ -48,7 +48,7 @@ export function storeSubscriber() {
     })
 
     shows.subscribe((data) => {
-        sendData(REMOTE, { channel: "SHOWS", data })
+        // sendData(REMOTE, { channel: "SHOWS", data })
 
         // temporary cache shows data
         updateShowsList(data)
@@ -61,7 +61,7 @@ export function storeSubscriber() {
 
         // REMOTE
 
-        sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
+        // sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
 
         // TODO: ?
         // send(REMOTE, ["SHOW"], data )

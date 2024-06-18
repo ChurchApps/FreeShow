@@ -3,7 +3,7 @@
 
 import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
-import { CLOUD, EXPORT, FILE_INFO, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, READ_FOLDER, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
+import { CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
 import { startBackup } from "./data/backup"
@@ -13,7 +13,7 @@ import { receiveNDI } from "./ndi/talk"
 import { closeAllOutputs, receiveOutput } from "./output/output"
 import { closeServers } from "./servers"
 import { stopApiListener } from "./utils/api"
-import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileInfo, getFolderContent, loadShows, selectFiles, selectFolder, writeFile } from "./utils/files"
+import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, loadShows, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRecording, startExport, startImport } from "./utils/responses"
@@ -23,6 +23,13 @@ import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // check if app's in production or not
 export const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
+
+// remove "Disabled webSecurity" console warning as it is only disabled in development
+if (!isProd) process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
+
+// development settings
+export const OUTPUT_CONSOLE: boolean = false
+const RECORD_STARTUP_TIME: boolean = false
 
 // get os platform
 export const isWindows: boolean = process.platform === "win32"
@@ -38,15 +45,20 @@ console.log("Starting FreeShow...")
 if (!isProd) console.log("Building app! This may take 20-90 seconds")
 if (isLinux) console.log("libva error on Linux can be ignored")
 
+// set application menu
+setGlobalMenu()
+
 // start when ready
+if (RECORD_STARTUP_TIME) console.time("Full startup")
 app.on("ready", startApp)
 
 function startApp() {
-    createLoading()
+    if (RECORD_STARTUP_TIME) console.time("Initial")
+    setTimeout(createLoading)
     updateDataPath({ load: true })
+    if (RECORD_STARTUP_TIME) console.timeEnd("Initial")
 
-    setTimeout(createMain, 100)
-    setTimeout(initialize, 3000)
+    createMain()
 }
 
 function initialize() {
@@ -66,47 +78,19 @@ function initialize() {
 
 // get LOADED message from frontend
 let isLoaded: boolean = false
-ipcMain.once("LOADED", () => {
+ipcMain.once("LOADED", mainWindowLoaded)
+function mainWindowLoaded() {
+    if (RECORD_STARTUP_TIME) console.timeEnd("Main window content")
     isLoaded = true
+
+    initialize()
+
     if (config.get("maximized")) mainWindow!.maximize()
     mainWindow?.show()
     loadingWindow?.close()
-})
 
-// ----- CUSTOM EXTENSION -----
-// rquires administator access on install
-
-// Custom .show file
-
-//   var data = null;
-//   if (isWindows && process.argv.length >= 2) {
-//     var openFilePath = process.argv[1];
-//     data = fs.readFileSync(openFilePath, 'utf-8');
-//   }
-
-// "fileAssociations": [
-//     {
-//         "ext": "show",
-//         "name": "FreeShow Show",
-//         "description": "A FreeShow Show File",
-//         "role": "Editor"
-//     },
-//     {
-//         "ext": "fsb",
-//         "name": "FreeShow Bible",
-//         "description": "A FreeShow Bible File",
-//         "role": "Editor"
-//     },
-//     {
-//         "ext": "project",
-//         "name": "FreeShow Project",
-//         "description": "A FreeShow Project File",
-//         "role": "Editor"
-//     }
-// ],
-// "nsis": {
-//     "perMachine": true
-// },
+    if (RECORD_STARTUP_TIME) console.timeEnd("Full startup")
+}
 
 // ----- LOADING WINDOW -----
 
@@ -122,6 +106,7 @@ function createLoading() {
 export let mainWindow: BrowserWindow | null = null
 export let dialogClose: boolean = false // is unsaved
 function createMain() {
+    if (RECORD_STARTUP_TIME) console.time("Main window")
     let bounds: Rectangle = config.get("bounds")
     let screenBounds: Rectangle = screen.getPrimaryDisplay().bounds
 
@@ -139,13 +124,15 @@ function createMain() {
 
     loadWindowContent(mainWindow)
     setMainListeners()
-    setGlobalMenu()
 
     // open devtools
     if (!isProd) mainWindow.webContents.openDevTools()
+
+    if (RECORD_STARTUP_TIME) console.timeEnd("Main window")
 }
 
 export function loadWindowContent(window: BrowserWindow, isOutput: boolean = false) {
+    if (!isOutput && RECORD_STARTUP_TIME) console.time("Main window content")
     if (!isOutput) console.log("Loading main window content")
     if (isProd) window.loadFile("public/index.html").catch(error)
     else window.loadURL("http://localhost:3000").catch(error)
@@ -247,7 +234,7 @@ export function maximizeMain() {
 // https://stackoverflow.com/a/58823019
 
 // quit app when all windows have been closed
-// I think this is never called, because of the "will-quit" listener
+// this is never called on mac, because of the "will-quit" listener
 app.on("window-all-closed", () => {
     app.quit()
 })
@@ -318,7 +305,7 @@ function save(data: any) {
         if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
         function saveShow([id, value]: any) {
             if (!value) return
-            let p: string = path.resolve(data.path, (value.name || id) + ".show")
+            let p: string = path.join(data.path, (value.name || id) + ".show")
             // WIP will overwrite a file with JSON data from another show 0,007% of the time (7 shows get broken when saving 1000 at the same time)
             writeFile(p, JSON.stringify([id, value]), id)
         }
@@ -327,7 +314,7 @@ function save(data: any) {
         if (data.deletedShows) data.deletedShows.forEach(deleteShow)
         function deleteShow({ name, id }: any) {
             if (!name || data.showsCache[id]) return
-            let p: string = path.resolve(data.path, (name || id) + ".show")
+            let p: string = path.join(data.path, (name || id) + ".show")
             deleteFile(p)
         }
 
@@ -344,16 +331,12 @@ function save(data: any) {
 
 // ----- LISTENERS -----
 
-ipcMain.on(IMPORT, startImport)
-ipcMain.on(EXPORT, startExport)
-ipcMain.on(BIBLE, loadScripture)
-ipcMain.on(SHOW, loadShow)
 ipcMain.on(MAIN, receiveMain)
 ipcMain.on(OUTPUT, receiveOutput)
-ipcMain.on(READ_FOLDER, getFolderContent)
-ipcMain.on(OPEN_FOLDER, selectFolder)
-ipcMain.on(OPEN_FILE, selectFiles)
-ipcMain.on(FILE_INFO, getFileInfo)
+ipcMain.on(IMPORT, startImport)
+ipcMain.on(EXPORT, startExport)
+ipcMain.on(SHOW, loadShow)
+ipcMain.on(BIBLE, loadScripture)
 ipcMain.on(CLOUD, cloudConnect)
 ipcMain.on(RECORDER, saveRecording)
 ipcMain.on(NDI, receiveNDI)
@@ -365,6 +348,12 @@ export const toApp = (channel: string, ...args: any[]): void => mainWindow?.webC
 
 // set/update global application menu
 export function setGlobalMenu(strings: any = {}) {
+    if (isProd && isWindows) {
+        // set to null as it is not used on Windows
+        Menu.setApplicationMenu(null)
+        return
+    }
+
     const menu: Menu = Menu.buildFromTemplate(template(strings))
     Menu.setApplicationMenu(menu)
 }

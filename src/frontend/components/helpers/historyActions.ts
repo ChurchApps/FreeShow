@@ -19,7 +19,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
     let initializing: boolean = undo === null
 
     if (obj) {
-        console.log(obj, undo)
         data = obj.newData || {}
         // if (initializing && !obj.oldData) obj.oldData = clone(obj.newData) // WIP
     }
@@ -889,7 +888,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
         console.error(obj.id, "HISTORY ERROR:", msg)
     }
 
-    if (obj) console.info(obj.id, "HISTORY " + (initializing ? "INIT" : undo ? "UNDO" : "REDO") + ":", clone(obj))
+    if (obj) console.info("HISTORY " + (initializing ? "INIT" : undo ? "UNDO" : "REDO") + ` [${obj.id}]:`, clone(obj))
 
     return actions
 }

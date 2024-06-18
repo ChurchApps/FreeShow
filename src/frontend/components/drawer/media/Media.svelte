@@ -3,7 +3,7 @@
     import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
     import { uid } from "uid"
-    import { READ_FOLDER } from "../../../../types/Channels"
+    import { MAIN, READ_FOLDER } from "../../../../types/Channels"
     import { activeDrawerOnlineTab, activeEdit, activePopup, activeShow, dictionary, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -23,6 +23,7 @@
     import Media from "./MediaCard.svelte"
     import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
+    import { send } from "../../../utils/request"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -77,14 +78,14 @@
                 prevActive = active
                 files = []
                 fullFilteredFiles = []
-                Object.values($mediaFolders).forEach((data) => window.api.send(READ_FOLDER, { path: data.path }))
+                Object.values($mediaFolders).forEach((data) => send(MAIN, ["READ_FOLDER"], { path: data.path }))
             }
         } else if (path?.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
                 fullFilteredFiles = []
-                window.api.send(READ_FOLDER, { path, listFilesInFolders: true })
+                send(MAIN, ["READ_FOLDER"], { path, listFilesInFolders: true })
             }
         } else {
             // screens && cameras
@@ -261,7 +262,7 @@
 <svelte:window on:keydown={keydown} on:mousedown={mousedown} />
 
 <!-- TODO: autoscroll -->
-<div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel={wheel}>
+<div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel|passive={wheel}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
         {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <PlayerVideos active={onlineTab} {searchValue} />

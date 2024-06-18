@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { OPEN_FILE } from "../../../../types/Channels"
+    import { MAIN } from "../../../../types/Channels"
     import { activePopup, driveData, driveKeys } from "../../../stores"
     import { syncDrive } from "../../../utils/drive"
+    import { send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -13,7 +14,7 @@
 
     function getKeysFile() {
         activePopup.set("cloud_update")
-        window.api.send(OPEN_FILE, { channel: "GOOGLE_KEYS", id: "keys", title: "Select keys file", filter: { name: "JSON", extensions: ["json"] }, multiple: false, read: true })
+        send(MAIN, ["OPEN_FILE"], { channel: "GOOGLE_KEYS", id: "keys", title: "Select keys file", filter: { name: "JSON", extensions: ["json"] }, multiple: false, read: true })
     }
 
     $: validKeys = typeof $driveKeys === "object" && Object.keys($driveKeys).length

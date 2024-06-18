@@ -57,7 +57,6 @@ export const outputOptions: any = {
     // roundedCorners: false, // disable rounded corners on mac
     webPreferences: {
         preload: join(__dirname, "..", "preload"),
-        devTools: !isProd,
         webSecurity: isProd,
         nodeIntegration: !isProd,
         contextIsolation: true,

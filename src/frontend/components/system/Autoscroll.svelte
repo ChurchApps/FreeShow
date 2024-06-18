@@ -47,7 +47,7 @@
     }
 </script>
 
-<div class="scroll {$$props.class}" on:wheel={wheel} bind:this={scrollElem} style={($$props.style || "") + behaviour}>
+<div class="scroll {$$props.class}" on:wheel|passive={wheel} bind:this={scrollElem} style={($$props.style || "") + behaviour}>
     <slot />
 </div>
 

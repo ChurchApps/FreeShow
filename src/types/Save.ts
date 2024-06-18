@@ -41,7 +41,6 @@ export type SaveListSettings =
     | "mediaFolders"
     | "mediaOptions"
     | "openedFolders"
-    | "os"
     | "outputs"
     | "sorted"
     | "styles"
