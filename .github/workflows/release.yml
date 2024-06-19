@@ -6,13 +6,9 @@ on:
     workflow_dispatch:
 
 jobs:
-    publish:
-        name: "Publish"
-        runs-on: ${{ matrix.os }}
-
-        strategy:
-            matrix:
-                os: [windows-latest, ubuntu-latest]
+    publish_windows:
+        name: "Publish Windows"
+        runs-on: windows-latest
 
         steps:
             - name: Check out Git repository
@@ -33,6 +29,50 @@ jobs:
                   CSC_LINK: ${{ secrets.CSC_LINK }}
                   CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
               run: npm run release
+
+    publish_linux:
+        name: "Publish Linux x64"
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v2
+
+            - name: Install Node.js and NPM
+              uses: actions/setup-node@master
+              with:
+                  node-version: 18
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Build and release app
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: npm run release
+
+    # This needs it's own build
+    # https://github.com/ChurchApps/FreeShow/issues/562
+    publish_linux_arm:
+        name: "Publish Linux arm64"
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v2
+
+            - name: Install Node.js and NPM
+              uses: actions/setup-node@master
+              with:
+                  node-version: 18
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Build and release app
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: npm run release:arm64
 
     publish_mac:
         name: "Publish MacOS"
