@@ -449,6 +449,13 @@
         place-content: flex-start;
     }
 
+    .grid :global(.selectElem) {
+        outline-offset: -2px;
+    }
+    .grid :global(#media.isSelected .main) {
+        z-index: -1;
+    }
+
     /* WIP padding in virtual grid - scrolling */
     /* .grid :global(div:first-child) {
         padding: 5px;

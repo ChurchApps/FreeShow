@@ -17,7 +17,7 @@ export function displayOutputs(e: any = {}, auto: boolean = false) {
     enabledOutputs.forEach((id) => {
         let output: any = { id, ...get(outputs)[id] }
         let autoPosition = enabledOutputs.length === 1
-        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: e.ctrlKey || e.metaKey, auto, autoPosition })
+        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: output.allowMainScreen || e.ctrlKey || e.metaKey, auto, autoPosition })
     })
 }
 

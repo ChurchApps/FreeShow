@@ -31,7 +31,7 @@ export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
         if (midiIndex > -1) triggerData = { ...triggerData, index: midiIndex }
 
         if (actionId === "start_slide_timers" && slideIndex > -1) {
-            let layoutRef = _show("active").layouts().ref()[0]
+            let layoutRef = _show("active").layouts("active").ref()[0]
             if (layoutRef) {
                 let overlayIds = layoutRef[slideIndex].data?.overlays
                 triggerData = { overlayIds }

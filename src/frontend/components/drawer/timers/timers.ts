@@ -139,7 +139,11 @@ export function playPauseGlobal(id: any, timer: any, forcePlay: boolean = false)
 
     activeTimers.update((a) => {
         if (index < 0) a.push({ ...timer, id, currentTime: timer?.start || 0, paused: false })
-        else a[index].paused = forcePlay ? false : !a[index].paused
+        else {
+            a[index].paused = forcePlay ? false : !a[index].paused
+            delete a[index].startTime
+        }
+
         return a
     })
 

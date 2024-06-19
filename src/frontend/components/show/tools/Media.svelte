@@ -148,7 +148,7 @@
     // TODO: check if file exists!!!
 
     let simularBgs: any[] = []
-    $: if (bgs.length) send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
+    $: if (bgs.length) send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => decodeURIComponent(a.path)) })
     receive(MAIN, { GET_SIMULAR: (data: any[]) => (simularBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)) }, "media_simular")
     onDestroy(() => destroy(MAIN, "media_simular"))
 

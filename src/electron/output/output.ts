@@ -1,13 +1,13 @@
 import { BrowserWindow, Rectangle, screen } from "electron"
-import { isMac, loadWindowContent, mainWindow, OUTPUT_CONSOLE, toApp } from ".."
+import { OUTPUT_CONSOLE, isMac, loadWindowContent, mainWindow, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { Output } from "../../types/Output"
 import { Message } from "../../types/Socket"
+import { NdiSender } from "../ndi/NdiSender"
 import { setDataNDI } from "../ndi/talk"
 import { outputOptions, screenIdentifyOptions } from "../utils/windowOptions"
-import { startCapture, stopCapture, updatePreviewResolution } from "./capture"
-import { NdiSender } from "../ndi/NdiSender"
 import { CaptureTransmitter } from "./CaptureTransmitter"
+import { startCapture, stopCapture, updatePreviewResolution } from "./capture"
 
 export let outputWindows: { [key: string]: BrowserWindow } = {}
 
@@ -269,12 +269,28 @@ function moveToFront(id: string) {
     window.moveTop()
 }
 
+function alignWithScreens() {
+    Object.keys(outputWindows).forEach((outputId) => {
+        let output = outputWindows[outputId]
+
+        let wBounds = output.getBounds()
+        let centerLeft = wBounds.x + wBounds.width / 2
+        let centerTop = wBounds.y + wBounds.height / 2
+
+        let point = { x: centerLeft, y: centerTop }
+        let closestScreen = screen.getDisplayNearestPoint(point)
+
+        output.setBounds(closestScreen.bounds)
+    })
+}
+
 // RESPONSES
 
 const outputResponses: any = {
     CREATE: (data: any) => createOutput(data),
     REMOVE: (data: any) => removeOutput(data.id),
     DISPLAY: (data: any) => displayOutput(data),
+    ALIGN_WITH_SCREEN: () => alignWithScreens(),
 
     MOVE: (data: any) => (moveEnabled = data.enabled),
 

@@ -140,7 +140,7 @@
             {/if}
         </span>
     {:else}
-        <div class="align" style={item.align}>
+        <div class="align" style="--align: {item.align};--text-align: {item.alignX};">
             <div>
                 {#if id.includes("notes")}
                     <SlideNotes {currentSlide} {next} autoSize={item.auto !== false ? autoSize : fontSize} />
@@ -229,5 +229,12 @@
         font-size: 3em;
         font-weight: 600;
         text-align: center;
+    }
+
+    .align :global(.item .align) {
+        align-items: var(--align);
+    }
+    .align :global(.item .align .lines) {
+        text-align: var(--text-align);
     }
 </style>

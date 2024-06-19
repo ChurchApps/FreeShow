@@ -12,7 +12,7 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { translate } from "../../../utils/language"
@@ -48,19 +48,39 @@
         if (mode === "slide_midi") action.midiEnabled = true
     }
 
+    // saveSlide(true)
+    onDestroy(removeEmptyAction)
+    function removeEmptyAction(actionId = "") {
+        let ref = _show().layouts("active").ref()[0] || []
+        let layoutSlide = ref[$popupData.index] || {}
+        let actions = layoutSlide.data?.actions || {}
+        let slideActions = actions.slideActions || []
+        let existingActionIndex = slideActions.findIndex((a) => a.id === (actionId || id))
+
+        // if actionId is set remove action regardless, else remove if empty
+        if (existingActionIndex < 0 || (!actionId && slideActions[existingActionIndex].triggers?.[0])) return
+
+        slideActions.splice(existingActionIndex, 1)
+        actions.slideActions = slideActions
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [$popupData.index] } })
+    }
+
+    let existingSearched: boolean = false
     $: if (action.triggers?.[0]) findExisting()
     function findExisting() {
-        if (mode !== "slide" || $popupData.index === undefined) return
+        if (mode !== "slide" || $popupData.index === undefined || existingSearched) return
+        existingSearched = true
 
         let ref = _show().layouts("active").ref()[0] || []
         let layoutSlide = ref[$popupData.index] || {}
         let slideActions = layoutSlide.data?.actions?.slideActions || []
-        let existingAction = slideActions.find((a) => a.triggers?.[0] === action.triggers?.[0])
+        // find any action with the same value, but different id
+        let existingAction = slideActions.find((a) => a.triggers?.[0] === action.triggers?.[0] && (!id || a.id !== id))
 
         if (!existingAction) return
 
-        // remove previous on slide
-        // if (id && mode === "slide") saveSlide(true)
+        // remove new action if already existing
+        if (id !== existingAction.id && mode === "slide") removeEmptyAction(id)
 
         id = existingAction.id
         action = existingAction

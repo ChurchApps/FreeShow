@@ -203,7 +203,7 @@
         {/each}
     </div>
 
-    <div class="grid" on:wheel={wheel} bind:this={calendarElem}>
+    <div class="grid" on:wheel|passive={wheel} bind:this={calendarElem}>
         {#each days as week}
             <div class="week">
                 <span class="weeknumber">

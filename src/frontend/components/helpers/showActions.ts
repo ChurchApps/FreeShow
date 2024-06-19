@@ -376,7 +376,7 @@ function randomNumber(end: number) {
     return Math.floor(Math.random() * end)
 }
 
-export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null) {
+export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null, actionTimeout: number = 10) {
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
 
     _show(showId).set({ key: "timestamps.used", value: new Date().getTime() })
@@ -526,7 +526,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         // let values update
         setTimeout(() => {
             playSlideActions(data.actions.slideActions, outputIds, index)
-        })
+        }, actionTimeout)
     }
 }
 
@@ -560,8 +560,11 @@ export async function startShow(showId: string) {
 
     // slideClick() - Slides.svelte
     let slideRef: any = _show(showId).layouts("active").ref()[0]
-    updateOut(showId, 0, slideRef)
+    if (!slideRef[0]) return
+
     setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
+    // timeout has to be 1200 to let output data update properly (in case slide has special actions)
+    updateOut(showId, 0, slideRef, true, null, 1200)
 }
 
 export function changeOutputStyle({ outputStyle, styleOutputs }: API_output_style) {
@@ -674,11 +677,9 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
         let layoutRef = _show("active").layouts([outputRef.layout]).ref()[0]
         slideId = layoutRef[outputRef.index]?.id || ""
     }
-    console.log(slideId, get(outputs)[getActiveOutputs()[0]])
 
     let showSlides: any = _show(showId).get("slides") || {}
     let slide = showSlides[slideId]
-    console.log(showSlides, slide)
     if (!slide) return
 
     // find all timers in current slide & any overlay placed on the slide

@@ -1,10 +1,10 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, os, variables } from "../../../stores"
-    import { _show } from "../../helpers/shows"
-    import EditboxPlain from "./EditboxPlain.svelte"
-    import EditboxOther from "./EditboxOther.svelte"
+    import { activeEdit, activeShow, os, showsCache, variables } from "../../../stores"
+    import { deleteAction } from "../../helpers/clipboard"
     import EditboxLines from "./EditboxLines.svelte"
+    import EditboxOther from "./EditboxOther.svelte"
+    import EditboxPlain from "./EditboxPlain.svelte"
 
     export let item: Item
     export let filter: string = ""
@@ -71,6 +71,32 @@
         }
     }
 
+    $: active = $activeShow?.id
+    $: layout = active && $showsCache[active] ? $showsCache[active].settings.activeLayout : ""
+    // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
+
+    function keydown(e: any) {
+        if (e.key === "Escape") {
+            ;(document.activeElement as HTMLElement).blur()
+            window.getSelection()?.removeAllRanges()
+            if ($activeEdit.items.length) {
+                // give time so output don't clear
+                setTimeout(() => {
+                    activeEdit.update((a) => {
+                        a.items = []
+                        return a
+                    })
+                })
+            }
+        }
+
+        if (!$activeEdit.items.includes(index) || document.activeElement?.closest(".item") || document.activeElement?.closest("input")) return
+
+        if (e.key === "Backspace" || e.key === "Delete") {
+            deleteAction({ id: "item", data: { layout, slideId: ref.id } })
+        }
+    }
+
     function deselect(e: any) {
         if (e.target.closest(".menus") || e.target.closest(".popup") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
 
@@ -88,7 +114,7 @@
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
-<svelte:window on:mousedown={deselect} />
+<svelte:window on:mousedown={deselect} on:keydown={keydown} />
 
 <!-- bind:offsetHeight={height}
 bind:offsetWidth={width} -->

@@ -230,7 +230,7 @@ export const theme: Writable<string> = writable("default") // "default"
 export const themes: Writable<{ [key: string]: Themes }> = writable({}) // {default}
 
 // STYLES
-export const styles: Writable<{ [key: string]: Styles }> = writable({})
+export const styles: Writable<{ [key: string]: Styles }> = writable({}) // {}
 
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}
@@ -238,7 +238,7 @@ export const outLocked: Writable<boolean> = writable(false) // false
 
 // MIDI
 // this is repurposed as "actions"
-export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({})
+export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({}) // {}
 
 // CONNECTIONS
 export const ports: Writable<any> = writable({ remote: 5510, stage: 5511, controller: 5512, output_stream: 5513 }) // {default}
@@ -284,6 +284,7 @@ export const $ = {
     audioChannels,
     playingAudio,
     playingVideos,
+    visualizerData,
     drawTool,
     draw,
     paintCache,
@@ -312,6 +313,7 @@ export const $ = {
     projects,
     folders,
     timers,
+    variables,
     media,
     mediaFolders,
     overlayCategories,
@@ -332,6 +334,7 @@ export const $ = {
     mediaOptions,
     resized,
     dataPath,
+    special,
     language,
     timeFormat,
     alertUpdates,
@@ -345,6 +348,7 @@ export const $ = {
     theme,
     themes,
     outputs,
+    styles,
     outLocked,
     ports,
     maxConnections,

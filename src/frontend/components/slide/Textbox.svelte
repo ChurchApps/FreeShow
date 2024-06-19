@@ -7,7 +7,7 @@
     import { getAutoSize } from "../edit/scripts/autoSize"
     import Icon from "../helpers/Icon.svelte"
     import { clone } from "../helpers/array"
-    import { getExtension, getMediaType } from "../helpers/media"
+    import { getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
@@ -346,6 +346,18 @@
 
     let paddingCorrection = {}
     $: paddingCorrection = getPaddingCorrection(stageItem)
+
+    let mediaItemPath = ""
+    $: if (item?.type === "media") getMediaItemPath()
+    async function getMediaItemPath() {
+        mediaItemPath = item.src || ""
+
+        // only load thumbnails in main
+        if ($currentWindow) return
+
+        let newPath = await loadThumbnail(mediaItemPath, mediaSize.slideSize)
+        if (newPath) mediaItemPath = newPath
+    }
 </script>
 
 <OutputTransition transition={hidden ? {} : itemTransition}>
@@ -408,11 +420,10 @@
         {:else if item?.type === "list"}
             <ListView list={item.list} disableTransition={disableListTransition} />
         {:else if item?.type === "media"}
-            {#if item.src}
-                {#if getMediaType(getExtension(item.src)) === "video"}
-                    <!-- video -->
+            {#if mediaItemPath}
+                {#if $currentWindow && getMediaType(getExtension(mediaItemPath)) === "video"}
                     <video
-                        src={item.src}
+                        src={mediaItemPath}
                         style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
                         muted={mirror || item.muted}
                         volume={Math.max(1, $volume)}
@@ -425,13 +436,11 @@
                     <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
                     <!-- TODO: use custom transition... -->
                     <Image
-                        transition={transition?.type !== "none" && transition?.duration}
-                        src={item.src}
+                        src={mediaItemPath}
                         alt=""
+                        transition={transition?.type !== "none" && transition?.duration}
                         style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
                     />
-                    <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
-                    <!-- <MediaLoader path={item.src} /> -->
                 {/if}
             {/if}
         {:else if item?.type === "camera"}

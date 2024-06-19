@@ -5,6 +5,7 @@ import { getActiveOutputs } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
 import {
+    $,
     activeProject,
     activeShow,
     cachedShowsData,
@@ -33,7 +34,6 @@ import {
     timers,
     transitionData,
     variables,
-    visualizerData,
     volume,
 } from "../stores"
 import { driveConnect } from "./drive"
@@ -237,36 +237,43 @@ export function storeSubscriber() {
 }
 
 const initalOutputData = {
-    STYLES: get(styles),
-    TRANSITION: get(transitionData),
-    SHOWS: get(showsCache),
+    STYLES: "styles",
+    TRANSITION: "transitionData",
+    SHOWS: "showsCache",
 
-    TEMPLATES: get(templates),
-    OVERLAYS: get(overlays),
-    EVENTS: get(events),
+    TEMPLATES: "templates",
+    OVERLAYS: "overlays",
+    EVENTS: "events",
 
-    DRAW: { data: get(draw) },
-    DRAW_TOOL: { data: get(drawTool) },
-    DRAW_SETTINGS: get(drawSettings),
+    DRAW: { data: "draw" },
+    DRAW_TOOL: { data: "drawTool" },
+    DRAW_SETTINGS: "drawSettings",
 
-    VIZUALISER_DATA: get(visualizerData),
-    MEDIA: get(media),
-    TIMERS: get(timers),
-    VARIABLES: get(variables),
-    TIME_FORMAT: get(timeFormat),
+    VIZUALISER_DATA: "visualizerData",
+    MEDIA: "media",
+    TIMERS: "timers",
+    VARIABLES: "variables",
+    TIME_FORMAT: "timeFormat",
 
-    SPECIAL: get(special),
+    SPECIAL: "special",
 
-    PLAYER_VIDEOS: get(playerVideos),
-    STAGE_SHOWS: get(stageShows),
+    PLAYER_VIDEOS: "playerVideos",
+    STAGE_SHOWS: "stageShows",
 
     // received by Output
-    VOLUME: get(volume),
+    VOLUME: "volume",
 }
 
 export function sendInitialOutputData() {
     Object.keys(initalOutputData).forEach((KEY) => {
-        send(OUTPUT, [KEY], initalOutputData[KEY])
+        let storeKey = initalOutputData[KEY]
+
+        let storeData: any
+        if (storeKey.data) storeData = { data: get($[storeKey.data]) }
+        else storeData = get($[storeKey])
+        if (storeData === undefined) storeData = {}
+
+        send(OUTPUT, [KEY], storeData)
     })
 
     setTimeout(() => {

@@ -24,6 +24,7 @@ import { convertPDF } from "../converters/pdf"
 import { convertPowerpoint } from "../converters/powerpoint"
 import { importProject } from "../converters/project"
 import { convertProPresenter } from "../converters/propresenter"
+import { convertSoftProjector } from "../converters/softprojector"
 import { convertTexts } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
@@ -35,7 +36,6 @@ import {
     allOutputs,
     audioChannels,
     audioFolders,
-    autosave,
     closeAd,
     currentOutputSettings,
     dataPath,
@@ -92,7 +92,6 @@ import { receive, send } from "./request"
 import { closeApp, initializeClosing, saveComplete } from "./save"
 import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { convertSoftProjector } from "../converters/softprojector"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -427,7 +426,7 @@ const receiveCLOUD = {
                 return a
             })
 
-            syncDrive()
+            syncDrive(false, false, true)
             return
         }
 
@@ -464,13 +463,16 @@ const receiveCLOUD = {
         syncDrive(true)
     },
     SYNC_DATA: ({ changes, closeWhenFinished }) => {
-        if (closeWhenFinished) {
-            closeApp()
-            return
-        }
-
         if (changes.error) {
             newToast(changes.error)
+            if (!closeWhenFinished) return
+        }
+
+        if (closeWhenFinished) {
+            popupData.set(changes)
+            activePopup.set("cloud_update")
+
+            setTimeout(closeApp, 800)
             return
         }
 
@@ -480,6 +482,8 @@ const receiveCLOUD = {
         })
 
         if (!changes.length) {
+            newToast("$cloud.sync_complete")
+
             if (get(activePopup) !== "cloud_update") return
 
             popupData.set({})
@@ -492,13 +496,8 @@ const receiveCLOUD = {
         showsCache.set({})
         activeShow.set(null)
 
-        if (get(autosave) === "never") {
-            popupData.set(changes)
-            activePopup.set("cloud_update")
-            return
-        }
-
-        newToast("$cloud.sync_complete")
+        popupData.set(changes)
+        activePopup.set("cloud_update")
     },
 }
 

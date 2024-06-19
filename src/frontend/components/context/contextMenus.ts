@@ -44,6 +44,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
     force_output: { label: "context.force_outputs", icon: "outputs" },
+    align_with_screen: { label: "context.align_with_screen", icon: "resize" },
     choose_screen: { label: "popup.choose_screen", icon: "screen" },
     toggle_output: { label: "context.toggle_output", icon: "outputs" },
     move_to_front: { label: "context.move_to_front", icon: "toFront" },
@@ -133,7 +134,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     output_window: ["close"],
 
     // TOP
-    output: ["force_output", "choose_screen"],
+    output: ["force_output", "align_with_screen", "choose_screen"],
 
     // OUTPUTS
     output_active_button: ["toggle_output", "move_to_front", "edit"],

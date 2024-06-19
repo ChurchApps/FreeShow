@@ -222,6 +222,7 @@ const actions: any = {
             send(OUTPUT, ["DISPLAY"], { enabled: true, output, force: true })
         })
     },
+    align_with_screen: () => send(OUTPUT, ["ALIGN_WITH_SCREEN"]),
     choose_screen: () => {
         popupData.set({ activateOutput: true })
         activePopup.set("choose_screen")

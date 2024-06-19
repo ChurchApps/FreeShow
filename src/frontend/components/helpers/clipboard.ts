@@ -111,6 +111,7 @@ export function cut(data: any = {}) {
 }
 
 export function deleteAction({ id, data }, type: string = "delete") {
+    console.log("DELETE", id, data)
     if (!deleteActions[id]) return false
     let deleted: any = deleteActions[id](data, type)
 

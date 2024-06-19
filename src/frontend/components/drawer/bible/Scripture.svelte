@@ -490,20 +490,34 @@
         if (!bible) return
 
         let matches: any[] = []
+        let extraMatches: any[] = []
         if (bible.api) {
             let searchResult: any = await searchBibleAPI(active, contentSearch)
             matches = searchResult?.verses?.map((a) => ({ book: a.bookId, chapter: a.chapterId, verse: a.reference.slice(a.reference.indexOf(":") + 1), reference: a.reference, text: a.text, api: true }))
         } else {
             let allBooks: any[] = books[firstBibleId]
+            let searchValue = formatText(contentSearch)
             allBooks.forEach((book, bookIndex) => {
                 book.chapters.forEach((chapter, chapterIndex) => {
                     chapter.verses.forEach((verse) => {
-                        if (verse.value?.toLowerCase().includes(contentSearch.toLowerCase()))
+                        let verseValue = formatText(verse.value || "")
+                        if (verseValue.includes(searchValue)) {
                             matches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.value })
+                        } else {
+                            let wordInSearch = searchValue.split(" ")
+                            let matchingWords = wordInSearch.reduce((count, word) => (count += verseValue.includes(word) ? 1 : 0), 0)
+                            if (matchingWords === wordInSearch.length) extraMatches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.value })
+                        }
                     })
                 })
             })
+
+            function formatText(text: string) {
+                return text.toLowerCase().replace(/[`!*()-?;:'",.]/gi, "")
+            }
         }
+
+        matches.push(...extraMatches)
 
         contentSearchMatches = matches
         contentSearchActive = true

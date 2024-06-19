@@ -15,7 +15,7 @@
     export let animationStyle: string = ""
     export let mirror: boolean = false
 
-    $: duration = transition.duration || 800
+    $: duration = transition.duration ?? 800
     $: style = `height: 100%;zoom: ${1 / ratio};transition: filter ${duration}ms, backdrop-filter ${duration}ms;${slideFilter}`
 
     let firstActive: boolean = true

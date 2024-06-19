@@ -49,7 +49,7 @@
         videoElem.currentTime = duration / 2
     }
 
-    // retry on error (don't think this is neccesary)
+    // retry on error
     let retryCount = 0
     $: if (path || thumbnailPath) retryCount = 0
     function reload() {

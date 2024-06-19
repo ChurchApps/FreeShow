@@ -39,8 +39,21 @@ function increment(timer: any) {
     if (timer.start < timer.end ? timer.currentTime >= timer.end : timer.currentTime <= timer.end) checkNextAfterMedia(timer.id, "timer")
 
     if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer
-    if (timer.start < timer.end) timer.currentTime++
-    else timer.currentTime--
+
+    let currentTime = Date.now()
+    // store timer start time (for accuracy)
+    if (!timer.startTime) {
+        let timerIs = timer.currentTime - timer.start
+        let timerShouldBe = timerIs * 1000 // - 1
+        if (timer.start < timer.end) timer.startTime = currentTime - timerShouldBe
+        else timer.startTime = currentTime + timerShouldBe
+    }
+
+    let difference = currentTime - timer.startTime
+    let timerShouldBe = Math.floor(difference / 1000) + 1
+
+    if (timer.start < timer.end) timer.currentTime = timer.start + timerShouldBe
+    else timer.currentTime = timer.start - timerShouldBe
 
     return timer
 }

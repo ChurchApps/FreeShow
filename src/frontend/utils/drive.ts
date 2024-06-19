@@ -41,8 +41,11 @@ export function driveConnect(keys: any) {
     }, 100)
 }
 
-export function syncDrive(force: boolean = false, closeWhenFinished: boolean = false) {
-    if (!force && get(driveData).disabled === true) return
+// force = manual sync OR first sync
+export function syncDrive(force: boolean = false, closeWhenFinished: boolean = false, startup: boolean = false) {
+    let autoSyncDisabled = get(driveData).disabled === true
+    let notStartingAndNotClosing = !startup && !closeWhenFinished
+    if (!force && (notStartingAndNotClosing || autoSyncDisabled)) return
 
     let method = get(driveData).initializeMethod
     if (get(driveData).disableUpload) method = "download"
