@@ -32,8 +32,12 @@ test("Launch electron app", async () => {
     // Direct Electron console to Node terminal.
     window.on("console", console.log)
 
+    // Initial setup
+    await window.getByText("Get Started!").click()
+    await window.getByTestId("alert-ack").click()
+
     // Create a new project, then try creating a new show under the project
-    await window.getByText("New project").click()
+    await window.locator("#leftPanel").getByText("New project").click()
     await window.getByText("New show").first().click()
 
     // Expect the pop up to be visible
