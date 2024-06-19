@@ -31,6 +31,9 @@
         "prerelease": "npm run build",
         "release": "electron-builder",
         "postrelease": "node scripts/cleanBuilds.js",
+        "prerelease:arm64": "npm run build",
+        "release:arm64": "electron-builder --arm64",
+        "postrelease:arm64": "node scripts/cleanBuilds.js",
         "lint:electron": "eslint -c eslint.electron.json --ext .js,.ts src/electron",
         "lint:svelte": "eslint -c eslint.svelte.json --ext .js,.ts src/frontend",
         "lint": "npm-run-all -s lint:electron lint:svelte",
@@ -106,16 +109,8 @@
             ],
             "category": "AudioVideo",
             "target": [
-                {
-                    "target": "AppImage",
-                    "arch": [
-                        "x64",
-                        "arm64"
-                    ]
-                },
-                {
-                    "target": "deb"
-                }
+                "AppImage",
+                "deb"
             ],
             "icon": "build/public"
         },
