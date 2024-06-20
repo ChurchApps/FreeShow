@@ -34,7 +34,10 @@ test("Launch electron app", async () => {
 
         // Initial setup
         await window.getByText("Get Started!").click({ timeout: 1000 })
-        await window.getByTestId("alert.ack.check").click({ timeout: 1000 })
+        // This depends on whether there is existing shows to be loaded
+        try {
+            await window.getByTestId("alert.ack.check").click({ timeout: 1000 })
+        } catch (ex) {}
 
         // Create a new project, then try creating a new show under the project
         await window.locator("#leftPanel").getByText("New project").click({ timeout: 1000 })
