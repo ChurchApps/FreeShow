@@ -33,7 +33,7 @@
 
 <br />
 
-<Button on:click={() => activePopup.set(null)} center dark data-testid="alert-ack">
+<Button on:click={() => activePopup.set(null)} center dark data-testid="alert.ack.check">
     <Icon id="check" size={1.2} />
 </Button>
 
