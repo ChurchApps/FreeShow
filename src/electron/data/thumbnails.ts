@@ -1,11 +1,10 @@
-import { BrowserWindow, NativeImage, ResizeOptions, app, nativeImage } from "electron"
+import { NativeImage, ResizeOptions, app, nativeImage } from "electron"
 import fs from "fs"
 import path from "path"
 import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
 import { doesPathExist } from "../utils/files"
-import { wait, waitUntilValueIsDefined } from "../utils/helpers"
-import { captureOptions } from "./../utils/windowOptions"
+import { waitUntilValueIsDefined } from "../utils/helpers"
 import { defaultSettings } from "./defaults"
 
 export function getThumbnail(data: any) {
@@ -33,8 +32,8 @@ function addToGenerateQueue(data: Thumbnail) {
 
 let working = false
 function nextInQueue() {
-    if (working) return
-    if (!thumbnailQueue[0]) return removeCaptureWindow()
+    if (working || !thumbnailQueue[0]) return
+    // if (!thumbnailQueue[0]) return removeCaptureWindow()
 
     working = true
     generateThumbnail(thumbnailQueue.shift()!)
@@ -93,124 +92,124 @@ function hashCode(str: string) {
 
 ///// CUSTOM WINDOW /////
 
-const JS_IMAGE = 'document.querySelector("img")'
-const JS_IMAGE_LOADED = JS_IMAGE + "?.complete"
-const JS_IMAGE_WIDTH = JS_IMAGE + ".naturalWidth"
-const JS_IMAGE_HEIGHT = JS_IMAGE + ".naturalHeight"
+// const JS_IMAGE = 'document.querySelector("img")'
+// const JS_IMAGE_LOADED = JS_IMAGE + "?.complete"
+// const JS_IMAGE_WIDTH = JS_IMAGE + ".naturalWidth"
+// const JS_IMAGE_HEIGHT = JS_IMAGE + ".naturalHeight"
 
-const JS_VIDEO = 'document.querySelector("video")'
-const JS_VIDEO_READY = JS_VIDEO + "?.readyState"
-const JS_GET_DURATION = JS_VIDEO + ".duration"
-const JS_PAUSE_VIDEO = JS_VIDEO + ".pause()"
-const JS_REMOVE_CONTROLS = JS_VIDEO + '.removeAttribute("controls")'
-const JS_SET_TIME = JS_VIDEO + ".currentTime="
-const JS_VIDEO_WIDTH = JS_VIDEO + ".videoWidth"
-const JS_VIDEO_HEIGHT = JS_VIDEO + ".videoHeight"
+// const JS_VIDEO = 'document.querySelector("video")'
+// const JS_VIDEO_READY = JS_VIDEO + "?.readyState"
+// const JS_GET_DURATION = JS_VIDEO + ".duration"
+// const JS_PAUSE_VIDEO = JS_VIDEO + ".pause()"
+// const JS_REMOVE_CONTROLS = JS_VIDEO + '.removeAttribute("controls")'
+// const JS_SET_TIME = JS_VIDEO + ".currentTime="
+// const JS_VIDEO_WIDTH = JS_VIDEO + ".videoWidth"
+// const JS_VIDEO_HEIGHT = JS_VIDEO + ".videoHeight"
 
-let captureWindow: BrowserWindow | null = null
-async function createCaptureWindow(data: any) {
-    if (!captureWindow) captureWindow = new BrowserWindow(captureOptions)
+// let captureWindow: BrowserWindow | null = null
+// async function createCaptureWindow(data: any) {
+//     if (!captureWindow) captureWindow = new BrowserWindow(captureOptions)
 
-    captureWindow?.loadFile(data.input)
+//     captureWindow?.loadFile(data.input)
 
-    // wait until loaded
-    let contentLoaded: boolean = false
-    captureWindow?.once("ready-to-show", () => {
-        contentLoaded = true
-    })
-    await waitUntilValueIsDefined(() => contentLoaded, 20, 1000)
-    if (!contentLoaded) return exit()
+//     // wait until loaded
+//     let contentLoaded: boolean = false
+//     captureWindow?.once("ready-to-show", () => {
+//         contentLoaded = true
+//     })
+//     await waitUntilValueIsDefined(() => contentLoaded, 20, 1000)
+//     if (!contentLoaded) return exit()
 
-    let extension = getExtension(data.input)
-    if (customImageCapture.includes(extension)) return checkImage()
+//     let extension = getExtension(data.input)
+//     if (customImageCapture.includes(extension)) return checkImage()
 
-    let videoLoaded: any = await waitUntilValueIsDefined(checkIfVideoHasLoaded, 20, 2000)
-    if (!videoLoaded) {
-        // probably unsupported codec
-        if (extension === "mp4") return exit()
-        return checkImage()
-    }
+//     let videoLoaded: any = await waitUntilValueIsDefined(checkIfVideoHasLoaded, 20, 2000)
+//     if (!videoLoaded) {
+//         // probably unsupported codec
+//         if (extension === "mp4") return exit()
+//         return checkImage()
+//     }
 
-    let videoDuration = await captureWindow?.webContents.executeJavaScript(JS_GET_DURATION)
-    if (!videoDuration) return exit()
+//     let videoDuration = await captureWindow?.webContents.executeJavaScript(JS_GET_DURATION)
+//     if (!videoDuration) return exit()
 
-    let seekTo = Math.floor(videoDuration) * (data.seek ?? 0.5)
+//     let seekTo = Math.floor(videoDuration) * (data.seek ?? 0.5)
 
-    captureWindow?.webContents.executeJavaScript(JS_PAUSE_VIDEO)
-    captureWindow?.webContents.executeJavaScript(JS_REMOVE_CONTROLS)
-    captureWindow?.webContents.executeJavaScript(JS_SET_TIME + seekTo)
+//     captureWindow?.webContents.executeJavaScript(JS_PAUSE_VIDEO)
+//     captureWindow?.webContents.executeJavaScript(JS_REMOVE_CONTROLS)
+//     captureWindow?.webContents.executeJavaScript(JS_SET_TIME + seekTo)
 
-    // check if video seek has loaded properly
-    await waitUntilValueIsDefined(checkIfVideoHasLoaded, 20)
+//     // check if video seek has loaded properly
+//     await waitUntilValueIsDefined(checkIfVideoHasLoaded, 20)
 
-    let videoWidth = await captureWindow?.webContents.executeJavaScript(JS_VIDEO_WIDTH)
-    let videoHeight = await captureWindow?.webContents.executeJavaScript(JS_VIDEO_HEIGHT)
+//     let videoWidth = await captureWindow?.webContents.executeJavaScript(JS_VIDEO_WIDTH)
+//     let videoHeight = await captureWindow?.webContents.executeJavaScript(JS_VIDEO_HEIGHT)
 
-    await setWindowSize(videoWidth, videoHeight)
+//     await setWindowSize(videoWidth, videoHeight)
 
-    captureContent()
+//     captureContent()
 
-    async function checkImage() {
-        let hasLoaded: any = await waitUntilValueIsDefined(checkIfImageHasLoaded, 20, 2000)
-        if (!hasLoaded) return exit()
+//     async function checkImage() {
+//         let hasLoaded: any = await waitUntilValueIsDefined(checkIfImageHasLoaded, 20, 2000)
+//         if (!hasLoaded) return exit()
 
-        let imageWidth = await captureWindow?.webContents.executeJavaScript(JS_IMAGE_WIDTH)
-        let imageHeight = await captureWindow?.webContents.executeJavaScript(JS_IMAGE_HEIGHT)
+//         let imageWidth = await captureWindow?.webContents.executeJavaScript(JS_IMAGE_WIDTH)
+//         let imageHeight = await captureWindow?.webContents.executeJavaScript(JS_IMAGE_HEIGHT)
 
-        await setWindowSize(imageWidth, imageHeight)
+//         await setWindowSize(imageWidth, imageHeight)
 
-        captureContent()
-        return
-    }
+//         captureContent()
+//         return
+//     }
 
-    async function setWindowSize(contentWidth: number, contentHeight: number) {
-        if (!contentWidth) contentWidth = 1920
-        if (!contentHeight) contentHeight = 1080
+//     async function setWindowSize(contentWidth: number, contentHeight: number) {
+//         if (!contentWidth) contentWidth = 1920
+//         if (!contentHeight) contentHeight = 1080
 
-        const ratio = contentWidth / contentHeight
-        let width = data.size?.width
-        let height = data.size?.height
-        if (!width) width = height ? Math.floor(height * ratio) : contentWidth
-        if (!height) height = data.size?.width ? Math.floor(width / ratio) : contentHeight
+//         const ratio = contentWidth / contentHeight
+//         let width = data.size?.width
+//         let height = data.size?.height
+//         if (!width) width = height ? Math.floor(height * ratio) : contentWidth
+//         if (!height) height = data.size?.width ? Math.floor(width / ratio) : contentHeight
 
-        captureWindow?.setSize(width, height)
+//         captureWindow?.setSize(width, height)
 
-        // wait for window and content to get resized
-        await wait(50)
-    }
+//         // wait for window and content to get resized
+//         await wait(50)
+//     }
 
-    async function checkIfImageHasLoaded() {
-        let imageComplete = await captureWindow?.webContents.executeJavaScript(JS_IMAGE_LOADED)
-        return imageComplete
-    }
+//     async function checkIfImageHasLoaded() {
+//         let imageComplete = await captureWindow?.webContents.executeJavaScript(JS_IMAGE_LOADED)
+//         return imageComplete
+//     }
 
-    async function checkIfVideoHasLoaded() {
-        let readyState = await captureWindow?.webContents.executeJavaScript(JS_VIDEO_READY)
-        return readyState === 4
-    }
+//     async function checkIfVideoHasLoaded() {
+//         let readyState = await captureWindow?.webContents.executeJavaScript(JS_VIDEO_READY)
+//         return readyState === 4
+//     }
 
-    async function captureContent() {
-        let image = await captureWindow?.webContents.capturePage()
-        if (!image) return exit()
+//     async function captureContent() {
+//         let image = await captureWindow?.webContents.capturePage()
+//         if (!image) return exit()
 
-        removeCaptureWindow()
-        saveToDisk(data.output, image)
-    }
+//         removeCaptureWindow()
+//         saveToDisk(data.output, image)
+//     }
 
-    function exit() {
-        generationFinished()
-    }
-}
-function removeCaptureWindow() {
-    if (!captureWindow) return
-    if (captureWindow.isDestroyed()) {
-        captureWindow = null
-        return
-    }
+//     function exit() {
+//         generationFinished()
+//     }
+// }
+// function removeCaptureWindow() {
+//     if (!captureWindow) return
+//     if (captureWindow.isDestroyed()) {
+//         captureWindow = null
+//         return
+//     }
 
-    captureWindow.on("closed", () => (captureWindow = null))
-    captureWindow.destroy()
-}
+//     captureWindow.on("closed", () => (captureWindow = null))
+//     captureWindow.destroy()
+// }
 
 ///// GENERATE /////
 
@@ -229,20 +228,35 @@ async function generate(input: string, output: string, size: string, config: Con
     const parsedSize = parseSize(size)
     let extension = getExtension(input)
 
-    // mov files can't be opened directly, but can be played as video elem
-    if (extension === "mov") return captureWithCanvas({ input, output, size: parsedSize, config })
+    // // mov files can't be opened directly, but can be played as video elem
+    // if (extension === "mov") return captureWithCanvas({ input, output, size: parsedSize, config })
+    // // capture images directly from electron nativeImage (fastest)
+    // if (!customImageCapture.includes(extension) && defaultSettings.imageExtensions.includes(extension)) return captureImage(input, output, parsedSize)
+    // // capture videos in custom window (to reduce load on main window)
+    // createCaptureWindow({ input, output, size: parsedSize, config }) // WIP this would many times create a save dialog window in some cases
+
     // capture images directly from electron nativeImage (fastest)
     if (!customImageCapture.includes(extension) && defaultSettings.imageExtensions.includes(extension)) return captureImage(input, output, parsedSize)
-    // capture videos in custom window (to reduce load on main window)
-    createCaptureWindow({ input, output, size: parsedSize, config })
+
+    // capture other media with canvas in main window
+    await captureWithCanvas({ input, output, size: parsedSize, extension: getExtension(input), config })
 }
 
-function captureWithCanvas(data: any) {
+let mediaBeingCaptured: number = 0
+const maxAmount = 30
+const refillMargin = maxAmount * 0.6
+async function captureWithCanvas(data: any) {
+    mediaBeingCaptured++
     toApp(MAIN, { channel: "CAPTURE_CANVAS", data })
+
+    // generate a max amount at the same time
+    if (mediaBeingCaptured > maxAmount) await waitUntilValueIsDefined(() => mediaBeingCaptured < refillMargin)
+
     generationFinished()
 }
 
 export function saveImage(data: any) {
+    mediaBeingCaptured--
     if (!data.base64) return
 
     let dataURL = data.base64

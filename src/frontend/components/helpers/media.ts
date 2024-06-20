@@ -201,29 +201,33 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
 
 const jpegQuality = 90 // 0-100
 export function captureCanvas(data: any) {
-    let video = document.createElement("video")
-    video.src = data.input
-
     let canvas = document.createElement("canvas")
 
-    video.addEventListener("loadeddata", async () => {
-        video.currentTime = video.duration * (data.seek ?? 0.5)
+    let isImage: boolean = get(imageExtensions).includes(data.extension)
+    console.log(isImage, data)
+    let mediaElem: any = document.createElement(isImage ? "img" : "video")
+    mediaElem.src = data.input
 
-        let newSize = getNewSize({ width: video.videoWidth, height: video.videoHeight }, data.size || {})
+    mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {
+        if (!isImage) mediaElem.currentTime = mediaElem.duration * (data.seek ?? 0.5)
+
+        let mediaSize = isImage ? { width: mediaElem.naturalWidth, height: mediaElem.naturalHeight } : { width: mediaElem.videoWidth, height: mediaElem.videoHeight }
+        console.log(mediaSize)
+        let newSize = getNewSize(mediaSize, data.size || {})
         canvas.width = newSize.width
         canvas.height = newSize.height
 
         // wait until loaded
-        await waitUntilValueIsDefined(() => video.readyState === 4, 20)
+        await waitUntilValueIsDefined(() => (isImage ? mediaElem.complete : mediaElem.readyState === 4), 20)
 
-        captureCanvas()
+        captureCanvas(mediaElem, mediaSize)
     })
 
-    function captureCanvas() {
+    function captureCanvas(media, mediaSize) {
         let ctx = canvas.getContext("2d")
         if (!ctx) return
 
-        ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, canvas.width, canvas.height)
+        ctx.drawImage(media, 0, 0, mediaSize.width, mediaSize.height, 0, 0, canvas.width, canvas.height)
         let dataURL = canvas.toDataURL("image/jpeg", jpegQuality)
 
         send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })
