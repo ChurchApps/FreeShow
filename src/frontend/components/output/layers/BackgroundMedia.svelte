@@ -105,7 +105,16 @@
 
     // AUDIO
 
-    $: if (!mirror && $audioChannels) send(OUTPUT, ["AUDIO_MAIN"], { id, channels: $audioChannels })
+    // analyse and send to main if window is output
+    $: if (!mirror && $audioChannels && video !== null) updateVideo()
+    let updateCount = 0
+    function updateVideo() {
+        updateCount++
+        if (updateCount < 2) return
+        updateCount = 0
+
+        send(OUTPUT, ["AUDIO_MAIN"], { id: outputId, channels: $audioChannels, paused: videoData.paused })
+    }
     $: if (!mirror && video !== null) setTimeout(analyseVideo, 100)
 
     // analyse video audio

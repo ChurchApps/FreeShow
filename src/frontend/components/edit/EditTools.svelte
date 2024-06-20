@@ -15,6 +15,7 @@
     import Items from "./tools/Items.svelte"
     import SlideFilters from "./tools/SlideFilters.svelte"
     import SlideStyle from "./tools/SlideStyle.svelte"
+    import TemplateStyle from "./tools/TemplateStyle.svelte"
     import { boxes } from "./values/boxes"
     import { itemEdits } from "./values/item"
 
@@ -32,7 +33,7 @@
     // is not template or overlay
     $: isShow = !$activeEdit.id
     $: tabs.filters.remove = !isShow // TODO: set filters in template / overlay ?
-    $: tabs.slide.remove = !isShow
+    $: tabs.slide.remove = !isShow && $activeEdit.type !== "template"
     $: if ((tabs.slide.remove && active === "slide") || (tabs.filters.remove && active === "filters")) active = item ? "text" : "items"
 
     $: showIsActive = $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")
@@ -45,6 +46,7 @@
             .slides()
             .get()
 
+    // WIP better way of updating all of this
     $: if (!item && !tabs.text.disabled) {
         active = "items"
         tabs.text.disabled = true
@@ -53,6 +55,8 @@
         if (active === "items" && allSlideItems.length === 1) active = "text"
         // TODO: false triggers (arranging items)
         tabs.text.disabled = false
+        // } else if (item && active !== "text" && active !== "items") {
+        //     active = "text"
     }
     $: if (!allSlideItems?.length && !tabs.item.disabled) {
         tabs.item.disabled = true
@@ -272,6 +276,12 @@
 
     function reset() {
         if (!isShow) {
+            if ($activeEdit.type === "template" && active === "slide") {
+                let id = $activeEdit?.id || ""
+                history({ id: "UPDATE", newData: { key: "settings", data: {} }, oldData: { id }, location: { page: "edit", id: "template_settings", override: id } })
+                return
+            }
+
             return
         }
 
@@ -350,7 +360,7 @@
 
 <div class="main border editTools">
     {#if (slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id}
-        <Tabs {tabs} bind:active overflowHidden={isShow} />
+        <Tabs {tabs} bind:active overflowHidden={isShow || $activeEdit.type === "template"} />
 
         {#if active === "text"}
             <div class="content">
@@ -376,7 +386,11 @@
             </div>
         {:else if active === "slide"}
             <div class="content">
-                <SlideStyle />
+                {#if $activeEdit.type === "template"}
+                    <TemplateStyle />
+                {:else}
+                    <SlideStyle />
+                {/if}
             </div>
         {/if}
 
@@ -395,7 +409,7 @@
                     </Button>
                 {/if}
                 <!-- TODO: reset template/overlay -->
-                <Button style="flex: 1;" on:click={reset} disabled={!isShow} dark center>
+                <Button style="flex: 1;" on:click={reset} disabled={!isShow && ($activeEdit.type !== "template" || active !== "slide")} dark center>
                     <Icon id="reset" right />
                     <T id={"actions.reset"} />
                 </Button>

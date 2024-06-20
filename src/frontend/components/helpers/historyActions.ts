@@ -8,7 +8,7 @@ import { EMPTY_SHOW_SLIDE } from "../../values/empty"
 import { clone, keysToID } from "./array"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
-import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate } from "./output"
+import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayoutsFromTemplate, updateSlideFromTemplate } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 
@@ -745,6 +745,13 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         }
 
                         a[data.remember.showId].slides[id].items = clone(newItems)
+
+                        // set custom values
+                        let isFirst = !!Object.values(a[data.remember.showId].layouts).find((layout) => layout.slides[0]?.id === id)
+                        a[data.remember.showId].slides[id] = updateSlideFromTemplate(a[data.remember.showId].slides[id], slideTemplate, isFirst, changeOverflowItems)
+                        let newLayoutData = updateLayoutsFromTemplate(a[data.remember.showId].layouts, a[data.remember.showId].media, slideTemplate, changeOverflowItems)
+                        a[data.remember.showId].layouts = newLayoutData.layouts
+                        a[data.remember.showId].media = newLayoutData.media
                     })
 
                     return a

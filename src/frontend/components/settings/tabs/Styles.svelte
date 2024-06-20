@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeStyle, dictionary, imageExtensions, outputs, styles, templates } from "../../../stores"
+    import { activeStyle, dictionary, imageExtensions, outputs, styles, templates, videoExtensions } from "../../../stores"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -148,11 +148,11 @@
     </span>
 </CombinedInput>
 <CombinedInput>
-    <p><T id="edit.background_image" /></p>
+    <p><T id="edit.background_media" /></p>
     <MediaPicker
         id="styles"
         title={currentStyle.backgroundImage}
-        filter={{ name: "Image files", extensions: $imageExtensions }}
+        filter={{ name: "Media files", extensions: [...$imageExtensions, $videoExtensions] }}
         on:picked={(e) => {
             if (e.detail) updateStyle(e, "backgroundImage")
         }}

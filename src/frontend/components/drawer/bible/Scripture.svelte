@@ -770,6 +770,18 @@
     $: sortedVerses = bibles?.[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
     let verseRange = ""
     $: verseRange = sortedVerses.length ? joinRange(sortedVerses) : ""
+
+    // autoscroll
+    let booksScrollElem: any
+    let chaptersScrollElem: any
+    let versesScrollElem: any
+    $: if (booksScrollElem && active && bookId) setTimeout(() => scrollToActive(booksScrollElem))
+    $: if (chaptersScrollElem && active && chapterId) setTimeout(() => scrollToActive(chaptersScrollElem))
+    $: if (versesScrollElem && active && activeVerses?.length < 5) setTimeout(() => scrollToActive(versesScrollElem))
+    function scrollToActive(scrollElem) {
+        let selectedElemTop = scrollElem.querySelector(".active")?.offsetTop || 0
+        scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />
@@ -809,7 +821,7 @@
                 </Center>
             {/if}
         {:else}
-            <div class="books" class:center={!books[firstBibleId]?.length}>
+            <div class="books" bind:this={booksScrollElem} class:center={!books[firstBibleId]?.length}>
                 {#if books[firstBibleId]?.length}
                     {#key books[firstBibleId]}
                         {#each books[firstBibleId] as book, i}
@@ -830,7 +842,7 @@
                     <Loader />
                 {/if}
             </div>
-            <div class="chapters" style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
+            <div class="chapters" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
                 {#if chapters[firstBibleId]?.length}
                     {#each chapters[firstBibleId] as chapter, i}
                         {@const id = bibles[0].api ? chapter.id : i}
@@ -849,7 +861,7 @@
                     <Loader />
                 {/if}
             </div>
-            <div class="verses" class:center={!Object.keys(verses[firstBibleId] || {}).length}>
+            <div class="verses" bind:this={versesScrollElem} class:center={!Object.keys(verses[firstBibleId] || {}).length}>
                 {#if Object.keys(verses[firstBibleId] || {}).length}
                     {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
                         <!-- custom drag -->

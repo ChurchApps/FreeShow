@@ -23,9 +23,10 @@
     })
 
     const previewRates = [
-        { id: "auto", name: "$:settings.auto:$" },
-        { id: "optimized", name: "$:settings.optimized:$" },
-        { id: "full", name: "$:settings.full:$" },
+        { id: "auto", name: "$:settings.auto:$ (1|30 fps)" },
+        { id: "optimized", name: "$:settings.optimized:$ (1 fps)" },
+        { id: "reduced", name: "$:settings.reduced:$ (10 fps)" },
+        { id: "full", name: "$:settings.full:$ (60 fps)" },
     ]
 
     // let audioOutputs: any = []

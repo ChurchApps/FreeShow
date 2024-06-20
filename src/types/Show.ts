@@ -198,9 +198,8 @@ export interface SlideData {
     audio?: string[]
 
     actions?: {
-        clearBackground?: boolean
-        clearOverlays?: boolean
-        clearAudio?: boolean
+        // ...
+        slideActions?: any[]
     }
     // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
     bindings?: string[] // bind slide to an output
@@ -276,7 +275,16 @@ export interface Template {
     name: string
     color: null | string
     category: null | string
+    settings?: TemplateSettings
     items: Item[]
+}
+export interface TemplateSettings {
+    resolution?: Resolution
+    backgroundColor?: string
+    backgroundPath?: string
+    overlayId?: string
+    firstSlideTemplate?: string
+    actions?: any[]
 }
 
 // output

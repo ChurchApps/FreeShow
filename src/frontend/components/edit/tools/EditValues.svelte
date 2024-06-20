@@ -397,12 +397,18 @@
                             </Button>
                         </CombinedInput>
                     {:else if input.input === "media"}
-                        <MediaPicker id={"item_" + sessionId} title={input.value} style="margin-bottom: 10px;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => valueChange(e, input)}>
+                        <MediaPicker
+                            id={"item_" + sessionId}
+                            title={input.value}
+                            style="overflow: hidden;margin-bottom: 10px;"
+                            filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }}
+                            on:picked={(e) => valueChange(e, input)}
+                        >
                             <Icon id="image" right />
                             {#if input.value}
-                                {getFileName(input.value)}
+                                <p style="padding: 0;opacity: 1;">{getFileName(input.value)}</p>
                             {:else}
-                                <T id="edit.choose_media" />
+                                <p style="padding: 0;"><T id="edit.choose_media" /></p>
                             {/if}
                         </MediaPicker>
                     {:else if input.input === "multiselect"}

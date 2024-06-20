@@ -34,7 +34,7 @@ import {
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
+import { clearPlayingVideo, getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { initializeMetadata } from "./show"
 import { _show } from "./shows"
@@ -697,20 +697,22 @@ export function sendMidi(data: any) {
 }
 
 export function clearBackground(outputId: string = "") {
-    // clearVideo()
-    setOutput("background", null, false, outputId)
-    // clearPlayingVideo()
+    let outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
 
-    if (!outputId) return
+    outputIds.forEach((outputId) => {
+        // clearVideo()
+        setOutput("background", null, false, outputId)
+        clearPlayingVideo(outputId)
 
-    // WIP this does not clear time properly
-    videosData.update((a) => {
-        delete a[outputId]
-        return a
-    })
-    videosTime.update((a) => {
-        delete a[outputId]
-        return a
+        // WIP this does not clear time properly
+        videosData.update((a) => {
+            delete a[outputId]
+            return a
+        })
+        videosTime.update((a) => {
+            delete a[outputId]
+            return a
+        })
     })
 }
 
@@ -719,10 +721,14 @@ export function clearSlide() {
 }
 
 export function clearOverlays(outputId: string = "") {
-    outputId = outputId || getActiveOutputs()[0]
-    let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
-    outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
-    setOutput("overlays", outOverlays)
+    let outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
+
+    outputIds.forEach((outputId) => {
+        let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
+        outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
+        setOutput("overlays", outOverlays, false, outputId)
+    })
+
     lockedOverlays.set([])
 }
 

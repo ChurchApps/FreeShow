@@ -8,8 +8,8 @@ import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { captureCanvas, getFileName } from "../components/helpers/media"
-import { clearPlayingVideo, getActiveOutputs } from "../components/helpers/output"
-import { checkNextAfterMedia } from "../components/helpers/showActions"
+import { getActiveOutputs } from "../components/helpers/output"
+import { checkNextAfterMedia, clearBackground } from "../components/helpers/showActions"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
@@ -48,6 +48,7 @@ import {
     driveKeys,
     events,
     folders,
+    gain,
     isDev,
     media,
     mediaFolders,
@@ -80,6 +81,7 @@ import {
     videosData,
     videosTime,
     visualizerData,
+    volume,
     windowState,
 } from "../stores"
 import { redoHistory, undoHistory } from "./../stores"
@@ -278,18 +280,24 @@ const receiveOUTPUTasMAIN: any = {
     RESTART: () => restartOutputs(),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     AUDIO_MAIN: async (data: any) => {
-        audioChannels.set(data.channels)
-        if (!data.id) return
+        if (!data.id) {
+            // WIP merge with existing (audio.ts)
+            audioChannels.set(data.channels)
+            return
+        }
 
-        // let analyser: any = await getAnalyser(video)
-        // TODO: remove when finished
         playingVideos.update((a) => {
             let existing = a.findIndex((a) => a.id === data.id && a.location === "output")
-            if (existing > -1) a[existing].channels = data.channels
-            else {
+
+            if (existing > -1) {
+                let wasPaused = a[existing].paused
+                a[existing] = { ...data, location: "output" }
+                if (wasPaused === true && !data.paused) analyseAudio()
+            } else {
                 a.push({ location: "output", ...data })
                 analyseAudio()
             }
+
             return a
         })
     },
@@ -316,8 +324,8 @@ const receiveOUTPUTasMAIN: any = {
         // check and execute next after media regardless of loop
         if (checkNextAfterMedia(videoPath, "media", msg.id) || msg.loop) return
 
-        setTimeout(async () => {
-            await clearPlayingVideo(msg.id)
+        setTimeout(() => {
+            clearBackground(msg.id)
         }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH
     },
     // stage
@@ -392,6 +400,9 @@ export const receiveOUTPUTasOUTPUT: any = {
     // POSITION: (a: any) => outputPosition.set(a),
     PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
     STAGE_SHOWS: (a: any) => stageShows.set(a),
+
+    VOLUME: (a: any) => volume.set(a),
+    GAIN: (a: any) => gain.set(a),
 }
 
 // NDI

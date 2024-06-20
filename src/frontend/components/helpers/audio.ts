@@ -240,9 +240,37 @@ export function analyseAudio() {
 
             if (videos.length) {
                 videos.map((a) => {
-                    if (!a.paused) allAudio.push({ ...a })
+                    // set volume (video in output window)
+                    let newVolume = get(volume)
+                    if (a.analyser.gainNode) {
+                        let gainedValue = newVolume * (get(gain) || 1)
+                        a.analyser.gainNode.gain.value = gainedValue
+                    } else a.video.volume = newVolume
+
+                    if (!a.paused) allAudio.push(a)
                 })
             }
+        }
+
+        console.log(get(playingVideos))
+
+        let outputVideos: any[] = get(playingVideos).filter((a) => a.location === "output")
+        if (outputVideos.length) {
+            outputVideos.map((v) => {
+                let existing = allAudio.findIndex((a) => a.id === v.id && a.location === "output")
+                if (existing > -1) {
+                    if (v.paused) {
+                        allAudio.splice(existing, 1)
+                        return
+                    }
+
+                    allAudio[existing].channels = v.channels
+                    return
+                }
+
+                if (v.paused) return
+                allAudio.push(v)
+            })
         }
 
         if (!allAudio.length) {

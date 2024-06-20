@@ -294,6 +294,7 @@ export const _updaters = {
     template_name: { store: templates, empty: "" },
     template_color: { store: templates, empty: null },
     template_category: { store: templates, empty: null },
+    template_settings: { store: templates, empty: {} },
 
     player_video: { store: playerVideos, empty: EMPTY_PLAYER_VIDEO },
 

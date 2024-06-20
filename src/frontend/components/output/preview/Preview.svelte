@@ -232,7 +232,7 @@
     {/if}
 
     {#if $activePage === "show"}
-        <ClearButtons {outputId} bind:autoChange bind:activeClear />
+        <ClearButtons bind:autoChange bind:activeClear />
 
         {#if activeClear === "background"}
             <MediaControls {currentOutput} {outputId} />

@@ -178,7 +178,7 @@
     $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : currentSlide?.settings?.color || currentStyle.background || "black"
     $: messageText = $showsCache[slide?.id]?.message?.text || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
-    $: backgroundData = background || { path: currentStyle?.backgroundImage || "" }
+    $: backgroundData = background || { path: currentStyle?.backgroundImage || "", loop: true }
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.duration || 800} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>

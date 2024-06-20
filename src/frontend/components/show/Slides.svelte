@@ -68,9 +68,10 @@
         } else endIndex = null
     }
 
-    $: if (showId && currentShow) {
+    $: showTemplate = currentShow?.settings?.template || ""
+    $: if (showId && showTemplate) {
         // update show by its template
-        history({ id: "TEMPLATE", save: false, newData: { id: currentShow.settings?.template }, location: { page: "show" } })
+        history({ id: "TEMPLATE", save: false, newData: { id: showTemplate }, location: { page: "show" } })
     }
 
     $: if (showId && $special.capitalize_words) capitalizeWords()

@@ -672,6 +672,9 @@
         "background_color": "Background color",
         "background_opacity": "Background opacity",
         "background_image": "Background image",
+        "background_media": "Background media",
+        "overlay": "Overlay",
+        "different_first_template": "Custom template on first slide",
         "media_fit": "Media fit",
         "size": "Size",
         "chords": "Chords",
@@ -959,6 +962,7 @@
         "preview_frame_rate": "Preview frame rate",
         "auto": "Auto",
         "optimized": "Optimized",
+        "reduced": "Reduced",
         "full": "Full"
     },
     "sort": {

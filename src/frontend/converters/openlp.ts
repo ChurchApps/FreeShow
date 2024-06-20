@@ -225,8 +225,20 @@ function XMLtoObject(xml: string) {
         return lyrics
     }
 
-    function getLines(lines: string) {
+    function getLines(lines: string | any[]) {
         let newLines: string[] = []
+
+        // might be <lines break="optional">
+        if (lines["#text"]) lines = lines["#text"]
+        // some openlyrics verses can have multiple <lines> tags
+        if (Array.isArray(lines)) {
+            let convertedLines: string[] = lines.map(convertToText)
+            function convertToText(line: any) {
+                if (line["#text"]) return line["#text"]
+                return line
+            }
+            lines = convertedLines.join("\n")
+        }
 
         // remove unused line seperator char
         lines = lines.replaceAll("&#8232;", "")

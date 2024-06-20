@@ -1,30 +1,20 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
-    import { activeEdit, dictionary, outputs, styles, templates } from "../../../stores"
+    import { activeEdit, dictionary, templates } from "../../../stores"
+    import TemplateSlide from "../../drawer/pages/TemplateSlide.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { getResolution } from "../../helpers/output"
     import { getStyles } from "../../helpers/style"
     import Button from "../../inputs/Button.svelte"
-    import Zoomed from "../../slide/Zoomed.svelte"
-    import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
-    import Snaplines from "../../system/Snaplines.svelte"
-    import Editbox from "../editbox/Editbox.svelte"
 
     $: currentId = $activeEdit.id!
     $: Slide = $templates[currentId]
     templates.subscribe((a) => (Slide = a[currentId]))
 
-    let lines: [string, number][] = []
-    let mouse: any = null
     let newStyles: any = {}
     $: active = $activeEdit.items
-
-    let width: number = 0
-    let height: number = 0
-    $: resolution = getResolution(null, { $outputs, $styles })
 
     let ratio: number = 1
 
@@ -56,6 +46,8 @@
 
     // ZOOM
     let zoom = 1
+    let width: number = 0
+    let height: number = 0
 
     // shortcut
     let nextScrollTimeout: any = null
@@ -87,12 +79,7 @@
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
-            <Zoomed style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio hideOverflow={false} center={zoom >= 1}>
-                <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
-                {#each Slide.items as item, index}
-                    <Editbox ref={{ type: "template", id: currentId }} {item} {index} {ratio} bind:mouse />
-                {/each}
-            </Zoomed>
+            <TemplateSlide templateId={currentId} template={Slide} edit {width} {height} {zoom} bind:ratio />
         {:else}
             <Center size={2} faded>
                 <T id="empty.slide" />

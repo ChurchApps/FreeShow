@@ -3,14 +3,15 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
-import type { Item, OutSlide, Show, Transition } from "../../../types/Show"
+import type { Item, Layout, Media, OutSlide, Show, Slide, Template, Transition } from "../../../types/Show"
 import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData } from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "./array"
-import { clearBackground, replaceDynamicValues } from "./showActions"
+import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
+import { getFileName, removeExtension } from "./media"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
@@ -258,20 +259,14 @@ export function deleteOutput(outputId: string) {
     })
 }
 
-// WIP improve this
 export async function clearPlayingVideo(clearOutput: string = "") {
-    // videoData.paused = true
-    if (clearOutput) clearBackground(clearOutput) // , false, clearOutput
-
     let mediaTransition: Transition = getCurrentMediaTransition()
 
-    let duration = mediaTransition?.duration || 0
+    let duration = (mediaTransition?.duration || 0) + 200
     if (!clearOutput) duration /= 2.4 // a little less than half the time
 
     return new Promise((resolve) => {
         setTimeout(() => {
-            // if (!videoData.paused) return
-
             // remove from playing
             playingVideos.update((a) => {
                 let existing = -1
@@ -380,6 +375,62 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     newSlideItems = [...remainingTemplateItems, ...newSlideItems]
 
     return newSlideItems
+}
+
+export function updateSlideFromTemplate(slide: Slide, template: Template, isFirst: boolean = false, removeOverflow: boolean = false) {
+    let settings = template.settings || {}
+
+    if (settings.resolution || slide.settings.resolution) slide.settings.resolution = getResolution(settings.resolution)
+    if (settings.backgroundColor || slide.settings.color) slide.settings.color = settings.backgroundColor || ""
+    if (isFirst && (settings.firstSlideTemplate || removeOverflow)) slide.settings.template = settings.firstSlideTemplate || ""
+
+    return slide
+}
+
+export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, media: { [key: string]: Media }, template: Template, removeOverflow: boolean = false) {
+    let settings = template.settings || {}
+
+    let bgId = ""
+    if (settings.backgroundPath) {
+        // find existing
+        let existingId = Object.keys(media).find((id) => (media[id].path || media[id].id) === id)
+        bgId = existingId || uid()
+        if (!existingId) media[bgId] = { path: settings.backgroundPath, name: removeExtension(getFileName(settings.backgroundPath)) }
+    }
+
+    Object.keys(layouts).forEach((layoutId) => {
+        let slides = layouts[layoutId].slides
+        slides.forEach((slide, i) => {
+            if (i === 0 && settings.backgroundPath) slide.background = bgId
+
+            if (settings.overlayId) {
+                let existingOverlays = slide.overlays || []
+                if (!existingOverlays.includes(settings.overlayId)) {
+                    existingOverlays.push(settings.overlayId)
+                    slide.overlays = existingOverlays
+                }
+            } else if (removeOverflow) {
+                slide.overlays = []
+            }
+
+            if (settings.actions?.length) {
+                if (!slide.actions) slide.actions = {}
+
+                // remove existing
+                let newSlideActions: any[] = []
+                slide.actions.slideActions?.forEach((action) => {
+                    if (settings.actions?.find((a) => a.id === action.id || a.triggers?.[0] === action.triggers?.[0])) return
+                    newSlideActions.push(action)
+                })
+
+                slide.actions.slideActions = [...newSlideActions, settings.actions]
+            }
+        })
+
+        layouts[layoutId].slides = slides
+    })
+
+    return { layouts, media }
 }
 
 function removeTextValue(items: Item[]) {

@@ -2,15 +2,14 @@
     import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
-    import { clearPlayingVideo, isOutCleared, setOutput } from "../../helpers/output"
-    import { clearAll, clearOverlays, restoreOutput } from "../../helpers/showActions"
+    import { isOutCleared } from "../../helpers/output"
+    import { clearAll, clearBackground, clearOverlays, clearSlide, restoreOutput } from "../../helpers/showActions"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import { clearTimers } from "../clear"
 
     export let autoChange: any
     export let activeClear: any
-    export let outputId: string
 
     $: audioCleared = !Object.keys($playingAudio).length && !$playingMetronome
     $: allCleared = isOutCleared(null, $outputs) && audioCleared
@@ -26,21 +25,11 @@
     // ACTIONS
 
     const clearActions: any = {
-        background: () => {
-            clearPlayingVideo(outputId)
-        },
-        slide: () => {
-            setOutput("slide", null)
-        },
-        overlays: () => {
-            clearOverlays()
-        },
-        audio: () => {
-            clearAudio()
-        },
-        nextTimer: () => {
-            clearTimers()
-        },
+        background: () => clearBackground(),
+        slide: () => clearSlide(),
+        overlays: () => clearOverlays(),
+        audio: () => clearAudio(),
+        nextTimer: () => clearTimers(),
     }
 
     function clear(key: string) {

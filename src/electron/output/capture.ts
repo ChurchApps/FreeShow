@@ -23,7 +23,7 @@ export const framerates: any = {
 }
 export let customFramerates: any = {}
 
-function getDefaultCapture(window: BrowserWindow, id:string): CaptureOptions {
+function getDefaultCapture(window: BrowserWindow, id: string): CaptureOptions {
     let screen: Display = getWindowScreen(window)
 
     const previewFramerate = Math.round(framerates.preview / Object.keys(captures).length)
@@ -40,20 +40,27 @@ function getDefaultCapture(window: BrowserWindow, id:string): CaptureOptions {
         displayFrequency: screen.displayFrequency || 60,
         options: { server: false, ndi: false },
         framerates: defaultFramerates,
-        id
+        id,
     }
 }
 
 // START
 
 export let storedFrames: any = {}
-export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
+export function startCapture(id: string, toggle: any = {}, rate: any = "") {
     let window = outputWindows[id]
     let windowIsRemoved = !window || window.isDestroyed()
     if (windowIsRemoved) {
         delete captures[id]
         return
     }
+
+    // change preview frame rate based on settings
+    if (!rate) rate = "auto"
+    if (rate === "optimized") framerates.preview = 1 // 1 fps
+    else if (rate === "reduced") framerates.preview = 10 // 10 fps
+    else if (rate === "full") framerates.preview = 60 // 60 fps
+    else framerates.preview = 30 // auto // 0.5 fpgs OR 30 fps
 
     if (!captures[id]) captures[id] = getDefaultCapture(window, id)
 
@@ -65,37 +72,39 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
 
     if (captures[id].subscribed) return
 
-
     //captures[id].options.ndi = true
     CaptureTransmitter.startTransmitting(id)
 
     //framerates.preview = rate === "full" ? 60 : 30
-    if (rate !== "optimized") captures[id].window.webContents.beginFrameSubscription(true, processFrame)
+    if (rate === "auto" || rate === "full") captures[id].window.webContents.beginFrameSubscription(true, processFrame) // updates approximately every 0.02s
     captures[id].subscribed = true
+
+    if (rate === "full" || (rate !== "optimized" && captures[id].options.ndi)) return
 
     // optimize cpu on low end devices
     const autoOptimizePercentageCPU = 95 / 10 // % / 10
     const captureAmount = 4 * 60
     let captureCount = captureAmount
 
-    if (rate !== "full" && (rate === "optimized" || !captures[id].options.ndi)) cpuCapture()
-
+    cpuCapture()
     async function cpuCapture() {
         if (!captures[id] || captures[id].window.isDestroyed()) return
 
         let usage = process.getCPUUsage()
 
-        let isOptimizedOrLagging = rate === "optimized" || usage.percentCPUUsage > autoOptimizePercentageCPU || captureCount < captureAmount
+        let isOptimizedOrLagging = rate !== "auto" || captureCount < captureAmount || usage.percentCPUUsage > autoOptimizePercentageCPU
         if (isOptimizedOrLagging) {
             if (captureCount > captureAmount) captureCount = 0
             // limit frames
             if (captures[id].window.webContents.isBeingCaptured()) captures[id].window.webContents.endFrameSubscription()
-            //let image = await captures[id].window.webContents.capturePage()
-            //CaptureTransmitter.sendFrames(captures[id], image, { previewFrame: true, serverFrame: true, ndiFrame: true })
 
-            // capture for 60 seconds then get cpu again
+            // manually capture to reduce lag
+            let image = await captures[id].window.webContents.capturePage()
+            processFrame(image)
+
+            // capture for 60 seconds then get cpu again (if rate is "auto")
             captureCount++
-            setTimeout(cpuCapture, rate === "optimized" ? 2000 : 250)
+            setTimeout(cpuCapture, rate === "optimized" ? 1000 : 100)
         } else {
             captureCount = captureAmount
             if (!captures[id].window.webContents.isBeingCaptured()) captures[id].window.webContents.beginFrameSubscription(true, processFrame)
@@ -105,7 +114,6 @@ export function startCapture(id: string, toggle: any = {}, rate: any = {}) {
     function processFrame(image: NativeImage) {
         storedFrames[id] = image
     }
-
 }
 
 export function updateFramerate(id: string) {
@@ -119,7 +127,6 @@ export function updateFramerate(id: string) {
             captures[id].framerates.ndi = parseInt(ndiFramerate)
             CaptureTransmitter.startChannel(id, "ndi")
         }
-        
     }
 }
 
@@ -140,7 +147,9 @@ export function resizeImage(image: NativeImage, initialSize: Size, newSize: Size
 }
 
 export let previewSize: Size = { width: 320, height: 180 }
-export function updatePreviewResolution(data: any) { previewSize = data.size }
+export function updatePreviewResolution(data: any) {
+    previewSize = data.size
+}
 
 // STOP
 
@@ -169,7 +178,7 @@ export function stopCapture(id: string) {
 
     function endSubscription() {
         if (!captures[id].subscribed) return
-        
+
         captures[id].window.webContents.endFrameSubscription()
         captures[id].subscribed = false
     }

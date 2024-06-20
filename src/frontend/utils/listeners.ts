@@ -15,6 +15,7 @@ import {
     driveKeys,
     events,
     folders,
+    gain,
     groups,
     media,
     midiIn,
@@ -187,7 +188,9 @@ export function storeSubscriber() {
     volume.subscribe((data) => {
         send(OUTPUT, ["VOLUME"], data)
     })
-    // WIP send gain!!
+    gain.subscribe((data) => {
+        send(OUTPUT, ["GAIN"], data)
+    })
 
     timeFormat.subscribe((a) => {
         send(OUTPUT, ["TIME_FORMAT"], a)

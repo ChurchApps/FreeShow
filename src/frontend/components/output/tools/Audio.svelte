@@ -63,7 +63,7 @@
     <span class="name" style="justify-content: space-between;">
         {#each Object.entries($playingAudio) as [id, audio]}
             {@const name = audio.name || getName(id)}
-            <Button title={name} on:click={() => activeShow.set({ id, type: "audio", data: { isMic: audio.mic } })} active={$activeShow?.id === id} bold={false} center>
+            <Button title={decodeURIComponent(name)} on:click={() => activeShow.set({ id, type: "audio", data: { isMic: audio.mic } })} active={$activeShow?.id === id} style="z-index: 2;" bold={false} center>
                 {#if audio.mic}<Icon id="microphone" size={1.2} right />{/if}
                 <p>{decodeURIComponent(name)}</p>
             </Button>
@@ -72,7 +72,14 @@
 {:else}
     {@const name = playing.name || getName(path)}
 
-    <Button title={name} on:click={() => activeShow.set({ id: path, type: "audio", data: { isMic: playing.mic } })} active={$activeShow?.id === path} style="padding: 5px 10px;opacity: 0.8;width: 100%;" bold={false} center>
+    <Button
+        title={decodeURIComponent(name)}
+        on:click={() => activeShow.set({ id: path, type: "audio", data: { isMic: playing.mic } })}
+        active={$activeShow?.id === path}
+        style="padding: 5px 10px;opacity: 0.8;width: 100%;z-index: 2;"
+        bold={false}
+        center
+    >
         {#if playing.mic}<Icon id="microphone" size={1.2} right />{/if}
         <p>{$activePlaylist?.active === path ? `${$audioPlaylists[$activePlaylist.id]?.name}: ` : ""}{decodeURIComponent(name)}</p>
     </Button>

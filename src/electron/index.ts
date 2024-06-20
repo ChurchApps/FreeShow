@@ -105,6 +105,7 @@ function createLoading() {
 
 export let mainWindow: BrowserWindow | null = null
 export let dialogClose: boolean = false // is unsaved
+const MIN_WINDOW_SIZE = 200
 function createMain() {
     if (RECORD_STARTUP_TIME) console.time("Main window")
     let bounds: Rectangle = config.get("bounds")
@@ -113,14 +114,23 @@ function createMain() {
     let options: any = {
         width: !bounds.width || bounds.width === 800 ? screenBounds.width : bounds.width,
         height: !bounds.height || bounds.height === 600 ? screenBounds.height : bounds.height,
-        x: !bounds.x ? screenBounds.x : bounds.x,
-        y: !bounds.y ? screenBounds.y : bounds.y,
         frame: !isProd || !isWindows,
         autoHideMenuBar: isProd && isWindows,
     }
 
+    // should be centered to screen if x & y is not set
+    if (bounds.x) options.x = bounds.x
+    if (bounds.y) options.y = bounds.y
+
+    // set minimum window size on startup (in case it's tiny)
+    options.width = Math.max(MIN_WINDOW_SIZE, options.width)
+    options.height = Math.max(MIN_WINDOW_SIZE, options.height)
+
     // create window
     mainWindow = new BrowserWindow({ ...mainOptions, ...options })
+
+    // this is to debug any weird positioning
+    console.log("Main Window Bounds:", mainWindow.getBounds())
 
     loadWindowContent(mainWindow)
     setMainListeners()

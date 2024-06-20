@@ -1,7 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
-    import { volume } from "../../stores"
 
     export let path: any
     export let video: any = null
@@ -52,7 +51,7 @@
     }
 
     $: playbackRate = Number(mediaStyle.speed) || 1
-    $: audioVolume = Math.max(0, Math.min(1, $volume ?? 1))
+    // $: audioVolume = Math.max(0, Math.min(1, $volume ?? 1))
 
     // path starting at "/" auto completes to app root, but should be file://
     $: if (path[0] === "/") path = `file://${path}`
@@ -71,12 +70,12 @@
         bind:currentTime={videoTime}
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}
-        bind:volume={audioVolume}
         muted={mirror ? true : videoData.muted ?? true}
         src={path}
         autoplay
         loop={videoData.loop || false}
     >
+        <!-- bind:volume={audioVolume} -->
         <track kind="captions" />
     </video>
 </div>

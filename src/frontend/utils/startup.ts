@@ -45,7 +45,7 @@ async function startupMain() {
     checkStartupActions()
     startTracking()
 
-    await wait(3000)
+    await wait(5000)
     unsavedUpdater()
 }
 
