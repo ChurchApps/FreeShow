@@ -23,7 +23,8 @@
         "start:electron:dev": "npm-run-all -s build:electron:dev start:electron:script start:electron:run",
         "start:electron:script": "node scripts/electronDevPostBuild.js",
         "start:electron": "npm-run-all -p build:electron:dev:watch start:electron:dev",
-        "test": "npm-run-all -s build test:playwright",
+        "test": "npm-run-all -s build test:local",
+        "test:local": "node scripts/e2eTest.js",
         "test:playwright": "cross-env NODE_ENV=production npx playwright test",
         "postinstall": "electron-builder install-app-deps",
         "prepack": "npm run build",
@@ -178,6 +179,7 @@
         "sqlite-to-json": "^0.1.3",
         "sqlite3": "5.1.6",
         "svelte-youtube": "0.0.2",
+        "tmp": "^0.2.3",
         "uid": "^2.0.0",
         "word-extractor": "^1.0.4",
         "youtube-iframe": "^1.0.3"
