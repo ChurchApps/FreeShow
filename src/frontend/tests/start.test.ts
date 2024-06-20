@@ -70,7 +70,7 @@ test("Launch electron app", async () => {
         // Close after finishing
         await electronApp.close()
     } catch (ex) {
-        await window.screenshot({ path: "failed.png" })
+        await window.screenshot({ path: "playwright-report/failed.png" })
         throw ex
     }
 })
