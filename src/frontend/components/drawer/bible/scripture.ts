@@ -126,12 +126,19 @@ export function getSlides({ bibles, sorted }) {
         sorted.forEach((s: any, i: number) => {
             let slideArr: any = slides[slideIndex][bibleIndex]
 
+            let lineIndex: number = 0
+            // verses on individual lines
+            if (get(scriptureSettings).versesOnIndividualLines) {
+                lineIndex = i
+                if (!slideArr.lines![lineIndex]) slideArr.lines![lineIndex] = { text: [], align: alignStyle }
+            }
+
             if (get(scriptureSettings).verseNumbers) {
                 let size = get(scriptureSettings).numberSize || 50
                 if (i === 0) size *= 1.2
                 let verseNumberStyle = textStyle + "font-size: " + size + "px;color: " + (get(scriptureSettings).numberColor || "#919191")
 
-                slideArr.lines![0].text.push({
+                slideArr.lines![lineIndex].text.push({
                     value: s + " ",
                     style: verseNumberStyle,
                     customType: "disableTemplate", // dont let template style verse numbers
@@ -196,7 +203,7 @@ export function getSlides({ bibles, sorted }) {
                 textArray.push({ value: text, style: textStyle })
             }
 
-            slideArr.lines![0].text.push(...textArray)
+            slideArr.lines![lineIndex].text.push(...textArray)
 
             // if (bibleIndex + 1 < bibles.length) return
             if ((i + 1) % get(scriptureSettings).versesPerSlide > 0) return

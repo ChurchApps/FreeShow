@@ -76,7 +76,7 @@
     <!-- overlay -->
     <!-- WIP !altKeyPressed &&  -->
     {#if overlay?.items}
-        <div style="opacity: 0.5;pointer-events: none;">
+        <div style={edit ? "opacity: 0.5;pointer-events: none;" : ""}>
             {#each overlay.items as item}
                 <Textbox {item} ref={{ type: "overlay", id: overlayId }} />
             {/each}

@@ -82,10 +82,12 @@ import type { SaveList, SaveListSettings, SaveListSyncedSettings } from "./../..
 import { audioStreams, companion } from "./../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
+import { customActionActivation } from "../components/actions/actions"
 
 export function save(closeWhenFinished: boolean = false, backup: boolean = false) {
     console.log("SAVING...")
     newToast("$toast.saving")
+    customActionActivation("save")
 
     let settings: { [key in SaveListSettings]: any } = {
         initialized: true,

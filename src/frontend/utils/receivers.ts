@@ -16,7 +16,7 @@ import { importFSB } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
 import { convertEasyWorship } from "../converters/easyworship"
-import { importShow } from "../converters/importHelpers"
+import { importShow, importSpecific } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
@@ -515,13 +515,16 @@ const receiveCLOUD = {
 // IMPORT
 
 const receiveIMPORT: any = {
-    txt: (a: any) => convertTexts(a),
-    pdf: (a: any) => convertPDF(a),
-    calendar: (a: any) => convertCalendar(a),
-    powerpoint: (a: any) => convertPowerpoint(a),
-    word: (a: any) => convertTexts(a),
+    // FreeShow
     freeshow: (a: any) => importShow(a),
     freeshow_project: (a: any) => importProject(a),
+    freeshow_template: (a: any) => importSpecific(a, templates),
+    freeshow_theme: (a: any) => importSpecific(a, themes),
+    // Text
+    txt: (a: any) => convertTexts(a),
+    chordpro: (a: any) => convertChordPro(a),
+    powerpoint: (a: any) => convertPowerpoint(a),
+    word: (a: any) => convertTexts(a),
     // Other programs
     propresenter: (a: any) => convertProPresenter(a),
     easyworship: (a: any) => convertEasyWorship(a),
@@ -529,12 +532,14 @@ const receiveIMPORT: any = {
     openlp: (a: any) => convertOpenLP(a),
     opensong: (a: any) => convertOpenSong(a),
     softprojector: (a: any) => convertSoftProjector(a),
-    chordpro: (a: any) => convertChordPro(a),
+    // Media
+    pdf: (a: any) => convertPDF(a),
+    lessons: (a: any) => convertLessonsPresentation(a),
+    // Other
+    calendar: (a: any) => convertCalendar(a),
     // Bibles
     freeshow_bible: (a: any) => importFSB(a),
     beblia_bible: (a: any) => convertBebliaBible(a),
     zefania_bible: (a: any) => convertZefaniaBible(a),
     opensong_bible: (a: any) => convertOpenSongBible(a),
-    // Special
-    lessons: (a: any) => convertLessonsPresentation(a),
 }

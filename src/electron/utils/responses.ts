@@ -11,7 +11,6 @@ import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { Show } from "../../types/Show"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
-import { createPDFWindow, exportProject, exportTXT } from "../data/export"
 import { importShow } from "../data/import"
 import { error_log } from "../data/store"
 import { getThumbnail, saveImage } from "../data/thumbnails"
@@ -41,7 +40,6 @@ import {
     selectFiles,
     selectFilesDialog,
     selectFolder,
-    selectFolderDialog,
     writeFile,
 } from "./files"
 import { LyricSearch } from "./LyricSearch"
@@ -57,28 +55,6 @@ export function startImport(_e: any, msg: Message) {
     if (needsFileAndNoFileSelected || isLinuxAndPfdImport) return
 
     importShow(msg.channel, files || null, msg.data.path)
-}
-
-// EXPORT
-export function startExport(_e: any, msg: Message) {
-    if (msg.channel !== "GENERATE") return
-
-    let dataPath: string = msg.data.path
-
-    if (!dataPath) {
-        dataPath = selectFolderDialog()
-        if (!dataPath) return
-
-        toApp(MAIN, { channel: "DATA_PATH", data: dataPath })
-    }
-
-    msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
-
-    // WIP open in system when completed...
-
-    if (msg.data.type === "pdf") createPDFWindow(msg.data)
-    else if (msg.data.type === "txt") exportTXT(msg.data)
-    else if (msg.data.type === "project") exportProject(msg.data)
 }
 
 // BIBLE

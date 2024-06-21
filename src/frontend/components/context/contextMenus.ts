@@ -114,6 +114,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // OVERLAYS
     lock_to_output: { label: "context.lock_to_output", icon: "locked" },
     place_under_slide: { label: "context.place_under_slide", icon: "under" },
+    // TEMPLATES
+    template_actions: { label: "tabs.actions", icon: "actions" },
     // STAGE
     move_connections: { label: "context.move_connections", icon: "up" },
     // SETTINGS
@@ -176,7 +178,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "addToFirstSlide",
     overlay_card: ["edit", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
-    template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    template_card: ["edit", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
     audio_button: ["addToProject", "SEPERATOR", "preview", "favourite", "SEPERATOR", "system_open"],
@@ -234,7 +236,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     event: ["edit", "duplicate", "delete", "delete_all"],
 
     // SETTINGS
-    theme: ["rename", "duplicate", "delete", "SEPERATOR", "reset_theme"],
+    theme: ["rename", "duplicate", "delete", "SEPERATOR", "export", "SEPERATOR", "reset_theme"],
     style: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen_stage: ["rename", "recolor", "SEPERATOR", "reset"],

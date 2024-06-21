@@ -3,11 +3,11 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activeProject, categories, drawerTabsData, outLocked, playScripture, scriptureSettings, templates } from "../../../stores"
+    import { activeProject, categories, drawerTabsData, outLocked, outputs, playScripture, scriptureSettings, templates } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { setOutput } from "../../helpers/output"
+    import { getActiveOutputs, setOutput } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -19,6 +19,7 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
+    import { customActionActivation } from "../../actions/actions"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -117,6 +118,9 @@
     function showVerse() {
         if ($outLocked) return
 
+        let outputIsScripture = $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
+        if (!outputIsScripture) customActionActivation("scripture_start")
+
         let tempItems: Item[] = slides[0] || []
         setOutput("slide", { id: "temp", tempItems })
     }
@@ -173,6 +177,8 @@
         if (!customText.split("\n")[0] && customText.length) customText = customText.replaceAll("\n", "")
         update("customText", customText)
     }
+
+    $: containsJesusWords = Object.values(bibles?.[0]?.verses || {})?.find((text: any) => text?.includes('<span class="wj"'))
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -193,10 +199,20 @@
             <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 30%;" />
         </CombinedInput>
 
-        <CombinedInput textWidth={70}>
-            <p><T id="scripture.max_verses" /></p>
-            <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
-        </CombinedInput>
+        {#if $scriptureSettings.versesPerSlide != 3 || sorted.length > 1}
+            <CombinedInput textWidth={70}>
+                <p><T id="scripture.max_verses" /></p>
+                <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
+            </CombinedInput>
+        {/if}
+        {#if $scriptureSettings.versesOnIndividualLines || sorted.length > 1}
+            <CombinedInput textWidth={70}>
+                <p><T id="scripture.verses_on_individual_lines" /></p>
+                <div class="alignRight">
+                    <Checkbox id="versesOnIndividualLines" checked={$scriptureSettings.versesOnIndividualLines} on:change={checked} />
+                </div>
+            </CombinedInput>
+        {/if}
 
         <CombinedInput textWidth={70}>
             <p><T id="scripture.verse_numbers" /></p>
@@ -215,12 +231,14 @@
             </CombinedInput>
         {/if}
 
-        <CombinedInput textWidth={70}>
-            <p><T id="scripture.red_jesus" /></p>
-            <div class="alignRight">
-                <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
-            </div>
-        </CombinedInput>
+        {#if $scriptureSettings.redJesus || containsJesusWords}
+            <CombinedInput textWidth={70}>
+                <p><T id="scripture.red_jesus" /></p>
+                <div class="alignRight">
+                    <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
+                </div>
+            </CombinedInput>
+        {/if}
         {#if $scriptureSettings.redJesus}
             <CombinedInput>
                 <p><T id="edit.color" /></p>

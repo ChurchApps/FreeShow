@@ -140,6 +140,8 @@ function playNote(time: number, first: boolean = false) {
     source.connect(gainNode)
     gainNode.connect(audioContext.destination)
 
+    // WIP connect getAnalyser()
+
     gainNode.gain.value = getVolume(first ? accentVolume : secondaryVolume)
 
     source.start(audioContext.currentTime + time)

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, onMount } from "svelte"
     import type { Option } from "../../../types/Main"
     import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, popupData, shows, stageShows, styles, triggers } from "../../stores"
     import T from "../helpers/T.svelte"
@@ -21,6 +21,11 @@
     export let actionIndex: number = 0
     export let mainId: string = ""
     export let list: boolean = false
+
+    onMount(() => {
+        // set default
+        if (inputId === "metronome" && !value) updateValue("", { tempo: 120, beats: 4 })
+    })
 
     let dispatch = createEventDispatcher()
     function updateValue(key: string, e) {

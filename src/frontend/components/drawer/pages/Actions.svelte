@@ -54,7 +54,7 @@
                                     <Icon id={actionData[action.triggers[0]]?.icon || "actions"} right />
                                 {/if}
 
-                                <p style="width: 350px;" class:startup={action.startupEnabled}>
+                                <p style="width: 350px;" class:customActivation={action.customActivation || action.startupEnabled}>
                                     {action.name}
 
                                     {#if action.midi}
@@ -120,7 +120,7 @@
         width: 100%;
         min-height: 35px;
     }
-    .startup {
+    .customActivation {
         color: var(--secondary);
     }
 

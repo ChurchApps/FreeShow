@@ -11,6 +11,7 @@ import { addToPos } from "./mover"
 import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayoutsFromTemplate, updateSlideFromTemplate } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
+import { customActionActivation } from "../actions/actions"
 
 // TODO: move history switch to actions
 
@@ -50,6 +51,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 id = obj.oldData?.id || uid()
                 if (keys && !key) id = "keys"
 
+                if (initializing && obj.location.id === "show") customActionActivation("show_created")
                 if (initializing && empty && updater.initialize) data.data = updater.initialize(data.data)
 
                 if (data.replace) {
@@ -726,7 +728,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         // roll items around
                         if (createItems && !slide.settings?.template) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 
-                        let changeOverflowItems = slide.settings?.template ?? createItems
+                        let changeOverflowItems = slide.settings?.template || createItems
                         let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false)
 
                         // remove items if not in template (and textbox is empty)

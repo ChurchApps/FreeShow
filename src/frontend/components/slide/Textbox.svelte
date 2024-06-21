@@ -358,6 +358,12 @@
         let newPath = await loadThumbnail(mediaItemPath, mediaSize.slideSize)
         if (newPath) mediaItemPath = newPath
     }
+
+    // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
+    let updateDynamic = 0
+    setInterval(() => {
+        updateDynamic++
+    }, 1000)
 </script>
 
 <OutputTransition transition={hidden ? {} : itemTransition}>
@@ -405,7 +411,7 @@
                                 {#each line.text || [] as text}
                                     {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                     <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate' ? text.style : ''}">
-                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }) : value}
+                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }, updateDynamic) : value}
                                     </span>
                                 {/each}
                             </div>

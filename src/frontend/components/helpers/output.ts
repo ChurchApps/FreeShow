@@ -3,15 +3,15 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
-import type { Item, Layout, Media, OutSlide, Show, Slide, Template, Transition } from "../../../types/Show"
+import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData } from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "./array"
+import { getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
-import { getFileName, removeExtension } from "./media"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
@@ -381,13 +381,22 @@ export function updateSlideFromTemplate(slide: Slide, template: Template, isFirs
     let settings = template.settings || {}
 
     if (settings.resolution || slide.settings.resolution) slide.settings.resolution = getResolution(settings.resolution)
-    if (settings.backgroundColor || slide.settings.color) slide.settings.color = settings.backgroundColor || ""
     if (isFirst && (settings.firstSlideTemplate || removeOverflow)) slide.settings.template = settings.firstSlideTemplate || ""
+    if (settings.backgroundColor || slide.settings.color) slide.settings.color = settings.backgroundColor || ""
+
+    // add overlay items to slide items
+    if (removeOverflow && settings.overlayId) {
+        let overlayItems = get(overlays)[settings.overlayId]?.items || []
+        slide.items.push(...overlayItems)
+    }
 
     return slide
 }
 
 export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, media: { [key: string]: Media }, template: Template, removeOverflow: boolean = false) {
+    // only alter layout slides if clicking on the template
+    if (!removeOverflow) return { layouts, media }
+
     let settings = template.settings || {}
 
     let bgId = ""
@@ -403,16 +412,6 @@ export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, me
         slides.forEach((slide, i) => {
             if (i === 0 && settings.backgroundPath) slide.background = bgId
 
-            if (settings.overlayId) {
-                let existingOverlays = slide.overlays || []
-                if (!existingOverlays.includes(settings.overlayId)) {
-                    existingOverlays.push(settings.overlayId)
-                    slide.overlays = existingOverlays
-                }
-            } else if (removeOverflow) {
-                slide.overlays = []
-            }
-
             if (settings.actions?.length) {
                 if (!slide.actions) slide.actions = {}
 
@@ -423,7 +422,7 @@ export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, me
                     newSlideActions.push(action)
                 })
 
-                slide.actions.slideActions = [...newSlideActions, settings.actions]
+                slide.actions.slideActions = [...newSlideActions, ...settings.actions]
             }
         })
 
@@ -431,6 +430,21 @@ export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, me
     })
 
     return { layouts, media }
+}
+
+function getSlideItemsFromTemplate(templateSettings: TemplateSettings) {
+    let newItems: Item[] = []
+
+    // these are set by the output style: resolution, backgroundColor, backgroundPath
+    // this is not relevant: firstSlideTemplate
+
+    // add overlay items
+    if (templateSettings.overlayId) {
+        let overlayItems = get(overlays)[templateSettings.overlayId]?.items || []
+        newItems.push(...overlayItems)
+    }
+
+    return newItems
 }
 
 function removeTextValue(items: Item[]) {
@@ -514,9 +528,13 @@ export function getOutputTransitions(slideData: any, transitionData: any, disabl
 
 export function setTemplateStyle(outSlide: any, templateId: string | undefined, items: Item[]) {
     let slideItems = outSlide?.id === "temp" ? outSlide.tempItems : items
-    let templateItems = get(templates)[templateId || ""]?.items || []
+    let template = get(templates)[templateId || ""] || {}
+    let templateItems = template.items || []
 
-    return mergeWithTemplate(slideItems, templateItems, true)
+    let newItems = mergeWithTemplate(slideItems, templateItems, true)
+    newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
+
+    return newItems
 }
 
 export function getOutputLines(outSlide: any, styleLines: any = 0) {

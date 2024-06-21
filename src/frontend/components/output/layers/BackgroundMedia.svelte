@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
     import type { MediaStyle } from "../../../../types/Main"
     import type { OutBackground, Transition } from "../../../../types/Show"
@@ -17,6 +17,7 @@
 
     export let data: OutBackground
     export let transition: Transition
+    export let fadingOut: boolean = false
     export let currentStyle: any = {}
     export let animationStyle: string = ""
     export let duration: number = 0
@@ -41,6 +42,8 @@
     // video values updated
     $: if (!mirror && (data.muted !== undefined || data.loop !== undefined)) updateValues()
     function updateValues() {
+        if (fadingOut) return
+
         videoData.muted = data.muted ?? true
         videoData.loop = data.loop ?? false
     }
@@ -48,8 +51,8 @@
     $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
     $: if (mirror && $videosTime[outputId]) videoTime = $videosTime[outputId]
 
-    $: if (!mirror) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
-    $: if (!mirror) sendVideoTime(videoTime)
+    $: if (!mirror && !fadingOut) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
+    $: if (!mirror && !fadingOut) sendVideoTime(videoTime)
 
     let loop = 0
     function sendVideoTime(time: number) {
@@ -73,13 +76,13 @@
     const videoReceiver = {
         TIME: (data: any) => {
             let outputData = data[keyParentId || outputId]
-            if (!outputData) return
+            if (!outputData || fadingOut) return
 
             videoTime = outputData
         },
         DATA: (data: any) => {
             let outputData = data[keyParentId || outputId]
-            if (!outputData) return
+            if (!outputData || fadingOut) return
 
             videoData = { ...outputData, duration: videoData.duration || 0 }
         },
@@ -88,7 +91,7 @@
     onMount(() => {
         receive(OUTPUT, videoReceiver, listenerId)
     })
-    onDestroy(() => destroy(OUTPUT, listenerId))
+    $: if (fadingOut) destroy(OUTPUT, listenerId)
 
     // call end just before (to make room for transition) - this also triggers video ended on loop
     $: if (videoData.duration && duration && videoTime >= videoData.duration - (duration / 1000 + 0.1)) videoEnded()

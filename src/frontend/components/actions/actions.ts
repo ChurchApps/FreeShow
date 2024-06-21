@@ -43,9 +43,25 @@ export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
 }
 
 export function checkStartupActions() {
+    // WIP only for v1.1.7 (can be removed)
+    midiIn.update((a) => {
+        Object.keys(a).forEach((actionId) => {
+            let action: any = a[actionId]
+            if (action.startupEnabled && !action.customActivation) {
+                delete action.startupEnabled
+                action.customActivation = "startup"
+            }
+        })
+        return a
+    })
+
+    customActionActivation("startup")
+}
+
+export function customActionActivation(id: string) {
     Object.keys(get(midiIn)).forEach((actionId) => {
-        let action = get(midiIn)[actionId]
-        if (action.startupEnabled) runAction(action)
+        let action: any = get(midiIn)[actionId]
+        if (action.customActivation === id) runAction(action)
     })
 }
 

@@ -83,7 +83,7 @@
     </CombinedInput>
 
     <CombinedInput>
-        <p><T id="edit.overlay" /></p>
+        <p title={$dictionary.edit?.overlay_content}><T id="edit.overlay_content" /></p>
         <Dropdown options={overlayList} value={$overlays[settings.overlayId || ""]?.name || "—"} on:click={(e) => setValue(e?.detail?.id, "overlayId")} />
     </CombinedInput>
 

@@ -232,7 +232,7 @@ export interface Midi {
     // action?: string
     // actionData?: any
     shows?: any[] // ??
-    startupEnabled?: boolean
+    customActivation?: string
     midiEnabled?: boolean
     midi?: {
         input?: string

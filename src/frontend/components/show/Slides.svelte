@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activePage, activeShow, cachedShowsData, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles } from "../../stores"
+    import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
@@ -48,6 +49,8 @@
     function slideClick(e: any, index: number) {
         // TODO: duplicate function of "preview:126 - updateOut"
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
+
+        customActionActivation("slide_click")
 
         let slideRef: any = _show("active").layouts("active").ref()[0]
         updateOut("active", index, slideRef, !e.altKey)

@@ -6,6 +6,7 @@
     import { getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import Actions from "../../slide/Actions.svelte"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -72,6 +73,11 @@
                                 history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "none", override: "show#" + $activeShow.id } })
                         }}
                     >
+                        <!-- icons -->
+                        {#if template.settings?.actions?.length}
+                            <Actions columns={$mediaOptions.columns} templateId={template.id} actions={{ slideActions: template.settings?.actions }} />
+                        {/if}
+
                         <SelectElem id="template" data={template.id} fill draggable>
                             <TemplateSlide templateId={template.id} {template} />
                         </SelectElem>

@@ -252,8 +252,6 @@ export function analyseAudio() {
             }
         }
 
-        console.log(get(playingVideos))
-
         let outputVideos: any[] = get(playingVideos).filter((a) => a.location === "output")
         if (outputVideos.length) {
             outputVideos.map((v) => {

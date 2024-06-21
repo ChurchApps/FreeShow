@@ -1,7 +1,8 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import { history } from "../components/helpers/history"
-import { activeDrawerTab, activePopup, activeProject, activeRename, categories, drawerTabsData, shows } from "../stores"
 import { checkName } from "../components/helpers/show"
+import { activeDrawerTab, activePopup, activeProject, activeRename, categories, drawerTabsData, shows } from "../stores"
 import { newToast } from "../utils/common"
 
 export function createCategory(name: string, icon: string = "song", { isDefault } = { isDefault: false }) {
@@ -63,4 +64,19 @@ export function importShow(files: any[]) {
     })
 
     setTempShows(tempShows)
+}
+
+// SPECIFIC FORMATS
+
+export function importSpecific(data: any, store: any) {
+    data.forEach(({ content }) => {
+        content = JSON.parse(content)
+
+        store.update((a) => {
+            a[uid()] = content
+            return a
+        })
+    })
+
+    newToast("$main.finished")
 }

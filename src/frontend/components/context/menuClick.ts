@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { MAIN, OUTPUT } from "../../../types/Channels"
+import { EXPORT, MAIN, OUTPUT } from "../../../types/Channels"
 import type { MediaStyle } from "../../../types/Main"
 import type { Slide } from "../../../types/Show"
 import { changeSlideGroups, splitItemInTwo } from "../../show/slides"
@@ -16,6 +16,7 @@ import {
     audioFolders,
     currentOutputSettings,
     currentWindow,
+    dataPath,
     dictionary,
     drawerTabsData,
     eventEdit,
@@ -297,10 +298,29 @@ const actions: any = {
 
     // project
     export: (obj: any) => {
-        if (!obj.contextElem.classList.value.includes("project")) return
-        if (obj.sel.id !== "project" && !get(activeProject)) return
-        let projectId: string = obj.sel.data[0]?.id || get(activeProject)
-        exportProject(get(projects)[projectId])
+        if (obj.sel.id === "template") {
+            let template = get(templates)[obj.sel.data[0]]
+            if (!template) return
+            send(EXPORT, ["TEMPLATE"], { path: get(dataPath), content: template })
+
+            return
+        }
+
+        if (obj.sel.id === "theme") {
+            let theme = get(themes)[obj.sel.data[0]?.id]
+            if (!theme) return
+            send(EXPORT, ["THEME"], { path: get(dataPath), content: theme })
+
+            return
+        }
+
+        if (obj.contextElem.classList.value.includes("project")) {
+            if (obj.sel.id !== "project" && !get(activeProject)) return
+            let projectId: string = obj.sel.data[0]?.id || get(activeProject)
+            exportProject(get(projects)[projectId])
+
+            return
+        }
     },
     close: (obj: any) => {
         if (get(currentWindow) === "output") {
@@ -489,6 +509,16 @@ const actions: any = {
         } else if (action.includes("Timer")) {
             activePopup.set("set_time")
         }
+    },
+    template_actions: (obj: any) => {
+        let templateId = obj.sel.data[0]
+        let template = get(templates)[templateId]
+        if (!template) return
+
+        let existingActions = template.settings?.actions || []
+
+        popupData.set({ mode: "template", templateId, existing: existingActions.map((a) => a.triggers?.[0]) })
+        activePopup.set("action")
     },
     remove_layers: (obj: any) => {
         let type: "image" | "overlays" | "music" | "microphone" | "action" = obj.menu.type || obj.menu.icon

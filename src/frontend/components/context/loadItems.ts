@@ -190,8 +190,9 @@ const loadActions = {
     bind_item: () => loadActions.bind_slide([], true),
     dynamic_values: () => {
         let values: any = getDynamicIds().map((id) => ({ id, label: id, translate: false }))
+        let firstShowIndex = values.findIndex((a) => a.id.includes("show_"))
         let firstMetaIndex = values.findIndex((a) => a.id.includes("meta_"))
-        values = [...values.slice(0, firstMetaIndex), "SEPERATOR", ...values.slice(firstMetaIndex)]
+        values = [...values.slice(0, firstShowIndex), "SEPERATOR", ...values.slice(firstShowIndex, firstMetaIndex), "SEPERATOR", ...values.slice(firstMetaIndex)]
 
         return values
     },

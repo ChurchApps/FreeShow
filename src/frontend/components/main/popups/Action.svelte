@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeShow, midiIn, popupData, showsCache } from "../../../stores"
+    import { activePopup, activeShow, midiIn, popupData, showsCache, templates } from "../../../stores"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
     import { actionData } from "../../actions/actionData"
@@ -18,6 +18,7 @@
     import { translate } from "../../../utils/language"
     import { updateCachedShows } from "../../helpers/show"
     import type { API_midi } from "../../actions/api"
+    import Dropdown from "../../inputs/Dropdown.svelte"
 
     $: id = $popupData.id || ""
     $: mode = $popupData.mode || ""
@@ -30,6 +31,9 @@
         if (!id) {
             id = uid()
             popupData.set({ ...$popupData, id })
+        } else if (mode === "template") {
+            if (id) action = $templates[$popupData.templateId]?.settings?.actions?.find((a) => a.id === id) || action
+            else id = uid()
         } else {
             // old
             let showMidi = _show().get("midi")?.[id]
@@ -90,6 +94,7 @@
     function updateValue(key: string, e: any, checkbox: boolean = false) {
         let value = e.detail ?? e.target?.value ?? e
         if (checkbox) value = e.target?.checked
+
         action[key] = value
     }
 
@@ -155,7 +160,22 @@
 
         if (action.midiEnabled && !action.midi) action.midi = actionMidi
 
-        if (mode !== "slide") {
+        if (mode === "template") {
+            let templateId = $popupData.templateId
+            let template = $templates[templateId]
+            if (!template) return activePopup.set(null)
+
+            let templateSettings = template?.settings || {}
+
+            let actions = templateSettings.actions || []
+            let existingIndex = actions.findIndex((a) => a.id === id || a.triggers?.[0] === action.triggers?.[0])
+            if (existingIndex > -1) actions[existingIndex] = action
+            else actions.push(action)
+
+            templateSettings.actions = actions
+            let newData = { key: "settings", data: templateSettings }
+            history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "drawer", id: "template_settings", override: `actions_${templateId}` } })
+        } else if (mode !== "slide") {
             midiIn.update((a) => {
                 if (mode === "slide_midi") {
                     // WIP MIDI this should show up in the "Actions" tab
@@ -211,10 +231,21 @@
         let setShow = { id: "start_show", actionValue: { id: $popupData.showId } }
         changeAction({ detail: setShow }, $popupData.actionIndex)
     }
+
+    // custom activations
+    const customActivations = [
+        { id: "", name: "—" },
+        { id: "startup", name: "$:actions.activate_on_startup:$" },
+        { id: "save", name: "$:actions.activate_save:$" },
+        { id: "slide_click", name: "$:actions.activate_slide_clicked:$" },
+        { id: "scripture_start", name: "$:actions.activate_scripture_start:$" },
+        { id: "show_created", name: "$:actions.activate_show_created:$" },
+    ]
+    $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""
 </script>
 
 <div style="min-width: 45vw;min-height: 50vh;">
-    {#if mode === "slide"}
+    {#if mode === "slide" || mode === "template"}
         <CreateAction mainId={id} actionId={action.triggers?.[0] || ""} existingActions={action.triggers || []} actionValue={action.actionValues?.[action.triggers?.[0] || ""]} on:change={changeAction} list />
     {:else}
         {#if mode !== "slide_midi"}
@@ -248,12 +279,10 @@
         <!-- if not slide specific trigger action -->
         {#if !mode}
             <CombinedInput>
-                <!-- WIP MIDI activate on startup -->
-                <p><T id="actions.activate_on_startup" /></p>
-                <div class="alignRight">
-                    <Checkbox checked={action.startupEnabled} on:change={(e) => updateValue("startupEnabled", e, true)} />
-                </div>
+                <p><T id="actions.custom_activation" /></p>
+                <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} />
             </CombinedInput>
+
             <!-- can be activated by MIDI input signal -->
             <CombinedInput>
                 <p><T id="midi.activate" /></p>

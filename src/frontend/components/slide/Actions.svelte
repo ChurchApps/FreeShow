@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { audioPlaylists, audioStreams, dictionary, midiIn, shows, stageShows, styles, triggers } from "../../stores"
+    import { audioPlaylists, audioStreams, dictionary, midiIn, shows, stageShows, styles, templates, triggers } from "../../stores"
     import { translate } from "../../utils/language"
     import { actionData } from "../actions/actionData"
     import { clone } from "../helpers/array"
@@ -8,10 +8,13 @@
     import Button from "../inputs/Button.svelte"
 
     export let columns: number
-    export let index: number
+    export let index: number = -1
+    export let templateId: string = ""
     export let actions: any
 
     function changeAction(id: string, save: boolean = true) {
+        if (templateId) return
+
         let data = { ...actions, [id]: actions[id] ? !actions[id] : true }
 
         if (id === "outputStyle" && !data[id]) delete data.styleOutputs
@@ -23,6 +26,16 @@
         let slideActions = clone(actions.slideActions)
         let actionIndex = actions.slideActions.findIndex((a) => a.id === id)
         slideActions.splice(actionIndex, 1)
+
+        if (templateId) {
+            let templateSettings = $templates[templateId]?.settings || {}
+            templateSettings.actions = slideActions
+
+            let newData = { key: "settings", data: templateSettings }
+            history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "drawer", id: "template_settings", override: `actions_${templateId}` } })
+
+            return
+        }
 
         let data = { ...actions, slideActions }
 

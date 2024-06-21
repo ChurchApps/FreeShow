@@ -316,7 +316,8 @@
                 bibles[i].verses = verses[id]
             }
 
-            selectFirstVerse(id, i)
+            // let bibles[i].verses update first
+            setTimeout(() => selectFirstVerse(id, i), 500)
         })
     }
 
@@ -331,7 +332,16 @@
             activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[bibleId]?.[a]) : ["1"]
         }
 
-        bibles[index].activeVerses = activeVerses
+        updateActiveVerses(index)
+    }
+
+    function updateActiveVerses(bibleIndex: number = 0) {
+        console.log("UPDATE", activeVerses)
+        bibles[bibleIndex].activeVerses = activeVerses
+
+        // add to selected (for drag/drop)
+        let sorted = activeVerses.sort((a, b) => Number(a) - Number(b)) || []
+        selected.set({ id: "scripture", data: [{ bibles, sorted }] })
     }
 
     function selectVerse(e: any, id: string) {
@@ -361,10 +371,7 @@
             activeVerses = activeVerses
         } else activeVerses = [id]
 
-        bibles[0].activeVerses = activeVerses
-
-        let sorted = activeVerses.sort((a, b) => Number(a) - Number(b)) || []
-        selected.set({ id: "scripture", data: [{ bibles, sorted }] })
+        updateActiveVerses()
     }
 
     // search
@@ -702,11 +709,7 @@
         })
 
         activeVerses = currentVerses
-        bibles[0].activeVerses = currentVerses
-
-        // add to selected (for drag/drop)
-        let sorted = activeVerses.sort((a, b) => Number(a) - Number(b)) || []
-        selected.set({ id: "scripture", data: [{ bibles, sorted }] })
+        updateActiveVerses()
     }
 
     function moveSelection(moveLeft: boolean) {

@@ -26,6 +26,7 @@ import {
     showsCache,
     slideTimers,
     styles,
+    templates,
     timers,
     triggers,
     videosData,
@@ -39,6 +40,7 @@ import { loadShows } from "./setShow"
 import { initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { stopTimers } from "./timerTick"
+import { addZero } from "./time"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -527,7 +529,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         setTimeout(() => {
             playSlideActions(data.actions.slideActions, outputIds, index)
         }, actionTimeout)
-    }
+    } else playOutputStyleTemplateActions(outputIds)
 }
 
 const runPerOutput = ["clear_background", "clear_overlays"]
@@ -547,6 +549,24 @@ function playSlideActions(actions: any[], outputIds: string[] = [], slideIndex: 
     }
 
     actions.forEach((a) => runAction(a, { slideIndex }))
+
+    playOutputStyleTemplateActions(outputIds)
+}
+
+// play any output style template actions
+function playOutputStyleTemplateActions(outputIds: string[]) {
+    outputIds.forEach((outputId) => {
+        let outputStyleId = get(outputs)[outputId]?.style || ""
+        if (!outputStyleId) return
+
+        let styleTemplateId = get(styles)[outputStyleId]?.template || ""
+        if (!styleTemplateId) return
+
+        let templateSettings = get(templates)[styleTemplateId]?.settings?.actions || []
+        if (!templateSettings?.length) return
+
+        templateSettings?.forEach((action) => runAction(action))
+    })
 }
 
 export async function startShow(showId: string) {
@@ -800,7 +820,7 @@ export function getDynamicIds() {
     return [...mainValues, ...metaValues]
 }
 
-export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex }: any) {
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex }: any, _updater: number = 0) {
     let show = _show(showId).get()
     if (!show) return text
 
@@ -826,6 +846,15 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 }
 
 const dynamicValues = {
+    // time
+    time_date: () => addZero(new Date().getDate()),
+    time_month: () => addZero(new Date().getMonth() + 1),
+    time_year: () => new Date().getFullYear(),
+    time_hours: () => addZero(new Date().getHours()),
+    time_minutes: () => addZero(new Date().getMinutes()),
+    time_seconds: () => addZero(new Date().getSeconds()),
+
+    // show
     show_name: ({ show }) => show.name || "",
 
     layout_slides: ({ ref }) => ref.length,
