@@ -1,10 +1,23 @@
 import { _electron as electron } from "playwright"
 import { expect, test } from "@playwright/test"
+import tmp from "tmp"
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 test("Launch electron app", async () => {
-    const electronApp = await electron.launch({ args: ["."] })
+    const electronApp = await electron.launch({
+        args: ["."],
+        // offline to avoid new version check
+        offline: true,
+    })
+
+    // Mocking Electron open dialog
+    const tmp_folder = tmp.dirSync({ unsafeCleanup: true })
+    await electronApp.evaluate(async ({ dialog }, tmp_folder_name) => {
+        dialog.showOpenDialogSync = (): string[] | undefined => {
+            return [tmp_folder_name]
+        }
+    }, tmp_folder.name)
 
     await electronApp.waitForEvent("window")
 
@@ -22,6 +35,9 @@ test("Launch electron app", async () => {
 
     // Get the first window that the app opens, wait if necessary.
     const window = await electronApp.firstWindow()
+
+    // Direct Electron console to Node terminal.
+    window.on("console", console.log)
     try {
         // Print the title.
         console.log(await window.title())
@@ -29,15 +45,14 @@ test("Launch electron app", async () => {
         // Capture a screenshot.
         // await window.screenshot({ path: "intro.png" })
 
-        // Direct Electron console to Node terminal.
-        window.on("console", console.log)
-
         // Initial setup
+        // This triggers the Electron open dialog, mocked above
+        await window.locator(".main .showElem").getByRole("button").click()
         await window.getByText("Get Started!").click({ timeout: 1000 })
-        // This depends on whether there is existing shows to be loaded
-        try {
-            await window.getByTestId("alert.ack.check").click({ timeout: 1000 })
-        } catch (ex) {}
+        // This depends on whether there is existing shows to be loaded.
+        // As the existing show folder is also mocked to be a tmp folder,
+        // this is not expected.
+        // await window.getByTestId("alert.ack.check").click({ timeout: 1000 })
 
         // Create a new project, then try creating a new show under the project
         await window.locator("#leftPanel").getByText("New project").click({ timeout: 1000 })
@@ -77,4 +92,5 @@ test("Launch electron app", async () => {
         await window.screenshot({ path: "test-output/screenshots/failed.png" })
         throw ex
     }
+    tmp_folder.removeCallback()
 })

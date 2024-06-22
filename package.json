@@ -133,6 +133,7 @@
         "@types/express": "^4.17.13",
         "@types/follow-redirects": "^1.14.2",
         "@types/sqlite3": "^3.1.8",
+        "@types/tmp": "^0.2.6",
         "@types/vimeo__player": "^2.16.2",
         "electron": "^21.2.2",
         "electron-builder": "24.12.0",
