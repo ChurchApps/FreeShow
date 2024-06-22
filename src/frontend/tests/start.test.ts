@@ -9,19 +9,19 @@ test.beforeEach(async ({ context }) => {
 })
 
 test("Launch electron app", async () => {
-    const tmp_setting_folder = tmp.dirSync({ unsafeCleanup: true })
+    const tmpSettingFolder = tmp.dirSync({ unsafeCleanup: true })
     const electronApp = await electron.launch({
         args: ["."],
-        env: { ...process.env, NODE_ENV: "production", FS_MOCK_STORE_PATH: tmp_setting_folder.name },
+        env: { ...process.env, NODE_ENV: "production", FS_MOCK_STORE_PATH: tmpSettingFolder.name },
     })
 
     // Mocking Electron open dialog
-    const tmp_data_folder = tmp.dirSync({ unsafeCleanup: true })
-    await electronApp.evaluate(async ({ dialog }, tmp_data_folder_name) => {
+    const tmpDataFolder = tmp.dirSync({ unsafeCleanup: true })
+    await electronApp.evaluate(async ({ dialog }, tmpDataFolderName) => {
         dialog.showOpenDialogSync = (): string[] | undefined => {
-            return [tmp_data_folder_name]
+            return [tmpDataFolderName]
         }
-    }, tmp_data_folder.name)
+    }, tmpDataFolder.name)
 
     await electronApp.waitForEvent("window")
 
@@ -95,6 +95,6 @@ test("Launch electron app", async () => {
     }
     // Close after finishing
     await electronApp.close()
-    tmp_data_folder.removeCallback()
-    tmp_setting_folder.removeCallback()
+    tmpDataFolder.removeCallback()
+    tmpSettingFolder.removeCallback()
 })
