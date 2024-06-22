@@ -4,20 +4,24 @@ import tmp from "tmp"
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+test.beforeEach(async ({ context }) => {
+    await context.route("https://api.github.com/repos/vassbo/freeshow/releases", (route) => route.abort())
+})
+
 test("Launch electron app", async () => {
+    const tmp_setting_folder = tmp.dirSync({ unsafeCleanup: true })
     const electronApp = await electron.launch({
         args: ["."],
-        // offline to avoid new version check
-        offline: true,
+        env: { ...process.env, NODE_ENV: "production", FS_MOCK_STORE_PATH: tmp_setting_folder.name },
     })
 
     // Mocking Electron open dialog
-    const tmp_folder = tmp.dirSync({ unsafeCleanup: true })
-    await electronApp.evaluate(async ({ dialog }, tmp_folder_name) => {
+    const tmp_data_folder = tmp.dirSync({ unsafeCleanup: true })
+    await electronApp.evaluate(async ({ dialog }, tmp_data_folder_name) => {
         dialog.showOpenDialogSync = (): string[] | undefined => {
-            return [tmp_folder_name]
+            return [tmp_data_folder_name]
         }
-    }, tmp_folder.name)
+    }, tmp_data_folder.name)
 
     await electronApp.waitForEvent("window")
 
@@ -84,13 +88,13 @@ test("Launch electron app", async () => {
 
         // Verify the group changing was successful
         await expect(window.getByTitle("Outro")).toBeVisible({ timeout: 1000 })
-
-        // Close after finishing
-        await electronApp.close()
     } catch (ex) {
         console.log("Taking screenshot")
         await window.screenshot({ path: "test-output/screenshots/failed.png" })
         throw ex
     }
-    tmp_folder.removeCallback()
+    // Close after finishing
+    await electronApp.close()
+    tmp_data_folder.removeCallback()
+    tmp_setting_folder.removeCallback()
 })
