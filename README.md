@@ -2,6 +2,7 @@
 
 [![Downloads](https://img.shields.io/github/downloads/ChurchApps/freeshow/total)](https://github.com/ChurchApps/freeshow/releases)
 [![Licence](https://img.shields.io/badge/licence-GPL-blue.svg)](https://github.com/ChurchApps/freeshow/blob/main/LICENSE)
+![dev - E2E Test](https://github.com/ChurchApps/FreeShow/actions/workflows/playwright.yml/badge.svg?branch=dev)
 
 # FreeShow
 
