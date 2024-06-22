@@ -5,7 +5,7 @@ import tmp from "tmp"
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 test.beforeEach(async ({ context }) => {
-    await context.route("https://api.github.com/repos/vassbo/freeshow/releases", (route) => route.abort())
+    await context.route("https://api.github.com/repos/ChurchApps/freeshow/releases", (route) => route.abort())
 })
 
 test("Launch electron app", async () => {

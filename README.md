@@ -1,7 +1,7 @@
-<img align="right" width="150" height="150" src="https://github.com/vassbo/freeshow/assets/17619496/ddcdb667-db87-4844-b102-c928ac15f074">
+<img align="right" width="150" height="150" src="https://github.com/ChurchApps/FreeShow/assets/17619496/02ac9807-1f47-47fc-b895-b35f857c2b57">
 
-[![Downloads](https://img.shields.io/github/downloads/vassbo/freeshow/total)](https://github.com/vassbo/freeshow/releases)
-[![Licence](https://img.shields.io/badge/licence-GPL-blue.svg)](https://github.com/vassbo/freeshow/blob/main/LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/ChurchApps/freeshow/total)](https://github.com/ChurchApps/freeshow/releases)
+[![Licence](https://img.shields.io/badge/licence-GPL-blue.svg)](https://github.com/ChurchApps/freeshow/blob/main/LICENSE)
 
 # FreeShow
 
@@ -29,10 +29,12 @@ FreeShow is a free and open-source presentation program that makes it easy to sh
 FreeShow exists because the creator found that other simular programs was either expensive or complex to use. He wanted to create a program that was easy to use and affordable for everyone, from small churches to large venues. FreeShow is now used by people all over the world.
 
 ## Support Us
+
 The only reason this program is free is because of the generous support from users. If you want to support us to keep this free, please head over to [ChurchApps](https://churchapps/partner) or [sponsor us on GitHub](https://github.com/sponsors/ChurchApps/). Thank you so much!
 
 ## Join the Community
-We have a great community for end-users on [Facebook](https://www.facebook.com/groups/freeshowapp).  It's a good way to ask questions, get tips and follow new updates.  Come join us!
+
+We have a great community for end-users on [Facebook](https://www.facebook.com/groups/freeshowapp). It's a good way to ask questions, get tips and follow new updates. Come join us!
 
 ## Help the development
 
@@ -45,10 +47,11 @@ You are welcome to contribute to the code!
 
 ## Report an issue or request a feature
 
-Create an [issue on GitHub](https://github.com/vassbo/freeshow/issues).
+Create an [issue on GitHub](https://github.com/ChurchApps/freeshow/issues).
 
 ## Join us on Slack
-If you would like to get involved contributing in any way, head over to our [Slack Channel](https://join.slack.com/t/livechurchsolutions/shared_invite/zt-i88etpo5-ZZhYsQwQLVclW12DKtVflg) and introduce yourself.  We'd love to hear from you.
+
+If you would like to get involved contributing in any way, head over to our [Slack Channel](https://join.slack.com/t/livechurchsolutions/shared_invite/zt-i88etpo5-ZZhYsQwQLVclW12DKtVflg) and introduce yourself. We'd love to hear from you.
 
 ## Give feedback
 
