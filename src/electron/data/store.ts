@@ -27,35 +27,40 @@ const fileNames: { [key: string]: string } = {
 
 // NOTE: defaults will always replace the keys with any in the default when they are removed
 
+const storeExtraConfig: { [key: string]: string } = {}
+if (process.env.FS_MOCK_STORE_PATH != undefined) {
+    storeExtraConfig["cwd"] = process.env.FS_MOCK_STORE_PATH
+}
+
 // MAIN WINDOW
-export const config = new Store<any>({ defaults: defaultConfig })
+export const config = new Store<any>({ defaults: defaultConfig, ...storeExtraConfig })
 // ERROR LOG
-export const error_log = new Store({ name: fileNames.error_log, defaults: {} })
+export const error_log = new Store({ name: fileNames.error_log, defaults: {}, ...storeExtraConfig })
 
 // SETTINGS
-const settings = new Store({ name: fileNames.settings, defaults: defaultSettings })
-let synced_settings = new Store({ name: fileNames.synced_settings, defaults: defaultSyncedSettings })
-let themes = new Store({ name: fileNames.themes, defaults: {} })
+const settings = new Store({ name: fileNames.settings, defaults: defaultSettings, ...storeExtraConfig })
+let synced_settings = new Store({ name: fileNames.synced_settings, defaults: defaultSyncedSettings, ...storeExtraConfig })
+let themes = new Store({ name: fileNames.themes, defaults: {}, ...storeExtraConfig })
 
 // PROJECTS
-let projects = new Store({ name: fileNames.projects, defaults: { projects: {}, folders: {} } })
+let projects = new Store({ name: fileNames.projects, defaults: { projects: {}, folders: {} }, ...storeExtraConfig })
 
 // SLIDES
-let shows = new Store({ name: fileNames.shows, defaults: {} })
-let stageShows = new Store({ name: fileNames.stageShows, defaults: {} })
-let overlays = new Store({ name: fileNames.overlays, defaults: {} })
-let templates = new Store({ name: fileNames.templates, defaults: {} })
+let shows = new Store({ name: fileNames.shows, defaults: {}, ...storeExtraConfig })
+let stageShows = new Store({ name: fileNames.stageShows, defaults: {}, ...storeExtraConfig })
+let overlays = new Store({ name: fileNames.overlays, defaults: {}, ...storeExtraConfig })
+let templates = new Store({ name: fileNames.templates, defaults: {}, ...storeExtraConfig })
 
 // CALENDAR
-let events = new Store({ name: fileNames.events, defaults: {} })
+let events = new Store({ name: fileNames.events, defaults: {}, ...storeExtraConfig })
 
 // CLOUD
-let driveKeys = new Store({ name: fileNames.driveKeys, defaults: {} })
+let driveKeys = new Store({ name: fileNames.driveKeys, defaults: {}, ...storeExtraConfig })
 
 // CACHE
-const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesByDotNotation: false })
-const cache = new Store({ name: fileNames.cache, defaults: {} })
-let history = new Store({ name: fileNames.history, defaults: {} })
+const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesByDotNotation: false, ...storeExtraConfig })
+const cache = new Store({ name: fileNames.cache, defaults: {}, ...storeExtraConfig })
+let history = new Store({ name: fileNames.history, defaults: {}, ...storeExtraConfig })
 
 export let stores: { [key: string]: Store<any> } = {
     SETTINGS: settings,

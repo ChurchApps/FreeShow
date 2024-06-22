@@ -1,10 +1,27 @@
 import { _electron as electron } from "playwright"
 import { expect, test } from "@playwright/test"
+import tmp from "tmp"
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+test.beforeEach(async ({ context }) => {
+    await context.route("https://api.github.com/repos/vassbo/freeshow/releases", (route) => route.abort())
+})
+
 test("Launch electron app", async () => {
-    const electronApp = await electron.launch({ args: ["."] })
+    const tmpSettingFolder = tmp.dirSync({ unsafeCleanup: true })
+    const electronApp = await electron.launch({
+        args: ["."],
+        env: { ...process.env, NODE_ENV: "production", FS_MOCK_STORE_PATH: tmpSettingFolder.name },
+    })
+
+    // Mocking Electron open dialog
+    const tmpDataFolder = tmp.dirSync({ unsafeCleanup: true })
+    await electronApp.evaluate(async ({ dialog }, tmpDataFolderName) => {
+        dialog.showOpenDialogSync = (): string[] | undefined => {
+            return [tmpDataFolderName]
+        }
+    }, tmpDataFolder.name)
 
     await electronApp.waitForEvent("window")
 
@@ -23,46 +40,61 @@ test("Launch electron app", async () => {
     // Get the first window that the app opens, wait if necessary.
     const window = await electronApp.firstWindow()
 
-    // Print the title.
-    console.log(await window.title())
-
-    // Capture a screenshot.
-    // await window.screenshot({ path: "intro.png" })
-
     // Direct Electron console to Node terminal.
     window.on("console", console.log)
+    try {
+        // Print the title.
+        console.log(await window.title())
 
-    // Create a new project, then try creating a new show under the project
-    await window.getByText("New project").click()
-    await window.getByText("New show").first().click()
+        // Capture a screenshot.
+        // await window.screenshot({ path: "intro.png" })
 
-    // Expect the pop up to be visible
-    await expect(window.getByText("Name")).toBeVisible()
+        // Initial setup
+        // This triggers the Electron open dialog, mocked above
+        await window.locator(".main .showElem").getByRole("button").click()
+        await window.getByText("Get Started!").click({ timeout: 1000 })
+        // This depends on whether there is existing shows to be loaded.
+        // As the existing show folder is also mocked to be a tmp folder,
+        // this is not expected.
+        // await window.getByTestId("alert.ack.check").click({ timeout: 1000 })
 
-    // Fill name of show
-    await window.locator("#name").fill("New Test Show")
+        // Create a new project, then try creating a new show under the project
+        await window.locator("#leftPanel").getByText("New project").click({ timeout: 1000 })
+        await window.getByText("New show").first().click({ timeout: 1000 })
 
-    // Select category (this will sometimes not have any categories)
-    // await window.getByText("—").click()
-    // await window.locator("#id_categorysong").click()
+        // Expect the pop up to be visible
+        await expect(window.getByText("Name")).toBeVisible({ timeout: 1000 })
 
-    // Put lyrics
-    await window.getByText("Quick Lyrics").click()
-    let lyricsBox = window.getByPlaceholder("[Verse]")
-    await lyricsBox.focus()
-    await lyricsBox.fill(`[Verse]\ntest line 1\ntest line 2\n\n[Chorus]\ntest line 3\ntest line 4`)
+        // Fill name of show
+        await window.locator("#name").fill("New Test Show", { timeout: 1000 })
 
-    // Click new show
-    await window.getByTestId("create.show.popup.new.show").click()
+        // Select category (this will sometimes not have any categories)
+        // await window.getByText("—").click()
+        // await window.locator("#id_categorysong").click()
 
-    // Try changing group for Chorus
-    await window.getByTitle("Chorus").click({ button: "right" })
-    await window.getByText("Change group").hover()
-    await window.getByText("Outro").click()
+        // Put lyrics
+        await window.getByText("Quick Lyrics").click({ timeout: 1000 })
+        let lyricsBox = window.getByPlaceholder("[Verse]")
+        await lyricsBox.focus()
+        await lyricsBox.fill(`[Verse]\ntest line 1\ntest line 2\n\n[Chorus]\ntest line 3\ntest line 4`, { timeout: 1000 })
 
-    // Verify the group changing was successful
-    await expect(window.getByTitle("Outro")).toBeVisible()
+        // Click new show
+        await window.getByTestId("create.show.popup.new.show").click({ timeout: 1000 })
 
+        // Try changing group for Chorus
+        await window.getByTitle("Chorus").click({ button: "right", timeout: 1000 })
+        await window.getByText("Change group").hover({ timeout: 1000 })
+        await window.getByText("Outro").click({ timeout: 1000 })
+
+        // Verify the group changing was successful
+        await expect(window.getByTitle("Outro")).toBeVisible({ timeout: 1000 })
+    } catch (ex) {
+        console.log("Taking screenshot")
+        await window.screenshot({ path: "test-output/screenshots/failed.png" })
+        throw ex
+    }
     // Close after finishing
     await electronApp.close()
+    tmpDataFolder.removeCallback()
+    tmpSettingFolder.removeCallback()
 })
