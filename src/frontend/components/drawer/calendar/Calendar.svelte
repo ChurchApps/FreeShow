@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeDays, activePopup, dictionary, eventEdit, events, labelsDisabled, popupData } from "../../../stores"
+    import { actionData } from "../../actions/actionData"
     import { removeDuplicates, sortByTime } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -176,6 +177,12 @@
         // let animation finish
         setTimeout(() => activePopup.set("edit_event"), 300)
     }
+
+    function getEventIcon(type: string, { actionId }) {
+        if (type === "event") return "calendar"
+        if (type === "action") return actionData[actionId]?.icon || "actions"
+        return type
+    }
 </script>
 
 <div class="calendar">
@@ -224,11 +231,13 @@
                         <span style="font-size: 1.5em;font-weight: 600;">{day.getDate()}</span>
                         <span class="events">
                             {#each dayEvents as event, i}
+                                {@const eventIcon = getEventIcon(event.type, { actionId: event.action?.id })}
+
                                 {#if dayEvents.length > 3 && i > 1}
                                     <span class="dot" style="background-color: {event.color || 'white'}" title={event.name} />
                                 {:else}
                                     <div class="event" style="color: {event.color || 'white'}" title={event.name}>
-                                        <Icon id={event.type === "event" ? "calendar" : event.type} right white />
+                                        <Icon id={eventIcon} right white />
                                         <p>{event.name}</p>
                                     </div>
                                 {/if}

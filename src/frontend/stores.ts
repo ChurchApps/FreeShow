@@ -56,8 +56,8 @@ export const activeScripture: Writable<any> = writable({})
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
 export const eventEdit: Writable<null | string> = writable(null)
-export const nextShowEventStart: Writable<any> = writable({})
-export const nextShowEventPaused: Writable<boolean> = writable(false)
+export const nextActionEventStart: Writable<any> = writable({})
+export const nextActionEventPaused: Writable<boolean> = writable(false)
 
 // AUDIO
 export const audioChannels: Writable<{ left: number; right: number }> = writable({ left: 0, right: 0 })

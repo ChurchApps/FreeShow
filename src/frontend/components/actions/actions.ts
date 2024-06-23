@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { midiIn } from "../../stores"
+import { audioPlaylists, audioStreams, midiIn, shows, stageShows, styles, triggers } from "../../stores"
 import { clone } from "../helpers/array"
 import { history } from "../helpers/history"
 import { _show } from "../helpers/shows"
@@ -82,4 +82,29 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
     actions.slideActions.push(action)
 
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [slideIndex] } })
+}
+
+// extra names
+
+const namedObjects = {
+    run_action: () => get(midiIn),
+    start_show: () => get(shows),
+    start_trigger: () => get(triggers),
+    start_audio_stream: () => get(audioStreams),
+    start_playlist: () => get(audioPlaylists),
+    id_select_stage_layout: () => get(stageShows),
+}
+export function getActionName(actionId: string, actionValue: any) {
+    if (actionId === "change_output_style") {
+        return get(styles)[actionValue.outputStyle]?.name
+    }
+
+    if (actionId === "start_metronome") {
+        let beats = (actionValue.beats || 4) === 4 ? "" : " | " + actionValue.beats
+        return (actionValue.tempo || 120) + beats
+    }
+
+    if (!namedObjects[actionId]) return
+
+    return namedObjects[actionId]()[actionValue.id]?.name
 }

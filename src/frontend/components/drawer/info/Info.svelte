@@ -3,7 +3,7 @@
     import Center from "../../system/Center.svelte"
     import Clock from "../../system/Clock.svelte"
     import Date from "../../system/Date.svelte"
-    import AudioMix from "./AudioMix.svelte"
+    import AudioInfo from "./AudioInfo.svelte"
     import CalendarInfo from "./CalendarInfo.svelte"
     import FunctionsInfo from "./FunctionsInfo.svelte"
     import MediaInfo from "./MediaInfo.svelte"
@@ -22,7 +22,7 @@
     {:else if !$forceClock && id === "media" && ($activeShow?.type === "video" || $activeShow?.type === "image" || ["online", "screens"].includes($drawerTabsData.media?.activeSubTab || ""))}
         <MediaInfo />
     {:else if !$forceClock && id === "audio"}
-        <AudioMix />
+        <AudioInfo />
     {:else if !$forceClock && id === "overlays"}
         <OverlayInfo />
     {:else if !$forceClock && id === "templates"}

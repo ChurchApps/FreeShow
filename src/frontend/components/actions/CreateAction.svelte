@@ -41,6 +41,7 @@
         "clear_slide",
         "clear_next_timer",
         "name_select_overlay",
+        "playlist_next",
         "id_select_output_style",
         "change_transition",
     ]
@@ -85,7 +86,7 @@
         }
     }
 
-    function findName(): string {
+    function findName(actionId: string): string {
         return ACTIONS.find((a) => a.id === actionId)?.name || actionId || ""
     }
 </script>
@@ -95,7 +96,7 @@
         <CombinedInput>
             <Button on:click={() => (pickAction = true)} style="width: 100%;" center dark>
                 <Icon id={actionData[actionId]?.icon || "actions"} right />
-                <p style="display: contents;">{findName()}</p>
+                <p style="display: contents;">{findName(actionId)}</p>
             </Button>
         </CombinedInput>
     {:else}
@@ -117,7 +118,7 @@
                 {#if actionNameIndex}#{actionNameIndex}{/if}
             </span>
         </p>
-        <Dropdown value={findName() || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={(e) => changeAction(e.detail)} />
+        <Dropdown value={findName(actionId) || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={(e) => changeAction(e.detail)} />
     </CombinedInput>
 {/if}
 

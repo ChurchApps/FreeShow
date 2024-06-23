@@ -70,7 +70,7 @@
         } else if (id === "calendar") {
             buttons = [
                 { id: "event", name: "calendar.event", default: true, icon: "calendar" },
-                { id: "show", name: "calendar.show", default: true, icon: "showIcon" },
+                { id: "action", name: "calendar.schedule_action", default: true, icon: "actions" },
                 // WIP very few tabs
             ]
         } else if (id === "functions") {
@@ -116,7 +116,6 @@
         let playlists = sortObject(keysToID(playlistUpdater), "name") as Button[]
         playlists = playlists.map((a) => ({ ...a, icon: "playlist" }))
         if (!playlists.length) return []
-        console.log("PLAYLISTS", playlists)
 
         return [{ id: "SEPERATOR", name: "" }, ...playlists]
     }

@@ -336,7 +336,6 @@
     }
 
     function updateActiveVerses(bibleIndex: number = 0) {
-        console.log("UPDATE", activeVerses)
         bibles[bibleIndex].activeVerses = activeVerses
 
         // add to selected (for drag/drop)

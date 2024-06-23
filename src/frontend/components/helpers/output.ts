@@ -4,14 +4,16 @@ import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
-import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData } from "../../stores"
+import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData, videoExtensions } from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "./array"
-import { getFileName, removeExtension } from "./media"
+import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
+import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
+import { customActionActivation } from "../actions/actions"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
@@ -38,26 +40,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
 
-            if (key === "background" && data) {
-                // mute videos in the other output windows if more than one
-                data.muted = data.muted || false
-                if (outs.length > 1 && i > 0) data.muted = true
-
-                let videoData: any = { muted: data.muted, loop: data.loop || false }
-
-                setTimeout(() => {
-                    // WIP data is sent directly in output, so this is probably not needed
-                    send(OUTPUT, ["DATA"], { [id]: videoData })
-                    if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
-                }, 100)
-            }
-
-            if (key === "background") {
-                setTimeout(() => {
-                    // update stage background if any
-                    sendBackgroundToStage(id)
-                }, 100)
-            }
+            if (key === "background") data = changeOutputBackground(data, { outs, output, id, i })
 
             let outData = a[id].out?.[key] || null
             if (key === "overlays" && data.length) {
@@ -75,6 +58,51 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 
         return a
     })
+}
+
+function changeOutputBackground(data, { outs, output, id, i }) {
+    setTimeout(() => {
+        // update stage background if any
+        sendBackgroundToStage(id)
+    }, 100)
+
+    let previousWasVideo: boolean = get(videoExtensions).includes(getExtension(output.out?.background?.path))
+
+    if (data === null) {
+        fadeinAllPlayingAudio()
+        if (previousWasVideo) videoEnding()
+
+        return data
+    }
+
+    // mute videos in the other output windows if more than one
+    data.muted = data.muted || false
+    if (outs.length > 1 && i > 0) data.muted = true
+
+    let videoData: any = { muted: data.muted, loop: data.loop || false }
+
+    let muteAudio = get(special).muteAudioWhenVideoPlays
+    let isVideo = get(videoExtensions).includes(getExtension(data.path))
+    if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
+    else fadeinAllPlayingAudio()
+
+    if (isVideo) videoStarting()
+    else if (previousWasVideo) videoEnding()
+
+    setTimeout(() => {
+        // WIP data is sent directly in output, so this is probably not needed
+        send(OUTPUT, ["DATA"], { [id]: videoData })
+        if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
+    }, 100)
+
+    return data
+}
+
+function videoEnding() {
+    customActionActivation("video_end")
+}
+function videoStarting() {
+    customActionActivation("video_start")
 }
 
 export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {

@@ -1,14 +1,15 @@
 import { get } from "svelte/store"
 import type { Event } from "../../../types/Calendar"
 import { OUTPUT, STAGE } from "../../../types/Channels"
-import { activeTimers, currentWindow, dictionary, events, nextShowEventPaused, nextShowEventStart, shows } from "../../stores"
-import { send } from "../../utils/request"
-import { setOutput } from "./output"
-import { loadShows } from "./setShow"
-import { _show } from "./shows"
-import { clone, sortByTime } from "./array"
-import { checkNextAfterMedia, updateOut } from "./showActions"
+import { activeTimers, currentWindow, dictionary, events, nextActionEventPaused, nextActionEventStart } from "../../stores"
 import { newToast } from "../../utils/common"
+import { translate } from "../../utils/language"
+import { send } from "../../utils/request"
+import { actionData } from "../actions/actionData"
+import { runAction } from "../actions/actions"
+import { clone, sortByTime } from "./array"
+import { loadShows } from "./setShow"
+import { checkNextAfterMedia } from "./showActions"
 
 const INTERVAL = 1000
 const TEN_SECONDS = 1000 * 10
@@ -58,60 +59,87 @@ function increment(timer: any) {
     return timer
 }
 
-let showTimeout: any = null
-export function startEventTimer() {
-    let currentTime: Date = new Date()
-    let showEvents: Event[] = Object.values(get(events)).filter((a) => {
-        let eventTime: Date = new Date(a.from)
-        return a.type === "show" && currentTime.getTime() - INTERVAL < eventTime.getTime()
+// convert "show" to "action" <= 1.1.7
+function convertShowToAction() {
+    events.update((a) => {
+        Object.keys(a).forEach((eventId) => {
+            let event = a[eventId]
+            if (event.type === "show") {
+                event.type = "action"
+                event.action = { id: "start_show", data: { id: event.show } }
+            }
+        })
+        return a
     })
-    if (!showEvents.length || showTimeout) {
-        nextShowEventStart.set({})
-        return
+}
+
+let actionTimeout: any = null
+let initialized: boolean = false
+export function startEventTimer() {
+    if (actionTimeout) return
+    actionTimeout = true
+
+    if (!initialized) {
+        initialized = true
+        convertShowToAction()
     }
 
-    showEvents = showEvents.sort(sortByTime)
+    let currentTime: Date = new Date()
+    let actionEvents: Event[] = Object.values(get(events)).filter((a) => {
+        let eventTime: Date = new Date(a.from)
+        return a.type === "action" && currentTime.getTime() - INTERVAL < eventTime.getTime()
+    })
 
-    showTimeout = setTimeout(() => {
-        showEvents.forEach((event, i) => {
+    if (!actionEvents.length) nextActionEventStart.set({})
+
+    actionEvents = actionEvents.sort(sortByTime)
+
+    actionTimeout = setTimeout(() => {
+        actionEvents.forEach((event, i) => {
+            if (!event.action) return
+
             let eventTime: Date = new Date(event.from)
             let toast = get(dictionary).toast || {}
-            let showId = event.show || ""
-            let show = get(shows)[showId]
-            if (!show || get(nextShowEventPaused)) return
+            if (get(nextActionEventPaused)) return
+
+            let actionId = event.action.id
+            let actionName = translate(actionData[actionId]?.name)
 
             let timeLeft: number = eventTime.getTime() - currentTime.getTime()
-            if (i === 0) {
-                nextShowEventStart.set({ showId, name: show.name, timeLeft })
-            }
+            if (i === 0) nextActionEventStart.set({ name: actionName, timeLeft })
 
             // less than 1 minute
-            if (timeLeft <= ONE_MINUTE && timeLeft > ONE_MINUTE - INTERVAL) {
-                newToast(`${toast.starting_show} "${show.name}" ${toast.less_than_minute}`)
+            if (i < 4 && timeLeft <= ONE_MINUTE && timeLeft > ONE_MINUTE - INTERVAL) {
+                newToast(`${toast.starting_action} "${actionName}" ${toast.less_than_minute}`)
+                return
             }
             // less than 30 seconds
-            if (timeLeft <= ONE_MINUTE / 2 && timeLeft > ONE_MINUTE / 2 - INTERVAL) {
-                newToast(`${toast.starting_show} "${show.name}" ${toast.less_than_seconds.replace("{}", "30")}`)
+            if (i < 4 && timeLeft <= ONE_MINUTE / 2 && timeLeft > ONE_MINUTE / 2 - INTERVAL) {
+                newToast(`${toast.starting_action} "${actionName}" ${toast.less_than_seconds.replace("{}", "30")}`)
+                return
             }
             // less than 10 seconds
-            if (timeLeft <= TEN_SECONDS && timeLeft > TEN_SECONDS - INTERVAL) {
-                newToast(`${toast.starting_show} "${show.name}" ${toast.less_than_seconds.replace("{}", "10")}`)
-                loadShows([showId])
-            }
-            // start show
-            if (timeLeft <= 0 && timeLeft > 0 - INTERVAL) {
-                newToast(`${toast.starting_show} "${show.name}" ${toast.now}`)
-                loadShows([showId])
-                let activeLayout = _show(event.show).get("settings.activeLayout")
+            if (i < 4 && timeLeft <= TEN_SECONDS && timeLeft > TEN_SECONDS - INTERVAL) {
+                newToast(`${toast.starting_action} "${actionName}" ${toast.less_than_seconds.replace("{}", "10")}`)
 
-                // slideClick() - Slides.svelte
-                let slideRef: any = _show(showId).layouts("active").ref()[0]
-                updateOut(showId, 0, slideRef)
-                setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
+                // preload data
+                if (actionId === "start_show") loadShows([event.action.data?.id])
+                return
+            }
+
+            // start action
+            if (timeLeft <= 0 && timeLeft > 0 - INTERVAL) {
+                newToast(`${toast.starting_action} "${actionName}" ${toast.now}`)
+
+                runAction(convertEventAction(event.action))
             }
         })
 
-        showTimeout = null
+        actionTimeout = null
         startEventTimer()
     }, INTERVAL)
+}
+
+function convertEventAction(action) {
+    return { triggers: [action.id], actionValues: { [action.id]: action.data || {} } }
 }

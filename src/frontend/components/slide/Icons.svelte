@@ -1,10 +1,11 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activeTimers, dictionary, outputs } from "../../stores"
+    import { activeTimers, dictionary, outputs, videoExtensions } from "../../stores"
     import { send } from "../../utils/request"
     import { getAudioDuration } from "../helpers/audio"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
+    import { getExtension } from "../helpers/media"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
@@ -127,7 +128,7 @@
             {/if}
         </div>
     {/if}
-    {#if background && muted && duration}
+    {#if background && muted && $videoExtensions.includes(getExtension(background.path))}
         <div>
             <div class="button">
                 <Button style="padding: 3px;" redHover title="{$dictionary.actions?.unmute}{zoom}" on:click={() => mute()}>

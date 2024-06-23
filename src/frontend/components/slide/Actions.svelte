@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { audioPlaylists, audioStreams, dictionary, midiIn, shows, stageShows, styles, templates, triggers } from "../../stores"
+    import { dictionary, templates } from "../../stores"
     import { translate } from "../../utils/language"
     import { actionData } from "../actions/actionData"
+    import { getActionName } from "../actions/actions"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -50,26 +51,6 @@
 
     // WIP MIDI convert into new
     // actionData get slideId and convert into slideActions
-
-    const namedObjects = {
-        run_action: $midiIn,
-        start_show: $shows,
-        start_trigger: $triggers,
-        start_audio_stream: $audioStreams,
-        start_playlist: $audioPlaylists,
-        id_select_stage_layout: $stageShows,
-    }
-    function getActionName(actionId, actionValue) {
-        if (actionId === "change_output_style") {
-            return $styles[actionValue.outputStyle]?.name
-        }
-        if (actionId === "start_metronome") {
-            let beats = (actionValue.beats || 4) === 4 ? "" : " | " + actionValue.beats
-            return (actionValue.tempo || 120) + beats
-        }
-
-        return namedObjects[actionId]?.[actionValue.id]?.name
-    }
 
     $: zoom = 4 / columns
 </script>

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activePlaylist, activeShow, audioPlaylists, dictionary, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { getAudioDuration, playAudio, playlistNext } from "../../helpers/audio"
+    import { audioPlaylistNext, getAudioDuration, playAudio } from "../../helpers/audio"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
@@ -117,16 +117,7 @@
             </span>
 
             {#if $activePlaylist?.active === path}
-                <Button
-                    style="flex: 0"
-                    disabled={$outLocked}
-                    center
-                    title={$dictionary.media?.next}
-                    on:click={() => {
-                        if ($outLocked) return
-                        playlistNext(path)
-                    }}
-                >
+                <Button style="flex: 0" disabled={$outLocked} center title={$dictionary.media?.next} on:click={audioPlaylistNext}>
                     <Icon id="audio_forward" size={1.2} />
                 </Button>
             {/if}

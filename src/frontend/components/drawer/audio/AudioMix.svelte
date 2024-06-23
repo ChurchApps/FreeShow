@@ -1,65 +1,38 @@
 <script lang="ts">
-    import { drawer, gain, playingMetronome, volume } from "../../../stores"
-    import Icon from "../../helpers/Icon.svelte"
+    import { drawer, gain, volume } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { updateVolume } from "../../helpers/audio"
-    import Button from "../../inputs/Button.svelte"
     import Slider from "../../inputs/Slider.svelte"
     import AudioMeter from "../../output/preview/AudioMeter.svelte"
-    import Metronome from "../audio/Metronome.svelte"
 
     // TODO: video player volume
-
-    // TODO: reduce volume on video/player too
-
-    // let volume: number = 100
 
     function setVolume(e: any, changeGain: boolean = false) {
         updateVolume(e.target.value, changeGain)
     }
 
-    $: drawerHeight = $drawer.height - 40 - 100
-
-    let openedPage: "default" | "metronome" = "default"
-    function togglePage(pageId) {
-        if (openedPage === pageId) openedPage = "default"
-        else openedPage = pageId
-    }
-
-    $: metronomeActive = !!$playingMetronome
-    $: if (metronomeActive) openedPage = "metronome"
+    $: drawerHeight = $drawer.height - 40 - 180
 </script>
 
-<!-- TODO: effects?: https://alemangui.github.io/pizzicato/ -->
-
-{#if openedPage === "metronome"}
-    <Metronome />
-{:else}
-    <main style="--height: {(drawerHeight || 150) - 30}px;">
-        <div class="meter">
-            <AudioMeter advanced />
+<main style="--height: {drawerHeight || 150}px;">
+    <div class="meter">
+        <AudioMeter advanced />
+    </div>
+    <div class="volume">
+        <p style="font-size: 0.9em;"><T id="media.volume" /></p>
+        <div class="slider">
+            <Slider value={$volume} step={0.01} max={1} on:input={setVolume} />
         </div>
-        <div class="volume">
-            <p style="font-size: 0.9em;"><T id="media.volume" /></p>
-            <div class="slider">
-                <Slider value={$volume} step={0.01} max={1} on:input={setVolume} />
-            </div>
-            <p style="font-size: 1em;margin: 10px;{$volume === 1 || $volume === 0 ? 'color: var(--secondary);' : ''}">{($volume * 100).toFixed()}</p>
+        <p style="font-size: 1em;margin: 10px;{$volume === 1 || $volume === 0 ? 'color: var(--secondary);' : ''}">{($volume * 100).toFixed()}</p>
+    </div>
+    <div class="volume" style="left: 75%">
+        <p style="font-size: 0.9em;"><T id="media.gain" /></p>
+        <div class="slider">
+            <Slider value={$gain} step={0.01} min={1} max={3} on:input={(e) => setVolume(e, true)} />
         </div>
-        <div class="volume" style="left: 75%">
-            <p style="font-size: 0.9em;"><T id="media.gain" /></p>
-            <div class="slider">
-                <Slider value={$gain} step={0.01} min={1} max={3} on:input={(e) => setVolume(e, true)} />
-            </div>
-            <p style="font-size: 1em;margin: 10px;{$gain === 1 ? 'color: var(--secondary);' : ''}">{(($gain - 1) * 100).toFixed()}</p>
-        </div>
-    </main>
-{/if}
-
-<Button style="width: 100%;" on:click={() => togglePage("metronome")} center dark>
-    <Icon id="metronome" right />
-    <T id="audio.toggle_metronome" />
-</Button>
+        <p style="font-size: 1em;margin: 10px;{$gain === 1 ? 'color: var(--secondary);' : ''}">{(($gain - 1) * 100).toFixed()}</p>
+    </div>
+</main>
 
 <style>
     main {
@@ -82,7 +55,7 @@
         position: absolute;
         left: 50%;
         top: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -58%);
         pointer-events: none;
     }
 

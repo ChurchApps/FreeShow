@@ -160,6 +160,8 @@
         "recommended": "Recommended"
     },
     "audio": {
+        "settings": "Audio settings",
+        "mute_when_video_plays": "Mute when video plays",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "tempo": "Tempo",
@@ -388,7 +390,7 @@
         "verse_undefined": "Verse {} does not exist in this chapter.",
         "recording_started": "Recording started!",
         "recording_stopped": "Recording stopped!",
-        "starting_show": "Starting show",
+        "starting_action": "Starting action",
         "less_than_minute": "in less than a minute.",
         "less_than_seconds": "in less than {} seconds.",
         "now": "now!",
@@ -562,6 +564,7 @@
         "change_volume": "Change volume",
         "start_audio_stream": "Start audio stream",
         "start_playlist": "Start playlist",
+        "playlist_next": "Next track in playlist",
         "start_metronome": "Start metronome",
         "start_slide_timers": "Start timers on active slide",
         "id_select_output_style": "Select output style by ID",
@@ -574,6 +577,8 @@
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",
         "activate_slide_clicked": "Activate on slide click",
+        "activate_video_starting": "Activate when video is starting",
+        "activate_video_ending": "Activate when video is ending",
         "activate_scripture_start": "Activate when scripture is started",
         "activate_show_created": "Activate when show is created"
     },
@@ -928,6 +933,7 @@
         "disable_presenter_controller_keys": "Disable presenter controller keys",
         "default_project_name": "Default project name",
         "audio_fade_duration": "Audio fade duration",
+        "audio_crossfade": "Audio crossfade",
         "max_auto_font_size": "Max auto font size",
         "resolution": "Resolution",
         "cropping": "Cropping",
@@ -986,7 +992,7 @@
     "calendar": {
         "type": "Type",
         "event": "Event",
-        "show": "Schedule show",
+        "schedule_action": "Schedule action",
         "name": "Name",
         "color": "Color",
         "time": "Time",

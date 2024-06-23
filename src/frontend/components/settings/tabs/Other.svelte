@@ -29,20 +29,9 @@
         { id: "full", name: "$:settings.full:$ (60 fps)" },
     ]
 
-    // let audioOutputs: any = []
-    // async function getAudioOutputs() {
-    //     const devices = await navigator.mediaDevices.enumerateDevices()
-    //     let outputs = devices.filter((device) => device.kind === "audiooutput")
-
-    //     let defaultGroupId = outputs.find((a) => a.deviceId === "default")?.groupId
-    //     if (defaultGroupId) outputs = outputs.filter((a) => a.groupId !== defaultGroupId || a.deviceId === "default")
-
-    //     audioOutputs = [{ id: "", name: "—" }, ...outputs.map((device) => ({ id: device.deviceId, name: device.label }))]
-    // }
-
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (key !== "audio_fade_duration" && !value) delete a[key]
+            if (!value) delete a[key]
             else a[key] = value
 
             return a
@@ -205,11 +194,6 @@
     <Dropdown options={previewRates} value={previewRates.find((a) => a.id === ($special.previewRate || "auto"))?.name} on:click={(e) => updateSpecial(e.detail.id, "previewRate")} />
 </CombinedInput>
 
-<!-- <CombinedInput>
-    <p><T id="settings.custom_audio_output" /></p>
-    <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
-</CombinedInput> -->
-
 <CombinedInput>
     <p><T id="settings.capitalize_words" /></p>
     <TextInput value={$special.capitalize_words} on:change={(e) => updateTextInput(e, "capitalize_words")} />
@@ -218,11 +202,6 @@
 <CombinedInput title={projectReplacerTitle}>
     <p><T id="settings.default_project_name" /></p>
     <TextInput value={$special.default_project_name ?? DEFAULT_PROJECT_NAME} on:change={(e) => updateTextInput(e, "default_project_name")} />
-</CombinedInput>
-
-<CombinedInput>
-    <p><T id="settings.audio_fade_duration" /></p>
-    <NumberInput value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
 </CombinedInput>
 
 <CombinedInput>
