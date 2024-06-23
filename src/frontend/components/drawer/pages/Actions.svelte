@@ -15,8 +15,11 @@
     export let searchValue
     console.log(searchValue)
 
-    function openMidi(id: string) {
-        popupData.set({ id })
+    function openMidi(id: string, mode: string = "") {
+        let data: any = { id }
+        if (mode) data.mode = mode
+
+        popupData.set(data)
         activePopup.set("action")
     }
 
@@ -46,8 +49,8 @@
                         <!-- WIP MIDI if slide action.action ... -->
                         <Button title={$dictionary.media?.play} on:click={() => runAction(action)} dark>
                             <span style="display: flex;align-items: center;width: 100%;">
-                                {#if action.triggers === undefined}
-                                    <Icon id="slide" right />
+                                {#if action.shows?.length}
+                                    <Icon id="slide" white right />
                                 {:else if action.triggers.length !== 1}
                                     <Icon id="actions" right />
                                 {:else}
@@ -55,7 +58,11 @@
                                 {/if}
 
                                 <p style="width: 350px;" class:customActivation={action.customActivation || action.startupEnabled}>
-                                    {action.name}
+                                    {#if action.shows?.length}
+                                        <T id="actions.play_on_midi" />
+                                    {:else}
+                                        {action.name || "—"}
+                                    {/if}
 
                                     {#if action.midi}
                                         ({action.midi.input || "—"})
@@ -73,13 +80,11 @@
                                 {/if}
                             </span>
 
-                            <!-- WIP MIDI remove this way shows midi action... -->
-                            <p style="opacity: 0.5;font-style: italic;">{action.triggers === undefined ? action.shows.length : ""}</p>
+                            <p style="opacity: 0.5;font-style: italic;">{action.shows?.length > 1 ? action.shows.length : ""}</p>
                         </Button>
                     </SelectElem>
 
-                    <!-- WIP MIDI , !!action.shows?.length -->
-                    <Button title={$dictionary.timer?.edit} on:click={() => openMidi(action.id)}>
+                    <Button title={$dictionary.timer?.edit} on:click={() => openMidi(action.id, action.shows?.length ? "slide_midi" : "")}>
                         <Icon id="edit" />
                     </Button>
                     <Button title={$dictionary.actions?.delete} on:click={() => deleteMidi(action.id)}>

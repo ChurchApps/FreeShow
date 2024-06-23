@@ -9,10 +9,12 @@ import { updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { runAction } from "./actions"
 import { newToast } from "../../utils/common"
+import { loadShows } from "../helpers/setShow"
 
 export function midiInListen() {
     Object.entries(get(midiIn)).forEach(([id, action]: any) => {
         action = convertOldMidiToNewAction(action)
+        console.log("LISTEN", action)
         if (!action.midi) return
 
         if (!action.shows?.length) {
@@ -22,15 +24,23 @@ export function midiInListen() {
             return
         }
 
-        action.shows.forEach((show) => {
-            if (!shows[show.id]) return
+        action.shows.forEach(async (show) => {
+            if (!get(shows)[show.id]) return
 
-            // find all slides in current show with this MIDI
+            await loadShows([show.id])
+
+            // check that current show actually has this MIDI receive action
             let layouts: any[] = _show(show.id).layouts().get()
             let found: boolean = false
             layouts.forEach((layout) => {
                 layout.slides.forEach((slide) => {
                     if (slide.actions?.receiveMidi === id) found = true
+
+                    if (slide.children) {
+                        Object.values(slide.children).forEach((child: any) => {
+                            if (child.actions?.receiveMidi === id) found = true
+                        })
+                    }
                 })
             })
 

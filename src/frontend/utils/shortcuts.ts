@@ -1,15 +1,15 @@
 import { get } from "svelte/store"
-import type { DrawerTabIds, TopViews } from "../../types/Tabs"
+import type { TopViews } from "../../types/Tabs"
+import { menuClick } from "../components/context/menuClick"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
+import { redo, undo } from "../components/helpers/history"
 import { displayOutputs } from "../components/helpers/output"
 import { activeDrawerTab, activePage, activePopup, currentWindow, drawer, os, selected, volume } from "../stores"
-import { save } from "./save"
-import { redo, undo } from "../components/helpers/history"
-import { menuClick } from "../components/context/menuClick"
+import { drawerTabs } from "../values/tabs"
 import { hideDisplay } from "./common"
+import { save } from "./save"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
-const drawerMenus: DrawerTabIds[] = ["shows", "media", "audio", "overlays", "templates", "scripture", "calendar"]
 
 const ctrlKeys: any = {
     a: () => selectAll(),
@@ -65,6 +65,7 @@ export function keydown(e: any) {
     }
 
     if (e.ctrlKey || e.metaKey) {
+        let drawerMenus: any[] = Object.keys(drawerTabs)
         if (document.activeElement === document.body && Object.keys(drawerMenus).includes((e.key - 1).toString())) {
             activeDrawerTab.set(drawerMenus[e.key - 1])
             // open drawer

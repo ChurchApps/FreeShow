@@ -59,10 +59,7 @@
     {#each actionsList as action}
         {#if actions[action.id]}
             <div class="button white">
-                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {action.name}" {zoom} on:click={() => changeAction(action.id)}>
-                    {#if action.getName}
-                        <p>{action.getName(actions[action.id])}</p>
-                    {/if}
+                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {action.title}" {zoom} on:click={() => changeAction(action.id)}>
                     <Icon id={action.icon} size={0.9} white />
                 </Button>
             </div>

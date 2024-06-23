@@ -233,7 +233,6 @@
     }
 
     // set show when selected
-    $: console.log(actionData, $popupData)
     $: if ($popupData.showId) setTimeout(setShow, 100)
     function setShow() {
         editEvent = $popupData.event
@@ -256,119 +255,121 @@
     }
 </script>
 
-{#if selectedType === "event"}
+<div style="min-width: 45vw;min-height: 50vh;">
+    {#if selectedType === "event"}
+        <CombinedInput textWidth={30}>
+            <p><T id="calendar.time" /></p>
+            <div class="alignRight">
+                <Checkbox checked={editEvent.time} on:change={(e) => check(e, "time")} />
+            </div>
+        </CombinedInput>
+    {/if}
+
+    <!-- TODO: update totime if fromtime is newer -->
     <CombinedInput textWidth={30}>
-        <p><T id="calendar.time" /></p>
+        <p><T id="timer.from" /></p>
+        <div style="display: flex;">
+            <input style="flex: 2;" type="date" title={$dictionary.calendar?.from_date} bind:value={editEvent.isoFrom} />
+            <input style="flex: 1;" type="time" title={$dictionary.calendar?.from_time} bind:value={editEvent.fromTime} on:change={() => updateTime("from")} disabled={!editEvent.time} />
+        </div>
+    </CombinedInput>
+    {#if selectedType === "event"}
+        <CombinedInput textWidth={30}>
+            <p><T id="timer.to" /></p>
+            <div style="display: flex;">
+                <input style="flex: 2;" type="date" title={$dictionary.calendar?.to_date} bind:value={editEvent.isoTo} />
+                <input style="flex: 1;" type="time" title={$dictionary.calendar?.to_time} bind:value={editEvent.toTime} on:change={() => updateTime("to")} disabled={!editEvent.time} />
+            </div>
+        </CombinedInput>
+    {/if}
+
+    <CombinedInput textWidth={30}>
+        <p><T id="calendar.repeat" /></p>
         <div class="alignRight">
-            <Checkbox checked={editEvent.time} on:change={(e) => check(e, "time")} />
+            <Checkbox disabled={editEvent.group} checked={editEvent.repeat} on:change={(e) => check(e, "repeat")} />
         </div>
     </CombinedInput>
-{/if}
 
-<!-- TODO: update totime if fromtime is newer -->
-<CombinedInput textWidth={30}>
-    <p><T id="timer.from" /></p>
-    <div style="display: flex;">
-        <input style="flex: 2;" type="date" title={$dictionary.calendar?.from_date} bind:value={editEvent.isoFrom} />
-        <input style="flex: 1;" type="time" title={$dictionary.calendar?.from_time} bind:value={editEvent.fromTime} on:change={() => updateTime("from")} disabled={!editEvent.time} />
-    </div>
-</CombinedInput>
-{#if selectedType === "event"}
-    <CombinedInput textWidth={30}>
-        <p><T id="timer.to" /></p>
-        <div style="display: flex;">
-            <input style="flex: 2;" type="date" title={$dictionary.calendar?.to_date} bind:value={editEvent.isoTo} />
-            <input style="flex: 1;" type="time" title={$dictionary.calendar?.to_time} bind:value={editEvent.toTime} on:change={() => updateTime("to")} disabled={!editEvent.time} />
-        </div>
-    </CombinedInput>
-{/if}
-
-<CombinedInput textWidth={30}>
-    <p><T id="calendar.repeat" /></p>
-    <div class="alignRight">
-        <Checkbox disabled={editEvent.group} checked={editEvent.repeat} on:change={(e) => check(e, "repeat")} />
-    </div>
-</CombinedInput>
-
-{#if editEvent.repeat}
-    <CombinedInput textWidth={30}>
-        <div style="display: flex;">
-            <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_every" /></span>
-            <NumberInput disabled={!!editEvent.group} style="width: 50px;" value={editEvent.repeatData.count} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
-            <Dropdown disabled={!!editEvent.group} style="width: 100px;" options={repeats} value={repeats.find((a) => a.id === editEvent.repeatData.type)?.name || ""} on:click={(e) => (editEvent.repeatData.type = e.detail.id)} />
-            <!-- TODO: select weekdays? -->
-            <!-- {#if selectedRepeat.id === "week"}
+    {#if editEvent.repeat}
+        <CombinedInput textWidth={30}>
+            <div style="display: flex;">
+                <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_every" /></span>
+                <NumberInput disabled={!!editEvent.group} style="width: 50px;" value={editEvent.repeatData.count} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
+                <Dropdown disabled={!!editEvent.group} style="width: 100px;" options={repeats} value={repeats.find((a) => a.id === editEvent.repeatData.type)?.name || ""} on:click={(e) => (editEvent.repeatData.type = e.detail.id)} />
+                <!-- TODO: select weekdays? -->
+                <!-- {#if selectedRepeat.id === "week"}
 <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_on" /></span>
 <Dropdown style="width: 100px;" options={weekdays} value={selectedWeekday.name} on:click={(e) => (selectedWeekday = e.detail)} />
 {/if} -->
-            <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_until" /></span>
-            <Dropdown disabled={!!editEvent.group} style="width: 130px;" options={endings} value={endings.find((a) => a.id === editEvent.repeatData.ending)?.name || ""} on:click={(e) => (editEvent.repeatData.ending = e.detail.id)} />
+                <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_until" /></span>
+                <Dropdown disabled={!!editEvent.group} style="width: 130px;" options={endings} value={endings.find((a) => a.id === editEvent.repeatData.ending)?.name || ""} on:click={(e) => (editEvent.repeatData.ending = e.detail.id)} />
 
-            {#if editEvent.repeatData.ending === "date"}
-                <input disabled={!!editEvent.group} type="date" bind:value={editEvent.repeatData.endingDate} />
-            {:else if editEvent.repeatData.ending === "after"}
-                <NumberInput disabled={!!editEvent.group} style="width: 50px;" value={editEvent.repeatData.afterRepeats} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.afterRepeats = e.detail)} />
-                <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.ending_times" /></span>
-            {/if}
-        </div>
-    </CombinedInput>
-{/if}
+                {#if editEvent.repeatData.ending === "date"}
+                    <input disabled={!!editEvent.group} type="date" bind:value={editEvent.repeatData.endingDate} />
+                {:else if editEvent.repeatData.ending === "after"}
+                    <NumberInput disabled={!!editEvent.group} style="width: 50px;" value={editEvent.repeatData.afterRepeats} min={1} buttons={false} on:change={(e) => (editEvent.repeatData.afterRepeats = e.detail)} />
+                    <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.ending_times" /></span>
+                {/if}
+            </div>
+        </CombinedInput>
+    {/if}
 
-{#if selectedType === "event"}
-    <CombinedInput textWidth={30} style="margin-top: 10px;">
-        <p>
-            <Icon id="edit" size={1.2} right />
-            <T id="calendar.name" />
-        </p>
-        <TextInput value={editEvent.name} style="width: 50%;" on:input={(e) => inputChange(e, "name")} />
-    </CombinedInput>
+    {#if selectedType === "event"}
+        <CombinedInput textWidth={30} style="margin-top: 10px;">
+            <p>
+                <Icon id="edit" size={1.2} right />
+                <T id="calendar.name" />
+            </p>
+            <TextInput value={editEvent.name} style="width: 50%;" on:input={(e) => inputChange(e, "name")} />
+        </CombinedInput>
 
-    <CombinedInput textWidth={30}>
-        <p>
-            <Icon id="theme" size={1.2} right />
-            <T id="calendar.color" />
-        </p>
-        <Color value={editEvent.color} on:input={(e) => (editEvent.color = e.detail)} style="width: 50%;" />
-    </CombinedInput>
+        <CombinedInput textWidth={30}>
+            <p>
+                <Icon id="theme" size={1.2} right />
+                <T id="calendar.color" />
+            </p>
+            <Color value={editEvent.color} on:input={(e) => (editEvent.color = e.detail)} style="width: 50%;" />
+        </CombinedInput>
 
-    <CombinedInput textWidth={30}>
-        <p>
-            <Icon id="location" size={1.2} right />
-            <T id="calendar.location" />
-        </p>
-        <TextInput value={editEvent.location || ""} style="width: 50%;" on:input={(e) => inputChange(e, "location")} />
-    </CombinedInput>
+        <CombinedInput textWidth={30}>
+            <p>
+                <Icon id="location" size={1.2} right />
+                <T id="calendar.location" />
+            </p>
+            <TextInput value={editEvent.location || ""} style="width: 50%;" on:input={(e) => inputChange(e, "location")} />
+        </CombinedInput>
 
-    <CombinedInput textWidth={30}>
-        <p>
-            <Icon id="notes" size={1.2} right />
-            <T id="calendar.notes" />
-        </p>
-        <TextInput value={editEvent.notes || ""} style="width: 50%;" on:input={(e) => inputChange(e, "notes")} />
-    </CombinedInput>
-{:else if selectedType === "action"}
+        <CombinedInput textWidth={30}>
+            <p>
+                <Icon id="notes" size={1.2} right />
+                <T id="calendar.notes" />
+            </p>
+            <TextInput value={editEvent.notes || ""} style="width: 50%;" on:input={(e) => inputChange(e, "notes")} />
+        </CombinedInput>
+    {:else if selectedType === "action"}
+        <br />
+        {#key actionData}
+            <CreateAction actionId={actionData?.id || ""} actionValue={actionData?.data || {}} on:change={changeAction} />
+        {/key}
+    {/if}
+
     <br />
-    {#key actionData}
-        <CreateAction actionId={actionData?.id || ""} actionValue={actionData?.data || {}} on:change={changeAction} />
-    {/key}
-{/if}
 
-<br />
-
-<CombinedInput>
-    <Button style="width: 100%;" on:click={save} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData : true} dark center>
-        <Icon id="save" right />
-        <T id="actions.save" />
-    </Button>
-</CombinedInput>
-{#if editEvent.group}
     <CombinedInput>
-        <Button style="width: 100%;" on:click={saveAll} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData : true} dark center>
+        <Button style="width: 100%;" on:click={save} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData : true} dark center>
             <Icon id="save" right />
-            <T id="calendar.save_all" />
+            <T id="actions.save" />
         </Button>
     </CombinedInput>
-{/if}
+    {#if editEvent.group}
+        <CombinedInput>
+            <Button style="width: 100%;" on:click={saveAll} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData : true} dark center>
+                <Icon id="save" right />
+                <T id="calendar.save_all" />
+            </Button>
+        </CombinedInput>
+    {/if}
+</div>
 
 <style>
     input[type="date"],

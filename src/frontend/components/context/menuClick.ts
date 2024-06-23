@@ -916,7 +916,7 @@ function changeSlideAction(obj: any, id: string) {
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
 
-        let data: any = { id: midiId, mode: "slide_midi" } // , index: layoutSlide
+        let data: any = { id: midiId, index: layoutSlide, mode: "slide_midi" } // , index: layoutSlide
 
         popupData.set(data)
         activePopup.set("action")

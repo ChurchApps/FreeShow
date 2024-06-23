@@ -42,7 +42,7 @@ const loadActions = {
 
         let slideActions = [
             { id: "action", label: "midi.start_action", icon: "actions" },
-            { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
+            { id: "receiveMidi", label: "actions.play_on_midi", icon: "play", enabled: currentActions?.receiveMidi || false },
             "SEPERATOR",
             { id: "nextTimer", label: "preview.nextTimer", icon: "clock", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
             { id: "loop", label: "preview.to_start", icon: "restart", enabled: slideRef?.data?.end || false },

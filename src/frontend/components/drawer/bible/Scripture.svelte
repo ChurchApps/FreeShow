@@ -781,6 +781,8 @@
     $: if (chaptersScrollElem && active && chapterId) setTimeout(() => scrollToActive(chaptersScrollElem))
     $: if (versesScrollElem && active && activeVerses?.length < 5) setTimeout(() => scrollToActive(versesScrollElem))
     function scrollToActive(scrollElem) {
+        if (!scrollElem) return
+
         let selectedElemTop = scrollElem.querySelector(".active")?.offsetTop || 0
         scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
     }

@@ -26,6 +26,7 @@
     let action: any = { name: "", triggers: [] }
     let actionMidi: API_midi = { type: "noteon", values: { note: 0, velocity: mode === "slide" ? 0 : -1, channel: 1 }, defaultValues: true }
 
+    let loaded: boolean = false
     onMount(setAction)
     function setAction() {
         if (!id) {
@@ -50,6 +51,8 @@
         }
 
         if (mode === "slide_midi") action.midiEnabled = true
+
+        loaded = true
     }
 
     // saveSlide(true)
@@ -109,7 +112,6 @@
         if (e.detail.actionValue) {
             if (!action.actionValues) action.actionValues = {}
             action.actionValues[actionId] = e.detail.actionValue
-            saveAction()
             return
         }
 
@@ -156,7 +158,8 @@
     // WIP MIDI remove unused / empty actions from slide
     $: if (action) saveAction()
     function saveAction() {
-        if (!action.name) return
+        if (!loaded) return
+        if (mode !== "slide_midi" && mode !== "slide" && mode !== "template" && !action.name) return
 
         if (action.midiEnabled && !action.midi) action.midi = actionMidi
 
@@ -178,11 +181,12 @@
         } else if (mode !== "slide") {
             midiIn.update((a) => {
                 if (mode === "slide_midi") {
-                    // WIP MIDI this should show up in the "Actions" tab
                     let shows = a[id]?.shows || []
                     let showId = $popupData.index === undefined ? "" : $activeShow?.id || ""
                     if (showId && !shows.find((a) => a.id === showId)) shows.push({ id: showId })
                     action.shows = shows
+
+                    if (action.midi?.defaultValues) delete action.midi.defaultValues
                 }
 
                 a[id] = clone(action)
