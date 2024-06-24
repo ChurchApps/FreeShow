@@ -23,7 +23,7 @@ import {
 } from "../helpers/showActions"
 import { stopTimers } from "../helpers/timerTick"
 import { clearTimers } from "../output/clear"
-import { runActionId } from "./actions"
+import { runActionId, toggleAction } from "./actions"
 import { changeVariable, gotoGroup, moveStageConnection, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
 
 /// TYPES ///
@@ -39,6 +39,7 @@ type API_boolval = { value?: boolean }
 type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
 type API_slide = { showId?: string | "active"; slideId?: string }
+export type API_toggle = { id: string; value?: boolean }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
@@ -131,9 +132,9 @@ export const API_ACTIONS = {
     // folder_select_audio: () => ,
     change_volume: (data: API_volume) => updateVolume(data.volume ?? data.gain, data.gain !== undefined),
     start_audio_stream: (data: API_id) => startAudioStream(data.id), // BC
-    start_playlist: (data: API_id) => startPlaylist(data.id),
-    playlist_next: () => audioPlaylistNext(),
-    start_metronome: (data: API_metronome) => startMetronome(data),
+    start_playlist: (data: API_id) => startPlaylist(data.id), // BC
+    playlist_next: () => audioPlaylistNext(), // BC
+    start_metronome: (data: API_metronome) => startMetronome(data), // BC
 
     // TIMERS
     // play / pause playing timers
@@ -152,6 +153,7 @@ export const API_ACTIONS = {
     start_trigger: (data: API_id) => activateTrigger(data.id), // BC
     send_midi: (data: API_midi) => sendMidi(data), // BC
     run_action: (data: API_id) => runActionId(data.id), // BC
+    toggle_action: (data: API_toggle) => toggleAction(data), // BC
 }
 
 /// RECEIVER / SENDER ///

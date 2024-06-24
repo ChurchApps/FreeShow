@@ -248,6 +248,7 @@ export interface Midi {
 }
 
 export interface MidiIn extends Midi {
+    enabled?: boolean
     shows: {
         id: string
         // layoutId: string

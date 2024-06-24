@@ -114,6 +114,7 @@ export const receiveSTAGE: any = {
         msg.data = [slides[ref[out.index!].id]]
 
         let nextIndex = out.index! + 1
+        if (!ref[nextIndex]) return
         while (nextIndex < ref.length && ref[nextIndex].data.disabled === true) nextIndex++
 
         if (nextIndex < ref.length && !ref[nextIndex].data.disabled) msg.data.push(slides[ref[nextIndex].id])

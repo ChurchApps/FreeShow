@@ -99,7 +99,9 @@ function changeOutputBackground(data, { outs, output, id, i }) {
 }
 
 function videoEnding() {
-    customActionActivation("video_end")
+    setTimeout(() => {
+        customActionActivation("video_end")
+    })
 }
 function videoStarting() {
     customActionActivation("video_start")

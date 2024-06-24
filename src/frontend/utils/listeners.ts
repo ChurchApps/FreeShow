@@ -54,29 +54,36 @@ export function storeSubscriber() {
         // temporary cache shows data
         updateShowsList(data)
     })
+
+    let timeout: any = null
     showsCache.subscribe((data) => {
         send(OUTPUT, ["SHOWS"], data)
 
-        // STAGE
-        sendData(STAGE, { channel: "SLIDES" })
+        if (timeout) clearTimeout(timeout)
+        timeout = setTimeout(() => {
+            // STAGE
+            sendData(STAGE, { channel: "SLIDES" })
 
-        // REMOTE
+            // REMOTE
 
-        // sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
+            // sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
 
-        // TODO: ?
-        // send(REMOTE, ["SHOW"], data )
-        timedout(REMOTE, { channel: "SHOW", data }, () =>
-            eachConnection(REMOTE, "SHOW", async (connection) => {
-                return connection.active ? await convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
-            })
-        )
-        // TODO: this, timedout +++
-        // this is just for updating output slide pos I guess
-        sendData(REMOTE, { channel: "OUT" })
+            // TODO: ?
+            // send(REMOTE, ["SHOW"], data )
+            timedout(REMOTE, { channel: "SHOW", data }, () =>
+                eachConnection(REMOTE, "SHOW", async (connection) => {
+                    return connection.active ? await convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
+                })
+            )
+            // TODO: this, timedout +++
+            // this is just for updating output slide pos I guess
+            sendData(REMOTE, { channel: "OUT" })
 
-        // cache shows data for faster show loading (if it's less than 100)
-        if (Object.keys(data).length < 100) updateCachedShows(data)
+            // cache shows data for faster show loading (if it's less than 100)
+            if (Object.keys(data).length < 100) updateCachedShows(data)
+
+            timeout = null
+        }, 80)
     })
 
     templates.subscribe((data) => {
@@ -110,7 +117,11 @@ export function storeSubscriber() {
         send(OUTPUT, ["OUTPUTS"], data)
         // used for stage mirror data
         send(OUTPUT, ["ALL_OUTPUTS"], data)
-        sendData(REMOTE, { channel: "OUT" })
+
+        // let it update properly
+        setTimeout(() => {
+            sendData(REMOTE, { channel: "OUT" })
+        })
 
         // STAGE
         sendData(STAGE, { channel: "SLIDES" }, true)

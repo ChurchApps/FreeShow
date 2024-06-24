@@ -200,6 +200,7 @@ export function getSlides({ bibles, sorted }) {
                     }
                 })
             } else {
+                // WIP bibles with custom html tags?
                 text = removeTags(text)
 
                 if (text.charAt(text.length - 1) !== " ") text += " "
@@ -263,6 +264,7 @@ export function getSlides({ bibles, sorted }) {
 
         if (get(scriptureSettings).combineWithText) itemIndex = 0
         let metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
+        let alignStyle = metaTemplate?.lines?.[0]?.align || ""
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         // remove text in () on scripture names
         let versions = bibles.map((a) => a.version.replace(/\([^)]*\)/g, "").trim()).join(" + ")
@@ -274,7 +276,7 @@ export function getSlides({ bibles, sorted }) {
         if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + ":" + range)
 
         text.split("\n").forEach((line) => {
-            lines.push({ text: [{ value: line, style: verseStyle }], align: "" })
+            lines.push({ text: [{ value: line, style: verseStyle }], align: alignStyle })
         })
 
         if (lines.length) {

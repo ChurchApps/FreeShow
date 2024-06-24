@@ -8,9 +8,11 @@ import { _show } from "../components/helpers/shows"
 import { REMOTE } from "./../../types/Channels"
 import { activeProject, connections, dictionary, driveData, folders, openedFolders, outLocked, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
 import { sendData } from "./sendData"
+import { uid } from "uid"
 
 // REMOTE
 
+let currentOut: string = ""
 export const receiveREMOTE: any = {
     PASSWORD: (msg: any) => {
         msg.data = {
@@ -71,6 +73,9 @@ export const receiveREMOTE: any = {
     },
     OUT: async (msg: any) => {
         if (get(outLocked)) return
+        // set id because convertBackgrounds might use a long time
+        let currentId = uid(5)
+        currentOut = currentId
 
         let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
         let out: any = currentOutput?.out?.slide || null
@@ -78,15 +83,18 @@ export const receiveREMOTE: any = {
 
         if (msg.data === "clear") {
             clearAll()
+            return
         } else if (msg.data?.id) {
             id = msg.data.id
             await loadShows([id])
+
             let layout = _show(id).layouts("active").ref()[0]
             if (msg.data.index < layout.length && msg.data.index >= 0) {
                 updateOut(msg.data.id, msg.data.index, _show(msg.data.id).layouts([msg.data.layout]).ref()[0])
                 setOutput("slide", msg.data)
             }
-            msg.data = null
+
+            return
         } else if (msg.data !== null && msg.data !== undefined && out) {
             id = out.id
             console.log(msg.data)
@@ -107,6 +115,8 @@ export const receiveREMOTE: any = {
                 msg.data.show = await convertBackgrounds(get(showsCache)[id])
                 msg.data.show.id = id
             }
+
+            if (currentOut !== currentId) return
         }
         if (id.length && msg.id) {
             connections.update((a) => {

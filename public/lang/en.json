@@ -573,6 +573,7 @@
         "change_variable": "Change variable",
         "start_trigger": "Start trigger",
         "run_action": "Run action",
+        "toggle_action": "Toggle action",
         "custom_activation": "Custom activation",
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",

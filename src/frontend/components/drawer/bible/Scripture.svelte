@@ -31,7 +31,7 @@
     let chapterId: any = cachedRef?.chapterId ?? "GEN.1"
     let activeVerses: string[] = cachedRef?.activeVerses || ["1"]
 
-    $: console.log(loaded, bookId, chapterId, verses, activeVerses)
+    $: console.log(verses, bibles)
     $: if (bookId || chapterId || verses || activeVerses) updateActive()
     function updateActive() {
         if (!loaded) return

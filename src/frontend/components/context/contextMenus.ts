@@ -136,10 +136,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     output_window: ["close"],
 
     // TOP
-    output: ["force_output", "align_with_screen", "choose_screen"],
+    output: ["force_output", "SEPERATOR", "align_with_screen", "choose_screen"], // , "SEPERATOR", "edit"
 
     // OUTPUTS
-    output_active_button: ["toggle_output", "move_to_front", "edit"],
+    output_active_button: ["toggle_output", "move_to_front", "SEPERATOR", "edit"],
 
     // DRAWER
     drawer_top: ["enabledTabs"],

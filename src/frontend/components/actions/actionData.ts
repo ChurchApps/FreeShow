@@ -56,4 +56,5 @@ export const actionData = {
     start_trigger: { slideId: "trigger", name: "actions.start_trigger", icon: "trigger", input: "id" },
     send_midi: { slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
     run_action: { name: "actions.run_action", icon: "actions", input: "id" },
+    toggle_action: { name: "actions.toggle_action", icon: "actions", input: "toggle_action" },
 }

@@ -91,7 +91,7 @@ export async function loadShows(s: string[]) {
             } else count++
             // } else resolve("already_loaded")
         })
-        console.info(`LOADING ${s.length - count} SHOW(S)`)
+        if (s.length - count) console.info(`LOADING ${s.length - count} SHOW(S)`)
 
         // RECEIVE
         let listenerId = uid()

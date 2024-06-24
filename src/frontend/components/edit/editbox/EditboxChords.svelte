@@ -154,8 +154,8 @@
     .edit.chords :global(.chord) {
         /* color: var(--chord-color);
       font-size: var(--chord-size) !important; */
-        bottom: 0;
-        transform: translate(-50%, -60%);
+        /* bottom: 0; */
+        transform: translate(-50%, -10%);
         z-index: 2;
         font-size: 60px !important;
         /* color: #FF851B; */

@@ -259,6 +259,12 @@
                 <p><T id="midi.name" /></p>
                 <TextInput style="width: 70%;" value={action.name} on:change={(e) => updateValue("name", e)} />
             </CombinedInput>
+            <CombinedInput>
+                <p><T id="settings.enabled" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={action.enabled ?? true} on:change={(e) => updateValue("enabled", e, true)} />
+                </div>
+            </CombinedInput>
 
             <!-- multiple actions -->
             <div class="actions" style="margin: 10px 0;">

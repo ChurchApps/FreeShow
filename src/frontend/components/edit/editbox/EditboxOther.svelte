@@ -65,7 +65,7 @@
 {:else if item?.type === "events"}
     <DynamicEvents {...item.events} edit textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
 {:else if item?.type === "variable"}
-    <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} hideText={false} edit />
+    <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ showId: ref.showId, slideIndex: $activeEdit.slide }} hideText={false} edit />
 {:else if item?.type === "web"}
     <Website src={item?.web?.src || ""} />
 {:else if item?.type === "mirror"}

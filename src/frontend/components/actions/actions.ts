@@ -4,7 +4,7 @@ import { audioPlaylists, audioStreams, midiIn, shows, stageShows, styles, trigge
 import { clone } from "../helpers/array"
 import { history } from "../helpers/history"
 import { _show } from "../helpers/shows"
-import { API_ACTIONS } from "./api"
+import { API_ACTIONS, API_toggle } from "./api"
 import { convertOldMidiToNewAction } from "./midi"
 
 export function runActionId(id: string) {
@@ -12,7 +12,7 @@ export function runActionId(id: string) {
 }
 
 export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
-    if (!action) return
+    if (!action || action.enabled === false) return
     action = convertOldMidiToNewAction(action)
 
     let triggers = action.triggers || []
@@ -40,6 +40,15 @@ export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
 
         API_ACTIONS[actionId](triggerData)
     }
+}
+
+export function toggleAction(data: API_toggle) {
+    midiIn.update((a) => {
+        let previousValue = a[data.id].enabled ?? true
+        a[data.id].enabled = data.value ?? !previousValue
+
+        return a
+    })
 }
 
 export function checkStartupActions() {
