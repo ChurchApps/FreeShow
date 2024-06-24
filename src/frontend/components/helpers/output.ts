@@ -498,7 +498,7 @@ export function isEmptyOrSpecial(item: Item) {
     return false
 }
 
-function sortItemsByType(items: Item[]) {
+export function sortItemsByType(items: Item[]) {
     let sortedItems: { [key: string]: Item[] } = {}
 
     items.forEach((item) => {

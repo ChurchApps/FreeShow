@@ -20,6 +20,7 @@
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
+    import Captions from "./views/Captions.svelte"
 
     export let item: Item
     export let itemIndex: number = -1
@@ -470,6 +471,8 @@
             {/if}
         {:else if item?.type === "visualizer"}
             <Visualizer {item} {preview} />
+        {:else if item?.type === "captions"}
+            <Captions {item} />
         {:else if item?.type === "icon"}
             {#if item.customSvg}
                 <div class="customIcon" class:customColor={item?.style.includes("color:") && !item?.style.includes("color:#FFFFFF;")}>

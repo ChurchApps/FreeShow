@@ -518,7 +518,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         // startShow is at the top
         if (data.actions.trigger) activateTrigger(data.actions.trigger)
         if (data.actions.audioStream) startAudioStream(data.actions.audioStream)
-        if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
+        // if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions)
         if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id, overlayIds: data.overlays })

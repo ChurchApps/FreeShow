@@ -4,7 +4,7 @@
     import { send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
     import { runAction } from "../../actions/actions"
-    import { convertOldMidiToNewAction, midiToNote } from "../../actions/midi"
+    import { convertOldMidiToNewAction, midiToNote, receivedMidi } from "../../actions/midi"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -47,7 +47,7 @@
                 <div class="action">
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
-                        <Button title={$dictionary.media?.play} on:click={() => runAction(action)} dark>
+                        <Button title={$dictionary.media?.play} on:click={() => (action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action))} dark>
                             <span style="display: flex;align-items: center;width: 100%;">
                                 {#if action.shows?.length}
                                     <Icon id="slide" white right />

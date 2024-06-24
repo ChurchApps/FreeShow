@@ -14,7 +14,6 @@ import { loadShows } from "../helpers/setShow"
 export function midiInListen() {
     Object.entries(get(midiIn)).forEach(([id, action]: any) => {
         action = convertOldMidiToNewAction(action)
-        console.log("LISTEN", action)
         if (!action.midi) return
 
         if (!action.shows?.length) {
@@ -96,13 +95,13 @@ export const defaultMidiActionChannels = {
 }
 
 export function receivedMidi(msg) {
-    console.log(msg)
     let msgAction = get(midiIn)[msg.id]
     if (!msgAction) return
 
     let action: Midi = convertOldMidiToNewAction(msgAction)
 
     // get index
+    if (!msg.values) msg.values = {}
     let index = msg.values.velocity ?? -1
     if (action.midi?.values?.velocity !== undefined && action.midi.values.velocity < 0) index = -1
 
@@ -111,7 +110,7 @@ export function receivedMidi(msg) {
     const diff_type = action.midi?.type !== msg.type
     const diff_note = msg.values.note !== action.midi?.values.note
     const diff_channel = msg.values.channel !== action.midi?.values.channel
-    if ((diff_type || diff_note || diff_channel) && index !== 0) return
+    if (!msg.bypass && (diff_type || diff_note || diff_channel) && index !== 0) return
 
     let hasindex = action.triggers?.[0]?.includes("index_") ?? false
     if (hasindex && index < 0) {
@@ -128,13 +127,16 @@ export function receivedMidi(msg) {
     if (!shows?.length) return
 
     let slidePlayed: boolean = false
-    shows.forEach(({ id }) => {
+    shows.forEach(async ({ id }) => {
+        await loadShows([id])
         let refs = _show(id).layouts().ref()
+
         refs.forEach((ref) => {
             ref.forEach((slideRef) => {
+                if (slidePlayed) return
+
                 let receiveMidi = slideRef.data.actions?.receiveMidi
-                if (!receiveMidi) return
-                if (slidePlayed || receiveMidi !== msg.id) return
+                if (!receiveMidi || receiveMidi !== msg.id) return
 
                 // start slide
                 slidePlayed = true

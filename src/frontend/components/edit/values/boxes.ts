@@ -1,4 +1,5 @@
 import type { ItemType } from "./../../../../types/Show"
+import { captionLanguages } from "./captionLanguages"
 
 export type Box = {
     [key in ItemType]?: {
@@ -439,6 +440,22 @@ export const boxes: Box = {
             //     { name: "filter.saturate", id: "filter", key: "saturate", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
             //     { name: "filter.opacity", id: "filter", key: "opacity", input: "number", value: 1, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
             // ],
+        },
+    },
+    captions: {
+        icon: "captions",
+        edit: {
+            default: [
+                { name: "captions.language", id: "captions.language", input: "dropdown", value: "en-US", values: { options: captionLanguages } },
+                // this is very limited
+                // { name: "captions.translate", id: "captions.translate", input: "dropdown", value: "en-US", values: { options: captionTranslateLanguages } },
+                { name: "captions.showtime", id: "captions.showtime", input: "number", value: 5, values: { min: 1, max: 60 } },
+                // label?
+                { name: "captions.powered_by", values: { subtext: "CAPTION.Ninja" }, input: "tip" },
+            ],
+            // WIP custom inputs for the css
+            // https://github.com/steveseguin/captionninja?tab=readme-ov-file#changing-the-font-size-and-more
+            CSS: [{ id: "captions.style", input: "CSS" }],
         },
     },
     icon: {

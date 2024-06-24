@@ -16,6 +16,7 @@
     import Image from "../../drawer/media/Image.svelte"
     import { getAutoSize } from "../scripts/autoSize"
     import { onMount } from "svelte"
+    import Captions from "../../slide/views/Captions.svelte"
 
     export let item: Item
 
@@ -71,6 +72,8 @@
     <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
 {:else if item?.type === "visualizer"}
     <Visualizer {item} />
+{:else if item?.type === "captions"}
+    <Captions {item} />
 {:else if item?.type === "icon"}
     {#if item.customSvg}
         <div class="customIcon" class:customColor={item?.style.includes("color:") && !item?.style.includes("color:#FFFFFF;")}>

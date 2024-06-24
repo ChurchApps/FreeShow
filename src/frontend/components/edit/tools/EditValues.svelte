@@ -138,7 +138,7 @@
     function getStyleString(input: any) {
         let style = ""
         if (input.id === "item") style = item?.style
-        if (input.id === "text") style = input.value
+        else style = input.value // "text" / custom
 
         if (!style) return ""
 
@@ -379,6 +379,11 @@
                             <p title={$dictionary.items?.variable}><T id="items.variable" /></p>
                             <Dropdown value={Object.entries($variables).find(([id]) => id === input.value)?.[1]?.name || "—"} options={keysToID($variables)} on:click={(e) => valueChange(e, input)} />
                         </CombinedInput>
+                    {:else if input.input === "tip"}
+                        <p class="tip">
+                            <T id={input.name} />
+                            {input.values?.subtext || ""}
+                        </p>
                     {:else if input.input === "popup"}
                         <CombinedInput>
                             <Button
@@ -450,7 +455,7 @@
                             </Button>
                         {:else}
                             <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
-                                <Notes value={getStyleString(input)} on:change={(e) => dispatch("change", { id: "CSS", value: e.detail })} />
+                                <Notes value={getStyleString(input)} on:change={(e) => dispatch("change", { id: input.id === "text" ? "CSS" : input.id, value: e.detail })} />
                             </div>
                         {/if}
                     {:else if input.input === "checkbox"}
@@ -543,5 +548,12 @@
         font-size: 0.9em;
 
         overflow: hidden !important;
+    }
+
+    .tip {
+        font-size: 0.8em;
+        opacity: 0.8;
+        text-align: center;
+        padding: 8px;
     }
 </style>

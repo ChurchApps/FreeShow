@@ -333,6 +333,12 @@ const receiveOUTPUTasMAIN: any = {
         if (!data.id) return
         send(OUTPUT, ["VIDEO_DATA"], { id: data.id, data: get(videosData), time: get(videosTime) })
     },
+    ALERT_MAIN: (data: string) => {
+        if (!data) return
+
+        alertMessage.set(data)
+        activePopup.set("alert")
+    },
 }
 
 let previousOutputs: string = ""

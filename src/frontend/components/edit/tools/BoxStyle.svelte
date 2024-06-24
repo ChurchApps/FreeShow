@@ -74,7 +74,25 @@
     let styles: any = {}
     $: if (style !== undefined) styles = getStyles(style, true)
 
-    $: if (box?.edit?.CSS && style) box.edit.CSS[0].value = style
+    $: if (box?.edit?.CSS) {
+        if (box.edit.CSS[0].id !== "text") box.edit.CSS[0].value = getItemValue(box.edit.CSS[0].id)
+        else if (style) box.edit.CSS[0].value = style
+    }
+
+    // WIP use this more
+    function getItemValue(id: string) {
+        if (!item) return null
+
+        let divideIndex = id.indexOf(".")
+        if (divideIndex > -1) {
+            let firstKey = id.slice(0, divideIndex)
+            let secondKey = id.slice(divideIndex + 1)
+
+            return item[firstKey]?.[secondKey] || null
+        }
+
+        return item[id] || null
+    }
 
     $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : getStyles(item?.align)
     $: alignStyle = item?.align ? getStyles(item.align) : {}

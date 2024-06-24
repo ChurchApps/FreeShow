@@ -16,6 +16,7 @@ const TEN_SECONDS = 1000 * 10
 const ONE_MINUTE = 1000 * 60
 
 let timeout: any = null
+let customInterval = INTERVAL
 export function startTimer() {
     if (get(currentWindow)) return
     if (!get(activeTimers).filter((a) => a.paused !== true).length || timeout) return
@@ -29,14 +30,15 @@ export function startTimer() {
 
         timeout = null
         startTimer()
-    }, INTERVAL)
+    }, customInterval)
 }
 
 export function stopTimers() {
     activeTimers.set([])
+    customInterval = INTERVAL
 }
 
-function increment(timer: any) {
+function increment(timer: any, i: number) {
     if (timer.start < timer.end ? timer.currentTime >= timer.end : timer.currentTime <= timer.end) checkNextAfterMedia(timer.id, "timer")
 
     if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer
@@ -52,6 +54,13 @@ function increment(timer: any) {
 
     let difference = currentTime - timer.startTime
     let timerShouldBe = Math.floor(difference / 1000) + 1
+
+    // prevent interval time increasing more and more
+    if (i === 0) {
+        let preciseTime = (timerShouldBe - 1) * 1000
+        let differenceMs = difference - preciseTime
+        customInterval = Math.max(500, INTERVAL - differenceMs)
+    }
 
     if (timer.start < timer.end) timer.currentTime = timer.start + timerShouldBe
     else timer.currentTime = timer.start - timerShouldBe

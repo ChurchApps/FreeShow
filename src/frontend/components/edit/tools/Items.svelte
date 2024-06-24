@@ -5,6 +5,7 @@
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName } from "../../helpers/media"
+    import { sortItemsByType } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -15,7 +16,7 @@
     import { getItemText } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
 
-    const items: { id: ItemType; icon?: string; name?: string }[] = [
+    const items: { id: ItemType; icon?: string; name?: string; maxAmount?: number }[] = [
         { id: "text" },
         { id: "list" },
         // { id: "table" },
@@ -27,7 +28,8 @@
         { id: "variable" },
         { id: "web" },
         { id: "mirror" },
-        { id: "visualizer" },
+        { id: "visualizer", maxAmount: 1 },
+        { id: "captions", maxAmount: 1 }, // max one because there can't be multiple translations at this point
     ]
 
     const getIdentifier = {
@@ -104,13 +106,15 @@
     }
 
     const getType = (item: any) => (item.type as ItemType) || "text"
+
+    $: sortedItems = sortItemsByType(invertedItemList)
 </script>
 
 <Panel>
     <h6 style="margin-top: 10px;"><T id="edit.add_items" /></h6>
     <div class="grid">
         {#each items as item}
-            <IconButton name title={$dictionary.items?.[item.name || item.id]} icon={item.icon || item.id} on:click={() => addItem(item.id)} />
+            <IconButton name title={$dictionary.items?.[item.name || item.id]} icon={item.icon || item.id} disabled={item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount} on:click={() => addItem(item.id)} />
         {/each}
     </div>
     <div>

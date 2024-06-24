@@ -6,6 +6,7 @@ import { getAutoSize } from "../../edit/scripts/autoSize"
 import { clone, removeDuplicates } from "../../helpers/array"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
+let tempCache: any = {}
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
     let versesId: any = null
     if (ref.versesList.length) {
@@ -21,6 +22,8 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
         versesText: `${api}${active}/verses/${versesId}`,
     }
 
+    if (tempCache[urls[load]]) return tempCache[urls[load]]
+
     return new Promise((resolve, reject) => {
         if (!get(bibleApiKey)) return reject("No API key!")
         if (urls[load].includes("null")) return reject("Something went wrong!")
@@ -28,6 +31,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
         fetch(urls[load], { headers: { "api-key": get(bibleApiKey) } })
             .then((response) => response.json())
             .then((data) => {
+                tempCache[urls[load]] = data.data
                 resolve(data.data)
             })
             .catch((e) => {
@@ -260,7 +264,8 @@ export function getSlides({ bibles, sorted }) {
         if (get(scriptureSettings).combineWithText) itemIndex = 0
         let metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
-        let versions = bibles.map((a) => a.version).join(" + ")
+        // remove text in () on scripture names
+        let versions = bibles.map((a) => a.version.replace(/\([^)]*\)/g, "").trim()).join(" + ")
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         let text = customText

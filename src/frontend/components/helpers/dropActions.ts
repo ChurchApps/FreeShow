@@ -3,7 +3,24 @@ import { uid } from "uid"
 import type { Show } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, audioPlaylists, audioStreams, categories, drawerTabsData, imageExtensions, media, projects, scriptureSettings, showsCache, videoExtensions } from "../../stores"
+import {
+    activeDrawerTab,
+    activePage,
+    activeProject,
+    activeShow,
+    audioExtensions,
+    audioPlaylists,
+    audioStreams,
+    categories,
+    drawerTabsData,
+    imageExtensions,
+    media,
+    projects,
+    scriptureSettings,
+    showsCache,
+    templates,
+    videoExtensions,
+} from "../../stores"
 import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
 import { addItem } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
@@ -203,6 +220,21 @@ export const dropActions: any = {
         }
     },
     templates: ({ drag, drop }: any) => {
+        if (drag.id === "files") {
+            let mediaPath: string = drag.data?.[0]?.path
+            let templateId: string = drop.data
+            if (!mediaPath || !templateId) return
+
+            if (!files[drop.id].includes(getExtension(mediaPath))) return
+
+            let templateSettings = get(templates)[templateId]?.settings || {}
+            let newData = { key: "settings", data: { ...templateSettings, backgroundPath: mediaPath } }
+
+            history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
+
+            return
+        }
+
         if (drag.id !== "slide") return
 
         drag.data.forEach(({ index }: any) => {
@@ -230,11 +262,13 @@ export const dropActions: any = {
 
 // "show", "project"
 const fileDropExtensions: any = [...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)]
+const mediaExtensions: any = [...get(imageExtensions), ...get(videoExtensions)]
 
 const files: any = {
     project: fileDropExtensions,
     slides: fileDropExtensions,
     slide: fileDropExtensions,
+    templates: mediaExtensions,
 }
 
 const slideDrop: any = {
@@ -263,6 +297,7 @@ const slideDrop: any = {
         if (drag.id === "files" && drop.index !== undefined) center = true
 
         if (center) {
+            if (!data[0]) return
             history.id = "showMedia"
 
             if (drop.trigger?.includes("end")) drop.index!--

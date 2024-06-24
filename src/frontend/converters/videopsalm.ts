@@ -88,6 +88,7 @@ const keys = [
     "Culture",
     "Tonality",
     "Language",
+    "IsAudioFileEnabled",
 ]
 export function convertVideopsalm(data: any) {
     let categoryId = createCategory("VideoPsalm")

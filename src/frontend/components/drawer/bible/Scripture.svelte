@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { BIBLE } from "../../../../types/Channels"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
@@ -23,29 +23,21 @@
 
     let books: { [key: string]: Book[] } = {}
     let chapters: { [key: string]: Chapter[] } = {}
-    let versesList: { [key: string]: Verse[] } = {}
+    let verses: { [key: string]: { [key: string]: string } } = {}
 
-    $: cachedRef = $activeScripture[bibles[0]?.api ? "api" : "bible"] || {}
+    let cachedRef: any = {}
+    if ($activeScripture) cachedRef = $activeScripture[bibles[0]?.api ? "api" : "bible"] || {}
     let bookId: any = cachedRef?.bookId ?? "GEN"
     let chapterId: any = cachedRef?.chapterId ?? "GEN.1"
-    let verses: { [key: string]: any[] } = cachedRef?.verses || {}
-
     let activeVerses: string[] = cachedRef?.activeVerses || ["1"]
 
+    $: console.log(loaded, bookId, chapterId, verses, activeVerses)
     $: if (bookId || chapterId || verses || activeVerses) updateActive()
     function updateActive() {
         if (!loaded) return
-        activeScripture.set({ ...$activeScripture, [bibles[0]?.api ? "api" : "bible"]: { bookId, chapterId, verses, activeVerses } })
+        activeScripture.set({ ...$activeScripture, [bibles[0]?.api ? "api" : "bible"]: { bookId, chapterId, activeVerses } })
+        cachedRef = $activeScripture[bibles[0]?.api ? "api" : "bible"] || {}
     }
-
-    let loaded: boolean = false
-    onMount(() => {
-        getBible()
-
-        setTimeout(() => {
-            loaded = true
-        }, 2000)
-    })
 
     let error: null | string = null
 
@@ -92,6 +84,7 @@
         return selectedScriptureData?.id || selectedScriptureData?.collection?.versions?.[index] || bible?.id || active
     }
 
+    let versesList: { [key: string]: Verse[] } = {}
     async function loadAPIBible(bibleId: string, load: string, index: number = 0) {
         error = null
         let data: any = null
@@ -152,7 +145,7 @@
         }
     }
 
-    function divide(data: VerseText, index: number = 0): VerseText[] {
+    function divide(data: VerseText, index: number = 0): { [key: string]: string } {
         let newVerses: any = {}
         let verse: string
 
@@ -224,10 +217,7 @@
     $: if (active) getBible()
     $: if (books[firstBibleId]?.length && bookId !== undefined) getBook()
     $: if (chapters[firstBibleId]?.length && chapterId !== undefined) getChapter()
-
-    $: if (versesList[firstBibleId]?.length) getVerses()
-    $: isApiVerses = !bibles[0]?.api && bibles[0]?.activeVerses
-    $: if (isApiVerses) getVerses()
+    $: if (Object.keys(verses[firstBibleId])?.length) getVerses()
 
     function getBible() {
         notLoaded = false
@@ -238,7 +228,7 @@
         bibles.forEach((bible, i) => {
             let id: string = getBibleId(i, bible)
             bibles[i] = loadBible(id, i, bible)
-            verses[id] = []
+            verses[id] = {}
 
             if (!bibles[i]?.version) return
 
@@ -274,7 +264,7 @@
     }
 
     function getChapter() {
-        bibles.forEach((bible, i) => {
+        bibles.forEach(async (bible, i) => {
             let id: string = getBibleId(i, bible)
             if (!chapters[id]) return
 
@@ -282,57 +272,46 @@
                 chapters[id].forEach((c) => {
                     if (c.id === chapterId) bibles[i].chapter = c.number
                 })
-                loadAPIBible(id, "verses")
+
+                verses[id] = {}
+                await loadAPIBible(id, "verses")
+                await loadAPIBible(id, "versesText", i)
             } else if (chapters[id][chapterId]) {
                 let content: any = {}
                 bibles[i].chapter = (chapters[id][chapterId] as any).number || 0
                 ;(chapters[id][chapterId] as any).verses?.forEach((a: any) => {
                     content[a.number] = a.value
                 })
+
                 verses[id] = content
             }
+        })
+    }
+
+    function getVerses() {
+        bibles.forEach(async (bible, i) => {
+            let id: string = getBibleId(i, bible)
+            if (!verses[id]) return
+
+            bibles[i].verses = verses[id]
 
             selectFirstVerse(id, i)
         })
     }
 
-    // prevent loop when loading collection with API Bible
-    let preventLoop = false
-    function getVerses() {
-        if (preventLoop) return
-        preventLoop = true
-        setTimeout(() => {
-            preventLoop = false
-        }, 200)
-
-        bibles.forEach(async (bible, i) => {
-            let id: string = getBibleId(i, bible)
-            if (!verses[id]) return
-
-            if (bible.api) {
-                verses[id] = []
-                await loadAPIBible(id, "versesText", i)
-            } else {
-                bibles[i].verses = verses[id]
-            }
-
-            // let bibles[i].verses update first
-            setTimeout(() => selectFirstVerse(id, i), 500)
-        })
-    }
-
-    let previousBibleId = ""
+    let loaded: boolean = false
+    $: if (active) loaded = false
     function selectFirstVerse(bibleId: string, index: number) {
         if (!verses[bibleId] || !bibles[index]) return
 
-        if (previousBibleId !== active && cachedRef?.activeVerses?.length && verses[bibleId]?.[cachedRef?.activeVerses[0]]) {
+        if (cachedRef?.activeVerses?.length && verses[bibleId]?.[cachedRef?.activeVerses[0]]) {
             activeVerses = cachedRef.activeVerses
-            previousBibleId = active
         } else if (loaded) {
             activeVerses = activeVerses.length ? activeVerses.filter((a) => verses[bibleId]?.[a]) : ["1"]
         }
 
         updateActiveVerses(index)
+        loaded = true
     }
 
     function updateActiveVerses(bibleIndex: number = 0) {
@@ -376,7 +355,7 @@
     // search
     const updateSearchValue = (v: string) => (searchValue = v)
 
-    let mainElem: any = null
+    // let mainElem: any = null
     let autoComplete: boolean = false
     // $: if (searchValue) autoComplete = true
 
@@ -410,12 +389,13 @@
 
         resetContentSearch()
 
+        // this should auto update when e.g. bookId changed, but it does not
+        setTimeout(updateActive, 1000)
+
         if (bookId !== searchValues.book) {
             bookId = searchValues.book
             getBook()
             getChapter()
-
-            if (mainElem) scrollTo(mainElem.querySelector(".books"), bookId)
         }
 
         let bookLength = (searchValues.bookName + " ").length
@@ -428,8 +408,6 @@
         if (chapterId !== searchValues.chapter) {
             chapterId = searchValues.chapter
             getChapter()
-
-            if (mainElem) scrollTo(mainElem.querySelector(".chapters"), chapterId)
         }
 
         searchValues.verses = findVerse({ splittedEnd })
@@ -438,19 +416,7 @@
             activeVerses = removeDuplicates(searchValues.verses)
             activeVerses = activeVerses.map((a) => a.toString())
             bibles[0].activeVerses = activeVerses
-
-            // scroll down
-            if (mainElem) scrollTo(mainElem.querySelector(".verses"), activeVerses[0])
         }
-    }
-
-    function scrollTo(parent, childId) {
-        if (!parent) return
-
-        let selectedChild = [...parent.children].find((a) => a.id === childId.toString())
-        if (!selectedChild) return
-
-        parent.scrollTo(0, selectedChild.offsetTop)
     }
 
     let searchBibleActive: boolean = false
@@ -777,21 +743,25 @@
     let booksScrollElem: any
     let chaptersScrollElem: any
     let versesScrollElem: any
-    $: if (booksScrollElem && active && bookId) setTimeout(() => scrollToActive(booksScrollElem))
-    $: if (chaptersScrollElem && active && chapterId) setTimeout(() => scrollToActive(chaptersScrollElem))
-    $: if (versesScrollElem && active && activeVerses?.length < 5) setTimeout(() => scrollToActive(versesScrollElem))
+    $: if (active && bookId) setTimeout(() => scrollToActive(booksScrollElem))
+    $: if (active && chapterId) setTimeout(() => scrollToActive(chaptersScrollElem))
+    $: if (active && activeVerses?.length < 5) setTimeout(() => scrollToActive(versesScrollElem))
     function scrollToActive(scrollElem) {
         if (!scrollElem) return
 
         let selectedElemTop = scrollElem.querySelector(".active")?.offsetTop || 0
-        scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
+
+        // wait to allow user to double click
+        setTimeout(() => {
+            scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
+        }, 150)
     }
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />
 
 <div class="scroll" style="flex: 1;overflow-y: auto;">
-    <div class="main" bind:this={mainElem}>
+    <div class="main">
         {#if notLoaded || !bibles[0]}
             <Center faded>
                 <T id="error.bible" />

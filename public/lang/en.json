@@ -770,6 +770,7 @@
         "variable": "Variable",
         "web": "Website",
         "visualizer": "Visualizer",
+        "captions": "Captions",
         "icon": "Icon"
     },
     "borders": {
@@ -821,6 +822,13 @@
         "digital": "Digital",
         "analog": "Analog",
         "seconds": "Seconds"
+    },
+    "captions": {
+        "info": "Please click the URL to open in your browser if you haven't already, or open it on any other device! Make sure to give access to your microphone, and use Google Chrome for the best performance.",
+        "language": "Transcription language",
+        "translate": "Translate to",
+        "showtime": "Display duration",
+        "powered_by": "Powered by"
     },
     "midi": {
         "midi": "MIDI",
