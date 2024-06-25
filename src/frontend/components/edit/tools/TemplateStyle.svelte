@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { TemplateSettings } from "../../../../types/Show"
     import { activeEdit, dictionary, imageExtensions, outputs, overlays, styles, templates, videoExtensions } from "../../../stores"
-    import { clone, keysToID, sortByName } from "../../helpers/array"
+    import { getList } from "../../../utils/common"
+    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName } from "../../helpers/media"
@@ -56,13 +57,6 @@
 
     $: templateList = getList($templates, true).filter((a) => a.id !== templateId)
     $: overlayList = getList($overlays, true)
-
-    function getList(object: any, addEmptyValue: boolean = false) {
-        let list = sortByName(keysToID(object))
-        if (addEmptyValue) list = [{ id: null, name: "—" }, ...list]
-
-        return list
-    }
 </script>
 
 <div class="section">

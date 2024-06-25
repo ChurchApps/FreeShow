@@ -296,6 +296,10 @@
     <p><T id="settings.override_with_template" /></p>
     <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "template")} />
 </CombinedInput>
+<CombinedInput>
+    <p><T id="settings.override_scripture_with_template" /></p>
+    <Dropdown options={templateList} value={$templates[currentStyle.templateScripture || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "templateScripture")} />
+</CombinedInput>
 
 <!-- meta -->
 <h3><T id="tools.metadata" /></h3>

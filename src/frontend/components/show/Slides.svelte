@@ -71,9 +71,9 @@
         } else endIndex = null
     }
 
-    $: showTemplate = currentShow?.settings?.template || ""
-    $: if (showId && showTemplate) {
+    $: if (showId) {
         // update show by its template
+        let showTemplate = currentShow?.settings?.template || ""
         history({ id: "TEMPLATE", save: false, newData: { id: showTemplate }, location: { page: "show" } })
     }
 

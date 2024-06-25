@@ -244,6 +244,7 @@
         { id: "slide_click", name: "$:actions.activate_slide_clicked:$" },
         { id: "video_start", name: "$:actions.activate_video_starting:$" },
         { id: "video_end", name: "$:actions.activate_video_ending:$" },
+        { id: "timer_end", name: "$:actions.activate_timer_ending:$" },
         { id: "scripture_start", name: "$:actions.activate_scripture_start:$" },
         { id: "show_created", name: "$:actions.activate_show_created:$" },
     ]

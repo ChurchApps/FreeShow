@@ -16,8 +16,8 @@
     function openInDrawer() {
         if (!edit) return
 
-        setDrawerTabData("calendar", "variables")
-        activeDrawerTab.set("overlays")
+        setDrawerTabData("functions", "variables")
+        activeDrawerTab.set("functions")
 
         // open drawer if closed
         if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })

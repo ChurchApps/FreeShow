@@ -58,8 +58,8 @@
     function openInDrawer() {
         if (!edit) return
 
-        setDrawerTabData("calendar", "timer")
-        activeDrawerTab.set("calendar")
+        setDrawerTabData("functions", "timer")
+        activeDrawerTab.set("functions")
 
         // open drawer if closed
         if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })

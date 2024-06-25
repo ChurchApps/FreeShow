@@ -348,12 +348,18 @@ function getPlayingAudio() {
                     return false
                 } else {
                     playingAudio.update((a: any) => {
-                        // a[audioPath].paused = true
-                        delete a[audioPath]
+                        if (get(special).clearMediaOnFinish === false) {
+                            // a[audioPath].audio?.pause()
+                            a[audioPath].paused = true
+                        } else {
+                            delete a[audioPath]
+                        }
+
                         return a
                     })
 
-                    if (!Object.keys(get(playingAudio)).length) checkNextAfterMedia(audioPath, "audio")
+                    let stillPlaying = Object.values(get(playingAudio)).filter((a) => !a.audio?.paused)
+                    if (!stillPlaying.length) checkNextAfterMedia(audioPath, "audio")
                     return false
                 }
             }

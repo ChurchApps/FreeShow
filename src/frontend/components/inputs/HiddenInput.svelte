@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { activeRename, dictionary } from "../../stores"
+    import { activeProject, activeRename, dictionary, projectView } from "../../stores"
 
     export let value: string = ""
     export let style: string = ""
@@ -50,6 +50,10 @@
 
     function keydown(e) {
         if (e.key === "Enter" || e.key === "Tab") {
+            if ($activeRename?.includes("project_") && $activeProject === $activeRename.slice($activeRename.indexOf("_") + 1)) {
+                setTimeout(() => projectView.set(false), 20)
+            }
+
             edit = false
             activeRename.set(null)
 

@@ -50,7 +50,9 @@ function createOutputWindow(options: any, id: string, name: string) {
     window.setSkipTaskbar(options.skipTaskbar) // hide from taskbar
     if (isMac) window.minimize() // hide on mac
 
-    if (options.alwaysOnTop) window.setAlwaysOnTop(true, "pop-up-menu", 1)
+    window.once("show", () => {
+        if (options.alwaysOnTop) window?.setAlwaysOnTop(true, "pop-up-menu", 1)
+    })
     // window.setVisibleOnAllWorkspaces(true)
 
     loadWindowContent(window, true)
@@ -245,7 +247,7 @@ const setValues: any = {
         window.setBackgroundColor(value ? "#00000000" : "#000000")
     },
     alwaysOnTop: (value: boolean, window: BrowserWindow) => {
-        window.setAlwaysOnTop(value)
+        window.setAlwaysOnTop(value, "pop-up-menu", 1)
         window.setResizable(!value)
         window.setSkipTaskbar(value)
     },

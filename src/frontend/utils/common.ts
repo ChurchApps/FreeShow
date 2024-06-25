@@ -5,7 +5,7 @@ import { activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
-import { removeDuplicates } from "../components/helpers/array"
+import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
 
 // create toast popup
 export function newToast(msg: string) {
@@ -82,6 +82,14 @@ export function startAutosave() {
         save()
         startAutosave()
     }, saveInterval)
+}
+
+// get dropdown list
+export function getList(object: any, addEmptyValue: boolean = false) {
+    let list = sortByName(keysToID(object))
+    if (addEmptyValue) list = [{ id: null, name: "—" }, ...list]
+
+    return list
 }
 
 // error logger

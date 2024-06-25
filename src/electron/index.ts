@@ -19,6 +19,7 @@ import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRecording, startImport } from "./utils/responses"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { startExport } from "./data/export"
+import { currentlyDeletedShows } from "./cloud/drive"
 
 // ----- STARTUP -----
 
@@ -325,8 +326,12 @@ function save(data: any) {
         if (data.deletedShows) data.deletedShows.forEach(deleteShow)
         function deleteShow({ name, id }: any) {
             if (!name || data.showsCache[id]) return
+
             let p: string = path.join(data.path, (name || id) + ".show")
             deleteFile(p)
+
+            // update cloud
+            currentlyDeletedShows.push(id)
         }
 
         // SAVED

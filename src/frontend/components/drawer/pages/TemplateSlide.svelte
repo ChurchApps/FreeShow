@@ -21,7 +21,7 @@
     export let edit: boolean = false
     let lines: [string, number][] = []
     let mouse: any = null
-    let newStyles: any = {}
+    export let newStyles: any = {}
     $: active = $activeEdit.items
 
     $: currentStyle = $styles[$outputs[getActiveOutputs()[0]].style || ""] || {}

@@ -444,6 +444,8 @@
 
         searchInBible(e)
     }
+    let previousSearch: string = ""
+    let cachedSearches: number = 0
     async function searchInBible(e: any) {
         contentSearch = e.target?.value || ""
         contentSearchActive = false
@@ -463,12 +465,18 @@
 
         let matches: any[] = []
         let extraMatches: any[] = []
-        if (bible.api) {
+        let searchValue = formatText(contentSearch)
+
+        // if new search includes previous search, then just search through previously filtered data
+        // Bible.API will only give a fixed result, so search that again when "cachedSearches" is more than 5
+        if (previousSearch && searchValue.includes(previousSearch) && (!bible.api || cachedSearches < 5)) {
+            matches = contentSearchMatches.filter((a) => a.text.includes(searchValue))
+            cachedSearches++
+        } else if (bible.api) {
             let searchResult: any = await searchBibleAPI(active, contentSearch)
             matches = searchResult?.verses?.map((a) => ({ book: a.bookId, chapter: a.chapterId, verse: a.reference.slice(a.reference.indexOf(":") + 1), reference: a.reference, text: a.text, api: true }))
         } else {
             let allBooks: any[] = books[firstBibleId]
-            let searchValue = formatText(contentSearch)
             allBooks.forEach((book, bookIndex) => {
                 book.chapters.forEach((chapter, chapterIndex) => {
                     chapter.verses.forEach((verse) => {
@@ -483,16 +491,17 @@
                     })
                 })
             })
+        }
 
-            function formatText(text: string) {
-                return text.toLowerCase().replace(/[`!*()-?;:'",.]/gi, "")
-            }
+        function formatText(text: string) {
+            return text.toLowerCase().replace(/[`!*()-?;:'",.]/gi, "")
         }
 
         matches.push(...extraMatches)
 
         contentSearchMatches = matches
         contentSearchActive = true
+        previousSearch = searchValue
 
         if (!tempCache[firstBibleId]) tempCache[firstBibleId] = {}
         tempCache[firstBibleId][contentSearch] = matches
@@ -650,6 +659,7 @@
         if (!e.ctrlKey && !e.metaKey) return
 
         if (e.key === "r") {
+            if (!outputIsScripture) return
             e.preventDefault()
             playOrClearScripture(true)
             return

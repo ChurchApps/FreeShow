@@ -359,18 +359,24 @@
                     caret = { line: i, pos: 0 }
                 }
             })
+
+            // set to end (if backspace)
+            if (!caret && (item.lines || []).length > newLines.length) {
+                // WIP if line in middle is deleted, the caret is still moved to the last line... (get the last used line here)
+                caret = { line: newLines.length - 1, pos: getLineText(newLines[newLines.length - 1]).length }
+            }
         }
 
         if (caret) {
             item.lines = newLines
             setTimeout(() => {
                 getStyle()
-                if (newLines.length > 1) {
-                    // set caret position back
-                    setTimeout(() => {
-                        setCaret(textElem, caret)
-                    }, 10)
-                }
+                if (newLines.length < 1) return
+
+                // set caret position back
+                setTimeout(() => {
+                    setCaret(textElem, caret)
+                }, 10)
             }, 10)
         }
 
@@ -486,7 +492,7 @@
         opacity: 0;
         overflow: hidden;
     }
-    .edit:not(.invisible).autoSize :global(span) {
+    .edit:not(.invisible).autoSize :global(span:not(.custom)) {
         font-size: var(--auto-size) !important;
     }
 

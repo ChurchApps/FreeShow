@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activeShow, os, showsCache, variables } from "../../../stores"
+    import { activeEdit, activeShow, openToolsTab, os, showsCache, variables } from "../../../stores"
     import { deleteAction } from "../../helpers/clipboard"
     import EditboxLines from "./EditboxLines.svelte"
     import EditboxOther from "./EditboxOther.svelte"
@@ -25,6 +25,8 @@
     export let mouse: any = {}
     function mousedown(e: any) {
         if (e.target.closest(".chords") || e.target.closest(".editTools")) return
+        if (!e.target.closest(".line") && !e.target.closest(".square")) openToolsTab.set("text")
+
         let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         activeEdit.update((ae) => {

@@ -92,7 +92,9 @@
 
         if (active === "text") {
             // get current text style
-            let style = item?.lines?.[0].text?.[0].style || item?.style
+            // don't style scripture verses
+            let normalText = item?.lines?.[0].text?.filter((a) => !a.customType) || []
+            let style = normalText[0]?.style || item?.style
             let extraKeys = {
                 auto: item?.auto,
                 specialStyle: item?.specialStyle,
@@ -170,7 +172,11 @@
                         if (!a.text) return
 
                         return a.text.map((a: any) => {
+                            // don't style scripture verses
+                            if (a.customType) return a
+
                             a.style = style
+
                             return a
                         })
                     })

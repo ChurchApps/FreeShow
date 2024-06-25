@@ -79,7 +79,7 @@
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
-            <TemplateSlide templateId={currentId} template={Slide} edit {width} {height} {zoom} bind:ratio />
+            <TemplateSlide bind:newStyles templateId={currentId} template={Slide} edit {width} {height} {zoom} bind:ratio />
         {:else}
             <Center size={2} faded>
                 <T id="empty.slide" />

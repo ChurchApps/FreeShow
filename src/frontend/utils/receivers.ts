@@ -324,6 +324,9 @@ const receiveOUTPUTasMAIN: any = {
         // check and execute next after media regardless of loop
         if (checkNextAfterMedia(videoPath, "media", msg.id) || msg.loop) return
 
+        console.log(get(special))
+        if (get(special).clearMediaOnFinish === false) return
+
         setTimeout(() => {
             clearBackground(msg.id)
         }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH

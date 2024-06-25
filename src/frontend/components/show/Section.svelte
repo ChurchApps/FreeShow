@@ -6,7 +6,7 @@
     export let section: any
 
     let note: string = ""
-    $: if ($activeShow !== null) updateNote()
+    $: if ($activeShow !== null || section) updateNote()
 
     function updateNote() {
         note = $projects[$activeProject!].shows[section.index]?.notes || ""
@@ -35,7 +35,7 @@
     function keydown(e: any) {
         if (e.key !== "Enter") return
 
-        (document.activeElement as any)?.blur()
+        ;(document.activeElement as any)?.blur()
     }
 </script>
 

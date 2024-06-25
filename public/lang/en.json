@@ -117,7 +117,8 @@
         "slide": "Clear slide",
         "overlays": "Clear overlays",
         "audio": "Clear audio",
-        "nextTimer": "Clear next slide timer"
+        "nextTimer": "Clear next slide timer",
+        "drawing": "Clear drawing"
     },
     "remove": {
         "background": "Remove background",
@@ -509,7 +510,7 @@
         "add_color": "Add color",
         "format": "Format",
         "find_replace": "Find and replace text",
-        "cut_in_half": "Cut in half",
+        "cut_in_half": "Split in two",
         "find": "Find",
         "replace": "Replace",
         "case_sensitive": "Case sensitive",
@@ -580,6 +581,7 @@
         "activate_slide_clicked": "Activate on slide click",
         "activate_video_starting": "Activate when video is starting",
         "activate_video_ending": "Activate when video is ending",
+        "activate_timer_ending": "Activate when timer is ending",
         "activate_scripture_start": "Activate when scripture is started",
         "activate_show_created": "Activate when show is created"
     },
@@ -939,6 +941,7 @@
         "full_colors": "Full slide group colors",
         "auto_output": "Activate output screen on startup",
         "hide_cursor_in_output": "Hide cursor in output",
+        "clear_media_when_finished": "Clear media when finished",
         "disable_presenter_controller_keys": "Disable presenter controller keys",
         "default_project_name": "Default project name",
         "audio_fade_duration": "Audio fade duration",

@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePage, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, notFound, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
+import { activeEdit, activePage, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { EMPTY_SHOW_SLIDE } from "../../values/empty"
 import { clone, keysToID } from "./array"
@@ -721,8 +721,27 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     Object.entries(slides).forEach(([id, slide]: any) => {
                         if ((slideId && slideId !== id) || !slide) return
 
+                        // show template
                         let slideTemplate = template
-                        if (slide.settings?.template) slideTemplate = clone(get(templates)[slide.settings.template]) || template
+                        let isGlobalTemplate = true
+                        // slide template
+                        if (slide.settings?.template) {
+                            slideTemplate = clone(get(templates)[slide.settings.template]) || template
+                            isGlobalTemplate = false
+                        } else {
+                            // group template
+                            let isChild = slide.group === null
+                            let globalGroup = slide.globalGroup
+                            if (isChild) {
+                                let parent = Object.values(a[data.remember.showId].slides).find((a) => a.children?.includes(id))
+                                globalGroup = parent?.globalGroup
+                            }
+                            if (globalGroup && get(groups)[globalGroup]?.template) {
+                                slideTemplate = clone(get(templates)[get(groups)[globalGroup]?.template]) || template
+                                isGlobalTemplate = false
+                            }
+                        }
+
                         if (!slideTemplate?.items?.length) return
 
                         // roll items around
@@ -747,6 +766,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         }
 
                         a[data.remember.showId].slides[id].items = clone(newItems)
+
+                        if (!isGlobalTemplate) return
 
                         // set custom values
                         let isFirst = !!Object.values(a[data.remember.showId].layouts).find((layout) => layout.slides[0]?.id === id)

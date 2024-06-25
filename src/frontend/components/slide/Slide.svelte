@@ -125,7 +125,8 @@
 
         // set cloud path to path
         showsCache.update((a) => {
-            let media = a[showId].media[fileId]
+            let media = a[showId]?.media?.[fileId]
+            if (!media) return a
             if (!media.cloud) a[showId].media[fileId].cloud = {}
             a[showId].media[fileId].cloud![cloudId] = path
 

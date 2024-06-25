@@ -860,7 +860,7 @@ const dynamicValues = {
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
 
-    slide_group: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex].id].group || "",
+    slide_group: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.group || "",
     slide_number: ({ slideIndex }) => Number(slideIndex || 0) + 1,
-    slide_notes: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex].id].notes || "",
+    slide_notes: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.notes || "",
 }

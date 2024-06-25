@@ -17,7 +17,8 @@ export interface Styles {
     resolution?: Resolution
     cropping?: Cropping
     lines?: number
-    template?: string
+    template?: string // slide
+    templateScripture?: string
     metadataDivider?: string
     displayMetadata?: string
     metadataTemplate?: string

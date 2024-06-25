@@ -6,7 +6,7 @@ import { newToast } from "../../utils/common"
 import { translate } from "../../utils/language"
 import { send } from "../../utils/request"
 import { actionData } from "../actions/actionData"
-import { runAction } from "../actions/actions"
+import { customActionActivation, runAction } from "../actions/actions"
 import { clone, sortByTime } from "./array"
 import { loadShows } from "./setShow"
 import { checkNextAfterMedia } from "./showActions"
@@ -39,7 +39,11 @@ export function stopTimers() {
 }
 
 function increment(timer: any, i: number) {
-    if (timer.start < timer.end ? timer.currentTime >= timer.end : timer.currentTime <= timer.end) checkNextAfterMedia(timer.id, "timer")
+    if (timer.start < timer.end ? timer.currentTime >= timer.end : timer.currentTime <= timer.end) {
+        // ended
+        checkNextAfterMedia(timer.id, "timer")
+        customActionActivation("timer_end")
+    }
 
     if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer
 

@@ -178,7 +178,7 @@
         update("customText", customText)
     }
 
-    $: containsJesusWords = Object.values(bibles?.[0]?.verses || {})?.find((text: any) => text?.includes('<span class="wj"'))
+    $: containsJesusWords = Object.values(bibles?.[0]?.verses || {})?.find((text: any) => text?.includes('<span class="wj"') || text?.includes("<red"))
 </script>
 
 <svelte:window on:keydown={keydown} />

@@ -103,7 +103,7 @@
     // custom template
     $: outputStyle = currentOutput?.style
     $: if (currentSlide && outputStyle && currentStyle) setTemplateItems()
-    const setTemplateItems = () => (currentSlide.items = setTemplateStyle(slide, currentStyle.template, currentSlide.items))
+    const setTemplateItems = () => (currentSlide.items = setTemplateStyle(slide, currentStyle, currentSlide.items))
 
     // lines
     let lines: any = {}

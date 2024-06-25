@@ -31,7 +31,7 @@
 
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (!value) delete a[key]
+            if (!value && key !== "clearMediaOnFinish") delete a[key]
             else a[key] = value
 
             return a
@@ -174,6 +174,12 @@
     <p><T id="settings.user_data_location" /></p>
     <div class="alignRight">
         <Checkbox disabled={!$dataPath} checked={$special.customUserDataLocation || false} on:change={(e) => toggle(e, "customUserDataLocation")} />
+    </div>
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.clear_media_when_finished" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.clearMediaOnFinish ?? true} on:change={(e) => toggle(e, "clearMediaOnFinish")} />
     </div>
 </CombinedInput>
 <CombinedInput>

@@ -148,6 +148,7 @@
                     dark
                     on:click={(e) => {
                         if (!e.target?.closest(".up")) {
+                            selected.set({ id: null, data: [] })
                             activeEdit.update((ae) => {
                                 if (e.ctrlKey || e.metaKey) {
                                     if (ae.items.includes(index)) ae.items.splice(ae.items.indexOf(index), 1)

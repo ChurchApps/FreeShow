@@ -47,7 +47,7 @@
                 <div class="action">
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
-                        <Button title={$dictionary.media?.play} on:click={() => (action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action))} dark>
+                        <Button style={action.enabled === false ? "opacity: 0.6;" : ""} title={$dictionary.media?.play} on:click={() => (action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action))} dark>
                             <span style="display: flex;align-items: center;width: 100%;">
                                 {#if action.shows?.length}
                                     <Icon id="slide" white right />

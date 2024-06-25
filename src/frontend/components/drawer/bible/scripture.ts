@@ -158,6 +158,7 @@ export function getSlides({ bibles, sorted }) {
             if (get(scriptureSettings).redJesus) {
                 let jesusWords: any[] = []
                 let jesusStart = text.indexOf('<span class="wj"')
+                if (jesusStart < 0) jesusStart = text.indexOf("<red")
 
                 while (jesusStart > -1) {
                     let jesusEnd = 0
@@ -178,6 +179,7 @@ export function getSlides({ bibles, sorted }) {
                     if (jesusEnd) {
                         jesusWords.push([jesusStart, jesusEnd])
                         jesusStart = text.indexOf('<span class="wj"', jesusEnd)
+                        if (jesusStart < 0) jesusStart = text.indexOf("<red", jesusEnd)
                     } else {
                         jesusWords.push([jesusStart, text.length])
                         jesusStart = -1

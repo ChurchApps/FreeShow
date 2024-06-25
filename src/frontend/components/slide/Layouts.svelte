@@ -160,13 +160,13 @@
     {/if}
     <span style="display: flex; align-items: center;position: relative;{multipleLayouts || reference || !layouts ? '' : 'width: 100%;'}">
         {#if !multipleLayouts && layouts && !reference}
-            <!-- WIP left aligned to prevent accidental clicks ? -->
-            <!-- <span style="width: 100%;"> -->
-            <Button disabled={!layoutSlides.length} on:click={addLayout} style="white-space: nowrap;width: 100%;" title={$dictionary.show?.new_layout} center>
-                <Icon size={1.3} id="add" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
-            </Button>
-            <!-- </span> -->
+            <!-- left aligned to prevent accidental clicks -->
+            <span style="width: 100%;">
+                <Button disabled={!layoutSlides.length} on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
+                    <Icon size={1.3} id="add" right={!$labelsDisabled} />
+                    {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
+                </Button>
+            </span>
         {/if}
 
         <div class="seperator" />

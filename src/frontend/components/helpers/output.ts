@@ -556,8 +556,11 @@ export function getOutputTransitions(slideData: any, transitionData: any, disabl
     return clone(transitions)
 }
 
-export function setTemplateStyle(outSlide: any, templateId: string | undefined, items: Item[]) {
-    let slideItems = outSlide?.id === "temp" ? outSlide.tempItems : items
+export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]) {
+    let isScripture = outSlide?.id === "temp"
+    let slideItems = isScripture ? outSlide.tempItems : items
+
+    let templateId = currentStyle[`template${isScripture ? "Scripture" : ""}`]
     let template = get(templates)[templateId || ""] || {}
     let templateItems = template.items || []
 
