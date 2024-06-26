@@ -6,6 +6,7 @@ import { getAutoSize } from "../../edit/scripts/autoSize"
 import { clone, removeDuplicates } from "../../helpers/array"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
+let tempCache: any = {}
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
     let versesId: any = null
     if (ref.versesList.length) {
@@ -21,6 +22,8 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
         versesText: `${api}${active}/verses/${versesId}`,
     }
 
+    if (tempCache[urls[load]]) return tempCache[urls[load]]
+
     return new Promise((resolve, reject) => {
         if (!get(bibleApiKey)) return reject("No API key!")
         if (urls[load].includes("null")) return reject("Something went wrong!")
@@ -28,6 +31,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
         fetch(urls[load], { headers: { "api-key": get(bibleApiKey) } })
             .then((response) => response.json())
             .then((data) => {
+                tempCache[urls[load]] = data.data
                 resolve(data.data)
             })
             .catch((e) => {
@@ -126,12 +130,19 @@ export function getSlides({ bibles, sorted }) {
         sorted.forEach((s: any, i: number) => {
             let slideArr: any = slides[slideIndex][bibleIndex]
 
+            let lineIndex: number = 0
+            // verses on individual lines
+            if (get(scriptureSettings).versesOnIndividualLines) {
+                lineIndex = i
+                if (!slideArr.lines![lineIndex]) slideArr.lines![lineIndex] = { text: [], align: alignStyle }
+            }
+
             if (get(scriptureSettings).verseNumbers) {
                 let size = get(scriptureSettings).numberSize || 50
                 if (i === 0) size *= 1.2
                 let verseNumberStyle = textStyle + "font-size: " + size + "px;color: " + (get(scriptureSettings).numberColor || "#919191")
 
-                slideArr.lines![0].text.push({
+                slideArr.lines![lineIndex].text.push({
                     value: s + " ",
                     style: verseNumberStyle,
                     customType: "disableTemplate", // dont let template style verse numbers
@@ -147,6 +158,7 @@ export function getSlides({ bibles, sorted }) {
             if (get(scriptureSettings).redJesus) {
                 let jesusWords: any[] = []
                 let jesusStart = text.indexOf('<span class="wj"')
+                if (jesusStart < 0) jesusStart = text.indexOf("<red")
 
                 while (jesusStart > -1) {
                     let jesusEnd = 0
@@ -167,6 +179,7 @@ export function getSlides({ bibles, sorted }) {
                     if (jesusEnd) {
                         jesusWords.push([jesusStart, jesusEnd])
                         jesusStart = text.indexOf('<span class="wj"', jesusEnd)
+                        if (jesusStart < 0) jesusStart = text.indexOf("<red", jesusEnd)
                     } else {
                         jesusWords.push([jesusStart, text.length])
                         jesusStart = -1
@@ -189,6 +202,7 @@ export function getSlides({ bibles, sorted }) {
                     }
                 })
             } else {
+                // WIP bibles with custom html tags?
                 text = removeTags(text)
 
                 if (text.charAt(text.length - 1) !== " ") text += " "
@@ -196,7 +210,7 @@ export function getSlides({ bibles, sorted }) {
                 textArray.push({ value: text, style: textStyle })
             }
 
-            slideArr.lines![0].text.push(...textArray)
+            slideArr.lines![lineIndex].text.push(...textArray)
 
             // if (bibleIndex + 1 < bibles.length) return
             if ((i + 1) % get(scriptureSettings).versesPerSlide > 0) return
@@ -252,8 +266,10 @@ export function getSlides({ bibles, sorted }) {
 
         if (get(scriptureSettings).combineWithText) itemIndex = 0
         let metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
+        let alignStyle = metaTemplate?.lines?.[0]?.align || ""
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
-        let versions = bibles.map((a) => a.version).join(" + ")
+        // remove text in () on scripture names
+        let versions = bibles.map((a) => a.version.replace(/\([^)]*\)/g, "").trim()).join(" + ")
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         let text = customText
@@ -262,7 +278,7 @@ export function getSlides({ bibles, sorted }) {
         if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + ":" + range)
 
         text.split("\n").forEach((line) => {
-            lines.push({ text: [{ value: line, style: verseStyle }], align: "" })
+            lines.push({ text: [{ value: line, style: verseStyle }], align: alignStyle })
         })
 
         if (lines.length) {

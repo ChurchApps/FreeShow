@@ -114,9 +114,9 @@
 </div>
 
 {#if $drawTool === "paint"}
-    <Button style="flex: 1;" on:click={() => update("clear", true)} dark center>
-        <Icon id="clear" right />
-        <T id="clear.all" />
+    <Button style="flex: 1;padding: 10px;" on:click={() => update("clear", true)} dark center>
+        <Icon id="clear" size={2} right />
+        <T id="clear.drawing" />
     </Button>
 {/if}
 

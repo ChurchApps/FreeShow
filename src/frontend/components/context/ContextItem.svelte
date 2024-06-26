@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeRecording, activeShow, events, forceClock, media, os, overlays, redoHistory, scriptures, selected, shows, stageShows, undoHistory } from "../../stores"
+    import { activeProject, activeRecording, activeShow, events, forceClock, media, os, overlays, redoHistory, scriptures, selected, shows, slidesOptions, stageShows, undoHistory } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -15,6 +15,12 @@
     let enabled: boolean = menu?.enabled ? true : false
 
     const conditions: any = {
+        // slide views
+        view_grid: () => ($slidesOptions.mode === "grid" ? (enabled = true) : ""),
+        view_simple: () => ($slidesOptions.mode === "simple" ? (enabled = true) : ""),
+        view_list: () => ($slidesOptions.mode === "list" ? (enabled = true) : ""),
+        view_lyrics: () => ($slidesOptions.mode === "lyrics" ? (enabled = true) : ""),
+        view_text: () => ($slidesOptions.mode === "text" ? (enabled = true) : ""),
         private: () => {
             if (!$shows[$selected.data[0]?.id]?.private) return
             enabled = $shows[$selected.data[0].id].private

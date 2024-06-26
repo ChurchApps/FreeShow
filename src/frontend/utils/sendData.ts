@@ -78,13 +78,13 @@ export function client(id: Clients, msg: ClientMessage) {
             c[id][msg.id!] = { entered: false, ...msg.data }
             return c
         })
-        console.log(msg.id + " connected")
+        console.info("SERVER: " + msg.id + " connected")
     } else if (msg.channel === "DISCONNECT") {
         connections.update((c: any) => {
             if (c[id]) delete c[id][msg.id!]
             return c
         })
-        console.log(msg.id + " disconnected")
+        console.info("SERVER: " + msg.id + " disconnected")
     } else sendData(id, msg)
 }
 
@@ -142,8 +142,8 @@ function checkSent(id: Clients, msg: any): boolean {
 
 // send data per connection to all
 export function eachConnection(id: Clients, channel: any, callback: any) {
-    Object.entries(get(connections)[id] || {}).forEach(([clientID, value]: any) => {
-        let data = callback(value)
+    Object.entries(get(connections)[id] || {}).forEach(async ([clientID, value]: any) => {
+        let data = await callback(value)
         if (data) window.api.send(id, { id: clientID, channel, data })
     })
 }

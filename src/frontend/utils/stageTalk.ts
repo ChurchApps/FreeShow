@@ -2,68 +2,27 @@ import { get } from "svelte/store"
 import { STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { clone } from "../components/helpers/array"
+import { getBase64Path } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { events, media, mediaCache, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
+import { events, media, outputs, previewBuffers, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
-import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
+import { arrayToObject, filterObjectArray, sendData } from "./sendData"
 
-// WIP this should not send to all stage, just connected ids
-export function stageListen() {
-    stageShows.subscribe((data: any) => {
-        data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
-        timedout(STAGE, { channel: "SHOW", data }, () =>
-            eachConnection(STAGE, "SHOW", (connection) => {
-                if (!connection.active) return
-
-                let currentData = data[connection.active]
-                if (!currentData.settings.resolution?.width) currentData.settings.resolution = { width: 1920, height: 1080 }
-                return currentData
-            })
-        )
-    })
-    showsCache.subscribe(() => {
-        sendData(STAGE, { channel: "SLIDES" })
-    })
-
-    outputs.subscribe(() => {
-        sendData(STAGE, { channel: "SLIDES" }, true)
-        // send(STAGE, ["OUTPUTS"], data)
-
-        // sendBackgroundToStage(a)
-    })
-    mediaCache.subscribe(() => {
-        sendData(STAGE, { channel: "SLIDES" }, true)
-        // sendBackgroundToStage(get(outputs))
-    })
-
-    timers.subscribe((a) => {
-        send(STAGE, ["TIMERS"], a)
-    })
-    variables.subscribe((a) => {
-        send(STAGE, ["VARIABLES"], a)
-    })
-    events.subscribe((a) => {
-        send(STAGE, ["EVENTS"], a)
-    })
-
-    timeFormat.subscribe((a) => {
-        send(STAGE, ["DATA"], { timeFormat: a })
-    })
-}
-
-export function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
+export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
     let currentOutput = updater[outputId]?.out
     let path = currentOutput?.background?.path || ""
-    if (!path) return
+    if (!path) {
+        send(STAGE, ["BACKGROUND"], { path: "" })
+        return
+    }
 
-    let background = get(mediaCache)[path] || {}
-    let base64path = background.data
+    let base64path = await getBase64Path(path)
     if (!base64path) return
 
-    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next: getNextBackground(currentOutput?.slide) })
+    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next: await getNextBackground(currentOutput?.slide) })
 
     if (returnPath) return bg
 
@@ -71,7 +30,7 @@ export function sendBackgroundToStage(outputId, updater = get(outputs), returnPa
     return
 }
 
-function getNextBackground(currentOutputSlide: any) {
+async function getNextBackground(currentOutputSlide: any) {
     if (!currentOutputSlide?.id) return {}
 
     let layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
@@ -83,8 +42,7 @@ function getNextBackground(currentOutputSlide: any) {
     let bgId = nextLayout.data.background || ""
     let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path
 
-    let background = get(mediaCache)[path] || {}
-    let base64path = background.data
+    let base64path = await getBase64Path(path)
     if (!base64path) return {}
 
     return { path: base64path, mediaStyle: get(media)[path] || {} }
@@ -156,6 +114,7 @@ export const receiveSTAGE: any = {
         msg.data = [slides[ref[out.index!].id]]
 
         let nextIndex = out.index! + 1
+        if (!ref[nextIndex]) return
         while (nextIndex < ref.length && ref[nextIndex].data.disabled === true) nextIndex++
 
         if (nextIndex < ref.length && !ref[nextIndex].data.disabled) msg.data.push(slides[ref[nextIndex].id])

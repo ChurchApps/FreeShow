@@ -13,7 +13,6 @@
     $: showGroups = $cachedShowsData[$activeShow!.id]?.groups.sort(orderGroups) || []
 
     $: layoutSlides = $showsCache[$activeShow!.id]?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
-    $: console.log(layoutSlides)
     function countGroupsInLayout(slideId) {
         let count = layoutSlides.reduce((count: number, slide: any) => (slide.id === slideId ? count + 1 : count), 0)
         return count
@@ -147,6 +146,7 @@
         font-size: 0.8em;
         font-weight: 600;
         background-color: var(--primary-darker);
+        border-radius: var(--border-radius);
         cursor: pointer;
         padding: 0 5px;
     }

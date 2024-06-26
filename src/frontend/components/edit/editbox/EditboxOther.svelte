@@ -16,6 +16,7 @@
     import Image from "../../drawer/media/Image.svelte"
     import { getAutoSize } from "../scripts/autoSize"
     import { onMount } from "svelte"
+    import Captions from "../../slide/views/Captions.svelte"
 
     export let item: Item
 
@@ -64,13 +65,15 @@
 {:else if item?.type === "events"}
     <DynamicEvents {...item.events} edit textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
 {:else if item?.type === "variable"}
-    <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} hideText={false} edit />
+    <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ showId: ref.showId, slideIndex: $activeEdit.slide }} hideText={false} edit />
 {:else if item?.type === "web"}
     <Website src={item?.web?.src || ""} />
 {:else if item?.type === "mirror"}
     <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
 {:else if item?.type === "visualizer"}
     <Visualizer {item} />
+{:else if item?.type === "captions"}
+    <Captions {item} />
 {:else if item?.type === "icon"}
     {#if item.customSvg}
         <div class="customIcon" class:customColor={item?.style.includes("color:") && !item?.style.includes("color:#FFFFFF;")}>

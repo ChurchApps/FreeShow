@@ -1,12 +1,12 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { outputs, styles } from "../../../stores"
-    import { newToast } from "../../../utils/messages"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import type { API_output_style } from "../api"
+    import { newToast } from "../../../utils/common"
 
     export let value: API_output_style
 

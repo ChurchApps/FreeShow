@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { alertMessage, activePopup, dictionary } from "./../stores"
 
 export function checkForUpdates(currentVersion: string) {
-    fetch("https://api.github.com/repos/vassbo/freeshow/releases")
+    fetch("https://api.github.com/repos/ChurchApps/freeshow/releases")
         .then((response) => response.json())
         .then((a) => {
             if (get(activePopup) !== null) return

@@ -1,18 +1,18 @@
 <script lang="ts">
-    import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, special } from "../../../stores"
+    import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
-    import { clearPlayingVideo, isOutCleared, setOutput } from "../../helpers/output"
-    import { clearAll, clearOverlays, restoreOutput } from "../../helpers/showActions"
+    import { isOutCleared } from "../../helpers/output"
+    import { clearAll, clearBackground, clearOverlays, clearSlide, restoreOutput } from "../../helpers/showActions"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import { clearTimers } from "../clear"
 
     export let autoChange: any
     export let activeClear: any
-    export let outputId: string
 
-    $: allCleared = isOutCleared(null, $outputs) && !Object.keys($playingAudio).length
+    $: audioCleared = !Object.keys($playingAudio).length && !$playingMetronome
+    $: allCleared = isOutCleared(null, $outputs) && audioCleared
     $: if (allCleared) autoChange = true
 
     let enableRestore: boolean = false
@@ -25,21 +25,11 @@
     // ACTIONS
 
     const clearActions: any = {
-        background: () => {
-            clearPlayingVideo(outputId)
-        },
-        slide: () => {
-            setOutput("slide", null)
-        },
-        overlays: () => {
-            clearOverlays()
-        },
-        audio: () => {
-            clearAudio()
-        },
-        nextTimer: () => {
-            clearTimers()
-        },
+        background: () => clearBackground(),
+        slide: () => clearSlide(),
+        overlays: () => clearOverlays(),
+        audio: () => clearAudio(),
+        nextTimer: () => clearTimers(),
     }
 
     function clear(key: string) {
@@ -104,7 +94,7 @@
         </div>
 
         <div class="combinedButton">
-            <Button disabled={$outLocked || !Object.keys($playingAudio).length} on:click={() => clear("audio")} title={$dictionary.clear?.audio + " [F4]"} dark red center>
+            <Button disabled={$outLocked || audioCleared} on:click={() => clear("audio")} title={$dictionary.clear?.audio + " [F4]"} dark red center>
                 <Icon id="audio" size={1.2} />
             </Button>
             {#if !allCleared}

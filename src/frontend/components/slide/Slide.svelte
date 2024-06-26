@@ -23,6 +23,7 @@
         slidesOptions,
         styles,
     } from "../../stores"
+    import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/editbox/Editbox.svelte"
@@ -30,7 +31,7 @@
     import { clone, keysToID } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { GetLayoutRef } from "../helpers/get"
-    import { checkMedia, getFileName, getMediaStyle, splitPath } from "../helpers/media"
+    import { checkMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import SelectElem from "../system/SelectElem.svelte"
     import Actions from "./Actions.svelte"
@@ -124,7 +125,8 @@
 
         // set cloud path to path
         showsCache.update((a) => {
-            let media = a[showId].media[fileId]
+            let media = a[showId]?.media?.[fileId]
+            if (!media) return a
             if (!media.cloud) a[showId].media[fileId].cloud = {}
             a[showId].media[fileId].cloud![cloudId] = path
 
@@ -133,6 +135,27 @@
     }
 
     let duration: number = 0
+
+    // LOAD BACKGROUND
+    $: bgPath = bg?.path || bg?.id || ""
+    $: if (bgPath) loadBackground()
+    let thumbnailPath: string = ""
+    async function loadBackground() {
+        if (ghostBackground) {
+            await wait(100)
+            thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)
+            return
+        }
+
+        // when zoomed in show the full res image
+        // if (columns < 3 && $activePage !== "edit") {
+        //     backgroundPath = bgPath
+        //     return
+        // }
+
+        let newPath = await loadThumbnail(bgPath, mediaSize.slideSize)
+        if (newPath) thumbnailPath = newPath
+    }
 
     let mediaStyle: MediaStyle = {}
     $: if (bg?.path) mediaStyle = getMediaStyle($media[bg.path], currentStyle)
@@ -283,6 +306,9 @@
             refreshListBoxes.set(-1)
         }, 100)
     }
+
+    // correct view order based on arranged order in Items.svelte
+    $: invertedItemList = clone(slide.items)?.reverse() || []
 </script>
 
 <!-- TODO: faster loading ? lazy load images? -->
@@ -324,21 +350,13 @@
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader
-                                    name={$dictionary.error?.load}
-                                    path={bg.path || bg.id || ""}
-                                    cameraGroup={bg.cameraGroup || ""}
-                                    type={bg.type !== "player" ? bg.type : null}
-                                    loadFullImage={!!(bg.path || bg.id)}
-                                    ghost={!background}
-                                    {mediaStyle}
-                                    bind:duration
-                                />
+                                <MediaLoader name={$dictionary.error?.load} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration />
+                                <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}
                     {/if}
                     {#if slide.items}
-                        {#each slide.items as item, i}
+                        {#each invertedItemList as item, i}
                             {#if item && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
                                 <Textbox
                                     filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
@@ -408,7 +426,7 @@
         <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
             {#key $refreshListBoxes >= 0 && $refreshListBoxes !== index}
                 {#if slide.items}
-                    {#each slide.items as item, itemIndex}
+                    {#each invertedItemList as item, itemIndex}
                         {#if item.lines}
                             <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
                         {/if}

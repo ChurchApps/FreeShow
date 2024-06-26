@@ -13,7 +13,7 @@ export const textEdits: { [key: string]: EditInput[] } = {
         { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
         { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100 }, extension: "px" },
     ],
-    // align: [{ input: "align-x" }, { input: "align-y" }],
+    align: [{ input: "align-x" }], // , { input: "align-y" }
     outline: [
         { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
         { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" },
@@ -29,4 +29,5 @@ export const textEdits: { [key: string]: EditInput[] } = {
         { name: "color", id: "chordsData.color", input: "color", value: "#FF851B", hidden: true },
         { name: "size", id: "chordsData.size", input: "number", value: 30, hidden: true },
     ],
+    CSS: [{ id: "item", input: "CSS" }],
 }

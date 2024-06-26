@@ -2,16 +2,16 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePage, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, notFound, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
+import { activeEdit, activePage, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { EMPTY_SHOW_SLIDE } from "../../values/empty"
-import { getItemText } from "../edit/scripts/textStyle"
 import { clone, keysToID } from "./array"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
-import { getItemsCountByType, mergeWithTemplate } from "./output"
+import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayoutsFromTemplate, updateSlideFromTemplate } from "./output"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
+import { customActionActivation } from "../actions/actions"
 
 // TODO: move history switch to actions
 
@@ -20,7 +20,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
     let initializing: boolean = undo === null
 
     if (obj) {
-        console.log(obj, undo)
         data = obj.newData || {}
         // if (initializing && !obj.oldData) obj.oldData = clone(obj.newData) // WIP
     }
@@ -52,6 +51,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 id = obj.oldData?.id || uid()
                 if (keys && !key) id = "keys"
 
+                if (initializing && obj.location.id === "show") customActionActivation("show_created")
                 if (initializing && empty && updater.initialize) data.data = updater.initialize(data.data)
 
                 if (data.replace) {
@@ -721,41 +721,60 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     Object.entries(slides).forEach(([id, slide]: any) => {
                         if ((slideId && slideId !== id) || !slide) return
 
+                        // show template
                         let slideTemplate = template
-                        if (slide.settings?.template) slideTemplate = clone(get(templates)[slide.settings.template]) || template
+                        let isGlobalTemplate = true
+                        // slide template
+                        if (slide.settings?.template) {
+                            slideTemplate = clone(get(templates)[slide.settings.template]) || template
+                            isGlobalTemplate = false
+                        } else {
+                            // group template
+                            let isChild = slide.group === null
+                            let globalGroup = slide.globalGroup
+                            if (isChild) {
+                                let parent = Object.values(a[data.remember.showId].slides).find((a) => a.children?.includes(id))
+                                globalGroup = parent?.globalGroup
+                            }
+                            if (globalGroup && get(groups)[globalGroup]?.template) {
+                                slideTemplate = clone(get(templates)[get(groups)[globalGroup]?.template]) || template
+                                isGlobalTemplate = false
+                            }
+                        }
+
                         if (!slideTemplate?.items?.length) return
 
                         // roll items around
                         if (createItems && !slide.settings?.template) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 
-                        let newItems = mergeWithTemplate(slide.items, slideTemplate.items, slide.settings?.template ?? createItems, obj.save !== false)
+                        let changeOverflowItems = slide.settings?.template || createItems
+                        let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false)
 
                         // remove items if not in template (and textbox is empty)
-                        let templateItemCount = getItemsCountByType(slideTemplate.items)
-                        let slideItemCount = getItemsCountByType(newItems)
-                        newItems = newItems.filter((a) => {
-                            let type = a.type || "text"
-                            if (templateItemCount[type] - slideItemCount[type] >= 0) return true
-                            if (type === "text" && getItemText(a).length) return true
+                        if (changeOverflowItems) {
+                            let templateItemCount = getItemsCountByType(slideTemplate.items)
+                            let slideItemCount = getItemsCountByType(newItems)
+                            newItems = newItems.filter((a) => {
+                                let type = a.type || "text"
+                                if (templateItemCount[type] - slideItemCount[type] >= 0) return true
+                                if (type === "text" && !isEmptyOrSpecial(a)) return true
 
-                            // remove item
-                            slideItemCount[type]--
-                            return false
-                        })
-                        // // remove items if textbox is empty and not in template
-                        // let templateTextboxes = slideTemplate.items.reduce((count, item) => (count += (item.type || "text") === "text" ? 1 : 0), 0)
-                        // let slideTextboxes = newItems.reduce((count, item) => (count += (item.type || "text") === "text" ? 1 : 0), 0)
-                        // newItems = newItems.filter((a) => {
-                        //     if ((a.type || "text") !== "text") return true
-                        //     if (templateTextboxes - slideTextboxes >= 0) return true
-                        //     if (getItemText(a).length) return true
-
-                        //     // remove item
-                        //     slideTextboxes--
-                        //     return false
-                        // })
+                                // remove item
+                                slideItemCount[type]--
+                                return false
+                            })
+                        }
 
                         a[data.remember.showId].slides[id].items = clone(newItems)
+
+                        if (!isGlobalTemplate) return
+
+                        // set custom values
+                        let isFirst = !!Object.values(a[data.remember.showId].layouts).find((layout) => layout.slides[0]?.id === id)
+                        a[data.remember.showId].slides[id] = updateSlideFromTemplate(a[data.remember.showId].slides[id], slideTemplate, isFirst, changeOverflowItems)
+                        let newLayoutData = updateLayoutsFromTemplate(a[data.remember.showId].layouts, a[data.remember.showId].media, slideTemplate, changeOverflowItems)
+                        a[data.remember.showId].layouts = newLayoutData.layouts
+                        a[data.remember.showId].media = newLayoutData.media
                     })
 
                     return a
@@ -899,7 +918,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
         console.error(obj.id, "HISTORY ERROR:", msg)
     }
 
-    if (obj) console.info(obj.id, "HISTORY " + (initializing ? "INIT" : undo ? "UNDO" : "REDO") + ":", clone(obj))
+    if (obj) console.info("HISTORY " + (initializing ? "INIT" : undo ? "UNDO" : "REDO") + ` [${obj.id}]:`, clone(obj))
 
     return actions
 }

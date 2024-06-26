@@ -13,9 +13,27 @@
             loaded = true
         }
     })
+
+    // retry on error
+    let retryCount = 0
+    $: if (src) retryCount = 0
+    function reload() {
+        if (retryCount > 5) {
+            loaded = true
+            return
+        }
+        loaded = false
+
+        let time = 500 * (retryCount + 1)
+        setTimeout(() => {
+            retryCount++
+        }, time)
+    }
 </script>
 
-<img style={$$props.style} {src} {alt} class:loaded class:transition bind:this={image} />
+{#key retryCount}
+    <img style={$$props.style} {src} {alt} class:loaded class:transition bind:this={image} on:error={reload} />
+{/key}
 
 <style>
     img {

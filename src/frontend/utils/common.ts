@@ -1,10 +1,52 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { getActiveOutputs } from "../components/helpers/output"
-import { activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, focusedArea, os, outputDisplay, outputs, serverData, special, version } from "../stores"
+import { activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, focusedArea, os, outputDisplay, outputs, serverData, special, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
+import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
+
+// create toast popup
+export function newToast(msg: string) {
+    if (!msg) return
+    toastMessages.set(removeDuplicates([...get(toastMessages), msg]))
+}
+
+// async wait (instead of timeouts)
+export function wait(ms: number) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve("ended")
+        }, Number(ms))
+    })
+}
+
+// wait until input value is true
+export async function waitUntilValueIsDefined(value: Function, intervalTime: number = 50, timeoutValue: number = 5000) {
+    return new Promise(async (resolve) => {
+        let currentValue = await value()
+        if (currentValue) resolve(currentValue)
+
+        const timeout = setTimeout(() => {
+            exit()
+            resolve(null)
+        }, timeoutValue)
+
+        const interval = setInterval(async () => {
+            currentValue = await value()
+            if (!currentValue) return
+
+            exit()
+            resolve(currentValue)
+        }, intervalTime)
+
+        function exit() {
+            clearTimeout(timeout)
+            clearInterval(interval)
+        }
+    })
+}
 
 // hide output window
 export function hideDisplay(ctrlKey: boolean = true) {
@@ -40,6 +82,14 @@ export function startAutosave() {
         save()
         startAutosave()
     }, saveInterval)
+}
+
+// get dropdown list
+export function getList(object: any, addEmptyValue: boolean = false) {
+    let list = sortByName(keysToID(object))
+    if (addEmptyValue) list = [{ id: null, name: "—" }, ...list]
+
+    return list
 }
 
 // error logger
@@ -84,4 +134,12 @@ export function toggleRemoteStream() {
     setTimeout(() => {
         send(OUTPUT, ["SET_VALUE"], { id: captureOutputId, key: "capture", value, rate: get(special).previewRate || "auto" })
     }, 1800)
+}
+
+// dev specific commands
+export function startDevMode() {
+    // start svelte inspector
+    const script = document.createElement("script")
+    script.src = "http://localhost:5001/start"
+    document.body.appendChild(script)
 }

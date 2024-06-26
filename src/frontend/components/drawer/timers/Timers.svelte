@@ -43,7 +43,11 @@
         activeTimers.update((a) => {
             let index = a.findIndex((timer) => (ref.showId ? ref.showId === timer.showId && ref.slideId === timer.slideId && ref.id === timer.id : timer.id === ref.id))
             if (index < 0) a.push({ ...timer, ...ref, currentTime: time, paused: true })
-            else a[index].currentTime = time
+            else {
+                a[index].currentTime = time
+                delete a[index].startTime
+            }
+
             return a
         })
     }

@@ -18,29 +18,8 @@ export function convertPowerpoint(files: any[]) {
         files.forEach(({ name, content }: any) => {
             let slides: string[][][] = []
             Object.keys(content).forEach((key) => {
-                if (!key.includes("ppt/slides/slide")) return
-
-                let slide: string[][] = []
-                // textboxes
-                let lists = content[key]?.["p:sld"]?.["p:cSld"]?.[0]?.["p:spTree"]?.[0]?.["p:sp"] || []
-                lists.forEach((list: any) => {
-                    if (!list?.["p:txBody"]?.length) return
-
-                    let lines: string[] = []
-                    list["p:txBody"][0]?.["a:p"]?.forEach((line: any) => {
-                        if (!line?.["a:r"]) return
-
-                        let value: string = ""
-                        line["a:r"].forEach((list: any) => {
-                            value += list["a:t"]?.[0] || ""
-                        })
-
-                        lines.push(value)
-                    })
-                    slide.push(lines)
-                })
-
-                slides.push(slide)
+                if (key.includes("ppt/slides/slide")) slides.push(convertPPTX(content[key]))
+                else alertMessage.set('This format is unsupported, try using an online "PPT to TXT converter".')
             })
 
             // create show
@@ -70,6 +49,32 @@ export function convertPowerpoint(files: any[]) {
 
         setTempShows(tempShows)
     }, 10)
+}
+
+function convertPPTX(content: any) {
+    let slide: string[][] = []
+
+    // textboxes
+    // WIP extract images etc.
+    let lists = content?.["p:sld"]?.["p:cSld"]?.[0]?.["p:spTree"]?.[0]?.["p:sp"] || []
+    lists.forEach((list: any) => {
+        if (!list?.["p:txBody"]?.length) return
+
+        let lines: string[] = []
+        list["p:txBody"][0]?.["a:p"]?.forEach((line: any) => {
+            if (!line?.["a:r"]) return
+
+            let value: string = ""
+            line["a:r"].forEach((list: any) => {
+                value += list["a:t"]?.[0] || ""
+            })
+
+            lines.push(value)
+        })
+        slide.push(lines)
+    })
+
+    return slide
 }
 
 function createSlides(slides: string[][][]) {

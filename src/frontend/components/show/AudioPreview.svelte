@@ -225,7 +225,7 @@
             >
                 <Icon id="volume" white size={1.2} />
             </Button>
-            <p style="align-content: center;text-align: center;min-width: 50px;padding: 0 5px;">{Math.floor(($media[path]?.volume || 1) * 100)}%</p>
+            <p style="align-self: center;text-align: center;min-width: 50px;padding: 0 5px;">{Math.floor(($media[path]?.volume || 1) * 100)}%</p>
         </div>
     </div>
 </div>

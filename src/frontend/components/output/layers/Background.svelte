@@ -15,12 +15,13 @@
     export let animationStyle: string = ""
     export let mirror: boolean = false
 
-    $: duration = transition.duration || 800
+    $: duration = transition.duration ?? 800
     $: style = `height: 100%;zoom: ${1 / ratio};transition: filter ${duration}ms, backdrop-filter ${duration}ms;${slideFilter}`
 
     let firstActive: boolean = true
     let background1: any = null
     let background2: any = null
+    let firstFadingOut: boolean = false
 
     let loading: boolean = false
     let timeout: any = null
@@ -49,6 +50,7 @@
             () => {
                 loading = true
                 let loadingFirst = !background1
+                firstFadingOut = !loadingFirst
 
                 if (!background1) background1 = clone(data)
                 else background2 = clone(data)
@@ -89,12 +91,12 @@
 <div class="media" {style} class:key={isKeyOutput}>
     {#if background1}
         <div class="media" class:hidden={loading && !firstActive}>
-            <BackgroundMedia data={background1Data} {outputId} {transition} {currentStyle} {animationStyle} {duration} mirror={mirror || !firstActive} on:loaded={() => loaded(true)} />
+            <BackgroundMedia data={background1Data} fadingOut={firstFadingOut} {outputId} {transition} {currentStyle} {animationStyle} {duration} {mirror} on:loaded={() => loaded(true)} />
         </div>
     {/if}
     {#if background2}
         <div class="media" class:hidden={loading && firstActive}>
-            <BackgroundMedia data={background2Data} {outputId} {transition} {currentStyle} {animationStyle} {duration} mirror={mirror || firstActive} on:loaded={() => loaded(false)} />
+            <BackgroundMedia data={background2Data} fadingOut={!firstFadingOut} {outputId} {transition} {currentStyle} {animationStyle} {duration} {mirror} on:loaded={() => loaded(false)} />
         </div>
     {/if}
 </div>

@@ -1,7 +1,11 @@
 import { get } from "svelte/store"
-import { OUTPUT, REMOTE } from "../../types/Channels"
+import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
+import { midiInListen } from "../components/actions/midi"
+import { getActiveOutputs } from "../components/helpers/output"
+import { loadShows } from "../components/helpers/setShow"
 import { updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
 import {
+    $,
     activeProject,
     activeShow,
     cachedShowsData,
@@ -11,9 +15,9 @@ import {
     driveKeys,
     events,
     folders,
+    gain,
     groups,
     media,
-    mediaCache,
     midiIn,
     openedFolders,
     outputs,
@@ -34,39 +38,52 @@ import {
     volume,
 } from "../stores"
 import { driveConnect } from "./drive"
-import { midiInListen } from "../components/actions/midi"
 import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
-import { eachConnection, sendData, timedout } from "./sendData"
-import { getActiveOutputs } from "../components/helpers/output"
+import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
 
-export function listenForUpdates() {
+export function storeSubscriber() {
+    // load new show on show change
+    activeShow.subscribe((a) => {
+        if (a && (a.type === undefined || a.type === "show")) loadShows([a.id])
+    })
+
     shows.subscribe((data) => {
-        sendData(REMOTE, { channel: "SHOWS", data })
+        // sendData(REMOTE, { channel: "SHOWS", data })
 
         // temporary cache shows data
         updateShowsList(data)
     })
+
+    let timeout: any = null
     showsCache.subscribe((data) => {
         send(OUTPUT, ["SHOWS"], data)
 
-        // REMOTE
+        if (timeout) clearTimeout(timeout)
+        timeout = setTimeout(() => {
+            // STAGE
+            sendData(STAGE, { channel: "SLIDES" })
 
-        sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
+            // REMOTE
 
-        // TODO: ?
-        // send(REMOTE, ["SHOW"], data )
-        timedout(REMOTE, { channel: "SHOW", data }, () =>
-            eachConnection(REMOTE, "SHOW", (connection) => {
-                return connection.active ? convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
-            })
-        )
-        // TODO: this, timedout +++
-        // this is just for updating output slide pos I guess
-        sendData(REMOTE, { channel: "OUT" })
+            // sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
 
-        // cache shows data for faster show loading (if it's less than 100)
-        if (Object.keys(data).length < 100) updateCachedShows(data)
+            // TODO: ?
+            // send(REMOTE, ["SHOW"], data )
+            timedout(REMOTE, { channel: "SHOW", data }, () =>
+                eachConnection(REMOTE, "SHOW", async (connection) => {
+                    return connection.active ? await convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
+                })
+            )
+            // TODO: this, timedout +++
+            // this is just for updating output slide pos I guess
+            sendData(REMOTE, { channel: "OUT" })
+
+            // cache shows data for faster show loading (if it's less than 100)
+            if (Object.keys(data).length < 100) updateCachedShows(data)
+
+            timeout = null
+        }, 80)
     })
 
     templates.subscribe((data) => {
@@ -90,13 +107,26 @@ export function listenForUpdates() {
 
     events.subscribe((data) => {
         send(OUTPUT, ["EVENTS"], data)
+
+        // STAGE
+        // WIP all stage listeners should not send to all stages, just the connected ids
+        send(STAGE, ["EVENTS"], data)
     })
 
     outputs.subscribe((data) => {
         send(OUTPUT, ["OUTPUTS"], data)
         // used for stage mirror data
         send(OUTPUT, ["ALL_OUTPUTS"], data)
-        sendData(REMOTE, { channel: "OUT" })
+
+        // let it update properly
+        setTimeout(() => {
+            sendData(REMOTE, { channel: "OUT" })
+        })
+
+        // STAGE
+        sendData(STAGE, { channel: "SLIDES" }, true)
+        // send(STAGE, ["OUTPUTS"], data)
+        // sendBackgroundToStage(a)
     })
     styles.subscribe((data) => {
         send(OUTPUT, ["STYLES"], data)
@@ -106,6 +136,18 @@ export function listenForUpdates() {
     })
     stageShows.subscribe((data) => {
         send(OUTPUT, ["STAGE_SHOWS"], data)
+
+        // STAGE
+        data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
+        timedout(STAGE, { channel: "SHOW", data }, () =>
+            eachConnection(STAGE, "SHOW", (connection) => {
+                if (!connection.active) return
+
+                let currentData = data[connection.active]
+                if (!currentData.settings.resolution?.width) currentData.settings.resolution = { width: 1920, height: 1080 }
+                return currentData
+            })
+        )
     })
 
     draw.subscribe((data) => {
@@ -136,15 +178,18 @@ export function listenForUpdates() {
     media.subscribe((data) => {
         send(OUTPUT, ["MEDIA"], data)
     })
-    mediaCache.subscribe((data) => {
-        send(OUTPUT, ["MEDIA_CACHE"], data)
-    })
 
     timers.subscribe((data) => {
         send(OUTPUT, ["TIMERS"], data)
+
+        // STAGE
+        send(STAGE, ["TIMERS"], data)
     })
     variables.subscribe((data) => {
         send(OUTPUT, ["VARIABLES"], data)
+
+        // STAGE
+        send(STAGE, ["VARIABLES"], data)
     })
 
     special.subscribe((data) => {
@@ -154,10 +199,15 @@ export function listenForUpdates() {
     volume.subscribe((data) => {
         send(OUTPUT, ["VOLUME"], data)
     })
-    // WIP send gain!!
+    gain.subscribe((data) => {
+        send(OUTPUT, ["GAIN"], data)
+    })
 
     timeFormat.subscribe((a) => {
         send(OUTPUT, ["TIME_FORMAT"], a)
+
+        // STAGE
+        send(STAGE, ["DATA"], { timeFormat: a })
     })
 
     projects.subscribe(() => {
@@ -198,4 +248,51 @@ export function listenForUpdates() {
             refreshSlideThumbnails.set(false)
         })
     })
+}
+
+const initalOutputData = {
+    STYLES: "styles",
+    TRANSITION: "transitionData",
+    SHOWS: "showsCache",
+
+    TEMPLATES: "templates",
+    OVERLAYS: "overlays",
+    EVENTS: "events",
+
+    DRAW: { data: "draw" },
+    DRAW_TOOL: { data: "drawTool" },
+    DRAW_SETTINGS: "drawSettings",
+
+    VIZUALISER_DATA: "visualizerData",
+    MEDIA: "media",
+    TIMERS: "timers",
+    VARIABLES: "variables",
+    TIME_FORMAT: "timeFormat",
+
+    SPECIAL: "special",
+
+    PLAYER_VIDEOS: "playerVideos",
+    STAGE_SHOWS: "stageShows",
+
+    // received by Output
+    VOLUME: "volume",
+}
+
+export function sendInitialOutputData() {
+    Object.keys(initalOutputData).forEach((KEY) => {
+        let storeKey = initalOutputData[KEY]
+
+        let storeData: any
+        if (storeKey.data) storeData = { data: get($[storeKey.data]) }
+        else storeData = get($[storeKey])
+        if (storeData === undefined) storeData = {}
+
+        send(OUTPUT, [KEY], storeData)
+    })
+
+    setTimeout(() => {
+        send(OUTPUT, ["OUTPUTS"], get(outputs))
+        // used for stage mirror data
+        send(OUTPUT, ["ALL_OUTPUTS"], get(outputs))
+    }, 100)
 }

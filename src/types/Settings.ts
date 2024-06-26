@@ -5,6 +5,7 @@ export interface Themes {
     default?: boolean
     font: any
     colors: any
+    border?: any
 }
 
 export interface Styles {
@@ -16,7 +17,8 @@ export interface Styles {
     resolution?: Resolution
     cropping?: Cropping
     lines?: number
-    template?: string
+    template?: string // slide
+    templateScripture?: string
     metadataDivider?: string
     displayMetadata?: string
     metadataTemplate?: string

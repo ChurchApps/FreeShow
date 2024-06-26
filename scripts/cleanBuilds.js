@@ -8,6 +8,8 @@ const buildElectronPath = join(__dirname, "..", "build") // this includes server
 // delete folders and all of it's content
 deleteFolderRecursive(buildSveltePath)
 deleteFolderRecursive(buildElectronPath)
+deletePublicFile("preload.ts")
+deletePublicFile("preload.js.map")
 
 function deleteFolderRecursive(folderPath) {
     if (!existsSync(folderPath)) return
@@ -22,4 +24,12 @@ function deleteFolderRecursive(folderPath) {
     })
 
     rmdirSync(folderPath)
+}
+
+function deletePublicFile(fileName) {
+    const publicPath = join(__dirname, "..", "public")
+    const filePath = join(publicPath, fileName)
+    if (!existsSync(filePath)) return
+
+    unlinkSync(filePath)
 }

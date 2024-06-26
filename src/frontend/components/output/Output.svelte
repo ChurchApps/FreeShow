@@ -12,11 +12,12 @@
     import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, joinMetadata, setTemplateStyle } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import Zoomed from "../slide/Zoomed.svelte"
-    import { updateAnimation, wait } from "./animation"
+    import { updateAnimation } from "./animation"
     import Background from "./layers/Background.svelte"
     import Metadata from "./layers/Metadata.svelte"
     import Overlays from "./layers/Overlays.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
+    import { wait } from "../../utils/common"
 
     export let outputId: string = ""
     export let style = ""
@@ -102,7 +103,7 @@
     // custom template
     $: outputStyle = currentOutput?.style
     $: if (currentSlide && outputStyle && currentStyle) setTemplateItems()
-    const setTemplateItems = () => (currentSlide.items = setTemplateStyle(slide, currentStyle.template, currentSlide.items))
+    const setTemplateItems = () => (currentSlide.items = setTemplateStyle(slide, currentStyle, currentSlide.items))
 
     // lines
     let lines: any = {}
@@ -177,7 +178,7 @@
     $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : currentSlide?.settings?.color || currentStyle.background || "black"
     $: messageText = $showsCache[slide?.id]?.message?.text || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
-    $: backgroundData = background || { path: currentStyle?.backgroundImage || "" }
+    $: backgroundData = background || { path: currentStyle?.backgroundImage || "", loop: true }
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.duration || 800} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>

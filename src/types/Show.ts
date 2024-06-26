@@ -100,6 +100,7 @@ export interface Item {
     chords?: any
     scrolling?: Scrolling
     visualizer?: any
+    captions?: any
     // media: fit, startAt, endAt
     // tag?: string; // p, div????
 }
@@ -198,9 +199,8 @@ export interface SlideData {
     audio?: string[]
 
     actions?: {
-        clearBackground?: boolean
-        clearOverlays?: boolean
-        clearAudio?: boolean
+        // ...
+        slideActions?: any[]
     }
     // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
     bindings?: string[] // bind slide to an output
@@ -233,7 +233,7 @@ export interface Midi {
     // action?: string
     // actionData?: any
     shows?: any[] // ??
-    startupEnabled?: boolean
+    customActivation?: string
     midiEnabled?: boolean
     midi?: {
         input?: string
@@ -248,6 +248,7 @@ export interface Midi {
 }
 
 export interface MidiIn extends Midi {
+    enabled?: boolean
     shows: {
         id: string
         // layoutId: string
@@ -276,7 +277,16 @@ export interface Template {
     name: string
     color: null | string
     category: null | string
+    settings?: TemplateSettings
     items: Item[]
+}
+export interface TemplateSettings {
+    resolution?: Resolution
+    backgroundColor?: string
+    backgroundPath?: string
+    overlayId?: string
+    firstSlideTemplate?: string
+    actions?: any[]
 }
 
 // output
@@ -318,7 +328,7 @@ export interface OutTransition {
 // types
 
 export type ID = string
-export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "events" | "variable" | "web" | "mirror" | "icon" | "visualizer" // "shape" | "video" | "media" | "camera"
+export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "events" | "variable" | "web" | "mirror" | "icon" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

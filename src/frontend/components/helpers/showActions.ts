@@ -3,6 +3,7 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { runAction } from "../actions/actions"
+import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import {
     activeEdit,
@@ -19,11 +20,13 @@ import {
     outputs,
     overlays,
     playingAudio,
+    playingMetronome,
     projects,
     selected,
     showsCache,
     slideTimers,
     styles,
+    templates,
     timers,
     triggers,
     videosData,
@@ -32,12 +35,12 @@ import {
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
+import { clearPlayingVideo, getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { stopTimers } from "./timerTick"
-import type { API_output_style } from "../actions/api"
+import { addZero } from "./time"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -375,7 +378,7 @@ function randomNumber(end: number) {
     return Math.floor(Math.random() * end)
 }
 
-export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null) {
+export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null, actionTimeout: number = 10) {
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
 
     _show(showId).set({ key: "timestamps.used", value: new Date().getTime() })
@@ -515,7 +518,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         // startShow is at the top
         if (data.actions.trigger) activateTrigger(data.actions.trigger)
         if (data.actions.audioStream) startAudioStream(data.actions.audioStream)
-        if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
+        // if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions)
         if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id, overlayIds: data.overlays })
@@ -525,8 +528,8 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         // let values update
         setTimeout(() => {
             playSlideActions(data.actions.slideActions, outputIds, index)
-        })
-    }
+        }, actionTimeout)
+    } else playOutputStyleTemplateActions(outputIds)
 }
 
 const runPerOutput = ["clear_background", "clear_overlays"]
@@ -546,6 +549,24 @@ function playSlideActions(actions: any[], outputIds: string[] = [], slideIndex: 
     }
 
     actions.forEach((a) => runAction(a, { slideIndex }))
+
+    playOutputStyleTemplateActions(outputIds)
+}
+
+// play any output style template actions
+function playOutputStyleTemplateActions(outputIds: string[]) {
+    outputIds.forEach((outputId) => {
+        let outputStyleId = get(outputs)[outputId]?.style || ""
+        if (!outputStyleId) return
+
+        let styleTemplateId = get(styles)[outputStyleId]?.template || ""
+        if (!styleTemplateId) return
+
+        let templateSettings = get(templates)[styleTemplateId]?.settings?.actions || []
+        if (!templateSettings?.length) return
+
+        templateSettings?.forEach((action) => runAction(action))
+    })
 }
 
 export async function startShow(showId: string) {
@@ -559,8 +580,11 @@ export async function startShow(showId: string) {
 
     // slideClick() - Slides.svelte
     let slideRef: any = _show(showId).layouts("active").ref()[0]
-    updateOut(showId, 0, slideRef)
+    if (!slideRef[0]) return
+
     setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
+    // timeout has to be 1200 to let output data update properly (in case slide has special actions)
+    updateOut(showId, 0, slideRef, true, null, 1200)
 }
 
 export function changeOutputStyle({ outputStyle, styleOutputs }: API_output_style) {
@@ -643,13 +667,14 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     // check that current slide has the ended media!
     if (type === "media" || type === "audio") {
         let showMedia = _show(slideOut.id).media().get()
-        let currentMediaId = showMedia.find((a) => a.path === endedId)?.key
+        // find all matching paths because some slides with same background might have different media ids
+        let allMediaIds = showMedia.filter((a) => a.path === endedId).map((a) => a.key)
 
         // don't go to next if current slide don't has outputted media
         if (type === "media") {
-            if (layoutSlide.data?.background !== currentMediaId) return false
+            if (!allMediaIds.includes(layoutSlide.data?.background)) return false
         } else if (type === "audio") {
-            if (!layoutSlide.data?.audio?.find((id) => id === currentMediaId)) return false
+            if (!layoutSlide.data?.audio?.find((id) => allMediaIds.includes(id))) return false
         }
     } else if (type === "timer") {
         let slide = _show(slideOut.id).get("slides")[layoutSlide.id]
@@ -673,11 +698,9 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
         let layoutRef = _show("active").layouts([outputRef.layout]).ref()[0]
         slideId = layoutRef[outputRef.index]?.id || ""
     }
-    console.log(slideId, get(outputs)[getActiveOutputs()[0]])
 
     let showSlides: any = _show(showId).get("slides") || {}
     let slide = showSlides[slideId]
-    console.log(showSlides, slide)
     if (!slide) return
 
     // find all timers in current slide & any overlay placed on the slide
@@ -695,20 +718,22 @@ export function sendMidi(data: any) {
 }
 
 export function clearBackground(outputId: string = "") {
-    // clearVideo()
-    setOutput("background", null, false, outputId)
-    // clearPlayingVideo()
+    let outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
 
-    if (!outputId) return
+    outputIds.forEach((outputId) => {
+        // clearVideo()
+        setOutput("background", null, false, outputId)
+        clearPlayingVideo(outputId)
 
-    // WIP this does not clear time properly
-    videosData.update((a) => {
-        delete a[outputId]
-        return a
-    })
-    videosTime.update((a) => {
-        delete a[outputId]
-        return a
+        // WIP this does not clear time properly
+        videosData.update((a) => {
+            delete a[outputId]
+            return a
+        })
+        videosTime.update((a) => {
+            delete a[outputId]
+            return a
+        })
     })
 }
 
@@ -717,10 +742,14 @@ export function clearSlide() {
 }
 
 export function clearOverlays(outputId: string = "") {
-    outputId = outputId || getActiveOutputs()[0]
-    let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
-    outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
-    setOutput("overlays", outOverlays)
+    let outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
+
+    outputIds.forEach((outputId) => {
+        let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
+        outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
+        setOutput("overlays", outOverlays, false, outputId)
+    })
+
     lockedOverlays.set([])
 }
 
@@ -730,7 +759,8 @@ export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
     if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length)) return
 
-    let allCleared = isOutCleared(null) && !Object.keys(get(playingAudio)).length
+    let audioCleared = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
+    let allCleared = isOutCleared(null) && audioCleared
     if (allCleared) return
 
     // TODO: audio
@@ -791,7 +821,7 @@ export function getDynamicIds() {
     return [...mainValues, ...metaValues]
 }
 
-export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex }: any) {
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex }: any, _updater: number = 0) {
     let show = _show(showId).get()
     if (!show) return text
 
@@ -817,12 +847,21 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 }
 
 const dynamicValues = {
+    // time
+    time_date: () => addZero(new Date().getDate()),
+    time_month: () => addZero(new Date().getMonth() + 1),
+    time_year: () => new Date().getFullYear(),
+    time_hours: () => addZero(new Date().getHours()),
+    time_minutes: () => addZero(new Date().getMinutes()),
+    time_seconds: () => addZero(new Date().getSeconds()),
+
+    // show
     show_name: ({ show }) => show.name || "",
 
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
 
-    slide_group: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex].id].group || "",
+    slide_group: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.group || "",
     slide_number: ({ slideIndex }) => Number(slideIndex || 0) + 1,
-    slide_notes: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex].id].notes || "",
+    slide_notes: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.notes || "",
 }

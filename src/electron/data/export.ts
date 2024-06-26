@@ -7,8 +7,54 @@ import fs from "fs"
 import { join } from "path"
 import { EXPORT, MAIN, STARTUP } from "../../types/Channels"
 import { isProd, toApp } from "../index"
-import { doesPathExist } from "../utils/files"
+import { dataFolderNames, doesPathExist, getDataFolder, openSystemFolder, selectFolderDialog } from "../utils/files"
 import { exportOptions } from "../utils/windowOptions"
+import { Message } from "../../types/Socket"
+
+// SHOW: .show, PROJECT: .project, BIBLE: .fsb
+const customJSONExtensions: any = {
+    TEMPLATE: ".fstemplate",
+    THEME: ".fstheme",
+}
+
+export function startExport(_e: any, msg: Message) {
+    let dataPath: string = msg.data.path
+
+    if (!dataPath) {
+        dataPath = selectFolderDialog()
+        if (!dataPath) return
+
+        toApp(MAIN, { channel: "DATA_PATH", data: dataPath })
+    }
+
+    msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
+
+    let customExt = customJSONExtensions[msg.channel]
+    if (customExt) {
+        exportJSON(msg.data.content, customExt, msg.data.path)
+        return
+    }
+
+    if (msg.channel !== "GENERATE") return
+
+    if (msg.data.type === "pdf") createPDFWindow(msg.data)
+    else if (msg.data.type === "txt") exportTXT(msg.data)
+    else if (msg.data.type === "project") exportProject(msg.data)
+}
+
+// only open once per session
+let systemOpened: boolean = false
+function doneWritingFile(err: any, exportFolder: string) {
+    let msg: string = "export.exported"
+
+    // open export location in system when completed
+    if (!err && !systemOpened) {
+        openSystemFolder(exportFolder)
+        systemOpened = true
+    } else msg = err
+
+    toApp(MAIN, { channel: "ALERT", data: msg })
+}
 
 // ----- PDF -----
 
@@ -63,19 +109,18 @@ ipcMain.on(EXPORT, (_e, msg: any) => {
     if (msg.data.type === "pdf") generatePDF(join(msg.data.path, msg.data.name))
 })
 
+// ----- JSON -----
+
+export function exportJSON(content: any, extension: string, path: string) {
+    writeFile(join(path, content.name || "Unnamed"), extension, JSON.stringify(content, null, 4), "utf-8", (err: any) => doneWritingFile(err, path))
+}
+
 // ----- TXT -----
 
 export function exportTXT(data: any) {
-    let msg: string = "export.exported"
     data.shows.forEach((show: any) => {
-        writeFile(join(data.path, show.name), ".txt", getSlidesText(show), "utf-8", doneWritingFile)
+        writeFile(join(data.path, show.name), ".txt", getSlidesText(show), "utf-8", (err: any) => doneWritingFile(err, data.path))
     })
-
-    function doneWritingFile(err: any) {
-        if (err) msg = err
-
-        toApp(MAIN, { channel: "ALERT", data: msg })
-    }
 }
 
 // WIP do this in frontend

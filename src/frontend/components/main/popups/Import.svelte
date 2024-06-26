@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { IMPORT } from "../../../../types/Channels"
     import { convertText } from "../../../converters/txt"
     import { activePopup, alertMessage, dataPath } from "../../../stores"
@@ -6,13 +6,21 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
 
-    const show_formats = [
+    const freeshow_formats = [
+        { name: "Show", extensions: ["show"], id: "freeshow" },
+        { name: "Project", extensions: ["project", "shows"], id: "freeshow_project" }, // , "fsproject", "fsp"
+        { name: "Template", extensions: ["fstemplate", "fst", "template"], id: "freeshow_template" },
+        { name: "Theme", extensions: ["fstheme", "theme"], id: "freeshow_theme" },
+        // { name: "Calendar", extensions: ["ics"], id: "calendar" }, // calendar drawer tab
+        // { name: "Scripture", id: "scripture" }, // scripture drawer tab
+    ]
+
+    const text_formats = [
         { name: "Clipboard", id: "clipboard" },
         { name: "Text file", extensions: ["txt"], id: "txt" },
-        { name: "PDF", extensions: ["pdf"], id: "pdf", tutorial: "This might take a while.<br>Currently not supported on linux!<br>Use an online PDF to Image converter if you are having issues." },
+        { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
         { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint", tutorial: "This will convert all the text to a show. If you want to import all images and styling, please export/convert to PDF and import as PDF." },
         { name: "Word", extensions: ["doc", "docx"], id: "word" },
-        { name: "FreeShow", extensions: ["show"], id: "freeshow" },
         { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "pro", "json"], id: "propresenter" },
         {
             name: "EasyWorship",
@@ -28,73 +36,89 @@
         },
         { name: "OpenLP/OpenLyrics", extensions: ["xml", "sqlite"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
-        { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
+        { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
     ]
 
-    const formats = [
-        { name: "Project", extensions: ["project", "shows"], id: "freeshow_project", icon: "freeshow" },
-        { name: "Calendar", extensions: ["ics"], id: "calendar" },
-        { name: "Scripture", id: "scripture" },
+    const media_formats = [
+        { name: "PDF", extensions: ["pdf"], id: "pdf", tutorial: "This might take a while.<br>Currently not supported on linux!<br>Use an online PDF to Image converter if you are having issues." },
         { name: "Lessons.church", extensions: ["json", "olp", "olf"], id: "lessons" },
     ]
+
+    function displayTutorial(format: any) {
+        if (!format.tutorial) {
+            activePopup.set(null)
+            return
+        }
+
+        alertMessage.set(format.tutorial)
+        activePopup.set("alert")
+    }
+
+    function importFromClipboard() {
+        navigator.clipboard
+            .readText()
+            .then((text) => {
+                convertText({ text, noFormatting: true })
+            })
+            .catch((err) => {
+                console.error("Failed to read clipboard contents: ", err)
+            })
+    }
 </script>
 
-<h3>Show</h3>
-<div>
-    {#each show_formats as format}
+<h3>FreeShow</h3>
+<div style="margin-bottom: 20px;display: flex;">
+    {#each freeshow_formats as format}
+        <Button
+            style="flex: 1;min-height: 50px;"
+            on:click={() => {
+                send(IMPORT, [format.id], { path: $dataPath, format })
+                displayTutorial(format)
+            }}
+            center
+        >
+            <img style="height: 60px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" />
+            <p style="margin-left: 5px;">{format.name}</p>
+        </Button>
+    {/each}
+</div>
+
+<h3><T id="settings.text_import" /></h3>
+<div style="margin-bottom: 20px;">
+    {#each text_formats as format}
         <Button
             style="width: 20%;flex-direction: column;min-height: 160px;"
             on:click={() => {
                 if (format.extensions) {
                     send(IMPORT, [format.id], { path: $dataPath, format })
-                    if (format.tutorial) {
-                        alertMessage.set(format.tutorial)
-                        activePopup.set("alert")
-                    } else {
-                        activePopup.set(null)
-                    }
+                    displayTutorial(format)
                 } else if (format.id === "clipboard") {
-                    // clipboard
-                    navigator.clipboard
-                        .readText()
-                        .then((text) => {
-                            convertText({ text, noFormatting: true })
-                        })
-                        .catch((err) => {
-                            console.error("Failed to read clipboard contents: ", err)
-                        })
+                    importFromClipboard()
                     activePopup.set(null)
                 }
             }}
             bold={false}
             center
         >
-            <img src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" />
+            <img src="./import-logos/{format.id}.webp" alt="{format.id}-logo" />
             <p>{format.name}</p>
         </Button>
     {/each}
 </div>
 
-<h3><T id="settings.other" /></h3>
+<h3><T id="settings.media_import" /></h3>
 <div>
-    {#each formats as format}
+    {#each media_formats as format}
         <Button
             style="width: 20%;flex-direction: column;min-height: 160px;"
             on:click={() => {
-                if (format.extensions) {
-                    send(IMPORT, [format.id], { format })
-                    if (format.tutorial) {
-                        alertMessage.set(format.tutorial)
-                        activePopup.set("alert")
-                    } else activePopup.set(null)
-                } else if (format.id === "scripture") {
-                    activePopup.set("import_scripture")
-                }
+                send(IMPORT, [format.id], { format })
+                displayTutorial(format)
             }}
             bold={false}
             center
         >
-            <img src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" />
+            <img src="./import-logos/{format.id}.webp" alt="{format.id}-logo" />
             <p>{format.name}</p>
         </Button>
     {/each}
@@ -108,12 +132,14 @@
 
     img {
         height: 100px;
+        max-width: 100%;
+        object-fit: contain;
         padding: 10px;
     }
 
     h3 {
-        text-transform: uppercase;
-        /* font-size: 0.9em; */
+        font-size: 1.2em;
         color: var(--text);
+        margin-bottom: 5px;
     }
 </style>

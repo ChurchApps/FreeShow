@@ -1,7 +1,9 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Event } from "../../../../types/Calendar"
-import { events, shows } from "../../../stores"
+import { events } from "../../../stores"
+import { translate } from "../../../utils/language"
+import { actionData } from "../../actions/actionData"
 import { clone } from "../../helpers/array"
 import { history } from "../../helpers/history"
 
@@ -111,7 +113,7 @@ const setDate = (date: Date, options: any): Date => {
     return new Date([...newDate, time].join(" "))
 }
 
-export function updateEventData(editEvent: any, stored: any, { type, show }: any): any {
+export function updateEventData(editEvent: any, stored: any, { type, action }: any): any {
     let data = clone(editEvent)
     let oldData = JSON.parse(stored)
     let id = editEvent.id
@@ -120,8 +122,8 @@ export function updateEventData(editEvent: any, stored: any, { type, show }: any
     oldData.from = new Date(oldData.isoFrom + " " + (oldData.time ? oldData.fromTime : ""))
     data.to = new Date(editEvent.isoTo + " " + (editEvent ? editEvent.toTime : ""))
     oldData.to = new Date(oldData.isoTo + " " + (oldData ? oldData.toTime : ""))
-    data.type = type.id
-    oldData.type = type.id
+    data.type = type
+    oldData.type = type
 
     // to has to be after from
     if (data.to.getTime() - data.from.getTime() <= 0) data.to = data.from
@@ -132,17 +134,17 @@ export function updateEventData(editEvent: any, stored: any, { type, show }: any
         delete oldData[key]
     })
 
-    if (data.type === "show") data = getShowEventData(data, show.id)
+    if (data.type === "action") data = getActionEventData(data, action)
 
     return { data, oldData, id }
 }
 
-// show
-export function getShowEventData(event: any, showId: string) {
-    let show: any = get(shows)[showId]
+// action
+export function getActionEventData(event: any, action: any) {
+    let actionName = translate(actionData[action.id]?.name)
 
-    event.show = showId
-    event.name = show.name
+    event.action = action
+    event.name = actionName
     event.color = null
     delete event.location
     delete event.notes

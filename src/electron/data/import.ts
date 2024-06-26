@@ -111,7 +111,7 @@ export async function importShow(id: any, files: string[] | null, dataPath: stri
     let importId = id
     let sqliteFile = id === "openlp" && files.find((a) => a.includes(".sqlite"))
     if (sqliteFile) files = files.filter((a) => a.includes(".sqlite"))
-    if (id === "easyworship" || sqliteFile) importId = "sqlite"
+    if (id === "easyworship" || id === "softprojector" || sqliteFile) importId = "sqlite"
 
     let data: any[] = []
     if (specialImports[importId]) data = await specialImports[importId](files, dataPath)

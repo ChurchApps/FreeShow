@@ -1,7 +1,9 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import { history } from "../components/helpers/history"
+import { checkName } from "../components/helpers/show"
 import { activeDrawerTab, activePopup, activeProject, activeRename, categories, drawerTabsData, shows } from "../stores"
-import { newToast } from "../utils/messages"
+import { newToast } from "../utils/common"
 
 export function createCategory(name: string, icon: string = "song", { isDefault } = { isDefault: false }) {
     // return selected category if it is empty
@@ -33,5 +35,48 @@ export function setTempShows(tempShows: any[]) {
     }
 
     activePopup.set(null)
+    newToast("$main.finished")
+}
+
+export function importShow(files: any[]) {
+    let tempShows: any[] = []
+
+    files.forEach(({ content, name }: any) => {
+        let id, show
+
+        try {
+            ;[id, show] = JSON.parse(content)
+        } catch (e: any) {
+            // try to fix broken show files
+            content = content.slice(0, content.indexOf("}}]") + 3)
+
+            try {
+                ;[id, show] = JSON.parse(content)
+            } catch (e: any) {
+                console.error(name, e)
+                let pos = Number(e.toString().replace(/\D+/g, "") || 100)
+                console.log(pos, content.slice(pos - 5, pos + 5), content.slice(pos - 100, pos + 100))
+                return
+            }
+        }
+
+        tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
+    })
+
+    setTempShows(tempShows)
+}
+
+// SPECIFIC FORMATS
+
+export function importSpecific(data: any, store: any) {
+    data.forEach(({ content }) => {
+        content = JSON.parse(content)
+
+        store.update((a) => {
+            a[uid()] = content
+            return a
+        })
+    })
+
     newToast("$main.finished")
 }

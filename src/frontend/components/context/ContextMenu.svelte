@@ -67,11 +67,9 @@
     function loadData() {
         activeMenu.forEach((id) => {
             let items = contextMenuItems[id]?.items || []
-            console.log(items)
             if (!items[0]?.includes("LOAD")) return
 
             let firstId = items[0].slice(5, items[0].length)
-            console.log(firstId)
             quickLoadItems(firstId)
         })
     }
@@ -108,6 +106,7 @@
         position: fixed;
         min-width: 250px;
         background-color: var(--primary);
+        border-radius: var(--border-radius);
         box-shadow: 1px 1px 3px 2px rgb(0 0 0 / 0.2);
         padding: 5px 0;
         z-index: 5000;

@@ -1,13 +1,13 @@
 import { BrowserWindow, Rectangle, screen } from "electron"
-import { isMac, loadWindowContent, mainWindow, toApp } from ".."
+import { OUTPUT_CONSOLE, isMac, loadWindowContent, mainWindow, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { Output } from "../../types/Output"
 import { Message } from "../../types/Socket"
+import { NdiSender } from "../ndi/NdiSender"
 import { setDataNDI } from "../ndi/talk"
 import { outputOptions, screenIdentifyOptions } from "../utils/windowOptions"
-import { startCapture, stopCapture, updatePreviewResolution } from "./capture"
-import { NdiSender } from "../ndi/NdiSender"
 import { CaptureTransmitter } from "./CaptureTransmitter"
+import { startCapture, stopCapture, updatePreviewResolution } from "./capture"
 
 export let outputWindows: { [key: string]: BrowserWindow } = {}
 
@@ -40,6 +40,7 @@ function createOutputWindow(options: any, id: string, name: string) {
         options.resizable = true
     }
 
+    if (OUTPUT_CONSOLE) options.webPreferences.devTools = true
     let window: BrowserWindow | null = new BrowserWindow(options)
 
     // only win & linux
@@ -49,14 +50,16 @@ function createOutputWindow(options: any, id: string, name: string) {
     window.setSkipTaskbar(options.skipTaskbar) // hide from taskbar
     if (isMac) window.minimize() // hide on mac
 
-    if (options.alwaysOnTop) window.setAlwaysOnTop(true, "pop-up-menu", 1)
+    window.once("show", () => {
+        if (options.alwaysOnTop) window?.setAlwaysOnTop(true, "pop-up-menu", 1)
+    })
     // window.setVisibleOnAllWorkspaces(true)
 
     loadWindowContent(window, true)
     setWindowListeners(window, { id, name })
 
     // open devtools
-    // if (!isProd) window.webContents.openDevTools()
+    if (OUTPUT_CONSOLE) window.webContents.openDevTools({ mode: "detach" })
 
     return window
 }
@@ -244,7 +247,7 @@ const setValues: any = {
         window.setBackgroundColor(value ? "#00000000" : "#000000")
     },
     alwaysOnTop: (value: boolean, window: BrowserWindow) => {
-        window.setAlwaysOnTop(value)
+        window.setAlwaysOnTop(value, "pop-up-menu", 1)
         window.setResizable(!value)
         window.setSkipTaskbar(value)
     },
@@ -268,12 +271,28 @@ function moveToFront(id: string) {
     window.moveTop()
 }
 
+function alignWithScreens() {
+    Object.keys(outputWindows).forEach((outputId) => {
+        let output = outputWindows[outputId]
+
+        let wBounds = output.getBounds()
+        let centerLeft = wBounds.x + wBounds.width / 2
+        let centerTop = wBounds.y + wBounds.height / 2
+
+        let point = { x: centerLeft, y: centerTop }
+        let closestScreen = screen.getDisplayNearestPoint(point)
+
+        output.setBounds(closestScreen.bounds)
+    })
+}
+
 // RESPONSES
 
 const outputResponses: any = {
     CREATE: (data: any) => createOutput(data),
     REMOVE: (data: any) => removeOutput(data.id),
     DISPLAY: (data: any) => displayOutput(data),
+    ALIGN_WITH_SCREEN: () => alignWithScreens(),
 
     MOVE: (data: any) => (moveEnabled = data.enabled),
 

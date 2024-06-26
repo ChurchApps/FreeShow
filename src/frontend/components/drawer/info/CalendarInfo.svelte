@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeDays, dictionary, drawerTabsData, events, nextShowEventPaused, nextShowEventStart } from "../../../stores"
+    import { activeDays, dictionary, drawerTabsData, events, nextActionEventPaused, nextActionEventStart } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { joinTimeBig } from "../../helpers/time"
@@ -31,13 +31,13 @@
 {:else}
     <Day {type} />
 
-    {#if $nextShowEventStart.timeLeft}
-        <Button on:click={() => nextShowEventPaused.set(!$nextShowEventPaused)} title={$nextShowEventPaused ? $dictionary.actions?.start_timer : $dictionary.media?.pause} dark>
-            <Icon id={$nextShowEventPaused ? "play" : "pause"} white={$nextShowEventPaused} right />
-            {#if $nextShowEventPaused}
+    {#if $nextActionEventStart.timeLeft}
+        <Button on:click={() => nextActionEventPaused.set(!$nextActionEventPaused)} title={$nextActionEventPaused ? $dictionary.actions?.start_timer : $dictionary.media?.pause} dark>
+            <Icon id={$nextActionEventPaused ? "play" : "pause"} white={$nextActionEventPaused} right />
+            {#if $nextActionEventPaused}
                 <T id="actions.start_timer" />
             {:else}
-                <p>{joinTimeBig($nextShowEventStart.timeLeft / 1000)} <T id="calendar.repeat_until" /> "{$nextShowEventStart.name}"</p>
+                <p>{joinTimeBig($nextActionEventStart.timeLeft / 1000)} <T id="calendar.repeat_until" /> "{$nextActionEventStart.name}"</p>
             {/if}
         </Button>
     {/if}

@@ -42,7 +42,7 @@ const loadActions = {
 
         let slideActions = [
             { id: "action", label: "midi.start_action", icon: "actions" },
-            { id: "receiveMidi", label: "actions.play_on_midi", icon: "play" },
+            { id: "receiveMidi", label: "actions.play_on_midi", icon: "play", enabled: currentActions?.receiveMidi || false },
             "SEPERATOR",
             { id: "nextTimer", label: "preview.nextTimer", icon: "clock", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
             { id: "loop", label: "preview.to_start", icon: "restart", enabled: slideRef?.data?.end || false },
@@ -57,8 +57,8 @@ const loadActions = {
         let slide = getEditSlide()
         if (!slide) return []
 
-        let selectedItems: number[] = get(activeEdit).items
-        let currentItemActions: any = slide.items[selectedItems[0]].actions || {}
+        let selectedItems: number[] = get(activeEdit).items || []
+        let currentItemActions: any = slide.items?.[selectedItems[0]]?.actions || {}
 
         let itemActions: any = [
             { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
@@ -83,7 +83,7 @@ const loadActions = {
 
         // get background
         let bg = data.background
-        if (bg) {
+        if (bg && showMedia[bg]?.name) {
             media.push({
                 id: bg,
                 label: showMedia[bg].name.indexOf(".") > -1 ? showMedia[bg].name.slice(0, showMedia[bg].name.lastIndexOf(".")) : showMedia[bg].name,
@@ -190,8 +190,9 @@ const loadActions = {
     bind_item: () => loadActions.bind_slide([], true),
     dynamic_values: () => {
         let values: any = getDynamicIds().map((id) => ({ id, label: id, translate: false }))
+        let firstShowIndex = values.findIndex((a) => a.id.includes("show_"))
         let firstMetaIndex = values.findIndex((a) => a.id.includes("meta_"))
-        values = [...values.slice(0, firstMetaIndex), "SEPERATOR", ...values.slice(firstMetaIndex)]
+        values = [...values.slice(0, firstShowIndex), "SEPERATOR", ...values.slice(firstShowIndex, firstMetaIndex), "SEPERATOR", ...values.slice(firstMetaIndex)]
 
         return values
     },

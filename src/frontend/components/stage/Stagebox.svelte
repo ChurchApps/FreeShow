@@ -95,7 +95,14 @@
     $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($outputs, true, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
-    $: currentBackground = sendBackgroundToStage(stageOutputId, $currentWindow ? $allOutputs : $outputs, true)
+
+    $: if (stageOutputId || $allOutputs || $outputs) getCurrentBackground()
+    let currentBackground: any = {}
+    async function getCurrentBackground() {
+        let currentOutputs = $currentWindow ? $allOutputs : $outputs
+        let bg = await sendBackgroundToStage(stageOutputId, currentOutputs, true)
+        currentBackground = bg
+    }
 
     // $: resolution = getResolution(resolution, { $outputs, $styles })
 
@@ -133,7 +140,7 @@
             {/if}
         </span>
     {:else}
-        <div class="align" style={item.align}>
+        <div class="align" style="--align: {item.align};--text-align: {item.alignX};">
             <div>
                 {#if id.includes("notes")}
                     <SlideNotes {currentSlide} {next} autoSize={item.auto !== false ? autoSize : fontSize} />
@@ -222,5 +229,12 @@
         font-size: 3em;
         font-weight: 600;
         text-align: center;
+    }
+
+    .align :global(.item .align) {
+        align-items: var(--align);
+    }
+    .align :global(.item .align .lines) {
+        text-align: var(--text-align);
     }
 </style>

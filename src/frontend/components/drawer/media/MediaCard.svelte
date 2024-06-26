@@ -7,13 +7,13 @@
     import { clearBackground } from "../../helpers/showActions"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
-    import IntersectionObserver from "./IntersectionObserver.svelte"
     import MediaLoader from "./MediaLoader.svelte"
 
     export let name: string
     export let path: string
     export let type: any
     export let active: string | null
+    export let thumbnailPath: string = ""
     export let thumbnail: boolean = true
 
     $: name = name.slice(0, name.lastIndexOf("."))
@@ -26,14 +26,16 @@
     let hover: boolean = false
     let duration: number = 0
 
+    const steps: number = 10
     function move(e: any) {
-        if (loaded && videoElem) {
-            let percentage: number = e.offsetX / e.target.offsetWidth
-            let steps: number = 10
+        if (!loaded || !videoElem) return
 
-            let time = duration * ((Math.floor(percentage * steps) * steps + steps) / 100)
-            if (Number(time) === time) videoElem.currentTime = time
-        }
+        let percentage: number = e.offsetX / e.target.offsetWidth
+
+        let time = Math.floor(duration * ((Math.floor(percentage * steps) * steps + steps) / 100))
+        if (time && videoElem.currentTime === time) return
+
+        if (Number(time) === time) videoElem.currentTime = time
     }
 
     $: index = allFiles.findIndex((a) => a === path)
@@ -107,12 +109,7 @@
 >
     <SelectElem id="media" data={{ name, path, type }} draggable fill>
         {#if thumbnail}
-            <!-- TODO: scrolling fast might skip intersection observer, making a whole row not load -->
-            <IntersectionObserver class="observer" once let:intersecting>
-                {#if intersecting}
-                    <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {name} {mediaStyle} />
-                {/if}
-            </IntersectionObserver>
+            <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} />
         {:else}
             <div class="icon">
                 <Icon size={2.5} id={icon} white={type === "image"} />

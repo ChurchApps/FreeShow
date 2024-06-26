@@ -1,17 +1,21 @@
 <script lang="ts">
-    import { audioPlaylists, audioStreams, dictionary, midiIn, shows, stageShows, styles, triggers } from "../../stores"
+    import { dictionary, templates } from "../../stores"
     import { translate } from "../../utils/language"
     import { actionData } from "../actions/actionData"
+    import { getActionName } from "../actions/actions"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import Button from "../inputs/Button.svelte"
 
     export let columns: number
-    export let index: number
+    export let index: number = -1
+    export let templateId: string = ""
     export let actions: any
 
     function changeAction(id: string, save: boolean = true) {
+        if (templateId) return
+
         let data = { ...actions, [id]: actions[id] ? !actions[id] : true }
 
         if (id === "outputStyle" && !data[id]) delete data.styleOutputs
@@ -23,6 +27,16 @@
         let slideActions = clone(actions.slideActions)
         let actionIndex = actions.slideActions.findIndex((a) => a.id === id)
         slideActions.splice(actionIndex, 1)
+
+        if (templateId) {
+            let templateSettings = $templates[templateId]?.settings || {}
+            templateSettings.actions = slideActions
+
+            let newData = { key: "settings", data: templateSettings }
+            history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "drawer", id: "template_settings", override: `actions_${templateId}` } })
+
+            return
+        }
 
         let data = { ...actions, slideActions }
 
@@ -38,22 +52,6 @@
     // WIP MIDI convert into new
     // actionData get slideId and convert into slideActions
 
-    const namedObjects = {
-        run_action: $midiIn,
-        start_show: $shows,
-        start_trigger: $triggers,
-        start_audio_stream: $audioStreams,
-        start_playlist: $audioPlaylists,
-        id_select_stage_layout: $stageShows,
-    }
-    function getActionName(actionId, actionValue) {
-        if (actionId === "change_output_style") {
-            return $styles[actionValue.outputStyle]?.name
-        }
-
-        return namedObjects[actionId]?.[actionValue.id]?.name
-    }
-
     $: zoom = 4 / columns
 </script>
 
@@ -61,10 +59,7 @@
     {#each actionsList as action}
         {#if actions[action.id]}
             <div class="button white">
-                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {action.name}" {zoom} on:click={() => changeAction(action.id)}>
-                    {#if action.getName}
-                        <p>{action.getName(actions[action.id])}</p>
-                    {/if}
+                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {action.title}" {zoom} on:click={() => changeAction(action.id)}>
                     <Icon id={action.icon} size={0.9} white />
                 </Button>
             </div>

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { openToolsTab } from "../../stores"
+
     export let ratio: number = 1
     export let active: boolean
 
@@ -8,7 +10,7 @@
 
 <section>
     {#each sides as line}
-        <div class="line {line}l" class:active style="{line === 'n' || line === 's' ? 'height' : 'width'}: {active ? 25 : 50}px;" />
+        <div on:mousedown={() => openToolsTab.set("item")} class="line {line}l" class:active style="{line === 'n' || line === 's' ? 'height' : 'width'}: {active ? 25 : 50}px;" />
     {/each}
     {#each corners as square}
         <div class="square {square}" class:active style="width: {10 / ratio}px; cursor: {square}-resize;" />

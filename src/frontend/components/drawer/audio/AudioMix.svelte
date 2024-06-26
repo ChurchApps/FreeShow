@@ -7,18 +7,12 @@
 
     // TODO: video player volume
 
-    // TODO: reduce volume on video/player too
-
-    // let volume: number = 100
-
     function setVolume(e: any, changeGain: boolean = false) {
         updateVolume(e.target.value, changeGain)
     }
 
-    $: drawerHeight = $drawer.height - 40 - 100
+    $: drawerHeight = $drawer.height - 40 - 180
 </script>
-
-<!-- TODO: effects?: https://alemangui.github.io/pizzicato/ -->
 
 <main style="--height: {drawerHeight || 150}px;">
     <div class="meter">
@@ -61,7 +55,7 @@
         position: absolute;
         left: 50%;
         top: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -58%);
         pointer-events: none;
     }
 

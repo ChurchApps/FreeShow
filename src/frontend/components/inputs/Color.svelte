@@ -128,6 +128,7 @@
         border: 2px solid var(--primary-darker);
         transition: background-color 0.2s;
         position: relative;
+        border-radius: var(--border-radius);
     }
     /* filter: brightness(0.98); */
     /* .color:not(.picker):hover {

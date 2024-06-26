@@ -1,5 +1,7 @@
 <script lang="ts">
     import { activeDays, activePopup, dictionary, eventEdit, events } from "../../../stores"
+    import { actionData } from "../../actions/actionData"
+    import { getActionName } from "../../actions/actions"
     import { sortByTime } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -27,6 +29,12 @@
         tempEvents = tempEvents.filter((a) => a.type === type)
         currentEvents = tempEvents.sort(sortByTime)
     }
+
+    function getEventIcon(type: string, { actionId }) {
+        if (type === "event") return "calendar"
+        if (type === "action") return actionData[actionId]?.icon || "actions"
+        return type
+    }
 </script>
 
 {#if $activeDays.length}
@@ -39,10 +47,14 @@
         <div class="scroll">
             {#if currentEvents.length}
                 {#each currentEvents as event}
+                    {@const eventIcon = getEventIcon(event.type, { actionId: event.action?.id })}
+                    {@const customName = type === "action" ? getActionName(event.action?.id, event.action?.data) : ""}
+
                     <div
                         class="event context #event"
                         style="color: {event.color || 'unset'}"
                         id={event.id}
+                        title={customName}
                         on:click={() => {
                             eventEdit.set(event.id)
                             activePopup.set("edit_event")
@@ -65,10 +77,14 @@
                         {/if}
 
                         <div style="display: flex;align-items: center;overflow: hidden;">
-                            <Icon id={event.type === "event" ? "calendar" : event.type} right white />
+                            <Icon id={eventIcon} right white />
                             <p>
                                 {#if event.name}
-                                    {event.name}
+                                    {#if customName}
+                                        {event.name}: {customName}
+                                    {:else}
+                                        {event.name}
+                                    {/if}
                                 {:else}
                                     <span style="opacity: 0.5;">
                                         <T id="main.unnamed" />

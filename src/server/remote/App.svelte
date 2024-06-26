@@ -517,7 +517,7 @@
                     <div on:click={click} bind:this={lyricsScroll} class="lyrics">
                         {#each layout as layoutSlide, i}
                             {#if !layoutSlide.disabled}
-                                <span style="padding: 5px;{outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);color: #FFFFFF;' : ''}">
+                                <span style="padding: 5px;{outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}">
                                     <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
                                         <span style="left: 0;position: absolute;">{i + 1}</span>
                                         <span>{outShow.slides[layoutSlide.id].group === null ? "" : outShow.slides[layoutSlide.id].group || "—"}</span>

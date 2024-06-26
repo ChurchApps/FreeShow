@@ -9,19 +9,26 @@ import path from "path"
 import { closeMain, isLinux, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
 import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { Show } from "../../types/Show"
-import { closeServers, startServers } from "../servers"
-import { Message } from "./../../types/Socket"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
-import { createPDFWindow, exportProject, exportTXT } from "../data/export"
+import { importShow } from "../data/import"
+import { error_log } from "../data/store"
+import { getThumbnail, saveImage } from "../data/thumbnails"
+import { outputWindows } from "../output/output"
+import { closeServers, startServers } from "../servers"
+import { Message } from "./../../types/Socket"
+import { startWebSocketAndRest, stopApiListener } from "./api"
 import {
     checkShowsFolder,
     dataFolderNames,
     deleteFile,
     getDataFolder,
     getDocumentsFolder,
+    getFileInfo,
+    getFolderContent,
     getPaths,
     getSimularPaths,
+    getTempPaths,
     loadFile,
     locateMediaFile,
     openSystemFolder,
@@ -30,15 +37,13 @@ import {
     readFile,
     readFolder,
     renameFile,
+    selectFiles,
     selectFilesDialog,
-    selectFolderDialog,
+    selectFolder,
     writeFile,
 } from "./files"
-import { importShow } from "../data/import"
+import { LyricSearch } from "./LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
-import { outputWindows } from "../output/output"
-import { error_log } from "../data/store"
-import { startRestListener, startWebSocket, stopApiListener } from "./api"
 import checkForUpdates from "./updater"
 
 // IMPORT
@@ -52,37 +57,15 @@ export function startImport(_e: any, msg: Message) {
     importShow(msg.channel, files || null, msg.data.path)
 }
 
-// EXPORT
-export function startExport(_e: any, msg: Message) {
-    if (msg.channel !== "GENERATE") return
-
-    let dataPath: string = msg.data.path
-
-    if (!dataPath) {
-        dataPath = selectFolderDialog()
-        if (!dataPath) return
-
-        toApp(MAIN, { channel: "DATA_PATH", data: dataPath })
-    }
-
-    msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
-
-    // WIP open in system when completed...
-
-    if (msg.data.type === "pdf") createPDFWindow(msg.data)
-    else if (msg.data.type === "txt") exportTXT(msg.data)
-    else if (msg.data.type === "project") exportProject(msg.data)
-}
-
 // BIBLE
 export function loadScripture(e: any, msg: Message) {
     let bibleFolder: string = getDataFolder(msg.path || "", dataFolderNames.scriptures)
-    let p: string = path.resolve(bibleFolder, msg.name + ".fsb")
+    let p: string = path.join(bibleFolder, msg.name + ".fsb")
 
     let bible: any = loadFile(p, msg.id)
 
     // pre v0.5.6
-    if (bible.error) p = path.resolve(app.getPath("documents"), "Bibles", msg.name + ".fsb")
+    if (bible.error) p = path.join(app.getPath("documents"), "Bibles", msg.name + ".fsb")
     bible = loadFile(p, msg.id)
 
     if (msg.data) bible.data = msg.data
@@ -92,7 +75,7 @@ export function loadScripture(e: any, msg: Message) {
 // SHOW
 export function loadShow(e: any, msg: Message) {
     let p: string = checkShowsFolder(msg.path || "")
-    p = path.resolve(p, (msg.name || msg.id) + ".show")
+    p = path.join(p, (msg.name || msg.id) + ".show")
     let show: any = loadFile(p, msg.id)
 
     e.reply(SHOW, show)
@@ -100,81 +83,80 @@ export function loadShow(e: any, msg: Message) {
 
 // MAIN
 const mainResponses: any = {
+    // DATA
     LOG: (data: string): void => console.log(data),
     VERSION: (): string => app.getVersion(),
     IS_DEV: (): boolean => !isProd,
     GET_OS: (): any => ({ platform: os.platform(), name: os.hostname(), arch: os.arch() }),
     DEVICE_ID: (): string => machineIdSync(),
-    AUTO_UPDATE: (): void => checkForUpdates(),
-    GET_SYSTEM_FONTS: (): void => loadFonts(),
-    URL: (data: string): void => openURL(data),
-    START: (data: any): void => startServers(data),
-    STOP: (): void => closeServers(),
     IP: (): any => os.networkInterfaces(),
-    LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
-    SHOWS_PATH: (): string => getDocumentsFolder(),
-    DATA_PATH: (): string => getDocumentsFolder(null, ""),
-    DISPLAY: (): boolean => false,
-    GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
-    GET_MIDI_INPUTS: (): string[] => getMidiInputs(),
-    GET_SCREENS: (): void => getScreens(),
-    GET_WINDOWS: (): void => getScreens("window"),
-    GET_DISPLAYS: (): Display[] => screen.getAllDisplays(),
-    GET_PATHS: (): any => getPaths(),
-    OUTPUT: (_: any, e: any): "true" | "false" => (e.sender.id === mainWindow?.webContents.id ? "false" : "true"),
+    // APP
     CLOSE: (): void => closeMain(),
     MAXIMIZE: (): void => maximizeMain(),
     MAXIMIZED: (): boolean => !!mainWindow?.isMaximized(),
     MINIMIZE: (): void => mainWindow?.minimize(),
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
-    SEARCH_LYRICS: (data: any): void => {
-        searchLyrics(data)
-    },
+    // MAIN
+    AUTO_UPDATE: (): void => checkForUpdates(),
+    GET_SYSTEM_FONTS: (): void => loadFonts(),
+    URL: (data: string): void => openURL(data),
+    LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
+    GET_PATHS: (): any => getPaths(),
+    GET_TEMP_PATHS: (): any => getTempPaths(),
+    SHOWS_PATH: (): string => getDocumentsFolder(),
+    DATA_PATH: (): string => getDocumentsFolder(null, ""),
+    LOG_ERROR: (data: any) => logError(data),
+    OPEN_LOG: () => openSystemFolder(error_log.path),
+    // SHOWS
+    DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
+    REFRESH_SHOWS: (data: any) => refreshAllShows(data),
+    FULL_SHOWS_LIST: (data: any) => getAllShows(data),
+    // OUTPUT
+    GET_SCREENS: (): void => getScreens(),
+    GET_WINDOWS: (): void => getScreens("window"),
+    GET_DISPLAYS: (): Display[] => screen.getAllDisplays(),
+    OUTPUT: (_: any, e: any): "true" | "false" => (e.sender.id === mainWindow?.webContents.id ? "false" : "true"),
+    // MEDIA
+    GET_THUMBNAIL: (data: any): any => getThumbnail(data),
+    SAVE_IMAGE: (data: any): any => saveImage(data),
+    READ_EXIF: (data: any, e: any) => readExifData(data, e),
+    DOWNLOAD_MEDIA: (data: any) => downloadMedia(data),
+    MEDIA_BASE64: (data: any) => storeMedia(data),
+    ACCESS_CAMERA_PERMISSION: () => getPermission("camera"),
+    ACCESS_MICROPHONE_PERMISSION: () => getPermission("microphone"),
+    ACCESS_SCREEN_PERMISSION: () => getPermission("screen"),
+    // SERVERS
+    START: (data: any): void => startServers(data),
+    STOP: (): void => closeServers(),
+    // WebSocket / REST
+    WEBSOCKET_START: (port: number | undefined) => startWebSocketAndRest(port),
+    WEBSOCKET_STOP: () => stopApiListener(),
+    // MIDI
+    GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
+    GET_MIDI_INPUTS: (): string[] => getMidiInputs(),
     SEND_MIDI: (data: any): void => {
         sendMidi(data)
     },
     RECEIVE_MIDI: (data: any): void => {
         receiveMidi(data)
     },
-    CLOSE_MIDI: (data: any): void => {
-        closeMidiInPorts(data.id)
+    CLOSE_MIDI: (data: any): void => closeMidiInPorts(data.id),
+    // LYRICS
+    GET_LYRICS: (data: any): void => {
+        getLyrics(data)
     },
-    DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
-    REFRESH_SHOWS: (data: any) => refreshAllShows(data),
-    FULL_SHOWS_LIST: (data: any) => getAllShows(data),
-    READ_EXIF: (data: any, e: any) => readExifData(data, e),
-    ACCESS_CAMERA_PERMISSION: () => {
-        if (process.platform !== "darwin") return
-        systemPreferences.askForMediaAccess("camera")
+    SEARCH_LYRICS: (data: any): void => {
+        searchLyrics(data)
     },
-    ACCESS_MICROPHONE_PERMISSION: () => {
-        if (process.platform !== "darwin") return
-        systemPreferences.askForMediaAccess("microphone")
-    },
-    ACCESS_SCREEN_PERMISSION: () => {
-        if (process.platform !== "darwin") return
-        systemPreferences.getMediaAccessStatus("screen")
-    },
+    // FILES
     RESTORE: (data: any) => restoreFiles(data),
     SYSTEM_OPEN: (data: any) => openSystemFolder(data),
     LOCATE_MEDIA_FILE: (data: any) => locateMediaFile(data),
-    DOWNLOAD_MEDIA: (data: any) => downloadMedia(data),
-    LOG_ERROR: (data: any) => logError(data),
-    OPEN_LOG: () => openSystemFolder(error_log.path),
-    MEDIA_BASE64: (data: any) => storeMedia(data),
     GET_SIMULAR: (data: any) => getSimularPaths(data),
-    // WebSocket / REST (Combined)
-    WEBSOCKET_START: (port: number | undefined) => {
-        startRestListener(port ? port + 1 : 0)
-        startWebSocket(port)
-    },
-    WEBSOCKET_STOP: () => stopApiListener(),
-    // // WebSocket (Companion)
-    // WEBSOCKET_START: (port: number | undefined) => startWebSocket(port),
-    // WEBSOCKET_STOP: () => stopApiListener("WebSocket"),
-    // // REST
-    // REST_START: (port: number | undefined) => startRestListener(port),
-    // REST_STOP: () => stopApiListener("REST"),
+    FILE_INFO: (data: any, e: any) => getFileInfo(data, e),
+    READ_FOLDER: (data: any) => getFolderContent(data),
+    OPEN_FOLDER: (data: any, e: any) => selectFolder(data, e),
+    OPEN_FILE: (data: any, e: any) => selectFiles(data, e),
 }
 
 export function receiveMain(e: any, msg: Message) {
@@ -277,13 +259,23 @@ function loadFonts() {
 
 // SEARCH_LYRICS
 async function searchLyrics({ artist, title }: any) {
-    const Genius = require("genius-lyrics")
-    const Client = new Genius.Client()
+    const songs = await LyricSearch.search(artist, title)
+    toApp("MAIN", { channel: "SEARCH_LYRICS", data: songs })
+}
 
-    const songs = await Client.songs.search(title + artist)
-    const lyrics = songs[0] ? await songs[0].lyrics() : ""
+// GET_LYRICS
+async function getLyrics({ song }: any) {
+    const lyrics = await LyricSearch.get(song)
+    console.log("****LYRICS", lyrics)
+    toApp("MAIN", { channel: "GET_LYRICS", data: { lyrics, source: song.source } })
+}
 
-    toApp("MAIN", { channel: "SEARCH_LYRICS", data: { lyrics } })
+// GET DEVICE MEDIA PERMISSION
+function getPermission(id: "camera" | "microphone" | "screen") {
+    if (process.platform !== "darwin") return
+
+    if (id === "screen") systemPreferences.getMediaAccessStatus(id)
+    else systemPreferences.askForMediaAccess(id)
 }
 
 // GET_SCREENS | GET_WINDOWS
@@ -312,7 +304,7 @@ function getScreens(type: "window" | "screen" = "screen") {
 // RECORDER
 export function saveRecording(_: any, msg: any) {
     let folder: string = getDataFolder(msg.path || "", dataFolderNames.recordings)
-    let p: string = path.resolve(folder, msg.name)
+    let p: string = path.join(folder, msg.name)
 
     const buffer = Buffer.from(msg.blob)
     writeFile(p, buffer)
@@ -321,6 +313,8 @@ export function saveRecording(_: any, msg: any) {
 // ERROR LOGGER
 const maxLogLength = 250
 export function logError(log: any, electron: boolean = false) {
+    if (!isProd) return
+
     let storedLog: any = error_log.store
     let key = electron ? "main" : "renderer"
 

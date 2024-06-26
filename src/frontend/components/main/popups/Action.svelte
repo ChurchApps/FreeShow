@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeShow, midiIn, popupData, showsCache } from "../../../stores"
+    import { activePopup, activeShow, midiIn, popupData, showsCache, templates } from "../../../stores"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
     import { actionData } from "../../actions/actionData"
@@ -12,12 +12,13 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { translate } from "../../../utils/language"
     import { updateCachedShows } from "../../helpers/show"
     import type { API_midi } from "../../actions/api"
+    import Dropdown from "../../inputs/Dropdown.svelte"
 
     $: id = $popupData.id || ""
     $: mode = $popupData.mode || ""
@@ -25,11 +26,15 @@
     let action: any = { name: "", triggers: [] }
     let actionMidi: API_midi = { type: "noteon", values: { note: 0, velocity: mode === "slide" ? 0 : -1, channel: 1 }, defaultValues: true }
 
+    let loaded: boolean = false
     onMount(setAction)
     function setAction() {
         if (!id) {
             id = uid()
             popupData.set({ ...$popupData, id })
+        } else if (mode === "template") {
+            if (id) action = $templates[$popupData.templateId]?.settings?.actions?.find((a) => a.id === id) || action
+            else id = uid()
         } else {
             // old
             let showMidi = _show().get("midi")?.[id]
@@ -46,21 +51,43 @@
         }
 
         if (mode === "slide_midi") action.midiEnabled = true
+
+        loaded = true
     }
 
+    // saveSlide(true)
+    onDestroy(removeEmptyAction)
+    function removeEmptyAction(actionId = "") {
+        let ref = _show().layouts("active").ref()[0] || []
+        let layoutSlide = ref[$popupData.index] || {}
+        let actions = layoutSlide.data?.actions || {}
+        let slideActions = actions.slideActions || []
+        let existingActionIndex = slideActions.findIndex((a) => a.id === (actionId || id))
+
+        // if actionId is set remove action regardless, else remove if empty
+        if (existingActionIndex < 0 || (!actionId && slideActions[existingActionIndex].triggers?.[0])) return
+
+        slideActions.splice(existingActionIndex, 1)
+        actions.slideActions = slideActions
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [$popupData.index] } })
+    }
+
+    let existingSearched: boolean = false
     $: if (action.triggers?.[0]) findExisting()
     function findExisting() {
-        if (mode !== "slide" || $popupData.index === undefined) return
+        if (mode !== "slide" || $popupData.index === undefined || existingSearched) return
+        existingSearched = true
 
         let ref = _show().layouts("active").ref()[0] || []
         let layoutSlide = ref[$popupData.index] || {}
         let slideActions = layoutSlide.data?.actions?.slideActions || []
-        let existingAction = slideActions.find((a) => a.triggers?.[0] === action.triggers?.[0])
+        // find any action with the same value, but different id
+        let existingAction = slideActions.find((a) => a.triggers?.[0] === action.triggers?.[0] && (!id || a.id !== id))
 
         if (!existingAction) return
 
-        // remove previous on slide
-        // if (id && mode === "slide") saveSlide(true)
+        // remove new action if already existing
+        if (id !== existingAction.id && mode === "slide") removeEmptyAction(id)
 
         id = existingAction.id
         action = existingAction
@@ -70,6 +97,7 @@
     function updateValue(key: string, e: any, checkbox: boolean = false) {
         let value = e.detail ?? e.target?.value ?? e
         if (checkbox) value = e.target?.checked
+
         action[key] = value
     }
 
@@ -84,7 +112,6 @@
         if (e.detail.actionValue) {
             if (!action.actionValues) action.actionValues = {}
             action.actionValues[actionId] = e.detail.actionValue
-            saveAction()
             return
         }
 
@@ -131,18 +158,35 @@
     // WIP MIDI remove unused / empty actions from slide
     $: if (action) saveAction()
     function saveAction() {
-        if (!action.name) return
+        if (!loaded) return
+        if (mode !== "slide_midi" && mode !== "slide" && mode !== "template" && !action.name) return
 
         if (action.midiEnabled && !action.midi) action.midi = actionMidi
 
-        if (mode !== "slide") {
+        if (mode === "template") {
+            let templateId = $popupData.templateId
+            let template = $templates[templateId]
+            if (!template) return activePopup.set(null)
+
+            let templateSettings = template?.settings || {}
+
+            let actions = templateSettings.actions || []
+            let existingIndex = actions.findIndex((a) => a.id === id || a.triggers?.[0] === action.triggers?.[0])
+            if (existingIndex > -1) actions[existingIndex] = action
+            else actions.push(action)
+
+            templateSettings.actions = actions
+            let newData = { key: "settings", data: templateSettings }
+            history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "drawer", id: "template_settings", override: `actions_${templateId}` } })
+        } else if (mode !== "slide") {
             midiIn.update((a) => {
                 if (mode === "slide_midi") {
-                    // WIP MIDI this should show up in the "Actions" tab
                     let shows = a[id]?.shows || []
                     let showId = $popupData.index === undefined ? "" : $activeShow?.id || ""
                     if (showId && !shows.find((a) => a.id === showId)) shows.push({ id: showId })
                     action.shows = shows
+
+                    if (action.midi?.defaultValues) delete action.midi.defaultValues
                 }
 
                 a[id] = clone(action)
@@ -191,16 +235,36 @@
         let setShow = { id: "start_show", actionValue: { id: $popupData.showId } }
         changeAction({ detail: setShow }, $popupData.actionIndex)
     }
+
+    // custom activations
+    const customActivations = [
+        { id: "", name: "—" },
+        { id: "startup", name: "$:actions.activate_on_startup:$" },
+        { id: "save", name: "$:actions.activate_save:$" },
+        { id: "slide_click", name: "$:actions.activate_slide_clicked:$" },
+        { id: "video_start", name: "$:actions.activate_video_starting:$" },
+        { id: "video_end", name: "$:actions.activate_video_ending:$" },
+        { id: "timer_end", name: "$:actions.activate_timer_ending:$" },
+        { id: "scripture_start", name: "$:actions.activate_scripture_start:$" },
+        { id: "show_created", name: "$:actions.activate_show_created:$" },
+    ]
+    $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""
 </script>
 
 <div style="min-width: 45vw;min-height: 50vh;">
-    {#if mode === "slide"}
+    {#if mode === "slide" || mode === "template"}
         <CreateAction mainId={id} actionId={action.triggers?.[0] || ""} existingActions={action.triggers || []} actionValue={action.actionValues?.[action.triggers?.[0] || ""]} on:change={changeAction} list />
     {:else}
         {#if mode !== "slide_midi"}
             <CombinedInput>
                 <p><T id="midi.name" /></p>
                 <TextInput style="width: 70%;" value={action.name} on:change={(e) => updateValue("name", e)} />
+            </CombinedInput>
+            <CombinedInput>
+                <p><T id="settings.enabled" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={action.enabled ?? true} on:change={(e) => updateValue("enabled", e, true)} />
+                </div>
             </CombinedInput>
 
             <!-- multiple actions -->
@@ -228,12 +292,10 @@
         <!-- if not slide specific trigger action -->
         {#if !mode}
             <CombinedInput>
-                <!-- WIP MIDI activate on startup -->
-                <p><T id="actions.activate_on_startup" /></p>
-                <div class="alignRight">
-                    <Checkbox checked={action.startupEnabled} on:change={(e) => updateValue("startupEnabled", e, true)} />
-                </div>
+                <p><T id="actions.custom_activation" /></p>
+                <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} />
             </CombinedInput>
+
             <!-- can be activated by MIDI input signal -->
             <CombinedInput>
                 <p><T id="midi.activate" /></p>

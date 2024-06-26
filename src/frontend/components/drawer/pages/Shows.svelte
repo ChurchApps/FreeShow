@@ -1,11 +1,12 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import type { ShowList } from "../../../../types/Show"
-    import { activePopup, activeProject, activeShow, categories, dictionary, labelsDisabled, sorted, sortedShowsList, textCache } from "../../../stores"
-    import { clone, sortObjectNumbers } from "../../helpers/array"
-    import { history } from "../../helpers/history"
+    import { activePopup, activeProject, activeShow, categories, dictionary, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { formatSearch, showSearch } from "../../../utils/search"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { clone } from "../../helpers/array"
+    import { history } from "../../helpers/history"
     import { dateToString } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
     import ShowButton from "../../inputs/ShowButton.svelte"
@@ -17,53 +18,7 @@
     export let active: string | null
     export let searchValue: string
 
-    $: sva = searchValue
-        .toLowerCase()
-        .replace(/[.\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
-        .split(" ")
-
-    const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
-    const searchIncludes = (s: string, sv: string): boolean => filter(s).includes(sv)
-    const searchEquals = (s: string, sv: string): boolean => filter(s) === sv
-
-    let totalMatch: number = 0
-    $: totalMatch = searchValue ? 0 : 0
-    function search(obj: any): number {
-        let match: any[] = []
-
-        sva.forEach((sv, i) => {
-            if (sv.length > 1) {
-                match[i] = 0
-                if (searchIncludes(obj.name, sv)) match[i] += 25
-
-                let cache = $textCache[obj.id]
-                if (cache) {
-                    cache.split(".").forEach((text: string) => {
-                        if (searchEquals(text, sv)) match[i] += 20
-                        else if (searchIncludes(text, sv)) {
-                            match[i] += 10
-                        }
-                    })
-                }
-            }
-        })
-
-        let sum = 0
-        let hasZero = match.some((m) => {
-            sum += m
-            return m === 0
-        })
-
-        if (hasZero) sum = 0
-
-        // find exact
-        if (sum >= 100) sum = 99
-        if (sva.join(" ") === obj.name.toLowerCase()) sum = 100
-
-        totalMatch += sum
-        return Math.min(sum, 100)
-    }
-
+    $: formattedSearch = formatSearch(searchValue)
     $: showsSorted = $sortedShowsList
 
     let filteredShows: ShowList[]
@@ -71,72 +26,59 @@
     $: filteredStored = filteredShows = active === "all" ? showsSorted : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
 
     export let firstMatch: null | any = null
-    let previousSearchValue: string[] = []
+    let previousSearchValue: string = ""
     $: {
         if (searchValue.length > 1) {
-            let currentShowsList = filteredStored
+            let currentShowsList = filteredShows
             // reset if search value changed
-            if (sva.length === previousSearchValue.length && newSearchIncludesPrevious()) {
-                currentShowsList = filteredShows
-            }
-            filteredShows = []
+            if (!formattedSearch.includes(previousSearchValue)) currentShowsList = clone(filteredStored)
 
-            console.log(currentShowsList)
-
-            currentShowsList.forEach((s: any) => {
-                let match = search(s)
-                if (match) filteredShows.push({ ...s, match })
-            })
-            filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowList[]
+            filteredShows = showSearch(formattedSearch, currentShowsList)
+            if (searchValue.length > 15 && filteredShows.length > 50) filteredShows = filteredShows.slice(0, 50)
+            if (searchValue.length > 30 && filteredShows.length > 30) filteredShows = filteredShows.slice(0, 30)
             firstMatch = filteredShows[0] || null
 
             // scroll to top
             document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
 
-            previousSearchValue = clone(sva)
+            previousSearchValue = formattedSearch
         } else {
-            filteredShows = filteredStored
+            filteredShows = clone(filteredStored)
             firstMatch = null
         }
     }
 
-    function newSearchIncludesPrevious() {
-        let matching = true
-        previousSearchValue.forEach((value, i) => {
-            if (!sva[i].includes(value)) matching = false
-        })
-        return matching
+    // auto scroll to active show in the virtual list
+    // WIP this does not work because the show buttons does not exist unless they are in view
+    if (id) {
     }
-
-    // this is useless with the virtual list
-    let scrollElem: any
-    let offset: number = -1
-    console.log(id)
-    // $: {
-    //     if (id && $activeShow !== null) {
-    //         if (id === "shows" && $activeShow.type === null && scrollElem) offset = scrollElem.querySelector("#" + $activeShow.id)?.offsetTop - scrollElem.offsetTop
+    // $: if (id === "shows" && $activeShow !== null && ($activeShow.type || "show") === "show") {
+    //     let scrollElem: any = document.querySelector("svelte-virtual-list-viewport")
+    //     if (scrollElem) {
+    //         let elemTop = scrollElem.querySelector("#show_" + $activeShow.id)?.closest("svelte-virtual-list-row")?.offsetTop || 0
+    //         scrollElem.scrollTo(0, elemTop - scrollElem.offsetTop)
     //     }
     // }
 
     function keydown(e: any) {
-        if (!e.target.closest("input") && !e.target.closest(".edit") && (e.ctrlKey || e.metaKey) && filteredShows.length) {
-            let id: any = null
-            if (e.key === "ArrowRight") {
-                if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[0].id
-                else {
-                    let currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
-                    if (currentIndex < filteredShows.length - 1) id = filteredShows[currentIndex + 1].id
-                }
-            } else if (e.key === "ArrowLeft") {
-                if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[filteredShows.length - 1].id
-                else {
-                    let currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
-                    if (currentIndex > 0) id = filteredShows[currentIndex - 1].id
-                }
-            }
+        if (e.target.closest("input") || e.target.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows.length) return
 
-            if (id) activeShow.set({ id, type: "show" })
+        let id: any = null
+        if (e.key === "ArrowRight") {
+            if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[0].id
+            else {
+                let currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
+                if (currentIndex < filteredShows.length - 1) id = filteredShows[currentIndex + 1].id
+            }
+        } else if (e.key === "ArrowLeft") {
+            if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[filteredShows.length - 1].id
+            else {
+                let currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
+                if (currentIndex > 0) id = filteredShows[currentIndex - 1].id
+            }
         }
+
+        if (id) activeShow.set({ id, type: "show" })
     }
 
     $: sortType = $sorted.shows?.type || "name"
@@ -144,7 +86,7 @@
 
 <svelte:window on:keydown={keydown} />
 
-<Autoscroll {offset} bind:scrollElem style="overflow-y: auto;flex: 1;">
+<Autoscroll style="overflow-y: auto;flex: 1;">
     <div class="column context #drawer_show">
         {#if filteredShows.length}
             <!-- reload list when changing category -->
@@ -164,7 +106,7 @@
                 </VirtualList>
             {/key}
 
-            {#if searchValue.length > 1 && totalMatch === 0}
+            {#if searchValue.length > 1 && !filteredShows.length}
                 <Center size={1.2} faded><T id="empty.search" /></Center>
             {/if}
         {:else}

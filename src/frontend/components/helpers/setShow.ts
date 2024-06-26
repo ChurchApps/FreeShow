@@ -54,7 +54,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
         return a
     })
 
-    console.log("SHOW UPDATED: ", id, value)
+    console.info("SHOW UPDATED: ", id, value)
 
     if (value && value !== "delete") {
         cachedShowsData.update((a) => {
@@ -87,11 +87,11 @@ export async function loadShows(s: string[]) {
                 })
                 // resolve("not_found")
             } else if (!get(showsCache)[id]) {
-                console.log("LOAD SHOWS:", s)
                 window.api.send(SHOW, { path: get(showsPath), name: get(shows)[id].name, id })
             } else count++
             // } else resolve("already_loaded")
         })
+        if (s.length - count) console.info(`LOADING ${s.length - count} SHOW(S)`)
 
         // RECEIVE
         let listenerId = uid()

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, onMount } from "svelte"
     import type { Option } from "../../../types/Main"
     import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, popupData, shows, stageShows, styles, triggers } from "../../stores"
     import T from "../helpers/T.svelte"
@@ -13,6 +13,7 @@
     import TextInput from "../inputs/TextInput.svelte"
     import MidiValues from "./MidiValues.svelte"
     import ChooseStyle from "./specific/ChooseStyle.svelte"
+    import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
 
     export let inputId: string
     export let value
@@ -20,6 +21,13 @@
     export let actionIndex: number = 0
     export let mainId: string = ""
     export let list: boolean = false
+
+    onMount(() => {
+        // set default
+        if (inputId === "metronome" && !value) updateValue("", { tempo: 120, beats: 4 })
+        else if (inputId === "index" && value?.index === undefined) updateValue("index", 0)
+        else if (inputId === "volume" && value?.volume === undefined) updateValue("volume", 1)
+    })
 
     let dispatch = createEventDispatcher()
     function updateValue(key: string, e) {
@@ -59,11 +67,25 @@
 </script>
 
 {#if inputId === "output_style"}
-    <div style="display: flex;flex-direction: column;">
+    <div class="column">
         <ChooseStyle value={value || {}} on:change={(e) => updateValue("", e)} />
     </div>
 {:else if inputId === "midi"}
     <MidiValues midi={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
+{:else if inputId === "metronome"}
+    <div class="column">
+        <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={(e) => updateValue("", e)} volume={false} />
+    </div>
+{:else if inputId === "toggle_action"}
+    <CombinedInput>
+        <Dropdown style="width: 100%;" value={getOptions.run_action().find((a) => a.id === value?.id)?.name || value?.id || "—"} options={getOptions.run_action()} on:click={(e) => updateValue("id", e.detail?.id)} />
+    </CombinedInput>
+    <CombinedInput>
+        {#if value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;">Action will toggle if checkbox is unchanged</p>{/if}
+        <div class="alignRight" style="width: 100%;">
+            <Checkbox checked={value?.value} on:change={checkboxChanged} />
+        </div>
+    </CombinedInput>
 {:else}
     <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
         {#if inputId === "index"}
@@ -91,7 +113,7 @@
             {/if}
         {:else if inputId === "volume"}
             <!-- gain can also be set -->
-            <NumberInput value={value?.volume || 0} max={1} decimals={2} step={0.1} inputMultiplier={100} on:change={(e) => updateValue("volume", e)} />
+            <NumberInput value={value?.volume || 1} max={1} decimals={2} step={0.1} inputMultiplier={100} on:change={(e) => updateValue("volume", e)} />
         {:else if inputId === "transition"}
             <!-- transition -->
         {:else if inputId === "variable"}
@@ -99,3 +121,10 @@
         {/if}
     </CombinedInput>
 {/if}
+
+<style>
+    .column {
+        display: flex;
+        flex-direction: column;
+    }
+</style>

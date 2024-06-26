@@ -1,8 +1,9 @@
 <script lang="ts">
+    import type { Item } from "../../../types/Show"
     import { getQuickExample } from "../../converters/txt"
     import { slidesOptions } from "../../stores"
     import { _show } from "../helpers/shows"
-    import { formatText } from "./formatTextEditor"
+    import { formatText, getFirstNormalTextbox } from "./formatTextEditor"
     import Notes from "./tools/Notes.svelte"
 
     export let currentShow: any
@@ -47,34 +48,30 @@
         text = text.trim()
     }
 
-    function getItems(items) {
+    function getItems(items: Item[]) {
         let text = ""
         let plainText = ""
-        let hasTextboxItem: boolean = false
+        let selectedItem: Item = getFirstNormalTextbox(items)
 
-        items.forEach((item) => {
-            if (!item.lines) return
-            // only return first textbox!
-            if (hasTextboxItem) return
+        let hasTextboxItem = !!selectedItem?.lines
+        if (!hasTextboxItem) return { text, plainText, hasTextboxItem }
 
-            hasTextboxItem = true
-
-            let filteredLines = item.lines?.filter((line) => line.text?.filter((text) => text.value.length).length)
-            filteredLines.forEach((line, i) => {
-                let tempText = ""
-                line.text?.forEach((txt) => {
-                    tempText += txt.value
-                })
-
-                if (tempText.length) {
-                    text += tempText + "\n"
-                    plainText += tempText + (i < filteredLines.length - 1 ? "\n" : "")
-                }
+        let filteredLines = selectedItem.lines?.filter((line) => line.text?.filter((text) => text.value.length).length) || []
+        filteredLines.forEach((line, i) => {
+            let tempText = ""
+            line.text?.forEach((txt) => {
+                tempText += txt.value
             })
-            // remove double enters
-            text = text.replaceAll("\n\n", "")
-            text += "\n"
+
+            if (tempText.length) {
+                text += tempText + "\n"
+                plainText += tempText + (i < filteredLines.length - 1 ? "\n" : "")
+            }
         })
+
+        // remove double enters
+        text = text.replaceAll("\n\n", "")
+        text += "\n"
 
         return { text, plainText, hasTextboxItem }
     }

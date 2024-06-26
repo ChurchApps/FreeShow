@@ -3,16 +3,18 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'none'"> -->
-        <!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self'"> -->
-        <!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" /> -->
-        <!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self' http://localhost:35729/livereload.js 'unsafe-inline' 'unsafe-eval';" /> -->
-        <!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self' http://* https://* 'unsafe-inline' 'unsafe-eval';" /> -->
-        <meta http-equiv="Content-Security-Policy" content="script-src 'self' http://localhost:35729/livereload.js http://www.youtube.com/iframe_api https://* 'unsafe-inline' 'unsafe-eval';" />
+
+        <!-- Live reload (dev):        http://localhost:35729/livereload.js -->
+        <!-- Svelte inspector (dev):   http://localhost:5001 -->
+        <!-- YouTube iframe:           http://www.youtube.com/iframe_api -->
+        <!-- Other sites (vimeo):      https://* -->
+        <!-- Inline <script>/<style>:  unsafe-inline -->
+        <!-- NumberInput math:         unsafe-eval -->
+        <meta http-equiv="Content-Security-Policy" content="script-src 'self' http://localhost:35729/livereload.js http://localhost:5001 http://www.youtube.com/iframe_api https://* 'unsafe-inline' 'unsafe-eval';" />
 
         <title>FreeShow</title>
 
-        <link rel="preload" href="./fonts/CMGSans-Regular.ttf" as="font" />
+        <link rel="preload" href="./fonts/CMGSans-Regular.ttf" as="font" crossorigin="anonymous" />
         <link rel="stylesheet" href="./global.css" />
         <link rel="stylesheet" href="./build/bundle.css" />
 

@@ -1,61 +1,37 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { MAIN, STORE } from "../../../../types/Channels"
-    import { activePopup, alertMessage, dataPath, dictionary, mediaCache, shows, showsCache, showsPath, special } from "../../../stores"
-    import { newToast } from "../../../utils/messages"
-    import { receive, send } from "../../../utils/request"
+    import { activePopup, alertMessage, dataPath, dictionary, shows, showsCache, showsPath, special } from "../../../stores"
+    import { destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import { restartOutputs } from "../../../utils/updateSettings"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { formatBytes } from "../../helpers/bytes"
+    import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     onMount(() => {
-        getCacheSize()
+        // getCacheSize()
         // getAudioOutputs()
         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
     })
 
-    let cacheSize: string = "0 Bytes"
-    function getCacheSize() {
-        if (!Object.keys($mediaCache).length) {
-            cacheSize = "0 Bytes"
-            return
-        }
-
-        let str = JSON.stringify($mediaCache)
-        let byteLengthUtf8 = new Blob([str]).size
-        cacheSize = formatBytes(byteLengthUtf8)
-    }
-
     const previewRates = [
-        { id: "auto", name: "$:settings.auto:$" },
-        { id: "optimized", name: "$:settings.optimized:$" },
-        { id: "full", name: "$:settings.full:$" },
+        { id: "auto", name: "$:settings.auto:$ (1|30 fps)" },
+        { id: "optimized", name: "$:settings.optimized:$ (1 fps)" },
+        { id: "reduced", name: "$:settings.reduced:$ (10 fps)" },
+        { id: "full", name: "$:settings.full:$ (60 fps)" },
     ]
-
-    // let audioOutputs: any = []
-    // async function getAudioOutputs() {
-    //     const devices = await navigator.mediaDevices.enumerateDevices()
-    //     let outputs = devices.filter((device) => device.kind === "audiooutput")
-
-    //     let defaultGroupId = outputs.find((a) => a.deviceId === "default")?.groupId
-    //     if (defaultGroupId) outputs = outputs.filter((a) => a.groupId !== defaultGroupId || a.deviceId === "default")
-
-    //     audioOutputs = [{ id: "", name: "—" }, ...outputs.map((device) => ({ id: device.deviceId, name: device.label }))]
-    // }
 
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (key !== "audio_fade_duration" && !value) delete a[key]
+            if (!value && key !== "clearMediaOnFinish") delete a[key]
             else a[key] = value
 
             return a
@@ -78,10 +54,16 @@
     // shows in folder
     let hiddenShows: any[] = []
     let brokenShows: number = 0
-    receive(MAIN, {
-        // this will not include newly created shows not saved yet, but it should not be an issue.
-        FULL_SHOWS_LIST: (data: any) => (hiddenShows = data || []),
-    })
+    let listenerId = "OTHER_SETTINGS"
+    receive(
+        MAIN,
+        {
+            // this will not include newly created shows not saved yet, but it should not be an issue.
+            FULL_SHOWS_LIST: (data: any) => (hiddenShows = data || []),
+        },
+        listenerId
+    )
+    onDestroy(() => destroy(MAIN, listenerId))
 
     $: if (hiddenShows?.length) getBrokenShows()
     function getBrokenShows() {
@@ -111,16 +93,16 @@
     }
 
     // delete media thumbnail cache
-    function deleteCache() {
-        if (!Object.keys($mediaCache).length) {
-            newToast("$toast.empty_cache")
-            return
-        }
+    // function deleteCache() {
+    //     if (!Object.keys($mediaCache).length) {
+    //         newToast("$toast.empty_cache")
+    //         return
+    //     }
 
-        newToast("$toast.deleted_cache")
-        mediaCache.set({})
-        cacheSize = "0 Bytes"
-    }
+    //     newToast("$toast.deleted_cache")
+    //     mediaCache.set({})
+    //     cacheSize = "0 Bytes"
+    // }
 
     // open log
     function openLog() {
@@ -194,7 +176,18 @@
         <Checkbox disabled={!$dataPath} checked={$special.customUserDataLocation || false} on:change={(e) => toggle(e, "customUserDataLocation")} />
     </div>
 </CombinedInput>
-
+<CombinedInput>
+    <p><T id="settings.clear_media_when_finished" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.clearMediaOnFinish ?? true} on:change={(e) => toggle(e, "clearMediaOnFinish")} />
+    </div>
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.disable_presenter_controller_keys" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.disablePresenterControllerKeys || false} on:change={(e) => toggle(e, "disablePresenterControllerKeys")} />
+    </div>
+</CombinedInput>
 <CombinedInput>
     <p><T id="settings.popup_before_close" /></p>
     <div class="alignRight">
@@ -207,11 +200,6 @@
     <Dropdown options={previewRates} value={previewRates.find((a) => a.id === ($special.previewRate || "auto"))?.name} on:click={(e) => updateSpecial(e.detail.id, "previewRate")} />
 </CombinedInput>
 
-<!-- <CombinedInput>
-    <p><T id="settings.custom_audio_output" /></p>
-    <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
-</CombinedInput> -->
-
 <CombinedInput>
     <p><T id="settings.capitalize_words" /></p>
     <TextInput value={$special.capitalize_words} on:change={(e) => updateTextInput(e, "capitalize_words")} />
@@ -223,27 +211,8 @@
 </CombinedInput>
 
 <CombinedInput>
-    <p><T id="settings.audio_fade_duration" /></p>
-    <NumberInput value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
-</CombinedInput>
-
-<CombinedInput>
     <p><T id="settings.max_auto_font_size" /></p>
     <NumberInput value={$special.max_auto_font_size ?? 800} min={20} max={5000} on:change={(e) => updateSpecial(e.detail, "max_auto_font_size")} />
-</CombinedInput>
-
-<CombinedInput>
-    <Button style="width: 100%;" on:click={() => activePopup.set("manage_icons")}>
-        <Icon id="noIcon" style="border: 0;" right />
-        <p style="padding: 0;"><T id="popup.manage_icons" /></p>
-    </Button>
-</CombinedInput>
-
-<CombinedInput>
-    <Button style="width: 100%;" on:click={() => activePopup.set("manage_colors")}>
-        <Icon id="color" style="border: 0;" right />
-        <p style="padding: 0;"><T id="popup.manage_colors" /></p>
-    </Button>
 </CombinedInput>
 
 <!-- WIP custom metadata order -->
@@ -281,7 +250,7 @@
     </CombinedInput>
 {/if}
 
-<CombinedInput>
+<!-- <CombinedInput>
     <Button style="width: 100%;" on:click={deleteCache}>
         <Icon id="delete" style="border: 0;" right />
         <p style="padding: 0;">
@@ -289,7 +258,7 @@
             <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({cacheSize})</span>
         </p>
     </Button>
-</CombinedInput>
+</CombinedInput> -->
 
 <CombinedInput>
     <Button style="width: 100%;" on:click={openLog}>
@@ -298,13 +267,10 @@
 </CombinedInput>
 
 <CombinedInput>
-    <Button style="width: 100%;" on:click={backup}>
+    <Button style="width: 50%;" on:click={backup}>
         <Icon id="download" right /><T id="settings.backup_all" />
     </Button>
-</CombinedInput>
-
-<CombinedInput>
-    <Button style="width: 100%;" on:click={restore}>
+    <Button on:click={restore}>
         <Icon id="upload" right /><T id="settings.restore" />
     </Button>
 </CombinedInput>

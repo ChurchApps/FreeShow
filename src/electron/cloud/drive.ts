@@ -3,7 +3,7 @@ import path from "path"
 import { isProd, toApp } from ".."
 import { STORE } from "../../types/Channels"
 import { stores } from "../data/store"
-import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, getFileStats, loadShows, readFile, writeFile } from "../utils/files"
+import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, getFileStats, loadShows, readFile, writeFile } from "../utils/files"
 import { trimShow } from "../utils/responses"
 
 let driveClient: any = null
@@ -169,6 +169,7 @@ const SHOWS_CONTENT = "SHOWS_CONTENT"
 const storesToSave = ["EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTINGS", "STAGE_SHOWS", "TEMPLATES", "THEMES", "MEDIA"]
 // don't upload: settings.json, config.json, cache.json, history.json
 
+export let currentlyDeletedShows: string[] = []
 export async function syncDataDrive(data: any) {
     let files = await listFiles(20, "'" + data.mainFolderId + "' in parents")
     if (files === null) return { error: "Error: Could not get files! Have you shared a folder with the service account?" }
@@ -371,8 +372,36 @@ export async function syncDataDrive(data: any) {
                 }
             }
 
-            if ((newest === "cloud" || data.method === "download") && cloudContent) allShows[id] = driveContent[id]
-            else if (localContent) {
+            if ((newest === "cloud" || data.method === "download") && cloudContent) {
+                // deleted locally
+                if (currentlyDeletedShows.includes(id)) {
+                    allShows[id] = { deleted: true, name: driveContent[id]?.name || "" }
+
+                    delete shows[id]
+                    uploadCount++
+                    if (DEBUG) console.log("Show has been deleted from cloud:", driveContent[id]?.name || "")
+
+                    return
+                }
+
+                allShows[id] = driveContent[id]
+
+                // if a show is deleted, synced and undone it can't be restored unless a duplicate is created with new ID!
+                // but it can be restored when deleted before it's synced
+                // deleted in cloud
+                if (driveContent[id].deleted === true) {
+                    let p: string = path.join(showsPath, name)
+                    if (doesPathExist(p)) {
+                        deleteFile(p)
+                        downloadCount++
+                        if (DEBUG) console.log("Show has been deleted locally:", driveContent[id]?.name || "")
+                    }
+
+                    delete shows[id]
+
+                    return
+                }
+            } else if (localContent) {
                 try {
                     allShows[id] = JSON.parse(localContent)[1]
                 } catch (err) {
@@ -382,9 +411,6 @@ export async function syncDataDrive(data: any) {
             }
 
             if (cloudContent && localContent === cloudContent) return
-
-            // TODO: deleted files are not deleted in cloud
-            // popup: found some show files not in the cloud: sync(upload) or delete
 
             // "download" show
             if (cloudContent && (newest === "cloud" || data.method === "download") && data.method !== "upload") {
@@ -434,6 +460,7 @@ export async function syncDataDrive(data: any) {
         if (DEBUG) console.log("Drive shows:", Object.keys(allShows).length)
         let file = createFile(data.mainFolderId, { type: "json", name }, JSON.stringify(allShows))
         let response = await uploadFile(file, driveFileId)
+        currentlyDeletedShows = []
 
         if (response?.status != 200) {
             changes.push({ type: "show", action: "upload_failed", name })

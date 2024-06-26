@@ -109,13 +109,16 @@
         justify-content: space-between;
         overflow: hidden;
         position: relative;
+        /* background: var(--primary); */
     }
 
     :global(.bar_left) {
         padding-right: var(--handle-width);
+        /* border-radius: 0 var(--border-radius) var(--border-radius) 0; */
     }
     :global(.bar_right) {
         padding-left: var(--handle-width);
+        /* border-radius: var(--border-radius) 0 0 var(--border-radius); */
     }
     :global(.bar_top) {
         padding-bottom: var(--handle-width);

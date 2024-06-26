@@ -3,20 +3,24 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
-import type { Item, OutSlide, Show, Transition } from "../../../types/Show"
-import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData } from "../../stores"
+import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
+import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData, videoExtensions } from "../../stores"
 import { send } from "../../utils/request"
-import { getSlideText } from "../edit/scripts/textStyle"
+import { sendBackgroundToStage } from "../../utils/stageTalk"
+import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "./array"
-import { clearBackground, replaceDynamicValues } from "./showActions"
+import { getExtension, getFileName, removeExtension } from "./media"
+import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
+import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
+import { customActionActivation } from "../actions/actions"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
     enabledOutputs.forEach((id) => {
         let output: any = { id, ...get(outputs)[id] }
         let autoPosition = enabledOutputs.length === 1
-        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: e.ctrlKey || e.metaKey, auto, autoPosition })
+        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: output.allowMainScreen || e.ctrlKey || e.metaKey, auto, autoPosition })
     })
 }
 
@@ -36,19 +40,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
 
-            if (key === "background" && data) {
-                // mute videos in the other output windows if more than one
-                data.muted = data.muted || false
-                if (outs.length > 1 && i > 0) data.muted = true
-
-                let videoData: any = { muted: data.muted, loop: data.loop || false }
-
-                setTimeout(() => {
-                    // WIP data is sent directly in output, so this is probably not needed
-                    send(OUTPUT, ["DATA"], { [id]: videoData })
-                    if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
-                }, 100)
-            }
+            if (key === "background") data = changeOutputBackground(data, { outs, output, id, i })
 
             let outData = a[id].out?.[key] || null
             if (key === "overlays" && data.length) {
@@ -66,6 +58,54 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 
         return a
     })
+}
+
+function changeOutputBackground(data, { outs, output, id, i }) {
+    setTimeout(() => {
+        // update stage background if any
+        sendBackgroundToStage(id)
+    }, 100)
+
+    let previousWasVideo: boolean = get(videoExtensions).includes(getExtension(output.out?.background?.path))
+
+    if (data === null) {
+        fadeinAllPlayingAudio()
+        if (previousWasVideo) videoEnding()
+
+        return data
+    }
+
+    // mute videos in the other output windows if more than one
+    data.muted = data.muted || false
+    if (outs.length > 1 && i > 0) data.muted = true
+
+    let videoData: any = { muted: data.muted, loop: data.loop || false }
+
+    let muteAudio = get(special).muteAudioWhenVideoPlays
+    let isVideo = get(videoExtensions).includes(getExtension(data.path))
+    if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
+    else fadeinAllPlayingAudio()
+
+    if (isVideo) videoStarting()
+    else if (previousWasVideo) videoEnding()
+
+    // wait for video receiver to change
+    setTimeout(() => {
+        // data is sent directly in output as well ??
+        send(OUTPUT, ["DATA"], { [id]: videoData })
+        if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
+    }, 600)
+
+    return data
+}
+
+function videoEnding() {
+    setTimeout(() => {
+        customActionActivation("video_end")
+    })
+}
+function videoStarting() {
+    customActionActivation("video_start")
 }
 
 export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {
@@ -250,20 +290,14 @@ export function deleteOutput(outputId: string) {
     })
 }
 
-// WIP improve this
 export async function clearPlayingVideo(clearOutput: string = "") {
-    // videoData.paused = true
-    if (clearOutput) clearBackground(clearOutput) // , false, clearOutput
-
     let mediaTransition: Transition = getCurrentMediaTransition()
 
-    let duration = mediaTransition?.duration || 0
+    let duration = (mediaTransition?.duration || 0) + 200
     if (!clearOutput) duration /= 2.4 // a little less than half the time
 
     return new Promise((resolve) => {
         setTimeout(() => {
-            // if (!videoData.paused) return
-
             // remove from playing
             playingVideos.update((a) => {
                 let existing = -1
@@ -374,6 +408,76 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     return newSlideItems
 }
 
+export function updateSlideFromTemplate(slide: Slide, template: Template, isFirst: boolean = false, removeOverflow: boolean = false) {
+    let settings = template.settings || {}
+
+    if (settings.resolution || slide.settings.resolution) slide.settings.resolution = getResolution(settings.resolution)
+    if (isFirst && (settings.firstSlideTemplate || removeOverflow)) slide.settings.template = settings.firstSlideTemplate || ""
+    if (settings.backgroundColor || slide.settings.color) slide.settings.color = settings.backgroundColor || ""
+
+    // add overlay items to slide items
+    if (removeOverflow && settings.overlayId) {
+        let overlayItems = get(overlays)[settings.overlayId]?.items || []
+        slide.items.push(...overlayItems)
+    }
+
+    return slide
+}
+
+export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, media: { [key: string]: Media }, template: Template, removeOverflow: boolean = false) {
+    // only alter layout slides if clicking on the template
+    if (!removeOverflow) return { layouts, media }
+
+    let settings = template.settings || {}
+
+    let bgId = ""
+    if (settings.backgroundPath) {
+        // find existing
+        let existingId = Object.keys(media).find((id) => (media[id].path || media[id].id) === id)
+        bgId = existingId || uid()
+        if (!existingId) media[bgId] = { path: settings.backgroundPath, name: removeExtension(getFileName(settings.backgroundPath)) }
+    }
+
+    Object.keys(layouts).forEach((layoutId) => {
+        let slides = layouts[layoutId].slides
+        slides.forEach((slide, i) => {
+            if (i === 0 && settings.backgroundPath) slide.background = bgId
+
+            if (settings.actions?.length) {
+                if (!slide.actions) slide.actions = {}
+
+                // remove existing
+                let newSlideActions: any[] = []
+                slide.actions.slideActions?.forEach((action) => {
+                    if (settings.actions?.find((a) => a.id === action.id || a.triggers?.[0] === action.triggers?.[0])) return
+                    newSlideActions.push(action)
+                })
+
+                slide.actions.slideActions = [...newSlideActions, ...settings.actions]
+            }
+        })
+
+        layouts[layoutId].slides = slides
+    })
+
+    return { layouts, media }
+}
+
+function getSlideItemsFromTemplate(templateSettings: TemplateSettings) {
+    let newItems: Item[] = []
+
+    // these are set by the output style: resolution, backgroundColor, backgroundPath
+    // this is not relevant: firstSlideTemplate
+
+    // add overlay items
+    if (templateSettings.overlayId) {
+        let overlayItems = get(overlays)[templateSettings.overlayId]?.items || []
+        newItems.push(...overlayItems)
+    }
+
+    return newItems
+}
+
 function removeTextValue(items: Item[]) {
     items.forEach((item) => {
         if (!item.lines) return
@@ -389,7 +493,15 @@ export function getTemplateText(value) {
     return ""
 }
 
-function sortItemsByType(items: Item[]) {
+export function isEmptyOrSpecial(item: Item) {
+    let text = getItemText(item)
+    if (!text.length) return true
+    if (getTemplateText(text)) return true
+
+    return false
+}
+
+export function sortItemsByType(items: Item[]) {
     let sortedItems: { [key: string]: Item[] } = {}
 
     items.forEach((item) => {
@@ -445,11 +557,18 @@ export function getOutputTransitions(slideData: any, transitionData: any, disabl
     return clone(transitions)
 }
 
-export function setTemplateStyle(outSlide: any, templateId: string | undefined, items: Item[]) {
-    let slideItems = outSlide?.id === "temp" ? outSlide.tempItems : items
-    let templateItems = get(templates)[templateId || ""]?.items || []
+export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]) {
+    let isScripture = outSlide?.id === "temp"
+    let slideItems = isScripture ? outSlide.tempItems : items
 
-    return mergeWithTemplate(slideItems, templateItems, true)
+    let templateId = currentStyle[`template${isScripture ? "Scripture" : ""}`]
+    let template = get(templates)[templateId || ""] || {}
+    let templateItems = template.items || []
+
+    let newItems = mergeWithTemplate(slideItems, templateItems, true)
+    newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
+
+    return newItems
 }
 
 export function getOutputLines(outSlide: any, styleLines: any = 0) {

@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { OPEN_FOLDER } from "../../../types/Channels"
+    import { MAIN } from "../../../types/Channels"
     import { activePopup, alertMessage, os } from "../../stores"
+    import { send } from "../../utils/request"
     import Button from "./Button.svelte"
 
     export let id: string
@@ -16,7 +17,7 @@
             activePopup.set("alert")
         }
 
-        window.api.send(OPEN_FOLDER, { channel: id, title, path })
+        send(MAIN, ["OPEN_FOLDER"], { channel: id, title, path })
     }
 </script>
 

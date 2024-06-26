@@ -16,8 +16,9 @@ export interface StageShows {
             background?: boolean
             color?: string
             autoStretch?: string
-            resolution?: boolean
-            size?: Resolution
+            resolution?: Resolution
+            // resolution?: boolean
+            // size?: Resolution
             labels?: boolean
             showLabelIfEmptySlide?: boolean
         }
@@ -29,6 +30,7 @@ export interface StageShows {
                 auto?: boolean
                 style: string
                 align: string
+                alignX?: string
                 label?: string // sending translated label to stage
             }
         }

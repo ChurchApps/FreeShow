@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item, Line } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
+    import { activeEdit, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -10,11 +10,10 @@
     import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import { EditboxHelper } from "./EditboxHelper"
 
-    import EditboxChords from "./EditboxChords.svelte"
     import { onMount } from "svelte"
-    import { addToPos } from "../../helpers/mover"
     import { uid } from "uid"
-    import { deleteAction } from "../../helpers/clipboard"
+    import { addToPos } from "../../helpers/mover"
+    import EditboxChords from "./EditboxChords.svelte"
 
     export let item: Item
     export let ref: {
@@ -92,15 +91,12 @@
         }, 10)
     }
 
-    $: active = $activeShow?.id
-    $: layout = active && $showsCache[active] ? $showsCache[active].settings.activeLayout : ""
-    // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
-
     function keydown(e: any) {
         // TODO: get working in list view
         if (e.key === "Enter" && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
             // incorrect editbox
             if (e.target.closest(".quickEdit") && Number(e.target.closest(".quickEdit").getAttribute("data-index")) !== editIndex) return
+            if (!e.target.closest(".quickEdit") && !$activeEdit.items.includes(index)) return
 
             // split
             let sel = getSelectionRange()
@@ -127,33 +123,13 @@
 
             cutInTwo({ e, sel, lines, currentIndex, textPos, start })
         }
-
-        if (e.key === "Escape") {
-            ;(document.activeElement as HTMLElement).blur()
-            window.getSelection()?.removeAllRanges()
-            if ($activeEdit.items.length) {
-                // give time so output don't clear
-                setTimeout(() => {
-                    activeEdit.update((a) => {
-                        a.items = []
-                        return a
-                    })
-                })
-            }
-        }
-
-        if (!$activeEdit.items.includes(index) || document.activeElement?.closest(".item") || document.activeElement?.closest("input")) return
-
-        if (e.key === "Backspace" || e.key === "Delete") {
-            deleteAction({ id: "item", data: { layout, slideId: ref.id } })
-        }
     }
 
     function cutInTwo({ e, sel, lines, currentIndex, textPos, start }) {
         let { firstLines, secondLines } = EditboxHelper.cutLinesInTwo({ sel, lines, currentIndex, textPos, start })
 
         if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
-        let editItemIndex: number = $activeEdit.items[0] || Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) || 0
+        let editItemIndex: number = $activeEdit.items[0] ?? Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) ?? 0
 
         let slideRef: any = _show().layouts("active").ref()[0][editIndex]
         if (!slideRef) return
@@ -383,18 +359,24 @@
                     caret = { line: i, pos: 0 }
                 }
             })
+
+            // set to end (if backspace)
+            if (!caret && (item.lines || []).length > newLines.length) {
+                // WIP if line in middle is deleted, the caret is still moved to the last line... (get the last used line here)
+                caret = { line: newLines.length - 1, pos: getLineText(newLines[newLines.length - 1]).length }
+            }
         }
 
         if (caret) {
             item.lines = newLines
             setTimeout(() => {
                 getStyle()
-                if (newLines.length > 1) {
-                    // set caret position back
-                    setTimeout(() => {
-                        setCaret(textElem, caret)
-                    }, 10)
-                }
+                if (newLines.length < 1) return
+
+                // set caret position back
+                setTimeout(() => {
+                    setCaret(textElem, caret)
+                }, 10)
             }, 10)
         }
 
@@ -510,7 +492,7 @@
         opacity: 0;
         overflow: hidden;
     }
-    .edit:not(.invisible).autoSize :global(span) {
+    .edit:not(.invisible).autoSize :global(span:not(.custom)) {
         font-size: var(--auto-size) !important;
     }
 

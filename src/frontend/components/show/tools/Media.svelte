@@ -3,19 +3,19 @@
     import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
+    import { actionData } from "../../actions/actionData"
+    import { runAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
-    import { getExtension, getMediaStyle, getMediaType, isMediaExtension } from "../../helpers/media"
+    import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { runAction } from "../../actions/actions"
-    import { actionData } from "../../actions/actionData"
 
     $: show = $showsCache[$activeShow!.id]
 
@@ -148,9 +148,20 @@
     // TODO: check if file exists!!!
 
     let simularBgs: any[] = []
-    $: if (bgs.length) send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
+    $: if (bgs.length) send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => decodeURIComponent(a.path)) })
     receive(MAIN, { GET_SIMULAR: (data: any[]) => (simularBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)) }, "media_simular")
     onDestroy(() => destroy(MAIN, "media_simular"))
+
+    let newPaths: any = {}
+    $: if (bgs) loadBackgrounds()
+    function loadBackgrounds() {
+        bgs.forEach(async (background) => {
+            let newBgPath = await loadThumbnail(background.path, mediaSize.small)
+
+            if (newBgPath) newPaths[background.path] = newBgPath
+            else newPaths[background.path] = background.path
+        })
+    }
 </script>
 
 <!-- TODO: transition type & duration -->
@@ -162,6 +173,8 @@
             {#each bgs as background}
                 <!-- TODO: cameras -->
                 {@const mediaStyle = getMediaStyle($media[background.path], { name: "" })}
+                {@const bgPath = newPaths[background.path] || ""}
+
                 <SelectElem id="media" data={{ ...background }} draggable>
                     <div class="media_item item context #show_media" class:active={findMatchingOut(background.path, $outputs)}>
                         <HoverButton
@@ -176,15 +189,15 @@
                             }}
                             title={$dictionary.media?.play}
                         >
-                            <!-- <div style="flex: 2;height: 50px;"> -->
-                            <MediaLoader name={background.name} path={background.path} type={background.type} {mediaStyle} />
-                            <!-- </div> -->
+                            <MediaLoader name={background.name} path={background.path} thumbnailPath={bgPath} type={background.type} {mediaStyle} />
                         </HoverButton>
-                        <!-- on:click={() => activeShow.set({ id: background.path, name: background.name, type: background.type })} -->
+
                         <p title={background.path}>{background.name}</p>
+
                         {#if background.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{background.count}</span>
                         {/if}
+
                         {#if background.type === "video"}
                             <Button
                                 style="flex: 0;padding: 14px 5px;"
@@ -376,7 +389,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        z-index: -1;
+        z-index: 0;
         padding: 2px;
     }
     .main :global(video) {

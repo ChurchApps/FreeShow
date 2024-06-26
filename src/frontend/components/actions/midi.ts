@@ -2,36 +2,44 @@ import { get } from "svelte/store"
 import { MAIN } from "../../../types/Channels"
 import type { Midi } from "../../../types/Show"
 import { midiIn, shows } from "../../stores"
-import { newToast } from "../../utils/messages"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { setOutput } from "../helpers/output"
 import { updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { runAction } from "./actions"
+import { newToast } from "../../utils/common"
+import { loadShows } from "../helpers/setShow"
 
-// WIP MIDI listener
 export function midiInListen() {
-    console.log("MIDI IN LISTEN")
-
     Object.entries(get(midiIn)).forEach(([id, action]: any) => {
         action = convertOldMidiToNewAction(action)
         if (!action.midi) return
 
         if (!action.shows?.length) {
+            console.info("MIDI INPUT LISTENER: ", action.midi)
             send(MAIN, ["RECEIVE_MIDI"], { id, ...action.midi })
+
             return
         }
 
-        action.shows.forEach((show) => {
-            if (!shows[show.id]) return
+        action.shows.forEach(async (show) => {
+            if (!get(shows)[show.id]) return
 
-            // find all slides in current show with this MIDI
+            await loadShows([show.id])
+
+            // check that current show actually has this MIDI receive action
             let layouts: any[] = _show(show.id).layouts().get()
             let found: boolean = false
             layouts.forEach((layout) => {
                 layout.slides.forEach((slide) => {
                     if (slide.actions?.receiveMidi === id) found = true
+
+                    if (slide.children) {
+                        Object.values(slide.children).forEach((child: any) => {
+                            if (child.actions?.receiveMidi === id) found = true
+                        })
+                    }
                 })
             })
 
@@ -43,6 +51,8 @@ export function midiInListen() {
                 })
             } else {
                 if (!action.midi?.input) return
+
+                console.info("MIDI INPUT LISTENER: ", action.midi)
                 send(MAIN, ["RECEIVE_MIDI"], { id, ...action.midi })
             }
         })
@@ -85,19 +95,22 @@ export const defaultMidiActionChannels = {
 }
 
 export function receivedMidi(msg) {
-    console.log(msg)
     let msgAction = get(midiIn)[msg.id]
     if (!msgAction) return
 
     let action: Midi = convertOldMidiToNewAction(msgAction)
 
     // get index
+    if (!msg.values) msg.values = {}
     let index = msg.values.velocity ?? -1
     if (action.midi?.values?.velocity !== undefined && action.midi.values.velocity < 0) index = -1
 
     // the select slide index from velocity can't select slide 0 as a NoteOn with velocity 0 is detected as NoteOff
     // velocity of 0 currently bypasses the note on/off
-    if (action.midi?.type !== msg.type && index !== 0) return
+    const diff_type = action.midi?.type !== msg.type
+    const diff_note = msg.values.note !== action.midi?.values.note
+    const diff_channel = msg.values.channel !== action.midi?.values.channel
+    if (!msg.bypass && (diff_type || diff_note || diff_channel) && index !== 0) return
 
     let hasindex = action.triggers?.[0]?.includes("index_") ?? false
     if (hasindex && index < 0) {
@@ -114,13 +127,16 @@ export function receivedMidi(msg) {
     if (!shows?.length) return
 
     let slidePlayed: boolean = false
-    shows.forEach(({ id }) => {
+    shows.forEach(async ({ id }) => {
+        await loadShows([id])
         let refs = _show(id).layouts().ref()
+
         refs.forEach((ref) => {
             ref.forEach((slideRef) => {
+                if (slidePlayed) return
+
                 let receiveMidi = slideRef.data.actions?.receiveMidi
-                if (!receiveMidi) return
-                if (slidePlayed || receiveMidi !== msg.id) return
+                if (!receiveMidi || receiveMidi !== msg.id) return
 
                 // start slide
                 slidePlayed = true

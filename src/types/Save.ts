@@ -41,7 +41,6 @@ export type SaveListSettings =
     | "mediaFolders"
     | "mediaOptions"
     | "openedFolders"
-    | "os"
     | "outputs"
     | "sorted"
     | "styles"
@@ -61,4 +60,5 @@ export type SaveListSettings =
     | "gain"
     | "driveData"
     | "calendarAddShow"
+    | "metronome"
     | "special"

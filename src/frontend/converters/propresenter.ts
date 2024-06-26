@@ -301,8 +301,15 @@ function decodeBase64(text: string) {
         if (l >= 8) r += String.fromCharCode((b >>> (l -= 8)) & 0xff)
     })
 
+    // WIP better convertion ?
+    // including GB2312 decode
+
     // https://www.oreilly.com/library/view/rtf-pocket-guide/9781449302047/ch04.html
     r = r.replaceAll("\\u8217 ?", "'")
+
+    // should be converted, but don't know proper length then
+    // r = r.replaceAll("\'", "\\u")
+
     r = r.replaceAll("\\'92", "'")
     r = r.replaceAll("\\'96", "–")
     // convert ‘ & ’ to '

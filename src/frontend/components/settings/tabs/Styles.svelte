@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeStyle, dictionary, imageExtensions, outputs, styles, templates } from "../../../stores"
+    import { activeStyle, dictionary, imageExtensions, outputs, styles, templates, videoExtensions } from "../../../stores"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -148,11 +148,11 @@
     </span>
 </CombinedInput>
 <CombinedInput>
-    <p><T id="edit.background_image" /></p>
+    <p><T id="edit.background_media" /></p>
     <MediaPicker
         id="styles"
         title={currentStyle.backgroundImage}
-        filter={{ name: "Image files", extensions: $imageExtensions }}
+        filter={{ name: "Media files", extensions: [...$imageExtensions, $videoExtensions] }}
         on:picked={(e) => {
             if (e.detail) updateStyle(e, "backgroundImage")
         }}
@@ -295,6 +295,10 @@
 <CombinedInput>
     <p><T id="settings.override_with_template" /></p>
     <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "template")} />
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.override_scripture_with_template" /></p>
+    <Dropdown options={templateList} value={$templates[currentStyle.templateScripture || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "templateScripture")} />
 </CombinedInput>
 
 <!-- meta -->

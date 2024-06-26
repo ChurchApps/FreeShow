@@ -106,6 +106,7 @@
         display: flex;
         /* align-items: center; */
         background-color: var(--primary-darker);
+        border-radius: var(--border-radius);
         flex-flow: wrap;
         transition: opacity 0.3s;
     }

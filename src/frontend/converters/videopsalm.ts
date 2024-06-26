@@ -88,6 +88,7 @@ const keys = [
     "Culture",
     "Tonality",
     "Language",
+    "IsAudioFileEnabled",
 ]
 export function convertVideopsalm(data: any) {
     let categoryId = createCategory("VideoPsalm")
@@ -136,7 +137,6 @@ export function convertVideopsalm(data: any) {
             let name = title || get(dictionary).main?.unnamed || "Unnamed"
             let songId = song.ID || ""
             if (songId && categoryId !== "videopsalm") name = `${songId} - ${name}`
-            console.log(name, song)
             show.name = checkName(name, showId) || ""
             show.meta = {
                 title: show.name,
@@ -241,6 +241,9 @@ function createSlides({ Verses, Sequence }: Song) {
             if (!newText.length) return
 
             if (chords.length) line.chords = chords
+
+            // fix some text having special HTML tags
+            newText = newText.replaceAll("<fNirmala UI>", "").replaceAll("</f>", "").trim()
 
             line.text = [{ style: "", value: newText }]
             lines.push(line)

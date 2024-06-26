@@ -9,9 +9,11 @@ import path, { join, parse } from "path"
 import { uid } from "uid"
 import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
 import { stores } from "../data/store"
+import { createThumbnail } from "../data/thumbnails"
 import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./responses"
+import { defaultSettings } from "../data/defaults"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -71,7 +73,7 @@ export function renameFile(p: string, oldName: string, newName: string) {
 export function getFileStats(p: string, disableLog: boolean = false) {
     try {
         const stat: Stats = fs.statSync(p)
-        return { path: p, stat, extension: path.extname(p).substring(1), folder: stat.isDirectory() }
+        return { path: p, stat, extension: path.extname(p).substring(1).toLowerCase(), folder: stat.isDirectory() }
     } catch (err) {
         if (!disableLog) actionComplete(err, "Error when getting file stats")
         return null
@@ -110,7 +112,7 @@ const appFolderName = "FreeShow"
 export function getDocumentsFolder(p: any = null, folderName: string = "Shows"): string {
     let folderPath = [app.getPath("documents"), appFolderName]
     if (folderName) folderPath.push(folderName)
-    if (!p) p = path.resolve(...folderPath)
+    if (!p) p = path.join(...folderPath)
     if (!doesPathExist(p)) p = fs.mkdirSync(p, { recursive: true })
 
     return p
@@ -184,8 +186,19 @@ export function getPaths(): any {
     return paths
 }
 
+const tempPaths = ["temp"]
+export function getTempPaths() {
+    let paths: any = {}
+    tempPaths.forEach((pathId: any) => {
+        paths[pathId] = app.getPath(pathId)
+    })
+
+    return paths
+}
+
 // READ_FOLDER
-export function getFolderContent(_e: any, data: any) {
+const MEDIA_EXTENSIONS = [...defaultSettings.imageExtensions, ...defaultSettings.videoExtensions]
+export function getFolderContent(data: any) {
     let folderPath: string = data.path
     let fileList: string[] = readFolder(folderPath)
 
@@ -198,7 +211,12 @@ export function getFolderContent(_e: any, data: any) {
     for (const name of fileList) {
         let p: string = path.join(folderPath, name)
         let stats: any = getFileStats(p)
-        if (stats) files.push({ ...stats, name })
+        if (stats) files.push({ ...stats, name, thumbnailPath: isMedia() ? createThumbnail(p) : "" })
+
+        function isMedia() {
+            if (stats.folder) return false
+            return MEDIA_EXTENSIONS.includes(stats.extension)
+        }
     }
 
     if (!files.length) {
@@ -284,7 +302,7 @@ function similarity(str1: string, str2: string) {
 }
 
 // OPEN_FOLDER
-export function selectFolder(e: any, msg: { channel: string; title: string | undefined; path: string | undefined }) {
+export function selectFolder(msg: { channel: string; title: string | undefined; path: string | undefined }, e: any) {
     let folder: any = selectFolderDialog(msg.title, msg.path)
 
     if (!folder) return
@@ -306,7 +324,7 @@ export function selectFolder(e: any, msg: { channel: string; title: string | und
 }
 
 // OPEN_FILE
-export function selectFiles(e: any, msg: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }) {
+export function selectFiles(msg: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }, e: any) {
     let files: any = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
     if (!files) return
 
@@ -320,7 +338,7 @@ export function selectFiles(e: any, msg: { id: string; channel: string; title?: 
 }
 
 // FILE_INFO
-export function getFileInfo(e: any, filePath: string) {
+export function getFileInfo(filePath: string, e: any) {
     let stats: any = getFileStats(filePath)
     if (stats) e.reply(FILE_INFO, stats)
 }

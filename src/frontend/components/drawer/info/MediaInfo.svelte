@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { FILE_INFO } from "../../../../types/Channels"
+    import { FILE_INFO, MAIN } from "../../../../types/Channels"
     import { activeShow, drawerTabsData } from "../../../stores"
     import { formatBytes } from "../../helpers/bytes"
     import { getFileName, removeExtension } from "../../helpers/media"
@@ -9,11 +9,12 @@
     import LiveInfo from "../live/LiveInfo.svelte"
     import PlayerInfo from "./PlayerInfo.svelte"
     import { onDestroy } from "svelte"
+    import { send } from "../../../utils/request"
 
     $: name = $activeShow?.name || ""
     $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "")) {
         info = {}
-        window.api.send(FILE_INFO, $activeShow?.id)
+        send(MAIN, ["FILE_INFO"], $activeShow?.id)
     }
 
     let listenerId = uid()

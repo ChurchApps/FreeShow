@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
     import { activePopup, companion, connections, disabledServers, maxConnections, outputs, popupData, ports, remotePassword, serverData } from "../../../stores"
-    import { receive, send } from "../../../utils/request"
+    import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID } from "../../helpers/array"
@@ -17,9 +17,11 @@
     const setRemotePassword = (e: any) => remotePassword.set(e.target.value)
 
     let ip = "IP"
+    let listenerId = "IP_ADDRESS"
     onMount(() => send(MAIN, ["IP"]))
-    receive(MAIN, { IP: (a: any) => getIP(a) })
+    receive(MAIN, { IP: (a: any) => getIP(a) }, listenerId)
     // receive(MAIN, { IP: (a: any) => (ip = a["Wi-Fi"]?.filter((a: any) => a.family === "IPv4")[0].address) })
+    onDestroy(() => destroy(MAIN, listenerId))
 
     function getIP(nets: any) {
         let results: any = {}

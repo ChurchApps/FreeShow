@@ -114,7 +114,7 @@
     // $: if (activeOutput) style += "outline-offset: -2px;outline: 2px solid " + activeOutput + ";"
 </script>
 
-<div {id} class="main">
+<div id="show_{id}" class="main">
     <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{newName}</span> -->
     <!-- WIP padding-left: 0.8em; -->
     <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} outline={activeOutput !== null || $playingAudio[id]} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>

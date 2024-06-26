@@ -212,6 +212,7 @@ export function getSlidesText(slides: { [key: string]: Slide }) {
 
 // get text of slide
 export function getSlideText(slide: Slide) {
+    if (!slide?.items?.length) return ""
     return slide.items.reduce((value, item) => (value += getItemText(item)), "")
 }
 

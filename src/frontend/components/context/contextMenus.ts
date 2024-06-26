@@ -44,6 +44,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
     force_output: { label: "context.force_outputs", icon: "outputs" },
+    align_with_screen: { label: "context.align_with_screen", icon: "resize" },
     choose_screen: { label: "popup.choose_screen", icon: "screen" },
     toggle_output: { label: "context.toggle_output", icon: "outputs" },
     move_to_front: { label: "context.move_to_front", icon: "toFront" },
@@ -89,7 +90,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     chord_list: { label: "edit.chords", icon: "chords", items: ["LOAD_chord_list"] },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
-    item_actions: { label: "actions.actions", icon: "actions", items: ["LOAD_item_actions"] },
+    item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
@@ -113,6 +114,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // OVERLAYS
     lock_to_output: { label: "context.lock_to_output", icon: "locked" },
     place_under_slide: { label: "context.place_under_slide", icon: "under" },
+    // TEMPLATES
+    template_actions: { label: "tabs.actions", icon: "actions" },
     // STAGE
     move_connections: { label: "context.move_connections", icon: "up" },
     // SETTINGS
@@ -133,10 +136,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     output_window: ["close"],
 
     // TOP
-    output: ["force_output", "choose_screen"],
+    output: ["force_output", "SEPERATOR", "align_with_screen", "choose_screen"], // , "SEPERATOR", "edit"
 
     // OUTPUTS
-    output_active_button: ["toggle_output", "move_to_front", "edit"],
+    output_active_button: ["toggle_output", "move_to_front", "SEPERATOR", "edit"],
 
     // DRAWER
     drawer_top: ["enabledTabs"],
@@ -175,7 +178,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "addToFirstSlide",
     overlay_card: ["edit", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
-    template_card: ["edit", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    template_card: ["edit", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
     audio_button: ["addToProject", "SEPERATOR", "preview", "favourite", "SEPERATOR", "system_open"],
@@ -233,7 +236,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     event: ["edit", "duplicate", "delete", "delete_all"],
 
     // SETTINGS
-    theme: ["rename", "duplicate", "delete", "SEPERATOR", "reset_theme"],
+    theme: ["rename", "duplicate", "delete", "SEPERATOR", "export", "SEPERATOR", "reset_theme"],
     style: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen_stage: ["rename", "recolor", "SEPERATOR", "reset"],

@@ -7,7 +7,7 @@
     import { getAutoSize } from "../edit/scripts/autoSize"
     import Icon from "../helpers/Icon.svelte"
     import { clone } from "../helpers/array"
-    import { getExtension, getMediaType } from "../helpers/media"
+    import { getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
@@ -20,6 +20,7 @@
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
+    import Captions from "./views/Captions.svelte"
 
     export let item: Item
     export let itemIndex: number = -1
@@ -72,7 +73,7 @@
     onMount(() => {
         setTimeout(() => (loaded = true), 100)
 
-        if (item.type !== "timer") return
+        if (item?.type !== "timer") return
         setInterval(() => (today = new Date()), 500)
     })
 
@@ -346,6 +347,24 @@
 
     let paddingCorrection = {}
     $: paddingCorrection = getPaddingCorrection(stageItem)
+
+    let mediaItemPath = ""
+    $: if (item?.type === "media") getMediaItemPath()
+    async function getMediaItemPath() {
+        mediaItemPath = item.src || ""
+
+        // only load thumbnails in main
+        if ($currentWindow) return
+
+        let newPath = await loadThumbnail(mediaItemPath, mediaSize.slideSize)
+        if (newPath) mediaItemPath = newPath
+    }
+
+    // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
+    let updateDynamic = 0
+    setInterval(() => {
+        updateDynamic++
+    }, 1000)
 </script>
 
 <OutputTransition transition={hidden ? {} : itemTransition}>
@@ -393,7 +412,7 @@
                                 {#each line.text || [] as text}
                                     {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                     <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate' ? text.style : ''}">
-                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }) : value}
+                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }, updateDynamic) : value}
                                     </span>
                                 {/each}
                             </div>
@@ -408,11 +427,10 @@
         {:else if item?.type === "list"}
             <ListView list={item.list} disableTransition={disableListTransition} />
         {:else if item?.type === "media"}
-            {#if item.src}
-                {#if getMediaType(getExtension(item.src)) === "video"}
-                    <!-- video -->
+            {#if mediaItemPath}
+                {#if $currentWindow && getMediaType(getExtension(mediaItemPath)) === "video"}
                     <video
-                        src={item.src}
+                        src={mediaItemPath}
                         style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
                         muted={mirror || item.muted}
                         volume={Math.max(1, $volume)}
@@ -425,13 +443,11 @@
                     <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
                     <!-- TODO: use custom transition... -->
                     <Image
-                        transition={transition?.type !== "none" && transition?.duration}
-                        src={item.src}
+                        src={mediaItemPath}
                         alt=""
+                        transition={transition?.type !== "none" && transition?.duration}
                         style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
                     />
-                    <!-- bind:loaded bind:hover bind:duration bind:videoElem {type} {path} {name} {filter} {flipped} -->
-                    <!-- <MediaLoader path={item.src} /> -->
                 {/if}
             {/if}
         {:else if item?.type === "camera"}
@@ -445,7 +461,7 @@
         {:else if item?.type === "events"}
             <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
         {:else if item?.type === "variable"}
-            <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} />
+            <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ showId: ref.showId, layoutId: ref.layoutId, slideIndex }} />
         {:else if item?.type === "web"}
             <Website src={item?.web?.src || ""} clickable={$currentWindow === "output"} />
         {:else if item?.type === "mirror"}
@@ -455,6 +471,8 @@
             {/if}
         {:else if item?.type === "visualizer"}
             <Visualizer {item} {preview} />
+        {:else if item?.type === "captions"}
+            <Captions {item} />
         {:else if item?.type === "icon"}
             {#if item.customSvg}
                 <div class="customIcon" class:customColor={item?.style.includes("color:") && !item?.style.includes("color:#FFFFFF;")}>

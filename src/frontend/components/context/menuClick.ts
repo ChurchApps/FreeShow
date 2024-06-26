@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { MAIN, OUTPUT } from "../../../types/Channels"
+import { EXPORT, MAIN, OUTPUT } from "../../../types/Channels"
 import type { MediaStyle } from "../../../types/Main"
 import type { Slide } from "../../../types/Show"
 import { changeSlideGroups, splitItemInTwo } from "../../show/slides"
@@ -16,6 +16,7 @@ import {
     audioFolders,
     currentOutputSettings,
     currentWindow,
+    dataPath,
     dictionary,
     drawerTabsData,
     eventEdit,
@@ -44,8 +45,7 @@ import {
     templates,
     themes,
 } from "../../stores"
-import { hideDisplay } from "../../utils/common"
-import { newToast } from "../../utils/messages"
+import { hideDisplay, newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
@@ -67,7 +67,6 @@ import { updateShowsList } from "../helpers/show"
 import { dynamicValueText, sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
-import { OPEN_FOLDER } from "./../../../types/Channels"
 import { activeProject } from "./../../stores"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
@@ -224,6 +223,7 @@ const actions: any = {
             send(OUTPUT, ["DISPLAY"], { enabled: true, output, force: true })
         })
     },
+    align_with_screen: () => send(OUTPUT, ["ALIGN_WITH_SCREEN"]),
     choose_screen: () => {
         popupData.set({ activateOutput: true })
         activePopup.set("choose_screen")
@@ -253,12 +253,12 @@ const actions: any = {
         }
 
         if (obj.contextElem.classList.contains("#category_media")) {
-            window.api.send(OPEN_FOLDER, { channel: "MEDIA", title: get(dictionary).new?.folder })
+            send(MAIN, ["OPEN_FOLDER"], { channel: "MEDIA", title: get(dictionary).new?.folder })
             return
         }
 
         if (obj.contextElem.classList.contains("#category_audio")) {
-            window.api.send(OPEN_FOLDER, { channel: "AUDIO", title: get(dictionary).new?.folder })
+            send(MAIN, ["OPEN_FOLDER"], { channel: "AUDIO", title: get(dictionary).new?.folder })
             return
         }
     },
@@ -298,10 +298,29 @@ const actions: any = {
 
     // project
     export: (obj: any) => {
-        if (!obj.contextElem.classList.value.includes("project")) return
-        if (obj.sel.id !== "project" && !get(activeProject)) return
-        let projectId: string = obj.sel.data[0]?.id || get(activeProject)
-        exportProject(get(projects)[projectId])
+        if (obj.sel.id === "template") {
+            let template = get(templates)[obj.sel.data[0]]
+            if (!template) return
+            send(EXPORT, ["TEMPLATE"], { path: get(dataPath), content: template })
+
+            return
+        }
+
+        if (obj.sel.id === "theme") {
+            let theme = get(themes)[obj.sel.data[0]?.id]
+            if (!theme) return
+            send(EXPORT, ["THEME"], { path: get(dataPath), content: theme })
+
+            return
+        }
+
+        if (obj.contextElem.classList.value.includes("project")) {
+            if (obj.sel.id !== "project" && !get(activeProject)) return
+            let projectId: string = obj.sel.data[0]?.id || get(activeProject)
+            exportProject(get(projects)[projectId])
+
+            return
+        }
     },
     close: (obj: any) => {
         if (get(currentWindow) === "output") {
@@ -490,6 +509,16 @@ const actions: any = {
         } else if (action.includes("Timer")) {
             activePopup.set("set_time")
         }
+    },
+    template_actions: (obj: any) => {
+        let templateId = obj.sel.data[0]
+        let template = get(templates)[templateId]
+        if (!template) return
+
+        let existingActions = template.settings?.actions || []
+
+        popupData.set({ mode: "template", templateId, existing: existingActions.map((a) => a.triggers?.[0]) })
+        activePopup.set("action")
     },
     remove_layers: (obj: any) => {
         let type: "image" | "overlays" | "music" | "microphone" | "action" = obj.menu.type || obj.menu.icon
@@ -750,7 +779,7 @@ const actions: any = {
         function updateItemText(items) {
             let replaced = false
 
-            items[edit.items[0]]?.lines?.[caret.line].text.forEach((text) => {
+            items[edit.items?.[0]]?.lines?.[caret.line].text.forEach((text) => {
                 if (replaced) return
 
                 let value = text.value
@@ -887,7 +916,7 @@ function changeSlideAction(obj: any, id: string) {
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
 
-        let data: any = { id: midiId, mode: "slide_midi" } // , index: layoutSlide
+        let data: any = { id: midiId, index: layoutSlide, mode: "slide_midi" } // , index: layoutSlide
 
         popupData.set(data)
         activePopup.set("action")
@@ -1047,8 +1076,8 @@ export function format(id: string, obj: any, data: any = null) {
 
     if (editing.id) {
         let currentItems: any[] = []
-        if (editing.type === "overlay") currentItems = get(overlays)[editing.id].items
-        if (editing.type === "template") currentItems = get(templates)[editing.id].items
+        if (editing.type === "overlay") currentItems = get(overlays)[editing.id]?.items || []
+        if (editing.type === "template") currentItems = get(templates)[editing.id]?.items || []
 
         let newItems: any[] = []
         currentItems.forEach((item: any) => {

@@ -2,9 +2,9 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { CLOUD } from "../../types/Channels"
 import { activePopup, dataPath, driveData, driveKeys, popupData, showsPath } from "../stores"
-import { newToast } from "./messages"
 import { send } from "./request"
 import { save } from "./save"
+import { newToast } from "./common"
 
 export function validateKeys(file: string) {
     let keys = JSON.parse(file)
@@ -41,8 +41,11 @@ export function driveConnect(keys: any) {
     }, 100)
 }
 
-export function syncDrive(force: boolean = false, closeWhenFinished: boolean = false) {
-    if (!force && get(driveData).disabled === true) return
+// force = manual sync OR first sync
+export function syncDrive(force: boolean = false, closeWhenFinished: boolean = false, startup: boolean = false) {
+    let autoSyncDisabled = get(driveData).disabled === true
+    let notStartingAndNotClosing = !startup && !closeWhenFinished
+    if (!force && (notStartingAndNotClosing || autoSyncDisabled)) return
 
     let method = get(driveData).initializeMethod
     if (get(driveData).disableUpload) method = "download"

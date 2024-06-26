@@ -152,9 +152,9 @@
 <section class="drawer" style="height: {height}px">
     <div class="top context #drawer_top" on:mousedown={mousedown} on:click={click}>
         <span class="tabs">
-            {#each tabs as tab}
+            {#each tabs as tab, i}
                 {#if $drawerTabsData[tab.id]?.enabled !== false}
-                    <Button id={tab.id} on:click={() => openDrawerTab(tab)} active={$activeDrawerTab === tab.id} class="context #drawer_top" title={$labelsDisabled ? $dictionary[tab.name.split(".")[0]]?.[tab.name.split(".")[1]] : ""}>
+                    <Button id={tab.id} on:click={() => openDrawerTab(tab)} active={$activeDrawerTab === tab.id} class="context #drawer_top" title="{$dictionary[tab.name.split('.')[0]]?.[tab.name.split('.')[1]]} [Ctrl+{i + 1}]">
                         <Icon id={tab.icon} size={1.3} />
                         {#if !$labelsDisabled}
                             <span><T id={tab.name} /></span>
@@ -165,8 +165,9 @@
         </span>
         <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit" type="text" placeholder={$dictionary.main?.search} bind:value={searchValue} on:input={search} use:selectTextOnFocus />
         {#if !searchActive && !searchValue.length}
-            <Button on:click={() => (searchActive = true)} title={$dictionary.main?.search}>
-                <Icon id="search" size={1.3} white />
+            <Button on:click={() => (searchActive = true)} title="{$dictionary.main?.search} [Ctrl+F]" bold={false}>
+                <Icon id="search" size={1.3} white right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<p style="opacity: 0.8;"><T id="main.search" /></p>{/if}
             </Button>
         {/if}
     </div>

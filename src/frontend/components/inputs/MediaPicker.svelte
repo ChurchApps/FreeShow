@@ -1,9 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
-    import { OPEN_FILE } from "../../../types/Channels"
+    import { MAIN, OPEN_FILE } from "../../../types/Channels"
     import Button from "./Button.svelte"
     import { uid } from "uid"
-    import { destroy } from "../../utils/request"
+    import { destroy, send } from "../../utils/request"
 
     export let id: string
     export let filter: any
@@ -18,7 +18,7 @@
         }
 
         // filter: { name: "Text file", extensions: ["txt"], id: "txt" }
-        window.api.send(OPEN_FILE, { channel: "MEDIA", id, filter, multiple })
+        send(MAIN, ["OPEN_FILE"], { channel: "MEDIA", id, filter, multiple })
     }
 
     let listenerId = uid()

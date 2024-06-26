@@ -41,8 +41,8 @@
     {#if firstOverflowIndex > -1 && overflowHidden}
         <Button
             on:click={() => {
-                overflowHidden = false
                 active = Object.keys(tabs)[firstOverflowIndex]
+                setTimeout(() => (overflowHidden = false))
             }}
             title={$dictionary.tooltip?.options}
             style="flex: 0;padding: 0.2em;"

@@ -46,6 +46,14 @@
         send(MAIN, ["GET_MIDI_OUTPUTS"])
     }
 
+    function setInitialData() {
+        // set initial data
+        console.log(midi)
+        if (midi.values?.note) return
+
+        setTimeout(() => setValues("note", 0), 50)
+    }
+
     let id = uid()
     receive(
         MAIN,
@@ -54,11 +62,15 @@
                 if (!msg.length) return
                 outputs = msg.map((a) => ({ name: a }))
                 if (!midi.output) midi.output = msg[0]
+
+                setInitialData()
             },
             GET_MIDI_INPUTS: (msg) => {
                 if (!msg.length) return
                 inputs = msg.map((a) => ({ name: a }))
                 if (!midi.input) midi.input = msg[0]
+
+                setInitialData()
             },
             RECEIVE_MIDI: (msg) => {
                 if (!autoValues) return

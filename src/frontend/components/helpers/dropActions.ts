@@ -3,7 +3,24 @@ import { uid } from "uid"
 import type { Show } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activePage, activeProject, activeShow, audioExtensions, audioPlaylists, audioStreams, categories, drawerTabsData, imageExtensions, media, projects, scriptureSettings, showsCache, videoExtensions } from "../../stores"
+import {
+    activeDrawerTab,
+    activePage,
+    activeProject,
+    activeShow,
+    audioExtensions,
+    audioPlaylists,
+    audioStreams,
+    categories,
+    drawerTabsData,
+    imageExtensions,
+    media,
+    projects,
+    scriptureSettings,
+    showsCache,
+    templates,
+    videoExtensions,
+} from "../../stores"
 import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
 import { addItem } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
@@ -203,6 +220,21 @@ export const dropActions: any = {
         }
     },
     templates: ({ drag, drop }: any) => {
+        if (drag.id === "files") {
+            let mediaPath: string = drag.data?.[0]?.path
+            let templateId: string = drop.data
+            if (!mediaPath || !templateId) return
+
+            if (!files[drop.id].includes(getExtension(mediaPath))) return
+
+            let templateSettings = get(templates)[templateId]?.settings || {}
+            let newData = { key: "settings", data: { ...templateSettings, backgroundPath: mediaPath } }
+
+            history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
+
+            return
+        }
+
         if (drag.id !== "slide") return
 
         drag.data.forEach(({ index }: any) => {
@@ -230,11 +262,13 @@ export const dropActions: any = {
 
 // "show", "project"
 const fileDropExtensions: any = [...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)]
+const mediaExtensions: any = [...get(imageExtensions), ...get(videoExtensions)]
 
 const files: any = {
     project: fileDropExtensions,
     slides: fileDropExtensions,
     slide: fileDropExtensions,
+    templates: mediaExtensions,
 }
 
 const slideDrop: any = {
@@ -263,6 +297,7 @@ const slideDrop: any = {
         if (drag.id === "files" && drop.index !== undefined) center = true
 
         if (center) {
+            if (!data[0]) return
             history.id = "showMedia"
 
             if (drop.trigger?.includes("end")) drop.index!--
@@ -333,7 +368,7 @@ const slideDrop: any = {
     },
     slide: ({ drag, drop }: any, history: any) => {
         history.id = "slide"
-        let ref: any[] = _show().layouts("active").ref()[0]
+        let ref: any[] = _show().layouts("active").ref()[0] || []
 
         let slides = _show().get().slides
         let oldLayout = _show().layouts("active").get()[0].slides
@@ -475,7 +510,7 @@ const slideDrop: any = {
             delete slide.id
             slides[id] = slide
 
-            let parent = ref[newIndex - 1]
+            let parent = ref[newIndex - 1] || { index: -1 }
             if (parent.type === "child") parent = parent.parent
 
             layout = addToPos(layout, [{ id }], parent.index + 1)
@@ -488,11 +523,11 @@ const slideDrop: any = {
     trigger: ({ drag, drop }: any, history: any) => {
         history.id = "SHOW_LAYOUT"
 
-        let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let data: any = ref.data.actions || {}
-        data.trigger = drag.data[0].id
+        let data = drag.data[0]
+        let actions = createSlideAction("start_trigger", drop.index, data)
+        if (!actions) return
 
-        history.newData = { key: "actions", data, indexes: [drop.index] }
+        history.newData = { key: "actions", data: actions, indexes: [drop.index] }
         return history
     },
     audio_stream: ({ drag, drop }: any, history: any) => {
@@ -502,14 +537,25 @@ const slideDrop: any = {
         let stream = get(audioStreams)[streamId]
         if (!stream) return
 
-        let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let data: any = ref.data.actions || {}
-        data.audioStream = { id: streamId, ...stream }
+        let data = { id: streamId, ...stream }
+        let actions = createSlideAction("start_audio_stream", drop.index, data)
+        if (!actions) return
 
-        history.newData = { key: "actions", data, indexes: [drop.index] }
+        history.newData = { key: "actions", data: actions, indexes: [drop.index] }
+        return history
+    },
+    metronome: ({ drag, drop }: any, history: any) => {
+        history.id = "SHOW_LAYOUT"
+
+        let data = drag.data[0]
+        let actions = createSlideAction("start_metronome", drop.index, data, true)
+        if (!actions) return
+
+        history.newData = { key: "actions", data: actions, indexes: [drop.index] }
         return history
     },
     midi: ({ drag, drop }: any, history: any) => {
+        // WIP not in use:
         history.id = "SHOW_LAYOUT"
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
@@ -544,6 +590,24 @@ const slideDrop: any = {
 }
 
 // HELPERS
+
+function createSlideAction(triggerId: string, slideIndex: number, data: any, removeExisting: boolean = false) {
+    let ref: any = _show().layouts("active").ref()[0][slideIndex]
+    if (!ref) return
+    let actions: any = ref.data?.actions || {}
+    let slideActions: any[] = actions.slideActions || []
+
+    if (removeExisting) {
+        let existingIndex = slideActions.findIndex((a) => a.triggers?.[0] === triggerId)
+        if (existingIndex > -1) slideActions.splice(existingIndex, 1)
+    }
+
+    let actionValues = { [triggerId]: data }
+    slideActions.push({ id: uid(), triggers: [triggerId], actionValues })
+
+    actions.slideActions = slideActions
+    return actions
+}
 
 // WIP duplicate of ScriptureInfo.svelte createSlides()
 function createScriptureShow(drag) {

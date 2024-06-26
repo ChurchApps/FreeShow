@@ -15,6 +15,7 @@ import type { Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { History } from "./components/helpers/history"
+import type { API_metronome } from "./components/actions/api"
 
 // ----- TEMPORARY VARIABLES -----
 
@@ -24,7 +25,9 @@ export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
 export const dictionary: Writable<Dictionary> = writable({})
 export const saved: Writable<boolean> = writable(true)
 export const loaded: Writable<boolean> = writable(true)
+export const loadedState: Writable<string[]> = writable([])
 export const isDev: Writable<boolean> = writable(false)
+export const windowState: Writable<any> = writable({})
 
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
@@ -53,14 +56,15 @@ export const activeScripture: Writable<any> = writable({})
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
 export const eventEdit: Writable<null | string> = writable(null)
-export const nextShowEventStart: Writable<any> = writable({})
-export const nextShowEventPaused: Writable<boolean> = writable(false)
+export const nextActionEventStart: Writable<any> = writable({})
+export const nextActionEventPaused: Writable<boolean> = writable(false)
 
 // AUDIO
 export const audioChannels: Writable<{ left: number; right: number }> = writable({ left: 0, right: 0 })
 export const playingAudio: Writable<{ [key: string]: any }> = writable({})
 export const playingVideos: Writable<any[]> = writable([])
 export const activePlaylist: Writable<any> = writable(null)
+export const playingMetronome: Writable<any> = writable(null)
 export const visualizerData: Writable<any> = writable(null)
 
 // DRAW
@@ -87,6 +91,8 @@ export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 
 export const sortedShowsList: Writable<ShowList[]> = writable([])
 export const cachedShowsData: Writable<any> = writable({})
 export const quickTextCache: Writable<string> = writable("")
+export const loadedMediaThumbnails: Writable<{ [key: string]: string }> = writable({})
+export const tempPath: Writable<string> = writable("")
 
 // EDIT
 export const editHistory: Writable<any[]> = writable([])
@@ -113,6 +119,7 @@ export const selectAllMedia: Writable<boolean> = writable(false)
 export const openToolsTab: Writable<string> = writable("")
 export const refreshSlideThumbnails: Writable<boolean> = writable(false)
 export const contextData: Writable<any> = writable({})
+export const lessonsLoaded: Writable<any> = writable({})
 
 // ----- SAVED VARIABLES -----
 
@@ -156,7 +163,6 @@ export const triggers: Writable<{ [key: string]: any }> = writable({}) // {}
 export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
 export const videoMarkers: Writable<{ [key: string]: { name: string; time: number }[] }> = writable({}) // {}
-export const mediaCache: Writable<any> = writable({}) // {}
 export const checkedFiles: Writable<any[]> = writable([])
 
 // OVERLAYS
@@ -169,6 +175,7 @@ export const audioStreams: Writable<any> = writable({}) // {}
 export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}) // {}
 export const volume: Writable<number> = writable(1) // 1
 export const gain: Writable<number> = writable(1) // 1
+export const metronome: Writable<API_metronome> = writable({}) // {}
 
 // PLAYER
 export const playerVideos: Writable<Categories> = writable({}) // {default}
@@ -224,7 +231,7 @@ export const theme: Writable<string> = writable("default") // "default"
 export const themes: Writable<{ [key: string]: Themes }> = writable({}) // {default}
 
 // STYLES
-export const styles: Writable<{ [key: string]: Styles }> = writable({})
+export const styles: Writable<{ [key: string]: Styles }> = writable({}) // {}
 
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}
@@ -232,7 +239,7 @@ export const outLocked: Writable<boolean> = writable(false) // false
 
 // MIDI
 // this is repurposed as "actions"
-export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({})
+export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({}) // {}
 
 // CONNECTIONS
 export const ports: Writable<any> = writable({ remote: 5510, stage: 5511, controller: 5512, output_stream: 5513 }) // {default}
@@ -278,6 +285,7 @@ export const $ = {
     audioChannels,
     playingAudio,
     playingVideos,
+    visualizerData,
     drawTool,
     draw,
     paintCache,
@@ -306,9 +314,9 @@ export const $ = {
     projects,
     folders,
     timers,
+    variables,
     media,
     mediaFolders,
-    mediaCache,
     overlayCategories,
     overlays,
     audioFolders,
@@ -327,6 +335,7 @@ export const $ = {
     mediaOptions,
     resized,
     dataPath,
+    special,
     language,
     timeFormat,
     alertUpdates,
@@ -340,6 +349,7 @@ export const $ = {
     theme,
     themes,
     outputs,
+    styles,
     outLocked,
     ports,
     maxConnections,

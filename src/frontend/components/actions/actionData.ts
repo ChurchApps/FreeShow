@@ -39,6 +39,8 @@ export const actionData = {
     change_volume: { name: "actions.change_volume", icon: "volume", input: "volume" },
     start_audio_stream: { slideId: "audioStream", name: "actions.start_audio_stream", icon: "audio_stream", input: "id" },
     start_playlist: { name: "actions.start_playlist", icon: "playlist", input: "id" },
+    playlist_next: { name: "actions.playlist_next", icon: "playlist" },
+    start_metronome: { name: "actions.start_metronome", icon: "metronome", input: "metronome" },
 
     // TIMERS
     start_slide_timers: { slideId: "startTimer", name: "actions.start_slide_timers", icon: "timer" },
@@ -54,4 +56,5 @@ export const actionData = {
     start_trigger: { slideId: "trigger", name: "actions.start_trigger", icon: "trigger", input: "id" },
     send_midi: { slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
     run_action: { name: "actions.run_action", icon: "actions", input: "id" },
+    toggle_action: { name: "actions.toggle_action", icon: "actions", input: "toggle_action" },
 }

@@ -43,7 +43,6 @@ import {
     variables,
     videoMarkers,
 } from "../../stores"
-import { newToast } from "../../utils/messages"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { setCaret } from "../edit/scripts/textStyle"
@@ -53,6 +52,7 @@ import { history } from "./history"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 import { getFileName, removeExtension } from "./media"
+import { newToast } from "../../utils/common"
 
 export function copy({ id, data }: any = {}, getData: boolean = true) {
     let copy: any = { id, data }
@@ -111,6 +111,7 @@ export function cut(data: any = {}) {
 }
 
 export function deleteAction({ id, data }, type: string = "delete") {
+    console.log("DELETE", id, data)
     if (!deleteActions[id]) return false
     let deleted: any = deleteActions[id](data, type)
 

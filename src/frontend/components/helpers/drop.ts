@@ -7,7 +7,7 @@ export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "
 
 const areas: { [key in DropAreas | string]: string[] } = {
     all_slides: ["template"],
-    slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "trigger", "audio_stream", "show", "midi", "action"], // group
+    slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "midi", "action"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
     project: ["show_drawer", "media", "audio", "player", "scripture"],
@@ -36,7 +36,7 @@ export function ondrop(e: any, id: string) {
     let elem: any = null
     if (e !== null) {
         // if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group" || sel.id === "media") elem = e.target.closest(".selectElem")
-        if (id === "project" || id === "projects" || id === "slides" || id === "all_slides" || id === "navigation") elem = e.target.closest(".selectElem")
+        if (id === "project" || id === "projects" || id === "slides" || id === "all_slides" || id === "navigation" || id === "templates") elem = e.target.closest(".selectElem")
         else if (id === "slide") elem = e.target.querySelector(".selectElem")
     }
 

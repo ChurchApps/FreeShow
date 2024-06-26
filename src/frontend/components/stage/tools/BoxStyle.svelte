@@ -37,6 +37,12 @@
         if (item?.chordsData?.size) edits.chords[2].value = item.chordsData.size
     }
 
+    // align
+    let alignStyle: any = {}
+    let lineAlignStyle: any = {}
+    $: if (item?.align) alignStyle = { "align-items": item.align }
+    $: if (item?.alignX) lineAlignStyle = { "text-align": item.alignX }
+
     function updateAuto(value) {
         let autoIndex = edits?.default?.findIndex((a) => a.id === "auto")
         if (!autoIndex) return
@@ -44,6 +50,8 @@
     }
 
     function setValue(input: any) {
+        console.log("STAGE", input)
+
         let value: any = input.value
         // if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
         // else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
@@ -63,9 +71,22 @@
         history({ id: "UPDATE", newData: { data: value, key: "items", subkey: input.id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
     }
 
+    function updateAlign(input) {
+        console.log("ALIGN", input)
+        let id = "align"
+        if (input.key === "text-align") id = "alignX"
+
+        let value = input.value
+        console.log(id, value)
+
+        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
+    }
+
     function updateStyle(e: any) {
         let input = e.detail
         console.log(input)
+
+        if (input.key === "text-align" || input.key === "align-items") updateAlign(input)
 
         if (input.id !== "style") {
             setValue(input)
@@ -95,7 +116,7 @@
 </script>
 
 {#if item}
-    <EditValues {edits} defaultEdits={clone(textEdits)} styles={data} {item} on:change={updateStyle} />
+    <EditValues {edits} defaultEdits={clone(textEdits)} {alignStyle} {lineAlignStyle} styles={data} {item} on:change={updateStyle} />
 {:else}
     <Center faded>
         <T id="empty.items" />

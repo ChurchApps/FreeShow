@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { activePopup, playerVideos, popupData } from "../../../stores"
-    import { newToast } from "../../../utils/messages"
+    import { newToast } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"

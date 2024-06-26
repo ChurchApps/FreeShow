@@ -1,21 +1,23 @@
 // ----- FreeShow -----
 // Expose protected methods that allow the renderer process to use the ipcRenderer without exposing the entire object
 
-import type { ValidChannels } from "../types/Channels"
 import { IpcRendererEvent, contextBridge, ipcRenderer } from "electron"
+import type { ValidChannels } from "../types/Channels"
 
 // const maxInterval: number = 500
 // const useTimeout: ValidChannels[] = ["STAGE", "REMOTE", "CONTROLLER", "OUTPUT_STREAM"]
 // let lastChannel: string = ""
 
-const debug: boolean = true
+// wait to log messages until after intial load is done
+let appLoaded: boolean = false
+const LOG_MESSAGES: boolean = process.env.NODE_ENV !== "production"
 const filteredChannels: any[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM", "PREVIEW", "REQUEST_STREAM", "MAIN_TIME"]
 
 let storedReceivers: any = {}
 
 contextBridge.exposeInMainWorld("api", {
     send: (channel: ValidChannels, data: any) => {
-        if (debug && !filteredChannels.includes(data?.channel)) console.log("TO ELECTRON [" + channel + "]: ", data)
+        if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(data?.channel)) console.log("TO ELECTRON [" + channel + "]: ", data)
         // if (useTimeout.includes(channel) && data.channel === lastChannel && data.id) return
 
         ipcRenderer.send(channel, data)
@@ -25,7 +27,8 @@ contextBridge.exposeInMainWorld("api", {
     },
     receive: (channel: ValidChannels, func: any, id: string = "") => {
         const receiver = (_e: IpcRendererEvent, ...args: any[]) => {
-            if (debug && !filteredChannels.includes(args[0]?.channel)) console.log("TO CLIENT [" + channel + "]: ", ...args)
+            if (!appLoaded && channel === "STORE" && args[0]?.channel === "SHOWS") setTimeout(() => (appLoaded = true), 3000)
+            if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(args[0]?.channel)) console.log("TO CLIENT [" + channel + "]: ", ...args)
 
             func(...args)
         }

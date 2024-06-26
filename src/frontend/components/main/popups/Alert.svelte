@@ -5,6 +5,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import Link from "../../inputs/Link.svelte"
 
     let msg: string = ""
     $: msg = $alertMessage.toString()
@@ -23,7 +24,12 @@
 
 <p on:click={click}>
     {#key msg}
-        {#if !msg.includes("<") && msg?.length - msg?.replaceAll(".", "").length === 1}
+        {#if msg.includes("captions#")}
+            <T id="captions.info" />
+            <br />
+            <br />
+            <Link url={msg.slice(msg.indexOf("#") + 1)}>{msg.slice(msg.indexOf("#") + 1)}</Link>
+        {:else if !msg.includes("<") && msg?.length - msg?.replaceAll(".", "").length === 1}
             <T id={msg} />
         {:else}
             {@html msg}

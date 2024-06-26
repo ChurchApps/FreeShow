@@ -1,5 +1,7 @@
 /node_modules/
 /public/build/
+/public/*.js.map
+/public/*.ts
 /build/
 /dist/
 
@@ -7,3 +9,6 @@
 
 .DS_Store
 package-lock.json
+
+test-output/
+test-results/

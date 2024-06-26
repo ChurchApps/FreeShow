@@ -32,9 +32,11 @@ import {
     labelsDisabled,
     language,
     loaded,
+    loadedState,
     lockedOverlays,
     mediaFolders,
     mediaOptions,
+    metronome,
     midiIn,
     openedFolders,
     outLocked,
@@ -74,8 +76,10 @@ export function updateSyncedSettings(data: any) {
 
     Object.entries(data).forEach(([key, value]: any) => {
         if (updateList[key as SaveListSyncedSettings]) updateList[key as SaveListSyncedSettings](value)
-        else console.log("MISSING: ", key)
+        else console.info("RECEIVED UNKNOWN SETTINGS KEY:", key)
     })
+
+    loadedState.set([...get(loadedState), "synced_settings"])
 }
 
 export function updateSettings(data: any) {
@@ -83,7 +87,7 @@ export function updateSettings(data: any) {
 
     Object.entries(data).forEach(([key, value]: any) => {
         if (updateList[key as SaveListSettings]) updateList[key as SaveListSettings](value)
-        else console.log("MISSING: ", key)
+        else console.info("RECEIVED UNKNOWN SETTINGS KEY:", key)
     })
 
     if (get(currentWindow)) return
@@ -176,6 +180,7 @@ export function updateThemeValues(themes: any) {
         if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
         document.documentElement.style.setProperty("--font-" + key, value)
     })
+    Object.entries(themes.border || {}).forEach(([key, value]: any) => document.documentElement.style.setProperty("--border-" + key, value))
 }
 
 const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = {
@@ -209,7 +214,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         // start overlays
         setOutput("overlays", v, false, null, true)
     },
-    os: (v: any) => console.log("saved os:", v),
     language: (v: any) => {
         language.set(v)
         setLanguage(v)
@@ -274,6 +278,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     customizedIcons: (v: any) => customizedIcons.set(v),
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
+    metronome: (v: any) => metronome.set(v),
     companion: (v: any) => {
         companion.set(v)
 
