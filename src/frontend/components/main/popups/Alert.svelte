@@ -20,8 +20,6 @@
             send(MAIN, ["URL"], "https://freeshow.app/?download")
         }
     }
-
-    $: console.log(msg, msg.slice(msg.indexOf("#")))
 </script>
 
 <p on:click={click}>

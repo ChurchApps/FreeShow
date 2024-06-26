@@ -91,12 +91,12 @@
 <div class="media" {style} class:key={isKeyOutput}>
     {#if background1}
         <div class="media" class:hidden={loading && !firstActive}>
-            <BackgroundMedia data={background1Data} fadingOut={firstFadingOut} {outputId} {transition} {currentStyle} {animationStyle} {duration} mirror={mirror || !firstActive} on:loaded={() => loaded(true)} />
+            <BackgroundMedia data={background1Data} fadingOut={firstFadingOut} {outputId} {transition} {currentStyle} {animationStyle} {duration} {mirror} on:loaded={() => loaded(true)} />
         </div>
     {/if}
     {#if background2}
         <div class="media" class:hidden={loading && firstActive}>
-            <BackgroundMedia data={background2Data} fadingOut={!firstFadingOut} {outputId} {transition} {currentStyle} {animationStyle} {duration} mirror={mirror || firstActive} on:loaded={() => loaded(false)} />
+            <BackgroundMedia data={background2Data} fadingOut={!firstFadingOut} {outputId} {transition} {currentStyle} {animationStyle} {duration} {mirror} on:loaded={() => loaded(false)} />
         </div>
     {/if}
 </div>

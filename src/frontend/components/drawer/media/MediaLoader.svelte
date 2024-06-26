@@ -69,6 +69,18 @@
     $: if (path[0] === "/") path = `file://${path}`
 
     $: useOriginal = hover || loadFullImage || retryCount > 5 || !thumbnailPath
+
+    // get duration
+    $: if (type === "video" && thumbnailPath) getVideoDuration()
+    function getVideoDuration() {
+        let video = document.createElement("video")
+        video.onloadeddata = () => {
+            duration = video.duration || 0
+            // video.pause()
+            video.src = ""
+        }
+        video.src = path
+    }
 </script>
 
 <div class="main" style="aspect-ratio: {customResolution.width}/{customResolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>

@@ -4,11 +4,12 @@ import { MAIN } from "../../types/Channels"
 import { ShowObj } from "../classes/Show"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
-import { checkName, getLabelId } from "../components/helpers/show"
-import { activeProject, dataPath, projects, refreshSlideThumbnails, videoExtensions } from "../stores"
+import { checkName, formatToFileName, getLabelId } from "../components/helpers/show"
+import { activeProject, activeRename, dataPath, projectView, projects, refreshSlideThumbnails, videoExtensions } from "../stores"
+import { newToast } from "../utils/common"
 import { destroy, receive, send } from "../utils/request"
 import { createCategory, setTempShows } from "./importHelpers"
-import { newToast } from "../utils/common"
+import { getExtension } from "../components/helpers/media"
 
 type File = {
     name: string
@@ -68,7 +69,7 @@ export async function convertLessonsPresentation(data: any) {
     let { mediaToDownload, lessonShow } = convertOpenLessonPlaylist(lesson)
 
     // download videos/images
-    send(MAIN, ["DOWNLOAD_MEDIA"], [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload }])
+    send(MAIN, ["DOWNLOAD_MEDIA"], [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
 
     let replace: any = await receiveMessage()
     replace.forEach((r) => {
@@ -99,10 +100,23 @@ function createProject() {
 
     let project = { parent: "/", created: Date.now(), name: "Lessons.church", shows: [] }
     history({ id: "UPDATE", newData: { data: project }, oldData: { id: "lessons" }, location: { id: "project", page: "show" } })
+
+    setTimeout(() => {
+        activeRename.set(null)
+        projectView.set(false)
+    }, 50)
 }
 
 function convertOpenLessonPlaylist(lesson: OlpLesson) {
     let slideGroups = [{ files: [{ name: "Lesson Image", url: lesson.lessonImage }], name: "Lesson Image" }, ...lesson.messages]
+
+    // fix file names (might have spaces or :)
+    slideGroups.forEach((group, i) => {
+        slideGroups[i].files = group.files?.map((file) => {
+            file.name = formatToFileName(file.name)
+            return file
+        })
+    })
 
     let { slides, layout, media }: any = convertToSlides(slideGroups)
     let lessonShow = createShow()
@@ -114,11 +128,12 @@ function convertOpenLessonPlaylist(lesson: OlpLesson) {
     function createShow() {
         let layoutId = uid()
         let show = new ShowObj(false, "lessons", layoutId)
-        let showId = getLabelId(lesson.lessonTitle) || uid()
+        let showId = getLabelId(lesson.lessonTitle, false) || uid()
 
         let name = lesson.lessonTitle
         if (lesson.lessonName !== name) name = `${name} - ${lesson.lessonName}`
         show.name = checkName(name, showId)
+        show.reference = { type: "lessons" }
 
         show.slides = slides
         show.media = media
@@ -189,19 +204,28 @@ function convertToSlides(groups) {
     let layout: any[] = []
     let media: any = {}
 
-    groups.forEach((group) => {
+    groups.forEach((group, groupIndex: number) => {
         if (!group.files?.length) return
 
         let children: string[] = []
         let layoutData: any = {}
         let parentId: string = ""
 
-        group.files.forEach((file) => {
+        group.files.forEach((file, fileIndex: number) => {
             if (!file.url) return
 
             let mediaId = uid()
-            media[mediaId] = { name: file.name, path: file.url, muted: false, loop: !!file.loopVideo }
-            let nextAfterMedia = !media[mediaId].loop && get(videoExtensions).find((ext) => file.url.includes(ext))
+            // find existing
+            let existingId = Object.keys(media).find((id) => media[id].path === file.url)
+            if (existingId) mediaId = existingId
+            else media[mediaId] = { name: file.name, path: file.url, muted: false, loop: !!file.loopVideo }
+
+            let extension = getExtension(file.url)
+            if (extension.includes("/") || extension.includes("\\")) extension = ""
+            if (!extension && file.fileType) extension = file.fileType.slice(file.fileType.indexOf("/") + 1)
+            if (!extension && file.streamUrl) extension = "mp4"
+            let nextAfterMedia = !media[mediaId].loop && get(videoExtensions).includes(extension)
+            if (groupIndex >= groups.length - 1 && fileIndex >= group.files.length - 1) nextAfterMedia = false
 
             let slideId = uid()
             slides[slideId] = {

@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
+    import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
     import type { MediaStyle } from "../../../../types/Main"
     import type { OutBackground, Transition } from "../../../../types/Show"
@@ -36,6 +37,10 @@
 
     let videoData: any = { duration: 0, paused: true, muted: true, loop: false }
     let videoTime: number = 0
+
+    // let videoDuration = 0
+    // if (!videoData.duration && duration) videoData.duration = videoDuration
+    // else if (videoData.duration && videoDuration !== videoData.duration) videoDuration = videoData.duration
 
     // always muted in mirror (draw/key)
     $: if (mirror && !videoData.muted) videoData.muted = true
@@ -87,23 +92,65 @@
             videoData = { ...outputData, duration: videoData.duration || 0 }
         },
     }
-    let listenerId = "MEDIA_RECEIVE"
-    onMount(() => {
+
+    let listenerId = ""
+    let receiving: boolean = false
+
+    let mounted: boolean = false
+    onMount(() => (mounted = true))
+    $: if (id && !fadingOut && mounted) startReceiver()
+    function startReceiver() {
+        if (mirror || receiving) return
+        receiving = true
+
+        destroy(OUTPUT, listenerId)
+
+        listenerId = "MEDIA_RECEIVE_" + uid(5)
         receive(OUTPUT, videoReceiver, listenerId)
-    })
-    $: if (fadingOut) destroy(OUTPUT, listenerId)
+    }
+
+    onDestroy(removeReceiver)
+    $: if (fadingOut || id) removeReceiver()
+    function removeReceiver() {
+        if (mirror || !receiving || !mounted) return
+        receiving = false
+
+        destroy(OUTPUT, listenerId)
+    }
 
     // call end just before (to make room for transition) - this also triggers video ended on loop
     $: if (videoData.duration && duration && videoTime >= videoData.duration - (duration / 1000 + 0.1)) videoEnded()
 
     let endedCalled: boolean = false
     function videoEnded() {
-        if (mirror || endedCalled) return
+        if (fadingOut || mirror || endedCalled) return
 
         endedCalled = true
         setTimeout(() => (endedCalled = false), duration || 1000)
 
         send(OUTPUT, ["MAIN_VIDEO_ENDED"], { id: outputId, loop: videoData.loop, duration })
+    }
+
+    // FADE OUT AUDIO
+
+    $: if (fadingOut && !videoData.muted) fadeoutVideo()
+    $: if (!fadingOut && !videoData.muted && id) setVolume(1)
+    const speed = 0.01
+    const margin = 0.9 // video should fade to 0 before clearing
+    function fadeoutVideo() {
+        if (!video || !fadingOut || !duration) return
+
+        let time = duration * speed * margin
+        setTimeout(() => {
+            if (!video) return
+
+            video.volume = Math.max(0, Number((video.volume - speed).toFixed(3)))
+            fadeoutVideo()
+        }, time)
+    }
+    function setVolume(volume: number) {
+        if (!video) return
+        video.volume = 1
     }
 
     // AUDIO

@@ -119,6 +119,7 @@ export const selectAllMedia: Writable<boolean> = writable(false)
 export const openToolsTab: Writable<string> = writable("")
 export const refreshSlideThumbnails: Writable<boolean> = writable(false)
 export const contextData: Writable<any> = writable({})
+export const lessonsLoaded: Writable<any> = writable({})
 
 // ----- SAVED VARIABLES -----
 

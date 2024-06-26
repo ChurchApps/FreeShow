@@ -204,7 +204,6 @@ export function captureCanvas(data: any) {
     let canvas = document.createElement("canvas")
 
     let isImage: boolean = get(imageExtensions).includes(data.extension)
-    console.log(isImage, data)
     let mediaElem: any = document.createElement(isImage ? "img" : "video")
     mediaElem.src = data.input
 
@@ -212,23 +211,29 @@ export function captureCanvas(data: any) {
         if (!isImage) mediaElem.currentTime = mediaElem.duration * (data.seek ?? 0.5)
 
         let mediaSize = isImage ? { width: mediaElem.naturalWidth, height: mediaElem.naturalHeight } : { width: mediaElem.videoWidth, height: mediaElem.videoHeight }
-        console.log(mediaSize)
         let newSize = getNewSize(mediaSize, data.size || {})
         canvas.width = newSize.width
         canvas.height = newSize.height
 
         // wait until loaded
-        await waitUntilValueIsDefined(() => (isImage ? mediaElem.complete : mediaElem.readyState === 4), 20)
+        let hasLoaded = await waitUntilValueIsDefined(() => (isImage ? mediaElem.complete : mediaElem.readyState === 4), 20)
+        if (!hasLoaded) return
 
+        console.log(data.input, hasLoaded)
+
+        await wait(50)
         captureCanvas(mediaElem, mediaSize)
     })
 
-    function captureCanvas(media, mediaSize) {
+    async function captureCanvas(media, mediaSize) {
         let ctx = canvas.getContext("2d")
         if (!ctx) return
 
         ctx.drawImage(media, 0, 0, mediaSize.width, mediaSize.height, 0, 0, canvas.width, canvas.height)
+        await wait(50)
         let dataURL = canvas.toDataURL("image/jpeg", jpegQuality)
+
+        console.log(dataURL)
 
         send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })
     }

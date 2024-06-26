@@ -1,8 +1,10 @@
 <script lang="ts">
-    import { activePage, activeShow, cachedShowsData, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles } from "../../stores"
+    import { onMount } from "svelte"
+    import { activePage, activePopup, activeShow, alertMessage, cachedShowsData, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
+    import { getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
@@ -14,6 +16,8 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import TextEditor from "./TextEditor.svelte"
+    import { destroy, receive } from "../../utils/request"
+    import { MAIN } from "../../../types/Channels"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId]
@@ -71,7 +75,7 @@
         } else endIndex = null
     }
 
-    $: if (showId) {
+    $: if (showId && currentShow?.category !== "lessons") {
         // update show by its template
         let showTemplate = currentShow?.settings?.template || ""
         history({ id: "TEMPLATE", save: false, newData: { id: showTemplate }, location: { page: "show" } })
@@ -184,25 +188,105 @@
 
     $: if (!loaded && !lazyLoading && layoutSlides?.length) {
         lazyLoading = true
+        // lazyLoader = isLessons ? 0 : 1
         lazyLoader = 1
         startLazyLoader()
     }
 
+    $: isLessons = currentShow?.category === "lessons"
+    // let showLessonsAlert: boolean = false
+    let lessonsFailed: number = 0
+    // let currentTries: number = 0
+    let lessonsTimeout: any = null
+
+    $: if (isLessons && $lessonsLoaded) startLazyLoader()
+
     let lazyLoading: boolean = false
-    function startLazyLoader() {
+    async function startLazyLoader() {
         if (!layoutSlides || timeout) return
 
         if (lazyLoader >= layoutSlides.length) {
             loaded = true
             lazyLoading = false
+
             return
         }
 
-        timeout = setTimeout(() => {
+        // check that media has loaded
+        if (isLessons) {
+            timeout = true
+            if (lessonsTimeout) clearTimeout(lessonsTimeout)
+
+            let count = $lessonsLoaded[showId]
+            if (count === undefined) {
+                lessonsTimeout = setTimeout(async () => {
+                    // might already be done (check first slide)
+                    let mediaId = layoutSlides[lazyLoader]?.background
+                    let mediaPath = currentShow.media?.[mediaId]?.path || ""
+                    let exists = await checkImage(mediaPath)
+
+                    if (exists) {
+                        lazyLoader = layoutSlides.length
+                        return
+                    }
+
+                    // could not load
+                    lazyLoader++
+                    lessonsFailed++
+                    startLazyLoader()
+                }, 2000)
+
+                timeout = null
+                return
+            }
+
+            let downloaded = count.finished + count.failed
+
+            // ensure media is loaded before initializing cache loading
+            setTimeout(() => {
+                lazyLoader = downloaded
+                lessonsFailed = count.failed
+            }, 1500)
+
+            if (downloaded < layoutSlides.length) {
+                alertMessage.set(`Please wait! Downloading Lessons.church media ${downloaded + 1}/${layoutSlides.length} ...`)
+                activePopup.set("alert")
+            } else {
+                if (lessonsFailed) alertMessage.set(`Something went wrong!<br>Could not get ${count.failed} files of total ${layoutSlides.length}!<br><br>The files might have expired, but you can try importing again`)
+                else alertMessage.set(`Downloaded ${layoutSlides.length} files!`)
+                activePopup.set("alert")
+            }
+
+            timeout = null
+            return
+        }
+
+        timeout = setTimeout(next, 10)
+
+        function next() {
             lazyLoader++
             timeout = null
             startLazyLoader()
-        }, 10)
+        }
+    }
+
+    function checkImage(src: string) {
+        let isVideo = $videoExtensions.includes(getExtension(src))
+        let media = new Image()
+        if (isVideo) media = document.createElement("video")
+
+        return new Promise((resolve) => {
+            if (isVideo)
+                media.onloadeddata = () => {
+                    resolve(true)
+                }
+            else media.onload = () => resolve(true)
+            media.onerror = () => {
+                resolve(false)
+            }
+
+            media.src = src
+        })
     }
 
     let loading: boolean = false

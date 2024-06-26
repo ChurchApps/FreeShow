@@ -64,6 +64,8 @@
             <Icon id="scripture" right={!$labelsDisabled} />
             {#if !$labelsDisabled}<T id="tabs.scripture" />{/if}
         </Button>
+    {:else if show.reference?.type === "lessons"}
+        <p>Lessons.church</p>
     {/if}
 </div>
 

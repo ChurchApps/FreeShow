@@ -50,6 +50,7 @@ import {
     folders,
     gain,
     isDev,
+    lessonsLoaded,
     media,
     mediaFolders,
     ndiData,
@@ -201,6 +202,7 @@ const receiveMAIN: any = {
 
     // MEDIA CACHE
     CAPTURE_CANVAS: (data: any) => captureCanvas(data),
+    LESSONS_DONE: (data: any) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
 }
 
 const receiveSTORE: any = {
@@ -324,10 +326,13 @@ const receiveOUTPUTasMAIN: any = {
         // check and execute next after media regardless of loop
         if (checkNextAfterMedia(videoPath, "media", msg.id) || msg.loop) return
 
-        console.log(get(special))
         if (get(special).clearMediaOnFinish === false) return
 
         setTimeout(() => {
+            // double check that output is still the same
+            let newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || ""
+            if (newVideoPath !== videoPath) return
+
             clearBackground(msg.id)
         }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH
     },

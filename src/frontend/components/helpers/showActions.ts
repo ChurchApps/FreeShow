@@ -667,13 +667,14 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     // check that current slide has the ended media!
     if (type === "media" || type === "audio") {
         let showMedia = _show(slideOut.id).media().get()
-        let currentMediaId = showMedia.find((a) => a.path === endedId)?.key
+        // find all matching paths because some slides with same background might have different media ids
+        let allMediaIds = showMedia.filter((a) => a.path === endedId).map((a) => a.key)
 
         // don't go to next if current slide don't has outputted media
         if (type === "media") {
-            if (layoutSlide.data?.background !== currentMediaId) return false
+            if (!allMediaIds.includes(layoutSlide.data?.background)) return false
         } else if (type === "audio") {
-            if (!layoutSlide.data?.audio?.find((id) => id === currentMediaId)) return false
+            if (!layoutSlide.data?.audio?.find((id) => allMediaIds.includes(id))) return false
         }
     } else if (type === "timer") {
         let slide = _show(slideOut.id).get("slides")[layoutSlide.id]

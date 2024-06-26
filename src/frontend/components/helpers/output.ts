@@ -89,11 +89,12 @@ function changeOutputBackground(data, { outs, output, id, i }) {
     if (isVideo) videoStarting()
     else if (previousWasVideo) videoEnding()
 
+    // wait for video receiver to change
     setTimeout(() => {
-        // WIP data is sent directly in output, so this is probably not needed
+        // data is sent directly in output as well ??
         send(OUTPUT, ["DATA"], { [id]: videoData })
         if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
-    }, 100)
+    }, 600)
 
     return data
 }

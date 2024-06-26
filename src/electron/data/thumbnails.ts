@@ -1,7 +1,7 @@
 import { NativeImage, ResizeOptions, app, nativeImage } from "electron"
 import fs from "fs"
 import path from "path"
-import { toApp } from ".."
+import { isProd, toApp } from ".."
 import { MAIN } from "../../types/Channels"
 import { doesPathExist } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
@@ -46,7 +46,7 @@ function generationFinished() {
 
 let exists: string[] = []
 async function generateThumbnail(data: Thumbnail) {
-    if (exists.includes(data.output)) return generationFinished()
+    if (isProd && exists.includes(data.output)) return generationFinished()
     if (doesPathExist(data.output)) {
         exists.push(data.output)
         generationFinished()
