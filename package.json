@@ -32,7 +32,7 @@
         "release": "electron-builder",
         "postrelease": "node scripts/cleanBuilds.js",
         "prerelease:arm64": "npm run build",
-        "release:arm64": "electron-builder --arm64",
+        "release:arm64": "electron-builder --arm64 --publish onTagOrDraft",
         "postrelease:arm64": "node scripts/cleanBuilds.js",
         "lint:electron": "eslint -c eslint.electron.json --ext .js,.ts src/electron",
         "lint:svelte": "eslint -c eslint.svelte.json --ext .js,.ts src/frontend",
