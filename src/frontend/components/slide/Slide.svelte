@@ -38,6 +38,7 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { slideHasAction } from "../actions/actions"
 
     export let slide: Slide
     export let layoutSlide: SlideData
@@ -63,7 +64,7 @@
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i <= index) {
-                if (a.actions?.clearBackground && (!a.disabled || i === index)) ghostBackground = null
+                if (slideHasAction(a.actions, "clear_background") && (!a.disabled || i === index)) ghostBackground = null
                 else if (a.background && !a.disabled) ghostBackground = show.media[a.background]
                 if (a.background && show.media[a.background]?.loop === false) ghostBackground = null
             }
@@ -92,7 +93,6 @@
 
         audioIds.forEach(async (audioId) => {
             let audio = showMedia[audioId]
-            console.log(audio, showMedia, audioId)
             if (!audio?.path) return
             locateFile(audioId, audio.path, folders, audio)
         })
@@ -121,12 +121,11 @@
             return
         }
 
-        if (!checkCloud) return
+        if (!checkCloud || !$showsCache[showId]?.media?.[fileId]) return
 
         // set cloud path to path
         showsCache.update((a) => {
-            let media = a[showId]?.media?.[fileId]
-            if (!media) return a
+            let media = a[showId].media[fileId]
             if (!media.cloud) a[showId].media[fileId].cloud = {}
             a[showId].media[fileId].cloud![cloudId] = path
 
@@ -350,7 +349,7 @@
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader name={$dictionary.error?.load} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration />
+                                <MediaLoader name={$dictionary.error?.load} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
                                 <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}

@@ -217,9 +217,10 @@ export function captureCanvas(data: any) {
 
         // wait until loaded
         let hasLoaded = await waitUntilValueIsDefined(() => (isImage ? mediaElem.complete : mediaElem.readyState === 4), 20)
-        if (!hasLoaded) return
-
-        console.log(data.input, hasLoaded)
+        if (!hasLoaded) {
+            send(MAIN, ["SAVE_IMAGE"], { path: data.output })
+            return
+        }
 
         await wait(50)
         captureCanvas(mediaElem, mediaSize)
@@ -227,13 +228,14 @@ export function captureCanvas(data: any) {
 
     async function captureCanvas(media, mediaSize) {
         let ctx = canvas.getContext("2d")
-        if (!ctx) return
+        if (!ctx) {
+            send(MAIN, ["SAVE_IMAGE"], { path: data.output })
+            return
+        }
 
         ctx.drawImage(media, 0, 0, mediaSize.width, mediaSize.height, 0, 0, canvas.width, canvas.height)
         await wait(50)
         let dataURL = canvas.toDataURL("image/jpeg", jpegQuality)
-
-        console.log(dataURL)
 
         send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })
     }

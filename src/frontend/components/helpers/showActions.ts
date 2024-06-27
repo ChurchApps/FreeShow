@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
-import { runAction } from "../actions/actions"
+import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import {
@@ -411,7 +411,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         if (!background) {
             layout.forEach((a, i) => {
                 if (i <= index && !a.data.disabled) {
-                    if (a.data.actions?.clearBackground) background = null
+                    if (slideHasAction(a.data?.actions, "clear_background")) background = null
                     else if (a.data.background) background = a.data.background
                     if (a.data.background && _show(showId).get("media")[a.data.background]?.loop === false) background = null
                 }

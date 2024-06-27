@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import { activePage, activePopup, activeShow, alertMessage, cachedShowsData, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
@@ -16,8 +15,6 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import TextEditor from "./TextEditor.svelte"
-    import { destroy, receive } from "../../utils/request"
-    import { MAIN } from "../../../types/Channels"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId]
@@ -75,8 +72,11 @@
         } else endIndex = null
     }
 
-    $: if (showId && currentShow?.category !== "lessons") {
-        // update show by its template
+    // update show by its template
+    $: if (showId && !isLessons && loaded) setTimeout(updateTemplate, 100)
+    function updateTemplate() {
+        if (!loaded) return
+
         let showTemplate = currentShow?.settings?.template || ""
         history({ id: "TEMPLATE", save: false, newData: { id: showTemplate }, location: { page: "show" } })
     }
@@ -86,21 +86,28 @@
         // keep letters and spaces
         const regEx = /[^a-zA-Z\s]+/
 
-        showsCache.update((a) => {
-            let slides = a[showId]?.slides || {}
-            Object.keys(slides).forEach((slideId) => {
-                let slide = slides[slideId]
-                slide.items.forEach((item) => {
-                    if (!item.lines) return
-                    item.lines.forEach((line) => {
-                        line?.text.forEach((text) => {
-                            let newValue = capitalize(text.value)
-                            text.value = newValue
-                        })
+        let capitalized = false
+        let slides = _show(showId).get("slides") || {}
+        Object.keys(slides).forEach((slideId) => {
+            let slide = slides[slideId]
+
+            slide.items.forEach((item) => {
+                if (!item.lines) return
+
+                item.lines.forEach((line) => {
+                    line?.text.forEach((text) => {
+                        let newValue = capitalize(text.value)
+                        if (text.value !== newValue) capitalized = true
+                        text.value = newValue
                     })
                 })
             })
+        })
 
+        if (!capitalized) return
+
+        showsCache.update((a) => {
+            a[showId].slides = slides
             return a
         })
 
@@ -188,8 +195,7 @@
 
     $: if (!loaded && !lazyLoading && layoutSlides?.length) {
         lazyLoading = true
-        // lazyLoader = isLessons ? 0 : 1
-        lazyLoader = 1
+        lazyLoader = 0
         startLazyLoader()
     }
 
@@ -272,7 +278,7 @@
 
     function checkImage(src: string) {
         let isVideo = $videoExtensions.includes(getExtension(src))
-        let media = new Image()
+        let media: any = new Image()
         if (isVideo) media = document.createElement("video")
 
         return new Promise((resolve) => {

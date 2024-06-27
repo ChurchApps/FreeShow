@@ -680,6 +680,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             let show = get(showsCache)[data.remember.showId]
             if (!show) return
+            let previousShow: string = JSON.stringify(show)
             let slides: any = show.slides || {}
 
             let ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0]
@@ -697,7 +698,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 data.previousData = { template: show.settings.template, slides: clone(slides) }
                 let templateId: string = data.id
 
-                if (templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
+                if (templateId && !slideId && show.settings?.template !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
 
                 let template = clone(get(templates)[templateId])
                 updateSlidesWithTemplate(template)
@@ -717,66 +718,70 @@ export const historyActions = ({ obj, undo = null }: any) => {
             else obj.newData = clone(data)
 
             function updateSlidesWithTemplate(template: any) {
-                showsCache.update((a) => {
-                    Object.entries(slides).forEach(([id, slide]: any) => {
-                        if ((slideId && slideId !== id) || !slide) return
+                Object.entries(slides).forEach(([id, slide]: any) => {
+                    if ((slideId && slideId !== id) || !slide) return
 
-                        // show template
-                        let slideTemplate = template
-                        let isGlobalTemplate = true
-                        // slide template
-                        if (slide.settings?.template) {
-                            slideTemplate = clone(get(templates)[slide.settings.template]) || template
+                    // show template
+                    let slideTemplate = template
+                    let isGlobalTemplate = true
+                    // slide template
+                    if (slide.settings?.template) {
+                        slideTemplate = clone(get(templates)[slide.settings.template]) || template
+                        isGlobalTemplate = false
+                    } else {
+                        // group template
+                        let isChild = slide.group === null
+                        let globalGroup = slide.globalGroup
+                        if (isChild) {
+                            let parent = Object.values(show.slides).find((a) => a.children?.includes(id))
+                            globalGroup = parent?.globalGroup
+                        }
+                        if (globalGroup && get(groups)[globalGroup]?.template) {
+                            slideTemplate = clone(get(templates)[get(groups)[globalGroup]?.template]) || template
                             isGlobalTemplate = false
-                        } else {
-                            // group template
-                            let isChild = slide.group === null
-                            let globalGroup = slide.globalGroup
-                            if (isChild) {
-                                let parent = Object.values(a[data.remember.showId].slides).find((a) => a.children?.includes(id))
-                                globalGroup = parent?.globalGroup
-                            }
-                            if (globalGroup && get(groups)[globalGroup]?.template) {
-                                slideTemplate = clone(get(templates)[get(groups)[globalGroup]?.template]) || template
-                                isGlobalTemplate = false
-                            }
                         }
+                    }
 
-                        if (!slideTemplate?.items?.length) return
+                    if (!slideTemplate?.items?.length) return
 
-                        // roll items around
-                        if (createItems && !slide.settings?.template) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
+                    // roll items around
+                    if (createItems && !slide.settings?.template) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 
-                        let changeOverflowItems = slide.settings?.template || createItems
-                        let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false)
+                    let changeOverflowItems = slide.settings?.template || createItems
+                    let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false)
 
-                        // remove items if not in template (and textbox is empty)
-                        if (changeOverflowItems) {
-                            let templateItemCount = getItemsCountByType(slideTemplate.items)
-                            let slideItemCount = getItemsCountByType(newItems)
-                            newItems = newItems.filter((a) => {
-                                let type = a.type || "text"
-                                if (templateItemCount[type] - slideItemCount[type] >= 0) return true
-                                if (type === "text" && !isEmptyOrSpecial(a)) return true
+                    // remove items if not in template (and textbox is empty)
+                    if (changeOverflowItems) {
+                        let templateItemCount = getItemsCountByType(slideTemplate.items)
+                        let slideItemCount = getItemsCountByType(newItems)
+                        newItems = newItems.filter((a) => {
+                            let type = a.type || "text"
+                            if (templateItemCount[type] - slideItemCount[type] >= 0) return true
+                            if (type === "text" && !isEmptyOrSpecial(a)) return true
 
-                                // remove item
-                                slideItemCount[type]--
-                                return false
-                            })
-                        }
+                            // remove item
+                            slideItemCount[type]--
+                            return false
+                        })
+                    }
 
-                        a[data.remember.showId].slides[id].items = clone(newItems)
+                    show.slides[id].items = clone(newItems)
 
-                        if (!isGlobalTemplate) return
+                    if (!isGlobalTemplate) return
 
-                        // set custom values
-                        let isFirst = !!Object.values(a[data.remember.showId].layouts).find((layout) => layout.slides[0]?.id === id)
-                        a[data.remember.showId].slides[id] = updateSlideFromTemplate(a[data.remember.showId].slides[id], slideTemplate, isFirst, changeOverflowItems)
-                        let newLayoutData = updateLayoutsFromTemplate(a[data.remember.showId].layouts, a[data.remember.showId].media, slideTemplate, changeOverflowItems)
-                        a[data.remember.showId].layouts = newLayoutData.layouts
-                        a[data.remember.showId].media = newLayoutData.media
-                    })
+                    // set custom values
+                    let isFirst = !!Object.values(show.layouts).find((layout) => layout.slides[0]?.id === id)
+                    show.slides[id] = updateSlideFromTemplate(show.slides[id], slideTemplate, isFirst, changeOverflowItems)
+                    let newLayoutData = updateLayoutsFromTemplate(show.layouts, show.media, slideTemplate, changeOverflowItems)
+                    show.layouts = newLayoutData.layouts
+                    show.media = newLayoutData.media
+                })
 
+                // don't update if show has not changed
+                if (obj.save === false && JSON.stringify(show) === previousShow) return
+
+                showsCache.update((a) => {
+                    a[data.remember.showId] = show
                     return a
                 })
             }

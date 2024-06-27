@@ -17,6 +17,7 @@
     import DropArea from "../../system/DropArea.svelte"
     import Snaplines from "../../system/Snaplines.svelte"
     import Editbox from "../editbox/Editbox.svelte"
+    import { slideHasAction } from "../../actions/actions"
 
     $: currentShow = $activeShow?.id
     $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
@@ -44,7 +45,7 @@
     $: if (!bgId) {
         ref?.forEach((a, i) => {
             if (i <= $activeEdit.slide! && !a.data.disabled) {
-                if (a.data.actions?.clearBackground) bgId = null
+                if (slideHasAction(a.data?.actions, "clear_background")) bgId = null
                 else if (a.data.background) bgId = a.data.background
                 if (a.data.background && currentShow && $showsCache[currentShow].media[a.data.background]?.loop === false) bgId = null
             }

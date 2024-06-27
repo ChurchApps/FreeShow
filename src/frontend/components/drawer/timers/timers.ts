@@ -45,36 +45,43 @@ export function getTimer(ref: any) {
 export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
     if (!showId) return
 
-    showsCache.update((a) => {
-        if (!a[showId]?.slides) return a
+    let currentShow = _show(showId).get()
+    if (!currentShow?.slides) return
 
-        Object.keys(a[showId].slides).forEach(checkSlide)
-        function checkSlide(slideId) {
-            let items: any[] = a[showId!].slides[slideId].items
+    let timerCreated: boolean = false
 
-            // TODO: "backup" global timer to show item.timer
+    Object.keys(currentShow.slides).forEach(checkSlide)
+    function checkSlide(slideId) {
+        let items: any[] = currentShow.slides[slideId].items
 
-            let timerIndex = items.findIndex((a) => !a.timerId && a.timer)
-            while (timerIndex >= 0) {
-                let globalTimerId = uid()
-                a[showId!].slides[slideId].items[timerIndex].timerId = globalTimerId
+        // TODO: "backup" global timer to show item.timer
 
-                timers.update((t) => {
-                    let globalTimer = clone(a[showId!].slides[slideId].items[timerIndex].timer)
-                    globalTimer.name = a[showId!].name
-                    delete globalTimer.id
+        let timerIndex = items.findIndex((a) => !a.timerId && a.timer)
+        while (timerIndex >= 0) {
+            timerCreated = true
+            let globalTimerId = uid()
+            currentShow.slides[slideId].items[timerIndex].timerId = globalTimerId
 
-                    // pre 0.5.3
-                    if (globalTimer.type === "countdown") globalTimer.type = "counter"
+            timers.update((t) => {
+                let globalTimer = clone(currentShow.slides[slideId].items[timerIndex].timer)
+                globalTimer.name = currentShow.name
+                delete globalTimer.id
 
-                    t[globalTimerId] = globalTimer
-                    return t
-                })
+                // pre 0.5.3
+                if (globalTimer.type === "countdown") globalTimer.type = "counter"
 
-                timerIndex = items.findIndex((a) => !a.timerId && a.timer)
-            }
+                t[globalTimerId] = globalTimer
+                return t
+            })
+
+            timerIndex = items.findIndex((a) => !a.timerId && a.timer)
         }
+    }
 
+    if (!timerCreated) return
+
+    showsCache.update((a) => {
+        a[showId] = currentShow
         return a
     })
 }

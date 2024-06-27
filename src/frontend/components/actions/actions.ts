@@ -93,6 +93,10 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [slideIndex] } })
 }
 
+export function slideHasAction(actions: any, key: string) {
+    return actions?.slideActions?.find((a) => a.triggers?.includes(key))
+}
+
 // extra names
 
 const namedObjects = {

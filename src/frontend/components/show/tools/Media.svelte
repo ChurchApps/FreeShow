@@ -307,7 +307,7 @@
                     <!-- class="context #action" -->
                     <Button on:click={() => runAction(action)} style="padding: 8px;width: 100%;" title={action.name} bold={false}>
                         <Icon id={customData.icon || "actions"} size={1.2} right />
-                        <p><T id={customData.name} /></p>
+                        <p><T id={customData.name || ""} /></p>
                     </Button>
                 </SelectElem>
             {/each}
