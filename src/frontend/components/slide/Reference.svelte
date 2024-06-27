@@ -10,8 +10,6 @@
 
     export let show: Show
 
-    $: console.log(show)
-
     async function updateCalendar() {
         let currentEvents: any[] = getSelectedEvents(show.reference?.data?.days)
 

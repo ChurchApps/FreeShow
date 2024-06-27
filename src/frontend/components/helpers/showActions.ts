@@ -5,6 +5,7 @@ import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
+import { clearTimers } from "../output/clear"
 import {
     activeEdit,
     activePage,
@@ -39,8 +40,8 @@ import { clearPlayingVideo, getActiveOutputs, isOutCleared, refreshOut, setOutpu
 import { loadShows } from "./setShow"
 import { initializeMetadata } from "./show"
 import { _show } from "./shows"
-import { stopTimers } from "./timerTick"
 import { addZero } from "./time"
+import { stopTimers } from "./timerTick"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -134,7 +135,7 @@ function getOutputWithLines() {
     return currentLines
 }
 
-export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string | null = null, nextAfterMedia: boolean = false) {
+export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string = "", nextAfterMedia: boolean = false) {
     if (get(outLocked) && !bypassLock) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
@@ -378,7 +379,7 @@ function randomNumber(end: number) {
     return Math.floor(Math.random() * end)
 }
 
-export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null, actionTimeout: number = 10) {
+export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string = "", actionTimeout: number = 10) {
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
 
     _show(showId).set({ key: "timestamps.used", value: new Date().getTime() })
@@ -496,8 +497,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             // outTransition.set({ duration: data.nextTimer })
             setOutput("transition", { duration: data.nextTimer }, false, outputId)
         } else {
-            // outTransition.set(null)
-            setOutput("transition", null, false, outputId)
+            clearTimers(outputId)
         }
 
         // DEPRECATED since <= 1.1.6, but still in use
@@ -584,7 +584,7 @@ export async function startShow(showId: string) {
 
     setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
     // timeout has to be 1200 to let output data update properly (in case slide has special actions)
-    updateOut(showId, 0, slideRef, true, null, 1200)
+    updateOut(showId, 0, slideRef, true, "", 1200)
 }
 
 export function changeOutputStyle({ outputStyle, styleOutputs }: API_output_style) {

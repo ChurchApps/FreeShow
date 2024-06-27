@@ -200,44 +200,73 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
 // CACHE
 
 const jpegQuality = 90 // 0-100
+let capturing: string[] = []
+let retries: any = {}
 export function captureCanvas(data: any) {
+    if (capturing.includes(data.input)) return exit()
+    capturing.push(data.input)
+
     let canvas = document.createElement("canvas")
 
     let isImage: boolean = get(imageExtensions).includes(data.extension)
     let mediaElem: any = document.createElement(isImage ? "img" : "video")
-    mediaElem.src = data.input
 
     mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {
-        if (!isImage) mediaElem.currentTime = mediaElem.duration * (data.seek ?? 0.5)
-
         let mediaSize = isImage ? { width: mediaElem.naturalWidth, height: mediaElem.naturalHeight } : { width: mediaElem.videoWidth, height: mediaElem.videoHeight }
         let newSize = getNewSize(mediaSize, data.size || {})
         canvas.width = newSize.width
         canvas.height = newSize.height
 
-        // wait until loaded
-        let hasLoaded = await waitUntilValueIsDefined(() => (isImage ? mediaElem.complete : mediaElem.readyState === 4), 20)
-        if (!hasLoaded) {
-            send(MAIN, ["SAVE_IMAGE"], { path: data.output })
-            return
+        // seek video
+        if (!isImage) {
+            mediaElem.currentTime = mediaElem.duration * (data.seek ?? 0.5)
+            await wait(50)
         }
 
-        await wait(50)
+        // wait until loaded
+        let hasLoaded = await waitUntilValueIsDefined(() => (isImage ? mediaElem.complete : mediaElem.readyState === 4), 20)
+        if (!hasLoaded) return exit()
+
         captureCanvas(mediaElem, mediaSize)
     })
 
+    // this should not get called becaues the file is checked existing, but here in case
+    mediaElem.addEventListener("error", (err) => {
+        if (!mediaElem.src) return
+
+        console.error("Could not load media:", err)
+        if (!retries[data.input]) retries[data.input] = 0
+        retries[data.input]++
+
+        if (retries[data.input] > 2) return exit()
+        else setTimeout(() => (isImage ? "" : mediaElem.load()), 3000)
+    })
+
+    mediaElem.src = data.input
+    // document.body.appendChild(mediaElem) // DEBUG
+
     async function captureCanvas(media, mediaSize) {
         let ctx = canvas.getContext("2d")
-        if (!ctx) {
-            send(MAIN, ["SAVE_IMAGE"], { path: data.output })
-            return
-        }
+        if (!ctx) return exit()
 
+        // ensure lessons are downloaded and loaded before capturing
+        let isLessons = data.input.includes("Lessons")
+        let loading = isLessons ? 3000 : 200
+        await wait(loading)
         ctx.drawImage(media, 0, 0, mediaSize.width, mediaSize.height, 0, 0, canvas.width, canvas.height)
-        await wait(50)
+
+        await wait(loading * 0.2)
         let dataURL = canvas.toDataURL("image/jpeg", jpegQuality)
 
         send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })
+
+        // unload
+        capturing.splice(capturing.indexOf(data.input), 1)
+        mediaElem.src = ""
+    }
+
+    function exit() {
+        send(MAIN, ["SAVE_IMAGE"], { path: data.output })
     }
 }
 

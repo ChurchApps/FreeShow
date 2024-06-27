@@ -126,6 +126,8 @@ export function logerror(err) {
 
 // stream to OutputShow
 export function toggleRemoteStream() {
+    if (get(currentWindow)) return
+
     let value = { key: "server", value: false }
     let captureOutputId = get(serverData)?.output_stream?.outputId
     if (!captureOutputId || !get(outputs)[captureOutputId]) captureOutputId = getActiveOutputs(get(outputs), true, true)[0]

@@ -103,14 +103,16 @@ export function updateSettings(data: any) {
         })
 
         // remove "ghost" key outputs (they were not removed in versions pre 0.9.6)
-        outputs.update((a) => {
-            outputsList.forEach((output) => {
-                if (!output.isKeyOutput || activeKeyOutputs.includes(output.id!)) return
-                delete a[output.id!]
-            })
+        let allOutputs = get(outputs)
+        let outputsUpdated: boolean = false
+        Object.keys(allOutputs).forEach((outputId) => {
+            let output = allOutputs[outputId]
+            if (!output.isKeyOutput || activeKeyOutputs.includes(output.id!)) return
 
-            return a
+            delete allOutputs[outputId][output.id!]
+            outputsUpdated = true
         })
+        if (outputsUpdated) outputs.set(allOutputs)
 
         // wait until content is loaded
         setTimeout(() => {
@@ -212,7 +214,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         lockedOverlays.set(v)
 
         // start overlays
-        setOutput("overlays", v, false, null, true)
+        if (v.length) setOutput("overlays", v, false, "", true)
     },
     language: (v: any) => {
         language.set(v)

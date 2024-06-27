@@ -55,6 +55,7 @@
     export let icons: boolean = false
     export let noQuickEdit: boolean = false
     export let altKeyPressed: boolean = false
+    export let disableThumbnails: boolean = false
 
     $: viewMode = $slidesOptions.mode || "grid"
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
@@ -70,6 +71,9 @@
             }
         })
     }
+
+    // show loop icon if many backgruounds
+    $: backgroundCount = layoutSlides.reduce((count, layoutRef) => (count += layoutRef.background ? 1 : 0), 0)
 
     // auto find media
     $: bg = clone(background || ghostBackground)
@@ -121,7 +125,7 @@
             return
         }
 
-        if (!checkCloud || !$showsCache[showId]?.media?.[fileId]) return
+        if (!checkCloud || !$showsCache[showId]?.media?.[fileId] || $showsCache[showId].media[fileId].cloud?.[cloudId] === path) return
 
         // set cloud path to path
         showsCache.update((a) => {
@@ -137,7 +141,7 @@
 
     // LOAD BACKGROUND
     $: bgPath = bg?.path || bg?.id || ""
-    $: if (bgPath) loadBackground()
+    $: if (bgPath && !disableThumbnails) loadBackground()
     let thumbnailPath: string = ""
     async function loadBackground() {
         if (ghostBackground) {
@@ -320,7 +324,7 @@
     {/if}
     <!-- icons -->
     {#if icons && !altKeyPressed && viewMode !== "simple"}
-        <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} style={viewMode === "lyrics" ? "padding-top: 23px;" : ""} />
+        <Icons {timer} {layoutSlide} {background} {backgroundCount} {duration} {columns} {index} style={viewMode === "lyrics" ? "padding-top: 23px;" : ""} />
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->

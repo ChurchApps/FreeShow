@@ -233,6 +233,9 @@
 
                     if (exists) {
                         lazyLoader = layoutSlides.length
+                        loaded = true
+                        lazyLoading = false
+
                         return
                     }
 
@@ -240,7 +243,7 @@
                     lazyLoader++
                     lessonsFailed++
                     startLazyLoader()
-                }, 2000)
+                }, 800)
 
                 timeout = null
                 return
@@ -249,10 +252,8 @@
             let downloaded = count.finished + count.failed
 
             // ensure media is loaded before initializing cache loading
-            setTimeout(() => {
-                lazyLoader = downloaded
-                lessonsFailed = count.failed
-            }, 1500)
+            lazyLoader = downloaded
+            lessonsFailed = count.failed
 
             if (downloaded < layoutSlides.length) {
                 alertMessage.set(`Please wait! Downloading Lessons.church media ${downloaded + 1}/${layoutSlides.length} ...`)
@@ -261,6 +262,10 @@
                 if (lessonsFailed) alertMessage.set(`Something went wrong!<br>Could not get ${count.failed} files of total ${layoutSlides.length}!<br><br>The files might have expired, but you can try importing again`)
                 else alertMessage.set(`Downloaded ${layoutSlides.length} files!`)
                 activePopup.set("alert")
+
+                loaded = true
+                lazyLoading = false
+                lessonsLoaded.set({})
             }
 
             timeout = null
@@ -378,6 +383,7 @@
                                     columns={$slidesOptions.columns}
                                     icons
                                     {altKeyPressed}
+                                    disableThumbnails={isLessons && !loaded}
                                     on:click={(e) => slideClick(e, i)}
                                 />
                             {/if}

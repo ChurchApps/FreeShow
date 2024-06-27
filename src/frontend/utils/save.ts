@@ -228,6 +228,7 @@ export function closeApp() {
 
 // GET SAVED STATE
 
+let initialized: boolean = false
 export function unsavedUpdater() {
     let cachedValues: any = {}
     let s = { ...saveList, folders, projects, showsCache, stageShows }
@@ -244,7 +245,7 @@ export function unsavedUpdater() {
                 cachedValues[id] = stringObj
             }
 
-            saved.set(false)
+            if (initialized) saved.set(false)
         })
 
         // set cached custom listener on load
@@ -255,7 +256,7 @@ export function unsavedUpdater() {
         }
     })
 
-    saved.set(true)
+    initialized = true
 }
 
 const customSavedListener = {

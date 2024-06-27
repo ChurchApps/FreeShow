@@ -214,17 +214,18 @@ function convertToSlides(groups) {
         group.files.forEach((file, fileIndex: number) => {
             if (!file.url) return
 
+            let loop = !!(file.loopVideo || file.loop || file.name.includes("Herman and Rusty Title"))
             let mediaId = uid()
             // find existing
             let existingId = Object.keys(media).find((id) => media[id].path === file.url)
             if (existingId) mediaId = existingId
-            else media[mediaId] = { name: file.name, path: file.url, muted: false, loop: !!file.loopVideo }
+            else media[mediaId] = { name: file.name, path: file.url, muted: false, loop }
 
             let extension = getExtension(file.url)
             if (extension.includes("/") || extension.includes("\\")) extension = ""
             if (!extension && file.fileType) extension = file.fileType.slice(file.fileType.indexOf("/") + 1)
             if (!extension && file.streamUrl) extension = "mp4"
-            let nextAfterMedia = !media[mediaId].loop && get(videoExtensions).includes(extension)
+            let nextAfterMedia = !loop && get(videoExtensions).includes(extension)
             if (groupIndex >= groups.length - 1 && fileIndex >= group.files.length - 1) nextAfterMedia = false
 
             let slideId = uid()
