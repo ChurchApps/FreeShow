@@ -110,7 +110,7 @@ jobs:
 
             # for some reason the build command don't continue after the rollup build
             - name: Sleep for 5 minutes
-              run: sleep 300s
+              run: sleep 300
               shell: bash
 
             - name: Build and release app
