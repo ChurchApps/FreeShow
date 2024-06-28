@@ -61,7 +61,7 @@ async function generateThumbnail(data: Thumbnail) {
 }
 
 let thumbnailFolderPath: string = ""
-function getThumbnailFolderPath() {
+export function getThumbnailFolderPath() {
     if (thumbnailFolderPath) return thumbnailFolderPath
 
     let p: string = path.join(app.getPath("temp"), "freeshow-cache")

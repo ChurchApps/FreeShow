@@ -108,6 +108,9 @@
     function openLog() {
         send(MAIN, ["OPEN_LOG"])
     }
+    function openCache() {
+        send(MAIN, ["OPEN_CACHE"])
+    }
 
     // backup
     function backup() {
@@ -261,8 +264,11 @@
 </CombinedInput> -->
 
 <CombinedInput>
-    <Button style="width: 100%;" on:click={openLog}>
+    <Button style="width: 50%;" on:click={openLog}>
         <Icon id="document" right /><T id="actions.open_log_file" />
+    </Button>
+    <Button on:click={openCache}>
+        <Icon id="folder" right /><T id="actions.open_cache_folder" />
     </Button>
 </CombinedInput>
 

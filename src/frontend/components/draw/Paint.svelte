@@ -6,7 +6,7 @@
 
     export let settings: any = {}
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
     $: currentLayout = currentOutput.out?.slide ? _show(currentOutput.out.slide.id).layouts([currentOutput.out.slide.layout]).ref()[0] : []
     $: currentSlide = currentOutput.out?.slide ? (currentOutput.out.slide.id === "temp" ? { items: currentOutput.out.slide.tempItems } : _show(currentOutput.out.slide.id).slides([currentLayout![currentOutput.out.slide.index!].id]).get()[0]) : null
     $: resolution = getResolution(currentSlide?.settings?.resolution, { $outputs, $styles })

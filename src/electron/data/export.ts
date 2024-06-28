@@ -7,9 +7,10 @@ import fs from "fs"
 import { join } from "path"
 import { EXPORT, MAIN, STARTUP } from "../../types/Channels"
 import { isProd, toApp } from "../index"
-import { dataFolderNames, doesPathExist, getDataFolder, openSystemFolder, selectFolderDialog } from "../utils/files"
+import { dataFolderNames, doesPathExist, getDataFolder, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
 import { exportOptions } from "../utils/windowOptions"
 import { Message } from "../../types/Socket"
+import { getAllShows } from "../utils/responses"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions: any = {
@@ -35,6 +36,11 @@ export function startExport(_e: any, msg: Message) {
         return
     }
 
+    if (msg.channel === "ALL_SHOWS") {
+        exportAllShows(msg.data)
+        return
+    }
+
     if (msg.channel !== "GENERATE") return
 
     if (msg.data.type === "pdf") createPDFWindow(msg.data)
@@ -44,16 +50,16 @@ export function startExport(_e: any, msg: Message) {
 
 // only open once per session
 let systemOpened: boolean = false
-function doneWritingFile(err: any, exportFolder: string) {
+function doneWritingFile(err: any, exportFolder: string, toMain: boolean = true) {
     let msg: string = "export.exported"
 
     // open export location in system when completed
     if (!err && !systemOpened) {
         openSystemFolder(exportFolder)
         systemOpened = true
-    } else msg = err
+    } else if (err) msg = err
 
-    toApp(MAIN, { channel: "ALERT", data: msg })
+    if (toMain) toApp(MAIN, { channel: "ALERT", data: msg })
 }
 
 // ----- PDF -----
@@ -118,8 +124,8 @@ export function exportJSON(content: any, extension: string, path: string) {
 // ----- TXT -----
 
 export function exportTXT(data: any) {
-    data.shows.forEach((show: any) => {
-        writeFile(join(data.path, show.name), ".txt", getSlidesText(show), "utf-8", (err: any) => doneWritingFile(err, data.path))
+    data.shows.forEach((show: any, i: number) => {
+        writeFile(join(data.path, show.name), ".txt", getSlidesText(show), "utf-8", (err: any) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
     })
 }
 
@@ -166,6 +172,28 @@ function getSlidesText(show: any) {
     text = text.replaceAll("\n\n\n", "\n\n")
 
     return text.trim()
+}
+
+// ----- ALL SHOWS -----
+
+function exportAllShows(data: any) {
+    let type = data.type || "txt"
+
+    if (type !== "txt") return
+
+    let allShows: string[] = getAllShows({ path: data.showsPath })
+    let shows: any[] = []
+    for (let i = 0; i < allShows.length; i++) {
+        const showName: string = allShows[i]
+        const showFilePath = join(data.showsPath, showName)
+        // WIP override existing instead of creating new?
+        const showContent: any = parseShow(readFile(showFilePath))
+
+        if (showContent?.[1]) shows.push(showContent[1])
+    }
+
+    if (shows.length) exportTXT({ ...data, shows })
+    else toApp(MAIN, { channel: "ALERT", data: "Exported 0 shows!" })
 }
 
 // ----- PROJECT -----

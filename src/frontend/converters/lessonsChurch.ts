@@ -44,6 +44,8 @@ type OlfLesson = {
     lessonDescription: string
     lessonImage: string
     lessonName: string
+    studyName: string
+    programAbout: string
 }
 
 export async function convertLessonsPresentation(data: any) {
@@ -133,7 +135,9 @@ function convertOpenLessonPlaylist(lesson: OlpLesson) {
         let name = lesson.lessonTitle
         if (lesson.lessonName !== name) name = `${name} - ${lesson.lessonName}`
         show.name = checkName(name, showId)
-        show.reference = { type: "lessons" }
+        let studyName = (lesson as any).studyName || ""
+        let about = (lesson as any).programAbout || ""
+        show.reference = { type: "lessons", data: { about, studyName } }
 
         show.slides = slides
         show.media = media
@@ -214,7 +218,7 @@ function convertToSlides(groups) {
         group.files.forEach((file, fileIndex: number) => {
             if (!file.url) return
 
-            let loop = !!(file.loopVideo || file.loop || file.name.includes("Herman and Rusty Title"))
+            let loop = !!(file.loopVideo || file.loop || file.name.includes("Title"))
             let mediaId = uid()
             // find existing
             let existingId = Object.keys(media).find((id) => media[id].path === file.url)

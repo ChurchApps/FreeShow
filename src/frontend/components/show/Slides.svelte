@@ -123,7 +123,7 @@
                         let matching = word.toLowerCase().indexOf(newWord)
                         if (matching >= 0) {
                             let capitalized = newWord[0].toUpperCase() + newWord.slice(1)
-                            word = word.slice(0, matching) + capitalized + word.slice(capitalized.length)
+                            word = word.slice(0, matching) + capitalized + word.slice(matching + capitalized.length)
                         }
 
                         return word

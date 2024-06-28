@@ -238,7 +238,7 @@
         zoomOpened = false
     }
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
 
     // select all
     $: if ($selectAllMedia) selectAll()

@@ -13,7 +13,7 @@ import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { error_log } from "../data/store"
-import { getThumbnail, saveImage } from "../data/thumbnails"
+import { getThumbnail, getThumbnailFolderPath, saveImage } from "../data/thumbnails"
 import { outputWindows } from "../output/output"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
@@ -107,6 +107,7 @@ const mainResponses: any = {
     DATA_PATH: (): string => getDocumentsFolder(null, ""),
     LOG_ERROR: (data: any) => logError(data),
     OPEN_LOG: () => openSystemFolder(error_log.path),
+    OPEN_CACHE: () => openSystemFolder(getThumbnailFolderPath()),
     // SHOWS
     DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
     REFRESH_SHOWS: (data: any) => refreshAllShows(data),

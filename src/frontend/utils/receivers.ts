@@ -137,7 +137,7 @@ const receiveMAIN: any = {
     SHOWS_PATH: (a: any) => showsPath.set(a),
     DATA_PATH: (a: any) => dataPath.set(a),
     ALERT: (a: any) => {
-        alertMessage.set(a)
+        alertMessage.set(a || "")
 
         if (a === "error.display") {
             let outputIds = getActiveOutputs(get(outputs), false, true)

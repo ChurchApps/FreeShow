@@ -140,7 +140,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
     let outputId = customOutputId || getActiveOutputs()[0]
-    let currentOutput: any = get(outputs)[outputId]
+    let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
 
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
@@ -264,7 +264,7 @@ export function previousSlide(e: any) {
     if (get(outLocked)) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-    let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+    let currentOutput: any = get(outputs)[getActiveOutputs()[0]] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
     let layout: any[] = _show(slide ? slide.id : "active")
@@ -325,7 +325,7 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
 
     index++
 
-    let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+    let currentOutput: any = get(outputs)[getActiveOutputs()[0]] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     let layout: any[] = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
@@ -351,7 +351,7 @@ export function randomSlide() {
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
     let outputId = getActiveOutputs()[0]
-    let currentOutput: any = get(outputs)[outputId]
+    let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     let showId = slide?.id || get(activeShow)?.id
     if (!showId) return

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { EXPORT } from "../../../../types/Channels"
     import type { Project } from "../../../../types/Projects"
-    import { activePopup, activeProject, activeShow, dataPath, os, projects, selected, showsCache, shows as showsList } from "../../../stores"
+    import { activePopup, activeProject, activeShow, dataPath, os, projects, selected, showsCache, showsPath } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { send } from "../../../utils/request"
     import Pdf from "../../export/Pdf.svelte"
@@ -32,13 +32,12 @@
             return $selected.data.map(({ id }) => ({ id, ...$showsCache[id] }))
         },
         all_shows: () => {
-            let allShows: any[] = []
-            console.log($showsCache)
-
-            Object.entries($showsCache).forEach(([id, show]) => {
-                allShows.push({ id, ...show })
-            })
-            return allShows
+            // let allShows: any[] = []
+            // console.log($showsCache)
+            // Object.entries($showsCache).forEach(([id, show]) => {
+            //     allShows.push({ id, ...show })
+            // })
+            // return allShows
         },
     }
 
@@ -55,14 +54,17 @@
     let loading: boolean = false
     async function getShowsToExport() {
         shows = []
+        loading = true
+
         if (what.id === "project" && $activeProject) await loadShows($projects[$activeProject].shows.filter(({ type }) => type === undefined || type === "show").map(({ id }) => id))
         else if (what.id === "selected_shows") await loadShows($selected.data.map(({ id }) => id))
         else if (what.id === "all_shows") {
-            loading = true
-            // WIP progress meter & faster loading
-            await loadShows(Object.keys($showsList))
-            loading = false
+            format.id = "txt"
         }
+
+        loading = false
+        if (what.id === "all_shows") return
+
         shows = getShows[what.id]()
     }
 
@@ -104,6 +106,12 @@
             return
         }
 
+        if (what.id === "all_shows") {
+            loading = true
+            send(EXPORT, ["ALL_SHOWS"], { type: "txt", path: $dataPath, showsPath: $showsPath })
+            return
+        }
+
         if (format.id === "project") {
             let project: Project | null = what.id === "project" && $activeProject ? $projects[$activeProject] : null
             if (!project) {
@@ -129,7 +137,11 @@
     <p style="white-space: break-spaces;"><T id="export.export_as" /></p>
     <Dropdown style="min-width: 200px;" options={whats} value={what.name} on:click={(e) => (what = e.detail)} />
     <p style="white-space: break-spaces;"><T id="export.export_as" index={1} />&nbsp;</p>
-    <Dropdown style="min-width: 200px;" options={formats} value={format.name} on:click={(e) => (format = e.detail)} />
+    {#if what.id === "all_shows"}
+        TXT
+    {:else}
+        <Dropdown style="min-width: 200px;" options={formats} value={format.name} on:click={(e) => (format = e.detail)} />
+    {/if}
 </div>
 
 <hr />
@@ -246,7 +258,7 @@
 {/if}
 
 {#if loading}
-    <Center>
+    <Center padding={10}>
         <Loader />
     </Center>
 {/if}
@@ -270,7 +282,7 @@
   </span>
 {/if} -->
 
-<Button style="margin-top: 10px;" disabled={!shows.length} on:click={exportClick} center dark>
+<Button style="margin-top: 10px;" disabled={!shows.length && what.id !== "all_shows"} on:click={exportClick} center dark>
     <Icon id="export" size={1.2} right />
     <T id="export.export" />
     {#if shows.length > 1 && format.id !== "project"}

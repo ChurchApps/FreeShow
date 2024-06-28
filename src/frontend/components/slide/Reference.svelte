@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { MAIN } from "../../../types/Channels"
     import type { Show } from "../../../types/Show"
     import { activeDrawerTab, activeShow, drawer, labelsDisabled, openScripture, scriptures, shows } from "../../stores"
+    import { send } from "../../utils/request"
     import { createSlides, getDateString, getSelectedEvents, sortDays } from "../drawer/calendar/calendar"
     import { history } from "../helpers/history"
     import { setDrawerTabData } from "../helpers/historyHelpers"
@@ -10,24 +12,26 @@
 
     export let show: Show
 
+    $: data = show.reference?.data || {}
+
     async function updateCalendar() {
-        let currentEvents: any[] = getSelectedEvents(show.reference?.data?.days)
+        let currentEvents: any[] = getSelectedEvents(data.days)
 
         let showId: string = $activeShow?.id || ""
-        let data = await createSlides(currentEvents, showId)
+        let slidesData = await createSlides(currentEvents, showId)
 
-        history({ id: "UPDATE", newData: { data: data.show }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
+        history({ id: "UPDATE", newData: { data: slidesData.show }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
     }
 
     function getDaysString() {
-        let { sortedDays, from, to } = sortDays(show.reference?.data?.days)
+        let { sortedDays, from, to } = sortDays(data.days)
         let string = getDateString(from)
         if (sortedDays[0] - sortedDays[1] < 0) string += " - " + getDateString(to)
         return string
     }
 
     function openTab() {
-        let collection = show.reference?.data?.collection
+        let collection = data.collection
         if (!collection) return
 
         let scriptureId = $scriptures[collection] ? collection : Object.values($scriptures).find((a: any) => a.id === collection)
@@ -42,28 +46,50 @@
         // open drawer if closed
         if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
     }
+
+    function openURL(url: string) {
+        send(MAIN, ["URL"], url)
+    }
+
+    function removeMarkdownURL(text: string) {
+        return text.replace(/\[([^\]]+)\][^\)]+\)/g, "$1")
+    }
 </script>
 
 <div>
     {#if show.reference?.type === "calendar"}
         <p>
             <T id="menu.calendar" />: {getDaysString()}
-            {#if show.reference?.data?.show && $shows[show.reference?.data?.show]}
+            {#if data.show && $shows[data.show]}
                 {" + "}{$shows[show.reference.data.show].name}
             {/if}
         </p>
+
         <Button on:click={updateCalendar} style="white-space: nowrap;">
             <Icon id="calendar" right={!$labelsDisabled} />
             {#if !$labelsDisabled}<T id="show.update" />{/if}
         </Button>
     {:else if show.reference?.type === "scripture"}
-        <p title={show.reference?.data?.version || ""}><T id="tabs.scripture" />: {show.reference?.data?.version || ""}</p>
+        <p title={data.version || ""}><T id="tabs.scripture" />: {data.version || ""}</p>
+
         <Button on:click={openTab} style="white-space: nowrap;">
             <Icon id="scripture" right={!$labelsDisabled} />
             {#if !$labelsDisabled}<T id="tabs.scripture" />{/if}
         </Button>
     {:else if show.reference?.type === "lessons"}
-        <p>Lessons.church</p>
+        <p>
+            {#if data.studyName}
+                {data.studyName}{#if data.about}:{/if}
+            {/if}
+            {#if data.about}
+                <span style="font-size: 0.8em;opacity: 0.8;">{removeMarkdownURL(data.about)}</span>
+            {/if}
+        </p>
+
+        <Button title="Open Lessons.church Website" on:click={() => openURL("https://lessons.church")} style="white-space: nowrap;">
+            <Icon id="book" right />
+            Lessons.church
+        </Button>
     {/if}
 </div>
 

@@ -61,9 +61,20 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     }
 
     if (startAt > 0) audio.currentTime = startAt
-    audio.play()
 
-    analyseAudio()
+    audio.addEventListener("error", (err) => {
+        console.error("Could not get audio:", err)
+
+        playingAudio.update((a) => {
+            delete a[path]
+            return a
+        })
+    })
+
+    audio.addEventListener("canplay", () => {
+        audio.play()
+        analyseAudio()
+    })
 }
 
 // if no "path" is provided it will fade out/clear all audio

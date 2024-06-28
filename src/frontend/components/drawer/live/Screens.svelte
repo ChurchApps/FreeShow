@@ -13,7 +13,7 @@
     receive(MAIN, { GET_SCREENS: (d: any) => (screens = d) }, "GET_SCREENS")
     onDestroy(() => destroy(MAIN, "GET_SCREENS"))
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
 
     $: console.log(screens)
 </script>
