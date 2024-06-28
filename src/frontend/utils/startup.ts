@@ -19,6 +19,8 @@ export function startup() {
         let type = msg.data
         currentWindow.set(type)
 
+        if (type) loaded.set(true)
+
         if (type === "pdf") return
         if (type === "output") {
             startupOutput()
@@ -30,8 +32,6 @@ export function startup() {
 }
 
 async function startupMain() {
-    loaded.set(false)
-
     setLanguage()
     setupMainReceivers()
     getMainData()

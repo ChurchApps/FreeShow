@@ -15,10 +15,11 @@ export const clearAll = () => {
     clearTimers()
 }
 
-export function clearTimers() {
-    setOutput("transition", null)
-    let outs = getActiveOutputs()
+export function clearTimers(outputId: string = "") {
+    setOutput("transition", null, false, outputId)
+
+    let outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
     Object.keys(get(slideTimers)).forEach((id) => {
-        if (outs.includes(id)) get(slideTimers)[id].timer?.clear()
+        if (outputIds.includes(id)) get(slideTimers)[id].timer?.clear()
     })
 }

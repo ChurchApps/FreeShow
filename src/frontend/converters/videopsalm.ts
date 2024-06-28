@@ -89,6 +89,7 @@ const keys = [
     "Tonality",
     "Language",
     "IsAudioFileEnabled",
+    "Tempo",
 ]
 export function convertVideopsalm(data: any) {
     let categoryId = createCategory("VideoPsalm")
@@ -103,13 +104,8 @@ export function convertVideopsalm(data: any) {
             content = content.split(":").map(fixJSON).join(":")
             content = content.replaceAll("\t", "").replaceAll("\v", "").replaceAll("\r", "").replaceAll("\f", "").replaceAll(',<br>"', ',"').replaceAll("﻿", "") // remove this invisible character
 
-            try {
-                content = JSON.parse(content || "{}") as VideoPsalm
-            } catch (e: any) {
-                console.error(e)
-                let pos = Number(e.toString().replace(/\D+/g, "") || 100)
-                console.log(pos, content.slice(pos - 10, pos) + "[HERE>]" + content.slice(pos, pos + 10), content.slice(pos - 100, pos + 100))
-            }
+            content = parseContent(content)
+            if (!content) return
         }
 
         if (!Object.keys(content).length) {
@@ -161,6 +157,33 @@ export function convertVideopsalm(data: any) {
             }
         }
     })
+}
+
+let previousIndex: number = -1
+function parseContent(content: string): VideoPsalm | null {
+    let newContent: VideoPsalm | null = null
+
+    try {
+        newContent = JSON.parse(content || "{}")
+    } catch (e: any) {
+        console.error(e)
+        let pos = Number(e.toString().replace(/\D+/g, "") || 100)
+        console.log(pos, content.slice(pos - 10, pos) + "[HERE>]" + content.slice(pos, pos + 10), content.slice(pos - 100, pos + 100))
+
+        if (pos === previousIndex) return newContent
+
+        // TRY to auto fix this (by adding "")
+        let start = content.slice(0, pos)
+        let wordEndIndex = content.indexOf(":", pos)
+        let wordId = content.slice(pos, wordEndIndex)
+        let end = content.slice(wordEndIndex)
+        content = `${start}"${wordId}"${end}`
+
+        previousIndex = pos
+        newContent = parseContent(content)
+    }
+
+    return newContent
 }
 
 const removeKeys = ["Body", "Background", "Footer", "Header", "Version"]

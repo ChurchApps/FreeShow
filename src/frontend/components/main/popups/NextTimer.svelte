@@ -70,7 +70,7 @@
     </CombinedInput>
 
     <CombinedInput>
-        <Button style="flex: 1;" on:click={() => updateValue(undefined)} center dark>
+        <Button style="flex: 1;" disabled={!totalTime} on:click={() => updateValue(undefined)} center dark>
             <Icon id="reset" right />
             <T id="actions.reset" />
         </Button>

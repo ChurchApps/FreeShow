@@ -27,7 +27,7 @@
         if (searchValue.length > 1) fullFilteredWindows = fullFilteredWindows.filter((a) => filter(a.name).includes(searchValue))
     }
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
 </script>
 
 {#if fullFilteredWindows.length}

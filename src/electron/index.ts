@@ -87,7 +87,7 @@ function mainWindowLoaded() {
 
     initialize()
 
-    if (config.get("maximized")) mainWindow!.maximize()
+    if (config.get("maximized")) maximizeMain()
     mainWindow?.show()
     loadingWindow?.close()
 

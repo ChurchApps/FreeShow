@@ -83,7 +83,11 @@ const actions: any = {
     save: () => save(),
     import: () => activePopup.set("import"),
     export_more: () => activePopup.set("export"),
-    settings: () => activePage.set("settings"),
+    settings: () => {
+        if (get(activePage) === "stage") settingsTab.set("connection")
+        else if (get(activePage) === "settings") settingsTab.set("general")
+        activePage.set("settings")
+    },
     quit: () => {
         if (get(saved)) send(MAIN, ["CLOSE"])
         else activePopup.set("unsaved")

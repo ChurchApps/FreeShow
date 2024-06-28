@@ -27,8 +27,7 @@
     // $: currentTime = getCurrentTime()
     $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
 
-    $: if (timer) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
-    $: console.log(currentTime, $activeTimers, $timers, id, timer)
+    $: if (Object.keys(timer).length) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
 
     $: min = Math.min(timer.start || 0, timer.end || 0)
     $: max = Math.max(timer.start || 0, timer.end || 0)

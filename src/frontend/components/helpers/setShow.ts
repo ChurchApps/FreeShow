@@ -97,6 +97,7 @@ export async function loadShows(s: string[]) {
         let listenerId = uid()
         window.api.receive(SHOW, receiveShow, listenerId)
         function receiveShow(msg: any) {
+            if (!s.includes(msg.id)) return
             count++
 
             // prevent receiving multiple times

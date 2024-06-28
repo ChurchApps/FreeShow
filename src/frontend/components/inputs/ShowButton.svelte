@@ -85,7 +85,7 @@
     function doubleClick(e: any) {
         if (editActive || $outLocked || e.target.closest("input")) return
 
-        let currentOutput: any = getActiveOutputs()[0]
+        let currentOutput: any = getActiveOutputs()[0] || {}
         let slide: any = currentOutput.out?.slide || null
 
         if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout].slides.length) {

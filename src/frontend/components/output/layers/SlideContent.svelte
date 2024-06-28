@@ -33,6 +33,7 @@
     let loading: boolean = false
     let timeout: any = null
     $: if (currentSlide || lines) createSlide()
+    let isAutoSize: boolean = false
     function createSlide() {
         let slideRef = JSON.stringify({ currentSlide, outSlide })
 
@@ -56,30 +57,33 @@
         timeout = setTimeout(
             () => {
                 loading = true
-                let loadingFirst = !slide1
+                // always use first if no transition
+                let loadingFirst = !slide1 || transition.duration === 0
 
-                if (!slide1) slide1 = { ref: slideRef, data: clone(currentSlide), lines: clone(lines) }
+                if (loadingFirst) slide1 = { ref: slideRef, data: clone(currentSlide), lines: clone(lines) }
                 else slide2 = { ref: slideRef, data: clone(currentSlide), lines: clone(lines) }
 
                 // wait for scripture auto size
                 let autoSize = outSlide?.id === "temp"
                 // check output template auto size
-                if (customTemplate) {
+                if (!autoSize && customTemplate) {
                     let templateItems = $templates[customTemplate]?.items || []
                     let hasAuto = templateItems.find((a) => a.auto)
                     if (hasAuto) autoSize = true
                 }
 
+                // WIP transition.duration === 0 && autoSize will remove text while loading...
                 // WIP wait for autoSize to finish!
                 let timeoutDuration = 10
                 if (autoSize) timeoutDuration = 400
+                isAutoSize = autoSize
 
                 // max 2 seconds loading time...
                 timeout = setTimeout(() => {
                     if (loading) loaded(loadingFirst)
 
                     timeout = null
-                    textLoaded.set(true)
+                    textLoaded.set(true) // not in use
                 }, timeoutDuration)
             },
             10 // add a buffer to reduce flickering on rapid changes (duration / 4)
@@ -90,16 +94,16 @@
         if (!loading) return
 
         loading = false
-        firstActive = isFirst
 
-        // allow firstActive to trigger first
+        if (isFirst) {
+            slide2 = null
+        } else {
+            slide1 = null
+        }
+
         setTimeout(() => {
-            if (isFirst) {
-                slide2 = null
-            } else {
-                slide1 = null
-            }
-        })
+            firstActive = isFirst
+        }, 50)
     }
 
     // don't remove data when clearing
@@ -107,42 +111,49 @@
     let slide2Data: Slide
     $: if (slide1) slide1Data = clone(slide1.data)
     $: if (slide2) slide2Data = clone(slide2.data)
+
+    $: isFirstHidden = loading && (!firstActive || transition.duration === 0)
+    $: isSecondHidden = loading && firstActive
+
+    $: hasChanged = !!(transition.duration === 0 && !isAutoSize && slide1)
 </script>
 
 {#if slide1}
-    <div class="slide" class:hidden={loading && !firstActive}>
+    <div class="slide" class:hidden={isFirstHidden} style="--duration: {(transition.duration ?? 500) * 0.8}ms">
         <!-- WIP crossfade: in:cReceive={{ key: "slide" }} out:cSend={{ key: "slide" }} -->
         <!-- svelte transition bug when changing between pages -->
         <OutputTransition {transition}>
-            {#if slide1Data?.items}
-                {#each slide1Data.items as item}
-                    {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                        <Textbox
-                            filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
-                            backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
-                            key={isKeyOutput}
-                            disableListTransition={mirror}
-                            chords={item.chords?.enabled}
-                            animationStyle={animationData.style || {}}
-                            {item}
-                            {ratio}
-                            ref={{ showId: outSlide.id, slideId: slide1Data.id, id: slide1Data.id || "", layoutId: outSlide.layout }}
-                            linesStart={slide1.lines?.[currentLineId]?.start}
-                            linesEnd={slide1.lines?.[currentLineId]?.end}
-                            {transitionEnabled}
-                            outputStyle={currentStyle}
-                            {mirror}
-                            slideIndex={outSlide.index}
-                        />
-                    {/if}
-                {/each}
-            {/if}
+            {#key hasChanged}
+                {#if slide1Data?.items}
+                    {#each slide1Data.items as item}
+                        {#if !item.bindings?.length || item.bindings.includes(outputId)}
+                            <Textbox
+                                filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
+                                backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                                key={isKeyOutput}
+                                disableListTransition={mirror}
+                                chords={item.chords?.enabled}
+                                animationStyle={animationData.style || {}}
+                                {item}
+                                {ratio}
+                                ref={{ showId: outSlide.id, slideId: slide1Data.id, id: slide1Data.id || "", layoutId: outSlide.layout }}
+                                linesStart={slide1.lines?.[currentLineId]?.start}
+                                linesEnd={slide1.lines?.[currentLineId]?.end}
+                                {transitionEnabled}
+                                outputStyle={currentStyle}
+                                {mirror}
+                                slideIndex={outSlide.index}
+                            />
+                        {/if}
+                    {/each}
+                {/if}
+            {/key}
         </OutputTransition>
     </div>
 {/if}
 
 {#if slide2}
-    <div class="slide" class:hidden={loading && firstActive}>
+    <div class="slide" class:hidden={isSecondHidden} style="--duration: {(transition.duration ?? 500) * 0.8}ms">
         <OutputTransition {transition}>
             {#if slide2Data?.items}
                 {#each slide2Data.items as item}
@@ -172,10 +183,6 @@
 {/if}
 
 <style>
-    .hidden {
-        opacity: 0;
-    }
-
     .slide {
         position: absolute;
         top: 50%;
@@ -186,5 +193,14 @@
 
         /* used for drawing */
         pointer-events: none;
+
+        /* hidden */
+        --duration: 400ms; /* 500 * 0.8 */
+        transition: opacity var(--duration);
+        opacity: 1;
+    }
+    .slide.hidden {
+        transition: none;
+        opacity: 0;
     }
 </style>

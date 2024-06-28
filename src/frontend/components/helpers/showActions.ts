@@ -2,9 +2,10 @@ import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { send } from "../../utils/request"
-import { runAction } from "../actions/actions"
+import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
+import { clearTimers } from "../output/clear"
 import {
     activeEdit,
     activePage,
@@ -39,8 +40,8 @@ import { clearPlayingVideo, getActiveOutputs, isOutCleared, refreshOut, setOutpu
 import { loadShows } from "./setShow"
 import { initializeMetadata } from "./show"
 import { _show } from "./shows"
-import { stopTimers } from "./timerTick"
 import { addZero } from "./time"
+import { stopTimers } from "./timerTick"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -134,12 +135,12 @@ function getOutputWithLines() {
     return currentLines
 }
 
-export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string | null = null, nextAfterMedia: boolean = false) {
+export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string = "", nextAfterMedia: boolean = false) {
     if (get(outLocked) && !bypassLock) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
     let outputId = customOutputId || getActiveOutputs()[0]
-    let currentOutput: any = get(outputs)[outputId]
+    let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
 
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
@@ -263,7 +264,7 @@ export function previousSlide(e: any) {
     if (get(outLocked)) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-    let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+    let currentOutput: any = get(outputs)[getActiveOutputs()[0]] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
     let layout: any[] = _show(slide ? slide.id : "active")
@@ -324,7 +325,7 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
 
     index++
 
-    let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+    let currentOutput: any = get(outputs)[getActiveOutputs()[0]] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     let layout: any[] = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
@@ -350,7 +351,7 @@ export function randomSlide() {
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
     let outputId = getActiveOutputs()[0]
-    let currentOutput: any = get(outputs)[outputId]
+    let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     let showId = slide?.id || get(activeShow)?.id
     if (!showId) return
@@ -378,7 +379,7 @@ function randomNumber(end: number) {
     return Math.floor(Math.random() * end)
 }
 
-export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string | null = null, actionTimeout: number = 10) {
+export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string = "", actionTimeout: number = 10) {
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
 
     _show(showId).set({ key: "timestamps.used", value: new Date().getTime() })
@@ -411,7 +412,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         if (!background) {
             layout.forEach((a, i) => {
                 if (i <= index && !a.data.disabled) {
-                    if (a.data.actions?.clearBackground) background = null
+                    if (slideHasAction(a.data?.actions, "clear_background")) background = null
                     else if (a.data.background) background = a.data.background
                     if (a.data.background && _show(showId).get("media")[a.data.background]?.loop === false) background = null
                 }
@@ -496,8 +497,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             // outTransition.set({ duration: data.nextTimer })
             setOutput("transition", { duration: data.nextTimer }, false, outputId)
         } else {
-            // outTransition.set(null)
-            setOutput("transition", null, false, outputId)
+            clearTimers(outputId)
         }
 
         // DEPRECATED since <= 1.1.6, but still in use
@@ -584,7 +584,7 @@ export async function startShow(showId: string) {
 
     setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
     // timeout has to be 1200 to let output data update properly (in case slide has special actions)
-    updateOut(showId, 0, slideRef, true, null, 1200)
+    updateOut(showId, 0, slideRef, true, "", 1200)
 }
 
 export function changeOutputStyle({ outputStyle, styleOutputs }: API_output_style) {

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import { activePage, activePopup, activeShow, alertMessage, cachedShowsData, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
@@ -16,8 +15,6 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import TextEditor from "./TextEditor.svelte"
-    import { destroy, receive } from "../../utils/request"
-    import { MAIN } from "../../../types/Channels"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId]
@@ -75,8 +72,11 @@
         } else endIndex = null
     }
 
-    $: if (showId && currentShow?.category !== "lessons") {
-        // update show by its template
+    // update show by its template
+    $: if (showId && !isLessons && loaded) setTimeout(updateTemplate, 100)
+    function updateTemplate() {
+        if (!loaded) return
+
         let showTemplate = currentShow?.settings?.template || ""
         history({ id: "TEMPLATE", save: false, newData: { id: showTemplate }, location: { page: "show" } })
     }
@@ -86,21 +86,28 @@
         // keep letters and spaces
         const regEx = /[^a-zA-Z\s]+/
 
-        showsCache.update((a) => {
-            let slides = a[showId]?.slides || {}
-            Object.keys(slides).forEach((slideId) => {
-                let slide = slides[slideId]
-                slide.items.forEach((item) => {
-                    if (!item.lines) return
-                    item.lines.forEach((line) => {
-                        line?.text.forEach((text) => {
-                            let newValue = capitalize(text.value)
-                            text.value = newValue
-                        })
+        let capitalized = false
+        let slides = _show(showId).get("slides") || {}
+        Object.keys(slides).forEach((slideId) => {
+            let slide = slides[slideId]
+
+            slide.items.forEach((item) => {
+                if (!item.lines) return
+
+                item.lines.forEach((line) => {
+                    line?.text.forEach((text) => {
+                        let newValue = capitalize(text.value)
+                        if (text.value !== newValue) capitalized = true
+                        text.value = newValue
                     })
                 })
             })
+        })
 
+        if (!capitalized) return
+
+        showsCache.update((a) => {
+            a[showId].slides = slides
             return a
         })
 
@@ -116,7 +123,7 @@
                         let matching = word.toLowerCase().indexOf(newWord)
                         if (matching >= 0) {
                             let capitalized = newWord[0].toUpperCase() + newWord.slice(1)
-                            word = word.slice(0, matching) + capitalized + word.slice(capitalized.length)
+                            word = word.slice(0, matching) + capitalized + word.slice(matching + capitalized.length)
                         }
 
                         return word
@@ -188,8 +195,7 @@
 
     $: if (!loaded && !lazyLoading && layoutSlides?.length) {
         lazyLoading = true
-        // lazyLoader = isLessons ? 0 : 1
-        lazyLoader = 1
+        lazyLoader = 0
         startLazyLoader()
     }
 
@@ -227,6 +233,9 @@
 
                     if (exists) {
                         lazyLoader = layoutSlides.length
+                        loaded = true
+                        lazyLoading = false
+
                         return
                     }
 
@@ -234,7 +243,7 @@
                     lazyLoader++
                     lessonsFailed++
                     startLazyLoader()
-                }, 2000)
+                }, 800)
 
                 timeout = null
                 return
@@ -243,10 +252,8 @@
             let downloaded = count.finished + count.failed
 
             // ensure media is loaded before initializing cache loading
-            setTimeout(() => {
-                lazyLoader = downloaded
-                lessonsFailed = count.failed
-            }, 1500)
+            lazyLoader = downloaded
+            lessonsFailed = count.failed
 
             if (downloaded < layoutSlides.length) {
                 alertMessage.set(`Please wait! Downloading Lessons.church media ${downloaded + 1}/${layoutSlides.length} ...`)
@@ -255,6 +262,10 @@
                 if (lessonsFailed) alertMessage.set(`Something went wrong!<br>Could not get ${count.failed} files of total ${layoutSlides.length}!<br><br>The files might have expired, but you can try importing again`)
                 else alertMessage.set(`Downloaded ${layoutSlides.length} files!`)
                 activePopup.set("alert")
+
+                loaded = true
+                lazyLoading = false
+                lessonsLoaded.set({})
             }
 
             timeout = null
@@ -272,7 +283,7 @@
 
     function checkImage(src: string) {
         let isVideo = $videoExtensions.includes(getExtension(src))
-        let media = new Image()
+        let media: any = new Image()
         if (isVideo) media = document.createElement("video")
 
         return new Promise((resolve) => {
@@ -372,6 +383,7 @@
                                     columns={$slidesOptions.columns}
                                     icons
                                     {altKeyPressed}
+                                    disableThumbnails={isLessons && !loaded}
                                     on:click={(e) => slideClick(e, i)}
                                 />
                             {/if}

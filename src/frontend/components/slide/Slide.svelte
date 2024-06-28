@@ -38,6 +38,7 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { slideHasAction } from "../actions/actions"
 
     export let slide: Slide
     export let layoutSlide: SlideData
@@ -54,6 +55,7 @@
     export let icons: boolean = false
     export let noQuickEdit: boolean = false
     export let altKeyPressed: boolean = false
+    export let disableThumbnails: boolean = false
 
     $: viewMode = $slidesOptions.mode || "grid"
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
@@ -63,12 +65,15 @@
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i <= index) {
-                if (a.actions?.clearBackground && (!a.disabled || i === index)) ghostBackground = null
+                if (slideHasAction(a.actions, "clear_background") && (!a.disabled || i === index)) ghostBackground = null
                 else if (a.background && !a.disabled) ghostBackground = show.media[a.background]
                 if (a.background && show.media[a.background]?.loop === false) ghostBackground = null
             }
         })
     }
+
+    // show loop icon if many backgruounds
+    $: backgroundCount = layoutSlides.reduce((count, layoutRef) => (count += layoutRef.background ? 1 : 0), 0)
 
     // auto find media
     $: bg = clone(background || ghostBackground)
@@ -92,7 +97,6 @@
 
         audioIds.forEach(async (audioId) => {
             let audio = showMedia[audioId]
-            console.log(audio, showMedia, audioId)
             if (!audio?.path) return
             locateFile(audioId, audio.path, folders, audio)
         })
@@ -121,12 +125,11 @@
             return
         }
 
-        if (!checkCloud) return
+        if (!checkCloud || !$showsCache[showId]?.media?.[fileId] || $showsCache[showId].media[fileId].cloud?.[cloudId] === path) return
 
         // set cloud path to path
         showsCache.update((a) => {
-            let media = a[showId]?.media?.[fileId]
-            if (!media) return a
+            let media = a[showId].media[fileId]
             if (!media.cloud) a[showId].media[fileId].cloud = {}
             a[showId].media[fileId].cloud![cloudId] = path
 
@@ -138,7 +141,7 @@
 
     // LOAD BACKGROUND
     $: bgPath = bg?.path || bg?.id || ""
-    $: if (bgPath) loadBackground()
+    $: if (bgPath && !disableThumbnails) loadBackground()
     let thumbnailPath: string = ""
     async function loadBackground() {
         if (ghostBackground) {
@@ -321,7 +324,7 @@
     {/if}
     <!-- icons -->
     {#if icons && !altKeyPressed && viewMode !== "simple"}
-        <Icons {timer} {layoutSlide} {background} {duration} {columns} {index} style={viewMode === "lyrics" ? "padding-top: 23px;" : ""} />
+        <Icons {timer} {layoutSlide} {background} {backgroundCount} {duration} {columns} {index} style={viewMode === "lyrics" ? "padding-top: 23px;" : ""} />
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->
@@ -350,7 +353,7 @@
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader name={$dictionary.error?.load} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration />
+                                <MediaLoader name={$dictionary.error?.load} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
                                 <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}

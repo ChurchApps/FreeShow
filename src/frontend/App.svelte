@@ -4,11 +4,13 @@
     import ContextMenu from "./components/context/ContextMenu.svelte"
     import Pdf from "./components/export/Pdf.svelte"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
+    import Loader from "./components/main/Loader.svelte"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
     import Recorder from "./components/main/Recorder.svelte"
     import Toast from "./components/main/Toast.svelte"
-    import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, os, outputDisplay } from "./stores"
+    import Center from "./components/system/Center.svelte"
+    import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, loaded, os, outputDisplay } from "./stores"
     import { focusArea, logerror, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -29,7 +31,7 @@
     $: if ($autosave) startAutosave()
 
     // stream to OutputShow
-    $: if (!$currentWindow && ($disabledServers.output_stream !== "" || !$outputDisplay)) toggleRemoteStream()
+    $: if (($loaded && $disabledServers.output_stream !== "") || !$outputDisplay) setTimeout(toggleRemoteStream, 1000)
 
     // close youtube ad
     $: if ($closeAd) setTimeout(() => closeAd.set(false), 10)
@@ -40,6 +42,7 @@
 {#if $currentWindow === "pdf"}
     <Pdf />
 {:else}
+    <!-- "isWindows" is only set in main window -->
     {#if isWindows}
         <MenuBar />
     {/if}
@@ -49,15 +52,16 @@
 
         {#if $currentWindow === "output"}
             <MainOutput />
-        {:else}
-            <!-- WIP black window before output is loaded (don't show app screen when creating output windows) -->
-            <!-- {#if !$loaded}<div class="black" />{/if} -->
-
+        {:else if $loaded}
             <Popup />
             <Toast />
             <Recorder />
 
             <MainLayout />
+        {:else}
+            <Center>
+                <Loader size={2} />
+            </Center>
         {/if}
     </main>
 {/if}
@@ -73,14 +77,4 @@
     .closeAd {
         height: 1px;
     }
-
-    /* .black {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: black;
-        z-index: 500;
-    } */
 </style>

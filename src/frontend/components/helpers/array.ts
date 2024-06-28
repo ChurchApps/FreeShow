@@ -50,7 +50,7 @@ export function sortByTime(a, b) {
 
 // sort objects in array by name
 export function sortByName(arr: any[]) {
-    return arr.sort((a, b) => a.name.localeCompare(b.name))
+    return arr.sort((a, b) => a.name?.localeCompare(b.name))
 }
 
 // sort objects in array alphabeticly

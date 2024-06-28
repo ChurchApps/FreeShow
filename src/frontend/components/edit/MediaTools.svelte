@@ -99,7 +99,7 @@
         updateStore("media", { keys: [mediaId, input.id], value })
 
         // update output filters
-        let currentOutput: any = $outputs[getActiveOutputs()[0]]
+        let currentOutput: any = $outputs[getActiveOutputs()[0]] || {}
         if (!currentOutput.out?.background || currentOutput.out?.background?.path !== mediaId) return
 
         let bg = currentOutput.out.background

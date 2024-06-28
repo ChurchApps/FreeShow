@@ -21,6 +21,7 @@
     export let loaded: boolean = false
     export let resolution: Resolution | null = null
     export let duration: number = 0
+    export let getDuration: boolean = false
     export let videoElem: any = null
 
     $: if (path) loaded = false
@@ -39,7 +40,7 @@
     $: if (mediaStyle.speed && videoElem) videoElem.playbackRate = mediaStyle.speed
 
     $: if (!videoElem) duration = 0
-    function getDuration() {
+    function getCurrentDuration() {
         if (!videoElem || duration) return
 
         duration = videoElem.duration
@@ -71,15 +72,17 @@
     $: useOriginal = hover || loadFullImage || retryCount > 5 || !thumbnailPath
 
     // get duration
-    $: if (type === "video" && thumbnailPath) getVideoDuration()
+    $: if (getDuration && type === "video" && thumbnailPath) getVideoDuration()
     function getVideoDuration() {
-        let video = document.createElement("video")
-        video.onloadeddata = () => {
-            duration = video.duration || 0
-            // video.pause()
-            video.src = ""
-        }
-        video.src = path
+        setTimeout(() => {
+            let video = document.createElement("video")
+            video.onloadeddata = () => {
+                duration = video.duration || 0
+                // video.pause()
+                video.src = ""
+            }
+            video.src = path
+        }, 20)
     }
 </script>
 
@@ -109,7 +112,7 @@
                 {/key}
             {/if}
             {#if type === "video" && useOriginal}
-                <video style="pointer-events: none;position: absolute;width: 100%;height: 100%;object-fit: {mediaStyle.fit};" bind:this={videoElem} on:error={reload} src={path} on:canplaythrough={getDuration}>
+                <video style="pointer-events: none;position: absolute;width: 100%;height: 100%;object-fit: {mediaStyle.fit};" bind:this={videoElem} on:error={reload} src={path} on:canplaythrough={getCurrentDuration}>
                     <track kind="captions" />
                 </video>
             {/if}

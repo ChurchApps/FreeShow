@@ -73,29 +73,33 @@ function increment(timer: any, i: number) {
 }
 
 // convert "show" to "action" <= 1.1.7
+let initialized: boolean = false
 function convertShowToAction() {
-    events.update((a) => {
-        Object.keys(a).forEach((eventId) => {
-            let event = a[eventId]
-            if (event.type === "show") {
-                event.type = "action"
-                event.action = { id: "start_show", data: { id: event.show } }
-            }
-        })
-        return a
+    if (initialized) return
+    initialized = true
+
+    let updated: boolean = false
+    let allEvents = get(events)
+    Object.keys(allEvents).forEach((eventId) => {
+        let newEvent = allEvents[eventId]
+        if (newEvent.type !== "show") return
+
+        updated = true
+        newEvent.type = "action"
+        newEvent.action = { id: "start_show", data: { id: newEvent.show } }
+
+        allEvents[eventId] = newEvent
     })
+
+    if (updated) events.set(allEvents)
 }
 
 let actionTimeout: any = null
-let initialized: boolean = false
 export function startEventTimer() {
     if (actionTimeout) return
     actionTimeout = true
 
-    if (!initialized) {
-        initialized = true
-        convertShowToAction()
-    }
+    convertShowToAction()
 
     let currentTime: Date = new Date()
     let actionEvents: Event[] = Object.values(get(events)).filter((a) => {

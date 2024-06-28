@@ -24,7 +24,7 @@ export const version: Writable<string> = writable("0.0.0")
 export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
 export const dictionary: Writable<Dictionary> = writable({})
 export const saved: Writable<boolean> = writable(true)
-export const loaded: Writable<boolean> = writable(true)
+export const loaded: Writable<boolean> = writable(false)
 export const loadedState: Writable<string[]> = writable([])
 export const isDev: Writable<boolean> = writable(false)
 export const windowState: Writable<any> = writable({})
@@ -357,4 +357,20 @@ export const $ = {
     videoExtensions,
     imageExtensions,
     audioExtensions,
+}
+
+// DEBUG STORE UPDATES
+const debugStores = false
+let updates: any = {}
+if (debugStores) startSubscriptions()
+function startSubscriptions() {
+    Object.entries($).forEach(([key, store]) => {
+        store.subscribe(() => {
+            if (!updates[key]) updates[key] = 0
+            updates[key]++
+
+            // first update is initializing empty store, second update sets saved value
+            if (updates[key] > 2) console.trace("STORE UPDATE:", key, updates[key])
+        })
+    })
 }

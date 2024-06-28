@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
     import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
@@ -148,9 +147,18 @@
     // TODO: check if file exists!!!
 
     let simularBgs: any[] = []
-    $: if (bgs.length) send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => decodeURIComponent(a.path)) })
-    receive(MAIN, { GET_SIMULAR: (data: any[]) => (simularBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)) }, "media_simular")
-    onDestroy(() => destroy(MAIN, "media_simular"))
+    $: if (bgs.length) getSimularPaths()
+    function getSimularPaths() {
+        send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => decodeURIComponent(a.path)) })
+
+        let listenerId = "media_simular"
+        destroy(MAIN, listenerId)
+        receive(MAIN, { GET_SIMULAR: (a) => receiveSimular(a) }, listenerId)
+        function receiveSimular(data: any[]) {
+            simularBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)
+            destroy(MAIN, listenerId)
+        }
+    }
 
     let newPaths: any = {}
     $: if (bgs) loadBackgrounds()
@@ -307,7 +315,7 @@
                     <!-- class="context #action" -->
                     <Button on:click={() => runAction(action)} style="padding: 8px;width: 100%;" title={action.name} bold={false}>
                         <Icon id={customData.icon || "actions"} size={1.2} right />
-                        <p><T id={customData.name} /></p>
+                        <p><T id={customData.name || ""} /></p>
                     </Button>
                 </SelectElem>
             {/each}

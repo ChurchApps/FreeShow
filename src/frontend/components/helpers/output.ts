@@ -8,7 +8,7 @@ import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
-import { clone, removeDuplicates } from "./array"
+import { clone, keysToID, removeDuplicates, sortByName } from "./array"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
@@ -29,7 +29,7 @@ export function displayOutputs(e: any = {}, auto: boolean = false) {
 // overlays: [],
 // transition: null,
 // TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
-export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string | null = null, add: boolean = false) {
+export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string = "", add: boolean = false) {
     outputs.update((a: any) => {
         let bindings = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0]?.[data.index]?.data?.bindings || [] : []
         let outs = bindings.length ? bindings : getActiveOutputs()
@@ -108,10 +108,12 @@ function videoStarting() {
     customActionActivation("video_start")
 }
 
+let sortedOutputs: any[] = []
 export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {
-    let sortedOutputs: any[] = Object.entries(updater || {})
-        .map(([id, a]: any) => ({ id, ...a }))
-        .sort((a, b) => a.name?.localeCompare(b.name))
+    if (sortedOutputs.length !== Object.keys(updater).length) {
+        sortedOutputs = sortByName(keysToID(updater || {}))
+    }
+
     let enabled: any[] = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true) && (removeStageOutput ? !a.stageOutput : true))
 
     if (hasToBeActive && enabled.filter((a) => a.active === true).length) enabled = enabled.filter((a) => a.active === true)
@@ -271,7 +273,7 @@ export function addOutput(onlyFirst: boolean = false) {
         if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id], rate: get(special).previewRate || "auto" })
         if (!onlyFirst && get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id, ...output[id] } })
 
-        currentOutputSettings.set(id)
+        if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
         return output
     })
 }

@@ -18,6 +18,7 @@ export const languages: any = {
     fr_FR: "Français", // French
     ru: "Русский", // Russian
     ko: "한국인", // Korean
+    nl: "Nederlands", // Dutch
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -25,7 +26,7 @@ export const languages: any = {
 // Region: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 export const replace: any = {
     // language_identifier: ["browser language/region code"],
-    en: ["en-US", "en-AU"],
+    en: ["en", "en-US", "en-AU"],
     en_GB: ["en-GB"],
     en_ZM: ["en-ZM"],
     no: ["no", "nb", "nn"],
@@ -43,4 +44,5 @@ export const replace: any = {
     fr_FR: ["fr", "fr-FR"],
     ru: ["ru"],
     ko: ["ko"],
+    nl: ["nl"],
 }

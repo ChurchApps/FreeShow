@@ -9,7 +9,7 @@
 
     let sources: any[] = []
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
 
     const receiveNDI: any = {
         RECEIVE_LIST: (msg) => {
