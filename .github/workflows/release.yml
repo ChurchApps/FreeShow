@@ -117,4 +117,4 @@ jobs:
                   APPLE_ID: ${{ secrets.APPLEID }}
                   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
                   APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
-              run: npm run release:mac
+              run: npm run release
