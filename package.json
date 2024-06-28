@@ -11,7 +11,7 @@
         "prestart": "cross-env NODE_ENV=development node scripts/preBuild.js",
         "start": "cross-env NODE_OPTIONS=--max-old-space-size=4096 NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",
         "prebuild": "cross-env NODE_ENV=production node scripts/preBuild.js",
-        "build": "cross-env NODE_ENV=production npm-run-all -s build:frontend:prod build:electron:prod",
+        "build": "cross-env NODE_ENV=production build:frontend:prod && build:electron:prod",
         "postbuild": "cross-env NODE_ENV=production node scripts/postBuild.js",
         "build:frontend:dev": "cross-env NODE_ENV=development rollup -c -w",
         "build:frontend:prod": "cross-env NODE_ENV=production rollup -c",
