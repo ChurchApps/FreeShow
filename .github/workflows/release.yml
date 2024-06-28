@@ -69,6 +69,11 @@ jobs:
             - name: Install dependencies
               run: npm install
 
+            # wait because this will only publish if the draft exists
+            - name: Sleep for 30 seconds
+              run: sleep 30s
+              shell: bash
+
             - name: Build and release app
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
