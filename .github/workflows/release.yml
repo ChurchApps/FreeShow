@@ -61,6 +61,13 @@ jobs:
             - name: Check out Git repository
               uses: actions/checkout@v3
 
+            - uses: uraimo/run-on-arch-action@v2
+              name: Run commands
+              id: runcmd
+              with:
+               arch: aarch64
+               distro: ubuntu22.04
+
             - name: Install Node.js and NPM
               uses: actions/setup-node@master
               with:
