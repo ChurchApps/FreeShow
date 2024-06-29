@@ -65,7 +65,7 @@ jobs:
               uses: actions/setup-node@master
               with:
                   node-version: 20
-                  architecture: 'aarch64'
+                  architecture: 'arm64'
 
             - uses: uraimo/run-on-arch-action@v2
               name: Run commands
