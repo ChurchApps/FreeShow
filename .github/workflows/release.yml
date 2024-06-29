@@ -61,30 +61,23 @@ jobs:
             - name: Check out Git repository
               uses: actions/checkout@v3
 
+            - name: Install Node.js and NPM
+              uses: actions/setup-node@master
+              with:
+                  node-version: 20
+                  architecture: 'aarch64'
+
             - uses: uraimo/run-on-arch-action@v2
               name: Run commands
               id: runcmd
               with:
                arch: aarch64
                distro: ubuntu22.04
-
-            - name: Install Node.js and NPM
-              uses: actions/setup-node@master
-              with:
-                  node-version: 20
-
-            - name: Install dependencies
-              run: npm install
-
-            # wait because this will only publish if the draft exists
-            - name: Sleep for 30 seconds
-              run: sleep 30s
-              shell: bash
-
-            - name: Build and release app
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: npm run release:arm64
+               githubToken: ${{ github.token }}
+               run: |
+                   npm install
+                   sleep 30
+                   npm run release:arm64
 
     publish_mac:
         name: "Publish MacOS"
