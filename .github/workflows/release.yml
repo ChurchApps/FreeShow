@@ -75,12 +75,8 @@ jobs:
                distro: ubuntu22.04
                githubToken: ${{ github.token }}
                run: |
-                   echo curl
-                   curl
-                   echo update
-                   apt update
                    echo npm
-                   apt search npm
+                   apt search wget
                    echo nvm
                    apt search nvm
                    echo nodejs
