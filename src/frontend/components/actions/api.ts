@@ -25,6 +25,7 @@ import { stopTimers } from "../helpers/timerTick"
 import { clearTimers } from "../output/clear"
 import { runActionId, toggleAction } from "./actions"
 import { changeVariable, gotoGroup, moveStageConnection, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
+import { sendRestCommand } from "./rest"
 
 /// TYPES ///
 
@@ -71,6 +72,12 @@ export type API_metronome = {
     beats?: number
     volume?: number
     // notesPerBeat?: number
+}
+export type API_rest_command = {
+    url: string
+    method: string
+    contentType: string
+    payload: string
 }
 
 /// ACTIONS ///
@@ -154,6 +161,7 @@ export const API_ACTIONS = {
     send_midi: (data: API_midi) => sendMidi(data), // BC
     run_action: (data: API_id) => runActionId(data.id), // BC
     toggle_action: (data: API_toggle) => toggleAction(data), // BC
+    send_rest_command: (data: API_rest_command) => sendRestCommand(data),
 }
 
 /// RECEIVER / SENDER ///
