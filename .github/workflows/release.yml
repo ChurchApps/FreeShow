@@ -75,8 +75,8 @@ jobs:
                distro: ubuntu22.04
                githubToken: ${{ github.token }}
                run: |
-                   echo 'ls -l'
-                   ls -l
+                   echo 'ls -l /opt/hostedtoolcache/node/' 
+                   ls -l /opt/hostedtoolcache/node/
                    echo 'pwd'
                    pwd
                    echo path
