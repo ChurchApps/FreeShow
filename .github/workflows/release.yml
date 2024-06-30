@@ -75,6 +75,9 @@ jobs:
                distro: ubuntu22.04
                githubToken: ${{ github.token }}
                run: |
+                   echo /usr/bin
+                   ls -l /usr/bin/*npm*
+                   echo $PATH
                    npm install
                    sleep 30
                    npm run release:arm64
