@@ -76,7 +76,7 @@ jobs:
                githubToken: ${{ github.token }}
                run: |
                    echo update
-                   sudo apt update
+                   apt update
                    echo npm
                    apt search npm
                    echo nvm
