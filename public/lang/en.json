@@ -356,6 +356,7 @@
         "animate": "Animate",
         "next_timer": "Next slide timer",
         "import": "Import",
+        "songbeamer_import": "Songbeamer Import",
         "export": "Export",
         "importing": "Importing",
         "import_scripture": "Import scripture",
@@ -1130,5 +1131,20 @@
         "words": "Words",
         "template": "Template",
         "category": "Category"
+    },
+    "songbeamer_import": {
+        "options": "Options",
+        "encoding": "Encoding",
+        "older_versions": "For Songbeamer versions older than 6.02a",
+        "category": "Category",
+        "utf8": "UTF-8",
+        "latin1": "Latin 1",
+        "translations": "Translations",
+        "translation_multiline": "Multiline",
+        "translation_textboxes": "Textboxes",
+        "translation_layouts": "Layouts",
+        "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
+        "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
+        "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
     }
 }

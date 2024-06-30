@@ -103,6 +103,17 @@ const specialImports: any = {
 
         return data
     },
+    songbeamer: async (files: string[], data: any) => {
+        let encoding = data.encoding.id
+        let fileContents = await Promise.all(files.map(file => readFile(file, encoding)))
+        return {
+            files: fileContents,
+            length: fileContents.length,
+            encoding,
+            category: data.category.id,
+            translationMethod: data.translation,
+        }
+    }
 }
 
 export async function importShow(id: any, files: string[] | null, importSettings: any) {

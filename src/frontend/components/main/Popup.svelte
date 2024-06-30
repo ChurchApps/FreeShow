@@ -38,6 +38,7 @@
     import SelectShow from "./popups/SelectShow.svelte"
     import SetTime from "./popups/SetTime.svelte"
     import Shortcuts from "./popups/Shortcuts.svelte"
+    import SongbeamerImport from "./popups/SongbeamerImport.svelte"
     import Timer from "./popups/Timer.svelte"
     import Transition from "./popups/Transition.svelte"
     import Trigger from "./popups/Trigger.svelte"
@@ -53,6 +54,7 @@
     const popups: any = {
         initialize: Initialize,
         import: Import,
+        songbeamer_import: SongbeamerImport,
         export: Export,
         show: CreateShow,
         delete_show: DeleteShow,
