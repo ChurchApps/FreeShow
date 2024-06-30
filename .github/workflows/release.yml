@@ -75,8 +75,6 @@ jobs:
                distro: ubuntu22.04
                githubToken: ${{ github.token }}
                run: |
-                   echo wget
-                   wget
                    echo curl
                    curl
                    echo update
