@@ -75,8 +75,11 @@ jobs:
                distro: ubuntu22.04
                githubToken: ${{ github.token }}
                run: |
-                   echo /usr/bin
-                   ls -l /usr/bin/*npm*
+                   echo 'ls -l'
+                   ls -l
+                   echo 'pwd'
+                   pwd
+                   echo path
                    echo $PATH
                    npm install
                    sleep 30
