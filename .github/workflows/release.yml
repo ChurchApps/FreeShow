@@ -76,9 +76,9 @@ jobs:
                githubToken: ${{ github.token }}
                run: |
                    echo wget
-                   which wget
+                   wget
                    echo curl
-                   which curl
+                   curl
                    echo update
                    apt update
                    echo npm
