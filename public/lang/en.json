@@ -280,6 +280,9 @@
     "inputs": {
         "name": "Name",
         "url": "URL",
+        "method": "Method",
+        "contentType": "Content Type",
+        "payload": "Payload",
         "video_id": "Video ID/URL",
         "close_ad": "Close ad on output screen",
         "start": "Start",
@@ -576,6 +579,7 @@
         "start_trigger": "Start trigger",
         "run_action": "Run action",
         "toggle_action": "Toggle action",
+        "send_rest_command": "Send HTTP-Request",
         "custom_activation": "Custom activation",
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",

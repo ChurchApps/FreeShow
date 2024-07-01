@@ -12,6 +12,7 @@
     import NumberInput from "../inputs/NumberInput.svelte"
     import TextInput from "../inputs/TextInput.svelte"
     import MidiValues from "./MidiValues.svelte"
+    import RestValues from "./RestValues.svelte"
     import ChooseStyle from "./specific/ChooseStyle.svelte"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
 
@@ -86,6 +87,8 @@
             <Checkbox checked={value?.value} on:change={checkboxChanged} />
         </div>
     </CombinedInput>
+{:else if inputId === "rest"}
+    <RestValues rest={value} on:change={(e) => updateValue("", e)} />
 {:else}
     <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
         {#if inputId === "index"}
