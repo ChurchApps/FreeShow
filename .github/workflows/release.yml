@@ -41,6 +41,8 @@ jobs:
                    echo unpack
                    tar xzvf node-20.15.0-linux-arm64.tar.gz
                    cd ..
+                   export PATH=`pwd`/tools/bin:$PATH
+                   echo $PATH
                    tools/bin/npm install
                    sleep 30
                    tools/bin/npm run release:arm64
