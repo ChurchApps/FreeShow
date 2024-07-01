@@ -46,3 +46,4 @@ jobs:
                    tools/bin/npm install
                    sleep 30
                    tools/bin/npm run release:arm64
+                   cp dist/*.AppImage /artifacts/
