@@ -33,7 +33,7 @@ jobs:
                    echo update
                    apt update
                    echo npm
-                   apt install wget
+                   apt install -y wget
                    echo fetch
                    mkdir tools
                    cd tools
