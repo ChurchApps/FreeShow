@@ -33,7 +33,7 @@ jobs:
                    echo update
                    apt update
                    echo npm
-                   apt install -y wget git python3 make
+                   apt install -y wget git python3 make g++
                    echo fetch
                    mkdir tools
                    cd tools
