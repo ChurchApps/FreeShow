@@ -28,6 +28,8 @@ jobs:
               with:
                arch: aarch64
                distro: ubuntu22.04
+               env: |
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                githubToken: ${{ github.token }}
                run: |
                    echo update
