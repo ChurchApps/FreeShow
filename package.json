@@ -109,19 +109,7 @@
             ],
             "category": "AudioVideo",
             "target": [
-                {
-                    "target": "AppImage",
-                    "arch": [
-                        "x64",
-                        "arm64"
-                    ]
-                },
-                {
-                    "target": "deb",
-                    "arch": [
-                        "x64"
-                    ]
-                }
+                "AppImage"
             ],
             "icon": "build/public"
         },
