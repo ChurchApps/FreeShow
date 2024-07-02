@@ -178,8 +178,8 @@ function xmlParser(xml: string, removeBreaks: boolean = false) {
     let parser = new DOMParser()
 
     // // fix for xml files without any line breaks
-    // let versionText = xml.indexOf("?>")
-    // if (versionText > 0 && versionText < 80) xml = xml.slice(versionText, xml.length)
+    let versionText = xml.indexOf("?>")
+    if (versionText > 0 && versionText < 80) xml = xml.slice(versionText + 2, xml.length)
 
     // remove first line (standalone attribute): <?xml version="1.0" encoding="UTF-8"?> / <?xml-stylesheet href="stylesheets.css" type="text/css"?>
     while (xml.indexOf("<?xml") >= 0) {
