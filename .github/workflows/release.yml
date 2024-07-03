@@ -28,6 +28,15 @@ jobs:
               with:
                arch: aarch64
                distro: ubuntu22.04
+                   
+               # Create an artifacts directory
+               setup: |
+                 mkdir -p "${PWD}/artifacts"
+    
+               # Mount the artifacts directory as /artifacts in the container
+               dockerRunArgs: |
+                 --volume "${PWD}/artifacts:/artifacts"
+                 
                env: |
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                githubToken: ${{ github.token }}
