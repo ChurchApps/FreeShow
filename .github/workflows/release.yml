@@ -44,7 +44,7 @@ jobs:
                    echo update
                    apt update
                    echo npm
-                   apt install -y wget git python3 make g++
+                   apt -q install -y wget git python3 make g++
                    echo fetch
                    mkdir tools
                    cd tools
