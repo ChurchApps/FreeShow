@@ -41,20 +41,22 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                githubToken: ${{ github.token }}
                run: |
-                   echo update
-                   apt update
-                   echo npm
+                   echo apt update
+                   apt -q update
+                   echo apt install
                    apt -q install -y wget git python3 make g++
-                   echo fetch
+                   echo fetch nodejs
                    mkdir tools
                    cd tools
                    wget https://github.com/actions/node-versions/releases/download/20.15.0-9607683765/node-20.15.0-linux-arm64.tar.gz
                    echo unpack
-                   tar xzvf node-20.15.0-linux-arm64.tar.gz
+                   tar xzf node-20.15.0-linux-arm64.tar.gz
                    cd ..
                    export PATH=`pwd`/tools/bin:$PATH
                    echo $PATH
+                   echo npm install
                    tools/bin/npm install
                    sleep 30
+                   echo npm run release
                    tools/bin/npm run release:arm64
                    cp dist/*.AppImage /artifacts/
