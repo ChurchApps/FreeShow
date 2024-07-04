@@ -64,5 +64,5 @@ jobs:
             - name: 'Upload Artifact'
               uses: actions/upload-artifact@v4
               with:
-                name: FreeShow-arm64
+                # name: FreeShow-arm64
                 path: artifacts/FreeShow*AppImage       
