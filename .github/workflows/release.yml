@@ -40,7 +40,7 @@ jobs:
                env: |
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                githubToken: ${{ github.token }}
-               run: |
+               install: |
                    echo apt update
                    apt -q update
                    echo apt install
@@ -52,6 +52,7 @@ jobs:
                    echo unpack
                    tar xzf node-20.15.0-linux-arm64.tar.gz
                    cd ..
+               run: |
                    export PATH=`pwd`/tools/bin:$PATH
                    echo $PATH
                    echo npm install
@@ -60,3 +61,8 @@ jobs:
                    echo npm run release
                    tools/bin/npm run release:arm64
                    cp dist/*.AppImage /artifacts/
+            - name: 'Upload Artifact'
+              uses: actions/upload-artifact@v4
+              with:
+                name: FreeShow-arm64
+                path: artifacts/FreeShow*AppImage       
