@@ -429,7 +429,7 @@
         <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
             {#key $refreshListBoxes >= 0 && $refreshListBoxes !== index}
                 {#if slide.items}
-                    {#each invertedItemList as item, itemIndex}
+                    {#each slide.items as item, itemIndex}
                         {#if item.lines}
                             <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
                         {/if}
