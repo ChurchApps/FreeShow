@@ -8,8 +8,8 @@ import util from "../ndi/vingester-util"
 import { NdiSender } from "../ndi/NdiSender"
 import { CaptureOptions, captures, previewSize, storedFrames } from "./capture"
 import { Worker } from "worker_threads"
-import electron from "electron"
 import path from "path"
+import { WorkerDelegate } from "./WorkerDelegate"
 
 export type Channel = {
     key: string
@@ -123,39 +123,47 @@ export class CaptureTransmitter {
         this.sendToRequested(msg)
     }
 
+    static worker: Worker
+
+    static setupWorker(initialSize: Size, newSize: Size) {
+      this.worker = new Worker(path.join(__dirname, 'resizeWorker.js'), {
+        workerData: {
+            initialSize,
+            newSize
+        }
+      });
+    }
+
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size): Promise<NativeImage> {
+      return WorkerDelegate.getThumbnail(image.toPNG(), initialSize, newSize);
+      /*
       return new Promise((resolve, reject) => {
         console.log("RESIZING")
         console.log("Main process: Starting worker");
         const imageBuffer = image.toPNG();
-        const worker = new Worker(path.join(__dirname, 'resizeWorker.js'), {
-            workerData: {
-                initialSize,
-                newSize
-            }
-        });
-        
+        if (!this.worker) this.setupWorker(initialSize, newSize)
+
           console.log("Main process: Sending message to worker");
-          worker.postMessage(imageBuffer, [imageBuffer.buffer]);
+          this.worker.postMessage(imageBuffer, [imageBuffer.buffer]);
 
 
-          worker.on('message', (resizedImageBuffer) => {
+          this.worker.on('message', (resizedImageBuffer) => {
             console.log("GOT A MESSAGE")
               const resizedImage = electron.nativeImage.createFromBuffer(resizedImageBuffer);
               resolve(resizedImage);
           });
     
-          worker.on('error', (error) => {
+          this.worker.on('error', (error) => {
               console.error("Main process: Worker error:", error);
               reject(error);
           });
 
-          worker.on('exit', (code) => {
+          this.worker.on('exit', (code) => {
               console.log(`Main process: Worker exited with code ${code}`);
               if (code !== 0)
                   reject(new Error(`Worker stopped with exit code ${code}`));
           });
-      });
+      });*/
     }
 
     static sendToStageOutputs(msg: any) {

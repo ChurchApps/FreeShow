@@ -22,15 +22,17 @@ function resizeImageWorker(imageBuffer, initialSize, newSize) {
 console.log("Worker: Setting up message listener");
 
 if (parentPort) {
-  parentPort.once('message', async (imageBuffer) => {
-    console.log("Worker: Received message");
+  parentPort.on('message', async ({ requestId, imageBuffer }) => {
+    console.log("Worker: Received message for requestId:", requestId);
+    let start = new Date().getTime();
     try {
       const resizedImageBuffer = await resizeImageWorker(imageBuffer, workerData.initialSize, workerData.newSize);
-      console.log("Worker: Resizing complete, sending result");
-      parentPort.postMessage(resizedImageBuffer, [resizedImageBuffer.buffer]);
+      const end = new Date().getTime();
+      console.log(`Worker: Resizing took ${end - start}ms for requestId: ${requestId}`);
+      parentPort.postMessage({ requestId, resizedImageBuffer }, [resizedImageBuffer.buffer]);
     } catch (error) {
-      console.error("Worker: Error occurred", error);
-      parentPort.postMessage({ error: error.message });
+      console.error(`Worker: Error occurred for requestId: ${requestId}`, error);
+      parentPort.postMessage({ requestId, error: error.message });
     }
   });
 } else {
