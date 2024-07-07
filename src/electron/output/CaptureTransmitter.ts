@@ -135,6 +135,7 @@ export class CaptureTransmitter {
     }
 
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size): Promise<NativeImage> {
+      console.log("CALLED RESIZE IMAGE")
       return WorkerDelegate.getThumbnail(image.toPNG(), initialSize, newSize);
       /*
       return new Promise((resolve, reject) => {

@@ -32,7 +32,7 @@ export class WorkerDelegate {
       console.error("Main process: Worker error:", error);
       // Reject all pending promises
       this.promiseMap.forEach(promiseHandlers => promiseHandlers.reject(error));
-      this.promiseMap.clear();
+      //this.promiseMap.clear();
     });
 
     this.worker.on('exit', (code) => {
@@ -42,7 +42,7 @@ export class WorkerDelegate {
         this.promiseMap.forEach(promiseHandlers => 
           promiseHandlers.reject(new Error(`Worker exited with code ${code}`))
         );
-        this.promiseMap.clear();
+        //this.promiseMap.clear();
       }
     });
   }
