@@ -7,7 +7,9 @@ import { sendToWindow } from "./output"
 import util from "../ndi/vingester-util"
 import { NdiSender } from "../ndi/NdiSender"
 import { CaptureOptions, captures, previewSize, storedFrames } from "./capture"
-
+import { Worker } from "worker_threads"
+import electron from "electron"
+import path from "path"
 
 export type Channel = {
     key: string
@@ -102,9 +104,11 @@ export class CaptureTransmitter {
     }
 
     // PREVIEW
-    static sendBufferToPreview(captureId:string, image: NativeImage, options: any) {
+    static async sendBufferToPreview(captureId:string, image: NativeImage, options: any) {
         if (!image) return
-        image = this.resizeImage(image, options.size, previewSize)
+        console.log("SENDING PREVIEW")
+        image = await this.resizeImage(image, options.size, previewSize)
+        console.log("GOT IMAGE")
 
         const buffer = image.getBitmap()
         const size = image.getSize()
@@ -119,11 +123,39 @@ export class CaptureTransmitter {
         this.sendToRequested(msg)
     }
 
-    static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
-        if (initialSize.width / initialSize.height >= newSize.width / newSize.height) image = image.resize({ width: newSize.width, quality: "good" })
-        else image = image.resize({ height: newSize.height, quality: "good" })
+    static resizeImage(image: NativeImage, initialSize: Size, newSize: Size): Promise<NativeImage> {
+      return new Promise((resolve, reject) => {
+        console.log("RESIZING")
+        console.log("Main process: Starting worker");
+        const imageBuffer = image.toPNG();
+        const worker = new Worker(path.join(__dirname, 'resizeWorker.js'), {
+            workerData: {
+                initialSize,
+                newSize
+            }
+        });
+        
+          console.log("Main process: Sending message to worker");
+          worker.postMessage(imageBuffer, [imageBuffer.buffer]);
 
-        return image
+
+          worker.on('message', (resizedImageBuffer) => {
+            console.log("GOT A MESSAGE")
+              const resizedImage = electron.nativeImage.createFromBuffer(resizedImageBuffer);
+              resolve(resizedImage);
+          });
+    
+          worker.on('error', (error) => {
+              console.error("Main process: Worker error:", error);
+              reject(error);
+          });
+
+          worker.on('exit', (code) => {
+              console.log(`Main process: Worker exited with code ${code}`);
+              if (code !== 0)
+                  reject(new Error(`Worker stopped with exit code ${code}`));
+          });
+      });
     }
 
     static sendToStageOutputs(msg: any) {
