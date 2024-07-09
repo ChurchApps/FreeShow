@@ -6,7 +6,7 @@ import { setDataNDI } from "../../ndi/talk"
 import { outputOptions } from "../../utils/windowOptions"
 import { CaptureTransmitter } from "../CaptureTransmitter"
 import { startCapture, stopCapture } from "../capture"
-import { OutputHelper } from "./OutputHelper"
+import { OutputHelper } from "../OutputHelper"
 import { OUTPUT } from "../../../types/Channels"
 
 export class OutputLifecycle {

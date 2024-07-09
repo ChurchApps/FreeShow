@@ -1,5 +1,5 @@
 import { OUTPUT } from "../../../types/Channels"
-import { OutputHelper } from "./OutputHelper"
+import { OutputHelper } from "../OutputHelper"
 
 export class OutputSend {
     static sendToOutputWindow(msg: any) {

@@ -1,5 +1,5 @@
 import { BrowserWindow, screen } from "electron"
-import { OutputHelper } from "./OutputHelper"
+import { OutputHelper } from "../OutputHelper"
 
 export class OutputBounds {
     // BOUNDS

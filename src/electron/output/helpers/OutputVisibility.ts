@@ -1,6 +1,6 @@
 import { BrowserWindow, Rectangle, screen } from "electron"
 import { mainWindow, toApp } from "../.."
-import { OutputHelper } from "./OutputHelper"
+import { OutputHelper } from "../OutputHelper"
 import { MAIN, OUTPUT } from "../../../types/Channels"
 
 export class OutputVisibility {

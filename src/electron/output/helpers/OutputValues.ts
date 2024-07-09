@@ -1,7 +1,7 @@
 import { BrowserWindow } from "electron"
 import { NdiSender } from "../../ndi/NdiSender"
 import { startCapture } from "../capture"
-import { OutputHelper } from "./OutputHelper"
+import { OutputHelper } from "../OutputHelper"
 
 export class OutputValues {
     private static setValues: any = {

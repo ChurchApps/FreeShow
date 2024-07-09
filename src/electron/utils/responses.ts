@@ -44,7 +44,7 @@ import {
 import { LyricSearch } from "./LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import checkForUpdates from "./updater"
-import { OutputHelper } from "../output/helpers/OutputHelper"
+import { OutputHelper } from "../output/OutputHelper"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {

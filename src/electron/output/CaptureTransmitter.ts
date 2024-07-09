@@ -6,7 +6,7 @@ import { toServer } from "../servers"
 import util from "../ndi/vingester-util"
 import { NdiSender } from "../ndi/NdiSender"
 import { CaptureOptions, captures, previewSize, storedFrames } from "./capture"
-import { OutputHelper } from "./helpers/OutputHelper"
+import { OutputHelper } from "./OutputHelper"
 
 export type Channel = {
     key: string

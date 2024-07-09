@@ -19,7 +19,7 @@ import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRec
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { startExport } from "./data/export"
 import { currentlyDeletedShows } from "./cloud/drive"
-import { OutputHelper } from "./output/helpers/OutputHelper"
+import { OutputHelper } from "./output/OutputHelper"
 
 // ----- STARTUP -----
 

@@ -2,7 +2,7 @@ import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
 import { NdiSender } from "../ndi/NdiSender"
 import { CaptureTransmitter } from "./CaptureTransmitter"
-import { OutputHelper } from "./helpers/OutputHelper"
+import { OutputHelper } from "./OutputHelper"
 
 export type CaptureOptions = {
     id: string
