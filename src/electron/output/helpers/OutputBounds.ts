@@ -53,4 +53,9 @@ export class OutputBounds {
             output.window.setBounds(closestScreen.bounds)
         })
     }
+
+    static getPreviewBounds(mainWidth: number, mainHeight: number) {
+        if (mainWidth || mainHeight) return { width: 320, height: 180 }
+        else return { width: 320, height: 180 }
+    }
 }

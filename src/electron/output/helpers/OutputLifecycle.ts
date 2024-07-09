@@ -16,7 +16,9 @@ export class OutputLifecycle {
         if (OutputHelper.getOutput(id)) return this.removeOutput(id, output)
 
         const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
-        OutputHelper.setOutput(id, { window: outputWindow, previewWindow: outputWindow }) //TODO: previewWindow
+        const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
+
+        OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow }) //TODO: previewWindow
         OutputHelper.Bounds.updateBounds(output)
 
         if (output.stageOutput) CaptureTransmitter.stageWindows.push(id)
@@ -28,6 +30,29 @@ export class OutputLifecycle {
         // NDI
         if (output.ndi) await NdiSender.createSenderNDI(id, output.name)
         if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+    }
+
+    private static createPreviewWindow(options: any) {
+        const mainBounds = mainWindow?.getBounds()
+
+        options = { ...outputOptions, ...options }
+        options.x = 0
+        options.y = 0
+        options.width = 320
+        options.height = 180
+        options.show = true
+        if (mainBounds) {
+            options.x = mainBounds.x + mainBounds.width - options.width - 20
+            options.y = mainBounds.y + 100
+        }
+
+        let window: BrowserWindow | null = new BrowserWindow(options)
+        window.setSkipTaskbar(options.skipTaskbar) // hide from taskbar
+        if (isMac) window.minimize() // hide on mac
+        loadWindowContent(window, true)
+        window.showInactive()
+        window.moveTop()
+        return window
     }
 
     private static createOutputWindow(options: any, id: string, name: string) {
