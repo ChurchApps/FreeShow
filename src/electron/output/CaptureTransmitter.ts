@@ -3,11 +3,10 @@ import os from "os"
 import { toApp } from ".."
 import { OUTPUT, OUTPUT_STREAM } from "../../types/Channels"
 import { toServer } from "../servers"
-import { sendToWindow } from "./output"
 import util from "../ndi/vingester-util"
 import { NdiSender } from "../ndi/NdiSender"
 import { CaptureOptions, captures, previewSize, storedFrames } from "./capture"
-
+import { OutputHelper } from "./helpers/OutputHelper"
 
 export type Channel = {
     key: string
@@ -17,12 +16,10 @@ export type Channel = {
 }
 
 export class CaptureTransmitter {
-    
     static stageWindows: string[] = []
     static requestList: any[] = []
     //static ndiFrameCount = 0
     static channels: { [key: string]: Channel } = {}
-
 
     static startTransmitting(captureId: string) {
         const capture = captures[captureId]
@@ -46,26 +43,26 @@ export class CaptureTransmitter {
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
         const interval = 1000 / captures[captureId].framerates[key]
-        
+
         if (this.channels[combinedKey]?.timer) {
             clearInterval(this.channels[combinedKey].timer)
             this.channels[combinedKey].timer = setInterval(() => this.handleChannelInterval(captureId, key), interval)
         } else {
-            this.channels[combinedKey] = { 
-                key, 
-                captureId, 
-                timer: setInterval(() => this.handleChannelInterval(captureId, key), interval), 
-                lastImage: storedFrames[captureId] 
+            this.channels[combinedKey] = {
+                key,
+                captureId,
+                timer: setInterval(() => this.handleChannelInterval(captureId, key), interval),
+                lastImage: storedFrames[captureId],
             }
         }
     }
 
-    static handleChannelInterval(captureId:string, key:string) {
+    static handleChannelInterval(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
         const channel = this.channels[combinedKey]
         if (!channel) return
         const image = storedFrames[captureId]
-        if (!image || channel.lastImage===image) return
+        if (!image || channel.lastImage === image) return
         const size = image.getSize()
         channel.lastImage = image
         switch (key) {
@@ -79,7 +76,6 @@ export class CaptureTransmitter {
                 this.sendBufferToServer(captures[captureId], image)
                 break
         }
-
     }
 
     /*
@@ -93,7 +89,7 @@ export class CaptureTransmitter {
 */
 
     // NDI
-    static sendBufferToNdi(captureId:string, image: NativeImage, { size }: any) {
+    static sendBufferToNdi(captureId: string, image: NativeImage, { size }: any) {
         const buffer = image.getBitmap()
         const ratio = image.getAspectRatio()
         //this.ndiFrameCount++
@@ -102,7 +98,7 @@ export class CaptureTransmitter {
     }
 
     // PREVIEW
-    static sendBufferToPreview(captureId:string, image: NativeImage, options: any) {
+    static sendBufferToPreview(captureId: string, image: NativeImage, options: any) {
         if (!image) return
         image = this.resizeImage(image, options.size, previewSize)
 
@@ -113,7 +109,7 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        let msg = { channel: "PREVIEW", data: { id:captureId, buffer, size, originalSize: options.size } }
+        let msg = { channel: "PREVIEW", data: { id: captureId, buffer, size, originalSize: options.size } }
         toApp(OUTPUT, msg)
         this.sendToStageOutputs(msg)
         this.sendToRequested(msg)
@@ -127,7 +123,7 @@ export class CaptureTransmitter {
     }
 
     static sendToStageOutputs(msg: any) {
-        ;[...new Set(this.stageWindows)].forEach((id) => sendToWindow(id, msg))
+        ;[...new Set(this.stageWindows)].forEach((id) => OutputHelper.Send.sendToWindow(id, msg))
     }
 
     static sendToRequested(msg: any) {
@@ -141,7 +137,7 @@ export class CaptureTransmitter {
                 return
             }
 
-            sendToWindow(data.id, msg)
+            OutputHelper.Send.sendToWindow(data.id, msg)
         })
 
         this.requestList = newList
@@ -163,13 +159,13 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id:capture.id, buffer, size } })
+        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: capture.id, buffer, size } })
     }
 
     static requestPreview(data: any) {
         this.requestList.push(JSON.stringify(data))
     }
-    
+
     static removeAllChannels(captureId: string) {
         Object.keys(this.channels).forEach((key) => {
             if (key.includes(captureId)) this.removeChannel(captureId, key)
@@ -182,5 +178,4 @@ export class CaptureTransmitter {
         if (this.channels[combinedKey].timer) clearInterval(this.channels[combinedKey].timer)
         delete this.channels[combinedKey]
     }
-
 }

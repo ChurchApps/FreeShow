@@ -202,40 +202,6 @@ function hideWindow(window: BrowserWindow, data: any) {
     toApp(OUTPUT, { channel: "RESTART" })
 }
 
-// UPDATE
-
-const setValues: any = {
-    ndi: async (value: boolean, window: BrowserWindow, id: string) => {
-        if (value) await NdiSender.createSenderNDI(id, window.getTitle())
-        else NdiSender.stopSenderNDI(id)
-
-        setValues.capture({ key: "ndi", value }, window, id)
-    },
-    capture: async (data: any, _window: BrowserWindow, id: string) => {
-        startCapture(id, { [data.key]: data.value }, data.rate)
-        // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
-    },
-    transparent: (value: boolean, window: BrowserWindow) => {
-        window.setBackgroundColor(value ? "#00000000" : "#000000")
-    },
-    alwaysOnTop: (value: boolean, window: BrowserWindow) => {
-        window.setAlwaysOnTop(value, "pop-up-menu", 1)
-        window.setResizable(!value)
-        window.setSkipTaskbar(value)
-    },
-    kioskMode: (value: boolean, window: BrowserWindow) => {
-        window.setKiosk(value)
-    },
-}
-
-async function updateValue({ id, key, value }: any) {
-    let window: BrowserWindow = outputWindows[id]
-    if (!window || window.isDestroyed()) return
-
-    if (!setValues[key]) return
-    setValues[key](value, window, id)
-}
-
 function moveToFront(id: string) {
     let window: BrowserWindow = outputWindows[id]
     if (!window || window.isDestroyed()) return
@@ -269,7 +235,7 @@ const outputResponses: any = {
     MOVE: (data: any) => (OutputHelper.Bounds.moveEnabled = data.enabled),
 
     UPDATE_BOUNDS: (data: any) => OutputHelper.Bounds.updateBounds(data),
-    SET_VALUE: (data: any) => updateValue(data),
+    SET_VALUE: (data: any) => OutputHelper.Values.updateValue(data),
     TO_FRONT: (data: any) => moveToFront(data),
 
     PREVIEW_RESOLUTION: (data: any) => updatePreviewResolution(data),
