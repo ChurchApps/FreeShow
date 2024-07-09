@@ -1,12 +1,12 @@
 import { BrowserWindow, Rectangle, screen } from "electron"
-import { createOutput, outputWindows } from "../output"
+import { createOutput } from "../output"
 import { mainWindow, toApp } from "../.."
 import { OutputHelper } from "./OutputHelper"
 import { MAIN, OUTPUT } from "../../../types/Channels"
 
 export class OutputVisibility {
     static displayOutput(data: any) {
-        let window: BrowserWindow = outputWindows[data.output?.id]
+        let window: BrowserWindow = OutputHelper.outputWindows[data.output?.id]
 
         if (data.enabled === "toggle") data.enabled = !window?.isVisible()
         if (data.enabled !== false) data.enabled = true
@@ -15,7 +15,7 @@ export class OutputVisibility {
             if (!data.output) return
 
             createOutput(data.output)
-            window = outputWindows[data.output.id]
+            window = OutputHelper.outputWindows[data.output.id]
             if (!window || window.isDestroyed()) return
         }
 

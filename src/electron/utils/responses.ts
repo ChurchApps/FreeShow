@@ -14,7 +14,6 @@ import { downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { error_log } from "../data/store"
 import { getThumbnail, getThumbnailFolderPath, saveImage } from "../data/thumbnails"
-import { outputWindows } from "../output/output"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { startWebSocketAndRest, stopApiListener } from "./api"
@@ -45,6 +44,7 @@ import {
 import { LyricSearch } from "./LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import checkForUpdates from "./updater"
+import { OutputHelper } from "../output/helpers/OutputHelper"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -290,7 +290,7 @@ function getScreens(type: "window" | "screen" = "screen") {
     })
 
     function addFreeShowWindows(screens: any[], sources: DesktopCapturerSource[]) {
-        Object.values({ main: mainWindow, ...outputWindows }).forEach((window: any) => {
+        Object.values({ main: mainWindow, ...OutputHelper.outputWindows }).forEach((window: any) => {
             let mediaId = window?.getMediaSourceId()
             let windowsAlreadyExists = sources.find((a: any) => a.id === mediaId)
             if (windowsAlreadyExists) return

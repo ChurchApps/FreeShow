@@ -1,9 +1,9 @@
 import { OUTPUT } from "../../../types/Channels"
-import { outputWindows } from "../output"
+import { OutputHelper } from "./OutputHelper"
 
 export class OutputSend {
     static sendToOutputWindow(msg: any) {
-        Object.entries(outputWindows).forEach(sendToWindow)
+        Object.entries(OutputHelper.outputWindows).forEach(sendToWindow)
 
         function sendToWindow([id, window]: any) {
             if ((msg.data?.id && msg.data.id !== id) || !window || window.isDestroyed()) return
@@ -23,7 +23,7 @@ export class OutputSend {
     }
 
     static sendToWindow(id: string, msg: any) {
-        let window = outputWindows[id]
+        let window = OutputHelper.outputWindows[id]
         if (!window || window.isDestroyed()) return
 
         window.webContents.send(OUTPUT, msg)

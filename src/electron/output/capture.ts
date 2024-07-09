@@ -1,8 +1,8 @@
 import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
-import { outputWindows } from "./output"
 import { NdiSender } from "../ndi/NdiSender"
 import { CaptureTransmitter } from "./CaptureTransmitter"
+import { OutputHelper } from "./helpers/OutputHelper"
 
 export type CaptureOptions = {
     id: string
@@ -48,7 +48,7 @@ function getDefaultCapture(window: BrowserWindow, id: string): CaptureOptions {
 
 export let storedFrames: any = {}
 export function startCapture(id: string, toggle: any = {}, rate: any = "") {
-    let window = outputWindows[id]
+    let window = OutputHelper.outputWindows[id]
     let windowIsRemoved = !window || window.isDestroyed()
     if (windowIsRemoved) {
         delete captures[id]

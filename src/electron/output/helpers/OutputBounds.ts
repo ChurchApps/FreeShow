@@ -1,5 +1,5 @@
 import { BrowserWindow } from "electron"
-import { outputWindows } from "../output"
+import { OutputHelper } from "./OutputHelper"
 
 export class OutputBounds {
     // BOUNDS
@@ -19,7 +19,7 @@ export class OutputBounds {
     }
 
     static updateBounds(data: any) {
-        let window: BrowserWindow = outputWindows[data.id]
+        let window: BrowserWindow = OutputHelper.outputWindows[data.id]
         if (!window || window.isDestroyed()) return
 
         this.disableWindowMoveListener()

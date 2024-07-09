@@ -1,7 +1,7 @@
 import { BrowserWindow } from "electron"
 import { NdiSender } from "../../ndi/NdiSender"
 import { startCapture } from "../capture"
-import { outputWindows } from "../output"
+import { OutputHelper } from "./OutputHelper"
 
 export class OutputValues {
     private static setValues: any = {
@@ -29,7 +29,7 @@ export class OutputValues {
     }
 
     static async updateValue({ id, key, value }: any) {
-        let window: BrowserWindow = outputWindows[id]
+        let window: BrowserWindow = OutputHelper.outputWindows[id]
         if (!window || window.isDestroyed()) return
 
         if (!this.setValues[key]) return

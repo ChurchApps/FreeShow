@@ -10,16 +10,14 @@ import { CaptureTransmitter } from "./CaptureTransmitter"
 import { startCapture, stopCapture, updatePreviewResolution } from "./capture"
 import { OutputHelper } from "./helpers/OutputHelper"
 
-export let outputWindows: { [key: string]: BrowserWindow } = {}
-
 // CREATE
 
 export async function createOutput(output: Output) {
     let id: string = output.id || ""
 
-    if (outputWindows[id]) return removeOutput(id, output)
+    if (OutputHelper.outputWindows[id]) return removeOutput(id, output)
 
-    outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
+    OutputHelper.outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
     OutputHelper.Bounds.updateBounds(output)
 
     if (output.stageOutput) CaptureTransmitter.stageWindows.push(id)
@@ -81,42 +79,42 @@ function setWindowListeners(window: BrowserWindow, { id, name }: { [key: string]
 }
 
 export async function closeAllOutputs() {
-    await Promise.all(Object.keys(outputWindows).map(removeOutput))
+    await Promise.all(Object.keys(OutputHelper.outputWindows).map(removeOutput))
 }
 
 async function removeOutput(id: string, reopen: any = null) {
     await stopCapture(id)
     NdiSender.stopSenderNDI(id)
 
-    if (!outputWindows[id]) return
-    if (outputWindows[id].isDestroyed()) {
-        delete outputWindows[id]
+    if (!OutputHelper.outputWindows[id]) return
+    if (OutputHelper.outputWindows[id].isDestroyed()) {
+        delete OutputHelper.outputWindows[id]
         if (reopen) createOutput(reopen)
         return
     }
 
-    outputWindows[id].on("closed", () => {
-        delete outputWindows[id]
+    OutputHelper.outputWindows[id].on("closed", () => {
+        delete OutputHelper.outputWindows[id]
         if (reopen) createOutput(reopen)
     })
 
     try {
-        outputWindows[id].destroy()
+        OutputHelper.outputWindows[id].destroy()
     } catch (error) {
         console.log(error)
     }
 }
 
 function moveToFront(id: string) {
-    let window: BrowserWindow = outputWindows[id]
+    let window: BrowserWindow = OutputHelper.outputWindows[id]
     if (!window || window.isDestroyed()) return
 
     window.moveTop()
 }
 
 function alignWithScreens() {
-    Object.keys(outputWindows).forEach((outputId) => {
-        let output = outputWindows[outputId]
+    Object.keys(OutputHelper.outputWindows).forEach((outputId) => {
+        let output = OutputHelper.outputWindows[outputId]
 
         let wBounds = output.getBounds()
         let centerLeft = wBounds.x + wBounds.width / 2
