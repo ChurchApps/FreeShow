@@ -10,7 +10,7 @@ import { startBackup } from "./data/backup"
 import { config, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
-import { closeAllOutputs, receiveOutput } from "./output/output"
+import { receiveOutput } from "./output/output"
 import { closeServers } from "./servers"
 import { stopApiListener } from "./utils/api"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, loadShows, writeFile } from "./utils/files"
@@ -20,6 +20,7 @@ import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRec
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { startExport } from "./data/export"
 import { currentlyDeletedShows } from "./cloud/drive"
+import { OutputHelper } from "./output/helpers/OutputHelper"
 
 // ----- STARTUP -----
 
@@ -205,7 +206,7 @@ export async function exitApp() {
     mainWindow = null
     dialogClose = false
 
-    await closeAllOutputs()
+    await OutputHelper.Lifecycle.closeAllOutputs()
     NdiReceiver.stopReceiversNDI()
 
     closeServers()

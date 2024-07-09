@@ -1,5 +1,4 @@
 import { BrowserWindow, Rectangle, screen } from "electron"
-import { createOutput } from "../output"
 import { mainWindow, toApp } from "../.."
 import { OutputHelper } from "./OutputHelper"
 import { MAIN, OUTPUT } from "../../../types/Channels"
@@ -14,7 +13,7 @@ export class OutputVisibility {
         if (!window || window.isDestroyed()) {
             if (!data.output) return
 
-            createOutput(data.output)
+            OutputHelper.Lifecycle.createOutput(data.output)
             window = OutputHelper.outputWindows[data.output.id]
             if (!window || window.isDestroyed()) return
         }
