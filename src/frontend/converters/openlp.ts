@@ -182,7 +182,7 @@ function XMLtoObject(xml: string) {
     let properties = song.properties || {}
 
     let newSong: Song = {
-        title: properties.titles?.title || "",
+        title: getTitle(),
         notes: song["#comment"] || properties.comments?.map((comment) => comment["#text"] || "").join("\n") || "",
         // created: song["@createDate"],
         modified: song["@modifiedDate"],
@@ -194,6 +194,15 @@ function XMLtoObject(xml: string) {
     }
 
     return newSong
+
+    function getTitle() {
+        let currentSongTitle = properties.titles?.title || []
+        if (Array.isArray(currentSongTitle)) currentSongTitle = currentSongTitle[0]
+
+        let title = (typeof currentSongTitle["#text"] != "undefined") ? currentSongTitle["#text"] : currentSongTitle
+
+        return title
+    }
 
     function getAuthors() {
         let currentSongAuthors = properties.authors?.author || []
