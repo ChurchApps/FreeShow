@@ -1,4 +1,4 @@
-import { BrowserWindow, screen } from "electron"
+import { BrowserWindow } from "electron"
 import { OUTPUT_CONSOLE, isMac, loadWindowContent, mainWindow, toApp } from ".."
 import { OUTPUT } from "../../types/Channels"
 import { Output } from "../../types/Output"
@@ -105,41 +105,19 @@ async function removeOutput(id: string, reopen: any = null) {
     }
 }
 
-function moveToFront(id: string) {
-    let window: BrowserWindow = OutputHelper.outputWindows[id]
-    if (!window || window.isDestroyed()) return
-
-    window.moveTop()
-}
-
-function alignWithScreens() {
-    Object.keys(OutputHelper.outputWindows).forEach((outputId) => {
-        let output = OutputHelper.outputWindows[outputId]
-
-        let wBounds = output.getBounds()
-        let centerLeft = wBounds.x + wBounds.width / 2
-        let centerTop = wBounds.y + wBounds.height / 2
-
-        let point = { x: centerLeft, y: centerTop }
-        let closestScreen = screen.getDisplayNearestPoint(point)
-
-        output.setBounds(closestScreen.bounds)
-    })
-}
-
 // RESPONSES
 
 const outputResponses: any = {
     CREATE: (data: any) => createOutput(data),
     REMOVE: (data: any) => removeOutput(data.id),
     DISPLAY: (data: any) => OutputHelper.Visibility.displayOutput(data),
-    ALIGN_WITH_SCREEN: () => alignWithScreens(),
+    ALIGN_WITH_SCREEN: () => OutputHelper.Bounds.alignWithScreens(),
 
     MOVE: (data: any) => (OutputHelper.Bounds.moveEnabled = data.enabled),
 
     UPDATE_BOUNDS: (data: any) => OutputHelper.Bounds.updateBounds(data),
     SET_VALUE: (data: any) => OutputHelper.Values.updateValue(data),
-    TO_FRONT: (data: any) => moveToFront(data),
+    TO_FRONT: (data: any) => OutputHelper.Bounds.moveToFront(data),
 
     PREVIEW_RESOLUTION: (data: any) => updatePreviewResolution(data),
     REQUEST_PREVIEW: (data: any) => CaptureTransmitter.requestPreview(data),

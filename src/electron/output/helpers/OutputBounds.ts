@@ -1,4 +1,4 @@
-import { BrowserWindow } from "electron"
+import { BrowserWindow, screen } from "electron"
 import { OutputHelper } from "./OutputHelper"
 
 export class OutputBounds {
@@ -30,5 +30,27 @@ export class OutputBounds {
             if (!window || window.isDestroyed()) return
             window.setBounds(data.bounds)
         }, 10)
+    }
+
+    static moveToFront(id: string) {
+        let window: BrowserWindow = OutputHelper.outputWindows[id]
+        if (!window || window.isDestroyed()) return
+
+        window.moveTop()
+    }
+
+    static alignWithScreens() {
+        Object.keys(OutputHelper.outputWindows).forEach((outputId) => {
+            let output = OutputHelper.outputWindows[outputId]
+
+            let wBounds = output.getBounds()
+            let centerLeft = wBounds.x + wBounds.width / 2
+            let centerTop = wBounds.y + wBounds.height / 2
+
+            let point = { x: centerLeft, y: centerTop }
+            let closestScreen = screen.getDisplayNearestPoint(point)
+
+            output.setBounds(closestScreen.bounds)
+        })
     }
 }
