@@ -10,7 +10,6 @@ import { startBackup } from "./data/backup"
 import { config, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
-import { receiveOutput } from "./output/output"
 import { closeServers } from "./servers"
 import { stopApiListener } from "./utils/api"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, loadShows, writeFile } from "./utils/files"
@@ -349,7 +348,7 @@ function save(data: any) {
 // ----- LISTENERS -----
 
 ipcMain.on(MAIN, receiveMain)
-ipcMain.on(OUTPUT, receiveOutput)
+ipcMain.on(OUTPUT, OutputHelper.receiveOutput)
 ipcMain.on(IMPORT, startImport)
 ipcMain.on(EXPORT, startExport)
 ipcMain.on(SHOW, loadShow)
