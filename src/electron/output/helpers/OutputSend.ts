@@ -3,15 +3,18 @@ import { OutputHelper } from "../OutputHelper"
 
 export class OutputSend {
     static sendToOutputWindow(msg: any) {
-        Object.entries(OutputHelper.outputWindows).forEach(sendToWindow)
+        OutputHelper.getAllOutputs().forEach(sendToWindow)
 
-        function sendToWindow([id, window]: any) {
-            if ((msg.data?.id && msg.data.id !== id) || !window || window.isDestroyed()) return
+        function sendToWindow([id, output]: any) {
+            if ((msg.data?.id && msg.data.id !== id) || !output.window || output.window.isDestroyed()) return
 
             let tempMsg: any = JSON.parse(JSON.stringify(msg))
             if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, id)
 
-            window.webContents.send(OUTPUT, tempMsg)
+            output.window.webContents.send(OUTPUT, tempMsg)
+
+            if (!output.previewWindow || output.previewWindow.isDestroyed()) return
+            output.previewWindow.webContents.send(OUTPUT, tempMsg)
         }
 
         function onlySendToMatchingId(tempMsg: any, id: string) {
@@ -23,9 +26,10 @@ export class OutputSend {
     }
 
     static sendToWindow(id: string, msg: any) {
-        let window = OutputHelper.outputWindows[id]
-        if (!window || window.isDestroyed()) return
-
-        window.webContents.send(OUTPUT, msg)
+        const output = OutputHelper.getOutput(id)
+        if (!output.window || output.window.isDestroyed()) return
+        output.window.webContents.send(OUTPUT, msg)
+        if (!output.previewWindow || output.previewWindow.isDestroyed()) return
+        output.previewWindow.webContents.send(OUTPUT, msg)
     }
 }

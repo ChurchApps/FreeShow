@@ -1,7 +1,7 @@
 // ----- FreeShow -----
 // Respond to messages from the frontend
 
-import { app, desktopCapturer, DesktopCapturerSource, Display, screen, shell, systemPreferences } from "electron"
+import { app, BrowserWindow, desktopCapturer, DesktopCapturerSource, Display, screen, shell, systemPreferences } from "electron"
 import { getFonts } from "font-list"
 import { machineIdSync } from "node-machine-id"
 import os from "os"
@@ -290,7 +290,11 @@ function getScreens(type: "window" | "screen" = "screen") {
     })
 
     function addFreeShowWindows(screens: any[], sources: DesktopCapturerSource[]) {
-        Object.values({ main: mainWindow, ...OutputHelper.outputWindows }).forEach((window: any) => {
+        const windows: BrowserWindow[] = []
+        OutputHelper.getAllOutputs().forEach(([output]: any) => {
+            output.window && windows.push(output.window)
+        })
+        Object.values({ main: mainWindow, ...windows }).forEach((window: any) => {
             let mediaId = window?.getMediaSourceId()
             let windowsAlreadyExists = sources.find((a: any) => a.id === mediaId)
             if (windowsAlreadyExists) return

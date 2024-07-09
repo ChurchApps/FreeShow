@@ -19,7 +19,7 @@ export class OutputBounds {
     }
 
     static updateBounds(data: any) {
-        let window: BrowserWindow = OutputHelper.outputWindows[data.id]
+        let window: BrowserWindow = OutputHelper.getOutput(data.id)?.window
         if (!window || window.isDestroyed()) return
 
         this.disableWindowMoveListener()
@@ -33,24 +33,24 @@ export class OutputBounds {
     }
 
     static moveToFront(id: string) {
-        let window: BrowserWindow = OutputHelper.outputWindows[id]
+        let window: BrowserWindow = OutputHelper.getOutput(id)?.window
         if (!window || window.isDestroyed()) return
 
         window.moveTop()
     }
 
     static alignWithScreens() {
-        Object.keys(OutputHelper.outputWindows).forEach((outputId) => {
-            let output = OutputHelper.outputWindows[outputId]
+        OutputHelper.getKeys().forEach((outputId) => {
+            let output = OutputHelper.getOutput(outputId)
 
-            let wBounds = output.getBounds()
+            let wBounds = output.window.getBounds()
             let centerLeft = wBounds.x + wBounds.width / 2
             let centerTop = wBounds.y + wBounds.height / 2
 
             let point = { x: centerLeft, y: centerTop }
             let closestScreen = screen.getDisplayNearestPoint(point)
 
-            output.setBounds(closestScreen.bounds)
+            output.window.setBounds(closestScreen.bounds)
         })
     }
 }

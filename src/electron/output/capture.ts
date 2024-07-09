@@ -48,7 +48,7 @@ function getDefaultCapture(window: BrowserWindow, id: string): CaptureOptions {
 
 export let storedFrames: any = {}
 export function startCapture(id: string, toggle: any = {}, rate: any = "") {
-    let window = OutputHelper.outputWindows[id]
+    let window = OutputHelper.getOutput(id)?.window
     let windowIsRemoved = !window || window.isDestroyed()
     if (windowIsRemoved) {
         delete captures[id]

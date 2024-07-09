@@ -29,10 +29,10 @@ export class OutputValues {
     }
 
     static async updateValue({ id, key, value }: any) {
-        let window: BrowserWindow = OutputHelper.outputWindows[id]
-        if (!window || window.isDestroyed()) return
-
+        const output = OutputHelper.getOutput(id)
         if (!this.setValues[key]) return
-        this.setValues[key](value, window, id)
+
+        if (!output.window || output.window.isDestroyed()) return
+        this.setValues[key](value, output.window, id)
     }
 }

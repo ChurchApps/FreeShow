@@ -13,9 +13,10 @@ export class OutputLifecycle {
     static async createOutput(output: Output) {
         let id: string = output.id || ""
 
-        if (OutputHelper.outputWindows[id]) return this.removeOutput(id, output)
+        if (OutputHelper.getOutput(id)) return this.removeOutput(id, output)
 
-        OutputHelper.outputWindows[id] = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
+        const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
+        OutputHelper.setOutput(id, { window: outputWindow, previewWindow: outputWindow }) //TODO: previewWindow
         OutputHelper.Bounds.updateBounds(output)
 
         if (output.stageOutput) CaptureTransmitter.stageWindows.push(id)
@@ -65,20 +66,22 @@ export class OutputLifecycle {
         await stopCapture(id)
         NdiSender.stopSenderNDI(id)
 
-        if (!OutputHelper.outputWindows[id]) return
-        if (OutputHelper.outputWindows[id].isDestroyed()) {
-            delete OutputHelper.outputWindows[id]
+        if (!OutputHelper.getOutput(id)) return
+        if (OutputHelper.getOutput(id).window.isDestroyed()) {
+            OutputHelper.deleteOutput(id)
             if (reopen) this.createOutput(reopen)
             return
         }
 
-        OutputHelper.outputWindows[id].on("closed", () => {
-            delete OutputHelper.outputWindows[id]
+        OutputHelper.getOutput(id).window.on("closed", () => {
+            OutputHelper.deleteOutput(id)
             if (reopen) this.createOutput(reopen)
         })
 
         try {
-            OutputHelper.outputWindows[id].destroy()
+            const output = OutputHelper.getOutput(id)
+            output?.window?.destroy()
+            output?.previewWindow?.destroy()
         } catch (error) {
             console.log(error)
         }
@@ -100,6 +103,6 @@ export class OutputLifecycle {
     }
 
     static async closeAllOutputs() {
-        await Promise.all(Object.keys(OutputHelper.outputWindows).map(this.removeOutput))
+        await Promise.all(OutputHelper.getKeys().map(this.removeOutput))
     }
 }

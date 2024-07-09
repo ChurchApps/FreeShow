@@ -1,4 +1,3 @@
-import { BrowserWindow } from "electron"
 import { OutputBounds } from "./helpers/OutputBounds"
 import { OutputIdentify } from "./helpers/OutputIdentify"
 import { OutputSend } from "./helpers/OutputSend"
@@ -10,6 +9,7 @@ import { toApp } from ".."
 import { CaptureTransmitter } from "./CaptureTransmitter"
 import { updatePreviewResolution } from "./capture"
 import { OUTPUT } from "../../types/Channels"
+import { Output } from "./Output"
 
 export class OutputHelper {
     static receiveOutput(_e: any, msg: Message) {
@@ -37,7 +37,28 @@ export class OutputHelper {
         OutputHelper.Send.sendToOutputWindow(msg)
     }
 
-    static outputWindows: { [key: string]: BrowserWindow } = {}
+    //static outputWindows: { [key: string]: BrowserWindow } = {}
+    private static outputs: { [key: string]: Output } = {}
+
+    static getOutput(id: string) {
+        return this.outputs[id]
+    }
+
+    static getAllOutputs() {
+        return Object.entries(this.outputs)
+    }
+
+    static setOutput(id: string, output: Output) {
+        this.outputs[id] = output
+    }
+
+    static deleteOutput(id: string) {
+        delete this.outputs[id]
+    }
+
+    static getKeys() {
+        return Object.keys(OutputHelper.outputs)
+    }
 
     static Bounds = OutputBounds
     static Identify = OutputIdentify

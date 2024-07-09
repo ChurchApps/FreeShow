@@ -5,7 +5,7 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 
 export class OutputVisibility {
     static displayOutput(data: any) {
-        let window: BrowserWindow = OutputHelper.outputWindows[data.output?.id]
+        let window: BrowserWindow = OutputHelper.getOutput(data.output?.id)?.window
 
         if (data.enabled === "toggle") data.enabled = !window?.isVisible()
         if (data.enabled !== false) data.enabled = true
@@ -14,7 +14,7 @@ export class OutputVisibility {
             if (!data.output) return
 
             OutputHelper.Lifecycle.createOutput(data.output)
-            window = OutputHelper.outputWindows[data.output.id]
+            window = OutputHelper.getOutput(data.output?.id)?.window
             if (!window || window.isDestroyed()) return
         }
 
