@@ -5,9 +5,10 @@ import { Output } from "../../types/Output"
 import { Message } from "../../types/Socket"
 import { NdiSender } from "../ndi/NdiSender"
 import { setDataNDI } from "../ndi/talk"
-import { outputOptions, screenIdentifyOptions } from "../utils/windowOptions"
+import { outputOptions } from "../utils/windowOptions"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 import { startCapture, stopCapture, updatePreviewResolution } from "./capture"
+import { OutputHelper } from "./helpers/OutputHelper"
 
 export let outputWindows: { [key: string]: BrowserWindow } = {}
 
@@ -19,7 +20,7 @@ async function createOutput(output: Output) {
     if (outputWindows[id]) return removeOutput(id, output)
 
     outputWindows[id] = createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
-    updateBounds(output)
+    OutputHelper.Bounds.updateBounds(output)
 
     if (output.stageOutput) CaptureTransmitter.stageWindows.push(id)
 
@@ -72,7 +73,7 @@ function setWindowListeners(window: BrowserWindow, { id, name }: { [key: string]
     })
 
     window.on("move", (e: any) => {
-        if (!moveEnabled || updatingBounds) return e.preventDefault()
+        if (!OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()
 
         let bounds = window.getBounds()
         toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
@@ -132,7 +133,7 @@ function displayOutput(data: any) {
     if (data.enabled && bounds && (data.force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
         showWindow(window)
 
-        if (bounds) updateBounds(data.output)
+        if (bounds) OutputHelper.Bounds.updateBounds(data.output)
     } else {
         hideWindow(window, data.output)
 
@@ -201,35 +202,6 @@ function hideWindow(window: BrowserWindow, data: any) {
     toApp(OUTPUT, { channel: "RESTART" })
 }
 
-// BOUNDS
-
-let moveEnabled: boolean = false
-let updatingBounds: boolean = false
-let boundsTimeout: any = null
-function disableWindowMoveListener() {
-    updatingBounds = true
-
-    if (boundsTimeout) clearTimeout(boundsTimeout)
-    boundsTimeout = setTimeout(() => {
-        updatingBounds = false
-        boundsTimeout = null
-    }, 1000)
-}
-
-function updateBounds(data: any) {
-    let window: BrowserWindow = outputWindows[data.id]
-    if (!window || window.isDestroyed()) return
-
-    disableWindowMoveListener()
-    window.setBounds(data.bounds)
-
-    // has to be set twice to work first time
-    setTimeout(() => {
-        if (!window || window.isDestroyed()) return
-        window.setBounds(data.bounds)
-    }, 10)
-}
-
 // UPDATE
 
 const setValues: any = {
@@ -294,79 +266,21 @@ const outputResponses: any = {
     DISPLAY: (data: any) => displayOutput(data),
     ALIGN_WITH_SCREEN: () => alignWithScreens(),
 
-    MOVE: (data: any) => (moveEnabled = data.enabled),
+    MOVE: (data: any) => (OutputHelper.Bounds.moveEnabled = data.enabled),
 
-    UPDATE_BOUNDS: (data: any) => updateBounds(data),
+    UPDATE_BOUNDS: (data: any) => OutputHelper.Bounds.updateBounds(data),
     SET_VALUE: (data: any) => updateValue(data),
     TO_FRONT: (data: any) => moveToFront(data),
 
     PREVIEW_RESOLUTION: (data: any) => updatePreviewResolution(data),
     REQUEST_PREVIEW: (data: any) => CaptureTransmitter.requestPreview(data),
 
-    IDENTIFY_SCREENS: (data: any) => identifyScreens(data),
+    IDENTIFY_SCREENS: (data: any) => OutputHelper.Identify.identifyScreens(data),
 }
 
 export function receiveOutput(_e: any, msg: Message) {
     if (msg.channel.includes("MAIN")) return toApp(OUTPUT, msg)
     if (outputResponses[msg.channel]) return outputResponses[msg.channel](msg.data)
 
-    sendToOutputWindow(msg)
-}
-
-function sendToOutputWindow(msg: any) {
-    Object.entries(outputWindows).forEach(sendToWindow)
-
-    function sendToWindow([id, window]: any) {
-        if ((msg.data?.id && msg.data.id !== id) || !window || window.isDestroyed()) return
-
-        let tempMsg: any = JSON.parse(JSON.stringify(msg))
-        if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, id)
-
-        window.webContents.send(OUTPUT, tempMsg)
-    }
-
-    function onlySendToMatchingId(tempMsg: any, id: string) {
-        if (!msg.data?.[id]) return tempMsg
-
-        tempMsg.data = { [id]: msg.data[id] }
-        return tempMsg
-    }
-}
-
-export function sendToWindow(id: string, msg: any) {
-    let window = outputWindows[id]
-    if (!window || window.isDestroyed()) return
-
-    window.webContents.send(OUTPUT, msg)
-}
-
-// create numbered outputs for each screen
-let identifyActive: boolean = false
-const IDENTIFY_TIMEOUT: number = 3000
-function identifyScreens(screens: any[]) {
-    if (identifyActive) return
-    identifyActive = true
-
-    let activeWindows: any[] = screens.map(createIdentifyScreen)
-
-    setTimeout(() => {
-        activeWindows.forEach((window) => {
-            window.destroy()
-        })
-
-        identifyActive = false
-    }, IDENTIFY_TIMEOUT)
-}
-
-function createIdentifyScreen(screen: any, i: number) {
-    let window: BrowserWindow | null = new BrowserWindow(screenIdentifyOptions)
-    window.setBounds(screen.bounds)
-    window.loadFile("public/identify.html")
-
-    window.webContents.on("did-finish-load", sendNumberToScreen)
-    function sendNumberToScreen() {
-        window!.webContents.send("NUMBER", i + 1)
-    }
-
-    return window
+    OutputHelper.Send.sendToOutputWindow(msg)
 }
