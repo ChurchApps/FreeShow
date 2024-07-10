@@ -42,7 +42,7 @@ export class OutputLifecycle {
         options.height = 180
         options.show = true
         if (mainBounds) {
-            options.x = mainBounds.x + mainBounds.width - options.width - 20
+            options.x = mainBounds.x + mainBounds.width - options.width - 20 - 300
             options.y = mainBounds.y + 100
         }
 

@@ -1,5 +1,6 @@
 import { BrowserWindow, screen } from "electron"
 import { OutputHelper } from "../OutputHelper"
+import { mainWindow } from "../.."
 
 export class OutputBounds {
     // BOUNDS
@@ -57,5 +58,47 @@ export class OutputBounds {
     static getPreviewBounds(mainWidth: number, mainHeight: number) {
         if (mainWidth || mainHeight) return { width: 320, height: 180 }
         else return { width: 320, height: 180 }
+    }
+
+    static updatePreviewBounds() {
+        const mainBounds = mainWindow?.getBounds()
+        if (mainBounds) {
+            OutputHelper.getKeys().forEach((outputId) => {
+                const output = OutputHelper.getOutput(outputId)
+                console.log(output.previewWindow?.getBounds())
+                if (output.previewWindow) {
+                    const bounds: Electron.Rectangle = {
+                        x: (output.previewBounds?.x || 0) + mainBounds?.x,
+                        y: (output.previewBounds?.y || 0) + mainBounds?.y + 200,
+                        width: output.previewBounds?.width || 320,
+                        height: output.previewBounds?.height || 180,
+                    }
+                    output.previewWindow.setBounds(bounds)
+                }
+            })
+        }
+    }
+
+    static setPreviewBounds(data: any) {
+        const output = OutputHelper.getOutput(data.id)
+        if (output) {
+            output.previewBounds = {
+                x: data.x,
+                y: data.y,
+                width: data.width,
+                height: data.height,
+            }
+
+            const mainBounds = mainWindow?.getBounds()
+
+            const bounds: Electron.Rectangle = {
+                x: data.x + mainBounds?.x,
+                y: data.y + mainBounds?.y + 200,
+                width: data.width,
+                height: data.height,
+            }
+            console.log(bounds)
+            output?.previewWindow.setBounds(bounds)
+        }
     }
 }

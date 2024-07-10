@@ -184,11 +184,23 @@ function retryLoadingContent() {
 function setMainListeners() {
     if (!mainWindow) return
 
-    mainWindow.on("maximize", () => config.set("maximized", true))
-    mainWindow.on("unmaximize", () => config.set("maximized", false))
+    mainWindow.on("maximize", () => {
+        OutputHelper.Bounds.updatePreviewBounds()
+        config.set("maximized", true)
+    })
+    mainWindow.on("unmaximize", () => {
+        OutputHelper.Bounds.updatePreviewBounds()
+        config.set("maximized", false)
+    })
 
-    mainWindow.on("resize", () => config.set("bounds", mainWindow?.getBounds()))
-    mainWindow.on("move", () => config.set("bounds", mainWindow?.getBounds()))
+    mainWindow.on("resize", () => {
+        OutputHelper.Bounds.updatePreviewBounds()
+        config.set("bounds", mainWindow?.getBounds())
+    })
+    mainWindow.on("move", () => {
+        OutputHelper.Bounds.updatePreviewBounds()
+        config.set("bounds", mainWindow?.getBounds())
+    })
 
     mainWindow.on("close", callClose)
     mainWindow.on("closed", exitApp)

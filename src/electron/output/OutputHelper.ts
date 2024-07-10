@@ -29,6 +29,7 @@ export class OutputHelper {
             REQUEST_PREVIEW: (data: any) => CaptureTransmitter.requestPreview(data),
 
             IDENTIFY_SCREENS: (data: any) => OutputHelper.Identify.identifyScreens(data),
+            PREVIEW_BOUNDS: (data: any) => OutputHelper.Bounds.setPreviewBounds(data),
         }
 
         if (msg.channel.includes("MAIN")) return toApp(OUTPUT, msg)

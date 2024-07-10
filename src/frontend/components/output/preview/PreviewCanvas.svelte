@@ -14,12 +14,29 @@
     let width: number = 0
     let height: number = 0
 
+    function logWindowDetails() {
+        const element = document.querySelector("#" + id)
+        const apectRatio = (capture?.size?.width || 16) / (capture?.size?.height || 9)
+
+        if (element) {
+            const rect = element.getBoundingClientRect()
+            console.log(`Width: ${rect.width}, Height: ${rect.height}, X: ${rect.left}, Y: ${rect.top}`)
+            const data = { id, width: Math.round(rect.width), height: Math.round(rect.width / apectRatio), x: Math.round(rect.left), y: Math.round(rect.top) }
+            send(OUTPUT, ["PREVIEW_BOUNDS"], data)
+        }
+    }
+
     onMount(() => {
         if (!canvas) return
 
         ctx = canvas.getContext("2d")
         canvas.width = width * 2.8
         canvas.height = height * 2.8
+
+        window.addEventListener("resize", logWindowDetails)
+
+        // Initial log
+        logWindowDetails()
 
         send(OUTPUT, ["PREVIEW_RESOLUTION"], { id, size: { width: canvas.width, height: canvas.height } })
     })
