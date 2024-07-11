@@ -18,8 +18,10 @@ export class OutputLifecycle {
         const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
         const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow }) //TODO: previewWindow
+        OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds(output)
+
+        OutputHelper.Bounds.updatePreviewBounds()
 
         if (output.stageOutput) CaptureTransmitter.stageWindows.push(id)
 
@@ -91,21 +93,26 @@ export class OutputLifecycle {
         await stopCapture(id)
         NdiSender.stopSenderNDI(id)
 
+        console.log("MADE IT HERE")
         if (!OutputHelper.getOutput(id)) return
         if (OutputHelper.getOutput(id).window.isDestroyed()) {
+            console.log("OUTPUT IS DESTORYED ALREADY")
             OutputHelper.deleteOutput(id)
             if (reopen) this.createOutput(reopen)
             return
         }
 
         OutputHelper.getOutput(id).window.on("closed", () => {
+            console.log("Window is closed")
             OutputHelper.deleteOutput(id)
             if (reopen) this.createOutput(reopen)
         })
 
         try {
             const output = OutputHelper.getOutput(id)
+            console.log("Destroying output:", output?.window)
             output?.window?.destroy()
+            console.log("Destroying preview:", output?.previewWindow)
             output?.previewWindow?.destroy()
         } catch (error) {
             console.log(error)

@@ -184,6 +184,15 @@ function retryLoadingContent() {
 function setMainListeners() {
     if (!mainWindow) return
 
+    mainWindow.on("minimize", () => {
+        OutputHelper.Visibility.hideAllPreviews()
+    })
+    mainWindow.on("restore", () => {
+        setTimeout(() => {
+            OutputHelper.Visibility.showAllPreviews()
+        }, 100)
+    })
+
     mainWindow.on("maximize", () => {
         OutputHelper.Bounds.updatePreviewBounds()
         config.set("maximized", true)

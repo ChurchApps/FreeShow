@@ -16,17 +16,14 @@
 
     function logWindowDetails() {
         //const apectRatio = (capture?.size?.width || 16) / (capture?.size?.height || 9)
-
         if (canvas) {
-            //console.log(canvas)
             const rect = canvas.getBoundingClientRect()
-            console.log(`Id: ${id} Width: ${Math.round(rect.width)}, Height: ${Math.round(rect.height)}, X: ${Math.round(rect.left)}, Y: ${Math.round(rect.top)}`)
             const data = { id, width: Math.round(rect.width), height: Math.round(rect.height), x: Math.round(rect.left), y: Math.round(rect.top) }
             send(OUTPUT, ["PREVIEW_BOUNDS"], data)
         }
     }
 
-    $: if (canvas) logWindowDetails()
+    $: if (canvas || id) logWindowDetails()
 
     onMount(() => {
         if (!canvas) return

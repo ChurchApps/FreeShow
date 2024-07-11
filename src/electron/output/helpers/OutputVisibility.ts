@@ -96,4 +96,18 @@ export class OutputVisibility {
         console.log("RESTARTING OUTPUT:", data.id)
         toApp(OUTPUT, { channel: "RESTART" })
     }
+
+    static hideAllPreviews() {
+        OutputHelper.getKeys().forEach((outputId) => {
+            let output = OutputHelper.getOutput(outputId)
+            if (output.previewWindow) output.previewWindow.hide()
+        })
+    }
+
+    static showAllPreviews() {
+        OutputHelper.getKeys().forEach((outputId) => {
+            let output = OutputHelper.getOutput(outputId)
+            if (output.previewWindow) output.previewWindow.showInactive()
+        })
+    }
 }
