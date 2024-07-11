@@ -75,6 +75,8 @@ export function startCapture(id: string, toggle: any = {}, rate: any = "") {
     //captures[id].options.ndi = true
     CaptureTransmitter.startTransmitting(id)
 
+    // TODO: Re-enable for NDI and Server
+    /*
     //framerates.preview = rate === "full" ? 60 : 30
     if (rate === "auto" || rate === "full") captures[id].window.webContents.beginFrameSubscription(true, processFrame) // updates approximately every 0.02s
     captures[id].subscribed = true
@@ -114,6 +116,7 @@ export function startCapture(id: string, toggle: any = {}, rate: any = "") {
     function processFrame(image: NativeImage) {
         storedFrames[id] = image
     }
+    */
 }
 
 export function updateFramerate(id: string) {

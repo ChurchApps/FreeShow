@@ -62,14 +62,16 @@ export class OutputBounds {
 
     static updatePreviewBounds() {
         const mainBounds = mainWindow?.getBounds()
+        const devFrameOffsetY = 50 //TODO: Remove hack
+        const devFrameOffsetX = 8
         if (mainBounds) {
             OutputHelper.getKeys().forEach((outputId) => {
                 const output = OutputHelper.getOutput(outputId)
                 console.log(output.previewWindow?.getBounds())
                 if (output.previewWindow) {
                     const bounds: Electron.Rectangle = {
-                        x: (output.previewBounds?.x || 0) + mainBounds?.x,
-                        y: (output.previewBounds?.y || 0) + mainBounds?.y + 200,
+                        x: (output.previewBounds?.x || 0) + mainBounds?.x + devFrameOffsetX,
+                        y: (output.previewBounds?.y || 0) + mainBounds?.y + devFrameOffsetY,
                         width: output.previewBounds?.width || 320,
                         height: output.previewBounds?.height || 180,
                     }
@@ -89,6 +91,9 @@ export class OutputBounds {
                 height: data.height,
             }
 
+            this.updatePreviewBounds()
+
+            /*
             const mainBounds = mainWindow?.getBounds()
 
             const bounds: Electron.Rectangle = {
@@ -99,6 +104,7 @@ export class OutputBounds {
             }
             console.log(bounds)
             output?.previewWindow.setBounds(bounds)
+            */
         }
     }
 }

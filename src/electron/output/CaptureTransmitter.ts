@@ -1,11 +1,10 @@
 import type { NativeImage, Size } from "electron"
 import os from "os"
-import { toApp } from ".."
-import { OUTPUT, OUTPUT_STREAM } from "../../types/Channels"
+import { OUTPUT_STREAM } from "../../types/Channels"
 import { toServer } from "../servers"
 import util from "../ndi/vingester-util"
 import { NdiSender } from "../ndi/NdiSender"
-import { CaptureOptions, captures, previewSize, storedFrames } from "./capture"
+import { CaptureOptions, captures, storedFrames } from "./capture"
 import { OutputHelper } from "./OutputHelper"
 
 export type Channel = {
@@ -24,7 +23,7 @@ export class CaptureTransmitter {
     static startTransmitting(captureId: string) {
         const capture = captures[captureId]
         if (!capture) return
-        this.startChannel(captureId, "preview")
+        //this.startChannel(captureId, "preview")
         if (capture.options.ndi) this.startChannel(captureId, "ndi")
         if (capture.options.server) this.startChannel(captureId, "server")
 
@@ -66,9 +65,9 @@ export class CaptureTransmitter {
         const size = image.getSize()
         channel.lastImage = image
         switch (key) {
-            case "preview":
-                this.sendBufferToPreview(channel.captureId, image, { size })
-                break
+            //case "preview":
+            //this.sendBufferToPreview(channel.captureId, image, { size })
+            //break
             case "ndi":
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
@@ -98,6 +97,7 @@ export class CaptureTransmitter {
     }
 
     // PREVIEW
+    /*
     static sendBufferToPreview(captureId: string, image: NativeImage, options: any) {
         if (!image) return
         image = this.resizeImage(image, options.size, previewSize)
@@ -105,7 +105,7 @@ export class CaptureTransmitter {
         const buffer = image.getBitmap()
         const size = image.getSize()
 
-        /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
+        //  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
@@ -114,6 +114,7 @@ export class CaptureTransmitter {
         this.sendToStageOutputs(msg)
         this.sendToRequested(msg)
     }
+    */
 
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
         if (initialSize.width / initialSize.height >= newSize.width / newSize.height) image = image.resize({ width: newSize.width, quality: "good" })

@@ -15,16 +15,18 @@
     let height: number = 0
 
     function logWindowDetails() {
-        const element = document.querySelector("#" + id)
-        const apectRatio = (capture?.size?.width || 16) / (capture?.size?.height || 9)
+        //const apectRatio = (capture?.size?.width || 16) / (capture?.size?.height || 9)
 
-        if (element) {
-            const rect = element.getBoundingClientRect()
-            console.log(`Width: ${rect.width}, Height: ${rect.height}, X: ${rect.left}, Y: ${rect.top}`)
-            const data = { id, width: Math.round(rect.width), height: Math.round(rect.width / apectRatio), x: Math.round(rect.left), y: Math.round(rect.top) }
+        if (canvas) {
+            //console.log(canvas)
+            const rect = canvas.getBoundingClientRect()
+            console.log(`Id: ${id} Width: ${Math.round(rect.width)}, Height: ${Math.round(rect.height)}, X: ${Math.round(rect.left)}, Y: ${Math.round(rect.top)}`)
+            const data = { id, width: Math.round(rect.width), height: Math.round(rect.height), x: Math.round(rect.left), y: Math.round(rect.top) }
             send(OUTPUT, ["PREVIEW_BOUNDS"], data)
         }
     }
+
+    $: if (canvas) logWindowDetails()
 
     onMount(() => {
         if (!canvas) return
@@ -33,10 +35,14 @@
         canvas.width = width * 2.8
         canvas.height = height * 2.8
 
-        window.addEventListener("resize", logWindowDetails)
+        window.addEventListener("resize", () => {
+            logWindowDetails()
+        })
 
-        // Initial log
-        logWindowDetails()
+        //TODO: Bind to canvas initialisation
+        setTimeout(() => {
+            logWindowDetails()
+        }, 1000)
 
         send(OUTPUT, ["PREVIEW_RESOLUTION"], { id, size: { width: canvas.width, height: canvas.height } })
     })
@@ -63,6 +69,7 @@
 
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+        logWindowDetails()
     }
 </script>
 
