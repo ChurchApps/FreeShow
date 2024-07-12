@@ -60,52 +60,23 @@ export function startCapture(id: string, toggle: any = {}) {
     updateFramerate(id)
 
     if (captures[id].subscribed) return
-
-    //captures[id].options.ndi = true
     CaptureTransmitter.startTransmitting(id)
-
-    // TODO: Re-enable for NDI and Server
-    /*
-    //framerates.preview = rate === "full" ? 60 : 30
-    if (rate === "auto" || rate === "full") captures[id].window.webContents.beginFrameSubscription(true, processFrame) // updates approximately every 0.02s
     captures[id].subscribed = true
-
-    if (rate === "full" || (rate !== "optimized" && captures[id].options.ndi)) return
-
-    // optimize cpu on low end devices
-    const autoOptimizePercentageCPU = 95 / 10 // % / 10
-    const captureAmount = 4 * 60
-    let captureCount = captureAmount
 
     cpuCapture()
     async function cpuCapture() {
         if (!captures[id] || captures[id].window.isDestroyed()) return
-
-        let usage = process.getCPUUsage()
-
-        let isOptimizedOrLagging = rate !== "auto" || captureCount < captureAmount || usage.percentCPUUsage > autoOptimizePercentageCPU
-        if (isOptimizedOrLagging) {
-            if (captureCount > captureAmount) captureCount = 0
-            // limit frames
-            if (captures[id].window.webContents.isBeingCaptured()) captures[id].window.webContents.endFrameSubscription()
-
-            // manually capture to reduce lag
-            let image = await captures[id].window.webContents.capturePage()
-            processFrame(image)
-
-            // capture for 60 seconds then get cpu again (if rate is "auto")
-            captureCount++
-            setTimeout(cpuCapture, rate === "optimized" ? 1000 : 100)
-        } else {
-            captureCount = captureAmount
-            if (!captures[id].window.webContents.isBeingCaptured()) captures[id].window.webContents.beginFrameSubscription(true, processFrame)
-        }
+        let image = await captures[id].window.webContents.capturePage()
+        processFrame(image)
+        let frameRate = captures[id].framerates.ndi
+        if (captures[id].framerates.server > frameRate) frameRate = captures[id].framerates.server
+        const ms = Math.round(1000 / frameRate)
+        setTimeout(cpuCapture, ms)
     }
 
     function processFrame(image: NativeImage) {
         storedFrames[id] = image
     }
-    */
 }
 
 export function updateFramerate(id: string) {
