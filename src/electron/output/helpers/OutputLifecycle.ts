@@ -26,7 +26,7 @@ export class OutputLifecycle {
         if (output.stageOutput) CaptureTransmitter.stageWindows.push(id)
 
         setTimeout(() => {
-            startCapture(id, { ndi: output.ndi || false }, (output as any).rate)
+            startCapture(id, { ndi: output.ndi || false })
         }, 1200)
 
         // NDI

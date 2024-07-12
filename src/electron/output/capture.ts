@@ -16,7 +16,6 @@ export type CaptureOptions = {
 export let captures: { [key: string]: CaptureOptions } = {}
 
 export const framerates: any = {
-    preview: 30,
     server: 30,
     unconnected: 1,
     connected: 30,
@@ -26,10 +25,7 @@ export let customFramerates: any = {}
 function getDefaultCapture(window: BrowserWindow, id: string): CaptureOptions {
     let screen: Display = getWindowScreen(window)
 
-    const previewFramerate = Math.round(framerates.preview / Object.keys(captures).length)
-
     let defaultFramerates = {
-        preview: previewFramerate,
         server: framerates.server,
         ndi: framerates.connected,
     }
@@ -47,20 +43,13 @@ function getDefaultCapture(window: BrowserWindow, id: string): CaptureOptions {
 // START
 
 export let storedFrames: any = {}
-export function startCapture(id: string, toggle: any = {}, rate: any = "") {
+export function startCapture(id: string, toggle: any = {}) {
     let window = OutputHelper.getOutput(id)?.window
     let windowIsRemoved = !window || window.isDestroyed()
     if (windowIsRemoved) {
         delete captures[id]
         return
     }
-
-    // change preview frame rate based on settings
-    if (!rate) rate = "auto"
-    if (rate === "optimized") framerates.preview = 1 // 1 fps
-    else if (rate === "reduced") framerates.preview = 10 // 10 fps
-    else if (rate === "full") framerates.preview = 60 // 60 fps
-    else framerates.preview = 30 // auto // 0.5 fpgs OR 30 fps
 
     if (!captures[id]) captures[id] = getDefaultCapture(window, id)
 
@@ -147,11 +136,6 @@ export function resizeImage(image: NativeImage, initialSize: Size, newSize: Size
     else image = image.resize({ height: newSize.height })
 
     return image
-}
-
-export let previewSize: Size = { width: 320, height: 180 }
-export function updatePreviewResolution(data: any) {
-    previewSize = data.size
 }
 
 // STOP

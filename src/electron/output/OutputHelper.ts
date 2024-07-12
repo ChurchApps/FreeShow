@@ -7,7 +7,6 @@ import { OutputLifecycle } from "./helpers/OutputLifecycle"
 import { Message } from "../../types/Socket"
 import { toApp } from ".."
 import { CaptureTransmitter } from "./CaptureTransmitter"
-import { updatePreviewResolution } from "./capture"
 import { OUTPUT } from "../../types/Channels"
 import { Output } from "./Output"
 
@@ -25,7 +24,7 @@ export class OutputHelper {
             SET_VALUE: (data: any) => OutputHelper.Values.updateValue(data),
             TO_FRONT: (data: any) => OutputHelper.Bounds.moveToFront(data),
 
-            PREVIEW_RESOLUTION: (data: any) => updatePreviewResolution(data),
+            //PREVIEW_RESOLUTION: (data: any) => () => {}, //TODO: Eliminate?   Was -> updatePreviewResolution(data)
             REQUEST_PREVIEW: (data: any) => CaptureTransmitter.requestPreview(data),
 
             IDENTIFY_SCREENS: (data: any) => OutputHelper.Identify.identifyScreens(data),

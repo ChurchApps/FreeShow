@@ -12,7 +12,7 @@ export class OutputValues {
             this.setValues.capture({ key: "ndi", value }, window, id)
         },
         capture: async (data: any, _window: BrowserWindow, id: string) => {
-            startCapture(id, { [data.key]: data.value }, data.rate)
+            startCapture(id, { [data.key]: data.value })
             // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
         },
         transparent: (value: boolean, window: BrowserWindow) => {
