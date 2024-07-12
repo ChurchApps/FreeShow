@@ -1,7 +1,6 @@
 import { NativeImage } from "electron"
-import { CaptureHelper } from "./CaptureHelper"
-import { CaptureTransmitter } from "./CaptureTransmitter"
-import { OutputHelper } from "../output/OutputHelper"
+import { CaptureHelper } from "../CaptureHelper"
+import { OutputHelper } from "../../output/OutputHelper"
 
 export class CaptureLifecycle {
     static startCapture(id: string, toggle: any = {}) {
@@ -25,7 +24,7 @@ export class CaptureLifecycle {
         CaptureHelper.updateFramerate(id)
 
         if (output.captureOptions.subscribed) return
-        CaptureTransmitter.startTransmitting(id)
+        CaptureHelper.Transmitter.startTransmitting(id)
         output.captureOptions.subscribed = true
 
         cpuCapture()
@@ -56,7 +55,7 @@ export class CaptureLifecycle {
         const capture = output.captureOptions
         return new Promise((resolve) => {
             if (!capture) return resolve(true)
-            CaptureTransmitter.removeAllChannels(id)
+            CaptureHelper.Transmitter.removeAllChannels(id)
             let windowIsRemoved = !capture.window || capture.window.isDestroyed()
             if (windowIsRemoved) return deleteAndResolve()
 

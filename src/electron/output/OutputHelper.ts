@@ -8,7 +8,7 @@ import { Message } from "../../types/Socket"
 import { toApp } from ".."
 import { OUTPUT } from "../../types/Channels"
 import { Output } from "./Output"
-import { CaptureTransmitter } from "../capture/CaptureTransmitter"
+import { CaptureHelper } from "../capture/CaptureHelper"
 
 export class OutputHelper {
     static receiveOutput(_e: any, msg: Message) {
@@ -25,7 +25,7 @@ export class OutputHelper {
             TO_FRONT: (data: any) => OutputHelper.Bounds.moveToFront(data),
 
             //PREVIEW_RESOLUTION: (data: any) => () => {}, //TODO: Eliminate?   Was -> updatePreviewResolution(data)
-            REQUEST_PREVIEW: (data: any) => CaptureTransmitter.requestPreview(data),
+            REQUEST_PREVIEW: (data: any) => CaptureHelper.Transmitter.requestPreview(data),
 
             IDENTIFY_SCREENS: (data: any) => OutputHelper.Identify.identifyScreens(data),
             PREVIEW_BOUNDS: (data: any) => OutputHelper.Bounds.setPreviewBounds(data),

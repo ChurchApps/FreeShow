@@ -1,13 +1,14 @@
 import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
 import { NdiSender } from "../ndi/NdiSender"
-import { CaptureTransmitter } from "./CaptureTransmitter"
+import { CaptureTransmitter } from "./helpers/CaptureTransmitter"
 import { CaptureOptions } from "./CaptureOptions"
-import { CaptureLifecycle } from "./CaptureLifecycle"
+import { CaptureLifecycle } from "./helpers/CaptureLifecycle"
 import { OutputHelper } from "../output/OutputHelper"
 
 export class CaptureHelper {
     static Lifecycle = CaptureLifecycle
+    static Transmitter = CaptureTransmitter
 
     private static framerates: any = {
         server: 30,

@@ -1,12 +1,12 @@
 import type { NativeImage, Size } from "electron"
 import os from "os"
-import { OUTPUT_STREAM } from "../../types/Channels"
-import { toServer } from "../servers"
-import util from "../ndi/vingester-util"
-import { NdiSender } from "../ndi/NdiSender"
-import { CaptureHelper } from "./CaptureHelper"
-import { CaptureOptions } from "./CaptureOptions"
-import { OutputHelper } from "../output/OutputHelper"
+import { OUTPUT_STREAM } from "../../../types/Channels"
+import { toServer } from "../../servers"
+import util from "../../ndi/vingester-util"
+import { NdiSender } from "../../ndi/NdiSender"
+import { CaptureHelper } from "../CaptureHelper"
+import { CaptureOptions } from "../CaptureOptions"
+import { OutputHelper } from "../../output/OutputHelper"
 
 export type Channel = {
     key: string
@@ -33,8 +33,8 @@ export class CaptureTransmitter {
             /*
             console.log("SETTING INTERVAL");
             setInterval(() => {
-                console.log("NDI FRAMES:", CaptureTransmitter.ndiFrameCount, " - ", captureId);
-                CaptureTransmitter.ndiFrameCount = 0
+                console.log("NDI FRAMES:", this.ndiFrameCount, " - ", captureId);
+                this.ndiFrameCount = 0
             },1000);
             */
         }

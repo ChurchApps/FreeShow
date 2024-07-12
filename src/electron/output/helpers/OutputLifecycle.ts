@@ -6,7 +6,6 @@ import { setDataNDI } from "../../ndi/talk"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
 import { OUTPUT } from "../../../types/Channels"
-import { CaptureTransmitter } from "../../capture/CaptureTransmitter"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 
 export class OutputLifecycle {
@@ -23,7 +22,7 @@ export class OutputLifecycle {
 
         OutputHelper.Bounds.updatePreviewBounds()
 
-        if (output.stageOutput) CaptureTransmitter.stageWindows.push(id)
+        if (output.stageOutput) CaptureHelper.Transmitter.stageWindows.push(id)
 
         setTimeout(() => {
             CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false })
