@@ -92,26 +92,21 @@ export class OutputLifecycle {
         await CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
 
-        console.log("MADE IT HERE")
         if (!OutputHelper.getOutput(id)) return
         if (OutputHelper.getOutput(id).window.isDestroyed()) {
-            console.log("OUTPUT IS DESTORYED ALREADY")
             OutputHelper.deleteOutput(id)
             if (reopen) this.createOutput(reopen)
             return
         }
 
         OutputHelper.getOutput(id).window.on("closed", () => {
-            console.log("Window is closed")
             OutputHelper.deleteOutput(id)
             if (reopen) this.createOutput(reopen)
         })
 
         try {
             const output = OutputHelper.getOutput(id)
-            console.log("Destroying output:", output?.window)
             output?.window?.destroy()
-            console.log("Destroying preview:", output?.previewWindow)
             output?.previewWindow?.destroy()
         } catch (error) {
             console.log(error)
