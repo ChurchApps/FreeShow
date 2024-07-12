@@ -4,9 +4,9 @@ import { NdiSender } from "../ndi/NdiSender"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 import { CaptureOptions } from "./CaptureOptions"
 import { CaptureLifecycle } from "./CaptureLifecycle"
+import { OutputHelper } from "../output/OutputHelper"
 
 export class CaptureHelper {
-    static captures: { [key: string]: CaptureOptions } = {}
     static Lifecycle = CaptureLifecycle
 
     private static framerates: any = {
@@ -39,14 +39,15 @@ export class CaptureHelper {
     static storedFrames: any = {}
 
     static updateFramerate(id: string) {
-        if (!this.captures[id]) return
+        const captureOptions = OutputHelper.getOutput(id)?.captureOptions
+        if (!captureOptions) return
 
         if (NdiSender.NDI[id]) {
             let ndiFramerate = this.framerates.unconnected
             if (NdiSender.NDI[id].status === "connected") ndiFramerate = this.customFramerates[id]?.ndi || this.framerates.connected
 
-            if (this.captures[id].framerates.ndi !== parseInt(ndiFramerate)) {
-                this.captures[id].framerates.ndi = parseInt(ndiFramerate)
+            if (captureOptions.framerates.ndi !== parseInt(ndiFramerate)) {
+                captureOptions.framerates.ndi = parseInt(ndiFramerate)
                 CaptureTransmitter.startChannel(id, "ndi")
             }
         }

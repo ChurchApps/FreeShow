@@ -5,32 +5,36 @@ import { OutputHelper } from "../output/OutputHelper"
 
 export class CaptureLifecycle {
     static startCapture(id: string, toggle: any = {}) {
-        let window = OutputHelper.getOutput(id)?.window
+        const output = OutputHelper.getOutput(id)
+        let window = output?.window
         let windowIsRemoved = !window || window.isDestroyed()
         if (windowIsRemoved) {
-            delete CaptureHelper.captures[id]
+            delete output.captureOptions
             return
         }
 
-        if (!CaptureHelper.captures[id]) CaptureHelper.captures[id] = CaptureHelper.getDefaultCapture(window, id)
+        if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(window, id)
 
-        Object.keys(toggle).map((key) => {
-            CaptureHelper.captures[id].options[key] = toggle[key]
-        })
+        if (output.captureOptions) {
+            const capture = output.captureOptions
+            Object.keys(toggle).map((key) => {
+                capture.options[key] = toggle[key]
+            })
+        }
 
         CaptureHelper.updateFramerate(id)
 
-        if (CaptureHelper.captures[id].subscribed) return
+        if (output.captureOptions.subscribed) return
         CaptureTransmitter.startTransmitting(id)
-        CaptureHelper.captures[id].subscribed = true
+        output.captureOptions.subscribed = true
 
         cpuCapture()
         async function cpuCapture() {
-            if (!CaptureHelper.captures[id] || CaptureHelper.captures[id].window.isDestroyed()) return
-            let image = await CaptureHelper.captures[id].window.webContents.capturePage()
+            if (!output.captureOptions || output.captureOptions.window.isDestroyed()) return
+            let image = await output.captureOptions.window.webContents.capturePage()
             processFrame(image)
-            let frameRate = CaptureHelper.captures[id].framerates.ndi
-            if (CaptureHelper.captures[id].framerates.server > frameRate) frameRate = CaptureHelper.captures[id].framerates.server
+            let frameRate = output.captureOptions.framerates.ndi
+            if (output.captureOptions.framerates.server > frameRate) frameRate = output.captureOptions.framerates.server
             const ms = Math.round(1000 / frameRate)
             setTimeout(cpuCapture, ms)
         }
@@ -41,16 +45,19 @@ export class CaptureLifecycle {
     }
 
     // STOP
-
     static stopAllCaptures() {
-        Object.keys(CaptureHelper.captures).forEach(this.stopCapture)
+        OutputHelper.getAllOutputs().forEach((output) => {
+            if (output[1].captureOptions) this.stopCapture(output[0])
+        })
     }
 
     static stopCapture(id: string) {
+        const output = OutputHelper.getOutput(id)
+        const capture = output.captureOptions
         return new Promise((resolve) => {
-            if (!CaptureHelper.captures[id]) return resolve(true)
+            if (!capture) return resolve(true)
             CaptureTransmitter.removeAllChannels(id)
-            let windowIsRemoved = !CaptureHelper.captures[id].window || CaptureHelper.captures[id].window.isDestroyed()
+            let windowIsRemoved = !capture.window || capture.window.isDestroyed()
             if (windowIsRemoved) return deleteAndResolve()
 
             console.log("Capture - stopping: " + id)
@@ -60,21 +67,21 @@ export class CaptureLifecycle {
             deleteAndResolve()
 
             function deleteAndResolve() {
-                delete CaptureHelper.captures[id]
+                delete output.captureOptions
                 resolve(true)
             }
         })
 
         function endSubscription() {
-            if (!CaptureHelper.captures[id].subscribed) return
+            if (!capture?.subscribed) return
 
-            CaptureHelper.captures[id].window.webContents.endFrameSubscription()
-            CaptureHelper.captures[id].subscribed = false
+            capture.window.webContents.endFrameSubscription()
+            capture.subscribed = false
         }
 
         function removeListeners() {
-            CaptureHelper.captures[id].window.removeAllListeners()
-            CaptureHelper.captures[id].window.webContents.removeAllListeners()
+            capture?.window.removeAllListeners()
+            capture?.window.webContents.removeAllListeners()
         }
     }
 }

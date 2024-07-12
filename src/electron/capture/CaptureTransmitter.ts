@@ -22,7 +22,7 @@ export class CaptureTransmitter {
     static channels: { [key: string]: Channel } = {}
 
     static startTransmitting(captureId: string) {
-        const capture = CaptureHelper.captures[captureId]
+        const capture = OutputHelper.getOutput(captureId)?.captureOptions
         if (!capture) return
         //this.startChannel(captureId, "preview")
         if (capture.options.ndi) this.startChannel(captureId, "ndi")
@@ -42,7 +42,7 @@ export class CaptureTransmitter {
 
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
-        const interval = 1000 / CaptureHelper.captures[captureId].framerates[key]
+        const interval = 1000 / OutputHelper.getOutput(captureId)?.captureOptions?.framerates[key] || 10
 
         if (this.channels[combinedKey]?.timer) {
             clearInterval(this.channels[combinedKey].timer)
@@ -73,20 +73,11 @@ export class CaptureTransmitter {
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
             case "server":
-                this.sendBufferToServer(CaptureHelper.captures[captureId], image)
+                const options = OutputHelper.getOutput(captureId)?.captureOptions
+                if (options) this.sendBufferToServer(options, image)
                 break
         }
     }
-
-    /*
-    static async sendFrames(capture: CaptureOptions, image: NativeImage, rates: any) {
-        if (!capture || !image) return
-        const size = image.getSize()
-        if (rates.previewFrame) this.sendBufferToPreview(capture.id, image, { size })
-        if (rates.serverFrame && capture.options.server) this.sendBufferToServer(capture, image)
-        if (rates.ndiFrame && capture.options.ndi) this.sendBufferToNdi(capture.id, image, { size })
-    }
-*/
 
     // NDI
     static sendBufferToNdi(captureId: string, image: NativeImage, { size }: any) {
@@ -94,28 +85,8 @@ export class CaptureTransmitter {
         const ratio = image.getAspectRatio()
         //this.ndiFrameCount++
         // WIP refresh on enable?
-        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: CaptureHelper.captures[captureId].framerates.ndi })
+        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates.ndi || 10 })
     }
-
-    // PREVIEW
-    /*
-    static sendBufferToPreview(captureId: string, image: NativeImage, options: any) {
-        if (!image) return
-        image = this.resizeImage(image, options.size, previewSize)
-
-        const buffer = image.getBitmap()
-        const size = image.getSize()
-
-        //  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)
-        if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
-        else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
-
-        let msg = { channel: "PREVIEW", data: { id: captureId, buffer, size, originalSize: options.size } }
-        toApp(OUTPUT, msg)
-        this.sendToStageOutputs(msg)
-        this.sendToRequested(msg)
-    }
-    */
 
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
         if (initialSize.width / initialSize.height >= newSize.width / newSize.height) image = image.resize({ width: newSize.width, quality: "good" })
