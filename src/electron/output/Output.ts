@@ -1,5 +1,5 @@
 import { BrowserWindow } from "electron"
-import { CaptureOptions } from "./capture"
+import { CaptureOptions } from "./CaptureOptions"
 
 export class Output {
     window: BrowserWindow

@@ -1,6 +1,6 @@
 import { NDI } from "../../types/Channels"
 import { Message } from "../../types/Socket"
-import { customFramerates, updateFramerate } from "../output/capture"
+import { CaptureHelper } from "../output/CaptureHelper"
 import { NdiReceiver } from "./NdiReceiver"
 
 export async function receiveNDI(e: any, msg: Message) {
@@ -27,9 +27,9 @@ export function setDataNDI(data: any) {
     if (!data?.id) return
 
     if (data.framerate) {
-        if (!customFramerates[data.id]) customFramerates[data.id] = {}
-        customFramerates[data.id].ndi = data.framerate
+        if (!CaptureHelper.customFramerates[data.id]) CaptureHelper.customFramerates[data.id] = {}
+        CaptureHelper.customFramerates[data.id].ndi = data.framerate
 
-        updateFramerate(data.id)
+        CaptureHelper.updateFramerate(data.id)
     }
 }

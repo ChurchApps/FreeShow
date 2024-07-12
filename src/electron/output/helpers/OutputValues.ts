@@ -1,7 +1,7 @@
 import { BrowserWindow } from "electron"
 import { NdiSender } from "../../ndi/NdiSender"
-import { startCapture } from "../capture"
 import { OutputHelper } from "../OutputHelper"
+import { CaptureHelper } from "../CaptureHelper"
 
 export class OutputValues {
     private static setValues: any = {
@@ -12,7 +12,7 @@ export class OutputValues {
             this.setValues.capture({ key: "ndi", value }, window, id)
         },
         capture: async (data: any, _window: BrowserWindow, id: string) => {
-            startCapture(id, { [data.key]: data.value })
+            CaptureHelper.Lifecycle.startCapture(id, { [data.key]: data.value })
             // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
         },
         transparent: (value: boolean, window: BrowserWindow) => {

@@ -5,9 +5,9 @@ import { NdiSender } from "../../ndi/NdiSender"
 import { setDataNDI } from "../../ndi/talk"
 import { outputOptions } from "../../utils/windowOptions"
 import { CaptureTransmitter } from "../CaptureTransmitter"
-import { startCapture, stopCapture } from "../capture"
 import { OutputHelper } from "../OutputHelper"
 import { OUTPUT } from "../../../types/Channels"
+import { CaptureHelper } from "../CaptureHelper"
 
 export class OutputLifecycle {
     static async createOutput(output: Output) {
@@ -26,7 +26,7 @@ export class OutputLifecycle {
         if (output.stageOutput) CaptureTransmitter.stageWindows.push(id)
 
         setTimeout(() => {
-            startCapture(id, { ndi: output.ndi || false })
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false })
         }, 1200)
 
         // NDI
@@ -90,7 +90,7 @@ export class OutputLifecycle {
     }
 
     static async removeOutput(id: string, reopen: any = null) {
-        await stopCapture(id)
+        await CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
 
         console.log("MADE IT HERE")

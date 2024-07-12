@@ -4,8 +4,9 @@ import { OUTPUT_STREAM } from "../../types/Channels"
 import { toServer } from "../servers"
 import util from "../ndi/vingester-util"
 import { NdiSender } from "../ndi/NdiSender"
-import { CaptureOptions, captures, storedFrames } from "./capture"
 import { OutputHelper } from "./OutputHelper"
+import { CaptureHelper } from "./CaptureHelper"
+import { CaptureOptions } from "./CaptureOptions"
 
 export type Channel = {
     key: string
@@ -21,7 +22,7 @@ export class CaptureTransmitter {
     static channels: { [key: string]: Channel } = {}
 
     static startTransmitting(captureId: string) {
-        const capture = captures[captureId]
+        const capture = CaptureHelper.captures[captureId]
         if (!capture) return
         //this.startChannel(captureId, "preview")
         if (capture.options.ndi) this.startChannel(captureId, "ndi")
@@ -41,7 +42,7 @@ export class CaptureTransmitter {
 
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
-        const interval = 1000 / captures[captureId].framerates[key]
+        const interval = 1000 / CaptureHelper.captures[captureId].framerates[key]
 
         if (this.channels[combinedKey]?.timer) {
             clearInterval(this.channels[combinedKey].timer)
@@ -51,7 +52,7 @@ export class CaptureTransmitter {
                 key,
                 captureId,
                 timer: setInterval(() => this.handleChannelInterval(captureId, key), interval),
-                lastImage: storedFrames[captureId],
+                lastImage: CaptureHelper.storedFrames[captureId],
             }
         }
     }
@@ -60,7 +61,7 @@ export class CaptureTransmitter {
         const combinedKey = `${captureId}-${key}`
         const channel = this.channels[combinedKey]
         if (!channel) return
-        const image = storedFrames[captureId]
+        const image = CaptureHelper.storedFrames[captureId]
         if (!image || channel.lastImage === image) return
         const size = image.getSize()
         channel.lastImage = image
@@ -72,7 +73,7 @@ export class CaptureTransmitter {
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
             case "server":
-                this.sendBufferToServer(captures[captureId], image)
+                this.sendBufferToServer(CaptureHelper.captures[captureId], image)
                 break
         }
     }
@@ -93,7 +94,7 @@ export class CaptureTransmitter {
         const ratio = image.getAspectRatio()
         //this.ndiFrameCount++
         // WIP refresh on enable?
-        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: captures[captureId].framerates.ndi })
+        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: CaptureHelper.captures[captureId].framerates.ndi })
     }
 
     // PREVIEW
