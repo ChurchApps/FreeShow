@@ -3,7 +3,7 @@ import os from "os"
 import { isLinux, toApp } from ".."
 import util from "./vingester-util"
 import grandiose from "grandiose"
-import { CaptureHelper } from "../output/CaptureHelper"
+import { CaptureHelper } from "../capture/CaptureHelper"
 
 // WIP - NDI issue on Linux: libndi.so.5: No such file or dialog
 

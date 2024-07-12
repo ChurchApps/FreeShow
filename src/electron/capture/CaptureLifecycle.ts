@@ -1,7 +1,7 @@
 import { NativeImage } from "electron"
 import { CaptureHelper } from "./CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
-import { OutputHelper } from "./OutputHelper"
+import { OutputHelper } from "../output/OutputHelper"
 
 export class CaptureLifecycle {
     static startCapture(id: string, toggle: any = {}) {

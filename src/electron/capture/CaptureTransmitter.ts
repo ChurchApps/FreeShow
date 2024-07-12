@@ -4,9 +4,9 @@ import { OUTPUT_STREAM } from "../../types/Channels"
 import { toServer } from "../servers"
 import util from "../ndi/vingester-util"
 import { NdiSender } from "../ndi/NdiSender"
-import { OutputHelper } from "./OutputHelper"
 import { CaptureHelper } from "./CaptureHelper"
 import { CaptureOptions } from "./CaptureOptions"
+import { OutputHelper } from "../output/OutputHelper"
 
 export type Channel = {
     key: string

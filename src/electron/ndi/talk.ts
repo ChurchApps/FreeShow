@@ -1,6 +1,6 @@
 import { NDI } from "../../types/Channels"
 import { Message } from "../../types/Socket"
-import { CaptureHelper } from "../output/CaptureHelper"
+import { CaptureHelper } from "../capture/CaptureHelper"
 import { NdiReceiver } from "./NdiReceiver"
 
 export async function receiveNDI(e: any, msg: Message) {

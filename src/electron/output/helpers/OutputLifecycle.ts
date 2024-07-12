@@ -4,10 +4,10 @@ import { Output } from "../../../types/Output"
 import { NdiSender } from "../../ndi/NdiSender"
 import { setDataNDI } from "../../ndi/talk"
 import { outputOptions } from "../../utils/windowOptions"
-import { CaptureTransmitter } from "../CaptureTransmitter"
 import { OutputHelper } from "../OutputHelper"
 import { OUTPUT } from "../../../types/Channels"
-import { CaptureHelper } from "../CaptureHelper"
+import { CaptureTransmitter } from "../../capture/CaptureTransmitter"
+import { CaptureHelper } from "../../capture/CaptureHelper"
 
 export class OutputLifecycle {
     static async createOutput(output: Output) {

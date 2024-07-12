@@ -6,9 +6,9 @@ import { OutputVisibility } from "./helpers/OutputVisibility"
 import { OutputLifecycle } from "./helpers/OutputLifecycle"
 import { Message } from "../../types/Socket"
 import { toApp } from ".."
-import { CaptureTransmitter } from "./CaptureTransmitter"
 import { OUTPUT } from "../../types/Channels"
 import { Output } from "./Output"
+import { CaptureTransmitter } from "../capture/CaptureTransmitter"
 
 export class OutputHelper {
     static receiveOutput(_e: any, msg: Message) {
