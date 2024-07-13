@@ -1,6 +1,5 @@
 import { BrowserWindow, screen } from "electron"
 import { OutputHelper } from "../OutputHelper"
-import { mainWindow } from "../.."
 
 export class OutputBounds {
     // BOUNDS
@@ -55,6 +54,7 @@ export class OutputBounds {
         })
     }
 
+    /*
     static getPreviewBounds(mainWidth: number, mainHeight: number) {
         if (mainWidth || mainHeight) return { width: 320, height: 180 }
         else return { width: 320, height: 180 }
@@ -93,4 +93,5 @@ export class OutputBounds {
             this.updatePreviewBounds()
         }
     }
+    */
 }

@@ -184,6 +184,7 @@ function retryLoadingContent() {
 function setMainListeners() {
     if (!mainWindow) return
 
+    /*
     mainWindow.on("minimize", () => {
         OutputHelper.Visibility.hideAllPreviews()
     })
@@ -191,23 +192,23 @@ function setMainListeners() {
         setTimeout(() => {
             OutputHelper.Visibility.showAllPreviews()
         }, 100)
-    })
+    })*/
 
     mainWindow.on("maximize", () => {
-        OutputHelper.Bounds.updatePreviewBounds()
+        //OutputHelper.Bounds.updatePreviewBounds()
         config.set("maximized", true)
     })
     mainWindow.on("unmaximize", () => {
-        OutputHelper.Bounds.updatePreviewBounds()
+        //OutputHelper.Bounds.updatePreviewBounds()
         config.set("maximized", false)
     })
 
     mainWindow.on("resize", () => {
-        OutputHelper.Bounds.updatePreviewBounds()
+        //OutputHelper.Bounds.updatePreviewBounds()
         config.set("bounds", mainWindow?.getBounds())
     })
     mainWindow.on("move", () => {
-        OutputHelper.Bounds.updatePreviewBounds()
+        //OutputHelper.Bounds.updatePreviewBounds()
         config.set("bounds", mainWindow?.getBounds())
     })
 

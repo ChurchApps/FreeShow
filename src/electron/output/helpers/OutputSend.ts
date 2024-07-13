@@ -11,10 +11,11 @@ export class OutputSend {
             let tempMsg: any = JSON.parse(JSON.stringify(msg))
             if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, id)
 
+            if (msg.channel === "OUTPUTS") console.log("SENDING", tempMsg)
             output.window.webContents.send(OUTPUT, tempMsg)
 
-            if (!output.previewWindow || output.previewWindow.isDestroyed()) return
-            output.previewWindow.webContents.send(OUTPUT, tempMsg)
+            //if (!output.previewWindow || output.previewWindow.isDestroyed()) return
+            //output.previewWindow.webContents.send(OUTPUT, tempMsg)
         }
 
         function onlySendToMatchingId(tempMsg: any, id: string) {
@@ -29,7 +30,7 @@ export class OutputSend {
         const output = OutputHelper.getOutput(id)
         if (!output.window || output.window.isDestroyed()) return
         output.window.webContents.send(OUTPUT, msg)
-        if (!output.previewWindow || output.previewWindow.isDestroyed()) return
-        output.previewWindow.webContents.send(OUTPUT, msg)
+        //if (!output.previewWindow || output.previewWindow.isDestroyed()) return
+        //output.previewWindow.webContents.send(OUTPUT, msg)
     }
 }

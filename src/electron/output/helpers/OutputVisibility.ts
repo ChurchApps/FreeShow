@@ -97,6 +97,7 @@ export class OutputVisibility {
         toApp(OUTPUT, { channel: "RESTART" })
     }
 
+    /*
     static hideAllPreviews() {
         OutputHelper.getKeys().forEach((outputId) => {
             let output = OutputHelper.getOutput(outputId)
@@ -110,4 +111,5 @@ export class OutputVisibility {
             if (output.previewWindow) output.previewWindow.showInactive()
         })
     }
+    */
 }

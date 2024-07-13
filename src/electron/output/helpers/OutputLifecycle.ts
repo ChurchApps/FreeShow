@@ -15,12 +15,13 @@ export class OutputLifecycle {
         if (OutputHelper.getOutput(id)) return this.removeOutput(id, output)
 
         const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
-        const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
+        //const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
+        OutputHelper.setOutput(id, { window: outputWindow })
+        //OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds(output)
 
-        OutputHelper.Bounds.updatePreviewBounds()
+        //OutputHelper.Bounds.updatePreviewBounds()
 
         if (output.stageOutput) CaptureHelper.Transmitter.stageWindows.push(id)
 
@@ -33,6 +34,7 @@ export class OutputLifecycle {
         if (output.ndiData) setDataNDI({ id, ...output.ndiData })
     }
 
+    /*
     private static createPreviewWindow(options: any) {
         const mainBounds = mainWindow?.getBounds()
 
@@ -54,7 +56,7 @@ export class OutputLifecycle {
         window.showInactive()
         window.moveTop()
         return window
-    }
+    }*/
 
     private static createOutputWindow(options: any, id: string, name: string) {
         options = { ...outputOptions, ...options }
@@ -107,7 +109,7 @@ export class OutputLifecycle {
         try {
             const output = OutputHelper.getOutput(id)
             output?.window?.destroy()
-            output?.previewWindow?.destroy()
+            //output?.previewWindow?.destroy()
         } catch (error) {
             console.log(error)
         }
