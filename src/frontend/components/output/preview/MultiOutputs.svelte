@@ -1,14 +1,15 @@
 <script lang="ts">
-    import { dictionary, outputs, previewBuffers } from "../../../stores"
+    import { Resolution } from "../../../../types/Settings"
+    import { currentWindow, dictionary, outputs, previewBuffers, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
-    import { getActiveOutputs } from "../../helpers/output"
+    import { getActiveOutputs, getResolution } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
-    import PreviewCanvas from "./PreviewCanvas.svelte"
+    import { getStyleResolution } from "../../slide/getStyleResolution"
+    import Output from "../Output.svelte"
 
     // export let resolution: Resolution
-
     $: outputList = getActiveOutputs($outputs, false, true)
 
     let fullscreen: boolean = false
@@ -37,6 +38,9 @@
             timeout = null
         }, 500)
     }
+
+    let resolution: Resolution = getResolution()
+    $: if ($currentWindow === "output") resolution = getResolution(null, { $outputs, $styles }, true)
 </script>
 
 <!-- aspect-ratio: {resolution?.width || 1920}/{resolution?.height || 1080}; -->
@@ -56,13 +60,7 @@
 
     {#each updatedList as outputId}
         {#if !fullscreen || fullscreenId === outputId}
-            <PreviewCanvas
-                style={outputList.length > 1 && !fullscreen ? `border: 2px solid ${$outputs[outputId]?.color};width: 50%;` : ""}
-                disabled={outputList.length > 1 && !fullscreen && !$outputs[outputId]?.active}
-                capture={$previewBuffers[outputId]}
-                id={outputId}
-                {fullscreen}
-            />
+            <Output {outputId} style={getStyleResolution(resolution, 160, 90, "fit")} />
         {/if}
     {/each}
 </div>
