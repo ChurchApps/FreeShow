@@ -53,7 +53,10 @@
         videoData.loop = data.loop ?? false
     }
     // draw
-    $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
+
+    //TODO: Figure out why this line makes preview window so laggy
+    //$: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
+
     $: if (mirror && $videosTime[outputId]) videoTime = $videosTime[outputId]
 
     $: if (!mirror && !fadingOut) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })

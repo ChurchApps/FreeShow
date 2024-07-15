@@ -20,7 +20,7 @@
 </script>
 
 <div class="center previewOutput" id={outputId} class:fullscreen class:disabled style={style + "; aspect-ratio: " + width / height} bind:offsetWidth={width} bind:offsetHeight={height}>
-    <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
+    <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} mirror={true} />
 </div>
 
 <style>
