@@ -6,8 +6,7 @@
     import { clone } from "../../helpers/array"
     import { getActiveOutputs, getResolution } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
-    import { getStyleResolution } from "../../slide/getStyleResolution"
-    import Output from "../Output.svelte"
+    import PreviewOutput from "./PreviewOutput.svelte"
 
     // export let resolution: Resolution
     $: outputList = getActiveOutputs($outputs, false, true)
@@ -60,7 +59,7 @@
 
     {#each updatedList as outputId}
         {#if !fullscreen || fullscreenId === outputId}
-            <Output {outputId} style={getStyleResolution(resolution, 160, 90, "fit")} />
+            <PreviewOutput {outputId} style={outputList.length > 1 && !fullscreen ? `border: 2px solid ${$outputs[outputId]?.color};width:50%` : ""} disabled={outputList.length > 1 && !fullscreen && !$outputs[outputId]?.active} {fullscreen} />
         {/if}
     {/each}
 </div>
@@ -71,11 +70,11 @@
         flex-wrap: wrap;
         height: fit-content;
     }
+    /*
     .multipleOutputs.multiple:not(.fullscreen) :global(.zoomed) {
-        /* width: unset !important;
-        min-width: 50%; */
         width: 50% !important;
     }
+    */
 
     .fullscreen {
         position: fixed;
