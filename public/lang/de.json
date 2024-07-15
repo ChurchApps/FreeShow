@@ -262,6 +262,8 @@
     "inputs": {
         "name": "Name",
         "url": "URL",
+        "method": "Übertragungs Methode",
+        "payload": "Daten",
         "video_id": "Video ID/URL",
         "close_ad": "Anzeige auf dem Ausgabebildschirm schließen",
         "change_folder": "Wähle einen anderen Speicherort"
