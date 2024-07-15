@@ -54,8 +54,9 @@
     }
     // draw
 
-    //TODO: Figure out why this line makes preview window so laggy
-    //$: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
+    //Without the second if, the preview videos don't actually play but just skip ahead when kept in sync with the setTimeout()
+    $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
+    $: if (mirror && $videosData[outputId]?.paused === false) videoData.paused = false
 
     $: if (mirror && $videosTime[outputId]) videoTime = $videosTime[outputId]
 
