@@ -20,9 +20,23 @@
 
         parsedSrc = valid ? src : ""
     }
+
+    let webview: any
+    $: if (webview) {
+        /*
+        webview?.addEventListener("did-finish-load", () => {
+            webview.executeJavaScript(`
+            document.body.style.transform = 'scale(0.1)';
+            document.body.style.transformOrigin = '0 0';
+            document.body.style.width = '1000%';  // Scale factor inverse to maintain full width
+            document.body.style.height = '1000%';  // Scale factor inverse to maintain full height
+        `)
+        })
+        */
+    }
 </script>
 
-<webview class:clickable id="webview" src={parsedSrc} />
+<webview class:clickable id="webview" src={parsedSrc} bind:this={webview} />
 
 <style>
     webview {

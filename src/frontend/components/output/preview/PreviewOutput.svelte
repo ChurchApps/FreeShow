@@ -19,7 +19,7 @@
     $: console.log("getStyleResolution", getStyleResolution(resolution, width, height, "fit"))
 </script>
 
-<div class="center" class:fullscreen class:disabled style={style + "; aspect-ratio: " + width / height} bind:offsetWidth={width} bind:offsetHeight={height}>
+<div class="center previewOutput" id={outputId} class:fullscreen class:disabled style={style + "; aspect-ratio: " + width / height} bind:offsetWidth={width} bind:offsetHeight={height}>
     <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
 </div>
 
@@ -32,7 +32,7 @@
         height: 100%;
         width: 100%;
     }
-    .center.fullscreen canvas {
+    .center.fullscreen {
         width: unset;
         height: 100%;
     }
