@@ -261,6 +261,7 @@
             style="flex: 1;"
             on:click={() => {
                 eventEdit.set(null)
+                popupData.set({})
                 activePopup.set("edit_event")
             }}
             center

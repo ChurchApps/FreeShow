@@ -2,11 +2,12 @@ import { get } from "svelte/store"
 import { CONTROLLER, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage, Clients } from "../../types/Socket"
 import { getResolution } from "../components/helpers/output"
-import { clearAll, nextSlide, previousSlide } from "../components/helpers/showActions"
+import { nextSlide, previousSlide } from "../components/helpers/showActions"
 import { connections, paintCache } from "../stores"
 import { draw, drawSettings, drawTool } from "./../stores"
 import { receiveREMOTE } from "./remoteTalk"
 import { receiveSTAGE } from "./stageTalk"
+import { clearAll } from "../components/output/clear"
 
 const receiveCONTROLLER = {
     ACTION: ({ data }) => {

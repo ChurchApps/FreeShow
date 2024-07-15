@@ -1,18 +1,70 @@
 import { get } from "svelte/store"
-import { outLocked, slideTimers } from "../../stores"
-import { getActiveOutputs, setOutput } from "../helpers/output"
-import { clearBackground, clearOverlays, clearSlide } from "../helpers/showActions"
+import { activeEdit, activePopup, lockedOverlays, outLocked, outputCache, outputs, overlays, playingAudio, playingMetronome, selected, slideTimers, videosData, videosTime } from "../../stores"
+import { clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { clearAudio } from "../helpers/audio"
+import { clone } from "../helpers/array"
 
-export const clearAll = () => {
+// TODO: output/clearButtons
+export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
+    if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length)) return
 
-    // clear video in "preview"
+    let audioCleared = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
+    let allCleared = isOutCleared(null) && audioCleared
+    if (allCleared) return
+
+    // TODO: audio
+    if (!get(outputCache)) outputCache.set(clone(get(outputs)))
+
     clearBackground()
     clearSlide()
     clearOverlays()
     clearAudio()
     clearTimers()
+}
+
+// WIP restore only selected outputs
+export function restoreOutput() {
+    if (get(outLocked) || !get(outputCache)) return
+
+    outputs.set(get(outputCache))
+    outputCache.set(null)
+}
+
+export function clearBackground(outputId: string = "") {
+    let outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
+
+    outputIds.forEach((outputId) => {
+        // clearVideo()
+        setOutput("background", null, false, outputId)
+        clearPlayingVideo(outputId)
+
+        // WIP this does not clear time properly
+        videosData.update((a) => {
+            delete a[outputId]
+            return a
+        })
+        videosTime.update((a) => {
+            delete a[outputId]
+            return a
+        })
+    })
+}
+
+export function clearSlide() {
+    setOutput("slide", null)
+}
+
+export function clearOverlays(outputId: string = "") {
+    let outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
+
+    outputIds.forEach((outputId) => {
+        let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
+        outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
+        setOutput("overlays", outOverlays, false, outputId)
+    })
+
+    lockedOverlays.set([])
 }
 
 export function clearTimers(outputId: string = "") {

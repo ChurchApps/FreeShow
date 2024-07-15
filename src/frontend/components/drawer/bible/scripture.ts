@@ -269,6 +269,7 @@ export function getSlides({ bibles, sorted }) {
     }
 
     function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
+        const scriptureDivider = ":"
         if (!bibles[0]) return
 
         let lines: any[] = []
@@ -278,13 +279,13 @@ export function getSlides({ bibles, sorted }) {
         let alignStyle = metaTemplate?.lines?.[0]?.align || ""
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         // remove text in () on scripture names
-        let versions = bibles.map((a) => a.version.replace(/\([^)]*\)/g, "").trim()).join(" + ")
+        let versions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim()).join(" + ")
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         let text = customText
         if (!showVersion && !showVerse) return
         if (showVersion) text = text.replaceAll(textKeys.showVersion, versions)
-        if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + ":" + range)
+        if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + scriptureDivider + range)
 
         text.split("\n").forEach((line) => {
             lines.push({ text: [{ value: line, style: verseStyle }], align: alignStyle })
@@ -316,7 +317,9 @@ export function setBooksCache(scriptureId: string, data: any) {
     })
 }
 
-export function getShortBibleName(name) {
+export function getShortBibleName(name: string) {
+    if (!name) return ""
+
     name = name
         .replace(/[^a-zA-Z ]+/g, "")
         .trim()

@@ -8,6 +8,7 @@ import { audioAnalyser } from "../output/audioAnalyser"
 import { clone, shuffleArray } from "./array"
 import { encodeFilePath } from "./media"
 import { checkNextAfterMedia } from "./showActions"
+import { newToast } from "../../utils/common"
 
 export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0) {
     let existing: any = get(playingAudio)[path]
@@ -654,4 +655,21 @@ export async function getAudioDuration(path: string): Promise<number> {
             resolve(audio.duration)
         })
     })
+}
+
+export function decodeURI(path: string) {
+    const cleanedURI = cleanURI(path)
+
+    try {
+        return decodeURIComponent(cleanedURI)
+    } catch (e) {
+        console.error("URI malformed: ", path)
+        newToast("$error.uri")
+        return path
+    }
+}
+function cleanURI(uri) {
+    // only keep valid URI characters
+    const invalidChars = /[^A-Za-z0-9\-_.!~*'()%;:@&=+$,/?#[\]]/g
+    return uri.replace(invalidChars, "")
 }

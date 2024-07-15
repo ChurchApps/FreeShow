@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { getActiveOutputs } from "../components/helpers/output"
-import { activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, focusedArea, os, outputDisplay, outputs, serverData, special, toastMessages, version } from "../stores"
+import { activeDrawerTab, activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, drawer, focusedArea, os, outputDisplay, outputs, serverData, special, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
@@ -114,6 +114,7 @@ export function logerror(err) {
         os: get(os).platform || "Unknown",
         version: get(version),
         active: { window: get(currentWindow) || "main", page: get(activePage), show: get(activeShow), edit: get(activeEdit) },
+        drawer: { active: get(drawer)?.height > 40 ? get(activeDrawerTab) : "CLOSED" },
         // lastUndo: get(undoHistory)[get(undoHistory).length - 1],
         type: err.type,
         source: err.type === "unhandledrejection" ? "See stack" : `${err.filename} - ${err.lineno}:${err.colno}`,

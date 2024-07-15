@@ -78,7 +78,7 @@
     </div>
 {:else if inputId === "toggle_action"}
     <CombinedInput>
-        <Dropdown style="width: 100%;" value={getOptions.run_action().find((a) => a.id === value?.id)?.name || value?.id || "—"} options={getOptions.run_action()} on:click={(e) => updateValue("id", e.detail?.id)} />
+        <Dropdown style="width: 100%;" activeId={value?.id} value={getOptions.run_action().find((a) => a.id === value?.id)?.name || value?.id || "—"} options={getOptions.run_action()} on:click={(e) => updateValue("id", e.detail?.id)} />
     </CombinedInput>
     <CombinedInput>
         {#if value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;">Action will toggle if checkbox is unchanged</p>{/if}
@@ -109,7 +109,7 @@
                 </Button>
             {:else if options.length || getOptions[actionId]}
                 <!-- <p><T id={actionData[actionId]?.name || actionId} /></p> -->
-                <Dropdown style="width: 100%;" value={options.find((a) => a.id === value?.id)?.name || value?.id || "—"} {options} on:click={(e) => updateValue("id", e.detail?.id)} />
+                <Dropdown style="width: 100%;" activeId={value?.id} value={options.find((a) => a.id === value?.id)?.name || value?.id || "—"} {options} on:click={(e) => updateValue("id", e.detail?.id)} />
             {/if}
         {:else if inputId === "volume"}
             <!-- gain can also be set -->

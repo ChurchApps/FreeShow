@@ -5,7 +5,7 @@
     import { destroy, receive, send } from "../../../utils/request"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Capture from "./Capture.svelte"
-    import { clearBackground } from "../../helpers/showActions"
+    import { clearBackground } from "../../output/clear"
 
     let screens: any[] = []
     export let streams: any[]

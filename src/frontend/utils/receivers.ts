@@ -9,7 +9,7 @@ import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { captureCanvas, getFileName } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
-import { checkNextAfterMedia, clearBackground } from "../components/helpers/showActions"
+import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
@@ -95,6 +95,7 @@ import { receive, send } from "./request"
 import { closeApp, initializeClosing, saveComplete } from "./save"
 import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { clearBackground } from "../components/output/clear"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -472,12 +473,11 @@ const receiveCLOUD = {
         let method = get(driveData).initializeMethod
         if (get(driveData).disableUpload) method = "download"
         if (!method) {
-            // you could choose previously, but I don't see a reason anymore as I have implemented "newest file always"
-            // if (existingData) {
-            //     // WIP this will show over "initialize" popup
-            //     activePopup.set("cloud_method")
-            //     return
-            // }
+            // this is not needed for the shows, but for all the other data
+            if (existingData) {
+                activePopup.set("cloud_method")
+                return
+            }
 
             driveData.update((a) => {
                 a.initializeMethod = existingData ? "done" : "upload"

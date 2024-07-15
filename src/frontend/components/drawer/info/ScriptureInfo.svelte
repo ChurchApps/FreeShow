@@ -20,6 +20,7 @@
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
     import { customActionActivation } from "../../actions/actions"
+    import { removeDuplicates } from "../../helpers/array"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -56,15 +57,23 @@
         }
     }
 
+    const scriptureDivider = ":"
     function createSlides() {
         if (!bibles[0]) return { show: null }
 
+        let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
+
         let slides2: any = {}
         let layouts: any[] = []
-        slides.forEach((items: any) => {
+        slides.forEach((items: any, i: number) => {
             let id = uid()
-            let firstTextItem = items.find((a) => a.lines)
-            slides2[id] = { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: {}, notes: "", items }
+
+            // get verse reference
+            let v = $scriptureSettings.versesPerSlide
+            let range: any[] = sorted.slice((i + 1) * v - v, (i + 1) * v)
+            let scriptureRef = books + " " + bibles[0].chapter + scriptureDivider + joinRange(range)
+
+            slides2[id] = { group: scriptureRef || "", color: null, settings: {}, notes: "", items }
             let l: any = { id }
             layouts.push(l)
         })
@@ -82,7 +91,7 @@
 
         let bibleShowName = `${bibles[0].book} ${bibles[0].chapter},${verseRange}`
         show.name = checkName(bibleShowName)
-        if (show.name !== bibleShowName) show.name = checkName(`${bibleShowName} - ${getShortBibleName(bibles[0].version)}`)
+        if (show.name !== bibleShowName) show.name = checkName(`${bibleShowName} - ${getShortBibleName(bibles[0].version || "")}`)
         show.slides = slides2
         show.layouts = { [layoutID]: { name: bibles[0].version || "", notes: "", slides: layouts } }
 

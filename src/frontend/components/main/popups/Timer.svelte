@@ -16,10 +16,11 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
 
+    const defaultName = "Counter"
     let currentTimer = getSelected("timer", 0)
     let timer: Timer = {
         type: "counter",
-        name: "Counter",
+        name: defaultName,
         start: 300,
         end: 0,
         event: "",
@@ -64,6 +65,15 @@
         Object.entries($events).forEach(addEvent)
         eventList = eventList.sort((a, b) => (new Date(a).getTime() > new Date(b).getTime() ? 1 : -1))
         timer.event = eventList[0]?.id || ""
+
+        // set unique timer name
+        if (timer.name === defaultName && !currentTimer?.id) {
+            let count = 1
+            while (Object.values($timers).find((a) => a.name === defaultName + (count > 1 ? ` ${count}` : ""))) {
+                count++
+            }
+            timer.name = defaultName + (count > 1 ? ` ${count}` : "")
+        }
     })
 
     const addEvent = ([id, event]: any) => {
@@ -223,7 +233,7 @@
     <CombinedInput style="margin-top: 10px;">
         <p><T id="timer.event" /></p>
         {#if eventList.length}
-            <Dropdown options={eventList} value={eventList.find((a) => a.id === timer.event)?.name || "—"} on:click={updateEvent} />
+            <Dropdown options={eventList} activeId={timer.event} value={eventList.find((a) => a.id === timer.event)?.name || "—"} on:click={updateEvent} />
         {:else}
             <div style="padding: 0 10px;display: flex;align-items: center;"><T id="timer.no_events" /></div>
         {/if}

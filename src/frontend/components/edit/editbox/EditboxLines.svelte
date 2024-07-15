@@ -332,7 +332,7 @@
             let sel = getSelectionRange()
             let lineIndex = sel.findIndex((a) => a?.start !== undefined)
             if (lineIndex >= 0) {
-                let caret = { line: lineIndex || 0, pos: sel[lineIndex].start || 0 }
+                let caret = { line: lineIndex || 0, pos: sel[lineIndex]?.start || 0 }
 
                 setTimeout(() => {
                     getStyle()

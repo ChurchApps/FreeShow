@@ -9,6 +9,7 @@
         "search": "Search",
         "none": "None",
         "finished": "Finished",
+        "open": "Open",
         "system_open": "Open in system"
     },
     "titlebar": {
@@ -230,7 +231,8 @@
         "display": "Could not show output window on current display",
         "keep_one_layout": "You have to have at least one layout",
         "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
-        "folder_exists": "This folder does already exist"
+        "folder_exists": "This folder does already exist",
+        "uri": "Could not parse the audio name, please rename the file"
     },
     "meta": {
         "title": "Title",

@@ -4,25 +4,9 @@ import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
 import { displayOutputs } from "../helpers/output"
-import {
-    activateTrigger,
-    changeOutputStyle,
-    clearAll,
-    clearBackground,
-    clearOverlays,
-    clearSlide,
-    nextSlide,
-    playSlideTimers,
-    previousSlide,
-    randomSlide,
-    restoreOutput,
-    selectProjectShow,
-    sendMidi,
-    startAudioStream,
-    startShow,
-} from "../helpers/showActions"
+import { activateTrigger, changeOutputStyle, nextSlide, playSlideTimers, previousSlide, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShow } from "../helpers/showActions"
 import { stopTimers } from "../helpers/timerTick"
-import { clearTimers } from "../output/clear"
+import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { runActionId, toggleAction } from "./actions"
 import { changeVariable, gotoGroup, moveStageConnection, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
 

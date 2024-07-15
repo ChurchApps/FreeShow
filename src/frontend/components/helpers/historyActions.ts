@@ -733,7 +733,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         let isChild = slide.group === null
                         let globalGroup = slide.globalGroup
                         if (isChild) {
-                            let parent = Object.values(show.slides).find((a) => a.children?.includes(id))
+                            let parent = Object.values(show.slides || {}).find((a) => a.children?.includes(id))
                             globalGroup = parent?.globalGroup
                         }
                         if (globalGroup && get(groups)[globalGroup]?.template) {
@@ -770,7 +770,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (!isGlobalTemplate) return
 
                     // set custom values
-                    let isFirst = !!Object.values(show.layouts).find((layout) => layout.slides[0]?.id === id)
+                    let isFirst = !!Object.values(show.layouts || {}).find((layout) => layout.slides[0]?.id === id)
                     show.slides[id] = updateSlideFromTemplate(show.slides[id], slideTemplate, isFirst, changeOverflowItems)
                     let newLayoutData = updateLayoutsFromTemplate(show.layouts, show.media, slideTemplate, changeOverflowItems)
                     show.layouts = newLayoutData.layouts

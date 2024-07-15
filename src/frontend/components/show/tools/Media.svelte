@@ -7,7 +7,7 @@
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
+    import { clearAudioStreams, decodeURI, playAudio, startMicrophone } from "../../helpers/audio"
     import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
@@ -149,7 +149,7 @@
     let simularBgs: any[] = []
     $: if (bgs.length) getSimularPaths()
     function getSimularPaths() {
-        send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => decodeURIComponent(a.path)) })
+        send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => decodeURI(a.path)) })
 
         let listenerId = "media_simular"
         destroy(MAIN, listenerId)

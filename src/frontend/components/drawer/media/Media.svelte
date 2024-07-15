@@ -11,7 +11,6 @@
     import { splitPath } from "../../helpers/get"
     import { encodeFilePath, getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
-    import { clearBackground } from "../../helpers/showActions"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import Cameras from "../live/Cameras.svelte"
@@ -24,6 +23,7 @@
     import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
     import { send } from "../../../utils/request"
+    import { clearBackground } from "../../output/clear"
 
     export let active: string | null
     export let searchValue: string = ""

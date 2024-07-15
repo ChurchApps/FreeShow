@@ -7,7 +7,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
-    import { startPlaylist, stopPlaylist, updatePlaylist } from "../../helpers/audio"
+    import { decodeURI, startPlaylist, stopPlaylist, updatePlaylist } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
     import { encodeFilePath, getFileName, getMediaType } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
@@ -210,7 +210,7 @@
             <AudioStreams />
         {:else if playlist}
             {#each playlist.songs as song}
-                <AudioFile path={song} name={decodeURIComponent(getFileName(song))} {active} playlist />
+                <AudioFile path={song} name={decodeURI(getFileName(song))} {active} playlist />
             {/each}
         {:else if fullFilteredFiles.length}
             {#key rootPath}

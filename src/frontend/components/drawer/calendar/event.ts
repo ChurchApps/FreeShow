@@ -101,6 +101,8 @@ export function createRepeatedEvents(event: Event, onlyMissing: boolean = false)
         newEvents[uid()] = newEvent
     })
 
+    console.log(event, newEvents)
+
     // TODO: remove existing events after last newEvent.from
 
     if (!Object.keys(newEvents).length) return

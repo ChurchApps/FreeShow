@@ -353,7 +353,7 @@
             if (input.key === "text-align") {
                 let newAligns: any[] = []
                 currentSlideItem.lines?.forEach((_a, line) => {
-                    if (!selection || selection[line].start !== undefined) newAligns.push(input.key + ": " + input.value)
+                    if (!selection || selection[line]?.start !== undefined) newAligns.push(input.key + ": " + input.value)
                     else newAligns.push(currentSlideItem.lines![line].align)
                 })
                 values[slideId].push(newAligns)

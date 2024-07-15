@@ -411,25 +411,29 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 
-    let cachedShows = stores.SHOWS.store || {}
+    let cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
     let newCachedShows: any = {}
+
+    // create a map for quick lookup of cached shows by name
+    let cachedShowNames = new Map<string, string>()
+    for (const [id, show] of Object.entries(cachedShows)) {
+        if (show?.name) cachedShowNames.set(show.name, id)
+    }
+
+    filesInFolder = filesInFolder
+        .filter((name) => name.toLowerCase().endsWith(".show"))
+        .map((name) => name.slice(0, -5)) // remove .show extension
+        .filter((trimmedName) => trimmedName) // remove files with no name
 
     for (const name of filesInFolder) checkShow(name)
     function checkShow(name: string) {
-        if (!name.toLowerCase().includes(".show")) return
-
-        let trimmedName = name.slice(0, -5) // remove .show
-
-        // no name results in the id trying to be read leading to show not found
-        if (!trimmedName) return
-
-        let matchingShowId = Object.entries(cachedShows).find(([_id, a]: any) => a?.name === trimmedName)?.[0]
+        let matchingShowId = cachedShowNames.get(name)
         if (matchingShowId && !newCachedShows[matchingShowId]) {
             newCachedShows[matchingShowId] = cachedShows[matchingShowId]
             return
         }
 
-        let p: string = path.join(showsPath, name)
+        let p: string = path.join(showsPath, `${name}.show`)
         let jsonData = readFile(p) || "{}"
         let show = parseShow(jsonData)
 
@@ -439,7 +443,7 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
         // some old duplicated shows might have the same id
         if (newCachedShows[id]) id = uid()
 
-        newCachedShows[id] = trimShow({ ...show[1], name: trimmedName })
+        newCachedShows[id] = trimShow({ ...show[1], name })
     }
 
     if (returnShows) return newCachedShows

@@ -131,6 +131,9 @@ function createMain() {
     // create window
     mainWindow = new BrowserWindow({ ...mainOptions, ...options })
 
+    // macos min size
+    mainWindow.setMinimumSize(MIN_WINDOW_SIZE, MIN_WINDOW_SIZE)
+
     // this is to debug any weird positioning
     console.log("Main Window Bounds:", mainWindow.getBounds())
 
