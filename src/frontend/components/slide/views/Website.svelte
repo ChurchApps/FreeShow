@@ -2,6 +2,9 @@
     export let src: string
     export let clickable: boolean = false
 
+    let webview: any
+    export let ratio: number
+
     let parsedSrc: string = ""
     $: if (src) checkURL()
 
@@ -21,18 +24,16 @@
         parsedSrc = valid ? src : ""
     }
 
-    let webview: any
-    $: if (webview) {
-        /*
+    $: if (webview && ratio) {
+        const inverse = Math.round(100 / ratio)
         webview?.addEventListener("did-finish-load", () => {
             webview.executeJavaScript(`
-            document.body.style.transform = 'scale(0.1)';
+            document.body.style.transform = 'scale(${ratio})';
             document.body.style.transformOrigin = '0 0';
-            document.body.style.width = '1000%';  // Scale factor inverse to maintain full width
-            document.body.style.height = '1000%';  // Scale factor inverse to maintain full height
+            document.body.style.width = '${inverse}%';  // Scale factor inverse to maintain full width
+            document.body.style.height = '${inverse}%';  // Scale factor inverse to maintain full height
         `)
         })
-        */
     }
 </script>
 

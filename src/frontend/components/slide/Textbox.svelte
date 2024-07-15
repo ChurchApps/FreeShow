@@ -463,7 +463,7 @@
         {:else if item?.type === "variable"}
             <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ showId: ref.showId, layoutId: ref.layoutId, slideIndex }} />
         {:else if item?.type === "web"}
-            <Website src={item?.web?.src || ""} clickable={$currentWindow === "output"} />
+            <Website src={item?.web?.src || ""} clickable={$currentWindow === "output"} {ratio} />
         {:else if item?.type === "mirror"}
             <!-- no mirrors in mirrors! -->
             {#if !isMirrorItem}

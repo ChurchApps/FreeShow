@@ -11,7 +11,6 @@ export class OutputSend {
             let tempMsg: any = JSON.parse(JSON.stringify(msg))
             if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, id)
 
-            if (msg.channel === "OUTPUTS") console.log("SENDING", tempMsg)
             output.window.webContents.send(OUTPUT, tempMsg)
 
             //if (!output.previewWindow || output.previewWindow.isDestroyed()) return
