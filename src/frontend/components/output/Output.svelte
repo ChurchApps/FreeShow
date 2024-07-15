@@ -134,14 +134,21 @@
 
     // ANIMATE
     let animationData: any = {}
-    $: currentAnimationId = ""
+    let currentAnimationId = ""
     $: slideAnimation = slideData?.actions?.animate || {}
 
+    $: if (slide) stopAnimation()
+    onDestroy(stopAnimation)
+    function stopAnimation() {
+        animationData = {}
+        currentAnimationId = ""
+    }
+
+    // TODO: play slide animations on each textbox so animation can continue while transitioning
     $: if (slideAnimation) initializeAnimation()
     async function initializeAnimation() {
         if (!Object.keys(slideAnimation).length) {
-            animationData = {}
-            currentAnimationId = ""
+            stopAnimation()
             return
         }
 
@@ -167,8 +174,16 @@
             if (currentAnimationId !== currentId) return
 
             animationData = await updateAnimation(animationData, currentIndex, slide)
+            if (currentAnimationId !== currentId) {
+                animationData = {}
+                return
+            }
 
             if (typeof animationData.newIndex !== "number") return
+
+            // stop if ended & not repeating
+            if (!animationData.animation.repeat && !animationData.animation.actions[animationData.newIndex]) return
+
             animate(animationData.newIndex)
         }
     }

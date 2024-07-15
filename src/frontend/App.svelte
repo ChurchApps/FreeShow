@@ -47,7 +47,7 @@
         <MenuBar />
     {/if}
 
-    <main style={isWindows ? "height: calc(100% - 30px);" : ""} class:closeAd={$closeAd} class:background={$currentWindow === "output"}>
+    <main style={isWindows ? "height: calc(100% - 25px);" : ""} class:closeAd={$closeAd} class:background={$currentWindow === "output"}>
         <ContextMenu />
 
         {#if $currentWindow === "output"}

@@ -25,6 +25,7 @@
     } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
+    import { slideHasAction } from "../actions/actions"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/editbox/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
@@ -38,7 +39,6 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
-    import { slideHasAction } from "../actions/actions"
 
     export let slide: Slide
     export let layoutSlide: SlideData
@@ -146,7 +146,9 @@
     async function loadBackground() {
         if (ghostBackground) {
             await wait(100)
-            thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)
+            // will not load if not opened in the drawer (but original image will then be loaded)
+            thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
+            // thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
             return
         }
 

@@ -153,7 +153,8 @@ export function getThumbnailPath(input: string, size: number) {
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
-    return joinPath([get(tempPath), getFileName(hashCode(input), size)])
+    let encodedPath: string = joinPath([get(tempPath), "freeshow-cache", getFileName(hashCode(input), size)])
+    return encodedPath
 
     function getFileName(path, size) {
         return `${path}-${size}.jpg`

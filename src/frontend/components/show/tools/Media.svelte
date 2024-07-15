@@ -200,7 +200,7 @@
                             <MediaLoader name={background.name} path={background.path} thumbnailPath={bgPath} type={background.type} {mediaStyle} />
                         </HoverButton>
 
-                        <p title={background.path}>{background.name}</p>
+                        <p title={decodeURI(background.path)}>{background.name}</p>
 
                         {#if background.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{background.count}</span>

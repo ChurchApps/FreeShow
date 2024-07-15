@@ -29,6 +29,7 @@ import { getExtension, getFileName, getMediaType, removeExtension } from "./medi
 import { addToPos, getIndexes, mover } from "./mover"
 import { checkName } from "./show"
 import { _show } from "./shows"
+import { decodeURI } from "./audio"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -116,11 +117,11 @@ export const dropActions: any = {
                     let type: string = getMediaType(extension)
 
                     let name: string = a.name || getFileName(a.path)
-                    return { name: removeExtension(name), id: a.path, type }
+                    return { name: decodeURI(removeExtension(name)), id: a.path, type }
                 })
                 .filter((a: any) => a)
         } else if (drag.id === "audio") {
-            data = data.map((a: any) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
+            data = data.map((a: any) => ({ id: a.path, name: decodeURI(removeExtension(a.name)), type: "audio" }))
         } else if (drag.id === "player") {
             data = data.map((a: any) => ({ id: a, type: "player" }))
         } else if (drag.id === "scripture") {
@@ -284,7 +285,7 @@ const slideDrop: any = {
                 if (files[drop.id].includes(extension)) {
                     data.push({
                         path: a.path,
-                        name: removeExtension(a.name),
+                        name: decodeURI(removeExtension(a.name)),
                         type: getMediaType(extension),
                     })
                 }
