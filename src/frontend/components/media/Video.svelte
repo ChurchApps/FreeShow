@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, onMount } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
 
     export let path: any
@@ -13,6 +13,10 @@
     export let mirror: boolean = false
 
     let dispatch: any = createEventDispatcher()
+
+    onMount(() => {
+        console.log("VIDEO MOUNTED", path, video)
+    })
 
     let hasLoaded: boolean = false
     function loaded() {
@@ -33,7 +37,7 @@
     $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0
     $: if (endTime) setInterval(checkIfEnded, 1000 * playbackRate)
     function checkIfEnded() {
-        if (!videoTime) return
+        if (!videoTime || !endTime) return
         if (videoTime >= endTime!) dispatch("ended")
     }
 

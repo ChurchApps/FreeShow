@@ -762,7 +762,8 @@
         "max_events": "Max events",
         "start_days_from_today": "Start at days from today",
         "just_one_day": "Just one day",
-        "enable_start_date": "Enable start date"
+        "enable_start_date": "Enable start date",
+        "disable_navigation": "Disable navigation controls"
     },
     "items": {
         "text": "Textbox",

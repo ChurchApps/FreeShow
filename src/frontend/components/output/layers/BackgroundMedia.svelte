@@ -154,7 +154,7 @@
     }
     function setVolume(volume: number) {
         if (!video) return
-        video.volume = 1
+        video.volume = volume
     }
 
     // AUDIO
@@ -175,6 +175,7 @@
     let video: any = null
     let currentAnalysedElem: any = null
     async function analyseVideo() {
+        if (!video) return
         let currentAnalyser: any = null
 
         // Failed to execute 'createMediaElementSource' on 'AudioContext': HTMLMediaElement already connected previously to a different MediaElementSourceNode.

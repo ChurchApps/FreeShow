@@ -2,13 +2,15 @@
     import { dictionary, outputs } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
-    import { getActiveOutputs, getResolution } from "../../helpers/output"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
+    import { getResolution } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import PreviewOutput from "./PreviewOutput.svelte"
 
+    export let disableTransitions: boolean = false
+
     // export let resolution: Resolution
-    $: outputList = getActiveOutputs($outputs, false, true)
+    $: outs = sortByName(keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput))
 
     let fullscreen: boolean = false
     let fullscreenId = ""
@@ -26,25 +28,27 @@
         currentResolution()
     }
 
+    // this is to prevent transitions when adding/removing outputs (but it does not work at the moment)
+    // let disableTransitions: boolean = false
     let updatedList: any[] = []
     let timeout: any = null
-    $: if (outputList) updateList()
+    $: if (outs) updateList()
     function updateList() {
-        if (JSON.stringify(updatedList) === JSON.stringify(outputList)) return
+        if (JSON.stringify(updatedList) === JSON.stringify(outs)) return
         if (timeout) clearTimeout(timeout)
 
+        disableTransitions = true
+
         timeout = setTimeout(() => {
-            updatedList = clone(outputList)
+            updatedList = clone(outs)
             timeout = null
-        }, 500)
+            disableTransitions = false
+        }) // 500
     }
 
-    // let resolution: Resolution = getResolution()
-    // $: if ($currentWindow === "output") resolution = getResolution(null, { $outputs, $styles }, true)
     let resolution: any = {}
     function currentResolution() {
         resolution = getResolution(null, null, true)
-        console.log(resolution)
     }
 </script>
 
@@ -63,10 +67,10 @@
 
     <!-- TODO: fullscreen height getStyleResolution() -->
 
-    {#each updatedList as outputId}
-        {#if !fullscreen || fullscreenId === outputId}
-            <PreviewOutput {outputId} style={outputList.length > 1 && !fullscreen ? `border: 2px solid ${$outputs[outputId]?.color};width:50%` : ""} disabled={outputList.length > 1 && !fullscreen && !$outputs[outputId]?.active} {fullscreen} />
-        {/if}
+    {#each updatedList as output}
+        <div class="outputPreview" style={!fullscreen || fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;"}>
+            <PreviewOutput outputId={output.id} {disableTransitions} style={outs.length > 1 && !fullscreen ? `border: 2px solid ${output?.color};width:50%` : ""} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
+        </div>
     {/each}
 </div>
 

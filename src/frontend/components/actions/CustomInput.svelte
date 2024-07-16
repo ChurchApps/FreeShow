@@ -33,7 +33,7 @@
     let dispatch = createEventDispatcher()
     function updateValue(key: string, e) {
         let newValue = e?.detail ?? e?.target?.value ?? e
-        if (key) value = { [key]: newValue }
+        if (key) value = { ...value, [key]: newValue }
         else value = newValue
 
         dispatch("change", value)
@@ -61,7 +61,7 @@
         start_playlist: () => convertToOptions($audioPlaylists),
         id_select_output_style: () => [{ id: null, name: "—" }, ...convertToOptions($styles)],
         start_trigger: () => convertToOptions($triggers),
-        run_action: () => convertToOptions($midiIn).filter((a) => a.id !== mainId),
+        run_action: () => convertToOptions($midiIn).filter((a) => a.name && a.id !== mainId),
     }
 
     $: options = getOptions[actionId]?.() || []

@@ -288,14 +288,15 @@ app.on("web-contents-created", (_e, contents) => {
     })
 
     // disallow in app web redirects
-    contents.on("will-navigate", (e, navigationUrl) => {
-        // allow Hot Module Replacement in dev mode
-        const parsedURL = new URL(navigationUrl)
-        if (!isProd && parsedURL.host === "localhost:3000") return
+    // contents.on("will-navigate", (e, navigationUrl) => {
+    //     // allow Hot Module Replacement in dev mode
+    //     const parsedURL = new URL(navigationUrl)
+    //     if (!isProd && parsedURL.host === "localhost:3000") return
 
-        e.preventDefault()
-        console.warn("Stopped attempt to open: " + navigationUrl)
-    })
+    //     // >>> allow navigating on website items! <<<
+    //     e.preventDefault()
+    //     console.warn("Stopped attempt to open: " + navigationUrl)
+    // })
 })
 
 // ----- STORE DATA -----

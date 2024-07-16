@@ -64,8 +64,19 @@
 
     $: autoSize = item.autoFontSize || getAutoSize(item)
 
-    $: lines = item?.lines
-    $: if (linesStart !== null && linesEnd !== null && lines?.length) lines = lines.filter((a) => a.text.filter((a) => a.value.length)?.length)
+    $: lines = clone(item?.lines)
+    $: if (linesStart !== null && linesEnd !== null && lines?.length) {
+        lines = lines.filter((a) => a.text.filter((a) => a.value.length)?.length)
+
+        // show last possible lines if no text at current line
+        if (!lines[linesStart]) {
+            let linesCount = linesEnd - linesStart
+            let length = lines.length - 1
+            let index = length - (length % linesCount)
+            linesStart = index
+            linesEnd = index + linesCount
+        }
+    }
 
     // timer updater
     let today = new Date()
@@ -463,7 +474,7 @@
         {:else if item?.type === "variable"}
             <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ showId: ref.showId, layoutId: ref.layoutId, slideIndex }} />
         {:else if item?.type === "web"}
-            <Website src={item?.web?.src || ""} clickable={$currentWindow === "output"} {ratio} />
+            <Website src={item?.web?.src || ""} navigation={!item?.web?.noNavigation} clickable={$currentWindow === "output"} {ratio} />
         {:else if item?.type === "mirror"}
             <!-- no mirrors in mirrors! -->
             {#if !isMirrorItem}

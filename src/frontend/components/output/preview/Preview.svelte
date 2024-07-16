@@ -218,6 +218,7 @@
             <Button class="hide" on:click={() => (enablePreview = false)} style="z-index: 2;" title={$dictionary.preview?._hide_preview} center>
                 <Icon id="hide" white />
             </Button>
+            <!-- disable before hiding: disableTransitions={!enablePreview} -->
             <MultiOutputs />
             <AudioMeter />
         </div>

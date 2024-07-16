@@ -574,15 +574,18 @@ const slideDrop: any = {
         let data: any = ref.data.actions || {}
         let slideActions = data.slideActions || []
 
-        let existing = slideActions.find((a) => a.triggers?.[0] === "run_action")
         // WIP MIDI you should maybe be able to add more than one
-        if (existing) return
+        let existingIndex = slideActions.findIndex((a) => a.triggers?.[0] === "run_action")
 
         let actionId = drag.data[0].id
         let action = { id: uid(), triggers: ["run_action"], actionValues: { run_action: { id: actionId } } }
-        if (drag.data[0].triggers?.[0]) action = drag.data[0]
+        if (drag.data[0].triggers?.[0] && drag.data[0].triggers.length === 1) {
+            action = drag.data[0]
+            existingIndex = -1
+        }
 
-        slideActions.push(action)
+        if (existingIndex > -1) slideActions[existingIndex] = action
+        else slideActions.push(action)
         data.slideActions = slideActions
 
         history.newData = { key: "actions", data, indexes: [drop.index] }

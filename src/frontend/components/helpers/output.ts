@@ -110,9 +110,11 @@ function videoStarting() {
 
 let sortedOutputs: any[] = []
 export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {
-    if (sortedOutputs.length !== Object.keys(updater).length) {
-        sortedOutputs = sortByName(keysToID(updater || {}))
-    }
+    // WIP cache outputs
+    // if (JSON.stringify(sortedOutputs.map(({ id }) => id)) !== JSON.stringify(Object.keys(updater))) {
+    //     sortedOutputs = sortByName(keysToID(updater || {}))
+    // }
+    sortedOutputs = sortByName(keysToID(updater || {}))
 
     let enabled: any[] = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true) && (removeStageOutput ? !a.stageOutput : true))
 
@@ -592,7 +594,7 @@ export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]
     let template = get(templates)[templateId || ""] || {}
     let templateItems = template.items || []
 
-    let newItems = mergeWithTemplate(slideItems, templateItems, true)
+    let newItems = mergeWithTemplate(slideItems, templateItems, true) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     return newItems
