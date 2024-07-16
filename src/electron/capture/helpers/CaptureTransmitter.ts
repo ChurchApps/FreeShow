@@ -1,13 +1,12 @@
 import type { NativeImage, Size } from "electron"
 import os from "os"
-import { toApp } from ".."
-import { OUTPUT, OUTPUT_STREAM } from "../../types/Channels"
-import { toServer } from "../servers"
-import { sendToWindow } from "./output"
-import util from "../ndi/vingester-util"
-import { NdiSender } from "../ndi/NdiSender"
-import { CaptureOptions, captures, previewSize, storedFrames } from "./capture"
-
+import { OUTPUT_STREAM } from "../../../types/Channels"
+import { toServer } from "../../servers"
+import util from "../../ndi/vingester-util"
+import { NdiSender } from "../../ndi/NdiSender"
+import { CaptureHelper } from "../CaptureHelper"
+import { CaptureOptions } from "../CaptureOptions"
+import { OutputHelper } from "../../output/OutputHelper"
 
 export type Channel = {
     key: string
@@ -17,17 +16,15 @@ export type Channel = {
 }
 
 export class CaptureTransmitter {
-    
     static stageWindows: string[] = []
     static requestList: any[] = []
     //static ndiFrameCount = 0
     static channels: { [key: string]: Channel } = {}
 
-
     static startTransmitting(captureId: string) {
-        const capture = captures[captureId]
+        const capture = OutputHelper.getOutput(captureId)?.captureOptions
         if (!capture) return
-        this.startChannel(captureId, "preview")
+        //this.startChannel(captureId, "preview")
         if (capture.options.ndi) this.startChannel(captureId, "ndi")
         if (capture.options.server) this.startChannel(captureId, "server")
 
@@ -36,8 +33,8 @@ export class CaptureTransmitter {
             /*
             console.log("SETTING INTERVAL");
             setInterval(() => {
-                console.log("NDI FRAMES:", CaptureTransmitter.ndiFrameCount, " - ", captureId);
-                CaptureTransmitter.ndiFrameCount = 0
+                console.log("NDI FRAMES:", this.ndiFrameCount, " - ", captureId);
+                this.ndiFrameCount = 0
             },1000);
             */
         }
@@ -45,78 +42,50 @@ export class CaptureTransmitter {
 
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
-        const interval = 1000 / captures[captureId].framerates[key]
-        
+        const interval = 1000 / OutputHelper.getOutput(captureId)?.captureOptions?.framerates[key] || 10
+
         if (this.channels[combinedKey]?.timer) {
             clearInterval(this.channels[combinedKey].timer)
             this.channels[combinedKey].timer = setInterval(() => this.handleChannelInterval(captureId, key), interval)
         } else {
-            this.channels[combinedKey] = { 
-                key, 
-                captureId, 
-                timer: setInterval(() => this.handleChannelInterval(captureId, key), interval), 
-                lastImage: storedFrames[captureId] 
+            this.channels[combinedKey] = {
+                key,
+                captureId,
+                timer: setInterval(() => this.handleChannelInterval(captureId, key), interval),
+                lastImage: CaptureHelper.storedFrames[captureId],
             }
         }
     }
 
-    static handleChannelInterval(captureId:string, key:string) {
+    static handleChannelInterval(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
         const channel = this.channels[combinedKey]
         if (!channel) return
-        const image = storedFrames[captureId]
-        if (!image || channel.lastImage===image) return
+        const image = CaptureHelper.storedFrames[captureId]
+        if (!image || channel.lastImage === image) return
         const size = image.getSize()
         channel.lastImage = image
         switch (key) {
-            case "preview":
-                this.sendBufferToPreview(channel.captureId, image, { size })
-                break
+            //case "preview":
+            //this.sendBufferToPreview(channel.captureId, image, { size })
+            //break
             case "ndi":
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
             case "server":
-                this.sendBufferToServer(captures[captureId], image)
+                const options = OutputHelper.getOutput(captureId)?.captureOptions
+                if (options) this.sendBufferToServer(options, image)
                 break
         }
-
     }
-
-    /*
-    static async sendFrames(capture: CaptureOptions, image: NativeImage, rates: any) {
-        if (!capture || !image) return
-        const size = image.getSize()
-        if (rates.previewFrame) this.sendBufferToPreview(capture.id, image, { size })
-        if (rates.serverFrame && capture.options.server) this.sendBufferToServer(capture, image)
-        if (rates.ndiFrame && capture.options.ndi) this.sendBufferToNdi(capture.id, image, { size })
-    }
-*/
 
     // NDI
-    static sendBufferToNdi(captureId:string, image: NativeImage, { size }: any) {
+    static sendBufferToNdi(captureId: string, image: NativeImage, { size }: any) {
         const buffer = image.getBitmap()
         const ratio = image.getAspectRatio()
         //this.ndiFrameCount++
         // WIP refresh on enable?
-        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: captures[captureId].framerates.ndi })
-    }
-
-    // PREVIEW
-    static sendBufferToPreview(captureId:string, image: NativeImage, options: any) {
-        if (!image) return
-        image = this.resizeImage(image, options.size, previewSize)
-
-        const buffer = image.getBitmap()
-        const size = image.getSize()
-
-        /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
-        if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
-        else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
-
-        let msg = { channel: "PREVIEW", data: { id:captureId, buffer, size, originalSize: options.size } }
-        toApp(OUTPUT, msg)
-        this.sendToStageOutputs(msg)
-        this.sendToRequested(msg)
+        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates.ndi || 10 })
     }
 
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
@@ -127,7 +96,7 @@ export class CaptureTransmitter {
     }
 
     static sendToStageOutputs(msg: any) {
-        ;[...new Set(this.stageWindows)].forEach((id) => sendToWindow(id, msg))
+        ;[...new Set(this.stageWindows)].forEach((id) => OutputHelper.Send.sendToWindow(id, msg))
     }
 
     static sendToRequested(msg: any) {
@@ -141,7 +110,7 @@ export class CaptureTransmitter {
                 return
             }
 
-            sendToWindow(data.id, msg)
+            OutputHelper.Send.sendToWindow(data.id, msg)
         })
 
         this.requestList = newList
@@ -163,13 +132,13 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id:capture.id, buffer, size } })
+        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: capture.id, buffer, size } })
     }
 
     static requestPreview(data: any) {
         this.requestList.push(JSON.stringify(data))
     }
-    
+
     static removeAllChannels(captureId: string) {
         Object.keys(this.channels).forEach((key) => {
             if (key.includes(captureId)) this.removeChannel(captureId, key)
@@ -182,5 +151,4 @@ export class CaptureTransmitter {
         if (this.channels[combinedKey].timer) clearInterval(this.channels[combinedKey].timer)
         delete this.channels[combinedKey]
     }
-
 }

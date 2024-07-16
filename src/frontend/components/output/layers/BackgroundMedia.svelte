@@ -53,7 +53,11 @@
         videoData.loop = data.loop ?? false
     }
     // draw
+
+    //Without the second if, the preview videos don't actually play but just skip ahead when kept in sync with the setTimeout()
     $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
+    $: if (mirror && $videosData[outputId]?.paused === false) videoData.paused = false
+
     $: if (mirror && $videosTime[outputId]) videoTime = $videosTime[outputId]
 
     $: if (!mirror && !fadingOut) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
