@@ -13,14 +13,10 @@
     let resolution: Resolution = getResolution()
     let width = 160
     let height = 90
-
-    // $: if ($currentWindow === "output") resolution = getResolution(null, { $outputs, $styles }, true)
-    $: console.log("style", style + "; aspect-ratio: " + width / height)
-    $: console.log("getStyleResolution", getStyleResolution(resolution, width, height, "fit"))
 </script>
 
 <div class="center previewOutput" id={outputId} class:fullscreen class:disabled style={style + "; aspect-ratio: " + width / height} bind:offsetWidth={width} bind:offsetHeight={height}>
-    <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} mirror={true} />
+    <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} mirror preview />
 </div>
 
 <style>

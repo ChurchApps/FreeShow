@@ -26,6 +26,7 @@ export class OutputHelper {
 
             //PREVIEW_RESOLUTION: (data: any) => () => {}, //TODO: Eliminate?   Was -> updatePreviewResolution(data)
             REQUEST_PREVIEW: (data: any) => CaptureHelper.Transmitter.requestPreview(data),
+            CAPTURE: (data: any) => CaptureHelper.Lifecycle.startCapture(data.id, data.captures),
 
             IDENTIFY_SCREENS: (data: any) => OutputHelper.Identify.identifyScreens(data),
             //PREVIEW_BOUNDS: (data: any) => OutputHelper.Bounds.setPreviewBounds(data),

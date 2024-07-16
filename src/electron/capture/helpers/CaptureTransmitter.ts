@@ -1,12 +1,12 @@
 import type { NativeImage, Size } from "electron"
 import os from "os"
-import { OUTPUT_STREAM } from "../../../types/Channels"
-import { toServer } from "../../servers"
-import util from "../../ndi/vingester-util"
+import { OUTPUT, OUTPUT_STREAM } from "../../../types/Channels"
 import { NdiSender } from "../../ndi/NdiSender"
-import { CaptureHelper } from "../CaptureHelper"
-import { CaptureOptions } from "../CaptureOptions"
+import util from "../../ndi/vingester-util"
 import { OutputHelper } from "../../output/OutputHelper"
+import { toServer } from "../../servers"
+import { CaptureHelper } from "../CaptureHelper"
+import { toApp } from "../.."
 
 export type Channel = {
     key: string
@@ -27,6 +27,7 @@ export class CaptureTransmitter {
         //this.startChannel(captureId, "preview")
         if (capture.options.ndi) this.startChannel(captureId, "ndi")
         if (capture.options.server) this.startChannel(captureId, "server")
+        if (capture.options.stage) this.startChannel(captureId, "stage")
 
         if (capture.options.ndi) {
             //ENABLE TO TRACK NDI FRAME RATES
@@ -57,6 +58,11 @@ export class CaptureTransmitter {
         }
     }
 
+    static stopChannel(captureId: string, key: string) {
+        const combinedKey = `${captureId}-${key}`
+        clearInterval(this.channels[combinedKey].timer)
+    }
+
     static handleChannelInterval(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
         const channel = this.channels[combinedKey]
@@ -73,8 +79,11 @@ export class CaptureTransmitter {
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
             case "server":
-                const options = OutputHelper.getOutput(captureId)?.captureOptions
-                if (options) this.sendBufferToServer(options, image)
+                // const options = OutputHelper.getOutput(captureId)?.captureOptions
+                this.sendBufferToServer(captureId, image)
+                break
+            case "stage":
+                this.sendBufferToMain(captureId, image)
                 break
         }
     }
@@ -116,10 +125,29 @@ export class CaptureTransmitter {
         this.requestList = newList
     }
 
+    // MAIN (STAGE OUTPUT)
+    static sendBufferToMain(captureId: string, image: NativeImage) {
+        if (!image) return
+        // image = this.resizeImage(image, options.size, previewSize)
+
+        const buffer = image.getBitmap()
+        const size = image.getSize()
+
+        /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
+        if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
+        else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
+
+        let msg = { channel: "BUFFER", data: { id: captureId, buffer, size } }
+        toApp(OUTPUT, msg)
+        this.sendToStageOutputs(msg)
+        this.sendToRequested(msg)
+    }
+
     // SERVER
 
     // const outputServerSize: Size = { width: 1280, height: 720 }
-    static sendBufferToServer(capture: CaptureOptions, image: NativeImage) {
+    static sendBufferToServer(outputId: string, image: NativeImage) {
+        // capture: CaptureOptions
         if (!image) return
 
         // send output image size
@@ -132,7 +160,7 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: capture.id, buffer, size } })
+        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, buffer, size } })
     }
 
     static requestPreview(data: any) {

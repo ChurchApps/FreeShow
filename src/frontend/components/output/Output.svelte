@@ -23,6 +23,7 @@
     export let style = ""
     export let ratio: number = 0
     export let mirror: boolean = false
+    export let preview: boolean = false
 
     $: currentOutput = $outputs[outputId] || {}
 
@@ -97,7 +98,7 @@
 
     // slide styling
     $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle })
-    $: transitions = getOutputTransitions(slideData, $transitionData, mirror)
+    $: transitions = getOutputTransitions(slideData, $transitionData, mirror && !preview)
     $: slideFilter = getSlideFilter(slideData)
 
     // custom template

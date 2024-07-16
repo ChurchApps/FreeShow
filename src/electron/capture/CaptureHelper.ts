@@ -11,6 +11,7 @@ export class CaptureHelper {
     static Transmitter = CaptureTransmitter
 
     private static framerates: any = {
+        stage: 20,
         server: 30,
         unconnected: 1,
         connected: 30,
@@ -21,15 +22,16 @@ export class CaptureHelper {
         let screen: Display = this.getWindowScreen(window)
 
         let defaultFramerates = {
-            server: this.framerates.server,
             ndi: this.framerates.connected,
+            server: this.framerates.server,
+            stage: this.framerates.stage,
         }
 
         return {
             window,
             subscribed: false,
             displayFrequency: screen.displayFrequency || 60,
-            options: { server: false, ndi: false },
+            options: { ndi: false, server: false, stage: false },
             framerates: defaultFramerates,
             id,
         }
@@ -52,6 +54,9 @@ export class CaptureHelper {
                 CaptureTransmitter.startChannel(id, "ndi")
             }
         }
+
+        if (captureOptions.options.server) CaptureTransmitter.startChannel(id, "server")
+        if (captureOptions.options.stage) CaptureTransmitter.startChannel(id, "stage")
     }
 
     static getWindowScreen(window: BrowserWindow) {

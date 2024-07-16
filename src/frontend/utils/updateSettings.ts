@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { MAIN, STORE } from "../../types/Channels"
 import type { Output } from "../../types/Output"
 import { clone, keysToID } from "../components/helpers/array"
-import { displayOutputs, setOutput } from "../components/helpers/output"
+import { checkWindowCapture, displayOutputs, setOutput } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import {
     activePopup,
@@ -118,6 +118,7 @@ export function updateSettings(data: any) {
         setTimeout(() => {
             restartOutputs()
             if (get(autoOutput)) setTimeout(() => displayOutputs({}, true), 500)
+            checkWindowCapture()
         }, 1500)
     }
 

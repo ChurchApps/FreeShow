@@ -32,7 +32,7 @@ export class OutputValues {
         const output = OutputHelper.getOutput(id)
         if (!this.setValues[key]) return
 
-        if (!output.window || output.window.isDestroyed()) return
+        if (!output?.window || output.window.isDestroyed()) return
         this.setValues[key](value, output.window, id)
     }
 }

@@ -1,6 +1,7 @@
 import { NativeImage } from "electron"
 import { CaptureHelper } from "../CaptureHelper"
 import { OutputHelper } from "../../output/OutputHelper"
+import { CaptureTransmitter } from "./CaptureTransmitter"
 
 export class CaptureLifecycle {
     static startCapture(id: string, toggle: any = {}) {
@@ -17,6 +18,9 @@ export class CaptureLifecycle {
         if (output.captureOptions) {
             const capture = output.captureOptions
             Object.keys(toggle).map((key) => {
+                // turn off capture
+                if (capture.options[key] && !toggle[key]) CaptureTransmitter.stopChannel(id, key)
+                // set capture on/off
                 capture.options[key] = toggle[key]
             })
         }
@@ -30,10 +34,14 @@ export class CaptureLifecycle {
         cpuCapture()
         async function cpuCapture() {
             if (!output.captureOptions || output.captureOptions.window.isDestroyed()) return
+
             let image = await output.captureOptions.window.webContents.capturePage()
             processFrame(image)
+
+            if (!output.captureOptions) return
             let frameRate = output.captureOptions.framerates.ndi
             if (output.captureOptions.framerates.server > frameRate) frameRate = output.captureOptions.framerates.server
+
             const ms = Math.round(1000 / frameRate)
             setTimeout(cpuCapture, ms)
         }
@@ -74,7 +82,6 @@ export class CaptureLifecycle {
         function endSubscription() {
             if (!capture?.subscribed) return
 
-            capture.window.webContents.endFrameSubscription()
             capture.subscribed = false
         }
 

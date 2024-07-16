@@ -93,6 +93,10 @@ export class OutputVisibility {
         window.hide()
 
         // WIP has to restart because window is unresponsive when hidden again (until showed again)...
+        // this is only needed if the output is being captured!! (has to reset for capture to work when window is hidden)
+        let captureEnabled = Object.values(OutputHelper.getOutput(data.id)?.captureOptions?.options || {}).find((a) => a === true)
+        if (!captureEnabled) return
+
         console.log("RESTARTING OUTPUT:", data.id)
         toApp(OUTPUT, { channel: "RESTART" })
     }

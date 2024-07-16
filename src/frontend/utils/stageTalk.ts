@@ -99,8 +99,6 @@ export const receiveSTAGE: any = {
         let out: any = currentOutput?.out?.slide || null
         msg.data = []
 
-        console.log(out, show)
-
         if (!out) return msg
 
         // scripture

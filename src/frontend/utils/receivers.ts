@@ -273,9 +273,9 @@ const receiveFILE = {
 
 let clearing: boolean = false
 const receiveOUTPUTasMAIN: any = {
-    PREVIEW: ({ id, buffer, size, originalSize }) => {
+    BUFFER: ({ id, buffer, size }) => {
         previewBuffers.update((a) => {
-            a[id] = { buffer, size, originalSize }
+            a[id] = { buffer, size }
             return a
         })
     },
@@ -376,13 +376,13 @@ export const receiveOUTPUTasOUTPUT: any = {
         allOutputs.set(a)
     },
     // only received by stage screen outputs
-    PREVIEW: ({ id, buffer, size, originalSize }) => {
+    BUFFER: ({ id, buffer, size }) => {
         // WIP only receive the "output capture" from this outputs "stageOutput id"
         // let outputId = Object.keys(get(outputs))[0]
         // if (id !== outputId) return
 
         previewBuffers.update((a) => {
-            a[id] = { buffer, size, originalSize }
+            a[id] = { buffer, size }
             return a
         })
     },

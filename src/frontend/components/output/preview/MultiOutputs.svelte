@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { Resolution } from "../../../../types/Settings"
-    import { currentWindow, dictionary, outputs, previewBuffers, styles } from "../../../stores"
+    import { dictionary, outputs } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
@@ -23,6 +22,8 @@
 
         fullscreen = true
         fullscreenId = e.target.closest(".previewOutput")?.id
+
+        currentResolution()
     }
 
     let updatedList: any[] = []
@@ -38,8 +39,13 @@
         }, 500)
     }
 
-    let resolution: Resolution = getResolution()
-    $: if ($currentWindow === "output") resolution = getResolution(null, { $outputs, $styles }, true)
+    // let resolution: Resolution = getResolution()
+    // $: if ($currentWindow === "output") resolution = getResolution(null, { $outputs, $styles }, true)
+    let resolution: any = {}
+    function currentResolution() {
+        resolution = getResolution(null, null, true)
+        console.log(resolution)
+    }
 </script>
 
 <!-- aspect-ratio: {resolution?.width || 1920}/{resolution?.height || 1080}; -->
@@ -50,8 +56,8 @@
         </Button>
 
         <span class="resolution">
-            <p><b><T id="screen.width" />:</b> {$previewBuffers[fullscreenId]?.originalSize?.width || 0} <T id="screen.pixels" /></p>
-            <p><b><T id="screen.height" />:</b> {$previewBuffers[fullscreenId]?.originalSize?.height || 0} <T id="screen.pixels" /></p>
+            <p><b><T id="screen.width" />:</b> {resolution?.width || 0} <T id="screen.pixels" /></p>
+            <p><b><T id="screen.height" />:</b> {resolution?.height || 0} <T id="screen.pixels" /></p>
         </span>
     {/if}
 
@@ -78,6 +84,7 @@
 
     .fullscreen {
         position: fixed;
+        justify-content: center;
         background-color: var(--primary-darkest);
         top: 50%;
         left: 50%;

@@ -6,7 +6,7 @@ export class OutputSend {
         OutputHelper.getAllOutputs().forEach(sendToWindow)
 
         function sendToWindow([id, output]: any) {
-            if ((msg.data?.id && msg.data.id !== id) || !output.window || output.window.isDestroyed()) return
+            if ((msg.data?.id && msg.data.id !== id) || !output?.window || output.window.isDestroyed()) return
 
             let tempMsg: any = JSON.parse(JSON.stringify(msg))
             if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, id)
@@ -27,7 +27,7 @@ export class OutputSend {
 
     static sendToWindow(id: string, msg: any) {
         const output = OutputHelper.getOutput(id)
-        if (!output.window || output.window.isDestroyed()) return
+        if (!output?.window || output.window.isDestroyed()) return
         output.window.webContents.send(OUTPUT, msg)
         //if (!output.previewWindow || output.previewWindow.isDestroyed()) return
         //output.previewWindow.webContents.send(OUTPUT, msg)

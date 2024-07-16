@@ -4,7 +4,7 @@ import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
-import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData, videoExtensions } from "../../stores"
+import { currentOutputSettings, disabledServers, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, videoExtensions } from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
@@ -219,6 +219,31 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
     }
 
     return initial || style || slideRes || { width: 1920, height: 1080 }
+}
+
+export function checkWindowCapture() {
+    getActiveOutputs(get(outputs), false, true, true).forEach(shouldBeCaptured)
+}
+
+// NDI | OutputShow | Stage CurrentOutput
+export function shouldBeCaptured(outputId: string) {
+    let output = get(outputs)[outputId]
+    let captures: any = {
+        ndi: !!output.ndi,
+        server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0]) === outputId),
+        stage: stageHasOutput(outputId),
+    }
+
+    send(OUTPUT, ["CAPTURE"], { id: outputId, captures })
+}
+function stageHasOutput(outputId: string) {
+    return !!Object.keys(get(stageShows)).find((stageId) => {
+        let stageLayout = get(stageShows)[stageId]
+        let outputItem = stageLayout.items?.["output#current_output"]
+
+        if (!outputItem?.enabled) return false
+        return (stageLayout.settings?.output || outputId) === outputId
+    })
 }
 
 // settings
