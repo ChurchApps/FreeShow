@@ -91,15 +91,13 @@ test("Launch electron app", async () => {
 
         // Verify the group changing was successful
         await expect(window.getByTitle("Outro")).toBeVisible({ timeout: 1000 })
-
-        await delay(1000)
     } catch (ex) {
         console.log("Taking screenshot")
         await window.screenshot({ path: "test-output/screenshots/failed.png" })
         throw ex
     }
     // Close after finishing
-    await electronApp.close()
+    // await electronApp.close() // this times out in GitHub Actions
     tmpDataFolder.removeCallback()
     tmpSettingFolder.removeCallback()
 })
