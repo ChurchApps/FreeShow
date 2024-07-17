@@ -32,6 +32,7 @@
 
     let mediaStyle: MediaStyle = {}
     $: if (data) mediaStyle = getMediaStyle(data, currentStyle)
+    $: console.log(mediaStyle, data)
 
     // VIDEO
 

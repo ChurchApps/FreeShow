@@ -46,6 +46,7 @@ export function template(strings: any): any {
                 ? [
                       // { label: lang.actions?.pasteAndMatchStyle || "Paste And Match Style", role: "pasteAndMatchStyle", click: () => mc("paste") },
                       { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
+                      // WIP: these shortcuts (CMD+A) not working in the MAC file selector modal
                       { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") }, //   , accelerator: "CmdOrCtrl+A"
                   ]
                 : [

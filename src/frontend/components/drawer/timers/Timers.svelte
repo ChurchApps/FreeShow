@@ -2,7 +2,7 @@
     import { activePopup, activeProject, activeTimers, dictionary, labelsDisabled, projects, showsCache, timers } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { sortByName } from "../../helpers/array"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import Button from "../../inputs/Button.svelte"
     import Slider from "../../inputs/Slider.svelte"
     import Timer from "../../slide/views/Timer.svelte"
@@ -12,9 +12,7 @@
 
     export let searchValue
 
-    $: globalList = Object.entries($timers).map(([id, a]) => ({ ...a, id }))
-
-    $: sortedTimers = sortByName(globalList)
+    $: sortedTimers = clone(sortByName(keysToID($timers)))
     $: sortedTimersWithProject = sortedTimers.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
     $: filteredTimers = searchValue.length > 1 ? sortedTimersWithProject.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTimersWithProject
 

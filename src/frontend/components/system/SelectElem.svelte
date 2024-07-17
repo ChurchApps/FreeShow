@@ -122,6 +122,13 @@
         dragover = null
         if ($selected.id !== id) selected.set({ id, data: [] })
     }
+
+    function stopDrag() {
+        // TODO: allow dropping over borders (edges)
+        // if (e.target?.closest(".selectElem") === elem) return
+
+        dragover = null
+    }
 </script>
 
 <svelte:window
@@ -154,7 +161,7 @@
 >
     <!-- TODO: validateDrop(id, $selected.id, true) -->
     {#if trigger && (dragActive || fileOver)}
-        <div class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={() => (dragover = null)}>
+        <div class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={stopDrag}>
             {#if borders === "all" || borders === "edges"}
                 <span id="start" class="TriggerBlock" on:dragover={() => (dragover = "start")} />
             {/if}

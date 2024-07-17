@@ -7,13 +7,13 @@ import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSett
 import { currentOutputSettings, disabledServers, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, videoExtensions } from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
+import { customActionActivation } from "../actions/actions"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates, sortByName } from "./array"
+import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
-import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
-import { customActionActivation } from "../actions/actions"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
@@ -275,7 +275,8 @@ export function keyOutput(keyId: string, delOutput: boolean = false) {
         a[keyId] = currentOutput
 
         // show
-        send(OUTPUT, ["CREATE"], { id: keyId, ...currentOutput, rate: get(special).previewRate || "auto" })
+        // , rate: get(special).previewRate || "auto"
+        send(OUTPUT, ["CREATE"], { id: keyId, ...currentOutput })
         if (get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id: keyId, ...currentOutput } })
 
         return a
@@ -297,7 +298,8 @@ export function addOutput(onlyFirst: boolean = false) {
         if (onlyFirst) output[id].name = "Primary"
 
         // show
-        if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id], rate: get(special).previewRate || "auto" })
+        // , rate: get(special).previewRate || "auto"
+        if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
         if (!onlyFirst && get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id, ...output[id] } })
 
         if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)

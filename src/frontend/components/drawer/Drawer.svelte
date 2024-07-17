@@ -122,8 +122,9 @@
             if ($activeDrawerTab !== "shows") return
 
             searchElem.select()
-            if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: -1, data: { id: firstMatch.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
-            activeShow.set({ ...firstMatch, index: $projects[$activeProject].shows.length - 1 })
+            let newIndex = ($activeShow?.index ?? $projects[$activeProject].shows.length - 1) + 1
+            if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id: firstMatch.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
+            activeShow.set({ ...firstMatch, index: newIndex })
             searchValue = ""
         }
     }

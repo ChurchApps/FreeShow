@@ -25,8 +25,27 @@
 
     let loading: boolean = false
     let timeout: any = null
+    let tooRapid: any = null
+    let tryAgain: boolean = false
     $: if (data) createBackground()
     function createBackground() {
+        // prevent svelte bug creating multiple items if creating new while old clears
+        if (tooRapid) {
+            tryAgain = true
+            return
+        }
+        tooRapid = setTimeout(() => {
+            tooRapid = null
+            if (tryAgain) createBackground()
+            tryAgain = false
+        }, duration / 2)
+
+        if (timeout) {
+            clearTimeout(timeout)
+            firstActive = !background2?.path
+        }
+        if (loading) loading = false
+
         // clearing
         if (!data.path && !data.id) {
             background1 = null
@@ -42,10 +61,6 @@
             return
         }
 
-        if (loading) loading = false
-
-        // prevent svelte bug creating multiple items if creating new while old clears
-        if (timeout) clearTimeout(timeout)
         timeout = setTimeout(
             () => {
                 loading = true
@@ -58,7 +73,6 @@
                 // max 2 seconds loading time
                 timeout = setTimeout(() => {
                     if (loading) loaded(loadingFirst)
-                    timeout = null
                 }, 2000)
             },
             duration / 4 + 20
@@ -72,12 +86,13 @@
         firstActive = isFirst
 
         // allow firstActive to trigger first
-        setTimeout(() => {
+        timeout = setTimeout(() => {
             if (isFirst) {
                 background2 = null
             } else {
                 background1 = null
             }
+            timeout = null
         })
     }
 

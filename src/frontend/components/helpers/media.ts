@@ -91,16 +91,26 @@ export function checkMedia(src: string) {
         let elem
         if (isVideo) {
             elem = document.createElement("video")
-            elem.onloadeddata = () => resolve("true")
+            elem.onloadeddata = () => finish()
         } else if (isAudio) {
             elem = document.createElement("audio")
-            elem.onloadeddata = () => resolve("true")
+            elem.onloadeddata = () => finish()
         } else {
             elem = new Image()
-            elem.onload = () => resolve("true")
+            elem.onload = () => finish()
         }
 
+        elem.onerror = () => finish("false")
         elem.src = src
+
+        let timedout = setTimeout(() => {
+            finish("false")
+        }, 3000)
+
+        function finish(response: string = "true") {
+            clearTimeout(timedout)
+            resolve(response)
+        }
     })
 }
 

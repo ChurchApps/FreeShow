@@ -24,7 +24,6 @@ export class OutputHelper {
             SET_VALUE: (data: any) => OutputHelper.Values.updateValue(data),
             TO_FRONT: (data: any) => OutputHelper.Bounds.moveToFront(data),
 
-            //PREVIEW_RESOLUTION: (data: any) => () => {}, //TODO: Eliminate?   Was -> updatePreviewResolution(data)
             REQUEST_PREVIEW: (data: any) => CaptureHelper.Transmitter.requestPreview(data),
             CAPTURE: (data: any) => CaptureHelper.Lifecycle.startCapture(data.id, data.captures),
 

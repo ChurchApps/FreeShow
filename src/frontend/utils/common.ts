@@ -1,11 +1,11 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../types/Channels"
+import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
 import { getActiveOutputs } from "../components/helpers/output"
-import { activeDrawerTab, activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, drawer, focusedArea, os, outputDisplay, outputs, serverData, special, toastMessages, version } from "../stores"
+import { activeDrawerTab, activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, drawer, focusedArea, os, outputDisplay, outputs, serverData, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
-import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
 
 // create toast popup
 export function newToast(msg: string) {
@@ -135,7 +135,8 @@ export function toggleRemoteStream() {
     if (get(disabledServers).output_stream === false) value.value = true
 
     setTimeout(() => {
-        send(OUTPUT, ["SET_VALUE"], { id: captureOutputId, key: "capture", value, rate: get(special).previewRate || "auto" })
+        // , rate: get(special).previewRate || "auto"
+        send(OUTPUT, ["SET_VALUE"], { id: captureOutputId, key: "capture", value })
     }, 1800)
 }
 

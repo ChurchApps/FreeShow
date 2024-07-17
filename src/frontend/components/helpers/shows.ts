@@ -353,7 +353,7 @@ export function _show(id: any = "active") {
             /** Get full ref layout */
             ref: () => {
                 let a: any[] = []
-                if (shows[id]) {
+                if (shows[id]?.layouts) {
                     if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
                     else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
                     layoutIds.forEach((layoutId: any, i: number) => {

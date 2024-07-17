@@ -133,7 +133,7 @@
         else if (id === "timer") box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
         else if (id === "variable") box.edit.default[0].value = item?.variable?.id
         else if (id === "web") box.edit.default[0].value = item?.web?.src || ""
-        else if (id === "events") {
+        else if (id === "events" && box.edit.default[5]) {
             box.edit.default[4].hidden = !item?.events?.enableStartDate
             box.edit.default[5].hidden = !item?.events?.enableStartDate
         }

@@ -17,6 +17,7 @@ import {
     media,
     projects,
     scriptureSettings,
+    shows,
     showsCache,
     templates,
     videoExtensions,
@@ -172,13 +173,11 @@ export const dropActions: any = {
         if (drop.data !== "all" && get(activeDrawerTab) && (drag.id === "show" || drag.id === "show_drawer")) {
             h.id = "SHOWS"
             let data = drop.data === "unlabeled" ? null : drop.data
-            let showsList: any[] = drag.data.map(({ id }) => ({ show: { category: data }, id }))
+            let allShowIds = drag.data.map(({ id }) => id).filter((id) => get(shows)[id])
+            let showsList: any[] = allShowIds.map((id) => ({ show: { category: data }, id }))
             h.newData = { replace: true, data: showsList }
             h.location = { page: "drawer" }
-            historyAwait(
-                drag.data.map(({ id }) => id),
-                h
-            )
+            historyAwait(allShowIds, h)
             return
         }
 
@@ -458,7 +457,7 @@ const slideDrop: any = {
         drag.data.forEach((slide: any) => {
             let id = uid()
             delete slide.id
-            slides[id] = slide
+            slides[id] = clone(slide)
 
             let parent = ref[newIndex - 1] || { index: -1 }
             if (parent.type === "child") parent = parent.parent

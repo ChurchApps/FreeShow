@@ -14,7 +14,6 @@ export type Channel = {
     timer: NodeJS.Timeout
     lastImage: NativeImage
 }
-
 export class CaptureTransmitter {
     static stageWindows: string[] = []
     static requestList: any[] = []
@@ -43,7 +42,7 @@ export class CaptureTransmitter {
 
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
-        const interval = 1000 / OutputHelper.getOutput(captureId)?.captureOptions?.framerates[key] || 10
+        const interval = 1000 / OutputHelper.getOutput(captureId)?.captureOptions?.framerates[key] || 30
 
         if (this.channels[combinedKey]?.timer) {
             clearInterval(this.channels[combinedKey].timer)
@@ -60,6 +59,8 @@ export class CaptureTransmitter {
 
     static stopChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
+        if (!this.channels[combinedKey].timer) return
+
         clearInterval(this.channels[combinedKey].timer)
     }
 
@@ -67,10 +68,13 @@ export class CaptureTransmitter {
         const combinedKey = `${captureId}-${key}`
         const channel = this.channels[combinedKey]
         if (!channel) return
+
         const image = CaptureHelper.storedFrames[captureId]
         if (!image || channel.lastImage === image) return
+
         const size = image.getSize()
         channel.lastImage = image
+
         switch (key) {
             //case "preview":
             //this.sendBufferToPreview(channel.captureId, image, { size })

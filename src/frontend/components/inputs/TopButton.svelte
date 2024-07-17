@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { TopViews } from "../../../types/Tabs"
-    import { activePage, dictionary, labelsDisabled } from "../../stores"
+    import { activeEdit, activePage, activeShow, dictionary, editHistory, labelsDisabled } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "./Button.svelte"
@@ -12,11 +12,30 @@
     $: label = hideLabel === null ? !$labelsDisabled : !hideLabel
 
     $: title = $dictionary.menu?.["_title_" + id]
+
+    function openPage() {
+        activePage.set(id)
+
+        if (id === "edit") openActiveShow()
+    }
+
+    function openActiveShow() {
+        let showIsActive = $activeShow && ($activeShow.type || "show") === "show"
+        let noEditSlide = $activeEdit.slide === null || $activeEdit.slide === undefined
+        if (showIsActive && noEditSlide) updateEditItem()
+
+        function updateEditItem() {
+            // set to show if: media has been opened AND show has not been opened
+            if ($activeEdit.id && (!$editHistory.find((a) => $activeEdit.id === a.edit?.id) || $editHistory.find((a) => $activeShow?.id === a.show?.id))) return
+
+            activeEdit.set({ slide: 0, items: [] })
+        }
+    }
 </script>
 
 <div>
     <!-- width: 140px; -->
-    <Button style={label ? "padding: 0.3em 1.2em;" : ""} {title} {disabled} active={$activePage === id} {red} on:click={() => activePage.set(id)}>
+    <Button style={label ? "padding: 0.3em 1.2em;" : ""} {title} {disabled} active={$activePage === id} {red} on:click={openPage}>
         <Icon {id} size={1.6} right={label} />
         {#if label}
             <span><T id={"menu." + id} /></span>

@@ -1,7 +1,5 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { send } from "../../../utils/request"
-    import { OUTPUT } from "../../../../types/Channels"
 
     export let capture: any
     export let fullscreen: any = false
@@ -21,7 +19,7 @@
         canvas.width = width * 2.8
         canvas.height = height * 2.8
 
-        send(OUTPUT, ["PREVIEW_RESOLUTION"], { id, size: { width: canvas.width, height: canvas.height } })
+        // send(OUTPUT, ["PREVIEW_RESOLUTION"], { id, size: { width: canvas.width, height: canvas.height } })
     })
 
     $: if (fullscreen !== "") setTimeout(updateResolution, 100)
@@ -30,7 +28,7 @@
 
         canvas.width = fullscreen ? width * 1.2 : width * 2.8
         canvas.height = fullscreen ? height * 1.2 : height * 2.8
-        send(OUTPUT, ["PREVIEW_RESOLUTION"], { id, size: { width: canvas.width, height: canvas.height } })
+        // send(OUTPUT, ["PREVIEW_RESOLUTION"], { id, size: { width: canvas.width, height: canvas.height } })
 
         if (capture) updateCanvas()
     }
@@ -50,7 +48,7 @@
 </script>
 
 <div class="center" class:fullscreen class:disabled {style} bind:offsetWidth={width} bind:offsetHeight={height}>
-    <canvas {id} style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class="previewCanvas" bind:this={canvas} />
+    <canvas {id} class:hide={!capture} style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class="previewCanvas" bind:this={canvas} />
 </div>
 
 <style>
@@ -65,6 +63,10 @@
     .center.fullscreen canvas {
         width: unset;
         height: 100%;
+    }
+
+    .hide {
+        opacity: 0;
     }
 
     .center.disabled {

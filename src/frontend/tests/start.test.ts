@@ -50,6 +50,9 @@ test("Launch electron app", async () => {
         // await window.screenshot({ path: "intro.png" })
 
         // Initial setup
+        // Set language to English
+        await window.locator(".main .dropdownElem").getByRole("button").click({ timeout: 5000 })
+        await window.locator(".main .dropdownElem .dropdown #id_English").click({ timeout: 1000 })
         // This triggers the Electron open dialog, mocked above
         await window.locator(".main .showElem").getByRole("button").click()
         await window.getByText("Get Started!").click({ timeout: 1000 })
@@ -88,6 +91,8 @@ test("Launch electron app", async () => {
 
         // Verify the group changing was successful
         await expect(window.getByTitle("Outro")).toBeVisible({ timeout: 1000 })
+
+        await delay(1000)
     } catch (ex) {
         console.log("Taking screenshot")
         await window.screenshot({ path: "test-output/screenshots/failed.png" })

@@ -147,8 +147,8 @@ export function updateCachedShow(id: string, show: Show) {
     let addedGroups: any = {}
 
     // sort by order when just one layout
-    if (Object.keys(show.layouts).length < 2) {
-        let layoutSlides = Object.values(show.layouts)[0]?.slides?.map(({ id }) => id) || []
+    if (Object.keys(show.layouts || {}).length < 2) {
+        let layoutSlides = Object.values(show.layouts || {})[0]?.slides?.map(({ id }) => id) || []
         showSlides = showSlides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
     }
 

@@ -16,34 +16,38 @@ export class CaptureLifecycle {
         if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(window, id)
 
         if (output.captureOptions) {
-            const capture = output.captureOptions
+            const captureOpts = output.captureOptions?.options || {}
             Object.keys(toggle).map((key) => {
                 // turn off capture
-                if (capture.options[key] && !toggle[key]) CaptureTransmitter.stopChannel(id, key)
+                if (captureOpts[key] && !toggle[key]) CaptureTransmitter.stopChannel(id, key)
                 // set capture on/off
-                capture.options[key] = toggle[key]
+                captureOpts[key] = toggle[key]
             })
+            output.captureOptions.options = captureOpts
         }
 
+        if (!output.captureOptions || output.captureOptions.window.isDestroyed()) return
+
         CaptureHelper.updateFramerate(id)
-
-        if (output.captureOptions.subscribed) return
         CaptureHelper.Transmitter.startTransmitting(id)
-        output.captureOptions.subscribed = true
 
-        cpuCapture()
-        async function cpuCapture() {
+        if (output.captureOptions.frameSubscription) clearTimeout(output.captureOptions.frameSubscription)
+
+        captureFrame()
+        async function captureFrame() {
             if (!output.captureOptions || output.captureOptions.window.isDestroyed()) return
 
             let image = await output.captureOptions.window.webContents.capturePage()
             processFrame(image)
 
             if (!output.captureOptions) return
+
             let frameRate = output.captureOptions.framerates.ndi
             if (output.captureOptions.framerates.server > frameRate) frameRate = output.captureOptions.framerates.server
+            if (output.captureOptions.framerates.stage > frameRate) frameRate = output.captureOptions.framerates.stage
 
             const ms = Math.round(1000 / frameRate)
-            setTimeout(cpuCapture, ms)
+            output.captureOptions.frameSubscription = setTimeout(captureFrame, ms)
         }
 
         function processFrame(image: NativeImage) {
@@ -80,9 +84,10 @@ export class CaptureLifecycle {
         })
 
         function endSubscription() {
-            if (!capture?.subscribed) return
+            if (!capture?.frameSubscription) return
 
-            capture.subscribed = false
+            clearTimeout(capture.frameSubscription)
+            capture.frameSubscription = null
         }
 
         function removeListeners() {

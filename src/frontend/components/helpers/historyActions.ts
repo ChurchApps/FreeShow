@@ -280,9 +280,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             a[id] = { ...a[id], ...show }
 
                             // rename
-                            let oldName = get(shows)[id].name
-                            if (show.name !== undefined && oldName !== show.name) {
-                                rename[id] = { name: show.name || id, oldName: oldName }
+                            let oldName = get(shows)[id]?.name
+                            if (show.name !== undefined && oldName && oldName !== show.name) {
+                                rename[id] = { name: show.name || id, oldName }
                             }
                             return
                         }
@@ -323,8 +323,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     a[id] = {
                         name: show.name || a[id]?.name || "",
-                        category: show.category === undefined ? a[id].category : show.category,
-                        timestamps: show.timestamps || a[id].timestamps,
+                        category: show.category === undefined ? a[id]?.category : show.category,
+                        timestamps: show.timestamps || a[id]?.timestamps,
                     }
 
                     if (show.private) a[id].private = true

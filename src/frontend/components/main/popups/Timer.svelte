@@ -15,6 +15,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import { getDateString } from "../../drawer/calendar/calendar"
 
     const defaultName = "Counter"
     let currentTimer = getSelected("timer", 0)
@@ -63,7 +64,7 @@
     let eventList: any[] = []
     onMount(() => {
         Object.entries($events).forEach(addEvent)
-        eventList = eventList.sort((a, b) => (new Date(a).getTime() > new Date(b).getTime() ? 1 : -1))
+        eventList = eventList.sort((a, b) => (new Date(a).getTime() > new Date(b).getTime() ? -1 : 1))
         timer.event = eventList[0]?.id || ""
 
         // set unique timer name
@@ -77,7 +78,7 @@
     })
 
     const addEvent = ([id, event]: any) => {
-        if (new Date(event.from).getTime() > today.getTime()) eventList.push({ id, name: event.name, date: event.from })
+        if (new Date(event.from).getTime() > today.getTime()) eventList.push({ id, name: `${getDateString(new Date(event.from))}: ${event.name}`, date: event.from })
     }
 
     let eventTime: Date

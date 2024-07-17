@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { OUTPUT } from "../../../../types/Channels"
     import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, selected, showsCache, slideTimers, special, styles } from "../../../stores"
-    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clearAudio } from "../../helpers/audio"
@@ -203,9 +201,6 @@
     // hide preview in draw page
     // $: enablePreview = ["show", "edit", "settings"].includes($activePage)
     // $: if ($activePage === "draw") enablePreview = false
-
-    // reduce preview resolution if hidden
-    $: if (enablePreview === false) send(OUTPUT, ["PREVIEW_RESOLUTION"], { size: { width: 0, height: 0 } })
 </script>
 
 <svelte:window on:keydown={keydown} />

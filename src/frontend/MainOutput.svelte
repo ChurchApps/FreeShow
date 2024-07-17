@@ -57,6 +57,9 @@
     {:else if loaded}
         <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
     {/if}
+
+    <!-- preload CMGSans font -->
+    {#if !loaded}<div class="fontPreload">.</div>{/if}
 </div>
 
 <style>
@@ -88,5 +91,11 @@
 
     .fill.hideCursor {
         cursor: none;
+    }
+
+    .fontPreload {
+        font-family: "CMGSans";
+        position: absolute;
+        opacity: 0;
     }
 </style>

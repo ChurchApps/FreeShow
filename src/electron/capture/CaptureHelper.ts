@@ -29,7 +29,7 @@ export class CaptureHelper {
 
         return {
             window,
-            subscribed: false,
+            frameSubscription: null,
             displayFrequency: screen.displayFrequency || 60,
             options: { ndi: false, server: false, stage: false },
             framerates: defaultFramerates,
@@ -54,9 +54,6 @@ export class CaptureHelper {
                 CaptureTransmitter.startChannel(id, "ndi")
             }
         }
-
-        if (captureOptions.options.server) CaptureTransmitter.startChannel(id, "server")
-        if (captureOptions.options.stage) CaptureTransmitter.startChannel(id, "stage")
     }
 
     static getWindowScreen(window: BrowserWindow) {

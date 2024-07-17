@@ -5,7 +5,8 @@
     import { uid } from "uid"
     import { MAIN } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
-    import { outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { wait } from "../../utils/common"
     import { destroy, receive, send } from "../../utils/request"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
@@ -17,7 +18,6 @@
     import Metadata from "./layers/Metadata.svelte"
     import Overlays from "./layers/Overlays.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
-    import { wait } from "../../utils/common"
 
     export let outputId: string = ""
     export let style = ""
@@ -194,7 +194,7 @@
     $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : currentSlide?.settings?.color || currentStyle.background || "black"
     $: messageText = $showsCache[slide?.id]?.message?.text || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
-    $: backgroundData = background || { path: currentStyle?.backgroundImage || "", loop: true }
+    $: backgroundData = background || { path: currentStyle?.backgroundImage || "", loop: true, ...($media[currentStyle?.backgroundImage || ""] || {}) }
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.duration || 800} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>

@@ -164,7 +164,8 @@ export function restartOutputs() {
                 if (parentOutput) output = { ...parentOutput, ...output }
             }
 
-            send(OUTPUT, ["CREATE"], { ...output, rate: get(special).previewRate || "auto" })
+            // , rate: get(special).previewRate || "auto"
+            send(OUTPUT, ["CREATE"], output)
         })
 
     // restore output video data when recreating window
@@ -292,7 +293,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         }
     },
     special: (v: any) => {
-        if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, God"
+        if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God
         if (v.autoUpdates !== false) send(MAIN, ["AUTO_UPDATE"])
         special.set(v)
     },

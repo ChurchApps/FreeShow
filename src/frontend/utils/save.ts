@@ -262,6 +262,8 @@ export function unsavedUpdater() {
 const customSavedListener = {
     showsCache: (data: any) => {
         Object.keys(data).forEach((id) => {
+            if (!data[id]?.slides) return
+
             delete data[id].timestamps
             delete data[id].settings
 

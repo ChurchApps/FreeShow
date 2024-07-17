@@ -12,7 +12,11 @@ export class OutputLifecycle {
     static async createOutput(output: Output) {
         let id: string = output.id || ""
 
-        if (OutputHelper.getOutput(id)) return this.removeOutput(id, output)
+        if (OutputHelper.getOutput(id)) {
+            CaptureHelper.Lifecycle.stopCapture(id)
+            this.removeOutput(id, output)
+            return
+        }
 
         const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
         //const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })

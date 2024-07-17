@@ -60,6 +60,7 @@ export function selectProjectShow(select: number | "next" | "previous") {
 }
 
 export function swichProjectItem(pos: number, id: string) {
+    if (!get(showsCache)[id]?.layouts) return
     let projectLayout: string = get(projects)[get(activeProject)!].shows[pos!].layout || ""
 
     // set active layout from project if it exists
