@@ -100,9 +100,6 @@ test("Launch electron app", async () => {
         await window.getByText("Save", { exact: true }).click({ timeout: 1000 })
         // await window.keyboard.press("Control+S")
         // await window.keyboard.press("Meta+S")
-        // Only Windows:
-        // await window.getByText("File").click({ timeout: 1000 })
-        // await window.getByText("Save").click({ timeout: 1000 })
         await delay(5000)
     } catch (ex) {
         console.log("Taking screenshot")
@@ -112,7 +109,8 @@ test("Launch electron app", async () => {
 
     // Close after finishing
     console.log("Closing app...")
-    await electronApp.close()
+    electronApp.close() // await here not detecting close on Linux
+    await delay(2000)
     console.log("App closed!")
 
     tmpDataFolder.removeCallback()
