@@ -61,6 +61,9 @@ test("Launch electron app", async () => {
         // this is not expected.
         // await window.getByTestId("alert.ack.check").click({ timeout: 1000 })
 
+        // Give time to save initial state
+        await delay(8000)
+
         // Create a new project, then try creating a new show under the project
         await window.locator("#leftPanel").getByText("New project").click({ timeout: 1000 })
         await window.getByText("New show").first().click({ timeout: 1000 })
@@ -93,9 +96,10 @@ test("Launch electron app", async () => {
         await expect(window.getByTitle("Outro")).toBeVisible({ timeout: 1000 })
 
         // Manual save!
-        await window.getByText("File").click({ timeout: 1000 })
-        await window.getByText("Save").click({ timeout: 1000 })
-        await delay(3000)
+        await window.keyboard.press("Control+S")
+        // await window.getByText("File").click({ timeout: 1000 })
+        // await window.getByText("Save").click({ timeout: 1000 })
+        await delay(8000)
     } catch (ex) {
         console.log("Taking screenshot")
         await window.screenshot({ path: "test-output/screenshots/failed.png" })
@@ -106,7 +110,7 @@ test("Launch electron app", async () => {
     console.log("Closing app...")
     setTimeout(() => {
         if (window.isClosed()) return
-        console.log("Taking screenshot")
+        console.log("Failed closing - Taking screenshot")
         window.screenshot({ path: "test-output/screenshots/not_closing.png" })
     }, 3000)
     await electronApp.close()
