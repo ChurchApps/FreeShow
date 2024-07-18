@@ -4,8 +4,10 @@
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
     import { activeProject, categories, drawerTabsData, outLocked, outputs, playScripture, scriptureSettings, templates } from "../../../stores"
+    import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
@@ -19,8 +21,6 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
-    import { customActionActivation } from "../../actions/actions"
-    import { removeDuplicates } from "../../helpers/array"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -57,7 +57,6 @@
         }
     }
 
-    const scriptureDivider = ":"
     function createSlides() {
         if (!bibles[0]) return { show: null }
 
@@ -65,13 +64,14 @@
 
         let slides2: any = {}
         let layouts: any[] = []
+        const referenceDivider = $scriptureSettings.referenceDivider || ":"
         slides.forEach((items: any, i: number) => {
             let id = uid()
 
             // get verse reference
             let v = $scriptureSettings.versesPerSlide
             let range: any[] = sorted.slice((i + 1) * v - v, (i + 1) * v)
-            let scriptureRef = books + " " + bibles[0].chapter + scriptureDivider + joinRange(range)
+            let scriptureRef = books + " " + bibles[0].chapter + referenceDivider + joinRange(range)
 
             slides2[id] = { group: scriptureRef || "", color: null, settings: {}, notes: "", items }
             let l: any = { id }

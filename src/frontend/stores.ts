@@ -197,7 +197,7 @@ export const stageShows: Writable<StageShows> = writable({}) // {default}
 // SCRIPTURE
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}
-export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true }) // {default}
+export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true, referenceDivider: ":" }) // {default}
 export const bibleApiKey: Writable<string> = writable("320b5b593fa790ced135a98861de51a9") // WIP ""
 
 // DRAWER

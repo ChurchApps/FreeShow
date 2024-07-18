@@ -163,6 +163,8 @@
         else getStyle()
     }
 
+    let HISTORY_UPDATE_KEY = 0
+    let updates: number = 0
     function updateLines(newLines: Line[]) {
         // updateItem = true
         if (!newLines) newLines = getNewLines()
@@ -184,7 +186,17 @@
             let lastChangedLine = EditboxHelper.determineCaretLine(item?.lines || [], newLines)
             if (lastChangedLine > -1) setCaretDelayed(lastChangedLine, 0)
 
-            history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "none", override: ref.showId + ref.id + index } })
+            // create new history store, when passing 15 steps
+            updates++
+            if (updates >= 15) {
+                HISTORY_UPDATE_KEY++
+                updates = 0
+            }
+            let itemRef = ref.showId + ref.id + "_" + index + "_" + HISTORY_UPDATE_KEY
+
+            // WIP I guess this (undo/redo) is also controlled by the default text input method..
+
+            history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "none", override: itemRef } })
 
             // refresh list view boxes
             if (plain) refreshListBoxes.set(editIndex)

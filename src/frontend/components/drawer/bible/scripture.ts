@@ -269,7 +269,6 @@ export function getSlides({ bibles, sorted }) {
     }
 
     function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
-        const scriptureDivider = ":"
         if (!bibles[0]) return
 
         let lines: any[] = []
@@ -282,10 +281,11 @@ export function getSlides({ bibles, sorted }) {
         let versions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim()).join(" + ")
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
+        const referenceDivider = get(scriptureSettings).referenceDivider || ":"
         let text = customText
         if (!showVersion && !showVerse) return
         if (showVersion) text = text.replaceAll(textKeys.showVersion, versions)
-        if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + scriptureDivider + range)
+        if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + referenceDivider + range)
 
         text.split("\n").forEach((line) => {
             lines.push({ text: [{ value: line, style: verseStyle }], align: alignStyle })
