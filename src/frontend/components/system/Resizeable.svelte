@@ -1,19 +1,20 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { resized } from "../../stores"
+    import { DEFAULT_WIDTH } from "../../utils/common"
 
     export let id: string
     export let side: "left" | "right" | "top" | "bottom" = "left"
-    export let width: number = 300
-    let defaultWidth: number = Number(width.toString())
+
+    let width: number = DEFAULT_WIDTH
     let handleWidth: number = 4
-    export let maxWidth: number = defaultWidth * 2 // * 3
+    export let maxWidth: number = DEFAULT_WIDTH * 2.2
     export let minWidth: number = handleWidth
 
     let loaded = false
     onMount(() => {
         setTimeout(() => {
-            width = $resized[id] ?? 300
+            width = $resized[id] ?? DEFAULT_WIDTH
             loaded = true
         }, 2000)
     })
@@ -50,9 +51,9 @@
     }
 
     function getWidth(width: number) {
-        if (width < (defaultWidth * 0.6) / 2) return minWidth
-        if (width < defaultWidth * 0.6) return defaultWidth * 0.6
-        if (width > defaultWidth - 20 && width < defaultWidth + 20) return defaultWidth
+        if (width < (DEFAULT_WIDTH * 0.6) / 2) return minWidth
+        if (width < DEFAULT_WIDTH * 0.6) return DEFAULT_WIDTH * 0.6
+        if (width > DEFAULT_WIDTH - 20 && width < DEFAULT_WIDTH + 20) return DEFAULT_WIDTH
         if (width > maxWidth) return maxWidth
         move = true
         return width
@@ -76,7 +77,7 @@
             return
         }
 
-        width = storeWidth === null || storeWidth < defaultWidth / 2 ? defaultWidth : storeWidth
+        width = storeWidth === null || storeWidth < DEFAULT_WIDTH / 2 ? DEFAULT_WIDTH : storeWidth
         storeWidth = null
     }
 

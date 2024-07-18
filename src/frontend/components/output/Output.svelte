@@ -50,7 +50,19 @@
     $: refreshOutput = out.refresh
     $: if (outputId || refreshOutput) updateOutData()
     function updateOutData(type: string = "") {
-        if (!type || type === "slide") slide = clone(out.slide || null)
+        if (!type || type === "slide") {
+            let noLineCurrent = clone(slide || {})
+            delete noLineCurrent.line
+            let noLineNew = clone(out?.slide || {})
+            delete noLineNew.line
+
+            // don't refresh if changing lines on another slide & content is unchanged
+            if (!refreshOutput && lines[currentLineId]?.start === null && JSON.stringify(noLineCurrent) === JSON.stringify(noLineNew)) return
+
+            // WIP option to turn off "content refresh" if slide content is identical to previous content ?
+
+            slide = clone(out.slide || null)
+        }
         if (!type || type === "background") background = clone(out.background || null)
         if (!type || type === "overlays") {
             storedOverlayIds = JSON.stringify(out.overlays)
@@ -109,7 +121,7 @@
     // lines
     let lines: any = {}
     $: currentLineId = slide?.id
-    $: lines[currentLineId] = getOutputLines(slide, currentStyle.lines)
+    $: if (currentLineId) lines[currentLineId] = getOutputLines(slide, currentStyle.lines)
 
     // metadata
     let metadata: OutputMetadata = {}
@@ -221,6 +233,7 @@
             {lines}
             {ratio}
             {mirror}
+            {preview}
             customTemplate={currentStyle.template}
             transition={transitions.text}
             transitionEnabled={!mirror && transitions.text?.type !== "none" && transitions.text?.duration}

@@ -224,7 +224,7 @@
         background-color: rgb(0 0 0 / 0.2);
         color: var(--text);
         /* font-family: inherit; */
-        width: 300px;
+        width: var(--navigation-width);
         /* width: 50%; */
         padding: 0 8px;
         border: none;

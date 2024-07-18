@@ -46,7 +46,7 @@
         position: absolute;
         bottom: 0;
         right: 0;
-        max-width: 300px;
+        max-width: var(--navigation-width);
         /* bottom: 80px;
         left: 50%;
         transform: translateX(-50%); */

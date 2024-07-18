@@ -7,6 +7,8 @@ import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
 
+export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (stores.ts & defaults.ts)
+
 // create toast popup
 export function newToast(msg: string) {
     if (!msg) return

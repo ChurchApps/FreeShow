@@ -14,8 +14,8 @@ import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } 
 import type { Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
-import type { History } from "./components/helpers/history"
 import type { API_metronome } from "./components/actions/api"
+import type { History } from "./components/helpers/history"
 
 // ----- TEMPORARY VARIABLES -----
 
@@ -206,7 +206,7 @@ export const drawer: Writable<{ height: number; stored: null | number }> = writa
 export const mediaOptions: Writable<MediaOptions> = writable({ columns: 5, mode: "grid" }) // {default}
 
 // OTHER
-export const resized: Writable<NumberObject> = writable({ leftPanel: 300, rightPanel: 300, leftPanelDrawer: 300, rightPanelDrawer: 300 }) // {default}
+export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
 export const sorted: Writable<any> = writable({}) // {}
 export const dataPath: Writable<string> = writable("") // ""
 export const lockedOverlays: Writable<string[]> = writable([]) // []

@@ -128,7 +128,7 @@
     $: lineBg = item?.specialStyle?.lineBg
 
     // actions
-    $: if ((preview || $currentWindow === "output") && item?.actions) runActions()
+    $: if ($currentWindow === "output" && item?.actions) runActions() // preview ||
     function runActions() {
         Object.keys(item?.actions || {}).forEach((action) => {
             if (actions[action]) actions[action](item?.actions[action])
@@ -365,7 +365,7 @@
         mediaItemPath = item.src || ""
 
         // only load thumbnails in main
-        if ($currentWindow) return
+        if ($currentWindow || preview) return
 
         let newPath = await loadThumbnail(mediaItemPath, mediaSize.slideSize)
         if (newPath) mediaItemPath = newPath

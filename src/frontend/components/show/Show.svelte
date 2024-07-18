@@ -25,6 +25,7 @@
 <div class="main">
     {#if show}
         {#if show.type === "video" || show.type === "image" || show.type === "player"}
+            <!-- WIP indicate that this does not loop when played! -->
             <div style="display: flex;flex-direction: column;height: 100%;">
                 {#if show.type === "video" || show.type === "player"}
                     <VideoShow {show} {mediaStyle} />

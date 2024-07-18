@@ -121,11 +121,11 @@
         <div class="tabs">
             <Button on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $projects[$activeProject || ""]?.parent || "/" } }, location: { page: "show", id: "project_folder" } })} center title={$dictionary.new?.folder}>
                 <Icon id="folder" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<T id="new.folder" />{/if}
+                {#if !$labelsDisabled}<p><T id="new.folder" /></p>{/if}
             </Button>
             <Button on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $projects[$activeProject || ""]?.parent || "/" } }, location: { page: "show", id: "project" } })} center title={$dictionary.new?.project}>
                 <Icon id="project" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<T id="new.project" />{/if}
+                {#if !$labelsDisabled}<p><T id="new.project" /></p>{/if}
             </Button>
         </div>
     {:else}
@@ -163,7 +163,7 @@
     <div class="tabs">
         <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
             <Icon id="section" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="new.section" />{/if}
+            {#if !$labelsDisabled}<p><T id="new.section" /></p>{/if}
         </Button>
     </div>
 {/if}
