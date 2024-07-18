@@ -28,6 +28,7 @@ import { convertSoftProjector } from "../converters/softprojector"
 import { convertTexts } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
+import { convertSongbeamerFiles } from "../converters/songbeamer"
 import {
     activePopup,
     activeShow,
@@ -546,6 +547,7 @@ const receiveIMPORT: any = {
     openlp: (a: any) => convertOpenLP(a),
     opensong: (a: any) => convertOpenSong(a),
     softprojector: (a: any) => convertSoftProjector(a),
+    songbeamer: (a: any) => convertSongbeamerFiles(a),
     // Media
     pdf: (a: any) => convertPDF(a),
     lessons: (a: any) => convertLessonsPresentation(a),

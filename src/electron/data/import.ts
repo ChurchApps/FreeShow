@@ -35,14 +35,14 @@ const specialImports: any = {
 
         return data
     },
-    pdf: async (files: string[], dataPath: string) => {
+    pdf: async (files: string[], settings: { path: string }) => {
         let data: any[] = []
 
         // TODO: linux don't support pdf-poppler!
         const pdf = require("pdf-poppler")
 
         let opts: any = { format: "png", scale: 1920, out_prefix: "img", page: null }
-        let importPath = getDataFolder(dataPath, dataFolderNames.imports)
+        let importPath = getDataFolder(settings.path, dataFolderNames.imports)
 
         await Promise.all(files.map(pdfToImages))
 
@@ -103,9 +103,20 @@ const specialImports: any = {
 
         return data
     },
+    songbeamer: async (files: string[], data: any) => {
+        let encoding = data.encoding.id
+        let fileContents = await Promise.all(files.map(file => readFile(file, encoding)))
+        return {
+            files: fileContents,
+            length: fileContents.length,
+            encoding,
+            category: data.category.id,
+            translationMethod: data.translation,
+        }
+    }
 }
 
-export async function importShow(id: any, files: string[] | null, dataPath: string) {
+export async function importShow(id: any, files: string[] | null, importSettings: any) {
     if (!files?.length) return
 
     let importId = id
@@ -114,10 +125,10 @@ export async function importShow(id: any, files: string[] | null, dataPath: stri
     if (id === "easyworship" || id === "softprojector" || sqliteFile) importId = "sqlite"
 
     let data: any[] = []
-    if (specialImports[importId]) data = await specialImports[importId](files, dataPath)
+    if (specialImports[importId]) data = await specialImports[importId](files, importSettings)
     else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
-        data = await Promise.all(files.map(readFile))
+        data = await Promise.all(files.map(file => readFile(file)))
     }
 
     if (!data.length) return
@@ -125,7 +136,7 @@ export async function importShow(id: any, files: string[] | null, dataPath: stri
     toApp(IMPORT, { channel: id, data })
 }
 
-async function readFile(filePath: string) {
+async function readFile(filePath: string, encoding: BufferEncoding | null = "utf8") {
     let content: string = ""
 
     let name: string = getFileName(filePath) || ""
@@ -133,7 +144,7 @@ async function readFile(filePath: string) {
 
     try {
         if (extension === "pro") content = await decodeProto(filePath)
-        else content = readFileSync(filePath, "utf8").toString()
+        else content = readFileSync(filePath, encoding).toString()
     } catch (err) {
         console.error("Error reading file:", err.stack)
     }

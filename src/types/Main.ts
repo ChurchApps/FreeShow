@@ -106,6 +106,7 @@ export interface MediaStyle {
 export type Popups =
     | "initialize"
     | "import"
+    | "songbeamer_import"
     | "export"
     | "show"
     | "delete_show"

@@ -54,7 +54,7 @@ export function startImport(_e: any, msg: Message) {
     let needsFileAndNoFileSelected = msg.data.format.extensions && !files.length
     if (needsFileAndNoFileSelected || isLinuxAndPfdImport) return
 
-    importShow(msg.channel, files || null, msg.data.path)
+    importShow(msg.channel, files || null, msg.data)
 }
 
 // BIBLE

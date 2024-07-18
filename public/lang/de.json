@@ -332,6 +332,7 @@
         "animate": "Animate",
         "next_timer": "Timer zur nächsten Folie",
         "import": "Importieren",
+        "songbeamer_import": "Songbeamer Importieren",
         "export": "Exportieren",
         "importing": "Importiere",
         "import_scripture": "Importiere Bibel",
@@ -1003,5 +1004,20 @@
         "words": "Wörter",
         "template": "Vorlage",
         "category": "Kategorie"
+    },
+    "songbeamer_import": {
+        "options": "Optionen",
+        "encoding": "Codierung",
+        "older_versions": "Für Songbeamer Versionen älter als 6.02a",
+        "category": "Kategorie",
+        "utf8": "UTF-8",
+        "latin1": "Latin 1",
+        "translations": "Übersetzungen",
+        "translation_multiline": "Mehrzeilig",
+        "translation_textboxes": "Textboxen",
+        "translation_layouts": "Layouts",
+        "translation_description_multiline": "Fügt alle Sprachen in eine einzelne Textbox in abwechselnden Zeilen ein. (Wie in Songbeamer)",
+        "translation_description_textboxes": "Fügt jede Sprache in eine separate Textbox auf der Folie ein.",
+        "translation_description_layouts": "Erstellt für jede Sprache eigene Slides und ein eigenes Layout nur für diese Sprache."
     }
 }

@@ -77,10 +77,13 @@
 
     const cats: any = [
         { id: "", name: "—" },
-        ...sortObject(
-            Object.keys($categories).map((id) => ({ id, name: $categories[id].default ? `$:${$categories[id].name}:$` : $categories[id].name })),
-            "name"
-        ),
+        ...sortObject(Object.keys($categories).map((key: string) => ({
+            id: key,
+            ...$categories[key],
+        })), "name").map((cat: any) => ({
+            id: cat.id,
+            name: cat.default? `$:${cat.name}:$` : cat.name,
+        })),
     ]
 
     let selectedCategory: any = cats[0]
