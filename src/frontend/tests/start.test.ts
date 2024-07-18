@@ -61,9 +61,6 @@ test("Launch electron app", async () => {
         // this is not expected.
         // await window.getByTestId("alert.ack.check").click({ timeout: 1000 })
 
-        // wait until it's initialized
-        await delay(2000)
-
         // Create a new project, then try creating a new show under the project
         await window.locator("#leftPanel").getByText("New project").click({ timeout: 1000 })
         await window.getByText("New show").first().click({ timeout: 1000 })
@@ -94,13 +91,24 @@ test("Launch electron app", async () => {
 
         // Verify the group changing was successful
         await expect(window.getByTitle("Outro")).toBeVisible({ timeout: 1000 })
+
+        // Manual save!
+        await window.getByText("File").click({ timeout: 1000 })
+        await window.getByText("Save").click({ timeout: 1000 })
+        await delay(3000)
     } catch (ex) {
         console.log("Taking screenshot")
         await window.screenshot({ path: "test-output/screenshots/failed.png" })
         throw ex
     }
+
     // Close after finishing
     console.log("Closing app...")
+    setTimeout(() => {
+        if (window.isClosed()) return
+        console.log("Taking screenshot")
+        window.screenshot({ path: "test-output/screenshots/not_closing.png" })
+    }, 3000)
     await electronApp.close()
     console.log("App closed!")
 
