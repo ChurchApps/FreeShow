@@ -61,6 +61,9 @@ test("Launch electron app", async () => {
         // this is not expected.
         // await window.getByTestId("alert.ack.check").click({ timeout: 1000 })
 
+        // wait until it's initialized
+        await delay(2000)
+
         // Create a new project, then try creating a new show under the project
         await window.locator("#leftPanel").getByText("New project").click({ timeout: 1000 })
         await window.getByText("New show").first().click({ timeout: 1000 })
@@ -97,7 +100,11 @@ test("Launch electron app", async () => {
         throw ex
     }
     // Close after finishing
-    // await electronApp.close() // this times out in GitHub Actions
+    console.log("Closing app...")
+    await electronApp.close()
+    console.log("App closed!")
+
     tmpDataFolder.removeCallback()
     tmpSettingFolder.removeCallback()
+    console.log("DONE!")
 })

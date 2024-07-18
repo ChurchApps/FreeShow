@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from "svelte"
+    import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
 
     export let path: any
@@ -13,10 +13,6 @@
     export let mirror: boolean = false
 
     let dispatch: any = createEventDispatcher()
-
-    onMount(() => {
-        console.log("VIDEO MOUNTED", path, video)
-    })
 
     let hasLoaded: boolean = false
     function loaded() {

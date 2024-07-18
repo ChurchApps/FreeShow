@@ -85,7 +85,7 @@ import { syncDrive } from "./drive"
 import { customActionActivation } from "../components/actions/actions"
 
 export function save(closeWhenFinished: boolean = false, backup: boolean = false) {
-    console.log("SAVING...")
+    console.trace("SAVING...")
     newToast("$toast.saving")
     customActionActivation("save")
 
@@ -200,6 +200,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
 export function saveComplete({ closeWhenFinished, backup }: any) {
     if (!closeWhenFinished) {
         saved.set(true)
+        console.log("SAVED!")
         newToast("$toast.saved")
     }
 
