@@ -96,11 +96,14 @@ test("Launch electron app", async () => {
         await expect(window.getByTitle("Outro")).toBeVisible({ timeout: 1000 })
 
         // Manual save!
-        await window.keyboard.press("Control+S")
-        await window.keyboard.press("Meta+S")
+        await window.locator(".top").getByText("FreeShow").click({ button: "right", timeout: 1000 })
+        await window.getByText("Save", { exact: true }).click({ timeout: 1000 })
+        // await window.keyboard.press("Control+S")
+        // await window.keyboard.press("Meta+S")
+        // Only Windows:
         // await window.getByText("File").click({ timeout: 1000 })
         // await window.getByText("Save").click({ timeout: 1000 })
-        await delay(4000)
+        await delay(5000)
     } catch (ex) {
         console.log("Taking screenshot")
         await window.screenshot({ path: "test-output/screenshots/failed.png" })
@@ -109,11 +112,6 @@ test("Launch electron app", async () => {
 
     // Close after finishing
     console.log("Closing app...")
-    setTimeout(() => {
-        if (window.isClosed()) return
-        console.log("Failed closing - Taking screenshot")
-        window.screenshot({ path: "test-output/screenshots/not_closing.png" })
-    }, 3000)
     await electronApp.close()
     console.log("App closed!")
 

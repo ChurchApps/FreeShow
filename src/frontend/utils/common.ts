@@ -109,8 +109,6 @@ export function logerror(err) {
     let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
     if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
 
-    console.log("ERROR", err)
-
     let log = {
         time: new Date(),
         os: get(os).platform || "Unknown",
