@@ -62,7 +62,7 @@ test("Launch electron app", async () => {
         // await window.getByTestId("alert.ack.check").click({ timeout: 1000 })
 
         // Give time to save initial state
-        await delay(8000)
+        await delay(4000)
 
         // Create a new project, then try creating a new show under the project
         await window.locator("#leftPanel").getByText("New project").click({ timeout: 1000 })
@@ -97,9 +97,10 @@ test("Launch electron app", async () => {
 
         // Manual save!
         await window.keyboard.press("Control+S")
+        await window.keyboard.press("Meta+S")
         // await window.getByText("File").click({ timeout: 1000 })
         // await window.getByText("Save").click({ timeout: 1000 })
-        await delay(8000)
+        await delay(4000)
     } catch (ex) {
         console.log("Taking screenshot")
         await window.screenshot({ path: "test-output/screenshots/failed.png" })

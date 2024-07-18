@@ -337,6 +337,8 @@ export function catchErrors() {
 }
 
 function createLog(err: Error) {
+    console.log("NODE ERROR", err)
+
     return {
         time: new Date(),
         os: process.platform || "Unknown",
