@@ -38,8 +38,7 @@
     $: layoutSlide = ref?.[$activeEdit.slide!]?.data || {}
     // get backgruond
     $: bgId = layoutSlide.background
-    // $: loadFullImage = !!layoutSlide.background
-    let loadFullImage = true
+    let loadFullImage = false // true
 
     // get ghost background
     $: if (!bgId) {

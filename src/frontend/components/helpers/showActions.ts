@@ -5,38 +5,12 @@ import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { clearTimers } from "../output/clear"
-import {
-    activeEdit,
-    activePage,
-    activePopup,
-    activeProject,
-    activeShow,
-    audioStreams,
-    driveData,
-    lockedOverlays,
-    media,
-    outLocked,
-    outputCache,
-    outputs,
-    overlays,
-    playingAudio,
-    playingMetronome,
-    projects,
-    selected,
-    showsCache,
-    slideTimers,
-    styles,
-    templates,
-    timers,
-    triggers,
-    videosData,
-    videosTime,
-} from "./../../stores"
+import { clearOverlays, clearTimers } from "../output/clear"
+import { activeEdit, activePage, activeProject, activeShow, audioStreams, driveData, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, styles, templates, timers, triggers } from "./../../stores"
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { clearPlayingVideo, getActiveOutputs, isOutCleared, refreshOut, setOutput } from "./output"
+import { getActiveOutputs, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { initializeMetadata } from "./show"
 import { _show } from "./shows"
@@ -86,6 +60,7 @@ export function selectProjectShow(select: number | "next" | "previous") {
 }
 
 export function swichProjectItem(pos: number, id: string) {
+    if (!get(showsCache)[id]?.layouts) return
     let projectLayout: string = get(projects)[get(activeProject)!].shows[pos!].layout || ""
 
     // set active layout from project if it exists
@@ -147,7 +122,8 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let layout: any[] = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
-    let isLastSlide: boolean = slide && layout ? slide.index === layout.length - 1 && !layout[slide.index].end : false
+    let isLastSlide: boolean = slide && layout ? (slide.index || 0) >= layout.filter((a) => !a.data?.disabled).length - 1 && !layout[slide.index || 0].end : false
+
     let index: null | number = null
 
     // lines
@@ -160,6 +136,8 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     if (isLastSlide && !hasLinesEnded) isLastSlide = false
 
     // TODO: active show slide index on delete......
+
+    console.log(isLastSlide)
 
     // go to first slide in next project show ("Next after media" feature)
     let isNotLooping = loop && slide?.index !== undefined && !layout[slide.index]?.data?.end
@@ -178,6 +156,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
         // layout = GetLayout()
         layout = _show(id).layouts("active").ref()[0]
+        console.log(layout)
         if (!layout?.filter((a) => !a.data.disabled).length) return
 
         index = 0
@@ -695,7 +674,9 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
 export function playSlideTimers({ showId = "active", slideId = "", overlayIds = [] }) {
     if (!slideId) {
         let outputRef: any = get(outputs)[getActiveOutputs()[0]]?.out?.slide || {}
-        let layoutRef = _show("active").layouts([outputRef.layout]).ref()[0]
+        showId = outputRef.id
+
+        let layoutRef = _show(showId).layouts([outputRef.layout]).ref()[0]
         slideId = layoutRef[outputRef.index]?.id || ""
     }
 
@@ -715,71 +696,6 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
 
 export function sendMidi(data: any) {
     send(MAIN, ["SEND_MIDI"], data)
-}
-
-export function clearBackground(outputId: string = "") {
-    let outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
-
-    outputIds.forEach((outputId) => {
-        // clearVideo()
-        setOutput("background", null, false, outputId)
-        clearPlayingVideo(outputId)
-
-        // WIP this does not clear time properly
-        videosData.update((a) => {
-            delete a[outputId]
-            return a
-        })
-        videosTime.update((a) => {
-            delete a[outputId]
-            return a
-        })
-    })
-}
-
-export function clearSlide() {
-    setOutput("slide", null)
-}
-
-export function clearOverlays(outputId: string = "") {
-    let outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
-
-    outputIds.forEach((outputId) => {
-        let outOverlays: string[] = get(outputs)[outputId]?.out?.overlays || []
-        outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
-        setOutput("overlays", outOverlays, false, outputId)
-    })
-
-    lockedOverlays.set([])
-}
-
-// TODO: output/clearButtons
-// WIP duplicate of clear.ts
-export function clearAll(button: boolean = false) {
-    if (get(outLocked)) return
-    if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length)) return
-
-    let audioCleared = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
-    let allCleared = isOutCleared(null) && audioCleared
-    if (allCleared) return
-
-    // TODO: audio
-    if (!get(outputCache)) outputCache.set(clone(get(outputs)))
-
-    clearBackground()
-    clearSlide()
-    clearOverlays()
-    clearAudio()
-    // clearTimers()
-    setOutput("transition", null)
-}
-
-// WIP restore only selected outputs
-export function restoreOutput() {
-    if (get(outLocked) || !get(outputCache)) return
-
-    outputs.set(get(outputCache))
-    outputCache.set(null)
 }
 
 export function activateTrigger(triggerId: string) {

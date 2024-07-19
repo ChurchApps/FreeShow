@@ -12,6 +12,7 @@
     import NumberInput from "../inputs/NumberInput.svelte"
     import TextInput from "../inputs/TextInput.svelte"
     import MidiValues from "./MidiValues.svelte"
+    import RestValues from "./RestValues.svelte"
     import ChooseStyle from "./specific/ChooseStyle.svelte"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
 
@@ -32,7 +33,7 @@
     let dispatch = createEventDispatcher()
     function updateValue(key: string, e) {
         let newValue = e?.detail ?? e?.target?.value ?? e
-        if (key) value = { [key]: newValue }
+        if (key) value = { ...value, [key]: newValue }
         else value = newValue
 
         dispatch("change", value)
@@ -60,7 +61,7 @@
         start_playlist: () => convertToOptions($audioPlaylists),
         id_select_output_style: () => [{ id: null, name: "—" }, ...convertToOptions($styles)],
         start_trigger: () => convertToOptions($triggers),
-        run_action: () => convertToOptions($midiIn).filter((a) => a.id !== mainId),
+        run_action: () => convertToOptions($midiIn).filter((a) => a.name && a.id !== mainId),
     }
 
     $: options = getOptions[actionId]?.() || []
@@ -78,7 +79,7 @@
     </div>
 {:else if inputId === "toggle_action"}
     <CombinedInput>
-        <Dropdown style="width: 100%;" value={getOptions.run_action().find((a) => a.id === value?.id)?.name || value?.id || "—"} options={getOptions.run_action()} on:click={(e) => updateValue("id", e.detail?.id)} />
+        <Dropdown style="width: 100%;" activeId={value?.id} value={getOptions.run_action().find((a) => a.id === value?.id)?.name || value?.id || "—"} options={getOptions.run_action()} on:click={(e) => updateValue("id", e.detail?.id)} />
     </CombinedInput>
     <CombinedInput>
         {#if value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;">Action will toggle if checkbox is unchanged</p>{/if}
@@ -86,6 +87,8 @@
             <Checkbox checked={value?.value} on:change={checkboxChanged} />
         </div>
     </CombinedInput>
+{:else if inputId === "rest"}
+    <RestValues rest={value} on:change={(e) => updateValue("", e)} />
 {:else}
     <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
         {#if inputId === "index"}
@@ -109,7 +112,7 @@
                 </Button>
             {:else if options.length || getOptions[actionId]}
                 <!-- <p><T id={actionData[actionId]?.name || actionId} /></p> -->
-                <Dropdown style="width: 100%;" value={options.find((a) => a.id === value?.id)?.name || value?.id || "—"} {options} on:click={(e) => updateValue("id", e.detail?.id)} />
+                <Dropdown style="width: 100%;" activeId={value?.id} value={options.find((a) => a.id === value?.id)?.name || value?.id || "—"} {options} on:click={(e) => updateValue("id", e.detail?.id)} />
             {/if}
         {:else if inputId === "volume"}
             <!-- gain can also be set -->

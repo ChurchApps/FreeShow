@@ -4,13 +4,13 @@ export const defaultConfig: any = { loaded: false, maximized: true, bounds: { wi
 
 export const defaultGroups: any = {
     break: { name: "break", default: true, color: "#f5255e" },
-    bridge: { name: "bridge", default: true, color: "#f52598" },
-    chorus: { name: "chorus", default: true, color: "#f525d2" },
+    bridge: { name: "bridge", default: true, color: "#f52598", shortcut: "B" },
+    chorus: { name: "chorus", default: true, color: "#f525d2", shortcut: "C" },
     intro: { name: "intro", default: true, color: "#d525f5" },
     outro: { name: "outro", default: true, color: "#a525f5" },
     pre_chorus: { name: "pre_chorus", default: true, color: "#8825f5" },
     tag: { name: "tag", default: true, color: "#7525f5" },
-    verse: { name: "verse", default: true, color: "#5825f5" },
+    verse: { name: "verse", default: true, color: "#5825f5", shortcut: "V" },
 }
 
 export const defaultSettings: { [key in SaveListSettings]: any } = {
@@ -31,7 +31,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     },
     sorted: {},
     styles: {},
-    openedFolders: [],
+    openedFolders: ["default"],
     activeProject: null,
     alertUpdates: true,
     autoOutput: false,
@@ -49,10 +49,10 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         jesus: { name: "Jesus, Only Jesus", type: "vimeo", id: "426363743" },
     },
     resized: {
-        leftPanel: 300,
-        rightPanel: 300,
-        leftPanelDrawer: 300,
-        rightPanelDrawer: 300,
+        leftPanel: 290,
+        rightPanel: 290,
+        leftPanelDrawer: 290,
+        rightPanelDrawer: 290,
     },
     slidesOptions: { columns: 4, mode: "grid" },
     mediaOptions: { columns: 5, mode: "grid" },
@@ -98,8 +98,12 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         presentation: { name: "category.presentation", icon: "presentation", default: true },
         scripture: { name: "category.scripture", icon: "scripture", default: true },
     },
-    timers: {},
-    variables: {},
+    timers: {
+        default: { name: "05:00", type: "counter", start: 300, end: 0 },
+    },
+    variables: {
+        default: { name: "Counter", type: "number" },
+    },
     triggers: {},
     audioStreams: {},
     audioPlaylists: {},
@@ -116,6 +120,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         verseNumbers: false,
         showVersion: false,
         showVerse: true,
+        referenceDivider: ":",
     },
     groups: defaultGroups,
     midiIn: {},

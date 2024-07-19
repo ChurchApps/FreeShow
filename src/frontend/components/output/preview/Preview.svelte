@@ -1,16 +1,15 @@
 <script lang="ts">
-    import { OUTPUT } from "../../../../types/Channels"
     import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, selected, showsCache, slideTimers, special, styles } from "../../../stores"
-    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clearAudio } from "../../helpers/audio"
     import { getActiveOutputs, isOutCleared, outputSlideHasContent, refreshOut, setOutput } from "../../helpers/output"
-    import { clearAll, clearBackground, clearSlide, getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../../helpers/showActions"
+    import { getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import { newSlideTimer } from "../../helpers/tick"
     import Button from "../../inputs/Button.svelte"
     import ShowActions from "../ShowActions.svelte"
+    import { clearAll, clearBackground, clearSlide } from "../clear"
     import Audio from "../tools/Audio.svelte"
     import MediaControls from "../tools/MediaControls.svelte"
     import NextTimer from "../tools/NextTimer.svelte"
@@ -202,9 +201,6 @@
     // hide preview in draw page
     // $: enablePreview = ["show", "edit", "settings"].includes($activePage)
     // $: if ($activePage === "draw") enablePreview = false
-
-    // reduce preview resolution if hidden
-    $: if (enablePreview === false) send(OUTPUT, ["PREVIEW_RESOLUTION"], { size: { width: 0, height: 0 } })
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -217,6 +213,7 @@
             <Button class="hide" on:click={() => (enablePreview = false)} style="z-index: 2;" title={$dictionary.preview?._hide_preview} center>
                 <Icon id="hide" white />
             </Button>
+            <!-- disable before hiding: disableTransitions={!enablePreview} -->
             <MultiOutputs />
             <AudioMeter />
         </div>

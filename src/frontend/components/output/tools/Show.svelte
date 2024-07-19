@@ -41,7 +41,7 @@
             {/if}
         </p>
         <!-- TODO: update -->
-        <span style="opacity: 0.6;">
+        <span style="opacity: 0.6;white-space: nowrap;">
             {(slide?.index || 0) + 1}/{length}
             {#if linesIndex !== null && maxLines !== null}
                 ({linesIndex + 1}/{maxLines})

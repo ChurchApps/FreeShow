@@ -41,7 +41,10 @@
     on:mousemove={mousemoveOutput}
     bind:offsetWidth={width}
     bind:offsetHeight={height}
-    on:dblclick={() => hideDisplay()}
+    on:dblclick={(e) => {
+        if (e.target?.closest(".website")) return
+        hideDisplay()
+    }}
 >
     {#if enableOutputMove}
         <div class="dragger">
@@ -49,11 +52,14 @@
         </div>
     {/if}
 
-    {#if $outputs[outputId].stageOutput}
+    {#if $outputs[outputId]?.stageOutput}
         <StageShow {outputId} stageId={$outputs[outputId].stageOutput} edit={false} />
     {:else if loaded}
         <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
     {/if}
+
+    <!-- preload CMGSans font -->
+    {#if !loaded}<div class="fontPreload">.</div>{/if}
 </div>
 
 <style>
@@ -85,5 +91,11 @@
 
     .fill.hideCursor {
         cursor: none;
+    }
+
+    .fontPreload {
+        font-family: "CMGSans";
+        position: absolute;
+        opacity: 0;
     }
 </style>

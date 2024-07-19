@@ -75,7 +75,7 @@
     <canvas bind:this={canvas} />
 {:else}
     <!-- class="context #live_card" -->
-    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click label={screen.name} icon="ndi" white>
+    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click label={screen.name} icon="ndi" white showPlayOnHover>
         <!-- <SelectElem style="display: flex;" id="ndi" data={{ id: screen.id, type: "ndi", name: screen.name }} draggable> -->
         <canvas bind:this={canvas} />
         <!-- </SelectElem> -->

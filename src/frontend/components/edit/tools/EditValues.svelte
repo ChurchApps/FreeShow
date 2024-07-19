@@ -462,7 +462,9 @@
                         {@const value = getValue(input, { styles, item })}
                         {#if !input.hidden}
                             <CombinedInput>
-                                <p><T id={input.name.includes(".") ? input.name : "edit." + input.name} /></p>
+                                <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
+                                    <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
+                                </p>
                                 <div class="alignRight">
                                     <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
                                 </div>

@@ -3,11 +3,14 @@
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
     import Cam from "./Cam.svelte"
+    import { sortByName } from "../../helpers/array"
 
     let cams: any[] = []
     navigator.mediaDevices?.enumerateDevices()?.then((devices) => {
         if (!devices) return
-        cams = devices.filter((a) => a.kind === "videoinput").map((a) => ({ name: a.label, id: a.deviceId, group: a.groupId }))
+
+        let cameraList = devices.filter((a) => a.kind === "videoinput").map((a) => ({ name: a.label, id: a.deviceId, group: a.groupId }))
+        cams = sortByName(cameraList)
     })
 
     let dispatch = createEventDispatcher()

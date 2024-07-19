@@ -13,7 +13,8 @@
     export let center: boolean = false
     export let arrow: boolean = false
     let active: boolean = false
-    export let value: any
+    export let value: string
+    export let activeId: string = ""
     export let title: string = ""
     let normalizedValue: any = value
     $: (normalizedValue = value || options[0]?.name || "—"), $language
@@ -27,7 +28,7 @@
         // if (!e.ctrlKey && !e.metaKey) return
         e.preventDefault()
 
-        let index = options.findIndex((a) => a.name === (value.name || value))
+        let index = options.findIndex((a) => (activeId ? a.id === activeId : a.name === value))
         if (e.deltaY > 0) index = Math.min(options.length - 1, index + 1)
         else index = Math.max(0, index - 1)
         dispatch("click", options[index])
@@ -86,7 +87,7 @@
                         dispatch("click", option)
                         active = false
                     }}
-                    class:active={option.name === value}
+                    class:active={activeId && option?.id ? option.id === activeId : option.name === value}
                 >
                     {translate(option.name, { parts: true }) || option.name}
                     {#if option.extra}

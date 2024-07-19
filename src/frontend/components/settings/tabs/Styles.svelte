@@ -17,6 +17,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { defaultLayers } from "../../helpers/output"
+    import Checkbox from "../../inputs/Checkbox.svelte"
 
     function updateStyle(e: any, key: string, currentId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -34,6 +35,8 @@
 
         styleId = currentId
     }
+
+    const isChecked = (e: any) => e.target.checked
 
     function updateCropping(newValue: number, key: string) {
         let cropping = currentStyle.cropping || { top: 0, right: 0, bottom: 0, left: 0 }
@@ -176,6 +179,14 @@
         </Button>
     {/if}
 </CombinedInput>
+{#if currentStyle.backgroundImage && (currentStyle.clearStyleBackgroundOnText || activeLayers.includes("slide"))}
+    <CombinedInput>
+        <p><T id="settings.clear_style_background_on_text" /></p>
+        <div class="alignRight">
+            <Checkbox checked={currentStyle.clearStyleBackgroundOnText} on:change={(e) => updateStyle(isChecked(e), "clearStyleBackgroundOnText")} />
+        </div>
+    </CombinedInput>
+{/if}
 <CombinedInput>
     <p><T id="edit.media_fit" /></p>
     <Dropdown value={mediaFitOptions.find((a) => a.id === currentStyle.fit)?.name || "—"} options={[{ id: null, name: "—" }, ...mediaFitOptions]} on:click={(e) => updateStyle(e.detail.id, "fit")} />

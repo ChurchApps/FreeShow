@@ -6,7 +6,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID } from "../../helpers/array"
-    import { getActiveOutputs } from "../../helpers/output"
+    import { checkWindowCapture, getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -65,6 +65,8 @@
             a[id] = value
             return a
         })
+
+        if (id === "output_stream") checkWindowCapture()
     }
 
     function toggleCompanion(e: any) {

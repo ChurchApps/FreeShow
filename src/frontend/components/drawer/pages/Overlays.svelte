@@ -61,6 +61,7 @@
                         color={overlay.color}
                         icon={overlay.placeUnderSlide ? "under" : overlay.locked ? "locked" : null}
                         {resolution}
+                        showPlayOnHover
                         on:click={(e) => {
                             if (!$outLocked && !e.ctrlKey && !e.metaKey) setOutput("overlays", overlay.id, true)
                         }}

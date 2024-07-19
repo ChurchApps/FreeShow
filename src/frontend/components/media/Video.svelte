@@ -33,7 +33,7 @@
     $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0
     $: if (endTime) setInterval(checkIfEnded, 1000 * playbackRate)
     function checkIfEnded() {
-        if (!videoTime) return
+        if (!videoTime || !endTime) return
         if (videoTime >= endTime!) dispatch("ended")
     }
 

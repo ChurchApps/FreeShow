@@ -8,7 +8,7 @@
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
     import Capture from "./Capture.svelte"
-    import { clearBackground } from "../../helpers/showActions"
+    import { clearBackground } from "../../output/clear"
 
     export let streams: any[]
     export let searchValue: string = ""

@@ -18,6 +18,7 @@
 
     export let ratio: number
     export let mirror: boolean = false
+    export let preview: boolean = false
     export let customTemplate: string = ""
     export let transition: any = {}
     export let transitionEnabled: boolean = false
@@ -142,6 +143,7 @@
                                 {transitionEnabled}
                                 outputStyle={currentStyle}
                                 {mirror}
+                                {preview}
                                 slideIndex={outSlide.index}
                             />
                         {/if}

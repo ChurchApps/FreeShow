@@ -74,7 +74,7 @@
 
         <Button on:click={openTab} style="white-space: nowrap;">
             <Icon id="scripture" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="tabs.scripture" />{/if}
+            {#if !$labelsDisabled}<T id="main.open" />{/if}
         </Button>
     {:else if show.reference?.type === "lessons"}
         <p>

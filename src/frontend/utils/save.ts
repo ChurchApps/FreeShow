@@ -200,6 +200,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
 export function saveComplete({ closeWhenFinished, backup }: any) {
     if (!closeWhenFinished) {
         saved.set(true)
+        console.log("SAVED!")
         newToast("$toast.saved")
     }
 
@@ -262,6 +263,8 @@ export function unsavedUpdater() {
 const customSavedListener = {
     showsCache: (data: any) => {
         Object.keys(data).forEach((id) => {
+            if (!data[id]?.slides) return
+
             delete data[id].timestamps
             delete data[id].settings
 

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { outputs } from "../../../stores"
     import { newToast } from "../../../utils/common"
+    import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
@@ -11,10 +12,7 @@
     //     currentOutputId = getActiveOutputs({}, true, true)[0]
     // })
 
-    $: outs = Object.entries($outputs)
-        .map(([id, o]: any) => ({ id, ...o }))
-        .filter((a) => a.enabled && !a.isKeyOutput)
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: outs = sortByName(keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput))
 
     function toggleOutput(e: any, id: string) {
         if (outs.length <= 1) return

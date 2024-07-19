@@ -9,7 +9,7 @@ import { analyseAudio } from "../components/helpers/audio"
 import { history } from "../components/helpers/history"
 import { captureCanvas, getFileName } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
-import { checkNextAfterMedia, clearBackground } from "../components/helpers/showActions"
+import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
@@ -28,6 +28,7 @@ import { convertSoftProjector } from "../converters/softprojector"
 import { convertTexts } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
+import { convertSongbeamerFiles } from "../converters/songbeamer"
 import {
     activePopup,
     activeShow,
@@ -95,6 +96,7 @@ import { receive, send } from "./request"
 import { closeApp, initializeClosing, saveComplete } from "./save"
 import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { clearBackground } from "../components/output/clear"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -272,9 +274,9 @@ const receiveFILE = {
 
 let clearing: boolean = false
 const receiveOUTPUTasMAIN: any = {
-    PREVIEW: ({ id, buffer, size, originalSize }) => {
+    BUFFER: ({ id, buffer, size }) => {
         previewBuffers.update((a) => {
-            a[id] = { buffer, size, originalSize }
+            a[id] = { buffer, size }
             return a
         })
     },
@@ -375,13 +377,13 @@ export const receiveOUTPUTasOUTPUT: any = {
         allOutputs.set(a)
     },
     // only received by stage screen outputs
-    PREVIEW: ({ id, buffer, size, originalSize }) => {
+    BUFFER: ({ id, buffer, size }) => {
         // WIP only receive the "output capture" from this outputs "stageOutput id"
         // let outputId = Object.keys(get(outputs))[0]
         // if (id !== outputId) return
 
         previewBuffers.update((a) => {
-            a[id] = { buffer, size, originalSize }
+            a[id] = { buffer, size }
             return a
         })
     },
@@ -472,12 +474,11 @@ const receiveCLOUD = {
         let method = get(driveData).initializeMethod
         if (get(driveData).disableUpload) method = "download"
         if (!method) {
-            // you could choose previously, but I don't see a reason anymore as I have implemented "newest file always"
-            // if (existingData) {
-            //     // WIP this will show over "initialize" popup
-            //     activePopup.set("cloud_method")
-            //     return
-            // }
+            // this is not needed for the shows, but for all the other data
+            if (existingData) {
+                activePopup.set("cloud_method")
+                return
+            }
 
             driveData.update((a) => {
                 a.initializeMethod = existingData ? "done" : "upload"
@@ -546,6 +547,7 @@ const receiveIMPORT: any = {
     openlp: (a: any) => convertOpenLP(a),
     opensong: (a: any) => convertOpenSong(a),
     softprojector: (a: any) => convertSoftProjector(a),
+    songbeamer: (a: any) => convertSongbeamerFiles(a),
     // Media
     pdf: (a: any) => convertPDF(a),
     lessons: (a: any) => convertLessonsPresentation(a),

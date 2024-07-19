@@ -15,7 +15,7 @@
     let activeID: null | string = null
     let activeMenu: string[] = []
     let x: number = 0
-    let y: number = 30
+    let y: number = 25
 
     $: maximized = !!$windowState.maximized
 
@@ -71,13 +71,13 @@
     </div>
     <div class="window">
         <Button on:click={() => window.api.send(MAIN, { channel: "MINIMIZE" })} center>
-            <Icon id="remove" size={1.4} white />
+            <Icon id="remove" size={1.2} white />
         </Button>
         <Button on:click={() => window.api.send(MAIN, { channel: "MAXIMIZE" })} style="transform: rotate(180deg);" center>
-            <Icon id={maximized ? "maximized" : "unmaximized"} size={maximized ? 1 : 1.1} white />
+            <Icon id={maximized ? "maximized" : "unmaximized"} size={maximized ? 0.8 : 0.9} white />
         </Button>
         <Button id="close" on:click={initializeClosing} center>
-            <Icon id="close" size={1.4} white />
+            <Icon id="close" size={1.2} white />
         </Button>
     </div>
 </main>
@@ -93,7 +93,8 @@
         display: flex;
         justify-content: space-between;
         background-color: var(--primary-darkest);
-        height: 30px;
+        font-size: 0.9em;
+        height: 25px;
         -webkit-app-region: drag;
     }
 
@@ -104,7 +105,7 @@
     }
 
     .window :global(button) {
-        width: 60px;
+        width: 48px;
     }
 
     /* close */

@@ -216,7 +216,7 @@
     $: if (active) getBible()
     $: if (books[firstBibleId]?.length && bookId !== undefined) getBook()
     $: if (chapters[firstBibleId]?.length && chapterId !== undefined) getChapter()
-    $: if (Object.keys(verses[firstBibleId])?.length) getVerses()
+    $: if (Object.keys(verses?.[firstBibleId] || {})?.length) getVerses()
 
     function getBible() {
         notLoaded = false
@@ -283,6 +283,7 @@
                 })
 
                 verses[id] = content
+                bibles[i].verses = verses[id]
             }
         })
     }
@@ -493,6 +494,7 @@
         }
 
         function formatText(text: string) {
+            if (!text) return ""
             return text.toLowerCase().replace(/[`!*()-?;:'",.]/gi, "")
         }
 
@@ -590,7 +592,7 @@
         if (formattedChapter === null) {
             // if (isNaN(Number(chapter))) return ""
             if (chapter.length > 2) return ""
-            let msg = $dictionary.toast?.chapter_undefined
+            let msg = $dictionary.toast?.chapter_undefined || ""
             msg = msg.replace("{}", chapter)
             newToast(msg)
             return ""
@@ -628,7 +630,7 @@
             return []
         } else if (currentVerses.length === 1 && verses[firstBibleId]) {
             if (currentVerses[0] > Object.keys(verses[firstBibleId]).length) {
-                let msg = $dictionary.toast?.verse_undefined
+                let msg = $dictionary.toast?.verse_undefined || ""
                 msg = msg.replace("{}", verse)
                 if (verse.length < 3) newToast(msg)
             }

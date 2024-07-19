@@ -97,8 +97,16 @@
             if (!line.chords?.length || !line.text) return
 
             let chords = JSON.parse(JSON.stringify(line.chords || []))
+            let negativeChords = chords.filter((chord: any) => chord.pos < 0)
+            chords = chords.filter((chord: any) => chord.pos >= 0)
 
             let html = ""
+
+            //add negative chords at the beginning of the line
+            negativeChords.sort((a: any, b: any) => b.pos - a.pos).forEach((chord: any, i: number) => {
+                html += `<span class="chord" style="transform: translateX(calc(-100% - ${60 * (i + 1)}px));">${chord.key}</span>`
+            });
+
             let index = 0
             line.text.forEach((text) => {
                 let value = text.value.trim().replaceAll("\n", "") || "."
@@ -117,7 +125,7 @@
                 })
             })
 
-            chords.forEach((chord: any, i: number) => {
+            chords.sort((a: any, b: any) => a.pos - b.pos).forEach((chord: any, i: number) => {
                 html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
             })
 

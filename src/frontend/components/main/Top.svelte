@@ -12,7 +12,7 @@
     <!-- {#if !isWindows}
     <div class="dragZone" />
     {/if} -->
-    <span style="width: 300px;">
+    <span style="width: var(--navigation-width);">
         {#if !$saved && $os.platform !== "win32"}
             <div class="unsaved" />
         {/if}
@@ -29,7 +29,7 @@
         <!-- <TopButton id="draw" /> -->
         <TopButton id="stage" />
     </span>
-    <span style="width: 300px;justify-content: flex-end;">
+    <span style="width: var(--navigation-width);justify-content: flex-end;">
         <!-- <TopButton id="stage" hideLabel /> -->
         <TopButton id="draw" red={$drawTool === "fill" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
         <TopButton id="settings" hideLabel />
@@ -102,4 +102,10 @@
         width: 100%;
         gap: 10px;
     } */
+
+    @media screen and (max-width: 580px) {
+        .top span:first-child {
+            display: none;
+        }
+    }
 </style>

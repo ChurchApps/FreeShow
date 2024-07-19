@@ -20,6 +20,7 @@
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
     import { activeEdit, activePage, activeShow, activeStage, currentWindow, loaded, os } from "./stores"
+    import { DEFAULT_WIDTH } from "./utils/common"
 
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
@@ -59,7 +60,7 @@
         </div>
 
         <Resizeable id="rightPanel" let:width side="right">
-            <div class="right" class:row={width > 300 * 1.5}>
+            <div class="right" class:row={width > DEFAULT_WIDTH * 1.8}>
                 <Preview />
                 {#if page === "show"}
                     {#if $activeShow && ($activeShow.type === "show" || $activeShow.type === undefined)}

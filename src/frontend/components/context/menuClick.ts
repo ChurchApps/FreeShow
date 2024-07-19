@@ -32,7 +32,6 @@ import {
     projectView,
     projects,
     refreshEditSlide,
-    saved,
     scriptures,
     selected,
     settingsTab,
@@ -47,7 +46,7 @@ import {
 } from "../../stores"
 import { hideDisplay, newToast } from "../../utils/common"
 import { send } from "../../utils/request"
-import { save } from "../../utils/save"
+import { initializeClosing, save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { moveStageConnection } from "../actions/apiHelper"
 import { getShortBibleName } from "../drawer/bible/scripture"
@@ -88,10 +87,7 @@ const actions: any = {
         else if (get(activePage) === "settings") settingsTab.set("general")
         activePage.set("settings")
     },
-    quit: () => {
-        if (get(saved)) send(MAIN, ["CLOSE"])
-        else activePopup.set("unsaved")
-    },
+    quit: () => initializeClosing(),
     // view
     fullscreen: () => send(MAIN, ["FULLSCREEN"]),
     // edit

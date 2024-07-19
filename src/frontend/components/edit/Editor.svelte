@@ -1,22 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeEdit, activeShow, drawer, editHistory, refreshEditSlide } from "../../stores"
-    import OverlayEditor from "./editors/OverlayEditor.svelte"
-    import SlideEditor from "./editors/SlideEditor.svelte"
+    import { activeEdit, drawer, refreshEditSlide } from "../../stores"
     import Splash from "../main/Splash.svelte"
     import EffectEditor from "./editors/EffectEditor.svelte"
     import MediaEditor from "./editors/MediaEditor.svelte"
+    import OverlayEditor from "./editors/OverlayEditor.svelte"
+    import SlideEditor from "./editors/SlideEditor.svelte"
     import TemplateEditor from "./editors/TemplateEditor.svelte"
-
-    $: showIsActive = $activeShow && ($activeShow.type || "show") === "show"
-    $: noEditSlide = $activeEdit.slide === null || $activeEdit.slide === undefined
-    $: if (showIsActive && noEditSlide) updateEditItem()
-    function updateEditItem() {
-        // set to show if: media has been opened AND show has not been opened
-        if ($activeEdit.id && (!$editHistory.find((a) => $activeEdit.id === a.edit?.id) || $editHistory.find((a) => $activeShow?.id === a.show?.id))) return
-
-        activeEdit.set({ slide: 0, items: [] })
-    }
 
     $: if ($refreshEditSlide) {
         setTimeout(() => {

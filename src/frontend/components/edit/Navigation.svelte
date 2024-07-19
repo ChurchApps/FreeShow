@@ -66,13 +66,17 @@
             return a
         })
     }
+
+    let clonedHistory: any[] = []
+    // don't change order when changing edits
+    $: if ($editHistory.length !== clonedHistory.length || !$activeEdit.id) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
 </script>
 
 {#if $activeEdit.id || (!$activeShow && $editHistory.length)}
     <h3><T id="edit.recent" /></h3>
     {#if $editHistory.length}
         <div class="edited">
-            {#each clone($editHistory).reverse() as edited, i}
+            {#each clonedHistory as edited}
                 <div class="item">
                     <Button
                         style="width: 100%;"
@@ -81,7 +85,7 @@
                             refreshEditSlide.set(true)
                             if (edited.show) activeShow.set(edited.show)
                         }}
-                        active={i === 0 && !!$activeEdit.id}
+                        active={$activeEdit.id === edited.id}
                         bold={false}
                         border
                     >

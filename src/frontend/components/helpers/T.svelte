@@ -4,12 +4,11 @@
     export let id: string
     export let index: number = 0
     export let lowercase: boolean = false
-    let category: string, key: string
 
-    if (id?.includes(".")) {
-        category = id.slice(0, id.indexOf(".")).replace("$:", "")
-        key = id.slice(id.indexOf(".") + 1, id.length).replace(":$", "")
-    }
+    const hasPeriod = id?.includes(".")
+    const periodIndex = id?.indexOf(".")
+    $: category = hasPeriod ? id.slice(0, periodIndex).replace("$:", "") : ""
+    $: key = hasPeriod ? id.slice(periodIndex + 1, id.length).replace(":$", "") : ""
 </script>
 
 {#key language}

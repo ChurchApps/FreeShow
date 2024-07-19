@@ -3,10 +3,9 @@
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
     import { isOutCleared } from "../../helpers/output"
-    import { clearAll, clearBackground, clearOverlays, clearSlide, restoreOutput } from "../../helpers/showActions"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-    import { clearTimers } from "../clear"
+    import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../clear"
 
     export let autoChange: any
     export let activeClear: any

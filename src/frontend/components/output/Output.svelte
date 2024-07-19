@@ -5,7 +5,8 @@
     import { uid } from "uid"
     import { MAIN } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
-    import { outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { wait } from "../../utils/common"
     import { destroy, receive, send } from "../../utils/request"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
@@ -17,12 +18,12 @@
     import Metadata from "./layers/Metadata.svelte"
     import Overlays from "./layers/Overlays.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
-    import { wait } from "../../utils/common"
 
     export let outputId: string = ""
     export let style = ""
     export let ratio: number = 0
     export let mirror: boolean = false
+    export let preview: boolean = false
 
     $: currentOutput = $outputs[outputId] || {}
 
@@ -49,7 +50,19 @@
     $: refreshOutput = out.refresh
     $: if (outputId || refreshOutput) updateOutData()
     function updateOutData(type: string = "") {
-        if (!type || type === "slide") slide = clone(out.slide || null)
+        if (!type || type === "slide") {
+            let noLineCurrent = clone(slide || {})
+            delete noLineCurrent.line
+            let noLineNew = clone(out?.slide || {})
+            delete noLineNew.line
+
+            // don't refresh if changing lines on another slide & content is unchanged
+            if (!refreshOutput && lines[currentLineId]?.start === null && JSON.stringify(noLineCurrent) === JSON.stringify(noLineNew)) return
+
+            // WIP option to turn off "content refresh" if slide content is identical to previous content ?
+
+            slide = clone(out.slide || null)
+        }
         if (!type || type === "background") background = clone(out.background || null)
         if (!type || type === "overlays") {
             storedOverlayIds = JSON.stringify(out.overlays)
@@ -97,7 +110,7 @@
 
     // slide styling
     $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle })
-    $: transitions = getOutputTransitions(slideData, $transitionData, mirror)
+    $: transitions = getOutputTransitions(slideData, $transitionData, mirror && !preview)
     $: slideFilter = getSlideFilter(slideData)
 
     // custom template
@@ -108,7 +121,7 @@
     // lines
     let lines: any = {}
     $: currentLineId = slide?.id
-    $: lines[currentLineId] = getOutputLines(slide, currentStyle.lines)
+    $: if (currentLineId) lines[currentLineId] = getOutputLines(slide, currentStyle.lines)
 
     // metadata
     let metadata: OutputMetadata = {}
@@ -134,14 +147,21 @@
 
     // ANIMATE
     let animationData: any = {}
-    $: currentAnimationId = ""
+    let currentAnimationId = ""
     $: slideAnimation = slideData?.actions?.animate || {}
 
+    $: if (slide) stopAnimation()
+    onDestroy(stopAnimation)
+    function stopAnimation() {
+        animationData = {}
+        currentAnimationId = ""
+    }
+
+    // TODO: play slide animations on each textbox so animation can continue while transitioning
     $: if (slideAnimation) initializeAnimation()
     async function initializeAnimation() {
         if (!Object.keys(slideAnimation).length) {
-            animationData = {}
-            currentAnimationId = ""
+            stopAnimation()
             return
         }
 
@@ -167,8 +187,16 @@
             if (currentAnimationId !== currentId) return
 
             animationData = await updateAnimation(animationData, currentIndex, slide)
+            if (currentAnimationId !== currentId) {
+                animationData = {}
+                return
+            }
 
             if (typeof animationData.newIndex !== "number") return
+
+            // stop if ended & not repeating
+            if (!animationData.animation.repeat && !animationData.animation.actions[animationData.newIndex]) return
+
             animate(animationData.newIndex)
         }
     }
@@ -178,7 +206,8 @@
     $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : currentSlide?.settings?.color || currentStyle.background || "black"
     $: messageText = $showsCache[slide?.id]?.message?.text || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
-    $: backgroundData = background || { path: currentStyle?.backgroundImage || "", loop: true }
+    $: styleBackground = currentStyle?.clearStyleBackgroundOnText && slide ? "" : currentStyle?.backgroundImage || ""
+    $: backgroundData = background || { path: styleBackground, loop: true, ...($media[styleBackground] || {}) }
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.duration || 800} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
@@ -205,6 +234,7 @@
             {lines}
             {ratio}
             {mirror}
+            {preview}
             customTemplate={currentStyle.template}
             transition={transitions.text}
             transitionEnabled={!mirror && transitions.text?.type !== "none" && transitions.text?.duration}

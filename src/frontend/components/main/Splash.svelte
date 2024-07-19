@@ -21,7 +21,7 @@
     <span class="buttons">
         <Button on:click={() => history({ id: "UPDATE", location: { page: "show", id: "project" } })} title={$dictionary.tooltip?.project} dark>
             <Icon id="project" right />
-            <T id="new.project" />
+            <p><T id="new.project" /></p>
         </Button>
         <Button
             on:click={(e) => {
@@ -33,7 +33,7 @@
             dark
         >
             <Icon id="add" right />
-            <T id="new.show" />
+            <p><T id="new.show" /></p>
         </Button>
     </span>
 </Center>
@@ -60,5 +60,21 @@
     color: var(--secondary-text);
     font-size: 1em;
     margin: 10px; */
+    }
+
+    @media screen and (max-height: 500px) {
+        h1 {
+            font-size: 3em;
+        }
+    }
+    @media screen and (max-height: 400px) {
+        h1 {
+            font-size: 2em;
+        }
+    }
+    @media screen and (max-width: 800px) {
+        h1 {
+            font-size: 2em;
+        }
     }
 </style>

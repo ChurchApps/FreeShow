@@ -1,4 +1,4 @@
-import { derived, get } from "svelte/store"
+import { get } from "svelte/store"
 import { MAIN, REMOTE } from "../../types/Channels"
 import { dictionary, language } from "../stores"
 import { replace } from "./languageData"
@@ -12,7 +12,7 @@ import { send } from "./request"
 const defaultPath = "./lang/en.json"
 
 // WIP right to left
-const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
+// const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
 
 function setLanguage(locale: string = "") {
     if (!locale) {
@@ -80,4 +80,4 @@ const translate = (id: string, { parts = false } = {}) => {
     return `${pre}${id}${suf}`
 }
 
-export { dir, setLanguage, translate }
+export { setLanguage, translate }

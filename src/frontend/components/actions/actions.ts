@@ -12,6 +12,7 @@ export function runActionId(id: string) {
 }
 
 export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
+    console.log(action)
     if (!action || action.enabled === false) return
     action = convertOldMidiToNewAction(action)
 
@@ -43,7 +44,11 @@ export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
 }
 
 export function toggleAction(data: API_toggle) {
+    if (!data.id) return
+
     midiIn.update((a) => {
+        if (!a[data.id]) return a
+
         let previousValue = a[data.id].enabled ?? true
         a[data.id].enabled = data.value ?? !previousValue
 

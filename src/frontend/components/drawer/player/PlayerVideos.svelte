@@ -2,8 +2,8 @@
     import { activeShow, outLocked, outputs, playerVideos } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { findMatchingOut, setOutput } from "../../helpers/output"
-    import { clearBackground } from "../../helpers/showActions"
     import T from "../../helpers/T.svelte"
+    import { clearBackground } from "../../output/clear"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
@@ -55,6 +55,7 @@
             outlineColor={findMatchingOut(video.rid, $outputs)}
             label={video.name || ""}
             title={video.id || ""}
+            showPlayOnHover
             on:click={(e) => {
                 if ($outLocked || e.ctrlKey || e.metaKey) return
                 if (findMatchingOut(video.rid, $outputs)) {

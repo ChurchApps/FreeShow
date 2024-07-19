@@ -75,7 +75,7 @@
         </video>
     {/if}
 {:else}
-    <Card class="context #live_card" {loaded} outlineColor={findMatchingOut(cam.id, $outputs)} active={findMatchingOut(cam.id, $outputs) !== null} on:click label={cam.name} icon="camera" white={!cam.id.includes("cam")}>
+    <Card class="context #live_card" {loaded} outlineColor={findMatchingOut(cam.id, $outputs)} active={findMatchingOut(cam.id, $outputs) !== null} on:click label={cam.name} icon="camera" white={!cam.id.includes("cam")} showPlayOnHover>
         <SelectElem id="camera" data={{ id: cam.id, type: "camera", name: cam.name, cameraGroup: cam.group }} draggable>
             {#if error}
                 <div class="error">

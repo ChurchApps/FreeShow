@@ -91,16 +91,26 @@ export function checkMedia(src: string) {
         let elem
         if (isVideo) {
             elem = document.createElement("video")
-            elem.onloadeddata = () => resolve("true")
+            elem.onloadeddata = () => finish()
         } else if (isAudio) {
             elem = document.createElement("audio")
-            elem.onloadeddata = () => resolve("true")
+            elem.onloadeddata = () => finish()
         } else {
             elem = new Image()
-            elem.onload = () => resolve("true")
+            elem.onload = () => finish()
         }
 
+        elem.onerror = () => finish("false")
         elem.src = src
+
+        let timedout = setTimeout(() => {
+            finish("false")
+        }, 3000)
+
+        function finish(response: string = "true") {
+            clearTimeout(timedout)
+            resolve(response)
+        }
     })
 }
 
@@ -153,7 +163,8 @@ export function getThumbnailPath(input: string, size: number) {
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
-    return joinPath([get(tempPath), getFileName(hashCode(input), size)])
+    let encodedPath: string = joinPath([get(tempPath), "freeshow-cache", getFileName(hashCode(input), size)])
+    return encodedPath
 
     function getFileName(path, size) {
         return `${path}-${size}.jpg`
@@ -220,7 +231,7 @@ export function captureCanvas(data: any) {
         // seek video
         if (!isImage) {
             mediaElem.currentTime = mediaElem.duration * (data.seek ?? 0.5)
-            await wait(50)
+            await wait(400)
         }
 
         // wait until loaded
@@ -255,7 +266,7 @@ export function captureCanvas(data: any) {
         await wait(loading)
         ctx.drawImage(media, 0, 0, mediaSize.width, mediaSize.height, 0, 0, canvas.width, canvas.height)
 
-        await wait(loading * 0.2)
+        await wait(200)
         let dataURL = canvas.toDataURL("image/jpeg", jpegQuality)
 
         send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })

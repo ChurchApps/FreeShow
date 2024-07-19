@@ -17,6 +17,7 @@ import {
     media,
     projects,
     scriptureSettings,
+    shows,
     showsCache,
     templates,
     videoExtensions,
@@ -29,6 +30,7 @@ import { getExtension, getFileName, getMediaType, removeExtension } from "./medi
 import { addToPos, getIndexes, mover } from "./mover"
 import { checkName } from "./show"
 import { _show } from "./shows"
+import { decodeURI } from "./audio"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -116,11 +118,11 @@ export const dropActions: any = {
                     let type: string = getMediaType(extension)
 
                     let name: string = a.name || getFileName(a.path)
-                    return { name: removeExtension(name), id: a.path, type }
+                    return { name: decodeURI(removeExtension(name)), id: a.path, type }
                 })
                 .filter((a: any) => a)
         } else if (drag.id === "audio") {
-            data = data.map((a: any) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
+            data = data.map((a: any) => ({ id: a.path, name: decodeURI(removeExtension(a.name)), type: "audio" }))
         } else if (drag.id === "player") {
             data = data.map((a: any) => ({ id: a, type: "player" }))
         } else if (drag.id === "scripture") {
@@ -171,13 +173,11 @@ export const dropActions: any = {
         if (drop.data !== "all" && get(activeDrawerTab) && (drag.id === "show" || drag.id === "show_drawer")) {
             h.id = "SHOWS"
             let data = drop.data === "unlabeled" ? null : drop.data
-            let showsList: any[] = drag.data.map(({ id }) => ({ show: { category: data }, id }))
+            let allShowIds = drag.data.map(({ id }) => id).filter((id) => get(shows)[id])
+            let showsList: any[] = allShowIds.map((id) => ({ show: { category: data }, id }))
             h.newData = { replace: true, data: showsList }
             h.location = { page: "drawer" }
-            historyAwait(
-                drag.data.map(({ id }) => id),
-                h
-            )
+            historyAwait(allShowIds, h)
             return
         }
 
@@ -284,7 +284,7 @@ const slideDrop: any = {
                 if (files[drop.id].includes(extension)) {
                     data.push({
                         path: a.path,
-                        name: removeExtension(a.name),
+                        name: decodeURI(removeExtension(a.name)),
                         type: getMediaType(extension),
                     })
                 }
@@ -387,7 +387,7 @@ const slideDrop: any = {
             // move all children when parent is moved
             selected.forEach(selectChildren)
             function selectChildren(index: number) {
-                if (ref[index].type !== "parent") return
+                if (ref[index]?.type !== "parent") return
                 console.log(newIndex, index, ref[index].children)
                 let children: string[] = ref[index].children || []
                 if (!children) return
@@ -429,7 +429,7 @@ const slideDrop: any = {
         // TODO: dragging a parent slide over its own childs will not change children
 
         // check if first slide child
-        if (newLayoutRef[0].type === "child") newLayoutRef[0].newType = "parent"
+        if (newLayoutRef[0]?.type === "child") newLayoutRef[0].newType = "parent"
 
         console.log(sortedLayout, slides, clone(newLayoutRef), moved, newIndex)
         history.newData = changeLayout(sortedLayout, slides, clone(newLayoutRef), moved, newIndex)
@@ -457,7 +457,7 @@ const slideDrop: any = {
         drag.data.forEach((slide: any) => {
             let id = uid()
             delete slide.id
-            slides[id] = slide
+            slides[id] = clone(slide)
 
             let parent = ref[newIndex - 1] || { index: -1 }
             if (parent.type === "child") parent = parent.parent
@@ -573,15 +573,18 @@ const slideDrop: any = {
         let data: any = ref.data.actions || {}
         let slideActions = data.slideActions || []
 
-        let existing = slideActions.find((a) => a.triggers?.[0] === "run_action")
         // WIP MIDI you should maybe be able to add more than one
-        if (existing) return
+        let existingIndex = slideActions.findIndex((a) => a.triggers?.[0] === "run_action")
 
         let actionId = drag.data[0].id
         let action = { id: uid(), triggers: ["run_action"], actionValues: { run_action: { id: actionId } } }
-        if (drag.data[0].triggers?.[0]) action = drag.data[0]
+        if (drag.data[0].triggers?.[0] && drag.data[0].triggers.length === 1) {
+            action = drag.data[0]
+            existingIndex = -1
+        }
 
-        slideActions.push(action)
+        if (existingIndex > -1) slideActions[existingIndex] = action
+        else slideActions.push(action)
         data.slideActions = slideActions
 
         history.newData = { key: "actions", data, indexes: [drop.index] }

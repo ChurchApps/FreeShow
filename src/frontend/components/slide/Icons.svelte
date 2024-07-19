@@ -57,6 +57,16 @@
 </script>
 
 <div class="icons" style="zoom: {zoom};{style}">
+    {#if layoutSlide.disabled}
+        <div>
+            <div class="button">
+                <Button style="padding: 3px;" redHover title={$dictionary.actions?.enable} {zoom} on:click={() => removeLayout("disabled")}>
+                    <Icon id="disable" size={0.9} white />
+                </Button>
+            </div>
+        </div>
+    {/if}
+
     {#if timer.length}
         <div>
             <div class="button">

@@ -9,6 +9,7 @@
         "search": "Søk",
         "none": "Ingen",
         "finished": "Fullført",
+        "open": "Åpne",
         "system_open": "Vis i systemet"
     },
     "titlebar": {
@@ -29,9 +30,11 @@
     "about": {
         "check_updates": "Se etter oppdateringer",
         "made": "Laget i Norge av",
-        "report": "Vil du rapportere en feil? Opprett en \"issue\" på GitHub",
-        "help": "Vil du hjelpe med å oversette eller foreslå en funksjon? Send en e-post til",
-        "support": "Støtt prosjektet?",
+        "more": "Sjekk ut flere av våre apper på",
+        "report": "For å rapportere en feil eller foreslå en funksjon, gå til",
+        "translate": "Vil du hjelpe med å oversette? Gå til",
+        "mail": "Kontakt via e-post",
+        "support": "Hvis du er takknemlig for dette prosjektet, vurder å støtte det",
         "assets": "Ressurser brukt",
         "libraries": "Biblioteker brukt",
         "thanks": "Takk til",
@@ -117,7 +120,8 @@
         "slide": "Fjern lysbilde",
         "overlays": "Fjern overlegg",
         "audio": "Fjern lyd",
-        "nextTimer": "Fjern tid til neste lysbilde"
+        "nextTimer": "Fjern tid til neste lysbilde",
+        "drawing": "Fjern tegning"
     },
     "remove": {
         "background": "Fjern bakgrunn",
@@ -160,6 +164,8 @@
         "recommended": "Anbefalt"
     },
     "audio": {
+        "settings": "Lydinnstillinger",
+        "mute_when_video_plays": "Demp når video spilles",
         "metronome": "Metronom",
         "toggle_metronome": "Veksle metronom",
         "tempo": "Tempo",
@@ -227,7 +233,8 @@
         "display": "Kunne ikke vise utgangsvindu på nåværende skjerm",
         "keep_one_layout": "Du må ha minst ett oppsett",
         "video_unavailable": "Er videoen utilgjengelig? Skaperen har slått av innebygging av videoen.",
-        "folder_exists": "Denne mappen eksisterer allerede"
+        "folder_exists": "Denne mappen eksisterer allerede",
+        "uri": "Kunne ikke lese navnet til lydfilen. Prøv å endre navnet"
     },
     "meta": {
         "title": "Tittel",
@@ -277,6 +284,9 @@
     "inputs": {
         "name": "Navn",
         "url": "URL",
+        "method": "Metode",
+        "contentType": "Innholdstype",
+        "payload": "Datalast",
         "video_id": "Video ID/URL",
         "close_ad": "Lukk annonse på utgangsskjermen",
         "start": "Start",
@@ -353,6 +363,7 @@
         "animate": "Animer",
         "next_timer": "Tid til neste lysbilde",
         "import": "Importer",
+        "songbeamer_import": "Songbeamer importering",
         "export": "Eksporter",
         "importing": "Importerer",
         "import_scripture": "Importer en bibel",
@@ -388,7 +399,7 @@
         "verse_undefined": "Verset {} eksisterer ikke i dette kapittelet.",
         "recording_started": "Opptak startet!",
         "recording_stopped": "Opptak stoppet!",
-        "starting_show": "Starter show",
+        "starting_action": "Starter handling",
         "less_than_minute": "om mindre enn ett minutt.",
         "less_than_seconds": "om mindre enn {} sekunder.",
         "now": "nå!",
@@ -537,6 +548,7 @@
         "delete_shows_not_indexed": "Slett show i 'Shows'-mappen som ikke er indeksert",
         "delete_thumbnail_cache": "Slett hurtigbuffer med miniatyrbilder",
         "open_log_file": "Åpne logg-fil",
+        "open_cache_folder": "Åpne mappe for hurtigbuffer",
         "refresh_all_shows": "Finn alle show i 'Shows'-mappen",
         "start_timer": "Start tidtaker",
         "stop_timers": "Stopp pågående tidtakere",
@@ -562,6 +574,7 @@
         "change_volume": "Endre volum",
         "start_audio_stream": "Start lydstrøm",
         "start_playlist": "Start lysbilde",
+        "playlist_next": "Neste låt i spilleliste",
         "start_metronome": "Start metronom",
         "start_slide_timers": "Start tidtakere på aktivt lysbilde",
         "id_select_output_style": "Velg utgangsstil fra ID",
@@ -570,10 +583,15 @@
         "change_variable": "Endre variabel",
         "start_trigger": "Start utløser",
         "run_action": "Kjør handling",
+        "toggle_action": "Veksle handling",
+        "send_rest_command": "Send HTTP-forespørsel",
         "custom_activation": "Egendefinert aktivering",
         "activate_on_startup": "Aktiver ved oppstart",
         "activate_save": "Aktiver ved lagring",
         "activate_slide_clicked": "Aktiver ved klikk på lysbilde",
+        "activate_video_starting": "Aktiver når video starter",
+        "activate_video_ending": "Aktiver når video slutter",
+        "activate_timer_ending": "Aktiver når tidtaker slutter",
         "activate_scripture_start": "Aktiver når bibeltekst vises",
         "activate_show_created": "Aktiver når show blir laget"
     },
@@ -747,7 +765,8 @@
         "max_events": "Maks hendelser",
         "start_days_from_today": "Start på antall dager fra i dag",
         "just_one_day": "Bare en dag",
-        "enable_start_date": "Aktiver startdato"
+        "enable_start_date": "Aktiver startdato",
+        "disable_navigation": "Deaktiver navigeringsknapper"
     },
     "items": {
         "text": "Tekstboks",
@@ -765,6 +784,7 @@
         "variable": "Variabel",
         "web": "Nettside",
         "visualizer": "Visualisering",
+        "captions": "Teksting",
         "icon": "Ikon"
     },
     "borders": {
@@ -816,6 +836,13 @@
         "digital": "Digital",
         "analog": "Analog",
         "seconds": "Sekunder"
+    },
+    "captions": {
+        "info": "Klikk på URL-en for å åpne i nettleseren din hvis du ikke allerede har gjort det, eller åpne den på en annen enhet! Sørg for å gi tilgang til mikrofonen din, og bruk Google Chrome for best ytelse.",
+        "language": "Språk for transkripsjon",
+        "translate": "Oversett til",
+        "showtime": "Varighet for visning",
+        "powered_by": "Drevet av"
     },
     "midi": {
         "midi": "MIDI",
@@ -925,9 +952,11 @@
         "full_colors": "Full farge på lysbildegruppe",
         "auto_output": "Aktiver utgangsskjerm ved oppstart",
         "hide_cursor_in_output": "Skjul peker i utgangsskjerm",
+        "clear_media_when_finished": "Fjern media ved slutt",
         "disable_presenter_controller_keys": "Deaktiver knapper fra presentasjons-kontroller",
         "default_project_name": "Standard prosjektnavn",
         "audio_fade_duration": "Varighet for fjerning av lyd",
+        "audio_crossfade": "Krysstoning",
         "max_auto_font_size": "Maks automatisk tekststørrelse",
         "resolution": "Oppløsning",
         "cropping": "Beskjæring",
@@ -986,7 +1015,7 @@
     "calendar": {
         "type": "Type",
         "event": "Arrangement",
-        "show": "Planlegg show",
+        "schedule_action": "Planlegg handling",
         "name": "Navn",
         "color": "Farge",
         "time": "Tid",
@@ -1111,5 +1140,20 @@
         "words": "Ord",
         "template": "Mal",
         "category": "Kategori"
+    },
+    "songbeamer_import": {
+        "options": "Alternativer",
+        "encoding": "Koding",
+        "older_versions": "For Songbeamer versjoner eldre enn 6.02a",
+        "category": "Kategori",
+        "utf8": "UTF-8",
+        "latin1": "Latin 1",
+        "translations": "Oversettelser",
+        "translation_multiline": "Flerlinjet",
+        "translation_textboxes": "Tekstbokser",
+        "translation_layouts": "Oppsett",
+        "translation_description_multiline": "Legger til alle språk i en tekstboks med vekslende linjer. (Som i Songbeamer)",
+        "translation_description_textboxes": "Legger hvert språk til lysbildet i en egen tekstboks.",
+        "translation_description_layouts": "Oppretter et unikt sett med lysbilder og et oppsett for hvert språk."
     }
 }

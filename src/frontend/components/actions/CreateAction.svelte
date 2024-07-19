@@ -118,7 +118,7 @@
                 {#if actionNameIndex}#{actionNameIndex}{/if}
             </span>
         </p>
-        <Dropdown value={findName(actionId) || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={(e) => changeAction(e.detail)} />
+        <Dropdown activeId={actionId} value={findName(actionId) || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={(e) => changeAction(e.detail)} />
     </CombinedInput>
 {/if}
 

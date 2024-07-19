@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeStage, outputs, special, stageShows } from "../../../stores"
+    import { activeStage, outputs, stageShows } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -48,7 +48,8 @@
                         screen: null,
                     }
 
-                    send(OUTPUT, ["CREATE"], { ...a[id], id, rate: $special.previewRate || "auto" })
+                    // , rate: $special.previewRate || "auto"
+                    send(OUTPUT, ["CREATE"], { ...a[id], id })
                 } else {
                     // WIP: remove alpha key outputs...
                     let outputWithStageId = keysToID(a).find((output) => output.stageOutput === $activeStage.id)?.id

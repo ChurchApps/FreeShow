@@ -41,7 +41,7 @@
 
     $: if (!videoElem) duration = 0
     function getCurrentDuration() {
-        if (!videoElem || duration) return
+        if (!videoElem || duration === videoElem.duration) return
 
         duration = videoElem.duration
 
@@ -84,6 +84,8 @@
             video.src = path
         }, 20)
     }
+
+    $: mediaStyleString = `pointer-events: none;position: absolute;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 </script>
 
 <div class="main" style="aspect-ratio: {customResolution.width}/{customResolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>
@@ -98,21 +100,11 @@
         {:else}
             {#if type !== "video" || (thumbnailPath && retryCount <= 5)}
                 {#key retryCount}
-                    <img
-                        src={type !== "video" && useOriginal ? path : thumbnailPath}
-                        alt={name}
-                        style="pointer-events: none;position: absolute;filter: {mediaStyle.filter || ''};object-fit: {mediaStyle.fit || 'contain'};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY
-                            ? '-1'
-                            : '1'});width: 100%;height: 100%;"
-                        loading="lazy"
-                        class:loading={!loaded}
-                        on:error={reload}
-                        on:load={() => (loaded = true)}
-                    />
+                    <img src={type !== "video" && useOriginal ? path : thumbnailPath} alt={name} style={mediaStyleString} loading="lazy" class:loading={!loaded} on:error={reload} on:load={() => (loaded = true)} />
                 {/key}
             {/if}
             {#if type === "video" && useOriginal}
-                <video style="pointer-events: none;position: absolute;width: 100%;height: 100%;object-fit: {mediaStyle.fit};" bind:this={videoElem} on:error={reload} src={path} on:canplaythrough={getCurrentDuration}>
+                <video style={mediaStyleString} bind:this={videoElem} on:error={reload} src={path} on:canplaythrough={getCurrentDuration}>
                     <track kind="captions" />
                 </video>
             {/if}

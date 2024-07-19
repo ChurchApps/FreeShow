@@ -23,7 +23,7 @@
         "new.show": `${ctrl} + n`,
         "actions.toggle_output": `${ctrl} + o`,
         // "new.project": `${ctrl} + p`,
-        // "": `${ctrl} + q`,
+        "actions.toggle_panels": `${ctrl} + q`,
         "preview._update": `${ctrl} + r`,
         "actions.save": `${ctrl} + s`,
         // "": `${ctrl} + t`,

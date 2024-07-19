@@ -7,8 +7,8 @@
 
     const actions = {
         n: () => activePopup.set(null),
-        q: () => ($saved ? "" : closeApp()),
-        y: () => save(true),
+        q: () => closeApp(),
+        y: () => ($saved ? "" : save(true)),
     }
 
     function keydown(e: any) {
@@ -34,20 +34,27 @@
         <span>N</span>
     </Button>
 </CombinedInput>
-{#if !$saved}
+{#if $saved}
+    <CombinedInput>
+        <Button style="width: 100%;background-color: var(--secondary-opacity);" on:click={closeApp} dark center>
+            <T id="main.quit" />
+            <span>Q</span>
+        </Button>
+    </CombinedInput>
+{:else}
     <CombinedInput>
         <Button style="width: 100%;" on:click={closeApp} dark center>
             <div style="display: inline;opacity: 0.7;display: flex;align-items: center;"><T id="popup.quit" /></div>
             <span>Q</span>
         </Button>
     </CombinedInput>
+    <CombinedInput>
+        <Button style="width: 100%;background-color: var(--secondary-opacity);" on:click={() => save(true)} dark center>
+            <T id="popup.save_quit" />
+            <span>Y</span>
+        </Button>
+    </CombinedInput>
 {/if}
-<CombinedInput>
-    <Button style="width: 100%;background-color: var(--secondary-opacity);" on:click={() => save(true)} dark center>
-        <T id="popup.save_quit" />
-        <span>Y</span>
-    </Button>
-</CombinedInput>
 
 <style>
     span {

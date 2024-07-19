@@ -433,6 +433,7 @@ function getHighestNumber(numbers: number[]): number {
 }
 
 let clearing = false
+let forceClear: boolean = false
 export function clearAudio(path: string = "", clearPlaylist: boolean = true) {
     // turn off any playlist
     if (clearPlaylist && (!path || get(activePlaylist)?.active === path)) activePlaylist.set(null)
@@ -444,7 +445,12 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true) {
     // TODO: starting audio before previous clear is finished will not start/clear audio
     const clearTime = get(special).audio_fade_duration ?? 1.5
 
-    if (clearing) return // setTimeout(() => clearAudio(path), clearTime * 1000 + 200)
+    if (clearing) {
+        // force stop audio files (bypass timeout if already active)
+        forceClear = true
+        setTimeout(() => (forceClear = false), 100)
+        return
+    }
     if (!Object.keys(get(playingAudio)).length) return
     clearing = true
 
@@ -534,20 +540,25 @@ function stopFading() {
 const speed = 0.01
 let currentlyFading: any = {}
 async function fadeAudio(audio, duration = 1, increment: boolean = false): Promise<boolean> {
+    duration = Number(duration)
     if (!audio || !duration) return true
 
-    let time = duration * 1000 * speed
+    let currentSpeed = speed
+    if (duration < 1) currentSpeed *= 10
+    let time = duration * 1000 * currentSpeed
 
     // WIP non linear easing
 
     let fadeId = uid()
     return new Promise((resolve) => {
         currentlyFading[fadeId] = setInterval(() => {
+            if (forceClear) return finished()
+
             if (increment) {
-                audio.volume = Math.min(1, Number((audio.volume + speed).toFixed(3)))
+                audio.volume = Math.min(1, Number((audio.volume + currentSpeed).toFixed(3)))
                 if (audio.volume === 1) finished()
             } else {
-                audio.volume = Math.max(0, Number((audio.volume - speed).toFixed(3)))
+                audio.volume = Math.max(0, Number((audio.volume - currentSpeed).toFixed(3)))
                 if (audio.volume === 0) finished()
             }
         }, time)
@@ -654,4 +665,21 @@ export async function getAudioDuration(path: string): Promise<number> {
             resolve(audio.duration)
         })
     })
+}
+
+export function decodeURI(path: string) {
+    const cleanedURI = cleanURI(path)
+
+    try {
+        return decodeURIComponent(cleanedURI)
+    } catch (e) {
+        console.error("URI malformed: ", path)
+        // newToast("$error.uri")
+        return path
+    }
+}
+function cleanURI(uri) {
+    // only keep valid URI characters (and spaces)
+    const invalidChars = /[^ A-Za-z0-9\-_.!~*'()%;:@&=+$,/?#[\]]/g
+    return uri.replace(invalidChars, "")
 }

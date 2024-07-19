@@ -6,7 +6,7 @@ import { redo, undo } from "../components/helpers/history"
 import { displayOutputs } from "../components/helpers/output"
 import { activeDrawerTab, activePage, activePopup, currentWindow, drawer, os, selected, volume } from "../stores"
 import { drawerTabs } from "../values/tabs"
-import { hideDisplay } from "./common"
+import { hideDisplay, togglePanels } from "./common"
 import { save } from "./save"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
@@ -24,6 +24,7 @@ const ctrlKeys: any = {
     h: () => activePopup.set("history"),
     m: () => volume.set(get(volume) ? 0 : 1),
     o: () => displayOutputs(),
+    q: () => togglePanels(),
     s: () => save(),
     y: () => redo(),
     z: () => undo(),

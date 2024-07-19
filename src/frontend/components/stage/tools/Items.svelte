@@ -5,7 +5,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID } from "../../helpers/array"
-    import { getActiveOutputs, getResolution } from "../../helpers/output"
+    import { checkWindowCapture, getActiveOutputs, getResolution } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import Panel from "../../system/Panel.svelte"
@@ -49,6 +49,8 @@
             else enabledItems[item].enabled = true
             return ss
         })
+
+        if (item === "output#current_output") checkWindowCapture()
 
         if (!timeout) {
             updateStageShow()
