@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { SelectIds } from "../../../types/Main"
-    import { activeRename, os, selected } from "../../stores"
-    import { arrayHasData } from "../helpers/array"
+    import { activeRename, activeShow, os, selected } from "../../stores"
+    import { arrayHasData, clone } from "../helpers/array"
+    import { _show } from "../helpers/shows"
 
     export let id: SelectIds
     export let data: any
@@ -10,6 +11,7 @@
     export let trigger: null | "row" | "column" = null
     export let fileOver: boolean = false
     export let borders: "all" | "center" | "edges" = "all"
+    export let triggerOnHover: boolean = false
     let elem: any
 
     function enter(e: any) {
@@ -26,6 +28,43 @@
                 })
             }
         }
+    }
+
+    const TRIGGER_TIMEOUT = 500
+    let triggerTimeout: any = null
+    function triggerHoverAction() {
+        if (!triggerOnHover || triggerTimeout) return
+
+        triggerTimeout = setTimeout(() => {
+            triggerTimeout = null
+            if (!dragover) return
+            if (!triggerHoverActions[id]) return console.log("MISSING HOVER TRIGGER:", id)
+
+            triggerHoverActions[id]()
+        }, TRIGGER_TIMEOUT)
+    }
+
+    const triggerHoverActions: any = {
+        show: () => {
+            if (($selected.id === "slide" || $selected.id === "group" || $selected.id === "global_group") && (data.type || "show") === "show") {
+                // copy slide data
+                if ($selected.id === "slide") {
+                    let slides: any[] = convertDataToSlide($selected.data)
+                    // select after show is opened (because a slide is selected in the new show)
+                    setTimeout(() => {
+                        selected.set({ id: "global_group", data: slides }) // , overrideDrop: true
+                    }, 50)
+                }
+                // open show
+                activeShow.set(data)
+            }
+        },
+    }
+
+    function convertDataToSlide(slideRef: { index: number }[]) {
+        let currentSlides = _show().get("slides")
+        let currentLayoutRef = _show().layouts("active").ref()[0]
+        return slideRef.map(({ index }) => clone(currentSlides[currentLayoutRef[index]?.id])).filter((a) => a)
     }
 
     function mousedown(e: any, dragged: boolean = false) {
@@ -129,6 +168,11 @@
 
         dragover = null
     }
+
+    function dragOver(key: "start" | "center" | "end") {
+        dragover = key
+        triggerHoverAction()
+    }
 </script>
 
 <svelte:window
@@ -163,14 +207,14 @@
     {#if trigger && (dragActive || fileOver)}
         <div class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={stopDrag}>
             {#if borders === "all" || borders === "edges"}
-                <span id="start" class="TriggerBlock" on:dragover={() => (dragover = "start")} />
+                <span id="start" class="TriggerBlock" on:dragover={() => dragOver("start")} />
             {/if}
             {#if borders === "all" || borders === "center"}
-                <span id="start_center" class="TriggerBlock" on:dragover={() => (dragover = "center")} />
-                <span id="end_center" class="TriggerBlock" on:dragover={() => (dragover = "center")} />
+                <span id="start_center" class="TriggerBlock" on:dragover={() => dragOver("center")} />
+                <span id="end_center" class="TriggerBlock" on:dragover={() => dragOver("center")} />
             {/if}
             {#if borders === "all" || borders === "edges"}
-                <span id="end" class="TriggerBlock" on:dragover={() => (dragover = "end")} />
+                <span id="end" class="TriggerBlock" on:dragover={() => dragOver("end")} />
             {/if}
         </div>
     {/if}

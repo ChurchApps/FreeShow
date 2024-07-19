@@ -41,7 +41,7 @@
 
     $: if (!videoElem) duration = 0
     function getCurrentDuration() {
-        if (!videoElem || duration) return
+        if (!videoElem || duration === videoElem.duration) return
 
         duration = videoElem.duration
 

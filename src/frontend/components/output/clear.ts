@@ -3,6 +3,7 @@ import { activeEdit, activePopup, lockedOverlays, outLocked, outputCache, output
 import { clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { clearAudio } from "../helpers/audio"
 import { clone } from "../helpers/array"
+import { customActionActivation } from "../actions/actions"
 
 // TODO: output/clearButtons
 export function clearAll(button: boolean = false) {
@@ -49,10 +50,13 @@ export function clearBackground(outputId: string = "") {
             return a
         })
     })
+
+    customActionActivation("background_cleared")
 }
 
 export function clearSlide() {
     setOutput("slide", null)
+    customActionActivation("slide_cleared")
 }
 
 export function clearOverlays(outputId: string = "") {

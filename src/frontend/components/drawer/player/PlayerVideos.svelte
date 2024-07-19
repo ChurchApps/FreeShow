@@ -55,6 +55,7 @@
             outlineColor={findMatchingOut(video.rid, $outputs)}
             label={video.name || ""}
             title={video.id || ""}
+            showPlayOnHover
             on:click={(e) => {
                 if ($outLocked || e.ctrlKey || e.metaKey) return
                 if (findMatchingOut(video.rid, $outputs)) {

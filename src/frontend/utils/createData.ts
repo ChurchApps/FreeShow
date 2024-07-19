@@ -14,7 +14,7 @@ export function createData(paths: any) {
                 template: "header",
             },
             timestamps: {
-                created: new Date("2022-01-01").getTime(),
+                created: new Date().getTime(), // new Date("2022-01-01").getTime(),
                 modified: null,
                 used: null,
             },
@@ -130,17 +130,17 @@ export function setExampleOverlays() {
             name: get(dictionary).example?.clock || "Clock",
             color: "dodgerblue",
             category: "visuals",
-            items: [{ style: "top:0px;left:1450px;height:170px;width:470px;", type: "clock", clock: { type: "digital", seconds: false } }],
+            items: [{ style: "top:70px;left:1450px;height:150px;width:470px;", type: "clock", clock: { type: "digital", seconds: false } }],
         }
         a.name = {
             name: get(dictionary).inputs?.name || "Name",
-            color: "#5825F5",
+            color: "#0b57a2",
             category: "visuals",
             items: [
-                { style: "top:875px;left:80px;height:135px;width:750px;background-color: #b10dc9;box-shadow: 2px 2px 10px 0px rgb(0 0 0 / 0.8);" },
-                { style: "top:875px;left:80px;height:135px;width:50px;background-color: #7fdbff;" },
+                { style: "top:875px;left:80px;height:135px;width:750px;background-color: #0b57a2;box-shadow: 2px 2px 10px 0px rgb(0 0 0 / 0.8);" },
+                { style: "top:875px;left:80px;height:135px;width:50px;background-color: #74cbfb;" },
                 {
-                    style: "top:935px;left:130px;height:75px;width:700px;background-color: #b10dc9;padding: 0 10px;",
+                    style: "top:935px;left:130px;height:75px;width:700px;background-color: #0b57a2;padding: 0 10px;",
                     actions: {
                         showTimer: 1,
                         transition: { type: "slide", duration: 500, easing: "cubic" },
@@ -149,7 +149,7 @@ export function setExampleOverlays() {
                     lines: [{ align: "text-align: left", text: [{ value: "Name Surname", style: "font-family: Arial;font-size: 70px;text-shadow: 0 0 #000000;" }] }],
                 },
                 {
-                    style: "top:875px;left:130px;height:60px;width:700px;background-color: #0074d9;padding: 0 10px;",
+                    style: "top:875px;left:130px;height:60px;width:700px;background-color: #006fcf;padding: 0 10px;",
                     actions: {
                         transition: { type: "slide", duration: 500, easing: "cubic" },
                     },
@@ -187,7 +187,7 @@ export function setExampleTemplates() {
             category: null,
             items: [
                 {
-                    style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: get(dictionary).tools?.metadata || "Metadata", style: "font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }],
                 },
@@ -200,7 +200,7 @@ export function setExampleTemplates() {
             category: null,
             items: [
                 {
-                    style: "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    style: "top: 50px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: get(dictionary).meta?.message || "Message", style: "font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }],
                 },
@@ -387,7 +387,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:387.50px;left:51px;height:307.15px;width:1820px;border-width:8px;background-color: rgb(0 0 0 / 0.4);",
+                    style: "top:387.50px;left:51px;height:307.15px;width:1820px;border-width:8px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;",
                     align: "",
                     lines: [
                         { align: "", text: [{ value: "1", style: "font-weight: bold;font-size: 80px;line-height:1.1em;letter-spacing:2px;text-shadow: 0 0 #000000;" }] },
@@ -422,12 +422,12 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 30px;left: 50px;width: 1820px;height: 890px;",
+                    style: "top: 30px;left: 30px;width: 1860px;height: 875px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;" }] }],
                 },
                 {
-                    style: "top: 920px;left: 50px;width: 1820px;height: 140px;opacity: 0.8;",
+                    style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
                 },
@@ -440,18 +440,18 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;left: 50px;width: 1820px;height: 400px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 40px;left: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 70px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 475px;left: 50px;width: 1820px;height: 400px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 475px;left: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 70px;" }] }],
                 },
                 {
-                    style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
                 },
@@ -464,24 +464,24 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;left: 50px;width: 1820px;height: 250px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 40px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 320px;left: 50px;width: 1820px;height: 250px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 320px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 600px;left: 50px;width: 1820px;height: 250px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 600px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }],
                 },
                 {
-                    style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
                 },
@@ -494,30 +494,30 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 40px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 40px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 250px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 250px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 460px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 460px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }],
                 },
                 {
                     // auto: true,
-                    style: "top: 670px;left: 50px;width: 1820px;height: 200px;border-width: 1px;border-color: #cccccc;",
+                    style: "top: 670px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "4", style: "font-size: 60px;" }] }],
                 },
                 {
-                    style: "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
                 },

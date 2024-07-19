@@ -40,7 +40,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     newCategory: { label: "context.newCategory", icon: "add" },
     newScripture: { label: "new.scripture", icon: "add" },
     createCollection: { label: "new.collection", icon: "collection" },
-    changeIcon: { label: "context.changeIcon", icon: "noIcon" },
+    changeIcon: { label: "context.changeIcon", icon: "star" },
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
     force_output: { label: "context.force_outputs", icon: "outputs" },

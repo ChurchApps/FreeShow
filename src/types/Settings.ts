@@ -13,6 +13,7 @@ export interface Styles {
     layers?: ["background", "slide", "overlays"][]
     background?: string
     backgroundImage?: string
+    clearStyleBackgroundOnText?: boolean
     fit?: MediaFit | null
     resolution?: Resolution
     cropping?: Cropping

@@ -252,6 +252,8 @@
         { id: "video_end", name: "$:actions.activate_video_ending:$" },
         { id: "timer_end", name: "$:actions.activate_timer_ending:$" },
         { id: "scripture_start", name: "$:actions.activate_scripture_start:$" },
+        { id: "slide_cleared", name: "$:actions.activate_slide_cleared:$" },
+        { id: "background_cleared", name: "$:actions.activate_background_cleared:$" },
         { id: "show_created", name: "$:actions.activate_show_created:$" },
     ]
     $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""

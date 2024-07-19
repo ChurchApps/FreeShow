@@ -231,7 +231,7 @@ export function captureCanvas(data: any) {
         // seek video
         if (!isImage) {
             mediaElem.currentTime = mediaElem.duration * (data.seek ?? 0.5)
-            await wait(50)
+            await wait(400)
         }
 
         // wait until loaded
@@ -266,7 +266,7 @@ export function captureCanvas(data: any) {
         await wait(loading)
         ctx.drawImage(media, 0, 0, mediaSize.width, mediaSize.height, 0, 0, canvas.width, canvas.height)
 
-        await wait(loading * 0.2)
+        await wait(200)
         let dataURL = canvas.toDataURL("image/jpeg", jpegQuality)
 
         send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })

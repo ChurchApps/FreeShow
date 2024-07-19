@@ -100,6 +100,7 @@
     title={path}
     icon={thumbnail ? icon : null}
     white={type === "image"}
+    showPlayOnHover
     on:click={click}
     on:dblclick={dblclick}
     on:keydown={keydown}

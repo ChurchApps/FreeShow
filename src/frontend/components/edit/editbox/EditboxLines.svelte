@@ -102,6 +102,8 @@
             let sel = getSelectionRange()
             if (!sel?.length || (sel.length === 1 && !Object.keys(sel[0]).length)) return
 
+            // WIP auto add • or - if on line and pressing Enter
+
             // if (sel.start === sel.end) {
             let lines: Line[] = getNewLines()
             let currentIndex = 0,

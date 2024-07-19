@@ -387,7 +387,7 @@ const slideDrop: any = {
             // move all children when parent is moved
             selected.forEach(selectChildren)
             function selectChildren(index: number) {
-                if (ref[index].type !== "parent") return
+                if (ref[index]?.type !== "parent") return
                 console.log(newIndex, index, ref[index].children)
                 let children: string[] = ref[index].children || []
                 if (!children) return
@@ -429,7 +429,7 @@ const slideDrop: any = {
         // TODO: dragging a parent slide over its own childs will not change children
 
         // check if first slide child
-        if (newLayoutRef[0].type === "child") newLayoutRef[0].newType = "parent"
+        if (newLayoutRef[0]?.type === "child") newLayoutRef[0].newType = "parent"
 
         console.log(sortedLayout, slides, clone(newLayoutRef), moved, newIndex)
         history.newData = changeLayout(sortedLayout, slides, clone(newLayoutRef), moved, newIndex)

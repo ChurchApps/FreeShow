@@ -2,12 +2,14 @@ import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
 import { getActiveOutputs } from "../components/helpers/output"
-import { activeDrawerTab, activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, drawer, focusedArea, os, outputDisplay, outputs, serverData, toastMessages, version } from "../stores"
+import { activeDrawerTab, activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, drawer, focusedArea, os, outputDisplay, outputs, resized, serverData, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
 
 export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (stores.ts & defaults.ts)
+export const DEFAULT_DRAWER_HEIGHT = 300
+export const MENU_BAR_HEIGHT = 25 // main (ManuBar.svelte) - Windows
 
 // create toast popup
 export function newToast(msg: string) {
@@ -148,4 +150,26 @@ export function startDevMode() {
     const script = document.createElement("script")
     script.src = "http://localhost:5001/start"
     document.body.appendChild(script)
+}
+
+// toggle drawer & left/right panels
+const minDrawerHeight = 40
+const minPanelWidth = 4
+let panelsManuallyClosed: boolean = false
+export function togglePanels() {
+    let drawerIsOpened = get(drawer).height > minDrawerHeight
+    let leftPanelIsOpened = get(resized).leftPanel > minPanelWidth
+    let rightPanelIsOpened = get(resized).rightPanel > minPanelWidth
+
+    // close all
+    if (drawerIsOpened || leftPanelIsOpened || rightPanelIsOpened) {
+        drawer.set({ height: minDrawerHeight, stored: get(drawer).height })
+        resized.set({ ...get(resized), leftPanel: minPanelWidth, rightPanel: minPanelWidth })
+        panelsManuallyClosed = !leftPanelIsOpened && !rightPanelIsOpened
+        return
+    }
+
+    // open all
+    if (!drawerIsOpened) drawer.set({ height: get(drawer).stored || DEFAULT_DRAWER_HEIGHT, stored: null })
+    if (!panelsManuallyClosed) resized.set({ ...get(resized), leftPanel: leftPanelIsOpened ? get(resized).leftPanel : DEFAULT_WIDTH, rightPanel: rightPanelIsOpened ? get(resized).rightPanel : DEFAULT_WIDTH })
 }

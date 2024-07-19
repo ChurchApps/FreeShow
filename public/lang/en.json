@@ -530,6 +530,7 @@
         "svg_clipboard": "Import SVG from clipboard",
         "fullscreen_preview": "Toggle fullscreen preview",
         "toggle_output": "Toggle output screen",
+        "toggle_panels": "Toggle panels",
         "change_tab": "Change tab",
         "change_drawer_tab": "Change drawer tab",
         "change_slide": "Change slide",
@@ -593,6 +594,7 @@
         "activate_video_ending": "Activate when video is ending",
         "activate_timer_ending": "Activate when timer is ending",
         "activate_scripture_start": "Activate when scripture is started",
+        "activate_slide_cleared": "Activate when slide is cleared",
         "activate_show_created": "Activate when show is created"
     },
     "animate": {
@@ -958,6 +960,7 @@
         "audio_fade_duration": "Audio fade duration",
         "audio_crossfade": "Audio crossfade",
         "max_auto_font_size": "Max auto font size",
+        "clear_style_background_on_text": "Clear style background when slide is active",
         "resolution": "Resolution",
         "cropping": "Cropping",
         "frame_rate": "Frame rate",

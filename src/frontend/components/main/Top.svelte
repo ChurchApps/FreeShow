@@ -102,4 +102,10 @@
         width: 100%;
         gap: 10px;
     } */
+
+    @media screen and (max-width: 580px) {
+        .top span:first-child {
+            display: none;
+        }
+    }
 </style>

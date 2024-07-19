@@ -56,4 +56,10 @@
     span {
         font-weight: bold;
     }
+
+    @media screen and (max-width: 750px) {
+        span {
+            display: none;
+        }
+    }
 </style>

@@ -407,9 +407,17 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 let templateText = templateLine?.text[k] || templateLine?.text[0]
                 if (text.customType !== "disableTemplate") text.style = templateText?.style || ""
 
+                let firstChar = templateText?.value?.[0] || ""
+
                 // add dynamic values
-                if (!text.value?.length && templateText?.value?.[0] === "{") {
-                    text.value = templateText.value
+                if (!text.value?.length && firstChar === "{") {
+                    text.value = templateText!.value
+                }
+
+                // add bullets
+                if (firstChar === "•" || firstChar === "-") {
+                    if (text.value[0] === firstChar) return
+                    line.text[k].value = `${firstChar} ${text.value.trim()}`
                 }
             })
         })

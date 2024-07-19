@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Bible } from "../../../types/Scripture"
     import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
+    import { DEFAULT_DRAWER_HEIGHT, MENU_BAR_HEIGHT } from "../../utils/common"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
@@ -15,8 +16,7 @@
 
     const minHeight = 40
     const topHeight = 40
-    let maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? 30 : 0)
-    let defaultHeight: number = 300
+    let maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? MENU_BAR_HEIGHT : 0)
     $: height = $drawer.height
 
     let move: boolean = false
@@ -24,7 +24,7 @@
     function mousedown(e: any) {
         if (e.target.closest(".search")) return
 
-        maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? 30 : 0)
+        maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? MENU_BAR_HEIGHT : 0)
         mouse = {
             x: e.clientX,
             y: e.clientY,
@@ -61,7 +61,7 @@
         }
 
         // open drawer
-        drawer.set({ height: storeHeight === null || storeHeight < defaultHeight ? defaultHeight : storeHeight, stored: null })
+        drawer.set({ height: storeHeight === null || storeHeight < DEFAULT_DRAWER_HEIGHT ? DEFAULT_DRAWER_HEIGHT : storeHeight, stored: null })
     }
 
     function mouseup(e: any) {
@@ -225,6 +225,7 @@
         color: var(--text);
         /* font-family: inherit; */
         width: var(--navigation-width);
+        min-width: var(--navigation-width);
         /* width: 50%; */
         padding: 0 8px;
         border: none;
@@ -247,5 +248,11 @@
         display: flex;
         height: calc(100% - 40px);
         justify-content: space-between;
+    }
+
+    @media screen and (max-width: 750px) {
+        .tabs span {
+            display: none;
+        }
     }
 </style>

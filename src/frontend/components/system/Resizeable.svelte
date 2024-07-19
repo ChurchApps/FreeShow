@@ -11,6 +11,8 @@
     export let maxWidth: number = DEFAULT_WIDTH * 2.2
     export let minWidth: number = handleWidth
 
+    $: if (!mouse && $resized[id]) width = $resized[id]
+
     let loaded = false
     onMount(() => {
         setTimeout(() => {

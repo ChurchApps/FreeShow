@@ -44,6 +44,7 @@
     import Trigger from "./popups/Trigger.svelte"
     import Unsaved from "./popups/Unsaved.svelte"
     import Variable from "./popups/Variable.svelte"
+    import { MENU_BAR_HEIGHT } from "../../utils/common"
 
     function mousedown(e: any) {
         if (disablePopupClose.includes(popupId)) return
@@ -109,7 +110,7 @@
 
 {#if popupId !== null}
     {#key popupId}
-        <div style={$os.platform === "win32" ? "height: calc(100% - 30px);" : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
+        <div style={$os.platform === "win32" ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
             <div class="card" class:fill={popupId === "import_scripture"} transition:scale={{ duration: 200 }}>
                 <div style="position: relative;">
                     {#if popupId !== "alert"}
@@ -143,7 +144,7 @@
         /* pointer-events: none; */
         width: 100%;
         height: 100%;
-        padding: 20px 300px;
+        padding: 20px var(--navigation-width);
         z-index: 5000;
 
         font-size: 1.2em;
@@ -152,6 +153,18 @@
         align-items: center;
         justify-content: center;
     }
+
+    @media screen and (max-width: 1000px) {
+        .popup {
+            padding: 20px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            /* 12px for windows menu bar */
+            transform: translate(-50%, calc(-50% + 12px));
+        }
+    }
+
     .card {
         position: relative;
         background-color: var(--primary);

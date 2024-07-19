@@ -82,6 +82,7 @@
         label={screen.name}
         icon={screen.id.includes("screen") ? "screen" : "window"}
         white={!screen.id.includes("screen")}
+        showPlayOnHover
     >
         <SelectElem style="display: flex;" id="screen" data={{ id: screen.id, type: "screen", name: screen.name }} draggable>
             <canvas bind:this={canvas} />

@@ -48,6 +48,7 @@ export function convertText({ name = "", category = null, text, noFormatting = f
         let firstSlideText = labeled[0].text.split("\n")
         name = firstSlideText[0]
         if (firstSlideText.length > 1 && (name.includes("[") || name.includes(":"))) name = firstSlideText[1]
+        name = name.replace(/[,.!]/g, "").trim()
     }
 
     let layoutID: string = uid()
@@ -272,28 +273,28 @@ function fixText(text: string, formatText: boolean): string {
             firstRepeater = text.indexOf(":/:")
             secondRepeater = text.indexOf(":/:", firstRepeater + 1)
         }
-    }
 
-    let newText: string = ""
-    const commaDividerMinLength = 22 // shouldn't be much less
-    text.split("\n").forEach((t: any) => {
-        let newLineText: string = ""
+        let newText: string = ""
+        const commaDividerMinLength = 22 // shouldn't be much less
+        text.split("\n").forEach((t: any) => {
+            let newLineText: string = ""
 
-        // commas inside line
-        let commas: string[] = removeEmpty(t.split(","))
-        commas.forEach((a: any, i: number) => {
-            newLineText += a
+            // commas inside line
+            let commas: string[] = removeEmpty(t.split(","))
+            commas.forEach((a: any, i: number) => {
+                newLineText += a
 
-            if (i >= commas.length - 1) newLineText += "\n"
-            else if (!formatText) newLineText += ","
-            else if (a.length < commaDividerMinLength || (commas[i + 1] && commas[i + 1].length < commaDividerMinLength)) newLineText += ","
-            else newLineText += "\n"
+                if (i >= commas.length - 1) newLineText += "\n"
+                // else if (!formatText) newLineText += ","
+                else if (a.length < commaDividerMinLength || (commas[i + 1] && commas[i + 1].length < commaDividerMinLength)) newLineText += ","
+                else newLineText += "\n"
+            })
+
+            newText += newLineText
         })
 
-        newText += newLineText
-    })
-
-    text = newText
+        text = newText
+    }
 
     let lines: string[] = text.split("\n")
 

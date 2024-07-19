@@ -227,6 +227,8 @@ function callClose(e: any) {
 }
 
 export async function exitApp() {
+    console.log("Closing app!")
+
     mainWindow = null
     dialogClose = false
 
@@ -237,6 +239,11 @@ export async function exitApp() {
     stopApiListener()
 
     stopMidi()
+
+    if (!isProd) {
+        console.log("Dev mode active - Relaunching...")
+        app.relaunch()
+    }
 
     try {
         app.quit()

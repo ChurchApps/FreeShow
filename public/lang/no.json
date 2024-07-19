@@ -363,6 +363,7 @@
         "animate": "Animer",
         "next_timer": "Tid til neste lysbilde",
         "import": "Importer",
+        "songbeamer_import": "Songbeamer importering",
         "export": "Eksporter",
         "importing": "Importerer",
         "import_scripture": "Importer en bibel",
@@ -1139,5 +1140,20 @@
         "words": "Ord",
         "template": "Mal",
         "category": "Kategori"
+    },
+    "songbeamer_import": {
+        "options": "Alternativer",
+        "encoding": "Koding",
+        "older_versions": "For Songbeamer versjoner eldre enn 6.02a",
+        "category": "Kategori",
+        "utf8": "UTF-8",
+        "latin1": "Latin 1",
+        "translations": "Oversettelser",
+        "translation_multiline": "Flerlinjet",
+        "translation_textboxes": "Tekstbokser",
+        "translation_layouts": "Oppsett",
+        "translation_description_multiline": "Legger til alle språk i en tekstboks med vekslende linjer. (Som i Songbeamer)",
+        "translation_description_textboxes": "Legger hvert språk til lysbildet i en egen tekstboks.",
+        "translation_description_layouts": "Oppretter et unikt sett med lysbilder og et oppsett for hvert språk."
     }
 }

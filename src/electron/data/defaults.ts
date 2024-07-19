@@ -31,7 +31,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     },
     sorted: {},
     styles: {},
-    openedFolders: [],
+    openedFolders: ["default"],
     activeProject: null,
     alertUpdates: true,
     autoOutput: false,
@@ -98,8 +98,12 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         presentation: { name: "category.presentation", icon: "presentation", default: true },
         scripture: { name: "category.scripture", icon: "scripture", default: true },
     },
-    timers: {},
-    variables: {},
+    timers: {
+        default: { name: "05:00", type: "counter", start: 300, end: 0 },
+    },
+    variables: {
+        default: { name: "Counter", type: "number" },
+    },
     triggers: {},
     audioStreams: {},
     audioPlaylists: {},

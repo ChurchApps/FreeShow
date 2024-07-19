@@ -130,7 +130,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function updateElement(a) {
                 // TODO: check for duplicates!!???
                 if (key) {
-                    data.previousData = clone(filterIndexes(a[id][key], subkey, { indexes, keys }))
+                    data.previousData = clone(filterIndexes(a[id][key] || {}, subkey, { indexes, keys }))
                     a = updateKeyData(a, data.data)
                 } else if (keys) {
                     // if just keys, but no "key"
@@ -196,6 +196,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 }
 
                 if (subkey) {
+                    if (!a[id][key]) a[id][key] = {}
+
                     // insert at index
                     if (index !== undefined && Array.isArray(a[id][key][subkey])) {
                         if (index === -1) a[id][key][subkey].push(newValue)
