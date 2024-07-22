@@ -417,6 +417,12 @@ export const receiveOUTPUTasOUTPUT: any = {
     PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
     STAGE_SHOWS: (a: any) => stageShows.set(a),
 
+    // stage & dynamic value (video)
+    VIDEO_DATA: (data) => {
+        videosData.set(data.data)
+        videosTime.set(data.time)
+    },
+
     VOLUME: (a: any) => volume.set(a),
     GAIN: (a: any) => gain.set(a),
 }

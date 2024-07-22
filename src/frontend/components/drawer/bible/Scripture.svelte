@@ -455,9 +455,12 @@
             return
         }
 
-        if (tempCache[firstBibleId]?.[contentSearch]) {
-            contentSearchMatches = tempCache[firstBibleId][contentSearch]
+        let searchValue = formatText(contentSearch)
+
+        if (tempCache[firstBibleId]?.[searchValue]?.length) {
+            contentSearchMatches = tempCache[firstBibleId][searchValue]
             contentSearchActive = true
+            return
         }
 
         let bible = bibles[0]
@@ -465,16 +468,15 @@
 
         let matches: any[] = []
         let extraMatches: any[] = []
-        let searchValue = formatText(contentSearch)
 
         // if new search includes previous search, then just search through previously filtered data
         // Bible.API will only give a fixed result, so search that again when "cachedSearches" is more than 5
-        if (previousSearch && searchValue.includes(previousSearch) && (!bible.api || cachedSearches < 5)) {
-            matches = contentSearchMatches.filter((a) => a.text.includes(searchValue))
+        if (previousSearch && searchValue.includes(previousSearch) && (!bible.api || cachedSearches < 5) && contentSearchMatches?.length) {
+            matches = contentSearchMatches.filter((a) => formatText(a.text).includes(searchValue))
             cachedSearches++
         } else if (bible.api) {
             let searchResult: any = await searchBibleAPI(active, contentSearch)
-            matches = searchResult?.verses?.map((a) => ({ book: a.bookId, chapter: a.chapterId, verse: a.reference.slice(a.reference.indexOf(":") + 1), reference: a.reference, text: a.text, api: true }))
+            matches = searchResult?.verses?.map((a) => ({ book: a.bookId, chapter: a.chapterId, verse: a.reference.slice(a.reference.indexOf(":") + 1), reference: a.reference, text: a.text, api: true })) || []
         } else {
             let allBooks: any[] = books[firstBibleId]
             allBooks.forEach((book, bookIndex) => {
@@ -505,7 +507,7 @@
         previousSearch = searchValue
 
         if (!tempCache[firstBibleId]) tempCache[firstBibleId] = {}
-        tempCache[firstBibleId][contentSearch] = matches
+        tempCache[firstBibleId][searchValue] = matches
     }
 
     function findBook() {

@@ -4,7 +4,7 @@ import { menuClick } from "../components/context/menuClick"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { redo, undo } from "../components/helpers/history"
 import { displayOutputs } from "../components/helpers/output"
-import { activeDrawerTab, activePage, activePopup, currentWindow, drawer, os, selected, volume } from "../stores"
+import { activeDrawerTab, activePage, activePopup, currentWindow, drawer, os, refreshEditSlide, selected, volume } from "../stores"
 import { drawerTabs } from "../values/tabs"
 import { hideDisplay, togglePanels } from "./common"
 import { save } from "./save"
@@ -80,8 +80,13 @@ export function keydown(e: any) {
             return
         }
 
+        const preventDefaults = ["z", "Z", "y"]
         if (ctrlKeys[e.key]) {
             ctrlKeys[e.key](e)
+            if (preventDefaults.includes(e.key)) {
+                e.preventDefault()
+                if (get(activePage) === "edit") refreshEditSlide.set(true)
+            }
         }
         return
     }

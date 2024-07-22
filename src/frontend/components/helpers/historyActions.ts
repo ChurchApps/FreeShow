@@ -443,6 +443,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (deleting) {
                     // update layout
                     showsCache.update((a) => {
+                        if (!a[showId]) return a
+
                         let slides = a[showId].layouts[layout].slides
                         let newSlides = clone(slides).filter((a, i) => (slideIndex !== undefined ? i !== slideIndex : a.id !== id))
 
@@ -817,7 +819,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             function updateLayoutSlides() {
                 showsCache.update((a: any) => {
-                    if (!a[data.remember.showId]) return
+                    if (!a[data.remember.showId]) return a
                     let layoutSlides = a[data.remember.showId].layouts[data.remember.layout].slides
 
                     let currentIndex = -1

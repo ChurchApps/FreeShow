@@ -397,7 +397,7 @@
                 class:bottomTopScrolling={item?.scrolling?.type === "bottom_top"}
                 class:leftRightScrolling={item?.scrolling?.type === "left_right"}
                 class:rightLeftScrolling={item?.scrolling?.type === "right_left"}
-                style="--scrollSpeed: {item?.scrolling?.speed ?? 15}s;{style ? item.align : null}"
+                style="--scrollSpeed: {item?.scrolling?.speed ?? 15}s;{style ? item?.align : null}"
                 bind:this={alignElem}
             >
                 <div

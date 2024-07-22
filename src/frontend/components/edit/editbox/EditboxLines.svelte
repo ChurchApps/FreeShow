@@ -408,7 +408,7 @@
 
     // paste
     function paste(e: any, clipboardText: string = "") {
-        let clipboard: string = clipboardText || e.clipboardData.getData("text/plain") || ""
+        let clipboard: string = clipboardText || e.clipboardData?.getData("text/plain") || ""
         if (!clipboard) return
 
         let sel = getSelectionRange()

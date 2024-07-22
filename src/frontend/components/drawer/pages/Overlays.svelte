@@ -30,7 +30,7 @@
     let fullFilteredOverlays: any[] = []
     function filterSearch() {
         fullFilteredOverlays = clone(filteredOverlays)
-        if (searchValue.length > 1) fullFilteredOverlays = fullFilteredOverlays.filter((a) => filter(a.name).includes(filter(searchValue)))
+        if (searchValue.length > 1) fullFilteredOverlays = fullFilteredOverlays.filter((a) => filter(a.name || "").includes(filter(searchValue)))
     }
 
     let nextScrollTimeout: any = null
