@@ -65,12 +65,15 @@
                     <Card
                         class="context #template_card"
                         active={template.id === activeTemplate}
-                        label={template.name || "—"}
+                        label={template.name}
+                        renameId="template_{template.id}"
                         color={template.color}
                         {resolution}
                         on:click={(e) => {
-                            if ((($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show") && !e.ctrlKey && !e.metaKey)
-                                history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "none", override: "show#" + $activeShow.id } })
+                            if (e.target?.closest(".edit")) return
+                            if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
+
+                            history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "none", override: "show#" + $activeShow.id } })
                         }}
                     >
                         <!-- icons -->

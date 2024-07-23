@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeShow, overlays, playerVideos, selected, showsCache, templates } from "../../../stores"
+    import { activePopup, activeShow, playerVideos, selected, showsCache } from "../../../stores"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -11,11 +11,8 @@
     let list: string[] = []
     $: {
         list = []
-        if ($selected.id === "overlay") {
-            list = removeDuplicates($selected.data.map((id) => $overlays[id].name))
-        } else if ($selected.id === "template") {
-            list = removeDuplicates($selected.data.map((id) => $templates[id].name))
-        } else if (($activeShow && $selected.id === "slide") || $selected.id === "group") {
+
+        if (($activeShow && $selected.id === "slide") || $selected.id === "group") {
             $selected.data.forEach((a, i) => {
                 let slide = a.id ? a : _show("active").layouts("active").ref()[0][a.index]
                 if (slide.parent) slide = slide.parent.id
@@ -25,8 +22,6 @@
                 if (i === 0) groupName = name
             })
             list = removeDuplicates(list)
-        } else if ($selected.id === "player") {
-            list = removeDuplicates($selected.data.map((id) => $playerVideos[id].name))
         } else if ($selected.id === "chord") {
             groupName = $selected.data?.[0]?.chord?.key || ""
         }

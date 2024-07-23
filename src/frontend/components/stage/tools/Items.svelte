@@ -15,7 +15,7 @@
     const titles = {
         // slide_background ++
         slide: ["current_slide_text", "current_slide", "current_slide_notes", "next_slide_text", "next_slide", "next_slide_notes"],
-        output: ["current_output"],
+        output: ["current_output", "group_sequence"],
         time: ["system_clock", "video_time", "video_countdown"],
         global_timers: ["{timers}"],
         variables: ["{variables}"],

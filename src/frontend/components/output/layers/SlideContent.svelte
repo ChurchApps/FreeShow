@@ -36,6 +36,9 @@
     $: if (currentSlide || lines) createSlide()
     let isAutoSize: boolean = false
     function createSlide() {
+        // prevent svelte bug creating multiple items if creating new while old clears
+        if (timeout) clearTimeout(timeout)
+
         let slideRef = JSON.stringify({ currentSlide, outSlide })
 
         // update existing slide, if same
@@ -53,13 +56,11 @@
 
         if (loading) loading = false
 
-        // prevent svelte bug creating multiple items if creating new while old clears
-        if (timeout) clearTimeout(timeout)
         timeout = setTimeout(
             () => {
                 loading = true
                 // always use first if no transition
-                let loadingFirst = !slide1 || transition.duration === 0
+                let loadingFirst = !slide1 || !transitionActive
 
                 if (loadingFirst) slide1 = { ref: slideRef, data: clone(currentSlide), lines: clone(lines) }
                 else slide2 = { ref: slideRef, data: clone(currentSlide), lines: clone(lines) }
@@ -83,7 +84,6 @@
                 timeout = setTimeout(() => {
                     if (loading) loaded(loadingFirst)
 
-                    timeout = null
                     textLoaded.set(true) // not in use
                 }, timeoutDuration)
             },
@@ -95,15 +95,17 @@
         if (!loading) return
 
         loading = false
+        firstActive = isFirst
 
-        if (isFirst) {
-            slide2 = null
-        } else {
-            slide1 = null
-        }
+        // start showing next before hiding current (to reduce "black" fade if transitioning to same element)
+        timeout = setTimeout(() => {
+            if (isFirst) {
+                slide2 = null
+            } else {
+                slide1 = null
+            }
 
-        setTimeout(() => {
-            firstActive = isFirst
+            timeout = null
         }, 50)
     }
 
@@ -113,10 +115,19 @@
     $: if (slide1) slide1Data = clone(slide1.data)
     $: if (slide2) slide2Data = clone(slide2.data)
 
-    $: isFirstHidden = loading && (!firstActive || transition.duration === 0)
-    $: isSecondHidden = loading && firstActive
+    $: transitionActive = transition.duration !== 0 && transition.type !== "none"
+
+    $: isFirstHidden = transitionActive && loading && !firstActive
+    $: isSecondHidden = !transitionActive || (loading && firstActive)
 
     $: hasChanged = !!(transition.duration === 0 && !isAutoSize && slide1)
+
+    // WIP text should fade, but items that are the same between slides should not & items with custom transitions should not use the global slide transition
+
+    // custom item transition
+    // $: itemTransitionEnabled = transitionEnabled && item.actions?.transition && item.actions.transition.type !== "none" && item.actions.transition.duration > 0
+    // $: itemTransition = transition ? clone(item.actions.transition) : {}
+    // $: if (itemTransition.type === "none") itemTransition = { duration: 0, type: "fade", easing: "linear" }
 </script>
 
 {#if slide1}

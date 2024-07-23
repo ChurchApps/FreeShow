@@ -64,7 +64,13 @@
     function convertDataToSlide(slideRef: { index: number }[]) {
         let currentSlides = _show().get("slides")
         let currentLayoutRef = _show().layouts("active").ref()[0]
-        return slideRef.map(({ index }) => clone(currentSlides[currentLayoutRef[index]?.id])).filter((a) => a)
+
+        let slideData = slideRef.map(({ index }) => {
+            let layout = currentLayoutRef[index] || {}
+            return { slide: clone(currentSlides[layout.id]), layoutData: layout.data }
+        })
+
+        return slideData.filter((a) => a.slide)
     }
 
     function mousedown(e: any, dragged: boolean = false) {

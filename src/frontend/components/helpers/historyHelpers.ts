@@ -249,18 +249,13 @@ export const _updaters = {
     overlay: {
         store: overlays,
         empty: EMPTY_SLIDE,
-        initialize: (data) => {
+        initialize: (data, id: string) => {
             // get selected category
             if (get(drawerTabsData).overlays?.activeSubTab && get(overlayCategories)[get(drawerTabsData).overlays.activeSubTab!]) {
                 data.category = get(drawerTabsData).overlays.activeSubTab
             }
 
-            // auto name
-            let newName = 1
-            while (Object.values(get(overlays)).find((a) => a.name === newName.toString())) {
-                newName++
-            }
-            data.name = newName.toString()
+            activeRename.set("overlay_" + id)
 
             return data
         },
@@ -274,18 +269,13 @@ export const _updaters = {
     template: {
         store: templates,
         empty: EMPTY_SLIDE,
-        initialize: (data) => {
+        initialize: (data, id: string) => {
             // get selected category
             if (get(drawerTabsData).templates?.activeSubTab && get(templateCategories)[get(drawerTabsData).templates.activeSubTab!]) {
                 data.category = get(drawerTabsData).templates.activeSubTab
             }
 
-            // auto name
-            let newName = 1
-            while (Object.values(get(templates)).find((a) => a.name === newName.toString())) {
-                newName++
-            }
-            data.name = newName.toString()
+            activeRename.set("template_" + id)
 
             return data
         },

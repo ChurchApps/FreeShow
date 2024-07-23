@@ -11,6 +11,7 @@
     export let active: boolean = false
     export let outlineColor: string | null = null
     export let label: string
+    export let renameId: string = ""
     export let title: string = ""
     export let mediaData: string = ""
     export let width: number = 0
@@ -45,7 +46,7 @@
             {/if}
             <slot />
         </div>
-        <Label {label} {title} {icon} {white} {color} {mode} />
+        <Label {label} {renameId} {title} {icon} {white} {color} {mode} />
     </div>
 </div>
 

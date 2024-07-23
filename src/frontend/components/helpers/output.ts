@@ -374,6 +374,7 @@ export function getCurrentMediaTransition() {
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true) {
     slideItems = clone(slideItems)
     if (!templateItems.length) return slideItems
+    templateItems = clone(templateItems)
 
     let sortedTemplateItems = sortItemsByType(templateItems)
 

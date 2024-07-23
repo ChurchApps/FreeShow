@@ -109,16 +109,13 @@ const actions: any = {
         if (!id) return
         let data = obj.sel.data[0]
 
-        if (id === "slide" || id === "group" || id === "overlay" || id === "template" || id === "player") activePopup.set("rename")
+        const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output"]
+        const renameByIdDirect = ["overlay", "template", "player", "layout"]
+
+        if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
+        else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
+        else if (id === "slide" || id === "group") activePopup.set("rename")
         else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
-        else if (id === "show_drawer") activeRename.set("show_drawer_" + data.id)
-        else if (id === "project") activeRename.set("project_" + data.id)
-        else if (id === "folder") activeRename.set("folder_" + data.id)
-        else if (id === "layout") activeRename.set("layout_" + data)
-        else if (id === "stage") activeRename.set("stage_" + data.id)
-        else if (id === "theme") activeRename.set("theme_" + data.id)
-        else if (id === "style") activeRename.set("style_" + data.id)
-        else if (id === "output") activeRename.set("output_" + data.id)
         else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + obj.contextElem.id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
