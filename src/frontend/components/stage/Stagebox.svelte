@@ -6,6 +6,7 @@
     import { getStyles } from "../helpers/style"
     import Image from "../media/Image.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
+    import SlideProgress from "../slide/views/SlideProgress.svelte"
     import Timer from "../slide/views/Timer.svelte"
     import Variable from "../slide/views/Variable.svelte"
     import Clock from "../system/Clock.svelte"
@@ -142,7 +143,9 @@
     {:else}
         <div class="align" style="--align: {item.align};--text-align: {item.alignX};">
             <div>
-                {#if id.includes("notes")}
+                {#if id.includes("slide_tracker")}
+                    <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
+                {:else if id.includes("notes")}
                     <SlideNotes {currentSlide} {next} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
                     <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} />

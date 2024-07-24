@@ -28,6 +28,7 @@
         { id: "variable" },
         { id: "web" },
         { id: "mirror" },
+        { id: "slide_tracker", icon: "percentage" },
         { id: "visualizer", maxAmount: 1 },
         { id: "captions", maxAmount: 1 }, // max one because there can't be multiple translations at this point
     ]

@@ -108,8 +108,8 @@ export class CaptureTransmitter {
         return image
     }
 
-    static sendToStageOutputs(msg: any) {
-        ;[...new Set(this.stageWindows)].forEach((id) => OutputHelper.Send.sendToWindow(id, msg))
+    static sendToStageOutputs(msg: any, excludeId: string = "") {
+        ;[...new Set(this.stageWindows)].forEach((id) => id !== excludeId && OutputHelper.Send.sendToWindow(id, msg))
     }
 
     static sendToRequested(msg: any) {
@@ -143,7 +143,7 @@ export class CaptureTransmitter {
 
         let msg = { channel: "BUFFER", data: { id: captureId, buffer, size } }
         toApp(OUTPUT, msg)
-        this.sendToStageOutputs(msg)
+        this.sendToStageOutputs(msg, captureId) // don't send to itself
         this.sendToRequested(msg)
     }
 

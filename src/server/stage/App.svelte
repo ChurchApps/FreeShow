@@ -4,7 +4,7 @@
     import Button from "./components/Button.svelte"
     import Icon from "./components/Icon.svelte"
     import Slide from "./components/Slide.svelte"
-    import { activeTimers, events, timeFormat, timers, variables } from "./store"
+    import { activeTimers, events, progressData, timeFormat, timers, variables } from "./store"
 
     // TODO: translate
     const lang: any = {
@@ -69,7 +69,7 @@
     let stream: any = {}
 
     socket.on("STAGE", (msg) => {
-        console.log(msg)
+        if (msg.channel !== "BACKGROUND") console.log(msg)
         switch (msg.channel) {
             case "ERROR":
                 setError(lang.error[msg.data])
@@ -128,6 +128,9 @@
                 break
             case "SLIDES":
                 slides = msg.data
+
+                // SlideProgress item
+                socket.emit("STAGE", { id, channel: "REQUEST_PROGRESS", data: { outputId: msg.data.outputId } })
                 break
             case "BACKGROUND":
                 background = msg.data
@@ -145,6 +148,9 @@
                 break
             case "ACTIVE_TIMERS":
                 activeTimers.set(msg.data)
+                break
+            case "REQUEST_PROGRESS":
+                progressData.set(msg.data)
                 break
             case "REQUEST_STREAM":
                 stream[msg.data.alpha ? "alpha" : "default"] = msg.data.stream

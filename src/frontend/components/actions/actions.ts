@@ -84,7 +84,7 @@ export function customActionActivation(id: string) {
     })
 }
 
-export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}) {
+export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}, allowMultiple: boolean = false) {
     if (slideIndex < 0) return
 
     let ref = _show().layouts("active").ref()[0]
@@ -98,7 +98,10 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
     if (actionValue) actionValues[actionId] = actionValue
 
     let action = { id, triggers: [actionId], actionValues }
-    actions.slideActions.push(action)
+
+    let existingIndex = actions.slideActions.findIndex((a) => a.triggers?.[0] === actionId)
+    if (allowMultiple || existingIndex < 0) actions.slideActions.push(action)
+    else actions.slideActions[existingIndex] = action
 
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [slideIndex] } })
 }

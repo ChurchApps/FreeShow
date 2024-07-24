@@ -11,6 +11,7 @@ import {
     activePage,
     activeProject,
     activeShow,
+    allOutputs,
     audioStreams,
     currentWindow,
     driveData,
@@ -758,7 +759,13 @@ export function getDynamicIds() {
     return [...mainValues, ...metaValues]
 }
 
-export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex }: any, _updater: number = 0) {
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type }: any, _updater: number = 0) {
+    if (type === "stage" && get(currentWindow) === "output") {
+        let outputId = Object.values(get(outputs))[0]?.stageOutput || ""
+        let outSlide = get(allOutputs)[outputId]?.out?.slide
+        showId = outSlide?.id
+    }
+
     let show = _show(showId).get()
     if (!show) return text
 

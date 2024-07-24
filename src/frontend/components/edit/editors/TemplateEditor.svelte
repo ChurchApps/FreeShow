@@ -8,10 +8,11 @@
     import { getStyles } from "../../helpers/style"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
+    import { clone } from "../../helpers/array"
 
     $: currentId = $activeEdit.id!
     $: Slide = $templates[currentId]
-    templates.subscribe((a) => (Slide = a[currentId]))
+    templates.subscribe((a) => (Slide = clone(a[currentId])))
 
     let newStyles: any = {}
     $: active = $activeEdit.items

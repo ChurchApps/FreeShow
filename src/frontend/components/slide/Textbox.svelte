@@ -21,6 +21,7 @@
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
     import Captions from "./views/Captions.svelte"
+    import SlideProgress from "./views/SlideProgress.svelte"
 
     export let item: Item
     export let itemIndex: number = -1
@@ -423,7 +424,7 @@
                                 {#each line.text || [] as text}
                                     {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                     <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate' ? text.style : ''}">
-                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }, updateDynamic) : value}
+                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex, type: ref.type }, updateDynamic) : value}
                                     </span>
                                 {/each}
                             </div>
@@ -480,6 +481,8 @@
             {#if !isMirrorItem}
                 <Mirror {item} {ref} {ratio} index={slideIndex} />
             {/if}
+        {:else if item?.type === "slide_tracker"}
+            <SlideProgress tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : autoSize} />
         {:else if item?.type === "visualizer"}
             <Visualizer {item} {preview} />
         {:else if item?.type === "captions"}

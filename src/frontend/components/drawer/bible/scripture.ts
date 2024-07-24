@@ -121,7 +121,7 @@ export const textKeys = {
 export function getSlides({ bibles, sorted }) {
     let slides: any[][] = [[]]
 
-    let template = get(templates)[get(scriptureSettings).template]?.items || []
+    let template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
     let templateTextItems = template.filter((a) => a.lines)
     let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
 

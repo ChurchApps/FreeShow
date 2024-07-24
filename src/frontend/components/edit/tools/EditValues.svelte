@@ -68,6 +68,14 @@
             let actualValue = (styles[input.key] || getOriginalValue(edits, (inset ? "inset_" : "") + input.key)).split(" ")
             if (inset && !actualValue.includes("inset")) actualValue.unshift("inset")
             actualValue[input.valueIndex] = value
+
+            // update current styles value (to properly reset)
+            if (styles[input.key]) {
+                let splitted = styles[input.key].split(" ") || []
+                if (splitted[input.valueIndex]) splitted[input.valueIndex] = value
+                styles[input.key] = splitted.join(" ")
+            }
+
             value = actualValue.join(" ")
         }
 
@@ -225,9 +233,9 @@
     function checkIsClosed(id: string) {
         if (noClosing) return false
 
-        if ($storedEditMenuState[sessionId]?.[id] !== undefined) {
-            return $storedEditMenuState[sessionId]?.[id]
-        }
+        // if ($storedEditMenuState[sessionId]?.[id] !== undefined) {
+        //     return $storedEditMenuState[sessionId]?.[id]
+        // }
 
         let closedVal = closed[id]
         let defaultEdit = defaultEdits?.[id]
@@ -272,55 +280,66 @@
 
         let state = !differentValue
 
-        if (sessionId) {
-            storedEditMenuState.update((a) => {
-                if (!a[sessionId]) a[sessionId] = {}
-                a[sessionId][id] = state
+        // if (sessionId) {
+        //     storedEditMenuState.update((a) => {
+        //         if (!a[sessionId]) a[sessionId] = {}
+        //         a[sessionId][id] = state
 
-                return a
-            })
-        }
+        //         return a
+        //     })
+        // }
 
         return state
     }
 
-    function updateMenu() {
-        if ($storedEditMenuState[sessionId]) storedEditMenuState.set({})
-        updateClosed = true
-        // WIP some menus won't close on first update
-    }
+    // function updateMenu() {
+    //     if ($storedEditMenuState[sessionId]) storedEditMenuState.set({})
+    //     updateClosed = true
+    //     // WIP some menus won't close on first update
+    // }
 
-    let updateClosed: boolean = false
     function openEdit(id: string) {
-        let closedVal = clone(closed[id])
-        let currentEdit = clone(edits[id])
+        storedEditMenuState.update((a) => {
+            if (!a[sessionId]) a[sessionId] = []
+            if (!a[sessionId].includes(id)) a[sessionId].push(id)
 
-        if (!closedVal || !currentEdit) return
-        currentEdit = currentEdit.map((a) => lineInputs[a.input] || a).flat()
-
-        currentEdit.forEach((input: any) => {
-            let newValue = Object.entries(closedVal).find(([styleId, _value]: any) => {
-                let dataId: string = styleId.split("_")[0]
-                let key: string | undefined = styleId.split("_")[1]
-                let valueIndex: string | undefined = styleId.split("_")[2]
-
-                if (valueIndex) return input.valueIndex === Number(valueIndex)
-                else if (key) return input.key === key
-                else return input.id === dataId
-            })?.[1]
-
-            if (newValue === undefined) return
-
-            valueChange({ detail: newValue }, input)
+            return a
         })
-
-        updateMenu()
     }
+
+    // WIP this will apply a default value (could be useful in some cases (like shadows), but was more confusing)
+    // let updateClosed: boolean = false
+    // function openEdit(id: string) {
+    //     let closedVal = clone(closed[id])
+    //     let currentEdit = clone(edits[id])
+
+    //     if (!closedVal || !currentEdit) return
+    //     currentEdit = currentEdit.map((a) => lineInputs[a.input] || a).flat()
+
+    //     currentEdit.forEach((input: any) => {
+    //         let newValue = Object.entries(closedVal).find(([styleId, _value]: any) => {
+    //             let dataId: string = styleId.split("_")[0]
+    //             let key: string | undefined = styleId.split("_")[1]
+    //             let valueIndex: string | undefined = styleId.split("_")[2]
+
+    //             if (valueIndex) return input.valueIndex === Number(valueIndex)
+    //             else if (key) return input.key === key
+    //             else return input.id === dataId
+    //         })?.[1]
+
+    //         if (newValue === undefined) return
+
+    //         valueChange({ detail: newValue }, input)
+    //     })
+
+    //     updateMenu()
+    // }
 
     function resetAndClose(id: string) {
         let closedVal = closed[id]
         let defaultEdit = clone(defaultEdits?.[id])
         let currentEdit = clone(edits[id])
+        console.log(defaultEdit, currentEdit)
 
         if (!closedVal || !defaultEdit || !currentEdit) return
 
@@ -328,7 +347,7 @@
         function resetInput(i: number = 0) {
             let input = currentEdit[i]
             if (!input) return
-            if (input.name === "background_opacity" || (input.key === "box-shadow" && input.valueIndex === 3)) return resetInput(i + 1)
+            if (input.name === "background_opacity") return resetInput(i + 1)
 
             if (lineInputs[input.input]) {
                 input = lineInputs[input.input]?.[0] || {}
@@ -337,167 +356,190 @@
 
             // TODO: remove value instead of setting to default...
             let newValue = defaultEdit[i]?.value
+            let currentValue = getValue(input, { styles, item })
+            if (newValue == currentValue) return resetInput(i + 1)
+
             valueChange({ detail: newValue }, input)
 
             setTimeout(() => resetInput(i + 1), 10)
         }
 
-        updateMenu()
+        // update menu state after values have changed!
+        let timeout = currentEdit.length * 10 + 30
+        setTimeout(() => {
+            storedEditMenuState.update((a) => {
+                let currentTabIndex = a[sessionId].indexOf(id)
+                if (currentTabIndex > -1) a[sessionId].splice(currentTabIndex, 1)
+
+                return a
+            })
+        }, timeout)
     }
 
     let cssClosed: boolean = true
+
+    $: if (sessionId) updateSectionsState()
+    function updateSectionsState() {
+        storedEditMenuState.update((a) => {
+            if (!a[sessionId]) a[sessionId] = []
+
+            Object.keys(edits || {}).forEach((section) => {
+                if (a[sessionId].includes(section)) return
+                if (!checkIsClosed(section)) a[sessionId].push(section)
+            })
+
+            return a
+        })
+    }
 </script>
 
-{#key updateClosed}
-    {#each Object.keys(edits || {}) as section, i}
-        {@const isClosed = checkIsClosed(section)}
-        <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
-            {#if isClosed}
-                <Button on:click={() => openEdit(section)} style="margin-top: 5px;" dark bold={false}>
-                    <Icon id={section} right />
-                    <p style="font-size: 1.2em;opacity: 1;width: initial;"><T id="edit.{section}" /></p>
-                </Button>
-            {:else}
-                {#if section !== "default" && (section !== "CSS" || !cssClosed)}
-                    <h6 style="display: flex;justify-content: center;align-items: center;position: relative;">
-                        {#if section[0] === section[0].toUpperCase()}
-                            {section}
-                        {:else}
-                            <T id="edit.{section}" />
-                        {/if}
-
-                        {#if !noClosing && closed[section]}
-                            <Button style="position: absolute;right: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.reset}><Icon id="reset" white /></Button>
-                        {/if}
-                    </h6>
-                {/if}
-                {#each edits[section] as input}
-                    {#if input.input === "editTimer"}
-                        <EditTimer {item} on:change={(e) => valueChange(e, input)} />
-                    {:else if input.input === "selectVariable"}
-                        <CombinedInput>
-                            <p title={$dictionary.items?.variable}><T id="items.variable" /></p>
-                            <Dropdown value={Object.entries($variables).find(([id]) => id === input.value)?.[1]?.name || "—"} options={keysToID($variables)} on:click={(e) => valueChange(e, input)} />
-                        </CombinedInput>
-                    {:else if input.input === "tip"}
-                        <p class="tip">
-                            <T id={input.name} />
-                            {input.values?.subtext || ""}
-                        </p>
-                    {:else if input.input === "popup"}
-                        <CombinedInput>
-                            <Button
-                                style="width: 100%;"
-                                on:click={() => {
-                                    activePopup.set(input.popup || input.id)
-                                    let data = { id: input.id, section, value: input.value, type: "" }
-                                    if (input.id === "list.items") data.type = edits[section].find((a) => a.id === "list.style")?.value
-                                    popupData.set(data)
-                                }}
-                                dark
-                                center
-                            >
-                                <Icon id={input.icon || input.id} right />
-                                <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
-                            </Button>
-                        </CombinedInput>
-                    {:else if input.input === "media"}
-                        <MediaPicker
-                            id={"item_" + sessionId}
-                            title={input.value}
-                            style="overflow: hidden;margin-bottom: 10px;"
-                            filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }}
-                            on:picked={(e) => valueChange(e, input)}
-                        >
-                            <Icon id="image" right />
-                            {#if input.value}
-                                <p style="padding: 0;opacity: 1;">{getFileName(input.value)}</p>
-                            {:else}
-                                <p style="padding: 0;"><T id="edit.choose_media" /></p>
-                            {/if}
-                        </MediaPicker>
-                    {:else if input.input === "multiselect"}
-                        <div class="line">
-                            {#each input.values as option}
-                                <Button
-                                    on:click={() => valueChange({ detail: option.id }, input)}
-                                    style={input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
-                                    bold={false}
-                                    center
-                                    dark
-                                >
-                                    {#if option.icon}
-                                        <Icon id={option.icon} right />
-                                    {/if}
-                                    <T id={option.name} />
-                                </Button>
-                            {/each}
-                        </div>
-                    {:else if lineInputs[input.input]}
-                        <!-- <div class="line" style="border-bottom: 2px solid var(--primary-lighter);"> -->
-                        <CombinedInput>
-                            {#each lineInputs[input.input] as lineInput}
-                                {@const currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles}
-                                <IconButton
-                                    on:click={() => (lineInput.toggle ? toggle(lineInput) : dispatch("change", lineInput))}
-                                    title={$dictionary.edit?.["_title_" + lineInput.title || lineInput.icon]}
-                                    icon={lineInput.icon}
-                                    active={currentStyle[lineInput.key] ? currentStyle[lineInput.key]?.includes(lineInput.value) : lineInput.default}
-                                />
-                            {/each}
-                        </CombinedInput>
-                        <!-- </div> -->
-                    {:else if input.input === "CSS"}
-                        {#if cssClosed}
-                            <Button on:click={() => (cssClosed = false)} style="margin-top: 5px;" dark bold={false}>
-                                <Icon id="code" right />
-                                <p style="font-size: 1.2em;opacity: 1;width: initial;">CSS</p>
-                            </Button>
-                        {:else}
-                            <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
-                                <Notes value={getStyleString(input)} on:change={(e) => dispatch("change", { id: input.id === "text" ? "CSS" : input.id, value: e.detail })} />
-                            </div>
-                        {/if}
-                    {:else if input.input === "checkbox"}
-                        {@const value = getValue(input, { styles, item })}
-                        {#if !input.hidden}
-                            <CombinedInput>
-                                <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
-                                    <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
-                                </p>
-                                <div class="alignRight">
-                                    <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
-                                </div>
-                            </CombinedInput>
-                        {/if}
-                    {:else if !input.name}
-                        Missing input name: {input.input}
+{#each Object.keys(edits || {}) as section, i}
+    <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
+        {#if !$storedEditMenuState[sessionId]?.includes(section)}
+            <Button on:click={() => openEdit(section)} style="margin-top: 5px;" dark bold={false}>
+                <Icon id={section} right />
+                <p style="font-size: 1.2em;opacity: 1;width: initial;"><T id="edit.{section}" /></p>
+            </Button>
+        {:else}
+            {#if section !== "default" && (section !== "CSS" || !cssClosed)}
+                <h6 style="display: flex;justify-content: center;align-items: center;position: relative;">
+                    {#if section[0] === section[0].toUpperCase()}
+                        {section}
                     {:else}
-                        {@const value = getValue(input, { styles, item })}
-                        {#if !input.hidden}
-                            <CombinedInput>
-                                <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
-                                    <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
-                                </p>
-                                <svelte:component
-                                    this={inputs[input.input]}
-                                    {...input.values || {}}
-                                    {value}
-                                    disabled={input.disabled && (item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value)}
-                                    enableNoColor={input.enableNoColor}
-                                    disableHold
-                                    on:click={(e) => valueChange(e, input)}
-                                    on:input={(e) => valueChange(e, input, true)}
-                                    on:change={(e) => valueChange(e, input)}
-                                />
-                            </CombinedInput>
-                        {/if}
+                        <T id="edit.{section}" />
                     {/if}
-                {/each}
+
+                    {#if !noClosing && closed[section]}
+                        <Button style="position: absolute;right: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.reset}><Icon id="reset" white /></Button>
+                    {/if}
+                </h6>
             {/if}
-        </div>
-    {/each}
-{/key}
+            {#each edits[section] as input}
+                {#if input.input === "editTimer"}
+                    <EditTimer {item} on:change={(e) => valueChange(e, input)} />
+                {:else if input.input === "selectVariable"}
+                    <CombinedInput>
+                        <p title={$dictionary.items?.variable}><T id="items.variable" /></p>
+                        <Dropdown value={Object.entries($variables).find(([id]) => id === input.value)?.[1]?.name || "—"} options={keysToID($variables)} on:click={(e) => valueChange(e, input)} />
+                    </CombinedInput>
+                {:else if input.input === "tip"}
+                    <p class="tip">
+                        <T id={input.name} />
+                        {input.values?.subtext || ""}
+                    </p>
+                {:else if input.input === "popup"}
+                    <CombinedInput>
+                        <Button
+                            style="width: 100%;"
+                            on:click={() => {
+                                activePopup.set(input.popup || input.id)
+                                let data = { id: input.id, section, value: input.value, type: "" }
+                                if (input.id === "list.items") data.type = edits[section].find((a) => a.id === "list.style")?.value
+                                popupData.set(data)
+                            }}
+                            dark
+                            center
+                        >
+                            <Icon id={input.icon || input.id} right />
+                            <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
+                        </Button>
+                    </CombinedInput>
+                {:else if input.input === "media"}
+                    <MediaPicker
+                        id={"item_" + sessionId}
+                        title={input.value}
+                        style="overflow: hidden;margin-bottom: 10px;"
+                        filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }}
+                        on:picked={(e) => valueChange(e, input)}
+                    >
+                        <Icon id="image" right />
+                        {#if input.value}
+                            <p style="padding: 0;opacity: 1;">{getFileName(input.value)}</p>
+                        {:else}
+                            <p style="padding: 0;"><T id="edit.choose_media" /></p>
+                        {/if}
+                    </MediaPicker>
+                {:else if input.input === "multiselect"}
+                    <div class="line">
+                        {#each input.values as option}
+                            <Button
+                                on:click={() => valueChange({ detail: option.id }, input)}
+                                style={input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                                bold={false}
+                                center
+                                dark
+                            >
+                                {#if option.icon}
+                                    <Icon id={option.icon} right />
+                                {/if}
+                                <T id={option.name} />
+                            </Button>
+                        {/each}
+                    </div>
+                {:else if lineInputs[input.input]}
+                    <!-- <div class="line" style="border-bottom: 2px solid var(--primary-lighter);"> -->
+                    <CombinedInput>
+                        {#each lineInputs[input.input] as lineInput}
+                            {@const currentStyle = lineInput.key === "align-items" ? alignStyle : lineInput.key === "text-align" ? lineAlignStyle : styles}
+                            <IconButton
+                                on:click={() => (lineInput.toggle ? toggle(lineInput) : dispatch("change", lineInput))}
+                                title={$dictionary.edit?.["_title_" + lineInput.title || lineInput.icon]}
+                                icon={lineInput.icon}
+                                active={currentStyle[lineInput.key] ? currentStyle[lineInput.key]?.includes(lineInput.value) : lineInput.default}
+                            />
+                        {/each}
+                    </CombinedInput>
+                    <!-- </div> -->
+                {:else if input.input === "CSS"}
+                    {#if cssClosed}
+                        <Button on:click={() => (cssClosed = false)} style="margin-top: 5px;" dark bold={false}>
+                            <Icon id="code" right />
+                            <p style="font-size: 1.2em;opacity: 1;width: initial;">CSS</p>
+                        </Button>
+                    {:else}
+                        <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
+                            <Notes lines={8} value={getStyleString(input)} on:change={(e) => dispatch("change", { id: input.id === "text" ? "CSS" : input.id, value: e.detail })} />
+                        </div>
+                    {/if}
+                {:else if input.input === "checkbox"}
+                    {@const value = getValue(input, { styles, item })}
+                    {#if !input.hidden}
+                        <CombinedInput>
+                            <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
+                                <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
+                            </p>
+                            <div class="alignRight">
+                                <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
+                            </div>
+                        </CombinedInput>
+                    {/if}
+                {:else if !input.name}
+                    Missing input name: {input.input}
+                {:else}
+                    {@const value = getValue(input, { styles, item })}
+                    {#if !input.hidden}
+                        <CombinedInput>
+                            <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
+                                <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
+                            </p>
+                            <svelte:component
+                                this={inputs[input.input]}
+                                {...input.values || {}}
+                                {value}
+                                disabled={input.disabled && (item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value)}
+                                enableNoColor={input.enableNoColor}
+                                disableHold
+                                on:click={(e) => valueChange(e, input)}
+                                on:input={(e) => valueChange(e, input, true)}
+                                on:change={(e) => valueChange(e, input)}
+                            />
+                        </CombinedInput>
+                    {/if}
+                {/if}
+            {/each}
+        {/if}
+    </div>
+{/each}
 
 <style>
     .section {

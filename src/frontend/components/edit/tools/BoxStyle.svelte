@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item, ItemType } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, selected, showsCache, templates } from "../../../stores"
+    import { activeEdit, activeShow, overlays, selected, showsCache, templates, theme, themes } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { hexToRgb, splitRgb } from "../../helpers/color"
@@ -63,7 +63,7 @@
 
     // -----
 
-    const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera", "variable", "web"]
+    const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera", "variable", "web", "slide_tracker"]
 
     const setBox = () => clone(boxes[id])
     let box: any = setBox()
@@ -133,7 +133,10 @@
         else if (id === "timer") box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
         else if (id === "variable") box.edit.default[0].value = item?.variable?.id
         else if (id === "web") box.edit.default[0].value = item?.web?.src || ""
-        else if (id === "events" && box.edit.default[5]) {
+        else if (id === "slide_tracker") {
+            if (item?.tracker?.type) box.edit.default[0].value = item.tracker.type
+            box.edit.default[1].value = item?.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C"
+        } else if (id === "events" && box.edit.default[5]) {
             box.edit.default[4].hidden = !item?.events?.enableStartDate
             box.edit.default[5].hidden = !item?.events?.enableStartDate
         }

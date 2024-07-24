@@ -32,6 +32,7 @@ export interface StageShows {
                 align: string
                 alignX?: string
                 label?: string // sending translated label to stage
+                tracker?: any // slide tracker data
             }
         }
     }

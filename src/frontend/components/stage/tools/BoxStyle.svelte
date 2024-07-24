@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { activeStage, stageShows } from "../../../stores"
+    import { activeStage, stageShows, theme, themes } from "../../../stores"
     import { addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
+    import { trackerEdits } from "../../edit/values/boxes"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -19,8 +20,14 @@
         edits = clone(textEdits)
 
         // custom input values
-        if (items[0].includes("slide") && !items[0].includes("text") && !items[0].includes("notes")) edits = { chords: edits.chords }
-        else if (items[0].includes("output")) edits = {}
+        if (items[0].includes("slide") && !items[0].includes("text") && !items[0].includes("notes") && !items[0].includes("tracker")) edits = { chords: edits.chords }
+        else if (items[0].includes("tracker")) {
+            let newEdits = clone(textEdits)
+            delete newEdits.default
+            delete newEdits.align
+            delete newEdits.chords
+            edits = { default: trackerEdits, font: edits.default, ...newEdits }
+        } else if (items[0].includes("output")) edits = {}
     }
 
     let data: { [key: string]: any } = {}
@@ -36,6 +43,10 @@
         if (item?.chordsData?.color) edits.chords[1].value = item.chordsData.color
         if (item?.chordsData?.size) edits.chords[2].value = item.chordsData.size
     }
+    $: if (items[0]?.includes("tracker") && item?.tracker && edits.default?.[0]?.id === "tracker.type") {
+        if (item.tracker.type) edits.default[0].value = item.tracker.type
+        edits.default[1].value = item.tracker.accent || $themes[$theme]?.colors?.secondary || "#F0008C"
+    }
 
     // align
     let alignStyle: any = {}
@@ -44,8 +55,11 @@
     $: if (item?.alignX) lineAlignStyle = { "text-align": item.alignX }
 
     function updateAuto(value) {
-        let autoIndex = edits?.default?.findIndex((a) => a.id === "auto")
-        if (!autoIndex) return
+        if (!edits.default) return
+
+        let autoIndex = edits.default.findIndex((a) => a.id === "auto")
+        if (autoIndex < 0) return
+
         edits.default[autoIndex].value = value
     }
 

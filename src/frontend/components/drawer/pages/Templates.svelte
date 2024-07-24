@@ -26,7 +26,7 @@
     templates.subscribe(updateTemplates)
 
     function updateTemplates() {
-        filteredTemplates = Object.keys($templates)
+        filteredTemplates = clone(Object.keys($templates))
             .map((id) => ({ id, ...$templates[id] }))
             .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category])))
             .sort((a, b) => a.name.localeCompare(b.name))

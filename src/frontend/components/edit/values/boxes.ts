@@ -34,6 +34,28 @@ export const mediaFitOptions: any[] = [
     // { id: "scale-down", name: "Scale down" },
 ]
 
+export let trackerEdits = [
+    {
+        name: "clock.type",
+        input: "dropdown",
+        id: "tracker.type",
+        value: "number",
+        values: {
+            options: [
+                { id: "number", name: "$:variables.number:$" },
+                { id: "bar", name: "$:edit.progress_bar:$" },
+                { id: "group", name: "$:tools.groups:$" },
+            ],
+        },
+    },
+    {
+        name: "edit.accent_color",
+        input: "color",
+        id: "tracker.accent",
+        value: "#F0008C",
+    },
+]
+
 export const boxes: Box = {
     text: {
         // name: "items.text",
@@ -423,6 +445,19 @@ export const boxes: Box = {
                 { name: "slide_index", disabled: "mirror.useSlideIndex", id: "mirror.index", input: "number", value: 0 },
             ],
             // template, item index
+        },
+    },
+    slide_tracker: {
+        icon: "slide_tracker",
+        edit: {
+            default: trackerEdits,
+            font: [
+                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
+                { name: "text_color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
+                { name: "font_size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
+                { name: "auto_size", id: "auto", input: "checkbox", value: false },
+                { input: "font-style" },
+            ],
         },
     },
     visualizer: {
