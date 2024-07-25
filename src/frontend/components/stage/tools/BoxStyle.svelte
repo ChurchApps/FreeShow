@@ -48,6 +48,10 @@
         edits.default[1].value = item.tracker.accent || $themes[$theme]?.colors?.secondary || "#F0008C"
     }
 
+    // CSS
+    // WIP get only text related item styles (& combine again)?
+    $: if (edits?.CSS && item?.style) edits.CSS[0].value = item.style
+
     // align
     let alignStyle: any = {}
     let lineAlignStyle: any = {}
@@ -64,8 +68,6 @@
     }
 
     function setValue(input: any) {
-        console.log("STAGE", input)
-
         let value: any = input.value
         // if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
         // else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
@@ -74,35 +76,30 @@
 
         if (input.id.includes(".")) {
             let splitted = input.id.split(".")
-            console.log(splitted)
             input.id = splitted[0]
             let newValue = item?.[input.id] || {}
             newValue[splitted[1]] = value
             value = newValue
-            console.log(value)
         }
 
         history({ id: "UPDATE", newData: { data: value, key: "items", subkey: input.id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
     }
 
     function updateAlign(input) {
-        console.log("ALIGN", input)
         let id = "align"
         if (input.key === "text-align") id = "alignX"
 
         let value = input.value
-        console.log(id, value)
 
         history({ id: "UPDATE", newData: { data: value, key: "items", subkey: id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
     }
 
     function updateStyle(e: any) {
         let input = e.detail
-        console.log(input)
 
         if (input.key === "text-align" || input.key === "align-items") updateAlign(input)
 
-        if (input.id !== "style") {
+        if (input.id !== "style" && input.id !== "CSS") {
             setValue(input)
             return
         }
@@ -112,8 +109,6 @@
         if (input.id === "CSS") value = input.value.replaceAll("\n", "")
 
         if (!value) return
-
-        console.log(item?.style, value)
 
         history({ id: "UPDATE", newData: { data: value, key: "items", subkey: "style", keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
 

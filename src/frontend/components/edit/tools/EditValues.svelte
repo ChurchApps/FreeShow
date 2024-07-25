@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
+    import { uid } from "uid"
     import { activePopup, dictionary, imageExtensions, popupData, storedEditMenuState, variables, videoExtensions } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -65,18 +66,23 @@
         if (input.valueIndex !== undefined) {
             let inset = input.key.includes("inset_")
             if (inset) input.key = input.key.substring(6)
-            let actualValue = (styles[input.key] || getOriginalValue(edits, (inset ? "inset_" : "") + input.key)).split(" ")
+
+            let actualValue = styles[input.key] || getOriginalValue(edits, (inset ? "inset_" : "") + input.key)
+
+            // replace rgb() because it has spaces
+            if (input.input === "color") {
+                let rgbIndex: number = actualValue.indexOf("rgb")
+                if (rgbIndex > 5) actualValue = actualValue.slice(0, rgbIndex) + "#000000"
+            }
+            actualValue = actualValue.split(" ")
+
             if (inset && !actualValue.includes("inset")) actualValue.unshift("inset")
             actualValue[input.valueIndex] = value
 
-            // update current styles value (to properly reset)
-            if (styles[input.key]) {
-                let splitted = styles[input.key].split(" ") || []
-                if (splitted[input.valueIndex]) splitted[input.valueIndex] = value
-                styles[input.key] = splitted.join(" ")
-            }
-
             value = actualValue.join(" ")
+
+            // update current styles value (to properly set/reset)
+            styles[input.key] = value
         }
 
         dispatch("change", { ...input, value })
@@ -188,12 +194,12 @@
         },
         shadow: {
             // "style_text-shadow_3": "#000000",
-            "style_text-shadow_0": 2,
-            "style_text-shadow_1": 2,
+            "style_text-shadow_0": 0,
+            "style_text-shadow_1": 0,
+            "style_text-shadow_2": 0,
 
             // item
-            // WIP only last value updates here (both set/reset)
-            "style_box-shadow_4": "rgb(0 0 0 / 0.3)",
+            "style_box-shadow_4": "rgb(0 0 0 / 0.5)",
             "style_box-shadow_0": 2,
             "style_box-shadow_1": 2,
             "style_box-shadow_2": 8,
@@ -232,10 +238,7 @@
 
     function checkIsClosed(id: string) {
         if (noClosing) return false
-
-        // if ($storedEditMenuState[sessionId]?.[id] !== undefined) {
-        //     return $storedEditMenuState[sessionId]?.[id]
-        // }
+        if (id === "CSS") return true
 
         let closedVal = closed[id]
         let defaultEdit = defaultEdits?.[id]
@@ -280,24 +283,10 @@
 
         let state = !differentValue
 
-        // if (sessionId) {
-        //     storedEditMenuState.update((a) => {
-        //         if (!a[sessionId]) a[sessionId] = {}
-        //         a[sessionId][id] = state
-
-        //         return a
-        //     })
-        // }
-
         return state
     }
 
-    // function updateMenu() {
-    //     if ($storedEditMenuState[sessionId]) storedEditMenuState.set({})
-    //     updateClosed = true
-    //     // WIP some menus won't close on first update
-    // }
-
+    const setDefaults: string[] = ["outline", "shadow", "chords", "border"]
     function openEdit(id: string) {
         storedEditMenuState.update((a) => {
             if (!a[sessionId]) a[sessionId] = []
@@ -305,41 +294,50 @@
 
             return a
         })
+
+        if (setDefaults.includes(id)) setCustomValues(id)
     }
 
-    // WIP this will apply a default value (could be useful in some cases (like shadows), but was more confusing)
-    // let updateClosed: boolean = false
-    // function openEdit(id: string) {
-    //     let closedVal = clone(closed[id])
-    //     let currentEdit = clone(edits[id])
+    function setCustomValues(id: string) {
+        let closedVal = clone(closed[id])
+        let currentEdit = clone(edits[id])
 
-    //     if (!closedVal || !currentEdit) return
-    //     currentEdit = currentEdit.map((a) => lineInputs[a.input] || a).flat()
+        if (!closedVal || !currentEdit) return
+        currentEdit = currentEdit.map((a) => lineInputs[a.input] || a).flat()
 
-    //     currentEdit.forEach((input: any) => {
-    //         let newValue = Object.entries(closedVal).find(([styleId, _value]: any) => {
-    //             let dataId: string = styleId.split("_")[0]
-    //             let key: string | undefined = styleId.split("_")[1]
-    //             let valueIndex: string | undefined = styleId.split("_")[2]
+        setStyle()
+        function setStyle(i: number = 0) {
+            let input = currentEdit[i]
+            if (!input) return
 
-    //             if (valueIndex) return input.valueIndex === Number(valueIndex)
-    //             else if (key) return input.key === key
-    //             else return input.id === dataId
-    //         })?.[1]
+            let newValue = Object.entries(closedVal).find(([styleId, _value]: any) => {
+                let dataId: string = styleId.split("_")[0]
+                let key: string | undefined = styleId.split("_")[1]
+                let valueIndex: string | undefined = styleId.split("_")[2]
 
-    //         if (newValue === undefined) return
+                if (valueIndex) return input.valueIndex === Number(valueIndex) && input.key === key
+                else if (key) return input.key === key
+                else return input.id === dataId
+            })?.[1]
 
-    //         valueChange({ detail: newValue }, input)
-    //     })
+            if (newValue === undefined) return setStyle(i + 1)
 
-    //     updateMenu()
-    // }
+            valueChange({ detail: newValue }, input)
+            input.value = newValue
+
+            setTimeout(() => setStyle(i + 1), 20)
+        }
+    }
 
     function resetAndClose(id: string) {
+        if (id === "CSS") {
+            closeEdit("CSS")
+            return
+        }
+
         let closedVal = closed[id]
         let defaultEdit = clone(defaultEdits?.[id])
         let currentEdit = clone(edits[id])
-        console.log(defaultEdit, currentEdit)
 
         if (!closedVal || !defaultEdit || !currentEdit) return
 
@@ -366,22 +364,23 @@
 
         // update menu state after values have changed!
         let timeout = currentEdit.length * 10 + 30
-        setTimeout(() => {
-            storedEditMenuState.update((a) => {
-                let currentTabIndex = a[sessionId].indexOf(id)
-                if (currentTabIndex > -1) a[sessionId].splice(currentTabIndex, 1)
-
-                return a
-            })
-        }, timeout)
+        setTimeout(() => closeEdit(id), timeout)
     }
 
-    let cssClosed: boolean = true
+    function closeEdit(id: string) {
+        storedEditMenuState.update((a) => {
+            let currentTabIndex = a[sessionId].indexOf(id)
+            if (currentTabIndex > -1) a[sessionId].splice(currentTabIndex, 1)
 
+            return a
+        })
+    }
+
+    $: if (!sessionId) sessionId = uid()
     $: if (sessionId) updateSectionsState()
     function updateSectionsState() {
         storedEditMenuState.update((a) => {
-            if (!a[sessionId]) a[sessionId] = []
+            if (!a[sessionId]) a[sessionId] = ["default"]
 
             Object.keys(edits || {}).forEach((section) => {
                 if (a[sessionId].includes(section)) return
@@ -395,13 +394,18 @@
 
 {#each Object.keys(edits || {}) as section, i}
     <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
-        {#if !$storedEditMenuState[sessionId]?.includes(section)}
+        {#if !noClosing && !$storedEditMenuState[sessionId]?.includes(section)}
             <Button on:click={() => openEdit(section)} style="margin-top: 5px;" dark bold={false}>
-                <Icon id={section} right />
-                <p style="font-size: 1.2em;opacity: 1;width: initial;"><T id="edit.{section}" /></p>
+                {#if section === "CSS"}
+                    <Icon id="code" right />
+                    <p style="font-size: 1.2em;opacity: 1;width: initial;">CSS</p>
+                {:else}
+                    <Icon id={section} right />
+                    <p style="font-size: 1.2em;opacity: 1;width: initial;"><T id="edit.{section}" /></p>
+                {/if}
             </Button>
         {:else}
-            {#if section !== "default" && (section !== "CSS" || !cssClosed)}
+            {#if section !== "default"}
                 <h6 style="display: flex;justify-content: center;align-items: center;position: relative;">
                     {#if section[0] === section[0].toUpperCase()}
                         {section}
@@ -409,8 +413,14 @@
                         <T id="edit.{section}" />
                     {/if}
 
-                    {#if !noClosing && closed[section]}
-                        <Button style="position: absolute;right: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.reset}><Icon id="reset" white /></Button>
+                    {#if !noClosing && (closed[section] || section === "CSS")}
+                        <Button style="position: absolute;right: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.[checkIsClosed(section) ? "close" : "reset"]}>
+                            {#if checkIsClosed(section)}
+                                <Icon id="remove" white />
+                            {:else}
+                                <Icon id="reset" white />
+                            {/if}
+                        </Button>
                     {/if}
                 </h6>
             {/if}
@@ -491,16 +501,9 @@
                     </CombinedInput>
                     <!-- </div> -->
                 {:else if input.input === "CSS"}
-                    {#if cssClosed}
-                        <Button on:click={() => (cssClosed = false)} style="margin-top: 5px;" dark bold={false}>
-                            <Icon id="code" right />
-                            <p style="font-size: 1.2em;opacity: 1;width: initial;">CSS</p>
-                        </Button>
-                    {:else}
-                        <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
-                            <Notes lines={8} value={getStyleString(input)} on:change={(e) => dispatch("change", { id: input.id === "text" ? "CSS" : input.id, value: e.detail })} />
-                        </div>
-                    {/if}
+                    <div class="items CSS" style="display: flex;flex-direction: column;background: var(--primary-darker);">
+                        <Notes lines={8} value={getStyleString(input)} on:change={(e) => dispatch("change", { id: input.id === "text" ? "CSS" : input.id, value: e.detail })} />
+                    </div>
                 {:else if input.input === "checkbox"}
                     {@const value = getValue(input, { styles, item })}
                     {#if !input.hidden}

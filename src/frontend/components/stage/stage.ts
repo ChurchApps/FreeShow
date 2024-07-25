@@ -11,7 +11,7 @@ export function updateStageShow() {
     })
 }
 
-export function getCustomStageLabel(itemId: string): string {
+export function getCustomStageLabel(itemId: string, _updater: any = null): string {
     if (itemId.includes("global_timers")) return get(timers)[getStageItemId(itemId)]?.name || ""
     if (itemId.includes("variables")) return get(variables)[getStageItemId(itemId)]?.name || ""
 

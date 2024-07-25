@@ -20,6 +20,9 @@
     $: itemEdit = clone(itemEdits)
     $: if (itemEdit.backdrop_filters) delete itemEdit.backdrop_filters
 
+    // CSS
+    $: if (itemEdit?.CSS && item?.style) itemEdit.CSS[0].value = item.style
+
     function updateStyle(e: any) {
         let input = e.detail
 
@@ -28,8 +31,6 @@
         if (input.id === "CSS") value = input.value.replaceAll("\n", "")
 
         if (!value) return
-
-        console.log(item?.style, value)
 
         history({ id: "UPDATE", newData: { data: value, key: "items", subkey: "style", keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_style", override: $activeStage.id + items.join("") } })
 

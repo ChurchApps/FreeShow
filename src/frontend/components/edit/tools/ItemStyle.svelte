@@ -20,6 +20,9 @@
 
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
 
+    // CSS
+    $: if (itemEditValues?.CSS && item?.style) itemEditValues.CSS[0].value = item.style
+
     $: itemBackFilters = getStyles(item?.style)["backdrop-filter"]
     $: if (itemBackFilters) getItemFilters()
     function getItemFilters() {

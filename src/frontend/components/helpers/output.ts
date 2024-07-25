@@ -35,9 +35,10 @@ import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
-    let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
-    enabledOutputs.forEach((id) => {
-        let output: any = { id, ...get(outputs)[id] }
+    // sort so display order can be changed! (needs app restart)
+    let enabledOutputs: any[] = sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id })))
+
+    enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1
         send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: output.allowMainScreen || e.ctrlKey || e.metaKey, auto, autoPosition })
     })

@@ -9,6 +9,7 @@
         "search": "Arama",
         "none": "Hiçbiri",
         "finished": "Bitti",
+        "open": "Açık",
         "system_open": "Sistemde aç"
     },
     "titlebar": {
@@ -29,9 +30,11 @@
     "about": {
         "check_updates": "Güncellemeleri ara",
         "made": "tarafından Norveç'te yapılmıştır.",
-        "report": "Bir sorunu bildirmek ister misiniz? GitHub'da bir sorun oluşturun.",
-        "help": "Çeviriye yardım etmek veya bir özellik istemek mi istiyorsunuz? mail gönder",
-        "support": "Projeyi destekliyor musunuz?",
+        "more": "Lütfen daha fazla uygulamamıza göz atın",
+        "report": "Bir sorunu bildirmek veya bir özellik talep etmek için şu adrese gidin",
+        "translate": "Çeviriye yardım etmek ister misiniz? Lütfen şu adrese gidin",
+        "mail": "E-posta yoluyla iletişim",
+        "support": "Bu proje için minnettarsanız, lütfen desteklemeyi düşünün",
         "assets": "Kullanılan varlıklar",
         "libraries": "Kullanılan kütüphaneler",
         "thanks": "Teşekkür ederim",
@@ -117,7 +120,8 @@
         "slide": "Slaytı temizle",
         "overlays": "Bindirmeleri temizle",
         "audio": "Sesi temizle",
-        "nextTimer": "Sonraki slayt zamanlayıcısını temizle"
+        "nextTimer": "Sonraki slayt zamanlayıcısını temizle",
+        "drawing": "Temiz çizim"
     },
     "remove": {
         "background": "Arkaplanı kaldırın",
@@ -160,6 +164,8 @@
         "recommended": "Tavsiye edilen"
     },
     "audio": {
+        "settings": "Ses ayarları",
+        "mute_when_video_plays": "Video oynatılırken sesi kapat",
         "metronome": "Metronom",
         "toggle_metronome": "Metronomu değiştir",
         "tempo": "Tempo",
@@ -227,7 +233,8 @@
         "display": "Geçerli ekranda çıktı penceresi gösterilemedi",
         "keep_one_layout": "En az bir düzeniniz olmalıdır",
         "video_unavailable": "Video kullanılamıyor mu? İçerik oluşturucu, videodaki yerleştirmeleri devre dışı bıraktı.",
-        "folder_exists": "Bu klasör zaten var"
+        "folder_exists": "Bu klasör zaten var",
+        "uri": "Ses adı ayrıştırılamadı, lütfen dosyayı yeniden adlandırın"
     },
     "meta": {
         "title": "Başlık",
@@ -277,6 +284,9 @@
     "inputs": {
         "name": "İsim",
         "url": "URL",
+        "method": "Yöntem",
+        "contentType": "İçerik Türü",
+        "payload": "Yük",
         "video_id": "Video ID/URL",
         "close_ad": "Çıktı ekranında reklamı kapat",
         "start": "Başlat",
@@ -353,6 +363,7 @@
         "animate": "Hareketlendir",
         "next_timer": "Sonraki slayt zamanlayıcı",
         "import": "İçeri aktar",
+        "songbeamer_import": "Songbeamer İçe aktar",
         "export": "Dışarı aktar",
         "importing": "İçe Aktarma",
         "import_scripture": "Kutsal kitabı içe aktar",
@@ -388,7 +399,7 @@
         "verse_undefined": "{} ayeti bu bölümde yok.",
         "recording_started": "Kayıt başladı!",
         "recording_stopped": "Kayıt durduruldu!",
-        "starting_show": "Başlangıç şovu",
+        "starting_action": "Başlangıç eylemi",
         "less_than_minute": "bir dakikadan daha kısa sürede.",
         "less_than_seconds": "{} saniyeden daha kısa sürede.",
         "now": "Şimdi!",
@@ -507,7 +518,7 @@
         "add_color": "Renk ekle",
         "format": "Biçim",
         "find_replace": "Metni bul ve değiştir",
-        "cut_in_half": "Yarıdan kes",
+        "cut_in_half": "İkiye bölünmüş",
         "find": "Bul",
         "replace": "Değiştir",
         "case_sensitive": "Harfe duyarlı",
@@ -537,6 +548,7 @@
         "delete_shows_not_indexed": "Dizine eklenmemiş 'Şovlar' klasöründeki şovları silin",
         "delete_thumbnail_cache": "Küçük resim önbelleğini sil",
         "open_log_file": "Günlük dosyasını aç",
+        "open_cache_folder": "Önbellek klasörünü açın",
         "refresh_all_shows": "Tüm şovları 'Şovlar' klasörüne alın",
         "start_timer": "Zamanlayıcıyı başlat",
         "stop_timers": "Aktif zamanlayıcıları durdur",
@@ -562,6 +574,7 @@
         "change_volume": "Hacmi değiştirin",
         "start_audio_stream": "Ses akışını başlat",
         "start_playlist": "Çalma listesini başlat",
+        "playlist_next": "Çalma listesindeki sonraki parça",
         "start_metronome": "Metronomu başlat",
         "start_slide_timers": "Etkin slaytta zamanlayıcıları başlatma",
         "id_select_output_style": "Kimliğe göre çıktı stilini seçme",
@@ -570,10 +583,15 @@
         "change_variable": "Değişken değiştir",
         "start_trigger": "Tetikleyiciyi başlat",
         "run_action": "Çalıştırma eylemi",
+        "toggle_action": "Eylemi değiştir",
+        "send_rest_command": "HTTP-İsteği Gönder",
         "custom_activation": "Özel etkinleştirme",
         "activate_on_startup": "Başlangıçta etkinleştir",
         "activate_save": "Kaydettiğinde etkinleştir",
         "activate_slide_clicked": "Slayt tıklandığında etkinleştir",
+        "activate_video_starting": "Video başladığında etkinleştir",
+        "activate_video_ending": "Video sona erdiğinde etkinleştir",
+        "activate_timer_ending": "Zamanlayıcı sona erdiğinde etkinleştir",
         "activate_scripture_start": "Kutsal kitap başlatıldığında etkinleştirin",
         "activate_show_created": "Gösteri oluşturulduğunda etkinleştir"
     },
@@ -747,7 +765,8 @@
         "max_events": "Maksimum etkinlik",
         "start_days_from_today": "Bugünden sonraki günlerde başla",
         "just_one_day": "Sadece bir gün",
-        "enable_start_date": "Başlangıç tarihini etkinleştir"
+        "enable_start_date": "Başlangıç tarihini etkinleştir",
+        "disable_navigation": "Navigasyon kontrollerini devre dışı bırak"
     },
     "items": {
         "text": "Metin kutusu",
@@ -765,6 +784,7 @@
         "variable": "Değişken",
         "web": "Website",
         "visualizer": "Görselleştirici",
+        "captions": "Başlıklar",
         "icon": "Simge"
     },
     "borders": {
@@ -816,6 +836,13 @@
         "digital": "Dijital",
         "analog": "Analog",
         "seconds": "Saniye"
+    },
+    "captions": {
+        "info": "Henüz açmadıysanız tarayıcınızda açmak için lütfen URL'ye tıklayın veya başka bir cihazda açın! Mikrofonunuza erişim sağladığınızdan ve en iyi performans için Google Chrome kullandığınızdan emin olun.",
+        "language": "Transkripsiyon dili",
+        "translate": "Şuna çevir",
+        "showtime": "Ekran süresi",
+        "powered_by": "Tarafından desteklenmektedir"
     },
     "midi": {
         "midi": "MIDI",
@@ -925,9 +952,11 @@
         "full_colors": "Tam slayt grubu renkleri",
         "auto_output": "Başlangıçta çıktı ekranını etkinleştir",
         "hide_cursor_in_output": "İmleci çıktıda gizle",
+        "clear_media_when_finished": "Bittiğinde medyayı temizleyin",
         "disable_presenter_controller_keys": "Sunum yapan denetleyici tuşlarını devre dışı bırakma",
         "default_project_name": "Varsayılan proje adı",
         "audio_fade_duration": "Ses kısma süresi",
+        "audio_crossfade": "Ses çapraz geçişi",
         "max_auto_font_size": "Maks. otomatik yazı tipi boyutu",
         "resolution": "Çözünürlük",
         "cropping": "Kırpma",
@@ -986,7 +1015,7 @@
     "calendar": {
         "type": "Tip",
         "event": "Etkinlik",
-        "show": "Gösteri planla",
+        "schedule_action": "Eylem planlayın",
         "name": "İsim",
         "color": "Renk",
         "time": "Zaman",
@@ -1111,5 +1140,20 @@
         "words": "Kelimeler",
         "template": "Şablon",
         "category": "Kategori"
+    },
+    "songbeamer_import": {
+        "options": "Seçenekler",
+        "encoding": "Kodlama",
+        "older_versions": "6.02a'dan eski Songbeamer sürümleri için",
+        "category": "Kategori",
+        "utf8": "UTF-8",
+        "latin1": "Latin 1",
+        "translations": "Çeviriler",
+        "translation_multiline": "Çoklu Hat",
+        "translation_textboxes": "Metin Kutuları",
+        "translation_layouts": "Düzenlemeler",
+        "translation_description_multiline": "Tüm dilleri tek bir metin kutusuna dönüşümlü satırlar halinde ekler. (Songbeamer'daki gibi)",
+        "translation_description_textboxes": "Her dili ayrı bir metin kutusu olarak slayta ekler.",
+        "translation_description_layouts": "Her dil için benzersiz bir slayt seti ve bir düzen oluşturur."
     }
 }

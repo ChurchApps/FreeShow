@@ -42,7 +42,7 @@ export class CaptureTransmitter {
 
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
-        const interval = 1000 / OutputHelper.getOutput(captureId)?.captureOptions?.framerates[key] || 30
+        const interval = 1000 / OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.[key] || 30
 
         if (this.channels[combinedKey]?.timer) {
             clearInterval(this.channels[combinedKey].timer)
@@ -98,7 +98,7 @@ export class CaptureTransmitter {
         const ratio = image.getAspectRatio()
         //this.ndiFrameCount++
         // WIP refresh on enable?
-        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates.ndi || 10 })
+        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.ndi || 10 })
     }
 
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
@@ -118,7 +118,7 @@ export class CaptureTransmitter {
         ;[...new Set(this.requestList)].forEach((data: any) => {
             data = JSON.parse(data)
 
-            if (data.previewId !== msg.data.id) {
+            if (data.previewId !== msg.data?.id) {
                 newList.push(JSON.stringify(data))
                 return
             }

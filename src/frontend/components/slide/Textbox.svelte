@@ -39,6 +39,7 @@
     export let transitionEnabled: boolean = false
     export let animationStyle: any = {}
     export let dynamicValues: boolean = true
+    export let isStage: boolean = false
     export let customFontSize: number | null = null
     export let outputStyle: any = {}
     export let ref: {
@@ -394,10 +395,10 @@
         {#if lines}
             <div
                 class="align"
-                class:topBottomScrolling={item?.scrolling?.type === "top_bottom"}
-                class:bottomTopScrolling={item?.scrolling?.type === "bottom_top"}
-                class:leftRightScrolling={item?.scrolling?.type === "left_right"}
-                class:rightLeftScrolling={item?.scrolling?.type === "right_left"}
+                class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"}
+                class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"}
+                class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"}
+                class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"}
                 style="--scrollSpeed: {item?.scrolling?.speed ?? 15}s;{style ? item?.align : null}"
                 bind:this={alignElem}
             >

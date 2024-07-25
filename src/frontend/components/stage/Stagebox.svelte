@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeStage, allOutputs, currentWindow, outputs, previewBuffers, stageShows, timers, variables } from "../../stores"
+    import { activeStage, allOutputs, currentWindow, dictionary, outputs, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import { getActiveOutputs } from "../helpers/output"
@@ -126,7 +126,7 @@
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}
-        <div class="label">{getCustomStageLabel(id)}</div>
+        <div class="label">{getCustomStageLabel(id, $dictionary)}</div>
     {/if}
     {#if edit}
         <Movebox {ratio} active={$activeStage.items.includes(id)} />
@@ -188,7 +188,7 @@
     }
 
     .item.border {
-        border: 3px solid white;
+        border: 3px solid #5a4c00;
     }
 
     .stage_item.outline {
@@ -228,9 +228,10 @@
         width: 100%;
 
         background: rgb(0 0 0 / 0.5);
-        color: var(--text);
-        font-size: 3em;
-        font-weight: 600;
+        /* color: #fff7cb; */
+        color: #dfd9b8;
+        font-size: 2.6em;
+        /* font-weight: 600; */
         text-align: center;
     }
 

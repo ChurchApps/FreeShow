@@ -164,7 +164,7 @@
         </span>
         <span style="display: flex;">
             <span style="flex: 1;">
-                <span style="display: flex;align-items: center;padding: 0 10px;">
+                <span class="alignLeft">
                     {#if server.id === "companion"}
                         <Checkbox checked={$companion.enabled === true} on:change={toggleCompanion} />
                     {:else}
