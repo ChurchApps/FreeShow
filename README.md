@@ -37,6 +37,18 @@ The only reason this program is free is because of the generous support from use
 
 We have a great community for end-users on [Facebook](https://www.facebook.com/groups/freeshowapp). It's a good way to ask questions, get tips and follow new updates. Come join us!
 
+## Report an issue or request a feature
+
+If you notice a bug, or need a feature. Please create an [issue on GitHub](https://github.com/ChurchApps/freeshow/issues).
+
+## Give feedback
+
+Feedback is welcome! Please [open a discussion here](https://github.com/orgs/ChurchApps/discussions/categories/freeshow) or send a mail to [dev@freeshow.app](mailto:dev@freeshow.app).
+
+## Help translate
+
+Head over to [FreeShow on Transifex](https://app.transifex.com/nettbiter/freeshow/) to request a language.
+
 ## Help the development
 
 You are welcome to contribute to the code!
@@ -46,18 +58,6 @@ You are welcome to contribute to the code!
 3. In the terminal, run: `npm install`
 4. To start the app, run: `npm start`
 
-## Report an issue or request a feature
-
-Create an [issue on GitHub](https://github.com/ChurchApps/freeshow/issues).
-
 ## Join us on Slack
 
 If you would like to get involved contributing in any way, head over to our [Slack Channel](https://join.slack.com/t/livechurchsolutions/shared_invite/zt-i88etpo5-ZZhYsQwQLVclW12DKtVflg) and introduce yourself. We'd love to hear from you.
-
-## Give feedback
-
-Send a mail to [dev@freeshow.app](mailto:dev@freeshow.app).
-
-## Help translate
-
-Head over to [FreeShow on Transifex](https://app.transifex.com/nettbiter/freeshow/) to request a language.
