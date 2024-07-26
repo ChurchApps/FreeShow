@@ -54,10 +54,13 @@
             active={findMatchingOut(video.rid, $outputs) !== null}
             outlineColor={findMatchingOut(video.rid, $outputs)}
             label={video.name || ""}
+            renameId="player_{video.rid}"
             title={video.id || ""}
             showPlayOnHover
             on:click={(e) => {
                 if ($outLocked || e.ctrlKey || e.metaKey) return
+                if (e.target?.closest(".edit")) return
+
                 if (findMatchingOut(video.rid, $outputs)) {
                     clearBackground()
                     return

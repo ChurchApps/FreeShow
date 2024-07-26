@@ -69,7 +69,7 @@ async function setAudioBuffers() {
 
     await Promise.all(
         audioFiles.map(async (fileName) => {
-            let path = `../assets/${fileName}.mp3`
+            let path = `./assets/${fileName}.mp3`
             let id = fileName.slice(fileName.indexOf("-") + 1)
 
             const audioBuffer = await fetch(path)

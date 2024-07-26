@@ -1,12 +1,13 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Show } from "../../types/Show"
+import type { Item, Show } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { getItemText } from "../components/edit/scripts/textStyle"
 import { clone, removeEmpty } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { checkName, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
+import { linesToTextboxes } from "../components/show/formatTextEditor"
 import { activeProject, dictionary, formatNewShow, groups, splitLines } from "../stores"
 
 export function getQuickExample() {
@@ -165,10 +166,8 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
             layouts.push({ id })
         }
 
-        function createSlide(lines: any, slideIndex: number) {
-            lines = lines.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
-            let defaultItemStyle: string = "top:120px;left:50px;height:840px;width:1820px;"
-            let items: any[] = [{ style: defaultItemStyle, lines }] // auto: true
+        function createSlide(lines: string, slideIndex: number) {
+            let items: Item[] = linesToItems(lines)
 
             // get active show
             if (_show().get()) {
@@ -234,6 +233,13 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
             slides[id] = { group, color, globalGroup: group, settings: {}, notes: "", items }
         }
     }
+}
+
+function linesToItems(lines: string) {
+    let slideLines: string[] = lines.split("\n")
+    let items: Item[] = linesToTextboxes(slideLines)
+
+    return items
 }
 
 function checkRepeats(labeled: any[]) {

@@ -2,6 +2,7 @@
     import { getAutoSize } from "../helpers/autoSize"
     import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
+    import SlideProgress from "../items/SlideProgress.svelte"
     import SlideNotes from "../items/SlideNotes.svelte"
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
@@ -87,7 +88,9 @@
     {:else}
         <div class="align" style={item.align}>
             <div>
-                {#if id.includes("notes")}
+                {#if id.includes("slide_tracker")}
+                    <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
+                {:else if id.includes("notes")}
                     <SlideNotes notes={slide?.notes || ""} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
                     {#key item || slide}

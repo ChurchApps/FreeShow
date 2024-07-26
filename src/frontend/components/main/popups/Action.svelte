@@ -50,6 +50,7 @@
             action = convertOldMidiToNewAction(action)
         }
 
+        if (!action.name) action.name = ""
         if (mode === "slide_midi") action.midiEnabled = true
 
         loaded = true

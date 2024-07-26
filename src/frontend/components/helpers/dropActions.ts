@@ -437,10 +437,11 @@ const slideDrop: any = {
     },
     global_group: ({ drag, drop }: any, history: any) => {
         let ref: any[] = _show().layouts("active").ref()[0]
+        if (!drag.data[0].slide) return
 
         if (drop.center) {
             if (drop.trigger?.includes("end")) drop.index--
-            changeSlideGroups({ sel: { data: [{ index: drop.index }] }, menu: { id: drag.data[0].globalGroup } })
+            changeSlideGroups({ sel: { data: [{ index: drop.index }] }, menu: { id: drag.data[0].slide.globalGroup } })
             return
         }
 
@@ -454,7 +455,7 @@ const slideDrop: any = {
         if (drop.index === undefined) drop.index = layout.length
         let newIndex: number = drop.index
 
-        drag.data.forEach((slide: any) => {
+        drag.data.forEach(({ slide, layoutData }: any) => {
             let id = uid()
             delete slide.id
             slides[id] = clone(slide)
@@ -462,7 +463,11 @@ const slideDrop: any = {
             let parent = ref[newIndex - 1] || { index: -1 }
             if (parent.type === "child") parent = parent.parent
 
-            layout = addToPos(layout, [{ id }], parent.index + 1)
+            // add layout data (if dragging a slide to another show)
+            let newLayout = { id }
+            if (layoutData) newLayout = { ...layoutData, id }
+
+            layout = addToPos(layout, [newLayout], parent.index + 1)
         })
 
         history.newData = { slides, layout }

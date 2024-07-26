@@ -170,6 +170,7 @@
         background-color: var(--primary);
         border-radius: var(--border-radius);
         overflow-y: auto;
+        /* overflow-x: hidden; */
 
         min-width: 50%;
         min-height: 50px;

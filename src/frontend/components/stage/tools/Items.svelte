@@ -15,7 +15,7 @@
     const titles = {
         // slide_background ++
         slide: ["current_slide_text", "current_slide", "current_slide_notes", "next_slide_text", "next_slide", "next_slide_notes"],
-        output: ["current_output"],
+        output: ["current_output", "slide_tracker"],
         time: ["system_clock", "video_time", "video_countdown"],
         global_timers: ["{timers}"],
         variables: ["{variables}"],
@@ -23,6 +23,7 @@
     }
     const customIcons = {
         current_output: "screen",
+        slide_tracker: "percentage",
         video_time: "clock",
         video_countdown: "clock",
     }
@@ -37,11 +38,11 @@
 
         let resolution = getResolution()
         let style = `
-      width: ${resolution.width / 2}px;
-      height: ${resolution.height / 2}px;
-      left: ${resolution.width / 4}px;
-      top: ${resolution.height / 4}px;
-    `
+            width: ${resolution.width / 2}px;
+            height: ${resolution.height / 2}px;
+            left: ${resolution.width / 4}px;
+            top: ${resolution.height / 4}px;
+        `
 
         stageShows.update((ss) => {
             if (!enabledItems[item]) enabledItems[item] = { enabled: true, style, align: "" }
@@ -49,6 +50,14 @@
             else enabledItems[item].enabled = true
             return ss
         })
+
+        // select item
+        if (enabledItems[item]?.enabled === true && $activeStage.items.length) {
+            activeStage.update((a) => {
+                a.items = [item]
+                return a
+            })
+        }
 
         if (item === "output#current_output") checkWindowCapture()
 
@@ -144,6 +153,7 @@
 
                 {#each items as item}
                     <Button on:click={() => click(title + "#" + item)} active={enabledItems[title + "#" + item]?.enabled} style="width: 100%;" bold={false}>
+                        <span style="font-size: 0;position: absolute;">{console.log(item, customIcons[item], item.split("_")[item.split("_").length - 1])}</span>
                         <Icon id={customIcons[item] || item.split("_")[item.split("_").length - 1]} right />
                         <span class="overflow"><T id="stage.{item}" /></span>
                     </Button>

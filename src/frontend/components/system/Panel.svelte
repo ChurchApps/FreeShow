@@ -1,8 +1,22 @@
-<section>
+<script lang="ts">
+    export let flex: boolean = false
+    export let column: boolean = false
+</script>
+
+<section class:flex class:column>
     <slot />
 </section>
 
 <style>
+    section.flex {
+        height: 100%;
+        width: 100%;
+        display: flex;
+    }
+    section.column {
+        flex-direction: column;
+    }
+
     section :global(h6) {
         color: var(--text);
         text-transform: uppercase;

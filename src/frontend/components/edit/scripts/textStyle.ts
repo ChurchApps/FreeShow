@@ -234,7 +234,7 @@ export function getItemText(item: Item): string {
 
 export function getLineText(line: any): string {
     let text: string = ""
-    line.text?.forEach((content: any) => {
+    line?.text?.forEach((content: any) => {
         text += content.value
     })
     return text

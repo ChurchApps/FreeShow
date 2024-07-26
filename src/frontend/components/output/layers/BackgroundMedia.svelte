@@ -64,13 +64,16 @@
     $: if (!mirror && !fadingOut) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
     $: if (!mirror && !fadingOut) sendVideoTime(videoTime)
 
-    let loop = 0
+    let sendingTimeout: any = null
+    let timeUpdateTimeout = 220
     function sendVideoTime(time: number) {
-        loop++
-        if (loop < 80) return
+        if (sendingTimeout) return
 
         send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
-        loop = 0
+        sendingTimeout = setTimeout(() => {
+            send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
+            sendingTimeout = null
+        }, timeUpdateTimeout)
     }
 
     // key output parent

@@ -4,7 +4,26 @@ import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
-import { currentOutputSettings, disabledServers, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, videoExtensions } from "../../stores"
+import {
+    currentOutputSettings,
+    currentWindow,
+    disabledServers,
+    lockedOverlays,
+    outputDisplay,
+    outputs,
+    overlays,
+    playingVideos,
+    serverData,
+    showsCache,
+    special,
+    stageShows,
+    styles,
+    templates,
+    theme,
+    themes,
+    transitionData,
+    videoExtensions,
+} from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { customActionActivation } from "../actions/actions"
@@ -16,9 +35,10 @@ import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
-    let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
-    enabledOutputs.forEach((id) => {
-        let output: any = { id, ...get(outputs)[id] }
+    // sort so display order can be changed! (needs app restart)
+    let enabledOutputs: any[] = sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id })))
+
+    enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1
         send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: output.allowMainScreen || e.ctrlKey || e.metaKey, auto, autoPosition })
     })
@@ -61,10 +81,12 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 }
 
 function changeOutputBackground(data, { outs, output, id, i }) {
-    setTimeout(() => {
-        // update stage background if any
-        sendBackgroundToStage(id)
-    }, 100)
+    if (get(currentWindow) === null) {
+        setTimeout(() => {
+            // update stage background if any
+            sendBackgroundToStage(id)
+        }, 100)
+    }
 
     let previousWasVideo: boolean = get(videoExtensions).includes(getExtension(output.out?.background?.path))
 
@@ -123,7 +145,7 @@ export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boo
     enabled = enabled.map((a) => a.id)
 
     if (!enabled.length) {
-        if (!sortedOutputs.length) addOutput(true)
+        if (!sortedOutputs.length && get(currentWindow) === null) addOutput(true)
         if (sortedOutputs[0]) enabled = [sortedOutputs[0].id]
     }
 
@@ -372,8 +394,11 @@ export function getCurrentMediaTransition() {
 // TEMPLATE
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true) {
+    if (!slideItems) return []
     slideItems = clone(slideItems)
+
     if (!templateItems.length) return slideItems
+    templateItems = clone(templateItems)
 
     let sortedTemplateItems = sortItemsByType(templateItems)
 
@@ -599,6 +624,7 @@ export function getOutputTransitions(slideData: any, transitionData: any, disabl
 export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]) {
     let isScripture = outSlide?.id === "temp"
     let slideItems = isScripture ? outSlide.tempItems : items
+    if (_show(outSlide?.id).get("reference")?.type === "scripture") isScripture = true
 
     let templateId = currentStyle[`template${isScripture ? "Scripture" : ""}`]
     let template = get(templates)[templateId || ""] || {}

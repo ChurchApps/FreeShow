@@ -26,7 +26,7 @@
     templates.subscribe(updateTemplates)
 
     function updateTemplates() {
-        filteredTemplates = Object.keys($templates)
+        filteredTemplates = clone(Object.keys($templates))
             .map((id) => ({ id, ...$templates[id] }))
             .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category])))
             .sort((a, b) => a.name.localeCompare(b.name))
@@ -65,12 +65,15 @@
                     <Card
                         class="context #template_card"
                         active={template.id === activeTemplate}
-                        label={template.name || "—"}
+                        label={template.name}
+                        renameId="template_{template.id}"
                         color={template.color}
                         {resolution}
                         on:click={(e) => {
-                            if ((($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show") && !e.ctrlKey && !e.metaKey)
-                                history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "none", override: "show#" + $activeShow.id } })
+                            if (e.target?.closest(".edit")) return
+                            if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
+
+                            history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "none", override: "show#" + $activeShow.id } })
                         }}
                     >
                         <!-- icons -->

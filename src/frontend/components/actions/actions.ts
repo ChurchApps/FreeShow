@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { audioPlaylists, audioStreams, midiIn, shows, stageShows, styles, triggers } from "../../stores"
+import { audioPlaylists, audioStreams, midiIn, outputs, shows, stageShows, styles, triggers } from "../../stores"
 import { clone } from "../helpers/array"
 import { history } from "../helpers/history"
 import { _show } from "../helpers/shows"
 import { API_ACTIONS, API_toggle } from "./api"
 import { convertOldMidiToNewAction } from "./midi"
+import { getActiveOutputs } from "../helpers/output"
 
 export function runActionId(id: string) {
     runAction(get(midiIn)[id])
@@ -32,7 +33,11 @@ export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
         if (midiIndex > -1) triggerData = { ...triggerData, index: midiIndex }
 
         if (actionId === "start_slide_timers" && slideIndex > -1) {
-            let layoutRef = _show("active").layouts("active").ref()[0]
+            let outputRef: any = get(outputs)[getActiveOutputs()[0]]?.out?.slide || {}
+            let showId = outputRef.id || "active"
+            let layoutRef = _show(showId)
+                .layouts(outputRef.layout ? [outputRef.layout] : "active")
+                .ref()[0]
             if (layoutRef) {
                 let overlayIds = layoutRef[slideIndex].data?.overlays
                 triggerData = { overlayIds }
@@ -79,7 +84,7 @@ export function customActionActivation(id: string) {
     })
 }
 
-export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}) {
+export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}, allowMultiple: boolean = false) {
     if (slideIndex < 0) return
 
     let ref = _show().layouts("active").ref()[0]
@@ -93,7 +98,10 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
     if (actionValue) actionValues[actionId] = actionValue
 
     let action = { id, triggers: [actionId], actionValues }
-    actions.slideActions.push(action)
+
+    let existingIndex = actions.slideActions.findIndex((a) => a.triggers?.[0] === actionId)
+    if (allowMultiple || existingIndex < 0) actions.slideActions.push(action)
+    else actions.slideActions[existingIndex] = action
 
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [slideIndex] } })
 }

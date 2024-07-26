@@ -696,6 +696,7 @@
         "_title_underline": "Underline",
         "_title_strikethrough": "Strikethrough",
         "color": "Color",
+        "accent_color": "Accent color",
         "background_color": "Background color",
         "background_opacity": "Background opacity",
         "background_image": "Background image",
@@ -768,7 +769,8 @@
         "start_days_from_today": "Start at days from today",
         "just_one_day": "Just one day",
         "enable_start_date": "Enable start date",
-        "disable_navigation": "Disable navigation controls"
+        "disable_navigation": "Disable navigation controls",
+        "progress_bar": "Progress bar"
     },
     "items": {
         "text": "Textbox",
@@ -785,6 +787,7 @@
         "timer": "Timer",
         "variable": "Variable",
         "web": "Website",
+        "slide_tracker": "Progress",
         "visualizer": "Visualizer",
         "captions": "Captions",
         "icon": "Icon"
@@ -890,6 +893,7 @@
         "next_slide_notes": "Next slide notes",
         "output": "Output",
         "current_output": "Current output",
+        "slide_tracker": "Progress",
         "time": "Time",
         "system_clock": "System clock",
         "video_time": "Video time",

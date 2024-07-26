@@ -8,7 +8,7 @@
     const actions = {
         n: () => activePopup.set(null),
         q: () => closeApp(),
-        y: () => ($saved ? "" : save(true)),
+        y: () => ($saved ? closeApp() : save(true)),
     }
 
     function keydown(e: any) {
@@ -38,7 +38,7 @@
     <CombinedInput>
         <Button style="width: 100%;background-color: var(--secondary-opacity);" on:click={closeApp} dark center>
             <T id="main.quit" />
-            <span>Q</span>
+            <span>Y</span>
         </Button>
     </CombinedInput>
 {:else}

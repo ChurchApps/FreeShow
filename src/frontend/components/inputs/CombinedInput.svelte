@@ -89,6 +89,12 @@
         justify-content: end;
         padding-right: 10px;
     }
+    .input :global(.alignLeft) {
+        display: flex;
+        align-items: center;
+        justify-content: start;
+        padding-left: 10px;
+    }
 
     .input :global(:nth-child(2):not(.switch):not(.numberInput)) {
         flex: 1;

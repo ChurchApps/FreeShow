@@ -27,7 +27,7 @@ export class OutputLifecycle {
 
         //OutputHelper.Bounds.updatePreviewBounds()
 
-        if (output.stageOutput) CaptureHelper.Transmitter.stageWindows.push(id)
+        if (output.stageOutput && !CaptureHelper.Transmitter.stageWindows.includes(id)) CaptureHelper.Transmitter.stageWindows.push(id)
 
         setTimeout(() => {
             CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false })

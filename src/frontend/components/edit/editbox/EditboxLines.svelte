@@ -125,6 +125,8 @@
 
             cutInTwo({ e, sel, lines, currentIndex, textPos, start })
         }
+
+        storeCurrentCaretPos()
     }
 
     function cutInTwo({ e, sel, lines, currentIndex, textPos, start }) {
@@ -316,7 +318,11 @@
                 // TODO: pressing enter / backspace will remove any following style in list view
                 // if (plain && !style && i > 0) style = item.lines![i - 1]?.text[j]?.style
 
-                newLines[pos].text.push({ style, value: child.innerText })
+                let lineText = child.innerText
+                // empty line
+                if (lineText === "\n") lineText = ""
+                newLines[pos].text.push({ style, value: lineText })
+
                 currentStyle += style
 
                 // GET CHORDS
@@ -340,6 +346,8 @@
                 }
             }
         })
+
+        if (pasting) return newLines
 
         if (updateHTML) {
             // get caret pos
@@ -374,10 +382,14 @@
                 }
             })
 
-            // set to end (if backspace)
-            if (!caret && (item.lines || []).length > newLines.length) {
-                // WIP if line in middle is deleted, the caret is still moved to the last line... (get the last used line here)
-                caret = { line: newLines.length - 1, pos: getLineText(newLines[newLines.length - 1]).length }
+            // set to last caret pos (if backspace)
+            let sel = getSelectionRange()
+            let currentLine = sel.findIndex((a) => a?.start !== undefined)
+            let deleteKey = currentLine === lastCaretPos.line
+            if (!caret && (item.lines || []).length > newLines.length && !deleteKey) {
+                let newLine = lastCaretPos.line > -1 ? lastCaretPos.line - 1 : newLines.length - 1
+                let newPos = lastCaretPos.pos > -1 ? getLineText(newLines[lastCaretPos.line - 1]).length - lastCaretPos.lineLength : getLineText(newLines[newLines.length - 1]).length
+                caret = { line: newLine, pos: newPos }
             }
         }
 
@@ -392,9 +404,34 @@
                     setCaret(textElem, caret)
                 }, 10)
             }, 10)
+
+            lastCaretPos = caret
+        } else {
+            storeCurrentCaretPos()
         }
 
         return newLines
+    }
+
+    let lastCaretPos: { line: number; pos: number; lineLength: number } = { line: -1, pos: -1, lineLength: 0 }
+    function storeCurrentCaretPos() {
+        let sel = getSelectionRange()
+        let caretLineIndex = sel.findIndex((line) => line.start !== undefined)
+        if (caretLineIndex > -1) lastCaretPos = { line: caretLineIndex, pos: sel[caretLineIndex]?.start ?? -1, lineLength: getHTMLLineText(caretLineIndex).length }
+    }
+
+    function getHTMLLineText(lineIndex: number) {
+        if (!textElem || !item) return ""
+
+        let text = ""
+
+        let lineElem = textElem.children[lineIndex]
+        new Array(...lineElem.childNodes).forEach((child: any) => {
+            if (child.nodeName === "#text") text += child.textContent
+            else text += child.innerText
+        })
+
+        return text.trim()
     }
 
     function textElemKeydown(e: any) {
@@ -407,35 +444,83 @@
     }
 
     // paste
+    let pasting: boolean = false
     function paste(e: any, clipboardText: string = "") {
-        let clipboard: string = clipboardText || e.clipboardData.getData("text/plain") || ""
+        let clipboard: string = clipboardText || e.clipboardData?.getData("text/plain") || ""
         if (!clipboard) return
 
-        let sel = getSelectionRange()
-        let lines: Line[] = getNewLines()
+        pasting = true
 
+        let sel = getSelectionRange()
+        let caret = { line: 0, pos: 0 }
         let emptySelection: boolean = !sel.filter((a) => Object.keys(a).length).length
 
-        // get caret pos
-        let caret = { line: 0, pos: 0 }
-        sel.forEach((lineSel, i) => {
-            if (lineSel.start !== undefined || (emptySelection && i >= sel.length - 1)) {
-                let pos = 0
-                let pasted = false
-                lines[i].text.forEach(({ value }, j) => {
-                    if (!pasted && (pos + value.length >= lineSel.start || (emptySelection && j >= lines[i].text.length - 1))) {
-                        let caretPos = lineSel.start - pos
-                        caret = { line: i, pos: lineSel.start + clipboard.length }
-                        let removeText = lineSel.end - lineSel.start
-                        removeText = removeText > 0 ? removeText : 0
+        let lines: Line[] = getNewLines()
+        let newLines: any[] = []
+        let pastingIndex: number = -1
+        sel.forEach((lineSel, lineIndex) => {
+            if (lineSel.start === undefined && (!emptySelection || lineIndex < sel.length - 1)) {
+                newLines.push(lines[lineIndex])
+                return
+            }
 
-                        lines[i].text[j].value = value.slice(0, caretPos) + clipboard + value.slice(caretPos + removeText, value.length)
-                        pasted = true
-                    }
-                    pos += value.length
-                })
+            if (pastingIndex < 0) {
+                pastingIndex = lineIndex
+                caret = { line: pastingIndex, pos: lineSel.start + clipboard.length }
+            }
+
+            let lineText: any[] = []
+            let linePos = 0
+            let pasteOverflow = 0
+            // move multi line select to one line
+            lines[lineIndex].text.forEach((text) => {
+                let value = text.value
+                let newLinePos = linePos + value.length
+                if (newLinePos < lineSel.start || linePos > lineSel.end) {
+                    lineText.push(text)
+                    linePos = newLinePos
+                    return
+                }
+
+                // selected more text (different styles) on one line
+                if (pasteOverflow > 0) {
+                    let newValue = value.slice(pasteOverflow)
+                    pasteOverflow = pasteOverflow - value.length
+                    if (!newValue.length) return
+
+                    text.value = newValue
+                    lineText.push(text)
+                    return
+                }
+
+                let caretPos = lineSel.start - linePos
+                let removeText = lineSel.end - lineSel.start
+                removeText = removeText > 0 ? removeText : 0
+                pasteOverflow = caretPos + removeText - value.length
+
+                let newValue = value.slice(0, caretPos) + (pastingIndex === lineIndex ? clipboard : "") + value.slice(caretPos + removeText)
+                if (!newValue.length) return
+
+                text.value = newValue
+                lineText.push(text)
+
+                linePos = newLinePos
+            })
+
+            if (pastingIndex < 0) {
+                newLines.push(lines[lineIndex])
+                return
+            }
+
+            if (!newLines[pastingIndex]?.text) {
+                newLines[pastingIndex] = clone(lines[lineIndex])
+                newLines[pastingIndex].text = lineText
+            } else {
+                newLines[pastingIndex].text.push(...lineText)
             }
         })
+
+        lines = newLines
 
         lines = EditboxHelper.splitAllCrlf(lines)
         updateLines(lines)
@@ -444,6 +529,7 @@
             // set caret position back
             setTimeout(() => {
                 setCaret(textElem, caret)
+                pasting = false
             }, 10)
         }, 10)
     }
@@ -475,6 +561,7 @@
                 let newLines = chordMove(e, { textElem, item })
                 if (newLines) item.lines = newLines
             }}
+            on:mouseup={() => storeCurrentCaretPos()}
             class="edit"
             class:hidden={chordsMode}
             class:autoSize={item.auto && autoSize}

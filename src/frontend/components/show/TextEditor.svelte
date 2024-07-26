@@ -3,7 +3,7 @@
     import { getQuickExample } from "../../converters/txt"
     import { slidesOptions } from "../../stores"
     import { _show } from "../helpers/shows"
-    import { formatText, getFirstNormalTextbox } from "./formatTextEditor"
+    import { formatText, getTextboxes } from "./formatTextEditor"
     import Notes from "./tools/Notes.svelte"
 
     export let currentShow: any
@@ -51,29 +51,37 @@
     function getItems(items: Item[]) {
         let text = ""
         let plainText = ""
-        let selectedItem: Item = getFirstNormalTextbox(items)
+        // let selectedItem: Item = getFirstNormalTextbox(items)
+        let selectedItems: Item[] = getTextboxes(items)
 
-        let hasTextboxItem = !!selectedItem?.lines
-        if (!hasTextboxItem) return { text, plainText, hasTextboxItem }
+        if (!selectedItems.length) return { text, plainText, hasTextboxItem: false }
 
-        let filteredLines = selectedItem.lines?.filter((line) => line.text?.filter((text) => text.value.length).length) || []
-        filteredLines.forEach((line, i) => {
-            let tempText = ""
-            line.text?.forEach((txt) => {
-                tempText += txt.value
+        selectedItems.forEach((item, i) => {
+            if (selectedItems.length > 1) {
+                let textboxId = "[#" + (i + 1) + "]"
+                text += textboxId + "\n"
+                plainText += textboxId + "\n"
+            }
+
+            let filteredLines = item.lines?.filter((line) => line.text?.filter((text) => text.value.length).length) || []
+            filteredLines.forEach((line, i) => {
+                let tempText = ""
+                line.text?.forEach((txt) => {
+                    tempText += txt.value
+                })
+
+                if (tempText.length) {
+                    text += tempText + "\n"
+                    plainText += tempText + (i < filteredLines.length - 1 ? "\n" : "")
+                }
             })
 
-            if (tempText.length) {
-                text += tempText + "\n"
-                plainText += tempText + (i < filteredLines.length - 1 ? "\n" : "")
-            }
+            // remove double enters
+            text = text.replaceAll("\n\n", "")
+            if (i === selectedItems.length - 1) text += "\n"
         })
 
-        // remove double enters
-        text = text.replaceAll("\n\n", "")
-        text += "\n"
-
-        return { text, plainText, hasTextboxItem }
+        return { text, plainText, hasTextboxItem: true }
     }
 
     const br = "||__$BREAK$__||"

@@ -4,7 +4,7 @@ import { menuClick } from "../components/context/menuClick"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { redo, undo } from "../components/helpers/history"
 import { displayOutputs } from "../components/helpers/output"
-import { activeDrawerTab, activePage, activePopup, currentWindow, drawer, os, selected, volume } from "../stores"
+import { activeDrawerTab, activePage, activePopup, currentWindow, drawer, os, refreshEditSlide, selected, volume } from "../stores"
 import { drawerTabs } from "../values/tabs"
 import { hideDisplay, togglePanels } from "./common"
 import { save } from "./save"
@@ -74,14 +74,19 @@ export function keydown(e: any) {
             return
         }
 
-        // use default input shortcuts on supported devices (this includes working undo/redo)
-        const exeption = ["e", "i", "n", "o", "s", "a"]
+        // use default input shortcuts on supported devices
+        const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
         if ((e.key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && get(os).platform !== "darwin")) {
             return
         }
 
+        const preventDefaults = ["z", "Z", "y"]
         if (ctrlKeys[e.key]) {
             ctrlKeys[e.key](e)
+            if (preventDefaults.includes(e.key)) {
+                e.preventDefault()
+                if (get(activePage) === "edit") refreshEditSlide.set(true)
+            }
         }
         return
     }

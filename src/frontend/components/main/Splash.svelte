@@ -10,7 +10,7 @@
 
 <Center>
     <h1>FreeShow</h1>
-    <p>v{$version}</p>
+    <p style="opacity: 0.8;">v{$version}</p>
     <p style="padding: 30px">
         <Link url="https://freeshow.app/docs">
             <T id="main.docs" />
@@ -45,7 +45,6 @@
     }
 
     p {
-        opacity: 0.8;
         overflow: initial;
     }
 

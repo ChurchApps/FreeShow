@@ -121,7 +121,7 @@ export const textKeys = {
 export function getSlides({ bibles, sorted }) {
     let slides: any[][] = [[]]
 
-    let template = get(templates)[get(scriptureSettings).template]?.items || []
+    let template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
     let templateTextItems = template.filter((a) => a.lines)
     let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
 
@@ -138,6 +138,7 @@ export function getSlides({ bibles, sorted }) {
 
         sorted.forEach((s: any, i: number) => {
             let slideArr: any = slides[slideIndex][bibleIndex]
+            if (!slideArr?.lines[0]?.text) return
 
             let lineIndex: number = 0
             // verses on individual lines
@@ -239,7 +240,7 @@ export function getSlides({ bibles, sorted }) {
         // auto size
         slides.forEach((slide, i) => {
             slide.forEach((item, j) => {
-                if (!templateTextItems[j]?.auto) return
+                if (!templateTextItems[j]?.auto || !slides[i][j].lines?.[0]?.text) return
 
                 let autoSize: number = getAutoSize(item)
                 // WIP historyActions - TEMPLATE...

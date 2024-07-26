@@ -9,7 +9,7 @@
     // TODO: zoom tool
 
     function keydown(e: any) {
-        if (e.ctrlKey || e.metaKey) return
+        if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
 
         let nextTab = -1
         let currentTabIndex = tools.findIndex((tab) => tab === $drawTool)

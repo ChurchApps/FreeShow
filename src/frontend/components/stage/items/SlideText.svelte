@@ -45,10 +45,38 @@
 
         return oneItem ? [oneItem] : []
     }
+
+    // PRE LOAD SLIDE ITEMS (AUTO SIZE)
+
+    let firstActive: boolean = false
+    let items1: any[] = []
+    let items2: any[] = []
+
+    const waitDuration = 380 // approximate auto size time
+    let timeout: any = null
+    $: if (items) preloadItems()
+    function preloadItems() {
+        if (firstActive) items2 = clone(items)
+        else items1 = clone(items)
+
+        let currentlyLoading = !firstActive
+
+        if (timeout) clearTimeout(timeout)
+
+        timeout = setTimeout(() => timeoutFinished(currentlyLoading), waitDuration)
+    }
+
+    function timeoutFinished(newActive: boolean) {
+        timeout = null
+        firstActive = newActive
+
+        if (firstActive) items2 = []
+        else items1 = []
+    }
 </script>
 
-{#if slide}
-    {#if style}
+{#if style}
+    {#if slide}
         <Main let:resolution let:width let:height>
             <Zoomed background="transparent" style={getStyleResolution(resolution, width, height, "fit")} center>
                 {#each items as item}
@@ -56,9 +84,31 @@
                 {/each}
             </Zoomed>
         </Main>
-    {:else}
-        {#each items as item}
-            <Textbox {item} {style} {stageItem} {chords} {ref} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} />
-        {/each}
     {/if}
+{:else}
+    <div class:loading={items1 && !firstActive}>
+        {#each items1 as item}
+            <Textbox {item} {style} {stageItem} {chords} {ref} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} isStage />
+        {/each}
+    </div>
+    <div class:loading={items2 && firstActive}>
+        {#each items2 as item}
+            <Textbox {item} {style} {stageItem} {chords} {ref} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} isStage />
+        {/each}
+    </div>
 {/if}
+
+<style>
+    div {
+        width: 100%;
+        height: 100%;
+    }
+
+    .loading {
+        position: absolute;
+        opacity: 0;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
+</style>

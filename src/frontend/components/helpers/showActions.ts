@@ -6,7 +6,29 @@ import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { clearOverlays, clearTimers } from "../output/clear"
-import { activeEdit, activePage, activeProject, activeShow, audioStreams, driveData, media, outLocked, outputs, overlays, projects, showsCache, slideTimers, styles, templates, timers, triggers } from "./../../stores"
+import {
+    activeEdit,
+    activePage,
+    activeProject,
+    activeShow,
+    allOutputs,
+    audioStreams,
+    currentWindow,
+    driveData,
+    media,
+    outLocked,
+    outputs,
+    overlays,
+    projects,
+    showsCache,
+    slideTimers,
+    styles,
+    templates,
+    timers,
+    triggers,
+    videosData,
+    videosTime,
+} from "./../../stores"
 import { clone } from "./array"
 import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
@@ -14,7 +36,7 @@ import { getActiveOutputs, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
 import { initializeMetadata } from "./show"
 import { _show } from "./shows"
-import { addZero } from "./time"
+import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
 
 const getProjectIndex: any = {
@@ -122,7 +144,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let layout: any[] = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
-    let isLastSlide: boolean = slide && layout ? (slide.index || 0) >= layout.filter((a) => !a.data?.disabled).length - 1 && !layout[slide.index || 0].end : false
+    let isLastSlide: boolean = slide && layout ? (slide.index || 0) >= layout.filter((a) => !a?.data?.disabled).length - 1 && !layout[slide.index || 0].end : false
 
     let index: null | number = null
 
@@ -737,7 +759,13 @@ export function getDynamicIds() {
     return [...mainValues, ...metaValues]
 }
 
-export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex }: any, _updater: number = 0) {
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type }: any, _updater: number = 0) {
+    if (type === "stage" && get(currentWindow) === "output") {
+        let outputId = Object.values(get(outputs))[0]?.stageOutput || ""
+        let outSlide = get(allOutputs)[outputId]?.out?.slide
+        showId = outSlide?.id
+    }
+
     let show = _show(showId).get()
     if (!show) return text
 
@@ -754,11 +782,20 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             return show.meta[key] || ""
         }
 
+        let outputId: string = getActiveOutputs()[0]
+
+        if (id.includes("video_") && get(currentWindow) === "output") {
+            send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
+        }
+
         let activeLayout = layoutId ? [layoutId] : "active"
         let ref = _show(showId).layouts(activeLayout).ref()[0]
         let layout = _show(showId).layouts(activeLayout).get()[0]
 
-        return dynamicValues[id]({ show, ref, slideIndex, layout })
+        let videoTime: number = get(videosTime)[outputId] || 0
+        let videoDuration: number = get(videosData)[outputId]?.duration || 0
+
+        return dynamicValues[id]({ show, ref, slideIndex, layout, videoTime, videoDuration })
     }
 }
 
@@ -780,4 +817,9 @@ const dynamicValues = {
     slide_group: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.group || "",
     slide_number: ({ slideIndex }) => Number(slideIndex || 0) + 1,
     slide_notes: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.notes || "",
+
+    // media
+    video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),
+    video_duration: ({ videoDuration }) => joinTime(secondsToTime(videoDuration)),
+    video_countdown: ({ videoTime, videoDuration }) => joinTime(secondsToTime(videoDuration - videoTime)),
 }

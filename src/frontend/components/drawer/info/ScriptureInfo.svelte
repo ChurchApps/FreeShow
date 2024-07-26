@@ -214,7 +214,7 @@
                 <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
             </CombinedInput>
         {/if}
-        {#if $scriptureSettings.versesOnIndividualLines || sorted.length > 1}
+        {#if $scriptureSettings.versesOnIndividualLines || (sorted.length > 1 && $scriptureSettings.versesPerSlide > 1)}
             <CombinedInput textWidth={70}>
                 <p><T id="scripture.verses_on_individual_lines" /></p>
                 <div class="alignRight">
