@@ -116,8 +116,7 @@
         },
         "win": {
             "target": "NSIS",
-            "icon": "build/public/icon.png",
-            "publisherName": "FreeShow"
+            "icon": "build/public/icon.png"
         }
     },
     "devDependencies": {
