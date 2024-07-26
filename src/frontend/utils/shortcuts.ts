@@ -74,8 +74,8 @@ export function keydown(e: any) {
             return
         }
 
-        // use default input shortcuts on supported devices (this includes working undo/redo)
-        const exeption = ["e", "i", "n", "o", "s", "a"]
+        // use default input shortcuts on supported devices
+        const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
         if ((e.key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && get(os).platform !== "darwin")) {
             return
         }

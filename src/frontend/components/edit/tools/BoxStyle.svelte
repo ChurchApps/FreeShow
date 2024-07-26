@@ -9,7 +9,7 @@
     import { getListOfShows, getStageList } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
-    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
+    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
     import { uid } from "uid"
@@ -58,7 +58,16 @@
 
         updateValue({ detail: value })
 
-        // WIP reset selection (caret is at start, but it remembers the selection)
+        // reset caret position (styles can be changed without this also)
+        setTimeout(() => {
+            if (!selection) return
+
+            let editElem = document.querySelector(".editArea")?.querySelectorAll(".editItem")?.[$activeEdit.items[0]]?.querySelector(".edit")
+            if (!editElem) return
+
+            let selectedLine = selection.findIndex((a) => a.start !== undefined)
+            if (selectedLine > -1) setCaret(editElem, { line: selectedLine, pos: selection[selectedLine].end })
+        }, 10)
     }
 
     // -----
