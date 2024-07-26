@@ -38,11 +38,11 @@
 
         let resolution = getResolution()
         let style = `
-      width: ${resolution.width / 2}px;
-      height: ${resolution.height / 2}px;
-      left: ${resolution.width / 4}px;
-      top: ${resolution.height / 4}px;
-    `
+            width: ${resolution.width / 2}px;
+            height: ${resolution.height / 2}px;
+            left: ${resolution.width / 4}px;
+            top: ${resolution.height / 4}px;
+        `
 
         stageShows.update((ss) => {
             if (!enabledItems[item]) enabledItems[item] = { enabled: true, style, align: "" }
@@ -50,6 +50,14 @@
             else enabledItems[item].enabled = true
             return ss
         })
+
+        // select item
+        if (enabledItems[item]?.enabled === true && $activeStage.items.length) {
+            activeStage.update((a) => {
+                a.items = [item]
+                return a
+            })
+        }
 
         if (item === "output#current_output") checkWindowCapture()
 

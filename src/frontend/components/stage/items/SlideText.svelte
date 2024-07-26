@@ -107,5 +107,8 @@
     .loading {
         position: absolute;
         opacity: 0;
+        top: 0;
+        left: 0;
+        pointer-events: none;
     }
 </style>

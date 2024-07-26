@@ -73,7 +73,8 @@
     }
 
     // update show by its template
-    $: if (showId && !isLessons && loaded) setTimeout(updateTemplate, 100)
+    $: gridMode = $slidesOptions.mode === "grid" || $slidesOptions.mode === "simple"
+    $: if (showId && gridMode && !isLessons && loaded) setTimeout(updateTemplate, 100)
     function updateTemplate() {
         if (!loaded) return
 

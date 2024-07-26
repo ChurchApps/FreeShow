@@ -228,10 +228,9 @@
         width: 100%;
 
         background: rgb(0 0 0 / 0.5);
-        /* color: #fff7cb; */
         color: #dfd9b8;
-        font-size: 2.6em;
-        /* font-weight: 600; */
+        font-size: 42px;
+        font-weight: normal;
         text-align: center;
     }
 

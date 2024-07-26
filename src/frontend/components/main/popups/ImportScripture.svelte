@@ -12,8 +12,6 @@
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
 
-    // API.Bible key. Will propably change in the future (Please don't abuse)
-    let key: string = "320b5b593fa790ced135a98861de51a9"
     let error: null | string = null
     let bibles: any[] = []
 
@@ -34,7 +32,7 @@
         }
 
         const api = "https://api.scripture.api.bible/v1/bibles"
-        fetch(api, { headers: { "api-key": key } })
+        fetch(api, { headers: { "api-key": $bibleApiKey } })
             .then((response) => response.json())
             .then((data) => {
                 bibles = data.data

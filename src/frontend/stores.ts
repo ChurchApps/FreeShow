@@ -198,7 +198,8 @@ export const stageShows: Writable<StageShows> = writable({}) // {default}
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}
 export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true, referenceDivider: ":" }) // {default}
-export const bibleApiKey: Writable<string> = writable("320b5b593fa790ced135a98861de51a9") // WIP ""
+// API.Bible key. Have not found any good way to secretly store this (because it's open source). Please don't use this anywhere else than FreeShow, thank you! :)
+export const bibleApiKey: Writable<string> = writable("320b5b593fa790ced135a98861de51a9") // ""
 
 // DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}
