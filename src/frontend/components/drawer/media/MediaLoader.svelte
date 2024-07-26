@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import type { Resolution } from "../../../../types/Settings"
     import type { MediaType, ShowType } from "../../../../types/Show"
@@ -86,6 +87,12 @@
     }
 
     $: mediaStyleString = `pointer-events: none;position: absolute;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+
+    let readyToLoad: boolean = false
+    onMount(() => {
+        // sometimes the img elem loaded before "loaded" was set to false, causing it to load twice!
+        readyToLoad = true
+    })
 </script>
 
 <div class="main" style="aspect-ratio: {customResolution.width}/{customResolution.height};" bind:offsetWidth={width} bind:offsetHeight={height}>
@@ -97,7 +104,7 @@
             </div>
         {:else if type === "screen"}
             <Capture screen={{ id: path, name }} streams={[]} background />
-        {:else}
+        {:else if readyToLoad}
             {#if type !== "video" || (thumbnailPath && retryCount <= 5)}
                 {#key retryCount}
                     <img src={type !== "video" && useOriginal ? path : thumbnailPath} alt={name} style={mediaStyleString} loading="lazy" class:loading={!loaded} on:error={reload} on:load={() => (loaded = true)} />
@@ -127,7 +134,9 @@
     }
 
     img.loading {
-        display: none;
+        opacity: 0;
+        position: absolute;
+        pointer-events: none;
     }
 
     /* canvas,
