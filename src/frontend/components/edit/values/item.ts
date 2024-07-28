@@ -60,5 +60,5 @@ export const itemEdits: { [key: string]: EditInput[] } = {
         { name: "filter.contrast", id: "backdrop-filter", key: "contrast", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
         { name: "filter.saturate", id: "backdrop-filter", key: "saturate", input: "number", value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
     ],
-    CSS: [{ id: "item", input: "CSS" }],
+    CSS: [{ id: "CSS", input: "CSS" }],
 }

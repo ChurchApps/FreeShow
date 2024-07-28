@@ -9,6 +9,7 @@ import {
     audioPlaylists,
     autoOutput,
     autosave,
+    bibleApiKey,
     calendarAddShow,
     categories,
     customizedIcons,
@@ -135,6 +136,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         driveData: get(driveData),
         calendarAddShow: get(calendarAddShow),
         metronome: get(metronome),
+        bibleApiKey: get(bibleApiKey),
         special: get(special),
     }
 
@@ -200,6 +202,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
 export function saveComplete({ closeWhenFinished, backup }: any) {
     if (!closeWhenFinished) {
         saved.set(true)
+        console.log("SAVED!")
         newToast("$toast.saved")
     }
 
@@ -262,6 +265,8 @@ export function unsavedUpdater() {
 const customSavedListener = {
     showsCache: (data: any) => {
         Object.keys(data).forEach((id) => {
+            if (!data[id]?.slides) return
+
             delete data[id].timestamps
             delete data[id].settings
 
@@ -346,6 +351,7 @@ const saveList: { [key in SaveList]: any } = {
     driveData: driveData,
     calendarAddShow: null,
     metronome: null,
+    bibleApiKey: null,
     special: special,
     companion: null,
 }

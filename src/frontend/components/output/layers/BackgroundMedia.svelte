@@ -32,6 +32,7 @@
 
     let mediaStyle: MediaStyle = {}
     $: if (data) mediaStyle = getMediaStyle(data, currentStyle)
+    $: console.log(mediaStyle, data)
 
     // VIDEO
 
@@ -53,19 +54,26 @@
         videoData.loop = data.loop ?? false
     }
     // draw
+
+    //Without the second if, the preview videos don't actually play but just skip ahead when kept in sync with the setTimeout()
     $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
+    $: if (mirror && $videosData[outputId]?.paused === false) videoData.paused = false
+
     $: if (mirror && $videosTime[outputId]) videoTime = $videosTime[outputId]
 
     $: if (!mirror && !fadingOut) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
     $: if (!mirror && !fadingOut) sendVideoTime(videoTime)
 
-    let loop = 0
+    let sendingTimeout: any = null
+    let timeUpdateTimeout = 220
     function sendVideoTime(time: number) {
-        loop++
-        if (loop < 80) return
+        if (sendingTimeout) return
 
         send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
-        loop = 0
+        sendingTimeout = setTimeout(() => {
+            send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
+            sendingTimeout = null
+        }, timeUpdateTimeout)
     }
 
     // key output parent
@@ -150,7 +158,7 @@
     }
     function setVolume(volume: number) {
         if (!video) return
-        video.volume = 1
+        video.volume = volume
     }
 
     // AUDIO
@@ -171,6 +179,7 @@
     let video: any = null
     let currentAnalysedElem: any = null
     async function analyseVideo() {
+        if (!video) return
         let currentAnalyser: any = null
 
         // Failed to execute 'createMediaElementSource' on 'AudioContext': HTMLMediaElement already connected previously to a different MediaElementSourceNode.

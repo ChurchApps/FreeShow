@@ -17,6 +17,7 @@
     import { getAutoSize } from "../scripts/autoSize"
     import { onMount } from "svelte"
     import Captions from "../../slide/views/Captions.svelte"
+    import SlideProgress from "../../slide/views/SlideProgress.svelte"
 
     export let item: Item
 
@@ -67,9 +68,11 @@
 {:else if item?.type === "variable"}
     <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ showId: ref.showId, slideIndex: $activeEdit.slide }} hideText={false} edit />
 {:else if item?.type === "web"}
-    <Website src={item?.web?.src || ""} />
+    <Website src={item?.web?.src || ""} {ratio} />
 {:else if item?.type === "mirror"}
     <Mirror {item} {ref} {ratio} index={$activeEdit.slide || 0} edit />
+{:else if item?.type === "slide_tracker"}
+    <SlideProgress tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : autoSize} />
 {:else if item?.type === "visualizer"}
     <Visualizer {item} />
 {:else if item?.type === "captions"}

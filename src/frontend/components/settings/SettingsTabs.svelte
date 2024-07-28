@@ -8,7 +8,7 @@
     const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "groups", "connection", "cloud", "theme", "other"]
 
     function keydown(e: any) {
-        if (e.ctrlKey || e.metaKey) return
+        if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
 
         let nextTab = -1
         let currentTabIndex = tabs.findIndex((tab) => tab === $settingsTab)

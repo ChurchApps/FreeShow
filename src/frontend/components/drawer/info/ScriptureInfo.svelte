@@ -4,8 +4,10 @@
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
     import { activeProject, categories, drawerTabsData, outLocked, outputs, playScripture, scriptureSettings, templates } from "../../../stores"
+    import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
@@ -19,7 +21,6 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
-    import { customActionActivation } from "../../actions/actions"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -59,12 +60,20 @@
     function createSlides() {
         if (!bibles[0]) return { show: null }
 
+        let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
+
         let slides2: any = {}
         let layouts: any[] = []
-        slides.forEach((items: any) => {
+        const referenceDivider = $scriptureSettings.referenceDivider || ":"
+        slides.forEach((items: any, i: number) => {
             let id = uid()
-            let firstTextItem = items.find((a) => a.lines)
-            slides2[id] = { group: firstTextItem?.lines?.[0]?.text?.[0]?.value?.split(" ")?.slice(0, 4)?.join(" ")?.trim() || "", color: null, settings: {}, notes: "", items }
+
+            // get verse reference
+            let v = $scriptureSettings.versesPerSlide
+            let range: any[] = sorted.slice((i + 1) * v - v, (i + 1) * v)
+            let scriptureRef = books + " " + bibles[0].chapter + referenceDivider + joinRange(range)
+
+            slides2[id] = { group: scriptureRef || "", color: null, settings: {}, notes: "", items }
             let l: any = { id }
             layouts.push(l)
         })
@@ -82,7 +91,7 @@
 
         let bibleShowName = `${bibles[0].book} ${bibles[0].chapter},${verseRange}`
         show.name = checkName(bibleShowName)
-        if (show.name !== bibleShowName) show.name = checkName(`${bibleShowName} - ${getShortBibleName(bibles[0].version)}`)
+        if (show.name !== bibleShowName) show.name = checkName(`${bibleShowName} - ${getShortBibleName(bibles[0].version || "")}`)
         show.slides = slides2
         show.layouts = { [layoutID]: { name: bibles[0].version || "", notes: "", slides: layouts } }
 
@@ -205,7 +214,7 @@
                 <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
             </CombinedInput>
         {/if}
-        {#if $scriptureSettings.versesOnIndividualLines || sorted.length > 1}
+        {#if $scriptureSettings.versesOnIndividualLines || (sorted.length > 1 && $scriptureSettings.versesPerSlide > 1)}
             <CombinedInput textWidth={70}>
                 <p><T id="scripture.verses_on_individual_lines" /></p>
                 <div class="alignRight">

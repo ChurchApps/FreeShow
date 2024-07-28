@@ -1,6 +1,14 @@
 <script lang="ts">
+    import { currentWindow } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
+    import Button from "../../inputs/Button.svelte"
+
     export let src: string
+    export let navigation: boolean = true
     export let clickable: boolean = false
+
+    let webview: any
+    export let ratio: number
 
     let parsedSrc: string = ""
     $: if (src) checkURL()
@@ -20,12 +28,92 @@
 
         parsedSrc = valid ? src : ""
     }
+
+    let loaded: boolean = false
+    $: if (parsedSrc) loaded = false
+
+    $: if (webview && ratio) setWebpageRatio()
+    function setWebpageRatio() {
+        // if preview is fullscreen, don't set ratio
+        let isFullscreen = (webview.closest(".previewOutput")?.offsetWidth || 0) > 450
+        const inverse = isFullscreen ? 100 : Math.round(100 / ratio)
+
+        if (loaded) setStyle()
+        else {
+            webview?.addEventListener("did-finish-load", setStyle)
+            webview?.addEventListener("did-navigate", () => {
+                checkNavigation()
+                url = webview?.getURL() || parsedSrc
+            })
+        }
+
+        function setStyle() {
+            if (!webview) return
+            loaded = true
+
+            webview.executeJavaScript(`
+            document.body.style.transform = 'scale(${isFullscreen ? 1 : ratio})';
+            document.body.style.transformOrigin = '0 0';
+            document.body.style.width = '${inverse}%';  // Scale factor inverse to maintain full width
+            document.body.style.height = '${inverse}%';  // Scale factor inverse to maintain full height
+        `)
+        }
+    }
+
+    let hover: boolean = false
+    function mouseover() {
+        hover = true
+        checkNavigation()
+    }
+    function mouseleave() {
+        hover = false
+    }
+
+    let backDisabled: boolean = true
+    let forwardDisabled: boolean = true
+    function navigate(back: boolean = true) {
+        if (!webview) return
+
+        if (back) webview.goBack()
+        else webview.goForward()
+
+        setTimeout(checkNavigation)
+    }
+
+    function checkNavigation() {
+        backDisabled = !webview?.canGoBack()
+        forwardDisabled = !webview?.canGoForward()
+    }
+
+    $: url = parsedSrc
+    function formatUrl(url: string) {
+        url = url.split("://")[1] || url
+        url = url.replace("www.", "")
+        if (url[url.length - 1] === "/") url = url.slice(0, -1)
+        return url
+    }
 </script>
 
-<webview class:clickable id="webview" src={parsedSrc} />
+<div class="website" class:clickable on:mouseover={mouseover} on:mouseleave={mouseleave}>
+    {#if navigation && hover && $currentWindow === "output"}
+        <div class="controls" style="zoom: {1 / ratio};">
+            {#if !backDisabled || !forwardDisabled}
+                <Button on:click={() => navigate(true)} disabled={backDisabled}>
+                    <Icon id="back" white />
+                </Button>
+                <Button on:click={() => navigate(false)} disabled={forwardDisabled}>
+                    <Icon id="arrow_forward" white />
+                </Button>
+            {/if}
+
+            <p class="url" style="zoom: {ratio};">{formatUrl(url)}</p>
+        </div>
+    {/if}
+    <webview id="webview" src={parsedSrc} bind:this={webview} />
+</div>
 
 <style>
-    webview {
+    .website {
         position: absolute;
         width: 100%;
         height: 100%;
@@ -33,7 +121,35 @@
         pointer-events: none;
     }
 
-    webview.clickable {
+    .website.clickable {
         pointer-events: initial;
+    }
+
+    webview {
+        width: 100%;
+        height: 100%;
+    }
+
+    .controls {
+        z-index: 1;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+
+        background-color: black;
+        border-top-right-radius: 3px;
+        display: flex;
+
+        opacity: 0.4;
+    }
+    .controls :global(button) {
+        padding: 2px 4px !important;
+    }
+
+    .url {
+        font-size: 0.15em;
+        display: flex;
+        align-items: center;
+        padding: 2px 10px;
     }
 </style>

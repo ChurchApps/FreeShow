@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { NDI, OUTPUT } from "../../../../types/Channels"
-    import { activePopup, currentOutputSettings, ndiData, os, outputDisplay, outputs, special, styles } from "../../../stores"
+    import { activePopup, currentOutputSettings, ndiData, os, outputDisplay, outputs, styles } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -59,7 +59,8 @@
             }
 
             if (key === "enabled") {
-                if (value) send(OUTPUT, ["CREATE"], { ...currentOutput, rate: $special.previewRate || "auto" })
+                // , rate: $special.previewRate || "auto"
+                if (value) send(OUTPUT, ["CREATE"], currentOutput)
                 else send(OUTPUT, ["REMOVE"], { id: outputId })
 
                 // WIP if only one left, all outputs should be "active"

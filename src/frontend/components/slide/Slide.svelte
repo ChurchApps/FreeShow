@@ -25,6 +25,7 @@
     } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
+    import { slideHasAction } from "../actions/actions"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/editbox/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
@@ -38,7 +39,6 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
-    import { slideHasAction } from "../actions/actions"
 
     export let slide: Slide
     export let layoutSlide: SlideData
@@ -146,7 +146,9 @@
     async function loadBackground() {
         if (ghostBackground) {
             await wait(100)
-            thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)
+            // will not load if not opened in the drawer (but original image will then be loaded)
+            thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
+            // thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
             return
         }
 
@@ -310,8 +312,8 @@
         }, 100)
     }
 
-    // correct view order based on arranged order in Items.svelte
-    $: invertedItemList = clone(slide.items)?.reverse() || []
+    // correct view order based on arranged order in Items.svelte (?.reverse())
+    $: itemsList = clone(slide.items) || []
 </script>
 
 <!-- TODO: faster loading ? lazy load images? -->
@@ -359,7 +361,7 @@
                         {/key}
                     {/if}
                     {#if slide.items}
-                        {#each invertedItemList as item, i}
+                        {#each itemsList as item, i}
                             {#if item && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
                                 <Textbox
                                     filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""}
@@ -429,7 +431,7 @@
         <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
             {#key $refreshListBoxes >= 0 && $refreshListBoxes !== index}
                 {#if slide.items}
-                    {#each invertedItemList as item, itemIndex}
+                    {#each itemsList as item, itemIndex}
                         {#if item.lines}
                             <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
                         {/if}

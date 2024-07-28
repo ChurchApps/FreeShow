@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activePlaylist, activeShow, audioPlaylists, dictionary, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { audioPlaylistNext, getAudioDuration, playAudio } from "../../helpers/audio"
+    import { audioPlaylistNext, decodeURI, getAudioDuration, playAudio } from "../../helpers/audio"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
@@ -63,25 +63,18 @@
     <span class="name" style="justify-content: space-between;">
         {#each Object.entries($playingAudio) as [id, audio]}
             {@const name = audio.name || getName(id)}
-            <Button title={decodeURIComponent(name)} on:click={() => activeShow.set({ id, type: "audio", data: { isMic: audio.mic } })} active={$activeShow?.id === id} style="z-index: 2;" bold={false} center>
+            <Button title={decodeURI(name)} on:click={() => activeShow.set({ id, type: "audio", data: { isMic: audio.mic } })} active={$activeShow?.id === id} style="z-index: 2;" bold={false} center>
                 {#if audio.mic}<Icon id="microphone" size={1.2} right />{/if}
-                <p>{decodeURIComponent(name)}</p>
+                <p>{decodeURI(name)}</p>
             </Button>
         {/each}
     </span>
 {:else}
     {@const name = playing.name || getName(path)}
 
-    <Button
-        title={decodeURIComponent(name)}
-        on:click={() => activeShow.set({ id: path, type: "audio", data: { isMic: playing.mic } })}
-        active={$activeShow?.id === path}
-        style="padding: 5px 10px;opacity: 0.8;width: 100%;z-index: 2;"
-        bold={false}
-        center
-    >
+    <Button title={decodeURI(name)} on:click={() => activeShow.set({ id: path, type: "audio", data: { isMic: playing.mic } })} active={$activeShow?.id === path} style="padding: 5px 10px;opacity: 0.8;width: 100%;z-index: 2;" bold={false} center>
         {#if playing.mic}<Icon id="microphone" size={1.2} right />{/if}
-        <p>{$activePlaylist?.active === path ? `${$audioPlaylists[$activePlaylist.id]?.name}: ` : ""}{decodeURIComponent(name)}</p>
+        <p>{$activePlaylist?.active === path ? `${$audioPlaylists[$activePlaylist.id]?.name}: ` : ""}{decodeURI(name)}</p>
     </Button>
 
     <!-- AUDIO CONTROLS -->

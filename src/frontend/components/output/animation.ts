@@ -3,6 +3,8 @@ import { wait } from "../../utils/common"
 import { clone } from "../helpers/array"
 
 export async function updateAnimation(animationData: any, currentIndex: number, outSlide: any) {
+    console.log(animationData, currentIndex)
+
     // give time for initial element & prevent infinite loops
     if (currentIndex === 0) await wait(50)
 

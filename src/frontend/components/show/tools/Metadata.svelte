@@ -21,7 +21,7 @@
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
-    let values: any = {}
+    let values: { [key: string]: string } = {}
     let message: any = {}
     let metadata: any = {}
     let templateList: any[] = []
@@ -72,16 +72,20 @@
         history({ id: "UPDATE", newData: { data, key }, oldData: { id: $activeShow!.id }, location: { page: "show", id: "show_key", override } })
     }
 
+    // I have no idea why, but the ui jump around without resetting this new checkbox
     let tempHide = false
-    $: if (metadata.override !== undefined) {
+    $: setHide = metadata.override || metadata.display || metadata.template || message.template
+    $: if (setHide) hide()
+    function hide() {
         tempHide = true
-        setTimeout(() => {
-            tempHide = false
-        }, 10)
+        setTimeout(() => (tempHide = false), 10)
+
+        // scroll to bottom
+        setTimeout(() => document.querySelector(".content")?.scrollTo(0, 999), 20)
     }
 </script>
 
-<Panel>
+<Panel flex column={!tempHide}>
     {#if metadata.autoMedia !== true}
         <div class="gap" style="padding: 10px;">
             <span class="titles">
@@ -114,8 +118,7 @@
     <!-- styling -->
     <h5><T id="edit.style" /></h5>
     <div class="styling">
-        <!-- I have no idea why, but the ui jump around without resetting this new checkbox -->
-        <div class:tempHide>
+        <div>
             <p><T id="meta.override_output" /></p>
             <Checkbox checked={metadata.override || false} on:change={toggleOverride} />
         </div>
@@ -177,10 +180,6 @@
         text-transform: uppercase;
     }
 
-    .styling div.tempHide {
-        display: none;
-    }
-
     .message,
     .styling {
         padding: 10px;
@@ -194,6 +193,7 @@
         position: relative;
         display: block;
         background: var(--primary-darker);
+        height: initial;
     }
 
     .styling div {

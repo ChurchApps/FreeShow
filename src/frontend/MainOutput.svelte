@@ -36,12 +36,15 @@
 
 <div
     class="fill context #output_window"
-    style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') && !Object.values($outputs)[0].stageOutput ? 'row' : 'column'}"
+    style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') && !Object.values($outputs)[0]?.stageOutput ? 'row' : 'column'}"
     class:hideCursor={$special.hideCursor}
     on:mousemove={mousemoveOutput}
     bind:offsetWidth={width}
     bind:offsetHeight={height}
-    on:dblclick={() => hideDisplay()}
+    on:dblclick={(e) => {
+        if (e.target?.closest(".website")) return
+        hideDisplay()
+    }}
 >
     {#if enableOutputMove}
         <div class="dragger">
@@ -49,11 +52,14 @@
         </div>
     {/if}
 
-    {#if $outputs[outputId].stageOutput}
+    {#if $outputs[outputId]?.stageOutput}
         <StageShow {outputId} stageId={$outputs[outputId].stageOutput} edit={false} />
     {:else if loaded}
         <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
     {/if}
+
+    <!-- preload CMGSans font -->
+    {#if !loaded}<div class="fontPreload">.</div>{/if}
 </div>
 
 <style>
@@ -85,5 +91,11 @@
 
     .fill.hideCursor {
         cursor: none;
+    }
+
+    .fontPreload {
+        font-family: "CMGSans";
+        position: absolute;
+        opacity: 0;
     }
 </style>

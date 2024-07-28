@@ -4,7 +4,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
-    import { clearBackground } from "../../helpers/showActions"
+    import { clearBackground } from "../../output/clear"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import MediaLoader from "./MediaLoader.svelte"
@@ -100,6 +100,7 @@
     title={path}
     icon={thumbnail ? icon : null}
     white={type === "image"}
+    showPlayOnHover
     on:click={click}
     on:dblclick={dblclick}
     on:keydown={keydown}

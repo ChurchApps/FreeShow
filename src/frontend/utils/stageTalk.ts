@@ -15,7 +15,7 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
     let currentOutput = updater[outputId]?.out
     let path = currentOutput?.background?.path || ""
     if (!path) {
-        send(STAGE, ["BACKGROUND"], { path: "" })
+        if (!returnPath) send(STAGE, ["BACKGROUND"], { path: "" })
         return
     }
 
@@ -109,24 +109,43 @@ export const receiveSTAGE: any = {
 
         let ref: any[] = _show(out.id).layouts([out.layout]).ref()[0]
         let slides: any = _show(out.id).get()?.slides
+        console.log(ref, slides)
 
         if (!ref?.[out.index!]) return
         msg.data = [slides[ref[out.index!].id]]
 
         let nextIndex = out.index! + 1
-        if (!ref[nextIndex]) return
-        while (nextIndex < ref.length && ref[nextIndex].data.disabled === true) nextIndex++
+        if (ref[nextIndex]) {
+            while (nextIndex < ref.length && ref[nextIndex].data.disabled === true) nextIndex++
 
-        if (nextIndex < ref.length && !ref[nextIndex].data.disabled) msg.data.push(slides[ref[nextIndex].id])
-        else msg.data.push(null)
+            if (nextIndex < ref.length && !ref[nextIndex].data.disabled) msg.data.push(slides[ref[nextIndex].id])
+            else msg.data.push(null)
+        } else msg.data.push(null)
 
         sendBackgroundToStage(outputId)
 
         return msg
     },
+    REQUEST_PROGRESS: (msg: ClientMessage) => {
+        let outputId = msg.data.outputId
+        if (!outputId) outputId = getActiveOutputs(get(outputs), false, true, true)[0]
+        if (!outputId) return
+
+        let currentSlideOut = get(outputs)[outputId]?.out?.slide || null
+        let currentShowId = currentSlideOut?.id || ""
+        let currentShowSlide = currentSlideOut?.index ?? -1
+        let currentLayoutRef = _show(currentShowId).layouts("active").ref()[0] || []
+        let currentShowSlides = _show(currentShowId).get("slides") || {}
+        let slidesLength = currentLayoutRef.length || 0
+        let layoutGroups = currentLayoutRef.map((ref) => currentShowSlides[ref.parent?.id || ref.id]?.group || "—")
+
+        msg.data.progress = { currentShowSlide, slidesLength, layoutGroups }
+
+        return msg
+    },
     REQUEST_STREAM: (msg: ClientMessage) => {
         let id = msg.data.outputId
-        if (!id) id = getActiveOutputs(get(outputs), true, true, true)[0]
+        if (!id) id = getActiveOutputs(get(outputs), false, true, true)[0]
         if (msg.data.alpha && get(outputs)[id].keyOutput) id = get(outputs)[id].keyOutput
 
         if (!id) return
@@ -140,7 +159,7 @@ export const receiveSTAGE: any = {
 
         // WIP don't know the outputId
         // let id = msg.data.outputId
-        let outputId = getActiveOutputs(get(outputs), true, true, true)[0]
+        let outputId = getActiveOutputs(get(outputs), false, true, true)[0]
         if (!outputId) return
 
         msg.data.data = get(videosData)[outputId]

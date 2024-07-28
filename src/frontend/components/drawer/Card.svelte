@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Resolution } from "../../../types/Settings"
     import { mediaOptions, outputs, styles } from "../../stores"
+    import Icon from "../helpers/Icon.svelte"
     import { getResolution } from "../helpers/output"
     import Loader from "../main/Loader.svelte"
     import Label from "./Label.svelte"
@@ -10,6 +11,7 @@
     export let active: boolean = false
     export let outlineColor: string | null = null
     export let label: string
+    export let renameId: string = ""
     export let title: string = ""
     export let mediaData: string = ""
     export let width: number = 0
@@ -17,6 +19,7 @@
     export let color: null | string = null
     export let white: boolean = true
     export let changed: boolean = false
+    export let showPlayOnHover: boolean = false
     export let mode: "grid" | "list" | "lyrics" = "grid"
     export let resolution: Resolution = getResolution(null, { $outputs, $styles })
     $: resolution = getResolution(resolution, { $outputs, $styles })
@@ -36,10 +39,14 @@
                 <div class="loader">
                     <Loader />
                 </div>
+            {:else if showPlayOnHover}
+                <div class="overlayIcon">
+                    <Icon id={active ? "clear" : "play"} size={2} white />
+                </div>
             {/if}
             <slot />
         </div>
-        <Label {label} {title} {icon} {white} {color} {mode} />
+        <Label {label} {renameId} {title} {icon} {white} {color} {mode} />
     </div>
 </div>
 
@@ -67,6 +74,25 @@
         position: absolute;
         top: 0;
         left: 0;
+    }
+
+    .over:hover > .card .overlayIcon {
+        opacity: 0.6;
+    }
+    .overlayIcon {
+        display: flex;
+        cursor: pointer;
+
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+
+        z-index: 1;
+        pointer-events: none;
+
+        transition: 0.3s opacity;
+        opacity: 0;
     }
 
     .main.preview {

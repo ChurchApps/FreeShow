@@ -1,7 +1,7 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activeStage, currentWindow, stageShows, videosData, videosTime } from "../../stores"
-    import { receive, send } from "../../utils/request"
+    import { activeStage, currentWindow, stageShows } from "../../stores"
+    import { send } from "../../utils/request"
     import { history } from "../helpers/history"
     import { getStyles } from "../helpers/style"
     import T from "../helpers/T.svelte"
@@ -71,13 +71,6 @@
     function requestVideoData() {
         if (interval) return
         interval = setInterval(() => send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId }), 1000) // , stageId
-
-        receive(OUTPUT, {
-            VIDEO_DATA: (data) => {
-                videosData.set(data.data)
-                videosTime.set(data.time)
-            },
-        })
     }
 </script>
 

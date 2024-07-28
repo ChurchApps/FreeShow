@@ -4,14 +4,12 @@
     import { activePopup, alertMessage, dataPath, dictionary, shows, showsCache, showsPath, special } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
-    import { restartOutputs } from "../../../utils/updateSettings"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
@@ -22,12 +20,12 @@
         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
     })
 
-    const previewRates = [
-        { id: "auto", name: "$:settings.auto:$ (1|30 fps)" },
-        { id: "optimized", name: "$:settings.optimized:$ (1 fps)" },
-        { id: "reduced", name: "$:settings.reduced:$ (10 fps)" },
-        { id: "full", name: "$:settings.full:$ (60 fps)" },
-    ]
+    // const previewRates = [
+    //     { id: "auto", name: "$:settings.auto:$ (1|30 fps)" },
+    //     { id: "optimized", name: "$:settings.optimized:$ (1 fps)" },
+    //     { id: "reduced", name: "$:settings.reduced:$ (10 fps)" },
+    //     { id: "full", name: "$:settings.full:$ (60 fps)" },
+    // ]
 
     function updateSpecial(value, key) {
         special.update((a) => {
@@ -37,7 +35,7 @@
             return a
         })
 
-        if (key === "previewRate") restartOutputs()
+        // if (key === "previewRate") restartOutputs()
     }
 
     function updateTextInput(e: any, key: string) {
@@ -198,10 +196,11 @@
     </div>
 </CombinedInput>
 
-<CombinedInput>
+<!-- WIP change frame rate on remote?? -->
+<!-- <CombinedInput>
     <p><T id="settings.preview_frame_rate" /></p>
     <Dropdown options={previewRates} value={previewRates.find((a) => a.id === ($special.previewRate || "auto"))?.name} on:click={(e) => updateSpecial(e.detail.id, "previewRate")} />
-</CombinedInput>
+</CombinedInput> -->
 
 <CombinedInput>
     <p><T id="settings.capitalize_words" /></p>

@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { tick } from "svelte"
     import { IMPORT } from "../../../../types/Channels"
+    import { Popups } from "../../../../types/Main"
     import { convertText } from "../../../converters/txt"
     import { activePopup, alertMessage, dataPath } from "../../../stores"
     import { send } from "../../../utils/request"
@@ -15,7 +17,7 @@
         // { name: "Scripture", id: "scripture" }, // scripture drawer tab
     ]
 
-    const text_formats = [
+    const text_formats: { popup?: Popups, [key: string]: any }[] = [
         { name: "Clipboard", id: "clipboard" },
         { name: "Text file", extensions: ["txt"], id: "txt" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
@@ -37,6 +39,7 @@
         { name: "OpenLP/OpenLyrics", extensions: ["xml", "sqlite"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
         { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
+        { name: "Songbeamer", id: "songbeamer", popup: "songbeamer_import" },
     ]
 
     const media_formats = [
@@ -89,7 +92,13 @@
         <Button
             style="width: 20%;flex-direction: column;min-height: 160px;"
             on:click={() => {
-                if (format.extensions) {
+                if (format.popup) {
+                    tick().then(() => {
+                        if(format.popup) {
+                            activePopup.set(format.popup)
+                        }
+                    })
+                } else if (format.extensions) {
                     send(IMPORT, [format.id], { path: $dataPath, format })
                     displayTutorial(format)
                 } else if (format.id === "clipboard") {

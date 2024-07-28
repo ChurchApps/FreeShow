@@ -14,8 +14,8 @@ import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } 
 import type { Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
-import type { History } from "./components/helpers/history"
 import type { API_metronome } from "./components/actions/api"
+import type { History } from "./components/helpers/history"
 
 // ----- TEMPORARY VARIABLES -----
 
@@ -197,8 +197,9 @@ export const stageShows: Writable<StageShows> = writable({}) // {default}
 // SCRIPTURE
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}
-export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true }) // {default}
-export const bibleApiKey: Writable<string> = writable("320b5b593fa790ced135a98861de51a9") // WIP ""
+export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true, referenceDivider: ":" }) // {default}
+// API.Bible key. Have not found any good way to secretly store this (because it's open source). Please don't use this anywhere else than FreeShow, thank you! :)
+export const bibleApiKey: Writable<string> = writable("320b5b593fa790ced135a98861de51a9") // ""
 
 // DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}
@@ -206,7 +207,7 @@ export const drawer: Writable<{ height: number; stored: null | number }> = writa
 export const mediaOptions: Writable<MediaOptions> = writable({ columns: 5, mode: "grid" }) // {default}
 
 // OTHER
-export const resized: Writable<NumberObject> = writable({ leftPanel: 300, rightPanel: 300, leftPanelDrawer: 300, rightPanelDrawer: 300 }) // {default}
+export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
 export const sorted: Writable<any> = writable({}) // {}
 export const dataPath: Writable<string> = writable("") // ""
 export const lockedOverlays: Writable<string[]> = writable([]) // []

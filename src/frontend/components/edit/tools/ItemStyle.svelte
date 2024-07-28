@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { uid } from "uid"
     import type { Item } from "../../../../types/Show"
     import { activeEdit, activeShow, selected, showsCache } from "../../../stores"
+    import { clone } from "../../helpers/array"
     import { hexToRgb, splitRgb } from "../../helpers/color"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
@@ -9,8 +10,6 @@
     import { addFilterString, addStyleString } from "../scripts/textStyle"
     import { itemEdits } from "../values/item"
     import EditValues from "./EditValues.svelte"
-    import { clone } from "../../helpers/array"
-    import { uid } from "uid"
 
     export let allSlideItems: Item[]
     export let item: Item | null
@@ -20,6 +19,9 @@
     let data: { [key: string]: any } = {}
 
     $: if (item?.style || item === null) data = getStyles(item?.style, true)
+
+    // CSS
+    $: if (itemEditValues?.CSS && item?.style) itemEditValues.CSS[0].value = item.style
 
     $: itemBackFilters = getStyles(item?.style)["backdrop-filter"]
     $: if (itemBackFilters) getItemFilters()
@@ -36,18 +38,20 @@
         })
     }
 
-    onMount(() => {
-        getBackgroundOpacity()
-    })
+    $: if (item) getBackgroundOpacity()
 
     // background opacity
     function getBackgroundOpacity() {
         let backgroundValue = data["background-color"] || ""
-        if (!backgroundValue.includes("rgb")) return
-
-        let rgb = splitRgb(backgroundValue)
         let boIndex = itemEditValues.style.findIndex((a) => a.id === "background-opacity")
         if (boIndex < 0) return
+
+        if (!backgroundValue.includes("rgb")) {
+            itemEditValues.style[boIndex].value = 1
+            return
+        }
+
+        let rgb = splitRgb(backgroundValue)
         itemEditValues.style[boIndex].value = rgb.a
     }
     function getOldOpacity() {

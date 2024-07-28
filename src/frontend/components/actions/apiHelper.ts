@@ -4,7 +4,7 @@ import { keysToID, sortByName } from "../helpers/array"
 import { getActiveOutputs, setOutput } from "../helpers/output"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
-import { activeEdit, activePage, activeProject, activeShow, dictionary, groups, outLocked, outputs, overlays, projects, refreshEditSlide, sortedShowsList, variables } from "../../stores"
+import { activeEdit, activePage, activeProject, activeShow, dictionary, groupNumbers, groups, outLocked, outputs, overlays, projects, refreshEditSlide, sortedShowsList, variables } from "../../stores"
 import type { API_variable } from "./api"
 import { send } from "../../utils/request"
 import { getLabelId } from "../helpers/show"
@@ -73,7 +73,21 @@ export function selectSlideByIndex(index: number) {
 }
 export function selectSlideByName(name: string) {
     let slides = _show().slides().get()
-    let sortedSlides = sortByClosestMatch(slides, getLabelId(name), "group")
+    // group numbers
+    let groupNums: any = {}
+    slides = slides
+        .filter((a) => a.group)
+        .map((a) => {
+            if (!groupNums[a.group]) groupNums[a.group] = 0
+            groupNums[a.group]++
+
+            let group = getLabelId(a.group, false)
+            if (get(groupNumbers) && groupNums[a.group] > 1) group += `_${groupNums[a.group]}`
+
+            return { ...a, group }
+        })
+
+    let sortedSlides = sortByClosestMatch(slides, getLabelId(name, false), "group")
     if (!sortedSlides[0]) return
 
     let showRef = _show().layouts("active").ref()[0]

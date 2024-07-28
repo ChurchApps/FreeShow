@@ -2,11 +2,12 @@ import { get } from "svelte/store"
 import { CONTROLLER, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage, Clients } from "../../types/Socket"
 import { getResolution } from "../components/helpers/output"
-import { clearAll, nextSlide, previousSlide } from "../components/helpers/showActions"
-import { connections, paintCache } from "../stores"
+import { nextSlide, previousSlide } from "../components/helpers/showActions"
+import { connections, currentWindow, paintCache } from "../stores"
 import { draw, drawSettings, drawTool } from "./../stores"
 import { receiveREMOTE } from "./remoteTalk"
 import { receiveSTAGE } from "./stageTalk"
+import { clearAll } from "../components/output/clear"
 
 const receiveCONTROLLER = {
     ACTION: ({ data }) => {
@@ -90,6 +91,8 @@ export function client(id: Clients, msg: ClientMessage) {
 
 // send data to client
 export async function sendData(id: Clients, msg: ClientMessage, check: boolean = false) {
+    if (get(currentWindow) !== null) return
+
     if (id === REMOTE) {
         if (!receiveREMOTE[msg.channel]) return console.log("UNKNOWN CHANNEL:", msg.channel)
         msg = await receiveREMOTE[msg.channel](msg)

@@ -191,8 +191,9 @@ const loadActions = {
     dynamic_values: () => {
         let values: any = getDynamicIds().map((id) => ({ id, label: id, translate: false }))
         let firstShowIndex = values.findIndex((a) => a.id.includes("show_"))
+        let firstVideoIndex = values.findIndex((a) => a.id.includes("video_"))
         let firstMetaIndex = values.findIndex((a) => a.id.includes("meta_"))
-        values = [...values.slice(0, firstShowIndex), "SEPERATOR", ...values.slice(firstShowIndex, firstMetaIndex), "SEPERATOR", ...values.slice(firstMetaIndex)]
+        values = [...values.slice(0, firstShowIndex), "SEPERATOR", ...values.slice(firstShowIndex, firstVideoIndex), "SEPERATOR", ...values.slice(firstVideoIndex, firstMetaIndex), "SEPERATOR", ...values.slice(firstMetaIndex)]
 
         return values
     },

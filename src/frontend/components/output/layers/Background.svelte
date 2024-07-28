@@ -22,11 +22,34 @@
     let background1: any = null
     let background2: any = null
     let firstFadingOut: boolean = false
+    let currentlyLoadingFirst: boolean = false
+
+    // WIP changing media while another transitions is not smooth
+    // WIP changing quicly between media might make it not receive updates
 
     let loading: boolean = false
     let timeout: any = null
+    let tooRapid: any = null
+    let tryAgain: boolean = false
     $: if (data) createBackground()
     function createBackground() {
+        // prevent svelte bug creating multiple items if creating new while old clears
+        if (tooRapid) {
+            tryAgain = true
+            return
+        }
+        tooRapid = setTimeout(() => {
+            tooRapid = null
+            if (tryAgain) createBackground()
+            tryAgain = false
+        }, duration / 2)
+
+        if (timeout) {
+            clearTimeout(timeout)
+            firstActive = !background2?.path
+        }
+        if (loading) loading = false
+
         // clearing
         if (!data.path && !data.id) {
             background1 = null
@@ -34,31 +57,29 @@
             return
         }
 
+        let newData = clone(data)
+
         // update existing background, if same
         let activeId = firstActive ? background1?.path || background1?.id : background2?.path || background2?.id
         if (activeId === (data.path || data.id)) {
-            if (firstActive) background1 = clone(data)
-            else background2 = clone(data)
+            if (firstActive) background1 = newData
+            else background2 = newData
             return
         }
 
-        if (loading) loading = false
-
-        // prevent svelte bug creating multiple items if creating new while old clears
-        if (timeout) clearTimeout(timeout)
         timeout = setTimeout(
             () => {
                 loading = true
-                let loadingFirst = !background1
+                let loadingFirst = !background1 // && background2?.path ? background2?.path !== data.path : background2?.id !== data.id
+                currentlyLoadingFirst = loadingFirst
                 firstFadingOut = !loadingFirst
 
-                if (!background1) background1 = clone(data)
-                else background2 = clone(data)
+                if (loadingFirst) background1 = newData
+                else background2 = newData
 
                 // max 2 seconds loading time
                 timeout = setTimeout(() => {
                     if (loading) loaded(loadingFirst)
-                    timeout = null
                 }, 2000)
             },
             duration / 4 + 20
@@ -66,18 +87,19 @@
     }
 
     function loaded(isFirst: boolean) {
-        if (!loading) return
+        if (!loading || currentlyLoadingFirst !== isFirst) return // media loaded, but probably fading out
 
         loading = false
         firstActive = isFirst
 
         // allow firstActive to trigger first
-        setTimeout(() => {
+        timeout = setTimeout(() => {
             if (isFirst) {
                 background2 = null
             } else {
                 background1 = null
             }
+            timeout = null
         })
     }
 

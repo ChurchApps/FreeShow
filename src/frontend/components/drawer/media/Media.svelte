@@ -11,7 +11,6 @@
     import { splitPath } from "../../helpers/get"
     import { encodeFilePath, getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
-    import { clearBackground } from "../../helpers/showActions"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import Cameras from "../live/Cameras.svelte"
@@ -24,6 +23,7 @@
     import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
     import { send } from "../../../utils/request"
+    import { clearBackground } from "../../output/clear"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -265,26 +265,32 @@
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel|passive={wheel}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
         {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
-            <PlayerVideos active={onlineTab} {searchValue} />
+            <div class="gridgap">
+                <PlayerVideos active={onlineTab} {searchValue} />
+            </div>
         {:else if active === "screens"}
-            {#if screenTab === "screens"}
-                <Screens bind:streams />
-            {:else if screenTab === "ndi"}
-                <NDIStreams />
-            {:else}
-                <Windows bind:streams {searchValue} />
-            {/if}
+            <div class="gridgap">
+                {#if screenTab === "screens"}
+                    <Screens bind:streams />
+                {:else if screenTab === "ndi"}
+                    <NDIStreams />
+                {:else}
+                    <Windows bind:streams {searchValue} />
+                {/if}
+            </div>
         {:else if active === "cameras"}
-            <Cameras
-                on:click={({ detail }) => {
-                    let e = detail.event
-                    let cam = detail.cam
+            <div class="gridgap">
+                <Cameras
+                    on:click={({ detail }) => {
+                        let e = detail.event
+                        let cam = detail.cam
 
-                    if ($outLocked || e.ctrlKey || e.metaKey) return
-                    if (currentOutput.out?.background?.id === cam.id) clearBackground()
-                    else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.cameraGroup, type: "camera" })
-                }}
-            />
+                        if ($outLocked || e.ctrlKey || e.metaKey) return
+                        if (currentOutput.out?.background?.id === cam.id) clearBackground()
+                        else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.cameraGroup, type: "camera" })
+                    }}
+                />
+            </div>
         {:else if fullFilteredFiles.length}
             {#key fullFilteredFiles}
                 {#if $mediaOptions.mode === "grid"}
@@ -477,6 +483,19 @@
         padding: 5px;
         place-content: flex-start;
     } */
+
+    .gridgap {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        padding: 5px;
+
+        width: 100%;
+        height: 100%;
+
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
 
     .text {
         opacity: 0.8;

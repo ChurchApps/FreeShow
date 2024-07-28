@@ -50,6 +50,9 @@ test("Launch electron app", async () => {
         // await window.screenshot({ path: "intro.png" })
 
         // Initial setup
+        // Set language to English
+        await window.locator(".main .dropdownElem").getByRole("button").click({ timeout: 5000 })
+        await window.locator(".main .dropdownElem .dropdown #id_English").click({ timeout: 1000 })
         // This triggers the Electron open dialog, mocked above
         await window.locator(".main .showElem").getByRole("button").click()
         await window.getByText("Get Started!").click({ timeout: 1000 })
@@ -57,6 +60,9 @@ test("Launch electron app", async () => {
         // As the existing show folder is also mocked to be a tmp folder,
         // this is not expected.
         // await window.getByTestId("alert.ack.check").click({ timeout: 1000 })
+
+        // Give time to save initial state
+        await delay(4000)
 
         // Create a new project, then try creating a new show under the project
         await window.locator("#leftPanel").getByText("New project").click({ timeout: 1000 })
@@ -88,13 +94,26 @@ test("Launch electron app", async () => {
 
         // Verify the group changing was successful
         await expect(window.getByTitle("Outro")).toBeVisible({ timeout: 1000 })
+
+        // Manual save!
+        await window.locator(".top").getByText("FreeShow").click({ button: "right", timeout: 1000 })
+        await window.getByText("Save", { exact: true }).click({ timeout: 1000 })
+        // await window.keyboard.press("Control+S")
+        // await window.keyboard.press("Meta+S")
+        await delay(5000)
     } catch (ex) {
         console.log("Taking screenshot")
         await window.screenshot({ path: "test-output/screenshots/failed.png" })
         throw ex
     }
+
     // Close after finishing
-    await electronApp.close()
+    console.log("Closing app...")
+    electronApp.close() // await here not detecting close on Linux
+    await delay(2000)
+    console.log("App closed!")
+
     tmpDataFolder.removeCallback()
     tmpSettingFolder.removeCallback()
+    console.log("DONE!")
 })

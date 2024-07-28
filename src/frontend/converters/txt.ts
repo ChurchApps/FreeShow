@@ -1,12 +1,13 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Show } from "../../types/Show"
+import type { Item, Show } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { getItemText } from "../components/edit/scripts/textStyle"
 import { clone, removeEmpty } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { checkName, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
+import { linesToTextboxes } from "../components/show/formatTextEditor"
 import { activeProject, dictionary, formatNewShow, groups, splitLines } from "../stores"
 
 export function getQuickExample() {
@@ -48,6 +49,7 @@ export function convertText({ name = "", category = null, text, noFormatting = f
         let firstSlideText = labeled[0].text.split("\n")
         name = firstSlideText[0]
         if (firstSlideText.length > 1 && (name.includes("[") || name.includes(":"))) name = firstSlideText[1]
+        name = name.replace(/[,.!]/g, "").trim()
     }
 
     let layoutID: string = uid()
@@ -164,10 +166,8 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
             layouts.push({ id })
         }
 
-        function createSlide(lines: any, slideIndex: number) {
-            lines = lines.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
-            let defaultItemStyle: string = "top:120px;left:50px;height:840px;width:1820px;"
-            let items: any[] = [{ style: defaultItemStyle, lines }] // auto: true
+        function createSlide(lines: string, slideIndex: number) {
+            let items: Item[] = linesToItems(lines)
 
             // get active show
             if (_show().get()) {
@@ -235,6 +235,13 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
     }
 }
 
+function linesToItems(lines: string) {
+    let slideLines: string[] = lines.split("\n")
+    let items: Item[] = linesToTextboxes(slideLines)
+
+    return items
+}
+
 function checkRepeats(labeled: any[]) {
     let newLabels: any[] = []
     labeled.forEach((a: any) => {
@@ -272,28 +279,28 @@ function fixText(text: string, formatText: boolean): string {
             firstRepeater = text.indexOf(":/:")
             secondRepeater = text.indexOf(":/:", firstRepeater + 1)
         }
-    }
 
-    let newText: string = ""
-    const commaDividerMinLength = 22 // shouldn't be much less
-    text.split("\n").forEach((t: any) => {
-        let newLineText: string = ""
+        let newText: string = ""
+        const commaDividerMinLength = 22 // shouldn't be much less
+        text.split("\n").forEach((t: any) => {
+            let newLineText: string = ""
 
-        // commas inside line
-        let commas: string[] = removeEmpty(t.split(","))
-        commas.forEach((a: any, i: number) => {
-            newLineText += a
+            // commas inside line
+            let commas: string[] = removeEmpty(t.split(","))
+            commas.forEach((a: any, i: number) => {
+                newLineText += a
 
-            if (i >= commas.length - 1) newLineText += "\n"
-            else if (!formatText) newLineText += ","
-            else if (a.length < commaDividerMinLength || (commas[i + 1] && commas[i + 1].length < commaDividerMinLength)) newLineText += ","
-            else newLineText += "\n"
+                if (i >= commas.length - 1) newLineText += "\n"
+                // else if (!formatText) newLineText += ","
+                else if (a.length < commaDividerMinLength || (commas[i + 1] && commas[i + 1].length < commaDividerMinLength)) newLineText += ","
+                else newLineText += "\n"
+            })
+
+            newText += newLineText
         })
 
-        newText += newLineText
-    })
-
-    text = newText
+        text = newText
+    }
 
     let lines: string[] = text.split("\n")
 

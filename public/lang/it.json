@@ -9,6 +9,7 @@
         "search": "Cerca",
         "none": "Nessuno",
         "finished": "Finito",
+        "open": "Apri",
         "system_open": "Apri nel sistema"
     },
     "titlebar": {
@@ -29,9 +30,11 @@
     "about": {
         "check_updates": "Cerca aggiornamenti",
         "made": "Creato in Norvegia da",
-        "report": "Vuoi segnalare un problema? Crea un problema su GitHub",
-        "help": "Vuoi aiutare a tradurre o richiedere una funzionalità? Invia una mail a",
-        "support": "Supportare il progetto?",
+        "more": "Controlla altre nostre applicazioni su",
+        "report": "Per segnalare un problema o richiedere una funzionalità, vai a",
+        "translate": "Vuoi aiutare a tradurre? Per favore, vai a",
+        "mail": "Contatto tramite e-mail",
+        "support": "Se sei grato per questo progetto, considera di sostenerlo",
         "assets": "Assets usati",
         "libraries": "Librerie usate",
         "thanks": "Grazie a",
@@ -117,7 +120,8 @@
         "slide": "Cancella diapositiva",
         "overlays": "Cancella sovrapposizioni",
         "audio": "Cancella audio",
-        "nextTimer": "Cancella il timer della diapositiva successiva"
+        "nextTimer": "Cancella il timer della diapositiva successiva",
+        "drawing": "Disegno chiaro"
     },
     "remove": {
         "background": "Rimuovi sfondo",
@@ -160,6 +164,8 @@
         "recommended": "Raccomandato"
     },
     "audio": {
+        "settings": "Impostazioni audio",
+        "mute_when_video_plays": "Disattiva l'audio durante la riproduzione del video",
         "metronome": "Metronomo",
         "toggle_metronome": "Attiva metronomo",
         "tempo": "Tempo",
@@ -227,7 +233,8 @@
         "display": "Impossibile mostrare la finestra di output sul display corrente",
         "keep_one_layout": "Devi avere almeno un layout",
         "video_unavailable": "Il video non è disponibile? Il creatore ha disattivato gli incorporamenti nel video.",
-        "folder_exists": "Questa cartella esiste già"
+        "folder_exists": "Questa cartella esiste già",
+        "uri": "Impossibile analizzare il nome dell'audio. Rinomina il file"
     },
     "meta": {
         "title": "Titolo",
@@ -277,6 +284,9 @@
     "inputs": {
         "name": "Nome",
         "url": "URL",
+        "method": "Metodo",
+        "contentType": "Tipo di contenuto",
+        "payload": "Carico utile",
         "video_id": "ID/URL video",
         "close_ad": "Chiudi annuncio sulla schermata di output",
         "start": "Inizio",
@@ -353,6 +363,7 @@
         "animate": "Animate",
         "next_timer": "Timer diapositiva successiva",
         "import": "Importa",
+        "songbeamer_import": "Importazione di Songbeamer",
         "export": "Esporta",
         "importing": "Importazione",
         "import_scripture": "Importa Bibbia",
@@ -388,7 +399,7 @@
         "verse_undefined": "Il verso {} non esiste in questo capitolo.",
         "recording_started": "La registrazione è iniziata!",
         "recording_stopped": "La registrazione è stata fermata!",
-        "starting_show": "Scena in avvio",
+        "starting_action": "Azione iniziale",
         "less_than_minute": "in meno di un minuto.",
         "less_than_seconds": "in meno di {} secondi.",
         "now": "ora!",
@@ -507,7 +518,7 @@
         "add_color": "Aggiungi colore",
         "format": "Formato",
         "find_replace": "Trova e sostituisci il testo",
-        "cut_in_half": "Taglia a metà",
+        "cut_in_half": "Dividere in due",
         "find": "Trova",
         "replace": "Sostituisci",
         "case_sensitive": "Case sensitive",
@@ -537,6 +548,7 @@
         "delete_shows_not_indexed": "Elimina le scene nella cartella 'Shows' che non sono indicizzate",
         "delete_thumbnail_cache": "Elimina la cache delle miniature",
         "open_log_file": "Apri file di log",
+        "open_cache_folder": "Apri la cartella della cache",
         "refresh_all_shows": "Ottieni tutte le scene nella cartella 'Shows'.",
         "start_timer": "Avviare il timer",
         "stop_timers": "Arresta i timer attivi",
@@ -562,6 +574,7 @@
         "change_volume": "Modifica volume",
         "start_audio_stream": "Avvia il flusso audio",
         "start_playlist": "Avvia la playlist",
+        "playlist_next": "Traccia successiva nella playlist",
         "start_metronome": "Avvia il metronomo",
         "start_slide_timers": "Avvia i timer sulla diapositiva attiva",
         "id_select_output_style": "Seleziona lo stile di output in base all'ID",
@@ -570,10 +583,15 @@
         "change_variable": "Cambia variabile",
         "start_trigger": "Avvia trigger",
         "run_action": "Esegui l'azione",
+        "toggle_action": "Attiva azione",
+        "send_rest_command": "Invia richiesta HTTP",
         "custom_activation": "Attivazione personalizzata",
         "activate_on_startup": "Attiva all'avvio",
         "activate_save": "Attiva durante il salvataggio",
         "activate_slide_clicked": "Attiva al clic della diapositiva",
+        "activate_video_starting": "Attiva all'avvio del video",
+        "activate_video_ending": "Attiva quando il video sta finendo",
+        "activate_timer_ending": "Attiva quando il timer sta per scadere",
         "activate_scripture_start": "Attiva quando viene avviata la scrittura",
         "activate_show_created": "Attiva quando viene creato lo spettacolo"
     },
@@ -747,7 +765,8 @@
         "max_events": "Eventi massimi",
         "start_days_from_today": "Inizia i giorni da oggi",
         "just_one_day": "Solo un giorno",
-        "enable_start_date": "Abilita data di inizio"
+        "enable_start_date": "Abilita data di inizio",
+        "disable_navigation": "Disabilita i controlli di navigazione"
     },
     "items": {
         "text": "Casella di testo",
@@ -765,6 +784,7 @@
         "variable": "Variable",
         "web": "Sito web",
         "visualizer": "Visualizzatore",
+        "captions": "Didascalie",
         "icon": "Icona"
     },
     "borders": {
@@ -816,6 +836,13 @@
         "digital": "Digitale",
         "analog": "Analogico",
         "seconds": "Secondi"
+    },
+    "captions": {
+        "info": "Se non l'hai già fatto, fai clic sull'URL per aprirlo nel browser oppure aprilo su qualsiasi altro dispositivo! Assicurati di concedere l'accesso al microfono e utilizza Google Chrome per ottenere le prestazioni migliori.",
+        "language": "Linguaggio di trascrizione",
+        "translate": "Traduci in",
+        "showtime": "Durata della visualizzazione",
+        "powered_by": "Alimentato da"
     },
     "midi": {
         "midi": "MIDI",
@@ -925,9 +952,11 @@
         "full_colors": "Colori completi del gruppo di diapositive",
         "auto_output": "Attiva la schermata di output all'avvio",
         "hide_cursor_in_output": "Nascondi il cursore nell'output",
+        "clear_media_when_finished": "Cancellare il media una volta terminato",
         "disable_presenter_controller_keys": "Disattiva i tasti del controller del presentatore",
         "default_project_name": "Nome progetto predefinito",
         "audio_fade_duration": "Durata della dissolvenza audio",
+        "audio_crossfade": "Dissolvenza incrociata dell'audio",
         "max_auto_font_size": "Dimensione massima del carattere automatico",
         "resolution": "Risoluzione",
         "cropping": "Ritagliare",
@@ -986,7 +1015,7 @@
     "calendar": {
         "type": "Tipo",
         "event": "Evento",
-        "show": "Programma scena",
+        "schedule_action": "Pianifica azione",
         "name": "Nome",
         "color": "Colore",
         "time": "Tempo",
@@ -1111,5 +1140,20 @@
         "words": "Parole",
         "template": "Modello",
         "category": "Categoria"
+    },
+    "songbeamer_import": {
+        "options": "Opzioni",
+        "encoding": "Codifica",
+        "older_versions": "Per le versioni Songbeamer precedenti alla 6.02a",
+        "category": "Categoria",
+        "utf8": "UTF-8",
+        "latin1": "Latino 1",
+        "translations": "Traduzioni",
+        "translation_multiline": "Multilinea",
+        "translation_textboxes": "Caselle di testo",
+        "translation_layouts": "Layout",
+        "translation_description_multiline": "Aggiunge tutte le lingue in un'unica casella di testo in righe alternate. (Come in Songbeamer)",
+        "translation_description_textboxes": "Aggiunge ogni lingua come casella di testo separata alla diapositiva.",
+        "translation_description_layouts": "Crea un set unico di diapositive e un layout per ogni lingua."
     }
 }

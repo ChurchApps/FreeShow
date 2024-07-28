@@ -30,7 +30,7 @@
     let fullFilteredOverlays: any[] = []
     function filterSearch() {
         fullFilteredOverlays = clone(filteredOverlays)
-        if (searchValue.length > 1) fullFilteredOverlays = fullFilteredOverlays.filter((a) => filter(a.name).includes(filter(searchValue)))
+        if (searchValue.length > 1) fullFilteredOverlays = fullFilteredOverlays.filter((a) => filter(a.name || "").includes(filter(searchValue)))
     }
 
     let nextScrollTimeout: any = null
@@ -57,12 +57,17 @@
                         class="context #overlay_card"
                         outlineColor={findMatchingOut(overlay.id, $outputs)}
                         active={findMatchingOut(overlay.id, $outputs) !== null}
-                        label={overlay.name || "—"}
+                        label={overlay.name}
+                        renameId="overlay_{overlay.id}"
                         color={overlay.color}
                         icon={overlay.placeUnderSlide ? "under" : overlay.locked ? "locked" : null}
                         {resolution}
+                        showPlayOnHover
                         on:click={(e) => {
-                            if (!$outLocked && !e.ctrlKey && !e.metaKey) setOutput("overlays", overlay.id, true)
+                            if ($outLocked || e.ctrlKey || e.metaKey) return
+                            if (e.target?.closest(".edit")) return
+
+                            setOutput("overlays", overlay.id, true)
                         }}
                     >
                         <SelectElem id="overlay" data={overlay.id} fill draggable>

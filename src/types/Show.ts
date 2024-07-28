@@ -95,6 +95,7 @@ export interface Item {
     muted?: boolean // media item
     variable?: any
     web?: any
+    tracker?: any // slide progress tracker item data
     bindings?: string[] // bind item to stage or an output
     actions?: any // showTime | hideTime
     chords?: any
@@ -328,7 +329,7 @@ export interface OutTransition {
 // types
 
 export type ID = string
-export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "events" | "variable" | "web" | "mirror" | "icon" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
+export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "events" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

@@ -3,12 +3,13 @@ import { clone } from "../components/helpers/array"
 import { getBase64Path, mediaSize } from "../components/helpers/media"
 import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
-import { clearAll, updateOut } from "../components/helpers/showActions"
+import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { REMOTE } from "./../../types/Channels"
 import { activeProject, connections, dictionary, driveData, folders, openedFolders, outLocked, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
 import { sendData } from "./sendData"
 import { uid } from "uid"
+import { clearAll } from "../components/output/clear"
 
 // REMOTE
 

@@ -121,7 +121,7 @@ export const textKeys = {
 export function getSlides({ bibles, sorted }) {
     let slides: any[][] = [[]]
 
-    let template = get(templates)[get(scriptureSettings).template]?.items || []
+    let template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
     let templateTextItems = template.filter((a) => a.lines)
     let templateOtherItems = template.filter((a) => !a.lines && a.type !== "text")
 
@@ -138,6 +138,7 @@ export function getSlides({ bibles, sorted }) {
 
         sorted.forEach((s: any, i: number) => {
             let slideArr: any = slides[slideIndex][bibleIndex]
+            if (!slideArr?.lines[0]?.text) return
 
             let lineIndex: number = 0
             // verses on individual lines
@@ -239,7 +240,7 @@ export function getSlides({ bibles, sorted }) {
         // auto size
         slides.forEach((slide, i) => {
             slide.forEach((item, j) => {
-                if (!templateTextItems[j]?.auto) return
+                if (!templateTextItems[j]?.auto || !slides[i][j].lines?.[0]?.text) return
 
                 let autoSize: number = getAutoSize(item)
                 // WIP historyActions - TEMPLATE...
@@ -278,13 +279,14 @@ export function getSlides({ bibles, sorted }) {
         let alignStyle = metaTemplate?.lines?.[0]?.align || ""
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         // remove text in () on scripture names
-        let versions = bibles.map((a) => a.version.replace(/\([^)]*\)/g, "").trim()).join(" + ")
+        let versions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim()).join(" + ")
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
+        const referenceDivider = get(scriptureSettings).referenceDivider || ":"
         let text = customText
         if (!showVersion && !showVerse) return
         if (showVersion) text = text.replaceAll(textKeys.showVersion, versions)
-        if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + ":" + range)
+        if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + referenceDivider + range)
 
         text.split("\n").forEach((line) => {
             lines.push({ text: [{ value: line, style: verseStyle }], align: alignStyle })
@@ -316,7 +318,9 @@ export function setBooksCache(scriptureId: string, data: any) {
     })
 }
 
-export function getShortBibleName(name) {
+export function getShortBibleName(name: string) {
+    if (!name) return ""
+
     name = name
         .replace(/[^a-zA-Z ]+/g, "")
         .trim()

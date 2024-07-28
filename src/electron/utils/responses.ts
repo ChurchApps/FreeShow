@@ -1,7 +1,7 @@
 // ----- FreeShow -----
 // Respond to messages from the frontend
 
-import { app, desktopCapturer, DesktopCapturerSource, Display, screen, shell, systemPreferences } from "electron"
+import { app, BrowserWindow, desktopCapturer, DesktopCapturerSource, Display, screen, shell, systemPreferences } from "electron"
 import { getFonts } from "font-list"
 import { machineIdSync } from "node-machine-id"
 import os from "os"
@@ -14,7 +14,6 @@ import { downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { error_log } from "../data/store"
 import { getThumbnail, getThumbnailFolderPath, saveImage } from "../data/thumbnails"
-import { outputWindows } from "../output/output"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { startWebSocketAndRest, stopApiListener } from "./api"
@@ -45,6 +44,7 @@ import {
 import { LyricSearch } from "./LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import checkForUpdates from "./updater"
+import { OutputHelper } from "../output/OutputHelper"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -54,7 +54,7 @@ export function startImport(_e: any, msg: Message) {
     let needsFileAndNoFileSelected = msg.data.format.extensions && !files.length
     if (needsFileAndNoFileSelected || isLinuxAndPfdImport) return
 
-    importShow(msg.channel, files || null, msg.data.path)
+    importShow(msg.channel, files || null, msg.data)
 }
 
 // BIBLE
@@ -290,7 +290,11 @@ function getScreens(type: "window" | "screen" = "screen") {
     })
 
     function addFreeShowWindows(screens: any[], sources: DesktopCapturerSource[]) {
-        Object.values({ main: mainWindow, ...outputWindows }).forEach((window: any) => {
+        const windows: BrowserWindow[] = []
+        OutputHelper.getAllOutputs().forEach(([output]: any) => {
+            output.window && windows.push(output.window)
+        })
+        Object.values({ main: mainWindow, ...windows }).forEach((window: any) => {
             let mediaId = window?.getMediaSourceId()
             let windowsAlreadyExists = sources.find((a: any) => a.id === mediaId)
             if (windowsAlreadyExists) return

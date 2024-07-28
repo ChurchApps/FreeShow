@@ -21,6 +21,7 @@
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
     import Captions from "./views/Captions.svelte"
+    import SlideProgress from "./views/SlideProgress.svelte"
 
     export let item: Item
     export let itemIndex: number = -1
@@ -38,6 +39,7 @@
     export let transitionEnabled: boolean = false
     export let animationStyle: any = {}
     export let dynamicValues: boolean = true
+    export let isStage: boolean = false
     export let customFontSize: number | null = null
     export let outputStyle: any = {}
     export let ref: {
@@ -64,8 +66,19 @@
 
     $: autoSize = item.autoFontSize || getAutoSize(item)
 
-    $: lines = item?.lines
-    $: if (linesStart !== null && linesEnd !== null && lines?.length) lines = lines.filter((a) => a.text.filter((a) => a.value.length)?.length)
+    $: lines = clone(item?.lines)
+    $: if (linesStart !== null && linesEnd !== null && lines?.length) {
+        lines = lines.filter((a) => a.text.filter((a) => a.value.length)?.length)
+
+        // show last possible lines if no text at current line
+        if (!lines[linesStart]) {
+            let linesCount = linesEnd - linesStart
+            let length = lines.length - 1
+            let index = length - (length % linesCount)
+            linesStart = index
+            linesEnd = index + linesCount
+        }
+    }
 
     // timer updater
     let today = new Date()
@@ -117,7 +130,7 @@
     $: lineBg = item?.specialStyle?.lineBg
 
     // actions
-    $: if ((preview || $currentWindow === "output") && item?.actions) runActions()
+    $: if ($currentWindow === "output" && item?.actions) runActions() // preview ||
     function runActions() {
         Object.keys(item?.actions || {}).forEach((action) => {
             if (actions[action]) actions[action](item?.actions[action])
@@ -354,7 +367,7 @@
         mediaItemPath = item.src || ""
 
         // only load thumbnails in main
-        if ($currentWindow) return
+        if ($currentWindow || preview) return
 
         let newPath = await loadThumbnail(mediaItemPath, mediaSize.slideSize)
         if (newPath) mediaItemPath = newPath
@@ -382,11 +395,11 @@
         {#if lines}
             <div
                 class="align"
-                class:topBottomScrolling={item?.scrolling?.type === "top_bottom"}
-                class:bottomTopScrolling={item?.scrolling?.type === "bottom_top"}
-                class:leftRightScrolling={item?.scrolling?.type === "left_right"}
-                class:rightLeftScrolling={item?.scrolling?.type === "right_left"}
-                style="--scrollSpeed: {item?.scrolling?.speed ?? 15}s;{style ? item.align : null}"
+                class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"}
+                class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"}
+                class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"}
+                class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"}
+                style="--scrollSpeed: {item?.scrolling?.speed ?? 15}s;{style ? item?.align : null}"
                 bind:this={alignElem}
             >
                 <div
@@ -412,7 +425,7 @@
                                 {#each line.text || [] as text}
                                     {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                     <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate' ? text.style : ''}">
-                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex }, updateDynamic) : value}
+                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex, type: ref.type }, updateDynamic) : value}
                                     </span>
                                 {/each}
                             </div>
@@ -463,12 +476,14 @@
         {:else if item?.type === "variable"}
             <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ showId: ref.showId, layoutId: ref.layoutId, slideIndex }} />
         {:else if item?.type === "web"}
-            <Website src={item?.web?.src || ""} clickable={$currentWindow === "output"} />
+            <Website src={item?.web?.src || ""} navigation={!item?.web?.noNavigation} clickable={$currentWindow === "output"} {ratio} />
         {:else if item?.type === "mirror"}
             <!-- no mirrors in mirrors! -->
             {#if !isMirrorItem}
                 <Mirror {item} {ref} {ratio} index={slideIndex} />
             {/if}
+        {:else if item?.type === "slide_tracker"}
+            <SlideProgress tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : autoSize} />
         {:else if item?.type === "visualizer"}
             <Visualizer {item} {preview} />
         {:else if item?.type === "captions"}

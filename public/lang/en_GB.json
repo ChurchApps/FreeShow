@@ -9,6 +9,7 @@
         "search": "Search",
         "none": "None",
         "finished": "Finished",
+        "open": "Open",
         "system_open": "Open in system"
     },
     "titlebar": {
@@ -29,9 +30,11 @@
     "about": {
         "check_updates": "Look for updates",
         "made": "Made in Norway by",
-        "report": "Want to report an issue? Create an issue on GitHub",
-        "help": "Want to help translate or request a feature? Send a mail to",
-        "support": "Support the project?",
+        "more": "Please check out more of our applications at",
+        "report": "To report an issue or request a feature, go to",
+        "translate": "Want to help translate? Please head over to",
+        "mail": "Contact via email",
+        "support": "If you are grateful for this project, please consider supporting it",
         "assets": "Assets used",
         "libraries": "Libraries used",
         "thanks": "Thanks to",
@@ -117,7 +120,8 @@
         "slide": "Clear slide",
         "overlays": "Clear overlays",
         "audio": "Clear audio",
-        "nextTimer": "Clear next slide timer"
+        "nextTimer": "Clear next slide timer",
+        "drawing": "Clear drawing"
     },
     "remove": {
         "background": "Remove background",
@@ -160,6 +164,8 @@
         "recommended": "Recommended"
     },
     "audio": {
+        "settings": "Audio settings",
+        "mute_when_video_plays": "Mute when video plays",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "tempo": "Tempo",
@@ -227,7 +233,8 @@
         "display": "Could not show output window on current display",
         "keep_one_layout": "You have to have at least one layout",
         "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
-        "folder_exists": "This folder does already exist"
+        "folder_exists": "This folder does already exist",
+        "uri": "Could not parse the audio name, please rename the file"
     },
     "meta": {
         "title": "Title",
@@ -277,6 +284,9 @@
     "inputs": {
         "name": "Name",
         "url": "URL",
+        "method": "Method",
+        "contentType": "Content Type",
+        "payload": "Payload",
         "video_id": "Video ID/URL",
         "close_ad": "Close ad on output screen",
         "start": "Start",
@@ -353,6 +363,7 @@
         "animate": "Animate",
         "next_timer": "Next slide timer",
         "import": "Import",
+        "songbeamer_import": "Songbeamer Import",
         "export": "Export",
         "importing": "Importing",
         "import_scripture": "Import scripture",
@@ -388,7 +399,7 @@
         "verse_undefined": "Verse {} does not exist in this chapter.",
         "recording_started": "Recording started!",
         "recording_stopped": "Recording stopped!",
-        "starting_show": "Starting show",
+        "starting_action": "Starting action",
         "less_than_minute": "in less than a minute.",
         "less_than_seconds": "in less than {} seconds.",
         "now": "now!",
@@ -507,7 +518,7 @@
         "add_color": "Add colour",
         "format": "Format",
         "find_replace": "Find and replace text",
-        "cut_in_half": "Cut in half",
+        "cut_in_half": "Split in two",
         "find": "Find",
         "replace": "Replace",
         "case_sensitive": "Case sensitive",
@@ -537,6 +548,7 @@
         "delete_shows_not_indexed": "Delete shows in 'Shows' folder that are not indexed",
         "delete_thumbnail_cache": "Delete thumbnail cache",
         "open_log_file": "Open log file",
+        "open_cache_folder": "Open cache folder",
         "refresh_all_shows": "Get all shows in 'Shows' folder",
         "start_timer": "Start timer",
         "stop_timers": "Stop active timers",
@@ -562,6 +574,7 @@
         "change_volume": "Change volume",
         "start_audio_stream": "Start audio stream",
         "start_playlist": "Start playlist",
+        "playlist_next": "Next track in playlist",
         "start_metronome": "Start metronome",
         "start_slide_timers": "Start timers on active slide",
         "id_select_output_style": "Select output style by ID",
@@ -570,10 +583,15 @@
         "change_variable": "Change variable",
         "start_trigger": "Start trigger",
         "run_action": "Run action",
+        "toggle_action": "Toggle action",
+        "send_rest_command": "Send HTTP-Request",
         "custom_activation": "Custom activation",
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",
         "activate_slide_clicked": "Activate on slide click",
+        "activate_video_starting": "Activate when video is starting",
+        "activate_video_ending": "Activate when video is ending",
+        "activate_timer_ending": "Activate when timer is ending",
         "activate_scripture_start": "Activate when scripture is started",
         "activate_show_created": "Activate when show is created"
     },
@@ -747,7 +765,8 @@
         "max_events": "Max events",
         "start_days_from_today": "Start at days from today",
         "just_one_day": "Just one day",
-        "enable_start_date": "Enable start date"
+        "enable_start_date": "Enable start date",
+        "disable_navigation": "Disable navigation controls"
     },
     "items": {
         "text": "Textbox",
@@ -765,6 +784,7 @@
         "variable": "Variable",
         "web": "Website",
         "visualizer": "Visualiser",
+        "captions": "Captions",
         "icon": "Icon"
     },
     "borders": {
@@ -816,6 +836,13 @@
         "digital": "Digital",
         "analog": "Analogue",
         "seconds": "Seconds"
+    },
+    "captions": {
+        "info": "Please click the URL to open in your browser if you haven't already, or open it on any other device! Make sure to give access to your microphone, and use Google Chrome for the best performance.",
+        "language": "Transcription language",
+        "translate": "Translate to",
+        "showtime": "Display duration",
+        "powered_by": "Powered by"
     },
     "midi": {
         "midi": "MIDI",
@@ -925,9 +952,11 @@
         "full_colors": "Full slide group colours",
         "auto_output": "Activate output screen on startup",
         "hide_cursor_in_output": "Hide cursor in output",
+        "clear_media_when_finished": "Clear media when finished",
         "disable_presenter_controller_keys": "Disable presenter controller keys",
         "default_project_name": "Default project name",
         "audio_fade_duration": "Audio fade duration",
+        "audio_crossfade": "Audio crossfade",
         "max_auto_font_size": "Max auto font size",
         "resolution": "Resolution",
         "cropping": "Cropping",
@@ -986,7 +1015,7 @@
     "calendar": {
         "type": "Type",
         "event": "Event",
-        "show": "Schedule show",
+        "schedule_action": "Schedule action",
         "name": "Name",
         "color": "Colour",
         "time": "Time",
@@ -1111,5 +1140,20 @@
         "words": "Words",
         "template": "Template",
         "category": "Category"
+    },
+    "songbeamer_import": {
+        "options": "Options",
+        "encoding": "Encoding",
+        "older_versions": "For Songbeamer versions older than 6.02a",
+        "category": "Category",
+        "utf8": "UTF-8",
+        "latin1": "Latin 1",
+        "translations": "Translations",
+        "translation_multiline": "Multiline",
+        "translation_textboxes": "Textboxes",
+        "translation_layouts": "Layouts",
+        "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
+        "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
+        "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
     }
 }

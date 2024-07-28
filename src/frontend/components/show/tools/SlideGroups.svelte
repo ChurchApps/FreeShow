@@ -82,7 +82,7 @@
             <h4><T id="groups.global" /></h4>
             {#if sortedGroups.length}
                 {#each sortedGroups as slide}
-                    <SelectElem id="global_group" data={slide} draggable>
+                    <SelectElem id="global_group" data={{ slide }} draggable>
                         <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                         <div
                             class="slide context #global_group"

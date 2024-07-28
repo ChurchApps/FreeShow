@@ -1,14 +1,12 @@
 <script lang="ts">
     import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeStage, outputs, special, stageShows } from "../../../stores"
+    import { activeStage, outputs, stageShows } from "../../../stores"
     import { send } from "../../../utils/request"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getActiveOutputs } from "../../helpers/output"
-    import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -48,7 +46,8 @@
                         screen: null,
                     }
 
-                    send(OUTPUT, ["CREATE"], { ...a[id], id, rate: $special.previewRate || "auto" })
+                    // , rate: $special.previewRate || "auto"
+                    send(OUTPUT, ["CREATE"], { ...a[id], id })
                 } else {
                     // WIP: remove alpha key outputs...
                     let outputWithStageId = keysToID(a).find((output) => output.stageOutput === $activeStage.id)?.id
@@ -85,10 +84,6 @@
         .map(([id, a]) => ({ id, ...a }))
         .filter((a) => !a.isKeyOutput && !a.stageOutput)
         .sort((a, b) => a.name.localeCompare(b.name))
-
-    function reset() {
-        history({ id: "UPDATE", newData: { data: { color: "#000000" }, key: "settings" }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage" } })
-    }
 </script>
 
 <div class="section">
@@ -156,13 +151,6 @@
   </div> -->
 </div>
 
-<div class="bottom">
-    <Button style="flex: 1;" on:click={reset} dark center>
-        <Icon id="reset" right />
-        <T id={"actions.reset"} />
-    </Button>
-</div>
-
 <!-- <EditValues edits={textEdits} styles={data} {item} on:change={updateStyle} /> -->
 
 <style>
@@ -195,11 +183,4 @@
         display: block;
         background: var(--primary-darker);
     } */
-
-    .bottom {
-        display: flex;
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-    }
 </style>

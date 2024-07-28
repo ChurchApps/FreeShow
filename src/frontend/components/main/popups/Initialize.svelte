@@ -32,7 +32,7 @@
 
     <br />
 
-    <p style="margin-bottom: 10px;"><T id="setup.change_later" />:</p>
+    <p style="margin-bottom: 10px;font-style: italic;opacity: 0.7;"><T id="setup.change_later" />:</p>
     <CombinedInput textWidth={30}>
         <p><T id="settings.language" /></p>
         <LocaleSwitcher />

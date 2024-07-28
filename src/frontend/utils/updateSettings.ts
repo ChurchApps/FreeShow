@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { MAIN, STORE } from "../../types/Channels"
 import type { Output } from "../../types/Output"
 import { clone, keysToID } from "../components/helpers/array"
-import { displayOutputs, setOutput } from "../components/helpers/output"
+import { checkWindowCapture, displayOutputs, setOutput } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import {
     activePopup,
@@ -13,6 +13,7 @@ import {
     audioStreams,
     autoOutput,
     autosave,
+    bibleApiKey,
     calendarAddShow,
     categories,
     companion,
@@ -118,6 +119,7 @@ export function updateSettings(data: any) {
         setTimeout(() => {
             restartOutputs()
             if (get(autoOutput)) setTimeout(() => displayOutputs({}, true), 500)
+            checkWindowCapture()
         }, 1500)
     }
 
@@ -163,7 +165,8 @@ export function restartOutputs() {
                 if (parentOutput) output = { ...parentOutput, ...output }
             }
 
-            send(OUTPUT, ["CREATE"], { ...output, rate: get(special).previewRate || "auto" })
+            // , rate: get(special).previewRate || "auto"
+            send(OUTPUT, ["CREATE"], output)
         })
 
     // restore output video data when recreating window
@@ -182,7 +185,12 @@ export function updateThemeValues(themes: any) {
         if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
         document.documentElement.style.setProperty("--font-" + key, value)
     })
-    Object.entries(themes.border || {}).forEach(([key, value]: any) => document.documentElement.style.setProperty("--border-" + key, value))
+
+    // border radius
+    if (!themes.border) themes.border = {}
+    // set to 0 if nothing is set
+    if (themes.border?.radius === undefined) themes.border.radius = "0"
+    Object.entries(themes.border).forEach(([key, value]: any) => document.documentElement.style.setProperty("--border-" + key, value))
 }
 
 const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = {
@@ -290,8 +298,12 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
             }, 3000)
         }
     },
+    bibleApiKey: (a: any) => {
+        // this is so users can manually add their own key
+        if (a) bibleApiKey.set(a)
+    },
     special: (v: any) => {
-        if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, God"
+        if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God
         if (v.autoUpdates !== false) send(MAIN, ["AUTO_UPDATE"])
         special.set(v)
     },

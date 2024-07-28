@@ -9,6 +9,7 @@
     import { clone, keysToID } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import { formatSearch, showSearch } from "../../../utils/search"
 
     $: sortedShows = $sortedShowsList
     $: privateShows = keysToID($shows)
@@ -20,17 +21,26 @@
 
     $: active = $popupData.active || ""
 
-    let searchedShows = defaultShows
+    let searchedShows = clone(defaultShows)
     let searchValue = ""
+    let previousSearchValue: string = ""
     function search(e: any = null) {
-        searchValue = e?.target?.value?.toLowerCase() || ""
+        searchValue = formatSearch(e?.target?.value || "")
 
         if (searchValue.length < 2) {
-            searchedShows = defaultShows
+            searchedShows = clone(defaultShows)
             return
         }
 
-        searchedShows = defaultShows.filter((a) => searchValue.split(" ").find((value) => a.name.toLowerCase().includes(value)))
+        let currentShowsList = searchedShows
+        // reset if search value changed
+        if (!searchValue.includes(previousSearchValue)) currentShowsList = clone(defaultShows)
+
+        searchedShows = showSearch(searchValue, currentShowsList)
+        if (searchValue.length > 15 && searchedShows.length > 50) searchedShows = searchedShows.slice(0, 50)
+        if (searchValue.length > 30 && searchedShows.length > 30) searchedShows = searchedShows.slice(0, 30)
+
+        previousSearchValue = searchValue
     }
 
     function selectShow(show: any) {

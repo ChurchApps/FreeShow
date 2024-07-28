@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { activeStage, allOutputs, currentWindow, outputs, previewBuffers, stageShows, timers, variables } from "../../stores"
+    import { activeStage, allOutputs, currentWindow, dictionary, outputs, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import { getAutoSize } from "../edit/scripts/autoSize"
     import { getActiveOutputs } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import Image from "../media/Image.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
+    import SlideProgress from "../slide/views/SlideProgress.svelte"
     import Timer from "../slide/views/Timer.svelte"
     import Variable from "../slide/views/Variable.svelte"
     import Clock from "../system/Clock.svelte"
@@ -92,7 +93,7 @@
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
-    $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($outputs, true, true, true)[0]
+    $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($currentWindow === "output" ? $allOutputs : $outputs, false, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
 
@@ -125,7 +126,7 @@
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}
-        <div class="label">{getCustomStageLabel(id)}</div>
+        <div class="label">{getCustomStageLabel(id, $dictionary)}</div>
     {/if}
     {#if edit}
         <Movebox {ratio} active={$activeStage.items.includes(id)} />
@@ -142,7 +143,9 @@
     {:else}
         <div class="align" style="--align: {item.align};--text-align: {item.alignX};">
             <div>
-                {#if id.includes("notes")}
+                {#if id.includes("slide_tracker")}
+                    <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
+                {:else if id.includes("notes")}
                     <SlideNotes {currentSlide} {next} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
                     <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} />
@@ -185,7 +188,7 @@
     }
 
     .item.border {
-        border: 3px solid white;
+        border: 3px solid #5a4c00;
     }
 
     .stage_item.outline {
@@ -225,9 +228,9 @@
         width: 100%;
 
         background: rgb(0 0 0 / 0.5);
-        color: var(--text);
-        font-size: 3em;
-        font-weight: 600;
+        color: #dfd9b8;
+        font-size: 42px;
+        font-weight: normal;
         text-align: center;
     }
 

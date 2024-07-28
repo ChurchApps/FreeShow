@@ -52,7 +52,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (keys && !key) id = "keys"
 
                 if (initializing && obj.location.id === "show") customActionActivation("show_created")
-                if (initializing && empty && updater.initialize) data.data = updater.initialize(data.data)
+                if (initializing && empty && updater.initialize) data.data = updater.initialize(data.data, id)
 
                 if (data.replace) {
                     data.data = { ...data.data, ...data.replace }
@@ -130,7 +130,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function updateElement(a) {
                 // TODO: check for duplicates!!???
                 if (key) {
-                    data.previousData = clone(filterIndexes(a[id][key], subkey, { indexes, keys }))
+                    data.previousData = clone(filterIndexes(a[id][key] || {}, subkey, { indexes, keys }))
                     a = updateKeyData(a, data.data)
                 } else if (keys) {
                     // if just keys, but no "key"
@@ -196,6 +196,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 }
 
                 if (subkey) {
+                    if (!a[id][key]) a[id][key] = {}
+
                     // insert at index
                     if (index !== undefined && Array.isArray(a[id][key][subkey])) {
                         if (index === -1) a[id][key][subkey].push(newValue)
@@ -280,9 +282,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             a[id] = { ...a[id], ...show }
 
                             // rename
-                            let oldName = get(shows)[id].name
-                            if (show.name !== undefined && oldName !== show.name) {
-                                rename[id] = { name: show.name || id, oldName: oldName }
+                            let oldName = get(shows)[id]?.name
+                            if (show.name !== undefined && oldName && oldName !== show.name) {
+                                rename[id] = { name: show.name || id, oldName }
                             }
                             return
                         }
@@ -323,8 +325,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     a[id] = {
                         name: show.name || a[id]?.name || "",
-                        category: show.category === undefined ? a[id].category : show.category,
-                        timestamps: show.timestamps || a[id].timestamps,
+                        category: show.category === undefined ? a[id]?.category : show.category,
+                        timestamps: show.timestamps || a[id]?.timestamps,
                     }
 
                     if (show.private) a[id].private = true
@@ -441,6 +443,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (deleting) {
                     // update layout
                     showsCache.update((a) => {
+                        if (!a[showId]) return a
+
                         let slides = a[showId].layouts[layout].slides
                         let newSlides = clone(slides).filter((a, i) => (slideIndex !== undefined ? i !== slideIndex : a.id !== id))
 
@@ -733,7 +737,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         let isChild = slide.group === null
                         let globalGroup = slide.globalGroup
                         if (isChild) {
-                            let parent = Object.values(show.slides).find((a) => a.children?.includes(id))
+                            let parent = Object.values(show.slides || {}).find((a) => a.children?.includes(id))
                             globalGroup = parent?.globalGroup
                         }
                         if (globalGroup && get(groups)[globalGroup]?.template) {
@@ -770,7 +774,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (!isGlobalTemplate) return
 
                     // set custom values
-                    let isFirst = !!Object.values(show.layouts).find((layout) => layout.slides[0]?.id === id)
+                    let isFirst = !!Object.values(show.layouts || {}).find((layout) => layout.slides[0]?.id === id)
                     show.slides[id] = updateSlideFromTemplate(show.slides[id], slideTemplate, isFirst, changeOverflowItems)
                     let newLayoutData = updateLayoutsFromTemplate(show.layouts, show.media, slideTemplate, changeOverflowItems)
                     show.layouts = newLayoutData.layouts
@@ -815,7 +819,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             function updateLayoutSlides() {
                 showsCache.update((a: any) => {
-                    if (!a[data.remember.showId]) return
+                    if (!a[data.remember.showId]) return a
                     let layoutSlides = a[data.remember.showId].layouts[data.remember.layout].slides
 
                     let currentIndex = -1

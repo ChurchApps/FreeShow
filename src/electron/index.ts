@@ -10,7 +10,6 @@ import { startBackup } from "./data/backup"
 import { config, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
-import { closeAllOutputs, receiveOutput } from "./output/output"
 import { closeServers } from "./servers"
 import { stopApiListener } from "./utils/api"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, loadShows, writeFile } from "./utils/files"
@@ -20,6 +19,7 @@ import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRec
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { startExport } from "./data/export"
 import { currentlyDeletedShows } from "./cloud/drive"
+import { OutputHelper } from "./output/OutputHelper"
 
 // ----- STARTUP -----
 
@@ -131,6 +131,9 @@ function createMain() {
     // create window
     mainWindow = new BrowserWindow({ ...mainOptions, ...options })
 
+    // macos min size
+    mainWindow.setMinimumSize(MIN_WINDOW_SIZE, MIN_WINDOW_SIZE)
+
     // this is to debug any weird positioning
     console.log("Main Window Bounds:", mainWindow.getBounds())
 
@@ -184,11 +187,33 @@ function retryLoadingContent() {
 function setMainListeners() {
     if (!mainWindow) return
 
-    mainWindow.on("maximize", () => config.set("maximized", true))
-    mainWindow.on("unmaximize", () => config.set("maximized", false))
+    /*
+    mainWindow.on("minimize", () => {
+        OutputHelper.Visibility.hideAllPreviews()
+    })
+    mainWindow.on("restore", () => {
+        setTimeout(() => {
+            OutputHelper.Visibility.showAllPreviews()
+        }, 100)
+    })*/
 
-    mainWindow.on("resize", () => config.set("bounds", mainWindow?.getBounds()))
-    mainWindow.on("move", () => config.set("bounds", mainWindow?.getBounds()))
+    mainWindow.on("maximize", () => {
+        //OutputHelper.Bounds.updatePreviewBounds()
+        config.set("maximized", true)
+    })
+    mainWindow.on("unmaximize", () => {
+        //OutputHelper.Bounds.updatePreviewBounds()
+        config.set("maximized", false)
+    })
+
+    mainWindow.on("resize", () => {
+        //OutputHelper.Bounds.updatePreviewBounds()
+        config.set("bounds", mainWindow?.getBounds())
+    })
+    mainWindow.on("move", () => {
+        //OutputHelper.Bounds.updatePreviewBounds()
+        config.set("bounds", mainWindow?.getBounds())
+    })
 
     mainWindow.on("close", callClose)
     mainWindow.on("closed", exitApp)
@@ -202,16 +227,23 @@ function callClose(e: any) {
 }
 
 export async function exitApp() {
+    console.log("Closing app!")
+
     mainWindow = null
     dialogClose = false
 
-    await closeAllOutputs()
+    await OutputHelper.Lifecycle.closeAllOutputs()
     NdiReceiver.stopReceiversNDI()
 
     closeServers()
     stopApiListener()
 
     stopMidi()
+
+    if (!isProd) {
+        console.log("Dev mode active - Relaunching...")
+        app.relaunch()
+    }
 
     try {
         app.quit()
@@ -263,14 +295,15 @@ app.on("web-contents-created", (_e, contents) => {
     })
 
     // disallow in app web redirects
-    contents.on("will-navigate", (e, navigationUrl) => {
-        // allow Hot Module Replacement in dev mode
-        const parsedURL = new URL(navigationUrl)
-        if (!isProd && parsedURL.host === "localhost:3000") return
+    // contents.on("will-navigate", (e, navigationUrl) => {
+    //     // allow Hot Module Replacement in dev mode
+    //     const parsedURL = new URL(navigationUrl)
+    //     if (!isProd && parsedURL.host === "localhost:3000") return
 
-        e.preventDefault()
-        console.warn("Stopped attempt to open: " + navigationUrl)
-    })
+    //     // >>> allow navigating on website items! <<<
+    //     e.preventDefault()
+    //     console.warn("Stopped attempt to open: " + navigationUrl)
+    // })
 })
 
 // ----- STORE DATA -----
@@ -348,7 +381,7 @@ function save(data: any) {
 // ----- LISTENERS -----
 
 ipcMain.on(MAIN, receiveMain)
-ipcMain.on(OUTPUT, receiveOutput)
+ipcMain.on(OUTPUT, OutputHelper.receiveOutput)
 ipcMain.on(IMPORT, startImport)
 ipcMain.on(EXPORT, startExport)
 ipcMain.on(SHOW, loadShow)

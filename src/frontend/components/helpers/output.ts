@@ -4,21 +4,41 @@ import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
-import { currentOutputSettings, lockedOverlays, outputDisplay, outputs, overlays, playingVideos, showsCache, special, styles, templates, theme, themes, transitionData, videoExtensions } from "../../stores"
+import {
+    currentOutputSettings,
+    currentWindow,
+    disabledServers,
+    lockedOverlays,
+    outputDisplay,
+    outputs,
+    overlays,
+    playingVideos,
+    serverData,
+    showsCache,
+    special,
+    stageShows,
+    styles,
+    templates,
+    theme,
+    themes,
+    transitionData,
+    videoExtensions,
+} from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
+import { customActionActivation } from "../actions/actions"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates, sortByName } from "./array"
+import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
-import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
-import { customActionActivation } from "../actions/actions"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
-    let enabledOutputs: any[] = getActiveOutputs(get(outputs), false)
-    enabledOutputs.forEach((id) => {
-        let output: any = { id, ...get(outputs)[id] }
+    // sort so display order can be changed! (needs app restart)
+    let enabledOutputs: any[] = sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id })))
+
+    enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1
         send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: output.allowMainScreen || e.ctrlKey || e.metaKey, auto, autoPosition })
     })
@@ -61,10 +81,12 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 }
 
 function changeOutputBackground(data, { outs, output, id, i }) {
-    setTimeout(() => {
-        // update stage background if any
-        sendBackgroundToStage(id)
-    }, 100)
+    if (get(currentWindow) === null) {
+        setTimeout(() => {
+            // update stage background if any
+            sendBackgroundToStage(id)
+        }, 100)
+    }
 
     let previousWasVideo: boolean = get(videoExtensions).includes(getExtension(output.out?.background?.path))
 
@@ -110,9 +132,11 @@ function videoStarting() {
 
 let sortedOutputs: any[] = []
 export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {
-    if (sortedOutputs.length !== Object.keys(updater).length) {
-        sortedOutputs = sortByName(keysToID(updater || {}))
-    }
+    // WIP cache outputs
+    // if (JSON.stringify(sortedOutputs.map(({ id }) => id)) !== JSON.stringify(Object.keys(updater))) {
+    //     sortedOutputs = sortByName(keysToID(updater || {}))
+    // }
+    sortedOutputs = sortByName(keysToID(updater || {}))
 
     let enabled: any[] = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true) && (removeStageOutput ? !a.stageOutput : true))
 
@@ -121,7 +145,7 @@ export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boo
     enabled = enabled.map((a) => a.id)
 
     if (!enabled.length) {
-        if (!sortedOutputs.length) addOutput(true)
+        if (!sortedOutputs.length && get(currentWindow) === null) addOutput(true)
         if (sortedOutputs[0]) enabled = [sortedOutputs[0].id]
     }
 
@@ -221,6 +245,31 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
     return initial || style || slideRes || { width: 1920, height: 1080 }
 }
 
+export function checkWindowCapture() {
+    getActiveOutputs(get(outputs), false, true, true).forEach(shouldBeCaptured)
+}
+
+// NDI | OutputShow | Stage CurrentOutput
+export function shouldBeCaptured(outputId: string) {
+    let output = get(outputs)[outputId]
+    let captures: any = {
+        ndi: !!output.ndi,
+        server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0]) === outputId),
+        stage: stageHasOutput(outputId),
+    }
+
+    send(OUTPUT, ["CAPTURE"], { id: outputId, captures })
+}
+function stageHasOutput(outputId: string) {
+    return !!Object.keys(get(stageShows)).find((stageId) => {
+        let stageLayout = get(stageShows)[stageId]
+        let outputItem = stageLayout.items?.["output#current_output"]
+
+        if (!outputItem?.enabled) return false
+        return (stageLayout.settings?.output || outputId) === outputId
+    })
+}
+
 // settings
 
 export const defaultOutput: Output = {
@@ -248,7 +297,8 @@ export function keyOutput(keyId: string, delOutput: boolean = false) {
         a[keyId] = currentOutput
 
         // show
-        send(OUTPUT, ["CREATE"], { id: keyId, ...currentOutput, rate: get(special).previewRate || "auto" })
+        // , rate: get(special).previewRate || "auto"
+        send(OUTPUT, ["CREATE"], { id: keyId, ...currentOutput })
         if (get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id: keyId, ...currentOutput } })
 
         return a
@@ -270,7 +320,8 @@ export function addOutput(onlyFirst: boolean = false) {
         if (onlyFirst) output[id].name = "Primary"
 
         // show
-        if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id], rate: get(special).previewRate || "auto" })
+        // , rate: get(special).previewRate || "auto"
+        if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
         if (!onlyFirst && get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id, ...output[id] } })
 
         if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
@@ -343,8 +394,11 @@ export function getCurrentMediaTransition() {
 // TEMPLATE
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true) {
+    if (!slideItems) return []
     slideItems = clone(slideItems)
+
     if (!templateItems.length) return slideItems
+    templateItems = clone(templateItems)
 
     let sortedTemplateItems = sortItemsByType(templateItems)
 
@@ -378,9 +432,17 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 let templateText = templateLine?.text[k] || templateLine?.text[0]
                 if (text.customType !== "disableTemplate") text.style = templateText?.style || ""
 
+                let firstChar = templateText?.value?.[0] || ""
+
                 // add dynamic values
-                if (!text.value?.length && templateText?.value?.[0] === "{") {
-                    text.value = templateText.value
+                if (!text.value?.length && firstChar === "{") {
+                    text.value = templateText!.value
+                }
+
+                // add bullets
+                if (firstChar === "•" || firstChar === "-") {
+                    if (text.value[0] === firstChar) return
+                    line.text[k].value = `${firstChar} ${text.value.trim()}`
                 }
             })
         })
@@ -562,12 +624,13 @@ export function getOutputTransitions(slideData: any, transitionData: any, disabl
 export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]) {
     let isScripture = outSlide?.id === "temp"
     let slideItems = isScripture ? outSlide.tempItems : items
+    if (_show(outSlide?.id).get("reference")?.type === "scripture") isScripture = true
 
     let templateId = currentStyle[`template${isScripture ? "Scripture" : ""}`]
     let template = get(templates)[templateId || ""] || {}
     let templateItems = template.items || []
 
-    let newItems = mergeWithTemplate(slideItems, templateItems, true)
+    let newItems = mergeWithTemplate(slideItems, templateItems, true) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     return newItems

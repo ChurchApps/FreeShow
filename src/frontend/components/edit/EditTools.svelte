@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Item } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activeShow, overlays, showsCache, templates } from "../../stores"
+    import { activeEdit, activeShow, overlays, showsCache, storedEditMenuState, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { history } from "../helpers/history"
@@ -292,7 +292,10 @@
         }
 
         let ref = _show().layouts("active").ref()[0]
-        let slide = _show().slides([ref[$activeEdit.slide!].id]).get("id")[0]
+        let slide = ref[$activeEdit.slide!].id
+        if (!slide) return
+
+        storedEditMenuState.set({})
 
         if (active === "item") {
             history({
@@ -362,11 +365,14 @@
             })
         })
     }
+
+    $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)
+    $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 </script>
 
 <div class="main border editTools">
-    {#if (slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id}
-        <Tabs {tabs} bind:active overflowHidden={isShow || $activeEdit.type === "template"} />
+    {#if slideActive}
+        <Tabs {tabs} bind:active {overflowHidden} />
 
         {#if active === "text"}
             <div class="content">

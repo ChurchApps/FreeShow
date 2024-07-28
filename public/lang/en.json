@@ -9,6 +9,7 @@
         "search": "Search",
         "none": "None",
         "finished": "Finished",
+        "open": "Open",
         "system_open": "Open in system"
     },
     "titlebar": {
@@ -29,9 +30,11 @@
     "about": {
         "check_updates": "Look for updates",
         "made": "Made in Norway by",
-        "report": "Want to report an issue? Create an issue on GitHub",
-        "help": "Want to help translate or request a feature? Send a mail to",
-        "support": "Support the project?",
+        "more": "Please check out more of our applications at",
+        "report": "To report an issue or request a feature, go to",
+        "translate": "Want to help translate? Please head over to",
+        "mail": "Contact via email",
+        "support": "If you are grateful for this project, please consider supporting it",
         "assets": "Assets used",
         "libraries": "Libraries used",
         "thanks": "Thanks to",
@@ -230,7 +233,8 @@
         "display": "Could not show output window on current display",
         "keep_one_layout": "You have to have at least one layout",
         "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
-        "folder_exists": "This folder does already exist"
+        "folder_exists": "This folder does already exist",
+        "uri": "Could not parse the audio name, please rename the file"
     },
     "meta": {
         "title": "Title",
@@ -280,6 +284,9 @@
     "inputs": {
         "name": "Name",
         "url": "URL",
+        "method": "Method",
+        "contentType": "Content Type",
+        "payload": "Payload",
         "video_id": "Video ID/URL",
         "close_ad": "Close ad on output screen",
         "start": "Start",
@@ -356,6 +363,7 @@
         "animate": "Animate",
         "next_timer": "Next slide timer",
         "import": "Import",
+        "songbeamer_import": "Songbeamer Import",
         "export": "Export",
         "importing": "Importing",
         "import_scripture": "Import scripture",
@@ -522,6 +530,7 @@
         "svg_clipboard": "Import SVG from clipboard",
         "fullscreen_preview": "Toggle fullscreen preview",
         "toggle_output": "Toggle output screen",
+        "toggle_panels": "Toggle panels",
         "change_tab": "Change tab",
         "change_drawer_tab": "Change drawer tab",
         "change_slide": "Change slide",
@@ -576,6 +585,7 @@
         "start_trigger": "Start trigger",
         "run_action": "Run action",
         "toggle_action": "Toggle action",
+        "send_rest_command": "Send HTTP-Request",
         "custom_activation": "Custom activation",
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",
@@ -584,6 +594,7 @@
         "activate_video_ending": "Activate when video is ending",
         "activate_timer_ending": "Activate when timer is ending",
         "activate_scripture_start": "Activate when scripture is started",
+        "activate_slide_cleared": "Activate when slide is cleared",
         "activate_show_created": "Activate when show is created"
     },
     "animate": {
@@ -685,6 +696,7 @@
         "_title_underline": "Underline",
         "_title_strikethrough": "Strikethrough",
         "color": "Color",
+        "accent_color": "Accent color",
         "background_color": "Background color",
         "background_opacity": "Background opacity",
         "background_image": "Background image",
@@ -756,7 +768,9 @@
         "max_events": "Max events",
         "start_days_from_today": "Start at days from today",
         "just_one_day": "Just one day",
-        "enable_start_date": "Enable start date"
+        "enable_start_date": "Enable start date",
+        "disable_navigation": "Disable navigation controls",
+        "progress_bar": "Progress bar"
     },
     "items": {
         "text": "Textbox",
@@ -773,6 +787,7 @@
         "timer": "Timer",
         "variable": "Variable",
         "web": "Website",
+        "slide_tracker": "Progress",
         "visualizer": "Visualizer",
         "captions": "Captions",
         "icon": "Icon"
@@ -878,6 +893,7 @@
         "next_slide_notes": "Next slide notes",
         "output": "Output",
         "current_output": "Current output",
+        "slide_tracker": "Progress",
         "time": "Time",
         "system_clock": "System clock",
         "video_time": "Video time",
@@ -948,6 +964,7 @@
         "audio_fade_duration": "Audio fade duration",
         "audio_crossfade": "Audio crossfade",
         "max_auto_font_size": "Max auto font size",
+        "clear_style_background_on_text": "Clear style background when slide is active",
         "resolution": "Resolution",
         "cropping": "Cropping",
         "frame_rate": "Frame rate",
@@ -1130,5 +1147,20 @@
         "words": "Words",
         "template": "Template",
         "category": "Category"
+    },
+    "songbeamer_import": {
+        "options": "Options",
+        "encoding": "Encoding",
+        "older_versions": "For Songbeamer versions older than 6.02a",
+        "category": "Category",
+        "utf8": "UTF-8",
+        "latin1": "Latin 1",
+        "translations": "Translations",
+        "translation_multiline": "Multiline",
+        "translation_textboxes": "Textboxes",
+        "translation_layouts": "Layouts",
+        "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
+        "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
+        "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
     }
 }

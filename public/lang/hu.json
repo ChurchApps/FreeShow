@@ -9,6 +9,7 @@
         "search": "Keresés",
         "none": "Nincs",
         "finished": "Befejezett",
+        "open": "Megnyitás",
         "system_open": "Megnyitás a rendszerben"
     },
     "titlebar": {
@@ -29,9 +30,11 @@
     "about": {
         "check_updates": "Frissítések ellenőrzése",
         "made": "Készült Norvégiában",
-        "report": "Jelenteni szeretne egy problémát? Hozzon létre egy problémát a GitHubon",
-        "help": "Szeretne segíteni a fordításban vagy új funkciót kérni? Küldjön egy e-mailt a következő címre:",
-        "support": "Támogatná a projektet?",
+        "more": "Kérjük, tekintse meg további alkalmazásainkat a következő oldalon",
+        "report": "Ha problémát szeretne jelenteni vagy funkciót kérni, lépjen a következő oldalra",
+        "translate": "Szívesen segítene a fordításban? Kérjük, látogasson el a következő oldalra",
+        "mail": "Kapcsolatfelvétel e-mailen",
+        "support": "Ha hálás ezért a projektért, kérjük, fontolja meg a támogatást",
         "assets": "Felhasznált eszközök",
         "libraries": "Felhasznált könyvtárak",
         "thanks": "Köszönet",
@@ -117,7 +120,8 @@
         "slide": "Dia törlése",
         "overlays": "Átfedések törlése",
         "audio": "Hang törlése",
-        "nextTimer": "Következő dia időzítőjének törlése"
+        "nextTimer": "Következő dia időzítőjének törlése",
+        "drawing": "Rajz törlése"
     },
     "remove": {
         "background": "Háttér eltávolítása",
@@ -160,6 +164,8 @@
         "recommended": "Ajánlott"
     },
     "audio": {
+        "settings": "Hangbeállítások",
+        "mute_when_video_plays": "Némítás videó lejátszása alatt",
         "metronome": "Metronóm",
         "toggle_metronome": "Metronóm átváltása",
         "tempo": "Tempó",
@@ -227,7 +233,8 @@
         "display": "Nem sikerült megjeleníteni a kimeneti ablakot az aktuális kijelzőn",
         "keep_one_layout": "Legalább egy elrendezést meg kell tartani",
         "video_unavailable": "Nem érhető el a videó? A készítő letiltotta a videó beágyazását.",
-        "folder_exists": "Ez a mappa már létezik"
+        "folder_exists": "Ez a mappa már létezik",
+        "uri": "Nem sikerült feldolgozni a hangfájl nevét, kérjük, nevezze át a fájlt"
     },
     "meta": {
         "title": "Cím",
@@ -277,6 +284,9 @@
     "inputs": {
         "name": "Név",
         "url": "URL",
+        "method": "Módszer",
+        "contentType": "Tartalomtípus",
+        "payload": "Hasznos teher",
         "video_id": "Videóazonosító/URL",
         "close_ad": "Hirdetés bezárása a kimeneti képernyőn",
         "start": "Kezdés",
@@ -353,6 +363,7 @@
         "animate": "Animálás",
         "next_timer": "Következő dia időzítője",
         "import": "Importálás",
+        "songbeamer_import": "Songbeamer importálása",
         "export": "Exportálás",
         "importing": "Importálás folyamatban",
         "import_scripture": "Szentírás importálása",
@@ -388,7 +399,7 @@
         "verse_undefined": "Ez a vers nem létezik ebben a fejezetben: {}.",
         "recording_started": "Felvétel elindult!",
         "recording_stopped": "Felvétel leállítva!",
-        "starting_show": "Műsor indítása",
+        "starting_action": "Művelet indítása folyamatban",
         "less_than_minute": "kevesebb mint egy perc múlva.",
         "less_than_seconds": "kevesebb, mint {} másodperc múlva.",
         "now": "most!",
@@ -507,7 +518,7 @@
         "add_color": "Szín hozzáadása",
         "format": "Formázás",
         "find_replace": "Szöveg keresése és cseréje",
-        "cut_in_half": "Félbevágás",
+        "cut_in_half": "Kettéválasztás",
         "find": "Keresés",
         "replace": "Csere",
         "case_sensitive": "Kis- és nagybetű érzékeny",
@@ -537,6 +548,7 @@
         "delete_shows_not_indexed": "A „Shows” mappában lévő nem indexelt műsorok törlése",
         "delete_thumbnail_cache": "Bélyegkép gyorsítótár törlése",
         "open_log_file": "Naplófájl megnyitása",
+        "open_cache_folder": "Gyorsítótár mappa megnyitása",
         "refresh_all_shows": "A „Shows” mappa frissítése",
         "start_timer": "Időzítő indítása",
         "stop_timers": "Aktív időzítők leállítása",
@@ -562,6 +574,7 @@
         "change_volume": "Hangerő módosítása",
         "start_audio_stream": "Hangfolyam indítása",
         "start_playlist": "Lejátszási lista indítása",
+        "playlist_next": "Következő szám a lejátszási listában",
         "start_metronome": "Metronóm indítása",
         "start_slide_timers": "Időzítők indítása az aktív dián",
         "id_select_output_style": "Kimeneti stílus kijelölése azonosító alapján",
@@ -570,10 +583,15 @@
         "change_variable": "Változó módosítása",
         "start_trigger": "Kiváltó indítása",
         "run_action": "Művelet futtatása",
+        "toggle_action": "Művelet átváltása",
+        "send_rest_command": "HTTP-kérés küldése",
         "custom_activation": "Egyedi aktiválása",
         "activate_on_startup": "Aktiválás indításkor",
         "activate_save": "Aktiválás mentéskor",
         "activate_slide_clicked": "Aktiválás dián való kattintáskor",
+        "activate_video_starting": "Aktiválás videó indításakor",
+        "activate_video_ending": "Aktiválás videó befejezésekor",
+        "activate_timer_ending": "Aktiválás időzítő befejezésekor",
         "activate_scripture_start": "Aktiválás szentírás indításakor",
         "activate_show_created": "Aktiválás műsor létrehozásakor"
     },
@@ -747,7 +765,8 @@
         "max_events": "Maximális események",
         "start_days_from_today": "Kezdés napokban a mai naptól",
         "just_one_day": "Csak egy nap",
-        "enable_start_date": "Kezdési dátum engedélyezése"
+        "enable_start_date": "Kezdési dátum engedélyezése",
+        "disable_navigation": "Navigációs billentyűk letiltása"
     },
     "items": {
         "text": "Szövegdoboz",
@@ -765,6 +784,7 @@
         "variable": "Változó",
         "web": "Weboldal",
         "visualizer": "Vizualizáló",
+        "captions": "Feliratok",
         "icon": "Ikon"
     },
     "borders": {
@@ -816,6 +836,13 @@
         "digital": "Digitális",
         "analog": "Analóg",
         "seconds": "Másodperc"
+    },
+    "captions": {
+        "info": "Kérjük, kattintson az URL-re, hogy megnyissa a böngészőjében, ha még nem tette meg, vagy nyissa meg bármely más eszközön! Győződjön meg róla, hogy adott hozzáférést  mikrofonhoz, és a legjobb teljesítmény érdekében használja a Google Chrome-ot.",
+        "language": "Átírás nyelve",
+        "translate": "Fordítás erre",
+        "showtime": "Megjelenés időtartama",
+        "powered_by": "Készült ezzel"
     },
     "midi": {
         "midi": "MIDI",
@@ -925,9 +952,11 @@
         "full_colors": "Teljes diacsoport színek",
         "auto_output": "Kimeneti képernyő aktiválása indításkor",
         "hide_cursor_in_output": "Kurzor elrejtése a kimeneten",
+        "clear_media_when_finished": "Média törlése befejezéskor",
         "disable_presenter_controller_keys": "Bemutatóvezérlő billentyűk letiltása",
         "default_project_name": "Alapértelmezett projektnév",
         "audio_fade_duration": "Halkítás időtartama",
+        "audio_crossfade": "Hang kereszthalkítása",
         "max_auto_font_size": "Maximális automatikus betűméret",
         "resolution": "Felbontás",
         "cropping": "Vágás",
@@ -986,7 +1015,7 @@
     "calendar": {
         "type": "Típus",
         "event": "Esemény",
-        "show": "Műsor ütemezése",
+        "schedule_action": "Művelet időzítése",
         "name": "Név",
         "color": "Szín",
         "time": "Idő",
@@ -1111,5 +1140,20 @@
         "words": "Szavak",
         "template": "Sablon",
         "category": "Kategória"
+    },
+    "songbeamer_import": {
+        "options": "Beállítások",
+        "encoding": "Kódolás",
+        "older_versions": "6.02a-nál régebbi Songbeamer verziókhoz",
+        "category": "Kategória",
+        "utf8": "UTF-8",
+        "latin1": "Latin 1",
+        "translations": "Fordítások",
+        "translation_multiline": "Többsoros",
+        "translation_textboxes": "Szövegdobozok",
+        "translation_layouts": "Elrendezések",
+        "translation_description_multiline": "Hozzáadja az összes nyelvet egyetlen szövegdobozban, váltakozó sorokban (úgy, mint a Songbeamerben)",
+        "translation_description_textboxes": "Minden nyelvet külön szövegdobozként ad hozzá a diához.",
+        "translation_description_layouts": "Minden nyelvhez egyedi diakészletet és elrendezést hoz létre."
     }
 }

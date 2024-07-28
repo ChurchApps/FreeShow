@@ -12,7 +12,7 @@
 
     function pickFolder() {
         // linux dialog behind window message
-        if ($os.platform === "linux") {
+        if ($os.platform === "linux" && $activePopup !== "initialize") {
             alertMessage.set("The folder select dialog might appear behind the window on Linux!<br>Please check that if you don't see it.")
             activePopup.set("alert")
         }

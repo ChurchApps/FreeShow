@@ -9,6 +9,7 @@
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
     import { getActiveOutputs } from "../../helpers/output"
+    import { decodeURI } from "../../helpers/audio"
 
     export let currentOutput: any
     export let outputId: string
@@ -92,7 +93,7 @@
         {#if background?.type === "player"}
             <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
         {:else}
-            <p>{decodeURIComponent(mediaName)}</p>
+            <p>{decodeURI(mediaName)}</p>
         {/if}
     </span>
 

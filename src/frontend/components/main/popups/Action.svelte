@@ -50,6 +50,7 @@
             action = convertOldMidiToNewAction(action)
         }
 
+        if (!action.name) action.name = ""
         if (mode === "slide_midi") action.midiEnabled = true
 
         loaded = true
@@ -110,6 +111,7 @@
 
         // update action value instead of action id
         if (e.detail.actionValue) {
+            if (!action.name) action.name = actionId
             if (!action.actionValues) action.actionValues = {}
             action.actionValues[actionId] = e.detail.actionValue
             return
@@ -136,7 +138,7 @@
         }
 
         // auto name (if empty or not changed by user)
-        if (action.name === autoActionName && action.triggers.length === 1) {
+        if ((action.name || "") === autoActionName && action.triggers.length === 1) {
             autoActionName = translate(actionData[actionId]?.name || "") || actionId
             if (autoActionName) action.name = autoActionName
         }
@@ -156,7 +158,12 @@
 
     // TODO: history!
     // WIP MIDI remove unused / empty actions from slide
-    $: if (action) saveAction()
+
+    let saveTimeout: any = 0
+    $: if (action) {
+        if (saveTimeout) clearTimeout(saveTimeout)
+        saveTimeout = setTimeout(saveAction, 50)
+    }
     function saveAction() {
         if (!loaded) return
         if (mode !== "slide_midi" && mode !== "slide" && mode !== "template" && !action.name) return
@@ -246,6 +253,8 @@
         { id: "video_end", name: "$:actions.activate_video_ending:$" },
         { id: "timer_end", name: "$:actions.activate_timer_ending:$" },
         { id: "scripture_start", name: "$:actions.activate_scripture_start:$" },
+        { id: "slide_cleared", name: "$:actions.activate_slide_cleared:$" },
+        { id: "background_cleared", name: "$:actions.activate_background_cleared:$" },
         { id: "show_created", name: "$:actions.activate_show_created:$" },
     ]
     $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""
