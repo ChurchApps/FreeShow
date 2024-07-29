@@ -136,6 +136,7 @@ export function getSlides({ bibles, sorted }) {
         let slideIndex: number = 0
         slides[slideIndex].push(clone(emptyItem))
 
+        let verseLine = 0
         sorted.forEach((s: any, i: number) => {
             let slideArr: any = slides[slideIndex][bibleIndex]
             if (!slideArr?.lines[0]?.text) return
@@ -143,7 +144,8 @@ export function getSlides({ bibles, sorted }) {
             let lineIndex: number = 0
             // verses on individual lines
             if (get(scriptureSettings).versesOnIndividualLines) {
-                lineIndex = i
+                lineIndex = verseLine
+                verseLine++
                 if (!slideArr.lines![lineIndex]) slideArr.lines![lineIndex] = { text: [], align: alignStyle }
             }
 
@@ -233,6 +235,7 @@ export function getSlides({ bibles, sorted }) {
             if (i + 1 >= sorted.length) return
 
             slideIndex++
+            verseLine = 0
             if (!slides[slideIndex]) slides.push([clone(emptyItem)])
             else slides[slideIndex].push(clone(emptyItem))
         })

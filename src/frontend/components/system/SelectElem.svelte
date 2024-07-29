@@ -63,11 +63,20 @@
 
     function convertDataToSlide(slideRef: { index: number }[]) {
         let currentSlides = _show().get("slides")
+        let currentMedia = _show().get("media") || {}
         let currentLayoutRef = _show().layouts("active").ref()[0]
 
         let slideData = slideRef.map(({ index }) => {
             let layout = currentLayoutRef[index] || {}
-            return { slide: clone(currentSlides[layout.id]), layoutData: layout.data }
+            let layoutMedia: any = {}
+            if (layout.data?.background) layoutMedia[layout.data.background] = currentMedia[layout.data?.background]
+            if (layout.data?.audio) {
+                layout.data.audio.forEach((audioId) => {
+                    layoutMedia[audioId] = currentMedia[audioId]
+                })
+            }
+
+            return { slide: clone(currentSlides[layout.id]), layoutData: layout.data, media: layoutMedia }
         })
 
         return slideData.filter((a) => a.slide)
