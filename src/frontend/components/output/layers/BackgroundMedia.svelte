@@ -59,7 +59,8 @@
     $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
     $: if (mirror && $videosData[outputId]?.paused === false) videoData.paused = false
 
-    $: if (mirror && $videosTime[outputId]) {
+    $: if (mirror && $videosTime[outputId] !== undefined) setPreviewVideoTime()
+    function setPreviewVideoTime() {
         const diff = Math.abs($videosTime[outputId] - videoTime)
         if (diff > 0.5) {
             videoTime = $videosTime[outputId]
@@ -152,7 +153,7 @@
     const speed = 0.01
     const margin = 0.9 // video should fade to 0 before clearing
     function fadeoutVideo() {
-        if (!video || !fadingOut || !duration) return
+        if (mirror || !video || !fadingOut || !duration) return
 
         let time = duration * speed * margin
         setTimeout(() => {
