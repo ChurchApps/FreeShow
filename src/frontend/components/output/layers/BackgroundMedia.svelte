@@ -59,7 +59,13 @@
     $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
     $: if (mirror && $videosData[outputId]?.paused === false) videoData.paused = false
 
-    $: if (mirror && $videosTime[outputId]) videoTime = $videosTime[outputId]
+    $: if (mirror && $videosTime[outputId]) {
+        const diff = Math.abs($videosTime[outputId] - videoTime)
+        if (diff > 0.5) {
+            videoTime = $videosTime[outputId]
+            videoData.paused = $videosData[outputId]?.paused
+        }
+    }
 
     $: if (!mirror && !fadingOut) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
     $: if (!mirror && !fadingOut) sendVideoTime(videoTime)
