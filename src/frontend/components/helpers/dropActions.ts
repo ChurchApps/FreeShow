@@ -450,12 +450,14 @@ const slideDrop: any = {
         let layoutId: string = _show().get("settings.activeLayout")
 
         let slides: any = clone(get(showsCache)[get(activeShow)!.id].slides)
+        let media: any = clone(get(showsCache)[get(activeShow)!.id].media || {})
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
         if (drop.index === undefined) drop.index = layout.length
         let newIndex: number = drop.index
 
-        drag.data.forEach(({ slide, layoutData }: any) => {
+        let newMedia: any = media
+        drag.data.forEach(({ slide, layoutData, media }: any) => {
             let id = uid()
             delete slide.id
             slides[id] = clone(slide)
@@ -466,11 +468,12 @@ const slideDrop: any = {
             // add layout data (if dragging a slide to another show)
             let newLayout = { id }
             if (layoutData) newLayout = { ...layoutData, id }
+            if (media) newMedia = { ...newMedia, ...media }
 
             layout = addToPos(layout, [newLayout], parent.index + 1)
         })
 
-        history.newData = { slides, layout }
+        history.newData = { slides, layout, media: newMedia }
         history.location.layout = layoutId
         return history
     },

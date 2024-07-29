@@ -56,6 +56,7 @@
         let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
         item?.lines?.forEach((line) => {
             let align = line.align.replaceAll(lineBg, "")
+            if (align && !align.endsWith(";")) align += ";"
             s += align + lineBg
             line.text?.forEach((a) => {
                 s += EditboxHelper.getTextStyle(a)
@@ -64,6 +65,7 @@
 
         // dont replace while typing
         // && (window.getSelection() === null || window.getSelection()!.type === "None")
+        console.log(currentStyle !== s, currentStyle, s)
         if (currentStyle !== s) getStyle()
     }
 
@@ -466,7 +468,8 @@
 
             if (pastingIndex < 0) {
                 pastingIndex = lineIndex
-                caret = { line: pastingIndex, pos: lineSel.start + clipboard.length }
+                let lastPastedLine = pastingIndex + (clipboard.split("\n").length - 1)
+                caret = { line: lastPastedLine, pos: lineSel.start + clipboard.length }
             }
 
             let lineText: any[] = []

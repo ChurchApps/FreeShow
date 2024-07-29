@@ -120,6 +120,7 @@ export function history(obj: History, undo: null | boolean = null) {
                 old = {
                     slides: _show(showID).set({ key: "slides", value: obj.newData.slides }),
                     layout: _show(showID).layouts([obj.location!.layout!]).set({ key: "slides", value: obj.newData.layout })[0]?.value,
+                    media: _show(showID).set({ key: "media", value: obj.newData.media }),
                 }
                 break
 

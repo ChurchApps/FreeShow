@@ -59,7 +59,19 @@
     $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
     $: if (mirror && $videosData[outputId]?.paused === false) videoData.paused = false
 
-    $: if (mirror && $videosTime[outputId]) videoTime = $videosTime[outputId]
+    $: if (mirror && $videosTime[outputId] !== undefined) setPreviewVideoTime()
+    function setPreviewVideoTime() {
+        const diff = Math.abs($videosTime[outputId] - videoTime)
+        if (diff > 0.5) {
+            videoTime = $videosTime[outputId]
+
+            if (videoTime < 0.6) {
+                videoData.paused = true // quick fix for preview stutter when video loops (should be a better fix)
+            } else {
+                videoData.paused = $videosData[outputId]?.paused
+            }
+        }
+    }
 
     $: if (!mirror && !fadingOut) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
     $: if (!mirror && !fadingOut) sendVideoTime(videoTime)
@@ -146,7 +158,7 @@
     const speed = 0.01
     const margin = 0.9 // video should fade to 0 before clearing
     function fadeoutVideo() {
-        if (!video || !fadingOut || !duration) return
+        if (mirror || !video || !fadingOut || !duration) return
 
         let time = duration * speed * margin
         setTimeout(() => {

@@ -60,7 +60,7 @@
             () => {
                 loading = true
                 // always use first if no transition
-                let loadingFirst = !slide1 || !transitionActive
+                let loadingFirst = !slide1 // || !transitionActive
 
                 if (loadingFirst) slide1 = { ref: slideRef, data: clone(currentSlide), lines: clone(lines) }
                 else slide2 = { ref: slideRef, data: clone(currentSlide), lines: clone(lines) }
@@ -115,10 +115,12 @@
     $: if (slide1) slide1Data = clone(slide1.data)
     $: if (slide2) slide2Data = clone(slide2.data)
 
-    $: transitionActive = transition.duration !== 0 && transition.type !== "none"
-
-    $: isFirstHidden = transitionActive && loading && !firstActive
-    $: isSecondHidden = !transitionActive || (loading && firstActive)
+    // this can be used to not wait for auto size if transition is set to 0
+    // $: transitionActive = transition.duration !== 0 && transition.type !== "none"
+    // $: isFirstHidden = transitionActive && loading && !firstActive
+    // $: isSecondHidden = !transitionActive || (loading && firstActive)
+    $: isFirstHidden = loading && !firstActive
+    $: isSecondHidden = loading && firstActive
 
     $: hasChanged = !!(transition.duration === 0 && !isAutoSize && slide1)
 

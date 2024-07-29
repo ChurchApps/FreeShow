@@ -621,13 +621,20 @@ export function getOutputTransitions(slideData: any, transitionData: any, disabl
     return clone(transitions)
 }
 
-export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]) {
-    let isScripture = outSlide?.id === "temp"
-    let slideItems = isScripture ? outSlide.tempItems : items
-    if (_show(outSlide?.id).get("reference")?.type === "scripture") isScripture = true
+export function getStyleTemplate(outSlide: any, currentStyle: any) {
+    let isScripture = outSlide?.id === "temp" || _show(outSlide?.id).get("reference")?.type === "scripture"
 
     let templateId = currentStyle[`template${isScripture ? "Scripture" : ""}`]
     let template = get(templates)[templateId || ""] || {}
+
+    return template
+}
+
+export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]) {
+    let isDrawerScripture = outSlide?.id === "temp"
+    let slideItems = isDrawerScripture ? outSlide.tempItems : items
+
+    let template = getStyleTemplate(outSlide, currentStyle)
     let templateItems = template.items || []
 
     let newItems = mergeWithTemplate(slideItems, templateItems, true) || []
