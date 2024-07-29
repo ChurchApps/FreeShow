@@ -1,4 +1,4 @@
-import { blur, fade, crossfade, fly, scale, slide } from "svelte/transition"
+import { blur, crossfade, fade, fly, scale } from "svelte/transition"
 import type { TransitionType } from "./../../types/Show"
 // import { quintInOut } from "svelte/easing"
 import { backInOut, bounceInOut, circInOut, cubicInOut, elasticInOut, linear, sineInOut } from "svelte/easing"
@@ -16,7 +16,12 @@ export const transitions: { [key in TransitionType]: any } = {
     crossfade,
     fly,
     scale,
-    slide,
+    // slide,
+    slide: () => {
+        return {
+            css: (t: number) => `transform: translate(-${(1 - t) * 100}%);`,
+        }
+    },
     spin: (node: any) => {
         const o = +getComputedStyle(node).opacity
         return {

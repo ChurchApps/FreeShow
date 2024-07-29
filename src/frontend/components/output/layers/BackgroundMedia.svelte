@@ -64,7 +64,12 @@
         const diff = Math.abs($videosTime[outputId] - videoTime)
         if (diff > 0.5) {
             videoTime = $videosTime[outputId]
-            videoData.paused = $videosData[outputId]?.paused
+
+            if (videoTime < 0.6) {
+                videoData.paused = true // quick fix for preview stutter when video loops (should be a better fix)
+            } else {
+                videoData.paused = $videosData[outputId]?.paused
+            }
         }
     }
 

@@ -535,6 +535,8 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
 const runPerOutput = ["clear_background", "clear_overlays"]
 function playSlideActions(actions: any[], outputIds: string[] = [], slideIndex: number = -1) {
+    actions = clone(actions)
+
     // run these actions on each active output
     if (outputIds.length > 1) {
         runPerOutput.forEach((id) => {
