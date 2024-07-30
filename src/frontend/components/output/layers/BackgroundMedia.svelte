@@ -23,6 +23,7 @@
     export let animationStyle: string = ""
     export let duration: number = 0
     export let mirror: boolean = false
+    export let styleBackground: boolean = false
 
     $: id = data.path || data.id || ""
 
@@ -36,7 +37,7 @@
 
     // VIDEO
 
-    let videoData: any = { duration: 0, paused: true, muted: true, loop: false }
+    let videoData: any = { duration: 0, paused: true, muted: true, loop: styleBackground }
     let videoTime: number = 0
 
     // let videoDuration = 0
@@ -56,10 +57,10 @@
     // draw
 
     //Without the second if, the preview videos don't actually play but just skip ahead when kept in sync with the setTimeout()
-    $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
-    $: if (mirror && $videosData[outputId]?.paused === false) videoData.paused = false
+    $: if (mirror && !styleBackground && $videosData[outputId]?.paused) videoData.paused = true
+    $: if (mirror && !styleBackground && $videosData[outputId]?.paused === false) videoData.paused = false
 
-    $: if (mirror && $videosTime[outputId] !== undefined) setPreviewVideoTime()
+    $: if (mirror && !styleBackground && $videosTime[outputId] !== undefined) setPreviewVideoTime()
     function setPreviewVideoTime() {
         const diff = Math.abs($videosTime[outputId] - videoTime)
         if (diff > 0.5) {

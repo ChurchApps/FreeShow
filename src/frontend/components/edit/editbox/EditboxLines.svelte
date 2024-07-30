@@ -25,6 +25,7 @@
     export let editIndex: number = -1
     export let plain: boolean = false
     export let chordsMode: boolean = false
+    export let chordsAction: string = ""
 
     let textElem: any
     let html: string = ""
@@ -556,7 +557,7 @@
             </span>
         {/if}
         {#if chordsMode && textElem}
-            <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} />
+            <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
         {/if}
         <div
             bind:this={textElem}

@@ -1,10 +1,11 @@
 import { uid } from "uid"
+import type { Item, Slide } from "../../../../types/Show"
 import { selected } from "../../../stores"
+import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 import { keys } from "../values/chords"
-import { clone } from "../../helpers/array"
 
-export function addChords(item, showRef, itemIndex, line = 0, pos = 0) {
+export function addChords(item, showRef, itemIndex, line = 0, pos = 0, key = keys[0]) {
     let newLines: any = clone(item.lines)
     if (!newLines[line].chords) newLines[line].chords = []
     let id = uid(5)
@@ -16,7 +17,7 @@ export function addChords(item, showRef, itemIndex, line = 0, pos = 0) {
             if (chord.pos === pos) pos++
         })
 
-    newLines[line].chords.push({ id, pos, key: keys[0] })
+    newLines[line].chords.push({ id, pos, key: key || keys[0] })
 
     _show(showRef.showId)
         .slides([showRef.id])
@@ -136,4 +137,23 @@ export async function getChordPosition(chord: any, { textElem, item, line }) {
     let charWidth = totalLineWidth / lineLetters
 
     return `left: ${lineElems[0].offsetLeft + chord.pos * charWidth}px;top: ${lineElems[0].offsetTop}px;`
+}
+
+// get all chords in a textbox
+export function loadChords(item: Item) {
+    let chordsList: string[] = []
+
+    item.lines?.forEach((item) => {
+        item.chords?.forEach((chord) => {
+            chordsList.push(chord.key)
+        })
+    })
+
+    return chordsList
+}
+
+// get a list of unique chords used in a slide
+export function getUsedChords(slide: Slide) {
+    let itemChords = slide.items.reduce((value: string[], item) => (value = [...value, ...loadChords(item)]), [])
+    return [...new Set(itemChords)].sort((a, b) => a?.localeCompare(b))
 }

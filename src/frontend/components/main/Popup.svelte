@@ -1,97 +1,17 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition"
     import { activePopup, os } from "../../stores"
+    import { MENU_BAR_HEIGHT } from "../../utils/common"
     import { disablePopupClose } from "../../utils/shortcuts"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
-    import About from "./popups/About.svelte"
-    import Action from "./popups/Action.svelte"
-    import AdvancedScreen from "./popups/AdvancedScreen.svelte"
-    import Alert from "./popups/Alert.svelte"
-    import Animate from "./popups/Animate.svelte"
-    import AudioStream from "./popups/AudioStream.svelte"
-    import ChangeIcon from "./popups/ChangeIcon.svelte"
-    import ChangeOutputValues from "./popups/ChangeOutputValues.svelte"
-    import ChooseCamera from "./popups/ChooseCamera.svelte"
-    import ChooseScreen from "./popups/ChooseScreen.svelte"
-    import CloudMethod from "./popups/CloudMethod.svelte"
-    import CloudUpdate from "./popups/CloudUpdate.svelte"
-    import Color from "./popups/Color.svelte"
-    import Connect from "./popups/Connect.svelte"
-    import CreatePlayer from "./popups/CreatePlayer.svelte"
-    import CreateShow from "./popups/CreateShow.svelte"
-    import DeleteShow from "./popups/DeleteShow.svelte"
-    import EditEvent from "./popups/EditEvent.svelte"
-    import EditList from "./popups/EditList.svelte"
-    import Export from "./popups/Export.svelte"
-    import FindReplace from "./popups/FindReplace.svelte"
-    import History from "./popups/History.svelte"
-    import Import from "./popups/Import.svelte"
-    import ImportScripture from "./popups/ImportScripture.svelte"
-    import Initialize from "./popups/Initialize.svelte"
-    import ManageColors from "./popups/ManageColors.svelte"
-    import ManageIcons from "./popups/ManageIcons.svelte"
-    import NextTimer from "./popups/NextTimer.svelte"
-    import Rename from "./popups/Rename.svelte"
-    import ResetAll from "./popups/ResetAll.svelte"
-    import SelectShow from "./popups/SelectShow.svelte"
-    import SetTime from "./popups/SetTime.svelte"
-    import Shortcuts from "./popups/Shortcuts.svelte"
-    import SongbeamerImport from "./popups/SongbeamerImport.svelte"
-    import Timer from "./popups/Timer.svelte"
-    import Transition from "./popups/Transition.svelte"
-    import Trigger from "./popups/Trigger.svelte"
-    import Unsaved from "./popups/Unsaved.svelte"
-    import Variable from "./popups/Variable.svelte"
-    import { MENU_BAR_HEIGHT } from "../../utils/common"
+    import { popups } from "../../utils/popup"
 
     function mousedown(e: any) {
         if (disablePopupClose.includes(popupId)) return
 
         if (e.target.classList.contains("popup")) activePopup.set(null)
-    }
-
-    const popups: any = {
-        initialize: Initialize,
-        import: Import,
-        songbeamer_import: SongbeamerImport,
-        export: Export,
-        show: CreateShow,
-        delete_show: DeleteShow,
-        select_show: SelectShow,
-        icon: ChangeIcon,
-        manage_icons: ManageIcons,
-        manage_colors: ManageColors,
-        choose_camera: ChooseCamera,
-        player: CreatePlayer,
-        rename: Rename,
-        color: Color,
-        find_replace: FindReplace,
-        edit_list: EditList,
-        timer: Timer,
-        variable: Variable,
-        trigger: Trigger,
-        audio_stream: AudioStream,
-        transition: Transition,
-        import_scripture: ImportScripture,
-        edit_event: EditEvent,
-        choose_screen: ChooseScreen,
-        change_output_values: ChangeOutputValues,
-        set_time: SetTime,
-        animate: Animate,
-        next_timer: NextTimer,
-        advanced_settings: AdvancedScreen,
-        about: About,
-        shortcuts: Shortcuts,
-        unsaved: Unsaved,
-        reset_all: ResetAll,
-        alert: Alert,
-        history: History,
-        action: Action,
-        connect: Connect,
-        cloud_update: CloudUpdate,
-        cloud_method: CloudMethod,
     }
 
     // prevent svelte transition lock

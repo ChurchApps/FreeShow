@@ -70,7 +70,7 @@
                         color={template.color}
                         {resolution}
                         on:click={(e) => {
-                            if (e.target?.closest(".edit")) return
+                            if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
                             if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
 
                             history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "none", override: "show#" + $activeShow.id } })

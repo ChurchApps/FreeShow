@@ -3,7 +3,7 @@ import { activeEdit, contextData, drawerTabsData, groups, outputs, overlays, sel
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
-import { chordAdders, keys } from "../edit/values/chords"
+import { chordTypes, keys } from "../edit/values/chords"
 import { clone, keysToID, sortByName } from "../helpers/array"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
@@ -154,7 +154,7 @@ const loadActions = {
     },
     chord_list: (items: ContextMenuItem[]) => {
         keys.forEach((key) => {
-            chordAdders.forEach((adder) => {
+            chordTypes.forEach((adder) => {
                 items.push({ id: key + adder, label: key + adder, translate: false })
             })
         })

@@ -174,6 +174,7 @@
             let templateId = $popupData.templateId
             let template = $templates[templateId]
             if (!template) return activePopup.set(null)
+            if (!action.triggers?.length) return
 
             let templateSettings = template?.settings || {}
 
@@ -238,7 +239,7 @@
     let addTrigger: boolean = false
 
     // set show when selected
-    $: if (action.triggers?.[0] === "start_show" && $popupData.showId) {
+    $: if (action.triggers?.find((a) => a === "start_show") && $popupData.showId) {
         let setShow = { id: "start_show", actionValue: { id: $popupData.showId } }
         changeAction({ detail: setShow }, $popupData.actionIndex)
     }

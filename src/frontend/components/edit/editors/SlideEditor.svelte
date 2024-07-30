@@ -1,7 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activeShow, dictionary, driveData, labelsDisabled, media, outputs, refreshEditSlide, showsCache, styles } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, dictionary, driveData, labelsDisabled, media, outputs, refreshEditSlide, showsCache, styles } from "../../../stores"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -18,6 +18,7 @@
     import Snaplines from "../../system/Snaplines.svelte"
     import Editbox from "../editbox/Editbox.svelte"
     import { slideHasAction } from "../../actions/actions"
+    import { getUsedChords } from "../scripts/chords"
 
     $: currentShow = $activeShow?.id
     $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [] })
@@ -167,6 +168,19 @@
     }
 
     // CHORDS
+    let usedChords: string[] = []
+    $: usedChords = Slide ? getUsedChords(Slide) : []
+
+    let chordsAction: string = ""
+    function setDefaultChordsAction() {
+        if (chordsAction === "") {
+            alertMessage.set("actions.chord_info")
+            activePopup.set("alert")
+        } else {
+            chordsAction = ""
+        }
+    }
+
     let chordsMode: boolean = false
     function toggleChords() {
         chordsMode = !chordsMode
@@ -229,6 +243,7 @@
                                 backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""}
                                 {item}
                                 {chordsMode}
+                                {chordsAction}
                                 ref={{ showId: currentShow, id: Slide.id }}
                                 {index}
                                 {ratio}
@@ -257,7 +272,18 @@
         {/if}
     </div>
     <div class="actions">
-        {#if Slide?.notes}
+        {#if chordsMode}
+            <div class="chords">
+                <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
+                    <p><T id="popup.choose_chord" /></p>
+                </Button>
+                {#each usedChords as chord}
+                    <Button outline={chordsAction === chord} on:click={() => (chordsAction = chord)}>
+                        {chord}
+                    </Button>
+                {/each}
+            </div>
+        {:else if Slide?.notes}
             <div class="notes">
                 <Icon id="notes" right white />
                 {@html Slide.notes.replaceAll("\n", "&nbsp;")}
@@ -265,8 +291,8 @@
         {/if}
 
         <div class="actions" style="height: 100%;justify-content: right;">
-            <Button on:click={toggleChords} title={$dictionary.edit?.chords}>
-                <Icon id="chords" white={!chordsMode} right={!$labelsDisabled} />
+            <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
+                <Icon id="chords" white={!usedChords.length} right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="edit.chords" />{/if}
             </Button>
 
@@ -340,6 +366,14 @@
         width: 100%;
         background-color: var(--primary-darkest);
         /* border-top: 3px solid var(--primary-lighter); */
+    }
+
+    .actions :global(button.chordsActive) {
+        background-color: var(--focus);
+    }
+
+    .chords {
+        display: flex;
     }
 
     .notes {

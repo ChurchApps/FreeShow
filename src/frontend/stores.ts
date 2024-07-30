@@ -120,6 +120,7 @@ export const openToolsTab: Writable<string> = writable("")
 export const refreshSlideThumbnails: Writable<boolean> = writable(false)
 export const contextData: Writable<any> = writable({})
 export const lessonsLoaded: Writable<any> = writable({})
+export const storedChordsData: Writable<any> = writable({})
 
 // ----- SAVED VARIABLES -----
 
