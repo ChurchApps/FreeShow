@@ -14,7 +14,7 @@
     $: name = $activeShow?.name || ""
     $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "")) {
         info = {}
-        send(MAIN, ["FILE_INFO"], $activeShow?.id)
+        send(MAIN, ["FILE_INFO"], decodeURI($activeShow?.id))
     }
 
     let listenerId = uid()

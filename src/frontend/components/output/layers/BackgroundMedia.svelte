@@ -179,10 +179,15 @@
     // analyse and send to main if window is output
     $: if (!mirror && $audioChannels && video !== null) updateVideo()
     let updateCount = 0
+    let previousChannels: string = JSON.stringify({ left: 0, right: 0 })
     function updateVideo() {
         updateCount++
         if (updateCount < 2) return
         updateCount = 0
+
+        let current = JSON.stringify($audioChannels)
+        if (previousChannels === current) return
+        previousChannels = current
 
         send(OUTPUT, ["AUDIO_MAIN"], { id: outputId, channels: $audioChannels, paused: videoData.paused })
     }

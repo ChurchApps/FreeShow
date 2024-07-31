@@ -274,7 +274,11 @@ const receiveFILE = {
 
 let clearing: boolean = false
 const receiveOUTPUTasMAIN: any = {
-    BUFFER: ({ id, buffer, size }) => {
+    BUFFER: ({ id, time, buffer, size }) => {
+        // this will infinitely increace if this is not in place
+        let timeSinceSent = Date.now() - time
+        if (timeSinceSent > 100) return // skip frames if overloaded
+
         previewBuffers.update((a) => {
             a[id] = { buffer, size }
             return a
@@ -377,7 +381,10 @@ export const receiveOUTPUTasOUTPUT: any = {
         allOutputs.set(a)
     },
     // only received by stage screen outputs
-    BUFFER: ({ id, buffer, size }) => {
+    BUFFER: ({ id, time, buffer, size }) => {
+        let timeSinceSent = Date.now() - time
+        if (timeSinceSent > 100) return // skip frames if overloaded
+
         // WIP only receive the "output capture" from this outputs "stageOutput id"
         // let outputId = Object.keys(get(outputs))[0]
         // if (id !== outputId) return

@@ -135,7 +135,7 @@
     }
 
     .item.border {
-        border: 3px solid white;
+        border: 3px solid #5a4c00;
     }
 
     .align {
@@ -164,9 +164,9 @@
         width: 100%;
 
         background: rgb(0 0 0 / 0.5);
-        color: var(--text);
-        font-size: 1em;
-        font-weight: 600;
+        color: #dfd9b8;
+        font-size: 42px;
+        font-weight: normal;
         text-align: center;
     }
 </style>

@@ -141,7 +141,7 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        let msg = { channel: "BUFFER", data: { id: captureId, buffer, size } }
+        let msg = { channel: "BUFFER", data: { id: captureId, time: Date.now(), buffer, size } }
         toApp(OUTPUT, msg)
         this.sendToStageOutputs(msg, captureId) // don't send to itself
         this.sendToRequested(msg)
@@ -164,7 +164,7 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, buffer, size } })
+        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, time: Date.now(), buffer, size } })
     }
 
     static requestPreview(data: any) {
