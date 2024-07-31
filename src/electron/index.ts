@@ -52,6 +52,7 @@ setGlobalMenu()
 
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
+app.disableHardwareAcceleration() //Video flickers, especially on ARM mac otherwise.  Performance is actually better without.  https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
 app.on("ready", startApp)
 
 function startApp() {
