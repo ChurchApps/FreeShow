@@ -252,7 +252,10 @@
         "display_metadata": "Display metadata",
         "meta_template": "Metadata template",
         "text_divider": "Text separator",
-        "message_template": "Message template"
+        "message_template": "Message template",
+        "tags": "Tags",
+        "new_tag": "New tag",
+        "clear_tag_filter": "Clear tag filter"
     },
     "show_at": {
         "never": "No slides",
@@ -626,6 +629,7 @@
         "google_drive_api": "Google API service account key",
         "select_key": "Import keys file",
         "update_key": "Update keys file",
+        "enable_custom_folder_id": "Use custom folder ID",
         "main_folder": "Set main folder manually",
         "media_folder": "Cloud media folder",
         "reconnect": "Reconnect",
@@ -661,6 +665,7 @@
     },
     "context": {
         "enabledTabs": "Toggle tabs",
+        "filterByTags": "Filter by tags",
         "addToProject": "Add to project",
         "newCategory": "New category",
         "changeIcon": "Change icon",

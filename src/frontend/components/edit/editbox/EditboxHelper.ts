@@ -105,6 +105,7 @@ export class EditboxHelper {
     }
 
     static getSyleHtml(item: Item, plain: boolean, currentStyle: string) {
+        currentStyle = ""
         let html = ""
         let firstTextStyleArchive: string = ""
         let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""

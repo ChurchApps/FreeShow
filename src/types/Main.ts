@@ -62,6 +62,7 @@ export type SelectIds =
     | "theme"
     | "style"
     | "output"
+    | "tag"
 
 export interface Selected {
     id: null | SelectIds

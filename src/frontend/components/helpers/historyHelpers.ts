@@ -13,6 +13,7 @@ import {
     drawerTabsData,
     events,
     folders,
+    globalTags,
     groups,
     notFound,
     openedFolders,
@@ -29,7 +30,7 @@ import {
     themes,
 } from "../../stores"
 import { updateThemeValues } from "../../utils/updateSettings"
-import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE } from "../../values/empty"
+import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE, EMPTY_TAG } from "../../values/empty"
 import { getWeekNumber } from "../drawer/calendar/calendar"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
 import { clone } from "./array"
@@ -406,6 +407,16 @@ export const _updaters = {
     show_key: { store: showsCache },
 
     global_group: { store: groups },
+
+    tag: {
+        store: globalTags,
+        empty: EMPTY_TAG,
+        initialize: (data, id: string) => {
+            activeRename.set("tag_" + id)
+            return data
+        },
+    },
+    tag_key: { store: globalTags },
 
     settings_theme: {
         store: themes,

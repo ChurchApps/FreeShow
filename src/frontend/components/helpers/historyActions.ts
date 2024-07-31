@@ -72,6 +72,16 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             if (!deleting && updater.select) updater.select(id, data, initializing)
 
+            // update small shows cache
+            if (obj.location?.id === "show_key" && key === "quickAccess") {
+                shows.update((a) => {
+                    if (!a[id]) return a
+                    if (deleting && data.previousData) a[id].quickAccess = data.previousData
+                    else a[id].quickAccess = data.data
+                    return a
+                })
+            }
+
             if (!initializing) return
 
             if (deleting) delete data.id
@@ -327,6 +337,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         name: show.name || a[id]?.name || "",
                         category: show.category === undefined ? a[id]?.category : show.category,
                         timestamps: show.timestamps || a[id]?.timestamps,
+                        quickAccess: show.quickAccess || a[id]?.quickAccess,
                     }
 
                     if (show.private) a[id].private = true

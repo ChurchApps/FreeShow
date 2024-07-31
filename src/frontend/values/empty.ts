@@ -33,6 +33,8 @@ export const EMPTY_SECTION: ProjectShowRef = { id: "", type: "section", name: ""
 
 export const EMPTY_EVENT: Event = { name: "", color: null, type: "event", from: "", to: "", time: false, repeat: false }
 
+export const EMPTY_TAG = { name: "", color: "" }
+
 // SLIDE
 export const EMPTY_SHOW_SLIDE: Slide = { group: "", color: null, settings: {}, notes: "", items: [] }
 

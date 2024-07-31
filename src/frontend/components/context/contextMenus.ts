@@ -37,6 +37,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     export: { label: "actions.export", icon: "export" },
     // DRAWER
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
+    tags: { label: "context.filterByTags", icon: "tag", items: ["LOAD_tags"] },
     newCategory: { label: "context.newCategory", icon: "add" },
     newScripture: { label: "new.scripture", icon: "add" },
     createCollection: { label: "new.collection", icon: "collection" },
@@ -159,7 +160,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
     playlist: ["rename", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "newShow", "sort_shows_by", "selectAll"],
+    drawer_show: ["newShowPopup", "newShow", "SEPERATOR", "tags", "sort_shows_by", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
@@ -217,6 +218,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // global_group: ["rename"],
     layout: ["rename", "duplicate", "remove"],
     slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics", "view_text"],
+    tag: ["rename", "recolor", "SEPERATOR", "delete"],
     // TODO: change chords (m, dim, sus, left, guitar, custom value, ...)
     // chord notations
     // https://jazz-library.com/articles/chord-symbols/

@@ -116,6 +116,13 @@
 
         let m: any = menuClick(id, enabled, menu, contextElem, actionItem, sel)
         if (m?.enabled !== undefined) enabled = m.enabled
+
+        // don't hide context menu
+        if (id === "enabled_drawer_tabs" || id === "tags") {
+            enabled = !enabled
+            return
+        }
+
         if (!m || m.hide) contextActive = false
     }
 

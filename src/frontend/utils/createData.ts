@@ -18,6 +18,7 @@ export function createData(paths: any) {
                 modified: null,
                 used: null,
             },
+            quickAccess: {},
             meta: {},
             slides: {
                 1: {

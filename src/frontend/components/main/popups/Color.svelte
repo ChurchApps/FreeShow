@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeShow, outputs, overlays, selected, showsCache, templates } from "../../../stores"
+    import { activePopup, activeShow, globalTags, outputs, overlays, selected, showsCache, templates } from "../../../stores"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
@@ -21,6 +21,7 @@
         } else if ($selected.id === "overlay") value = $overlays[$selected.data[0]].color
         else if ($selected.id === "template") value = $templates[$selected.data[0]].color
         else if ($selected.id === "output") value = $outputs[$selected.data[0].id].color
+        else if ($selected.id === "tag") value = $globalTags[$selected.data[0].id].color
     })
 
     const actions: any = {
@@ -53,6 +54,14 @@
                 $selected.data.forEach(({ id }) => {
                     a[id].color = value
                 })
+
+                return a
+            })
+        },
+        tag: () => {
+            globalTags.update((a) => {
+                let id = $selected.data[0]?.id || ""
+                if (a[id]) a[id].color = value
 
                 return a
             })

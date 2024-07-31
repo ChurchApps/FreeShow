@@ -52,6 +52,7 @@ export const focusedArea: Writable<string> = writable("")
 export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
 export const activeScripture: Writable<any> = writable({})
+export const activeTagFilter: Writable<string[]> = writable([])
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -144,6 +145,7 @@ export const transitionData: Writable<{ text: Transition; media: Transition }> =
     media: { type: "fade", duration: 800, easing: "sine" },
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
+export const globalTags: Writable<{ [key: string]: { name: string; color: string } }> = writable({}) // {}
 
 // PROJECT
 export const openedFolders: Writable<ID[]> = writable([]) // []

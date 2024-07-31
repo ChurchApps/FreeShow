@@ -54,7 +54,7 @@ export function sortByName(arr: any[]) {
 }
 
 // sort objects in array alphabeticly
-export function sortObject(object: {}[], key: string): {}[] {
+export function sortObject(object: {}[], key: string): any[] {
     return object.sort((a: any, b: any) => {
         let textA: string = a[key] || ""
         let textB: string = b[key] || ""

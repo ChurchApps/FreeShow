@@ -271,9 +271,9 @@
             </Center>
         {/if}
     </div>
-    <div class="actions">
-        {#if chordsMode}
-            <div class="chords">
+    <div class="actions" style="width: 100%;gap: 10px;">
+        <div class="leftActions">
+            {#if chordsMode}
                 <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
                     <p><T id="popup.choose_chord" /></p>
                 </Button>
@@ -282,13 +282,13 @@
                         {chord}
                     </Button>
                 {/each}
-            </div>
-        {:else if Slide?.notes}
-            <div class="notes">
-                <Icon id="notes" right white />
-                {@html Slide.notes.replaceAll("\n", "&nbsp;")}
-            </div>
-        {/if}
+            {:else if Slide?.notes}
+                <div class="notes">
+                    <Icon id="notes" right white />
+                    {@html Slide.notes.replaceAll("\n", "&nbsp;")}
+                </div>
+            {/if}
+        </div>
 
         <div class="actions" style="height: 100%;justify-content: right;">
             <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
@@ -363,7 +363,6 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        width: 100%;
         background-color: var(--primary-darkest);
         /* border-top: 3px solid var(--primary-lighter); */
     }
@@ -372,8 +371,10 @@
         background-color: var(--focus);
     }
 
-    .chords {
+    .leftActions {
         display: flex;
+        overflow-x: auto;
+        width: 100%;
     }
 
     .notes {

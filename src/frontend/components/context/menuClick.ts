@@ -13,6 +13,7 @@ import {
     activeRecording,
     activeRename,
     activeShow,
+    activeTagFilter,
     audioFolders,
     currentOutputSettings,
     currentWindow,
@@ -109,7 +110,7 @@ const actions: any = {
         if (!id) return
         let data = obj.sel.data[0]
 
-        const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output"]
+        const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag"]
         const renameByIdDirect = ["overlay", "template", "player", "layout"]
 
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
@@ -187,6 +188,16 @@ const actions: any = {
             return a
         })
         return m
+    },
+    tags: (obj: any) => {
+        let tagId = obj.menu.id
+
+        let activeTags = get(activeTagFilter)
+        let currentIndex = activeTags.indexOf(tagId)
+        if (currentIndex < 0) activeTags.push(tagId)
+        else activeTags.splice(currentIndex, 1)
+
+        activeTagFilter.set(activeTags)
     },
     addToProject: (obj: any) => {
         if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return
