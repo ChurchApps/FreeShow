@@ -2,11 +2,11 @@
     import { getAutoSize } from "../helpers/autoSize"
     import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
-    import SlideProgress from "../items/SlideProgress.svelte"
     import SlideNotes from "../items/SlideNotes.svelte"
+    import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
-    import { timers, variables } from "../store"
+    import { activeTimers, timers, variables } from "../store"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Timer from "./Timer.svelte"
@@ -110,6 +110,8 @@
                     <Clock autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("video")}
                     <VideoTime {videoTime} autoSize={item.auto !== false ? autoSize : fontSize} />
+                {:else if id.includes("first_active_timer")}
+                    <Timer timer={$timers[$activeTimers[0]?.id] || {}} ref={{ id: $activeTimers[0]?.id }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
                         <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />

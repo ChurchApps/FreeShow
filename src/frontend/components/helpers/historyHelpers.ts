@@ -246,6 +246,7 @@ export const _updaters = {
     category_media: { store: mediaFolders, ...getDefaultCategoryUpdater("media") },
     category_audio: { store: audioFolders, ...getDefaultCategoryUpdater("audio") },
     audio_playlists: { store: audioPlaylists, ...getDefaultCategoryUpdater("audio"), empty: { name: "", songs: [] } },
+    audio_playlist_key: { store: audioPlaylists },
 
     overlay: {
         store: overlays,

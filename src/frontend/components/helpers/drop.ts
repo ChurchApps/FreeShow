@@ -3,7 +3,7 @@ import { activePage, selected } from "../../stores"
 import { dropActions } from "./dropActions"
 import { history } from "./history"
 
-export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation"
+export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation" | "audio_playlist"
 
 const areas: { [key in DropAreas | string]: string[] } = {
     all_slides: ["template"],
@@ -22,6 +22,7 @@ const areaChildren: { [key in DropAreas | string]: string[] } = {
     slides: ["slide", "group", "global_group", "screen", "camera", "microphone", "media", "audio", "show"],
     all_slides: [],
     navigation: ["show", "show_drawer", "media", "audio", "overlay", "template"],
+    audio_playlist: ["audio"],
 }
 
 export function validateDrop(id: string, selected: any, children: boolean = false): boolean {
@@ -36,7 +37,7 @@ export function ondrop(e: any, id: string) {
     let elem: any = null
     if (e !== null) {
         // if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group" || sel.id === "media") elem = e.target.closest(".selectElem")
-        if (id === "project" || id === "projects" || id === "slides" || id === "all_slides" || id === "navigation" || id === "templates") elem = e.target.closest(".selectElem")
+        if (id === "project" || id === "projects" || id === "slides" || id === "all_slides" || id === "navigation" || id === "templates" || id === "audio_playlist") elem = e.target.closest(".selectElem")
         else if (id === "slide") elem = e.target.querySelector(".selectElem")
     }
 

@@ -1,14 +1,16 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { popupData, storedChordsData } from "../../../stores"
-    import { chordTensions, chordTypes, keys, keysInverted } from "../../edit/values/chords"
+    import { chordTensions, chordTypes, keys, keysInverted, romanKeys } from "../../edit/values/chords"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
 
     let chordData = {
         key: "C",
+        romanKey: "I",
         type: "",
         tension: "",
         bass: "C",
@@ -49,21 +51,42 @@
 
         let bassKey = chordData.bass !== chordData.key ? "/" + chordData.bass : ""
         combinedChord = chordData.key + chordData.type + chordData.tension + bassKey
+
+        if (romanKeysActive) {
+            combinedChord = chordData.romanKey + chordData.type + chordData.tension
+        }
     }
 
     function selectChord() {
         popupData.set({ id: "choose_chord", value: combinedChord })
     }
 
+    const isChecked = (e: any) => e.target.checked
+    let romanKeysActive = false
+
     let showInvertedChords = false
 </script>
 
+<CombinedInput style="margin-bottom: 10px;">
+    <p><T id="actions.roman_keys" /></p>
+    <div class="alignRight">
+        <Checkbox checked={romanKeysActive} on:change={(e) => (romanKeysActive = isChecked(e))} />
+    </div>
+</CombinedInput>
+
 <div class="chords">
     <div class="list">
-        <p class="invert" on:mousedown={() => (showInvertedChords = !showInvertedChords)}><T id="actions.chord_key" /></p>
-        {#each showInvertedChords ? keysInverted : keys as key}
-            <Button outline={chordData.key === key} disabled={chordData.custom} on:click={() => updateData("key", key)} center>{key}</Button>
-        {/each}
+        {#if romanKeysActive}
+            <p><T id="actions.chord_key" /></p>
+            {#each romanKeys as key}
+                <Button outline={chordData.romanKey === key} disabled={chordData.custom} on:click={() => updateData("romanKey", key)} center>{key}</Button>
+            {/each}
+        {:else}
+            <p class="invert" on:mousedown={() => (showInvertedChords = !showInvertedChords)}><T id="actions.chord_key" /></p>
+            {#each showInvertedChords ? keysInverted : keys as key}
+                <Button outline={chordData.key === key} disabled={chordData.custom} on:click={() => updateData("key", key)} center>{key}</Button>
+            {/each}
+        {/if}
     </div>
 
     <div class="list">
@@ -92,12 +115,14 @@
         {/each}
     </div>
 
-    <div class="list">
-        <p class="invert" on:mousedown={() => (showInvertedChords = !showInvertedChords)}><T id="actions.chord_bass" /></p>
-        {#each showInvertedChords ? keysInverted : keys as bass}
-            <Button outline={chordData.bass === bass} disabled={chordData.custom} on:click={() => updateData("bass", bass)} center>{bass}</Button>
-        {/each}
-    </div>
+    {#if !romanKeysActive}
+        <div class="list">
+            <p class="invert" on:mousedown={() => (showInvertedChords = !showInvertedChords)}><T id="actions.chord_bass" /></p>
+            {#each showInvertedChords ? keysInverted : keys as bass}
+                <Button outline={chordData.bass === bass} disabled={chordData.custom} on:click={() => updateData("bass", bass)} center>{bass}</Button>
+            {/each}
+        </div>
+    {/if}
 </div>
 
 <CombinedInput style="margin-top: 10px;">

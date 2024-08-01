@@ -63,18 +63,19 @@
                 <Checkbox checked={$special.muteAudioWhenVideoPlays || false} on:change={(e) => updateSpecial(isChecked(e), "muteAudioWhenVideoPlays")} />
             </div>
         </CombinedInput>
-    </main>
-{:else if isPlaylist}
-    <main style="flex: 1;">
-        <CombinedInput>
-            <p><T id="settings.audio_crossfade" /></p>
-            <NumberInput value={activePlaylist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updatePlaylist(active, "crossfade", e.detail)} />
-        </CombinedInput>
 
-        <!-- <CombinedInput>
-        <p><T id="settings.custom_audio_output" /></p>
-        <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
-    </CombinedInput> -->
+        {#if isPlaylist}
+            <h5 style="color: var(--secondary);"><T id="audio.playlist_settings" /></h5>
+            <CombinedInput>
+                <p><T id="settings.audio_crossfade" /></p>
+                <NumberInput value={activePlaylist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updatePlaylist(active, "crossfade", e.detail)} />
+            </CombinedInput>
+
+            <!-- <CombinedInput>
+                <p><T id="settings.custom_audio_output" /></p>
+                <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
+            </CombinedInput> -->
+        {/if}
     </main>
 {:else if openedPage === "metronome"}
     <Metronome />
@@ -82,14 +83,26 @@
     <AudioMix />
 {/if}
 
-{#if !isPlaylist}
-    <Button style="width: 100%;" on:click={() => togglePage("metronome")} center dark>
-        <Icon id="metronome" white={openedPage === "metronome"} right />
-        <T id="audio.toggle_metronome" />
-    </Button>
-{/if}
+<!-- {#if !isPlaylist} -->
+<Button style="width: 100%;" on:click={() => togglePage("metronome")} center dark>
+    <Icon id="metronome" white={openedPage === "metronome"} right />
+    <T id="audio.toggle_metronome" />
+</Button>
+<!-- {/if} -->
 
 <Button style="width: 100%;" on:click={() => togglePage("settings")} center dark>
     <Icon id="options" white={openedPage === "settings"} right />
     <T id="audio.settings" />
 </Button>
+
+<style>
+    h5 {
+        overflow: visible;
+        text-align: center;
+        padding: 5px;
+        background-color: var(--primary-darkest);
+        color: var(--text);
+        font-size: 0.8em;
+        text-transform: uppercase;
+    }
+</style>

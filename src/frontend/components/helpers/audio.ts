@@ -8,6 +8,7 @@ import { audioAnalyser } from "../output/audioAnalyser"
 import { clone, shuffleArray } from "./array"
 import { encodeFilePath } from "./media"
 import { checkNextAfterMedia } from "./showActions"
+import { customActionActivation } from "../actions/actions"
 
 export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0) {
     let existing: any = get(playingAudio)[path]
@@ -30,6 +31,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
         return
     }
 
+    let audioPlaying = Object.keys(get(playingAudio)).length
     if (crossfade) crossfadeAudio(crossfade)
     else if (!playMultiple) clearAudio("", false)
 
@@ -55,9 +57,11 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     if (analyser.gainNode) analyser.gainNode.gain.value = localVolume * (get(gain) || 1)
     else audio.volume = localVolume
 
-    if (crossfade) {
+    let waitToPlay = 0
+    if (audioPlaying && crossfade) {
         audio.volume = 0
-        crossfadeAudio(crossfade, path)
+        waitToPlay = crossfade * 0.6
+        crossfadeAudio(crossfade, path, !!waitToPlay)
     }
 
     if (startAt > 0) audio.currentTime = startAt
@@ -72,19 +76,21 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     })
 
     audio.addEventListener("canplay", () => {
-        audio.play()
-        analyseAudio()
+        setTimeout(() => {
+            audio.play()
+            analyseAudio()
+        }, waitToPlay * 1000)
     })
 }
 
 // if no "path" is provided it will fade out/clear all audio
-async function crossfadeAudio(crossfade: number = 0, path: string = "") {
+async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPlay: boolean = false) {
     // fade in
     if (path) {
         let playing = get(playingAudio)[path]?.audio
         if (!playing) return
 
-        fadeAudio(playing, crossfade, true)
+        setTimeout(() => fadeAudio(playing, waitToPlay ? crossfade * 0.4 : crossfade, true), waitToPlay ? crossfade * 0.6 * 1000 : 0)
         return
     }
 
@@ -144,7 +150,12 @@ export function startPlaylist(id, specificSong: string = "") {
     if (!id) return
 
     activePlaylist.set({ id })
-    playlistNext("", specificSong)
+
+    let playlist = get(audioPlaylists)[id] || {}
+    let crossfade = Number(playlist.crossfade) || 0
+
+    // if (crossfade) isCrossfading = true
+    playlistNext("", specificSong, crossfade)
 }
 
 export function stopPlaylist() {
@@ -169,11 +180,12 @@ export function audioPlaylistNext() {
     let crossfade = Number(playlist.crossfade) || 0
 
     let activePath = get(activePlaylist).active
-    playlistNext(activePath, "", crossfade)
+    playlistNext(activePath, "", crossfade, playlist.loop !== false)
 }
 
-export function playlistNext(previous: string = "", specificSong: string = "", crossfade: number = 0) {
+export function playlistNext(previous: string = "", specificSong: string = "", crossfade: number = 0, loop: boolean = true) {
     let id = get(activePlaylist)?.id
+
     if (!id) return
 
     let songs = getSongs()
@@ -182,15 +194,25 @@ export function playlistNext(previous: string = "", specificSong: string = "", c
     let currentSongIndex = songs.findIndex((a) => a === (specificSong || previous))
     let nextSong = songs[currentSongIndex + (specificSong ? 0 : 1)]
 
-    if (!nextSong) nextSong = songs[0]
-    if (!nextSong) return
+    if (!nextSong && loop) nextSong = songs[0]
+    if (!nextSong) {
+        if (!loop && !Object.keys(currentlyFading).length) {
+            if (crossfade) crossfadeAudio(crossfade)
+            else clearAudio("", false)
+
+            setTimeout(() => {
+                if (!get(playingAudio)[previous]) customActionActivation("audio_playlist_ended")
+            }, 100)
+        }
+        return
+    }
 
     activePlaylist.update((a) => {
         a.active = nextSong
         return a
     })
 
-    if (crossfade) isCrossfading = true
+    // if (crossfade) isCrossfading = true
     playAudio({ path: nextSong }, false, 0, false, crossfade)
 
     function getSongs(): string[] {
@@ -330,10 +352,11 @@ function checkCrossfade(): number {
     let playing = get(playingAudio)[activePath]?.audio
     if (!playing) return 0
 
-    let reachedEnding = playing.currentTime + crossfade + extraMargin >= playing.duration
+    let customCrossfade = crossfade > 3 ? crossfade * 0.6 : crossfade
+    let reachedEnding = playing.currentTime + customCrossfade + extraMargin >= playing.duration
     if (!reachedEnding) return 0
 
-    playlistNext(activePath, "", crossfade)
+    playlistNext(activePath, "", customCrossfade, playlist.loop !== false)
     return crossfade
 }
 
@@ -350,12 +373,15 @@ function getPlayingAudio() {
                     get(playingAudio)[audioPath].audio.currentTime = 0
                     get(playingAudio)[audioPath].audio.play()
                 } else if (get(activePlaylist)?.active === audioPath) {
+                    let playlist = get(audioPlaylists)[audioPath] || {}
+
                     playingAudio.update((a: any) => {
                         delete a[audioPath]
                         return a
                     })
 
-                    playlistNext(audioPath)
+                    console.log("ENDED", playlist, playlist.loop !== false)
+                    playlistNext(audioPath, "", 0, playlist.loop !== false)
                     return false
                 } else {
                     playingAudio.update((a: any) => {
@@ -534,6 +560,7 @@ export function fadeinAllPlayingAudio() {
 function stopFading() {
     Object.values(currentlyFading).forEach((fadeInterval: any) => {
         clearInterval(fadeInterval)
+        delete currentlyFading[fadeInterval]
     })
 }
 
@@ -565,11 +592,13 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
 
         let timedout = setTimeout(() => {
             clearInterval(currentlyFading[fadeId])
+            delete currentlyFading[fadeId]
             resolve(false)
         }, duration * 1200)
 
         function finished() {
             clearInterval(currentlyFading[fadeId])
+            delete currentlyFading[fadeId]
             clearTimeout(timedout)
             setTimeout(() => resolve(true), 50)
         }

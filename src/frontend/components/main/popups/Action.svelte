@@ -257,6 +257,7 @@
         { id: "slide_cleared", name: "$:actions.activate_slide_cleared:$" },
         { id: "background_cleared", name: "$:actions.activate_background_cleared:$" },
         { id: "show_created", name: "$:actions.activate_show_created:$" },
+        { id: "audio_playlist_ended", name: "$:actions.activate_audio_playlist_ended:$" },
     ]
     $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""
 </script>
