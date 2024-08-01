@@ -55,8 +55,9 @@ You are welcome to contribute to the code!
 
 1. Clone the code in this repo
 2. Install [Node.js](https://nodejs.org/en/download/)
-3. In the terminal, run: `npm install`
-4. To start the app, run: `npm start`
+3. Install Python 3.11 or install Python 3.12 with the `setuptools` package
+4. In the terminal, run: `npm install`
+5. To start the app, run: `npm start`
 
 ## Join us on Slack
 
