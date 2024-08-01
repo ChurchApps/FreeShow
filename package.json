@@ -52,6 +52,7 @@
         "forceCodeSigning": true,
         "appId": "app.freeshow",
         "productName": "FreeShow",
+        "artifactName": "FreeShow-${version}-${arch}.${ext}",
         "files": [
             "build/electron/**/*",
             "build/types/**/*",
