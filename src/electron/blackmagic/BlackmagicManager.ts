@@ -1,5 +1,6 @@
 import macadam from "macadam"
 import { DeviceConfig, DeviceData } from "./TypeData"
+import { isProd } from ".."
 
 // https://github.com/Streampunk/macadam
 export class BlackmagicManager {
@@ -8,7 +9,23 @@ export class BlackmagicManager {
     }
 
     static getDevices(): DeviceData[] {
-        return macadam.getDeviceInfo() as any // ??
+        if (!isProd) {
+            // test data
+            return [
+                {
+                    modelName: "Intensity Extreme",
+                    displayName: "Intensity Extreme",
+                    vendorName: "Blackmagic",
+                    deviceHandle: "54:00000000:00360600",
+                    hasSerialPort: false,
+                    topologicalID: 3540480,
+                } as any,
+            ]
+        }
+
+        let deviceInfo: any = macadam.getDeviceInfo()
+        if (typeof deviceInfo === "object") deviceInfo = Object.values(deviceInfo)
+        return deviceInfo
     }
 
     static getDeviceById(deviceHandle: string) {

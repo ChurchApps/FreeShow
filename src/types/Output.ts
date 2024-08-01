@@ -20,6 +20,7 @@ export interface Output {
     transparent?: boolean
     ndi?: boolean
     ndiData?: any
+    decklinkData?: any
     invisible?: boolean
     taskbar?: boolean
     style?: string

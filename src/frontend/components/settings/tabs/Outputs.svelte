@@ -1,8 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { NDI, OUTPUT } from "../../../../types/Channels"
+    import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
     import { activePopup, currentOutputSettings, ndiData, os, outputDisplay, outputs, styles } from "../../../stores"
-    import { send } from "../../../utils/request"
+    import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { addOutput, getActiveOutputs, keyOutput } from "../../helpers/output"
@@ -12,6 +12,8 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import { Option } from "../../../../types/Main"
+    import { onDestroy } from "svelte"
 
     let outputsList: any[] = []
     $: outputsList = Object.entries($outputs)
@@ -28,6 +30,12 @@
 
     function updateOutput(key: string, value: any, outputId: string = "") {
         if (!outputId) outputId = currentOutput.id
+
+        if (key === "decklink" && value === true) {
+            send(BLACKMAGIC, ["GET_DEVICES"])
+            updateOutput("transparent", true)
+            updateOutput("invisible", true)
+        }
 
         // TODO: history
         outputs.update((a: any) => {
@@ -54,7 +62,27 @@
                     })
 
                     delete a[outputId].ndiData
-                    delete a[outputId].transparent
+                    if (!a[outputId].decklink) {
+                        delete a[outputId].transparent
+                        delete a[outputId].invisible
+                    }
+                }
+            }
+
+            if (key === "decklink") {
+                if (value) {
+                    delete a[outputId].keyOutput
+                } else {
+                    // ndiData.update((a) => {
+                    //     delete a[outputId]
+                    //     return a
+                    // })
+
+                    delete a[outputId].decklinkData
+                    if (!a[outputId].ndi) {
+                        delete a[outputId].transparent
+                        delete a[outputId].invisible
+                    }
                 }
             }
 
@@ -122,11 +150,62 @@
         { id: 60, name: "60 fps" },
     ]
 
+    // decklink
+    let decklinkDevices: Option[] = []
+    function updateDecklinkData(e: any, key: string) {
+        let id = currentOutput.id
+        if (!id) return
+
+        let newData = $outputs[id]?.decklinkData
+        if (!newData) newData = {}
+        newData[key] = e?.detail?.id || e?.detail?.name || e
+
+        updateOutput("decklinkData", newData)
+        // send(NDI, ["NDI_DATA"], { id, ...newData })
+    }
+
+    // WIP fetch this from the actual device! (inputDisplayModes[])
+    const decklinkModes = [
+        // SD
+        { name: "525i59.94 NTSC" },
+        { name: "625i50 PAL" },
+        // HD
+        { name: "720p50" },
+        { name: "720p59.94" },
+        { name: "720p60" },
+        { name: "1080p23.98" },
+        { name: "1080p24" },
+        { name: "1080p25" },
+        { name: "1080p29.97" },
+        { name: "1080p30" },
+        { name: "1080p50" },
+        { name: "1080p59" },
+        { name: "1080p59.94" },
+        { name: "1080p60" },
+        { name: "1080PsF23.98" },
+        { name: "1080PsF24" },
+        { name: "1080PsF25" },
+        { name: "1080PsF29.97" },
+        { name: "1080PsF30" },
+        { name: "1080i50" },
+        { name: "1080i59.94" }, // default
+        { name: "1080i60" },
+    ]
+
     let edit: any
 
     $: activeOutputs = Object.values($outputs).filter((a) => !a.stageOutput && a.enabled && a.active === true)
 
     const ndiNotSupported = $os.platform === "linux" && $os.arch !== "x64" && $os.arch !== "ia32"
+
+    // WAIT FOR BLACKMAGIC DEVICES
+
+    let listenerId = uid()
+    onDestroy(() => destroy(BLACKMAGIC, listenerId))
+    const RECEIVERS = {
+        GET_DEVICES: (data) => (decklinkDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName }))),
+    }
+    receive(BLACKMAGIC, RECEIVERS, listenerId)
 </script>
 
 <div class="info">
@@ -167,7 +246,7 @@
     <div class="alignRight">
         <Checkbox
             checked={!!currentOutput.keyOutput}
-            disabled={currentOutput.ndi}
+            disabled={currentOutput.ndi || currentOutput.decklink}
             on:change={(e) => {
                 let outputId = isChecked(e) ? "key_" + uid(5) : currentOutput.keyOutput
                 let keyValue = isChecked(e) ? outputId : null
@@ -242,13 +321,6 @@
 
 {#if currentOutput.ndi}
     <CombinedInput>
-        <p><T id="settings.transparent" /></p>
-        <div class="alignRight">
-            <Checkbox checked={currentOutput.transparent} on:change={(e) => updateOutput("transparent", isChecked(e))} />
-        </div>
-    </CombinedInput>
-
-    <CombinedInput>
         <p><T id="preview.audio" /> (Not implemented yet)</p>
         <div class="alignRight">
             <Checkbox disabled checked={currentOutput.audio} on:change={(e) => updateOutput("audio", isChecked(e))} />
@@ -260,6 +332,60 @@
         <Dropdown value={framerates.find((a) => a.id === currentOutput.ndiData?.framerate)?.name || "30 fps"} options={framerates} on:click={(e) => updateNdiData(e, "framerate")} />
     </CombinedInput>
 {/if}
+
+<!-- Blackmagic (synonym with Decklink in this case) -->
+<h3>Blackmagic</h3>
+
+<CombinedInput>
+    <p>
+        <T id="actions.enable" /> Blackmagic
+        <!-- <span class="connections">{$ndiData[currentOutput.id || ""]?.connections || ""}</span> -->
+    </p>
+    <div class="alignRight">
+        <Checkbox checked={currentOutput.decklink} on:change={(e) => updateOutput("decklink", isChecked(e))} />
+    </div>
+</CombinedInput>
+
+{#if currentOutput.decklink}
+    <CombinedInput>
+        <p><T id="settings.device" /></p>
+        <Dropdown value={decklinkDevices.find((a) => a.id === currentOutput.decklinkData?.deviceId)?.name || "—"} options={decklinkDevices} on:click={(e) => updateDecklinkData(e, "deviceId")} />
+    </CombinedInput>
+
+    {#if currentOutput.decklinkData?.deviceId}
+        <CombinedInput>
+            <p><T id="settings.display_mode" /></p>
+            <Dropdown value={decklinkModes.find((a) => a.name === currentOutput.decklinkData?.displayMode)?.name || "1080i59.94"} options={decklinkModes} on:click={(e) => updateDecklinkData(e, "displayMode")} />
+        </CombinedInput>
+
+        <CombinedInput>
+            <p><T id="settings.alpha_key" /></p>
+            <div class="alignRight">
+                <Checkbox checked={currentOutput.decklinkData?.alphaKey} on:change={(e) => updateDecklinkData(isChecked(e), "alphaKey")} />
+            </div>
+        </CombinedInput>
+    {/if}
+{/if}
+
+<br />
+
+{#if currentOutput.ndi || currentOutput.decklink}
+    <CombinedInput>
+        <p><T id="settings.transparent" /></p>
+        <div class="alignRight">
+            <Checkbox checked={currentOutput.transparent} on:change={(e) => updateOutput("transparent", isChecked(e))} />
+        </div>
+    </CombinedInput>
+
+    <CombinedInput>
+        <p><T id="settings.invisible_window" /></p>
+        <div class="alignRight">
+            <Checkbox checked={currentOutput.invisible} on:change={(e) => updateOutput("invisible", isChecked(e))} />
+        </div>
+    </CombinedInput>
+{/if}
+
+<!-- OUTPUT SELECTOR -->
 
 <div class="filler" style={outputsList.length > 1 ? "height: 76px;" : ""} />
 <div class="bottom">

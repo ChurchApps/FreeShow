@@ -1,7 +1,7 @@
 import { BrowserWindow, Rectangle, screen } from "electron"
 import { mainWindow, toApp } from "../.."
-import { OutputHelper } from "../OutputHelper"
 import { MAIN, OUTPUT } from "../../../types/Channels"
+import { OutputHelper } from "../OutputHelper"
 
 export class OutputVisibility {
     static displayOutput(data: any) {
@@ -19,6 +19,12 @@ export class OutputVisibility {
         }
 
         /////
+
+        if (data.output?.invisible) {
+            if (window.isVisible()) this.hideWindow(window, null)
+            // if just one output, send a message explaining why the button does not turn on?
+            return
+        }
 
         // don't auto position on mac (because of virtual)
         if (data.autoPosition && !data.force && process.platform !== "darwin") data.output.bounds = this.getSecondDisplay(data.output.bounds)
@@ -91,6 +97,8 @@ export class OutputVisibility {
 
         window.setKiosk(false)
         window.hide()
+
+        if (!data) return
 
         // this is only needed if the output is being captured!! (has to reset for capture to work when window is hidden)
         let captureEnabled = Object.values(OutputHelper.getOutput(data.id)?.captureOptions?.options || {}).find((a) => a === true)
