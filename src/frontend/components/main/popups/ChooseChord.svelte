@@ -15,6 +15,8 @@
         tension: "",
         bass: "C",
         custom: "",
+
+        romanKeysActive: false,
     }
 
     let loaded = false
@@ -52,7 +54,7 @@
         let bassKey = chordData.bass !== chordData.key ? "/" + chordData.bass : ""
         combinedChord = chordData.key + chordData.type + chordData.tension + bassKey
 
-        if (romanKeysActive) {
+        if (chordData.romanKeysActive) {
             combinedChord = chordData.romanKey + chordData.type + chordData.tension
         }
     }
@@ -62,7 +64,6 @@
     }
 
     const isChecked = (e: any) => e.target.checked
-    let romanKeysActive = false
 
     let showInvertedChords = false
 </script>
@@ -70,13 +71,13 @@
 <CombinedInput style="margin-bottom: 10px;">
     <p><T id="actions.roman_keys" /></p>
     <div class="alignRight">
-        <Checkbox checked={romanKeysActive} on:change={(e) => (romanKeysActive = isChecked(e))} />
+        <Checkbox checked={chordData.romanKeysActive} on:change={(e) => (chordData.romanKeysActive = isChecked(e))} />
     </div>
 </CombinedInput>
 
 <div class="chords">
     <div class="list">
-        {#if romanKeysActive}
+        {#if chordData.romanKeysActive}
             <p><T id="actions.chord_key" /></p>
             {#each romanKeys as key}
                 <Button outline={chordData.romanKey === key} disabled={chordData.custom} on:click={() => updateData("romanKey", key)} center>{key}</Button>
@@ -115,7 +116,7 @@
         {/each}
     </div>
 
-    {#if !romanKeysActive}
+    {#if !chordData.romanKeysActive}
         <div class="list">
             <p class="invert" on:mousedown={() => (showInvertedChords = !showInvertedChords)}><T id="actions.chord_bass" /></p>
             {#each showInvertedChords ? keysInverted : keys as bass}

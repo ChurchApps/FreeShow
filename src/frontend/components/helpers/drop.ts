@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { activePage, selected } from "../../stores"
 import { dropActions } from "./dropActions"
 import { history } from "./history"
+import { deselect } from "./select"
 
 export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation" | "audio_playlist"
 
@@ -56,7 +57,7 @@ export function ondrop(e: any, id: string) {
 
         h = dropActions[id](dropData, h)
         if (h && h.id) history(h)
-        selected.set({ id: null, data: [] })
+        deselect()
         return
     }
 

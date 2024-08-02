@@ -97,6 +97,7 @@ import { closeApp, initializeClosing, saveComplete } from "./save"
 import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { clearBackground } from "../components/output/clear"
+import { previewShortcuts } from "./shortcuts"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -352,6 +353,11 @@ const receiveOUTPUTasMAIN: any = {
 
         alertMessage.set(data)
         activePopup.set("alert")
+    },
+    MAIN_SHORTCUT: (data: { key: string }) => {
+        if (previewShortcuts[data.key]) {
+            previewShortcuts[data.key]({ ...data, preventDefault: () => "" })
+        }
     },
 }
 

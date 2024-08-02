@@ -57,7 +57,7 @@
         let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
         clone(item?.lines)?.forEach((line) => {
             let align = line.align.replaceAll(lineBg, "")
-            s += align + lineBg
+            s += align + lineBg // + line.chords?.map((a) => a.key)
             line.text?.forEach((a) => {
                 s += EditboxHelper.getTextStyle(a)
             })
@@ -66,6 +66,16 @@
         // dont replace while typing
         // && (window.getSelection() === null || window.getSelection()!.type === "None")
         if (currentStyle.replaceAll(";", "") !== s.replaceAll(";", "")) getStyle()
+    }
+
+    let previousChords = ""
+    $: {
+        // chords updated! (needed to save chords so they don't get reset when changing the lines)
+        let newChords = JSON.stringify(item?.lines?.map((a) => a.chords?.map((a) => a.key)))
+        if (previousChords !== newChords) {
+            previousChords = newChords
+            getStyle()
+        }
     }
 
     $: lineGap = item?.specialStyle?.lineGap

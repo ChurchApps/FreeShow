@@ -84,6 +84,7 @@ export const closeAd: Writable<boolean> = writable(false)
 export const videosData: Writable<any> = writable({})
 export const videosTime: Writable<any> = writable({})
 export const textLoaded: Writable<boolean> = writable(false)
+export const toggleOutputEnabled: Writable<boolean> = writable(false)
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })

@@ -857,6 +857,10 @@
                             {id}
                             draggable="true"
                             on:mouseup={(e) => selectVerse(e, id)}
+                            on:mousedown={() => {
+                                if (!activeVerses.includes(id)) activeVerses = [...activeVerses, id]
+                                updateActiveVerses()
+                            }}
                             on:dblclick={() => playOrClearScripture(true)}
                             class:active={activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}

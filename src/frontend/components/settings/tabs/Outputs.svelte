@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { NDI, OUTPUT } from "../../../../types/Channels"
-    import { activePopup, currentOutputSettings, ndiData, os, outputDisplay, outputs, styles } from "../../../stores"
+    import { activePopup, currentOutputSettings, ndiData, os, outputDisplay, outputs, styles, toggleOutputEnabled } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -149,13 +149,16 @@
                 checked={currentOutput.enabled}
                 disabled={currentOutput.enabled && activeOutputs.length < 2}
                 on:change={(e) => {
-                    updateOutput("enabled", isChecked(e))
-                    if ($outputDisplay) {
-                        let enabled = getActiveOutputs($outputs, false)
-                        Object.entries($outputs).forEach(([id, output]) => {
-                            send(OUTPUT, ["DISPLAY"], { enabled: enabled.includes(id), output: { id, ...output }, one: true })
-                        })
-                    }
+                    toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
+                    setTimeout(() => {
+                        updateOutput("enabled", isChecked(e))
+                        if ($outputDisplay) {
+                            let enabled = getActiveOutputs($outputs, false)
+                            Object.entries($outputs).forEach(([id, output]) => {
+                                send(OUTPUT, ["DISPLAY"], { enabled: enabled.includes(id), output: { id, ...output }, one: true })
+                            })
+                        }
+                    }, 100)
                 }}
             />
         </div>

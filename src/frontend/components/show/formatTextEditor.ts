@@ -1,13 +1,14 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Item, Line, Show, Slide, SlideData } from "../../../types/Show"
+import type { Chords, Item, Line, Show, Slide, SlideData } from "../../../types/Show"
 import { activeShow } from "../../stores"
-import { getItemText } from "../edit/scripts/textStyle"
+import { getItemChords, getItemText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates } from "../helpers/array"
 import { history } from "../helpers/history"
 import { isEmptyOrSpecial } from "../helpers/output"
 import { getGlobalGroup } from "../helpers/show"
 import { _show } from "../helpers/shows"
+import { createChord } from "../edit/scripts/chords"
 
 export function formatText(e: any) {
     let newSlidesText = e.detail.split("\n\n")
@@ -257,14 +258,50 @@ export function linesToTextboxes(slideLines: string[]) {
         }
 
         if (!items[currentItemIndex]) items[currentItemIndex] = clone(defaultItem)
-        items[currentItemIndex].lines!.push(getLine(line))
+
+        let lineData = getChords(line)
+        items[currentItemIndex].lines!.push(getLine(lineData.text, lineData.chords))
     })
 
     return items
 }
 
-export function getLine(text: string): Line {
-    return { align: "", text: [{ value: text, style: "font-size: 100px;" }] }
+function getChords(line: string) {
+    let text = ""
+    let chords: Chords[] = []
+
+    let currentlyInChord = false
+    let currentChord = ""
+
+    line.split("").forEach((char) => {
+        if (char === "[") {
+            currentlyInChord = true
+            currentChord = ""
+            return
+        }
+
+        if (!currentlyInChord) {
+            text += char
+            return
+        }
+
+        if (char === "]") {
+            currentlyInChord = false
+            if (currentChord.length > 12) text += `[${currentChord}]` // probably not a chord
+            else chords.push(createChord(text.length, currentChord))
+            return
+        }
+
+        currentChord += char
+    })
+
+    return { text, chords }
+}
+
+export function getLine(text: string, chords: Chords[]): Line {
+    let line: Line = { align: "", text: [{ value: text, style: "font-size: 100px;" }] }
+    if (chords.length) line.chords = chords
+    return line
 }
 
 function groupSlides(slides: Slide[]) {
@@ -283,7 +320,7 @@ function groupSlides(slides: Slide[]) {
         let textItems = getTextboxes(slide.items)
         if (!textItems.length) return
 
-        let fullOldSlideText = textItems.reduce((value, item) => (value += getItemText(item)), "")
+        let fullOldSlideText = textItems.reduce((value, item) => (value += getItemText(item) + getItemChords(item)), "")
         if (!fullOldSlideText) return
 
         // adding length so line breaks with no text changes works

@@ -232,6 +232,22 @@ export function getItemText(item: Item): string {
     return text
 }
 
+// get chords map
+export function getItemChords(item: Item): string {
+    let text: string = ""
+    if (!item?.lines) return ""
+
+    item.lines.forEach((line) => {
+        if (!line.chords?.length) return
+
+        line.chords.forEach((chord) => {
+            text += chord.key
+        })
+    })
+
+    return text
+}
+
 export function getLineText(line: any): string {
     let text: string = ""
     line?.text?.forEach((content: any) => {

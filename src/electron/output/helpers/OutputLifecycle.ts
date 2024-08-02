@@ -30,6 +30,7 @@ export class OutputLifecycle {
         if (output.stageOutput && !CaptureHelper.Transmitter.stageWindows.includes(id)) CaptureHelper.Transmitter.stageWindows.push(id)
 
         setTimeout(() => {
+            if (!CaptureHelper.Lifecycle) return // window closed before timeout finished
             CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false })
         }, 1200)
 
