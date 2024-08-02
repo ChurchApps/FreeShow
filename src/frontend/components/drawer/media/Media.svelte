@@ -355,7 +355,7 @@
                 <p>Pixabay</p>
             </Button>
             <Button style="flex: 1;" active={onlineTab === "unsplash"} on:click={() => (onlineTab = "unsplash")} center>
-                <Icon style="fill: {onlineTab !== 'unsplash' ? 'white' : '#00ab6b'};" size={1.2} id="unsplash" box={48} right />
+                <Icon style="fill: {onlineTab !== 'unsplash' ? 'white' : '#00ab6b'};" size={1.2} id="unsplash" right />
                 <p>Unsplash</p>
             </Button>
         {:else}
