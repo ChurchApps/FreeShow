@@ -1,3 +1,4 @@
+import type { Resolution } from "./Settings"
 import type { OutBackground, OutSlide, OutTransition } from "./Show"
 
 export interface Outputs {
@@ -20,7 +21,9 @@ export interface Output {
     transparent?: boolean
     ndi?: boolean
     ndiData?: any
-    decklinkData?: any
+    blackmagic?: boolean
+    blackmagicData?: any
+    forcedResolution?: Resolution
     invisible?: boolean
     taskbar?: boolean
     style?: string

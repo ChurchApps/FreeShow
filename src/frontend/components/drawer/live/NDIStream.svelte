@@ -29,14 +29,29 @@
 
         let ctx = canvas.getContext("2d")
 
-        // Create a new ImageData object
-        let imageData = ctx.createImageData(canvas.width, canvas.height)
-        // Copy the pixel data from the Buffer to the ImageData object
-        for (let i = 0; i < frame.data.length; i++) {
-            imageData.data[i] = frame.data[i]
-        }
-        // Put the ImageData onto the canvas
+        const WIDTH = frame.xres
+        const HEIGHT = frame.yres
+
+        // i don't know why
+        // when colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA is not set, this shows a wrong colored QR code
+        // when is is set the data seems correct but is all black...
+        // var mergedArray = new Uint8Array(frame.data.length * 2)
+        // mergedArray.set(frame.data)
+        // mergedArray.set(frame.data, frame.data.length)
+
+        console.log(WIDTH * HEIGHT * 4, "===", frame.data.length)
+
+        const imageData = new ImageData(new Uint8ClampedArray(frame.data), WIDTH, HEIGHT)
         ctx.putImageData(imageData, 0, 0)
+
+        // // Create a new ImageData object
+        // let imageData = ctx.createImageData(canvas.width, canvas.height)
+        // // Copy the pixel data from the Buffer to the ImageData object
+        // for (let i = 0; i < frame.data.length; i++) {
+        //     imageData.data[i] = frame.data[i]
+        // }
+        // // Put the ImageData onto the canvas
+        // ctx.putImageData(imageData, 0, 0)
 
         //////////////
 

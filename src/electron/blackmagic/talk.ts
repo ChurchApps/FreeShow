@@ -1,7 +1,14 @@
+import { BrowserWindow } from "electron"
 import { BLACKMAGIC } from "../../types/Channels"
+import { Output } from "../../types/Output"
 import { Message } from "../../types/Socket"
-import { BlackmagicCapture } from "./BlackmagicCapture"
+import { CaptureHelper } from "../capture/CaptureHelper"
+import { OutputBounds } from "../output/helpers/OutputBounds"
+import { OutputValues } from "../output/helpers/OutputValues"
+import { OutputHelper } from "../output/OutputHelper"
 import { BlackmagicManager } from "./BlackmagicManager"
+import { BlackmagicSender } from "./BlackmagicSender"
+import { BlackmagicReceiver } from "./BlackmagicReceiver"
 
 export async function receiveBM(e: any, msg: Message) {
     let data: any = {}
@@ -10,19 +17,47 @@ export async function receiveBM(e: any, msg: Message) {
     if (data !== undefined) e.reply(BLACKMAGIC, { channel: msg.channel, data: JSON.stringify(data) })
 }
 
-// WIP for SENDING frames the output window should be transparent!!
-
-let activeCapture: BlackmagicCapture
+// let activeCapture: BlackmagicSender
 export const bmResponses: any = {
     GET_DEVICES: () => BlackmagicManager.getDevices(),
 
-    START_CAPTURE: () => {
-        if (activeCapture instanceof BlackmagicCapture) activeCapture.stopCapture()
+    CAPTURE_FRAME: ({ source }: any) => BlackmagicReceiver.captureFrame(source),
+    CAPTURE_STREAM: ({ source }: any) => BlackmagicReceiver.startCapture(source),
 
-        activeCapture = new BlackmagicCapture(0)
-        activeCapture.captureFrame()
-    },
-    STOP_CAPTURE: () => {
-        if (activeCapture instanceof BlackmagicCapture) activeCapture.stopCapture()
-    },
+    // START_CAPTURE: () => {
+    //     if (activeCapture instanceof BlackmagicSender) activeCapture.stopCapture()
+
+    //     activeCapture = new BlackmagicSender(0)
+    //     activeCapture.captureFrame()
+    // },
+    // STOP_CAPTURE: () => {
+    //     if (activeCapture instanceof BlackmagicSender) activeCapture.stopCapture()
+    // },
+}
+
+export async function initializeSender(data: Output, window: BrowserWindow, id: string) {
+    if (!data.forcedResolution?.width) return // could not get proper size
+
+    // set blackmagic device resolution
+    let windowBounds = { ...window.getBounds(), ...data.forcedResolution }
+    OutputBounds.updateBounds({ id, bounds: windowBounds })
+
+    let bmdData = data.blackmagicData || {}
+    let deviceId = bmdData.deviceId
+    let deviceIndex = BlackmagicManager.getIndexById(deviceId)
+    if (deviceIndex < 0) return
+
+    if (data.blackmagic) await BlackmagicSender.initialize(id, deviceIndex, bmdData.displayMode, bmdData.pixelFormats, bmdData.alphaKey)
+    else BlackmagicSender.stop(id)
+
+    // get & set custom frame rate
+    const output = OutputHelper.getOutput(id)
+    if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(window, id)
+    if (!bmdData.framerate[1] || !bmdData.framerate[0]) return
+    let bmdFramerate = bmdData.framerate[1] / bmdData.framerate[0] // [ 1001, 30000 ]
+    if (bmdFramerate < 10) return
+    output.captureOptions.framerates.blackmagic = bmdFramerate
+    OutputHelper.setOutput(id, output)
+
+    OutputValues.updateValue({ key: "capture", value: { key: "blackmagic", value: data.blackmagic }, id })
 }

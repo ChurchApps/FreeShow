@@ -27,7 +27,7 @@ export class OutputVisibility {
         }
 
         // don't auto position on mac (because of virtual)
-        if (data.autoPosition && !data.force && process.platform !== "darwin") data.output.bounds = this.getSecondDisplay(data.output.bounds)
+        if (data.autoPosition && !data.force && !data.output?.forcedResolution?.width && process.platform !== "darwin") data.output.bounds = this.getSecondDisplay(data.output.bounds)
         let bounds: Rectangle = data.output.bounds
         let windowNotCoveringMain: boolean = this.amountCovered(bounds, mainWindow!.getBounds()) < 0.5
 

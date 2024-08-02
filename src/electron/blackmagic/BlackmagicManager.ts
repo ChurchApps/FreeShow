@@ -1,6 +1,7 @@
 import macadam from "macadam"
-import { DeviceConfig, DeviceData } from "./TypeData"
 import { isProd } from ".."
+import { bmdDisplayModes, bmdPixelFormats } from "./bmdFormats"
+import { DeviceConfig, DeviceData } from "./TypeData"
 
 // https://github.com/Streampunk/macadam
 export class BlackmagicManager {
@@ -19,6 +20,15 @@ export class BlackmagicManager {
                     deviceHandle: "54:00000000:00360600",
                     hasSerialPort: false,
                     topologicalID: 3540480,
+                    inputDisplayModes: [
+                        {
+                            name: "1080p29.97",
+                            width: 1920,
+                            height: 1080,
+                            frameRate: [1001, 30000],
+                            videoModes: ["8-bit YUV", "10-bit YUV"],
+                        },
+                    ],
                 } as any,
             ]
         }
@@ -50,5 +60,13 @@ export class BlackmagicManager {
 
         macadam.setDeviceConfig({ ...newData, deviceIndex })
         return true
+    }
+
+    static getDisplayMode(displayModeName: string) {
+        return bmdDisplayModes.get(displayModeName)
+    }
+
+    static getPixelFormat(pixelFormat: string) {
+        return bmdPixelFormats.get(pixelFormat)
     }
 }

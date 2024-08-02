@@ -31,7 +31,7 @@
     function updateOutput(key: string, value: any, outputId: string = "") {
         if (!outputId) outputId = currentOutput.id
 
-        if (key === "decklink" && value === true) {
+        if (key === "blackmagic" && value === true) {
             send(BLACKMAGIC, ["GET_DEVICES"])
             updateOutput("transparent", true)
             updateOutput("invisible", true)
@@ -62,14 +62,14 @@
                     })
 
                     delete a[outputId].ndiData
-                    if (!a[outputId].decklink) {
+                    if (!a[outputId].blackmagic) {
                         delete a[outputId].transparent
                         delete a[outputId].invisible
                     }
                 }
             }
 
-            if (key === "decklink") {
+            if (key === "blackmagic") {
                 if (value) {
                     delete a[outputId].keyOutput
                 } else {
@@ -78,7 +78,7 @@
                     //     return a
                     // })
 
-                    delete a[outputId].decklinkData
+                    delete a[outputId].blackmagicData
                     if (!a[outputId].ndi) {
                         delete a[outputId].transparent
                         delete a[outputId].invisible
@@ -98,7 +98,7 @@
 
             // UPDATE OUTPUT WINDOW
 
-            if (["alwaysOnTop", "kioskMode", "transparent", "ndi"].includes(key)) {
+            if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
                 send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
 
                 // update key output
@@ -150,47 +150,54 @@
         { id: 60, name: "60 fps" },
     ]
 
-    // decklink
-    let decklinkDevices: Option[] = []
-    function updateDecklinkData(e: any, key: string) {
+    // blackmagic
+    let blackmagicDevices: Option[] = []
+    function updateBlackmagicData(e: any, key: string) {
         let id = currentOutput.id
         if (!id) return
 
-        let newData = $outputs[id]?.decklinkData
+        let newData = $outputs[id]?.blackmagicData
         if (!newData) newData = {}
-        newData[key] = e?.detail?.id || e?.detail?.name || e
+        let value = e?.detail?.id || e?.detail?.name || e
+        newData[key] = value
 
-        updateOutput("decklinkData", newData)
+        updateOutput("blackmagicData", newData)
         // send(NDI, ["NDI_DATA"], { id, ...newData })
-    }
 
-    // WIP fetch this from the actual device! (inputDisplayModes[])
-    const decklinkModes = [
-        // SD
-        { name: "525i59.94 NTSC" },
-        { name: "625i50 PAL" },
-        // HD
-        { name: "720p50" },
-        { name: "720p59.94" },
-        { name: "720p60" },
-        { name: "1080p23.98" },
-        { name: "1080p24" },
-        { name: "1080p25" },
-        { name: "1080p29.97" },
-        { name: "1080p30" },
-        { name: "1080p50" },
-        { name: "1080p59" },
-        { name: "1080p59.94" },
-        { name: "1080p60" },
-        { name: "1080PsF23.98" },
-        { name: "1080PsF24" },
-        { name: "1080PsF25" },
-        { name: "1080PsF29.97" },
-        { name: "1080PsF30" },
-        { name: "1080i50" },
-        { name: "1080i59.94" }, // default
-        { name: "1080i60" },
-    ]
+        // wait for current value to update
+        setTimeout(() => {
+            if (key === "deviceId") {
+                let device = blackmagicDevices.find((a) => a.id === value)
+                if (!device) return
+
+                let displayModes = device.data?.displayModes || []
+                updateBlackmagicData(displayModes, "displayModes")
+                if (displayModes.length) {
+                    // try setting to "preferred" modes, or set to first available
+                    updateBlackmagicData(displayModes.find((a) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
+                }
+            } else if (key === "displayMode") {
+                let device = blackmagicDevices.find((a) => a.id === currentOutput.blackmagicData?.deviceId)
+                console.log(currentOutput, device)
+                if (!device) return
+
+                let displayModes = device.data?.displayModes || []
+                let modeData = displayModes.find((a) => a.name === value) || {}
+                console.log(displayModes, modeData, value)
+                if (!modeData.width) return
+
+                // force resolution & update framerate
+                updateOutput("forcedResolution", { width: modeData.width, height: modeData.height })
+                updateBlackmagicData(modeData.frameRate, "framerate")
+                updateBlackmagicData(modeData.videoModes, "pixelFormats")
+
+                // allow data to update first
+                setTimeout(() => {
+                    send(OUTPUT, ["SET_VALUE"], { id: currentOutput.id, key: "blackmagic", value: currentOutput })
+                })
+            }
+        })
+    }
 
     let edit: any
 
@@ -198,14 +205,17 @@
 
     const ndiNotSupported = $os.platform === "linux" && $os.arch !== "x64" && $os.arch !== "ia32"
 
-    // WAIT FOR BLACKMAGIC DEVICES
+    // RECEIVE BLACKMAGIC DEVICES
 
     let listenerId = uid()
     onDestroy(() => destroy(BLACKMAGIC, listenerId))
-    const RECEIVERS = {
-        GET_DEVICES: (data) => (decklinkDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName }))),
+    const receiveBMD = {
+        GET_DEVICES: (data) => {
+            blackmagicDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
+            if (blackmagicDevices.length && !currentOutput.blackmagicData?.deviceId) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
+        },
     }
-    receive(BLACKMAGIC, RECEIVERS, listenerId)
+    receive(BLACKMAGIC, receiveBMD, listenerId)
 </script>
 
 <div class="info">
@@ -241,21 +251,24 @@
     </CombinedInput>
 {/if}
 
-<CombinedInput>
-    <p><T id="settings.enable_key_output" /></p>
-    <div class="alignRight">
-        <Checkbox
-            checked={!!currentOutput.keyOutput}
-            disabled={currentOutput.ndi || currentOutput.decklink}
-            on:change={(e) => {
-                let outputId = isChecked(e) ? "key_" + uid(5) : currentOutput.keyOutput
-                let keyValue = isChecked(e) ? outputId : null
-                updateOutput("keyOutput", keyValue)
-                keyOutput(outputId, !isChecked(e))
-            }}
-        />
-    </div>
-</CombinedInput>
+<!-- WIP probably not needed! -->
+{#if currentOutput.keyOutput}
+    <CombinedInput>
+        <p><T id="settings.enable_key_output" /></p>
+        <div class="alignRight">
+            <Checkbox
+                checked={!!currentOutput.keyOutput}
+                disabled={currentOutput.ndi || currentOutput.blackmagic}
+                on:change={(e) => {
+                    let outputId = isChecked(e) ? "key_" + uid(5) : currentOutput.keyOutput
+                    let keyValue = isChecked(e) ? outputId : null
+                    updateOutput("keyOutput", keyValue)
+                    keyOutput(outputId, !isChecked(e))
+                }}
+            />
+        </div>
+    </CombinedInput>
+{/if}
 
 {#if !currentOutput.stageOutput}
     <CombinedInput>
@@ -274,7 +287,7 @@
 </div> -->
 <CombinedInput>
     <p><T id="settings.output_screen" /></p>
-    <Button on:click={() => activePopup.set("choose_screen")}>
+    <Button disabled={currentOutput.invisible} on:click={() => activePopup.set("choose_screen")}>
         <Icon id="screen" right />
         <p><T id="popup.choose_screen" /></p>
     </Button>
@@ -333,8 +346,8 @@
     </CombinedInput>
 {/if}
 
-<!-- Blackmagic (synonym with Decklink in this case) -->
-<h3>Blackmagic</h3>
+<!-- Blackmagic -->
+<h3>Blackmagic Design</h3>
 
 <CombinedInput>
     <p>
@@ -342,26 +355,30 @@
         <!-- <span class="connections">{$ndiData[currentOutput.id || ""]?.connections || ""}</span> -->
     </p>
     <div class="alignRight">
-        <Checkbox checked={currentOutput.decklink} on:change={(e) => updateOutput("decklink", isChecked(e))} />
+        <Checkbox checked={currentOutput.blackmagic} on:change={(e) => updateOutput("blackmagic", isChecked(e))} />
     </div>
 </CombinedInput>
 
-{#if currentOutput.decklink}
+{#if currentOutput.blackmagic}
     <CombinedInput>
         <p><T id="settings.device" /></p>
-        <Dropdown value={decklinkDevices.find((a) => a.id === currentOutput.decklinkData?.deviceId)?.name || "—"} options={decklinkDevices} on:click={(e) => updateDecklinkData(e, "deviceId")} />
+        <Dropdown value={blackmagicDevices.find((a) => a.id === currentOutput.blackmagicData?.deviceId)?.name || "—"} options={blackmagicDevices} on:click={(e) => updateBlackmagicData(e, "deviceId")} />
     </CombinedInput>
 
-    {#if currentOutput.decklinkData?.deviceId}
+    {#if currentOutput.blackmagicData?.deviceId}
         <CombinedInput>
             <p><T id="settings.display_mode" /></p>
-            <Dropdown value={decklinkModes.find((a) => a.name === currentOutput.decklinkData?.displayMode)?.name || "1080i59.94"} options={decklinkModes} on:click={(e) => updateDecklinkData(e, "displayMode")} />
+            <Dropdown
+                value={currentOutput.blackmagicData?.displayModes?.find((a) => a.name === currentOutput.blackmagicData?.displayMode)?.name || "—"}
+                options={currentOutput.blackmagicData?.displayModes || []}
+                on:click={(e) => updateBlackmagicData(e, "displayMode")}
+            />
         </CombinedInput>
 
         <CombinedInput>
             <p><T id="settings.alpha_key" /></p>
             <div class="alignRight">
-                <Checkbox checked={currentOutput.decklinkData?.alphaKey} on:change={(e) => updateDecklinkData(isChecked(e), "alphaKey")} />
+                <Checkbox checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(isChecked(e), "alphaKey")} />
             </div>
         </CombinedInput>
     {/if}
@@ -369,7 +386,7 @@
 
 <br />
 
-{#if currentOutput.ndi || currentOutput.decklink}
+{#if currentOutput.ndi || currentOutput.blackmagic}
     <CombinedInput>
         <p><T id="settings.transparent" /></p>
         <div class="alignRight">

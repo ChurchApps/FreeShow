@@ -5,6 +5,7 @@
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
     import { activeDrawerOnlineTab, activeEdit, activePopup, activeShow, dictionary, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
+    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
@@ -12,7 +13,9 @@
     import { encodeFilePath, getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
+    import { clearBackground } from "../../output/clear"
     import Center from "../../system/Center.svelte"
+    import BMDStreams from "../live/BMDStreams.svelte"
     import Cameras from "../live/Cameras.svelte"
     import NDIStreams from "../live/NDIStreams.svelte"
     import Screens from "../live/Screens.svelte"
@@ -22,8 +25,6 @@
     import Media from "./MediaCard.svelte"
     import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
-    import { send } from "../../../utils/request"
-    import { clearBackground } from "../../output/clear"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -274,6 +275,8 @@
                     <Screens bind:streams />
                 {:else if screenTab === "ndi"}
                     <NDIStreams />
+                {:else if screenTab === "blackmagic"}
+                    <BMDStreams />
                 {:else}
                     <Windows bind:streams {searchValue} />
                 {/if}
@@ -331,10 +334,15 @@
                 <p><T id="live.windows" /></p>
             </Button>
             <!-- WIP ndi inputs: -->
-            <!-- <Button style="flex: 1;" active={screenTab === "ndi"} on:click={() => (screenTab = "ndi")} center>
+            <Button style="flex: 1;" active={screenTab === "ndi"} on:click={() => (screenTab = "ndi")} center>
                 <Icon size={1.2} id="ndi" right />
                 <p>NDI</p>
-            </Button> -->
+            </Button>
+            <!-- WIP blackmagic inputs -->
+            <Button style="flex: 1;" active={screenTab === "blackmagic"} on:click={() => (screenTab = "blackmagic")} center>
+                <Icon size={1.2} id="blackmagic" right />
+                <p>Blackmagic</p>
+            </Button>
         {:else if active === "online"}
             <Button style="flex: 1;" active={onlineTab === "youtube"} on:click={() => (onlineTab = "youtube")} center>
                 <Icon style="fill: {onlineTab !== 'youtube' ? 'white' : '#ff0000'};" size={1.2} id="youtube" right />

@@ -162,9 +162,12 @@
             {#each screens as screen, i}
                 <div
                     class="screen"
+                    class:disabled={currentScreen?.forcedResolution}
                     class:active={$outputs[screenId || ""]?.screen === screen.id.toString()}
                     style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.bounds.x}px;top: {screen.bounds.y}px;"
-                    on:click={() => changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })}
+                    on:click={() => {
+                        if (!currentScreen?.forcedResolution) changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
+                    }}
                 >
                     {i + 1}
                 </div>
@@ -209,16 +212,20 @@
 
         background-color: var(--primary);
         outline: 40px solid var(--primary-lighter);
-        cursor: pointer;
         transition: background-color 0.1s;
     }
 
-    .screen:hover {
+    .screen:hover:not(.disabled) {
         background-color: var(--primary-lighter);
+        cursor: pointer;
     }
 
     .screen.active {
         background-color: var(--secondary);
         color: var(--secondary-text);
+    }
+
+    .screen.disabled {
+        opacity: 0.5;
     }
 </style>
