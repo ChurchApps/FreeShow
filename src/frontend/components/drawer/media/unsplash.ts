@@ -7,8 +7,9 @@ let cache: any = {}
 export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
     return new Promise((resolve) => {
         console.log(query)
+        if (cache[query]) return resolve(cache[query])
 
-        let url: string = "https://api.unsplash.com/search/photos/?client_id=CaXvP_plzuAivss1MbiwGU3-rXd3zZphCifOVplX6Cg&content_filter=high&per_page=10&query=" // this is still a demo key, so it should be changed before release
+        let url: string = "https://api.unsplash.com/search/photos/?client_id=CaXvP_plzuAivss1MbiwGU3-rXd3zZphCifOVplX6Cg&content_filter=high&per_page=30&query=" // this is still a demo key, so it should be changed before release
         url += encodeURIComponent(query)
         console.log(url)
 
@@ -21,8 +22,8 @@ export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
 
                 results = data.results.map((media) => {
                     // previewURL
-                    let path = media.urls.small
-                    return { path, name: media.description, extension: getExtension(path) }
+                    let path = media.urls.regular
+                    return { path, name: media.alt_description, extension: getExtension(path) }
                 })
 
                 cache[query] = results

@@ -45,7 +45,6 @@
         if (onlineTab === "pixabay") {
             fullFilteredFiles = await loadFromPixabay(searchValue || "landscape", activeView === "video")
         } else if (onlineTab === "unsplash") {
-            console.log("got called for UNSPLASH")
             fullFilteredFiles = await loadFromUnsplash(searchValue || "landscape")
         }
         loadAllFiles(fullFilteredFiles)
@@ -55,7 +54,7 @@
 
     let onlineTab = "youtube"
     $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
-    $: if (active === "online" && onlineTab === "unsplash") loadFilesAsync()
+    $: if (active === "online" && onlineTab === "unsplash" && (searchValue !== null || activeView)) loadFilesAsync()
     // only for info!
     $: if (onlineTab) activeDrawerOnlineTab.set(onlineTab)
 
