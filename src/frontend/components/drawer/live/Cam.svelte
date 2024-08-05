@@ -43,6 +43,8 @@
         navigator.mediaDevices
             .getUserMedia(constraints)
             .then((mediaStream) => {
+                if (!videoElem) return
+
                 videoElem.srcObject = mediaStream
                 loaded = true
                 videoElem.play()

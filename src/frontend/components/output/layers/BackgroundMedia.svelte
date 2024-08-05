@@ -13,6 +13,8 @@
     import Window from "../Window.svelte"
     import Media from "./Media.svelte"
     import OutputTransition from "./OutputTransition.svelte"
+    import NdiStream from "../../drawer/live/NDIStream.svelte"
+    import BmdStream from "../../drawer/live/BMDStream.svelte"
 
     export let outputId: string = ""
 
@@ -218,6 +220,10 @@
         <Media path={id} {data} {animationStyle} bind:video bind:videoData bind:videoTime {mirror} {mediaStyle} on:loaded on:ended={videoEnded} />
     {:else if type === "screen"}
         <Window {id} class="media" style="width: 100%;height: 100%;" on:loaded />
+    {:else if type === "ndi"}
+        <NdiStream screen={{ id, name: "" }} background {mirror} />
+    {:else if type === "blackmagic"}
+        <BmdStream screen={{ id, name: "" }} background {mirror} />
     {:else if type === "camera"}
         <Camera {id} groupId={data.cameraGroup || ""} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "player"}

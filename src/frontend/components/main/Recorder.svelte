@@ -29,6 +29,8 @@
             .getUserMedia(options)
             .then((stream) => {
                 if (!stream) return console.error("Error getting media stream!")
+                if (!videoElem) return
+
                 currentStream = stream
 
                 currentRecordingStream.set(stream)

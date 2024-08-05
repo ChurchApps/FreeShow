@@ -21,8 +21,9 @@ export async function receiveBM(e: any, msg: Message) {
 export const bmResponses: any = {
     GET_DEVICES: () => BlackmagicManager.getDevices(),
 
-    CAPTURE_FRAME: ({ source }: any) => BlackmagicReceiver.captureFrame(source),
-    CAPTURE_STREAM: ({ source }: any) => BlackmagicReceiver.startCapture(source),
+    CAPTURE_FRAME: (data: any) => BlackmagicReceiver.captureFrame(data),
+    CAPTURE_STREAM: (data: any) => BlackmagicReceiver.startCapture(data),
+    CAPTURE_DESTROY: (data: any) => BlackmagicReceiver.stopCapture(data),
 
     // START_CAPTURE: () => {
     //     if (activeCapture instanceof BlackmagicSender) activeCapture.stopCapture()

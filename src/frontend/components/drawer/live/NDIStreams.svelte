@@ -6,6 +6,8 @@
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import NDIStream from "./NDIStream.svelte"
     import { clearBackground } from "../../output/clear"
+    import Center from "../../system/Center.svelte"
+    import T from "../../helpers/T.svelte"
 
     let sources: any[] = []
 
@@ -26,13 +28,19 @@
     $: console.log(sources)
 </script>
 
-{#each sources as screen}
-    <NDIStream
-        {screen}
-        on:click={(e) => {
-            if ($outLocked || e.ctrlKey || e.metaKey) return
-            if (currentOutput.out?.background?.id === screen.id) clearBackground()
-            else setOutput("background", { id: screen.id, type: "ndi" })
-        }}
-    />
-{/each}
+{#if sources.length}
+    {#each sources as screen}
+        <NDIStream
+            {screen}
+            on:click={(e) => {
+                if ($outLocked || e.ctrlKey || e.metaKey) return
+                if (currentOutput.out?.background?.id === screen.id) clearBackground()
+                else setOutput("background", { id: screen.id, type: "ndi" })
+            }}
+        />
+    {/each}
+{:else}
+    <Center faded>
+        <T id="empty.general" />
+    </Center>
+{/if}

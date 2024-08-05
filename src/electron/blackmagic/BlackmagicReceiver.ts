@@ -21,7 +21,10 @@ export class BlackmagicReceiver {
         })
     }
 
-    static async startCapture(deviceId: string = ""): Promise<CaptureFrame> {
+    static async startCapture({ source, outputId }: any): Promise<CaptureFrame> {
+        let deviceId: string = source.id
+        console.log(outputId)
+
         if (!this.capture) await this.initialize(BlackmagicManager.getIndexById(deviceId))
         return await this.capture.frame()
         // for ( let x = 0 ; x < 1000 ; x++ ) {
@@ -30,7 +33,8 @@ export class BlackmagicReceiver {
         // }
     }
 
-    static async captureFrame(deviceId: string = ""): Promise<CaptureFrame> {
+    static async captureFrame({ source }: any): Promise<CaptureFrame> {
+        let deviceId: string = source.id
         if (!this.capture) await this.initialize(BlackmagicManager.getIndexById(deviceId))
         return await this.capture.frame()
         // for ( let x = 0 ; x < 1000 ; x++ ) {
@@ -39,7 +43,9 @@ export class BlackmagicReceiver {
         // }
     }
 
-    static stopCapture() {
+    static stopCapture({ source, outputId }: any) {
+        let deviceId: string = source.id
+        console.log(deviceId, outputId)
         this.capture.stop()
     }
 }
