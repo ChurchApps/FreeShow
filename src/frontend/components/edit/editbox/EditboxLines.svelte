@@ -304,7 +304,7 @@
         let updateHTML: boolean = false
 
         new Array(...textElem.children).forEach((line: any, i: number) => {
-            let align: string = plain ? item.lines![i]?.align || "" : line.getAttribute("style") || ""
+            let align: string = plain ? item.lines?.[i]?.align || "" : line.getAttribute("style") || ""
             pos++
             currentStyle += align
 
@@ -325,7 +325,7 @@
                 }
                 if (child.nodeName !== "SPAN") return
 
-                let style = plain ? item.lines![i]?.text[j]?.style || "" : child.getAttribute("style") || ""
+                let style = plain ? item.lines?.[i]?.text[j]?.style || "" : child.getAttribute("style") || ""
                 // TODO: pressing enter / backspace will remove any following style in list view
                 // if (plain && !style && i > 0) style = item.lines![i - 1]?.text[j]?.style
 

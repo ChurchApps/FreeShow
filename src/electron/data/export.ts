@@ -199,14 +199,7 @@ function exportAllShows(data: any) {
 // ----- PROJECT -----
 
 export function exportProject(data: any) {
-    let msg: string = "export.exported"
-    writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", doneWritingFile)
-
-    function doneWritingFile(err: any) {
-        if (err) msg = err
-
-        toApp(MAIN, { channel: "ALERT", data: msg })
-    }
+    writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", (err: any) => doneWritingFile(err, data.path))
 }
 
 // ----- HELPERS -----

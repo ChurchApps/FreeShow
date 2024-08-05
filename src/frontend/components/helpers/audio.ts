@@ -10,7 +10,15 @@ import { encodeFilePath } from "./media"
 import { checkNextAfterMedia } from "./showActions"
 import { customActionActivation } from "../actions/actions"
 
+// let currentlyStarting: string[] = []
 export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0) {
+    // // prevent starting the same song rapidly
+    // if (currentlyStarting.includes(path)) return
+    // currentlyStarting.push(path)
+    // setTimeout(() => {
+    //     currentlyStarting.splice(currentlyStarting.indexOf(path), 1)
+    // }, 3000)
+
     let existing: any = get(playingAudio)[path]
     if (existing) {
         if (!pauseIfPlaying) {
@@ -38,6 +46,9 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     let encodedPath = encodeFilePath(path)
     audio = audio || new Audio(encodedPath)
     let analyser: any = await getAnalyser(audio, stream)
+
+    // another audio might have been started while awaiting (if played rapidly)
+    if (get(playingAudio)[path]) return
 
     playingAudio.update((a) => {
         if (!analyser) return a
@@ -83,14 +94,19 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     })
 }
 
+let currentlyCrossfading: string[] = []
 // if no "path" is provided it will fade out/clear all audio
 async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPlay: boolean = false) {
+    if (currentlyCrossfading[path]) return
+    if (path) currentlyCrossfading.push(path)
+
     // fade in
     if (path) {
         let playing = get(playingAudio)[path]?.audio
         if (!playing) return
 
         setTimeout(() => fadeAudio(playing, waitToPlay ? crossfade * 0.4 : crossfade, true), waitToPlay ? crossfade * 0.6 * 1000 : 0)
+        currentlyCrossfading.splice(currentlyCrossfading.indexOf(path), 1)
         return
     }
 
@@ -111,6 +127,8 @@ async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPl
 
             return a
         })
+
+        currentlyCrossfading.splice(currentlyCrossfading.indexOf(path), 1)
     }
 }
 
@@ -206,6 +224,11 @@ export function playlistNext(previous: string = "", specificSong: string = "", c
         }
         return
     }
+
+    console.log("PLAY NEXT", nextSong, crossfade)
+
+    // prevent playing the same song twice (while it's fading) to stop duplicate audio
+    if (Object.keys(playingAudio).includes(nextSong)) return
 
     activePlaylist.update((a) => {
         a.active = nextSong
@@ -593,8 +616,8 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
         let timedout = setTimeout(() => {
             clearInterval(currentlyFading[fadeId])
             delete currentlyFading[fadeId]
-            resolve(false)
-        }, duration * 1200)
+            resolve(true)
+        }, duration * 1500)
 
         function finished() {
             clearInterval(currentlyFading[fadeId])

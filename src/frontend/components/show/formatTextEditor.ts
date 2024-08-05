@@ -28,6 +28,7 @@ export function formatText(e: any) {
 
     let groupedOldSlides = groupSlides(oldSlides)
     let groupedNewSlides = groupSlides(slides)
+    console.log(groupedOldSlides, groupedNewSlides)
 
     // TODO: renaming existing groups!
 
@@ -94,6 +95,7 @@ export function formatText(e: any) {
     oldLayoutSlideIds.forEach((slideId) => {
         if (newLayoutSlideIds.includes(slideId)) return
         let slide = show.slides[slideId]
+        if (!slide) return
 
         let textItem = slide.items.find((a) => (a.type || "text") === "text")
         if (textItem) return

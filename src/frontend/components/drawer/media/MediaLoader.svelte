@@ -23,6 +23,7 @@
     export let resolution: Resolution | null = null
     export let duration: number = 0
     export let getDuration: boolean = false
+    export let ghost: boolean = false
     export let videoElem: any = null
 
     $: if (path) loaded = false
@@ -55,6 +56,8 @@
     let retryCount = 0
     $: if (path || thumbnailPath) retryCount = 0
     function reload() {
+        if (ghost) return
+
         if (retryCount > 5) {
             loaded = true
             return
@@ -75,6 +78,8 @@
     // get duration
     $: if (getDuration && type === "video" && thumbnailPath) getVideoDuration()
     function getVideoDuration() {
+        if (ghost) return
+
         setTimeout(() => {
             let video = document.createElement("video")
             video.onloadeddata = () => {

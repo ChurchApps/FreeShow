@@ -589,6 +589,8 @@
         "start_playlist": "Start playlist",
         "playlist_next": "Next track in playlist",
         "start_metronome": "Start metronome",
+        "name_start_timer": "Start timer by name",
+        "id_start_timer": "Start timer by ID",
         "start_slide_timers": "Start timers on active slide",
         "id_select_output_style": "Select output style by ID",
         "change_output_style": "Change output style",

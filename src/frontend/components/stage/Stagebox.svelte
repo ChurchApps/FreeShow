@@ -2,6 +2,7 @@
     import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import { getAutoSize } from "../edit/scripts/autoSize"
+    import { keysToID, sortByName } from "../helpers/array"
     import { getActiveOutputs } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import Image from "../media/Image.svelte"
@@ -108,6 +109,12 @@
     // $: resolution = getResolution(resolution, { $outputs, $styles })
 
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
+
+    let firstTimerId: string = ""
+    $: if (id.includes("first_active_timer")) {
+        firstTimerId = $activeTimers[0]?.id
+        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -167,7 +174,7 @@
                 {:else if id.includes("video")}
                     <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                 {:else if id.includes("first_active_timer")}
-                    <Timer id={$activeTimers[0]?.id} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                    <Timer id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
                         <Timer id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />

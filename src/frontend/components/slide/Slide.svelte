@@ -355,7 +355,7 @@
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader name={$dictionary.error?.load} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
+                                <MediaLoader name={$dictionary.error?.load} ghost={!background} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
                                 <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}

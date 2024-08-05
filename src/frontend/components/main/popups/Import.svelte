@@ -9,15 +9,15 @@
     import Button from "../../inputs/Button.svelte"
 
     const freeshow_formats = [
-        { name: "Show", extensions: ["show"], id: "freeshow" },
-        { name: "Project", extensions: ["project", "shows"], id: "freeshow_project" }, // , "fsproject", "fsp"
-        { name: "Template", extensions: ["fstemplate", "fst", "template"], id: "freeshow_template" },
-        { name: "Theme", extensions: ["fstheme", "theme"], id: "freeshow_theme" },
+        { name: "Show", extensions: ["show", "json"], id: "freeshow" },
+        { name: "Project", extensions: ["project", "shows", "json"], id: "freeshow_project" }, // , "fsproject", "fsp"
+        { name: "Template", extensions: ["fstemplate", "fst", "template", "json"], id: "freeshow_template" },
+        { name: "Theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" },
         // { name: "Calendar", extensions: ["ics"], id: "calendar" }, // calendar drawer tab
         // { name: "Scripture", id: "scripture" }, // scripture drawer tab
     ]
 
-    const text_formats: { popup?: Popups, [key: string]: any }[] = [
+    const text_formats: { popup?: Popups; [key: string]: any }[] = [
         { name: "Clipboard", id: "clipboard" },
         { name: "Text file", extensions: ["txt"], id: "txt" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
@@ -94,7 +94,7 @@
             on:click={() => {
                 if (format.popup) {
                     tick().then(() => {
-                        if(format.popup) {
+                        if (format.popup) {
                             activePopup.set(format.popup)
                         }
                     })
