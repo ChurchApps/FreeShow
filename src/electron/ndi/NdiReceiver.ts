@@ -118,7 +118,7 @@ export class NdiReceiver {
             return
         }
 
-        Object.values(this.NDI_RECEIVERS).forEach((interval: any) => {
+        Object.values(this.NDI_RECEIVERS).forEach(({ interval }: any) => {
             clearInterval(interval)
         })
         this.NDI_RECEIVERS = {}

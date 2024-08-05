@@ -1,5 +1,4 @@
 import macadam from "macadam"
-import { isProd } from ".."
 import { bmdDisplayModes, bmdPixelFormats } from "./bmdFormats"
 import { DeviceConfig, DeviceData } from "./TypeData"
 
@@ -10,28 +9,28 @@ export class BlackmagicManager {
     }
 
     static getDevices(): DeviceData[] {
-        if (!isProd) {
-            // test data
-            return [
-                {
-                    modelName: "Intensity Extreme",
-                    displayName: "Intensity Extreme",
-                    vendorName: "Blackmagic",
-                    deviceHandle: "54:00000000:00360600",
-                    hasSerialPort: false,
-                    topologicalID: 3540480,
-                    inputDisplayModes: [
-                        {
-                            name: "1080p29.97",
-                            width: 1920,
-                            height: 1080,
-                            frameRate: [1001, 30000],
-                            videoModes: ["8-bit YUV", "10-bit YUV"],
-                        },
-                    ],
-                } as any,
-            ]
-        }
+        // if (!isProd) {
+        //     // test data
+        //     return [
+        //         {
+        //             modelName: "Intensity Extreme",
+        //             displayName: "Intensity Extreme",
+        //             vendorName: "Blackmagic",
+        //             deviceHandle: "54:00000000:00360600",
+        //             hasSerialPort: false,
+        //             topologicalID: 3540480,
+        //             inputDisplayModes: [
+        //                 {
+        //                     name: "1080p29.97",
+        //                     width: 1920,
+        //                     height: 1080,
+        //                     frameRate: [1001, 30000],
+        //                     videoModes: ["8-bit YUV", "10-bit YUV"],
+        //                 },
+        //             ],
+        //         } as any,
+        //     ]
+        // }
 
         let deviceInfo: any = macadam.getDeviceInfo()
         if (typeof deviceInfo === "object") deviceInfo = Object.values(deviceInfo)

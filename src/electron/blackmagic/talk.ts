@@ -21,19 +21,9 @@ export async function receiveBM(e: any, msg: Message) {
 export const bmResponses: any = {
     GET_DEVICES: () => BlackmagicManager.getDevices(),
 
-    CAPTURE_FRAME: (data: any) => BlackmagicReceiver.captureFrame(data),
-    CAPTURE_STREAM: (data: any) => BlackmagicReceiver.startCapture(data),
-    CAPTURE_DESTROY: (data: any) => BlackmagicReceiver.stopCapture(data),
-
-    // START_CAPTURE: () => {
-    //     if (activeCapture instanceof BlackmagicSender) activeCapture.stopCapture()
-
-    //     activeCapture = new BlackmagicSender(0)
-    //     activeCapture.captureFrame()
-    // },
-    // STOP_CAPTURE: () => {
-    //     if (activeCapture instanceof BlackmagicSender) activeCapture.stopCapture()
-    // },
+    RECEIVE_FRAME: (data: any) => BlackmagicReceiver.captureFrame(data),
+    RECEIVE_STREAM: (data: any) => BlackmagicReceiver.startCapture(data),
+    STOP_RECEIVER: (data: any) => BlackmagicReceiver.stopReceiver(data),
 }
 
 export async function initializeSender(data: Output, window: BrowserWindow, id: string) {

@@ -19,8 +19,8 @@
 
     onMount(() => {
         if (background) {
-            if (!mirror) send(BLACKMAGIC, ["CAPTURE_STREAM"], { source: screen, outputId: Object.keys($outputs)[0] })
-        } else send(BLACKMAGIC, ["RECEIVE_STREAM"], { source: screen })
+            if (!mirror) send(BLACKMAGIC, ["RECEIVE_STREAM"], { source: screen, outputId: Object.keys($outputs)[0] })
+        } else send(BLACKMAGIC, ["RECEIVE_FRAME"], { source: screen })
     })
 
     $: if (frame) setCanvas()
@@ -29,8 +29,8 @@
 
         let ctx = canvas.getContext("2d")
 
-        const WIDTH = frame.xres
-        const HEIGHT = frame.yres
+        const WIDTH = frame.width
+        const HEIGHT = frame.height
         canvas.width = WIDTH
         canvas.height = HEIGHT
 
@@ -40,20 +40,22 @@
 
     const receiveBlackmagic: any = {
         CAPTURE_FRAME: (data) => {
-            if (data.id !== screen.id) return
+            if (data.id !== screen.id || data.type !== "frame") return
             loaded = true
 
             let timeSinceSent = Date.now() - data.time
             if (timeSinceSent > 100) return // skip frames if overloaded
 
-            frame = data.frame
+            // WIP play audio? (data.audio.data ...)
+
+            frame = data.video
         },
     }
 
     receive(BLACKMAGIC, receiveBlackmagic, screen.id)
     onDestroy(() => {
         destroy(BLACKMAGIC, screen.id)
-        if (background && !mirror) send(BLACKMAGIC, ["CAPTURE_DESTROY"], { id: screen.id, outputId: Object.keys($outputs)[0] })
+        if (background && !mirror) send(BLACKMAGIC, ["STOP_RECEIVER"], { id: screen.id, outputId: Object.keys($outputs)[0] })
     })
 
     let loaded: boolean = false
@@ -71,7 +73,6 @@
     canvas {
         width: 100%;
         height: 100%;
-        /* aspect-ratio: 1920/1080; */
 
         object-fit: contain;
     }
