@@ -65,7 +65,7 @@
                         return a
                     })
 
-                    delete a[outputId].ndiData
+                    // delete a[outputId].ndiData
                     if (!a[outputId].blackmagic) {
                         delete a[outputId].transparent
                         delete a[outputId].invisible
@@ -82,7 +82,7 @@
                     //     return a
                     // })
 
-                    delete a[outputId].blackmagicData
+                    // delete a[outputId].blackmagicData
                     if (!a[outputId].ndi) {
                         delete a[outputId].transparent
                         delete a[outputId].invisible

@@ -1,7 +1,7 @@
 // ----- FreeShow -----
 // This is the electron entry point
 
-import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
+import { BrowserWindow, Menu, Rectangle, app, dialog, ipcMain, screen } from "electron"
 import path from "path"
 import { BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
@@ -102,6 +102,8 @@ function createLoading() {
     loadingWindow = new BrowserWindow(loadingOptions)
     loadingWindow.loadFile("public/loading.html")
     loadingWindow.on("closed", () => (loadingWindow = null))
+
+    dialog.showMessageBox(loadingWindow, { message: "Prompt text" })
 }
 
 // ----- MAIN WINDOW -----

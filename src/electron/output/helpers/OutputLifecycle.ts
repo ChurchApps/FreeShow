@@ -36,8 +36,10 @@ export class OutputLifecycle {
         }, 1200)
 
         // NDI
-        if (output.ndi) await NdiSender.createSenderNDI(id, output.name)
-        if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+        if (output.ndi) {
+            await NdiSender.createSenderNDI(id, output.name)
+            if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+        }
 
         // Blackmagic
         if (output.blackmagic) initializeSender(output, outputWindow, id)

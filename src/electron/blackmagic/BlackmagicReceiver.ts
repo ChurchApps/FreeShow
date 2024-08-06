@@ -18,12 +18,18 @@ export class BlackmagicReceiver {
         let deviceIndex = BlackmagicManager.getIndexById(deviceId)
         if (deviceIndex < 0) return
 
+        let device = BlackmagicManager.getDeviceById(deviceId)
+        if (!device) return
+
         // WIP change mode
+        let displayMode = BlackmagicManager.getDisplayMode(device.inputDisplayModes[0].videoModes[0]) // selecting first
+        let pixelFormat = macadam.bmdFormat8BitBGRA
+
         if (!this.BMD_RECEIVERS[deviceId]) this.BMD_RECEIVERS[deviceId] = {}
         return (this.BMD_RECEIVERS[deviceId].receiver = await macadam.capture({
             deviceIndex,
-            displayMode: macadam.bmdModeHD1080i50,
-            pixelFormat: macadam.bmdFormat8BitBGRA,
+            displayMode,
+            pixelFormat,
             channels: audioChannels,
             sampleRate: macadam.bmdAudioSampleRate48kHz,
             sampleType: macadam.bmdAudioSampleType16bitInteger,

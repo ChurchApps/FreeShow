@@ -6,7 +6,7 @@ import { ImageBufferConverter } from "./ImageBufferConverter"
 
 // const FPS = 30
 export class BlackmagicSender {
-    static playbackData: { [key: string]: { playback: PlaybackChannel; scheduledFrames: number; pixelFormat: string } } = {}
+    static playbackData: { [key: string]: { playback: PlaybackChannel; scheduledFrames: number; pixelFormat: string; displayMode: string } } = {}
     static devicePixelMode: "BGRA" | "ARGB" = "BGRA"
 
     // set audioChannels to 0 to disable audio
@@ -31,13 +31,32 @@ export class BlackmagicSender {
             }),
             scheduledFrames: 0,
             pixelFormat: pixelFormats[0],
+            displayMode: displayModeName,
         }
 
         this.devicePixelMode = os.endianness() === "BE" ? "ARGB" : "BGRA"
     }
 
+    // static alerted = false
     static scheduleFrame(outputId: string, videoFrame: Buffer, _audioFrame: Buffer | null, framerate: number = 1000) {
         if (!this.playbackData[outputId]) return
+
+        // if (!this.alerted) {
+        //     // DEBUG ALERT
+        //     dialog.showMessageBox(mainWindow!, {
+        //         message:
+        //             this.devicePixelMode +
+        //             " - " +
+        //             this.playbackData[outputId].pixelFormat +
+        //             " - " +
+        //             OutputHelper.getOutput(outputId).window.getBounds().width +
+        //             "x" +
+        //             OutputHelper.getOutput(outputId).window.getBounds().height +
+        //             " - " +
+        //             this.playbackData[outputId].displayMode,
+        //     })
+        //     this.alerted = true
+        // }
 
         videoFrame = this.convertVideoFrameFormat(videoFrame, this.playbackData[outputId].pixelFormat)
 
