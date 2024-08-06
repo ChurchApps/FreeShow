@@ -147,6 +147,9 @@ export const mediaSize = {
 export async function loadThumbnail(input: string, size: number) {
     if (!input) return ""
 
+    // online media (e.g. Pixabay/Unsplash)
+    if (input.includes("http")) return input
+
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
@@ -159,6 +162,9 @@ export async function loadThumbnail(input: string, size: number) {
 
 export function getThumbnailPath(input: string, size: number) {
     if (!input) return ""
+
+    // online media (e.g. Pixabay/Unsplash)
+    if (input.includes("http")) return input
 
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
@@ -199,6 +205,9 @@ function getThumbnailId(data: any) {
 
 // convert path to base64
 export async function getBase64Path(path: string, size: number = mediaSize.big) {
+    // online media (e.g. Pixabay/Unsplash)
+    if (path.includes("http")) return path
+
     let thumbnailPath = await loadThumbnail(path, size)
     // wait if thumnail is not generated yet
     await wait(200)

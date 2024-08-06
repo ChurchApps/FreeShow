@@ -123,6 +123,7 @@ export const refreshSlideThumbnails: Writable<boolean> = writable(false)
 export const contextData: Writable<any> = writable({})
 export const lessonsLoaded: Writable<any> = writable({})
 export const storedChordsData: Writable<any> = writable({})
+export const photoApiCredits: Writable<any> = writable({})
 
 // ----- SAVED VARIABLES -----
 

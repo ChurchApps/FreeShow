@@ -12,7 +12,7 @@
     import { send } from "../../../utils/request"
 
     $: name = $activeShow?.name || ""
-    $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "")) {
+    $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http")) {
         info = {}
         send(MAIN, ["FILE_INFO"], decodeURI($activeShow?.id))
     }
@@ -38,7 +38,7 @@
     <LiveInfo />
 {:else}
     <main style="overflow-y: auto;">
-        <h2 style="text-align: center" title={name}>
+        <h2 style="text-align: center;padding: 0 5px;" title={name}>
             {#if name.length}
                 {name}
             {:else}
@@ -92,6 +92,7 @@
         display: flex;
         justify-content: space-between;
         padding: 2px 10px;
+        gap: 5px;
     }
     main p:nth-child(even) {
         background-color: var(--primary-darker);
