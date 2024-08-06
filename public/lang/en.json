@@ -524,6 +524,7 @@
         "format": "Format",
         "find_replace": "Find and replace text",
         "cut_in_half": "Split in two",
+        "merge": "Merge",
         "find": "Find",
         "replace": "Replace",
         "case_sensitive": "Case sensitive",
