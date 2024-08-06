@@ -35,6 +35,7 @@ export class NdiReceiver {
                     clearInterval(findSourcesInterval)
                     resolve(sources)
                 }
+                // finder.wait()
                 previousLength = currentLength
             }, 1000)
         })

@@ -24,8 +24,6 @@
     send(NDI, ["RECEIVE_LIST"])
     receive(NDI, receiveNDI, "NDI_CAPTURE")
     onDestroy(() => destroy(NDI, "NDI_CAPTURE"))
-
-    $: console.log(sources)
 </script>
 
 {#if sources.length}

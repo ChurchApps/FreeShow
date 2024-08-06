@@ -42,7 +42,6 @@
         RECEIVE_STREAM: (data) => {
             if (data.id !== screen.id) return
             loaded = true
-            console.log("RECEIVE!!", data)
 
             let timeSinceSent = Date.now() - data.time
             if (timeSinceSent > 100) return // skip frames if overloaded
