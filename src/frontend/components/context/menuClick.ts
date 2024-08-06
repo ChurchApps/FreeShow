@@ -850,8 +850,7 @@ const actions: any = {
             if (selectedSlides.length > 1) mergeSlides(selectedSlides)
         } else if (!obj.sel.id) {
             // textbox
-            let selected = obj.sel.data
-            if (selected.length > 1) mergeTextboxes(selected)
+            mergeTextboxes()
         }
     },
     uppercase: (obj: any) => format("uppercase", obj),

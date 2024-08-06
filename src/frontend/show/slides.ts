@@ -8,7 +8,7 @@ import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/
 import { addToPos } from "../components/helpers/mover"
 import { _show } from "../components/helpers/shows"
 import { similarity } from "../converters/txt"
-import { activeShow, refreshEditSlide } from "../stores"
+import { activeEdit, activeShow, refreshEditSlide } from "../stores"
 
 export function changeSlideGroups(obj: any) {
     let ref: any[] = _show().layouts("active").ref()[0]
@@ -584,7 +584,6 @@ export function mergeSlides(indexes: { index: number }[]) {
     let firstSlideIndex = indexes[0].index
     let firstSlideId: string = layoutRef[firstSlideIndex]?.id
     let newSlide: Slide = clone(_show().slides([firstSlideId]).get()[0])
-    console.log(indexes, firstSlideId, newSlide)
     let previousTextboxStyle = newSlide.items.find((a) => a.type || "text" === "text")?.style || ""
 
     newSlide.items = []
@@ -635,6 +634,38 @@ export function mergeSlides(indexes: { index: number }[]) {
     history({ id: "UPDATE", newData: { data: newShow }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key", override: "merge_slides" } })
 }
 
-export function mergeTextboxes(indexes: { index: number }[]) {
-    console.log("MERGE TEXTBOXES: " + indexes)
+export function mergeTextboxes() {
+    let editSlideIndex: number = get(activeEdit).slide ?? -1
+    if (editSlideIndex < 0) return
+
+    let slideRef = _show().layouts("active").ref()[0][editSlideIndex] || {}
+    let slide: Slide = clone(
+        _show()
+            .slides([slideRef.id || ""])
+            .get()[0]
+    )
+    if (!slide) return
+
+    let selected = get(activeEdit).items
+    let selectedItems = slide.items.filter((a, i) => selected.includes(i) && (a.type || "text") === "text")
+    if (selectedItems.length < 2) return
+
+    // add all lines into one
+    let newLines: Line[] = []
+    selectedItems.forEach((item) => {
+        newLines.push(...(item.lines || []))
+    })
+
+    // create new textbox
+    let newTextbox: Item = clone(selectedItems[0])
+    newTextbox.lines = newLines
+
+    // set new item & remove old ones
+    slide.items[selected.shift()!] = newTextbox
+    selected.forEach((i) => {
+        slide.items.splice(i, 1)
+    })
+
+    // update
+    history({ id: "UPDATE", newData: { data: slide, key: "slides", keys: [slideRef.id] }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key" } })
 }

@@ -437,6 +437,7 @@
         let text = ""
 
         let lineElem = textElem.children[lineIndex]
+        if (!lineElem) return ""
         new Array(...lineElem.childNodes).forEach((child: any) => {
             if (child.nodeName === "#text") text += child.textContent
             else text += child.innerText
