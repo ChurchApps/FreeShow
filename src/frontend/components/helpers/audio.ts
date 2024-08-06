@@ -10,15 +10,7 @@ import { encodeFilePath } from "./media"
 import { checkNextAfterMedia } from "./showActions"
 import { customActionActivation } from "../actions/actions"
 
-// let currentlyStarting: string[] = []
 export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0) {
-    // // prevent starting the same song rapidly
-    // if (currentlyStarting.includes(path)) return
-    // currentlyStarting.push(path)
-    // setTimeout(() => {
-    //     currentlyStarting.splice(currentlyStarting.indexOf(path), 1)
-    // }, 3000)
-
     let existing: any = get(playingAudio)[path]
     if (existing) {
         if (!pauseIfPlaying) {
@@ -88,7 +80,10 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
 
     audio.addEventListener("canplay", () => {
         setTimeout(() => {
-            audio.play()
+            // audio might have been cleared
+            if (!get(playingAudio)[path]?.audio) return
+
+            get(playingAudio)[path].audio.play()
             analyseAudio()
         }, waitToPlay * 1000)
     })
@@ -225,8 +220,6 @@ export function playlistNext(previous: string = "", specificSong: string = "", c
         return
     }
 
-    console.log("PLAY NEXT", nextSong, crossfade)
-
     // prevent playing the same song twice (while it's fading) to stop duplicate audio
     if (Object.keys(playingAudio).includes(nextSong)) return
 
@@ -343,7 +336,11 @@ export function analyseAudio() {
     }, audioUpdateInterval)
 }
 
+let previousMerge = 0
 function mergeAudio(allAudio) {
+    let timeSinceLast = Date.now() - previousMerge
+    if (timeSinceLast > 100 && timeSinceLast < 200) return // skip if overloaded
+
     let allLefts: number[] = []
     let allRights: number[] = []
 
@@ -362,6 +359,7 @@ function mergeAudio(allAudio) {
     if (allLefts.length || allRights.length) merged = { left: getHighestNumber(allLefts), right: getHighestNumber(allRights) }
 
     audioChannels.set(merged)
+    previousMerge = Date.now()
 }
 
 const extraMargin = 0.1 // s
@@ -399,11 +397,11 @@ function getPlayingAudio() {
                     let playlist = get(audioPlaylists)[audioPath] || {}
 
                     playingAudio.update((a: any) => {
+                        a[audioPath]?.audio?.pause()
                         delete a[audioPath]
                         return a
                     })
 
-                    console.log("ENDED", playlist, playlist.loop !== false)
                     playlistNext(audioPath, "", 0, playlist.loop !== false)
                     return false
                 } else {
@@ -412,6 +410,7 @@ function getPlayingAudio() {
                             // a[audioPath].audio?.pause()
                             a[audioPath].paused = true
                         } else {
+                            a[audioPath]?.audio?.pause()
                             delete a[audioPath]
                         }
 

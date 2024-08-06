@@ -19,7 +19,9 @@
     $: paused = playing.paused !== false
 
     let duration = 0
-    $: if (Object.keys($playingAudio).length === 1) getDuration()
+    $: justOneAudio = Object.keys($playingAudio).length === 1
+    $: if (justOneAudio && path) getDuration()
+    else duration = 0
     async function getDuration() {
         duration = 0
         duration = await getAudioDuration(Object.keys($playingAudio)[0])

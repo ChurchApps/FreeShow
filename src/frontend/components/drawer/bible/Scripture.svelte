@@ -857,8 +857,9 @@
                             {id}
                             draggable="true"
                             on:mouseup={(e) => selectVerse(e, id)}
-                            on:mousedown={() => {
-                                if (!activeVerses.includes(id)) activeVerses = [...activeVerses, id]
+                            on:mousedown={(e) => {
+                                if (e.ctrlKey || e.metaKey || e.shiftKey) return
+                                if (!activeVerses.includes(id)) activeVerses = [id]
                                 updateActiveVerses()
                             }}
                             on:dblclick={() => playOrClearScripture(true)}
