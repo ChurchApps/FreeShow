@@ -141,13 +141,6 @@ export class CaptureTransmitter {
         const buffer = image.getBitmap()
         // const size = image.getSize()
 
-        /*  convert from ARGB (Electron/Chromium on big endian CPU)
-        to BGRA (supported input of NDI SDK). On little endian
-        CPU the input is already BGRA.  */
-        if (os.endianness() === "BE") {
-            util.ImageBufferAdjustment.ARGBtoBGRA(buffer)
-        }
-
         let framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
         if (!framerate) return
 

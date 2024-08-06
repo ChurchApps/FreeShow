@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
+    import { Option } from "../../../../types/Main"
     import { activePopup, currentOutputSettings, ndiData, os, outputDisplay, outputs, styles } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -12,8 +14,6 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { Option } from "../../../../types/Main"
-    import { onDestroy } from "svelte"
 
     let outputsList: any[] = []
     $: outputsList = Object.entries($outputs)
@@ -26,15 +26,19 @@
     let currentOutput: any = {}
     $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
 
-    $: console.log($currentOutputSettings, currentOutput)
+    $: if (currentOutput.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
 
     function updateOutput(key: string, value: any, outputId: string = "") {
         if (!outputId) outputId = currentOutput.id
 
-        if (key === "blackmagic" && value === true) {
-            send(BLACKMAGIC, ["GET_DEVICES"])
-            updateOutput("transparent", true)
-            updateOutput("invisible", true)
+        if (key === "blackmagic") {
+            if (value === true) {
+                // send(BLACKMAGIC, ["GET_DEVICES"])
+                updateOutput("transparent", true)
+                updateOutput("invisible", true)
+            } else {
+                send(BLACKMAGIC, ["STOP_SENDER"], { id: outputId })
+            }
         }
 
         // TODO: history
@@ -178,12 +182,10 @@
                 }
             } else if (key === "displayMode") {
                 let device = blackmagicDevices.find((a) => a.id === currentOutput.blackmagicData?.deviceId)
-                console.log(currentOutput, device)
                 if (!device) return
 
                 let displayModes = device.data?.displayModes || []
                 let modeData = displayModes.find((a) => a.name === value) || {}
-                console.log(displayModes, modeData, value)
                 if (!modeData.width) return
 
                 // force resolution & update framerate

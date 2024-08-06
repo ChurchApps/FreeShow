@@ -1,13 +1,18 @@
 import macadam, { PlaybackChannel } from "macadam"
+import os from "os"
+import util from "../ndi/vingester-util"
 import { BlackmagicManager } from "./BlackmagicManager"
+import { ImageBufferConverter } from "./ImageBufferConverter"
 
 // const FPS = 30
 export class BlackmagicSender {
-    static playbackData: { [key: string]: { playback: PlaybackChannel; scheduledFrames: number } } = {}
+    static playbackData: { [key: string]: { playback: PlaybackChannel; scheduledFrames: number; pixelFormat: string } } = {}
+    static devicePixelMode: "BGRA" | "ARGB" = "BGRA"
 
     // set audioChannels to 0 to disable audio
     static async initialize(outputId: string, deviceIndex: number, displayModeName: string, pixelFormats: string[], enableKeying: boolean, audioChannels: number = 2) {
-        if (this.playbackData[outputId]) return
+        console.log("Blackmagic - creating sender: " + outputId)
+        if (this.playbackData[outputId]) this.stop(outputId)
 
         let displayMode = BlackmagicManager.getDisplayMode(displayModeName)
         // WIP choose if multiple is available
@@ -25,11 +30,16 @@ export class BlackmagicSender {
                 startTimecode: "01:00:00:00",
             }),
             scheduledFrames: 0,
+            pixelFormat: pixelFormats[0],
         }
+
+        this.devicePixelMode = os.endianness() === "BE" ? "ARGB" : "BGRA"
     }
 
     static scheduleFrame(outputId: string, videoFrame: Buffer, _audioFrame: Buffer | null, framerate: number = 1000) {
         if (!this.playbackData[outputId]) return
+
+        videoFrame = this.convertVideoFrameFormat(videoFrame, this.playbackData[outputId].pixelFormat)
 
         this.playbackData[outputId].playback.schedule({
             video: videoFrame, // Video frame data. Decklink SDK docs have byte packing
@@ -56,9 +66,43 @@ export class BlackmagicSender {
         }
     }
 
+    static convertVideoFrameFormat(frame: Buffer, format: string) {
+        // bmdPixelFormats: YUV, ARGB, BGRA, RGB, RGBLE, RGBXLE, RGBX
+
+        /*  convert from ARGB (Electron/Chromium on big endian CPU)
+        or from BGRA on little endian CPU
+        to the currently selected Blackmagic pixel format */
+
+        if (format.includes("ARGB")) {
+            if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoARGB(frame)
+            // do nothing if it's already ARGB
+        } else if (format.includes("YUV")) {
+            if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoYUV(frame)
+            else ImageBufferConverter.ARGBtoYUV(frame)
+        } else if (format.includes("BGRA")) {
+            if (this.devicePixelMode === "ARGB") util.ImageBufferAdjustment.ARGBtoBGRA(frame)
+            // do nothing if it's already BGRA
+        } else if (format.includes("RGBXLE")) {
+            if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoRGBXLE(frame)
+            else ImageBufferConverter.ARGBtoRGBXLE(frame)
+        } else if (format.includes("RGBLE")) {
+            if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoRGBXLE(frame)
+            else ImageBufferConverter.ARGBtoRGBXLE(frame)
+        } else if (format.includes("RGBX")) {
+            if (this.devicePixelMode === "BGRA") util.ImageBufferAdjustment.BGRAtoBGRX(frame)
+            else ImageBufferConverter.ARGBtoRGBX(frame)
+        } else if (format.includes("RGB")) {
+            if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoRGB(frame)
+            else ImageBufferConverter.ARGBtoRGB(frame)
+        }
+
+        return frame
+    }
+
     static stop(outputId: string) {
         if (!this.playbackData[outputId]) return
 
+        console.log("Blackmagic - stopping sender: " + outputId)
         this.playbackData[outputId].playback.stop()
         delete this.playbackData[outputId]
     }

@@ -8,6 +8,7 @@ import { OutputHelper } from "../OutputHelper"
 import { OUTPUT } from "../../../types/Channels"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
+import { initializeSender } from "../../blackmagic/talk"
 
 export class OutputLifecycle {
     static async createOutput(output: Output) {
@@ -31,12 +32,15 @@ export class OutputLifecycle {
         if (output.stageOutput && !CaptureHelper.Transmitter.stageWindows.includes(id)) CaptureHelper.Transmitter.stageWindows.push(id)
 
         setTimeout(() => {
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false })
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, blackmagic: !!output.blackmagic })
         }, 1200)
 
         // NDI
         if (output.ndi) await NdiSender.createSenderNDI(id, output.name)
         if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+
+        // Blackmagic
+        if (output.blackmagic) initializeSender(output, outputWindow, id)
     }
 
     /*

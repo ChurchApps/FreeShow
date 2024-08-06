@@ -39,7 +39,7 @@
     }
 
     const receiveBlackmagic: any = {
-        CAPTURE_FRAME: (data) => {
+        RECEIVE_STREAM: (data) => {
             if (data.id !== screen.id || data.type !== "frame") return
             loaded = true
 

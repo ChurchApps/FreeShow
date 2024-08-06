@@ -27,6 +27,13 @@ export class BlackmagicManager {
         //                     frameRate: [1001, 30000],
         //                     videoModes: ["8-bit YUV", "10-bit YUV"],
         //                 },
+        //                 {
+        //                     name: "1080p30",
+        //                     width: 192,
+        //                     height: 108,
+        //                     frameRate: [1001, 20000],
+        //                     videoModes: ["10-bit YUV"],
+        //                 },
         //             ],
         //         } as any,
         //     ]
