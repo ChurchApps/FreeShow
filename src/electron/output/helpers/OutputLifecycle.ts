@@ -7,8 +7,6 @@ import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
 import { OUTPUT } from "../../../types/Channels"
 import { CaptureHelper } from "../../capture/CaptureHelper"
-import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
-import { initializeSender } from "../../blackmagic/talk"
 
 export class OutputLifecycle {
     static async createOutput(output: Output) {
@@ -33,7 +31,7 @@ export class OutputLifecycle {
 
         setTimeout(() => {
             if (!CaptureHelper.Lifecycle) return // window closed before timeout finished
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, blackmagic: !!output.blackmagic })
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false })
         }, 1200)
 
         // NDI
@@ -41,9 +39,6 @@ export class OutputLifecycle {
             await NdiSender.createSenderNDI(id, output.name)
             if (output.ndiData) setDataNDI({ id, ...output.ndiData })
         }
-
-        // Blackmagic
-        if (output.blackmagic) initializeSender(output, outputWindow, id)
     }
 
     /*
@@ -105,7 +100,6 @@ export class OutputLifecycle {
     static async removeOutput(id: string, reopen: any = null) {
         await CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
-        BlackmagicSender.stop(id)
 
         if (!OutputHelper.getOutput(id)) return
         if (OutputHelper.getOutput(id).window.isDestroyed()) {
