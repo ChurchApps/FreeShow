@@ -1,9 +1,13 @@
 import { uid } from "uid"
-import type { Item, Slide } from "../../../../types/Show"
+import type { Chords, Item, Slide } from "../../../../types/Show"
 import { selected } from "../../../stores"
 import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 import { keys } from "../values/chords"
+
+export function createChord(pos: number, key: string, id: string = uid(5)): Chords {
+    return { id, pos, key }
+}
 
 export function addChords(item, showRef, itemIndex, line = 0, pos = 0, key = keys[0]) {
     let newLines: any = clone(item.lines)
@@ -17,7 +21,7 @@ export function addChords(item, showRef, itemIndex, line = 0, pos = 0, key = key
             if (chord.pos === pos) pos++
         })
 
-    newLines[line].chords.push({ id, pos, key: key || keys[0] })
+    newLines[line].chords.push(createChord(pos, key || keys[0], id))
 
     _show(showRef.showId)
         .slides([showRef.id])

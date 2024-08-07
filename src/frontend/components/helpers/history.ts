@@ -1,9 +1,10 @@
 import { get } from "svelte/store"
-import { activePage, driveData, historyCacheCount, selected, undoHistory } from "../../stores"
+import { activePage, driveData, historyCacheCount, undoHistory } from "../../stores"
 import type { ShowRef } from "./../../../types/Projects"
 import { redoHistory } from "./../../stores"
 import { clone } from "./array"
 import { historyActions } from "./historyActions"
+import { deselect } from "./select"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 
@@ -277,7 +278,7 @@ export function history(obj: History, undo: null | boolean = null) {
     // deselect selected
     // not when changing multiple selected slides OR changing slide transition
     if (obj.location?.page !== "edit" && obj.id !== "SHOW_LAYOUT") {
-        selected.set({ id: null, data: [] })
+        deselect()
     }
 
     console.log("UNDO: ", [...get(undoHistory)])

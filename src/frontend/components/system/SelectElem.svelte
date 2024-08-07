@@ -154,18 +154,10 @@
     }
 
     function deselect(e: any) {
-        if (
-            !e.ctrlKey &&
-            !e.metaKey &&
-            $selected.id === id &&
-            !e.target.closest(".menus") &&
-            !e.target.closest(".selectElem") &&
-            !e.target.closest(".popup") &&
-            !e.target.closest(".edit") &&
-            !e.target.closest(".contextMenu") &&
-            !e.target.closest(".editTools")
-        )
-            selected.set({ id: null, data: [] })
+        if (e.ctrlKey || e.metaKey || $selected.id !== id) return
+        if (e.target.closest(".menus") || e.target.closest(".selectElem") || e.target.closest(".popup") || e.target.closest(".edit") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
+
+        selected.set({ id: null, data: [] })
     }
 
     let dragover: null | "start" | "center" | "end" = null

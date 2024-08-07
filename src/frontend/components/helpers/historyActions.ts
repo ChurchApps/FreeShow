@@ -710,7 +710,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 _show(data.remember.showId).set({ key: "slides", value: previousData.slides || {} })
                 _show(data.remember.showId).set({ key: "settings.template", value: previousData.template })
             } else {
-                data.previousData = { template: show.settings.template, slides: clone(slides) }
+                data.previousData = { template: show.settings?.template, slides: clone(slides) }
                 let templateId: string = data.id
 
                 if (templateId && !slideId && show.settings?.template !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
@@ -723,7 +723,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // update cached show
             cachedShowsData.update((a) => {
-                a[data.remember.showId].template.slidesUpdated = true
+                if (a[data.remember.showId]?.template?.slidesUpdated) a[data.remember.showId].template.slidesUpdated = true
                 return a
             })
 

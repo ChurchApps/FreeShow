@@ -196,14 +196,18 @@ export const dropActions: any = {
 
         // audio playlist
         if (get(audioPlaylists)[drop.data] && drag.id === "audio") {
-            audioPlaylists.update((a) => {
-                let newSongs = drag.data.map((a) => a.path)
-                a[drop.data].songs.push(...newSongs)
+            h.id = "UPDATE"
+            h.location = { page: "drawer", id: "audio_playlist_key" }
 
-                return a
-            })
+            let playlistId = drop.data
+            h.oldData = { id: playlistId }
 
-            // return history
+            let songs = clone(get(audioPlaylists)[playlistId]?.songs || [])
+            let newSongs = drag.data.map((a) => a.path)
+            songs.push(...newSongs)
+            h.newData = { key: "songs", data: songs }
+
+            return h
         }
 
         if (drop.data !== "all" && (drag.id === "overlay" || drag.id === "template")) {
@@ -257,6 +261,29 @@ export const dropActions: any = {
         if (drag.id !== "media" && drag.id !== "files") return
 
         drag.data.forEach(({ path }: any) => addItem("media", null, { src: path }))
+    },
+    audio_playlist: ({ drag, drop }: any, h: any) => {
+        h.id = "UPDATE"
+        h.location = { page: "drawer", id: "audio_playlist_key" }
+
+        let playlistId = get(drawerTabsData).audio?.activeSubTab
+        if (!playlistId) return
+
+        h.oldData = { id: playlistId }
+
+        let songs = clone(get(audioPlaylists)[playlistId]?.songs || [])
+
+        if (drag.id === "files") {
+            let dropIndex = drop.index
+            if (dropIndex === undefined) dropIndex = songs.length
+            let audioFiles = drag.data.map((a) => a.path)
+            songs = addToPos(songs, audioFiles, dropIndex)
+        } else {
+            songs = mover(songs, getIndexes(drag.data), drop.index)
+        }
+
+        h.newData = { key: "songs", data: songs }
+        return h
     },
 }
 

@@ -1,5 +1,7 @@
 import { BrowserWindow, screen } from "electron"
 import { OutputHelper } from "../OutputHelper"
+import { toApp } from "../.."
+import { OUTPUT } from "../../../types/Channels"
 
 export class OutputBounds {
     // BOUNDS
@@ -50,7 +52,10 @@ export class OutputBounds {
             let point = { x: centerLeft, y: centerTop }
             let closestScreen = screen.getDisplayNearestPoint(point)
 
+            if (JSON.stringify(wBounds) === JSON.stringify(closestScreen.bounds)) return
+
             output.window.setBounds(closestScreen.bounds)
+            toApp(OUTPUT, { channel: "MOVE", data: { id: outputId, bounds: closestScreen.bounds } })
         })
     }
 

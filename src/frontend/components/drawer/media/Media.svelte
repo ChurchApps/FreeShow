@@ -25,6 +25,7 @@
     import Media from "./MediaCard.svelte"
     import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
+    import { loadFromUnsplash } from "./unsplash"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -40,9 +41,13 @@
 
     async function loadFilesAsync() {
         fullFilteredFiles = []
-        if (onlineTab !== "pixabay" || activeView === "folder") return
+        if ((onlineTab !== "pixabay" && onlineTab !== "unsplash") || activeView === "folder") return
 
-        fullFilteredFiles = await loadFromPixabay(searchValue || "landscape", activeView === "video")
+        if (onlineTab === "pixabay") {
+            fullFilteredFiles = await loadFromPixabay(searchValue || "landscape", activeView === "video")
+        } else if (onlineTab === "unsplash") {
+            fullFilteredFiles = await loadFromUnsplash(searchValue || "landscape")
+        }
         loadAllFiles(fullFilteredFiles)
     }
 
@@ -50,6 +55,7 @@
 
     let onlineTab = "youtube"
     $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
+    $: if (active === "online" && onlineTab === "unsplash" && (searchValue !== null || activeView)) loadFilesAsync()
     // only for info!
     $: if (onlineTab) activeDrawerOnlineTab.set(onlineTab)
 
@@ -301,7 +307,16 @@
                         {#if item.folder}
                             <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} />
                         {:else}
-                            <Media name={item.name} path={item.path} thumbnailPath={$mediaOptions.columns < 3 ? "" : item.thumbnailPath} type={getMediaType(item.extension)} bind:activeFile {allFiles} {active} />
+                            <Media
+                                credits={item.credits}
+                                name={item.name}
+                                path={item.path}
+                                thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)}
+                                type={getMediaType(item.extension)}
+                                bind:activeFile
+                                {allFiles}
+                                {active}
+                            />
                         {/if}
                     </MediaGrid>
                 {:else}
@@ -309,7 +324,7 @@
                         {#if file.folder}
                             <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
                         {:else}
-                            <Media thumbnail={$mediaOptions.mode !== "list"} name={file.name} path={file.path} type={getMediaType(file.extension)} bind:activeFile {allFiles} {active} />
+                            <Media credits={file.credits} thumbnail={$mediaOptions.mode !== "list"} name={file.name} path={file.path} type={getMediaType(file.extension)} bind:activeFile {allFiles} {active} />
                         {/if}
                     </VirtualList>
                 {/if}
@@ -355,6 +370,11 @@
                 <Icon style="fill: {onlineTab !== 'pixabay' ? 'white' : '#00ab6b'};" size={1.2} id="pixabay" box={48} right />
                 <p>Pixabay</p>
             </Button>
+            <Button style="flex: 1;" active={onlineTab === "unsplash"} on:click={() => (onlineTab = "unsplash")} center>
+                <!-- #111111 -->
+                <Icon style="fill: {onlineTab !== 'unsplash' ? 'white' : '#bbbbbb'};" size={1.2} id="unsplash" right />
+                <p>Unsplash</p>
+            </Button>
         {:else}
             <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
                 <Icon size={1.3} id="back" />
@@ -399,7 +419,9 @@
                     {#if !$labelsDisabled}<T id="settings.add" />{/if}
                 </Button>
             {:else}
-                {#if active === "online"}
+                {#if active === "online" && onlineTab === "unsplash"}
+                    <!-- only images!! -->
+                {:else if active === "online" && onlineTab === "pixabay"}
                     <Button title={$dictionary.media?.image} on:click={() => (activeView = "image")}>
                         <Icon size={1.3} id="image" white={activeView !== "image"} />
                     </Button>

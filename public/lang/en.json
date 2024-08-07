@@ -165,6 +165,7 @@
     },
     "audio": {
         "settings": "Audio settings",
+        "playlist_settings": "Playlist settings",
         "mute_when_video_plays": "Mute when video plays",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
@@ -523,6 +524,7 @@
         "format": "Format",
         "find_replace": "Find and replace text",
         "cut_in_half": "Split in two",
+        "merge": "Merge",
         "find": "Find",
         "replace": "Replace",
         "case_sensitive": "Case sensitive",
@@ -550,6 +552,7 @@
         "chord_type": "Type",
         "chord_tension": "Tension",
         "chord_bass": "Bass",
+        "roman_keys": "Roman keys",
         "set_key": "Set key",
         "custom_key": "Set custom value",
         "select_chord": "Select this chord",
@@ -587,6 +590,8 @@
         "start_playlist": "Start playlist",
         "playlist_next": "Next track in playlist",
         "start_metronome": "Start metronome",
+        "name_start_timer": "Start timer by name",
+        "id_start_timer": "Start timer by ID",
         "start_slide_timers": "Start timers on active slide",
         "id_select_output_style": "Select output style by ID",
         "change_output_style": "Change output style",
@@ -605,7 +610,9 @@
         "activate_timer_ending": "Activate when timer is ending",
         "activate_scripture_start": "Activate when scripture is started",
         "activate_slide_cleared": "Activate when slide is cleared",
-        "activate_show_created": "Activate when show is created"
+        "activate_background_cleared": "Activate when background is cleared",
+        "activate_show_created": "Activate when show is created",
+        "activate_audio_playlist_ended": "Activate when audio playlist has ended"
     },
     "animate": {
         "change": "Change",
@@ -910,6 +917,7 @@
         "system_clock": "System clock",
         "video_time": "Video time",
         "video_countdown": "Video countdown",
+        "first_active_timer": "First active timer",
         "other": "Other",
         "message": "Message",
         "color": "Color",
@@ -1163,7 +1171,11 @@
         "slides": "Slides",
         "words": "Words",
         "template": "Template",
-        "category": "Category"
+        "category": "Category",
+        "photoUrl": "Photo URL",
+        "likes": "Likes",
+        "artist": "Artist",
+        "artistUrl": "Artist page"
     },
     "songbeamer_import": {
         "options": "Options",

@@ -97,11 +97,11 @@
     <span class="tabs">
         {#if projectActive}
             <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
-                <Icon id="back" size={1.2} right />
+                <Icon id="back" size={1.2} />
             </Button>
-            <div style="flex: 7;" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
+            <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
                 <!-- <Icon id="project" white right /> -->
-                <p style="color: white; overflow: hidden;">{$projects[$activeProject || ""]?.name || ""}</p>
+                <p style="color: white;">{$projects[$activeProject || ""]?.name || ""}</p>
             </div>
         {:else}
             <div class="header">

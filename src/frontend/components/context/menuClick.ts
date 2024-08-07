@@ -3,7 +3,7 @@ import { uid } from "uid"
 import { EXPORT, MAIN, OUTPUT } from "../../../types/Channels"
 import type { MediaStyle } from "../../../types/Main"
 import type { Slide } from "../../../types/Show"
-import { changeSlideGroups, splitItemInTwo } from "../../show/slides"
+import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
 import {
     $,
     activeDrawerTab,
@@ -813,10 +813,13 @@ const actions: any = {
     },
     cut_in_half: (obj: any) => {
         if (obj.sel.id === "slide") {
-            let oldLayoutRef = _show().layouts("active").ref()[0]
+            let oldLayoutRef = clone(_show().layouts("active").ref()[0])
             let previousSpiltIds: string[] = []
 
-            obj.sel.data.forEach(({ index }) => {
+            // go backwards to prevent wrong index when splitted
+            let selectedSlides = obj.sel.data.sort((a, b) => b.index - a.index)
+
+            selectedSlides.forEach(({ index }) => {
                 let slideRef = oldLayoutRef[index]
                 if (!slideRef || previousSpiltIds.includes(slideRef.id)) return
                 previousSpiltIds.push(slideRef.id)
@@ -829,6 +832,7 @@ const actions: any = {
                 splitItemInTwo(slideRef, firstTextItemIndex)
             })
         } else if (!obj.sel.id) {
+            // textbox
             let editSlideIndex: number = get(activeEdit).slide ?? -1
             if (editSlideIndex < 0) return
 
@@ -838,6 +842,15 @@ const actions: any = {
             let slideRef = _show().layouts("active").ref()[0][editSlideIndex]
             if (!slideRef) return
             splitItemInTwo(slideRef, textItemIndex)
+        }
+    },
+    merge: (obj: any) => {
+        if (obj.sel.id === "slide") {
+            let selectedSlides = obj.sel.data.sort((a, b) => a.index - b.index)
+            if (selectedSlides.length > 1) mergeSlides(selectedSlides)
+        } else if (!obj.sel.id) {
+            // textbox
+            mergeTextboxes()
         }
     },
     uppercase: (obj: any) => format("uppercase", obj),

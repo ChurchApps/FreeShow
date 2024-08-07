@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
     import type { Option } from "../../../types/Main"
-    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, popupData, shows, stageShows, styles, triggers } from "../../stores"
+    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, popupData, shows, stageShows, styles, timers, triggers } from "../../stores"
     import T from "../helpers/T.svelte"
     import { sortByName } from "../helpers/array"
     import { _show } from "../helpers/shows"
@@ -60,6 +60,7 @@
         start_audio_stream: () => convertToOptions($audioStreams),
         start_playlist: () => convertToOptions($audioPlaylists),
         id_select_output_style: () => [{ id: null, name: "—" }, ...convertToOptions($styles)],
+        id_start_timer: () => convertToOptions($timers),
         start_trigger: () => convertToOptions($triggers),
         run_action: () => convertToOptions($midiIn).filter((a) => a.name && a.id !== mainId),
     }

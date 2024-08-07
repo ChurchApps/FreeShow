@@ -118,7 +118,8 @@
         if (m?.enabled !== undefined) enabled = m.enabled
 
         // don't hide context menu
-        if (id === "enabled_drawer_tabs" || id === "tags") {
+        const keepOpen = ["enabled_drawer_tabs", "tags", "bind_to", "item_bind_to"]
+        if (keepOpen.includes(id)) {
             enabled = !enabled
             return
         }

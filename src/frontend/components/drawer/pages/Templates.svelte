@@ -19,7 +19,7 @@
     $: resolution = getResolution(null, { $outputs, $styles }) // $templates[active || ""]?.settings?.resolution
     let filteredTemplates: any
 
-    $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id]?.settings.template : null
+    $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id]?.settings?.template : null
 
     let fullFilteredTemplates: any[] = []
     $: if ($templates || active) updateTemplates()

@@ -77,9 +77,18 @@
         else newStyles = {}
     }
 
+    // const CHANGE_POS_TIME = 2000
+    // let changePosTimeout: any = null
     let updateTimeout: any = null
     function updateStyles() {
+        // || changePosTimeout
         if (!Object.keys(newStyles).length) return
+
+        // WIP nice to timeout here to reduce lag (but textbox position need to update!!)
+        // changePosTimeout = setTimeout(() => {
+        //     changePosTimeout = null
+        //     updateStyles()
+        // }, CHANGE_POS_TIME)
 
         let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!]?.id].items
         let values: any[] = []

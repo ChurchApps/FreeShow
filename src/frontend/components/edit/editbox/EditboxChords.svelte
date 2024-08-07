@@ -136,6 +136,8 @@
         z-index: 3;
 
         pointer-events: all;
+
+        --move-up: 40%;
     }
     .chords :global(.chord):hover {
         filter: brightness(1.2);
@@ -147,7 +149,8 @@
         left: 50%;
         transform: translate(-50%, 100%);
         width: 5px;
-        height: 50px;
+        /* this height works best as 100px font size */
+        height: calc(100% + var(--move-up) - 5px);
         background-color: var(--secondary);
         /* background-color: var(--secondary-opacity); */
     }
@@ -176,9 +179,9 @@
         /* color: var(--chord-color);
       font-size: var(--chord-size) !important; */
         /* bottom: 0; */
-        transform: translate(-50%, -10%);
+        transform: translate(-50%, calc(var(--move-up) * -1));
         z-index: 2;
-        font-size: 60px !important;
+        font-size: 45px !important;
         /* color: #FF851B; */
 
         line-height: initial;

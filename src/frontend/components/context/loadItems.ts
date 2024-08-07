@@ -24,6 +24,7 @@ const loadActions = {
     },
     tags: () => {
         let sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeTagFilter).includes(a.id), translate: false }))
+        setContextData("tags", sortedTags.length)
         return sortedTags
     },
     sort_shows: (items: ContextMenuItem[]) => sortItems(items, "shows"),

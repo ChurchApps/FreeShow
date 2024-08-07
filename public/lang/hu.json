@@ -256,10 +256,10 @@
     },
     "show_at": {
         "never": "Egyetlen dián sem",
-        "always": "Minden dia",
-        "first": "Első dia",
-        "last": "Utolsó dia",
-        "first_last": "Első és utolsó dia"
+        "always": "Minden dián",
+        "first": "Első dián",
+        "last": "Utolsó dián",
+        "first_last": "Első és utolsó dián"
     },
     "themes": {
         "default": "Alapértelmezett",
@@ -359,6 +359,7 @@
         "change_name": "Név módosítása",
         "choose_screen": "Képernyő kiválasztása",
         "change_output_values": "Kimeneti értékek módosítása",
+        "choose_chord": "Akkord kiválasztása",
         "set_time": "Idő beállítása",
         "animate": "Animálás",
         "next_timer": "Következő dia időzítője",
@@ -530,6 +531,7 @@
         "svg_clipboard": "SVG importálása vágólapról",
         "fullscreen_preview": "Teljes képernyős előnézet átváltása",
         "toggle_output": "Kimeneti képernyő átváltása",
+        "toggle_panels": "Panel átváltása",
         "change_tab": "Fül módosítása",
         "change_drawer_tab": "Rajzoló fül módosítása",
         "change_slide": "Dia módosítása",
@@ -540,8 +542,14 @@
         "slide_actions": "Diaműveletek",
         "item_actions": "Elemművelet",
         "clear_history": "Előzmények törlése",
+        "chord_info": "Kérjük, kattintson bármelyik betűre akkord hozzáadásához.",
+        "chord_key": "Kulcs",
+        "chord_type": "Típus",
+        "chord_tension": "Színezőhang",
+        "chord_bass": "Basszus",
         "set_key": "Billentyű beállítása",
         "custom_key": "Egyéni érték beállítása",
+        "select_chord": "Akkord kijelölése",
         "play_on_midi": "Aktiválás MIDI jelre",
         "play_on_midi_tip": "A kiválasztott MIDI jel fogadásakor aktiválja ezt a speciális diát.",
         "send_midi": "MIDI jel küldése",
@@ -593,6 +601,7 @@
         "activate_video_ending": "Aktiválás videó befejezésekor",
         "activate_timer_ending": "Aktiválás időzítő befejezésekor",
         "activate_scripture_start": "Aktiválás szentírás indításakor",
+        "activate_slide_cleared": "Aktiválás dia törlésekor",
         "activate_show_created": "Aktiválás műsor létrehozásakor"
     },
     "animate": {
@@ -694,6 +703,7 @@
         "_title_underline": "Aláhúzott",
         "_title_strikethrough": "Áthúzott",
         "color": "Szín",
+        "accent_color": "Ékezet színe",
         "background_color": "Háttérszín",
         "background_opacity": "Háttérátlátszatlanság",
         "background_image": "Háttérkép",
@@ -766,7 +776,8 @@
         "start_days_from_today": "Kezdés napokban a mai naptól",
         "just_one_day": "Csak egy nap",
         "enable_start_date": "Kezdési dátum engedélyezése",
-        "disable_navigation": "Navigációs billentyűk letiltása"
+        "disable_navigation": "Navigációs billentyűk letiltása",
+        "progress_bar": "Folyamatjelző"
     },
     "items": {
         "text": "Szövegdoboz",
@@ -783,6 +794,7 @@
         "timer": "Időzítő",
         "variable": "Változó",
         "web": "Weboldal",
+        "slide_tracker": "Folyamat",
         "visualizer": "Vizualizáló",
         "captions": "Feliratok",
         "icon": "Ikon"
@@ -888,6 +900,7 @@
         "next_slide_notes": "Következő dia jegyzetei",
         "output": "Kimenet",
         "current_output": "Aktuális kimenet",
+        "slide_tracker": "Folyamat",
         "time": "Idő",
         "system_clock": "Rendszeróra",
         "video_time": "Videó idő",
@@ -921,7 +934,7 @@
         "minutes": "perc",
         "use24hClock": "24 órás időformátum használata",
         "styles_hint": "Különböző stílusok létrehozása, amelyeket alkalmazni lehet a kimenetre a megjelenés módosítására.",
-        "hide_output_hint": "Duplán kattintás a kimeneti ablakra a elrejtéséhez. Húzás lenyomva tartott Ctrl billentyűvel.",
+        "hide_output_hint": "Dupla kattintással a kimeneti ablakon az elrejtéséhez. Lenyomva tartott Ctrl billentyűvel a húzásához.",
         "hide_menubar_hint": "Menüsor elrejtése a kioszk mód engedélyezesével, vagy „A menüsor automatikus elrejtése vagy megjelenítése” engedélyezésével a MacOS általános beállításaiban.",
         "show_output_hint": "Megjelenítés kényszerítése a második monitoron a Ctrl/Cmd billentyű lenyomva tartásával a megjelenítés gombra kattintáskor.",
         "move_output_hint": "Nem található a kijelző? Változtassa meg az elhelyezését, amíg az ablak meg nem jelenik a második képernyőn.",
@@ -958,6 +971,7 @@
         "audio_fade_duration": "Halkítás időtartama",
         "audio_crossfade": "Hang kereszthalkítása",
         "max_auto_font_size": "Maximális automatikus betűméret",
+        "clear_style_background_on_text": "Stílusháttér törlése, amikor a dia aktív",
         "resolution": "Felbontás",
         "cropping": "Vágás",
         "frame_rate": "Képkockasebesség",
@@ -1132,12 +1146,12 @@
     "info": {
         "created": "Létrehozás dátuma",
         "modified": "Módosítva",
-        "used": "Alkalmazott",
+        "used": "Alkalmazva",
         "changed": "Módosított",
         "extension": "Fájlkiterjesztés",
         "size": "Méret",
-        "slides": "Diák",
-        "words": "Szavak",
+        "slides": "Dia",
+        "words": "Szó",
         "template": "Sablon",
         "category": "Kategória"
     },

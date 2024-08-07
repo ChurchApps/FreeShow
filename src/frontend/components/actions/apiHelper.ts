@@ -117,7 +117,7 @@ export function selectOverlayByIndex(index: number) {
 
     let sortedOverlays = getSortedOverlays()
     let overlayId = sortedOverlays[index]?.id
-    if (!overlayId) return
+    if (!overlayId) return // newToast("$toast.action_no_id": action_id)
 
     setOutput("overlays", overlayId, true)
 }
@@ -174,7 +174,7 @@ function updateVariable(value: any, id: string, key: string) {
 
 // SPECIAL
 
-function sortByClosestMatch(array: any[], value: string, key: string = "name") {
+export function sortByClosestMatch(array: any[], value: string, key: string = "name") {
     // the object key must contain the input string
     array = array.filter((a) => a[key] && a[key].toLowerCase().includes(value.toLowerCase()))
 

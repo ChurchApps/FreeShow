@@ -5,7 +5,7 @@ import { startMetronome } from "../drawer/audio/metronome"
 import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
 import { displayOutputs } from "../helpers/output"
 import { activateTrigger, changeOutputStyle, nextSlide, playSlideTimers, previousSlide, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShow } from "../helpers/showActions"
-import { stopTimers } from "../helpers/timerTick"
+import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { runActionId, toggleAction } from "./actions"
 import { changeVariable, gotoGroup, moveStageConnection, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
@@ -66,43 +66,43 @@ export type API_rest_command = {
 
 /// ACTIONS ///
 
-// WIP use these for MIDI and Stage/Remote..
-// BC = Not added to Bitfocus Companion yet.
+// WIP use these for Stage/Remote..?
+// BC = Integrated to Bitfocus Companion.
 export const API_ACTIONS = {
     // PROJECT
-    index_select_project: (data: API_index) => selectProjectByIndex(data.index),
-    next_project_item: () => selectProjectShow("next"),
-    previous_project_item: () => selectProjectShow("previous"),
-    index_select_project_item: (data: API_index) => selectProjectShow(data.index),
+    index_select_project: (data: API_index) => selectProjectByIndex(data.index), // BC
+    next_project_item: () => selectProjectShow("next"), // BC
+    previous_project_item: () => selectProjectShow("previous"), // BC
+    index_select_project_item: (data: API_index) => selectProjectShow(data.index), // BC
 
     // SHOWS
-    name_select_show: (data: API_strval) => selectShowByName(data.value),
-    start_show: (data: API_id) => startShow(data.id), // BC
+    name_select_show: (data: API_strval) => selectShowByName(data.value), // BC
+    start_show: (data: API_id) => startShow(data.id),
 
     // PRESENTATION
-    next_slide: () => nextSlide({ key: "ArrowRight" }),
-    previous_slide: () => previousSlide({ key: "ArrowLeft" }),
-    random_slide: () => randomSlide(),
-    index_select_slide: (data: API_index) => selectSlideByIndex(data.index),
-    name_select_slide: (data: API_strval) => selectSlideByName(data.value),
-    id_select_group: (data: API_id) => gotoGroup(data.id),
-    lock_output: (data: API_boolval) => toggleLock(data.value),
-    toggle_output_windows: () => displayOutputs(),
+    next_slide: () => nextSlide({ key: "ArrowRight" }), // BC
+    previous_slide: () => previousSlide({ key: "ArrowLeft" }), // BC
+    random_slide: () => randomSlide(), // BC
+    index_select_slide: (data: API_index) => selectSlideByIndex(data.index), // BC
+    name_select_slide: (data: API_strval) => selectSlideByName(data.value), // BC
+    id_select_group: (data: API_id) => gotoGroup(data.id), // BC
+    lock_output: (data: API_boolval) => toggleLock(data.value), // BC
+    toggle_output_windows: () => displayOutputs(), // BC
     // WIP disable stage ?
     // WIP disable NDI ?
     // index_select_layout | name_select_layout
 
     // STAGE
-    id_select_stage_layout: (data: API_id) => moveStageConnection(data.id),
+    id_select_stage_layout: (data: API_id) => moveStageConnection(data.id), // BC
 
     // CLEAR
-    restore_output: () => restoreOutput(),
-    clear_all: () => clearAll(),
-    clear_background: () => clearBackground(),
-    clear_slide: () => clearSlide(),
-    clear_overlays: () => clearOverlays(),
-    clear_audio: () => clearAudio(),
-    clear_next_timer: () => clearTimers(),
+    restore_output: () => restoreOutput(), // BC
+    clear_all: () => clearAll(), // BC
+    clear_background: () => clearBackground(), // BC
+    clear_slide: () => clearSlide(), // BC
+    clear_overlays: () => clearOverlays(), // BC
+    clear_audio: () => clearAudio(), // BC
+    clear_next_timer: () => clearTimers(), // BC
 
     // MEDIA (Backgrounds)
     // play / pause playing
@@ -113,38 +113,40 @@ export const API_ACTIONS = {
     // path_select_media (can be url)
 
     // OVERLAYS
-    index_select_overlay: (data: API_index) => selectOverlayByIndex(data.index),
-    name_select_overlay: (data: API_strval) => selectOverlayByName(data.value),
+    index_select_overlay: (data: API_index) => selectOverlayByIndex(data.index), // BC
+    name_select_overlay: (data: API_strval) => selectOverlayByName(data.value), // BC
 
     // AUDIO
     // play / pause playing audio
     // control audio time
     // start specific folder (playlist)
     // folder_select_audio: () => ,
-    change_volume: (data: API_volume) => updateVolume(data.volume ?? data.gain, data.gain !== undefined),
-    start_audio_stream: (data: API_id) => startAudioStream(data.id), // BC
-    start_playlist: (data: API_id) => startPlaylist(data.id), // BC
-    playlist_next: () => audioPlaylistNext(), // BC
-    start_metronome: (data: API_metronome) => startMetronome(data), // BC
+    change_volume: (data: API_volume) => updateVolume(data.volume ?? data.gain, data.gain !== undefined), // BC
+    start_audio_stream: (data: API_id) => startAudioStream(data.id),
+    start_playlist: (data: API_id) => startPlaylist(data.id),
+    playlist_next: () => audioPlaylistNext(),
+    start_metronome: (data: API_metronome) => startMetronome(data),
 
     // TIMERS
     // play / pause playing timers
     // control timer time
     // start specific timer (by name / index)
-    start_slide_timers: (data: API_slide) => playSlideTimers(data), // BC
-    stop_timers: () => stopTimers(), // BC
+    name_start_timer: (data: API_strval) => startTimerByName(data.value),
+    id_start_timer: (data: API_id) => startTimerById(data.id),
+    start_slide_timers: (data: API_slide) => playSlideTimers(data),
+    stop_timers: () => stopTimers(),
 
     // VISUAL
-    id_select_output_style: (data: API_id) => changeOutputStyle({ outputStyle: data.id }),
-    change_output_style: (data: API_output_style) => changeOutputStyle(data),
-    change_transition: (data: API_transition) => updateTransition(data),
+    id_select_output_style: (data: API_id) => changeOutputStyle({ outputStyle: data.id }), // BC
+    change_output_style: (data: API_output_style) => changeOutputStyle(data), // BC
+    change_transition: (data: API_transition) => updateTransition(data), // BC
 
     // OTHER
-    change_variable: (data: API_variable) => changeVariable(data),
-    start_trigger: (data: API_id) => activateTrigger(data.id), // BC
-    send_midi: (data: API_midi) => sendMidi(data), // BC
-    run_action: (data: API_id) => runActionId(data.id), // BC
-    toggle_action: (data: API_toggle) => toggleAction(data), // BC
+    change_variable: (data: API_variable) => changeVariable(data), // BC
+    start_trigger: (data: API_id) => activateTrigger(data.id),
+    send_midi: (data: API_midi) => sendMidi(data),
+    run_action: (data: API_id) => runActionId(data.id),
+    toggle_action: (data: API_toggle) => toggleAction(data),
     send_rest_command: (data: API_rest_command) => sendRestCommand(data),
 }
 
