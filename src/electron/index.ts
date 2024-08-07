@@ -1,15 +1,19 @@
 // ----- FreeShow -----
 // This is the electron entry point
 
-import { BrowserWindow, Menu, Rectangle, app, dialog, ipcMain, screen } from "electron"
+import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
 import { BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
+import { receiveBM } from "./blackmagic/talk"
 import { cloudConnect } from "./cloud/cloud"
+import { currentlyDeletedShows } from "./cloud/drive"
 import { startBackup } from "./data/backup"
+import { startExport } from "./data/export"
 import { config, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
+import { OutputHelper } from "./output/OutputHelper"
 import { closeServers } from "./servers"
 import { stopApiListener } from "./utils/api"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, loadShows, writeFile } from "./utils/files"
@@ -17,10 +21,6 @@ import { template } from "./utils/menuTemplate"
 import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRecording, startImport } from "./utils/responses"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-import { startExport } from "./data/export"
-import { currentlyDeletedShows } from "./cloud/drive"
-import { OutputHelper } from "./output/OutputHelper"
-import { receiveBM } from "./blackmagic/talk"
 
 // ----- STARTUP -----
 
@@ -102,8 +102,6 @@ function createLoading() {
     loadingWindow = new BrowserWindow(loadingOptions)
     loadingWindow.loadFile("public/loading.html")
     loadingWindow.on("closed", () => (loadingWindow = null))
-
-    dialog.showMessageBox(loadingWindow, { message: "Prompt text" })
 }
 
 // ----- MAIN WINDOW -----

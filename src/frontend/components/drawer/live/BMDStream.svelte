@@ -40,7 +40,8 @@
 
     const receiveBlackmagic: any = {
         RECEIVE_STREAM: (data) => {
-            if (data.id !== screen.id || data.frame?.type !== "frame") return
+            //  || data.frame?.type !== "frame"
+            if (data.id !== screen.id || !data.frame.video) return
             loaded = true
 
             let timeSinceSent = Date.now() - data.time

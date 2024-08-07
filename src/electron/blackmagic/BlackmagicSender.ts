@@ -10,19 +10,15 @@ export class BlackmagicSender {
     static devicePixelMode: "BGRA" | "ARGB" = "BGRA"
 
     // set audioChannels to 0 to disable audio
-    static async initialize(outputId: string, deviceIndex: number, displayModeName: string, pixelFormats: string[], enableKeying: boolean, audioChannels: number = 2) {
+    static async initialize(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels: number = 2) {
         console.log("Blackmagic - creating sender: " + outputId)
         if (this.playbackData[outputId]) this.stop(outputId)
-
-        let displayMode = BlackmagicManager.getDisplayMode(displayModeName)
-        // WIP choose if multiple is available
-        let pixelFormat = BlackmagicManager.getPixelFormat(pixelFormats[0])
 
         this.playbackData[outputId] = {
             playback: await macadam.playback({
                 deviceIndex,
-                displayMode,
-                pixelFormat,
+                displayMode: BlackmagicManager.getDisplayMode(displayModeName),
+                pixelFormat: BlackmagicManager.getPixelFormat(pixelFormat),
                 enableKeying,
                 channels: audioChannels ? 0 : 0, // WIP send audio!
                 sampleRate: macadam.bmdAudioSampleRate48kHz,
@@ -30,7 +26,7 @@ export class BlackmagicSender {
                 startTimecode: "01:00:00:00",
             }),
             scheduledFrames: 0,
-            pixelFormat: pixelFormats[0],
+            pixelFormat: pixelFormat,
             displayMode: displayModeName,
         }
 
@@ -45,15 +41,15 @@ export class BlackmagicSender {
         //     // DEBUG ALERT
         //     dialog.showMessageBox(mainWindow!, {
         //         message:
-        //             this.devicePixelMode +
+        //             this.devicePixelMode + // "BGRA"
         //             " - " +
-        //             this.playbackData[outputId].pixelFormat +
+        //             this.playbackData[outputId].pixelFormat + // "8-bit YUV"
         //             " - " +
-        //             OutputHelper.getOutput(outputId).window.getBounds().width +
+        //             OutputHelper.getOutput(outputId).window.getBounds().width + // 1920
         //             "x" +
-        //             OutputHelper.getOutput(outputId).window.getBounds().height +
+        //             OutputHelper.getOutput(outputId).window.getBounds().height + // 1080
         //             " - " +
-        //             this.playbackData[outputId].displayMode,
+        //             this.playbackData[outputId].displayMode, // 1080p29.97
         //     })
         //     this.alerted = true
         // }
@@ -96,8 +92,8 @@ export class BlackmagicSender {
             if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoARGB(frame)
             // do nothing if it's already ARGB
         } else if (format.includes("YUV")) {
-            if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoYUV(frame)
-            else ImageBufferConverter.ARGBtoYUV(frame)
+            if (this.devicePixelMode === "BGRA") frame = ImageBufferConverter.BGRAtoYUV(frame)
+            else frame = ImageBufferConverter.ARGBtoYUV(frame)
         } else if (format.includes("BGRA")) {
             if (this.devicePixelMode === "ARGB") util.ImageBufferAdjustment.ARGBtoBGRA(frame)
             // do nothing if it's already BGRA
@@ -105,14 +101,14 @@ export class BlackmagicSender {
             if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoRGBXLE(frame)
             else ImageBufferConverter.ARGBtoRGBXLE(frame)
         } else if (format.includes("RGBLE")) {
-            if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoRGBXLE(frame)
-            else ImageBufferConverter.ARGBtoRGBXLE(frame)
+            if (this.devicePixelMode === "BGRA") frame = ImageBufferConverter.BGRAtoRGBLE(frame)
+            else ImageBufferConverter.ARGBtoRGBLE(frame)
         } else if (format.includes("RGBX")) {
             if (this.devicePixelMode === "BGRA") util.ImageBufferAdjustment.BGRAtoBGRX(frame)
             else ImageBufferConverter.ARGBtoRGBX(frame)
         } else if (format.includes("RGB")) {
-            if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoRGB(frame)
-            else ImageBufferConverter.ARGBtoRGB(frame)
+            if (this.devicePixelMode === "BGRA") frame = ImageBufferConverter.BGRAtoRGB(frame)
+            else frame = ImageBufferConverter.ARGBtoRGB(frame)
         }
 
         return frame

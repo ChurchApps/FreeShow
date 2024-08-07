@@ -982,6 +982,7 @@
         "frame_rate": "Frame rate",
         "device": "Device",
         "display_mode": "Display mode",
+        "pixel_format": "Pixel format",
         "alpha_key": "Alpha key",
         "transparent": "Transparent",
         "invisible_window": "Invisible window",

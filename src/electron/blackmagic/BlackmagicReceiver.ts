@@ -1,13 +1,13 @@
-import macadam from "macadam"
-import { CaptureChannel, CaptureFrame } from "macadam"
-import { BlackmagicManager } from "./BlackmagicManager"
-import { BLACKMAGIC } from "../../types/Channels"
+import macadam, { CaptureChannel, CaptureFrame } from "macadam"
 import { toApp } from ".."
-import { OutputHelper } from "../output/OutputHelper"
+import { BLACKMAGIC } from "../../types/Channels"
 import util from "../ndi/vingester-util"
+import { OutputHelper } from "../output/OutputHelper"
+import { BlackmagicManager } from "./BlackmagicManager"
+import { InputImageBufferConverter } from "./ImageBufferConverter"
 
 export class BlackmagicReceiver {
-    static BMD_RECEIVERS: { [key: string]: { receiver?: CaptureChannel; interval?: any } } = {}
+    static BMD_RECEIVERS: { [key: string]: { receiver?: CaptureChannel; interval?: any; displayMode: string; pixelFormat: string } } = {}
     static allActiveReceivers: any = {}
     static sendToOutputs: string[] = []
 
@@ -22,14 +22,15 @@ export class BlackmagicReceiver {
         if (!device) return
 
         // WIP change mode
-        let displayMode = BlackmagicManager.getDisplayMode(device.inputDisplayModes[0].videoModes[0]) // selecting first
-        let pixelFormat = macadam.bmdFormat8BitBGRA
+        let displayMode = device.inputDisplayModes[0].name // selecting first
+        let pixelFormat = device.inputDisplayModes[0].videoModes[0] // selecting first
+        // let pixelFormat = macadam.bmdFormat8BitBGRA
 
-        if (!this.BMD_RECEIVERS[deviceId]) this.BMD_RECEIVERS[deviceId] = {}
+        if (!this.BMD_RECEIVERS[deviceId]) this.BMD_RECEIVERS[deviceId] = { displayMode, pixelFormat }
         return (this.BMD_RECEIVERS[deviceId].receiver = await macadam.capture({
             deviceIndex,
-            displayMode,
-            pixelFormat,
+            displayMode: BlackmagicManager.getDisplayMode(displayMode),
+            pixelFormat: BlackmagicManager.getPixelFormat(pixelFormat),
             channels: audioChannels,
             sampleRate: macadam.bmdAudioSampleRate48kHz,
             sampleType: macadam.bmdAudioSampleType16bitInteger,
@@ -79,11 +80,19 @@ export class BlackmagicReceiver {
         }
     }
 
+    static lastFrameTime: number = 0
     static sendFrame(id: string, frame: CaptureFrame) {
         if (!frame) return
 
-        /*  convert from BGRA (Current mode: bmdFormat8BitBGRA) to RGBA (Web canvas)  */
-        util.ImageBufferAdjustment.BGRAtoRGBA(frame.video.data)
+        // lagging if less than 10 fps
+        let timeSinceLastFrame = Date.now() - this.lastFrameTime
+        if (timeSinceLastFrame > 100 && timeSinceLastFrame < 200) return // skip frames if overloaded
+
+        // mode
+        // let displayMode = this.BMD_RECEIVERS[id].displayMode
+        let pixelFormat = this.BMD_RECEIVERS[id].pixelFormat
+
+        frame.video.data = this.convertVideoFrameFormat(frame.video.data, pixelFormat)
 
         let msg = { channel: "RECEIVE_STREAM", data: { id, frame, time: Date.now() } }
         toApp(BLACKMAGIC, msg)
@@ -91,6 +100,32 @@ export class BlackmagicReceiver {
         this.sendToOutputs.forEach((outputId) => {
             OutputHelper.Send.sendToWindow(outputId, msg, BLACKMAGIC)
         })
+
+        this.lastFrameTime = Date.now()
+    }
+
+    static convertVideoFrameFormat(frame: Buffer, format: string) {
+        // bmdPixelFormats: YUV, ARGB, BGRA, RGB, RGBLE, RGBXLE, RGBX
+
+        /*  convert from current input pixel format to RGBA (Web canvas)  */
+
+        if (format.includes("ARGB")) {
+            util.ImageBufferAdjustment.ARGBtoRGBA(frame)
+        } else if (format.includes("YUV")) {
+            frame = InputImageBufferConverter.YUVtoRGBA(frame)
+        } else if (format.includes("BGRA")) {
+            util.ImageBufferAdjustment.BGRAtoRGBA(frame)
+        } else if (format.includes("RGBXLE")) {
+            InputImageBufferConverter.RGBXLEtoRGBA(frame)
+        } else if (format.includes("RGBLE")) {
+            InputImageBufferConverter.RGBLEtoRGBA(frame)
+        } else if (format.includes("RGBX")) {
+            InputImageBufferConverter.RGBXtoRGBA(frame)
+        } else if (format.includes("RGB")) {
+            InputImageBufferConverter.RGBtoRGBA(frame)
+        }
+
+        return frame
     }
 
     static stopReceiver(data: any) {

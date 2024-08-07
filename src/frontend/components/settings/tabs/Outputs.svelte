@@ -188,12 +188,21 @@
                 let modeData = displayModes.find((a) => a.name === value) || {}
                 if (!modeData.width) return
 
+                // pixel format
+                let pixelFormats = (modeData.videoModes || []).map((format) => ({ name: format }))
+                updateBlackmagicData(pixelFormats, "pixelFormats")
+                updateBlackmagicData(pixelFormats[0]?.name, "pixelFormat")
+
                 // force resolution & update framerate
                 updateOutput("forcedResolution", { width: modeData.width, height: modeData.height })
                 updateBlackmagicData(modeData.frameRate, "framerate")
-                updateBlackmagicData(modeData.videoModes, "pixelFormats")
+                // updateBlackmagicData(modeData.videoModes, "pixelFormats")
 
                 // allow data to update first
+                setTimeout(() => {
+                    send(OUTPUT, ["SET_VALUE"], { id: currentOutput.id, key: "blackmagic", value: currentOutput })
+                })
+            } else if (key === "pixelFormat") {
                 setTimeout(() => {
                     send(OUTPUT, ["SET_VALUE"], { id: currentOutput.id, key: "blackmagic", value: currentOutput })
                 })
@@ -374,6 +383,15 @@
                 value={currentOutput.blackmagicData?.displayModes?.find((a) => a.name === currentOutput.blackmagicData?.displayMode)?.name || "—"}
                 options={currentOutput.blackmagicData?.displayModes || []}
                 on:click={(e) => updateBlackmagicData(e, "displayMode")}
+            />
+        </CombinedInput>
+
+        <CombinedInput>
+            <p><T id="settings.pixel_format" /></p>
+            <Dropdown
+                value={currentOutput.blackmagicData?.pixelFormats?.find((a) => a.name === currentOutput.blackmagicData?.pixelFormat)?.name || "—"}
+                options={currentOutput.blackmagicData?.pixelFormats || []}
+                on:click={(e) => updateBlackmagicData(e, "pixelFormat")}
             />
         </CombinedInput>
 
