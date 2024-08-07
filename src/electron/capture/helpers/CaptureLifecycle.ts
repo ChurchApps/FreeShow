@@ -44,7 +44,6 @@ export class CaptureLifecycle {
 
             // use highest frame rate
             let frameRate = output.captureOptions.framerates.ndi
-            if (output.captureOptions.framerates.blackmagic > frameRate) frameRate = output.captureOptions.framerates.blackmagic
             if (output.captureOptions.framerates.server > frameRate) frameRate = output.captureOptions.framerates.server
             if (output.captureOptions.framerates.stage > frameRate) frameRate = output.captureOptions.framerates.stage
 
