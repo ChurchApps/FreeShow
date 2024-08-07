@@ -352,11 +352,10 @@
                 <Icon size={1.2} id="ndi" right />
                 <p>NDI</p>
             </Button>
-            <!-- BLACKMAGIC CURRENTLY NOT WORKING -->
-            <!-- <Button style="flex: 1;" active={screenTab === "blackmagic"} on:click={() => (screenTab = "blackmagic")} center>
+            <Button style="flex: 1;" active={screenTab === "blackmagic"} on:click={() => (screenTab = "blackmagic")} center>
                 <Icon size={1.2} id="blackmagic" right />
                 <p>Blackmagic</p>
-            </Button> -->
+            </Button>
         {:else if active === "online"}
             <Button style="flex: 1;" active={onlineTab === "youtube"} on:click={() => (onlineTab = "youtube")} center>
                 <Icon style="fill: {onlineTab !== 'youtube' ? 'white' : '#ff0000'};" size={1.2} id="youtube" right />

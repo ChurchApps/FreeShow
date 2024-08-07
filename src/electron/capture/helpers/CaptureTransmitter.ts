@@ -85,8 +85,7 @@ export class CaptureTransmitter {
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
             case "blackmagic":
-                // BLACKMAGIC CURRENTLY NOT WORKING
-                // this.sendBufferToBlackmagic(captureId, image)
+                this.sendBufferToBlackmagic(captureId, image)
                 break
             case "server":
                 // const options = OutputHelper.getOutput(captureId)?.captureOptions
