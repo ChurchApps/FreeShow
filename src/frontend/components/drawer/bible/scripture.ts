@@ -163,7 +163,8 @@ export function getSlides({ bibles, sorted }) {
 
             let text: string = bible.verses[s] || ""
 
-            text = text.replaceAll("/ ", " ")
+            // remove unwanted characters
+            text = text.replaceAll("/ ", " ").replaceAll("*", "")
 
             // highlight Jesus text
             let textArray: any[] = []
