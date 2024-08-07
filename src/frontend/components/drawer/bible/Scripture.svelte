@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { BIBLE } from "../../../../types/Channels"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
-    import { activeScripture, bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
+    import { activeScripture, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,7 +14,6 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import BibleApiKey from "./BibleApiKey.svelte"
     import { bookIds, fetchBible, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
 
     export let active: any
@@ -779,8 +778,8 @@
             <Center faded>
                 <T id="error.bible" />
             </Center>
-        {:else if bibles[0].api && !$bibleApiKey}
-            <BibleApiKey />
+            <!-- {:else if bibles[0].api && !$bibleApiKey}
+            <BibleApiKey /> -->
         {:else if error}
             <Center faded>
                 <T id="error.bible_api" />

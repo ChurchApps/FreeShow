@@ -4,6 +4,7 @@ import type { StringObject } from "../../../../types/Main"
 import { bibleApiKey, dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
 import { getAutoSize } from "../../edit/scripts/autoSize"
 import { clone, removeDuplicates } from "../../helpers/array"
+import { getKey } from "../../../values/keys"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
 let tempCache: any = {}
@@ -27,7 +28,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
     if (tempCache[urls[load]]) return tempCache[urls[load]]
 
     return new Promise((resolve, reject) => {
-        if (!get(bibleApiKey)) return reject("No API key!")
+        if (!get(bibleApiKey) && !getKey("bibleapi")) return reject("No API key!")
         if (urls[load].includes("null")) return reject("Something went wrong!")
 
         fetchTimeout = setTimeout(() => {
@@ -35,7 +36,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
             reject("Timed out!")
         }, 10000)
 
-        fetch(urls[load], { headers: { "api-key": get(bibleApiKey) } })
+        fetch(urls[load], { headers: { "api-key": get(bibleApiKey) || getKey("bibleapi") } })
             .then((response) => response.json())
             .then((data) => {
                 tempCache[urls[load]] = data.data
@@ -53,9 +54,9 @@ export function searchBibleAPI(active: string, searchQuery: string) {
     let url = `${api}${active}/search?query=${searchQuery}`
 
     return new Promise((resolve, reject) => {
-        if (!get(bibleApiKey)) return reject("No API key!")
+        if (!get(bibleApiKey) && !getKey("bibleapi")) return reject("No API key!")
 
-        fetch(url, { headers: { "api-key": get(bibleApiKey) } })
+        fetch(url, { headers: { "api-key": get(bibleApiKey) || getKey("bibleapi") } })
             .then((response) => response.json())
             .then((data) => {
                 resolve(data.data)

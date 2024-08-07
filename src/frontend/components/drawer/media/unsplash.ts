@@ -1,3 +1,4 @@
+import { getKey } from "../../../values/keys"
 import { getExtension } from "../../helpers/media"
 
 // https://unsplash.com/documentation
@@ -8,7 +9,7 @@ export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
     return new Promise((resolve) => {
         if (cache[query]) return resolve(cache[query])
 
-        let url: string = "https://api.unsplash.com/search/photos/?client_id=CaXvP_plzuAivss1MbiwGU3-rXd3zZphCifOVplX6Cg&content_filter=high&per_page=30&query=" // this is still a demo key, so it should be changed before release
+        let url: string = "https://api.unsplash.com/search/photos/?client_id=" + getKey("unsplash") + "&content_filter=high&per_page=30&query=" // this is still a demo key, so it should be changed before release
         url += encodeURIComponent(query)
 
         let results: any = []

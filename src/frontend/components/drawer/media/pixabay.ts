@@ -1,3 +1,4 @@
+import { getKey } from "../../../values/keys"
 import { getExtension } from "../../helpers/media"
 
 // https://pixabay.com/api/docs/
@@ -8,7 +9,7 @@ export async function loadFromPixabay(query: string = "", video: boolean = false
     return new Promise((resolve) => {
         if (cache[query + video]) return resolve(cache[query + video])
 
-        let url: string = "https://pixabay.com/api/" + (video ? "videos/" : "") + "?key=11258791-07728519970a70a9ae0664214&safesearch=true&per_page=80&q="
+        let url: string = "https://pixabay.com/api/" + (video ? "videos/" : "") + "?key=" + getKey("pixabay") + "&safesearch=true&per_page=80&q="
         url += encodeURIComponent(query)
 
         let hits: any = []
@@ -17,7 +18,7 @@ export async function loadFromPixabay(query: string = "", video: boolean = false
             .then((data) => {
                 console.log("PIXABAY", data)
 
-                // https://pixabay.com/api/?key=11258791-07728519970a70a9ae0664214&q=yellow+flowers&image_type=photo&pretty=true
+                // https://pixabay.com/api/?key={API_KEY}&q=yellow+flowers&image_type=photo&pretty=true
                 hits = data.hits.map((media) => {
                     let path = media.largeImageURL
                     if (video) path = media.videos.medium.url
