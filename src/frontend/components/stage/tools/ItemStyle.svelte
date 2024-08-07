@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeStage, stageShows } from "../../../stores"
     import { getBackgroundOpacity, setBackgroundColor } from "../../edit/scripts/edit"
-    import { addStyleString } from "../../edit/scripts/textStyle"
+    import { addFilterString, addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
     import { itemEdits } from "../../edit/values/item"
     import { clone } from "../../helpers/array"
@@ -28,6 +28,12 @@
 
     function updateStyle(e: any) {
         let input = e.detail
+
+        if (input.id === "transform") {
+            let oldString = data[input.id]
+            input.value = addFilterString(oldString || "", [input.key, input.value])
+            input.key = input.id
+        }
 
         // background opacity
         if (input.id === "background-opacity" || (input.value && input.key === "background-color")) {

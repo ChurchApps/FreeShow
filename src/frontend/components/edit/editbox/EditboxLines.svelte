@@ -397,10 +397,14 @@
             let sel = getSelectionRange()
             let currentLine = sel.findIndex((a) => a?.start !== undefined)
             let deleteKey = currentLine === lastCaretPos.line
-            if (!caret && (item.lines || []).length > newLines.length && !deleteKey) {
-                let newLine = lastCaretPos.line > -1 ? lastCaretPos.line - 1 : newLines.length - 1
-                let newPos = lastCaretPos.pos > -1 ? getLineText(newLines[lastCaretPos.line - 1]).length - lastCaretPos.lineLength : getLineText(newLines[newLines.length - 1]).length
-                caret = { line: newLine, pos: newPos }
+            if (!caret && (item.lines || []).length > newLines.length) {
+                if (deleteKey) {
+                    caret = lastCaretPos
+                } else {
+                    let newLine = lastCaretPos.line > -1 ? lastCaretPos.line - 1 : newLines.length - 1
+                    let newPos = lastCaretPos.pos > -1 ? getLineText(newLines[lastCaretPos.line - 1]).length - lastCaretPos.lineLength : getLineText(newLines[newLines.length - 1]).length
+                    caret = { line: newLine, pos: newPos }
+                }
             }
         }
 
