@@ -116,6 +116,14 @@
 
         let m: any = menuClick(id, enabled, menu, contextElem, actionItem, sel)
         if (m?.enabled !== undefined) enabled = m.enabled
+
+        // don't hide context menu
+        const keepOpen = ["enabled_drawer_tabs", "tags", "bind_to", "item_bind_to"]
+        if (keepOpen.includes(id)) {
+            enabled = !enabled
+            return
+        }
+
         if (!m || m.hide) contextActive = false
     }
 

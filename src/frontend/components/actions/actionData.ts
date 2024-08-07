@@ -43,6 +43,8 @@ export const actionData = {
     start_metronome: { name: "actions.start_metronome", icon: "metronome", input: "metronome" },
 
     // TIMERS
+    name_start_timer: { name: "actions.name_start_timer", icon: "timer", input: "strval" },
+    id_start_timer: { name: "actions.id_start_timer", icon: "timer", input: "id" },
     start_slide_timers: { slideId: "startTimer", name: "actions.start_slide_timers", icon: "timer" },
     stop_timers: { slideId: "stopTimers", name: "actions.stop_timers", icon: "stop", red: true },
 

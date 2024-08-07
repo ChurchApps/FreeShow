@@ -26,6 +26,7 @@ import {
     formatNewShow,
     fullColors,
     gain,
+    globalTags,
     groupNumbers,
     groups,
     imageExtensions,
@@ -158,6 +159,7 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         videoMarkers: get(videoMarkers),
         customizedIcons: get(customizedIcons),
         companion: get(companion),
+        globalTags: get(globalTags),
     }
 
     let allSavedData: any = {
@@ -341,7 +343,7 @@ const saveList: { [key in SaveList]: any } = {
     theme: theme,
     themes: themes,
     transitionData: transitionData,
-    videoExtensions: videoExtensions,
+    videoExtensions: null,
     volume: null,
     gain: null,
     midiIn: midiIn,
@@ -354,4 +356,5 @@ const saveList: { [key in SaveList]: any } = {
     bibleApiKey: null,
     special: special,
     companion: null,
+    globalTags: globalTags,
 }

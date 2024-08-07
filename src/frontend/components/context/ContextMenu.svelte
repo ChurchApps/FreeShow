@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, contextData } from "../../stores"
+    import { activePage, activePopup, contextData } from "../../stores"
     import ContextChild from "./ContextChild.svelte"
     import ContextItem from "./ContextItem.svelte"
     import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
@@ -78,6 +78,7 @@
     $: outputs = $contextData.outputList
     $: hasText = $contextData.textContent
     $: layers = $contextData.layers
+    $: tags = $contextData.tags
 </script>
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} />
@@ -90,7 +91,7 @@
                     <hr />
                 {:else if contextMenuItems[id]?.items}
                     <!-- conditional menus -->
-                    {#if (id !== "bind_to" || outputs) && (id !== "format" || hasText) && (id !== "remove_layers" || layers)}
+                    {#if (id !== "bind_to" || outputs) && (id !== "format" || hasText || $activePage !== "show") && (id !== "remove_layers" || layers) && (id !== "tags" || tags)}
                         <ContextChild {id} {contextElem} bind:contextActive {side} translate={activeMenu.length > 2 ? 0 : translate} />
                     {/if}
                 {:else}

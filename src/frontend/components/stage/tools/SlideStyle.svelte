@@ -80,10 +80,12 @@
     // password
 
     let outputList: any[] = []
-    $: outputList = Object.entries($outputs)
-        .map(([id, a]) => ({ id, ...a }))
+    $: outputList = keysToID($outputs)
         .filter((a) => !a.isKeyOutput && !a.stageOutput)
         .sort((a, b) => a.name.localeCompare(b.name))
+
+    // deleting stage layout and undoing will keep this on, but no output
+    $: if (settings.outputScreen && !Object.values($outputs).find((a) => a.stageOutput === $activeStage.id)) settings.outputScreen = false
 </script>
 
 <div class="section">

@@ -13,6 +13,8 @@
     import Window from "../Window.svelte"
     import Media from "./Media.svelte"
     import OutputTransition from "./OutputTransition.svelte"
+    import NdiStream from "../../drawer/live/NDIStream.svelte"
+    import BmdStream from "../../drawer/live/BMDStream.svelte"
 
     export let outputId: string = ""
 
@@ -23,6 +25,7 @@
     export let animationStyle: string = ""
     export let duration: number = 0
     export let mirror: boolean = false
+    export let styleBackground: boolean = false
 
     $: id = data.path || data.id || ""
 
@@ -36,7 +39,7 @@
 
     // VIDEO
 
-    let videoData: any = { duration: 0, paused: true, muted: true, loop: false }
+    let videoData: any = { duration: 0, paused: true, muted: true, loop: styleBackground }
     let videoTime: number = 0
 
     // let videoDuration = 0
@@ -56,10 +59,10 @@
     // draw
 
     //Without the second if, the preview videos don't actually play but just skip ahead when kept in sync with the setTimeout()
-    $: if (mirror && $videosData[outputId]?.paused) videoData.paused = true
-    $: if (mirror && $videosData[outputId]?.paused === false) videoData.paused = false
+    $: if (mirror && !styleBackground && $videosData[outputId]?.paused) videoData.paused = true
+    $: if (mirror && !styleBackground && $videosData[outputId]?.paused === false) videoData.paused = false
 
-    $: if (mirror && $videosTime[outputId] !== undefined) setPreviewVideoTime()
+    $: if (mirror && !styleBackground && $videosTime[outputId] !== undefined) setPreviewVideoTime()
     function setPreviewVideoTime() {
         const diff = Math.abs($videosTime[outputId] - videoTime)
         if (diff > 0.5) {
@@ -178,10 +181,15 @@
     // analyse and send to main if window is output
     $: if (!mirror && $audioChannels && video !== null) updateVideo()
     let updateCount = 0
+    let previousChannels: string = JSON.stringify({ left: 0, right: 0 })
     function updateVideo() {
         updateCount++
         if (updateCount < 2) return
         updateCount = 0
+
+        let current = JSON.stringify($audioChannels)
+        if (previousChannels === current) return
+        previousChannels = current
 
         send(OUTPUT, ["AUDIO_MAIN"], { id: outputId, channels: $audioChannels, paused: videoData.paused })
     }
@@ -212,6 +220,10 @@
         <Media path={id} {data} {animationStyle} bind:video bind:videoData bind:videoTime {mirror} {mediaStyle} on:loaded on:ended={videoEnded} />
     {:else if type === "screen"}
         <Window {id} class="media" style="width: 100%;height: 100%;" on:loaded />
+    {:else if type === "ndi"}
+        <NdiStream screen={{ id, name: "" }} background {mirror} />
+    {:else if type === "blackmagic"}
+        <BmdStream screen={{ id, name: "" }} background {mirror} />
     {:else if type === "camera"}
         <Camera {id} groupId={data.cameraGroup || ""} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "player"}

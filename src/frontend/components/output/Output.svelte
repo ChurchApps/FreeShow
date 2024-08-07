@@ -218,25 +218,20 @@
     $: messageText = $showsCache[slide?.id]?.message?.text || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && slide ? "" : currentStyle?.backgroundImage || ""
-    $: styleBackgroundData = { path: styleBackground, loop: true, ...($media[styleBackground] || {}) }
+    $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
     $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
-    $: backgroundData = templateBackground ? templateBackgroundData : background || styleBackgroundData
+    $: backgroundData = templateBackground ? templateBackgroundData : background
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.duration || 800} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
+    <!-- always show style background (behind other backgrounds) -->
+    {#if styleBackground}
+        <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror styleBackground />
+    {/if}
+
     <!-- background -->
-    {#if layers.includes("background") || styleBackground}
-        <Background
-            data={layers.includes("background") ? backgroundData : styleBackgroundData}
-            {outputId}
-            transition={transitions.media}
-            {currentStyle}
-            {slideFilter}
-            {ratio}
-            {isKeyOutput}
-            animationStyle={animationData.style?.background || ""}
-            mirror={isKeyOutput || mirror}
-        />
+    {#if layers.includes("background") && backgroundData}
+        <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror={isKeyOutput || mirror} />
     {/if}
 
     <!-- "underlays" -->

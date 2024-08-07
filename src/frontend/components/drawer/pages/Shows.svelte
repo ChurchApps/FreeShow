@@ -1,7 +1,7 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import type { ShowList } from "../../../../types/Show"
-    import { activePopup, activeProject, activeShow, categories, dictionary, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
     import { formatSearch, showSearch } from "../../../utils/search"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -29,9 +29,9 @@
     let previousSearchValue: string = ""
     $: {
         if (searchValue.length > 1) {
-            let currentShowsList = filteredShows
+            let currentShowsList = filterByTags(filteredShows, $activeTagFilter)
             // reset if search value changed
-            if (!formattedSearch.includes(previousSearchValue)) currentShowsList = clone(filteredStored)
+            if (!formattedSearch.includes(previousSearchValue)) currentShowsList = filterByTags(clone(filteredStored), $activeTagFilter)
 
             filteredShows = showSearch(formattedSearch, currentShowsList)
             if (searchValue.length > 15 && filteredShows.length > 50) filteredShows = filteredShows.slice(0, 50)
@@ -43,9 +43,17 @@
 
             previousSearchValue = formattedSearch
         } else {
-            filteredShows = clone(filteredStored)
+            filteredShows = filterByTags(clone(filteredStored), $activeTagFilter)
             firstMatch = null
         }
+    }
+
+    function filterByTags(shows, tags: string[]) {
+        if (!tags.length) return shows
+
+        return shows.filter((a) => {
+            return !tags.find((tagId) => !a.quickAccess?.tags?.includes(tagId))
+        })
     }
 
     // auto scroll to active show in the virtual list

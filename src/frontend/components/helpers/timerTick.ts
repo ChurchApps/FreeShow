@@ -1,15 +1,17 @@
 import { get } from "svelte/store"
 import type { Event } from "../../../types/Calendar"
 import { OUTPUT, STAGE } from "../../../types/Channels"
-import { activeTimers, currentWindow, dictionary, events, nextActionEventPaused, nextActionEventStart } from "../../stores"
+import { activeTimers, currentWindow, dictionary, events, nextActionEventPaused, nextActionEventStart, timers } from "../../stores"
 import { newToast } from "../../utils/common"
 import { translate } from "../../utils/language"
 import { send } from "../../utils/request"
 import { actionData } from "../actions/actionData"
 import { customActionActivation, runAction } from "../actions/actions"
-import { clone, sortByTime } from "./array"
+import { clone, keysToID, sortByTime } from "./array"
 import { loadShows } from "./setShow"
 import { checkNextAfterMedia } from "./showActions"
+import { sortByClosestMatch } from "../actions/apiHelper"
+import { playPauseGlobal } from "../drawer/timers/timers"
 
 const INTERVAL = 1000
 const TEN_SECONDS = 1000 * 10
@@ -31,6 +33,21 @@ export function startTimer() {
         timeout = null
         startTimer()
     }, customInterval)
+}
+
+export function startTimerByName(name: string) {
+    let timersList = sortByClosestMatch(keysToID(get(timers)), name)
+    let timerId = timersList[0]?.id
+    if (!timerId) return
+
+    startTimerById(timerId)
+}
+
+export function startTimerById(id: string) {
+    let timer = get(timers)[id]
+    if (!timer) return
+
+    playPauseGlobal(id, timer)
 }
 
 export function stopTimers() {

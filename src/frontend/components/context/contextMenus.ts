@@ -37,6 +37,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     export: { label: "actions.export", icon: "export" },
     // DRAWER
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
+    tags: { label: "context.filterByTags", icon: "tag", items: ["LOAD_tags"] },
     newCategory: { label: "context.newCategory", icon: "add" },
     newScripture: { label: "new.scripture", icon: "add" },
     createCollection: { label: "new.collection", icon: "collection" },
@@ -92,13 +93,14 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // ITEM
     item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
-    format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
+    format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
     find_replace: { label: "actions.find_replace", icon: "find_replace" },
     cut_in_half: { label: "actions.cut_in_half", icon: "cut_in_half" },
+    merge: { label: "actions.merge", icon: "merge" },
     uppercase: { label: "actions.uppercase", icon: "increase_text" },
     lowercase: { label: "actions.lowercase", icon: "decrease_text" },
     capitalize: { label: "actions.capitalize", icon: "capitalize" },
@@ -159,7 +161,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
     playlist: ["rename", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "newShow", "sort_shows_by", "selectAll"],
+    drawer_show: ["newShowPopup", "newShow", "SEPERATOR", "tags", "sort_shows_by", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
@@ -217,6 +219,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // global_group: ["rename"],
     layout: ["rename", "duplicate", "remove"],
     slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics", "view_text"],
+    tag: ["rename", "recolor", "SEPERATOR", "delete"],
     // TODO: change chords (m, dim, sus, left, guitar, custom value, ...)
     // chord notations
     // https://jazz-library.com/articles/chord-symbols/

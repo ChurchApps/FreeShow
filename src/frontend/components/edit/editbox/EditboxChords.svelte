@@ -1,7 +1,9 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
     import { activePopup, selected } from "../../../stores"
+    import { waitForPopupData } from "../../../utils/popup"
     import { clone } from "../../helpers/array"
+    import { deleteAction } from "../../helpers/clipboard"
     import { addChords } from "./../scripts/chords"
 
     export let item: Item
@@ -13,15 +15,23 @@
         id: string
     }
     export let chordsMode: boolean = false
+    export let chordsAction: string = ""
 
     // CHORDS
 
     let chordButtons: any[] = []
-    function chordClick(e: any) {
+    async function chordClick(e: any) {
         let add = e.target.closest(".add")
         if (add) {
+            // only left click
+            if (e.button !== 0) return
+
             let pos = add.id.split("_")
-            addChords(item, ref, index, Number(pos[0]), Number(pos[1]))
+            let key = chordsAction
+            if (!key) key = await waitForPopupData("choose_chord")
+            if (!key) return
+
+            addChords(item, ref, index, Number(pos[0]), Number(pos[1]), key)
             return
         }
 
@@ -33,6 +43,12 @@
 
         // for right click or rename click
         selected.set({ id: "chord", data: [{ chord: data.chord, index: data.lineIndex, slideId: ref.id, itemIndex: index }] })
+
+        // delete on middle mouse click
+        if (e.button === 1) {
+            deleteAction($selected)
+            return
+        }
 
         if (e.button !== 0) return
         // left click
@@ -104,6 +120,11 @@
 {/if}
 
 <style>
+    .chords,
+    .break {
+        width: 100%;
+    }
+
     .chords :global(.chord) {
         position: absolute;
         transform: translateY(-100%);
@@ -115,6 +136,8 @@
         z-index: 3;
 
         pointer-events: all;
+
+        --move-up: 40%;
     }
     .chords :global(.chord):hover {
         filter: brightness(1.2);
@@ -126,7 +149,8 @@
         left: 50%;
         transform: translate(-50%, 100%);
         width: 5px;
-        height: 50px;
+        /* this height works best as 100px font size */
+        height: calc(100% + var(--move-up) - 5px);
         background-color: var(--secondary);
         /* background-color: var(--secondary-opacity); */
     }
@@ -148,16 +172,16 @@
         background-color: rgb(255 255 255 / 0.1);
     }
     .edit.chords :global(.invisible):hover {
-        opacity: 0.6;
-        background-color: var(--secondary);
+        /* opacity: 0.8; */
+        background-color: var(--secondary-opacity);
     }
     .edit.chords :global(.chord) {
         /* color: var(--chord-color);
       font-size: var(--chord-size) !important; */
         /* bottom: 0; */
-        transform: translate(-50%, -10%);
+        transform: translate(-50%, calc(var(--move-up) * -1));
         z-index: 2;
-        font-size: 60px !important;
+        font-size: 45px !important;
         /* color: #FF851B; */
 
         line-height: initial;
@@ -167,6 +191,7 @@
         /* line-height: 0.5em; */
         /* font-size: inherit; */
         position: absolute;
+        z-index: 3; /* show over line box */
         /* pointer-events: none; */
     }
 

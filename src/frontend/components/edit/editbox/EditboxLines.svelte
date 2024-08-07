@@ -25,6 +25,7 @@
     export let editIndex: number = -1
     export let plain: boolean = false
     export let chordsMode: boolean = false
+    export let chordsAction: string = ""
 
     let textElem: any
     let html: string = ""
@@ -54,10 +55,9 @@
         // style hash
         let s = ""
         let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
-        item?.lines?.forEach((line) => {
+        clone(item?.lines)?.forEach((line) => {
             let align = line.align.replaceAll(lineBg, "")
-            if (align && !align.endsWith(";")) align += ";"
-            s += align + lineBg
+            s += align + lineBg // + line.chords?.map((a) => a.key)
             line.text?.forEach((a) => {
                 s += EditboxHelper.getTextStyle(a)
             })
@@ -65,8 +65,17 @@
 
         // dont replace while typing
         // && (window.getSelection() === null || window.getSelection()!.type === "None")
-        console.log(currentStyle !== s, currentStyle, s)
-        if (currentStyle !== s) getStyle()
+        if (currentStyle.replaceAll(";", "") !== s.replaceAll(";", "")) getStyle()
+    }
+
+    let previousChords = ""
+    $: {
+        // chords updated! (needed to save chords so they don't get reset when changing the lines)
+        let newChords = JSON.stringify(item?.lines?.map((a) => a.chords?.map((a) => a.key)))
+        if (previousChords !== newChords) {
+            previousChords = newChords
+            getStyle()
+        }
     }
 
     $: lineGap = item?.specialStyle?.lineGap
@@ -295,7 +304,7 @@
         let updateHTML: boolean = false
 
         new Array(...textElem.children).forEach((line: any, i: number) => {
-            let align: string = plain ? item.lines![i]?.align || "" : line.getAttribute("style") || ""
+            let align: string = plain ? item.lines?.[i]?.align || "" : line.getAttribute("style") || ""
             pos++
             currentStyle += align
 
@@ -316,7 +325,7 @@
                 }
                 if (child.nodeName !== "SPAN") return
 
-                let style = plain ? item.lines![i]?.text[j]?.style || "" : child.getAttribute("style") || ""
+                let style = plain ? item.lines?.[i]?.text[j]?.style || "" : child.getAttribute("style") || ""
                 // TODO: pressing enter / backspace will remove any following style in list view
                 // if (plain && !style && i > 0) style = item.lines![i - 1]?.text[j]?.style
 
@@ -388,10 +397,14 @@
             let sel = getSelectionRange()
             let currentLine = sel.findIndex((a) => a?.start !== undefined)
             let deleteKey = currentLine === lastCaretPos.line
-            if (!caret && (item.lines || []).length > newLines.length && !deleteKey) {
-                let newLine = lastCaretPos.line > -1 ? lastCaretPos.line - 1 : newLines.length - 1
-                let newPos = lastCaretPos.pos > -1 ? getLineText(newLines[lastCaretPos.line - 1]).length - lastCaretPos.lineLength : getLineText(newLines[newLines.length - 1]).length
-                caret = { line: newLine, pos: newPos }
+            if (!caret && (item.lines || []).length > newLines.length) {
+                if (deleteKey) {
+                    caret = lastCaretPos
+                } else {
+                    let newLine = lastCaretPos.line > -1 ? lastCaretPos.line - 1 : newLines.length - 1
+                    let newPos = lastCaretPos.pos > -1 ? getLineText(newLines[lastCaretPos.line - 1]).length - lastCaretPos.lineLength : getLineText(newLines[newLines.length - 1]).length
+                    caret = { line: newLine, pos: newPos }
+                }
             }
         }
 
@@ -428,6 +441,7 @@
         let text = ""
 
         let lineElem = textElem.children[lineIndex]
+        if (!lineElem) return ""
         new Array(...lineElem.childNodes).forEach((child: any) => {
             if (child.nodeName === "#text") text += child.textContent
             else text += child.innerText
@@ -556,7 +570,7 @@
             </span>
         {/if}
         {#if chordsMode && textElem}
-            <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} />
+            <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
         {/if}
         <div
             bind:this={textElem}

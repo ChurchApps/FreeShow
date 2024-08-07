@@ -1,10 +1,10 @@
 import { get } from "svelte/store"
-import { activeEdit, contextData, drawerTabsData, groups, outputs, overlays, selected, sorted } from "../../stores"
+import { activeEdit, activeTagFilter, contextData, drawerTabsData, globalTags, groups, outputs, overlays, selected, sorted } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
-import { chordAdders, keys } from "../edit/values/chords"
-import { clone, keysToID, sortByName } from "../helpers/array"
+import { chordTypes, keys } from "../edit/values/chords"
+import { clone, keysToID, sortByName, sortObject } from "../helpers/array"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
@@ -21,6 +21,11 @@ const loadActions = {
         })
 
         return items
+    },
+    tags: () => {
+        let sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeTagFilter).includes(a.id), translate: false }))
+        setContextData("tags", sortedTags.length)
+        return sortedTags
     },
     sort_shows: (items: ContextMenuItem[]) => sortItems(items, "shows"),
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
@@ -154,7 +159,7 @@ const loadActions = {
     },
     chord_list: (items: ContextMenuItem[]) => {
         keys.forEach((key) => {
-            chordAdders.forEach((adder) => {
+            chordTypes.forEach((adder) => {
                 items.push({ id: key + adder, label: key + adder, translate: false })
             })
         })

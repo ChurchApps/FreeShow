@@ -3,6 +3,7 @@ import { CaptureOptions } from "../capture/CaptureOptions"
 
 export class Output {
     window: BrowserWindow
+    invisible?: boolean
     //previewWindow: BrowserWindow
     captureOptions?: CaptureOptions
     /*

@@ -43,16 +43,16 @@ import {
     variables,
     videoMarkers,
 } from "../../stores"
+import { newToast } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { setCaret } from "../edit/scripts/textStyle"
 import { clone, removeDuplicates } from "./array"
 import { pasteText } from "./caretHelper"
 import { history } from "./history"
+import { getFileName, removeExtension } from "./media"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
-import { getFileName, removeExtension } from "./media"
-import { newToast } from "../../utils/common"
 
 export function copy({ id, data }: any = {}, getData: boolean = true) {
     let copy: any = { id, data }
@@ -787,8 +787,11 @@ const deleteActions = {
 
         currentOutputSettings.set(Object.keys(get(outputs))[0])
     },
+    tag: (data: any) => {
+        let tagId = data[0]?.id || ""
+        history({ id: "UPDATE", newData: { id: tagId }, location: { page: "show", id: "tag" } })
+    },
     chord: (data: any) => {
-        console.log(data)
         data = data[0]
 
         let item: any = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]

@@ -8,6 +8,7 @@ export interface Show {
     name: string
     private?: boolean
     category: null | ID
+    quickAccess?: any
     reference?: {
         type: "calendar" | "scripture"
         data: any
@@ -31,6 +32,7 @@ export interface Show {
         override: boolean
         display: string
         template: string
+        tags?: string[]
     }
     meta: {
         title?: string

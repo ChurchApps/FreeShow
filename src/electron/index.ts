@@ -3,13 +3,17 @@
 
 import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
-import { CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
+import { BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
+import { receiveBM } from "./blackmagic/talk"
 import { cloudConnect } from "./cloud/cloud"
+import { currentlyDeletedShows } from "./cloud/drive"
 import { startBackup } from "./data/backup"
+import { startExport } from "./data/export"
 import { config, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
+import { OutputHelper } from "./output/OutputHelper"
 import { closeServers } from "./servers"
 import { stopApiListener } from "./utils/api"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, loadShows, writeFile } from "./utils/files"
@@ -17,9 +21,6 @@ import { template } from "./utils/menuTemplate"
 import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRecording, startImport } from "./utils/responses"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-import { startExport } from "./data/export"
-import { currentlyDeletedShows } from "./cloud/drive"
-import { OutputHelper } from "./output/OutputHelper"
 
 // ----- STARTUP -----
 
@@ -52,6 +53,7 @@ setGlobalMenu()
 
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
+app.disableHardwareAcceleration() //Video flickers, especially on ARM mac otherwise.  Performance is actually better without.  https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
 app.on("ready", startApp)
 
 function startApp() {
@@ -389,6 +391,7 @@ ipcMain.on(BIBLE, loadScripture)
 ipcMain.on(CLOUD, cloudConnect)
 ipcMain.on(RECORDER, saveRecording)
 ipcMain.on(NDI, receiveNDI)
+ipcMain.on(BLACKMAGIC, receiveBM)
 
 // ----- HELPERS -----
 

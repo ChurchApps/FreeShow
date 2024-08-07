@@ -7,6 +7,7 @@ import { OutputHelper } from "../../output/OutputHelper"
 import { toServer } from "../../servers"
 import { CaptureHelper } from "../CaptureHelper"
 import { toApp } from "../.."
+import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 
 export type Channel = {
     key: string
@@ -25,6 +26,7 @@ export class CaptureTransmitter {
         if (!capture) return
         //this.startChannel(captureId, "preview")
         if (capture.options.ndi) this.startChannel(captureId, "ndi")
+        if (capture.options.blackmagic) this.startChannel(captureId, "blackmagic")
         if (capture.options.server) this.startChannel(captureId, "server")
         if (capture.options.stage) this.startChannel(captureId, "stage")
 
@@ -82,6 +84,10 @@ export class CaptureTransmitter {
             case "ndi":
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
+            case "blackmagic":
+                // BLACKMAGIC CURRENTLY NOT WORKING
+                // this.sendBufferToBlackmagic(captureId, image)
+                break
             case "server":
                 // const options = OutputHelper.getOutput(captureId)?.captureOptions
                 this.sendBufferToServer(captureId, image)
@@ -129,6 +135,20 @@ export class CaptureTransmitter {
         this.requestList = newList
     }
 
+    // BLACKMAGIC
+    static sendBufferToBlackmagic(captureId: string, image: NativeImage) {
+        if (!image) return
+
+        const buffer = image.getBitmap()
+        // const size = image.getSize()
+
+        let framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
+        if (!framerate) return
+
+        // WIP blackmagic audio
+        BlackmagicSender.scheduleFrame(captureId, buffer, null, framerate)
+    }
+
     // MAIN (STAGE OUTPUT)
     static sendBufferToMain(captureId: string, image: NativeImage) {
         if (!image) return
@@ -141,7 +161,7 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        let msg = { channel: "BUFFER", data: { id: captureId, buffer, size } }
+        let msg = { channel: "BUFFER", data: { id: captureId, time: Date.now(), buffer, size } }
         toApp(OUTPUT, msg)
         this.sendToStageOutputs(msg, captureId) // don't send to itself
         this.sendToRequested(msg)
@@ -164,7 +184,7 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, buffer, size } })
+        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, time: Date.now(), buffer, size } })
     }
 
     static requestPreview(data: any) {

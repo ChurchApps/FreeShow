@@ -41,6 +41,8 @@
         "clear_slide",
         "clear_next_timer",
         "name_select_overlay",
+        "name_start_timer",
+        "id_start_timer",
         "playlist_next",
         "id_select_output_style",
         "change_transition",

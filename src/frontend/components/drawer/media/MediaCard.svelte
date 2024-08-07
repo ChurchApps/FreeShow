@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeShow, media, mediaOptions, outLocked, outputs, styles } from "../../../stores"
+    import { activeShow, media, mediaOptions, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
@@ -11,6 +11,7 @@
 
     export let name: string
     export let path: string
+    export let credits: any = {}
     export let type: any
     export let active: string | null
     export let thumbnailPath: string = ""
@@ -39,6 +40,14 @@
     }
 
     $: index = allFiles.findIndex((a) => a === path)
+
+    function mousedown(e: any) {
+        if (e.ctrlKey || e.metaKey) return
+
+        if (credits) {
+            photoApiCredits.set(credits)
+        }
+    }
 
     let wait = false
     function click(e: any) {
@@ -101,6 +110,7 @@
     icon={thumbnail ? icon : null}
     white={type === "image"}
     showPlayOnHover
+    on:mousedown={mousedown}
     on:click={click}
     on:dblclick={dblclick}
     on:keydown={keydown}
