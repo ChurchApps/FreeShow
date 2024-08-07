@@ -1166,7 +1166,11 @@
         "slides": "Slides",
         "words": "Words",
         "template": "Template",
-        "category": "Category"
+        "category": "Category",
+        "photoUrl": "Photo URL",
+        "likes": "Likes",
+        "artist": "Artist",
+        "artistUrl": "Artist page"
     },
     "songbeamer_import": {
         "options": "Options",
