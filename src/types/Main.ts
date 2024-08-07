@@ -1,6 +1,7 @@
 export interface Option {
     name: string
     extra?: string
+    data?: any
     id?: string
 }
 

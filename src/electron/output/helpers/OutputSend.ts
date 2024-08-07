@@ -1,4 +1,4 @@
-import { OUTPUT } from "../../../types/Channels"
+import { OUTPUT, ValidChannels } from "../../../types/Channels"
 import { OutputHelper } from "../OutputHelper"
 
 export class OutputSend {
@@ -25,10 +25,10 @@ export class OutputSend {
         }
     }
 
-    static sendToWindow(id: string, msg: any) {
+    static sendToWindow(id: string, msg: any, channel: ValidChannels = OUTPUT) {
         const output = OutputHelper.getOutput(id)
         if (!output?.window || output.window.isDestroyed()) return
-        output.window.webContents.send(OUTPUT, msg)
+        output.window.webContents.send(channel, msg)
         //if (!output.previewWindow || output.previewWindow.isDestroyed()) return
         //output.previewWindow.webContents.send(OUTPUT, msg)
     }

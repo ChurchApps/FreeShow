@@ -7,6 +7,7 @@ import { OutputHelper } from "../../output/OutputHelper"
 import { toServer } from "../../servers"
 import { CaptureHelper } from "../CaptureHelper"
 import { toApp } from "../.."
+import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 
 export type Channel = {
     key: string
@@ -25,6 +26,7 @@ export class CaptureTransmitter {
         if (!capture) return
         //this.startChannel(captureId, "preview")
         if (capture.options.ndi) this.startChannel(captureId, "ndi")
+        if (capture.options.blackmagic) this.startChannel(captureId, "blackmagic")
         if (capture.options.server) this.startChannel(captureId, "server")
         if (capture.options.stage) this.startChannel(captureId, "stage")
 
@@ -82,6 +84,10 @@ export class CaptureTransmitter {
             case "ndi":
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
+            case "blackmagic":
+                // BLACKMAGIC CURRENTLY NOT WORKING
+                // this.sendBufferToBlackmagic(captureId, image)
+                break
             case "server":
                 // const options = OutputHelper.getOutput(captureId)?.captureOptions
                 this.sendBufferToServer(captureId, image)
@@ -127,6 +133,20 @@ export class CaptureTransmitter {
         })
 
         this.requestList = newList
+    }
+
+    // BLACKMAGIC
+    static sendBufferToBlackmagic(captureId: string, image: NativeImage) {
+        if (!image) return
+
+        const buffer = image.getBitmap()
+        // const size = image.getSize()
+
+        let framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
+        if (!framerate) return
+
+        // WIP blackmagic audio
+        BlackmagicSender.scheduleFrame(captureId, buffer, null, framerate)
     }
 
     // MAIN (STAGE OUTPUT)

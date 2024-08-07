@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { NDI } from "../../../../types/Channels"
+    import { BLACKMAGIC } from "../../../../types/Channels"
     import { outputs } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { findMatchingOut } from "../../helpers/output"
@@ -19,8 +19,8 @@
 
     onMount(() => {
         if (background) {
-            if (!mirror) send(NDI, ["CAPTURE_STREAM"], { source: screen, outputId: Object.keys($outputs)[0] })
-        } else send(NDI, ["RECEIVE_STREAM"], { source: screen })
+            if (!mirror) send(BLACKMAGIC, ["RECEIVE_STREAM"], { source: screen, outputId: Object.keys($outputs)[0] })
+        } else send(BLACKMAGIC, ["RECEIVE_FRAME"], { source: screen })
     })
 
     $: if (frame) setCanvas()
@@ -29,8 +29,8 @@
 
         let ctx = canvas.getContext("2d")
 
-        const WIDTH = frame.xres
-        const HEIGHT = frame.yres
+        const WIDTH = frame.width
+        const HEIGHT = frame.height
         canvas.width = WIDTH
         canvas.height = HEIGHT
 
@@ -38,22 +38,25 @@
         ctx.putImageData(imageData, 0, 0)
     }
 
-    const receiveNDI: any = {
+    const receiveBlackmagic: any = {
         RECEIVE_STREAM: (data) => {
-            if (data.id !== screen.id) return
+            //  || data.frame?.type !== "frame"
+            if (data.id !== screen.id || !data.frame.video) return
             loaded = true
 
             let timeSinceSent = Date.now() - data.time
             if (timeSinceSent > 100) return // skip frames if overloaded
 
-            frame = data.frame
+            // WIP play audio? (data.audio.data ...)
+
+            frame = data.frame.video
         },
     }
 
-    receive(NDI, receiveNDI, screen.id)
+    receive(BLACKMAGIC, receiveBlackmagic, screen.id)
     onDestroy(() => {
-        destroy(NDI, screen.id)
-        if (background && !mirror) send(NDI, ["CAPTURE_DESTROY"], { id: screen.id, outputId: Object.keys($outputs)[0] })
+        destroy(BLACKMAGIC, screen.id)
+        if (background && !mirror) send(BLACKMAGIC, ["STOP_RECEIVER"], { id: screen.id, outputId: Object.keys($outputs)[0] })
     })
 
     let loaded: boolean = false
@@ -62,11 +65,8 @@
 {#if background}
     <canvas bind:this={canvas} />
 {:else}
-    <!-- class="context #live_card" -->
-    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click label={screen.name} {loaded} icon="ndi" white showPlayOnHover>
-        <!-- <SelectElem style="display: flex;" id="ndi" data={{ id: screen.id, type: "ndi", name: screen.name }} draggable> -->
+    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click label={screen.name} {loaded} icon="blackmagic" white showPlayOnHover>
         <canvas bind:this={canvas} />
-        <!-- </SelectElem> -->
     </Card>
 {/if}
 
@@ -74,7 +74,6 @@
     canvas {
         width: 100%;
         height: 100%;
-        /* aspect-ratio: 1920/1080; */
 
         object-fit: contain;
     }

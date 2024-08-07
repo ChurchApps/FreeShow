@@ -46,6 +46,8 @@
         navigator.mediaDevices
             .getUserMedia(constraints)
             .then((stream) => {
+                if (!videoElem) return
+
                 streams.push(stream)
                 videoElem.srcObject = stream
                 videoElem.onloadedmetadata = () => {

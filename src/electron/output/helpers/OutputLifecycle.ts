@@ -7,6 +7,8 @@ import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
 import { OUTPUT } from "../../../types/Channels"
 import { CaptureHelper } from "../../capture/CaptureHelper"
+import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
+import { initializeSender } from "../../blackmagic/talk"
 
 export class OutputLifecycle {
     static async createOutput(output: Output) {
@@ -21,7 +23,7 @@ export class OutputLifecycle {
         const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
         //const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow })
+        OutputHelper.setOutput(id, { window: outputWindow, invisible: output.invisible })
         //OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds(output)
 
@@ -31,12 +33,17 @@ export class OutputLifecycle {
 
         setTimeout(() => {
             if (!CaptureHelper.Lifecycle) return // window closed before timeout finished
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false })
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, blackmagic: !!output.blackmagic })
         }, 1200)
 
         // NDI
-        if (output.ndi) await NdiSender.createSenderNDI(id, output.name)
-        if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+        if (output.ndi) {
+            await NdiSender.createSenderNDI(id, output.name)
+            if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+        }
+
+        // Blackmagic
+        if (output.blackmagic) initializeSender(output, outputWindow, id)
     }
 
     /*
@@ -98,6 +105,7 @@ export class OutputLifecycle {
     static async removeOutput(id: string, reopen: any = null) {
         await CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
+        BlackmagicSender.stop(id)
 
         if (!OutputHelper.getOutput(id)) return
         if (OutputHelper.getOutput(id).window.isDestroyed()) {
