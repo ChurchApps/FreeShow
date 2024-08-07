@@ -358,17 +358,15 @@
 {/if}
 
 <!-- Blackmagic -->
-<h3>Blackmagic Design</h3>
+<!-- BLACKMAGIC CURRENTLY NOT WORKING -->
+<!-- <h3>Blackmagic Design</h3>
 
 <CombinedInput>
-    <p>
-        <T id="actions.enable" /> Blackmagic
-        <!-- <span class="connections">{$ndiData[currentOutput.id || ""]?.connections || ""}</span> -->
-    </p>
+    <p><T id="actions.enable" /> Blackmagic</p>
     <div class="alignRight">
         <Checkbox checked={currentOutput.blackmagic} on:change={(e) => updateOutput("blackmagic", isChecked(e))} />
     </div>
-</CombinedInput>
+</CombinedInput> -->
 
 {#if currentOutput.blackmagic}
     <CombinedInput>
