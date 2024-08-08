@@ -9,7 +9,7 @@ export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
     return new Promise((resolve) => {
         if (cache[query]) return resolve(cache[query])
 
-        let url: string = "https://api.unsplash.com/search/photos/?client_id=" + getKey("unsplash") + "&content_filter=high&per_page=30&query=" // this is still a demo key, so it should be changed before release
+        let url: string = "https://api.unsplash.com/search/photos/?client_id=" + getKey("unsplash") + "&content_filter=high&per_page=30&query="
         url += encodeURIComponent(query)
 
         let results: any = []
@@ -41,6 +41,7 @@ function getUnsplashCredits(media) {
         likes: media.likes,
         artist: media.user.name,
         artistUrl: "https://unsplash.com/@" + media.user.username,
-        downloadUrl: media.links.download, // download_location
+        downloadUrl: media.links.download,
+        trigger_download: media.links.download_location,
     }
 }

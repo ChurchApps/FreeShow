@@ -263,6 +263,14 @@
                 <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
             </div>
         </CombinedInput>
+        {#if $scriptureSettings.showVerse && sorted.length > 1}
+            <CombinedInput textWidth={70}>
+                <p><T id="scripture.split_reference" /></p>
+                <div class="alignRight">
+                    <Checkbox id="splitReference" checked={$scriptureSettings.splitReference !== false} on:change={checked} />
+                </div>
+            </CombinedInput>
+        {/if}
         <CombinedInput textWidth={70}>
             <p><T id="scripture.version" /></p>
             <div class="alignRight">

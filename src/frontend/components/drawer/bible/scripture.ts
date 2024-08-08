@@ -231,6 +231,7 @@ export function getSlides({ bibles, sorted }) {
 
             if (bibleIndex + 1 >= bibles.length) {
                 let range: any[] = sorted.slice(i - get(scriptureSettings).versesPerSlide + 1, i + 1)
+                if (get(scriptureSettings).splitReference === false) range = sorted
                 addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: bibles.length })
             }
 
@@ -260,6 +261,7 @@ export function getSlides({ bibles, sorted }) {
         if (bibleIndex + 1 < bibles.length) return
         let remainder = sorted.length % get(scriptureSettings).versesPerSlide
         let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
+        if (get(scriptureSettings).splitReference === false) range = sorted
         if (remainder) addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: bibles.length })
     })
 

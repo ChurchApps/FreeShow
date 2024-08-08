@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeShow, media, mediaOptions, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
+    import { activeShow, customMessageCredits, media, mediaOptions, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
+    import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
@@ -70,6 +71,12 @@
         // TODO: get actual data
         // TODO: output/preview control does not always match
         // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
+
+        // unsplash requires the download to be triggered when using their images
+        if (credits.type === "unsplash" && credits.trigger_download) {
+            fetch(credits.trigger_download + "?client_id=" + getKey("unsplash"), { method: "GET" }).catch((err) => console.error("Could not trigger download:", err))
+            customMessageCredits.set(`Photo by ${credits.artist} from Unsplash`)
+        }
     }
 
     function dblclick(e: any) {

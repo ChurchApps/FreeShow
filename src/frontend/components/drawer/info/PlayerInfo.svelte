@@ -46,6 +46,10 @@
                 <span>{$photoApiCredits.downloadUrl}</span>
             </p> -->
         </main>
+
+        <div class="credits">
+            Photo by <Link url={$photoApiCredits.artistUrl}>{$photoApiCredits.artist}</Link> from <span style="text-transform: capitalize;"><Link url={$photoApiCredits.photoUrl}>{$photoApiCredits.type}</Link></span>
+        </div>
     {/if}
 {/if}
 
@@ -83,4 +87,11 @@
     margin: 20px 0;
     background-color: var(--primary-lighter);
   } */
+
+    .credits {
+        position: absolute;
+        bottom: 10px;
+        width: 100%;
+        text-align: center;
+    }
 </style>

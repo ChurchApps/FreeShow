@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
     import { Option } from "../../../../types/Main"
-    import { activePopup, currentOutputSettings, ndiData, os, outputDisplay, outputs, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePopup, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, styles, toggleOutputEnabled } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -14,6 +14,7 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import { newToast } from "../../../utils/common"
 
     let outputsList: any[] = []
     $: outputsList = Object.entries($outputs)
@@ -28,8 +29,22 @@
 
     $: if (currentOutput.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
 
+    const autoRevert: string[] = ["kioskMode"] // changing these settings could break some things in some cases
+    const revertTime: number = 5 // seconds
+    let reverted: string[] = []
+
     function updateOutput(key: string, value: any, outputId: string = "") {
         if (!outputId) outputId = currentOutput.id
+
+        // auto revert special values
+        if (autoRevert.includes(key) && value && !reverted.includes(key)) {
+            newToast($dictionary.toast?.reverting_setting?.replace("{}", revertTime.toString()))
+            reverted.push(key)
+            setTimeout(() => {
+                updateOutput(key, false, outputId)
+                newToast("$toast.reverted")
+            }, revertTime * 1000)
+        }
 
         if (key === "blackmagic") {
             if (value === true) {

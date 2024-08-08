@@ -22,6 +22,7 @@ import {
     projects,
     showsCache,
     slideTimers,
+    stageShows,
     styles,
     templates,
     timers,
@@ -761,17 +762,26 @@ export function getDynamicIds() {
     return [...mainValues, ...metaValues]
 }
 
-export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type }: any, _updater: number = 0) {
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater: number = 0) {
     if (type === "stage" && get(currentWindow) === "output") {
         let outputId = Object.values(get(outputs))[0]?.stageOutput || ""
         let outSlide = get(allOutputs)[outputId]?.out?.slide
         showId = outSlide?.id
+        slideIndex = outSlide?.index
+    } else if (type === "stage") {
+        let stageOutput = get(stageShows)[id]?.settings?.output
+        let outputId = stageOutput || getActiveOutputs(get(outputs), false, true, true)[0]
+        let outSlide = get(outputs)[outputId]?.out?.slide
+        showId = outSlide?.id
+        slideIndex = outSlide?.index
     }
 
     let show = _show(showId).get()
     if (!show) return text
 
     getDynamicIds().forEach((id) => {
+        if (!text.includes(dynamicValueText(id))) return
+
         let newValue = getDynamicValue(id, show)
         text = text.replaceAll(dynamicValueText(id), newValue)
     })

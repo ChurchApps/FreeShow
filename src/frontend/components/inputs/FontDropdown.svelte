@@ -102,8 +102,11 @@
                 <span
                     id={formatId(option)}
                     on:click={() => {
-                        dispatch("click", option)
                         active = false
+                        // allow dropdown to close before updating, so svelte visual bug don't duplicate inputs on close transition in boxstyle edit etc.
+                        setTimeout(() => {
+                            dispatch("click", option)
+                        }, 50)
                     }}
                     class:active={option === value}
                     style="font-family: {option};"
