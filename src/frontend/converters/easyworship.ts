@@ -87,7 +87,7 @@ export function convertEasyWorship(data: any) {
                 title: song?.title || "",
                 author: song.author || "",
                 copyright: song.copyright || "",
-                CCLI: song.vendor_id || "",
+                CCLI: song.reference_number || "",
             }
         }
 

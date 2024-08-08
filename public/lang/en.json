@@ -573,6 +573,7 @@
         "remove_layers": "Remove layers",
         "start_recording": "Start recording",
         "stop_recording": "Stop recording",
+        "export_recording": "Stop recording and export",
         "index_select_project": "Select project by index",
         "next_project_item": "Next project item",
         "previous_project_item": "Previous project item",

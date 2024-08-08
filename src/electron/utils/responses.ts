@@ -308,12 +308,19 @@ function getScreens(type: "window" | "screen" = "screen") {
 }
 
 // RECORDER
+// only open once per session
+let systemOpened: boolean = false
 export function saveRecording(_: any, msg: any) {
     let folder: string = getDataFolder(msg.path || "", dataFolderNames.recordings)
     let p: string = path.join(folder, msg.name)
 
     const buffer = Buffer.from(msg.blob)
     writeFile(p, buffer)
+
+    if (!systemOpened) {
+        openSystemFolder(folder)
+        systemOpened = true
+    }
 }
 
 // ERROR LOGGER

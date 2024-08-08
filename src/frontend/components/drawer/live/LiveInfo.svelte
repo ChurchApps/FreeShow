@@ -3,12 +3,12 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-    import { stopMediaRecorder, toggleMediaRecorder } from "./recorder"
+    import { mediaRecorderIsPaused, stopMediaRecorder, toggleMediaRecorder } from "./recorder"
 
     let videoElem
     $: if ($currentRecordingStream && videoElem) {
         videoElem.srcObject = $currentRecordingStream
-        paused = false
+        paused = mediaRecorderIsPaused() || false
     }
 
     let paused = false
@@ -39,7 +39,7 @@
 
         <Button on:click={stopMediaRecorder} center dark>
             <Icon id="export" size={1.2} right />
-            <T id="export.export" />
+            <T id="actions.export_recording" />
         </Button>
     </div>
 {:else}

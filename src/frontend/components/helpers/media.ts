@@ -150,6 +150,8 @@ export async function loadThumbnail(input: string, size: number) {
     // online media (e.g. Pixabay/Unsplash)
     if (input.includes("http")) return input
 
+    input = decodeURI(input)
+
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
@@ -165,6 +167,8 @@ export function getThumbnailPath(input: string, size: number) {
 
     // online media (e.g. Pixabay/Unsplash)
     if (input.includes("http")) return input
+
+    input = decodeURI(input)
 
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
