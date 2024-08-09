@@ -59,7 +59,7 @@
         </div> -->
         <div>
             • <T id="about.support" />!
-            <Link url="https://livecs.org/partner">livecs.org/partner</Link>
+            <Link url="https://churchapps.org/partner#give">churchapps.org/partner</Link>
         </div>
     </div>
 
