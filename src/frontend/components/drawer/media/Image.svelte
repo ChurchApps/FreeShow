@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import { encodeFilePath } from "../../helpers/media"
 
     export let src: string
     export let alt: string
@@ -32,7 +33,7 @@
 </script>
 
 {#key retryCount}
-    <img style={$$props.style} {src} {alt} class:loaded class:transition bind:this={image} on:error={reload} />
+    <img style={$$props.style} src={encodeFilePath(src)} {alt} class:loaded class:transition bind:this={image} on:error={reload} />
 {/key}
 
 <style>

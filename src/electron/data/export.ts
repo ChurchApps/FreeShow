@@ -88,8 +88,8 @@ export function generatePDF(path: string) {
 function exportMessage(message: string = "") {
     toApp(MAIN, { channel: "ALERT", data: message })
 
+    exportWindow?.on("closed", () => (exportWindow = null))
     exportWindow?.close()
-    exportWindow = null
 }
 
 let exportWindow: any = null

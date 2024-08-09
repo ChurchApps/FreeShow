@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
+    import { encodeFilePath } from "../helpers/media"
 
     export let path: any
     export let video: any = null
@@ -75,7 +76,7 @@
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}
         muted={mirror ? true : videoData.muted ?? true}
-        src={path}
+        src={encodeFilePath(path)}
         autoplay
         loop={videoData.loop || false}
     >

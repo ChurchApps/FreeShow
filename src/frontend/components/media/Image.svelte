@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
+    import { encodeFilePath } from "../helpers/media"
 
     export let path: string
     export let mediaStyle: MediaStyle = {}
@@ -17,7 +18,7 @@
 <img
     class="media"
     style="width: 100%;height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});"
-    src={path}
+    src={encodeFilePath(path)}
     alt=""
     draggable="false"
     on:error

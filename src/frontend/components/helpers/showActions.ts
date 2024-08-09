@@ -422,9 +422,8 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         }
 
         // background
-        if (background) {
-            let bg = _show(showId).get("media")[background!]
-            console.log(_show(showId).get(), _show(showId).get("media"))
+        if (background && _show(showId).get("media")[background]) {
+            let bg = _show(showId).get("media")[background]
             let outputBg = get(outputs)[outputId]?.out?.background
             let cloudId = get(driveData).mediaId
             let bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path : bg.path
@@ -439,7 +438,6 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
             if (bg && bgPath !== outputBg?.path) {
                 let mediaStyle = getMediaStyle(get(media)[bgPath], { name: "" })
-                console.log(mediaStyle)
                 let bgData: any = {
                     name,
                     type,

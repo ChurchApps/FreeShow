@@ -10,7 +10,7 @@
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
-    import { encodeFilePath, getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
+    import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import { clearBackground } from "../../output/clear"
@@ -115,7 +115,7 @@
         files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
         files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
-        files = files.map((a) => ({ ...a, path: a.folder ? a.path : encodeFilePath(a.path) }))
+        files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
         filterFiles()
     }

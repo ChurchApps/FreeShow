@@ -65,6 +65,7 @@
 
         let mediaId = layoutSlide.background!
         let folders = Object.values($mediaFolders).map((a) => a.path!)
+        console.log(background, mediaId, folders)
         locateFile(mediaId, bg.path, folders, bg)
     }
 

@@ -553,8 +553,12 @@ const receiveCLOUD = {
         showsCache.set({})
         activeShow.set(null)
 
-        popupData.set(changes)
-        activePopup.set("cloud_update")
+        // could show popup with data (but it's better to just show a toast!)
+        newToast("$cloud.sync_complete")
+        popupData.set({})
+        activePopup.set(null)
+        // popupData.set(changes)
+        // activePopup.set("cloud_update")
     },
 }
 

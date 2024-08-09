@@ -357,51 +357,69 @@ export function readExifData({ id }: any, e: any) {
 }
 
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
+const NESTED_SEARCH = 8 // folder levels deep
 export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
     let matches: string[] = []
 
-    findMatches(true)
-    if (matches.length < 1) findMatches()
-    if (matches.length < 1) return
+    findMatches()
+    if (!matches.length) return
 
     toApp(MAIN, { channel: "LOCATE_MEDIA_FILE", data: { path: matches[0], ref } })
 
     /////
 
-    function findMatches(searchWithFolder: boolean = false) {
+    function findMatches() {
         for (const folderPath of folders) {
-            if (matches.length > 1) return
-
-            checkFolderForMatches(folderPath, searchWithFolder)
-
+            // if (matches.length > 1) return // this might be used if we want the user to choose if more than one match is found
             if (matches.length) return
-
-            let files = readFolder(folderPath)
-            for (const name of files) {
-                if (matches.length) return
-
-                let p: string = path.join(folderPath, name)
-                let fileStat = getFileStats(p)
-                if (fileStat?.folder) checkFolderForMatches(p, searchWithFolder)
-            }
+            searchInFolder(folderPath)
         }
     }
 
-    function checkFolderForMatches(folderPath: string, searchWithFolder: boolean = false) {
+    function searchInFolder(folderPath: string, level: number = 1) {
+        if (level > NESTED_SEARCH || matches.length) return
+
+        let currentFolderFolders: string[] = []
         let files = readFolder(folderPath)
+        for (const name of files) {
+            let currentFilePath: string = path.join(folderPath, name)
+            let fileStat = getFileStats(currentFilePath)
 
-        let folderName = path.basename(folderPath)
-        let searchName = fileName
-        if (searchWithFolder && splittedPath?.length > 1) searchName = path.join(splittedPath[splittedPath.length - 2], fileName)
+            if (fileStat?.folder) {
+                // search all files in current folder before searching in any nested folders
+                currentFolderFolders.push(currentFilePath)
+            } else {
+                checkFileForMatch(name, folderPath)
+                if (matches.length) return
+            }
+        }
 
-        for (let name of files) {
-            if (matches.length > 1) return
+        if (matches.length) return
 
-            let pathName = searchWithFolder ? path.join(folderName, name) : name
+        for (const folderName of currentFolderFolders) {
+            searchInFolder(folderName, level + 1)
+            if (matches.length) return
+        }
+    }
+
+    function checkFileForMatch(currentFileName: string, folderPath: string) {
+        // include original parent folder name in search first (to limit it a bit if two files with same name are in two different folders!)
+        if (splittedPath?.length > 1) {
+            let currentParentFolder = path.basename(folderPath)
+            let pathName = path.join(currentParentFolder, currentFileName)
+            let searchName = path.join(splittedPath[splittedPath.length - 2], fileName)
             if (pathName === searchName) {
-                let p: string = path.join(folderPath, name)
+                let p: string = path.join(folderPath, currentFileName)
                 matches.push(p)
             }
+        }
+
+        if (matches.length) return
+
+        // check for file name exact match
+        if (currentFileName === fileName) {
+            let p: string = path.join(folderPath, currentFileName)
+            matches.push(p)
         }
     }
 }

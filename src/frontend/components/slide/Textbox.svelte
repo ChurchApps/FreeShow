@@ -7,7 +7,7 @@
     import { getAutoSize } from "../edit/scripts/autoSize"
     import Icon from "../helpers/Icon.svelte"
     import { clone } from "../helpers/array"
-    import { getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
+    import { encodeFilePath, getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
@@ -443,7 +443,7 @@
             {#if mediaItemPath}
                 {#if $currentWindow && getMediaType(getExtension(mediaItemPath)) === "video"}
                     <video
-                        src={mediaItemPath}
+                        src={encodeFilePath(mediaItemPath)}
                         style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
                         muted={mirror || item.muted}
                         volume={Math.max(1, $volume)}
