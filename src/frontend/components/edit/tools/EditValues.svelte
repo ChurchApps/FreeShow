@@ -67,7 +67,7 @@
             let inset = input.key.includes("inset_")
             if (inset) input.key = input.key.substring(6)
 
-            let actualValue = styles[input.key] || getOriginalValue(edits, (inset ? "inset_" : "") + input.key)
+            let actualValue = styles[input.key] || getOriginalValue(clone(edits), (inset ? "inset_" : "") + input.key)
 
             // replace rgb() because it has spaces
             if (input.input === "color") {

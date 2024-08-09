@@ -7,13 +7,14 @@ import fs from "fs"
 import { Stats } from "original-fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
-import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
+import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
 import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./responses"
 import { defaultSettings } from "../data/defaults"
+import { OutputHelper } from "../output/OutputHelper"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -356,51 +357,69 @@ export function readExifData({ id }: any, e: any) {
 }
 
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
+const NESTED_SEARCH = 8 // folder levels deep
 export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
     let matches: string[] = []
 
-    findMatches(true)
-    if (matches.length < 1) findMatches()
-    if (matches.length < 1) return
+    findMatches()
+    if (!matches.length) return
 
     toApp(MAIN, { channel: "LOCATE_MEDIA_FILE", data: { path: matches[0], ref } })
 
     /////
 
-    function findMatches(searchWithFolder: boolean = false) {
+    function findMatches() {
         for (const folderPath of folders) {
-            if (matches.length > 1) return
-
-            checkFolderForMatches(folderPath, searchWithFolder)
-
+            // if (matches.length > 1) return // this might be used if we want the user to choose if more than one match is found
             if (matches.length) return
-
-            let files = readFolder(folderPath)
-            for (const name of files) {
-                if (matches.length) return
-
-                let p: string = path.join(folderPath, name)
-                let fileStat = getFileStats(p)
-                if (fileStat?.folder) checkFolderForMatches(p, searchWithFolder)
-            }
+            searchInFolder(folderPath)
         }
     }
 
-    function checkFolderForMatches(folderPath: string, searchWithFolder: boolean = false) {
+    function searchInFolder(folderPath: string, level: number = 1) {
+        if (level > NESTED_SEARCH || matches.length) return
+
+        let currentFolderFolders: string[] = []
         let files = readFolder(folderPath)
+        for (const name of files) {
+            let currentFilePath: string = path.join(folderPath, name)
+            let fileStat = getFileStats(currentFilePath)
 
-        let folderName = path.basename(folderPath)
-        let searchName = fileName
-        if (searchWithFolder && splittedPath?.length > 1) searchName = path.join(splittedPath[splittedPath.length - 2], fileName)
+            if (fileStat?.folder) {
+                // search all files in current folder before searching in any nested folders
+                currentFolderFolders.push(currentFilePath)
+            } else {
+                checkFileForMatch(name, folderPath)
+                if (matches.length) return
+            }
+        }
 
-        for (let name of files) {
-            if (matches.length > 1) return
+        if (matches.length) return
 
-            let pathName = searchWithFolder ? path.join(folderName, name) : name
+        for (const folderName of currentFolderFolders) {
+            searchInFolder(folderName, level + 1)
+            if (matches.length) return
+        }
+    }
+
+    function checkFileForMatch(currentFileName: string, folderPath: string) {
+        // include original parent folder name in search first (to limit it a bit if two files with same name are in two different folders!)
+        if (splittedPath?.length > 1) {
+            let currentParentFolder = path.basename(folderPath)
+            let pathName = path.join(currentParentFolder, currentFileName)
+            let searchName = path.join(splittedPath[splittedPath.length - 2], fileName)
             if (pathName === searchName) {
-                let p: string = path.join(folderPath, name)
+                let p: string = path.join(folderPath, currentFileName)
                 matches.push(p)
             }
+        }
+
+        if (matches.length) return
+
+        // check for file name exact match
+        if (currentFileName === fileName) {
+            let p: string = path.join(folderPath, currentFileName)
+            matches.push(p)
         }
     }
 }
@@ -408,6 +427,8 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
 // LOAD SHOWS
 
 export function loadShows({ showsPath }: any, returnShows: boolean = false) {
+    specialCaseFixer()
+
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 
@@ -473,4 +494,29 @@ export function parseShow(jsonData: string) {
     }
 
     return show
+}
+
+// some users might have got themselves in a situation they can't get out of
+// example: enables "kiosk" mode on mac might have resulted in a black screen, and they can't find the app data location to revert it!
+// how: Place any file in your Documents/FreeShow folder that has the FIXES key in it's name (e.g. DISABLE_KIOSK_MODE), when you now start your app the fix will be triggered!
+const FIXES: any = {
+    DISABLE_KIOSK_MODE: () => {
+        // wait to ensure output settings have loaded in the app!
+        setTimeout(() => {
+            toApp(OUTPUT, { channel: "UPDATE_OUTPUTS_DATA", data: { key: "kioskMode", value: false, autoSave: true } })
+            OutputHelper.getAllOutputs().forEach(([_id, output]) => output.window.setKiosk(false))
+        }, 1000)
+    },
+    OPEN_APPDATA_SETTINGS: () => {
+        // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
+        openSystemFolder(stores.SETTINGS.path)
+    },
+}
+function specialCaseFixer() {
+    let defaultDataFolder = getDocumentsFolder(null, "")
+    let files: string[] = readFolder(defaultDataFolder)
+    files.forEach((fileName) => {
+        let matchFound = Object.keys(FIXES).find((key) => fileName.includes(key))
+        if (matchFound) FIXES[matchFound]()
+    })
 }

@@ -1,20 +1,20 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { FILE_INFO, MAIN } from "../../../../types/Channels"
-    import { activeShow, drawerTabsData } from "../../../stores"
+    import { activeRecording, activeShow, drawerTabsData } from "../../../stores"
+    import { send } from "../../../utils/request"
     import { formatBytes } from "../../helpers/bytes"
     import { getFileName, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import Date from "../../system/Date.svelte"
     import LiveInfo from "../live/LiveInfo.svelte"
     import PlayerInfo from "./PlayerInfo.svelte"
-    import { onDestroy } from "svelte"
-    import { send } from "../../../utils/request"
 
     $: name = $activeShow?.name || ""
     $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http")) {
         info = {}
-        send(MAIN, ["FILE_INFO"], decodeURI($activeShow?.id))
+        send(MAIN, ["FILE_INFO"], $activeShow?.id)
     }
 
     let listenerId = uid()
@@ -32,10 +32,10 @@
     $: subTab = $drawerTabsData.media?.activeSubTab
 </script>
 
-{#if subTab === "online"}
-    <PlayerInfo />
-{:else if subTab === "screens"}
+{#if subTab === "screens" || $activeRecording}
     <LiveInfo />
+{:else if subTab === "online"}
+    <PlayerInfo />
 {:else}
     <main style="overflow-y: auto;">
         <h2 style="text-align: center;padding: 0 5px;" title={name}>

@@ -7,16 +7,16 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
-    import { decodeURI, startPlaylist, stopPlaylist, updatePlaylist } from "../../helpers/audio"
+    import { startPlaylist, stopPlaylist, updatePlaylist } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
-    import { encodeFilePath, getFileName, getMediaType } from "../../helpers/media"
+    import { getFileName, getMediaType } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
+    import DropArea from "../../system/DropArea.svelte"
     import AudioStreams from "../live/AudioStreams.svelte"
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
     import AudioFile from "./AudioFile.svelte"
-    import DropArea from "../../system/DropArea.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -48,7 +48,7 @@
             files = Object.entries($media)
                 .map(([path, a]: any) => {
                     let p = splitPath(path)
-                    let name = decodeURI(p.name)
+                    let name = p.name
                     return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
                 })
                 .filter((a) => a.favourite === true && a.audio === true)
@@ -88,7 +88,7 @@
             files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
             files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
-            files = files.map((a) => ({ ...a, path: a.folder ? a.path : encodeFilePath(a.path) }))
+            files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
             // filterFiles()
             scrollElem?.scrollTo(0, 0)
@@ -226,7 +226,7 @@
             <DropArea id="audio_playlist" selectChildren let:fileOver file>
                 {#if playlist.songs.length}
                     {#each playlist.songs as song, index}
-                        <AudioFile path={song} name={decodeURI(getFileName(song))} {active} playlist {index} {fileOver} />
+                        <AudioFile path={song} name={getFileName(song)} {active} playlist {index} {fileOver} />
                     {/each}
                 {:else}
                     <Center faded>

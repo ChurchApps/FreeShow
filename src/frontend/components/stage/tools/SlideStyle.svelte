@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeStage, outputs, stageShows } from "../../../stores"
+    import { activeStage, outputs, stageShows, toggleOutputEnabled } from "../../../stores"
     import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
     import { keysToID } from "../../helpers/array"
@@ -101,7 +101,15 @@
     <CombinedInput>
         <p><T id="settings.output_screen" /></p>
         <div class="alignRight">
-            <Checkbox checked={settings.outputScreen} on:change={(e) => toggleValue(e, "outputScreen")} />
+            <Checkbox
+                checked={settings.outputScreen}
+                on:change={(e) => {
+                    toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
+                    setTimeout(() => {
+                        toggleValue(e, "outputScreen")
+                    }, 100)
+                }}
+            />
         </div>
     </CombinedInput>
 

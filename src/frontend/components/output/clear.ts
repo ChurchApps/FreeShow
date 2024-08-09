@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, activePopup, lockedOverlays, outLocked, outputCache, outputs, overlays, playingAudio, playingMetronome, selected, slideTimers, videosData, videosTime } from "../../stores"
+import { activeEdit, activePopup, customMessageCredits, lockedOverlays, outLocked, outputCache, outputs, overlays, playingAudio, playingMetronome, selected, slideTimers, videosData, videosTime } from "../../stores"
 import { clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { clearAudio } from "../helpers/audio"
 import { clone } from "../helpers/array"
@@ -51,6 +51,7 @@ export function clearBackground(outputId: string = "") {
         })
     })
 
+    customMessageCredits.set("") // unsplash
     customActionActivation("background_cleared")
 }
 

@@ -65,6 +65,7 @@
 
         let mediaId = layoutSlide.background!
         let folders = Object.values($mediaFolders).map((a) => a.path!)
+        console.log(background, mediaId, folders)
         locateFile(mediaId, bg.path, folders, bg)
     }
 
@@ -126,10 +127,14 @@
     let thumbnailPath: string = ""
     async function loadBackground() {
         if (ghostBackground) {
-            await wait(100)
-            // will not load if not opened in the drawer (but original image will then be loaded)
-            thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
-            // thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
+            if (index === 1) {
+                // create image (if not created) when it's on slide 2 (slide 1 is the original)
+                thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
+            } else {
+                // load ghost thumbnails (wait a bit to reduce loading lag)
+                await wait(100)
+                thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
+            }
             return
         }
 

@@ -39,6 +39,7 @@ import {
     audioFolders,
     closeAd,
     currentOutputSettings,
+    customMessageCredits,
     dataPath,
     deviceId,
     dictionary,
@@ -93,7 +94,7 @@ import { createData } from "./createData"
 import { syncDrive, validateKeys } from "./drive"
 import { sendInitialOutputData } from "./listeners"
 import { receive, send } from "./request"
-import { closeApp, initializeClosing, saveComplete } from "./save"
+import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { clearBackground } from "../components/output/clear"
@@ -318,6 +319,16 @@ const receiveOUTPUTasMAIN: any = {
             return a
         })
     },
+    UPDATE_OUTPUTS_DATA: ({ key, value, id, autoSave }) => {
+        outputs.update((a) => {
+            let ids = id ? [id] : Object.keys(get(outputs))
+            ids.forEach((outputId) => {
+                if (a[outputId]) a[outputId][key] = value
+            })
+            return a
+        })
+        if (autoSave) save()
+    },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.log(msg),
     MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
@@ -421,6 +432,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
     MEDIA: (a: any) => media.set(a),
+    CUSTOM_CREDITS: (a: any) => customMessageCredits.set(a),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
     TIME_FORMAT: (a: any) => timeFormat.set(a),
@@ -541,8 +553,12 @@ const receiveCLOUD = {
         showsCache.set({})
         activeShow.set(null)
 
-        popupData.set(changes)
-        activePopup.set("cloud_update")
+        // could show popup with data (but it's better to just show a toast!)
+        newToast("$cloud.sync_complete")
+        popupData.set({})
+        activePopup.set(null)
+        // popupData.set(changes)
+        // activePopup.set("cloud_update")
     },
 }
 

@@ -5,7 +5,7 @@
     import { uid } from "uid"
     import { MAIN } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
-    import { media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { customMessageCredits, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { destroy, receive, send } from "../../utils/request"
     import Draw from "../draw/Draw.svelte"
@@ -267,8 +267,8 @@
         {/if}
 
         <!-- metadata -->
-        {#if metadataValue}
-            <Metadata value={metadata.value || ""} style={metadata.style || ""} transition={transitions.overlay} {isKeyOutput} />
+        {#if metadataValue || $customMessageCredits}
+            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} transition={transitions.overlay} {isKeyOutput} />
         {/if}
 
         <!-- overlays -->

@@ -73,13 +73,13 @@
     }
 
     // get all shows inside current shows folder (and remove missing)
-    function refreshShows() {
-        send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
+    // function refreshShows() {
+    //     send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
 
-        setTimeout(() => {
-            send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
-        }, 800)
-    }
+    //     setTimeout(() => {
+    //         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
+    //     }, 800)
+    // }
 
     // delete shows from folder that are not indexed
     function deleteShows() {
@@ -228,7 +228,8 @@
 </CombinedInput> -->
 
 <!-- USED TO REFRESH SHOWS WITHOUT RESTARTING -->
-{#if brokenShows > 0 || hiddenShows.length > Object.keys($shows).length}
+<!-- WIP this could be used to refresh shows list from folder without restarting the program, but I don't think its necessary -->
+<!-- {#if brokenShows > 0 || hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={refreshShows}>
             <Icon id="refresh" style="border: 0;" right />
@@ -238,7 +239,7 @@
             </p>
         </Button>
     </CombinedInput>
-{/if}
+{/if} -->
 <!-- USED TO DELETE "BROKEN" SHOWS -->
 {#if hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>

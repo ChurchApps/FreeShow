@@ -3,7 +3,7 @@
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getExtension } from "../helpers/media"
+    import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
@@ -297,7 +297,7 @@
                 resolve(false)
             }
 
-            media.src = src
+            media.src = encodeFilePath(src)
         })
     }
 

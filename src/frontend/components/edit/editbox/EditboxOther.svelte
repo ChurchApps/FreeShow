@@ -3,7 +3,7 @@
     import { activeEdit } from "../../../stores"
     import Cam from "../../drawer/live/Cam.svelte"
     import Icon from "../../helpers/Icon.svelte"
-    import { getMediaType, getExtension, getThumbnailPath, mediaSize } from "../../helpers/media"
+    import { getMediaType, getExtension, getThumbnailPath, mediaSize, encodeFilePath } from "../../helpers/media"
     import { getStyles } from "../../helpers/style"
     import DynamicEvents from "../../slide/views/DynamicEvents.svelte"
     import ListView from "../../slide/views/ListView.svelte"
@@ -53,7 +53,7 @@
     {#if item.src}
         {#if getMediaType(getExtension(mediaPath)) === "video"}
             <!-- video -->
-            <video src={mediaPath} style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" muted={true} autoplay loop>
+            <video src={encodeFilePath(mediaPath)} style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" muted={true} autoplay loop>
                 <track kind="captions" />
             </video>
         {:else}

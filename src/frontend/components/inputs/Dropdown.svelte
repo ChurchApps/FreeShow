@@ -84,8 +84,11 @@
                     id={formatId(option.name)}
                     on:click={() => {
                         if (disabled) return
-                        dispatch("click", option)
                         active = false
+                        // allow dropdown to close before updating, so svelte visual bug don't duplicate inputs on close transition in boxstyle edit etc.
+                        setTimeout(() => {
+                            dispatch("click", option)
+                        }, 50)
                     }}
                     class:active={activeId && option?.id ? option.id === activeId : option.name === value}
                 >

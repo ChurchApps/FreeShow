@@ -79,7 +79,8 @@
 
     function getBibleId(index: number, bible: any = null) {
         let selectedScriptureData = $scriptures[active]
-        return selectedScriptureData?.id || selectedScriptureData?.collection?.versions?.[index] || bible?.id || active
+        let bibleId = selectedScriptureData?.collection?.versions?.[index] || selectedScriptureData?.id || bible?.id || active
+        return bibleId
     }
 
     let versesList: { [key: string]: Verse[] } = {}
@@ -97,7 +98,9 @@
             data = $scriptures[objectId].books
         } else {
             try {
-                data = await fetchBible(load, bibleId, { versesList: versesList[bibleId] || [], bookId, chapterId })
+                // get actual api id from the abbr
+                let apiId = $scriptures[bibleId]?.id || bibleId
+                data = await fetchBible(load, apiId, { versesList: versesList[bibleId] || [], bookId, chapterId })
 
                 if (load === "books" && data?.length) setBooksCache(objectId, data)
             } catch (err) {
@@ -230,7 +233,7 @@
 
             if (!bibles[i]?.version) return
 
-            if (bibles[i].api) loadAPIBible(id, "books")
+            if (bibles[i].api) loadAPIBible(id, "books", i)
             else if ($scripturesCache[id]) {
                 books[id] = ($scripturesCache[id].books as any) || []
                 bookId = cachedRef?.bookId || 0
@@ -250,7 +253,7 @@
                 books[id].forEach((b) => {
                     if (b.id === bookId) bibles[i].book = b.name
                 })
-                loadAPIBible(id, "chapters")
+                loadAPIBible(id, "chapters", i)
             } else if (books[id][bookId]) {
                 bibles[i].book = books[id][bookId].name || ""
                 chapters[id] = (books[id][bookId] as any).chapters
@@ -272,7 +275,7 @@
                 })
 
                 verses[id] = {}
-                await loadAPIBible(id, "verses")
+                await loadAPIBible(id, "verses", i)
                 await loadAPIBible(id, "versesText", i)
             } else if (chapters[id][chapterId]) {
                 let content: any = {}

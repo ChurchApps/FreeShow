@@ -711,26 +711,26 @@ export async function getAnalyser(elem: any, stream: any = null) {
 
 export async function getAudioDuration(path: string): Promise<number> {
     return new Promise((resolve) => {
-        let audio: any = new Audio(path)
+        let audio: any = new Audio(encodeFilePath(path))
         audio.addEventListener("canplaythrough", (_: any) => {
             resolve(audio.duration)
         })
     })
 }
 
-export function decodeURI(path: string) {
-    const cleanedURI = cleanURI(path)
+// export function decodeURI(path: string) {
+//     const cleanedURI = cleanURI(path)
 
-    try {
-        return decodeURIComponent(cleanedURI)
-    } catch (e) {
-        console.error("URI malformed: ", path)
-        // newToast("$error.uri")
-        return path
-    }
-}
-function cleanURI(uri) {
-    // only keep valid URI characters (and spaces)
-    const invalidChars = /[^ A-Za-z0-9\-_.!~*'()%;:@&=+$,/?#[\]]/g
-    return uri.replace(invalidChars, "")
-}
+//     try {
+//         return decodeURIComponent(cleanedURI)
+//     } catch (e) {
+//         console.error("URI malformed: ", path)
+//         // newToast("$error.uri")
+//         return path
+//     }
+// }
+// function cleanURI(uri) {
+//     // only keep valid URI characters (and spaces)
+//     const invalidChars = /[^ A-Za-z0-9\-_.!~*'()%;:@&=+$,/?#[\]]/g
+//     return uri.replace(invalidChars, "")
+// }

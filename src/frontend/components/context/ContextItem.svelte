@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeRecording, activeShow, events, forceClock, media, os, overlays, redoHistory, scriptures, selected, shows, slidesOptions, stageShows, undoHistory } from "../../stores"
+    import { activeProject, activeRecording, activeShow, events, forceClock, media, os, outputs, overlays, redoHistory, scriptures, selected, shows, slidesOptions, stageShows, undoHistory } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -83,6 +83,10 @@
         lock_to_output: () => {
             let id = $selected.data[0]
             if ($overlays[id]?.locked) enabled = true
+        },
+        hide_from_preview: () => {
+            let outputId = contextElem.id
+            if ($outputs[outputId]?.hideFromPreview) enabled = true
         },
         place_under_slide: () => {
             let id = $selected.data[0]

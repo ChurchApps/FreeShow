@@ -66,6 +66,15 @@ export function encodeFilePath(path: string): string {
     return joinPath([...splittedPath, encodedName])
 }
 
+// decode only file name in path (not full path)
+// export function decodeFilePath(path: string) {
+//     let splittedPath = splitPath(path)
+//     let fileName = splittedPath.pop() || ""
+//     let decodedName = decodeURI(fileName)
+
+//     return joinPath([...splittedPath, decodedName])
+// }
+
 // convert to base64
 async function toDataURL(url: string): Promise<string> {
     return new Promise((resolve: any) => {
@@ -101,7 +110,7 @@ export function checkMedia(src: string) {
         }
 
         elem.onerror = () => finish("false")
-        elem.src = src
+        elem.src = encodeFilePath(src)
 
         let timedout = setTimeout(() => {
             finish("false")
@@ -256,6 +265,7 @@ export function captureCanvas(data: any) {
     mediaElem.addEventListener("error", (err) => {
         if (!mediaElem.src) return
 
+        console.log(data, encodeFilePath(data.input))
         console.error("Could not load media:", err)
         if (!retries[data.input]) retries[data.input] = 0
         retries[data.input]++
@@ -264,7 +274,7 @@ export function captureCanvas(data: any) {
         else setTimeout(() => (isImage ? "" : mediaElem.load()), 3000)
     })
 
-    mediaElem.src = data.input
+    mediaElem.src = encodeFilePath(data.input)
     // document.body.appendChild(mediaElem) // DEBUG
 
     async function captureCanvas(media, mediaSize) {

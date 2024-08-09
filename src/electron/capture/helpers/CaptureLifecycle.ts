@@ -6,7 +6,9 @@ import { CaptureTransmitter } from "./CaptureTransmitter"
 export class CaptureLifecycle {
     static startCapture(id: string, toggle: any = {}) {
         const output = OutputHelper.getOutput(id)
-        let window = output?.window
+        if (!output) return
+
+        let window = output.window
         let windowIsRemoved = !window || window.isDestroyed()
         if (windowIsRemoved) {
             delete output.captureOptions
@@ -35,7 +37,7 @@ export class CaptureLifecycle {
 
         captureFrame()
         async function captureFrame() {
-            if (!output.captureOptions || output.captureOptions.window.isDestroyed()) return
+            if (!output?.captureOptions?.window || output.captureOptions.window.isDestroyed()) return
 
             let image = await output.captureOptions.window.webContents.capturePage()
             processFrame(image)

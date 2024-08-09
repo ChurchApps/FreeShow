@@ -49,6 +49,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     choose_screen: { label: "popup.choose_screen", icon: "screen" },
     toggle_output: { label: "context.toggle_output", icon: "outputs" },
     move_to_front: { label: "context.move_to_front", icon: "toFront" },
+    hide_from_preview: { label: "context.hide_from_preview", icon: "hide" },
     // PROJECT
     close: { label: "actions.close", icon: "close" },
     newProject: { label: "new.project", icon: "project" },
@@ -141,7 +142,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     output: ["force_output", "SEPERATOR", "align_with_screen", "choose_screen"], // , "SEPERATOR", "edit"
 
     // OUTPUTS
-    output_active_button: ["toggle_output", "move_to_front", "SEPERATOR", "edit"],
+    output_active_button: ["toggle_output", "move_to_front", "SEPERATOR", "hide_from_preview", "SEPERATOR", "edit"],
 
     // DRAWER
     drawer_top: ["enabledTabs"],
