@@ -44,6 +44,7 @@ import {
     styles,
     templates,
     themes,
+    toggleOutputEnabled,
 } from "../../stores"
 import { hideDisplay, newToast } from "../../utils/common"
 import { send } from "../../utils/request"
@@ -243,6 +244,22 @@ const actions: any = {
     move_to_front: (obj: any) => {
         send(OUTPUT, ["TO_FRONT"], obj.contextElem.id)
     },
+    hide_from_preview: (obj: any) => {
+        let outputId = obj.contextElem.id
+        toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
+        setTimeout(() => {
+            outputs.update((a) => {
+                // should match the outputs list in MultiOutputs.svelte
+                let showingOutputsList = Object.values(a).filter((a) => a.enabled && !a.hideFromPreview && !a.isKeyOutput)
+                let newValue = !a[outputId].hideFromPreview
+
+                if (newValue && showingOutputsList.length <= 1) newToast("$toast.one_output")
+                else a[outputId].hideFromPreview = !a[outputId].hideFromPreview
+
+                return a
+            })
+        }, 100)
+    },
 
     // new
     newShowPopup: () => activePopup.set("show"),
@@ -286,6 +303,7 @@ const actions: any = {
     createCollection: (obj: any) => {
         if (obj.sel.id !== "category_scripture") return
         let versions: string[] = obj.sel.data
+
         // remove collections
         versions = versions.filter((id) => typeof id === "string") // sometimes the bibles object is added
         versions = versions.filter((id) => !Object.entries(get(scriptures)).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
@@ -294,8 +312,12 @@ const actions: any = {
         let name = ""
         versions.forEach((id, i) => {
             if (i > 0) name += " + "
-            let bibleName: string = Object.values(get(scriptures)).find((a) => a.id === id)?.name || ""
-            name += getShortBibleName(bibleName)
+            if (id.length < 5) {
+                name += id.toUpperCase()
+            } else {
+                let bibleName: string = Object.values(get(scriptures)).find((a) => a.id === id)?.name || ""
+                name += getShortBibleName(bibleName)
+            }
         })
 
         scriptures.update((a) => {

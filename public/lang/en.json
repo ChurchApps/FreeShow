@@ -686,6 +686,7 @@
         "align_with_screen": "Align with screen",
         "toggle_output": "Toggle output",
         "move_to_front": "Move to front",
+        "hide_from_preview": "Hide from preview",
         "lock_to_output": "Lock to output",
         "place_under_slide": "Place under slide",
         "toggle_clock": "Toggle clock",

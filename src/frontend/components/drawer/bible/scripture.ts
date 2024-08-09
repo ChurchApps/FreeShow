@@ -8,7 +8,7 @@ import { getKey } from "../../../values/keys"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
 let tempCache: any = {}
-let fetchTimeout: any = null
+let fetchTimeout: any = {}
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
     let versesId: any = null
     if (ref.versesList.length) {
@@ -24,27 +24,27 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
         versesText: `${api}${active}/verses/${versesId}`,
     }
 
-    if (fetchTimeout) clearTimeout(fetchTimeout)
+    if (fetchTimeout[active]) clearTimeout(fetchTimeout[active])
     if (tempCache[urls[load]]) return tempCache[urls[load]]
 
     return new Promise((resolve, reject) => {
         if (!get(bibleApiKey) && !getKey("bibleapi")) return reject("No API key!")
         if (urls[load].includes("null")) return reject("Something went wrong!")
 
-        fetchTimeout = setTimeout(() => {
+        fetchTimeout[active] = setTimeout(() => {
             // WIP display error messages...
             reject("Timed out!")
-        }, 10000)
+        }, 40000)
 
         fetch(urls[load], { headers: { "api-key": get(bibleApiKey) || getKey("bibleapi") } })
             .then((response) => response.json())
             .then((data) => {
                 tempCache[urls[load]] = data.data
-                clearTimeout(fetchTimeout)
+                clearTimeout(fetchTimeout[active])
                 resolve(data.data)
             })
             .catch((e) => {
-                clearTimeout(fetchTimeout)
+                clearTimeout(fetchTimeout[active])
                 reject(e)
             })
     })

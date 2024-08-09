@@ -108,7 +108,10 @@
             if (key === "enabled") {
                 // , rate: $special.previewRate || "auto"
                 if (value) send(OUTPUT, ["CREATE"], currentOutput)
-                else send(OUTPUT, ["REMOVE"], { id: outputId })
+                else {
+                    send(OUTPUT, ["REMOVE"], { id: outputId })
+                    updateOutput("hideFromPreview", false, outputId)
+                }
 
                 // WIP if only one left, all outputs should be "active"
             }
