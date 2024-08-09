@@ -94,7 +94,7 @@ import { createData } from "./createData"
 import { syncDrive, validateKeys } from "./drive"
 import { sendInitialOutputData } from "./listeners"
 import { receive, send } from "./request"
-import { closeApp, initializeClosing, saveComplete } from "./save"
+import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { clearBackground } from "../components/output/clear"
@@ -318,6 +318,16 @@ const receiveOUTPUTasMAIN: any = {
             a[data.id].bounds = data.bounds
             return a
         })
+    },
+    UPDATE_OUTPUTS_DATA: ({ key, value, id, autoSave }) => {
+        outputs.update((a) => {
+            let ids = id ? [id] : Object.keys(get(outputs))
+            ids.forEach((outputId) => {
+                if (a[outputId]) a[outputId][key] = value
+            })
+            return a
+        })
+        if (autoSave) save()
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.log(msg),

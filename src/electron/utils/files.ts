@@ -7,13 +7,14 @@ import fs from "fs"
 import { Stats } from "original-fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
-import { FILE_INFO, MAIN, OPEN_FOLDER, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
+import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
 import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./responses"
 import { defaultSettings } from "../data/defaults"
+import { OutputHelper } from "../output/OutputHelper"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -408,6 +409,8 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
 // LOAD SHOWS
 
 export function loadShows({ showsPath }: any, returnShows: boolean = false) {
+    specialCaseFixer()
+
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 
@@ -473,4 +476,29 @@ export function parseShow(jsonData: string) {
     }
 
     return show
+}
+
+// some users might have got themselves in a situation they can't get out of
+// example: enables "kiosk" mode on mac might have resulted in a black screen, and they can't find the app data location to revert it!
+// how: Place any file in your Documents/FreeShow folder that has the FIXES key in it's name (e.g. DISABLE_KIOSK_MODE), when you now start your app the fix will be triggered!
+const FIXES: any = {
+    DISABLE_KIOSK_MODE: () => {
+        // wait to ensure output settings have loaded in the app!
+        setTimeout(() => {
+            toApp(OUTPUT, { channel: "UPDATE_OUTPUTS_DATA", data: { key: "kioskMode", value: false, autoSave: true } })
+            OutputHelper.getAllOutputs().forEach(([_id, output]) => output.window.setKiosk(false))
+        }, 1000)
+    },
+    OPEN_APPDATA_SETTINGS: () => {
+        // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
+        openSystemFolder(stores.SETTINGS.path)
+    },
+}
+function specialCaseFixer() {
+    let defaultDataFolder = getDocumentsFolder(null, "")
+    let files: string[] = readFolder(defaultDataFolder)
+    files.forEach((fileName) => {
+        let matchFound = Object.keys(FIXES).find((key) => fileName.includes(key))
+        if (matchFound) FIXES[matchFound]()
+    })
 }
