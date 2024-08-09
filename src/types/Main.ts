@@ -1,6 +1,7 @@
 export interface Option {
     name: string
     extra?: string
+    data?: any
     id?: string
 }
 
@@ -62,6 +63,7 @@ export type SelectIds =
     | "theme"
     | "style"
     | "output"
+    | "tag"
 
 export interface Selected {
     id: null | SelectIds
@@ -125,7 +127,10 @@ export type Popups =
     | "transition"
     | "import_scripture"
     | "edit_event"
+    | "edit_list"
+    | "choose_chord"
     | "choose_screen"
+    | "choose_camera"
     | "change_output_values"
     | "set_time"
     | "animate"

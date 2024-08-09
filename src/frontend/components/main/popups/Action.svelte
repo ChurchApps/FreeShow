@@ -174,6 +174,7 @@
             let templateId = $popupData.templateId
             let template = $templates[templateId]
             if (!template) return activePopup.set(null)
+            if (!action.triggers?.length) return
 
             let templateSettings = template?.settings || {}
 
@@ -238,7 +239,7 @@
     let addTrigger: boolean = false
 
     // set show when selected
-    $: if (action.triggers?.[0] === "start_show" && $popupData.showId) {
+    $: if (action.triggers?.find((a) => a === "start_show") && $popupData.showId) {
         let setShow = { id: "start_show", actionValue: { id: $popupData.showId } }
         changeAction({ detail: setShow }, $popupData.actionIndex)
     }
@@ -256,6 +257,7 @@
         { id: "slide_cleared", name: "$:actions.activate_slide_cleared:$" },
         { id: "background_cleared", name: "$:actions.activate_background_cleared:$" },
         { id: "show_created", name: "$:actions.activate_show_created:$" },
+        { id: "audio_playlist_ended", name: "$:actions.activate_audio_playlist_ended:$" },
     ]
     $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""
 </script>

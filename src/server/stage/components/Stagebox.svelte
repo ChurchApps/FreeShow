@@ -1,12 +1,13 @@
 <script lang="ts">
+    import { keysToID, sortByName } from "../helpers/array"
     import { getAutoSize } from "../helpers/autoSize"
     import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
-    import SlideProgress from "../items/SlideProgress.svelte"
     import SlideNotes from "../items/SlideNotes.svelte"
+    import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
-    import { timers, variables } from "../store"
+    import { activeTimers, timers, variables } from "../store"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Timer from "./Timer.svelte"
@@ -73,6 +74,12 @@
             if (reverse) videoTime = (msg.data.data?.duration || 0) - videoTime
         })
     }
+
+    let firstTimerId: string = ""
+    $: if (id.includes("first_active_timer")) {
+        firstTimerId = $activeTimers[0]?.id
+        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
+    }
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
@@ -110,6 +117,8 @@
                     <Clock autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("video")}
                     <VideoTime {videoTime} autoSize={item.auto !== false ? autoSize : fontSize} />
+                {:else if id.includes("first_active_timer")}
+                    <Timer timer={$timers[firstTimerId] || {}} ref={{ id: firstTimerId }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
                         <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
@@ -135,7 +144,7 @@
     }
 
     .item.border {
-        border: 3px solid white;
+        border: 3px solid #5a4c00;
     }
 
     .align {
@@ -164,9 +173,9 @@
         width: 100%;
 
         background: rgb(0 0 0 / 0.5);
-        color: var(--text);
-        font-size: 1em;
-        font-weight: 600;
+        color: #dfd9b8;
+        font-size: 42px;
+        font-weight: normal;
         text-align: center;
     }
 </style>

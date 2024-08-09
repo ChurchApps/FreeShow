@@ -17,7 +17,7 @@
         slide: ["current_slide_text", "current_slide", "current_slide_notes", "next_slide_text", "next_slide", "next_slide_notes"],
         output: ["current_output", "slide_tracker"],
         time: ["system_clock", "video_time", "video_countdown"],
-        global_timers: ["{timers}"],
+        global_timers: ["first_active_timer", "{timers}"],
         variables: ["{variables}"],
         // other: ["chords", "message"],
     }
@@ -113,6 +113,10 @@
             {#if title === "global_timers"}
                 <h6><T id="tabs.timers" /></h6>
                 {#if timersList.length}
+                    <Button on:click={() => click(title + "#first_active_timer")} active={enabledItems[title + "#first_active_timer"]?.enabled} style="width: 100%;" bold={false}>
+                        <Icon id="timer" right />
+                        <span class="overflow"><T id="stage.first_active_timer" /></span>
+                    </Button>
                     {#each timersList as timer}
                         <Button on:click={() => click(title + "#" + timer.id)} active={enabledItems[title + "#" + timer.id]?.enabled} style="width: 100%;" bold={false}>
                             <Icon id="timer" right />

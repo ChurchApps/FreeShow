@@ -658,15 +658,16 @@
     /* chords */
     .break.chords :global(.invisible) {
         opacity: 0;
-        line-height: 0;
+        line-height: 1.1em;
         font-size: 100px;
     }
     .break.chords :global(.chord) {
         position: absolute;
         color: var(--chord-color);
         font-size: var(--chord-size) !important;
-        bottom: -5px;
-        transform: translateX(-25%);
+
+        transform: translate(-50%, -10%);
+        line-height: initial;
         /* WIP chords goes over other (stage) items */
         z-index: 2;
     }

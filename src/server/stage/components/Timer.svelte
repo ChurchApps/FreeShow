@@ -18,6 +18,7 @@
         if (timer.type === "counter") {
             if (item) currentTime = $activeTimers.filter((a) => a.showId === ref.showId && a.slideId === ref.slideId && a.id === ref.id)[0]?.currentTime
             else currentTime = $activeTimers.filter((a) => a.id === ref.id)[0]?.currentTime
+            console.log(timer, currentTime, $activeTimers, ref)
             if (typeof currentTime !== "number") currentTime = timer.start
         } else if (timer.type === "clock") {
             let todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
@@ -25,6 +26,8 @@
         } else if (timer.type === "event") {
             let eventTime = new Date($events[timer.event]?.from)?.getTime() || 0
             currentTime = eventTime > today.getTime() ? (eventTime - today.getTime()) / 1000 : 0
+        } else {
+            currentTime = 0
         }
     }
 

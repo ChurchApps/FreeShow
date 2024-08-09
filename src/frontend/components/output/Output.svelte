@@ -10,7 +10,7 @@
     import { destroy, receive, send } from "../../utils/request"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
-    import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, joinMetadata, setTemplateStyle } from "../helpers/output"
+    import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, setTemplateStyle } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import Zoomed from "../slide/Zoomed.svelte"
     import { updateAnimation } from "./animation"
@@ -41,7 +41,11 @@
     let clonedOverlays: any = {}
 
     // don't update when layer content changes, only when refreshing or adding/removing layer
-    $: if (JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) layers = clone(currentStyle.layers || defaultLayers)
+    // currentOutput is set to refresh state when changed in preview
+    $: if (currentOutput && JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) setNewLayers()
+    function setNewLayers() {
+        layers = clone(currentStyle.layers || defaultLayers)
+    }
     $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = clone(currentOutput?.out || {})
 
     $: if (JSON.stringify(slide) !== JSON.stringify(out.slide || null)) updateOutData("slide")
@@ -114,9 +118,16 @@
     $: slideFilter = getSlideFilter(slideData)
 
     // custom template
+    // WIP revert to old style when output style is reverted to no style (REFRESH OUTPUT)
     $: outputStyle = currentOutput?.style
-    $: if (currentSlide && outputStyle && currentStyle) setTemplateItems()
+    // currentSlide is so the background updates when scripture is removed (if template background on both) - not changed in preview
+    $: if (outputStyle && currentStyle && currentSlide !== undefined) {
+        if (currentSlide) setTemplateItems()
+        getTemplateBackground()
+    }
     const setTemplateItems = () => (currentSlide.items = setTemplateStyle(slide, currentStyle, currentSlide.items))
+    let templateBackground = ""
+    const getTemplateBackground = () => (templateBackground = getStyleTemplate(slide, currentStyle).settings?.backgroundPath || "")
 
     // lines
     let lines: any = {}
@@ -207,12 +218,19 @@
     $: messageText = $showsCache[slide?.id]?.message?.text || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && slide ? "" : currentStyle?.backgroundImage || ""
-    $: backgroundData = background || { path: styleBackground, loop: true, ...($media[styleBackground] || {}) }
+    $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
+    $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
+    $: backgroundData = templateBackground ? templateBackgroundData : background
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.duration || 800} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
+    <!-- always show style background (behind other backgrounds) -->
+    {#if styleBackground}
+        <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror styleBackground />
+    {/if}
+
     <!-- background -->
-    {#if layers.includes("background") || currentStyle?.backgroundImage}
+    {#if layers.includes("background") && backgroundData}
         <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror={isKeyOutput || mirror} />
     {/if}
 

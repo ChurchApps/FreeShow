@@ -4,6 +4,7 @@ import type { StringObject } from "../../../../types/Main"
 import { bibleApiKey, dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
 import { getAutoSize } from "../../edit/scripts/autoSize"
 import { clone, removeDuplicates } from "../../helpers/array"
+import { getKey } from "../../../values/keys"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
 let tempCache: any = {}
@@ -27,7 +28,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
     if (tempCache[urls[load]]) return tempCache[urls[load]]
 
     return new Promise((resolve, reject) => {
-        if (!get(bibleApiKey)) return reject("No API key!")
+        if (!get(bibleApiKey) && !getKey("bibleapi")) return reject("No API key!")
         if (urls[load].includes("null")) return reject("Something went wrong!")
 
         fetchTimeout = setTimeout(() => {
@@ -35,7 +36,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
             reject("Timed out!")
         }, 10000)
 
-        fetch(urls[load], { headers: { "api-key": get(bibleApiKey) } })
+        fetch(urls[load], { headers: { "api-key": get(bibleApiKey) || getKey("bibleapi") } })
             .then((response) => response.json())
             .then((data) => {
                 tempCache[urls[load]] = data.data
@@ -53,9 +54,9 @@ export function searchBibleAPI(active: string, searchQuery: string) {
     let url = `${api}${active}/search?query=${searchQuery}`
 
     return new Promise((resolve, reject) => {
-        if (!get(bibleApiKey)) return reject("No API key!")
+        if (!get(bibleApiKey) && !getKey("bibleapi")) return reject("No API key!")
 
-        fetch(url, { headers: { "api-key": get(bibleApiKey) } })
+        fetch(url, { headers: { "api-key": get(bibleApiKey) || getKey("bibleapi") } })
             .then((response) => response.json())
             .then((data) => {
                 resolve(data.data)
@@ -136,6 +137,7 @@ export function getSlides({ bibles, sorted }) {
         let slideIndex: number = 0
         slides[slideIndex].push(clone(emptyItem))
 
+        let verseLine = 0
         sorted.forEach((s: any, i: number) => {
             let slideArr: any = slides[slideIndex][bibleIndex]
             if (!slideArr?.lines[0]?.text) return
@@ -143,7 +145,8 @@ export function getSlides({ bibles, sorted }) {
             let lineIndex: number = 0
             // verses on individual lines
             if (get(scriptureSettings).versesOnIndividualLines) {
-                lineIndex = i
+                lineIndex = verseLine
+                verseLine++
                 if (!slideArr.lines![lineIndex]) slideArr.lines![lineIndex] = { text: [], align: alignStyle }
             }
 
@@ -161,7 +164,8 @@ export function getSlides({ bibles, sorted }) {
 
             let text: string = bible.verses[s] || ""
 
-            text = text.replaceAll("/ ", " ")
+            // remove unwanted characters
+            text = text.replaceAll("/ ", " ").replaceAll("*", "")
 
             // highlight Jesus text
             let textArray: any[] = []
@@ -233,6 +237,7 @@ export function getSlides({ bibles, sorted }) {
             if (i + 1 >= sorted.length) return
 
             slideIndex++
+            verseLine = 0
             if (!slides[slideIndex]) slides.push([clone(emptyItem)])
             else slides[slideIndex].push(clone(emptyItem))
         })

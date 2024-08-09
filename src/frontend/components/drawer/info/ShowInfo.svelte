@@ -1,7 +1,10 @@
 <script lang="ts">
-    import { activeShow, categories, shows, showsCache, templates } from "../../../stores"
+    import { activeShow, activeTagFilter, categories, globalTags, shows, showsCache, templates } from "../../../stores"
+    import { keysToID, sortByName } from "../../helpers/array"
+    import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
     import Date from "../../system/Date.svelte"
 
     $: show = $activeShow?.id ? $shows[$activeShow.id] : null
@@ -81,6 +84,14 @@
             </span>
         </p>
         <p>
+            <span class="title"><T id={"meta.tags"} /></span>
+            <span style="overflow: hidden;text-overflow: ellipsis;">
+                {sortByName(keysToID($globalTags).filter((a) => show?.quickAccess?.tags?.includes(a.id)))
+                    .map(({ name }) => name)
+                    .join(", ") || "—"}
+            </span>
+        </p>
+        <p>
             <span class="title"><T id={"info.slides"} /></span>
             <span>{Object.keys(fullShow?.slides || {}).length}</span>
         </p>
@@ -105,14 +116,23 @@
     </div>
 </main>
 
+{#if $activeTagFilter?.length}
+    <Button style="width: 100%;" on:click={() => activeTagFilter.set([])} center dark>
+        <Icon id="close" right />
+        <T id="meta.clear_tag_filter" />
+    </Button>
+{/if}
+
 <style>
     main {
+        flex: 1;
         overflow-y: auto;
     }
 
     .table p {
         display: flex;
         justify-content: space-between;
+        gap: 5px;
         padding: 2px 10px;
     }
     .table p:nth-child(odd) {

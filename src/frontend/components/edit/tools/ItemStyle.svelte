@@ -3,10 +3,10 @@
     import type { Item } from "../../../../types/Show"
     import { activeEdit, activeShow, selected, showsCache } from "../../../stores"
     import { clone } from "../../helpers/array"
-    import { hexToRgb, splitRgb } from "../../helpers/color"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
     import { getFilters, getStyles } from "../../helpers/style"
+    import { getBackgroundOpacity, setBackgroundColor } from "../scripts/edit"
     import { addFilterString, addStyleString } from "../scripts/textStyle"
     import { itemEdits } from "../values/item"
     import EditValues from "./EditValues.svelte"
@@ -38,29 +38,7 @@
         })
     }
 
-    $: if (item) getBackgroundOpacity()
-
-    // background opacity
-    function getBackgroundOpacity() {
-        let backgroundValue = data["background-color"] || ""
-        let boIndex = itemEditValues.style.findIndex((a) => a.id === "background-opacity")
-        if (boIndex < 0) return
-
-        if (!backgroundValue.includes("rgb")) {
-            itemEditValues.style[boIndex].value = 1
-            return
-        }
-
-        let rgb = splitRgb(backgroundValue)
-        itemEditValues.style[boIndex].value = rgb.a
-    }
-    function getOldOpacity() {
-        let backgroundValue = data["background-color"] || ""
-        if (!backgroundValue.includes("rgb")) return 1
-
-        let rgb = splitRgb(backgroundValue)
-        return rgb.a
-    }
+    $: if (item) itemEditValues = getBackgroundOpacity(itemEditValues, data)
 
     function updateStyle(e: any) {
         let input = e.detail
@@ -75,15 +53,8 @@
 
         // background opacity
         if (input.id === "background-opacity" || (input.value && input.key === "background-color")) {
-            let backgroundColor = input.key === "background-color" ? input.value || "" : data["background-color"] || "rgb(0 0 0);"
-            let rgb = backgroundColor.includes("rgb") ? splitRgb(backgroundColor) : hexToRgb(backgroundColor)
-            let opacity = input.id === "background-opacity" ? input.value : getOldOpacity()
-            let newColor = "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / " + opacity + ");"
-
-            input.key = "background-color"
-            input.value = newColor
-
-            setTimeout(getBackgroundOpacity, 100)
+            input = setBackgroundColor(input, data)
+            setTimeout(() => getBackgroundOpacity(itemEditValues, data), 100)
         }
 
         let allItems: number[] = $activeEdit.items

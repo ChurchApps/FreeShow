@@ -97,6 +97,7 @@ import { closeApp, initializeClosing, saveComplete } from "./save"
 import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { clearBackground } from "../components/output/clear"
+import { previewShortcuts } from "./shortcuts"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -274,7 +275,11 @@ const receiveFILE = {
 
 let clearing: boolean = false
 const receiveOUTPUTasMAIN: any = {
-    BUFFER: ({ id, buffer, size }) => {
+    BUFFER: ({ id, time, buffer, size }) => {
+        // this will infinitely increace if this is not in place
+        let timeSinceSent = Date.now() - time
+        if (timeSinceSent > 100) return // skip frames if overloaded
+
         previewBuffers.update((a) => {
             a[id] = { buffer, size }
             return a
@@ -349,6 +354,11 @@ const receiveOUTPUTasMAIN: any = {
         alertMessage.set(data)
         activePopup.set("alert")
     },
+    MAIN_SHORTCUT: (data: { key: string }) => {
+        if (previewShortcuts[data.key]) {
+            previewShortcuts[data.key]({ ...data, preventDefault: () => "" })
+        }
+    },
 }
 
 let previousOutputs: string = ""
@@ -377,7 +387,10 @@ export const receiveOUTPUTasOUTPUT: any = {
         allOutputs.set(a)
     },
     // only received by stage screen outputs
-    BUFFER: ({ id, buffer, size }) => {
+    BUFFER: ({ id, time, buffer, size }) => {
+        let timeSinceSent = Date.now() - time
+        if (timeSinceSent > 100) return // skip frames if overloaded
+
         // WIP only receive the "output capture" from this outputs "stageOutput id"
         // let outputId = Object.keys(get(outputs))[0]
         // if (id !== outputId) return

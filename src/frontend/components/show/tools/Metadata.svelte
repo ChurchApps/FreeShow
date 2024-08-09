@@ -9,6 +9,7 @@
     import Panel from "../../system/Panel.svelte"
     import Notes from "./Notes.svelte"
     import { getActiveOutputs } from "../../helpers/output"
+    import Tags from "../Tags.svelte"
 
     // WIP duplicate of Outputs.svelte
     const metaDisplay: any[] = [
@@ -167,6 +168,11 @@
             </div>
         {/if}
     </div>
+
+    <h5><T id="meta.tags" /></h5>
+    <div class="tags" style="display: flex;flex-direction: column;">
+        <Tags />
+    </div>
 </Panel>
 
 <style>
@@ -181,7 +187,8 @@
     }
 
     .message,
-    .styling {
+    .styling,
+    .tags {
         padding: 10px;
     }
 

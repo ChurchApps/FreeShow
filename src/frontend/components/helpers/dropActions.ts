@@ -196,14 +196,18 @@ export const dropActions: any = {
 
         // audio playlist
         if (get(audioPlaylists)[drop.data] && drag.id === "audio") {
-            audioPlaylists.update((a) => {
-                let newSongs = drag.data.map((a) => a.path)
-                a[drop.data].songs.push(...newSongs)
+            h.id = "UPDATE"
+            h.location = { page: "drawer", id: "audio_playlist_key" }
 
-                return a
-            })
+            let playlistId = drop.data
+            h.oldData = { id: playlistId }
 
-            // return history
+            let songs = clone(get(audioPlaylists)[playlistId]?.songs || [])
+            let newSongs = drag.data.map((a) => a.path)
+            songs.push(...newSongs)
+            h.newData = { key: "songs", data: songs }
+
+            return h
         }
 
         if (drop.data !== "all" && (drag.id === "overlay" || drag.id === "template")) {
@@ -257,6 +261,29 @@ export const dropActions: any = {
         if (drag.id !== "media" && drag.id !== "files") return
 
         drag.data.forEach(({ path }: any) => addItem("media", null, { src: path }))
+    },
+    audio_playlist: ({ drag, drop }: any, h: any) => {
+        h.id = "UPDATE"
+        h.location = { page: "drawer", id: "audio_playlist_key" }
+
+        let playlistId = get(drawerTabsData).audio?.activeSubTab
+        if (!playlistId) return
+
+        h.oldData = { id: playlistId }
+
+        let songs = clone(get(audioPlaylists)[playlistId]?.songs || [])
+
+        if (drag.id === "files") {
+            let dropIndex = drop.index
+            if (dropIndex === undefined) dropIndex = songs.length
+            let audioFiles = drag.data.map((a) => a.path)
+            songs = addToPos(songs, audioFiles, dropIndex)
+        } else {
+            songs = mover(songs, getIndexes(drag.data), drop.index)
+        }
+
+        h.newData = { key: "songs", data: songs }
+        return h
     },
 }
 
@@ -450,12 +477,14 @@ const slideDrop: any = {
         let layoutId: string = _show().get("settings.activeLayout")
 
         let slides: any = clone(get(showsCache)[get(activeShow)!.id].slides)
+        let media: any = clone(get(showsCache)[get(activeShow)!.id].media || {})
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
         if (drop.index === undefined) drop.index = layout.length
         let newIndex: number = drop.index
 
-        drag.data.forEach(({ slide, layoutData }: any) => {
+        let newMedia: any = media
+        drag.data.forEach(({ slide, layoutData, media }: any) => {
             let id = uid()
             delete slide.id
             slides[id] = clone(slide)
@@ -466,11 +495,12 @@ const slideDrop: any = {
             // add layout data (if dragging a slide to another show)
             let newLayout = { id }
             if (layoutData) newLayout = { ...layoutData, id }
+            if (media) newMedia = { ...newMedia, ...media }
 
             layout = addToPos(layout, [newLayout], parent.index + 1)
         })
 
-        history.newData = { slides, layout }
+        history.newData = { slides, layout, media: newMedia }
         history.location.layout = layoutId
         return history
     },

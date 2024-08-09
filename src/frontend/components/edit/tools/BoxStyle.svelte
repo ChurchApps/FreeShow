@@ -354,6 +354,8 @@
         })
 
         function getNewItemValues(currentSlideItem: any, slideId: string) {
+            if (!currentSlideItem) return
+
             let selected = selection
             if (!selected?.length || !selected?.filter((a) => a.start !== a.end).length) {
                 selected = []

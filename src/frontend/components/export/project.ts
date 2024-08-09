@@ -18,14 +18,15 @@ export async function exportProject(project: Project) {
     // let overlays: any = {}
 
     project = clone(project)
+    let projectItems = clone(project.shows)
 
     // place on root
     project.parent = "/"
 
-    let showIds = project.shows.filter((a) => !a.type || a.type === "show").map((a) => a.id)
+    let showIds = projectItems.filter((a) => (a.type || "show") === "show").map((a) => a.id)
     await loadShows(showIds)
 
-    await Promise.all(project.shows.map(getShow))
+    await Promise.all(projectItems.map(getShow))
 
     // export to file
     send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: formatToFileName(project.name), file: { project, shows } })

@@ -52,6 +52,7 @@ export const focusedArea: Writable<string> = writable("")
 export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
 export const activeScripture: Writable<any> = writable({})
+export const activeTagFilter: Writable<string[]> = writable([])
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -83,6 +84,7 @@ export const closeAd: Writable<boolean> = writable(false)
 export const videosData: Writable<any> = writable({})
 export const videosTime: Writable<any> = writable({})
 export const textLoaded: Writable<boolean> = writable(false)
+export const toggleOutputEnabled: Writable<boolean> = writable(false)
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })
@@ -120,6 +122,8 @@ export const openToolsTab: Writable<string> = writable("")
 export const refreshSlideThumbnails: Writable<boolean> = writable(false)
 export const contextData: Writable<any> = writable({})
 export const lessonsLoaded: Writable<any> = writable({})
+export const storedChordsData: Writable<any> = writable({})
+export const photoApiCredits: Writable<any> = writable({})
 
 // ----- SAVED VARIABLES -----
 
@@ -143,6 +147,7 @@ export const transitionData: Writable<{ text: Transition; media: Transition }> =
     media: { type: "fade", duration: 800, easing: "sine" },
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
+export const globalTags: Writable<{ [key: string]: { name: string; color: string } }> = writable({}) // {}
 
 // PROJECT
 export const openedFolders: Writable<ID[]> = writable([]) // []
@@ -198,8 +203,7 @@ export const stageShows: Writable<StageShows> = writable({}) // {default}
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}
 export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true, referenceDivider: ":" }) // {default}
-// API.Bible key. Have not found any good way to secretly store this (because it's open source). Please don't use this anywhere else than FreeShow, thank you! :)
-export const bibleApiKey: Writable<string> = writable("320b5b593fa790ced135a98861de51a9") // ""
+export const bibleApiKey: Writable<string> = writable("") // ""
 
 // DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}

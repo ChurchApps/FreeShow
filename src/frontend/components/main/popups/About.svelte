@@ -8,6 +8,7 @@
         "Google Fonts (Icons)": "https://fonts.google.com/icons/",
         "Icons8 (Icons)": "https://icons8.com/",
         "Pixabay (Web Images)": "https://pixabay.com/",
+        "Unsplash (Web Images)": "https://unsplash.com/",
         "Electron (Cross-platform desktop apps)": "https://www.electronjs.org/",
         "Svelte (DOM framework)": "https://svelte.dev/",
         "Rollup (Module bundler)": "https://rollupjs.org/",

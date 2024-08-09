@@ -25,7 +25,8 @@
 
     function deleteSlideAction(id: string) {
         let slideActions = clone(actions.slideActions)
-        let actionIndex = actions.slideActions.findIndex((a) => a.id === id)
+        let actionIndex = slideActions.findIndex((a) => a.id === id || a.triggers?.[0] === id)
+        if (actionIndex < 0) return
         slideActions.splice(actionIndex, 1)
 
         if (templateId) {
@@ -76,7 +77,7 @@
             {@const customName = getActionName(actionId, actionValue)}
 
             <div class="button {customData.red ? '' : 'white'}">
-                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {translate(customData.name)}" {zoom} on:click={() => deleteSlideAction(actionId)}>
+                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {translate(customData.name)}" {zoom} on:click={() => deleteSlideAction(action.id || actionId)}>
                     {#if customName}<p>{customName}</p>{/if}
                     <Icon id={customData.icon || "actions"} size={0.9} white />
                 </Button>

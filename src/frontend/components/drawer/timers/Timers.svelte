@@ -31,7 +31,6 @@
 
     function getCurrentValue(timer: any, ref: any, _updater: any) {
         let currentTime = getCurrentTimerValue(timer, ref, today)
-        console.log(currentTime)
         // if (timer.end < timer.start) currentTime = timer.start - currentTime
         return currentTime
     }

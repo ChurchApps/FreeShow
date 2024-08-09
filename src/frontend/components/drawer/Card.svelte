@@ -28,7 +28,7 @@
 
 <!-- display: table; -->
 <div class="main" style="{outlineColor ? 'outline: 2px solid ' + outlineColor + ';' : ''}flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mainWidth}%;" class:preview class:active class:changed>
-    <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;" on:click on:dblclick>
+    <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;" on:mousedown on:click on:dblclick>
         {#if preview}
             <div class="overlay" />
         {:else}
