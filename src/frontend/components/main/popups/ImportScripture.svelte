@@ -6,11 +6,13 @@
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
+    import { getKey } from "../../../values/keys"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
+    import { sortByName } from "../../helpers/array"
 
     let error: null | string = null
     let bibles: any[] = []
@@ -32,7 +34,7 @@
         }
 
         const api = "https://api.scripture.api.bible/v1/bibles"
-        fetch(api, { headers: { "api-key": $bibleApiKey } })
+        fetch(api, { headers: { "api-key": $bibleApiKey || getKey("bibleapi") } })
             .then((response) => response.json())
             .then((data) => {
                 bibles = data.data
@@ -53,7 +55,7 @@
     $: {
         if (bibles?.length) {
             let langCode = window.navigator.language.slice(-2).toLowerCase()
-            sortedBibles = bibles.sort((a, b) => a.name.localeCompare(b.name))
+            sortedBibles = sortByName(bibles)
             let newSorted: any[] = []
             sortedBibles.forEach((bible) => {
                 newSorted.push(bible)

@@ -99,6 +99,7 @@
     <CombinedInput>
         <p style="width: 80px;"><T id="edit.width" /></p>
         <NumberInput
+            disabled={currentOutput.forcedResolution}
             value={currentOutput.bounds?.width || 0}
             min={40}
             max={100000}
@@ -116,6 +117,7 @@
     <CombinedInput>
         <p style="width: 80px;"><T id="edit.height" /></p>
         <NumberInput
+            disabled={currentOutput.forcedResolution}
             value={currentOutput.bounds?.height || 0}
             min={40}
             max={100000}

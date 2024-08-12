@@ -7,7 +7,7 @@
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { removeDuplicates } from "../../helpers/array"
+    import { removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
@@ -111,9 +111,7 @@
     }
 
     let templateList: any[] = []
-    $: templateList = Object.entries($templates)
-        .map(([id, template]: any) => ({ id, name: template.name }))
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: templateList = sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))
 
     function update(id: string, value: any) {
         scriptureSettings.update((a) => {
@@ -263,6 +261,14 @@
                 <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
             </div>
         </CombinedInput>
+        {#if $scriptureSettings.showVerse && sorted.length > 1}
+            <CombinedInput textWidth={70}>
+                <p><T id="scripture.split_reference" /></p>
+                <div class="alignRight">
+                    <Checkbox id="splitReference" checked={$scriptureSettings.splitReference !== false} on:change={checked} />
+                </div>
+            </CombinedInput>
+        {/if}
         <CombinedInput textWidth={70}>
             <p><T id="scripture.version" /></p>
             <div class="alignRight">

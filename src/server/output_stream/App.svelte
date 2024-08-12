@@ -8,6 +8,9 @@
     socket.on("OUTPUT_STREAM", (msg) => {
         switch (msg.channel) {
             case "STREAM":
+                let timeSinceSent = Date.now() - msg.data.time
+                if (timeSinceSent > 100) return // skip frames if overloaded
+
                 capture = msg.data
                 break
         }

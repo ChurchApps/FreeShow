@@ -88,8 +88,8 @@ export function generatePDF(path: string) {
 function exportMessage(message: string = "") {
     toApp(MAIN, { channel: "ALERT", data: message })
 
+    exportWindow?.on("closed", () => (exportWindow = null))
     exportWindow?.close()
-    exportWindow = null
 }
 
 let exportWindow: any = null
@@ -199,14 +199,7 @@ function exportAllShows(data: any) {
 // ----- PROJECT -----
 
 export function exportProject(data: any) {
-    let msg: string = "export.exported"
-    writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", doneWritingFile)
-
-    function doneWritingFile(err: any) {
-        if (err) msg = err
-
-        toApp(MAIN, { channel: "ALERT", data: msg })
-    }
+    writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", (err: any) => doneWritingFile(err, data.path))
 }
 
 // ----- HELPERS -----

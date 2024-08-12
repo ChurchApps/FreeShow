@@ -2,7 +2,7 @@
     import { activePopup, dictionary, labelsDisabled, triggers } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { keysToID } from "../../helpers/array"
+    import { keysToID, sortByName } from "../../helpers/array"
     import { activateTrigger } from "../../helpers/showActions"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
@@ -11,13 +11,12 @@
     export let searchValue
     console.log(searchValue)
 
-    $: globalList = keysToID($triggers)
-    $: sortedTriggers = globalList.sort((a, b) => a.name?.localeCompare(b.name))
+    $: globalList = sortByName(keysToID($triggers))
 </script>
 
-{#if sortedTriggers.length}
+{#if globalList.length}
     <div class="triggers">
-        {#each sortedTriggers as trigger}
+        {#each globalList as trigger}
             <SelectElem id="trigger" data={trigger} draggable>
                 <Button class="context #trigger" style="flex: 1;" on:click={() => activateTrigger(trigger.id)}>
                     <div class="trigger">

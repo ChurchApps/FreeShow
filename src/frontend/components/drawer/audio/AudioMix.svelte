@@ -89,7 +89,7 @@
         box-shadow: 0 0 5px rgb(0 0 0 / 0.3);
 
         opacity: 1;
-        background: #71797e;
+        background: #bababa;
 
         background-image: url("../assets/mixer_slider.webp");
         background-size: contain;

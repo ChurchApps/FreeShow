@@ -13,15 +13,14 @@
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
+    import { keysToID, sortByName } from "../helpers/array"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId] || {}
     $: layouts = currentShow.layouts
     $: activeLayout = currentShow.settings?.activeLayout
 
-    $: sortedLayouts = Object.entries(layouts || {})
-        .map(([id, layout]: any) => ({ id, ...layout }))
-        .sort((a, b) => a.name?.localeCompare(b.name))
+    $: sortedLayouts = sortByName(keysToID(layouts || {}))
 
     let totalTime: string = "0s"
     $: layoutSlides = layouts?.[activeLayout]?.slides || []

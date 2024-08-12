@@ -6,7 +6,9 @@ import { CaptureTransmitter } from "./CaptureTransmitter"
 export class CaptureLifecycle {
     static startCapture(id: string, toggle: any = {}) {
         const output = OutputHelper.getOutput(id)
-        let window = output?.window
+        if (!output) return
+
+        let window = output.window
         let windowIsRemoved = !window || window.isDestroyed()
         if (windowIsRemoved) {
             delete output.captureOptions
@@ -35,13 +37,14 @@ export class CaptureLifecycle {
 
         captureFrame()
         async function captureFrame() {
-            if (!output.captureOptions || output.captureOptions.window.isDestroyed()) return
+            if (!output?.captureOptions?.window || output.captureOptions.window.isDestroyed()) return
 
             let image = await output.captureOptions.window.webContents.capturePage()
             processFrame(image)
 
             if (!output.captureOptions) return
 
+            // use highest frame rate
             let frameRate = output.captureOptions.framerates.ndi
             if (output.captureOptions.framerates.server > frameRate) frameRate = output.captureOptions.framerates.server
             if (output.captureOptions.framerates.stage > frameRate) frameRate = output.captureOptions.framerates.stage

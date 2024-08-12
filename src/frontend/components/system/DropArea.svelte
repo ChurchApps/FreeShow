@@ -1,6 +1,7 @@
 <script lang="ts">
     import { selected } from "../../stores"
     import { DropAreas, ondrop, validateDrop } from "../helpers/drop"
+    import { deselect } from "../helpers/select"
     import T from "../helpers/T.svelte"
 
     export let id: DropAreas
@@ -57,7 +58,7 @@
     let fileOver: boolean = false
 
     function endDrag() {
-        selected.set({ id: null, data: [] })
+        deselect()
         hover = false
         // fileOver = false
     }

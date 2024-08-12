@@ -7,7 +7,7 @@
     import { getAutoSize } from "../edit/scripts/autoSize"
     import Icon from "../helpers/Icon.svelte"
     import { clone } from "../helpers/array"
-    import { getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
+    import { encodeFilePath, getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
@@ -425,7 +425,7 @@
                                 {#each line.text || [] as text}
                                     {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                     <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate' ? text.style : ''}">
-                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex, type: ref.type }, updateDynamic) : value}
+                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { ...ref, slideIndex }, updateDynamic) : value}
                                     </span>
                                 {/each}
                             </div>
@@ -443,7 +443,7 @@
             {#if mediaItemPath}
                 {#if $currentWindow && getMediaType(getExtension(mediaItemPath)) === "video"}
                     <video
-                        src={mediaItemPath}
+                        src={encodeFilePath(mediaItemPath)}
                         style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
                         muted={mirror || item.muted}
                         volume={Math.max(1, $volume)}
@@ -474,7 +474,7 @@
         {:else if item?.type === "events"}
             <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
         {:else if item?.type === "variable"}
-            <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ showId: ref.showId, layoutId: ref.layoutId, slideIndex }} />
+            <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ ...ref, slideIndex }} />
         {:else if item?.type === "web"}
             <Website src={item?.web?.src || ""} navigation={!item?.web?.noNavigation} clickable={$currentWindow === "output"} {ratio} />
         {:else if item?.type === "mirror"}
@@ -658,15 +658,16 @@
     /* chords */
     .break.chords :global(.invisible) {
         opacity: 0;
-        line-height: 0;
+        line-height: 1.1em;
         font-size: 100px;
     }
     .break.chords :global(.chord) {
         position: absolute;
         color: var(--chord-color);
         font-size: var(--chord-size) !important;
-        bottom: -5px;
-        transform: translateX(-25%);
+
+        transform: translate(-50%, -10%);
+        line-height: initial;
         /* WIP chords goes over other (stage) items */
         z-index: 2;
     }

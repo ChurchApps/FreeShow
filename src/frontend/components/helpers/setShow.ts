@@ -16,6 +16,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
             value.name = showRef.name
             value.category = showRef.category || null
             value.timestamps = showRef.timestamps || {}
+            value.quickAccess = showRef.quickAccess || {}
             if (showRef.private) value.private = true
 
             // fix "broken" shows:
@@ -46,6 +47,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
                 name: value.name,
                 category: value.category,
                 timestamps: value.timestamps,
+                quickAccess: value.quickAccess,
             }
 
             if (value.private) a[id].private = true

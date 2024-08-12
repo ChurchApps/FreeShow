@@ -2,16 +2,17 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
-    import { activePlaylist, audioFolders, audioPlaylists, dictionary, media } from "../../../stores"
+    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, media } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
-    import { decodeURI, startPlaylist, stopPlaylist, updatePlaylist } from "../../helpers/audio"
+    import { clone, sortByName } from "../../helpers/array"
+    import { startPlaylist, stopPlaylist, updatePlaylist } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
-    import { encodeFilePath, getFileName, getMediaType } from "../../helpers/media"
+    import { getFileName, getMediaType } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
+    import DropArea from "../../system/DropArea.svelte"
     import AudioStreams from "../live/AudioStreams.svelte"
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
@@ -81,13 +82,13 @@
     // receive files
     window.api.receive(READ_FOLDER, receiveContent, listenerId)
     function receiveContent(msg: any) {
-        filesInFolders = (msg.filesInFolders || []).sort((a: any, b: any) => a.name.localeCompare(b.name))
+        filesInFolders = sortByName(msg.filesInFolders || [])
 
         if (active === "all" || msg.path === path) {
             files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
-            files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+            sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
-            files = files.map((a) => ({ ...a, path: a.folder ? a.path : encodeFilePath(a.path) }))
+            files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
             // filterFiles()
             scrollElem?.scrollTo(0, 0)
@@ -131,17 +132,30 @@
     }
 
     function createPlaylist() {
-        let playlistName = name
-        if (name.includes(".")) playlistName = $dictionary.category?.[name.slice(name.indexOf(".") + 1)]
+        let playlistName = ""
+        if (!isDefault) {
+            playlistName = name
+            if (name.includes(".")) playlistName = $dictionary.category?.[name.slice(name.indexOf(".") + 1)]
+        }
 
+        let playlistId = uid()
         audioPlaylists.update((a) => {
-            a[uid()] = {
+            a[playlistId] = {
                 name: playlistName,
-                songs: fullFilteredFiles.filter((a) => !a.folder).map((a) => a.path),
+                songs: isDefault ? [] : fullFilteredFiles.filter((a) => !a.folder).map((a) => a.path),
             }
 
             return a
         })
+
+        drawerTabsData.update((a) => {
+            a.audio.activeSubTab = playlistId
+            return a
+        })
+
+        if (isDefault) {
+            activeRename.set("category_audio_" + playlistId)
+        }
     }
 
     // function playAudio(file: any) {
@@ -209,9 +223,17 @@
         {:else if active === "audio_streams"}
             <AudioStreams />
         {:else if playlist}
-            {#each playlist.songs as song}
-                <AudioFile path={song} name={decodeURI(getFileName(song))} {active} playlist />
-            {/each}
+            <DropArea id="audio_playlist" selectChildren let:fileOver file>
+                {#if playlist.songs.length}
+                    {#each playlist.songs as song, index}
+                        <AudioFile path={song} name={getFileName(song)} {active} playlist {index} {fileOver} />
+                    {/each}
+                {:else}
+                    <Center faded>
+                        <T id="empty.general" />
+                    </Center>
+                {/if}
+            </DropArea>
         {:else if fullFilteredFiles.length}
             {#key rootPath}
                 {#key path}
@@ -250,6 +272,15 @@
             >
                 <Icon size={1.3} id="shuffle_play" white={$audioPlaylists[active || ""]?.mode !== "shuffle"} />
             </Button>
+            <Button
+                title={$dictionary.media?._loop}
+                on:click={() => {
+                    if (!active) return
+                    updatePlaylist(active, "loop", $audioPlaylists[active]?.loop === undefined ? false : !$audioPlaylists[active]?.loop)
+                }}
+            >
+                <Icon size={1.3} id="loop" white={$audioPlaylists[active || ""]?.loop === false} />
+            </Button>
         {:else}
             <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
                 <Icon size={1.3} id="back" />
@@ -270,7 +301,7 @@
             {/key}
         </span>
 
-        {#if !isDefault && !playlist}
+        {#if !playlist}
             <Button disabled={!fullFilteredFiles.filter((a) => !a.folder)?.length} title={$dictionary.new?.playlist} on:click={createPlaylist}>
                 <Icon size={1.3} id="playlist_create" />
             </Button>

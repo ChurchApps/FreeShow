@@ -9,6 +9,7 @@ import {
     activeProject,
     activeShow,
     cachedShowsData,
+    customMessageCredits,
     draw,
     drawSettings,
     drawTool,
@@ -177,6 +178,10 @@ export function storeSubscriber() {
     // used by stage output
     media.subscribe((data) => {
         send(OUTPUT, ["MEDIA"], data)
+    })
+
+    customMessageCredits.subscribe((data) => {
+        send(OUTPUT, ["CUSTOM_CREDITS"], data)
     })
 
     timers.subscribe((data) => {

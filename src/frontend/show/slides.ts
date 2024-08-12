@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Item, Line } from "../../types/Show"
+import type { Item, Line, Show, Slide } from "../../types/Show"
 import { getSlideText } from "../components/edit/scripts/textStyle"
 import { changeValues, clone, keysToID, removeDuplicates, sortObjectNumbers } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
@@ -8,7 +8,7 @@ import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/
 import { addToPos } from "../components/helpers/mover"
 import { _show } from "../components/helpers/shows"
 import { similarity } from "../converters/txt"
-import { activeShow, refreshEditSlide } from "../stores"
+import { activeEdit, activeShow, refreshEditSlide } from "../stores"
 
 export function changeSlideGroups(obj: any) {
     let ref: any[] = _show().layouts("active").ref()[0]
@@ -575,4 +575,97 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     history({ id: "UPDATE", newData: { key: "slides", data: clone(slides) }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "show_slides_" + showId } })
 
     refreshEditSlide.set(true)
+}
+
+export function mergeSlides(indexes: { index: number }[]) {
+    let layoutRef = _show().layouts("active").ref()[0]
+
+    let allMergedSlideIds: string[] = []
+    let firstSlideIndex = indexes[0].index
+    let firstSlideId: string = layoutRef[firstSlideIndex]?.id
+    let newSlide: Slide = clone(_show().slides([firstSlideId]).get()[0])
+    let previousTextboxStyle = newSlide.items.find((a) => a.type || "text" === "text")?.style || ""
+
+    newSlide.items = []
+    let pushedItems: string[] = []
+    let newLines: Line[] = []
+
+    indexes.forEach(({ index }) => {
+        let ref = layoutRef[index]
+        if (!ref || allMergedSlideIds.includes(ref.id)) return
+        allMergedSlideIds.push(ref.id)
+
+        let currentSlide: Slide = _show().slides([ref.id]).get()[0]
+        currentSlide.items.forEach((item) => {
+            if ((item.type || "text") === "text") {
+                newLines.push(...(item.lines || []))
+            } else {
+                let uniqueItem = JSON.stringify(item)
+                if (pushedItems.includes(uniqueItem)) return
+
+                newSlide.items.push(item)
+                pushedItems.push(uniqueItem)
+            }
+        })
+    })
+
+    // add textbox
+    newSlide.items = [{ type: "text", lines: newLines, style: previousTextboxStyle }, ...newSlide.items]
+
+    let newShow: Show = clone(_show().get())
+
+    // delete layout slides (except for first one)
+    let activeLayoutIndex = Object.keys(newShow.layouts).findIndex((id) => id === newShow.settings.activeLayout)
+    Object.values(newShow.layouts).forEach((layout, currentIndex) => {
+        layout.slides = layout.slides.filter((a, i) => (activeLayoutIndex === currentIndex && i === firstSlideIndex) || !allMergedSlideIds.includes(a.id))
+    })
+
+    // delete slides
+    allMergedSlideIds.forEach((id) => {
+        delete newShow.slides[id]
+    })
+
+    // add new slide
+    delete newSlide.id // delete old id if it's there
+    let newSlideId = uid()
+    newShow.slides[newSlideId] = newSlide
+    newShow.layouts[newShow.settings.activeLayout].slides[firstSlideIndex].id = newSlideId
+
+    history({ id: "UPDATE", newData: { data: newShow }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key", override: "merge_slides" } })
+}
+
+export function mergeTextboxes() {
+    let editSlideIndex: number = get(activeEdit).slide ?? -1
+    if (editSlideIndex < 0) return
+
+    let slideRef = _show().layouts("active").ref()[0][editSlideIndex] || {}
+    let slide: Slide = clone(
+        _show()
+            .slides([slideRef.id || ""])
+            .get()[0]
+    )
+    if (!slide) return
+
+    let selected = get(activeEdit).items
+    let selectedItems = slide.items.filter((a, i) => selected.includes(i) && (a.type || "text") === "text")
+    if (selectedItems.length < 2) return
+
+    // add all lines into one
+    let newLines: Line[] = []
+    selectedItems.forEach((item) => {
+        newLines.push(...(item.lines || []))
+    })
+
+    // create new textbox
+    let newTextbox: Item = clone(selectedItems[0])
+    newTextbox.lines = newLines
+
+    // set new item & remove old ones
+    slide.items[selected.shift()!] = newTextbox
+    selected.forEach((i) => {
+        slide.items.splice(i, 1)
+    })
+
+    // update
+    history({ id: "UPDATE", newData: { data: slide, key: "slides", keys: [slideRef.id] }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key" } })
 }

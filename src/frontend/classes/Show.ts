@@ -11,6 +11,7 @@ export class ShowObj implements Show {
     category: any
     settings: any
     timestamps: any
+    quickAccess: any
     meta: any
     slides: any
     layouts: any
@@ -31,6 +32,7 @@ export class ShowObj implements Show {
             modified: null,
             used: null,
         }
+        this.quickAccess = {}
         this.meta = {}
         this.slides = {}
         this.layouts = { [layoutId]: { name: get(dictionary).example?.default || "Default", notes: "", slides: [] } }

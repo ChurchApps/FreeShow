@@ -9,6 +9,7 @@
     import Button from "../../inputs/Button.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
+    import { sortByName } from "../../helpers/array"
 
     $: showGroups = $cachedShowsData[$activeShow!.id]?.groups.sort(orderGroups) || []
 
@@ -37,7 +38,7 @@
         return { id, group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
     })
 
-    $: sortedGroups = globalGroups.sort((a: any, b: any) => a.group?.localeCompare(b.group))
+    $: sortedGroups = sortByName(globalGroups, "group")
 </script>
 
 <div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;align-items: flex-start;">

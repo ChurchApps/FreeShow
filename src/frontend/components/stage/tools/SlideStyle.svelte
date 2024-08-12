@@ -1,10 +1,10 @@
 <script lang="ts">
     import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeStage, outputs, stageShows } from "../../../stores"
+    import { activeStage, outputs, stageShows, toggleOutputEnabled } from "../../../stores"
     import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
-    import { keysToID } from "../../helpers/array"
+    import { keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getActiveOutputs } from "../../helpers/output"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -80,10 +80,10 @@
     // password
 
     let outputList: any[] = []
-    $: outputList = Object.entries($outputs)
-        .map(([id, a]) => ({ id, ...a }))
-        .filter((a) => !a.isKeyOutput && !a.stageOutput)
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: outputList = sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput && !a.stageOutput))
+
+    // deleting stage layout and undoing will keep this on, but no output
+    $: if (settings.outputScreen && !Object.values($outputs).find((a) => a.stageOutput === $activeStage.id)) settings.outputScreen = false
 </script>
 
 <div class="section">
@@ -99,7 +99,15 @@
     <CombinedInput>
         <p><T id="settings.output_screen" /></p>
         <div class="alignRight">
-            <Checkbox checked={settings.outputScreen} on:change={(e) => toggleValue(e, "outputScreen")} />
+            <Checkbox
+                checked={settings.outputScreen}
+                on:change={(e) => {
+                    toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
+                    setTimeout(() => {
+                        toggleValue(e, "outputScreen")
+                    }, 100)
+                }}
+            />
         </div>
     </CombinedInput>
 

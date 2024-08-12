@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
+    import { encodeFilePath } from "../helpers/media"
 
     export let path: any
     export let video: any = null
@@ -31,10 +32,14 @@
 
     // custom end time
     $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0
-    $: if (endTime) setInterval(checkIfEnded, 1000 * playbackRate)
+    let endInterval: any = null
+    $: if (endTime && !mirror && !endInterval) endInterval = setInterval(checkIfEnded, 1000 * playbackRate)
     function checkIfEnded() {
         if (!videoTime || !endTime) return
-        if (videoTime >= endTime!) dispatch("ended")
+        if (videoTime >= endTime!) {
+            if (videoData.loop) videoTime = mediaStyle.fromTime || 0
+            else dispatch("ended")
+        }
     }
 
     function playing() {
@@ -71,7 +76,7 @@
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}
         muted={mirror ? true : videoData.muted ?? true}
-        src={path}
+        src={encodeFilePath(path)}
         autoplay
         loop={videoData.loop || false}
     >

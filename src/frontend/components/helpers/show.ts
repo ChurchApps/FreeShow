@@ -1,8 +1,9 @@
 import { get } from "svelte/store"
 import type { Show, ShowList, Shows, Slide } from "../../../types/Show"
 import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
-import { clone, keysToID, removeValues, sortByNameAndNumber } from "./array"
+import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
+import { _show } from "./shows"
 
 // check if name exists and add number
 export function checkName(name: string = "", showId: string = "") {
@@ -60,11 +61,43 @@ export function getGlobalGroup(group: string, returnInputIfNull: boolean = false
     return globalGroup || (returnInputIfNull ? groupId : "")
 }
 
+// get group number (dynamic counter)
+export function getGroupName(show: Show, slideID: string, groupName: string | null, layoutIndex: number) {
+    let name = groupName
+    if (name === null) return name // child slide
+
+    if (!name.length) name = "—"
+    if (!get(groupNumbers)) return name
+
+    // sort by order when just one layout
+    let slides = keysToID(clone(show.slides || {}))
+    if (Object.keys(show.layouts || {}).length < 2) {
+        let layoutSlides = Object.values(show.layouts || {})[0]?.slides?.map(({ id }) => id) || []
+        slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
+    }
+
+    // different slides with same name
+    let currentSlide = show.slides?.[slideID] || {}
+    let allSlidesWithSameGroup = slides.filter((a) => a.group === currentSlide.group)
+    let currentIndex = allSlidesWithSameGroup.findIndex((a) => a.id === slideID)
+    let currentGroupNumber = allSlidesWithSameGroup.length > 1 ? " " + (currentIndex + 1) : ""
+    name += currentGroupNumber
+
+    // same group - count
+    let layoutRef = _show().layouts("active").ref()[0]
+    let allGroupLayoutSlides = layoutRef.filter((a) => a.id === slideID)
+    let currentGroupLayoutIndex = allGroupLayoutSlides.findIndex((a) => a.layoutIndex === layoutIndex)
+    let currentLayoutNumber = allGroupLayoutSlides.length > 1 ? " (" + (currentGroupLayoutIndex + 1) + ")" : ""
+    name += currentLayoutNumber
+
+    return name
+}
+
 // mirror & events
 export function getListOfShows(removeCurrent: boolean = false) {
     let list: any[] = Object.entries(get(shows)).map(([id, show]: any) => ({ id, name: show.name }))
     if (removeCurrent) list = list.filter((a) => a.id !== get(activeShow)?.id)
-    list = list.sort((a, b) => a.name?.localeCompare(b.name))
+    list = sortByName(list)
     return list
 }
 
@@ -142,16 +175,15 @@ export function updateCachedShow(id: string, show: Show) {
         slidesUpdated: cachedShowsData[id]?.template?.slidesUpdated || false,
     }
 
-    // create groups
-    let showSlides = keysToID(clone(show.slides || {}))
-    let addedGroups: any = {}
-
     // sort by order when just one layout
+    let showSlides = keysToID(clone(show.slides || {}))
     if (Object.keys(show.layouts || {}).length < 2) {
         let layoutSlides = Object.values(show.layouts || {})[0]?.slides?.map(({ id }) => id) || []
         showSlides = showSlides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
     }
 
+    // create groups
+    let addedGroups: any = {}
     let showGroups: any[] = showSlides.map(createGroups)
     function createGroups(slide) {
         // update if global group
@@ -173,18 +205,28 @@ export function updateCachedShow(id: string, show: Show) {
             }
         }
 
-        if (!slide.group || !get(groupNumbers)) return { ...slide, id: slide.id }
+        if (slide.group === null || !get(groupNumbers)) return { ...slide, id: slide.id }
+        if (!slide.group) slide.group = "—"
 
         // add numbers to different slides with same name
         if (addedGroups[slide.group]) {
             addedGroups[slide.group]++
             slide.group += " " + addedGroups[slide.group]
-        } else addedGroups[slide.group] = 1
+        } else {
+            addedGroups[slide.group] = 1
+
+            // find all groups with same name
+            let allSameGroups = showSlides.filter((a) => a.group !== null && (a.group || "—") === slide.group)
+            if (allSameGroups.length > 1) slide.group += " 1"
+        }
 
         return { ...slide, id: slide.id }
     }
     // sort groups by name
-    let sortedGroups = showGroups.filter((a) => a.group !== null && a.group !== undefined).sort((a: any, b: any) => a.group?.localeCompare(b.group))
+    let sortedGroups = sortByName(
+        showGroups.filter((a) => a.group !== null && a.group !== undefined),
+        "group"
+    )
 
     return { layout, endIndex, template, groups: sortedGroups }
 }

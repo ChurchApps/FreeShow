@@ -63,11 +63,20 @@
 
     function convertDataToSlide(slideRef: { index: number }[]) {
         let currentSlides = _show().get("slides")
+        let currentMedia = _show().get("media") || {}
         let currentLayoutRef = _show().layouts("active").ref()[0]
 
         let slideData = slideRef.map(({ index }) => {
             let layout = currentLayoutRef[index] || {}
-            return { slide: clone(currentSlides[layout.id]), layoutData: layout.data }
+            let layoutMedia: any = {}
+            if (layout.data?.background) layoutMedia[layout.data.background] = currentMedia[layout.data?.background]
+            if (layout.data?.audio) {
+                layout.data.audio.forEach((audioId) => {
+                    layoutMedia[audioId] = currentMedia[audioId]
+                })
+            }
+
+            return { slide: clone(currentSlides[layout.id]), layoutData: layout.data, media: layoutMedia }
         })
 
         return slideData.filter((a) => a.slide)
@@ -145,18 +154,10 @@
     }
 
     function deselect(e: any) {
-        if (
-            !e.ctrlKey &&
-            !e.metaKey &&
-            $selected.id === id &&
-            !e.target.closest(".menus") &&
-            !e.target.closest(".selectElem") &&
-            !e.target.closest(".popup") &&
-            !e.target.closest(".edit") &&
-            !e.target.closest(".contextMenu") &&
-            !e.target.closest(".editTools")
-        )
-            selected.set({ id: null, data: [] })
+        if (e.ctrlKey || e.metaKey || $selected.id !== id) return
+        if (e.target.closest(".menus") || e.target.closest(".selectElem") || e.target.closest(".popup") || e.target.closest(".edit") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
+
+        selected.set({ id: null, data: [] })
     }
 
     let dragover: null | "start" | "center" | "end" = null

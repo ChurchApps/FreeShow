@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { BIBLE } from "../../../../types/Channels"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
-    import { activeScripture, bibleApiKey, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
+    import { activeScripture, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,7 +14,6 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import BibleApiKey from "./BibleApiKey.svelte"
     import { bookIds, fetchBible, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
 
     export let active: any
@@ -80,7 +79,8 @@
 
     function getBibleId(index: number, bible: any = null) {
         let selectedScriptureData = $scriptures[active]
-        return selectedScriptureData?.id || selectedScriptureData?.collection?.versions?.[index] || bible?.id || active
+        let bibleId = selectedScriptureData?.collection?.versions?.[index] || selectedScriptureData?.id || bible?.id || active
+        return bibleId
     }
 
     let versesList: { [key: string]: Verse[] } = {}
@@ -98,7 +98,9 @@
             data = $scriptures[objectId].books
         } else {
             try {
-                data = await fetchBible(load, bibleId, { versesList: versesList[bibleId] || [], bookId, chapterId })
+                // get actual api id from the abbr
+                let apiId = $scriptures[bibleId]?.id || bibleId
+                data = await fetchBible(load, apiId, { versesList: versesList[bibleId] || [], bookId, chapterId })
 
                 if (load === "books" && data?.length) setBooksCache(objectId, data)
             } catch (err) {
@@ -231,7 +233,7 @@
 
             if (!bibles[i]?.version) return
 
-            if (bibles[i].api) loadAPIBible(id, "books")
+            if (bibles[i].api) loadAPIBible(id, "books", i)
             else if ($scripturesCache[id]) {
                 books[id] = ($scripturesCache[id].books as any) || []
                 bookId = cachedRef?.bookId || 0
@@ -251,7 +253,7 @@
                 books[id].forEach((b) => {
                     if (b.id === bookId) bibles[i].book = b.name
                 })
-                loadAPIBible(id, "chapters")
+                loadAPIBible(id, "chapters", i)
             } else if (books[id][bookId]) {
                 bibles[i].book = books[id][bookId].name || ""
                 chapters[id] = (books[id][bookId] as any).chapters
@@ -273,7 +275,7 @@
                 })
 
                 verses[id] = {}
-                await loadAPIBible(id, "verses")
+                await loadAPIBible(id, "verses", i)
                 await loadAPIBible(id, "versesText", i)
             } else if (chapters[id][chapterId]) {
                 let content: any = {}
@@ -311,7 +313,9 @@
         }
 
         updateActiveVerses(index)
-        loaded = true
+
+        // timeout here because svelte updates ($: if (active) loaded = false) after this (should be before)
+        setTimeout(() => (loaded = true))
     }
 
     function updateActiveVerses(bibleIndex: number = 0) {
@@ -764,7 +768,11 @@
 
         let selectedElemTop = scrollElem.querySelector(".active")?.offsetTop || 0
 
-        // wait to allow user to double click
+        // don't scroll if elem is in view
+        let visibleElemPos = selectedElemTop - scrollElem.scrollTop
+        if (visibleElemPos > 0 && visibleElemPos < scrollElem.offsetHeight) return
+
+        // wait to allow user to click
         setTimeout(() => {
             scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
         }, 150)
@@ -779,8 +787,8 @@
             <Center faded>
                 <T id="error.bible" />
             </Center>
-        {:else if bibles[0].api && !$bibleApiKey}
-            <BibleApiKey />
+            <!-- {:else if bibles[0].api && !$bibleApiKey}
+            <BibleApiKey /> -->
         {:else if error}
             <Center faded>
                 <T id="error.bible_api" />
@@ -857,6 +865,11 @@
                             {id}
                             draggable="true"
                             on:mouseup={(e) => selectVerse(e, id)}
+                            on:mousedown={(e) => {
+                                if (e.ctrlKey || e.metaKey || e.shiftKey) return
+                                if (!activeVerses.includes(id)) activeVerses = [id]
+                                updateActiveVerses()
+                            }}
                             on:dblclick={() => playOrClearScripture(true)}
                             class:active={activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}

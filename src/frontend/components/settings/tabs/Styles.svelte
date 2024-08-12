@@ -119,12 +119,7 @@
     ]
 
     let templateList: any[] = []
-    $: templateList = [
-        { id: null, name: "—" },
-        ...Object.entries($templates)
-            .map(([id, template]: any) => ({ id, name: template.name }))
-            .sort((a, b) => a.name.localeCompare(b.name)),
-    ]
+    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))]
 
     // text divider
     function keydown(e: any) {

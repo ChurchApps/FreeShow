@@ -1,6 +1,7 @@
 <script lang="ts">
     import { activeStage, stageShows } from "../../../stores"
-    import { addStyleString } from "../../edit/scripts/textStyle"
+    import { getBackgroundOpacity, setBackgroundColor } from "../../edit/scripts/edit"
+    import { addFilterString, addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
     import { itemEdits } from "../../edit/values/item"
     import { clone } from "../../helpers/array"
@@ -23,8 +24,22 @@
     // CSS
     $: if (itemEdit?.CSS && item?.style) itemEdit.CSS[0].value = item.style
 
+    $: if (item) itemEdit = getBackgroundOpacity(itemEdit, data)
+
     function updateStyle(e: any) {
         let input = e.detail
+
+        if (input.id === "transform") {
+            let oldString = data[input.id]
+            input.value = addFilterString(oldString || "", [input.key, input.value])
+            input.key = input.id
+        }
+
+        // background opacity
+        if (input.id === "background-opacity" || (input.value && input.key === "background-color")) {
+            input = setBackgroundColor(input, data)
+            setTimeout(() => getBackgroundOpacity(itemEdit, data), 100)
+        }
 
         let value: string = addStyleString(item!.style, [input.key, input.value]) || ""
 

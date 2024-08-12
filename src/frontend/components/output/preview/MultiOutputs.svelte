@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, outputs } from "../../../stores"
+    import { dictionary, outputs, toggleOutputEnabled } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -10,7 +10,7 @@
     export let disableTransitions: boolean = false
 
     // export let resolution: Resolution
-    $: outs = sortByName(keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput))
+    $: outs = sortByName(keysToID($outputs).filter((a) => a.enabled && !a.hideFromPreview && !a.isKeyOutput))
 
     let fullscreen: boolean = false
     let fullscreenId = ""
@@ -28,24 +28,13 @@
         currentResolution()
     }
 
-    // SHOULD ONLY BE ENABLED IF THE OUTPUTS ARE CHANGED, NOT THE CONTENT!
-    // // this is to prevent transitions when adding/removing outputs (but it does not work at the moment)
-    // // let disableTransitions: boolean = false
-    // let updatedList: any[] = []
-    // let timeout: any = null
-    // $: if (outs) updateList()
-    // function updateList() {
-    //     if (JSON.stringify(updatedList) === JSON.stringify(outs)) return
-    //     if (timeout) clearTimeout(timeout)
-
-    //     disableTransitions = true
-
-    //     timeout = setTimeout(() => {
-    //         updatedList = clone(outs)
-    //         timeout = null
-    //         disableTransitions = false
-    //     }) // 500
-    // }
+    $: if ($toggleOutputEnabled) {
+        disableTransitions = true
+        setTimeout(() => {
+            toggleOutputEnabled.set(false)
+            disableTransitions = false
+        }, 500)
+    }
 
     let resolution: any = {}
     function currentResolution() {

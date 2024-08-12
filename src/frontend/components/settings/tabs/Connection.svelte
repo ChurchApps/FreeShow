@@ -5,7 +5,7 @@
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, keysToID } from "../../helpers/array"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import { checkWindowCapture, getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -85,7 +85,7 @@
     $: outputsList = getList(clone($outputs))
     function getList(outputs) {
         let list = keysToID(outputs).filter((a) => !a.isKeyOutput && a.enabled === true)
-        return list.sort((a, b) => a.name.localeCompare(b.name))
+        return sortByName(list)
     }
 
     function setOutputId(e: any) {

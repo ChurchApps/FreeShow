@@ -6,10 +6,9 @@
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
+    import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
-    import { getActiveOutputs } from "../../helpers/output"
-    import { decodeURI } from "../../helpers/audio"
 
     export let currentOutput: any
     export let outputId: string
@@ -93,7 +92,7 @@
         {#if background?.type === "player"}
             <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
         {:else}
-            <p>{decodeURI(mediaName)}</p>
+            <p>{mediaName}</p>
         {/if}
     </span>
 

@@ -28,6 +28,7 @@
     $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
 
     $: if (Object.keys(timer).length) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
+    else currentTime = 0
 
     $: min = Math.min(timer.start || 0, timer.end || 0)
     $: max = Math.max(timer.start || 0, timer.end || 0)

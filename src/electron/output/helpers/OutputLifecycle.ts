@@ -21,7 +21,7 @@ export class OutputLifecycle {
         const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
         //const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow })
+        OutputHelper.setOutput(id, { window: outputWindow, invisible: output.invisible })
         //OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds(output)
 
@@ -35,8 +35,10 @@ export class OutputLifecycle {
         }, 1200)
 
         // NDI
-        if (output.ndi) await NdiSender.createSenderNDI(id, output.name)
-        if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+        if (output.ndi) {
+            await NdiSender.createSenderNDI(id, output.name)
+            if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+        }
     }
 
     /*
@@ -106,15 +108,16 @@ export class OutputLifecycle {
             return
         }
 
-        OutputHelper.getOutput(id).window.on("closed", () => {
+        OutputHelper.getOutput(id).window.once("closed", () => {
             OutputHelper.deleteOutput(id)
             if (reopen) this.createOutput(reopen)
         })
 
         try {
             const output = OutputHelper.getOutput(id)
-            output?.window?.destroy()
-            //output?.previewWindow?.destroy()
+            // this has to be called to actually remove the process!
+            output?.window?.removeAllListeners("close")
+            output?.window?.close()
         } catch (error) {
             console.log(error)
         }

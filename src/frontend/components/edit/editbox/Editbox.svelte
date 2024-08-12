@@ -19,6 +19,7 @@
     export let ratio: number = 1
     export let plain: boolean = false
     export let chordsMode: boolean = false
+    export let chordsAction: string = ""
 
     let itemElem: any
 
@@ -137,7 +138,7 @@ bind:offsetWidth={width} -->
         <EditboxPlain {item} {index} {ratio} />
     {/if}
     {#if item?.lines}
-        <EditboxLines {chordsMode} {item} {ref} {index} {editIndex} {plain} />
+        <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} />
     {:else}
         <EditboxOther {item} {ratio} {ref} />
     {/if}

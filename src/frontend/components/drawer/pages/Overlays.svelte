@@ -1,6 +1,6 @@
 <script lang="ts">
     import { dictionary, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
-    import { clone } from "../../helpers/array"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { findMatchingOut, getResolution, setOutput } from "../../helpers/output"
@@ -19,10 +19,7 @@
     $: resolution = getResolution(null, { $outputs, $styles })
 
     let filteredOverlays: any[] = []
-    $: filteredOverlays = Object.keys($overlays)
-        .map((id) => ({ id, ...$overlays[id] }))
-        .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$overlayCategories[s.category])))
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: filteredOverlays = sortByName(keysToID($overlays).filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$overlayCategories[s.category]))))
 
     // search
     $: if (filteredOverlays || searchValue !== undefined) filterSearch()

@@ -2,7 +2,6 @@
 
 [![Downloads](https://img.shields.io/github/downloads/ChurchApps/freeshow/total)](https://github.com/ChurchApps/freeshow/releases)
 [![Licence](https://img.shields.io/badge/licence-GPL-blue.svg)](https://github.com/ChurchApps/freeshow/blob/main/LICENSE)
-[![Playwright Tests](https://github.com/ChurchApps/FreeShow/actions/workflows/playwright.yml/badge.svg?branch=dev)](https://github.com/ChurchApps/FreeShow/actions/workflows/playwright.yml)
 
 # FreeShow
 
@@ -31,7 +30,7 @@ FreeShow exists because the creator found that other simular programs was either
 
 ## Support Us
 
-The only reason this program is free is because of the generous support from users. If you want to support us to keep this free, please head over to [ChurchApps](https://churchapps/partner) or [sponsor us on GitHub](https://github.com/sponsors/ChurchApps/). Thank you so much!
+The only reason this program is free is because of the generous support from users. If you want to support us to keep this free, please head over to [ChurchApps](https://churchapps.org/partner) or [sponsor us on GitHub](https://github.com/sponsors/ChurchApps/). Thank you so much!
 
 ## Join the Community
 
@@ -55,8 +54,9 @@ You are welcome to contribute to the code!
 
 1. Clone the code in this repo
 2. Install [Node.js](https://nodejs.org/en/download/)
-3. In the terminal, run: `npm install`
-4. To start the app, run: `npm start`
+3. Install [Python 3.11](https://www.python.org/downloads/release/python-3119/) or install [Python 3.12](https://www.python.org/downloads/) with the `setuptools` package
+4. In the terminal, run: `npm install`
+5. To start the app, run: `npm start`
 
 ## Join us on Slack
 

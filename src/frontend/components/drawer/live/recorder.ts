@@ -15,6 +15,10 @@ export function createMediaRecorder(stream) {
     mediaRecorder.onstop = handleStop
 }
 
+export function mediaRecorderIsPaused() {
+    return mediaRecorder?.state === "paused"
+}
+
 export function toggleMediaRecorder() {
     if (mediaRecorder.state === "paused") {
         mediaRecorder.resume()

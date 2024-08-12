@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activePopup, dictionary, labelsDisabled, variables } from "../../../stores"
+    import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -12,8 +13,7 @@
     export let searchValue
     console.log(searchValue)
 
-    $: globalList = Object.entries($variables).map(([id, a]) => ({ ...a, id }))
-    $: sortedVariables = globalList.sort((a, b) => a.name?.localeCompare(b.name))
+    $: sortedVariables = sortByName(keysToID($variables))
 
     function updateVariable(e: any, id: string, key: string) {
         let value = e?.target?.value ?? e

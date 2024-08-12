@@ -105,12 +105,13 @@ export class EditboxHelper {
     }
 
     static getSyleHtml(item: Item, plain: boolean, currentStyle: string) {
+        currentStyle = ""
         let html = ""
         let firstTextStyleArchive: string = ""
         let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
         item?.lines?.forEach((line, i) => {
             let align = line.align.replaceAll(lineBg, "")
-            currentStyle += align + lineBg
+            currentStyle += align + lineBg // + line.chords?.map((a) => a.key)
             let style = align || lineBg ? 'style="' + align + ";" + lineBg + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
 

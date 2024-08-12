@@ -1,15 +1,14 @@
 <script lang="ts">
-    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, selected, showsCache, slideTimers, special, styles } from "../../../stores"
+    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, slideTimers, special, styles } from "../../../stores"
+    import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clearAudio } from "../../helpers/audio"
-    import { getActiveOutputs, isOutCleared, outputSlideHasContent, refreshOut, setOutput } from "../../helpers/output"
-    import { getItemWithMostLines, nextSlide, playNextGroup, previousSlide } from "../../helpers/showActions"
+    import { getActiveOutputs, isOutCleared, outputSlideHasContent, setOutput } from "../../helpers/output"
+    import { getItemWithMostLines, playNextGroup, updateOut } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import { newSlideTimer } from "../../helpers/tick"
     import Button from "../../inputs/Button.svelte"
     import ShowActions from "../ShowActions.svelte"
-    import { clearAll, clearBackground, clearSlide } from "../clear"
     import Audio from "../tools/Audio.svelte"
     import MediaControls from "../tools/MediaControls.svelte"
     import NextTimer from "../tools/NextTimer.svelte"
@@ -25,110 +24,43 @@
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
-    const ctrlShortcuts: any = {
-        l: () => outLocked.set(!$outLocked),
-        r: () => {
-            if (!$outLocked) refreshOut()
-        },
-    }
-
-    const shortcuts: any = {
-        // presenter controller keys
-        Escape: () => {
-            // WIP if (allCleared) fullscreen = false
-
-            setTimeout(clearAll)
-        },
-        ".": () => {
-            if (!$special.disablePresenterControllerKeys) clearAll()
-        },
-        F1: () => {
-            if (!$outLocked) clearBackground()
-        },
-        F2: () => {
-            if ($outLocked || $selected.id) return false
-            if ($special.disablePresenterControllerKeys) return false
-
-            clearSlide()
-            return true
-        },
-        F3: () => {
-            if (!$outLocked) setOutput("overlays", [])
-        },
-        F4: () => {
-            if (!$outLocked) clearAudio()
-        },
-        F5: () => {
-            if (!$special.disablePresenterControllerKeys) nextSlide(null)
-            else setOutput("transition", null)
-        },
-        PageDown: (e: any) => {
-            if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-            if ($special.disablePresenterControllerKeys) return
-
-            e.preventDefault()
-            nextSlide(e)
-        },
-        PageUp: (e: any) => {
-            if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-            if ($special.disablePresenterControllerKeys) return
-
-            e.preventDefault()
-            previousSlide(e)
-        },
-
-        ArrowRight: (e: any) => {
-            // if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-            if ($outLocked || e.ctrlKey || e.metaKey) return
-            nextSlide(e)
-        },
-        ArrowLeft: (e: any) => {
-            // if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-            if ($outLocked || e.ctrlKey || e.metaKey) return
-            previousSlide(e)
-        },
-        " ": (e: any) => {
-            if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-
-            e.preventDefault()
-            if (currentOutput.out?.slide?.id !== $activeShow?.id || ($activeShow && currentOutput.out?.slide?.layout !== $showsCache[$activeShow.id].settings.activeLayout)) nextSlide(e, true)
-            else {
-                if (e.shiftKey) previousSlide(e)
-                else nextSlide(e)
-            }
-        },
-        Home: (e: any) => {
-            if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-            if ($special.disablePresenterControllerKeys) return
-
-            e.preventDefault()
-            nextSlide(e, true)
-        },
-        End: (e: any) => {
-            if ($activeShow?.type !== "show" && $activeShow?.type !== undefined) return
-            if ($special.disablePresenterControllerKeys) return
-
-            e.preventDefault()
-            nextSlide(e, false, true)
-        },
-    }
-
+    let numberKeyTimeout: any = null
+    let previousNumberKey: string = ""
     function keydown(e: any) {
-        if ((e.ctrlKey || e.metaKey || e.altKey) && ctrlShortcuts[e.key]) {
+        if ((e.ctrlKey || e.metaKey || e.altKey) && previewCtrlShortcuts[e.key]) {
             e.preventDefault()
-            ctrlShortcuts[e.key]()
+            previewCtrlShortcuts[e.key]()
         }
 
         if (e.target.closest("input") || e.target.closest(".edit")) return
 
         // group shortcuts
-        if ($activeShow && !e.ctrlKey && !e.metaKey && /^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
-            e.preventDefault()
-            return
+        if ($activeShow && !e.ctrlKey && !e.metaKey && !$outLocked) {
+            // play group with custom shortcut keys (A-Z)
+            if (/^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
+                e.preventDefault()
+                return
+            }
+
+            // play slide with number keys
+            if ($special.numberKeys && !isNaN(e.key)) {
+                previousNumberKey += e.key
+
+                if (numberKeyTimeout) clearTimeout(numberKeyTimeout)
+                numberKeyTimeout = setTimeout(() => {
+                    let slideIndex = Number(previousNumberKey) - 1
+                    playSlideAtIndex(slideIndex)
+
+                    numberKeyTimeout = null
+                    previousNumberKey = ""
+                }, 300)
+
+                return
+            }
         }
 
-        if (shortcuts[e.key]) {
-            if (shortcuts[e.key](e)) e.preventDefault()
+        if (previewShortcuts[e.key]) {
+            if (previewShortcuts[e.key](e)) e.preventDefault()
             return
         }
     }
@@ -151,6 +83,14 @@
         })
 
         return playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId }, !e.altKey)
+    }
+
+    function playSlideAtIndex(index: number) {
+        let slideRef: any = _show("active").layouts("active").ref()[0]
+        if (!slideRef[index]) return
+
+        updateOut("active", index, slideRef)
+        setOutput("slide", { id: $activeShow?.id, layout: _show("active").get("settings.activeLayout"), index, line: 0 })
     }
 
     // active menu

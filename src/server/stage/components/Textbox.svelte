@@ -88,6 +88,7 @@
 
     // CHORDS
 
+    // WIP auto size here does not set correct size in stage output
     let chordLines: string[] = []
     $: if (chords && item.lines) createChordLines()
     function createChordLines() {
@@ -103,9 +104,11 @@
             let html = ""
 
             //add negative chords at the beginning of the line
-            negativeChords.sort((a: any, b: any) => b.pos - a.pos).forEach((chord: any, i: number) => {
-                html += `<span class="chord" style="transform: translateX(calc(-100% - ${60 * (i + 1)}px));">${chord.key}</span>`
-            });
+            negativeChords
+                .sort((a: any, b: any) => b.pos - a.pos)
+                .forEach((chord: any, i: number) => {
+                    html += `<span class="chord" style="transform: translateX(calc(-100% - ${60 * (i + 1)}px));">${chord.key}</span>`
+                })
 
             let index = 0
             line.text.forEach((text) => {
@@ -125,9 +128,11 @@
                 })
             })
 
-            chords.sort((a: any, b: any) => a.pos - b.pos).forEach((chord: any, i: number) => {
-                html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
-            })
+            chords
+                .sort((a: any, b: any) => a.pos - b.pos)
+                .forEach((chord: any, i: number) => {
+                    html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
+                })
 
             if (!html) return
             chordLines[i] = html

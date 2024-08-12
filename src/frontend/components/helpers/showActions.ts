@@ -22,6 +22,7 @@ import {
     projects,
     showsCache,
     slideTimers,
+    stageShows,
     styles,
     templates,
     timers,
@@ -421,9 +422,8 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         }
 
         // background
-        if (background) {
-            let bg = _show(showId).get("media")[background!]
-            console.log(_show(showId).get(), _show(showId).get("media"))
+        if (background && _show(showId).get("media")[background]) {
+            let bg = _show(showId).get("media")[background]
             let outputBg = get(outputs)[outputId]?.out?.background
             let cloudId = get(driveData).mediaId
             let bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path : bg.path
@@ -438,7 +438,6 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
             if (bg && bgPath !== outputBg?.path) {
                 let mediaStyle = getMediaStyle(get(media)[bgPath], { name: "" })
-                console.log(mediaStyle)
                 let bgData: any = {
                     name,
                     type,
@@ -535,6 +534,8 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
 const runPerOutput = ["clear_background", "clear_overlays"]
 function playSlideActions(actions: any[], outputIds: string[] = [], slideIndex: number = -1) {
+    actions = clone(actions)
+
     // run these actions on each active output
     if (outputIds.length > 1) {
         runPerOutput.forEach((id) => {
@@ -759,17 +760,26 @@ export function getDynamicIds() {
     return [...mainValues, ...metaValues]
 }
 
-export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type }: any, _updater: number = 0) {
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater: number = 0) {
     if (type === "stage" && get(currentWindow) === "output") {
         let outputId = Object.values(get(outputs))[0]?.stageOutput || ""
         let outSlide = get(allOutputs)[outputId]?.out?.slide
         showId = outSlide?.id
+        slideIndex = outSlide?.index
+    } else if (type === "stage") {
+        let stageOutput = get(stageShows)[id]?.settings?.output
+        let outputId = stageOutput || getActiveOutputs(get(outputs), false, true, true)[0]
+        let outSlide = get(outputs)[outputId]?.out?.slide
+        showId = outSlide?.id
+        slideIndex = outSlide?.index
     }
 
     let show = _show(showId).get()
     if (!show) return text
 
     getDynamicIds().forEach((id) => {
+        if (!text.includes(dynamicValueText(id))) return
+
         let newValue = getDynamicValue(id, show)
         text = text.replaceAll(dynamicValueText(id), newValue)
     })

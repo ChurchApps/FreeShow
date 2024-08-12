@@ -4,7 +4,7 @@
     import { activeDrawerTab, activePage, activePopup, activeStage, drawer, drawerTabsData, outputs, stageShows, timers, variables } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { keysToID } from "../../helpers/array"
+    import { keysToID, sortByName } from "../../helpers/array"
     import { checkWindowCapture, getActiveOutputs, getResolution } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
@@ -17,7 +17,7 @@
         slide: ["current_slide_text", "current_slide", "current_slide_notes", "next_slide_text", "next_slide", "next_slide_notes"],
         output: ["current_output", "slide_tracker"],
         time: ["system_clock", "video_time", "video_countdown"],
-        global_timers: ["{timers}"],
+        global_timers: ["first_active_timer", "{timers}"],
         variables: ["{variables}"],
         // other: ["chords", "message"],
     }
@@ -72,8 +72,8 @@
 
     let timeout: any = null
 
-    let timersList: any[] = keysToID($timers).sort((a, b) => a.name?.localeCompare(b.name))
-    let variablesList: any[] = keysToID($variables).sort((a, b) => a.name?.localeCompare(b.name))
+    let timersList: any[] = sortByName(keysToID($timers))
+    let variablesList: any[] = sortByName(keysToID($variables))
 
     const drawerPages: { [key: string]: DrawerTabIds } = {
         timer: "calendar",
@@ -113,6 +113,10 @@
             {#if title === "global_timers"}
                 <h6><T id="tabs.timers" /></h6>
                 {#if timersList.length}
+                    <Button on:click={() => click(title + "#first_active_timer")} active={enabledItems[title + "#first_active_timer"]?.enabled} style="width: 100%;" bold={false}>
+                        <Icon id="timer" right />
+                        <span class="overflow"><T id="stage.first_active_timer" /></span>
+                    </Button>
                     {#each timersList as timer}
                         <Button on:click={() => click(title + "#" + timer.id)} active={enabledItems[title + "#" + timer.id]?.enabled} style="width: 100%;" bold={false}>
                             <Icon id="timer" right />

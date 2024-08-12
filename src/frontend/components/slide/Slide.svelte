@@ -3,37 +3,18 @@
     import { MAIN } from "../../../types/Channels"
     import type { MediaStyle } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
-    import {
-        activeShow,
-        activeTimers,
-        audioFolders,
-        checkedFiles,
-        dictionary,
-        driveData,
-        fullColors,
-        groupNumbers,
-        groups,
-        media,
-        mediaFolders,
-        outputs,
-        overlays,
-        refreshListBoxes,
-        refreshSlideThumbnails,
-        showsCache,
-        slidesOptions,
-        styles,
-    } from "../../stores"
+    import { activeShow, activeTimers, audioFolders, checkedFiles, dictionary, driveData, fullColors, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, showsCache, slidesOptions, styles } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import { slideHasAction } from "../actions/actions"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/editbox/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
-    import { clone, keysToID } from "../helpers/array"
+    import { clone } from "../helpers/array"
     import { getContrast } from "../helpers/color"
-    import { GetLayoutRef } from "../helpers/get"
     import { checkMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution } from "../helpers/output"
+    import { getGroupName } from "../helpers/show"
     import SelectElem from "../system/SelectElem.svelte"
     import Actions from "./Actions.svelte"
     import Icons from "./Icons.svelte"
@@ -84,6 +65,7 @@
 
         let mediaId = layoutSlide.background!
         let folders = Object.values($mediaFolders).map((a) => a.path!)
+        console.log(background, mediaId, folders)
         locateFile(mediaId, bg.path, folders, bg)
     }
 
@@ -145,10 +127,14 @@
     let thumbnailPath: string = ""
     async function loadBackground() {
         if (ghostBackground) {
-            await wait(100)
-            // will not load if not opened in the drawer (but original image will then be loaded)
-            thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
-            // thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
+            if (index === 1) {
+                // create image (if not created) when it's on slide 2 (slide 1 is the original)
+                thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
+            } else {
+                // load ghost thumbnails (wait a bit to reduce loading lag)
+                await wait(100)
+                thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
+            }
             return
         }
 
@@ -173,44 +159,7 @@
         // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
     }
 
-    $: name = getGroupName(layoutSlide.id)
-    // dynamic counter
-    function getGroupName(slideID: string) {
-        let name = group
-        if (name === null || name === undefined) return name
-
-        if (!name.length) name = "—"
-        let added: any = {}
-        if (!$groupNumbers) return name
-
-        // different slides with same name
-        let slides = keysToID(show.slides || [])
-        // sort by order when just one layout
-        if (Object.keys(show.layouts || {}).length < 2) {
-            let layoutSlides = Object.values(show.layouts)[0]?.slides?.map(({ id }) => id) || []
-            slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
-        }
-        slides.forEach((slide: any) => {
-            if (!slide) return
-            if (added[slide.group]) {
-                added[slide.group]++
-                if (slide.id === slideID) name += " " + added[slide.group]
-            } else added[slide.group] = 1
-        })
-
-        // same group count
-        added = {}
-        GetLayoutRef().forEach((a: any, i: number) => {
-            if (a.type === "parent") {
-                if (added[a.id]) {
-                    added[a.id]++
-                    if (i === index) name += " (" + added[a.id] + ")"
-                } else added[a.id] = 1
-            }
-        })
-
-        return name
-    }
+    $: name = getGroupName(show, layoutSlide.id, group, index)
 
     // quick edit
     let html: string = ""
@@ -355,7 +304,7 @@
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader name={$dictionary.error?.load} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
+                                <MediaLoader name={$dictionary.error?.load} ghost={!background} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
                                 <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}

@@ -1,10 +1,10 @@
 import { get } from "svelte/store"
-import { activeEdit, contextData, drawerTabsData, groups, outputs, overlays, selected, sorted } from "../../stores"
+import { activeEdit, activeTagFilter, contextData, drawerTabsData, globalTags, groups, outputs, overlays, selected, sorted } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
-import { chordAdders, keys } from "../edit/values/chords"
-import { clone, keysToID, sortByName } from "../helpers/array"
+import { chordTypes, keys } from "../edit/values/chords"
+import { clone, keysToID, sortByName, sortObject } from "../helpers/array"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
@@ -21,6 +21,11 @@ const loadActions = {
         })
 
         return items
+    },
+    tags: () => {
+        let sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeTagFilter).includes(a.id), translate: false }))
+        setContextData("tags", sortedTags.length)
+        return sortedTags
     },
     sort_shows: (items: ContextMenuItem[]) => sortItems(items, "shows"),
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
@@ -96,21 +101,27 @@ const loadActions = {
         let ol = data.overlays || []
         if (ol.length) {
             if (media.length) media.push("SEPERATOR")
-            media.push(...ol.map((id: string) => ({ id, label: get(overlays)[id].name, translate: false, icon: "overlays" })).sort((a, b) => a.label.localeCompare(b.label)))
+            media.push(
+                ...sortByName(
+                    ol.map((id: string) => ({ id, label: get(overlays)[id].name, translate: false, icon: "overlays" })),
+                    "label"
+                )
+            )
         }
 
         // get audio
         let audio = data.audio || []
         if (audio.length) {
             if (media.length) media.push("SEPERATOR")
-            let audioItems = audio
-                .map((id: string) => ({
+            let audioItems = sortByName(
+                audio.map((id: string) => ({
                     id,
                     label: showMedia[id].name.indexOf(".") > -1 ? showMedia[id].name.slice(0, showMedia[id].name.lastIndexOf(".")) : showMedia[id].name,
                     translate: false,
                     icon: "music",
-                }))
-                .sort((a, b) => a.label.localeCompare(b.label))
+                })),
+                "label"
+            )
             media.push(...audioItems)
         }
 
@@ -118,14 +129,15 @@ const loadActions = {
         let mics = data.mics || []
         if (mics.length) {
             if (media.length) media.push("SEPERATOR")
-            let micItems = mics
-                .map((mic: any) => ({
+            let micItems = sortByName(
+                mics.map((mic: any) => ({
                     id: mic.id,
                     label: mic.name,
                     translate: false,
                     icon: "microphone",
-                }))
-                .sort((a, b) => a.label.localeCompare(b.label))
+                })),
+                "label"
+            )
             media.push(...micItems)
         }
 
@@ -133,14 +145,15 @@ const loadActions = {
         let slideActions = data.actions?.slideActions || []
         if (slideActions.length) {
             if (media.length) media.push("SEPERATOR")
-            let actionItems = slideActions
-                .map((action: any) => ({
+            let actionItems = sortByName(
+                slideActions.map((action: any) => ({
                     id: action.id,
                     label: actionData[action.triggers?.[0]]?.name || "",
                     icon: actionData[action.triggers?.[0]]?.icon || "actions",
                     type: "action",
-                }))
-                .sort((a, b) => a.label.localeCompare(b.label))
+                })),
+                "label"
+            )
             media.push(...actionItems)
         }
 
@@ -154,7 +167,7 @@ const loadActions = {
     },
     chord_list: (items: ContextMenuItem[]) => {
         keys.forEach((key) => {
-            chordAdders.forEach((adder) => {
+            chordTypes.forEach((adder) => {
                 items.push({ id: key + adder, label: key + adder, translate: false })
             })
         })

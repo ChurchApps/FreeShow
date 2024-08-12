@@ -1,6 +1,6 @@
 <script lang="ts">
     import { activeShow, dictionary, labelsDisabled, mediaOptions, outputs, showsCache, styles, templateCategories, templates } from "../../../stores"
-    import { clone } from "../../helpers/array"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getResolution } from "../../helpers/output"
@@ -19,17 +19,14 @@
     $: resolution = getResolution(null, { $outputs, $styles }) // $templates[active || ""]?.settings?.resolution
     let filteredTemplates: any
 
-    $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id]?.settings.template : null
+    $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id]?.settings?.template : null
 
     let fullFilteredTemplates: any[] = []
     $: if ($templates || active) updateTemplates()
     templates.subscribe(updateTemplates)
 
     function updateTemplates() {
-        filteredTemplates = clone(Object.keys($templates))
-            .map((id) => ({ id, ...$templates[id] }))
-            .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category])))
-            .sort((a, b) => a.name.localeCompare(b.name))
+        filteredTemplates = sortByName(keysToID(clone($templates)).filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category]))))
 
         filterSearch()
     }
@@ -70,7 +67,7 @@
                         color={template.color}
                         {resolution}
                         on:click={(e) => {
-                            if (e.target?.closest(".edit")) return
+                            if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
                             if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
 
                             history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "none", override: "show#" + $activeShow.id } })

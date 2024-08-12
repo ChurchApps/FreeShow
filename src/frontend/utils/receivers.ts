@@ -39,6 +39,7 @@ import {
     audioFolders,
     closeAd,
     currentOutputSettings,
+    customMessageCredits,
     dataPath,
     deviceId,
     dictionary,
@@ -93,10 +94,11 @@ import { createData } from "./createData"
 import { syncDrive, validateKeys } from "./drive"
 import { sendInitialOutputData } from "./listeners"
 import { receive, send } from "./request"
-import { closeApp, initializeClosing, saveComplete } from "./save"
+import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { clearBackground } from "../components/output/clear"
+import { previewShortcuts } from "./shortcuts"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -274,7 +276,11 @@ const receiveFILE = {
 
 let clearing: boolean = false
 const receiveOUTPUTasMAIN: any = {
-    BUFFER: ({ id, buffer, size }) => {
+    BUFFER: ({ id, time, buffer, size }) => {
+        // this will infinitely increace if this is not in place
+        let timeSinceSent = Date.now() - time
+        if (timeSinceSent > 100) return // skip frames if overloaded
+
         previewBuffers.update((a) => {
             a[id] = { buffer, size }
             return a
@@ -313,6 +319,16 @@ const receiveOUTPUTasMAIN: any = {
             return a
         })
     },
+    UPDATE_OUTPUTS_DATA: ({ key, value, id, autoSave }) => {
+        outputs.update((a) => {
+            let ids = id ? [id] : Object.keys(get(outputs))
+            ids.forEach((outputId) => {
+                if (a[outputId]) a[outputId][key] = value
+            })
+            return a
+        })
+        if (autoSave) save()
+    },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.log(msg),
     MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
@@ -349,6 +365,11 @@ const receiveOUTPUTasMAIN: any = {
         alertMessage.set(data)
         activePopup.set("alert")
     },
+    MAIN_SHORTCUT: (data: { key: string }) => {
+        if (previewShortcuts[data.key]) {
+            previewShortcuts[data.key]({ ...data, preventDefault: () => "" })
+        }
+    },
 }
 
 let previousOutputs: string = ""
@@ -377,7 +398,10 @@ export const receiveOUTPUTasOUTPUT: any = {
         allOutputs.set(a)
     },
     // only received by stage screen outputs
-    BUFFER: ({ id, buffer, size }) => {
+    BUFFER: ({ id, time, buffer, size }) => {
+        let timeSinceSent = Date.now() - time
+        if (timeSinceSent > 100) return // skip frames if overloaded
+
         // WIP only receive the "output capture" from this outputs "stageOutput id"
         // let outputId = Object.keys(get(outputs))[0]
         // if (id !== outputId) return
@@ -408,6 +432,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
     MEDIA: (a: any) => media.set(a),
+    CUSTOM_CREDITS: (a: any) => customMessageCredits.set(a),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
     TIME_FORMAT: (a: any) => timeFormat.set(a),
@@ -528,8 +553,12 @@ const receiveCLOUD = {
         showsCache.set({})
         activeShow.set(null)
 
-        popupData.set(changes)
-        activePopup.set("cloud_update")
+        // could show popup with data (but it's better to just show a toast!)
+        newToast("$cloud.sync_complete")
+        popupData.set({})
+        activePopup.set(null)
+        // popupData.set(changes)
+        // activePopup.set("cloud_update")
     },
 }
 

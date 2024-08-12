@@ -8,6 +8,7 @@ import { audioAnalyser } from "../output/audioAnalyser"
 import { clone, shuffleArray } from "./array"
 import { encodeFilePath } from "./media"
 import { checkNextAfterMedia } from "./showActions"
+import { customActionActivation } from "../actions/actions"
 
 export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0) {
     let existing: any = get(playingAudio)[path]
@@ -30,12 +31,16 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
         return
     }
 
+    let audioPlaying = Object.keys(get(playingAudio)).length
     if (crossfade) crossfadeAudio(crossfade)
     else if (!playMultiple) clearAudio("", false)
 
     let encodedPath = encodeFilePath(path)
     audio = audio || new Audio(encodedPath)
     let analyser: any = await getAnalyser(audio, stream)
+
+    // another audio might have been started while awaiting (if played rapidly)
+    if (get(playingAudio)[path]) return
 
     playingAudio.update((a) => {
         if (!analyser) return a
@@ -55,9 +60,11 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     if (analyser.gainNode) analyser.gainNode.gain.value = localVolume * (get(gain) || 1)
     else audio.volume = localVolume
 
-    if (crossfade) {
+    let waitToPlay = 0
+    if (audioPlaying && crossfade) {
         audio.volume = 0
-        crossfadeAudio(crossfade, path)
+        waitToPlay = crossfade * 0.6
+        crossfadeAudio(crossfade, path, !!waitToPlay)
     }
 
     if (startAt > 0) audio.currentTime = startAt
@@ -72,19 +79,29 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     })
 
     audio.addEventListener("canplay", () => {
-        audio.play()
-        analyseAudio()
+        setTimeout(() => {
+            // audio might have been cleared
+            if (!get(playingAudio)[path]?.audio) return
+
+            get(playingAudio)[path].audio.play()
+            analyseAudio()
+        }, waitToPlay * 1000)
     })
 }
 
+let currentlyCrossfading: string[] = []
 // if no "path" is provided it will fade out/clear all audio
-async function crossfadeAudio(crossfade: number = 0, path: string = "") {
+async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPlay: boolean = false) {
+    if (currentlyCrossfading[path]) return
+    if (path) currentlyCrossfading.push(path)
+
     // fade in
     if (path) {
         let playing = get(playingAudio)[path]?.audio
         if (!playing) return
 
-        fadeAudio(playing, crossfade, true)
+        setTimeout(() => fadeAudio(playing, waitToPlay ? crossfade * 0.4 : crossfade, true), waitToPlay ? crossfade * 0.6 * 1000 : 0)
+        currentlyCrossfading.splice(currentlyCrossfading.indexOf(path), 1)
         return
     }
 
@@ -105,6 +122,8 @@ async function crossfadeAudio(crossfade: number = 0, path: string = "") {
 
             return a
         })
+
+        currentlyCrossfading.splice(currentlyCrossfading.indexOf(path), 1)
     }
 }
 
@@ -144,7 +163,12 @@ export function startPlaylist(id, specificSong: string = "") {
     if (!id) return
 
     activePlaylist.set({ id })
-    playlistNext("", specificSong)
+
+    let playlist = get(audioPlaylists)[id] || {}
+    let crossfade = Number(playlist.crossfade) || 0
+
+    // if (crossfade) isCrossfading = true
+    playlistNext("", specificSong, crossfade)
 }
 
 export function stopPlaylist() {
@@ -169,11 +193,12 @@ export function audioPlaylistNext() {
     let crossfade = Number(playlist.crossfade) || 0
 
     let activePath = get(activePlaylist).active
-    playlistNext(activePath, "", crossfade)
+    playlistNext(activePath, "", crossfade, playlist.loop !== false)
 }
 
-export function playlistNext(previous: string = "", specificSong: string = "", crossfade: number = 0) {
+export function playlistNext(previous: string = "", specificSong: string = "", crossfade: number = 0, loop: boolean = true) {
     let id = get(activePlaylist)?.id
+
     if (!id) return
 
     let songs = getSongs()
@@ -182,15 +207,28 @@ export function playlistNext(previous: string = "", specificSong: string = "", c
     let currentSongIndex = songs.findIndex((a) => a === (specificSong || previous))
     let nextSong = songs[currentSongIndex + (specificSong ? 0 : 1)]
 
-    if (!nextSong) nextSong = songs[0]
-    if (!nextSong) return
+    if (!nextSong && loop) nextSong = songs[0]
+    if (!nextSong) {
+        if (!loop && !Object.keys(currentlyFading).length) {
+            if (crossfade) crossfadeAudio(crossfade)
+            else clearAudio("", false)
+
+            setTimeout(() => {
+                if (!get(playingAudio)[previous]) customActionActivation("audio_playlist_ended")
+            }, 100)
+        }
+        return
+    }
+
+    // prevent playing the same song twice (while it's fading) to stop duplicate audio
+    if (Object.keys(playingAudio).includes(nextSong)) return
 
     activePlaylist.update((a) => {
         a.active = nextSong
         return a
     })
 
-    if (crossfade) isCrossfading = true
+    // if (crossfade) isCrossfading = true
     playAudio({ path: nextSong }, false, 0, false, crossfade)
 
     function getSongs(): string[] {
@@ -298,7 +336,11 @@ export function analyseAudio() {
     }, audioUpdateInterval)
 }
 
+let previousMerge = 0
 function mergeAudio(allAudio) {
+    let timeSinceLast = Date.now() - previousMerge
+    if (timeSinceLast > 100 && timeSinceLast < 200) return // skip if overloaded
+
     let allLefts: number[] = []
     let allRights: number[] = []
 
@@ -317,6 +359,7 @@ function mergeAudio(allAudio) {
     if (allLefts.length || allRights.length) merged = { left: getHighestNumber(allLefts), right: getHighestNumber(allRights) }
 
     audioChannels.set(merged)
+    previousMerge = Date.now()
 }
 
 const extraMargin = 0.1 // s
@@ -330,10 +373,11 @@ function checkCrossfade(): number {
     let playing = get(playingAudio)[activePath]?.audio
     if (!playing) return 0
 
-    let reachedEnding = playing.currentTime + crossfade + extraMargin >= playing.duration
+    let customCrossfade = crossfade > 3 ? crossfade * 0.6 : crossfade
+    let reachedEnding = playing.currentTime + customCrossfade + extraMargin >= playing.duration
     if (!reachedEnding) return 0
 
-    playlistNext(activePath, "", crossfade)
+    playlistNext(activePath, "", customCrossfade, playlist.loop !== false)
     return crossfade
 }
 
@@ -350,12 +394,15 @@ function getPlayingAudio() {
                     get(playingAudio)[audioPath].audio.currentTime = 0
                     get(playingAudio)[audioPath].audio.play()
                 } else if (get(activePlaylist)?.active === audioPath) {
+                    let playlist = get(audioPlaylists)[audioPath] || {}
+
                     playingAudio.update((a: any) => {
+                        a[audioPath]?.audio?.pause()
                         delete a[audioPath]
                         return a
                     })
 
-                    playlistNext(audioPath)
+                    playlistNext(audioPath, "", 0, playlist.loop !== false)
                     return false
                 } else {
                     playingAudio.update((a: any) => {
@@ -363,6 +410,7 @@ function getPlayingAudio() {
                             // a[audioPath].audio?.pause()
                             a[audioPath].paused = true
                         } else {
+                            a[audioPath]?.audio?.pause()
                             delete a[audioPath]
                         }
 
@@ -534,6 +582,7 @@ export function fadeinAllPlayingAudio() {
 function stopFading() {
     Object.values(currentlyFading).forEach((fadeInterval: any) => {
         clearInterval(fadeInterval)
+        delete currentlyFading[fadeInterval]
     })
 }
 
@@ -565,11 +614,13 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
 
         let timedout = setTimeout(() => {
             clearInterval(currentlyFading[fadeId])
-            resolve(false)
-        }, duration * 1200)
+            delete currentlyFading[fadeId]
+            resolve(true)
+        }, duration * 1500)
 
         function finished() {
             clearInterval(currentlyFading[fadeId])
+            delete currentlyFading[fadeId]
             clearTimeout(timedout)
             setTimeout(() => resolve(true), 50)
         }
@@ -660,26 +711,26 @@ export async function getAnalyser(elem: any, stream: any = null) {
 
 export async function getAudioDuration(path: string): Promise<number> {
     return new Promise((resolve) => {
-        let audio: any = new Audio(path)
+        let audio: any = new Audio(encodeFilePath(path))
         audio.addEventListener("canplaythrough", (_: any) => {
             resolve(audio.duration)
         })
     })
 }
 
-export function decodeURI(path: string) {
-    const cleanedURI = cleanURI(path)
+// export function decodeURI(path: string) {
+//     const cleanedURI = cleanURI(path)
 
-    try {
-        return decodeURIComponent(cleanedURI)
-    } catch (e) {
-        console.error("URI malformed: ", path)
-        // newToast("$error.uri")
-        return path
-    }
-}
-function cleanURI(uri) {
-    // only keep valid URI characters (and spaces)
-    const invalidChars = /[^ A-Za-z0-9\-_.!~*'()%;:@&=+$,/?#[\]]/g
-    return uri.replace(invalidChars, "")
-}
+//     try {
+//         return decodeURIComponent(cleanedURI)
+//     } catch (e) {
+//         console.error("URI malformed: ", path)
+//         // newToast("$error.uri")
+//         return path
+//     }
+// }
+// function cleanURI(uri) {
+//     // only keep valid URI characters (and spaces)
+//     const invalidChars = /[^ A-Za-z0-9\-_.!~*'()%;:@&=+$,/?#[\]]/g
+//     return uri.replace(invalidChars, "")
+// }

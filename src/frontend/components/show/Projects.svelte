@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { activeProject, activeShow, dictionary, drawer, folders, labelsDisabled, projects, projectView, sorted } from "../../stores"
+    import { sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
@@ -21,8 +22,8 @@
     $: {
         let sortType = $sorted.projects?.type || "name"
         // sort by name regardless because project folders <= 0.9.5 doesn't have created date
-        let sortedFolders = f.sort((a, b) => a.name?.localeCompare(b.name))
-        let sortedProjects = p.sort((a, b) => a.name?.localeCompare(b.name))
+        let sortedFolders = sortByName(f)
+        let sortedProjects = sortByName(p)
         if (sortType === "created") {
             sortedFolders = sortedFolders.sort((a, b) => (b.created || 0) - (a.created || 0))
             sortedProjects = sortedProjects.sort((a, b) => (b.created || 0) - (a.created || 0))
@@ -97,11 +98,11 @@
     <span class="tabs">
         {#if projectActive}
             <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
-                <Icon id="back" size={1.2} right />
+                <Icon id="back" size={1.2} />
             </Button>
-            <div style="flex: 7;" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
+            <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
                 <!-- <Icon id="project" white right /> -->
-                <p style="color: white; overflow: hidden;">{$projects[$activeProject || ""]?.name || ""}</p>
+                <p style="color: white;">{$projects[$activeProject || ""]?.name || ""}</p>
             </div>
         {:else}
             <div class="header">

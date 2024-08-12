@@ -6,13 +6,12 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import { keysToID, sortByName } from "../helpers/array"
 
     export let activateOutput: boolean = false
 
     let options: any[] = []
-    $: options = Object.entries($outputs)
-        .map(([id, a]) => ({ id, ...a }))
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: options = sortByName(keysToID($outputs))
     $: if (options.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(options[0].id)
 
     let screens: any[] = []
@@ -162,9 +161,12 @@
             {#each screens as screen, i}
                 <div
                     class="screen"
+                    class:disabled={currentScreen?.forcedResolution}
                     class:active={$outputs[screenId || ""]?.screen === screen.id.toString()}
                     style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.bounds.x}px;top: {screen.bounds.y}px;"
-                    on:click={() => changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })}
+                    on:click={() => {
+                        if (!currentScreen?.forcedResolution) changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
+                    }}
                 >
                     {i + 1}
                 </div>
@@ -209,16 +211,20 @@
 
         background-color: var(--primary);
         outline: 40px solid var(--primary-lighter);
-        cursor: pointer;
         transition: background-color 0.1s;
     }
 
-    .screen:hover {
+    .screen:hover:not(.disabled) {
         background-color: var(--primary-lighter);
+        cursor: pointer;
     }
 
     .screen.active {
         background-color: var(--secondary);
         color: var(--secondary-text);
+    }
+
+    .screen.disabled {
+        opacity: 0.5;
     }
 </style>

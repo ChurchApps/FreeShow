@@ -17,6 +17,7 @@ export type SaveListSyncedSettings =
     | "videoMarkers"
     | "customizedIcons"
     | "companion"
+    | "globalTags"
 
 export type SaveListSettings =
     | "initialized"

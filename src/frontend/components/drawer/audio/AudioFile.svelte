@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeShow, media, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { decodeURI, getAudioDuration, playAudio, startPlaylist } from "../../helpers/audio"
+    import { getAudioDuration, playAudio, startPlaylist } from "../../helpers/audio"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
 
@@ -11,18 +11,18 @@
     export let name: string
     export let active: string | null = null
     export let playlist: boolean = false
-
-    $: if (playlist) console.log("REARRANGE CONTENT!!")
+    export let index: number = -1
+    export let fileOver: boolean = false
 </script>
 
-<SelectElem id="audio" data={{ path, name }} draggable>
+<SelectElem id="audio" data={{ path, name, index }} {fileOver} borders={playlist ? "edges" : "all"} trigger={playlist ? "column" : null} draggable>
     <Button
         class="context #audio_button{playlist ? '_playlist' : ''}"
         outline={$playingAudio[path]}
         active={$activeShow?.id === path}
         border
         style="width: 100%;"
-        title={decodeURI(path)}
+        title={path}
         bold={false}
         on:click={(e) => {
             if ($outLocked || e.ctrlKey || e.metaKey) return
