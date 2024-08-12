@@ -242,7 +242,7 @@
     .buttons {
         display: flex;
         width: 100%;
-        height: fit-content;
+        /* height: fit-content; */
         gap: 10px;
         align-items: center;
 

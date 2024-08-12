@@ -427,6 +427,11 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
 // LOAD SHOWS
 
 export function loadShows({ showsPath }: any, returnShows: boolean = false) {
+    if (!showsPath) {
+        console.log("Invalid shows path, does the program have proper read/write permission?")
+        return {}
+    }
+
     specialCaseFixer()
 
     // list all shows in folder

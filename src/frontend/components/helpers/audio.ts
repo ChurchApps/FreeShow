@@ -693,6 +693,7 @@ export async function getAnalyser(elem: any, stream: any = null) {
 
     // custom audio output (supported in Chrome 110+)
     // https://developer.chrome.com/blog/audiocontext-setsinkid/
+    // this applies to both audio & video
     if (get(special).audioOutput) {
         let audioDest = ac.createMediaStreamDestination()
         source.connect(audioDest)

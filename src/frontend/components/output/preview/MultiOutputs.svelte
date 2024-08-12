@@ -68,8 +68,9 @@
     .multipleOutputs {
         display: flex;
         flex-wrap: wrap;
-        /* WIP this is broken in electron v31 (chromium) */
+        /* this is changed in electron v31 (chromium) */
         height: fit-content;
+        /* height: 100%; */
     }
     /*
     .multipleOutputs.multiple:not(.fullscreen) :global(.zoomed) {

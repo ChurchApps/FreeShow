@@ -364,6 +364,7 @@
     .item {
         display: flex;
         width: 100%;
+        /* don't think fit-content is necessary */
         height: fit-content;
         /* justify-content: center; */
         align-items: center;

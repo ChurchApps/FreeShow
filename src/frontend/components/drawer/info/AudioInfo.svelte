@@ -79,7 +79,7 @@
                 <Checkbox checked={$special.muteAudioWhenVideoPlays || false} on:change={(e) => updateSpecial(isChecked(e), "muteAudioWhenVideoPlays")} />
             </div>
         </CombinedInput>
-          
+
         <CombinedInput>
             <p title={$dictionary.audio?.custom_output}><T id="audio.custom_output" /></p>
             <Dropdown style="width: 100%;" options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail?.id, "audioOutput")} />

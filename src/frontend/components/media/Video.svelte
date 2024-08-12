@@ -19,15 +19,6 @@
     function loaded() {
         hasLoaded = true
         dispatch("loaded", true)
-
-        // audio context
-        // this don't work because video audio goes through audio context
-        // if (!$special.audioOutput) return
-        // try {
-        //     video.setSinkId($special.audioOutput)
-        // } catch (err) {
-        //     console.error(err)
-        // }
     }
 
     // custom end time

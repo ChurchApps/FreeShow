@@ -36,7 +36,7 @@
             activeShow.set({ id: path, name, type: "audio" })
         }}
     >
-        <span>
+        <span style="max-width: 90%;">
             <Icon
                 id={$playingAudio[path]?.paused === true ? "play" : $playingAudio[path]?.paused === false ? "pause" : $media[path]?.favourite === true && active !== "favourites" ? "star" : "music"}
                 white={$playingAudio[path]?.paused === true || (!$playingAudio[path] && ($media[path]?.favourite !== true || active === "favourites"))}
