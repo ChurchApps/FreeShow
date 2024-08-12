@@ -105,7 +105,9 @@ export function keydown(e: any) {
 
     if (e.altKey) return
     if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
-    if (document.activeElement === document.body && Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
+
+    // change tab with number keys
+    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
 
     if (keys[e.key]) {
         e.preventDefault()

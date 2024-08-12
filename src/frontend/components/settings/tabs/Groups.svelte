@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { dictionary, fullColors, groupNumbers, groups, templates } from "../../../stores"
+    import { dictionary, fullColors, groupNumbers, groups, special, templates } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
@@ -36,6 +36,11 @@
     const inputs: any = {
         colors: (e: any) => fullColors.set(e.target.checked),
         groupNumber: (e: any) => groupNumbers.set(e.target.checked),
+        numberKeys: (e: any) =>
+            special.update((a) => {
+                a.numberKeys = e.target.checked
+                return a
+            }),
     }
 
     const defaultGroups: any = {
@@ -85,6 +90,12 @@
     <p><T id="settings.full_colors" /></p>
     <div class="alignRight">
         <Checkbox checked={$fullColors} on:change={inputs.colors} />
+    </div>
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.slide_number_keys" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.numberKeys} on:change={inputs.numberKeys} />
     </div>
 </CombinedInput>
 
