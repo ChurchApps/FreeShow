@@ -166,6 +166,7 @@
     "audio": {
         "settings": "Audio settings",
         "playlist_settings": "Playlist settings",
+        "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",

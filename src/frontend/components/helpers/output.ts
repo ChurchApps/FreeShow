@@ -245,6 +245,13 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
     return initial || style || slideRes || { width: 1920, height: 1080 }
 }
 
+export function getOutputResolution(outputId: string, _updater = get(outputs)) {
+    let currentOutput = _updater[outputId]
+    let style = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+
+    return style || { width: 1920, height: 1080 }
+}
+
 export function checkWindowCapture() {
     getActiveOutputs(get(outputs), false, true, true).forEach(shouldBeCaptured)
 }

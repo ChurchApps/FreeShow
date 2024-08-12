@@ -691,20 +691,20 @@ export async function getAnalyser(elem: any, stream: any = null) {
 
     console.log("ANALYZING AUDIO", elem)
 
-    // custom audio output
-    // let audioDest = ac.createMediaStreamDestination()
-    // source.connect(audioDest)
-    // let newAudio: any = new Audio()
-    // newAudio.srcObject = audioDest.stream
-    // WIP this works in Chrome 110: (Electron needs to be updated!)
+    // custom audio output (supported in Chrome 110+)
     // https://developer.chrome.com/blog/audiocontext-setsinkid/
-    // if (get(special).audioOutput) {
-    //     try {
-    //         await (ac as any).setSinkId(get(special).audioOutput)
-    //     } catch (err) {
-    //         console.error(err)
-    //     }
-    // }
+    if (get(special).audioOutput) {
+        let audioDest = ac.createMediaStreamDestination()
+        source.connect(audioDest)
+        let newAudio: any = new Audio()
+        newAudio.srcObject = audioDest.stream
+
+        try {
+            await (ac as any).setSinkId(get(special).audioOutput)
+        } catch (err) {
+            console.error(err)
+        }
+    }
 
     return { left: leftAnalyser, right: rightAnalyser, gainNode }
 }
