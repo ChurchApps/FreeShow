@@ -8,7 +8,7 @@
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -70,14 +70,15 @@
             prevActive = active
         } else if (active === "favourites") {
             prevActive = active
-            files = Object.entries($media)
-                .map(([path, a]: any) => {
-                    let p = splitPath(path)
-                    let name = p.name
-                    return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
-                })
-                .filter((a) => a.favourite === true && a.audio !== true)
-                .sort((a: any, b: any) => a.name.localeCompare(b.name))
+            files = sortByName(
+                Object.entries($media)
+                    .map(([path, a]: any) => {
+                        let p = splitPath(path)
+                        let name = p.name
+                        return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
+                    })
+                    .filter((a) => a.favourite === true && a.audio !== true)
+            )
 
             filterFiles()
         } else if (active === "all") {
@@ -108,12 +109,12 @@
     // receive files
     window.api.receive(READ_FOLDER, receiveContent, listenerId)
     function receiveContent(msg: any) {
-        filesInFolders = (msg.filesInFolders || []).sort((a: any, b: any) => a.name.localeCompare(b.name))
+        filesInFolders = sortByName(msg.filesInFolders || [])
 
         if (active !== "all" && msg.path !== path) return
 
         files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
-        files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 

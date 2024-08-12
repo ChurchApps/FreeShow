@@ -50,9 +50,17 @@ if (isLinux) console.log("libva error on Linux can be ignored")
 // set application menu
 setGlobalMenu()
 
+// disable hardware acceleration by default
+if (config.get("disableHardwareAcceleration") !== false) {
+    // Video flickers, especially on ARM mac otherwise. Performance is actually better without (most of the time).
+    // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
+    app.disableHardwareAcceleration()
+} else {
+    console.log("Starting with Hardware Acceleration")
+}
+
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
-app.disableHardwareAcceleration() //Video flickers, especially on ARM mac otherwise.  Performance is actually better without.  https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
 app.on("ready", startApp)
 
 function startApp() {

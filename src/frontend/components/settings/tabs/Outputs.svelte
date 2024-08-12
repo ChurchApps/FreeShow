@@ -15,12 +15,10 @@
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { newToast } from "../../../utils/common"
+    import { keysToID, sortByName } from "../../helpers/array"
 
     let outputsList: any[] = []
-    $: outputsList = Object.entries($outputs)
-        .map(([id, a]) => ({ id, ...a }))
-        .filter((a) => !a.isKeyOutput)
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: outputsList = sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput))
 
     $: if (outputsList.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(outputsList[0].id)
 
@@ -142,7 +140,7 @@
             return { ...obj, id }
         })
 
-        let sortedList = list.sort((a, b) => a.name.localeCompare(b.name))
+        let sortedList = sortByName(list)
 
         return [{ id: null, name: "—" }, ...sortedList]
     }

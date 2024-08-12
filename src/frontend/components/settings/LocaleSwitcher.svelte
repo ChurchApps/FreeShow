@@ -4,6 +4,7 @@
     import { setLanguage } from "../../utils/language"
     import { languages } from "../../utils/languageData"
     import Dropdown from "../inputs/Dropdown.svelte"
+    import { sortByName } from "../helpers/array"
 
     let options: any[] = []
 
@@ -11,7 +12,7 @@
         Object.keys(languages).forEach((id) => {
             options.push({ name: languages[id], id: id })
         })
-        options = options.sort((a, b) => a.name.localeCompare(b.name))
+        options = sortByName(options)
     })
 </script>
 

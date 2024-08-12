@@ -49,12 +49,12 @@ export function sortByTime(a, b) {
 // OBJETS
 
 // sort objects in array by name
-export function sortByName(arr: any[]) {
-    return arr.sort((a, b) => a.name?.localeCompare(b.name))
+export function sortByName(arr: any[], key: string = "name") {
+    return arr.filter((a) => typeof a[key] === "string").sort((a, b) => a[key].localeCompare(b[key]))
 }
 
 // sort objects in array alphabeticly
-export function sortObject(object: {}[], key: string): any[] {
+export function sortObject(object: any[], key: string): any[] {
     return object.sort((a: any, b: any) => {
         let textA: string = a[key] || ""
         let textB: string = b[key] || ""
@@ -111,7 +111,7 @@ export function changeValues(object: any, values: { [key: string]: any }) {
 
 // clone objects
 export function clone(object: any) {
-    if (!object) return object
+    if (typeof object !== "object") return object
     return JSON.parse(JSON.stringify(object))
 }
 

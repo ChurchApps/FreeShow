@@ -1,6 +1,6 @@
 <script lang="ts">
     import { activeEdit, activeShow, outputs, showsCache, styles, templates } from "../../../stores"
-    import { clone } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getActiveOutputs, getResolution } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
@@ -58,12 +58,7 @@
     }
 
     let templateList: any[] = []
-    $: templateList = [
-        { id: null, name: "—" },
-        ...Object.entries($templates)
-            .map(([id, template]: any) => ({ id, name: template.name }))
-            .sort((a, b) => a.name.localeCompare(b.name)),
-    ]
+    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))]
 </script>
 
 <div class="section">

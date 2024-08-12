@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { Show, ShowList, Shows, Slide } from "../../../types/Show"
 import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
-import { clone, keysToID, removeValues, sortByNameAndNumber } from "./array"
+import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
 import { _show } from "./shows"
 
@@ -97,7 +97,7 @@ export function getGroupName(show: Show, slideID: string, groupName: string | nu
 export function getListOfShows(removeCurrent: boolean = false) {
     let list: any[] = Object.entries(get(shows)).map(([id, show]: any) => ({ id, name: show.name }))
     if (removeCurrent) list = list.filter((a) => a.id !== get(activeShow)?.id)
-    list = list.sort((a, b) => a.name?.localeCompare(b.name))
+    list = sortByName(list)
     return list
 }
 
@@ -223,7 +223,10 @@ export function updateCachedShow(id: string, show: Show) {
         return { ...slide, id: slide.id }
     }
     // sort groups by name
-    let sortedGroups = showGroups.filter((a) => a.group !== null && a.group !== undefined).sort((a: any, b: any) => a.group?.localeCompare(b.group))
+    let sortedGroups = sortByName(
+        showGroups.filter((a) => a.group !== null && a.group !== undefined),
+        "group"
+    )
 
     return { layout, endIndex, template, groups: sortedGroups }
 }

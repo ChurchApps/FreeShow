@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
 import { getActiveOutputs } from "../components/helpers/output"
-import { activeDrawerTab, activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, drawer, focusedArea, os, outputDisplay, outputs, resized, serverData, toastMessages, version } from "../stores"
+import { activeDrawerTab, activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, drawer, errorHasOccured, focusedArea, os, outputDisplay, outputs, resized, serverData, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
@@ -126,6 +126,7 @@ export function logerror(err) {
         stack: err.reason?.stack || err.error?.stack,
     }
 
+    errorHasOccured.set(true) // always show close popup if this has happened (so the user can choose to not save)
     send(MAIN, ["LOG_ERROR"], log)
 }
 

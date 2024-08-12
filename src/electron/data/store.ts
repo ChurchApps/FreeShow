@@ -46,7 +46,7 @@ let themes = new Store({ name: fileNames.themes, defaults: {}, ...storeExtraConf
 let projects = new Store({ name: fileNames.projects, defaults: { projects: {}, folders: {} }, ...storeExtraConfig })
 
 // SLIDES
-let shows = new Store({ name: fileNames.shows, defaults: {}, ...storeExtraConfig })
+let shows = new Store({ name: fileNames.shows, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 let stageShows = new Store({ name: fileNames.stageShows, defaults: {}, ...storeExtraConfig })
 let overlays = new Store({ name: fileNames.overlays, defaults: {}, ...storeExtraConfig })
 let templates = new Store({ name: fileNames.templates, defaults: {}, ...storeExtraConfig })
@@ -58,9 +58,9 @@ let events = new Store({ name: fileNames.events, defaults: {}, ...storeExtraConf
 let driveKeys = new Store({ name: fileNames.driveKeys, defaults: {}, ...storeExtraConfig })
 
 // CACHE
-const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesByDotNotation: false, ...storeExtraConfig })
-const cache = new Store({ name: fileNames.cache, defaults: {}, ...storeExtraConfig })
-let history = new Store({ name: fileNames.history, defaults: {}, ...storeExtraConfig })
+const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesByDotNotation: false, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+const cache = new Store({ name: fileNames.cache, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let history = new Store({ name: fileNames.history, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 
 export let stores: { [key: string]: Store<any> } = {
     SETTINGS: settings,

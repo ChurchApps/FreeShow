@@ -1,6 +1,6 @@
 <script lang="ts">
     import { activeShow, outLocked, outputs, playerVideos } from "../../../stores"
-    import { clone } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import { clearBackground } from "../../output/clear"
@@ -11,10 +11,11 @@
     export let active: any
     export let searchValue: string = ""
 
-    $: videos = Object.entries($playerVideos)
-        .map(([id, video]: any) => ({ rid: id, ...video }))
-        .filter((a) => a.type === active)
-        .sort((a: any, b: any) => a.name.localeCompare(b.name))
+    $: videos = sortByName(
+        Object.entries($playerVideos)
+            .map(([id, video]: any) => ({ rid: id, ...video }))
+            .filter((a) => a.type === active)
+    )
 
     // search
     $: if (videos || searchValue !== undefined) filterSearch()

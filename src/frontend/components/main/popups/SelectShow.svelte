@@ -6,15 +6,13 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
-    import { clone, keysToID } from "../../helpers/array"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import { formatSearch, showSearch } from "../../../utils/search"
 
     $: sortedShows = $sortedShowsList
-    $: privateShows = keysToID($shows)
-        .filter((a) => a.private === true)
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: privateShows = sortByName(keysToID($shows).filter((a) => a.private === true))
 
     $: defaultShows = clone([...(showPrivate ? privateShows : []), ...sortedShows])
     $: if (defaultShows) search()

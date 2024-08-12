@@ -130,10 +130,12 @@
     // $: itemTransitionEnabled = transitionEnabled && item.actions?.transition && item.actions.transition.type !== "none" && item.actions.transition.duration > 0
     // $: itemTransition = transition ? clone(item.actions.transition) : {}
     // $: if (itemTransition.type === "none") itemTransition = { duration: 0, type: "fade", easing: "linear" }
+
+    $: customOpacityDuration = transition?.type === "none" || !transition?.duration ? 0 : transition.duration
 </script>
 
 {#if slide1}
-    <div class="slide" class:hidden={isFirstHidden} style="--duration: {(transition.duration ?? 500) * 0.8}ms">
+    <div class="slide" class:hidden={isFirstHidden} style="--duration: {(customOpacityDuration ?? 500) * 0.8}ms">
         <!-- WIP crossfade: in:cReceive={{ key: "slide" }} out:cSend={{ key: "slide" }} -->
         <!-- svelte transition bug when changing between pages -->
         <OutputTransition {transition}>
@@ -168,7 +170,7 @@
 {/if}
 
 {#if slide2}
-    <div class="slide" class:hidden={isSecondHidden} style="--duration: {(transition.duration ?? 500) * 0.8}ms">
+    <div class="slide" class:hidden={isSecondHidden} style="--duration: {(customOpacityDuration ?? 500) * 0.8}ms">
         <OutputTransition {transition}>
             {#if slide2Data?.items}
                 {#each slide2Data.items as item}

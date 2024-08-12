@@ -1,6 +1,6 @@
 <script lang="ts">
     import { activeShow, dictionary, labelsDisabled, mediaOptions, outputs, showsCache, styles, templateCategories, templates } from "../../../stores"
-    import { clone } from "../../helpers/array"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getResolution } from "../../helpers/output"
@@ -26,10 +26,7 @@
     templates.subscribe(updateTemplates)
 
     function updateTemplates() {
-        filteredTemplates = clone(Object.keys($templates))
-            .map((id) => ({ id, ...$templates[id] }))
-            .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category])))
-            .sort((a, b) => a.name.localeCompare(b.name))
+        filteredTemplates = sortByName(keysToID(clone($templates)).filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category]))))
 
         filterSearch()
     }

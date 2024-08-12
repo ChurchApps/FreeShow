@@ -535,9 +535,9 @@ const slideDrop: any = {
         let slides: any = clone(get(showsCache)[get(activeShow)!.id].slides)
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
-        // WIP incorrect index
         if (drop.index === undefined) drop.index = layout.length
         let newIndex: number = drop.index
+        if (drop.trigger?.includes("end")) newIndex++
 
         newSlides.forEach((slide: any) => {
             let id = uid()

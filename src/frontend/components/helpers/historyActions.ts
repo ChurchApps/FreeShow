@@ -101,7 +101,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // reverting value with array index will restore the whole array
                     if (previousData && index !== undefined) index = undefined
 
-                    if (previousData) return updateKeyData(a, previousData)
+                    if (previousData !== undefined) return updateKeyData(a, previousData)
                     else {
                         if (subkey) delete a[id][key][subkey]
                         else delete a[id][key]
@@ -140,7 +140,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function updateElement(a) {
                 // TODO: check for duplicates!!???
                 if (key) {
-                    data.previousData = clone(filterIndexes(a[id][key] || {}, subkey, { indexes, keys }))
+                    data.previousData = clone(filterIndexes(a[id][key] ?? {}, subkey, { indexes, keys }))
                     a = updateKeyData(a, data.data)
                 } else if (keys) {
                     // if just keys, but no "key"

@@ -3,7 +3,7 @@
     import { dictionary, fullColors, groupNumbers, groups, templates } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import { getList } from "../../../utils/common"
     import { history } from "../../helpers/history"
     import Button from "../../inputs/Button.svelte"
@@ -13,9 +13,7 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
-    $: g = Object.entries($groups)
-        .map(([id, a]: any) => ({ id, ...a, name: a.default ? $dictionary.groups?.[a.name] || a.name : a.name }))
-        .sort((a: any, b: any) => a.name.localeCompare(b.name))
+    $: g = sortByName(Object.entries($groups).map(([id, a]: any) => ({ ...a, id, name: a.default ? $dictionary.groups?.[a.name] || a.name : a.name })))
 
     function changeGroup(e: any, id: string, key: string = "name") {
         // remove default tag if name is changed (used for translation)

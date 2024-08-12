@@ -50,5 +50,8 @@
 
     .previewOutput :global(.main) {
         width: 100%;
+
+        /* disable e.g. YouTube video controls on hover */
+        pointer-events: none;
     }
 </style>
