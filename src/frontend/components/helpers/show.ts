@@ -62,7 +62,7 @@ export function getGlobalGroup(group: string, returnInputIfNull: boolean = false
 }
 
 // get group number (dynamic counter)
-export function getGroupName(show: Show, slideID: string, groupName: string | null, layoutIndex: number) {
+export function getGroupName({ show, showId }: { show: Show; showId: string }, slideID: string, groupName: string | null, layoutIndex: number) {
     let name = groupName
     if (name === null) return name // child slide
 
@@ -84,7 +84,7 @@ export function getGroupName(show: Show, slideID: string, groupName: string | nu
     name += currentGroupNumber
 
     // same group - count
-    let layoutRef = _show().layouts("active").ref()[0]
+    let layoutRef = _show(showId).layouts("active").ref()[0]
     let allGroupLayoutSlides = layoutRef.filter((a) => a.id === slideID)
     let currentGroupLayoutIndex = allGroupLayoutSlides.findIndex((a) => a.layoutIndex === layoutIndex)
     let currentLayoutNumber = allGroupLayoutSlides.length > 1 ? " (" + (currentGroupLayoutIndex + 1) + ")" : ""

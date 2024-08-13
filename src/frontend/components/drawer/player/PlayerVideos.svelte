@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, outLocked, outputs, playerVideos } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, outLocked, outputs, playerVideos } from "../../../stores"
     import { clone, sortByName } from "../../helpers/array"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
@@ -70,7 +70,8 @@
                 setOutput("background", { id: video.rid, type: "player", muted: false, loop: false, startAt: 0 })
             }}
             on:dblclick={() => {
-                activeShow.set({ id: video.rid, type: "player" })
+                if ($focusMode) activeFocus.set({ id: video.rid })
+                else activeShow.set({ id: video.rid, type: "player" })
             }}
         >
             <SelectElem id="player" data={video.rid} draggable>

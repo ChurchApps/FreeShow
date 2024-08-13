@@ -8,6 +8,7 @@ import {
     $,
     activeDrawerTab,
     activeEdit,
+    activeFocus,
     activePage,
     activePopup,
     activeRecording,
@@ -22,6 +23,7 @@ import {
     drawerTabsData,
     eventEdit,
     events,
+    focusMode,
     forceClock,
     media,
     mediaFolders,
@@ -91,6 +93,19 @@ const actions: any = {
     },
     quit: () => initializeClosing(),
     // view
+    focus_mode: () => {
+        let project = get(projects)[get(activeProject) || ""]
+        if (!project?.shows?.length) return
+
+        previousShow.set(null)
+        activeShow.set(null)
+
+        let firstItem = project.shows[0].id
+        activeFocus.set({ id: firstItem, index: 0 })
+
+        activePage.set("show")
+        focusMode.set(!get(focusMode))
+    },
     fullscreen: () => send(MAIN, ["FULLSCREEN"]),
     // edit
     undo: () => undo(),

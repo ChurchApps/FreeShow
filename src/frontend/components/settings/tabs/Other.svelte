@@ -18,6 +18,7 @@
         // getCacheSize()
         // getAudioOutputs()
         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
+        send(MAIN, ["GET_STORE_VALUE"], { file: "config", key: "disableHardwareAcceleration" })
     })
 
     // const previewRates = [
@@ -49,6 +50,16 @@
         if (key === "customUserDataLocation") send(STORE, ["UPDATE_PATH"], { reset: !checked, dataPath: $dataPath })
     }
 
+    // hardware acceleration
+    let disableHardwareAcceleration = true
+    function toggleHardwareAcceleration(e: any) {
+        disableHardwareAcceleration = e.target.checked
+        send(MAIN, ["SET_STORE_VALUE"], { file: "config", key: "disableHardwareAcceleration", value: disableHardwareAcceleration })
+
+        alertMessage.set("settings.restart_for_change")
+        activePopup.set("alert")
+    }
+
     // shows in folder
     let hiddenShows: any[] = []
     let brokenShows: number = 0
@@ -58,6 +69,9 @@
         {
             // this will not include newly created shows not saved yet, but it should not be an issue.
             FULL_SHOWS_LIST: (data: any) => (hiddenShows = data || []),
+            GET_STORE_VALUE: (data: any) => {
+                if (data.key === "disableHardwareAcceleration") disableHardwareAcceleration = data.value
+            },
         },
         listenerId
     )
@@ -193,6 +207,14 @@
     <p><T id="settings.popup_before_close" /></p>
     <div class="alignRight">
         <Checkbox disabled={!$dataPath} checked={$special.showClosePopup || false} on:change={(e) => toggle(e, "showClosePopup")} />
+    </div>
+</CombinedInput>
+
+<!-- disableHardwareAcceleration -->
+<CombinedInput>
+    <p><T id="settings.disable_hardware_acceleration" /></p>
+    <div class="alignRight">
+        <Checkbox checked={disableHardwareAcceleration} on:change={toggleHardwareAcceleration} />
     </div>
 </CombinedInput>
 

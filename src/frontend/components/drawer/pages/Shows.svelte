@@ -1,7 +1,7 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import type { ShowList } from "../../../../types/Show"
-    import { activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
     import { formatSearch, showSearch } from "../../../utils/search"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -86,7 +86,10 @@
             }
         }
 
-        if (id) activeShow.set({ id, type: "show" })
+        if (id) {
+            if ($focusMode) activeFocus.set({ id })
+            else activeShow.set({ id, type: "show" })
+        }
     }
 
     $: sortType = $sorted.shows?.type || "name"

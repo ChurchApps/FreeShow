@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../types/Main"
-    import { activeEdit, activePage, activeProject, activeShow, categories, media, notFound, outLocked, outputs, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache } from "../../stores"
     import { playAudio } from "../helpers/audio"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -52,7 +52,8 @@
         }
     }
 
-    $: active = index !== null ? $activeShow?.index === index : $activeShow?.id === id
+    $: selectedItem = $focusMode ? $activeFocus : $activeShow
+    $: active = index !== null ? selectedItem?.index === index : selectedItem?.id === id
 
     let editActive: boolean = false
     function click(e: any) {
@@ -69,6 +70,11 @@
 
         let newShow: any = { id, type }
 
+        if ($focusMode) {
+            activeFocus.set({ id, index: pos ?? undefined })
+            return
+        }
+
         if (pos !== null) {
             newShow.index = pos
             if (type === "audio") newShow.name = show.name
@@ -76,6 +82,7 @@
         }
 
         activeShow.set(newShow)
+
         if (type === "image" || type === "video") activeEdit.set({ id, type: "media", items: [] })
         else if ($activeEdit.id) activeEdit.set({ type: "show", slide: 0, items: [] })
 

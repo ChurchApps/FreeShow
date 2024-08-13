@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
+    import { activeFocus, activeShow, dictionary, focusMode, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
@@ -60,12 +60,13 @@
     function openPreview() {
         if (!background) return
 
-        activeShow.set({ id: path, type })
+        if ($focusMode) activeFocus.set({ id: path })
+        else activeShow.set({ id: path, type })
     }
 
     function keydown(e: any) {
         if (e.key !== " ") return
-        if (e.target.closest(".edit") || e.target.closest("input")) return
+        if ($focusMode || e.target.closest(".edit") || e.target.closest("input")) return
 
         let show = $activeShow
         if (show && (show.type === "show" || show.type === undefined)) return

@@ -12,6 +12,7 @@ import {
     dictionary,
     drawerTabsData,
     events,
+    focusMode,
     folders,
     globalTags,
     groups,
@@ -340,7 +341,7 @@ export const _updaters = {
 
             // don't open when importing lots of songs
             // if (data.open !== false)
-            activeShow.set(showRef)
+            if (!get(focusMode)) activeShow.set(showRef)
 
             // set text cache
             saveTextCache(id, data.data)

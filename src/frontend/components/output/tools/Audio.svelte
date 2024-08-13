@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePlaylist, activeShow, audioPlaylists, dictionary, outLocked, playingAudio } from "../../../stores"
+    import { activeFocus, activePlaylist, activeShow, audioPlaylists, dictionary, focusMode, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { audioPlaylistNext, getAudioDuration, playAudio } from "../../helpers/audio"
     import { getFileName, removeExtension } from "../../helpers/media"
@@ -59,13 +59,18 @@
             return a
         })
     }
+
+    function openAudio(id: string, audio: any) {
+        if ($focusMode) activeFocus.set({ id })
+        else activeShow.set({ id, type: "audio", data: { isMic: audio.mic } })
+    }
 </script>
 
 {#if Object.keys($playingAudio).length > 1}
     <span class="name" style="justify-content: space-between;">
         {#each Object.entries($playingAudio) as [id, audio]}
             {@const name = audio.name || getName(id)}
-            <Button title={name} on:click={() => activeShow.set({ id, type: "audio", data: { isMic: audio.mic } })} active={$activeShow?.id === id} style="z-index: 2;" bold={false} center>
+            <Button title={name} on:click={() => openAudio(id, audio)} active={$activeShow?.id === id} style="z-index: 2;" bold={false} center>
                 {#if audio.mic}<Icon id="microphone" size={1.2} right />{/if}
                 <p>{name}</p>
             </Button>
@@ -74,7 +79,7 @@
 {:else}
     {@const name = playing.name || getName(path)}
 
-    <Button title={name} on:click={() => activeShow.set({ id: path, type: "audio", data: { isMic: playing.mic } })} active={$activeShow?.id === path} style="padding: 5px 10px;opacity: 0.8;width: 100%;z-index: 2;" bold={false} center>
+    <Button title={name} on:click={() => openAudio(path, playing)} active={$activeShow?.id === path} style="padding: 5px 10px;opacity: 0.8;width: 100%;z-index: 2;" bold={false} center>
         {#if playing.mic}<Icon id="microphone" size={1.2} right />{/if}
         <p>{$activePlaylist?.active === path ? `${$audioPlaylists[$activePlaylist.id]?.name}: ` : ""}{name}</p>
     </Button>

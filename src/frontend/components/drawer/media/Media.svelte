@@ -4,7 +4,7 @@
     import { slide } from "svelte/transition"
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
-    import { activeDrawerOnlineTab, activeEdit, activePopup, activeShow, dictionary, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
+    import { activeDrawerOnlineTab, activeEdit, activeFocus, activePopup, activeShow, dictionary, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -209,14 +209,19 @@
         activeEdit.set({ id: path, type: "media", items: [] })
         let name = removeExtension(getFileName(path))
         let type = getMediaType(getExtension(path))
-        activeShow.set({ id: path, name, type })
+
+        if ($focusMode) activeFocus.set({ id: path })
+        else activeShow.set({ id: path, name, type })
     }
 
     function keydown(e: any) {
         if (e.key === "Enter" && searchValue.length > 1 && e.target.closest(".search")) {
             if (fullFilteredFiles.length) {
                 let file = fullFilteredFiles[0]
-                activeShow.set({ id: file.path, name: file.name, type: getMediaType(file.extension) })
+
+                if ($focusMode) activeFocus.set({ id: file.path })
+                else activeShow.set({ id: file.path, name: file.name, type: getMediaType(file.extension) })
+
                 activeFile = filteredFiles.findIndex((a) => a.path === file.path)
                 if (activeFile < 0) activeFile = null
             }

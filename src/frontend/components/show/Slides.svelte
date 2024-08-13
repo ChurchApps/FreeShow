@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activePopup, activeShow, alertMessage, cachedShowsData, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
+    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -16,7 +16,8 @@
     import DropArea from "../system/DropArea.svelte"
     import TextEditor from "./TextEditor.svelte"
 
-    $: showId = $activeShow?.id || ""
+    export let showId: string
+
     $: currentShow = $showsCache[showId]
     $: activeLayout = $showsCache[showId]?.settings?.activeLayout
     $: layoutSlides = $cachedShowsData[showId]?.layout || []
@@ -53,8 +54,8 @@
 
         customActionActivation("slide_click")
 
-        let slideRef: any = _show("active").layouts("active").ref()[0]
-        updateOut("active", index, slideRef, !e.altKey)
+        let slideRef: any = _show(showId).layouts("active").ref()[0]
+        updateOut(showId, index, slideRef, !e.altKey)
 
         setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
 
@@ -352,7 +353,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
-<Autoscroll class="context #shows__close" on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode ? "" : "context #shows__close"} on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}
@@ -371,6 +372,7 @@
                         {#each layoutSlides as slide, i}
                             {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id] && ($slidesOptions.mode === "grid" || !slide.disabled)}
                                 <Slide
+                                    {showId}
                                     slide={currentShow.slides[slide.id]}
                                     show={currentShow}
                                     {layoutSlides}

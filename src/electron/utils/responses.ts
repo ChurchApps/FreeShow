@@ -12,7 +12,7 @@ import { Show } from "../../types/Show"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
-import { error_log } from "../data/store"
+import { config, error_log, stores } from "../data/store"
 import { getThumbnail, getThumbnailFolderPath, saveImage } from "../data/thumbnails"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
@@ -108,6 +108,8 @@ const mainResponses: any = {
     LOG_ERROR: (data: any) => logError(data),
     OPEN_LOG: () => openSystemFolder(error_log.path),
     OPEN_CACHE: () => openSystemFolder(getThumbnailFolderPath()),
+    GET_STORE_VALUE: (data: any) => getStoreValue(data),
+    SET_STORE_VALUE: (data: any) => setStoreValue(data),
     // SHOWS
     DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
     REFRESH_SHOWS: (data: any) => refreshAllShows(data),
@@ -365,4 +367,16 @@ function storeMedia(files: any[]) {
     })
 
     toApp(MAIN, { channel: "MEDIA_BASE64", data: encodedFiles })
+}
+
+// GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
+function getStoreValue(data: { file: string; key: string }) {
+    let store = data.file === "config" ? config : stores[data.file]
+    return { ...data, value: store.get(data.key) }
+}
+
+// GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
+function setStoreValue(data: { file: string; key: string; value: any }) {
+    let store = data.file === "config" ? config : stores[data.file]
+    store.set(data.key, data.value)
 }

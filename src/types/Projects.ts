@@ -19,6 +19,7 @@ export interface ProjectShowRef extends ShowRef {
     loop?: boolean
     filter?: any[]
     notes?: string
+    icon?: string // focus mode
 }
 
 export interface ShowRef {

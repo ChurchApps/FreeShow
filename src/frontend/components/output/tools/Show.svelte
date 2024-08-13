@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, showsCache } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, showsCache } from "../../../stores"
     import T from "../../helpers/T.svelte"
 
     export let currentOutput: any
@@ -27,7 +27,8 @@
             })
         }
 
-        activeShow.set({ id: slide?.id })
+        if ($focusMode) activeFocus.set({ id: slide?.id })
+        else activeShow.set({ id: slide?.id })
     }
 </script>
 
