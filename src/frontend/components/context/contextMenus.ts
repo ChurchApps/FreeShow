@@ -57,7 +57,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     newFolder: { label: "new.folder", icon: "folder" },
     newShowPopup: { label: "new.show", icon: "add" },
     newShow: { label: "new.empty_show", icon: "add" },
-    newPrivateShow: { label: "new.private", icon: "private" },
+    // newPrivateShow: { label: "new.private", icon: "private" },
     private: { label: "actions.toggle_private", icon: "private" },
     duplicate: { label: "actions.duplicate", icon: "duplicate", shortcuts: ["Ctrl+D"] },
     section: { label: "new.section", icon: "section" },
@@ -66,6 +66,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     sort_projects_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_projects"] },
     // SHOWS
     addToProject: { label: "context.addToProject", icon: "project" },
+    lock_show: { label: "context.lockForChanges", icon: "lock" },
     remove: { label: "actions.remove", icon: "remove" },
     remove_group: { label: "actions.remove", icon: "remove" },
     remove_slide: { label: "actions.remove_group", icon: "remove", shortcuts: ["Del"] },
@@ -163,11 +164,11 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
     playlist: ["rename", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "newShow", "SEPERATOR", "tags", "sort_shows_by", "selectAll"],
+    drawer_show: ["newShowPopup", "newShow", "SEPERATOR", "tags", "sort_shows_by"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
-    drawer_show_button: ["addToProject", "SEPERATOR", "rename", "duplicate", "delete"],
+    drawer_show_button: ["addToProject", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "SEPERATOR", "tags", "sort_shows_by", "selectAll"],
     drawer_new_show: ["newShowPopup", "newShow"],
     // media / audio
     // "play", "play_no_filters", "SEPERATOR", "edit",
@@ -193,7 +194,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // PROJECT
     projects: ["newProject", "newFolder", "sort_projects_by"],
     projectTab: ["export", "SEPERATOR", "close"],
-    project: ["newShowPopup", "newPrivateShow", "section"], // "newShow"(empty) , "newPrivateShow"
+    project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
     project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export"], // "open",
     folder: ["rename", "duplicate", "delete"],
     project_media: ["play", "play_no_filters", "remove"],

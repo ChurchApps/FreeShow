@@ -123,7 +123,7 @@
 bind:offsetWidth={width} -->
 <div
     bind:this={itemElem}
-    class={plain ? "editItem" : "editItem item context #edit_box"}
+    class={plain ? "editItem" : `editItem item ${$showsCache[active || ""]?.locked ? "" : "context #edit_box"}`}
     class:selected={$activeEdit.items.includes(index)}
     class:isDisabledVariable
     style={plain

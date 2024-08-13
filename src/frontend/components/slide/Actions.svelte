@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, templates } from "../../stores"
+    import { activeShow, dictionary, shows, templates } from "../../stores"
     import { translate } from "../../utils/language"
     import { actionData } from "../actions/actionData"
     import { getActionName } from "../actions/actions"
@@ -13,8 +13,10 @@
     export let templateId: string = ""
     export let actions: any
 
+    $: currentShow = $shows[$activeShow?.id || ""] || {}
+
     function changeAction(id: string, save: boolean = true) {
-        if (templateId) return
+        if (templateId || currentShow.locked) return
 
         let data = { ...actions, [id]: actions[id] ? !actions[id] : true }
 
@@ -24,6 +26,8 @@
     }
 
     function deleteSlideAction(id: string) {
+        if (currentShow.locked) return
+
         let slideActions = clone(actions.slideActions)
         let actionIndex = slideActions.findIndex((a) => a.id === id || a.triggers?.[0] === id)
         if (actionIndex < 0) return

@@ -9,7 +9,7 @@ import { redo, undo } from "../components/helpers/history"
 import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
 import { nextSlide, previousSlide } from "../components/helpers/showActions"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
-import { activeDrawerTab, activeFocus, activePage, activePopup, activeProject, activeShow, currentWindow, drawer, focusMode, os, outLocked, outputs, projects, refreshEditSlide, selected, showsCache, special, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeShow, currentWindow, drawer, focusMode, os, outLocked, outputs, projects, refreshEditSlide, selected, showsCache, special, volume } from "../stores"
 import { drawerTabs } from "../values/tabs"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
@@ -108,7 +108,15 @@ export function keydown(e: any) {
     if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
 
     // change tab with number keys
-    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
+    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((e.key - 1).toString())) {
+        let menu = menus[e.key - 1]
+        activePage.set(menu)
+
+        // open edit
+        if (menu === "edit" && !get(activeEdit)?.id) {
+            activeEdit.set({ slide: 0, items: [] })
+        }
+    }
 
     if (keys[e.key]) {
         e.preventDefault()

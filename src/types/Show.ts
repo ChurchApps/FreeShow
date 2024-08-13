@@ -6,7 +6,8 @@ export interface Shows {
 
 export interface Show {
     name: string
-    private?: boolean
+    private?: boolean // hide from drawer
+    locked?: boolean // disable edits
     category: null | ID
     quickAccess?: any
     reference?: {

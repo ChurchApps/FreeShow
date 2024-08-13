@@ -342,6 +342,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     if (show.private) a[id].private = true
                     else if (a[id].private) delete a[id].private
+                    if (show.locked) a[id].locked = true
+                    else if (a[id].locked) delete a[id].locked
 
                     let newShow = clone(a[id])
                     if (newShow?.timestamps) delete newShow.timestamps.used

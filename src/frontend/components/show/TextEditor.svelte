@@ -100,4 +100,4 @@
     }
 </script>
 
-<Notes style="padding: 30px;font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" placeholder={getQuickExample()} value={text} on:change={formatText} />
+<Notes disabled={currentShow?.locked} style="padding: 30px;font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" placeholder={getQuickExample()} value={text} on:change={formatText} />

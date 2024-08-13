@@ -350,6 +350,7 @@ export const _updaters = {
             shows.update((a) => {
                 a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps }
                 if (data.data.private) a[id].private = true
+                if (data.data.locked) a[id].locked = true
 
                 return a
             })

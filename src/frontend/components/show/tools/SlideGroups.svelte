@@ -39,6 +39,8 @@
     })
 
     $: sortedGroups = sortByName(globalGroups, "group")
+
+    $: isLocked = $showsCache[$activeShow?.id || ""]?.locked
 </script>
 
 <div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;align-items: flex-start;">
@@ -52,10 +54,10 @@
                 <SelectElem id="group" data={{ id: slide.id }} draggable>
                     <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                     <div
-                        class="slide context #group"
+                        class="slide {isLocked ? '' : 'context #group'}"
                         style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                         on:click={(e) => {
-                            if (!e.ctrlKey && !e.metaKey) {
+                            if (!e.ctrlKey && !e.metaKey && !isLocked) {
                                 selected.set({ id: "group", data: [{ id: slide.id }] })
                                 ondrop(null, "slide")
                                 selected.set({ id: null, data: [] })
@@ -89,7 +91,7 @@
                             class="slide context #global_group"
                             style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                             on:click={(e) => {
-                                if (!e.ctrlKey && !e.metaKey && $activeShow) {
+                                if (!e.ctrlKey && !e.metaKey && $activeShow && !$showsCache[$activeShow.id]?.locked) {
                                     // , unique: true
                                     history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
                                 }

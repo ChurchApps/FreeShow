@@ -244,7 +244,9 @@
                         </div>
                     {/if}
                     <!-- edit -->
-                    <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
+                    {#if !$showsCache[currentShow || ""]?.locked}
+                        <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
+                    {/if}
                     {#key $activeEdit.slide || $activeEdit.id}
                         {#each Slide.items as item, index}
                             <Editbox

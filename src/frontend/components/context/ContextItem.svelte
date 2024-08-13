@@ -12,6 +12,7 @@
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let disabled: boolean = false
 
+    let hide: boolean = false
     let enabled: boolean = menu?.enabled ? true : false
 
     const conditions: any = {
@@ -22,8 +23,15 @@
         view_lyrics: () => ($slidesOptions.mode === "lyrics" ? (enabled = true) : ""),
         view_text: () => ($slidesOptions.mode === "text" ? (enabled = true) : ""),
         private: () => {
-            if (!$shows[$selected.data[0]?.id]?.private) return
-            enabled = $shows[$selected.data[0].id].private
+            let show = $shows[$selected.data[0]?.id]
+            if (!show) return
+
+            enabled = show.private
+            hide = !enabled && show.locked
+        },
+        lock_show: () => {
+            if (!$shows[$selected.data[0]?.id]?.locked) return
+            enabled = $shows[$selected.data[0].id].locked
         },
         disable: () => {
             if ($selected.id === "slide" && $activeShow) {
@@ -145,7 +153,7 @@
     }
 </script>
 
-<div on:click={contextItemClick} class:enabled class:disabled style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
+<div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
         {#if menu?.translate === false}
@@ -187,5 +195,9 @@
     .enabled {
         color: var(--secondary);
         background-color: rgb(255 255 255 / 0.1);
+    }
+
+    .hide {
+        display: none;
     }
 </style>

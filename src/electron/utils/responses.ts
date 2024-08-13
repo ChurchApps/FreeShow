@@ -244,6 +244,7 @@ export function trimShow(showCache: Show) {
         quickAccess: showCache.quickAccess || {},
     }
     if (showCache.private) show.private = true
+    if (showCache.locked) show.locked = true
 
     return show
 }

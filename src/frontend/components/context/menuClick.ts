@@ -234,6 +234,22 @@ const actions: any = {
             return a
         })
     },
+    lock_show: (obj: any) => {
+        showsCache.update((a: any) => {
+            obj.sel.data.forEach((b: any) => {
+                if (!a[b.id]) return
+                a[b.id].locked = !a[b.id].locked
+            })
+            return a
+        })
+        shows.update((a: any) => {
+            obj.sel.data.forEach((b: any) => {
+                if (a[b.id].locked) delete a[b.id].locked
+                else a[b.id].locked = true
+            })
+            return a
+        })
+    },
     toggle_clock: () => {
         forceClock.set(!get(forceClock))
     },
@@ -377,6 +393,8 @@ const actions: any = {
             if (get(previousShow)) {
                 activeShow.set(JSON.parse(get(previousShow)))
                 previousShow.set(null)
+            } else {
+                activeShow.set(null)
             }
             return
         }

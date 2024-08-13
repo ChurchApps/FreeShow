@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item, Line } from "../../../../types/Show"
-    import { activeEdit, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
+    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -557,6 +557,9 @@
     // $: autoSize = height < width ? height / 1.5 : width / 4
     // $: autoSize = Math.min(height, width) / 2
     // $: autoSize = getAutoSize(item)
+
+    // SHOW IS LOCKED FOR EDITING
+    $: isLocked = $showsCache[$activeShow?.id || ""]?.locked
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -569,28 +572,32 @@
                 <T id="empty.text" />
             </span>
         {/if}
-        {#if chordsMode && textElem}
-            <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
+        {#if isLocked}
+            <div class="edit">{@html html}</div>
+        {:else}
+            {#if chordsMode && textElem}
+                <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
+            {/if}
+            <div
+                bind:this={textElem}
+                on:mousemove={(e) => {
+                    let newLines = chordMove(e, { textElem, item })
+                    if (newLines) item.lines = newLines
+                }}
+                on:mouseup={() => storeCurrentCaretPos()}
+                class="edit"
+                class:hidden={chordsMode}
+                class:autoSize={item.auto && autoSize}
+                contenteditable
+                on:keydown={textElemKeydown}
+                bind:innerHTML={html}
+                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
+                class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
+                class:tallLines={chordsMode}
+            />
+            <!-- this did not work on mac: -->
+            <!-- on:paste|preventDefault={paste} -->
         {/if}
-        <div
-            bind:this={textElem}
-            on:mousemove={(e) => {
-                let newLines = chordMove(e, { textElem, item })
-                if (newLines) item.lines = newLines
-            }}
-            on:mouseup={() => storeCurrentCaretPos()}
-            class="edit"
-            class:hidden={chordsMode}
-            class:autoSize={item.auto && autoSize}
-            contenteditable
-            on:keydown={textElemKeydown}
-            bind:innerHTML={html}
-            style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
-            class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
-            class:tallLines={chordsMode}
-        />
-        <!-- this did not work on mac: -->
-        <!-- on:paste|preventDefault={paste} -->
     </div>
 {/if}
 

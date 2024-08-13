@@ -18,6 +18,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
             value.timestamps = showRef.timestamps || {}
             value.quickAccess = showRef.quickAccess || {}
             if (showRef.private) value.private = true
+            if (showRef.locked) value.locked = true
 
             // fix "broken" shows:
             if (!value.settings) value.settings = { activeLayout: "", template: null }
@@ -51,6 +52,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
             }
 
             if (value.private) a[id].private = true
+            if (value.locked) a[id].locked = true
         }
 
         return a
