@@ -57,7 +57,7 @@
         send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
     }
 
-    $: audio = layoutSlide.audio?.length ? _show("active").get().media[layoutSlide.audio[0]] || {} : {}
+    $: audio = layoutSlide.audio?.length ? _show("active").get()?.media?.[layoutSlide.audio[0]] || {} : {}
     $: audioPath = audio.path
     // no need for cloud when audio can be stacked
     // $: cloudId = $driveData.mediaId

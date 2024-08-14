@@ -110,7 +110,7 @@ export function changeValues(object: any, values: { [key: string]: any }) {
 }
 
 // clone objects
-export function clone(object: any) {
+export function clone<T>(object: T): T {
     if (typeof object !== "object") return object
     return JSON.parse(JSON.stringify(object))
 }

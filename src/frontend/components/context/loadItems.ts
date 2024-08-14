@@ -31,7 +31,7 @@ const loadActions = {
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
     slide_groups: (items: ContextMenuItem[]) => {
         let selectedIndex = get(selected).data[0]?.index
-        let currentSlide = _show().layouts("active").ref()[0][selectedIndex]
+        let currentSlide = _show().layouts("active").ref()[0]?.[selectedIndex]
         if (!currentSlide) return []
 
         let currentGroup = currentSlide.data?.globalGroup || ""
@@ -42,7 +42,7 @@ const loadActions = {
         return sortItemsByLabel(items)
     },
     actions: () => {
-        let slideRef: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]
+        let slideRef: any = _show().layouts("active").ref()[0]?.[get(selected).data[0]?.index]
         let currentActions: any = slideRef?.data?.actions
 
         let slideActions = [
@@ -74,7 +74,7 @@ const loadActions = {
         return itemActions
     },
     remove_layers: () => {
-        let layoutSlide: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index] || {}
+        let layoutSlide: any = _show().layouts("active").ref()[0]?.[get(selected).data[0]?.index] || {}
 
         // text content
         let hasTextContent = getSlideText(_show().slides([layoutSlide.id]).get()[0])

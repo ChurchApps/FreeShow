@@ -99,6 +99,7 @@ import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { clearBackground } from "../components/output/clear"
 import { previewShortcuts } from "./shortcuts"
+import { convertOSISBible } from "../converters/osisBible"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -590,7 +591,8 @@ const receiveIMPORT: any = {
     calendar: (a: any) => convertCalendar(a),
     // Bibles
     freeshow_bible: (a: any) => importFSB(a),
-    beblia_bible: (a: any) => convertBebliaBible(a),
     zefania_bible: (a: any) => convertZefaniaBible(a),
+    osis_bible: (a: any) => convertOSISBible(a),
+    beblia_bible: (a: any) => convertBebliaBible(a),
     opensong_bible: (a: any) => convertOpenSongBible(a),
 }

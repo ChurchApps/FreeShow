@@ -18,6 +18,7 @@ import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { startWebSocketAndRest, stopApiListener } from "./api"
 import {
+    bundleMediaFiles,
     checkShowsFolder,
     dataFolderNames,
     deleteFile,
@@ -156,6 +157,7 @@ const mainResponses: any = {
     SYSTEM_OPEN: (data: any) => openSystemFolder(data),
     LOCATE_MEDIA_FILE: (data: any) => locateMediaFile(data),
     GET_SIMULAR: (data: any) => getSimularPaths(data),
+    BUNDLE_MEDIA_FILES: (data: any) => bundleMediaFiles(data),
     FILE_INFO: (data: any, e: any) => getFileInfo(data, e),
     READ_FOLDER: (data: any) => getFolderContent(data),
     OPEN_FOLDER: (data: any, e: any) => selectFolder(data, e),

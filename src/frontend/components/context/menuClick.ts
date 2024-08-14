@@ -239,6 +239,9 @@ const actions: any = {
             obj.sel.data.forEach((b: any) => {
                 if (!a[b.id]) return
                 a[b.id].locked = !a[b.id].locked
+
+                // remove template
+                a[b.id].settings.template = null
             })
             return a
         })

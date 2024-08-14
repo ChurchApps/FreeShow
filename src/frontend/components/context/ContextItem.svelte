@@ -22,6 +22,12 @@
         view_list: () => ($slidesOptions.mode === "list" ? (enabled = true) : ""),
         view_lyrics: () => ($slidesOptions.mode === "lyrics" ? (enabled = true) : ""),
         view_text: () => ($slidesOptions.mode === "text" ? (enabled = true) : ""),
+        rename: () => {
+            hide = $shows[$selected.data[0]?.id]?.locked
+        },
+        delete: () => {
+            hide = $shows[$selected.data[0]?.id]?.locked
+        },
         private: () => {
             let show = $shows[$selected.data[0]?.id]
             if (!show) return

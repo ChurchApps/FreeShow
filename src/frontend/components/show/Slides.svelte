@@ -353,7 +353,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
-<Autoscroll class={$focusMode ? "" : "context #shows__close"} on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}

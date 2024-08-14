@@ -15,6 +15,7 @@ import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./responses"
 import { defaultSettings } from "../data/defaults"
 import { OutputHelper } from "../output/OutputHelper"
+import { Show } from "../../types/Show"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -134,6 +135,7 @@ export function checkShowsFolder(path: string): string {
 export const dataFolderNames = {
     backups: "Backups",
     scriptures: "Bibles",
+    media_bundle: "Media",
     exports: "Exports",
     imports: "Imports",
     lessons: "Lessons",
@@ -422,6 +424,56 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
             matches.push(p)
         }
     }
+}
+
+// BUNDLE MEDIA FILES FROM ALL SHOWS (IMAGE/VIDEO/AUDIO)
+export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; dataPath: string }) {
+    let showsList = readFolder(showsPath)
+    showsList = showsList
+        .filter((name) => name.toLowerCase().endsWith(".show")) // only .show files
+        .filter((trimmedName) => trimmedName) // remove files with no name
+
+    let allMediaFiles: string[] = []
+
+    for (const name of showsList) readShow(name)
+    function readShow(fileName: string) {
+        let p: string = path.join(showsPath, fileName)
+        let jsonData = readFile(p) || "{}"
+        let show: Show | undefined = parseShow(jsonData)?.[1]
+
+        if (!show) return
+
+        // media backgrounds & audio
+        Object.values(show.media).forEach((media) => {
+            let path = media.path || media.id
+            if (path) allMediaFiles.push(path)
+        })
+
+        // WIP also copy media item paths? (only when it's supported by the auto find feature)
+    }
+
+    // remove duplicates
+    allMediaFiles = [...new Set(allMediaFiles)]
+    if (!allMediaFiles.length) return
+
+    // get/create new folder
+    let outputPath = getDataFolder(dataPath, dataFolderNames.media_bundle)
+
+    // copy media files
+    allMediaFiles.forEach((mediaPath) => {
+        let fileName = path.basename(mediaPath)
+        let newPath = path.join(outputPath, fileName)
+
+        // don't copy if it's already copied
+        if (doesPathExist(newPath)) return
+
+        fs.copyFile(mediaPath, newPath, (err) => {
+            if (err) console.error("Could not copy: " + mediaPath + "! File might not exist.")
+        })
+    })
+
+    // open folder
+    openSystemFolder(outputPath)
 }
 
 // LOAD SHOWS

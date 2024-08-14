@@ -161,7 +161,9 @@
         "fill": "Fill",
         "cover": "Cover",
         "online": "Online",
-        "recommended": "Recommended"
+        "recommended": "Recommended",
+        "bundle_media_files": "Bundle all media files",
+        "bundle_media_files_tip": "Bundle the media files from all shows into one folder"
     },
     "audio": {
         "settings": "Audio settings",
@@ -223,7 +225,8 @@
         "loading": "Loading...",
         "submit": "Submit",
         "password": "Password",
-        "wrong_password": "Wrong password"
+        "wrong_password": "Wrong password",
+        "quick_play": "Quick play"
     },
     "error": {
         "no_show": "Could not find show",
@@ -509,6 +512,7 @@
         "zoomIn": "Zoom In",
         "zoomOut": "Zoom Out",
         "reset": "Reset",
+        "remove_template_from_show": "Remove template from show",
         "reset_defaults": "Reset defaults",
         "to_all": "Apply to all",
         "to_following": "Apply to following",

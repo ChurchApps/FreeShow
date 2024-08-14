@@ -62,11 +62,10 @@
     $: cloudId = $driveData.mediaId
     $: if (bg) locateBackground()
     function locateBackground() {
-        if (!background) return
+        if (!background || !bg?.path) return
 
         let mediaId = layoutSlide.background!
         let folders = Object.values($mediaFolders).map((a) => a.path!)
-        console.log(background, mediaId, folders)
         locateFile(mediaId, bg.path, folders, bg)
     }
 
@@ -278,7 +277,7 @@
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->
-    <div class="slide context #{show.locked ? 'default' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} on:click>
+    <div class="slide context #{$focusMode || show.locked ? 'default' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} on:click>
         <div class="hover overlay" />
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">

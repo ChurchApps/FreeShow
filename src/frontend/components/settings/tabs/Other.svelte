@@ -11,7 +11,6 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
     onMount(() => {
@@ -124,6 +123,11 @@
         send(MAIN, ["OPEN_CACHE"])
     }
 
+    // bundle media files
+    function bundleMediaFiles() {
+        send(MAIN, ["BUNDLE_MEDIA_FILES"], { showsPath: $showsPath, dataPath: $dataPath })
+    }
+
     // backup
     function backup() {
         alertMessage.set($dictionary.settings?.backup_started)
@@ -234,11 +238,6 @@
     <TextInput value={$special.default_project_name ?? DEFAULT_PROJECT_NAME} on:change={(e) => updateTextInput(e, "default_project_name")} />
 </CombinedInput>
 
-<CombinedInput>
-    <p><T id="settings.max_auto_font_size" /></p>
-    <NumberInput value={$special.max_auto_font_size ?? 800} min={20} max={5000} on:change={(e) => updateSpecial(e.detail, "max_auto_font_size")} />
-</CombinedInput>
-
 <!-- WIP custom metadata order -->
 <!-- "Song: {title} - {author}, License: {ccli}" -->
 <!-- or just allow to enter in a template... -->
@@ -291,6 +290,12 @@
     </Button>
     <Button on:click={openCache}>
         <Icon id="folder" right /><T id="actions.open_cache_folder" />
+    </Button>
+</CombinedInput>
+
+<CombinedInput>
+    <Button style="width: 100%;" on:click={bundleMediaFiles} title={$dictionary?.media?.bundle_media_files_tip}>
+        <Icon id="image" right /><T id="media.bundle_media_files" />
     </Button>
 </CombinedInput>
 
