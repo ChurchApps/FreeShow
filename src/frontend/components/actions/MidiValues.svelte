@@ -101,32 +101,6 @@
         change()
     }
 
-    // TODO: delete unused midi in actions, that are created when adding a new one
-
-    // $: midiInOptions = Object.entries($midiIn)
-    //     .filter(([_id, value]) => !value.action)
-    //     .map(([id, value]) => ({ id, name: value.name }))
-
-    // function changeId(e: any) {
-    //     if (!e.detail?.id) return
-    //     if ($popupData.type !== "in") return
-    //     if ($popupData.index === undefined) return
-
-    //     // update show action id
-    //     let ref = _show().layouts("active").ref()[0]
-    //     let layoutSlide = ref[$popupData.index]
-    //     let actions = layoutSlide.data.actions || {}
-
-    //     id = e.detail.id
-    //     actions.receiveMidi = id
-
-    //     let override = "show#" + $activeShow?.id + "layout#" + _show().get("settings.activeLayout") + "index#" + $popupData.index
-    //     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [$popupData.index] }, location: { page: "show", override } })
-
-    //     midiInListen()
-    // }
-
-    // if (actionId) action.triggers[0] = Object.keys(midiActions)[0] || ""
     $: noActionOrDefaultValues = !hasActions || (midi.defaultValues && defaultMidiActionChannels[firstActionId])
 </script>
 

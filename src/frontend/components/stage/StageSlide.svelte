@@ -1,29 +1,17 @@
 <script lang="ts">
+    import { StageLayout } from "../../../types/Stage"
     import { stageShows } from "../../stores"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Stagebox from "./Stagebox.svelte"
 
-    // WIP
-    interface Show {
-        settings: any
-        name: string
-        disabled: boolean
-        password: string
-        items: {
-            [key: string]: any
-        }
-    }
-    export let show: Show
-    // export let title: string
+    export let layout: StageLayout
     export let id: string
     export let index: number
     export let columns: number = 1
     export let active: boolean = false
     export let list: boolean = false
-
-    console.log(show)
 
     let ratio: number = 1
 
@@ -37,17 +25,17 @@
 </script>
 
 <div class="main" class:active style="width: {100 / columns}%" class:list>
-    <div class="slide context #stage_slide" class:disabled={show.disabled} style={show.settings.color ? `background-color: ${show.settings.color};` : ""} tabindex={0} on:click>
+    <div class="slide context #stage_slide" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} on:click>
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }}>
-                <Zoomed background={show.items.length ? "black" : "transparent"} style="width: 100%;" disableStyle center bind:ratio>
-                    {#each Object.entries(show.items) as [id, item]}
+                <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" disableStyle center bind:ratio>
+                    {#each Object.entries(layout.items) as [id, item]}
                         {#if item.enabled !== false}
-                            <Stagebox {id} {item} {ratio} {show} />
+                            <Stagebox {id} {item} {ratio} show={layout} />
                         {/if}
                     {/each}
                 </Zoomed>
-                <div class="label" title={show.name}>
+                <div class="label" title={layout.name}>
                     <span style="position: absolute;display: contents;">{index + 1}</span>
                     <span class="text">
                         <!-- {#if show.name}
@@ -55,7 +43,7 @@
             {:else}
               <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
             {/if} -->
-                        <HiddenInput value={show.name} id={"stage_" + id} on:edit={edit} allowEmpty={false} />
+                        <HiddenInput value={layout.name} id={"stage_" + id} on:edit={edit} allowEmpty={false} />
                     </span>
                 </div>
             </SelectElem>
@@ -79,8 +67,6 @@
     }
 
     .slide {
-        /* padding: 3px; */
-        /* TODO: global settings background */
         background-color: #000000;
         z-index: 0;
         outline-offset: 0;
@@ -88,9 +74,6 @@
 
         position: relative;
         display: flex;
-
-        /* height: fit-content; */
-        /* border: 2px solid var(--primary-lighter); */
     }
     .slide.disabled {
         opacity: 0.2;

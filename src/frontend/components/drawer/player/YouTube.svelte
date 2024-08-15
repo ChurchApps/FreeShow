@@ -1,7 +1,7 @@
 <script>
     import YouTube from "svelte-youtube"
     import { MAIN, OUTPUT } from "../../../../types/Channels"
-    import { currentWindow, playerVideos, special } from "../../../stores"
+    import { currentWindow, playerVideos, special, volume } from "../../../stores"
     import { send } from "../../../utils/request"
     import { createEventDispatcher } from "svelte"
 
@@ -139,11 +139,21 @@
         videoData.paused = player.getPlayerState() === 1 ? false : true
         if (preview) videoTime = player.getCurrentTime()
     }
+
+    function ended() {
+        dispatch("ended", true)
+    }
+
+    // update volume based on global slider value
+    $: if (!preview && $volume !== undefined && player) updateVolume()
+    function updateVolume() {
+        player.setVolume($volume * 100)
+    }
 </script>
 
 <div class="main" class:hide={!id}>
     {#if id}
-        <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:stateChange={change} />
+        <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:end={ended} on:stateChange={change} />
     {/if}
 </div>
 

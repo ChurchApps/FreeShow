@@ -62,15 +62,10 @@
 
         if (findMatchingOut(path, $outputs)) {
             clearBackground()
-            // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
-
             return
         }
 
         setOutput("background", { path, type, loop: true, muted: false, startAt: 0, ...mediaStyle })
-        // TODO: get actual data
-        // TODO: output/preview control does not always match
-        // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
 
         // unsplash requires the download to be triggered when using their images
         if (credits.type === "unsplash" && credits.trigger_download) {
@@ -83,11 +78,6 @@
         if (e.ctrlKey || e.metaKey) return
 
         activeFile = index
-    }
-
-    // TODO: Enter play media
-    function keydown(e: any) {
-        if (e.key === "Enter") dblclick(e)
     }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
@@ -120,7 +110,6 @@
     on:mousedown={mousedown}
     on:click={click}
     on:dblclick={dblclick}
-    on:keydown={keydown}
     on:mouseenter={() => (hover = true)}
     on:mouseleave={() => (hover = false)}
     on:mousemove={move}

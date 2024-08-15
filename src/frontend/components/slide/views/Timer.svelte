@@ -18,9 +18,6 @@
     $: ref = { id }
     $: timer = $timers[id] || {}
 
-    // TODO: timer stops when leaving window...
-    // TODO: update timer type (in editor)
-
     let times: string[] = []
     let timeValue: string = "00:00"
     let currentTime: number

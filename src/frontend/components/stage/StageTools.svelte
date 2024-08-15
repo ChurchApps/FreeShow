@@ -111,7 +111,6 @@
         </div>
     {/if}
 
-    <!-- TODO: reset stage -->
     <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
         {#if active !== "items"}
             <Button style="flex: 1;" on:click={resetStageStyle} dark center>

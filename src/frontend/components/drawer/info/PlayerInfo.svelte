@@ -60,9 +60,6 @@
     {/if}
 {/if}
 
-<!-- TODO: change quality / resolution -->
-<!-- TODO: toggle captions -->
-
 <style>
     main {
         overflow-y: auto;

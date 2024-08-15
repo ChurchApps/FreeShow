@@ -114,7 +114,7 @@
         if (active !== "all" && msg.path !== path) return
 
         files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
-        sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
@@ -274,7 +274,6 @@
 
 <svelte:window on:keydown={keydown} on:mousedown={mousedown} />
 
-<!-- TODO: autoscroll -->
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel|passive={wheel}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
         {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
@@ -311,7 +310,7 @@
                 {#if $mediaOptions.mode === "grid"}
                     <MediaGrid items={fullFilteredFiles} columns={$mediaOptions.columns} let:item>
                         {#if item.folder}
-                            <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} />
+                            <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={fullFilteredFiles.length < 20} />
                         {:else}
                             <Media
                                 credits={item.credits}
@@ -484,9 +483,6 @@
         display: flex;
         flex-wrap: wrap;
         flex: 1;
-        /* gap: 10px;
-    padding: 10px; */
-        /* padding: 5px; */
         place-content: flex-start;
     }
 
@@ -497,27 +493,10 @@
         z-index: -1;
     }
 
-    /* WIP padding in virtual grid - scrolling */
-    /* .grid :global(div:first-child) {
-        padding: 5px;
-    } */
-
     .grid :global(svelte-virtual-list-viewport) {
         width: 100%;
         padding: 5px;
     }
-
-    /* .grid :global(svelte-virtual-list-viewport) {
-        height: initial;
-        width: 100%;
-    }
-    .grid :global(svelte-virtual-list-contents) {
-        display: flex;
-        flex-wrap: wrap;
-        flex: 1;
-        padding: 5px;
-        place-content: flex-start;
-    } */
 
     .gridgap {
         display: flex;

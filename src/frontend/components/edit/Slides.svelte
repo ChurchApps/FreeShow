@@ -2,6 +2,7 @@
     import { activeEdit, activeShow, cachedShowsData, showsCache } from "../../stores"
     import T from "../helpers/T.svelte"
     import { findMatchingOut } from "../helpers/output"
+    import { getShowCacheId } from "../helpers/show"
     import Slide from "../slide/Slide.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
@@ -9,7 +10,7 @@
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId]
-    $: layoutSlides = $cachedShowsData[showId]?.layout || []
+    $: layoutSlides = $cachedShowsData[getShowCacheId(showId, currentShow)]?.layout || []
 
     function keydown(e: any) {
         if (e.altKey) {
@@ -117,6 +118,7 @@
                     {#each layoutSlides as slide, i}
                         {#if (loaded || i < lazyLoader) && currentShow?.slides?.[slide.id]}
                             <Slide
+                                {showId}
                                 slide={currentShow.slides[slide.id]}
                                 show={currentShow}
                                 layoutSlide={slide}

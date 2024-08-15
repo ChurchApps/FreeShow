@@ -66,7 +66,7 @@
     $: invertedItemList = clone(allSlideItems)?.reverse() || []
 
     function move(index: number) {
-        let items = []
+        let items: Item[] = []
         let slideID: null | string = null
         if ($activeEdit.type === "overlay") items = clone($overlays[$activeEdit.id!]?.items)
         else if ($activeEdit.type === "template") items = clone($templates[$activeEdit.id!]?.items)
@@ -142,7 +142,7 @@
             {#each invertedItemList as currentItem, i}
                 {@const index = invertedItemList.length - i - 1}
                 {@const type = getType(currentItem)}
-                <!-- TODO: context menu -->
+                <!-- TODO: context menu (delete / move to top/bottom / etc.) -->
                 <Button
                     style="width: 100%;justify-content: space-between;"
                     active={$activeEdit.items.includes(index)}
@@ -163,7 +163,7 @@
                 >
                     <span style="display: flex;">
                         <p style="margin-right: 10px;">{i + 1}</p>
-                        <Icon id={type === "icon" ? currentItem.id : boxes[type]?.icon || "text"} custom={type === "icon"} />
+                        <Icon id={type === "icon" ? currentItem.id || "" : boxes[type]?.icon || "text"} custom={type === "icon"} />
                         <p style="margin-left: 10px;">{$dictionary.items?.[type]}</p>
                         {#if getIdentifier[type]}<p style="margin-left: 10px;max-width: 120px;opacity: 0.5;">{getIdentifier[type](currentItem)}</p>{/if}
                     </span>

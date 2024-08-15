@@ -223,10 +223,6 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     layout: ["rename", "duplicate", "remove"],
     slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics", "view_text"],
     tag: ["rename", "recolor", "SEPERATOR", "delete"],
-    // TODO: change chords (m, dim, sus, left, guitar, custom value, ...)
-    // chord notations
-    // https://jazz-library.com/articles/chord-symbols/
-    // https://www.musicnotes.com/now/tips/a-complete-guide-to-chord-symbols-in-music/
     chord: ["set_key", "chord_list", "custom_key", "SEPERATOR", "delete"],
 
     // MEDIA

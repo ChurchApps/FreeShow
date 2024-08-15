@@ -3,7 +3,7 @@ import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import { midiInListen } from "../components/actions/midi"
 import { getActiveOutputs } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
-import { updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
+import { getShowCacheId, updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
 import {
     $,
     activeProject,
@@ -93,7 +93,9 @@ export function storeSubscriber() {
         // set all loaded shows to false, so show style can be updated from template again
         cachedShowsData.update((a) => {
             Object.keys(a).forEach((id) => {
-                a[id].template.slidesUpdated = false
+                let customId = getShowCacheId(id, get(showsCache)[id])
+                if (!a[customId]?.template) return
+                a[customId].template.slidesUpdated = false
             })
 
             return a
@@ -236,7 +238,8 @@ export function storeSubscriber() {
 
         let show = get(showsCache)[data.id]
         cachedShowsData.update((a) => {
-            a[data.id] = updateCachedShow(data.id, show)
+            let customId = getShowCacheId(data.id, show)
+            a[customId] = updateCachedShow(data.id, show)
             return a
         })
     })

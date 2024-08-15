@@ -131,22 +131,6 @@
         })
     } else actions = []
 
-    // WIP MIDI get actions
-    // $: showMidi = show?.midi || {}
-    // $: if (Object.keys(showMidi).length || Object.keys($midiIn).length) {
-    //     midi = []
-    //     Object.entries(showMidi).forEach(([id, value]: any) => {
-    //         midi.push({ id, ...value })
-    //     })
-    //     Object.entries($midiIn).forEach(([id, value]: any) => {
-    //         if (value.shows.find((a) => a.id === $activeShow!.id)) {
-    //             midi.push({ id, ...value, sendType: "in" })
-    //         }
-    //     })
-    // } else if (!Object.keys(showMidi).length) midi = []
-
-    // TODO: check if file exists!!!
-
     let simularBgs: any[] = []
     $: if (bgs.length) getSimularPaths()
     function getSimularPaths() {
@@ -172,8 +156,6 @@
         })
     }
 </script>
-
-<!-- TODO: transition type & duration -->
 
 <div class="main">
     {#if bgs.length || audio.length || mics.length || actions.length}

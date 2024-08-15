@@ -78,7 +78,14 @@ export function selectProjectShow(select: number | "next" | "previous") {
     if (newIndex === null || !shows[newIndex]) return
 
     // show
-    if (!get(focusMode) && get(showsCache)[shows[newIndex].id]) swichProjectItem(newIndex, shows[newIndex].id)
+    if (!get(focusMode) && (shows[newIndex].type || "show") === "show") {
+        // async waiting for show to load
+        setTimeout(async () => {
+            // preload show (so the layout can be changed)
+            await loadShows([shows[newIndex!].id])
+            if (get(showsCache)[shows[newIndex!].id]) swichProjectItem(newIndex!, shows[newIndex!].id)
+        })
+    }
 
     // set active show in project list
     if (newIndex !== index) {

@@ -9,11 +9,6 @@
 
     $: slide = currentOutput?.out?.slide
 
-    // $: if (!slide) {
-    //   let outs = getActiveOutputs().map((id) => $outputs[id])
-    //   currentOutput = outs.find((output) => output.out?.slide)
-    // }
-
     $: name = slide && $showsCache[slide?.id] ? $showsCache[slide?.id].name : "—"
     $: length = ref?.length || 0
 
@@ -41,7 +36,6 @@
                 <T id="main.unnamed" />
             {/if}
         </p>
-        <!-- TODO: update -->
         <span style="opacity: 0.6;white-space: nowrap;">
             {(slide?.index || 0) + 1}/{length}
             {#if linesIndex !== null && maxLines !== null}

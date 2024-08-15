@@ -72,8 +72,6 @@
     }
 
     function openDrawerTab(tab: any) {
-        // || move
-        // TODO: don't open if move is greater than 10px
         if ($activeDrawerTab === tab.id) return
 
         // allow click event first
@@ -129,13 +127,7 @@
         }
     }
 
-    $: {
-        if ($activeShow?.type === undefined || $activeShow?.type === "show") previousShow.set(JSON.stringify($activeShow))
-        // else if ($activeDrawerTab === "shows" && $previousShow !== null) {
-        //   activeShow.set(JSON.parse($previousShow))
-        //   previousShow.set(null)
-        // }
-    }
+    $: if ($activeShow?.type === undefined || $activeShow?.type === "show") previousShow.set(JSON.stringify($activeShow))
 
     $: tabs = Object.entries(drawerTabs).map(([id, tab]: any) => ({ id, ...tab }))
 

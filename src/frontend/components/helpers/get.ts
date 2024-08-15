@@ -5,6 +5,9 @@ import { activeProject, activeShow, projects, showsCache } from "../../stores"
 import type { ShowRef } from "../../../types/Projects"
 import { getExtension, getFileName, removeExtension } from "./media"
 
+// please don't use the functions in this file!
+// they are outdated, but still in use
+
 export function splitPath(path: string) {
   const name: string = getFileName(path)
   const extension: string = getExtension(name)
@@ -12,28 +15,12 @@ export function splitPath(path: string) {
   return { path, name, extension, shortName }
 }
 
-// export const getProject = (id: ID): Project => get(projects)[id]
-// export const getProjectShows = (id: ID): Project => getProject(id)[get(activeProject)].shows
-// export const getShow = (showID: ID): Show => get(showsCache)[showID]
-// export const getSlide = (showID: ID, slideIndex: number): Slide => getShow(showID).slides[slideID] // TODO: get layout...
-
 export const getOutBackground = () => {
   "base64://"
 }
-// export const getOutSlide = (): null | Slide => {
-//   // let activeOutput: Output = get(output)
-//   return {
-//     group: null,
-//     color: null,
-//     settings: {},
-//     notes: "",
-//     items: [],
-//   } // getSlide(activeOutput.slide.id, activeOutput.slide.index)
-// }
 export const getOutOverlays = () => []
 
 export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null): SlideData[] => {
-  // console.trace(showID)
   if (!showID) showID = get(activeShow)?.id || null
   if (!showID) return []
   let currentShow: Show = get(showsCache)[showID]
@@ -115,14 +102,7 @@ export const GetShow = (ref: ShowRef): Show => {
 
 export function GetShows() {
   let list: Shows = get(showsCache)
-  // this.active = () => {
-  //   this.slides = s[get(activeShow).id].slides
-
-  //   let type = get(activeShow).type
-  //   if (type === "video") return s[get(activeShow).id]
-  //   else return s[get(activeShow).id]
-  // }
-  const active: Show | null = list[get(activeShow)?.id!] || null /////////
+  const active: Show | null = list[get(activeShow)?.id!] || null
   return { list, active }
 }
 
@@ -134,8 +114,4 @@ export function GetProjects() {
   let list: Projects = get(projects)
   const active: Project = list[get(activeProject)!]
   return { list, active }
-  // this.active = p[get(activeProject)]
-  // this.active = (): Project => p[get(activeProject)]
-  // return p
 }
-// GetProjects.prototype.active = (): Project => get(projects)[get(activeProject)]

@@ -489,8 +489,6 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true) {
     // stop playing metronome
     if (clearPlaylist && !path) stopMetronome()
 
-    // let clearTime = get(transitionData).audio.duration
-    // TODO: starting audio before previous clear is finished will not start/clear audio
     const clearTime = get(special).audio_fade_duration ?? 1.5
 
     if (clearing) {

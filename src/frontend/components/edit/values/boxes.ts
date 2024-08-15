@@ -307,7 +307,6 @@ export const boxes: Box = {
         icon: "clock",
         edit: {
             default: [
-                // TODO: clock = { type: "digital", seconds: false }
                 {
                     name: "clock.type",
                     input: "dropdown",

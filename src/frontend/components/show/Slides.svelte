@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
+    import { activePage, activePopup, alertMessage, focusMode, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
+    import { getCachedShow } from "../helpers/show"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -17,10 +18,11 @@
     import TextEditor from "./TextEditor.svelte"
 
     export let showId: string
+    export let layout: string = ""
 
     $: currentShow = $showsCache[showId]
-    $: activeLayout = $showsCache[showId]?.settings?.activeLayout
-    $: layoutSlides = $cachedShowsData[showId]?.layout || []
+    $: activeLayout = layout || $showsCache[showId]?.settings?.activeLayout
+    $: layoutSlides = currentShow ? getCachedShow(showId, activeLayout)?.layout || [] : []
 
     let scrollElem: any
     let offset: number = -1
@@ -54,7 +56,7 @@
 
         customActionActivation("slide_click")
 
-        let slideRef: any = _show(showId).layouts("active").ref()[0]
+        let slideRef: any = _show(showId).layouts([activeLayout]).ref()[0]
         updateOut(showId, index, slideRef, !e.altKey)
 
         setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
@@ -277,7 +279,7 @@
         timeout = setTimeout(next, 10)
 
         function next() {
-            lazyLoader++
+            lazyLoader += $focusMode ? 20 : 4
             timeout = null
             startLazyLoader()
         }
@@ -311,42 +313,6 @@
             loading = false
         }, 8000)
     }
-
-    // store media files
-    // MAX 512MB & overflows the ram quickly
-    // $: if (currentShow) storeMedia()
-    // let previousFiles = ""
-    // function storeMedia() {
-    //     if (!$special.storeShowMedia) return
-
-    //     let files: any = []
-    //     Object.keys(currentShow.media).forEach((mediaId) => {
-    //         let media = currentShow.media[mediaId]
-    //         if (media.type && !["image", "video", "audio"].includes(media.type)) return
-
-    //         files.push({ id: mediaId, path: media.path })
-    //     })
-
-    //     let newFiles = JSON.stringify(files)
-    //     if (previousFiles === newFiles) return
-
-    //     previousFiles = newFiles
-    //     send(MAIN, ["MEDIA_BASE64"], files)
-    // }
-
-    // receive(MAIN, {
-    //     MEDIA_BASE64: (data: any[]) => {
-    //         // TODO: history
-    //         showsCache.update((a) => {
-    //             data.forEach(({ id, content }) => {
-    //                 if (!a[showId].media[id]) return
-    //                 a[showId].media[id].base64 = content
-    //             })
-
-    //             return a
-    //         })
-    //     },
-    // })
 </script>
 
 <!-- TODO: tab enter not woring -->

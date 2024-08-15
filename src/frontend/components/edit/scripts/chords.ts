@@ -49,6 +49,7 @@ export function changeKey({ item, showRef, itemIndex, chord, lineIndex }) {
 }
 
 // WIP unused:
+// TODO: transpose chords
 let chordDrag: any = null
 export function chordDown(chordData, { showRef, itemIndex }) {
     selected.set({

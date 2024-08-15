@@ -86,7 +86,7 @@
 
         if (active === "all" || msg.path === path) {
             files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
-            sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+            files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
             files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 

@@ -12,6 +12,7 @@ import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayouts
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 import { customActionActivation } from "../actions/actions"
+import { getShowCacheId } from "./show"
 
 // TODO: move history switch to actions
 
@@ -725,7 +726,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // update cached show
             cachedShowsData.update((a) => {
-                if (a[data.remember.showId]?.template?.slidesUpdated) a[data.remember.showId].template.slidesUpdated = true
+                let customId = getShowCacheId(data.remember.showId, null, data.remember.layout)
+                if (a[customId]?.template?.slidesUpdated) a[customId].template.slidesUpdated = true
                 return a
             })
 

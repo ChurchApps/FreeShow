@@ -38,14 +38,13 @@
             return `https://i.ytimg.com/vi/${videoId}/sddefault.jpg`
         }
         if (active === "vimeo") {
-            return `https://vumbnail.com/${videoId}.jpg`
+            return `https://vumbnail.com/${videoId}_medium.jpg`
         }
 
         return ""
     }
 </script>
 
-<!-- TODO: loading -->
 {#if fullFilteredVideos.length}
     {#each fullFilteredVideos as video}
         <Card

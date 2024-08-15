@@ -104,8 +104,6 @@
 
         let bg = currentOutput.out.background
         bg[input.id] = value
-        // TODO: this will restart the video
-        // TODO: don't send if "Play without filters" is active
         setOutput("background", bg)
     }
 </script>

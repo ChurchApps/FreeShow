@@ -149,18 +149,40 @@ export function updateShowsList(shows: Shows) {
 export function updateCachedShows(shows: Shows) {
     let cachedShows = {}
     Object.entries(shows).forEach(([id, show]) => {
-        cachedShows[id] = updateCachedShow(id, show)
+        let customId = getShowCacheId(id, show)
+        cachedShows[customId] = updateCachedShow(id, show)
     })
     cachedShowsData.set(cachedShows)
 }
 
+export function getShowCacheId(id: string, show: Show | null, layout: string = "") {
+    if (!show && !layout) return ""
+    return `${id}_${layout || show?.settings?.activeLayout}`
+}
+
+// get cached show by layout (used for multiple of the same shows with different layout selected in "Focus mode")
+export function getCachedShow(id: string, layout: string = "") {
+    let show = get(showsCache)[id]
+    let customId = getShowCacheId(id, show, layout)
+    let cachedShow = get(cachedShowsData)[customId]
+    if (cachedShow || !layout) return cachedShow
+
+    cachedShow = updateCachedShow(id, show, layout)
+    cachedShowsData.update((a) => {
+        a[customId] = cachedShow
+        return a
+    })
+
+    return cachedShow
+}
+
 // update cached show
-export function updateCachedShow(id: string, show: Show) {
+export function updateCachedShow(id: string, show: Show, layoutId: string = "") {
     // WIP looped many times when show not loading
     // console.log(id, show)
     if (!show) return
 
-    let layout = GetLayout(id)
+    let layout = GetLayout(id, layoutId)
     // $: activeLayout = $showsCache[$activeShow!.id]?.settings?.activeLayout
     // let layout = _show(id).layouts(activeLayout).ref()[0]
 
@@ -170,9 +192,10 @@ export function updateCachedShow(id: string, show: Show) {
         if (lastEnabledSlide >= 0) endIndex = lastEnabledSlide
     }
 
+    let customId = getShowCacheId(id, show)
     let template = {
         id: show.settings?.template,
-        slidesUpdated: cachedShowsData[id]?.template?.slidesUpdated || false,
+        slidesUpdated: cachedShowsData[customId]?.template?.slidesUpdated || false,
     }
 
     // sort by order when just one layout

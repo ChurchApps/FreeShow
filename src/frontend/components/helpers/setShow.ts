@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { SHOW } from "../../../types/Channels"
 import type { Show } from "../../../types/Show"
 import { cachedShowsData, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
-import { updateCachedShow } from "./show"
+import { getShowCacheId, updateCachedShow } from "./show"
 import { uid } from "uid"
 import { destroy } from "../../utils/request"
 
@@ -62,7 +62,8 @@ export function setShow(id: string, value: "delete" | Show): Show {
 
     if (value && value !== "delete") {
         cachedShowsData.update((a) => {
-            a[id] = updateCachedShow(id, value)
+            let customId = getShowCacheId(id, get(showsCache)[id])
+            a[customId] = updateCachedShow(id, value)
             return a
         })
     }

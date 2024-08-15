@@ -10,8 +10,9 @@
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
     import { sortByName } from "../../helpers/array"
+    import { getShowCacheId } from "../../helpers/show"
 
-    $: showGroups = $cachedShowsData[$activeShow!.id]?.groups.sort(orderGroups) || []
+    $: showGroups = $cachedShowsData[getShowCacheId($activeShow!.id, $showsCache[$activeShow!.id])]?.groups.sort(orderGroups) || []
 
     $: layoutSlides = $showsCache[$activeShow!.id]?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
     function countGroupsInLayout(slideId) {

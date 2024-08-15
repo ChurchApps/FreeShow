@@ -6,6 +6,7 @@
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, getMediaStyle, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
+    import { loadShows } from "../helpers/setShow"
     import { checkName } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
@@ -20,7 +21,7 @@
     $: name = type === "show" ? $shows[show.id]?.name : type === "player" ? ($playerVideos[id] ? $playerVideos[id].name : setNotFound(id)) : show.name
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
-    // TODO: svelte animate
+
     // search
     $: style = match !== null ? `background: linear-gradient(to right, var(--primary-lighter) ${match}%, transparent ${match}%);` : ""
 
@@ -78,7 +79,14 @@
         if (pos !== null) {
             newShow.index = pos
             if (type === "audio") newShow.name = show.name
-            else if ($showsCache[id]) swichProjectItem(pos, id)
+            else if (type === "show") {
+                // async waiting for show to load
+                setTimeout(async () => {
+                    // preload show (so the layout can be changed)
+                    await loadShows([id])
+                    if ($showsCache[id]) swichProjectItem(pos, id)
+                })
+            }
         }
 
         activeShow.set(newShow)
@@ -118,18 +126,14 @@
 
     let activeOutput: any = null
     $: if ($outputs) activeOutput = findMatchingOut(id)
-    // $: if (activeOutput) style += "outline-offset: -2px;outline: 2px solid " + activeOutput + ";"
 </script>
 
 <div id="show_{id}" class="main">
-    <!-- <span style="background-image: url(tutorial/icons/{type}.svg)">{newName}</span> -->
-    <!-- WIP padding-left: 0.8em; -->
     <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} outline={activeOutput !== null || $playingAudio[id]} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
             {#if icon}
                 <Icon id={iconID || "noIcon"} {custom} right />
             {/if}
-            <!-- <p style="margin: 5px;">{newName}</p> -->
             <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
             {#if show.layoutInfo?.name}
                 <span class="layout">{show.layoutInfo.name}</span>

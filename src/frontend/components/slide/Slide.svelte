@@ -43,7 +43,8 @@
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
 
     let ghostBackground: Media | null = null
-    $: if (!background) {
+    // don't show ghost backgrounds if more than 25 slides (because of loading!)
+    $: if (!background && layoutSlides.length < 25) {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i <= index) {
@@ -263,9 +264,6 @@
     $: itemsList = clone(slide.items) || []
 </script>
 
-<!-- TODO: faster loading ? lazy load images? -->
-<!-- https://svelte.dev/repl/3bf15c868aa94743b5f1487369378cf3?version=3.21.0 -->
-<!-- animate:flip -->
 <div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || noQuickEdit ? 100 / columns : 100}%;">
     <!-- group box -->
     {#if $fullColors}

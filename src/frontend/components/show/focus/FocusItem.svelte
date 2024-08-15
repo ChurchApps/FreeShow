@@ -47,7 +47,7 @@
         <p class="notes">{show.notes}</p>
     {/if}
 {:else}
-    <Slides showId={show.id} />
+    <Slides showId={show.id} layout={show.layout} />
 
     <!-- WIP change layout??? -->
     <!-- <Layouts /> -->

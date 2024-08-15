@@ -53,6 +53,7 @@ setGlobalMenu()
 // disable hardware acceleration by default
 if (config.get("disableHardwareAcceleration") !== false) {
     // Video flickers, especially on ARM mac otherwise. Performance is actually better without (most of the time).
+    // this should remove flickers on videos, but we have had reports of increased CPU usage in a lot of cases.
     // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
     app.disableHardwareAcceleration()
 } else {

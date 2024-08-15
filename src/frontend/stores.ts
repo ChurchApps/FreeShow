@@ -9,7 +9,7 @@ import type { ActiveEdit, Media, MediaOptions, NumberObject, Popups, Selected, S
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { ID, MidiIn, Overlays, ShowList, Shows, Templates, Timer, Transition } from "../types/Show"
-import type { ActiveStage, StageShows } from "../types/Stage"
+import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
@@ -201,7 +201,7 @@ export const calendarAddShow: Writable<string> = writable("") // ""
 export const drawSettings: Writable<DrawSettings> = writable({}) // {}
 
 // STAGE
-export const stageShows: Writable<StageShows> = writable({}) // {default}
+export const stageShows: Writable<StageLayouts> = writable({}) // {default}
 
 // SCRIPTURE
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}

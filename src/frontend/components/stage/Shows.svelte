@@ -39,7 +39,7 @@
             {#each sortedStageSlides as show, index}
                 <StageSlide
                     id={show.id}
-                    {show}
+                    layout={show}
                     {index}
                     active={$activeStage.id === show.id}
                     on:click={(e) => {
