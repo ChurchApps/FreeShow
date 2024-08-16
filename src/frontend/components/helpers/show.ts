@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { Show, ShowList, Shows, Slide } from "../../../types/Show"
 import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
-import { clone, keysToID, removeValues, sortByNameAndNumber } from "./array"
+import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
 import { _show } from "./shows"
 
@@ -62,7 +62,7 @@ export function getGlobalGroup(group: string, returnInputIfNull: boolean = false
 }
 
 // get group number (dynamic counter)
-export function getGroupName(show: Show, slideID: string, groupName: string | null, layoutIndex: number) {
+export function getGroupName({ show, showId }: { show: Show; showId: string }, slideID: string, groupName: string | null, layoutIndex: number) {
     let name = groupName
     if (name === null) return name // child slide
 
@@ -84,7 +84,7 @@ export function getGroupName(show: Show, slideID: string, groupName: string | nu
     name += currentGroupNumber
 
     // same group - count
-    let layoutRef = _show().layouts("active").ref()[0]
+    let layoutRef = _show(showId).layouts("active").ref()[0]
     let allGroupLayoutSlides = layoutRef.filter((a) => a.id === slideID)
     let currentGroupLayoutIndex = allGroupLayoutSlides.findIndex((a) => a.layoutIndex === layoutIndex)
     let currentLayoutNumber = allGroupLayoutSlides.length > 1 ? " (" + (currentGroupLayoutIndex + 1) + ")" : ""
@@ -97,7 +97,7 @@ export function getGroupName(show: Show, slideID: string, groupName: string | nu
 export function getListOfShows(removeCurrent: boolean = false) {
     let list: any[] = Object.entries(get(shows)).map(([id, show]: any) => ({ id, name: show.name }))
     if (removeCurrent) list = list.filter((a) => a.id !== get(activeShow)?.id)
-    list = list.sort((a, b) => a.name?.localeCompare(b.name))
+    list = sortByName(list)
     return list
 }
 
@@ -149,18 +149,40 @@ export function updateShowsList(shows: Shows) {
 export function updateCachedShows(shows: Shows) {
     let cachedShows = {}
     Object.entries(shows).forEach(([id, show]) => {
-        cachedShows[id] = updateCachedShow(id, show)
+        let customId = getShowCacheId(id, show)
+        cachedShows[customId] = updateCachedShow(id, show)
     })
     cachedShowsData.set(cachedShows)
 }
 
+export function getShowCacheId(id: string, show: Show | null, layout: string = "") {
+    if (!show && !layout) return ""
+    return `${id}_${layout || show?.settings?.activeLayout}`
+}
+
+// get cached show by layout (used for multiple of the same shows with different layout selected in "Focus mode")
+export function getCachedShow(id: string, layout: string = "", updater = get(cachedShowsData)) {
+    let show = get(showsCache)[id]
+    let customId = getShowCacheId(id, show, layout)
+    let cachedShow = updater[customId]
+    if (cachedShow || !layout) return cachedShow
+
+    cachedShow = updateCachedShow(id, show, layout)
+    cachedShowsData.update((a) => {
+        a[customId] = cachedShow
+        return a
+    })
+
+    return cachedShow
+}
+
 // update cached show
-export function updateCachedShow(id: string, show: Show) {
+export function updateCachedShow(id: string, show: Show, layoutId: string = "") {
     // WIP looped many times when show not loading
     // console.log(id, show)
     if (!show) return
 
-    let layout = GetLayout(id)
+    let layout = GetLayout(id, layoutId)
     // $: activeLayout = $showsCache[$activeShow!.id]?.settings?.activeLayout
     // let layout = _show(id).layouts(activeLayout).ref()[0]
 
@@ -170,9 +192,10 @@ export function updateCachedShow(id: string, show: Show) {
         if (lastEnabledSlide >= 0) endIndex = lastEnabledSlide
     }
 
+    let customId = getShowCacheId(id, show)
     let template = {
         id: show.settings?.template,
-        slidesUpdated: cachedShowsData[id]?.template?.slidesUpdated || false,
+        slidesUpdated: cachedShowsData[customId]?.template?.slidesUpdated || false,
     }
 
     // sort by order when just one layout
@@ -223,7 +246,10 @@ export function updateCachedShow(id: string, show: Show) {
         return { ...slide, id: slide.id }
     }
     // sort groups by name
-    let sortedGroups = showGroups.filter((a) => a.group !== null && a.group !== undefined).sort((a: any, b: any) => a.group?.localeCompare(b.group))
+    let sortedGroups = sortByName(
+        showGroups.filter((a) => a.group !== null && a.group !== undefined),
+        "group"
+    )
 
     return { layout, endIndex, template, groups: sortedGroups }
 }

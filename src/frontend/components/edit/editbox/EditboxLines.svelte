@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item, Line } from "../../../../types/Show"
-    import { activeEdit, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
+    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -31,6 +31,9 @@
     let html: string = ""
     let previousHTML: string = ""
     let currentStyle: string = ""
+
+    // WIP pressing line break on empty html (textbox) does not work, but it works after typing something
+    // NOTE: undoing a change will set the html to "", causing the same issue
 
     onMount(() => {
         getStyle()
@@ -103,6 +106,13 @@
     }
 
     function keydown(e: any) {
+        if (e.key === "Enter" && e.shiftKey) {
+            // by default the browser contenteditable will add a <br> instead of our custom <span class="break"> when pressing SHIFT
+            // so just prevent shift break!
+            e.preventDefault()
+            return
+        }
+
         // TODO: get working in list view
         if (e.key === "Enter" && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
             // incorrect editbox
@@ -482,8 +492,11 @@
 
             if (pastingIndex < 0) {
                 pastingIndex = lineIndex
-                let lastPastedLine = pastingIndex + (clipboard.split("\n").length - 1)
-                caret = { line: lastPastedLine, pos: lineSel.start + clipboard.length }
+                let splitted = clipboard.split("\n")
+                let lastPastedLine = pastingIndex + (splitted.length - 1)
+                let pos = lineSel.start + clipboard.length
+                if (splitted.length > 1) pos = splitted[splitted.length - 1].trim().length
+                caret = { line: lastPastedLine, pos }
             }
 
             let lineText: any[] = []
@@ -557,6 +570,9 @@
     // $: autoSize = height < width ? height / 1.5 : width / 4
     // $: autoSize = Math.min(height, width) / 2
     // $: autoSize = getAutoSize(item)
+
+    // SHOW IS LOCKED FOR EDITING
+    $: isLocked = $showsCache[$activeShow?.id || ""]?.locked
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -569,28 +585,32 @@
                 <T id="empty.text" />
             </span>
         {/if}
-        {#if chordsMode && textElem}
-            <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
+        {#if isLocked}
+            <div class="edit">{@html html}</div>
+        {:else}
+            {#if chordsMode && textElem}
+                <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
+            {/if}
+            <div
+                bind:this={textElem}
+                on:mousemove={(e) => {
+                    let newLines = chordMove(e, { textElem, item })
+                    if (newLines) item.lines = newLines
+                }}
+                on:mouseup={() => storeCurrentCaretPos()}
+                class="edit"
+                class:hidden={chordsMode}
+                class:autoSize={item.auto && autoSize}
+                contenteditable
+                on:keydown={textElemKeydown}
+                bind:innerHTML={html}
+                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
+                class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
+                class:tallLines={chordsMode}
+            />
+            <!-- this did not work on mac: -->
+            <!-- on:paste|preventDefault={paste} -->
         {/if}
-        <div
-            bind:this={textElem}
-            on:mousemove={(e) => {
-                let newLines = chordMove(e, { textElem, item })
-                if (newLines) item.lines = newLines
-            }}
-            on:mouseup={() => storeCurrentCaretPos()}
-            class="edit"
-            class:hidden={chordsMode}
-            class:autoSize={item.auto && autoSize}
-            contenteditable
-            on:keydown={textElemKeydown}
-            bind:innerHTML={html}
-            style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
-            class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
-            class:tallLines={chordsMode}
-        />
-        <!-- this did not work on mac: -->
-        <!-- on:paste|preventDefault={paste} -->
     </div>
 {/if}
 

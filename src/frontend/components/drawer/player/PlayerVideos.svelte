@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { activeShow, outLocked, outputs, playerVideos } from "../../../stores"
-    import { clone } from "../../helpers/array"
+    import { activeFocus, activeShow, focusMode, outLocked, outputs, playerVideos } from "../../../stores"
+    import { clone, sortByName } from "../../helpers/array"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import { clearBackground } from "../../output/clear"
@@ -11,10 +11,11 @@
     export let active: any
     export let searchValue: string = ""
 
-    $: videos = Object.entries($playerVideos)
-        .map(([id, video]: any) => ({ rid: id, ...video }))
-        .filter((a) => a.type === active)
-        .sort((a: any, b: any) => a.name.localeCompare(b.name))
+    $: videos = sortByName(
+        Object.entries($playerVideos)
+            .map(([id, video]: any) => ({ rid: id, ...video }))
+            .filter((a) => a.type === active)
+    )
 
     // search
     $: if (videos || searchValue !== undefined) filterSearch()
@@ -37,14 +38,13 @@
             return `https://i.ytimg.com/vi/${videoId}/sddefault.jpg`
         }
         if (active === "vimeo") {
-            return `https://vumbnail.com/${videoId}.jpg`
+            return `https://vumbnail.com/${videoId}_medium.jpg`
         }
 
         return ""
     }
 </script>
 
-<!-- TODO: loading -->
 {#if fullFilteredVideos.length}
     {#each fullFilteredVideos as video}
         <Card
@@ -69,7 +69,8 @@
                 setOutput("background", { id: video.rid, type: "player", muted: false, loop: false, startAt: 0 })
             }}
             on:dblclick={() => {
-                activeShow.set({ id: video.rid, type: "player" })
+                if ($focusMode) activeFocus.set({ id: video.rid })
+                else activeShow.set({ id: video.rid, type: "player" })
             }}
         >
             <SelectElem id="player" data={video.rid} draggable>

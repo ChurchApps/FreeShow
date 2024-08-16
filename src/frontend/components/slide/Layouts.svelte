@@ -1,7 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import { uid } from "uid"
-    import { activePopup, activeProject, activeShow, dictionary, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions } from "../../stores"
+    import { activePopup, activeProject, activeShow, alertMessage, dictionary, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { duplicate } from "../helpers/clipboard"
@@ -13,15 +13,14 @@
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
+    import { keysToID, sortByName } from "../helpers/array"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId] || {}
     $: layouts = currentShow.layouts
     $: activeLayout = currentShow.settings?.activeLayout
 
-    $: sortedLayouts = Object.entries(layouts || {})
-        .map(([id, layout]: any) => ({ id, ...layout }))
-        .sort((a, b) => a.name?.localeCompare(b.name))
+    $: sortedLayouts = sortByName(keysToID(layouts || {}))
 
     let totalTime: string = "0s"
     $: layoutSlides = layouts?.[activeLayout]?.slides || []
@@ -123,7 +122,7 @@
 
 <div>
     {#if reference}
-        <Reference show={$showsCache[showId]} />
+        <Reference show={currentShow} />
     {:else if layouts}
         <span style="display: flex;overflow-x: hidden;">
             {#if multipleLayouts}
@@ -131,7 +130,7 @@
                     {#each sortedLayouts as layout}
                         <SelectElem id="layout" data={layout.id} fill={!edit || edit === layout.id}>
                             <Button
-                                class="context #layout"
+                                class={currentShow.locked ? "" : "context #layout"}
                                 on:click={() => {
                                     if (!edit) setLayout(layout.id, { name: layout.name })
                                 }}
@@ -144,7 +143,7 @@
                     {/each}
                 </span>
 
-                <Button on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
+                <Button disabled={currentShow.locked} on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
                     <Icon size={1.3} id="add" />
                 </Button>
             {/if}
@@ -162,7 +161,7 @@
         {#if !multipleLayouts && layouts && !reference}
             <!-- left aligned to prevent accidental clicks -->
             <span style="width: 100%;">
-                <Button disabled={!layoutSlides.length} on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
+                <Button disabled={!layoutSlides.length || currentShow.locked} on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
                     <Icon size={1.3} id="add" right={!$labelsDisabled} />
                     {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
                 </Button>
@@ -171,9 +170,21 @@
 
         <div class="seperator" />
 
-        <Button disabled={!layoutSlides.length} on:click={() => activePopup.set("next_timer")} title="{$dictionary.popup?.next_timer}{totalTime !== '0s' ? ': ' + totalTime : ''}">
-            <Icon size={1.1} id="clock" white={totalTime === "0s"} />
-        </Button>
+        {#if currentShow.locked}
+            <Button
+                on:click={() => {
+                    alertMessage.set("show.locked_info")
+                    activePopup.set("alert")
+                }}
+                title={$dictionary.show?.locked}
+            >
+                <Icon size={1.1} id="locked" />
+            </Button>
+        {:else}
+            <Button disabled={!layoutSlides.length} on:click={() => activePopup.set("next_timer")} title="{$dictionary.popup?.next_timer}{totalTime !== '0s' ? ': ' + totalTime : ''}">
+                <Icon size={1.1} id="clock" white={totalTime === "0s"} />
+            </Button>
+        {/if}
 
         <Button class="context #slideViews" on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
             <Icon size={1.3} id={$slidesOptions.mode} white />

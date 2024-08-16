@@ -9,7 +9,7 @@ import { cloudConnect } from "./cloud/cloud"
 import { currentlyDeletedShows } from "./cloud/drive"
 import { startBackup } from "./data/backup"
 import { startExport } from "./data/export"
-import { config, stores, updateDataPath, userDataPath } from "./data/store"
+import { config, getStore, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
@@ -50,9 +50,18 @@ if (isLinux) console.log("libva error on Linux can be ignored")
 // set application menu
 setGlobalMenu()
 
+// disable hardware acceleration by default
+if (config.get("disableHardwareAcceleration") !== false) {
+    // Video flickers, especially on ARM mac otherwise. Performance is actually better without (most of the time).
+    // this should remove flickers on videos, but we have had reports of increased CPU usage in a lot of cases.
+    // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
+    app.disableHardwareAcceleration()
+} else {
+    console.log("Starting with Hardware Acceleration")
+}
+
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
-app.disableHardwareAcceleration() //Video flickers, especially on ARM mac otherwise.  Performance is actually better without.  https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
 app.on("ready", startApp)
 
 function startApp() {
@@ -324,7 +333,7 @@ ipcMain.on(STORE, (e, msg) => {
     if (msg.channel === "UPDATE_PATH") updateDataPath(msg.data)
     else if (msg.channel === "SAVE") save(msg.data)
     else if (msg.channel === "SHOWS") loadShows(msg.data)
-    else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
+    else if (stores[msg.channel]) getStore(msg.channel, e)
 })
 
 function save(data: any) {

@@ -4,7 +4,7 @@
     import { activeStage, outputs, stageShows, toggleOutputEnabled } from "../../../stores"
     import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
-    import { keysToID } from "../../helpers/array"
+    import { keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getActiveOutputs } from "../../helpers/output"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -80,9 +80,7 @@
     // password
 
     let outputList: any[] = []
-    $: outputList = keysToID($outputs)
-        .filter((a) => !a.isKeyOutput && !a.stageOutput)
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: outputList = sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput && !a.stageOutput))
 
     // deleting stage layout and undoing will keep this on, but no output
     $: if (settings.outputScreen && !Object.values($outputs).find((a) => a.stageOutput === $activeStage.id)) settings.outputScreen = false

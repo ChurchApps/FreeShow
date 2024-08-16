@@ -5,8 +5,9 @@
 import { app } from "electron"
 import Store from "electron-store"
 import path from "path"
+import { STORE } from "../../types/Channels"
+import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
-import { dataFolderNames } from "../utils/files"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",
@@ -34,6 +35,23 @@ if (process.env.FS_MOCK_STORE_PATH != undefined) {
 
 // MAIN WINDOW
 export const config = new Store<any>({ defaults: defaultConfig, ...storeExtraConfig })
+
+// Check that files are parsed properly!
+let dataPath = config.path
+Object.values(fileNames).forEach((fileName) => {
+    let p = path.join(path.dirname(dataPath), fileName + ".json")
+    if (!doesPathExist(p)) return
+    let jsonData = readFile(p)
+
+    try {
+        JSON.parse(jsonData)
+    } catch (err) {
+        console.error("Could not read the " + fileName + ".json settings file, probably wrong JSON format!", err)
+        // auto delete files that can't be parsed!
+        deleteFile(p)
+    }
+})
+
 // ERROR LOG
 export const error_log = new Store({ name: fileNames.error_log, defaults: {}, ...storeExtraConfig })
 
@@ -46,7 +64,7 @@ let themes = new Store({ name: fileNames.themes, defaults: {}, ...storeExtraConf
 let projects = new Store({ name: fileNames.projects, defaults: { projects: {}, folders: {} }, ...storeExtraConfig })
 
 // SLIDES
-let shows = new Store({ name: fileNames.shows, defaults: {}, ...storeExtraConfig })
+let shows = new Store({ name: fileNames.shows, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 let stageShows = new Store({ name: fileNames.stageShows, defaults: {}, ...storeExtraConfig })
 let overlays = new Store({ name: fileNames.overlays, defaults: {}, ...storeExtraConfig })
 let templates = new Store({ name: fileNames.templates, defaults: {}, ...storeExtraConfig })
@@ -58,9 +76,9 @@ let events = new Store({ name: fileNames.events, defaults: {}, ...storeExtraConf
 let driveKeys = new Store({ name: fileNames.driveKeys, defaults: {}, ...storeExtraConfig })
 
 // CACHE
-const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesByDotNotation: false, ...storeExtraConfig })
-const cache = new Store({ name: fileNames.cache, defaults: {}, ...storeExtraConfig })
-let history = new Store({ name: fileNames.history, defaults: {}, ...storeExtraConfig })
+const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesByDotNotation: false, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+const cache = new Store({ name: fileNames.cache, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let history = new Store({ name: fileNames.history, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 
 export let stores: { [key: string]: Store<any> } = {
     SETTINGS: settings,
@@ -76,6 +94,17 @@ export let stores: { [key: string]: Store<any> } = {
     MEDIA: media,
     CACHE: cache,
     HISTORY: history,
+}
+
+// ----- GET STORE -----
+
+export function getStore(id: string, e: any = null) {
+    if (!stores[id]) return null
+
+    let store = stores[id].store
+    if (e) e.reply(STORE, { channel: id, data: store })
+
+    return store
 }
 
 // ----- CUSTOM DATA PATH -----

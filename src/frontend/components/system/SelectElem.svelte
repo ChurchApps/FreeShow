@@ -8,6 +8,7 @@
     export let data: any
     export let fill: boolean = false
     export let draggable: boolean = false
+    export let selectable: boolean = true
     export let trigger: null | "row" | "column" = null
     export let fileOver: boolean = false
     export let borders: "all" | "center" | "edges" = "all"
@@ -15,6 +16,7 @@
     let elem: any
 
     function enter(e: any) {
+        if (!selectable) return
         if (e.buttons && !dragActive) {
             if ((id === "project" || id === "folder") && $selected.data[0] && data.index < $selected.data[0].index) {
                 selected.set({ id, data: [data] })
@@ -83,6 +85,7 @@
     }
 
     function mousedown(e: any, dragged: boolean = false) {
+        if (!selectable) return
         if (dragged && $activeRename !== null) return e.preventDefault()
 
         // this affects the cursor
@@ -177,6 +180,7 @@
     }
 
     function dragOver(key: "start" | "center" | "end") {
+        if (!selectable) return
         dragover = key
         triggerHoverAction()
     }

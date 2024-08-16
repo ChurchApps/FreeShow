@@ -9,10 +9,8 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import FolderPicker from "../inputs/FolderPicker.svelte"
-    import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
-    import SelectElem from "../system/SelectElem.svelte"
-    import NavigationButton from "./NavigationButton.svelte"
+    import NavigationButtons from "./NavigationButtons.svelte"
 
     export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "functions" | "templates" | "timers"
 
@@ -179,34 +177,21 @@
 
     let selectId: any = "category"
     $: selectId = "category_" + id
+
+    const dropAreas: (typeof id)[] = ["shows", "audio", "overlays", "templates"]
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <div class="main">
     <div class="categories context #category_{id}">
-        <DropArea id="navigation" selectChildren>
-            {#key buttons}
-                {#if buttons.length}
-                    {#each buttons as category}
-                        {#if category.id === "SEPERATOR"}
-                            <hr />
-                        {:else}
-                            <SelectElem id={selectId} borders="center" trigger="column" data={category.id}>
-                                <NavigationButton {id} {category} {length} />
-                            </SelectElem>
-                        {/if}
-                    {/each}
-                {:else}
-                    <Center faded>
-                        <T id="empty.general" />
-                    </Center>
-                {/if}
-            {/key}
-            <!-- {#if id === "scripture"}
-        <a class="source" href="#void" on:click={() => window.api.send(MAIN, { channel: "URL", data: "https://scripture.api.bible/" })}> API.Bible </a>
-      {/if} -->
-        </DropArea>
+        {#if dropAreas.includes(id)}
+            <DropArea id="navigation" selectChildren>
+                <NavigationButtons {buttons} {id} {selectId} />
+            </DropArea>
+        {:else}
+            <NavigationButtons {buttons} {id} {selectId} />
+        {/if}
     </div>
     {#if id === "shows"}
         <div class="tabs">
@@ -273,12 +258,6 @@
     .tabs {
         display: flex;
         background-color: var(--primary-darker);
-    }
-
-    hr {
-        height: 2px;
-        border: none;
-        background-color: var(--primary-lighter);
     }
 
     .source {

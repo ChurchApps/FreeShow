@@ -47,6 +47,7 @@ function getId(drag: any): string {
 export const dropActions: any = {
     slides: ({ drag, drop }: any, history: any) => dropActions.slide({ drag, drop }, history),
     slide: ({ drag, drop }: any, history: any) => {
+        if (!get(activeShow)?.id || get(shows)[get(activeShow)?.id || ""]?.locked) return
         history.location = { page: get(activePage), show: get(activeShow), layout: get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout }
 
         let id: string = getId(drag)
@@ -535,9 +536,9 @@ const slideDrop: any = {
         let slides: any = clone(get(showsCache)[get(activeShow)!.id].slides)
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
-        // WIP incorrect index
         if (drop.index === undefined) drop.index = layout.length
         let newIndex: number = drop.index
+        if (drop.trigger?.includes("end")) newIndex++
 
         newSlides.forEach((slide: any) => {
             let id = uid()

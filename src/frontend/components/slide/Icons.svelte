@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activeTimers, dictionary, outputs, videoExtensions } from "../../stores"
+    import { activeShow, activeTimers, dictionary, outputs, shows, videoExtensions } from "../../stores"
     import { send } from "../../utils/request"
     import { getAudioDuration } from "../helpers/audio"
     import { history } from "../helpers/history"
@@ -27,19 +27,29 @@
     $: nextTimer = (layoutSlide.nextTimer || 0) > 0 ? (layoutSlide.nextTimer > 59 ? joinTime(secondsToTime(layoutSlide.nextTimer)) : layoutSlide.nextTimer + "s") : null
     $: transition = layoutSlide?.transition || layoutSlide?.mediaTransition
 
+    $: currentShow = $shows[$activeShow?.id || ""] || {}
+
     function removeLayout(key: string) {
+        if (currentShow.locked) return
+
         history({ id: "SHOW_LAYOUT", newData: { key, indexes: [index] } })
     }
 
     // TODO: history
     function mute() {
+        if (currentShow.locked) return
+
         _show("active").media([layoutSlide.background]).set({ key: "muted", value: false })
     }
     function removeLoop() {
+        if (currentShow.locked) return
+
         _show("active").media([layoutSlide.background]).set({ key: "loop", value: false })
     }
 
     function resetTimer() {
+        if (currentShow.locked) return
+
         activeTimers.update((a) => {
             a = a.filter((_a, i) => !timer.includes(i))
             return a
@@ -47,7 +57,7 @@
         send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
     }
 
-    $: audio = layoutSlide.audio?.length ? _show("active").get().media[layoutSlide.audio[0]] || {} : {}
+    $: audio = layoutSlide.audio?.length ? _show("active").get()?.media?.[layoutSlide.audio[0]] || {} : {}
     $: audioPath = audio.path
     // no need for cloud when audio can be stacked
     // $: cloudId = $driveData.mediaId

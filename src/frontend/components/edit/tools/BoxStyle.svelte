@@ -396,7 +396,6 @@
         }
 
         // TODO: remove unused (if default)
-        // TODO: template v-align
 
         if (!Object.values(values).length) return
 

@@ -66,7 +66,6 @@
     }
 
     let storeWidth: null | number = null
-    // TODO: pressing button with keyboard will close panel
     function click(e: any) {
         if (move || !conditions[side](e)) {
             move = false

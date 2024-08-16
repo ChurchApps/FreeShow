@@ -59,6 +59,7 @@ export function midiInListen() {
     })
 }
 
+// WIP add more presets based on api.ts
 export const defaultMidiActionChannels = {
     // presentation
     next_slide: { type: "noteon", values: { note: 0, velocity: -1, channel: 1 } },
@@ -66,9 +67,6 @@ export const defaultMidiActionChannels = {
     next_project_show: { type: "noteon", values: { note: 2, velocity: -1, channel: 1 } },
     previous_project_show: { type: "noteon", values: { note: 3, velocity: -1, channel: 1 } },
     goto_group: { type: "noteon", values: { note: 4, velocity: -1, channel: 1 } },
-
-    // media controls
-    // TODO: midi video action (to beginning, play/pause, play, pause)
 
     // clear
     clear_all: { type: "noteon", values: { note: 0, velocity: -1, channel: 3 } },
@@ -85,13 +83,6 @@ export const defaultMidiActionChannels = {
     index_select_project: { type: "noteon", values: { note: 0, velocity: -1, channel: 5 } },
     index_select_project_show: { type: "noteon", values: { note: 1, velocity: -1, channel: 5 } },
     index_select_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 5 } },
-    // index_select_media: { type: "noteon", values: { note: 3, velocity: -1, channel: 5 } },
-    // index_select_audio: { type: "noteon", values: { note: 4, velocity: -1, channel: 5 } },
-    // index_select_overlay: { type: "noteon", values: { note: 5, velocity: -1, channel: 5 } },
-    // this can be done from slide action:
-    // index_start_timer: { type: "noteon", values: { note: 6, velocity: -1, channel: 5 } },
-    // index_stop_timer: { type: "noteon", values: { note: 7, velocity: -1, channel: 5 } },
-    // index_reset_timer: { type: "noteon", values: { note: 8, velocity: -1, channel: 5 } },
 }
 
 export function receivedMidi(msg) {

@@ -11,13 +11,13 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
     onMount(() => {
         // getCacheSize()
         // getAudioOutputs()
         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
+        send(MAIN, ["GET_STORE_VALUE"], { file: "config", key: "disableHardwareAcceleration" })
     })
 
     // const previewRates = [
@@ -49,6 +49,16 @@
         if (key === "customUserDataLocation") send(STORE, ["UPDATE_PATH"], { reset: !checked, dataPath: $dataPath })
     }
 
+    // hardware acceleration
+    let disableHardwareAcceleration = true
+    function toggleHardwareAcceleration(e: any) {
+        disableHardwareAcceleration = e.target.checked
+        send(MAIN, ["SET_STORE_VALUE"], { file: "config", key: "disableHardwareAcceleration", value: disableHardwareAcceleration })
+
+        alertMessage.set("settings.restart_for_change")
+        activePopup.set("alert")
+    }
+
     // shows in folder
     let hiddenShows: any[] = []
     let brokenShows: number = 0
@@ -58,6 +68,9 @@
         {
             // this will not include newly created shows not saved yet, but it should not be an issue.
             FULL_SHOWS_LIST: (data: any) => (hiddenShows = data || []),
+            GET_STORE_VALUE: (data: any) => {
+                if (data.key === "disableHardwareAcceleration") disableHardwareAcceleration = data.value
+            },
         },
         listenerId
     )
@@ -108,6 +121,11 @@
     }
     function openCache() {
         send(MAIN, ["OPEN_CACHE"])
+    }
+
+    // bundle media files
+    function bundleMediaFiles() {
+        send(MAIN, ["BUNDLE_MEDIA_FILES"], { showsPath: $showsPath, dataPath: $dataPath })
     }
 
     // backup
@@ -196,6 +214,14 @@
     </div>
 </CombinedInput>
 
+<!-- disableHardwareAcceleration -->
+<CombinedInput>
+    <p><T id="settings.disable_hardware_acceleration" /></p>
+    <div class="alignRight">
+        <Checkbox checked={disableHardwareAcceleration} on:change={toggleHardwareAcceleration} />
+    </div>
+</CombinedInput>
+
 <!-- WIP change frame rate on remote?? -->
 <!-- <CombinedInput>
     <p><T id="settings.preview_frame_rate" /></p>
@@ -210,11 +236,6 @@
 <CombinedInput title={projectReplacerTitle}>
     <p><T id="settings.default_project_name" /></p>
     <TextInput value={$special.default_project_name ?? DEFAULT_PROJECT_NAME} on:change={(e) => updateTextInput(e, "default_project_name")} />
-</CombinedInput>
-
-<CombinedInput>
-    <p><T id="settings.max_auto_font_size" /></p>
-    <NumberInput value={$special.max_auto_font_size ?? 800} min={20} max={5000} on:change={(e) => updateSpecial(e.detail, "max_auto_font_size")} />
 </CombinedInput>
 
 <!-- WIP custom metadata order -->
@@ -269,6 +290,12 @@
     </Button>
     <Button on:click={openCache}>
         <Icon id="folder" right /><T id="actions.open_cache_folder" />
+    </Button>
+</CombinedInput>
+
+<CombinedInput>
+    <Button style="width: 100%;" on:click={bundleMediaFiles} title={$dictionary?.media?.bundle_media_files_tip}>
+        <Icon id="image" right /><T id="media.bundle_media_files" />
     </Button>
 </CombinedInput>
 

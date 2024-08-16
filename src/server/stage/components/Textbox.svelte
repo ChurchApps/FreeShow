@@ -41,7 +41,7 @@
 
     let alignElem: any
     let loopStop = false
-    const MAX_FONT_SIZE = 800 // $special.max_auto_font_size
+    const MAX_FONT_SIZE = 800 // outputStyle.maxAutoFontSize
     const MIN_FONT_SIZE = 10
 
     $: if (autoSize && loaded) getCustomAutoSize()

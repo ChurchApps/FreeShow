@@ -122,5 +122,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
+
+        /* Starting a drop area with many slides in e.g. overlays/templates drawer is very laggy when the content is
+        smaller than the "Drop here" text (or invisible), because that creates a custom scrollbar. Here is the fix! */
+        overflow: hidden;
     }
 </style>

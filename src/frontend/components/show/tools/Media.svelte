@@ -7,6 +7,7 @@
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { sortByName } from "../../helpers/array"
     import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
     import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
@@ -76,7 +77,7 @@
             else backgrounds[path] = { id: a, ...show.media[a], path, type, count: 1 }
         })
         Object.values(backgrounds).forEach((a) => bgs.push(a))
-        bgs = bgs.sort((a: any, b: any) => a.name.localeCompare(b.name))
+        bgs = sortByName(bgs)
     } else bgs = []
 
     let audio: any = []
@@ -130,22 +131,6 @@
         })
     } else actions = []
 
-    // WIP MIDI get actions
-    // $: showMidi = show?.midi || {}
-    // $: if (Object.keys(showMidi).length || Object.keys($midiIn).length) {
-    //     midi = []
-    //     Object.entries(showMidi).forEach(([id, value]: any) => {
-    //         midi.push({ id, ...value })
-    //     })
-    //     Object.entries($midiIn).forEach(([id, value]: any) => {
-    //         if (value.shows.find((a) => a.id === $activeShow!.id)) {
-    //             midi.push({ id, ...value, sendType: "in" })
-    //         }
-    //     })
-    // } else if (!Object.keys(showMidi).length) midi = []
-
-    // TODO: check if file exists!!!
-
     let simularBgs: any[] = []
     $: if (bgs.length) getSimularPaths()
     function getSimularPaths() {
@@ -171,8 +156,6 @@
         })
     }
 </script>
-
-<!-- TODO: transition type & duration -->
 
 <div class="main">
     {#if bgs.length || audio.length || mics.length || actions.length}
@@ -363,6 +346,7 @@
     .item {
         display: flex;
         width: 100%;
+        /* don't think fit-content is necessary */
         height: fit-content;
         /* justify-content: center; */
         align-items: center;

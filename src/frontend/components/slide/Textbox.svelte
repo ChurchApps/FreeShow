@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { currentWindow, overlays, showsCache, slidesOptions, special, templates, variables, volume } from "../../stores"
+    import { currentWindow, overlays, showsCache, slidesOptions, templates, variables, volume } from "../../stores"
     import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
     import { getAutoSize } from "../edit/scripts/autoSize"
@@ -13,15 +13,15 @@
     import { getStyles } from "../helpers/style"
     import OutputTransition from "../output/layers/OutputTransition.svelte"
     import Clock from "../system/Clock.svelte"
+    import Captions from "./views/Captions.svelte"
     import DynamicEvents from "./views/DynamicEvents.svelte"
     import ListView from "./views/ListView.svelte"
     import Mirror from "./views/Mirror.svelte"
+    import SlideProgress from "./views/SlideProgress.svelte"
     import Timer from "./views/Timer.svelte"
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
-    import Captions from "./views/Captions.svelte"
-    import SlideProgress from "./views/SlideProgress.svelte"
 
     export let item: Item
     export let itemIndex: number = -1
@@ -162,7 +162,7 @@
 
     let alignElem: any
     let loopStop = false
-    const MAX_FONT_SIZE = $special.max_auto_font_size ?? 800
+    const MAX_FONT_SIZE = outputStyle.maxAutoFontSize ?? 800
     const MIN_FONT_SIZE = 10
 
     let previousItem = "{}"

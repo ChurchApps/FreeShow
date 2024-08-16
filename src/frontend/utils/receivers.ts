@@ -99,6 +99,7 @@ import { client } from "./sendData"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { clearBackground } from "../components/output/clear"
 import { previewShortcuts } from "./shortcuts"
+import { convertOSISBible } from "../converters/osisBible"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -186,18 +187,24 @@ const receiveMAIN: any = {
         activePopup.set("alert")
     },
     LOCATE_MEDIA_FILE: ({ path, ref }) => {
-        newToast("$toast.media_replaced")
+        let prevPath: string = ""
+
         showsCache.update((a) => {
             let media = a[ref.showId].media[ref.mediaId]
             if (ref.cloudId) {
                 if (!media.cloud) a[ref.showId].media[ref.mediaId].cloud = {}
+                prevPath = a[ref.showId].media[ref.mediaId].cloud![ref.cloudId]
                 a[ref.showId].media[ref.mediaId].cloud![ref.cloudId] = path
             } else {
+                prevPath = a[ref.showId].media[ref.mediaId].path || ""
                 a[ref.showId].media[ref.mediaId].path = path
             }
 
             return a
         })
+
+        // sometimes when lagging the image will be "replaced" even when it exists
+        if (prevPath !== path) newToast("$toast.media_replaced")
     },
     API_TRIGGER: (data: any) => triggerAction(data),
 
@@ -338,7 +345,7 @@ const receiveOUTPUTasMAIN: any = {
         clearing = true
         setTimeout(() => (clearing = false), msg.duration || 1000)
 
-        let videoPath: string = get(outputs)[msg.id]?.out?.background?.path || ""
+        let videoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
         if (!videoPath) return
 
         // check and execute next after media regardless of loop
@@ -348,7 +355,7 @@ const receiveOUTPUTasMAIN: any = {
 
         setTimeout(() => {
             // double check that output is still the same
-            let newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || ""
+            let newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
             if (newVideoPath !== videoPath) return
 
             clearBackground(msg.id)
@@ -590,7 +597,8 @@ const receiveIMPORT: any = {
     calendar: (a: any) => convertCalendar(a),
     // Bibles
     freeshow_bible: (a: any) => importFSB(a),
-    beblia_bible: (a: any) => convertBebliaBible(a),
     zefania_bible: (a: any) => convertZefaniaBible(a),
+    osis_bible: (a: any) => convertOSISBible(a),
+    beblia_bible: (a: any) => convertBebliaBible(a),
     opensong_bible: (a: any) => convertOpenSongBible(a),
 }

@@ -49,11 +49,11 @@
                 {/if}
             </div>
         {:else if show.type === "audio"}
-            <AudioPreview />
+            <AudioPreview active={$activeShow} />
         {:else if show.type === "section"}
             <Section section={show} />
         {:else}
-            <Slides />
+            <Slides showId={$activeShow?.id || ""} />
             <Layouts />
         {/if}
     {:else}

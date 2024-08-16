@@ -1,9 +1,9 @@
 <script>
     import YouTube from "svelte-youtube"
     import { MAIN, OUTPUT } from "../../../../types/Channels"
-    import { currentWindow, playerVideos, special } from "../../../stores"
+    import { currentWindow, playerVideos, special, volume } from "../../../stores"
     import { send } from "../../../utils/request"
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, onDestroy } from "svelte"
 
     export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
     export let videoTime = 0
@@ -54,8 +54,10 @@
         if (!$currentWindow) {
             // WIP this only works in preview now
             setTimeout(() => {
+                let data = player.getVideoData()
+                if (!data) return
                 // console.log(player.playerInfo.videoData) // title | author
-                title = player.getVideoData().title
+                title = data.title
                 let noName = !$playerVideos[playerId].name || $playerVideos[playerId].name.includes($playerVideos[playerId].id)
                 if (title && noName) {
                     playerVideos.update((a) => {
@@ -99,6 +101,8 @@
         player.seekTo(videoTime)
 
         setTimeout(() => {
+            if (!player.g) return
+
             if (!videoData.paused) player.playVideo()
             seeking = false
 
@@ -139,11 +143,21 @@
         videoData.paused = player.getPlayerState() === 1 ? false : true
         if (preview) videoTime = player.getCurrentTime()
     }
+
+    function ended() {
+        dispatch("ended", true)
+    }
+
+    // update volume based on global slider value
+    $: if (!preview && $volume !== undefined && player) updateVolume()
+    function updateVolume() {
+        player.setVolume($volume * 100)
+    }
 </script>
 
 <div class="main" class:hide={!id}>
     {#if id}
-        <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:stateChange={change} />
+        <YouTube class="yt" videoId={id} {options} on:ready={onReady} on:end={ended} on:stateChange={change} />
     {/if}
 </div>
 

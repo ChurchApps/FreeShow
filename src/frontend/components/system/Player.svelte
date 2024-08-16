@@ -13,10 +13,12 @@
     export let videoTime: number = 0
     export let title: string = ""
     export let startAt: number = 0
+
+    // TODO: looping player videos does not work!
 </script>
 
 {#if video?.type === "youtube"}
-    <YouTube {outputId} playerId={id} id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} on:loaded />
+    <YouTube {outputId} playerId={id} id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} on:loaded on:ended />
 {:else if video?.type === "vimeo"}
     <Vimeo {outputId} id={video.id} bind:videoData bind:videoTime bind:title {startAt} {preview} on:loaded />
 {/if}

@@ -7,7 +7,9 @@
     import { clone, removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getFileName } from "../../helpers/media"
+    import { defaultLayers } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
@@ -16,8 +18,6 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { defaultLayers } from "../../helpers/output"
-    import Checkbox from "../../inputs/Checkbox.svelte"
 
     function updateStyle(e: any, key: string, currentId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -119,12 +119,7 @@
     ]
 
     let templateList: any[] = []
-    $: templateList = [
-        { id: null, name: "—" },
-        ...Object.entries($templates)
-            .map(([id, template]: any) => ({ id, name: template.name }))
-            .sort((a, b) => a.name.localeCompare(b.name)),
-    ]
+    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))]
 
     // text divider
     function keydown(e: any) {
@@ -239,19 +234,6 @@
 
 <h3><T id="preview.slide" /></h3>
 <CombinedInput>
-    <p><T id="settings.lines" /></p>
-    <NumberInput
-        value={currentStyle.lines || 0}
-        min={0}
-        max={99}
-        buttons={false}
-        outline
-        on:change={(e) => {
-            updateStyle(e, "lines")
-        }}
-    />
-</CombinedInput>
-<CombinedInput>
     <p><T id="settings.active_layers" /></p>
     <span class="flex">
         <!-- active={activeLayers.includes("background")} -->
@@ -310,6 +292,22 @@
 <CombinedInput>
     <p><T id="settings.override_scripture_with_template" /></p>
     <Dropdown options={templateList} value={$templates[currentStyle.templateScripture || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "templateScripture")} />
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.lines" /></p>
+    <NumberInput
+        value={currentStyle.lines || 0}
+        min={0}
+        max={99}
+        on:change={(e) => {
+            updateStyle(e, "lines")
+        }}
+    />
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.max_auto_font_size" /></p>
+    <NumberInput value={currentStyle.maxAutoFontSize ?? 800} min={20} max={5000} on:change={(e) => updateStyle(e.detail, "maxAutoFontSize")} />
 </CombinedInput>
 
 <!-- meta -->

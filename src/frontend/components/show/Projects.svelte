@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
-    import { activeProject, activeShow, dictionary, drawer, folders, labelsDisabled, projects, projectView, sorted } from "../../stores"
+    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, projects, projectView, sorted } from "../../stores"
+    import { sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
@@ -21,8 +22,8 @@
     $: {
         let sortType = $sorted.projects?.type || "name"
         // sort by name regardless because project folders <= 0.9.5 doesn't have created date
-        let sortedFolders = f.sort((a, b) => a.name?.localeCompare(b.name))
-        let sortedProjects = p.sort((a, b) => a.name?.localeCompare(b.name))
+        let sortedFolders = sortByName(f)
+        let sortedProjects = sortByName(p)
         if (sortType === "created") {
             sortedFolders = sortedFolders.sort((a, b) => (b.created || 0) - (a.created || 0))
             sortedProjects = sortedProjects.sort((a, b) => (b.created || 0) - (a.created || 0))
@@ -96,13 +97,15 @@
 <div class="main">
     <span class="tabs">
         {#if projectActive}
-            <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
-                <Icon id="back" size={1.2} />
-            </Button>
-            <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
-                <!-- <Icon id="project" white right /> -->
-                <p style="color: white;">{$projects[$activeProject || ""]?.name || ""}</p>
-            </div>
+            {#if !$focusMode}
+                <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
+                    <Icon id="back" size={1.2} />
+                </Button>
+                <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
+                    <!-- <Icon id="project" white right /> -->
+                    <p style="color: white;">{$projects[$activeProject || ""]?.name || ""}</p>
+                </div>
+            {/if}
         {:else}
             <div class="header">
                 <!-- <Icon id="folder" white right /> -->
@@ -136,7 +139,17 @@
                         {#each $projects[$activeProject || ""]?.shows as show, index}
                             <SelectElem id="show" triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}
-                                    <Button active={$activeShow?.id === show.id} class="section context #project_section__project" on:click={() => activeShow.set({ ...show, index })} dark center bold={false}>
+                                    <Button
+                                        active={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
+                                        class="section context #project_section__project"
+                                        on:click={() => {
+                                            if ($focusMode) activeFocus.set({ id: show.id, index })
+                                            else activeShow.set({ ...show, index })
+                                        }}
+                                        dark
+                                        center
+                                        bold={false}
+                                    >
                                         {#if show.name?.length}
                                             {show.name}
                                         {:else}
@@ -159,7 +172,7 @@
     {/if}
 </div>
 
-{#if $activeProject && !$projectView}
+{#if $activeProject && !$projectView && !$focusMode}
     <div class="tabs">
         <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
             <Icon id="section" right={!$labelsDisabled} />

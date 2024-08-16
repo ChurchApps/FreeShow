@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeStage, labelsDisabled, stageShows } from "../../stores"
+    import { keysToID, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -11,9 +12,7 @@
         history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
     }
 
-    $: sortedStageSlides = Object.entries($stageShows)
-        .map(([id, show]) => ({ id, ...show }))
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: sortedStageSlides = sortByName(keysToID($stageShows))
 
     function keydown(e: any) {
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
@@ -40,7 +39,7 @@
             {#each sortedStageSlides as show, index}
                 <StageSlide
                     id={show.id}
-                    {show}
+                    layout={show}
                     {index}
                     active={$activeStage.id === show.id}
                     on:click={(e) => {

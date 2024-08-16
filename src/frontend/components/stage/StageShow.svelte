@@ -78,7 +78,7 @@
     <div class="parent" class:noOverflow>
         {#if stageShowId}
             <!-- TODO: stage resolution... -->
-            <Zoomed background={show.settings?.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={false} center>
+            <Zoomed background={show.settings?.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={!edit} center>
                 <!-- TODO: snapping to top left... -->
                 {#if edit}
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />

@@ -10,6 +10,7 @@
     import Notes from "./Notes.svelte"
     import { getActiveOutputs } from "../../helpers/output"
     import Tags from "../Tags.svelte"
+    import { sortByName } from "../../helpers/array"
 
     // WIP duplicate of Outputs.svelte
     const metaDisplay: any[] = [
@@ -40,12 +41,7 @@
         metadata = currentShow.metadata || {}
         message = currentShow.message || {}
 
-        templateList = [
-            { id: null, name: "—" },
-            ...Object.entries($templates)
-                .map(([id, template]: any) => ({ id, name: template.name }))
-                .sort((a, b) => a.name.localeCompare(b.name)),
-        ]
+        templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))]
 
         let outputId = getActiveOutputs($outputs)[0]
         outputShowSettings = $styles[$outputs[outputId]?.style || ""] || {}

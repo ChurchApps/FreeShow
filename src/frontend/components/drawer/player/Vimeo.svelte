@@ -1,6 +1,6 @@
 <script>
     import Player from "@vimeo/player"
-    import { currentWindow, theme, themes } from "../../../stores"
+    import { currentWindow, theme, themes, volume } from "../../../stores"
     import { OUTPUT } from "../../../../types/Channels"
     import { createEventDispatcher } from "svelte"
     import { send } from "../../../utils/request"
@@ -103,6 +103,12 @@
 
         videoData.paused = paused
         if (preview) player.getCurrentTime((time) => (videoTime = time.duration))
+    }
+
+    // update volume based on global slider value
+    $: if (!preview && $volume !== undefined && player) updateVolume()
+    function updateVolume() {
+        player.setVolume($volume)
     }
 </script>
 

@@ -12,7 +12,7 @@
 
     export let searchValue
 
-    $: sortedTimers = clone(sortByName(keysToID($timers)))
+    $: sortedTimers = sortByName(sortByName(keysToID(clone($timers))), "type")
     $: sortedTimersWithProject = sortedTimers.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
     $: filteredTimers = searchValue.length > 1 ? sortedTimersWithProject.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTimersWithProject
 
@@ -23,8 +23,6 @@
     async function getList() {
         list = await loadProjectTimers(projectShows)
     }
-
-    // TODO: check overlays
 
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
@@ -49,8 +47,6 @@
         })
     }
 </script>
-
-<!-- TODO: sort by type (category) -->
 
 {#if filteredTimers.length}
     <div class="timers">

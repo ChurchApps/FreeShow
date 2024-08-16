@@ -156,10 +156,11 @@ function convertOpenLessonPlaylist(lesson: OlpLesson) {
 }
 
 function convertOlfLessonToOlpType(lesson: OlfLesson) {
-    let newLesson: OlpLesson = clone(lesson)
-
-    newLesson.lessonTitle = lesson.lessonName
-    newLesson.messages = getMessages(lesson.sections)
+    let newLesson: OlpLesson = clone({
+        ...lesson,
+        lessonTitle: lesson.lessonName,
+        messages: getMessages(lesson.sections),
+    })
 
     return newLesson
 

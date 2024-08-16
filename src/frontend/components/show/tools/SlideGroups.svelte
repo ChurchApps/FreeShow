@@ -9,8 +9,10 @@
     import Button from "../../inputs/Button.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
+    import { sortByName } from "../../helpers/array"
+    import { getShowCacheId } from "../../helpers/show"
 
-    $: showGroups = $cachedShowsData[$activeShow!.id]?.groups.sort(orderGroups) || []
+    $: showGroups = $cachedShowsData[getShowCacheId($activeShow!.id, $showsCache[$activeShow!.id])]?.groups.sort(orderGroups) || []
 
     $: layoutSlides = $showsCache[$activeShow!.id]?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
     function countGroupsInLayout(slideId) {
@@ -37,7 +39,9 @@
         return { id, group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
     })
 
-    $: sortedGroups = globalGroups.sort((a: any, b: any) => a.group?.localeCompare(b.group))
+    $: sortedGroups = sortByName(globalGroups, "group")
+
+    $: isLocked = $showsCache[$activeShow?.id || ""]?.locked
 </script>
 
 <div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;align-items: flex-start;">
@@ -51,10 +55,10 @@
                 <SelectElem id="group" data={{ id: slide.id }} draggable>
                     <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                     <div
-                        class="slide context #group"
+                        class="slide {isLocked ? '' : 'context #group'}"
                         style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                         on:click={(e) => {
-                            if (!e.ctrlKey && !e.metaKey) {
+                            if (!e.ctrlKey && !e.metaKey && !isLocked) {
                                 selected.set({ id: "group", data: [{ id: slide.id }] })
                                 ondrop(null, "slide")
                                 selected.set({ id: null, data: [] })
@@ -88,7 +92,7 @@
                             class="slide context #global_group"
                             style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                             on:click={(e) => {
-                                if (!e.ctrlKey && !e.metaKey && $activeShow) {
+                                if (!e.ctrlKey && !e.metaKey && $activeShow && !$showsCache[$activeShow.id]?.locked) {
                                     // , unique: true
                                     history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
                                 }

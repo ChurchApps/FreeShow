@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { activePage, activePopup, activeShow, alertMessage, cachedShowsData, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
+    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
+    import { getCachedShow } from "../helpers/show"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -16,10 +17,29 @@
     import DropArea from "../system/DropArea.svelte"
     import TextEditor from "./TextEditor.svelte"
 
-    $: showId = $activeShow?.id || ""
+    export let showId: string
+    export let layout: string = ""
+
     $: currentShow = $showsCache[showId]
-    $: activeLayout = $showsCache[showId]?.settings?.activeLayout
-    $: layoutSlides = $cachedShowsData[showId]?.layout || []
+    $: activeLayout = layout || $showsCache[showId]?.settings?.activeLayout
+    $: layoutSlides = currentShow ? getCachedShow(showId, activeLayout, $cachedShowsData)?.layout || [] : []
+
+    // fix broken media
+    $: if (showId) fixBrokenMedia()
+    function fixBrokenMedia() {
+        if (!currentShow) return
+        showsCache.update((a) => {
+            Object.entries(currentShow.layouts).forEach(([layoutId, layout]) => {
+                layout.slides.forEach((slide, i) => {
+                    let backgroundId = slide.background
+                    if (backgroundId && !currentShow.media[backgroundId]) {
+                        delete a[showId].layouts[layoutId].slides[i].background
+                    }
+                })
+            })
+            return a
+        })
+    }
 
     let scrollElem: any
     let offset: number = -1
@@ -53,8 +73,8 @@
 
         customActionActivation("slide_click")
 
-        let slideRef: any = _show("active").layouts("active").ref()[0]
-        updateOut("active", index, slideRef, !e.altKey)
+        let slideRef: any = _show(showId).layouts([activeLayout]).ref()[0]
+        updateOut(showId, index, slideRef, !e.altKey)
 
         setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
 
@@ -276,7 +296,7 @@
         timeout = setTimeout(next, 10)
 
         function next() {
-            lazyLoader++
+            lazyLoader += $focusMode ? 20 : 4
             timeout = null
             startLazyLoader()
         }
@@ -310,49 +330,13 @@
             loading = false
         }, 8000)
     }
-
-    // store media files
-    // MAX 512MB & overflows the ram quickly
-    // $: if (currentShow) storeMedia()
-    // let previousFiles = ""
-    // function storeMedia() {
-    //     if (!$special.storeShowMedia) return
-
-    //     let files: any = []
-    //     Object.keys(currentShow.media).forEach((mediaId) => {
-    //         let media = currentShow.media[mediaId]
-    //         if (media.type && !["image", "video", "audio"].includes(media.type)) return
-
-    //         files.push({ id: mediaId, path: media.path })
-    //     })
-
-    //     let newFiles = JSON.stringify(files)
-    //     if (previousFiles === newFiles) return
-
-    //     previousFiles = newFiles
-    //     send(MAIN, ["MEDIA_BASE64"], files)
-    // }
-
-    // receive(MAIN, {
-    //     MEDIA_BASE64: (data: any[]) => {
-    //         // TODO: history
-    //         showsCache.update((a) => {
-    //             data.forEach(({ id, content }) => {
-    //                 if (!a[showId].media[id]) return
-    //                 a[showId].media[id].base64 = content
-    //             })
-
-    //             return a
-    //         })
-    //     },
-    // })
 </script>
 
 <!-- TODO: tab enter not woring -->
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
-<Autoscroll class="context #shows__close" on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}
@@ -371,6 +355,7 @@
                         {#each layoutSlides as slide, i}
                             {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id] && ($slidesOptions.mode === "grid" || !slide.disabled)}
                                 <Slide
+                                    {showId}
                                     slide={currentShow.slides[slide.id]}
                                     show={currentShow}
                                     {layoutSlides}

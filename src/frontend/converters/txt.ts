@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Show } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
-import { getItemText } from "../components/edit/scripts/textStyle"
+import { getItemText, getSlideText } from "../components/edit/scripts/textStyle"
 import { clone, removeEmpty } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { checkName, getLabelId } from "../components/helpers/show"
@@ -98,11 +98,7 @@ export function convertText({ name = "", category = null, text, noFormatting = f
 function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
     let slides: any = existingSlides
     let layouts: any[] = []
-    let stored: any = initializeStoredSlides()
-    function initializeStoredSlides() {
-        return {}
-        // WIP add existing to stored to prevent duplicates
-    }
+    // let stored: any = {}
 
     let activeGroup: any = null
     let addedChildren: any = {}
@@ -113,14 +109,15 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
         slides[parentId].children = [...(slides[parentId].children || []), ...(children || [])]
     })
 
-    return { slides, layouts }
+    return removeSlideDuplicates(slides, layouts)
 
     function convertLabeledSlides(a: any): void {
         let id: any
         let formatText: boolean = noFormatting ? false : get(formatNewShow)
 
         let text: string = fixText(a.text, formatText)
-        if (stored[a.type]) id = stored[a.type].find((b: any) => b.text === text)?.id
+        // this only accounted for the parent slide, so if the same group was placed multiple times with different children that would be replaced & all "duplicate" children would be removed!
+        // if (stored[a.type]) id = stored[a.type].find((b: any) => b.text === text)?.id
 
         let hasTextGroup: boolean = (a.text.trim()[0] === "[" && a.text.includes("]")) || a.text.trim()[a.text.length - 1] === ":"
 
@@ -136,8 +133,8 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
         if (hasTextGroup) activeGroup = { type: a.type, id }
 
         // remember this
-        if (!stored[a.type]) stored[a.type] = []
-        stored[a.type].push({ id, text })
+        // if (!stored[a.type]) stored[a.type] = []
+        // stored[a.type].push({ id, text })
 
         let group: string = activeGroup && !hasTextGroup ? null : a.type
         if (!formatText && !hasTextGroup && group) group = "verse"
@@ -223,6 +220,9 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
             })
 
             if (slideIndex > 0) {
+                // don't add empty slides as children (but allow e.g. "Break")
+                if (!getSlideText({ items } as any).length) return
+
                 let childId: string = uid()
                 children.push(childId)
                 slides[childId] = { group: null, color: null, settings: {}, notes: "", items }
@@ -233,6 +233,35 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
             slides[id] = { group, color, globalGroup: group, settings: {}, notes: "", items }
         }
     }
+}
+
+function removeSlideDuplicates(slides, layouts) {
+    let slideTextCache: any = {}
+    let replaceSlides: any = {}
+
+    Object.entries(slides).forEach(([slideId, slide]: any) => {
+        if (slide.group === null) return
+
+        let text = getSlideText(slide)
+        text += slide.children?.reduce((value, childId) => (value += getSlideText(slides[childId])), "") || ""
+
+        let exists = Object.keys(slideTextCache).find((id) => slideTextCache[id] === text)
+        if (exists) replaceSlides[slideId] = exists
+        else slideTextCache[slideId] = text
+    })
+
+    if (Object.keys(replaceSlides).length) {
+        let layoutString = JSON.stringify(layouts)
+
+        Object.entries(replaceSlides).forEach(([oldId, newId]: any) => {
+            layoutString = layoutString.replaceAll(oldId, newId)
+            delete slides[oldId]
+        })
+
+        layouts = JSON.parse(layoutString)
+    }
+
+    return { slides, layouts }
 }
 
 function linesToItems(lines: string) {

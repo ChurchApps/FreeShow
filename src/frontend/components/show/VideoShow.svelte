@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../types/Main"
-    import { activeProject, activeRename, dictionary, outLocked, outputs, playingVideos, projects, videoMarkers, volume } from "../../stores"
+    import { activeProject, activeRename, dictionary, focusMode, outLocked, outputs, playingVideos, projects, videoMarkers, volume } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { analyseAudio, getAnalyser } from "../helpers/audio"
@@ -57,8 +57,30 @@
 
     function onLoad() {
         hasLoaded = true
+
+        if ($focusMode) {
+            // set right after loaded
+            setTimeout(() => {
+                videoData.paused = true
+                videoTime = videoData.duration ? videoData.duration / 2 : 0
+            })
+            return
+        }
+
         if (autoPause) videoData.paused = false
         else videoTime = 0
+    }
+
+    // player
+    $: if (show.type === "player") playerLoad()
+    function playerLoad() {
+        if (!$focusMode) return
+
+        // timeout for loading, because if the video is not loaded in time it will start playing, but that's fine
+        setTimeout(() => {
+            videoData.paused = true
+            videoTime = videoData.duration ? videoData.duration / 2 : 0
+        }, 2000)
     }
 
     let video: any
@@ -95,7 +117,7 @@
         let output = $outputs[getActiveOutputs()[0]] || {}
         let outputPath = output.out?.background?.path
 
-        if (e.key === " " && show && (!outputPath || outputPath !== show.id)) {
+        if (e.key === " " && !$focusMode && show && (!outputPath || outputPath !== show.id)) {
             e.preventDefault()
             if ((show!.type === "video" && outputPath !== show.id) || (show!.type === "player" && output.out?.background?.id !== show.id)) playVideo()
             else if (show!.type === "image" && !$outLocked) setOutput("background", { path: show?.id, ...mediaStyle })
@@ -258,7 +280,7 @@
                 <Icon id="timeMarker" white={!timeMarkersEnabled} size={1.2} />
             </Button>
         </div>
-    {:else}
+    {:else if !$focusMode}
         <Button on:click={() => (previewControls = true)} style="background-color: var(--primary-darkest);" center dark>
             <Icon id="eye" right />
             <T id="preview.enable_controls" />

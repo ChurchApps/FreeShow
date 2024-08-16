@@ -5,8 +5,6 @@
     import Slider from "../../inputs/Slider.svelte"
     import AudioMeter from "../../output/preview/AudioMeter.svelte"
 
-    // TODO: video player volume
-
     function setVolume(e: any, changeGain: boolean = false) {
         updateVolume(e.target.value, changeGain)
     }

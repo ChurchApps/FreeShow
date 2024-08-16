@@ -53,7 +53,7 @@ export function selectProjectByIndex(index: number) {
     if (index < 0) return
 
     // select project
-    let selectedProject = keysToID(get(projects)).sort((a, b) => a.name.localeCompare(b.name))[index]
+    let selectedProject = sortByName(keysToID(get(projects)))[index]
     if (!selectedProject) {
         newToast(get(dictionary).toast?.midi_no_project + " " + index)
         return
@@ -110,7 +110,7 @@ function outputSlide(showRef, index) {
 }
 
 function getSortedOverlays() {
-    return keysToID(get(overlays)).sort((a, b) => a.name.localeCompare(b.name))
+    return sortByName(keysToID(get(overlays)))
 }
 export function selectOverlayByIndex(index: number) {
     if (get(outLocked)) return

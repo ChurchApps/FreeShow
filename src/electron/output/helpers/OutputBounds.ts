@@ -58,45 +58,4 @@ export class OutputBounds {
             toApp(OUTPUT, { channel: "MOVE", data: { id: outputId, bounds: closestScreen.bounds } })
         })
     }
-
-    /*
-    static getPreviewBounds(mainWidth: number, mainHeight: number) {
-        if (mainWidth || mainHeight) return { width: 320, height: 180 }
-        else return { width: 320, height: 180 }
-    }
-
-    static updatePreviewBounds() {
-        const mainBounds = mainWindow?.getBounds()
-        const devFrameOffsetY = 50 //TODO: Remove hack
-        const devFrameOffsetX = 8
-        if (mainBounds) {
-            OutputHelper.getKeys().forEach((outputId) => {
-                const output = OutputHelper.getOutput(outputId)
-                if (output.previewWindow) {
-                    const bounds: Electron.Rectangle = {
-                        x: (output.previewBounds?.x || 0) + mainBounds?.x + devFrameOffsetX,
-                        y: (output.previewBounds?.y || 0) + mainBounds?.y + devFrameOffsetY,
-                        width: output.previewBounds?.width || 320,
-                        height: output.previewBounds?.height || 180,
-                    }
-                    output.previewWindow.setBounds(bounds)
-                }
-            })
-        }
-    }
-
-    static setPreviewBounds(data: any) {
-        const output = OutputHelper.getOutput(data.id)
-        if (output) {
-            output.previewBounds = {
-                x: data.x,
-                y: data.y,
-                width: data.width,
-                height: data.height,
-            }
-
-            this.updatePreviewBounds()
-        }
-    }
-    */
 }

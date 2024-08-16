@@ -6,7 +6,7 @@
     import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import { startPlaylist, stopPlaylist, updatePlaylist } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
     import { getFileName, getMediaType } from "../../helpers/media"
@@ -82,11 +82,11 @@
     // receive files
     window.api.receive(READ_FOLDER, receiveContent, listenerId)
     function receiveContent(msg: any) {
-        filesInFolders = (msg.filesInFolders || []).sort((a: any, b: any) => a.name.localeCompare(b.name))
+        filesInFolders = sortByName(msg.filesInFolders || [])
 
         if (active === "all" || msg.path === path) {
             files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
-            files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+            files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
             files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 

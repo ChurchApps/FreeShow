@@ -21,6 +21,7 @@ import {
     drawerTabsData,
     driveData,
     driveKeys,
+    errorHasOccured,
     events,
     folders,
     formatNewShow,
@@ -221,7 +222,7 @@ export function saveComplete({ closeWhenFinished, backup }: any) {
 }
 
 export function initializeClosing() {
-    if (get(special).showClosePopup) activePopup.set("unsaved")
+    if (get(special).showClosePopup || get(errorHasOccured)) activePopup.set("unsaved")
     // "saved" does not count for all minor changes, but should be fine
     else if (get(saved)) saveComplete({ closeWhenFinished: true })
     else save(true)

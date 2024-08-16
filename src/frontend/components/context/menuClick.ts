@@ -8,6 +8,7 @@ import {
     $,
     activeDrawerTab,
     activeEdit,
+    activeFocus,
     activePage,
     activePopup,
     activeRecording,
@@ -22,6 +23,7 @@ import {
     drawerTabsData,
     eventEdit,
     events,
+    focusMode,
     forceClock,
     media,
     mediaFolders,
@@ -91,6 +93,19 @@ const actions: any = {
     },
     quit: () => initializeClosing(),
     // view
+    focus_mode: () => {
+        let project = get(projects)[get(activeProject) || ""]
+        if (!project?.shows?.length) return
+
+        previousShow.set(null)
+        activeShow.set(null)
+
+        let firstItem = project.shows[0].id
+        activeFocus.set({ id: firstItem, index: 0 })
+
+        activePage.set("show")
+        focusMode.set(!get(focusMode))
+    },
     fullscreen: () => send(MAIN, ["FULLSCREEN"]),
     // edit
     undo: () => undo(),
@@ -216,6 +231,25 @@ const actions: any = {
             if (!a[get(activeProject)!]) return a
 
             a[get(activeProject)!].shows.push(...obj.sel.data)
+            return a
+        })
+    },
+    lock_show: (obj: any) => {
+        showsCache.update((a: any) => {
+            obj.sel.data.forEach((b: any) => {
+                if (!a[b.id]) return
+                a[b.id].locked = !a[b.id].locked
+
+                // remove template
+                a[b.id].settings.template = null
+            })
+            return a
+        })
+        shows.update((a: any) => {
+            obj.sel.data.forEach((b: any) => {
+                if (a[b.id].locked) delete a[b.id].locked
+                else a[b.id].locked = true
+            })
             return a
         })
     },
@@ -362,6 +396,8 @@ const actions: any = {
             if (get(previousShow)) {
                 activeShow.set(JSON.parse(get(previousShow)))
                 previousShow.set(null)
+            } else {
+                activeShow.set(null)
             }
             return
         }
@@ -868,7 +904,7 @@ const actions: any = {
     },
     merge: (obj: any) => {
         if (obj.sel.id === "slide") {
-            let selectedSlides = obj.sel.data.sort((a, b) => a.index - b.index)
+            let selectedSlides = obj.sel.data // .sort((a, b) => a.index - b.index) [merge based on selected order]
             if (selectedSlides.length > 1) mergeSlides(selectedSlides)
         } else if (!obj.sel.id) {
             // textbox

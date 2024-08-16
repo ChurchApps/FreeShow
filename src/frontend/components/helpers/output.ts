@@ -157,7 +157,7 @@ export function findMatchingOut(id: string, updater: any = get(outputs)): string
 
     // TODO: more than one active
 
-    getActiveOutputs(updater, false).forEach((outputId: string) => {
+    getActiveOutputs(updater, false, true, true).forEach((outputId: string) => {
         let output: any = updater[outputId]
         if (match === null && output.enabled) {
             // TODO: index & layout: $outSlide?.index === i && $outSlide?.id === $activeShow?.id && $outSlide?.layout === activeLayout
@@ -243,6 +243,13 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
     }
 
     return initial || style || slideRes || { width: 1920, height: 1080 }
+}
+
+export function getOutputResolution(outputId: string, _updater = get(outputs)) {
+    let currentOutput = _updater[outputId]
+    let style = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+
+    return style || { width: 1920, height: 1080 }
 }
 
 export function checkWindowCapture() {
@@ -443,6 +450,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 if (firstChar === "•" || firstChar === "-") {
                     if (text.value[0] === firstChar) return
                     line.text[k].value = `${firstChar} ${text.value.trim()}`
+                } else if (text.value[0] === "•" || text.value[0] === "-") {
+                    // remove bullets
+                    line.text[k].value = text.value.replace(text.value[0], "").trim()
                 }
             })
         })

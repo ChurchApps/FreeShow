@@ -104,7 +104,6 @@
     {#key path}
         {#if type === "camera"}
             <div bind:clientWidth={width} bind:clientHeight={height} style="height: 100%;">
-                <!-- TODO: media height -->
                 <Camera id={path} groupId={cameraGroup} class="media" style="{getStyleResolution({ width: videoElem?.videoWidth || 0, height: videoElem?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem />
             </div>
         {:else if type === "screen"}

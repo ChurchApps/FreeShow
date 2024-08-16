@@ -6,13 +6,12 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import { keysToID, sortByName } from "../helpers/array"
 
     export let activateOutput: boolean = false
 
     let options: any[] = []
-    $: options = Object.entries($outputs)
-        .map(([id, a]) => ({ id, ...a }))
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: options = sortByName(keysToID($outputs))
     $: if (options.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(options[0].id)
 
     let screens: any[] = []

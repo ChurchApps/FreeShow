@@ -18,6 +18,7 @@ export interface Styles {
     resolution?: Resolution
     cropping?: Cropping
     lines?: number
+    maxAutoFontSize?: number
     template?: string // slide
     templateScripture?: string
     metadataDivider?: string

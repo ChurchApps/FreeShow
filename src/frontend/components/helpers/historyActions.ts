@@ -12,6 +12,7 @@ import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayouts
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 import { customActionActivation } from "../actions/actions"
+import { getShowCacheId } from "./show"
 
 // TODO: move history switch to actions
 
@@ -101,7 +102,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // reverting value with array index will restore the whole array
                     if (previousData && index !== undefined) index = undefined
 
-                    if (previousData) return updateKeyData(a, previousData)
+                    if (previousData !== undefined) return updateKeyData(a, previousData)
                     else {
                         if (subkey) delete a[id][key][subkey]
                         else delete a[id][key]
@@ -140,7 +141,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function updateElement(a) {
                 // TODO: check for duplicates!!???
                 if (key) {
-                    data.previousData = clone(filterIndexes(a[id][key] || {}, subkey, { indexes, keys }))
+                    data.previousData = clone(filterIndexes(a[id][key] ?? {}, subkey, { indexes, keys }))
                     a = updateKeyData(a, data.data)
                 } else if (keys) {
                     // if just keys, but no "key"
@@ -342,6 +343,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     if (show.private) a[id].private = true
                     else if (a[id].private) delete a[id].private
+                    if (show.locked) a[id].locked = true
+                    else if (a[id].locked) delete a[id].locked
 
                     let newShow = clone(a[id])
                     if (newShow?.timestamps) delete newShow.timestamps.used
@@ -723,7 +726,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // update cached show
             cachedShowsData.update((a) => {
-                if (a[data.remember.showId]?.template?.slidesUpdated) a[data.remember.showId].template.slidesUpdated = true
+                let customId = getShowCacheId(data.remember.showId, null, data.remember.layout)
+                if (a[customId]?.template?.slidesUpdated) a[customId].template.slidesUpdated = true
                 return a
             })
 

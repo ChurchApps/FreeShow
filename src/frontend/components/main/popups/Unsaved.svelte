@@ -17,6 +17,8 @@
             actions[e.key]()
         }
     }
+
+    // auto close after X seconds if $errorHasOccured??
 </script>
 
 <svelte:window on:keydown={keydown} />

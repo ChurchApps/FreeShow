@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activeShow, outLocked, playingAudio } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { clearAudioStreams, startMicrophone } from "../../helpers/audio"
     import Button from "../../inputs/Button.svelte"
@@ -126,7 +126,9 @@
         }}
         on:dblclick={(e) => {
             if (e.ctrlKey || e.metaKey) return
-            activeShow.set({ id: mic.id, name: mic.name, type: "audio", data: { isMic: true } })
+
+            if ($focusMode) activeFocus.set({ id: mic.id })
+            else activeShow.set({ id: mic.id, name: mic.name, type: "audio", data: { isMic: true } })
         }}
     >
         <span style="display: flex;gap: 5px;flex: 3;align-items: center;">

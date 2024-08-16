@@ -131,12 +131,6 @@
         }
     }
 
-    // $: if (Object.keys(newStyles).length && $showsCache[$activeShow?.id!] && active.length) {
-    //   // let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!].id].items
-    //   let items = _show("active").slides([ref[$activeEdit.slide!].id]).items().get()[0]
-    //   if (items) autoSize(active, items)
-    // }
-
     let altKeyPressed: boolean = false
     function keydown(e: any) {
         if (e.altKey) {
@@ -244,7 +238,9 @@
                         </div>
                     {/if}
                     <!-- edit -->
-                    <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
+                    {#if !$showsCache[currentShow || ""]?.locked}
+                        <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
+                    {/if}
                     {#key $activeEdit.slide || $activeEdit.id}
                         {#each Slide.items as item, index}
                             <Editbox

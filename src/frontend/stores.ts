@@ -9,7 +9,7 @@ import type { ActiveEdit, Media, MediaOptions, NumberObject, Popups, Selected, S
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { ID, MidiIn, Overlays, ShowList, Shows, Templates, Timer, Transition } from "../types/Show"
-import type { ActiveStage, StageShows } from "../types/Stage"
+import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
@@ -35,6 +35,8 @@ export const clipboard: Writable<{ id: null | string; data: any[] }> = writable(
 export const connections: Writable<{ [key: string]: any }> = writable({})
 export const activePopup: Writable<null | Popups> = writable(null)
 export const activePage: Writable<TopViews> = writable("show")
+export const focusMode: Writable<boolean> = writable(false)
+export const activeFocus: Writable<{ id: string; index?: number }> = writable({ id: "" })
 export const activeShow: Writable<null | ShowRef> = writable(null)
 export const activeEdit: Writable<ActiveEdit> = writable({ items: [] })
 export const activeStage: Writable<ActiveStage> = writable({ id: null, items: [] })
@@ -125,6 +127,7 @@ export const contextData: Writable<any> = writable({})
 export const lessonsLoaded: Writable<any> = writable({})
 export const storedChordsData: Writable<any> = writable({})
 export const photoApiCredits: Writable<any> = writable({})
+export const errorHasOccured: Writable<boolean> = writable(false)
 
 // ----- SAVED VARIABLES -----
 
@@ -198,7 +201,7 @@ export const calendarAddShow: Writable<string> = writable("") // ""
 export const drawSettings: Writable<DrawSettings> = writable({}) // {}
 
 // STAGE
-export const stageShows: Writable<StageShows> = writable({}) // {default}
+export const stageShows: Writable<StageLayouts> = writable({}) // {default}
 
 // SCRIPTURE
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}

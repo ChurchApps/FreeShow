@@ -313,7 +313,9 @@
         }
 
         updateActiveVerses(index)
-        loaded = true
+
+        // timeout here because svelte updates ($: if (active) loaded = false) after this (should be before)
+        setTimeout(() => (loaded = true))
     }
 
     function updateActiveVerses(bibleIndex: number = 0) {
@@ -766,7 +768,11 @@
 
         let selectedElemTop = scrollElem.querySelector(".active")?.offsetTop || 0
 
-        // wait to allow user to double click
+        // don't scroll if elem is in view
+        let visibleElemPos = selectedElemTop - scrollElem.scrollTop
+        if (visibleElemPos > 0 && visibleElemPos < scrollElem.offsetHeight) return
+
+        // wait to allow user to click
         setTimeout(() => {
             scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
         }, 150)
