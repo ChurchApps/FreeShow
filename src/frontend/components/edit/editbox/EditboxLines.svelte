@@ -32,6 +32,9 @@
     let previousHTML: string = ""
     let currentStyle: string = ""
 
+    // WIP pressing line break on empty html (textbox) does not work, but it works after typing something
+    // NOTE: undoing a change will set the html to "", causing the same issue
+
     onMount(() => {
         getStyle()
 
@@ -103,6 +106,13 @@
     }
 
     function keydown(e: any) {
+        if (e.key === "Enter" && e.shiftKey) {
+            // by default the browser contenteditable will add a <br> instead of our custom <span class="break"> when pressing SHIFT
+            // so just prevent shift break!
+            e.preventDefault()
+            return
+        }
+
         // TODO: get working in list view
         if (e.key === "Enter" && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
             // incorrect editbox
@@ -482,8 +492,11 @@
 
             if (pastingIndex < 0) {
                 pastingIndex = lineIndex
-                let lastPastedLine = pastingIndex + (clipboard.split("\n").length - 1)
-                caret = { line: lastPastedLine, pos: lineSel.start + clipboard.length }
+                let splitted = clipboard.split("\n")
+                let lastPastedLine = pastingIndex + (splitted.length - 1)
+                let pos = lineSel.start + clipboard.length
+                if (splitted.length > 1) pos = splitted[splitted.length - 1].trim().length
+                caret = { line: lastPastedLine, pos }
             }
 
             let lineText: any[] = []

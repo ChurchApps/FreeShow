@@ -3,7 +3,7 @@
     import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { currentWindow, playerVideos, special, volume } from "../../../stores"
     import { send } from "../../../utils/request"
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, onDestroy } from "svelte"
 
     export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
     export let videoTime = 0
@@ -54,8 +54,10 @@
         if (!$currentWindow) {
             // WIP this only works in preview now
             setTimeout(() => {
+                let data = player.getVideoData()
+                if (!data) return
                 // console.log(player.playerInfo.videoData) // title | author
-                title = player.getVideoData().title
+                title = data.title
                 let noName = !$playerVideos[playerId].name || $playerVideos[playerId].name.includes($playerVideos[playerId].id)
                 if (title && noName) {
                     playerVideos.update((a) => {
@@ -99,6 +101,8 @@
         player.seekTo(videoTime)
 
         setTimeout(() => {
+            if (!player.g) return
+
             if (!videoData.paused) player.playVideo()
             seeking = false
 

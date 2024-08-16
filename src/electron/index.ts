@@ -9,7 +9,7 @@ import { cloudConnect } from "./cloud/cloud"
 import { currentlyDeletedShows } from "./cloud/drive"
 import { startBackup } from "./data/backup"
 import { startExport } from "./data/export"
-import { config, stores, updateDataPath, userDataPath } from "./data/store"
+import { config, getStore, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
@@ -333,7 +333,7 @@ ipcMain.on(STORE, (e, msg) => {
     if (msg.channel === "UPDATE_PATH") updateDataPath(msg.data)
     else if (msg.channel === "SAVE") save(msg.data)
     else if (msg.channel === "SHOWS") loadShows(msg.data)
-    else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
+    else if (stores[msg.channel]) getStore(msg.channel, e)
 })
 
 function save(data: any) {

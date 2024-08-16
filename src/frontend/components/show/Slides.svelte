@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activePopup, alertMessage, focusMode, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
+    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -22,7 +22,24 @@
 
     $: currentShow = $showsCache[showId]
     $: activeLayout = layout || $showsCache[showId]?.settings?.activeLayout
-    $: layoutSlides = currentShow ? getCachedShow(showId, activeLayout)?.layout || [] : []
+    $: layoutSlides = currentShow ? getCachedShow(showId, activeLayout, $cachedShowsData)?.layout || [] : []
+
+    // fix broken media
+    $: if (showId) fixBrokenMedia()
+    function fixBrokenMedia() {
+        if (!currentShow) return
+        showsCache.update((a) => {
+            Object.entries(currentShow.layouts).forEach(([layoutId, layout]) => {
+                layout.slides.forEach((slide, i) => {
+                    let backgroundId = slide.background
+                    if (backgroundId && !currentShow.media[backgroundId]) {
+                        delete a[showId].layouts[layoutId].slides[i].background
+                    }
+                })
+            })
+            return a
+        })
+    }
 
     let scrollElem: any
     let offset: number = -1

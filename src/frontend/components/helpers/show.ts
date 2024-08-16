@@ -161,10 +161,10 @@ export function getShowCacheId(id: string, show: Show | null, layout: string = "
 }
 
 // get cached show by layout (used for multiple of the same shows with different layout selected in "Focus mode")
-export function getCachedShow(id: string, layout: string = "") {
+export function getCachedShow(id: string, layout: string = "", updater = get(cachedShowsData)) {
     let show = get(showsCache)[id]
     let customId = getShowCacheId(id, show, layout)
-    let cachedShow = get(cachedShowsData)[customId]
+    let cachedShow = updater[customId]
     if (cachedShow || !layout) return cachedShow
 
     cachedShow = updateCachedShow(id, show, layout)

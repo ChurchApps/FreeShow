@@ -904,7 +904,7 @@ const actions: any = {
     },
     merge: (obj: any) => {
         if (obj.sel.id === "slide") {
-            let selectedSlides = obj.sel.data.sort((a, b) => a.index - b.index)
+            let selectedSlides = obj.sel.data // .sort((a, b) => a.index - b.index) [merge based on selected order]
             if (selectedSlides.length > 1) mergeSlides(selectedSlides)
         } else if (!obj.sel.id) {
             // textbox
