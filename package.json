@@ -90,6 +90,7 @@
         "afterSign": "scripts/notarize.js",
         "dmg": {
             "background": "build/public/dmg.png",
+            "sign": false,
             "contents": [
                 {
                     "x": 140,
@@ -120,7 +121,7 @@
         }
     },
     "devDependencies": {
-        "@electron/notarize": "^2.2.0",
+        "@electron/notarize": "^2.4.0",
         "@playwright/test": "^1.40.1",
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-node-resolve": "^15.2.3",
