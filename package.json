@@ -78,6 +78,7 @@
             "category": "public.app-category.utilities",
             "hardenedRuntime": true,
             "gatekeeperAssess": false,
+            "notarize": false,
             "entitlements": "scripts/entitlements.mac.plist",
             "entitlementsInherit": "scripts/entitlements.mac.plist",
             "extendInfo": {
