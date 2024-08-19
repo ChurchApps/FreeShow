@@ -490,7 +490,7 @@ const actions: any = {
 
     edit: (obj: any) => {
         if (obj.sel.id === "slide") {
-            activeEdit.set({ slide: obj.sel.data[0].index, items: [] })
+            activeEdit.set({ slide: obj.sel.data[0].index, items: [], showId: get(activeShow)?.id })
             activePage.set("edit")
         } else if (obj.sel.id === "media") {
             activeEdit.set({ type: "media", id: obj.sel.data[0].path, items: [] })

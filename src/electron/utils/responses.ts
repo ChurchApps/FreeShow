@@ -99,7 +99,7 @@ const mainResponses: any = {
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
     // MAIN
     AUTO_UPDATE: (): void => checkForUpdates(),
-    GET_SYSTEM_FONTS: (): void => loadFonts(),
+    GET_SYSTEM_FONTS: (data: any): void => loadFonts(data),
     URL: (data: string): void => openURL(data),
     LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
     GET_PATHS: (): any => getPaths(),
@@ -258,9 +258,9 @@ export const openURL = (url: string) => {
 }
 
 // GET_SYSTEM_FONTS
-function loadFonts() {
+function loadFonts(data: any) {
     getFonts({ disableQuoting: true })
-        .then((fonts: string[]) => toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: fonts }))
+        .then((fonts: string[]) => toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: { ...data, fonts } }))
         .catch((err: any) => console.log(err))
 }
 
@@ -340,6 +340,7 @@ export function logError(log: any, electron: boolean = false) {
     previousLog.push(log)
 
     if (previousLog.length > maxLogLength) previousLog = previousLog.slice(previousLog.length - maxLogLength)
+    if (!previousLog.length) return
 
     // error_log.clear()
     error_log.set({ [key]: previousLog })

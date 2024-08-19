@@ -450,7 +450,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 if (firstChar === "•" || firstChar === "-") {
                     if (text.value[0] === firstChar) return
                     line.text[k].value = `${firstChar} ${text.value.trim()}`
-                } else if (text.value[0] === "•" || text.value[0] === "-") {
+                } else if (addOverflowTemplateItems && (text.value[0] === "•" || text.value[0] === "-")) {
                     // remove bullets
                     line.text[k].value = text.value.replace(text.value[0], "").trim()
                 }

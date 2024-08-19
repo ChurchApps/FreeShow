@@ -85,6 +85,7 @@ export interface ActiveEdit {
     id?: string
     slide?: null | number
     items: number[]
+    showId?: string // only used to reset to slide 0 if changed ($activeShow.id is actually used)
 }
 
 export type MediaFit = "contain" | "cover" | "fill"

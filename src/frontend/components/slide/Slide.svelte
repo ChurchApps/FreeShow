@@ -347,7 +347,7 @@
                     <div title={name || ""} style="height: 2px;" />
                 {:else if viewMode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->
-                    <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color};`}>
+                    <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
                         {#if name === null && $fullColors}
                             <!-- WIP this works fine without full colors, but is it neccesary? (UI vs UX) -->
                             <div class="childLink" style="background-color: {color};" class:full={$fullColors} />
@@ -397,7 +397,7 @@
 
     .slide {
         /* padding: 3px; */
-        background-color: var(--primary-darker);
+        background-color: var(--primary-darkest);
         z-index: 0;
         outline-offset: 0;
         width: 100%;

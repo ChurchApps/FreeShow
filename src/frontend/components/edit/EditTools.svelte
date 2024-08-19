@@ -66,7 +66,7 @@
 
     $: ref = [$showsCache, _show().layouts("active").ref()[0] || {}][1]
 
-    $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [] })
+    $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
 
     $: allSlideItems = editSlideSelected && activeIsShow && ref.length > $activeEdit.slide! ? _show().slides([ref[$activeEdit.slide!]?.id]).get("items")[0] || [] : []
     $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!]?.items || []

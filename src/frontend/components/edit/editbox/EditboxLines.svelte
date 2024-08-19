@@ -184,7 +184,7 @@
         children = addToPos(children, [id], slideIndex)
         _show().slides([parentId]).set({ key: "children", value: children })
 
-        if (e?.target?.closest(".item")) activeEdit.set({ slide: $activeEdit.slide! + 1, items: [] })
+        if (e?.target?.closest(".item")) activeEdit.set({ slide: $activeEdit.slide! + 1, items: [], showId: $activeShow?.id })
         else getStyle()
     }
 

@@ -156,7 +156,6 @@
 
                 {#each items as item}
                     <Button on:click={() => click(title + "#" + item)} active={enabledItems[title + "#" + item]?.enabled} style="width: 100%;" bold={false}>
-                        <span style="font-size: 0;position: absolute;">{console.log(item, customIcons[item], item.split("_")[item.split("_").length - 1])}</span>
                         <Icon id={customIcons[item] || item.split("_")[item.split("_").length - 1]} right />
                         <span class="overflow"><T id="stage.{item}" /></span>
                     </Button>

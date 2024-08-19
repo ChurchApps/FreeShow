@@ -92,7 +92,7 @@
         activeShow.set(newShow)
 
         if (type === "image" || type === "video") activeEdit.set({ id, type: "media", items: [] })
-        else if ($activeEdit.id) activeEdit.set({ type: "show", slide: 0, items: [] })
+        else if ($activeEdit.id) activeEdit.set({ type: "show", slide: 0, items: [], showId: $activeShow?.id })
 
         if ($activePage === "edit") refreshEditSlide.set(true)
     }

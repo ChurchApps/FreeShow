@@ -481,10 +481,18 @@
 
     let sessionId = ""
     if (item) sessionId = uid()
+
+    // don't load right away (because that will load content twice)
+    let loaded = false
+    onMount(() => {
+        loaded = true
+    })
 </script>
 
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
 
-{#key box}
-    <EditValues edits={box?.edit} defaultEdits={clone(boxes[id])?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} {sessionId} />
-{/key}
+{#if loaded}
+    {#key box}
+        <EditValues edits={box?.edit} defaultEdits={clone(boxes[id])?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} {sessionId} />
+    {/key}
+{/if}

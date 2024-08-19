@@ -26,9 +26,9 @@
             ;(document.activeElement as any)?.blur()
 
             if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
-                activeEdit.set({ slide: 0, items: [] })
+                activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
             } else if ($activeEdit.slide < layoutSlides.length - 1) {
-                activeEdit.set({ slide: $activeEdit.slide + 1, items: [] })
+                activeEdit.set({ slide: $activeEdit.slide + 1, items: [], showId: $activeShow?.id })
             }
         } else if (e.key === "ArrowUp") {
             // Arrow Up
@@ -36,9 +36,9 @@
             ;(document.activeElement as any)?.blur()
 
             if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
-                activeEdit.set({ slide: layoutSlides.length - 1, items: [] })
+                activeEdit.set({ slide: layoutSlides.length - 1, items: [], showId: $activeShow?.id })
             } else if ($activeEdit.slide > 0) {
-                activeEdit.set({ slide: $activeEdit.slide - 1, items: [] })
+                activeEdit.set({ slide: $activeEdit.slide - 1, items: [], showId: $activeShow?.id })
             }
         }
     }

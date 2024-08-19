@@ -1,4 +1,4 @@
-import fs, { readFileSync } from "fs"
+import { readFileSync } from "fs"
 import path, { join } from "path"
 // import { pdf } from "pdf-to-img"
 import PPTX2Json from "pptx2json"
@@ -8,7 +8,7 @@ import sqlite3 from "sqlite3"
 import WordExtractor from "word-extractor"
 import { toApp } from ".."
 import { IMPORT } from "../../types/Channels"
-import { dataFolderNames, getDataFolder, readFolder } from "../utils/files"
+import { dataFolderNames, getDataFolder, makeDir, readFolder } from "../utils/files"
 
 const specialImports: any = {
     powerpoint: async (files: string[]) => {
@@ -49,7 +49,7 @@ const specialImports: any = {
         async function pdfToImages(filePath: string) {
             let name = getFileName(filePath)
             let outputPath = path.join(importPath, name)
-            fs.mkdirSync(outputPath, { recursive: true })
+            makeDir(outputPath)
             opts.out_dir = outputPath
 
             // WIP use pdf-to-img? (recuires canvas)

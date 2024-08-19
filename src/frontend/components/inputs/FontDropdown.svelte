@@ -1,11 +1,10 @@
 <script lang="ts">
+    import { createEventDispatcher, onMount } from "svelte"
     import { slide } from "svelte/transition"
-    import { createEventDispatcher, onDestroy, onMount } from "svelte"
-    import { destroy, receive, send } from "../../utils/request"
     import { MAIN } from "../../../types/Channels"
     import { systemFonts } from "../../stores"
+    import { awaitRequest } from "../../utils/request"
     import { removeDuplicates } from "../helpers/array"
-    import { uid } from "uid"
 
     export let system: boolean = false
 
@@ -20,23 +19,16 @@
         // "sans-serif",
     ]
 
-    onMount(() => {
+    onMount(async () => {
         if ($systemFonts.length) addFonts($systemFonts)
-        else send(MAIN, ["GET_SYSTEM_FONTS"])
-    })
+        else {
+            let fonts: string[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
+            if (!fonts) return
 
-    let id = uid()
-    receive(
-        MAIN,
-        {
-            GET_SYSTEM_FONTS: (fonts: string[]) => {
-                systemFonts.set(fonts)
-                addFonts(fonts)
-            },
-        },
-        id
-    )
-    onDestroy(() => destroy(MAIN, id))
+            systemFonts.set(fonts)
+            addFonts(fonts)
+        }
+    })
 
     function addFonts(newFonts: string[]) {
         // join and remove duplicates

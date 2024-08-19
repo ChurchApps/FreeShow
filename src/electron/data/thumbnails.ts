@@ -3,7 +3,7 @@ import fs from "fs"
 import path from "path"
 import { isProd, toApp } from ".."
 import { MAIN } from "../../types/Channels"
-import { doesPathExist } from "../utils/files"
+import { doesPathExist, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 
 export function getThumbnail(data: any) {
@@ -65,7 +65,7 @@ export function getThumbnailFolderPath() {
     if (thumbnailFolderPath) return thumbnailFolderPath
 
     let p: string = path.join(app.getPath("temp"), "freeshow-cache")
-    if (!doesPathExist(p)) fs.mkdirSync(p, { recursive: true })
+    if (!doesPathExist(p)) makeDir(p)
     thumbnailFolderPath = p
 
     return p

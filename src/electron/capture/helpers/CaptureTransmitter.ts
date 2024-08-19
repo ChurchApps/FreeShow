@@ -13,6 +13,8 @@ export type Channel = {
     captureId: string
     timer: NodeJS.Timeout
     lastImage: NativeImage
+    imageIsSame: boolean
+    lastCheck: number
 }
 export class CaptureTransmitter {
     static stageWindows: string[] = []
@@ -40,6 +42,7 @@ export class CaptureTransmitter {
         }
     }
 
+    // WIP one global capture (on the highest frame rate) instead of multiple per frame rate - but using multipe at once is probably an edge case
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
         const interval = 1000 / OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.[key] || 30
@@ -53,6 +56,8 @@ export class CaptureTransmitter {
                 captureId,
                 timer: setInterval(() => this.handleChannelInterval(captureId, key), interval),
                 lastImage: CaptureHelper.storedFrames[captureId],
+                imageIsSame: false,
+                lastCheck: 0,
             }
         }
     }
@@ -64,13 +69,25 @@ export class CaptureTransmitter {
         clearInterval(this.channels[combinedKey].timer)
     }
 
+    private static checkImageCount = 20
     static handleChannelInterval(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
         const channel = this.channels[combinedKey]
         if (!channel) return
 
         const image = CaptureHelper.storedFrames[captureId]
-        if (!image || channel.lastImage === image) return
+        if (!image) return
+
+        // check if image is the same as last once in a while
+        // if it's the same don't send a frame until it has changed
+        channel.lastCheck++
+        if (channel.lastCheck > (channel.imageIsSame ? 5 : this.checkImageCount)) {
+            channel.lastCheck = 0
+            channel.imageIsSame = channel.lastImage.toDataURL() === image.toDataURL()
+            if (channel.imageIsSame) return
+        }
+
+        if (channel.imageIsSame) return
 
         const size = image.getSize()
         channel.lastImage = image

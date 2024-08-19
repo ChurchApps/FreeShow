@@ -362,15 +362,18 @@
     $: paddingCorrection = getPaddingCorrection(stageItem)
 
     let mediaItemPath = ""
-    $: if (item?.type === "media") getMediaItemPath()
+    $: if (item?.type === "media" && item.src) getMediaItemPath()
     async function getMediaItemPath() {
-        mediaItemPath = item.src || ""
+        mediaItemPath = ""
+        if (!item.src) return
 
         // only load thumbnails in main
-        if ($currentWindow || preview) return
+        if ($currentWindow || preview) {
+            mediaItemPath = item.src
+            return
+        }
 
-        let newPath = await loadThumbnail(mediaItemPath, mediaSize.slideSize)
-        if (newPath) mediaItemPath = newPath
+        mediaItemPath = await loadThumbnail(item.src, mediaSize.slideSize)
     }
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
@@ -441,7 +444,7 @@
             <ListView list={item.list} disableTransition={disableListTransition} />
         {:else if item?.type === "media"}
             {#if mediaItemPath}
-                {#if $currentWindow && getMediaType(getExtension(mediaItemPath)) === "video"}
+                {#if ($currentWindow || preview) && getMediaType(getExtension(mediaItemPath)) === "video"}
                     <video
                         src={encodeFilePath(mediaItemPath)}
                         style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
