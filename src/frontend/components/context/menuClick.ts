@@ -57,6 +57,7 @@ import { getShortBibleName } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
+import { rearrangeItems } from "../edit/scripts/itemHelpers"
 import { getSelectionRange } from "../edit/scripts/textStyle"
 import { exportProject } from "../export/project"
 import { clone, removeDuplicates } from "../helpers/array"
@@ -862,6 +863,10 @@ const actions: any = {
             return items
         }
     },
+    to_front: () => rearrangeItems("to_front"),
+    forward: () => rearrangeItems("forward"),
+    backward: () => rearrangeItems("backward"),
+    to_back: () => rearrangeItems("to_back"),
 
     // formats
     find_replace: (obj: any) => {

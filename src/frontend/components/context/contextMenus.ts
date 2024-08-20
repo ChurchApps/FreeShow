@@ -95,9 +95,10 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
     item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
+    dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
-    dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
+    rearrange: { label: "actions.rearrange", icon: "rearrange", items: ["to_front", "forward", "backward", "to_back"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
@@ -108,6 +109,11 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     lowercase: { label: "actions.lowercase", icon: "decrease_text" },
     capitalize: { label: "actions.capitalize", icon: "capitalize" },
     trim: { label: "actions.trim", icon: "cut" },
+    // rearrange
+    to_front: { label: "actions.to_front", icon: "to_front" },
+    forward: { label: "actions.forward", icon: "up" },
+    backward: { label: "actions.backward", icon: "down" },
+    to_back: { label: "actions.to_back", icon: "to_back" },
     // MEDIA
     preview: { label: "preview.show_preview", icon: "eye" },
     play: { label: "media.play", icon: "play" },
@@ -232,7 +238,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
 
     // EDIT
-    edit_box: ["item_actions", "item_bind_to", "format", "dynamic_values", "delete", "SEPERATOR", "duplicate", "copy", "paste"],
+    edit_box: ["item_actions", "dynamic_values", "item_bind_to", "format", "rearrange", "delete", "SEPERATOR", "duplicate", "copy", "paste"],
 
     // CALENDAR
     event: ["edit", "duplicate", "delete", "delete_all"],

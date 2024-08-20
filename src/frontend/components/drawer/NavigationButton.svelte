@@ -81,7 +81,7 @@
         </span>
     </span>
     {#if length[category.id]}
-        <span style="opacity: 0.5;">
+        <span style="opacity: 0.5;font-size: 0.9em;">
             {length[category.id]}
         </span>
     {/if}

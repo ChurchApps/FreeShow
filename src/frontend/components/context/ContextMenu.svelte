@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activePage, activePopup, contextData } from "../../stores"
+    import { getEditItems } from "../edit/scripts/itemHelpers"
     import ContextChild from "./ContextChild.svelte"
     import ContextItem from "./ContextItem.svelte"
     import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
@@ -74,11 +75,17 @@
         })
     }
 
-    // prevent loop
-    $: outputs = $contextData.outputList
-    $: hasText = $contextData.textContent
-    $: layers = $contextData.layers
-    $: tags = $contextData.tags
+    // hide some context menu elements if they are not needed
+    function shouldShowMenuWithItems(id: string) {
+        if (id === "rearrange") return getEditItems().length > 1
+
+        if (id === "bind_to") return $contextData.outputList
+        if (id === "format") return $contextData.textContent || $activePage !== "show"
+        if (id === "remove_layers") return $contextData.layers
+        if (id === "tags") return $contextData.tags
+
+        return true
+    }
 </script>
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} />
@@ -91,7 +98,7 @@
                     <hr />
                 {:else if contextMenuItems[id]?.items}
                     <!-- conditional menus -->
-                    {#if (id !== "bind_to" || outputs) && (id !== "format" || hasText || $activePage !== "show") && (id !== "remove_layers" || layers) && (id !== "tags" || tags)}
+                    {#if shouldShowMenuWithItems(id)}
                         <ContextChild {id} {contextElem} bind:contextActive {side} translate={activeMenu.length > 2 ? 0 : translate} />
                     {/if}
                 {:else}

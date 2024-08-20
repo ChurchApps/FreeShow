@@ -44,6 +44,7 @@ export interface Show {
         copyright?: string
         CCLI?: string
         year?: string
+        key?: string
     }
     slides: { [key: ID]: Slide }
     layouts: { [key: ID]: Layout }

@@ -422,7 +422,8 @@
         /* outline: 3px solid var(--secondary); */
         outline: 2px solid var(--secondary);
         outline-offset: -1px;
-        z-index: 2;
+        /* this z-index causes the button title to show behind! */
+        /* z-index: 2; */
     }
 
     .group_box {

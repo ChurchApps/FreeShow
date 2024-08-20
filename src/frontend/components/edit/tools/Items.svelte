@@ -1,18 +1,16 @@
 <script lang="ts">
     import type { Item, ItemType } from "../../../../types/Show"
-    import { activeEdit, activePopup, activeShow, dictionary, overlays, refreshEditSlide, selected, showsCache, templates, timers, variables } from "../../../stores"
+    import { activeEdit, activePopup, dictionary, selected, showsCache, timers, variables } from "../../../stores"
     import { clone } from "../../helpers/array"
-    import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName } from "../../helpers/media"
     import { sortItemsByType } from "../../helpers/output"
-    import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import IconButton from "../../inputs/IconButton.svelte"
     import Center from "../../system/Center.svelte"
     import Panel from "../../system/Panel.svelte"
-    import { addItem } from "../scripts/itemHelpers"
+    import { addItem, rearrangeItems } from "../scripts/itemHelpers"
     import { getItemText } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
 
@@ -64,47 +62,6 @@
 
     export let allSlideItems: Item[]
     $: invertedItemList = clone(allSlideItems)?.reverse() || []
-
-    function move(index: number) {
-        let items: Item[] = []
-        let slideID: null | string = null
-        if ($activeEdit.type === "overlay") items = clone($overlays[$activeEdit.id!]?.items)
-        else if ($activeEdit.type === "template") items = clone($templates[$activeEdit.id!]?.items)
-        else {
-            let slides = $showsCache[$activeShow?.id!]?.slides
-            slideID = _show("active").layouts("active").ref()[0][$activeEdit.slide!].id as string
-            items = clone(slides[slideID].items)
-        }
-
-        // let oldItems = items
-
-        // move in array (to, from)
-        // items.splice(index, 0, items.splice(index + 1, 1)[0])
-        items = clone(moveItem(items, index, index + 1))
-
-        // update
-        if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {
-            // previousData: oldItems
-            history({
-                id: "UPDATE",
-                oldData: { id: $activeEdit.id },
-                newData: { key: "items", data: items },
-                location: { page: "edit", id: $activeEdit.type + "_items", override: true },
-            })
-        } else {
-            _show("active").slides([slideID!]).set({ key: "items", value: items })
-        }
-
-        refreshEditSlide.set(true)
-    }
-
-    function moveItem(items, fromIndex, toIndex) {
-        let item = items[fromIndex]
-        items.splice(fromIndex, 1)
-        items.splice(toIndex, 0, item)
-
-        return items
-    }
 
     const getType = (item: any) => (item.type as ItemType) || "text"
 
@@ -171,7 +128,7 @@
                         <Icon id="down" />
                     {/if} -->
                     {#if i > 0}
-                        <Button class="up" on:click={() => move(index)}>
+                        <Button class="up" on:click={() => rearrangeItems("forward", index)}>
                             <Icon id="up" />
                         </Button>
                     {/if}

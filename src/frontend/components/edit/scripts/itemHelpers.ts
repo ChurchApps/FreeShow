@@ -1,12 +1,12 @@
 import { get } from "svelte/store"
 import type { Item, ItemType } from "../../../../types/Show"
-import { activeEdit, activeShow, overlays, showsCache, templates, timers } from "../../../stores"
+import { activeEdit, activeShow, overlays, refreshEditSlide, showsCache, templates, timers } from "../../../stores"
 import { createNewTimer } from "../../drawer/timers/timers"
 import { history } from "../../helpers/history"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
 import { addSlideAction } from "../../actions/actions"
-import { keysToID, sortByName } from "../../helpers/array"
+import { clone, keysToID, sortByName } from "../../helpers/array"
 
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
@@ -75,11 +75,42 @@ export function getEditItems(onlyActive: boolean = false) {
     let active = get(activeEdit)
     let selectedItems: number[] = active.items
 
-    let editSlide = getEditSlide()
+    let editSlide = clone(getEditSlide())
     if (!editSlide?.items) return []
 
     let editItems = editSlide.items
     if (onlyActive) editItems = editItems.filter((_, i) => selectedItems.includes(i))
 
     return editItems
+}
+
+// rearrange
+export function rearrangeItems(type: string, startIndex: number = get(activeEdit).items[0]) {
+    let items = getEditItems()
+    let currentItem = items.splice(startIndex, 1)[0]
+
+    if (type === "forward") startIndex = Math.min(startIndex + 1, items.length)
+    else if (type === "backward") startIndex = Math.max(startIndex - 1, 0)
+    else if (type === "to_front") startIndex = items.length
+    else if (type === "to_back") startIndex = 0
+
+    items = [...items.slice(0, startIndex), currentItem, ...items.slice(startIndex)]
+
+    if (!get(activeEdit).id) {
+        let ref = _show().layouts("active").ref()[0]
+        let slideId = ref[get(activeEdit).slide!]?.id
+        history({ id: "UPDATE", newData: { data: items, key: "slides", keys: [slideId], subkey: "items" }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key", override: "rearrange_items" } })
+    } else {
+        // overlay, template
+        history({ id: "UPDATE", newData: { data: items, key: "items" }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type, override: "rearrange_items" } })
+    }
+
+    activeEdit.update((a) => {
+        // update selected edit item, because it has changed!
+        // could set to selected: startIndex, but that's confusing because selected is always in front!
+        a.items = []
+        return a
+    })
+
+    refreshEditSlide.set(true)
 }
