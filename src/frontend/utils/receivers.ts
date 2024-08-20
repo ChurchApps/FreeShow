@@ -10,6 +10,7 @@ import { history } from "../components/helpers/history"
 import { captureCanvas, getFileName } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
+import { clearBackground } from "../components/output/clear"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
@@ -20,15 +21,15 @@ import { importShow, importSpecific } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
-import { convertPDF } from "../converters/pdf"
+import { convertOSISBible } from "../converters/osisBible"
 import { convertPowerpoint } from "../converters/powerpoint"
-import { importProject } from "../converters/project"
+import { addToProject, importProject } from "../converters/project"
 import { convertProPresenter } from "../converters/propresenter"
 import { convertSoftProjector } from "../converters/softprojector"
+import { convertSongbeamerFiles } from "../converters/songbeamer"
 import { convertTexts } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
-import { convertSongbeamerFiles } from "../converters/songbeamer"
 import {
     activePopup,
     activeShow,
@@ -96,10 +97,8 @@ import { sendInitialOutputData } from "./listeners"
 import { receive, send } from "./request"
 import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
-import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { clearBackground } from "../components/output/clear"
 import { previewShortcuts } from "./shortcuts"
-import { convertOSISBible } from "../converters/osisBible"
+import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -591,7 +590,7 @@ const receiveIMPORT: any = {
     softprojector: (a: any) => convertSoftProjector(a),
     songbeamer: (a: any) => convertSongbeamerFiles(a),
     // Media
-    pdf: (a: any) => convertPDF(a),
+    pdf: (a: any) => addToProject("pdf", a),
     lessons: (a: any) => convertLessonsPresentation(a),
     // Other
     calendar: (a: any) => convertCalendar(a),

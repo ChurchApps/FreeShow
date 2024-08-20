@@ -288,11 +288,12 @@ export const dropActions: any = {
 }
 
 // "show", "project"
+const projectExtra: any = ["pdf", "ppt", "pptx"]
 const fileDropExtensions: any = [...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)]
 const mediaExtensions: any = [...get(imageExtensions), ...get(videoExtensions)]
 
 const files: any = {
-    project: fileDropExtensions,
+    project: [...fileDropExtensions, ...projectExtra],
     slides: fileDropExtensions,
     slide: fileDropExtensions,
     templates: mediaExtensions,
