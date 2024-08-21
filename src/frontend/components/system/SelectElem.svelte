@@ -206,7 +206,7 @@
     data={JSON.stringify(data)}
     {draggable}
     style={$$props.style}
-    class="selectElem"
+    class="selectElem {$$props.class || ''}"
     class:fill
     class:isSelected={$selected.id === id && arrayHasData($selected.data, data)}
     bind:this={elem}

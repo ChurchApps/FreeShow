@@ -422,7 +422,6 @@
         "media_replaced": "Missing media file replaced with match.",
         "lyrics_undefined": "Could not find any lyrics!",
         "lyrics_copied": "Lyrics copied from ",
-        "no_pdf_linux": "Can't export as PDF on Linux.",
         "one_output": "You have to have at least one active output!",
         "empty_cache": "Cache is empty.",
         "deleted_cache": "Deleted media thumbnail cache.",

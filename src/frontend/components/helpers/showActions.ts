@@ -763,26 +763,30 @@ export function sendMidi(data: any) {
     send(MAIN, ["SEND_MIDI"], data)
 }
 
-export function activateTrigger(triggerId: string) {
+export async function activateTrigger(triggerId: string): Promise<string> {
     let trigger = get(triggers)[triggerId]
-    if (!trigger) return
+    if (!trigger) return ""
 
     if (!customTriggers[trigger.type]) {
         console.log("Missing trigger:", trigger.type)
-        return
+        return "error"
     }
 
-    customTriggers[trigger.type](trigger.value)
+    return customTriggers[trigger.type](trigger.value)
 }
 
 const customTriggers = {
     http: (value: string) => {
-        fetch(value, { method: "GET" })
-            // .then((response) => response.json())
-            // .then((json) => console.log(json))
-            .catch((err) => {
-                console.error("Could not send HTTP request:", err)
-            })
+        return new Promise((resolve) => {
+            fetch(value, { method: "GET" })
+                .then(() => resolve("success"))
+                // .then((response) => response.json())
+                // .then((json) => console.log(json))
+                .catch((err) => {
+                    console.error("Could not send HTTP request:", err)
+                    resolve("error")
+                })
+        })
     },
 }
 

@@ -65,7 +65,7 @@
         columns = Math.max(1, Math.min(4, columns + (e.deltaY < 0 ? -1 : 1)))
 
         // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)

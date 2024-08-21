@@ -87,7 +87,7 @@
         if (scrollDown) nextMonth(true)
         else previousMonth(true)
 
-        let isMouseAndNotTrackpad = e.deltaY > 100 || e.deltaY < -100
+        let isMouseAndNotTrackpad = e.deltaY >= 100 || e.deltaY <= -100
         if (isMouseAndNotTrackpad) return
 
         nextScrollTimeout = setTimeout(() => {

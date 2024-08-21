@@ -8,14 +8,14 @@ import { Stats } from "original-fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
 import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
+import { Show } from "../../types/Show"
+import { defaultSettings } from "../data/defaults"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
+import { OutputHelper } from "../output/OutputHelper"
 import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./responses"
-import { defaultSettings } from "../data/defaults"
-import { OutputHelper } from "../output/OutputHelper"
-import { Show } from "../../types/Show"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -570,6 +570,25 @@ export function parseShow(jsonData: string) {
     }
 
     return show
+}
+
+// load shows by id (used for show export)
+export function getShowsFromIds(showIds: string[], showsPath: string) {
+    let shows: Show[] = []
+    let cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
+
+    showIds.forEach((id) => {
+        let cachedShow = cachedShows[id]
+        let fileName = cachedShow.name || id
+
+        let p: string = path.join(showsPath, `${fileName}.show`)
+        let jsonData = readFile(p) || "{}"
+        let show = parseShow(jsonData)
+
+        if (show?.[1]) shows.push({ ...show[1], id })
+    })
+
+    return shows
 }
 
 // some users might have got themselves in a situation they can't get out of
