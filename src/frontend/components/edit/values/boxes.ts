@@ -66,6 +66,18 @@ export const boxes: Box = {
                 { name: "text_color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
                 { name: "font_size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
                 { name: "auto_size", id: "auto", input: "checkbox", value: false },
+                {
+                    name: "text_fit",
+                    id: "textFit",
+                    input: "dropdown",
+                    value: "shrinkToFit",
+                    values: {
+                        options: [
+                            { id: "shrinkToFit", name: "$:edit.shrink_to_fit:$" },
+                            { id: "growToFit", name: "$:edit.grow_to_fit:$" },
+                        ],
+                    },
+                },
                 { input: "font-style" },
             ],
             align: [{ input: "align-x" }, { input: "align-y" }],

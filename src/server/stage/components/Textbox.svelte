@@ -41,7 +41,7 @@
 
     let alignElem: any
     let loopStop = false
-    const MAX_FONT_SIZE = 800 // outputStyle.maxAutoFontSize
+    const MAX_FONT_SIZE = 800 // TODO: stage custom text fit size
     const MIN_FONT_SIZE = 10
 
     $: if (autoSize && loaded) getCustomAutoSize()

@@ -162,7 +162,7 @@
 
     let alignElem: any
     let loopStop = false
-    const MAX_FONT_SIZE = outputStyle.maxAutoFontSize ?? 800
+    const MAX_FONT_SIZE = 800 // WIP CUSTOM TEXT FIT
     const MIN_FONT_SIZE = 10
 
     let previousItem = "{}"

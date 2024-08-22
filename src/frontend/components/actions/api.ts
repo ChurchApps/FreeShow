@@ -3,13 +3,28 @@ import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
-import { changeStageOutputLayout, displayOutputs } from "../helpers/output"
+import { changeStageOutputLayout, displayOutputs, startCamera } from "../helpers/output"
 import { activateTrigger, changeOutputStyle, nextSlide, playSlideTimers, previousSlide, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShow } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { runActionId, toggleAction } from "./actions"
 import { changeVariable, gotoGroup, moveStageConnection, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
 import { sendRestCommand } from "./rest"
+
+/// STEPS TO CREATE A CUSTOM API ACTION ///
+
+// 1. Create an ID like this: "next_slide" & put it in this file with a custom function
+// 2. Assign an existing data type or create a new one if it's needed
+
+// It can now be called with Companion/WebSocket/REST
+// Follow the next steps to integrate it into "Actions" in the program as well
+
+// 3. In actionData.ts add an entry with the action ID, "name", "icon" & "input"
+// 4. Add a string entry in en.json>"actions">ID, and find a fitting icon in icons.ts
+// 5. If it should be excluded from the default slide actions, add the ID in CreateAction.svelte
+// 6. If a special custom "input" is needed, add it to CustomInput.svelte
+
+// Now you're all set! :)
 
 /// TYPES ///
 
@@ -27,6 +42,7 @@ type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
+export type API_camera = { name?: string; id: string; groupId?: any }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
     type?: TransitionType // default: "fade"
@@ -106,6 +122,7 @@ export const API_ACTIONS = {
     clear_next_timer: () => clearTimers(), // BC
 
     // MEDIA (Backgrounds)
+    start_camera: (data: API_camera) => startCamera(data),
     // play / pause playing
     // control time
     // folder_select_media

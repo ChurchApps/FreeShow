@@ -27,7 +27,7 @@ import {
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { customActionActivation } from "../actions/actions"
-import type { API_stage_output_layout } from "../actions/api"
+import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates, sortByName } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
@@ -129,6 +129,10 @@ function videoEnding() {
 }
 function videoStarting() {
     customActionActivation("video_start")
+}
+
+export function startCamera(cam: API_camera) {
+    setOutput("background", { name: cam.name || "", id: cam.id, cameraGroup: cam.groupId, type: "camera" })
 }
 
 let sortedOutputs: any[] = []

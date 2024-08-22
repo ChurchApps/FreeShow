@@ -112,6 +112,9 @@
     }
 
     // WIP shouldn't have fixed values
+    $: if (id === "text" && box?.edit?.default) {
+        box.edit.default[4].hidden = !item?.auto
+    }
     $: if (id === "text" && box?.edit?.style) {
         box.edit.lines[1].value = item?.specialStyle?.lineGap || 0
 

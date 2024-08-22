@@ -286,15 +286,6 @@
 <!-- WIP toggle meta -->
 
 <CombinedInput>
-    <p><T id="settings.override_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "template")} />
-</CombinedInput>
-<CombinedInput>
-    <p><T id="settings.override_scripture_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.templateScripture || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "templateScripture")} />
-</CombinedInput>
-
-<CombinedInput>
     <p><T id="settings.lines" /></p>
     <NumberInput
         value={currentStyle.lines || 0}
@@ -305,9 +296,14 @@
         }}
     />
 </CombinedInput>
+
 <CombinedInput>
-    <p><T id="settings.max_auto_font_size" /></p>
-    <NumberInput value={currentStyle.maxAutoFontSize ?? 800} min={20} max={5000} on:change={(e) => updateStyle(e.detail, "maxAutoFontSize")} />
+    <p><T id="settings.override_with_template" /></p>
+    <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "template")} />
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.override_scripture_with_template" /></p>
+    <Dropdown options={templateList} value={$templates[currentStyle.templateScripture || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "templateScripture")} />
 </CombinedInput>
 
 <!-- meta -->

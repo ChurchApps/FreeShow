@@ -31,6 +31,9 @@ export const actionData = {
     clear_audio: { slideId: "clearAudio", name: "clear.audio", icon: "audio", red: true },
     clear_next_timer: { name: "clear.nextTimer", icon: "timer", red: true },
 
+    // MEDIA
+    start_camera: { name: "actions.start_camera", icon: "camera", input: "camera" },
+
     // OVERLAYS
     index_select_overlay: { name: "actions.index_select_overlay", icon: "overlays", input: "index" },
     name_select_overlay: { name: "actions.name_select_overlay", icon: "overlays", input: "strval" },

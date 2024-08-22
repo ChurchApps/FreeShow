@@ -1,6 +1,3 @@
-import { get } from "svelte/store"
-import { outputs, styles } from "../../../stores"
-import { getActiveOutputs, getCurrentStyle } from "../../helpers/output"
 import { getStyles } from "../../helpers/style"
 import { getItemLines, getItemText } from "./textStyle"
 
@@ -53,13 +50,11 @@ export function getAutoSize(item: any, styles: any = null, oneLine: boolean = fa
 }
 
 export function getMaxBoxTextSize(elem: any, parentElem: HTMLElement) {
-    // get first output style
-    let outputId = getActiveOutputs(get(outputs), false, true, false)[0]
-    let currentOutput = get(outputs)[outputId] || {}
-    let currentStyling = getCurrentStyle(get(styles), currentOutput.style)
-
-    const MAX_FONT_SIZE = currentStyling.maxAutoFontSize ?? 800
+    const MAX_FONT_SIZE = 800 // WIP CUSTOM TEXT FIT
     const MIN_FONT_SIZE = 10
+
+    // shrinkToFit: text is font size by default, but can become smaller if text does not fit in textbox
+    // growToFit: text will fill the entire textbox, but maximum the set font size
 
     let invisibleBox = elem.cloneNode(true)
     invisibleBox.classList.add("invisible")

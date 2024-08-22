@@ -54,6 +54,16 @@
         activePopup.set("select_show")
     }
 
+    let cameras: any[] = []
+    if (inputId === "camera") getCameras()
+    function getCameras() {
+        navigator.mediaDevices?.enumerateDevices()?.then((devices) => {
+            if (!devices) return
+            let cameraList = devices.filter((a) => a.kind === "videoinput").map((a) => ({ name: a.label, id: a.deviceId, groupId: a.groupId }))
+            cameras = sortByName(cameraList)
+        })
+    }
+
     const getOptions = {
         id_select_group: () => sortByName(Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))),
         id_select_stage_layout: () => convertToOptions($stageShows),
@@ -82,6 +92,11 @@
         <!-- keep empty to change all stage outputs -->
         <p><T id="stage.output" /></p>
         <Dropdown style="width: 100%;" value={getOptions.stage_outputs().find((a) => a.id === value?.outputId)?.name || "—"} options={getOptions.stage_outputs()} on:click={(e) => updateValue("outputId", e.detail?.id)} />
+    </CombinedInput>
+{:else if inputId === "camera"}
+    <CombinedInput>
+        <p><T id="items.camera" /></p>
+        <Dropdown style="width: 100%;" value={cameras.find((a) => a.id === value?.id)?.name || "—"} options={cameras} on:click={(e) => updateValue("", e.detail)} />
     </CombinedInput>
 {:else if inputId === "midi"}
     <MidiValues midi={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />

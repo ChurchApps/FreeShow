@@ -79,7 +79,8 @@ export interface Item {
     lines?: Line[]
     list?: List
     auto?: boolean
-    autoFontSize?: number
+    textFit?: string // auto size text fix option (default: shrinkToFit)
+    autoFontSize?: number // only used to store the calculated auto size text size
     style: string
     align?: string
     specialStyle?: any // line gap && line background
