@@ -45,6 +45,7 @@
         "id_start_timer",
         "playlist_next",
         "id_select_output_style",
+        "change_stage_output_layout",
         "change_transition",
     ]
     // remove actions that are not fully implemented to CustomInput yet

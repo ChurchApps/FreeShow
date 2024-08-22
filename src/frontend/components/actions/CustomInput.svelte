@@ -1,9 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
     import type { Option } from "../../../types/Main"
-    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, popupData, shows, stageShows, styles, timers, triggers } from "../../stores"
+    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, outputs, popupData, shows, stageShows, styles, timers, triggers } from "../../stores"
     import T from "../helpers/T.svelte"
-    import { sortByName } from "../helpers/array"
+    import { keysToID, sortByName } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
     import Checkbox from "../inputs/Checkbox.svelte"
@@ -57,6 +57,7 @@
     const getOptions = {
         id_select_group: () => sortByName(Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))),
         id_select_stage_layout: () => convertToOptions($stageShows),
+        stage_outputs: () => [{ id: null, name: "—" }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput))],
         start_audio_stream: () => convertToOptions($audioStreams),
         start_playlist: () => convertToOptions($audioPlaylists),
         id_select_output_style: () => [{ id: null, name: "—" }, ...convertToOptions($styles)],
@@ -72,6 +73,16 @@
     <div class="column">
         <ChooseStyle value={value || {}} on:change={(e) => updateValue("", e)} />
     </div>
+{:else if inputId === "stage_output_layout"}
+    <CombinedInput>
+        <p><T id="stage.stage_layout" /></p>
+        <Dropdown style="width: 100%;" value={getOptions.id_select_stage_layout().find((a) => a.id === value?.stageLayoutId)?.name || "—"} options={getOptions.id_select_stage_layout()} on:click={(e) => updateValue("stageLayoutId", e.detail?.id)} />
+    </CombinedInput>
+    <CombinedInput>
+        <!-- keep empty to change all stage outputs -->
+        <p><T id="stage.output" /></p>
+        <Dropdown style="width: 100%;" value={getOptions.stage_outputs().find((a) => a.id === value?.outputId)?.name || "—"} options={getOptions.stage_outputs()} on:click={(e) => updateValue("outputId", e.detail?.id)} />
+    </CombinedInput>
 {:else if inputId === "midi"}
     <MidiValues midi={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
 {:else if inputId === "metronome"}

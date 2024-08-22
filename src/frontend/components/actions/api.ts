@@ -3,7 +3,7 @@ import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
-import { displayOutputs } from "../helpers/output"
+import { changeStageOutputLayout, displayOutputs } from "../helpers/output"
 import { activateTrigger, changeOutputStyle, nextSlide, playSlideTimers, previousSlide, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShow } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
@@ -25,6 +25,7 @@ type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
 type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_toggle = { id: string; value?: boolean }
+export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
@@ -139,6 +140,7 @@ export const API_ACTIONS = {
     // VISUAL
     id_select_output_style: (data: API_id) => changeOutputStyle({ outputStyle: data.id }), // BC
     change_output_style: (data: API_output_style) => changeOutputStyle(data), // BC
+    change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),
     change_transition: (data: API_transition) => updateTransition(data), // BC
 
     // OTHER

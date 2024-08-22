@@ -27,6 +27,7 @@ import {
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { customActionActivation } from "../actions/actions"
+import type { API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates, sortByName } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
@@ -333,6 +334,55 @@ export function addOutput(onlyFirst: boolean = false) {
 
         if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
         return output
+    })
+}
+
+export function enableStageOutput(options: any = {}) {
+    let outputIds = getActiveOutputs()
+    let bounds = get(outputs)[outputIds[0]]?.bounds || { x: 0, y: 0, width: 100, height: 100 }
+    let id = uid()
+
+    outputs.update((a) => {
+        a[id] = {
+            enabled: true,
+            active: true,
+            stageOutput: "",
+            name: "",
+            color: "#555555",
+            bounds,
+            screen: null,
+            ...options,
+        }
+
+        send(OUTPUT, ["CREATE"], { ...a[id], id })
+
+        return a
+    })
+
+    return id
+}
+
+export function removeStageOutput(outputId: string) {
+    outputs.update((a) => {
+        if (!a[outputId]) return a
+
+        delete a[outputId]
+        send(OUTPUT, ["REMOVE"], { id: outputId })
+
+        return a
+    })
+}
+
+export function changeStageOutputLayout(data: API_stage_output_layout) {
+    let outputIds = data.outputId ? [data.outputId] : Object.keys(get(outputs))
+
+    outputs.update((a) => {
+        outputIds.forEach((id) => {
+            if (!a[id]?.stageOutput) return
+            a[id].stageOutput = data.stageLayoutId
+        })
+
+        return a
     })
 }
 

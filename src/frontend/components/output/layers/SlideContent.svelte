@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Slide } from "../../../../types/Show"
     import { templates, textLoaded } from "../../../stores"
+    import { getSlideText } from "../../edit/scripts/textStyle"
     import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
     import OutputTransition from "./OutputTransition.svelte"
@@ -94,19 +95,35 @@
     function loaded(isFirst: boolean) {
         if (!loading) return
 
-        loading = false
-        firstActive = isFirst
+        // check difference
+        let text1 = getSlideText(slide1?.data)
+        let text2 = getSlideText(slide2?.data)
 
         // start showing next before hiding current (to reduce "black" fade if transitioning to same element)
-        timeout = setTimeout(() => {
+        if (text1 === text2) {
+            loading = false
+            firstActive = isFirst
+            timeout = setTimeout(() => {
+                hideCurrent()
+                timeout = null
+            }, 50)
+        } else {
+            // if text is different, start hiding current before loading next, this looks better
+            hideCurrent()
+            timeout = setTimeout(() => {
+                loading = false
+                firstActive = isFirst
+                timeout = null
+            }, customOpacityDuration * 0.7)
+        }
+
+        function hideCurrent() {
             if (isFirst) {
                 slide2 = null
             } else {
                 slide1 = null
             }
-
-            timeout = null
-        }, 50)
+        }
     }
 
     // don't remove data when clearing

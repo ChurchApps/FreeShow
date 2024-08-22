@@ -312,12 +312,12 @@ const actions: any = {
             return
         }
 
-        if (obj.contextElem.classList.contains("#category_media")) {
+        if (obj.contextElem.classList.contains("#category_media") || obj.sel.id === "category_media") {
             send(MAIN, ["OPEN_FOLDER"], { channel: "MEDIA", title: get(dictionary).new?.folder })
             return
         }
 
-        if (obj.contextElem.classList.contains("#category_audio")) {
+        if (obj.contextElem.classList.contains("#category_audio") || obj.sel.id === "category_audio") {
             send(MAIN, ["OPEN_FOLDER"], { channel: "AUDIO", title: get(dictionary).new?.folder })
             return
         }
@@ -963,6 +963,7 @@ const actions: any = {
                 newOutput.name = currentOutput.name
                 newOutput.out = currentOutput.out
                 if (!currentOutput.enabled) newOutput.active = true
+                if (currentOutput.stageOutput) newOutput.stageOutput = currentOutput.stageOutput
 
                 history({ id: "UPDATE", newData: { data: newOutput }, oldData: { id }, location: { page: "settings", id: "settings_output" } })
             })

@@ -143,7 +143,7 @@
     let selectId: any = "category"
     $: selectId = "category_" + id
 
-    const dropAreas: (typeof id)[] = ["shows", "audio", "overlays", "templates"]
+    const dropAreas: (typeof id)[] = ["shows", "media", "audio", "overlays", "templates"]
 </script>
 
 <svelte:window on:keydown={keydown} />

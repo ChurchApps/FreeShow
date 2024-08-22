@@ -51,6 +51,7 @@ export const actionData = {
     // VISUAL
     id_select_output_style: { name: "actions.id_select_output_style", icon: "styles", input: "id" },
     change_output_style: { slideId: "outputStyle", name: "actions.change_output_style", icon: "styles", input: "output_style" },
+    change_stage_output_layout: { name: "actions.change_stage_output_layout", icon: "stage", input: "stage_output_layout" },
     change_transition: { name: "actions.change_transition", icon: "transition", input: "transition" },
 
     // OTHER

@@ -132,6 +132,7 @@ export type Popups =
     | "choose_chord"
     | "choose_screen"
     | "choose_camera"
+    | "choose_output"
     | "change_output_values"
     | "set_time"
     | "animate"

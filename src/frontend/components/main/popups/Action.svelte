@@ -271,12 +271,6 @@
                 <p><T id="midi.name" /></p>
                 <TextInput style="width: 70%;" value={action.name} on:change={(e) => updateValue("name", e)} />
             </CombinedInput>
-            <CombinedInput>
-                <p><T id="settings.enabled" /></p>
-                <div class="alignRight">
-                    <Checkbox checked={action.enabled ?? true} on:change={(e) => updateValue("enabled", e, true)} />
-                </div>
-            </CombinedInput>
 
             <!-- multiple actions -->
             <div class="actions" style="margin: 10px 0;">
@@ -306,6 +300,16 @@
                 <p><T id="actions.custom_activation" /></p>
                 <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} />
             </CombinedInput>
+
+            <!-- only used to disable customActionActivation if any -->
+            {#if customActivation || action.enabled === false}
+                <CombinedInput>
+                    <p><T id="settings.enabled" /></p>
+                    <div class="alignRight">
+                        <Checkbox checked={action.enabled ?? true} on:change={(e) => updateValue("enabled", e, true)} />
+                    </div>
+                </CombinedInput>
+            {/if}
 
             <!-- can be activated by MIDI input signal -->
             <CombinedInput>
