@@ -3,7 +3,7 @@ import fs from "fs"
 import path from "path"
 import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
-import { dataFolderNames, doesPathExist, getDataFolder } from "../utils/files"
+import { dataFolderNames, doesPathExist, getDataFolder, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 
 export function downloadMedia(lessons: any[]) {
@@ -19,7 +19,7 @@ function checkLesson(lesson: any) {
 
     const lessonsFolder = getDataFolder(lesson.path, dataFolderNames.lessons)
     const lessonFolder = path.join(lessonsFolder, lesson.name)
-    fs.mkdirSync(lessonFolder, { recursive: true })
+    makeDir(lessonFolder)
 
     return lesson.files
         .map((file: any) => {

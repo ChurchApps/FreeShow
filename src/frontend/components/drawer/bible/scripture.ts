@@ -251,6 +251,7 @@ export function getSlides({ bibles, sorted }) {
                 let autoSize: number = getAutoSize(item)
                 // WIP historyActions - TEMPLATE...
                 slides[i][j].auto = true
+                if (templateTextItems[j]?.textFit) slides[i][j].textFit = templateTextItems[j]?.textFit
                 slides[i][j].lines![0].text.forEach((_, k) => {
                     if (slides[i][j].lines![0].text[k].customType === "disableTemplate") return
                     slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"

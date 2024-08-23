@@ -4,6 +4,7 @@
     import { activeEdit, activeShow, overlays, showsCache, storedEditMenuState, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
+    import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
@@ -66,11 +67,11 @@
 
     $: ref = [$showsCache, _show().layouts("active").ref()[0] || {}][1]
 
-    $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [] })
+    $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
 
-    $: allSlideItems = editSlideSelected && activeIsShow && ref.length > $activeEdit.slide! ? _show().slides([ref[$activeEdit.slide!]?.id]).get("items")[0] || [] : []
-    $: if ($activeEdit.type === "overlay") allSlideItems = $overlays[$activeEdit.id!]?.items || []
-    $: if ($activeEdit.type === "template") allSlideItems = $templates[$activeEdit.id!]?.items || []
+    $: allSlideItems = editSlideSelected && activeIsShow && ref.length > $activeEdit.slide! ? clone(_show().slides([ref[$activeEdit.slide!]?.id]).get("items")[0] || []) : []
+    $: if ($activeEdit.type === "overlay") allSlideItems = clone($overlays[$activeEdit.id!]?.items || [])
+    $: if ($activeEdit.type === "template") allSlideItems = clone($templates[$activeEdit.id!]?.items || [])
     const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
     // select active items or all items
@@ -97,6 +98,7 @@
             let style = normalText[0]?.style || item?.style
             let extraKeys = {
                 auto: item?.auto,
+                textFit: item?.textFit,
                 specialStyle: item?.specialStyle,
                 scrolling: item?.scrolling,
             }

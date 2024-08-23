@@ -270,6 +270,9 @@ export function goToNextProjectItem() {
         let newShow = get(projects)[get(activeProject)!].shows[index]
         if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
         else activeShow.set({ ...newShow, index })
+
+        // skip if section is empty
+        if (newShow.type === "section" && !newShow.notes) goToNextProjectItem()
     }
 }
 
@@ -283,6 +286,9 @@ export function goToPreviousProjectItem() {
         let newShow = get(projects)[get(activeProject)!].shows[index]
         if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
         else activeShow.set({ ...newShow, index })
+
+        // skip if section is empty
+        if (newShow.type === "section" && !newShow.notes) goToPreviousProjectItem()
     }
 }
 
@@ -317,6 +323,16 @@ export function previousSlide(e: any) {
     let amountOfLinesToShow: number = outputWithLines ? outputWithLines : 0
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
     let hasLinesEnded: boolean = !slide || linesIndex === null || linesIndex < 1
+
+    // skip disabled slides if clicking previous when another show is selected and no enabled slide is before
+    let isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
+    if (!hasLinesEnded && isFirstSlide) isFirstSlide = false
+    if (isFirstSlide && activeShowLayout !== slide?.layout) {
+        slide = null
+        layout = _show("active").layouts("active").ref()[0]
+        activeLayout = activeShowLayout
+        index = (layout?.length || 0) - 1
+    }
 
     let line: number = linesIndex || 0
     if (hasLinesEnded) {
@@ -747,26 +763,30 @@ export function sendMidi(data: any) {
     send(MAIN, ["SEND_MIDI"], data)
 }
 
-export function activateTrigger(triggerId: string) {
+export async function activateTrigger(triggerId: string): Promise<string> {
     let trigger = get(triggers)[triggerId]
-    if (!trigger) return
+    if (!trigger) return ""
 
     if (!customTriggers[trigger.type]) {
         console.log("Missing trigger:", trigger.type)
-        return
+        return "error"
     }
 
-    customTriggers[trigger.type](trigger.value)
+    return customTriggers[trigger.type](trigger.value)
 }
 
 const customTriggers = {
     http: (value: string) => {
-        fetch(value, { method: "GET" })
-            // .then((response) => response.json())
-            // .then((json) => console.log(json))
-            .catch((err) => {
-                console.error("Could not send HTTP request:", err)
-            })
+        return new Promise((resolve) => {
+            fetch(value, { method: "GET" })
+                .then(() => resolve("success"))
+                // .then((response) => response.json())
+                // .then((json) => console.log(json))
+                .catch((err) => {
+                    console.error("Could not send HTTP request:", err)
+                    resolve("error")
+                })
+        })
     },
 }
 

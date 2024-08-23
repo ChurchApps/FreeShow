@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Slide } from "../../../../types/Show"
     import { templates, textLoaded } from "../../../stores"
+    import { getSlideText } from "../../edit/scripts/textStyle"
     import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
     import OutputTransition from "./OutputTransition.svelte"
@@ -94,19 +95,36 @@
     function loaded(isFirst: boolean) {
         if (!loading) return
 
-        loading = false
-        firstActive = isFirst
+        // check difference
+        let text1 = getSlideText(slide1?.data)
+        let text2 = getSlideText(slide2?.data)
 
         // start showing next before hiding current (to reduce "black" fade if transitioning to same element)
-        timeout = setTimeout(() => {
+        // this might not show very clear if transitioning between two texts that are the same! - That should show a little indication of change...
+        if (text1 === text2) {
+            loading = false
+            firstActive = isFirst
+            timeout = setTimeout(() => {
+                hideCurrent()
+                timeout = null
+            }, customOpacityDuration * 0.7)
+        } else {
+            // if text is different, start hiding current before loading next, this looks better
+            hideCurrent()
+            timeout = setTimeout(() => {
+                loading = false
+                firstActive = isFirst
+                timeout = null
+            }, customOpacityDuration * 0.5)
+        }
+
+        function hideCurrent() {
             if (isFirst) {
                 slide2 = null
             } else {
                 slide1 = null
             }
-
-            timeout = null
-        }, 50)
+        }
     }
 
     // don't remove data when clearing
@@ -126,12 +144,18 @@
 
     // WIP text should fade, but items that are the same between slides should not & items with custom transitions should not use the global slide transition
 
+    // WIP transition should be per item, so the item transition will override the global transition!!
+
     // custom item transition
     // $: itemTransitionEnabled = transitionEnabled && item.actions?.transition && item.actions.transition.type !== "none" && item.actions.transition.duration > 0
     // $: itemTransition = transition ? clone(item.actions.transition) : {}
     // $: if (itemTransition.type === "none") itemTransition = { duration: 0, type: "fade", easing: "linear" }
 
     $: customOpacityDuration = transition?.type === "none" || !transition?.duration ? 0 : transition.duration
+
+    // WIP fix text clipping in when it has not loaded?
+    // $: console.log(slide1, slide2)
+    // $: console.log(isFirstHidden, isSecondHidden)
 </script>
 
 {#if slide1}

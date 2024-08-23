@@ -8,14 +8,14 @@ import { Stats } from "original-fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
 import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
+import { Show } from "../../types/Show"
+import { defaultSettings } from "../data/defaults"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
+import { OutputHelper } from "../output/OutputHelper"
 import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./responses"
-import { defaultSettings } from "../data/defaults"
-import { OutputHelper } from "../output/OutputHelper"
-import { Show } from "../../types/Show"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -82,6 +82,17 @@ export function getFileStats(p: string, disableLog: boolean = false) {
     }
 }
 
+export function makeDir(path: string) {
+    try {
+        path = fs.mkdirSync(path, { recursive: true }) || path
+    } catch (err) {
+        console.error("Could not create a directory to path: " + path + "! " + err)
+        toApp(MAIN, { channel: "ALERT", data: "Error: Could not create folder at: " + path + "!" })
+    }
+
+    return path
+}
+
 // SELECT DIALOGS
 
 export function selectFilesDialog(title: string = "", filters: any, multiple: boolean = true): string[] {
@@ -115,7 +126,7 @@ export function getDocumentsFolder(p: any = null, folderName: string = "Shows"):
     let folderPath = [app.getPath("documents"), appFolderName]
     if (folderName) folderPath.push(folderName)
     if (!p) p = path.join(...folderPath)
-    if (!doesPathExist(p)) p = fs.mkdirSync(p, { recursive: true })
+    if (!doesPathExist(p)) p = makeDir(p)
 
     return p
 }
@@ -129,7 +140,7 @@ export function checkShowsFolder(path: string): string {
 
     if (doesPathExist(path)) return path
 
-    return fs.mkdirSync(path, { recursive: true }) || path
+    return makeDir(path)
 }
 
 export const dataFolderNames = {
@@ -153,7 +164,7 @@ export function getDataFolder(dataPath: string, name: string) {
 
 function createFolder(path: string) {
     if (doesPathExist(path)) return path
-    return fs.mkdirSync(path, { recursive: true }) || path
+    return makeDir(path)
 }
 
 export function fileContentMatches(content: string | NodeJS.ArrayBufferView, path: string): boolean {
@@ -427,7 +438,11 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
 }
 
 // BUNDLE MEDIA FILES FROM ALL SHOWS (IMAGE/VIDEO/AUDIO)
+let currentlyBundling: boolean = false
 export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; dataPath: string }) {
+    if (currentlyBundling) return
+    currentlyBundling = true
+
     let showsList = readFolder(showsPath)
     showsList = showsList
         .filter((name) => name.toLowerCase().endsWith(".show")) // only .show files
@@ -454,7 +469,10 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
 
     // remove duplicates
     allMediaFiles = [...new Set(allMediaFiles)]
-    if (!allMediaFiles.length) return
+    if (!allMediaFiles.length) {
+        currentlyBundling = false
+        return
+    }
 
     // get/create new folder
     let outputPath = getDataFolder(dataPath, dataFolderNames.media_bundle)
@@ -474,6 +492,7 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
 
     // open folder
     openSystemFolder(outputPath)
+    currentlyBundling = false
 }
 
 // LOAD SHOWS
@@ -551,6 +570,25 @@ export function parseShow(jsonData: string) {
     }
 
     return show
+}
+
+// load shows by id (used for show export)
+export function getShowsFromIds(showIds: string[], showsPath: string) {
+    let shows: Show[] = []
+    let cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
+
+    showIds.forEach((id) => {
+        let cachedShow = cachedShows[id]
+        let fileName = cachedShow.name || id
+
+        let p: string = path.join(showsPath, `${fileName}.show`)
+        let jsonData = readFile(p) || "{}"
+        let show = parseShow(jsonData)
+
+        if (show?.[1]) shows.push({ ...show[1], id })
+    })
+
+    return shows
 }
 
 // some users might have got themselves in a situation they can't get out of

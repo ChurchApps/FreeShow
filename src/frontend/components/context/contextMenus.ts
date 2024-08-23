@@ -73,6 +73,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     delete_slide: { label: "actions.delete_slide", icon: "delete" },
     delete_group: { label: "actions.delete_group", icon: "delete", shortcuts: ["Del"] },
     slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "remove_group", "SEPERATOR", "LOAD_slide_groups"] },
+    editSlideText: { label: "menu.edit", icon: "edit" }, // actions.edit_slide_text
     selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
     newSlide: { label: "new.slide", icon: "add" },
     // newGroup: { label: "context.createNew", icon: "add" },
@@ -95,9 +96,10 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
     item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
+    dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
-    dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
+    rearrange: { label: "actions.rearrange", icon: "rearrange", items: ["to_front", "forward", "backward", "to_back"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
@@ -108,6 +110,11 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     lowercase: { label: "actions.lowercase", icon: "decrease_text" },
     capitalize: { label: "actions.capitalize", icon: "capitalize" },
     trim: { label: "actions.trim", icon: "cut" },
+    // rearrange
+    to_front: { label: "actions.to_front", icon: "to_front" },
+    forward: { label: "actions.forward", icon: "up" },
+    backward: { label: "actions.backward", icon: "down" },
+    to_back: { label: "actions.to_back", icon: "to_back" },
     // MEDIA
     preview: { label: "preview.show_preview", icon: "eye" },
     play: { label: "media.play", icon: "play" },
@@ -190,6 +197,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     audio_button_playlist: ["preview", "SEPERATOR", "remove"],
     // "addToFirstSlide"
     live_card: ["recording"],
+    // actions
+    action: ["duplicate"],
 
     // PROJECT
     projects: ["newProject", "newFolder", "sort_projects_by"],
@@ -217,6 +226,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "copy", "paste"
     slide: ["slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
     slideChild: ["slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
+    slideFocus: ["editSlideText"],
     group: ["rename", "recolor", "selectAll", "SEPERATOR", "duplicate", "delete_group"],
     global_group: ["edit"],
     // global_group: ["rename"],
@@ -232,7 +242,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_slide: ["move_connections", "rename", "disable", "SEPERATOR", "duplicate", "delete"],
 
     // EDIT
-    edit_box: ["item_actions", "item_bind_to", "format", "dynamic_values", "delete", "SEPERATOR", "duplicate", "copy", "paste"],
+    edit_box: ["item_actions", "dynamic_values", "item_bind_to", "format", "rearrange", "delete", "SEPERATOR", "duplicate", "copy", "paste"],
 
     // CALENDAR
     event: ["edit", "duplicate", "delete", "delete_all"],
@@ -241,5 +251,5 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     theme: ["rename", "duplicate", "delete", "SEPERATOR", "export", "SEPERATOR", "reset_theme"],
     style: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
-    output_screen_stage: ["rename", "recolor", "SEPERATOR", "reset"],
+    output_screen_stage: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
 }

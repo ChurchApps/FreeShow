@@ -57,6 +57,7 @@ import { getShortBibleName } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
+import { rearrangeItems } from "../edit/scripts/itemHelpers"
 import { getSelectionRange } from "../edit/scripts/textStyle"
 import { exportProject } from "../export/project"
 import { clone, removeDuplicates } from "../helpers/array"
@@ -311,12 +312,12 @@ const actions: any = {
             return
         }
 
-        if (obj.contextElem.classList.contains("#category_media")) {
+        if (obj.contextElem.classList.contains("#category_media") || obj.sel.id === "category_media") {
             send(MAIN, ["OPEN_FOLDER"], { channel: "MEDIA", title: get(dictionary).new?.folder })
             return
         }
 
-        if (obj.contextElem.classList.contains("#category_audio")) {
+        if (obj.contextElem.classList.contains("#category_audio") || obj.sel.id === "category_audio") {
             send(MAIN, ["OPEN_FOLDER"], { channel: "AUDIO", title: get(dictionary).new?.folder })
             return
         }
@@ -487,11 +488,21 @@ const actions: any = {
             })
         }
     },
+    editSlideText: (obj) => {
+        if (obj.sel.id === "slide") {
+            let slide = obj.sel.data[0]
+            activeEdit.set({ slide: slide.index, items: [], showId: slide.showId })
+            activePage.set("edit")
+            setTimeout(() => selected.set({ id: null, data: [] }))
+        }
+    },
 
     edit: (obj: any) => {
         if (obj.sel.id === "slide") {
-            activeEdit.set({ slide: obj.sel.data[0].index, items: [] })
+            let slide = obj.sel.data[0]
+            activeEdit.set({ slide: slide.index, items: [], showId: slide.showId || get(activeShow)?.id })
             activePage.set("edit")
+            setTimeout(() => selected.set({ id: null, data: [] }))
         } else if (obj.sel.id === "media") {
             activeEdit.set({ type: "media", id: obj.sel.data[0].path, items: [] })
             activePage.set("edit")
@@ -862,6 +873,10 @@ const actions: any = {
             return items
         }
     },
+    to_front: () => rearrangeItems("to_front"),
+    forward: () => rearrangeItems("forward"),
+    backward: () => rearrangeItems("backward"),
+    to_back: () => rearrangeItems("to_back"),
 
     // formats
     find_replace: (obj: any) => {
@@ -958,6 +973,7 @@ const actions: any = {
                 newOutput.name = currentOutput.name
                 newOutput.out = currentOutput.out
                 if (!currentOutput.enabled) newOutput.active = true
+                if (currentOutput.stageOutput) newOutput.stageOutput = currentOutput.stageOutput
 
                 history({ id: "UPDATE", newData: { data: newOutput }, oldData: { id }, location: { page: "settings", id: "settings_output" } })
             })

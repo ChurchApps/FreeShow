@@ -275,11 +275,11 @@
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->
-    <div class="slide context #{$focusMode || show.locked ? 'default' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} on:click>
+    <div class="slide context #{show.locked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} on:click>
         <div class="hover overlay" />
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">
-            <SelectElem style={colorStyle} id="slide" data={{ index }} draggable={!$focusMode && !show.locked} selectable={!$focusMode && !show.locked} trigger={list ? "column" : "row"}>
+            <SelectElem style={colorStyle} id="slide" data={{ index, showId }} draggable={!$focusMode && !show.locked} onlyRightClickSelect={$focusMode} selectable={!show.locked} trigger={list ? "column" : "row"}>
                 <!-- TODO: tab select on enter -->
                 {#if viewMode === "lyrics" && !noQuickEdit}
                     <!-- border-bottom: 1px dashed {color}; -->
@@ -347,7 +347,7 @@
                     <div title={name || ""} style="height: 2px;" />
                 {:else if viewMode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->
-                    <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color};`}>
+                    <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
                         {#if name === null && $fullColors}
                             <!-- WIP this works fine without full colors, but is it neccesary? (UI vs UX) -->
                             <div class="childLink" style="background-color: {color};" class:full={$fullColors} />
@@ -397,7 +397,7 @@
 
     .slide {
         /* padding: 3px; */
-        background-color: var(--primary-darker);
+        background-color: var(--primary-darkest);
         z-index: 0;
         outline-offset: 0;
         width: 100%;
@@ -422,7 +422,8 @@
         /* outline: 3px solid var(--secondary); */
         outline: 2px solid var(--secondary);
         outline-offset: -1px;
-        z-index: 2;
+        /* this z-index causes the button title to show behind! */
+        /* z-index: 2; */
     }
 
     .group_box {
@@ -491,7 +492,7 @@
         left: 0;
         bottom: 0;
         transform: translate(-100%, 100%);
-        width: 12px;
+        width: 8px;
         height: 2px;
     }
     .childLink.full {

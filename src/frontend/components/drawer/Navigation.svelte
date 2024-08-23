@@ -1,7 +1,7 @@
 <script lang="ts">
     import { IMPORT } from "../../../types/Channels"
     import type { Category } from "../../../types/Tabs"
-    import { activePopup, audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates } from "../../stores"
+    import { activePopup, audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, scriptures, templateCategories } from "../../stores"
     import { send } from "../../utils/request"
     import { keysToID, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -118,41 +118,6 @@
         return [{ id: "SEPERATOR", name: "" }, ...playlists]
     }
 
-    let length: any = {}
-    if (id) length = {}
-    $: {
-        let list: any[] = []
-        if (id === "shows") list = Object.values($shows).filter((a: any) => !a?.private)
-        else if (id === "overlays") list = Object.values($overlays)
-        else if (id === "templates") list = Object.values($templates)
-
-        let totalLength: number = 0
-        buttons.forEach((button) => {
-            length[button.id] = 0
-
-            if (button.id === "all") {
-                length[button.id] = list.length
-                return
-            }
-
-            length[button.id] = list.filter(checkMatch).length
-            totalLength += length[button.id]
-
-            function checkMatch(a) {
-                if (!a) return a
-                if (button.id === "unlabeled") return a.category === null
-                return a.category === button.id
-            }
-        })
-
-        length.unlabeled += list.length - totalLength
-    }
-    $: if (id && $audioPlaylists) {
-        Object.keys($audioPlaylists).forEach((id) => {
-            length[id] = $audioPlaylists[id].songs.length
-        })
-    }
-
     function keydown(e: KeyboardEvent) {
         if (!e.target?.closest(".edit") && (e.ctrlKey || e.metaKey)) {
             if (e.key === "ArrowDown") {
@@ -178,7 +143,7 @@
     let selectId: any = "category"
     $: selectId = "category_" + id
 
-    const dropAreas: (typeof id)[] = ["shows", "audio", "overlays", "templates"]
+    const dropAreas: (typeof id)[] = ["shows", "media", "audio", "overlays", "templates"]
 </script>
 
 <svelte:window on:keydown={keydown} />

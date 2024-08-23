@@ -2,6 +2,7 @@
     import { OUTPUT } from "../../../types/Channels"
     import { activeStage, currentWindow, stageShows } from "../../stores"
     import { send } from "../../utils/request"
+    import { keysToID, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import { getStyles } from "../helpers/style"
     import T from "../helpers/T.svelte"
@@ -30,7 +31,7 @@
         } else newStyles = {}
     }
 
-    $: if ($activeStage.id === null && Object.keys($stageShows).length) activeStage.set({ id: Object.keys($stageShows)[0], items: [] })
+    $: if ($activeStage.id === null && Object.keys($stageShows).length) activeStage.set({ id: sortByName(keysToID($stageShows))[0]?.id, items: [] })
 
     function setStyles() {
         let items: any = $stageShows[$activeStage.id!].items

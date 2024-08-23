@@ -9,8 +9,9 @@ import { redo, undo } from "../components/helpers/history"
 import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
 import { nextSlide, previousSlide } from "../components/helpers/showActions"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeShow, currentWindow, drawer, focusMode, os, outLocked, outputs, projects, refreshEditSlide, selected, showsCache, special, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, currentWindow, drawer, focusMode, os, outLocked, outputs, projects, refreshEditSlide, selected, showsCache, special, volume } from "../stores"
 import { drawerTabs } from "../values/tabs"
+import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
@@ -114,7 +115,7 @@ export function keydown(e: any) {
 
         // open edit
         if (menu === "edit" && !get(activeEdit)?.id) {
-            activeEdit.set({ slide: 0, items: [] })
+            activeEdit.set({ slide: 0, items: [], showId: get(activeShow)?.id })
         }
     }
 

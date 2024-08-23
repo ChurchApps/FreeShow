@@ -32,7 +32,7 @@
 </script>
 
 {#key retryCount}
-    <img style={$$props.style} src={encodeFilePath(src)} {alt} class:loaded class:transition bind:this={image} on:load={() => (loaded = true)} on:error={reload} />
+    <img style={$$props.style} src={encodeFilePath(src)} {alt} draggable="false" class:loaded class:transition bind:this={image} on:load={() => (loaded = true)} on:error={reload} />
 {/key}
 
 <style>

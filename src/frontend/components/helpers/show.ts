@@ -106,8 +106,8 @@ export function getStageList() {
 }
 
 // meta
-export function initializeMetadata({ title = "", artist = "", author = "", composer = "", publisher = "", copyright = "", CCLI = "", year = "" }) {
-    return { title, artist, author, composer, publisher, copyright, CCLI, year }
+export function initializeMetadata({ title = "", artist = "", author = "", composer = "", publisher = "", copyright = "", CCLI = "", year = "", key = "" }) {
+    return { title, artist, author, composer, publisher, copyright, CCLI, year, key }
 }
 
 // create new slides

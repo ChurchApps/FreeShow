@@ -39,7 +39,7 @@ export class CaptureHelper {
 
     // START
 
-    static storedFrames: any = {}
+    static storedFrames: { [key: string]: NativeImage } = {}
 
     static updateFramerate(id: string) {
         const captureOptions = OutputHelper.getOutput(id)?.captureOptions

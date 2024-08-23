@@ -1,6 +1,4 @@
-import { get } from "svelte/store"
-import { outputs, styles } from "../../../stores"
-import { getActiveOutputs, getCurrentStyle } from "../../helpers/output"
+import type { Item } from "../../../../types/Show"
 import { getStyles } from "../../helpers/style"
 import { getItemLines, getItemText } from "./textStyle"
 
@@ -52,25 +50,42 @@ export function getAutoSize(item: any, styles: any = null, oneLine: boolean = fa
     return size
 }
 
-export function getMaxBoxTextSize(elem: any, parentElem: HTMLElement) {
-    // get first output style
-    let outputId = getActiveOutputs(get(outputs), false, true, false)[0]
-    let currentOutput = get(outputs)[outputId] || {}
-    let currentStyling = getCurrentStyle(get(styles), currentOutput.style)
-
-    const MAX_FONT_SIZE = currentStyling.maxAutoFontSize ?? 800
-    const MIN_FONT_SIZE = 10
+export const MAX_FONT_SIZE = 800
+export const MIN_FONT_SIZE = 10
+export function getMaxBoxTextSize(elem: any, parentElem: HTMLElement, item: Item | null = null) {
+    let maxFontSize = MAX_FONT_SIZE
+    let minFontSize = MIN_FONT_SIZE
 
     let invisibleBox = elem.cloneNode(true)
     invisibleBox.classList.add("invisible")
     parentElem.append(invisibleBox)
 
-    let fontSize = MAX_FONT_SIZE
+    let type = item?.textFit || "shrinkToFit"
+    // shrinkToFit: text is set font size by default, but can shrink if the text does not fit in the textbox
+    // growToFit: text will grow to fill the entire textbox, but maximum the set font size
+
+    let itemFontSize = Number(getStyles(item?.lines?.[0]?.text?.[0]?.style, true)?.["font-size"] || "")
+    if (type === "shrinkToFit") {
+        let textIsBiggerThanBox = invisibleBox.scrollHeight > invisibleBox.offsetHeight || invisibleBox.scrollWidth > invisibleBox.offsetWidth
+        if (textIsBiggerThanBox) {
+            // change type if text is bigger than box
+            type = "growToFit"
+        } else {
+            // don't change the font size
+            return itemFontSize
+        }
+    }
+    if (type === "growToFit") {
+        // set max font size to the current set text font size
+        if (itemFontSize) maxFontSize = itemFontSize
+    }
+
+    let fontSize = maxFontSize
     addStyleToElemText(fontSize)
 
     // quick search (double divide)
-    let lowestValue = MIN_FONT_SIZE
-    let highestValue = MAX_FONT_SIZE
+    let lowestValue = minFontSize
+    let highestValue = maxFontSize
     let biggerThanSize = true
     while (highestValue - lowestValue > 3) {
         let difference = (highestValue - lowestValue) / 2
@@ -86,7 +101,7 @@ export function getMaxBoxTextSize(elem: any, parentElem: HTMLElement) {
         biggerThanSize = invisibleBox.scrollHeight > invisibleBox.offsetHeight || invisibleBox.scrollWidth > invisibleBox.offsetWidth
     }
     fontSize = lowestValue // prefer lowest value
-    if (fontSize > MAX_FONT_SIZE) fontSize = MAX_FONT_SIZE
+    if (fontSize > maxFontSize) fontSize = maxFontSize
 
     function addStyleToElemText(fontSize) {
         for (let breakElem of invisibleBox.children) {

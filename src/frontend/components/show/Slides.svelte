@@ -61,7 +61,7 @@
         slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, Math.min(10, $slidesOptions.columns + (e.deltaY < 0 ? -1 : 1))) })
 
         // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)
@@ -143,7 +143,7 @@
 
                         let matching = word.toLowerCase().indexOf(newWord)
                         if (matching >= 0) {
-                            let capitalized = newWord[0].toUpperCase() + newWord.slice(1)
+                            let capitalized = newWord[0].toUpperCase() + word.slice(1)
                             word = word.slice(0, matching) + capitalized + word.slice(matching + capitalized.length)
                         }
 

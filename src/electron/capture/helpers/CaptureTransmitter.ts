@@ -12,7 +12,10 @@ export type Channel = {
     key: string
     captureId: string
     timer: NodeJS.Timeout
-    lastImage: NativeImage
+    // compare to not update when not changing
+    lastImage: Buffer // toBitmap
+    imageIsSame: boolean
+    lastCheck: number
 }
 export class CaptureTransmitter {
     static stageWindows: string[] = []
@@ -40,9 +43,11 @@ export class CaptureTransmitter {
         }
     }
 
+    // WIP one global capture (on the highest frame rate) instead of multiple per frame rate - but using multipe at once is probably an edge case
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
         const interval = 1000 / OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.[key] || 30
+        // console.log("START CHANNEL:", key, interval)
 
         if (this.channels[combinedKey]?.timer) {
             clearInterval(this.channels[combinedKey].timer)
@@ -52,7 +57,9 @@ export class CaptureTransmitter {
                 key,
                 captureId,
                 timer: setInterval(() => this.handleChannelInterval(captureId, key), interval),
-                lastImage: CaptureHelper.storedFrames[captureId],
+                lastImage: Buffer.from([]),
+                imageIsSame: false,
+                lastCheck: 0,
             }
         }
     }
@@ -61,19 +68,41 @@ export class CaptureTransmitter {
         const combinedKey = `${captureId}-${key}`
         if (!this.channels[combinedKey].timer) return
 
+        // console.log("STOP CHANNEL:", key)
         clearInterval(this.channels[combinedKey].timer)
     }
 
+    private static checkImageCount = 100 // about every 3-5 seconds (50*100 / 33*100)
     static handleChannelInterval(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
         const channel = this.channels[combinedKey]
         if (!channel) return
 
         const image = CaptureHelper.storedFrames[captureId]
-        if (!image || channel.lastImage === image) return
+        if (!image) return
+
+        // check if image is the same as last once in a while
+        // if it's the same don't send a frame until it has changed
+        channel.lastCheck++
+        let compareImageCount = channel.imageIsSame ? 10 : this.checkImageCount
+        if (channel.lastCheck > compareImageCount) {
+            channel.lastCheck = 0
+
+            // console.time("toBitmap")
+            let imgData = image.toBitmap({ scaleFactor: 0.5 })
+            // https://stackoverflow.com/a/78093344
+            channel.imageIsSame = channel.lastImage.equals(imgData)
+            // console.timeEnd("toBitmap") // aprx. 4ms
+
+            if (!channel.imageIsSame) {
+                // store frame for next check
+                channel.lastImage = imgData
+            }
+        }
+
+        if (channel.imageIsSame) return
 
         const size = image.getSize()
-        channel.lastImage = image
 
         switch (key) {
             //case "preview":

@@ -3,11 +3,11 @@
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
     import { Option } from "../../../../types/Main"
-    import { activePopup, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePopup, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { addOutput, getActiveOutputs, keyOutput } from "../../helpers/output"
+    import { addOutput, enableStageOutput, getActiveOutputs, keyOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -15,10 +15,11 @@
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { newToast } from "../../../utils/common"
-    import { keysToID, sortByName } from "../../helpers/array"
+    import { keysToID, sortByName, sortObject } from "../../helpers/array"
+    import { waitForPopupData } from "../../../utils/popup"
 
     let outputsList: any[] = []
-    $: outputsList = sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput))
+    $: outputsList = sortObject(sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput)), "stageOutput")
 
     $: if (outputsList.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(outputsList[0].id)
 
@@ -145,6 +146,8 @@
         return [{ id: null, name: "—" }, ...sortedList]
     }
 
+    let stageLayouts = sortByName(keysToID($stageShows)).map((a) => ({ ...a, name: a.name || $dictionary.main?.unnamed }))
+
     // ndi
     function updateNdiData(e: any, key: string) {
         let id = currentOutput.id
@@ -243,6 +246,26 @@
         },
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
+
+    // CREATE
+
+    async function createOutput() {
+        let stageLayouts = keysToID($stageShows)
+        let type = stageLayouts.length ? await waitForPopupData("choose_output") : "normal"
+
+        if (type === "stage") {
+            // get first stage layout
+            let stageOutput = sortByName(stageLayouts)[0] || {}
+
+            toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
+            setTimeout(() => {
+                let id = enableStageOutput({ stageOutput: stageOutput?.id || "", name: stageOutput?.name || "" })
+                currentOutputSettings.set(id)
+            }, 100)
+        } else if (type === "normal") {
+            addOutput()
+        }
+    }
 </script>
 
 <div class="info">
@@ -257,13 +280,13 @@
 
 <br />
 
-{#if (outputsList.length > 1 && !currentOutput.stageOutput) || !currentOutput.enabled}
+{#if outputsList.length > 1 || !currentOutput.enabled}
     <CombinedInput>
         <p><T id="settings.enabled" /></p>
         <div class="alignRight">
             <Checkbox
                 checked={currentOutput.enabled}
-                disabled={currentOutput.enabled && activeOutputs.length < 2}
+                disabled={!currentOutput.stageOutput && currentOutput.enabled && activeOutputs.length < 2}
                 on:change={(e) => {
                     toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
                     setTimeout(() => {
@@ -300,7 +323,12 @@
     </CombinedInput>
 {/if}
 
-{#if !currentOutput.stageOutput}
+{#if currentOutput.stageOutput}
+    <CombinedInput>
+        <p><T id="stage.stage_layout" /></p>
+        <Dropdown options={stageLayouts} value={stageLayouts.find((a) => a.id === currentOutput.stageOutput)?.name || "—"} on:click={(e) => (e.detail?.id ? updateOutput("stageOutput", e.detail.id) : "")} />
+    </CombinedInput>
+{:else}
     <CombinedInput>
         <p><T id="settings.active_style" /></p>
         <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
@@ -467,7 +495,7 @@
     {/if}
 
     <div style="display: flex;">
-        <Button style="width: 100%;" on:click={() => addOutput()} center>
+        <Button style="width: 100%;" on:click={createOutput} center>
             <Icon id="add" right />
             <T id="settings.add" />
         </Button>

@@ -41,7 +41,7 @@
     if (path && !type) type = getMediaType(getExtension(path))
 
     let mediaName: string = ""
-    $: outName = path && !path.includes("base64") ? splitPath(path).name : ""
+    $: outName = path && path.includes(".") && !path.includes("base64") ? splitPath(path).name : ""
     $: mediaName = outName ? outName.slice(0, outName.lastIndexOf(".")) : background?.name || ""
 
     $: activeOutputIds = getActiveOutputs($outputs, true, true, true)

@@ -159,6 +159,9 @@ export async function loadThumbnail(input: string, size: number) {
     // online media (e.g. Pixabay/Unsplash)
     if (input.includes("http")) return input
 
+    // already encoded (this could cause an infinite loop)
+    if (input.includes("freeshow-cache")) return input
+
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
@@ -174,6 +177,9 @@ export function getThumbnailPath(input: string, size: number) {
 
     // online media (e.g. Pixabay/Unsplash)
     if (input.includes("http")) return input
+
+    // already encoded
+    if (input.includes("freeshow-cache")) return input
 
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
@@ -265,7 +271,6 @@ export function captureCanvas(data: any) {
     mediaElem.addEventListener("error", (err) => {
         if (!mediaElem.src) return
 
-        console.log(data, encodeFilePath(data.input))
         console.error("Could not load media:", err)
         if (!retries[data.input]) retries[data.input] = 0
         retries[data.input]++

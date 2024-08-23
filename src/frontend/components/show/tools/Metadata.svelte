@@ -11,6 +11,7 @@
     import { getActiveOutputs } from "../../helpers/output"
     import Tags from "../Tags.svelte"
     import { sortByName } from "../../helpers/array"
+    import { initializeMetadata } from "../../helpers/show"
 
     // WIP duplicate of Outputs.svelte
     const metaDisplay: any[] = [
@@ -33,7 +34,7 @@
     $: if ($activeShow!.id) getValues()
 
     function getValues() {
-        values = { title: "", artist: "", author: "", composer: "", publisher: "", copyright: "", CCLI: "", year: "" }
+        values = initializeMetadata({})
         Object.entries(meta).forEach(([key, value]) => {
             values[key] = value
         })

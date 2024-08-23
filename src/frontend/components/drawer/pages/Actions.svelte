@@ -44,7 +44,7 @@
     {#if actions.length}
         <div class="actions">
             {#each actions as action}
-                <div class="action">
+                <div class="action context #action">
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
                         <Button style={action.enabled === false ? "opacity: 0.6;" : ""} title={$dictionary.media?.play} on:click={() => (action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action))} dark>
