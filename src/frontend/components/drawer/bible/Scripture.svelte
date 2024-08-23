@@ -153,7 +153,7 @@
         data.content.toString().split("span").forEach(trimVerse)
         function trimVerse(content) {
             // let xt = /(<span class="xt"\b[^>]*>)[^<>]*(<\/span>)/i
-            let brackets = / *\[[^\]]*]/g // remove [1], not [text]
+            let brackets = / *\[[0-9\]]*]/g // remove [1], not [text]
             content = content.replace(brackets, "").replace(/(<([^>]+)>)/gi, "")
 
             if (content.includes("data-number")) {

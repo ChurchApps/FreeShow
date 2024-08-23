@@ -99,6 +99,7 @@ function changeOutputBackground(data, { outs, output, id, i }) {
     }
 
     // mute videos in the other output windows if more than one
+    // WIP fix multiple outputs: if an output with style without background is first the video will be muted... even if another output should not be muted
     data.muted = data.muted || false
     if (outs.length > 1 && i > 0) data.muted = true
 
@@ -475,6 +476,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
+        if (templateItem.textFit) item.textFit
 
         // remove exiting styling & add new if set in template
         const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings"]

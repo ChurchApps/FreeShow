@@ -14,6 +14,7 @@
     import { uid } from "uid"
     import { addToPos } from "../../helpers/mover"
     import EditboxChords from "./EditboxChords.svelte"
+    import { getStyles } from "../../helpers/style"
 
     export let item: Item
     export let ref: {
@@ -266,41 +267,42 @@
     let loaded = false
     $: isTextbox = !!item?.lines
     $: isAuto = item?.auto
-    $: if (isTextbox && (isAuto || textChanged)) getCustomAutoSize()
+    $: textFit = item?.textFit
+    $: itemFontSize = Number(getStyles(item?.lines?.[0]?.text?.[0]?.style, true)?.["font-size"] || "")
+    $: if (isTextbox && (isAuto || textFit || itemFontSize || textChanged)) getCustomAutoSize()
     $: if (!isTextbox && item) autoSize = getAutoSize(item)
 
     let autoSize: number = 0
     let alignElem: any
-    let loopStop = false
+    let updateTimeout: any = null
     function getCustomAutoSize() {
-        if (isTyping || loopStop || !loaded || !textElem || !alignElem || !item.auto) return
-        loopStop = true
+        if (isTyping || !loaded || !textElem || !alignElem || !item.auto) return
 
-        autoSize = getMaxBoxTextSize(textElem, alignElem)
+        autoSize = getMaxBoxTextSize(textElem, alignElem, item)
 
-        // update item with new style
-        if (ref.type === "overlay") {
-            overlays.update((a) => {
-                a[ref.id].items[index].autoFontSize = autoSize
-                return a
-            })
-        } else if (ref.type === "template") {
-            templates.update((a) => {
-                a[ref.id].items[index].autoFontSize = autoSize
-                return a
-            })
-        } else if (ref.showId) {
-            showsCache.update((a) => {
-                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[index]) return a
+        // reduce text stuttering on quick changes
+        if (updateTimeout) clearTimeout(updateTimeout)
+        updateTimeout = setTimeout(() => {
+            // update item with new style
+            if (ref.type === "overlay") {
+                overlays.update((a) => {
+                    a[ref.id].items[index].autoFontSize = autoSize
+                    return a
+                })
+            } else if (ref.type === "template") {
+                templates.update((a) => {
+                    a[ref.id].items[index].autoFontSize = autoSize
+                    return a
+                })
+            } else if (ref.showId) {
+                showsCache.update((a) => {
+                    if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[index]) return a
 
-                a[ref.showId!].slides[ref.id].items[index].autoFontSize = autoSize
-                return a
-            })
-        }
-
-        setTimeout(() => {
-            loopStop = false
-        }, 500)
+                    a[ref.showId!].slides[ref.id].items[index].autoFontSize = autoSize
+                    return a
+                })
+            }
+        }, 200)
     }
 
     // UPDATE STYLE FROM LINES

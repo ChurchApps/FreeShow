@@ -488,11 +488,21 @@ const actions: any = {
             })
         }
     },
+    editSlideText: (obj) => {
+        if (obj.sel.id === "slide") {
+            let slide = obj.sel.data[0]
+            activeEdit.set({ slide: slide.index, items: [], showId: slide.showId })
+            activePage.set("edit")
+            setTimeout(() => selected.set({ id: null, data: [] }))
+        }
+    },
 
     edit: (obj: any) => {
         if (obj.sel.id === "slide") {
-            activeEdit.set({ slide: obj.sel.data[0].index, items: [], showId: get(activeShow)?.id })
+            let slide = obj.sel.data[0]
+            activeEdit.set({ slide: slide.index, items: [], showId: slide.showId || get(activeShow)?.id })
             activePage.set("edit")
+            setTimeout(() => selected.set({ id: null, data: [] }))
         } else if (obj.sel.id === "media") {
             activeEdit.set({ type: "media", id: obj.sel.data[0].path, items: [] })
             activePage.set("edit")

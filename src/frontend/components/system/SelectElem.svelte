@@ -8,6 +8,7 @@
     export let data: any
     export let fill: boolean = false
     export let draggable: boolean = false
+    export let onlyRightClickSelect: boolean = false
     export let selectable: boolean = true
     export let trigger: null | "row" | "column" = null
     export let fileOver: boolean = false
@@ -17,18 +18,19 @@
 
     function enter(e: any) {
         if (!selectable) return
-        if (e.buttons && !dragActive) {
-            if ((id === "project" || id === "folder") && $selected.data[0] && data.index < $selected.data[0].index) {
-                selected.set({ id, data: [data] })
-                return
-            }
-            if ($selected.id !== id) selected.set({ id, data: [data] })
-            else if (!arrayHasData($selected.data, data)) {
-                selected.update((s) => {
-                    s.data = [...s.data, data]
-                    return s
-                })
-            }
+        if (!e.buttons || dragActive || onlyRightClickSelect) return
+
+        if ((id === "project" || id === "folder") && $selected.data[0] && data.index < $selected.data[0].index) {
+            selected.set({ id, data: [data] })
+            return
+        }
+
+        if ($selected.id !== id) selected.set({ id, data: [data] })
+        else if (!arrayHasData($selected.data, data)) {
+            selected.update((s) => {
+                s.data = [...s.data, data]
+                return s
+            })
         }
     }
 
@@ -100,6 +102,12 @@
         // if (id === "folder" && ($selected.data[0]?.id === "project" || data.index > $selected.data[0]?.index)) return
 
         let newData: any
+        let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
+
+        if (onlyRightClickSelect) {
+            if (rightClick) selected.set({ id, data: [data] })
+            return
+        }
 
         // shift select range
         if (e.shiftKey && $selected.data[0]?.index !== undefined) {
@@ -133,7 +141,6 @@
 
         let alreadySelected: boolean = $selected.id === id && arrayHasData($selected.data, data)
         let selectMultiple: boolean = e.ctrlKey || e.metaKey || e.shiftKey || e.buttons === 4 // middle mouse button
-        let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         if (dragged) {
             if (alreadySelected) return

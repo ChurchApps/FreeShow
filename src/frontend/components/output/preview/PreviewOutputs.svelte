@@ -1,7 +1,7 @@
 <script lang="ts">
     import { outputs } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { keysToID, sortByName } from "../../helpers/array"
+    import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
@@ -12,7 +12,7 @@
     //     currentOutputId = getActiveOutputs({}, true, true)[0]
     // })
 
-    $: outs = sortByName(keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput))
+    $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput)), "stageOutput")
 
     function toggleOutput(e: any, id: string) {
         if (outs.length <= 1) return

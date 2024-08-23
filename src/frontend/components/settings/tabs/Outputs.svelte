@@ -15,11 +15,11 @@
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { newToast } from "../../../utils/common"
-    import { keysToID, sortByName } from "../../helpers/array"
+    import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import { waitForPopupData } from "../../../utils/popup"
 
     let outputsList: any[] = []
-    $: outputsList = sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput))
+    $: outputsList = sortObject(sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput)), "stageOutput")
 
     $: if (outputsList.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(outputsList[0].id)
 

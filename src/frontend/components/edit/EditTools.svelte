@@ -98,6 +98,7 @@
             let style = normalText[0]?.style || item?.style
             let extraKeys = {
                 auto: item?.auto,
+                textFit: item?.textFit,
                 specialStyle: item?.specialStyle,
                 scrolling: item?.scrolling,
             }

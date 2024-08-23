@@ -100,13 +100,14 @@
         let text2 = getSlideText(slide2?.data)
 
         // start showing next before hiding current (to reduce "black" fade if transitioning to same element)
+        // this might not show very clear if transitioning between two texts that are the same! - That should show a little indication of change...
         if (text1 === text2) {
             loading = false
             firstActive = isFirst
             timeout = setTimeout(() => {
                 hideCurrent()
                 timeout = null
-            }, 50)
+            }, customOpacityDuration * 0.8)
         } else {
             // if text is different, start hiding current before loading next, this looks better
             hideCurrent()
@@ -143,12 +144,18 @@
 
     // WIP text should fade, but items that are the same between slides should not & items with custom transitions should not use the global slide transition
 
+    // WIP transition should be per item, so the item transition will override the global transition!!
+
     // custom item transition
     // $: itemTransitionEnabled = transitionEnabled && item.actions?.transition && item.actions.transition.type !== "none" && item.actions.transition.duration > 0
     // $: itemTransition = transition ? clone(item.actions.transition) : {}
     // $: if (itemTransition.type === "none") itemTransition = { duration: 0, type: "fade", easing: "linear" }
 
     $: customOpacityDuration = transition?.type === "none" || !transition?.duration ? 0 : transition.duration
+
+    // WIP fix text clipping in when it has not loaded?
+    // $: console.log(slide1, slide2)
+    // $: console.log(isFirstHidden, isSecondHidden)
 </script>
 
 {#if slide1}

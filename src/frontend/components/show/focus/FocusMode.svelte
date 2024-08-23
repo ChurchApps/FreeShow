@@ -50,7 +50,7 @@
 
     let isScrolling: any = null
     function scrolling(e: any) {
-        if (scrollingToActive) return
+        if (scrollingToActive || !listElem) return
 
         if (isScrolling) clearTimeout(isScrolling)
         isScrolling = setTimeout(() => {

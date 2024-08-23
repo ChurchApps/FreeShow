@@ -78,7 +78,7 @@
                         <MediaTools />
                     {:else if $activeEdit.type === "effect"}
                         <EffectTools />
-                    {:else if !$shows[$activeShow?.id || ""]?.locked}
+                    {:else if !$shows[$activeShow?.id || ""]?.locked && !$focusMode}
                         <EditTools />
                     {/if}
                 {:else if page === "draw"}
