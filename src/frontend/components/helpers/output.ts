@@ -29,7 +29,7 @@ import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { customActionActivation } from "../actions/actions"
 import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
-import { clone, keysToID, removeDuplicates, sortByName } from "./array"
+import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
@@ -37,7 +37,7 @@ import { _show } from "./shows"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     // sort so display order can be changed! (needs app restart)
-    let enabledOutputs: any[] = sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id })))
+    let enabledOutputs: any[] = sortObject(sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id }))), "stageOutput")
 
     enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1

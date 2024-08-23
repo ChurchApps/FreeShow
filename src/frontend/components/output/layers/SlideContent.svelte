@@ -107,7 +107,7 @@
             timeout = setTimeout(() => {
                 hideCurrent()
                 timeout = null
-            }, customOpacityDuration * 0.8)
+            }, customOpacityDuration * 0.7)
         } else {
             // if text is different, start hiding current before loading next, this looks better
             hideCurrent()
@@ -115,7 +115,7 @@
                 loading = false
                 firstActive = isFirst
                 timeout = null
-            }, customOpacityDuration * 0.7)
+            }, customOpacityDuration * 0.5)
         }
 
         function hideCurrent() {
