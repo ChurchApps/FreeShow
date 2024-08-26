@@ -9,6 +9,7 @@
     export let transitionEnabled: boolean = false
     export let preview: boolean = false
     export let item: Item
+    export let currentSlide: any
     export let outSlide: any
     export let lines: any[]
 
@@ -99,11 +100,13 @@
         item = clone(item)
         lines = clone(lines)
         outSlide = clone(outSlide)
+        currentSlide = clone(currentSlide)
 
         let state = {
             item,
             lines,
             outSlide,
+            currentSlide,
             inTransition,
             outTransition,
         }
@@ -123,16 +126,28 @@
         delete currentlyTransitioning[id]
         // currentlyTransitioning = currentlyTransitioning
     }
+
+    // only update if new ID! Previous is removed, but output should not update until a new value is set
+    let currentIds: string[] = []
+    let currentOut: { [key: string]: any } = {}
+    $: if (Object.keys(currentlyTransitioning).find((id) => !currentIds.includes(id))) updateOut()
+    function updateOut() {
+        currentOut = clone(currentlyTransitioning)
+        currentIds = Object.keys(currentlyTransitioning)
+    }
+
+    $: console.log(currentOut)
 </script>
 
 <!-- ITEM WAIT TO SHOW ACTION -->
 <!-- ITEM TRANSITION (IN/OUT) -->
 <!-- GLOBAL SLIDE(ITEM) TRANSITION -->
 
-{#each Object.entries(currentlyTransitioning) as [id, transitioning]}
+{#each Object.entries(currentOut) as [id, transitioning]}
     {#if !fadeOut.includes(id) && !hide.includes(id)}
+        <span style="font-size: 0;position: absolute;">{console.log(transitioning, id, transitionEnabled ? transitioning.inTransition : null)}</span>
         <OutputTransition inTransition={transitionEnabled ? transitioning.inTransition : null} outTransition={transitionEnabled ? transitioning.outTransition : null}>
-            <slot customItem={transitioning.item} customLines={transitioning.lines} customOut={transitioning.outSlide} />
+            <slot customItem={transitioning.item} customLines={transitioning.lines} customOut={transitioning.outSlide} customSlide={transitioning.currentSlide} />
         </OutputTransition>
     {/if}
 {/each}

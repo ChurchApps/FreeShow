@@ -1,4 +1,6 @@
 <script lang="ts">
+    import type { Item } from "../../../../types/Show"
+    import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
 
@@ -22,10 +24,22 @@
     export let isKeyOutput: boolean = false
 
     console.log(customTemplate, preview)
+
+    // timeout so it can start fading out right before (so svelte don't removes the element right away)
+    let currentItems: Item[] = []
+    $: if (currentSlide.items !== undefined) updateItems()
+    function updateItems() {
+        setTimeout(() => {
+            currentItems = clone(currentSlide.items || [])
+        })
+    }
+
+    // WIP this should not update the array, but change a custom object like SlideItemTransition
+    // currently it's removed right away
 </script>
 
-{#each currentSlide.items as item}
-    <SlideItemTransition {preview} {transitionEnabled} slideTransition={transition} {item} {outSlide} {lines} let:customItem let:customLines let:customOut>
+{#each currentItems as item}
+    <SlideItemTransition {preview} {transitionEnabled} slideTransition={transition} {currentSlide} {item} {outSlide} {lines} let:customSlide let:customItem let:customLines let:customOut>
         {#if !customItem.bindings?.length || customItem.bindings.includes(outputId)}
             <Textbox
                 filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
@@ -36,7 +50,7 @@
                 animationStyle={animationData.style || {}}
                 item={customItem}
                 {ratio}
-                ref={{ showId: customOut.id, slideId: currentSlide.id, id: currentSlide.id || "", layoutId: customOut.layout }}
+                ref={{ showId: customOut.id, slideId: customSlide.id, id: customSlide.id || "", layoutId: customOut.layout }}
                 linesStart={customLines?.[currentLineId]?.start}
                 linesEnd={customLines?.[currentLineId]?.end}
                 outputStyle={currentStyle}
