@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Transition } from "../../../../types/Show"
-    import OutputTransition from "./OutputTransition.svelte"
+    import OutputTransition from "../transitions/OutputTransition.svelte"
     import Overlay from "./Overlay.svelte"
 
     export let outputId: string

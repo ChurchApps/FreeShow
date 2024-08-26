@@ -12,7 +12,7 @@
     import Camera from "../Camera.svelte"
     import Window from "../Window.svelte"
     import Media from "./Media.svelte"
-    import OutputTransition from "./OutputTransition.svelte"
+    import OutputTransition from "../transitions/OutputTransition.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
 
