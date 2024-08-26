@@ -13,6 +13,7 @@
     }
     export let cam: Cam
     export let item: boolean = false
+    export let style: string = ""
 
     let loaded: boolean = false
     // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
@@ -72,7 +73,7 @@
 
 {#if item}
     {#if !error}
-        <video style="width: 100%;height: 100%;" bind:this={videoElem}>
+        <video style="width: 100%;height: 100%;{style}" bind:this={videoElem}>
             <track kind="captions" />
         </video>
     {/if}

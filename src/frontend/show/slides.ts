@@ -549,6 +549,13 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
     if (!secondLines.length) secondLines = defaultLine
 
+    // add chords
+    let chordLines = clone(lines.map((a) => a.chords || []))
+    ;[...firstLines, ...secondLines].forEach((line) => {
+        let oldLineChords = chordLines.shift()
+        if (oldLineChords?.length) line.chords = oldLineChords
+    })
+
     // create new slide
     let newSlide = clone(_show().slides([slideRef.id]).get()[0])
     newSlide.items[itemIndex].lines = secondLines

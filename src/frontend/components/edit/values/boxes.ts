@@ -242,8 +242,9 @@ export const boxes: Box = {
         edit: {
             default: [
                 { name: "choose_camera", id: "device", input: "popup", popup: "choose_camera", icon: "camera" },
-                // { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
-                // { name: "media.flip", id: "flipped", input: "checkbox", value: false },
+                { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
+                { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
+                { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false },
             ],
             // filters: [
             //     { name: "filter.hue-rotate", id: "filter", key: "hue-rotate", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
