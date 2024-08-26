@@ -3,6 +3,7 @@
     import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, projects, projectView, sorted } from "../../stores"
     import { sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
+    import { addSection } from "../../converters/project"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
     import { checkInput } from "../helpers/showActions"
@@ -81,12 +82,6 @@
             delete a[$activeProject!].notes
             return a
         })
-    }
-
-    function addSection() {
-        let activeShowIndex = $activeShow?.index !== undefined ? $activeShow?.index + 1 : null
-        let index: number = activeShowIndex ?? $projects[$activeProject || ""]?.shows?.length ?? 0
-        history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: $activeProject }, location: { page: "show", id: "section" } })
     }
 
     $: projectActive = !$projectView && $activeProject !== null

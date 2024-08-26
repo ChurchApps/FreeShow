@@ -434,6 +434,7 @@
         "midi_no_velocity": "Received MIDI signal, but no velocity, defaults to first index."
     },
     "new": {
+        "create": "Create new",
         "show": "New show",
         "empty_show": "New empty show",
         "project": "New project",
@@ -695,6 +696,7 @@
         "enabledTabs": "Toggle tabs",
         "filterByTags": "Filter by tags",
         "addToProject": "Add to project",
+        "add_to_show": "Add to show",
         "lockForChanges": "Lock for editing",
         "newCategory": "New category",
         "changeIcon": "Change icon",
