@@ -3,7 +3,7 @@ import type { ShowType } from "../../types/Show"
 import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
-import { activeProject, projects } from "../stores"
+import { activeProject, activeShow, projects } from "../stores"
 
 export function importProject(files: any) {
     files.forEach(({ content }: any) => {
@@ -38,5 +38,9 @@ export function addToProject(type: ShowType, filePaths: string[]) {
     })
 
     let project = { key: "shows", data: [...projectShows, ...newProjectItems] }
-    history({ id: "UPDATE", newData: { data: project }, oldData: { id: currentProject }, location: { page: "show", id: "project_ref" } })
+    history({ id: "UPDATE", newData: project, oldData: { id: currentProject }, location: { page: "show", id: "project_ref" } })
+
+    // open project item
+    let lastItem = newProjectItems[newProjectItems.length - 1]
+    activeShow.set({ ...lastItem, index: project.data.length - 1 })
 }

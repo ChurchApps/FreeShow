@@ -320,8 +320,11 @@ export interface OutSlide {
     tempItems?: Item[]
     line?: number
     // layout: ID ?
-    // type?: ShowType
-    // private?: boolean
+    name?: string // mostly used for PDFs
+    type?: ShowType // mostly used for PDFs
+    page?: number // PDF
+    pages?: number // PDF
+    viewport?: { width: number; height: number } // PDF
 }
 
 export interface OutTransition {

@@ -66,6 +66,7 @@
     </span>
     <span class="group">
         <div class="combinedButton">
+            <!-- || getOutputContent()?.type === "pdf" -->
             <Button disabled={$outLocked || isOutCleared("background", $outputs)} on:click={() => clear("background")} title={$dictionary.clear?.background + " [F1]"} dark red center>
                 <Icon id="background" size={1.2} />
             </Button>

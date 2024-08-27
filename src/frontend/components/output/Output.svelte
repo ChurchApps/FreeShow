@@ -244,7 +244,7 @@
     {#if slide && layers.includes("slide")}
         {#if slide.type === "pdf"}
             <span style="zoom: {1 / ratio};">
-                <PdfOutput {slide} />
+                <PdfOutput {slide} {currentStyle} transition={transitions.text} />
             </span>
         {:else}
             <SlideContent

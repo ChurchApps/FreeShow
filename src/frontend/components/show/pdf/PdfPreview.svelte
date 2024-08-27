@@ -1,38 +1,41 @@
 <script lang="ts">
-    import { outLocked, outputs, slidesOptions } from "../../../stores"
+    import { outLocked, outputs, slidesOptions, styles } from "../../../stores"
+    import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import { clearBackground } from "../../output/clear"
+    import { getViewportSizes } from "./pdfData"
 
     export let show
 
+    let viewports: { width: number; height: number }[] = []
     let pages = 0
-    $: if (show.id) getPages()
+    $: if (show.id) getPdfPages()
 
-    async function getPages() {
-        pages = 0
+    async function getPdfPages() {
+        viewports = await getViewportSizes(show.id)
 
-        let response = await fetch(show.id)
-        let data = await response.blob()
-
-        const reader = new FileReader()
-        reader.onload = (_) => {
-            const dataURL = reader.result?.toString() || ""
-            pages = dataURL.match(/\/Type[\s]*\/Page[^s]/g)?.length || 0
-        }
-
-        reader.readAsText(data)
+        // pages = await getPages(show.id)
+        pages = viewports.length
     }
 
+    $: activeOutput = getActiveOutputs($outputs, false, true, true)[0]
+
     // set active if output
-    // $: active = false
-    // WIP multiple otuputs
-    $: activeOutput = getActiveOutputs($outputs, false, true)[0]
+    let active: number = -1
+    $: outSlide = $outputs[activeOutput].out?.slide
+    $: if (outSlide?.type === "pdf" && outSlide?.id === show.id) active = (outSlide?.page || 0) - 1
+    else active = -1
+
+    // WIP multiple outputs
     $: output = { color: $outputs[activeOutput].color }
-    $: active = false
 
     function outputPdf(e: any, page: number) {
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
-        setOutput("slide", { type: "pdf", id: show.id, page, pages })
+        let name = show.name || removeExtension(getFileName(show.id))
+        setOutput("slide", { type: "pdf", id: show.id, page, pages, viewport: viewports[page - 1], name })
+
+        clearBackground()
     }
 
     // WIP duplicate of Slides.svelte
@@ -50,7 +53,12 @@
         }, 500)
     }
 
-    // WIP custom background color if possible
+    // output style
+    $: currentOutput = $outputs[activeOutput] || {}
+    $: currentStyle = $styles[currentOutput.style || ""] || {}
+
+    // add extra padding to aspect ratio to ensure page is properly sized (if portrait mode)
+    const EXTRA_RATIO = 100 // 45
 </script>
 
 <!-- SHOW FULL PREVIEW: -->
@@ -59,9 +67,20 @@
 
 <div class="grid" on:wheel={wheel}>
     {#each [...Array(pages)] as _, page}
-        <div class="main" class:active style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / $slidesOptions.columns}%;">
+        <div class="main" class:active={active === page} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pages > 1 ? $slidesOptions.columns : 1)}%;">
             <div class="slide" tabindex={0} on:click={(e) => outputPdf(e, page + 1)}>
-                <iframe src="{show.id}#toolbar=0&view=fit&page={page + 1}" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no"></iframe>
+                {#if viewports[page]}
+                    <!-- 16 / 9 < -->
+                    <div
+                        class="center"
+                        class:wide={(viewports[page].width + EXTRA_RATIO) / viewports[page].height < viewports[page].width / viewports[page].height}
+                        style="aspect-ratio: {viewports[page].width / viewports[page].height};--background: {currentStyle.background || 'black'};"
+                    ></div>
+                {/if}
+
+                {#key $slidesOptions.columns}
+                    <iframe src="{show.id}#toolbar=0&view=fit&page={page + 1}" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no" style="aspect-ratio: {viewports[page].width + EXTRA_RATIO} / {viewports[page].height};"></iframe>
+                {/key}
             </div>
         </div>
     {/each}
@@ -112,5 +131,22 @@
     .main.active {
         outline: 2px solid var(--secondary);
         outline-offset: -1px;
+    }
+
+    /* cover grey areas with black */
+    .center {
+        height: calc(100% - 5px);
+
+        position: absolute;
+        left: 50%;
+        top: 2px;
+        transform: translateX(-50%);
+
+        outline-offset: 0;
+        outline: 800px solid var(--background);
+    }
+    .center.wide {
+        height: initial;
+        width: calc(100% - 5px);
     }
 </style>

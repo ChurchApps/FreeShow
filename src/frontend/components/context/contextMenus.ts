@@ -208,6 +208,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_player: ["remove"],
     project_show: ["rename", "private", "duplicate", "remove"],
     project_section: ["remove"],
+    project_pdf: ["remove"], // "rename",
     shows: ["newSlide", "selectAll"],
     // TIMER
     timer: ["play", "edit"], // , "reset"

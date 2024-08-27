@@ -364,7 +364,7 @@ export function previousSlide(e: any) {
 }
 
 function getNextEnabled(index: null | number, end: boolean = false): null | number {
-    if (index === null) return null
+    if (index === null || isNaN(index)) return null
 
     index++
 
