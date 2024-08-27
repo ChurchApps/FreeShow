@@ -217,6 +217,7 @@ export interface Transition {
     type: TransitionType
     duration: number
     easing: string
+    delay?: number // item in/out wait
 }
 
 export interface Media {

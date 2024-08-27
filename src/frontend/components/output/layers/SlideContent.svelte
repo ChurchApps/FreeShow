@@ -23,40 +23,75 @@
     export let transitionEnabled: boolean = false
     export let isKeyOutput: boolean = false
 
-    console.log(customTemplate, preview)
-
     // timeout so it can start fading out right before (so svelte don't removes the element right away)
     let currentItems: Item[] = []
+    let show: boolean = false
     $: if (currentSlide.items !== undefined) updateItems()
+    let timeout: any = null
     function updateItems() {
-        setTimeout(() => {
+        // let hideDuration = 0 * 1000
+        // // hideDuration += // + 40 // + 10
+
+        // get any items with no transition between the two slides
+        // WIP showing/clearing an item with no transition....
+        let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
+        let newItemTransition = currentSlide.items.find((a) => a.actions?.transition)?.actions?.transition
+        let itemTransitionDuration: number | null = null
+        if (oldItemTransition && JSON.stringify(oldItemTransition) === JSON.stringify(newItemTransition)) {
+            itemTransitionDuration = oldItemTransition.duration ?? null
+            if (oldItemTransition.type === "none") itemTransitionDuration = 0
+            // find any item that should have no transition!
+            else if (currentSlide.items.find((a) => a.actions?.transition?.duration === 0 || a.actions?.transition?.type === "none")) itemTransitionDuration = 0
+        }
+
+        // WIP get slide transition
+        console.log(oldItemTransition, newItemTransition, itemTransitionDuration)
+
+        let currentTransition = transitionEnabled ? itemTransitionDuration ?? transition?.duration ?? 0 : 0
+
+        let waitToShow = currentTransition * 0.5
+        console.log(waitToShow)
+
+        show = false
+
+        if (timeout) clearTimeout(timeout)
+        timeout = setTimeout(() => {
             currentItems = clone(currentSlide.items || [])
+            console.log(currentItems)
+
+            timeout = setTimeout(() => {
+                show = true
+            }, waitToShow)
         })
     }
 
-    // WIP this should not update the array, but change a custom object like SlideItemTransition
-    // currently it's removed right away
+    // WIP wait to hide not working...
+    // WIP use svelte transition "delay" to show & hide
 </script>
 
-{#each currentItems as item}
-    <SlideItemTransition {preview} {transitionEnabled} slideTransition={transition} {currentSlide} {item} {outSlide} {lines} let:customSlide let:customItem let:customLines let:customOut>
-        {#if !customItem.bindings?.length || customItem.bindings.includes(outputId)}
-            <Textbox
-                filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
-                backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
-                key={isKeyOutput}
-                disableListTransition={mirror}
-                chords={customItem.chords?.enabled}
-                animationStyle={animationData.style || {}}
-                item={customItem}
-                {ratio}
-                ref={{ showId: customOut.id, slideId: customSlide.id, id: customSlide.id || "", layoutId: customOut.layout }}
-                linesStart={customLines?.[currentLineId]?.start}
-                linesEnd={customLines?.[currentLineId]?.end}
-                outputStyle={currentStyle}
-                {mirror}
-                slideIndex={customOut.index}
-            />
+{#key show}
+    {#each currentItems as item}
+        {#if show}
+            <SlideItemTransition {preview} {transitionEnabled} globalTransition={transition} {currentSlide} {item} {outSlide} {lines} {customTemplate} let:customSlide let:customItem let:customLines let:customOut>
+                {#if !customItem.bindings?.length || customItem.bindings.includes(outputId)}
+                    <Textbox
+                        filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
+                        backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                        key={isKeyOutput}
+                        disableListTransition={mirror}
+                        chords={customItem.chords?.enabled}
+                        animationStyle={animationData.style || {}}
+                        item={customItem}
+                        {ratio}
+                        ref={{ showId: customOut.id, slideId: customSlide.id, id: customSlide.id || "", layoutId: customOut.layout }}
+                        linesStart={customLines?.[currentLineId]?.start}
+                        linesEnd={customLines?.[currentLineId]?.end}
+                        outputStyle={currentStyle}
+                        {mirror}
+                        slideIndex={customOut.index}
+                    />
+                {/if}
+            </SlideItemTransition>
         {/if}
-    </SlideItemTransition>
-{/each}
+    {/each}
+{/key}
