@@ -14,10 +14,10 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                   fetch-tags: true
-                  fetch-depth: 20
+                  fetch-depth: 100
             - name: Set env
               run: echo "GIT_TAG=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
             - name: Test
