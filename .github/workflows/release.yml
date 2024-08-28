@@ -16,11 +16,11 @@ jobs:
             - name: Check out Git repository
               uses: actions/checkout@v3
             - name: Set env
-              run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+              run: echo "GIT_TAG=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
             - name: Test
               run: |
-                echo $RELEASE_VERSION
-                echo ${{ env.RELEASE_VERSION }}
+                echo $GIT_TAG
+                echo ${{ env.GIT_TAG }}
 
             - name: Install Node.js and NPM
               uses: actions/setup-node@master
@@ -75,5 +75,5 @@ jobs:
             - name: 'Upload Artifact'
               uses: actions/upload-artifact@v4
               with:
-                name: FreeShow-arm64-${{ env.RELEASE_VERSION }}.zip
+                name: FreeShow-arm64-${{ env.GIT_TAG }}.zip
                 path: artifacts/FreeShow*AppImage       
