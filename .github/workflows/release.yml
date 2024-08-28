@@ -15,15 +15,6 @@ jobs:
         steps:
             - name: Check out Git repository
               uses: actions/checkout@v4
-              with:
-                  fetch-tags: true
-                  fetch-depth: 100
-            - name: Set env
-              run: echo "GIT_TAG=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
-            - name: Test
-              run: |
-                echo $GIT_TAG
-                echo ${{ env.GIT_TAG }}
 
             - name: Install Node.js and NPM
               uses: actions/setup-node@master
@@ -53,7 +44,7 @@ jobs:
                    echo apt update
                    apt -q update
                    echo apt install
-                   apt -q install -y wget git python3 make g++ ruby-dev build-essential
+                   apt -q install -y wget git python3 make g++ ruby-dev build-essential jq
                    #  https://github.com/electron-userland/electron-builder/issues/6116#issuecomment-1091205145
                    gem install fpm
                run: |
@@ -73,10 +64,11 @@ jobs:
                    export USE_SYSTEM_FPM=true
                    tools/bin/npm run release:arm64
                    cp dist/*.AppImage /artifacts/
-                   echo env
-                   env
+                   echo jq
+                   RELEASE_NAME=`jq -r .version package.json`
+                   export RELEASE_NAME
             - name: 'Upload Artifact'
               uses: actions/upload-artifact@v4
               with:
-                name: FreeShow-arm64-${{ env.GIT_TAG }}.zip
+                name: FreeShow-arm64-${{ env.RELEASE_NAME }}.zip
                 path: artifacts/FreeShow*AppImage       
