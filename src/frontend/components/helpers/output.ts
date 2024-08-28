@@ -666,7 +666,7 @@ export function getCurrentStyle(styles: { [key: string]: Styles }, styleId: stri
     return styles[styleId] || defaultStyle
 }
 
-export function getOutputTransitions(slideData: any, transitionData: any, disableTransitions: boolean) {
+export function getOutputTransitions(slideData: any, styleTransition: any, transitionData: any, disableTransitions: boolean) {
     let transitions: { [key: string]: Transition } = {}
 
     if (disableTransitions) {
@@ -680,9 +680,14 @@ export function getOutputTransitions(slideData: any, transitionData: any, disabl
         media: slideData?.mediaTransition?.type ? slideData.mediaTransition : null,
     }
 
-    transitions.text = slideTransitions.text || transitionData.text || {}
-    transitions.media = slideTransitions.media || transitionData.media || {}
-    transitions.overlay = transitionData.text || {}
+    let styleTransitions = {
+        text: styleTransition?.text || null,
+        media: styleTransition?.media || null,
+    }
+
+    transitions.text = slideTransitions.text || styleTransitions.text || transitionData.text || {}
+    transitions.media = slideTransitions.media || styleTransitions.media || transitionData.media || {}
+    transitions.overlay = styleTransitions.text || transitionData.text || {}
 
     return clone(transitions)
 }

@@ -114,7 +114,7 @@
 
     // slide styling
     $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle })
-    $: transitions = getOutputTransitions(slideData, $transitionData, mirror && !preview)
+    $: transitions = getOutputTransitions(slideData, currentStyle.transition, $transitionData, mirror && !preview)
     $: slideFilter = getSlideFilter(slideData)
 
     // custom template
@@ -255,7 +255,7 @@
             {preview}
             customTemplate={currentStyle.template}
             transition={transitions.text}
-            transitionEnabled={(!mirror || preview) && transitions.text?.type !== "none" && transitions.text?.duration}
+            transitionEnabled={(!mirror || preview) && transitions.text?.type !== "none" && !!transitions.text?.duration}
             {isKeyOutput}
         />
     {/if}

@@ -1,4 +1,5 @@
 import type { MediaFit } from "./Main"
+import type { Transition } from "./Show"
 
 export interface Themes {
     name: string
@@ -24,6 +25,7 @@ export interface Styles {
     displayMetadata?: string
     metadataTemplate?: string
     messageTemplate?: string
+    transition?: Transition
 }
 
 export interface Resolution {
