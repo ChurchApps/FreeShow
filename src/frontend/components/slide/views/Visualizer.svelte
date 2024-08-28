@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { playingAudio, playingVideos, visualizerData } from "../../../stores"
+    import { currentWindow, playingAudio, playingVideos, visualizerData } from "../../../stores"
     import { send } from "../../../utils/request"
 
     export let item: any
@@ -22,6 +23,19 @@
     $: color = item.visualizer?.color || null
     $: padding = (item.visualizer?.padding || 0) - 0.5
 
+    onDestroy(() => {
+        if (!ctx) return
+
+        // reset
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+        visualizerData.set(null)
+        if (preview) send(OUTPUT, ["VIZUALISER_DATA"], null)
+
+        if (rendering) cancelAnimationFrame(rendering)
+    })
+
+    let rendering: any = null
     function visualizer() {
         if (!ctx) {
             canvas.width = window.innerWidth
@@ -75,29 +89,32 @@
                 return
             }
 
-            requestAnimationFrame(renderFrame)
+            if ($currentWindow) return
 
-            channels.map((a, i) => a.getByteFrequencyData(dataArrays[i]))
-
-            let bars: any[] = []
-            for (let i = 0; i < bufferLengths[0]; i++) {
-                let dataAtIndex = dataArrays.map((a) => a[i])
-                let mid = dataAtIndex.reduce((value, data) => (value += data), 0) / dataAtIndex.length
-                barHeight = mid * 3
-                bars.push(barHeight)
-
-                generateBar(barHeight)
-            }
-
-            if (!preview) return
+            rendering = requestAnimationFrame(renderFrame)
 
             count++
             if (count > 3) {
-                send(OUTPUT, ["VIZUALISER_DATA"], { bars, buffers: bufferLength })
                 count = 0
+
+                channels.map((a, i) => a.getByteFrequencyData(dataArrays[i]))
+
+                let bars: any[] = []
+                for (let i = 0; i < bufferLengths[0]; i++) {
+                    let dataAtIndex = dataArrays.map((a) => a[i])
+                    let mid = dataAtIndex.reduce((value, data) => (value += data), 0) / dataAtIndex.length
+                    barHeight = mid * 3
+                    bars.push(barHeight)
+
+                    // WIP this does not generate anything in the preview...
+                    // generateBar(barHeight)
+                }
+
+                if (preview) send(OUTPUT, ["VIZUALISER_DATA"], { bars, buffers: bufferLength })
             }
         }
 
+        if (rendering) cancelAnimationFrame(rendering)
         renderFrame()
 
         function generateBar(barHeight) {
@@ -106,6 +123,7 @@
             let g = 5
             let b = 150
 
+            if (color === "rgb(0 0 0 / 0)") color = ""
             ctx.fillStyle = color || "rgb(" + r + "," + g + "," + b + ")"
             ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight)
 

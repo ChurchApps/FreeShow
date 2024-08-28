@@ -18,11 +18,11 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import Media from "../../output/layers/Media.svelte"
     import Notes from "../../show/tools/Notes.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
-    import Media from "../../output/layers/Media.svelte"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []

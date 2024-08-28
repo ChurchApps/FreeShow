@@ -157,6 +157,16 @@ const actions: any = {
     delete_slide: (obj: any) => actions.delete(obj),
     delete_group: (obj: any) => actions.delete(obj),
     delete: (obj: any) => {
+        // delete shows from project
+        if (obj.sel.id === "show") {
+            // wait to delete until after they are removed from project
+            setTimeout(() => {
+                let sel = { ...obj.sel, id: "show_drawer" }
+                selected.set(sel)
+                actions.delete({ ...obj, sel })
+            })
+        }
+
         if (deleteAction(obj.sel)) return
 
         if (obj.contextElem?.classList.value.includes("#video_marker")) {

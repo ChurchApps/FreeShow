@@ -329,8 +329,6 @@
 
         if (active !== "text") return
 
-        // TODO: reset timer/icon/media/mirror style
-
         let values: any = []
         items.forEach((item) => {
             if (item.lines) {
@@ -344,21 +342,24 @@
             }
         })
 
-        if (!values.length) return
-
         // let selectedItems = $activeEdit.items.length ? $activeEdit.items : Object.keys(allSlideItems)
-        history({
-            id: "textStyle",
-            newData: { style: { key: "text", values } },
-            location: {
-                page: "edit",
-                show: $activeShow!,
-                slide,
-                items: $activeEdit.items,
-            },
-        })
+        if (values.length) {
+            history({
+                id: "textStyle",
+                newData: { style: { key: "text", values } },
+                location: {
+                    page: "edit",
+                    show: $activeShow!,
+                    slide,
+                    items: $activeEdit.items,
+                },
+            })
+        }
 
-        const deleteKeys = ["auto", "specialStyle", "scrolling"]
+        let deleteKeys = ["auto", "specialStyle", "scrolling"]
+        // reset timer/icon/media/mirror etc. style
+        if (item[item.type]) deleteKeys = [item.type]
+
         deleteKeys.forEach((key) => {
             history({
                 id: "setItems",
@@ -366,6 +367,8 @@
                 location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items, id: key },
             })
         })
+
+        // WIP refresh edit tools after resetting
     }
 
     $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)

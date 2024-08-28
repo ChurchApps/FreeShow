@@ -211,9 +211,7 @@
         if (!isStage) {
             // see autoSize.ts
             let type = item?.textFit || "shrinkToFit"
-            let itemFontSize = Number(getStyles(item?.lines?.[0]?.text?.[0]?.style, true)?.["font-size"] || "")
-            // WIP scripture drawer preview not showing the same as output
-            // console.log(item, ref, type, itemFontSize)
+            let itemFontSize = Number(getStyles(item?.lines?.[0]?.text?.[0]?.style, true)?.["font-size"] || "") || 100
 
             if (type === "shrinkToFit") {
                 let textIsBiggerThanBox = alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth
@@ -229,7 +227,7 @@
             }
             if (type === "growToFit") {
                 // set max font size to the current set text font size
-                if (itemFontSize) maxFontSize = itemFontSize
+                maxFontSize = itemFontSize
             }
         }
 

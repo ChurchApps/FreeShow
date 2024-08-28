@@ -2,9 +2,8 @@ import { get } from "svelte/store"
 import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
 import { bibleApiKey, dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
-import { getAutoSize } from "../../edit/scripts/autoSize"
-import { clone, removeDuplicates } from "../../helpers/array"
 import { getKey } from "../../../values/keys"
+import { clone, removeDuplicates } from "../../helpers/array"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
 let tempCache: any = {}
@@ -245,16 +244,16 @@ export function getSlides({ bibles, sorted }) {
 
         // auto size
         slides.forEach((slide, i) => {
-            slide.forEach((item, j) => {
+            slide.forEach((_item, j) => {
                 if (!templateTextItems[j]?.auto || !slides[i][j].lines?.[0]?.text) return
 
-                let autoSize: number = getAutoSize(item)
+                // let autoSize: number = getAutoSize(item)
                 // WIP historyActions - TEMPLATE...
                 slides[i][j].auto = true
                 if (templateTextItems[j]?.textFit) slides[i][j].textFit = templateTextItems[j]?.textFit
                 slides[i][j].lines![0].text.forEach((_, k) => {
                     if (slides[i][j].lines![0].text[k].customType === "disableTemplate") return
-                    slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
+                    // slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
                 })
             })
         })
