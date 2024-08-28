@@ -63,7 +63,7 @@ jobs:
                    echo npm run release
                    export USE_SYSTEM_FPM=true
                    tools/bin/npm run release:arm64
-                   cp dist/*.AppImage *.deb /artifacts/
+                   cp dist/*.AppImage /artifacts/
             - name: 'Upload Artifact'
               uses: actions/upload-artifact@v4
               with:
