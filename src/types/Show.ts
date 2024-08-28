@@ -218,6 +218,18 @@ export interface Transition {
     duration: number
     easing: string
     delay?: number // item in/out wait
+    custom?: any // e.g. transition direction
+
+    between?: TransitionData
+    in?: TransitionData
+    out?: TransitionData
+}
+
+export interface TransitionData {
+    type: TransitionType
+    duration: number
+    easing: string
+    delay?: number // item in/out wait
 }
 
 export interface Media {

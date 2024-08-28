@@ -10,7 +10,7 @@
 </script>
 
 <!-- svelte transition bug!!! -->
-{#if disableTransition}
+{#if disableTransition && !inTransition && !outTransition}
     <div class="transitioner">
         <slot />
     </div>

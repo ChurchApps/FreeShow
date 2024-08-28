@@ -132,7 +132,7 @@ export function getSlides({ bibles, sorted }) {
         let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
         let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
-        let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {} } // scrolling, bindings
+        let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings
 
         let slideIndex: number = 0
         slides[slideIndex].push(clone(emptyItem))
@@ -310,6 +310,7 @@ export function getSlides({ bibles, sorted }) {
                     lines,
                     style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
                     specialStyle: metaTemplate?.specialStyle || {},
+                    actions: metaTemplate?.actions || {},
                 })
             }
         }

@@ -23,17 +23,17 @@
     export let transitionEnabled: boolean = false
     export let isKeyOutput: boolean = false
 
-    // timeout so it can start fading out right before (so svelte don't removes the element right away)
     let currentItems: Item[] = []
     let show: boolean = false
+
     $: if (currentSlide.items !== undefined) updateItems()
     let timeout: any = null
-    function updateItems() {
-        // let hideDuration = 0 * 1000
-        // // hideDuration += // + 40 // + 10
 
+    // if anything is outputted & changing to something that's outputted
+    let transitioningBetween: boolean = false
+
+    function updateItems() {
         // get any items with no transition between the two slides
-        // WIP showing/clearing an item with no transition....
         let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
         let newItemTransition = currentSlide.items.find((a) => a.actions?.transition)?.actions?.transition
         let itemTransitionDuration: number | null = null
@@ -44,35 +44,43 @@
             else if (currentSlide.items.find((a) => a.actions?.transition?.duration === 0 || a.actions?.transition?.type === "none")) itemTransitionDuration = 0
         }
 
-        // WIP get slide transition
-        console.log(oldItemTransition, newItemTransition, itemTransitionDuration)
+        let currentTransition = transition.between || transition.in || transition
+        if (currentTransition?.type === "none") currentTransition.duration = 0
 
-        let currentTransition = transitionEnabled ? itemTransitionDuration ?? transition?.duration ?? 0 : 0
+        let currentTransitionDuration = transitionEnabled ? itemTransitionDuration ?? currentTransition?.duration ?? 0 : 0
+        let waitToShow = currentTransitionDuration * 0.5
 
-        let waitToShow = currentTransition * 0.5
-        console.log(waitToShow)
-
-        show = false
+        // between
+        if (currentItems.length && currentSlide.items.length) transitioningBetween = true
 
         if (timeout) clearTimeout(timeout)
-        timeout = setTimeout(() => {
-            currentItems = clone(currentSlide.items || [])
-            console.log(currentItems)
 
+        // wait for between to update out transition
+        timeout = setTimeout(() => {
+            show = false
+
+            // wait for previous items to start fading out (svelte will keep them until the transition is done!)
             timeout = setTimeout(() => {
-                show = true
-            }, waitToShow)
+                currentItems = clone(currentSlide.items || [])
+
+                // wait until half transition duration of previous items have passed as it looks better visually
+                timeout = setTimeout(() => {
+                    show = true
+
+                    // wait for between to set in transition
+                    timeout = setTimeout(() => {
+                        transitioningBetween = false
+                    })
+                }, waitToShow)
+            })
         })
     }
-
-    // WIP wait to hide not working...
-    // WIP use svelte transition "delay" to show & hide
 </script>
 
 {#key show}
     {#each currentItems as item}
         {#if show}
-            <SlideItemTransition {preview} {transitionEnabled} globalTransition={transition} {currentSlide} {item} {outSlide} {lines} {customTemplate} let:customSlide let:customItem let:customLines let:customOut>
+            <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} {currentSlide} {item} {outSlide} {lines} {customTemplate} let:customSlide let:customItem let:customLines let:customOut>
                 {#if !customItem.bindings?.length || customItem.bindings.includes(outputId)}
                     <Textbox
                         filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}

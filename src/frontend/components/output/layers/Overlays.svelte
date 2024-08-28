@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { Transition } from "../../../../types/Show"
-    import OutputTransition from "../transitions/OutputTransition.svelte"
     import Overlay from "./Overlay.svelte"
 
     export let outputId: string
@@ -15,11 +14,9 @@
 
 {#each activeOverlays as id}
     {#if overlays[id]}
-        <OutputTransition {transition}>
-            <div class:key={isKeyOutput}>
-                <Overlay {id} {outputId} {overlays} {mirror} transitionEnabled={transition.type !== "none" && !!transition.duration} />
-            </div>
-        </OutputTransition>
+        <div class:key={isKeyOutput}>
+            <Overlay {id} {outputId} {overlays} {mirror} {transition} />
+        </div>
     {/if}
 {/each}
 
