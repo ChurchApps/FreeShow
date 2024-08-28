@@ -21,7 +21,7 @@
     const dispatch = createEventDispatcher()
     const increment = (customStep: number = step) => dispatch("change", Math.min(Number(value) + customStep, max).toFixed(decimals))
     const decrement = (customStep: number = step) => dispatch("change", Math.max(Number(value) - customStep, min).toFixed(decimals))
-    // TODO: reset if not number....
+
     const input = (e: any) => {
         let inputValue = e.target.value || 0
         inputValue = new Function(`return ${inputValue}`)() // calculate without eval()
@@ -69,7 +69,7 @@
         else increment(stepAmount)
 
         // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)

@@ -7,7 +7,8 @@
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clearAudioStreams, decodeURI, playAudio, startMicrophone } from "../../helpers/audio"
+    import { sortByName } from "../../helpers/array"
+    import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
     import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
@@ -64,7 +65,7 @@
         backgrounds = {}
         bgs = []
         layoutBackgrounds.forEach((a: any) => {
-            if (!show.media[a]) return
+            if (!show.media?.[a]) return
             let path: string = show.media[a].path || show.media[a].id || ""
             let cloudId = $driveData.mediaId
             if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
@@ -76,7 +77,7 @@
             else backgrounds[path] = { id: a, ...show.media[a], path, type, count: 1 }
         })
         Object.values(backgrounds).forEach((a) => bgs.push(a))
-        bgs = bgs.sort((a: any, b: any) => a.name.localeCompare(b.name))
+        bgs = sortByName(bgs)
     } else bgs = []
 
     let audio: any = []
@@ -128,28 +129,12 @@
 
             actions.push(action)
         })
-    }
-
-    // WIP MIDI get actions
-    // $: showMidi = show?.midi || {}
-    // $: if (Object.keys(showMidi).length || Object.keys($midiIn).length) {
-    //     midi = []
-    //     Object.entries(showMidi).forEach(([id, value]: any) => {
-    //         midi.push({ id, ...value })
-    //     })
-    //     Object.entries($midiIn).forEach(([id, value]: any) => {
-    //         if (value.shows.find((a) => a.id === $activeShow!.id)) {
-    //             midi.push({ id, ...value, sendType: "in" })
-    //         }
-    //     })
-    // } else if (!Object.keys(showMidi).length) midi = []
-
-    // TODO: check if file exists!!!
+    } else actions = []
 
     let simularBgs: any[] = []
     $: if (bgs.length) getSimularPaths()
     function getSimularPaths() {
-        send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => decodeURI(a.path)) })
+        send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
 
         let listenerId = "media_simular"
         destroy(MAIN, listenerId)
@@ -171,8 +156,6 @@
         })
     }
 </script>
-
-<!-- TODO: transition type & duration -->
 
 <div class="main">
     {#if bgs.length || audio.length || mics.length || actions.length}
@@ -200,7 +183,7 @@
                             <MediaLoader name={background.name} path={background.path} thumbnailPath={bgPath} type={background.type} {mediaStyle} />
                         </HoverButton>
 
-                        <p title={decodeURI(background.path)}>{background.name}</p>
+                        <p title={background.path}>{background.name}</p>
 
                         {#if background.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{background.count}</span>
@@ -363,6 +346,7 @@
     .item {
         display: flex;
         width: 100%;
+        /* don't think fit-content is necessary */
         height: fit-content;
         /* justify-content: center; */
         align-items: center;

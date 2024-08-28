@@ -2,6 +2,7 @@
     import { OUTPUT } from "../../../types/Channels"
     import { activeStage, currentWindow, stageShows } from "../../stores"
     import { send } from "../../utils/request"
+    import { keysToID, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import { getStyles } from "../helpers/style"
     import T from "../helpers/T.svelte"
@@ -30,7 +31,7 @@
         } else newStyles = {}
     }
 
-    $: if ($activeStage.id === null && Object.keys($stageShows).length) activeStage.set({ id: Object.keys($stageShows)[0], items: [] })
+    $: if ($activeStage.id === null && Object.keys($stageShows).length) activeStage.set({ id: sortByName(keysToID($stageShows))[0]?.id, items: [] })
 
     function setStyles() {
         let items: any = $stageShows[$activeStage.id!].items
@@ -78,7 +79,7 @@
     <div class="parent" class:noOverflow>
         {#if stageShowId}
             <!-- TODO: stage resolution... -->
-            <Zoomed background={show.settings?.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={false} center>
+            <Zoomed background={show.settings?.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit")} bind:ratio disableStyle hideOverflow={!edit} center>
                 <!-- TODO: snapping to top left... -->
                 {#if edit}
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />

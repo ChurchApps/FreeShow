@@ -8,6 +8,7 @@ import {
     $,
     activeDrawerTab,
     activeEdit,
+    activeFocus,
     activePage,
     activePopup,
     activeRecording,
@@ -22,6 +23,7 @@ import {
     drawerTabsData,
     eventEdit,
     events,
+    focusMode,
     forceClock,
     media,
     mediaFolders,
@@ -44,6 +46,7 @@ import {
     styles,
     templates,
     themes,
+    toggleOutputEnabled,
 } from "../../stores"
 import { hideDisplay, newToast } from "../../utils/common"
 import { send } from "../../utils/request"
@@ -54,6 +57,7 @@ import { getShortBibleName } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
+import { rearrangeItems } from "../edit/scripts/itemHelpers"
 import { getSelectionRange } from "../edit/scripts/textStyle"
 import { exportProject } from "../export/project"
 import { clone, removeDuplicates } from "../helpers/array"
@@ -90,6 +94,19 @@ const actions: any = {
     },
     quit: () => initializeClosing(),
     // view
+    focus_mode: () => {
+        let project = get(projects)[get(activeProject) || ""]
+        if (!project?.shows?.length) return
+
+        previousShow.set(null)
+        activeShow.set(null)
+
+        let firstItem = project.shows[0].id
+        activeFocus.set({ id: firstItem, index: 0 })
+
+        activePage.set("show")
+        focusMode.set(!get(focusMode))
+    },
     fullscreen: () => send(MAIN, ["FULLSCREEN"]),
     // edit
     undo: () => undo(),
@@ -218,6 +235,25 @@ const actions: any = {
             return a
         })
     },
+    lock_show: (obj: any) => {
+        showsCache.update((a: any) => {
+            obj.sel.data.forEach((b: any) => {
+                if (!a[b.id]) return
+                a[b.id].locked = !a[b.id].locked
+
+                // remove template
+                a[b.id].settings.template = null
+            })
+            return a
+        })
+        shows.update((a: any) => {
+            obj.sel.data.forEach((b: any) => {
+                if (a[b.id].locked) delete a[b.id].locked
+                else a[b.id].locked = true
+            })
+            return a
+        })
+    },
     toggle_clock: () => {
         forceClock.set(!get(forceClock))
     },
@@ -243,6 +279,22 @@ const actions: any = {
     move_to_front: (obj: any) => {
         send(OUTPUT, ["TO_FRONT"], obj.contextElem.id)
     },
+    hide_from_preview: (obj: any) => {
+        let outputId = obj.contextElem.id
+        toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
+        setTimeout(() => {
+            outputs.update((a) => {
+                // should match the outputs list in MultiOutputs.svelte
+                let showingOutputsList = Object.values(a).filter((a) => a.enabled && !a.hideFromPreview && !a.isKeyOutput)
+                let newValue = !a[outputId].hideFromPreview
+
+                if (newValue && showingOutputsList.length <= 1) newToast("$toast.one_output")
+                else a[outputId].hideFromPreview = !a[outputId].hideFromPreview
+
+                return a
+            })
+        }, 100)
+    },
 
     // new
     newShowPopup: () => activePopup.set("show"),
@@ -260,12 +312,12 @@ const actions: any = {
             return
         }
 
-        if (obj.contextElem.classList.contains("#category_media")) {
+        if (obj.contextElem.classList.contains("#category_media") || obj.sel.id === "category_media") {
             send(MAIN, ["OPEN_FOLDER"], { channel: "MEDIA", title: get(dictionary).new?.folder })
             return
         }
 
-        if (obj.contextElem.classList.contains("#category_audio")) {
+        if (obj.contextElem.classList.contains("#category_audio") || obj.sel.id === "category_audio") {
             send(MAIN, ["OPEN_FOLDER"], { channel: "AUDIO", title: get(dictionary).new?.folder })
             return
         }
@@ -286,6 +338,7 @@ const actions: any = {
     createCollection: (obj: any) => {
         if (obj.sel.id !== "category_scripture") return
         let versions: string[] = obj.sel.data
+
         // remove collections
         versions = versions.filter((id) => typeof id === "string") // sometimes the bibles object is added
         versions = versions.filter((id) => !Object.entries(get(scriptures)).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
@@ -294,8 +347,12 @@ const actions: any = {
         let name = ""
         versions.forEach((id, i) => {
             if (i > 0) name += " + "
-            let bibleName: string = Object.values(get(scriptures)).find((a) => a.id === id)?.name || ""
-            name += getShortBibleName(bibleName)
+            if (id.length < 5) {
+                name += id.toUpperCase()
+            } else {
+                let bibleName: string = Object.values(get(scriptures)).find((a) => a.id === id)?.name || ""
+                name += getShortBibleName(bibleName)
+            }
         })
 
         scriptures.update((a) => {
@@ -340,6 +397,8 @@ const actions: any = {
             if (get(previousShow)) {
                 activeShow.set(JSON.parse(get(previousShow)))
                 previousShow.set(null)
+            } else {
+                activeShow.set(null)
             }
             return
         }
@@ -429,11 +488,21 @@ const actions: any = {
             })
         }
     },
+    editSlideText: (obj) => {
+        if (obj.sel.id === "slide") {
+            let slide = obj.sel.data[0]
+            activeEdit.set({ slide: slide.index, items: [], showId: slide.showId })
+            activePage.set("edit")
+            setTimeout(() => selected.set({ id: null, data: [] }))
+        }
+    },
 
     edit: (obj: any) => {
         if (obj.sel.id === "slide") {
-            activeEdit.set({ slide: obj.sel.data[0].index, items: [] })
+            let slide = obj.sel.data[0]
+            activeEdit.set({ slide: slide.index, items: [], showId: slide.showId || get(activeShow)?.id })
             activePage.set("edit")
+            setTimeout(() => selected.set({ id: null, data: [] }))
         } else if (obj.sel.id === "media") {
             activeEdit.set({ type: "media", id: obj.sel.data[0].path, items: [] })
             activePage.set("edit")
@@ -804,6 +873,10 @@ const actions: any = {
             return items
         }
     },
+    to_front: () => rearrangeItems("to_front"),
+    forward: () => rearrangeItems("forward"),
+    backward: () => rearrangeItems("backward"),
+    to_back: () => rearrangeItems("to_back"),
 
     // formats
     find_replace: (obj: any) => {
@@ -846,7 +919,7 @@ const actions: any = {
     },
     merge: (obj: any) => {
         if (obj.sel.id === "slide") {
-            let selectedSlides = obj.sel.data.sort((a, b) => a.index - b.index)
+            let selectedSlides = obj.sel.data // .sort((a, b) => a.index - b.index) [merge based on selected order]
             if (selectedSlides.length > 1) mergeSlides(selectedSlides)
         } else if (!obj.sel.id) {
             // textbox
@@ -900,6 +973,7 @@ const actions: any = {
                 newOutput.name = currentOutput.name
                 newOutput.out = currentOutput.out
                 if (!currentOutput.enabled) newOutput.active = true
+                if (currentOutput.stageOutput) newOutput.stageOutput = currentOutput.stageOutput
 
                 history({ id: "UPDATE", newData: { data: newOutput }, oldData: { id }, location: { page: "settings", id: "settings_output" } })
             })

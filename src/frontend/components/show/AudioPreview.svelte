@@ -1,14 +1,16 @@
 <script lang="ts">
-    import { activeShow, dictionary, media, outLocked, playingAudio } from "../../stores"
+    import { dictionary, focusMode, media, outLocked, playingAudio } from "../../stores"
     import { clearAudio, getAudioDuration, playAudio, updateVolume } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
     import Slider from "../inputs/Slider.svelte"
 
-    $: path = $activeShow?.id || ""
-    $: name = $activeShow?.name || ""
-    $: isMic = $activeShow?.data?.isMic
+    export let active: any
+
+    $: path = active?.id || ""
+    $: name = active?.name || ""
+    $: isMic = active?.data?.isMic
     $: playing = $playingAudio[path] || {}
     $: paused = playing.paused !== false
 
@@ -50,7 +52,7 @@
 
     function keydown(e: any) {
         // if (e.target.closest("input") || e.target.closest(".edit")) return
-        if ($outLocked || isMic || document.activeElement !== document.body) return
+        if ($outLocked || isMic || $focusMode || document.activeElement !== document.body) return
 
         if (e.key === " ") playAudio({ path, name }, true, currentTime)
     }
@@ -127,7 +129,10 @@
 
 <svelte:window on:keydown={keydown} />
 
-<canvas bind:this={canvas} />
+{#if !$focusMode}
+    <!-- analyzer -->
+    <canvas bind:this={canvas} />
+{/if}
 
 <div class="main media context #media_preview">
     <div class="buttons">
@@ -242,7 +247,7 @@
     .buttons {
         display: flex;
         width: 100%;
-        height: fit-content;
+        /* height: fit-content; */
         gap: 10px;
         align-items: center;
 

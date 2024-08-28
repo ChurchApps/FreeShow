@@ -15,11 +15,12 @@
     import Projects from "./components/show/Projects.svelte"
     import Show from "./components/show/Show.svelte"
     import ShowTools from "./components/show/ShowTools.svelte"
+    import FocusMode from "./components/show/focus/FocusMode.svelte"
     import Shows from "./components/stage/Shows.svelte"
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeEdit, activePage, activeShow, activeStage, currentWindow, loaded, os } from "./stores"
+    import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os, shows } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
 
     $: page = $activePage
@@ -27,7 +28,9 @@
 </script>
 
 <div class="column">
-    <Top {isWindows} />
+    {#if !$focusMode}
+        <Top {isWindows} />
+    {/if}
     <div class="row">
         <Resizeable id="leftPanel">
             <div class="left">
@@ -47,7 +50,11 @@
 
         <div class="center">
             {#if page === "show"}
-                <Show />
+                {#if $focusMode}
+                    <FocusMode />
+                {:else}
+                    <Show />
+                {/if}
             {:else if page === "edit"}
                 <Editor />
             {:else if page === "draw"}
@@ -63,7 +70,7 @@
             <div class="right" class:row={width > DEFAULT_WIDTH * 1.8}>
                 <Preview />
                 {#if page === "show"}
-                    {#if $activeShow && ($activeShow.type === "show" || $activeShow.type === undefined)}
+                    {#if $activeShow && ($activeShow.type === "show" || $activeShow.type === undefined) && !$focusMode}
                         <ShowTools />
                     {/if}
                 {:else if page === "edit"}
@@ -71,7 +78,7 @@
                         <MediaTools />
                     {:else if $activeEdit.type === "effect"}
                         <EffectTools />
-                    {:else}
+                    {:else if !$shows[$activeShow?.id || ""]?.locked && !$focusMode}
                         <EditTools />
                     {/if}
                 {:else if page === "draw"}
@@ -110,6 +117,8 @@
         flex: 1;
         background-color: var(--primary-darker);
         overflow: auto;
+
+        scroll-behavior: smooth;
     }
 
     .left,

@@ -4,13 +4,13 @@
     import { slide } from "svelte/transition"
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
-    import { activeDrawerOnlineTab, activeEdit, activePopup, activeShow, dictionary, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
+    import { activeDrawerOnlineTab, activeEdit, activeFocus, activePopup, activeShow, dictionary, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
-    import { encodeFilePath, getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
+    import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import { clearBackground } from "../../output/clear"
@@ -70,14 +70,15 @@
             prevActive = active
         } else if (active === "favourites") {
             prevActive = active
-            files = Object.entries($media)
-                .map(([path, a]: any) => {
-                    let p = splitPath(path)
-                    let name = p.name
-                    return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
-                })
-                .filter((a) => a.favourite === true && a.audio !== true)
-                .sort((a: any, b: any) => a.name.localeCompare(b.name))
+            files = sortByName(
+                Object.entries($media)
+                    .map(([path, a]: any) => {
+                        let p = splitPath(path)
+                        let name = p.name
+                        return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
+                    })
+                    .filter((a) => a.favourite === true && a.audio !== true)
+            )
 
             filterFiles()
         } else if (active === "all") {
@@ -108,14 +109,14 @@
     // receive files
     window.api.receive(READ_FOLDER, receiveContent, listenerId)
     function receiveContent(msg: any) {
-        filesInFolders = (msg.filesInFolders || []).sort((a: any, b: any) => a.name.localeCompare(b.name))
+        filesInFolders = sortByName(msg.filesInFolders || [])
 
         if (active !== "all" && msg.path !== path) return
 
         files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
-        files.sort((a: any, b: any) => a.name.localeCompare(b.name)).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
-        files = files.map((a) => ({ ...a, path: a.folder ? a.path : encodeFilePath(a.path) }))
+        files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
         filterFiles()
     }
@@ -179,7 +180,7 @@
         mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
 
         // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)
@@ -208,14 +209,19 @@
         activeEdit.set({ id: path, type: "media", items: [] })
         let name = removeExtension(getFileName(path))
         let type = getMediaType(getExtension(path))
-        activeShow.set({ id: path, name, type })
+
+        if ($focusMode) activeFocus.set({ id: path })
+        else activeShow.set({ id: path, name, type })
     }
 
     function keydown(e: any) {
         if (e.key === "Enter" && searchValue.length > 1 && e.target.closest(".search")) {
             if (fullFilteredFiles.length) {
                 let file = fullFilteredFiles[0]
-                activeShow.set({ id: file.path, name: file.name, type: getMediaType(file.extension) })
+
+                if ($focusMode) activeFocus.set({ id: file.path })
+                else activeShow.set({ id: file.path, name: file.name, type: getMediaType(file.extension) })
+
                 activeFile = filteredFiles.findIndex((a) => a.path === file.path)
                 if (activeFile < 0) activeFile = null
             }
@@ -268,7 +274,6 @@
 
 <svelte:window on:keydown={keydown} on:mousedown={mousedown} />
 
-<!-- TODO: autoscroll -->
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem} on:wheel|passive={wheel}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
         {#if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
@@ -305,7 +310,7 @@
                 {#if $mediaOptions.mode === "grid"}
                     <MediaGrid items={fullFilteredFiles} columns={$mediaOptions.columns} let:item>
                         {#if item.folder}
-                            <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} />
+                            <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={fullFilteredFiles.length < 20} />
                         {:else}
                             <Media
                                 credits={item.credits}
@@ -478,9 +483,6 @@
         display: flex;
         flex-wrap: wrap;
         flex: 1;
-        /* gap: 10px;
-    padding: 10px; */
-        /* padding: 5px; */
         place-content: flex-start;
     }
 
@@ -491,27 +493,10 @@
         z-index: -1;
     }
 
-    /* WIP padding in virtual grid - scrolling */
-    /* .grid :global(div:first-child) {
-        padding: 5px;
-    } */
-
     .grid :global(svelte-virtual-list-viewport) {
         width: 100%;
         padding: 5px;
     }
-
-    /* .grid :global(svelte-virtual-list-viewport) {
-        height: initial;
-        width: 100%;
-    }
-    .grid :global(svelte-virtual-list-contents) {
-        display: flex;
-        flex-wrap: wrap;
-        flex: 1;
-        padding: 5px;
-        place-content: flex-start;
-    } */
 
     .gridgap {
         display: flex;

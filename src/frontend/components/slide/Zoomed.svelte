@@ -81,9 +81,6 @@
 
     .slide {
         position: relative;
-        /* TODO: not edit */
-        /* z-index: -1; */
-
         transition: 800ms background-color;
     }
 

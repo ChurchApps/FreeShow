@@ -2,14 +2,15 @@
     import { activeEdit, activeShow, cachedShowsData, showsCache } from "../../stores"
     import T from "../helpers/T.svelte"
     import { findMatchingOut } from "../helpers/output"
+    import { getShowCacheId } from "../helpers/show"
     import Slide from "../slide/Slide.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
 
-    $: showId = $activeShow?.id || ""
+    $: showId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[showId]
-    $: layoutSlides = $cachedShowsData[showId]?.layout || []
+    $: layoutSlides = $cachedShowsData[getShowCacheId(showId, currentShow)]?.layout || []
 
     function keydown(e: any) {
         if (e.altKey) {
@@ -25,9 +26,9 @@
             ;(document.activeElement as any)?.blur()
 
             if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
-                activeEdit.set({ slide: 0, items: [] })
+                activeEdit.set({ slide: 0, items: [], showId })
             } else if ($activeEdit.slide < layoutSlides.length - 1) {
-                activeEdit.set({ slide: $activeEdit.slide + 1, items: [] })
+                activeEdit.set({ slide: $activeEdit.slide + 1, items: [], showId })
             }
         } else if (e.key === "ArrowUp") {
             // Arrow Up
@@ -35,9 +36,9 @@
             ;(document.activeElement as any)?.blur()
 
             if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
-                activeEdit.set({ slide: layoutSlides.length - 1, items: [] })
+                activeEdit.set({ slide: layoutSlides.length - 1, items: [], showId })
             } else if ($activeEdit.slide > 0) {
-                activeEdit.set({ slide: $activeEdit.slide - 1, items: [] })
+                activeEdit.set({ slide: $activeEdit.slide - 1, items: [], showId })
             }
         }
     }
@@ -64,7 +65,7 @@
         columns = Math.max(1, Math.min(4, columns + (e.deltaY < 0 ? -1 : 1)))
 
         // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)
@@ -82,7 +83,7 @@
     let loaded: boolean = false
 
     // reset loading when changing view modes
-    $: if ($activeShow?.id) loaded = false
+    $: if (showId) loaded = false
 
     $: if (!loaded && !lazyLoading && layoutSlides?.length) {
         lazyLoading = true
@@ -117,6 +118,7 @@
                     {#each layoutSlides as slide, i}
                         {#if (loaded || i < lazyLoader) && currentShow?.slides?.[slide.id]}
                             <Slide
+                                {showId}
                                 slide={currentShow.slides[slide.id]}
                                 show={currentShow}
                                 layoutSlide={slide}
@@ -129,7 +131,9 @@
                                 {altKeyPressed}
                                 {columns}
                                 on:click={(e) => {
-                                    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) activeEdit.set({ slide: i, items: [] })
+                                    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                                        activeEdit.set({ slide: i, items: [], showId })
+                                    }
                                 }}
                             />
                         {/if}

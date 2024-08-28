@@ -19,6 +19,7 @@
     import { updateCachedShows } from "../../helpers/show"
     import type { API_midi } from "../../actions/api"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import { customActionActivations } from "../../actions/customActivation"
 
     $: id = $popupData.id || ""
     $: mode = $popupData.mode || ""
@@ -245,20 +246,7 @@
     }
 
     // custom activations
-    const customActivations = [
-        { id: "", name: "—" },
-        { id: "startup", name: "$:actions.activate_on_startup:$" },
-        { id: "save", name: "$:actions.activate_save:$" },
-        { id: "slide_click", name: "$:actions.activate_slide_clicked:$" },
-        { id: "video_start", name: "$:actions.activate_video_starting:$" },
-        { id: "video_end", name: "$:actions.activate_video_ending:$" },
-        { id: "timer_end", name: "$:actions.activate_timer_ending:$" },
-        { id: "scripture_start", name: "$:actions.activate_scripture_start:$" },
-        { id: "slide_cleared", name: "$:actions.activate_slide_cleared:$" },
-        { id: "background_cleared", name: "$:actions.activate_background_cleared:$" },
-        { id: "show_created", name: "$:actions.activate_show_created:$" },
-        { id: "audio_playlist_ended", name: "$:actions.activate_audio_playlist_ended:$" },
-    ]
+    const customActivations = [{ id: "", name: "—" }, ...customActionActivations]
     $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""
 </script>
 
@@ -270,12 +258,6 @@
             <CombinedInput>
                 <p><T id="midi.name" /></p>
                 <TextInput style="width: 70%;" value={action.name} on:change={(e) => updateValue("name", e)} />
-            </CombinedInput>
-            <CombinedInput>
-                <p><T id="settings.enabled" /></p>
-                <div class="alignRight">
-                    <Checkbox checked={action.enabled ?? true} on:change={(e) => updateValue("enabled", e, true)} />
-                </div>
             </CombinedInput>
 
             <!-- multiple actions -->
@@ -306,6 +288,16 @@
                 <p><T id="actions.custom_activation" /></p>
                 <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} />
             </CombinedInput>
+
+            <!-- only used to disable customActionActivation if any -->
+            {#if customActivation || action.enabled === false}
+                <CombinedInput>
+                    <p><T id="settings.enabled" /></p>
+                    <div class="alignRight">
+                        <Checkbox checked={action.enabled ?? true} on:change={(e) => updateValue("enabled", e, true)} />
+                    </div>
+                </CombinedInput>
+            {/if}
 
             <!-- can be activated by MIDI input signal -->
             <CombinedInput>

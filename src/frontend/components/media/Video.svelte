@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
+    import { encodeFilePath } from "../helpers/media"
 
     export let path: any
     export let video: any = null
@@ -18,15 +19,6 @@
     function loaded() {
         hasLoaded = true
         dispatch("loaded", true)
-
-        // audio context
-        // this don't work because video audio goes through audio context
-        // if (!$special.audioOutput) return
-        // try {
-        //     video.setSinkId($special.audioOutput)
-        // } catch (err) {
-        //     console.error(err)
-        // }
     }
 
     // custom end time
@@ -75,7 +67,7 @@
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}
         muted={mirror ? true : videoData.muted ?? true}
-        src={path}
+        src={encodeFilePath(path)}
         autoplay
         loop={videoData.loop || false}
     >

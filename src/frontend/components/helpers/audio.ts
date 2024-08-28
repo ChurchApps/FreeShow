@@ -489,8 +489,6 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true) {
     // stop playing metronome
     if (clearPlaylist && !path) stopMetronome()
 
-    // let clearTime = get(transitionData).audio.duration
-    // TODO: starting audio before previous clear is finished will not start/clear audio
     const clearTime = get(special).audio_fade_duration ?? 1.5
 
     if (clearing) {
@@ -691,46 +689,47 @@ export async function getAnalyser(elem: any, stream: any = null) {
 
     console.log("ANALYZING AUDIO", elem)
 
-    // custom audio output
-    // let audioDest = ac.createMediaStreamDestination()
-    // source.connect(audioDest)
-    // let newAudio: any = new Audio()
-    // newAudio.srcObject = audioDest.stream
-    // WIP this works in Chrome 110: (Electron needs to be updated!)
+    // custom audio output (supported in Chrome 110+)
     // https://developer.chrome.com/blog/audiocontext-setsinkid/
-    // if (get(special).audioOutput) {
-    //     try {
-    //         await (ac as any).setSinkId(get(special).audioOutput)
-    //     } catch (err) {
-    //         console.error(err)
-    //     }
-    // }
+    // this applies to both audio & video
+    if (get(special).audioOutput) {
+        let audioDest = ac.createMediaStreamDestination()
+        source.connect(audioDest)
+        let newAudio: any = new Audio()
+        newAudio.srcObject = audioDest.stream
+
+        try {
+            await (ac as any).setSinkId(get(special).audioOutput)
+        } catch (err) {
+            console.error(err)
+        }
+    }
 
     return { left: leftAnalyser, right: rightAnalyser, gainNode }
 }
 
 export async function getAudioDuration(path: string): Promise<number> {
     return new Promise((resolve) => {
-        let audio: any = new Audio(path)
+        let audio: any = new Audio(encodeFilePath(path))
         audio.addEventListener("canplaythrough", (_: any) => {
             resolve(audio.duration)
         })
     })
 }
 
-export function decodeURI(path: string) {
-    const cleanedURI = cleanURI(path)
+// export function decodeURI(path: string) {
+//     const cleanedURI = cleanURI(path)
 
-    try {
-        return decodeURIComponent(cleanedURI)
-    } catch (e) {
-        console.error("URI malformed: ", path)
-        // newToast("$error.uri")
-        return path
-    }
-}
-function cleanURI(uri) {
-    // only keep valid URI characters (and spaces)
-    const invalidChars = /[^ A-Za-z0-9\-_.!~*'()%;:@&=+$,/?#[\]]/g
-    return uri.replace(invalidChars, "")
-}
+//     try {
+//         return decodeURIComponent(cleanedURI)
+//     } catch (e) {
+//         console.error("URI malformed: ", path)
+//         // newToast("$error.uri")
+//         return path
+//     }
+// }
+// function cleanURI(uri) {
+//     // only keep valid URI characters (and spaces)
+//     const invalidChars = /[^ A-Za-z0-9\-_.!~*'()%;:@&=+$,/?#[\]]/g
+//     return uri.replace(invalidChars, "")
+// }

@@ -19,7 +19,7 @@
 
 <main>
     {#if error}
-        <p class="error"><T id={$alertMessage} /></p>
+        <p class="error"><T id="error.display" /></p>
     {/if}
 
     <Screens {activateOutput} />

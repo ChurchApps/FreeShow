@@ -486,4 +486,5 @@ async function getNewest({ driveFile, localPath }: any) {
     return "same"
 }
 
-// TODO: drive media folder...
+// a custom drive media folder is not planned as discussed here:
+// https://github.com/ChurchApps/FreeShow/issues/402

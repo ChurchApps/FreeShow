@@ -6,7 +6,9 @@ export interface Shows {
 
 export interface Show {
     name: string
-    private?: boolean
+    id?: string // this id should not be stored (but often used in the program as a temporary value)
+    private?: boolean // hide from drawer
+    locked?: boolean // disable edits
     category: null | ID
     quickAccess?: any
     reference?: {
@@ -43,6 +45,7 @@ export interface Show {
         copyright?: string
         CCLI?: string
         year?: string
+        key?: string
     }
     slides: { [key: ID]: Slide }
     layouts: { [key: ID]: Layout }
@@ -76,7 +79,8 @@ export interface Item {
     lines?: Line[]
     list?: List
     auto?: boolean
-    autoFontSize?: number
+    textFit?: string // auto size text fix option (default: shrinkToFit)
+    autoFontSize?: number // only used to store the calculated auto size text size
     style: string
     align?: string
     specialStyle?: any // line gap && line background

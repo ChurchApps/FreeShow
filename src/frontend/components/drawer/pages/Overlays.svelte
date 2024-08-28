@@ -1,6 +1,6 @@
 <script lang="ts">
     import { dictionary, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
-    import { clone } from "../../helpers/array"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { findMatchingOut, getResolution, setOutput } from "../../helpers/output"
@@ -19,10 +19,7 @@
     $: resolution = getResolution(null, { $outputs, $styles })
 
     let filteredOverlays: any[] = []
-    $: filteredOverlays = Object.keys($overlays)
-        .map((id) => ({ id, ...$overlays[id] }))
-        .filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$overlayCategories[s.category])))
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: filteredOverlays = sortByName(keysToID($overlays).filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$overlayCategories[s.category]))))
 
     // search
     $: if (filteredOverlays || searchValue !== undefined) filterSearch()
@@ -41,7 +38,7 @@
         mediaOptions.set({ ...$mediaOptions, columns: Math.max(2, Math.min(10, $mediaOptions.columns + (e.deltaY < 0 ? -100 : 100) / 100)) })
 
         // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)

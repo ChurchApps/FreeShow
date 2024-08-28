@@ -2,15 +2,15 @@
     import { dictionary, outputs, toggleOutputEnabled } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { keysToID, sortByName } from "../../helpers/array"
-    import { getResolution } from "../../helpers/output"
+    import { keysToID, sortByName, sortObject } from "../../helpers/array"
+    import { getOutputResolution, getResolution } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import PreviewOutput from "./PreviewOutput.svelte"
 
     export let disableTransitions: boolean = false
 
     // export let resolution: Resolution
-    $: outs = sortByName(keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput))
+    $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled && !a.hideFromPreview && !a.isKeyOutput)), "stageOutput")
 
     let fullscreen: boolean = false
     let fullscreenId = ""
@@ -38,7 +38,7 @@
 
     let resolution: any = {}
     function currentResolution() {
-        resolution = getResolution(null, null, true)
+        resolution = getResolution(getOutputResolution(fullscreenId), null, true)
     }
 </script>
 
@@ -55,8 +55,6 @@
         </span>
     {/if}
 
-    <!-- TODO: fullscreen height getStyleResolution() -->
-
     {#each outs as output}
         <div class="outputPreview" style={!fullscreen || fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;"}>
             <PreviewOutput outputId={output.id} {disableTransitions} style={outs.length > 1 && !fullscreen ? `border: 2px solid ${output?.color};width:50%` : ""} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
@@ -68,7 +66,9 @@
     .multipleOutputs {
         display: flex;
         flex-wrap: wrap;
+        /* this is changed in electron v31 (chromium) */
         height: fit-content;
+        /* height: 100%; */
     }
     /*
     .multipleOutputs.multiple:not(.fullscreen) :global(.zoomed) {

@@ -29,24 +29,15 @@
     let time: string = "00:00"
 
     function move(e: any) {
-        // TODO: time
-        // let ratio: number = e.target.offsetWidth / videoData.duration
-        // let percentage: number = (e.offsetX / e.target.offsetWidth) % ratio
         let padding: number = 3.5
         let width: number = e.target.offsetWidth - padding * 2
         let offset: number = e.offsetX - padding
         let percentage: number = offset / width
-        // console.log(percentage)
-        // let test = (e.offsetX / e.target.clientWidth) * parseInt(videoData.duration, 10)
-        // console.log(test.toFixed(2))
 
         if (percentage < 0) percentage = 0
         else if (percentage > 1) percentage = 1
 
-        // let parsed: number = parseInt((videoData.duration * percentage).toString(), 10)
-
         time = joinTime(secondsToTime((videoData.duration || 0) * percentage))
-        // if (e.buttons && toOutput) sendToOutput(e)
     }
 
     let latestValue: string = "0"
@@ -128,7 +119,6 @@
             step={1}
             max={videoData.duration}
             on:mousedown={() => {
-                // if (toOutput) sendToOutput()
                 if (!videoData.paused) pauseAtMove()
             }}
             on:mousemove={move}

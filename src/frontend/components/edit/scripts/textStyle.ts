@@ -2,15 +2,11 @@ import type { Item, Line, Slide } from "../../../../types/Show"
 
 // add new style to text by selection
 export function addStyle(selection: { start: number; end: number }[], item: Item, style: string | any[]): Item {
-    // let selections: null | Selection = window.getSelection()
-    // let global: null | number[] = null
     item.lines?.forEach((line, i) => {
         let newText: any[] = []
         let pos: number = 0
         if (selection[i]?.start !== undefined) {
             line.text?.forEach((text: any) => {
-                // , i: number
-                // TODO: .replaceAll("<br>", "")
                 const length: number = text.value.length
                 let from = 0
                 let to = length
@@ -40,8 +36,6 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
 
 // combine duplicate styles
 function combine(item: Item): Item {
-    // TODO: removed one char....
-    // TODO: remove if value === "" ???
     item.lines?.forEach((line) => {
         let a = [...(line.text || [])]
         for (let i = 0; i < a.length; i++) {
@@ -65,7 +59,6 @@ function combine(item: Item): Item {
             }
         }
 
-        // item.lines![i].text = a
         line.text = a
     })
     return item
@@ -258,13 +251,6 @@ export function getLineText(line: any): string {
 
 // seperate text with breaks
 export function getItemLines(item: Item): string[] {
-    // return (
-    //   item.lines?.map((line) => {
-    //     let text = ""
-    //     line.text.map((content) => (text += content.value))
-    //     return text
-    //   }) || []
-    // )
     let lines: string[] = []
     item.lines?.forEach((line) => {
         let text = ""

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeRecording, activeShow, events, forceClock, media, os, overlays, redoHistory, scriptures, selected, shows, slidesOptions, stageShows, undoHistory } from "../../stores"
+    import { activeProject, activeRecording, activeShow, events, forceClock, media, os, outputs, overlays, redoHistory, scriptures, selected, shows, slidesOptions, stageShows, undoHistory } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -12,6 +12,7 @@
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let disabled: boolean = false
 
+    let hide: boolean = false
     let enabled: boolean = menu?.enabled ? true : false
 
     const conditions: any = {
@@ -21,9 +22,22 @@
         view_list: () => ($slidesOptions.mode === "list" ? (enabled = true) : ""),
         view_lyrics: () => ($slidesOptions.mode === "lyrics" ? (enabled = true) : ""),
         view_text: () => ($slidesOptions.mode === "text" ? (enabled = true) : ""),
+        rename: () => {
+            hide = $shows[$selected.data[0]?.id]?.locked
+        },
+        delete: () => {
+            hide = $shows[$selected.data[0]?.id]?.locked
+        },
         private: () => {
-            if (!$shows[$selected.data[0]?.id]?.private) return
-            enabled = $shows[$selected.data[0].id].private
+            let show = $shows[$selected.data[0]?.id]
+            if (!show) return
+
+            enabled = show.private
+            hide = !enabled && show.locked
+        },
+        lock_show: () => {
+            if (!$shows[$selected.data[0]?.id]?.locked) return
+            enabled = $shows[$selected.data[0].id].locked
         },
         disable: () => {
             if ($selected.id === "slide" && $activeShow) {
@@ -84,6 +98,10 @@
             let id = $selected.data[0]
             if ($overlays[id]?.locked) enabled = true
         },
+        hide_from_preview: () => {
+            let outputId = contextElem.id
+            if ($outputs[outputId]?.hideFromPreview) enabled = true
+        },
         place_under_slide: () => {
             let id = $selected.data[0]
             if ($overlays[id]?.placeUnderSlide) enabled = true
@@ -141,7 +159,7 @@
     }
 </script>
 
-<div on:click={contextItemClick} class:enabled class:disabled style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
+<div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
         {#if menu?.translate === false}
@@ -183,5 +201,9 @@
     .enabled {
         color: var(--secondary);
         background-color: rgb(255 255 255 / 0.1);
+    }
+
+    .hide {
+        display: none;
     }
 </style>

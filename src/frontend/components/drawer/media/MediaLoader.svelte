@@ -5,7 +5,7 @@
     import type { MediaType, ShowType } from "../../../../types/Show"
 
     import { outputs, styles, videoExtensions } from "../../../stores"
-    import { getExtension } from "../../helpers/media"
+    import { encodeFilePath, getExtension } from "../../helpers/media"
     import { getResolution } from "../../helpers/output"
     import Camera from "../../output/Camera.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
@@ -87,7 +87,7 @@
                 // video.pause()
                 video.src = ""
             }
-            video.src = path
+            video.src = encodeFilePath(path)
         }, 20)
     }
 
@@ -104,7 +104,6 @@
     {#key path}
         {#if type === "camera"}
             <div bind:clientWidth={width} bind:clientHeight={height} style="height: 100%;">
-                <!-- TODO: media height -->
                 <Camera id={path} groupId={cameraGroup} class="media" style="{getStyleResolution({ width: videoElem?.videoWidth || 0, height: videoElem?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem />
             </div>
         {:else if type === "screen"}
@@ -112,11 +111,11 @@
         {:else if readyToLoad}
             {#if type !== "video" || (thumbnailPath && retryCount <= 5)}
                 {#key retryCount}
-                    <img src={type !== "video" && useOriginal ? path : thumbnailPath} alt={name} style={mediaStyleString} loading="lazy" class:loading={!loaded} on:error={reload} on:load={() => (loaded = true)} />
+                    <img src={type !== "video" && useOriginal ? encodeFilePath(path) : thumbnailPath} alt={name} style={mediaStyleString} loading="lazy" class:loading={!loaded} on:error={reload} on:load={() => (loaded = true)} />
                 {/key}
             {/if}
             {#if type === "video" && useOriginal}
-                <video style={mediaStyleString} bind:this={videoElem} on:error={reload} src={path} on:canplaythrough={getCurrentDuration}>
+                <video style={mediaStyleString} bind:this={videoElem} on:error={reload} src={encodeFilePath(path)} on:canplaythrough={getCurrentDuration}>
                     <track kind="captions" />
                 </video>
             {/if}

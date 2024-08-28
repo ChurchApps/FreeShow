@@ -31,7 +31,7 @@ const loadActions = {
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
     slide_groups: (items: ContextMenuItem[]) => {
         let selectedIndex = get(selected).data[0]?.index
-        let currentSlide = _show().layouts("active").ref()[0][selectedIndex]
+        let currentSlide = _show().layouts("active").ref()[0]?.[selectedIndex]
         if (!currentSlide) return []
 
         let currentGroup = currentSlide.data?.globalGroup || ""
@@ -42,7 +42,7 @@ const loadActions = {
         return sortItemsByLabel(items)
     },
     actions: () => {
-        let slideRef: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index]
+        let slideRef: any = _show().layouts("active").ref()[0]?.[get(selected).data[0]?.index]
         let currentActions: any = slideRef?.data?.actions
 
         let slideActions = [
@@ -74,7 +74,7 @@ const loadActions = {
         return itemActions
     },
     remove_layers: () => {
-        let layoutSlide: any = _show().layouts("active").ref()[0][get(selected).data[0]?.index] || {}
+        let layoutSlide: any = _show().layouts("active").ref()[0]?.[get(selected).data[0]?.index] || {}
 
         // text content
         let hasTextContent = getSlideText(_show().slides([layoutSlide.id]).get()[0])
@@ -101,21 +101,27 @@ const loadActions = {
         let ol = data.overlays || []
         if (ol.length) {
             if (media.length) media.push("SEPERATOR")
-            media.push(...ol.map((id: string) => ({ id, label: get(overlays)[id].name, translate: false, icon: "overlays" })).sort((a, b) => a.label.localeCompare(b.label)))
+            media.push(
+                ...sortByName(
+                    ol.map((id: string) => ({ id, label: get(overlays)[id].name, translate: false, icon: "overlays" })),
+                    "label"
+                )
+            )
         }
 
         // get audio
         let audio = data.audio || []
         if (audio.length) {
             if (media.length) media.push("SEPERATOR")
-            let audioItems = audio
-                .map((id: string) => ({
+            let audioItems = sortByName(
+                audio.map((id: string) => ({
                     id,
                     label: showMedia[id].name.indexOf(".") > -1 ? showMedia[id].name.slice(0, showMedia[id].name.lastIndexOf(".")) : showMedia[id].name,
                     translate: false,
                     icon: "music",
-                }))
-                .sort((a, b) => a.label.localeCompare(b.label))
+                })),
+                "label"
+            )
             media.push(...audioItems)
         }
 
@@ -123,14 +129,15 @@ const loadActions = {
         let mics = data.mics || []
         if (mics.length) {
             if (media.length) media.push("SEPERATOR")
-            let micItems = mics
-                .map((mic: any) => ({
+            let micItems = sortByName(
+                mics.map((mic: any) => ({
                     id: mic.id,
                     label: mic.name,
                     translate: false,
                     icon: "microphone",
-                }))
-                .sort((a, b) => a.label.localeCompare(b.label))
+                })),
+                "label"
+            )
             media.push(...micItems)
         }
 
@@ -138,14 +145,15 @@ const loadActions = {
         let slideActions = data.actions?.slideActions || []
         if (slideActions.length) {
             if (media.length) media.push("SEPERATOR")
-            let actionItems = slideActions
-                .map((action: any) => ({
+            let actionItems = sortByName(
+                slideActions.map((action: any) => ({
                     id: action.id,
                     label: actionData[action.triggers?.[0]]?.name || "",
                     icon: actionData[action.triggers?.[0]]?.icon || "actions",
                     type: "action",
-                }))
-                .sort((a, b) => a.label.localeCompare(b.label))
+                })),
+                "label"
+            )
             media.push(...actionItems)
         }
 

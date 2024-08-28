@@ -35,9 +35,6 @@ interface Words {
 }
 
 export function convertEasyWorship(data: any) {
-    // close drawer to prevent loading songs
-    // drawer.set({ height: 40, stored: null })
-
     let categoryId = createCategory("EasyWorship")
 
     let songs = data.find((a: any) => a.content.song)?.content.song
@@ -46,27 +43,17 @@ export function convertEasyWorship(data: any) {
         newToast("$toast.no_songswords_easyworship")
         return
     }
-    // console.log(songsWords)
-    // TODO: promise
+
     let i = 0
     let importingText = get(dictionary)?.popup.importing || "Importing"
 
     let tempShows: any[] = []
 
     asyncLoop()
-    // songsWords.forEach(asyncLoop);
-    // songsWords?.forEach()
-    // activePopup.set(null)
-    // console.log(songs)
-    // console.log(songsWords)
-
-    // function asyncLoop(words: Words, i: number) {
     function asyncLoop() {
         let words: Words = songsWords[i]
-        // let song: Song | null = songs?.[words.song_id - 1] || null
         let song: Song | null = songs?.find((a: Song) => a.rowid === words.song_id) || null
 
-        // let song: Song | null = songs?.[i] || null
         let percentage: string = ((i / songsWords.length) * 100).toFixed()
         activePopup.set("alert")
         alertMessage.set(importingText + " " + i + "/" + songsWords.length + " (" + percentage + "%)" + "<br>" + (song?.title || ""))
@@ -77,9 +64,6 @@ export function convertEasyWorship(data: any) {
             return
         }
 
-        // let category = get(drawerTabsData).shows?.activeSubTab || null
-        // if (category === "all" || category === "unlabeled") category = null
-
         let layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
         if (song) {
@@ -87,7 +71,7 @@ export function convertEasyWorship(data: any) {
                 title: song?.title || "",
                 author: song.author || "",
                 copyright: song.copyright || "",
-                CCLI: song.vendor_id || "",
+                CCLI: song.reference_number || "",
             }
         }
 
@@ -108,11 +92,7 @@ export function convertEasyWorship(data: any) {
         if (allText.length) tempShows.push({ id: showId, show })
 
         if (i + 1 < songsWords.length) {
-            // wait 5 seconds every 100 seconds to catch up ??
-            // let nextTimer: number = 0
-            // if (i > 0 && i % 100 === 0) nextTimer = 5000
             i++
-            // setTimeout(asyncLoop, nextTimer)
             requestAnimationFrame(asyncLoop)
         } else {
             setTempShows(tempShows)

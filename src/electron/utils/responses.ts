@@ -12,12 +12,13 @@ import { Show } from "../../types/Show"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
-import { error_log } from "../data/store"
+import { config, error_log, stores } from "../data/store"
 import { getThumbnail, getThumbnailFolderPath, saveImage } from "../data/thumbnails"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { startWebSocketAndRest, stopApiListener } from "./api"
 import {
+    bundleMediaFiles,
     checkShowsFolder,
     dataFolderNames,
     deleteFile,
@@ -98,7 +99,7 @@ const mainResponses: any = {
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
     // MAIN
     AUTO_UPDATE: (): void => checkForUpdates(),
-    GET_SYSTEM_FONTS: (): void => loadFonts(),
+    GET_SYSTEM_FONTS: (data: any): void => loadFonts(data),
     URL: (data: string): void => openURL(data),
     LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
     GET_PATHS: (): any => getPaths(),
@@ -108,6 +109,8 @@ const mainResponses: any = {
     LOG_ERROR: (data: any) => logError(data),
     OPEN_LOG: () => openSystemFolder(error_log.path),
     OPEN_CACHE: () => openSystemFolder(getThumbnailFolderPath()),
+    GET_STORE_VALUE: (data: any) => getStoreValue(data),
+    SET_STORE_VALUE: (data: any) => setStoreValue(data),
     // SHOWS
     DELETE_SHOWS: (data: any) => deleteShowsNotIndexed(data),
     REFRESH_SHOWS: (data: any) => refreshAllShows(data),
@@ -154,6 +157,7 @@ const mainResponses: any = {
     SYSTEM_OPEN: (data: any) => openSystemFolder(data),
     LOCATE_MEDIA_FILE: (data: any) => locateMediaFile(data),
     GET_SIMULAR: (data: any) => getSimularPaths(data),
+    BUNDLE_MEDIA_FILES: (data: any) => bundleMediaFiles(data),
     FILE_INFO: (data: any, e: any) => getFileInfo(data, e),
     READ_FOLDER: (data: any) => getFolderContent(data),
     OPEN_FOLDER: (data: any, e: any) => selectFolder(data, e),
@@ -242,6 +246,7 @@ export function trimShow(showCache: Show) {
         quickAccess: showCache.quickAccess || {},
     }
     if (showCache.private) show.private = true
+    if (showCache.locked) show.locked = true
 
     return show
 }
@@ -253,9 +258,9 @@ export const openURL = (url: string) => {
 }
 
 // GET_SYSTEM_FONTS
-function loadFonts() {
+function loadFonts(data: any) {
     getFonts({ disableQuoting: true })
-        .then((fonts: string[]) => toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: fonts }))
+        .then((fonts: string[]) => toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: { ...data, fonts } }))
         .catch((err: any) => console.log(err))
 }
 
@@ -308,12 +313,19 @@ function getScreens(type: "window" | "screen" = "screen") {
 }
 
 // RECORDER
+// only open once per session
+let systemOpened: boolean = false
 export function saveRecording(_: any, msg: any) {
     let folder: string = getDataFolder(msg.path || "", dataFolderNames.recordings)
     let p: string = path.join(folder, msg.name)
 
     const buffer = Buffer.from(msg.blob)
     writeFile(p, buffer)
+
+    if (!systemOpened) {
+        openSystemFolder(folder)
+        systemOpened = true
+    }
 }
 
 // ERROR LOGGER
@@ -328,6 +340,7 @@ export function logError(log: any, electron: boolean = false) {
     previousLog.push(log)
 
     if (previousLog.length > maxLogLength) previousLog = previousLog.slice(previousLog.length - maxLogLength)
+    if (!previousLog.length) return
 
     // error_log.clear()
     error_log.set({ [key]: previousLog })
@@ -358,4 +371,16 @@ function storeMedia(files: any[]) {
     })
 
     toApp(MAIN, { channel: "MEDIA_BASE64", data: encodedFiles })
+}
+
+// GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
+function getStoreValue(data: { file: string; key: string }) {
+    let store = data.file === "config" ? config : stores[data.file]
+    return { ...data, value: store.get(data.key) }
+}
+
+// GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
+function setStoreValue(data: { file: string; key: string; value: any }) {
+    let store = data.file === "config" ? config : stores[data.file]
+    store.set(data.key, data.value)
 }

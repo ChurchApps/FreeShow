@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { activeShow, media, outLocked, playingAudio } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, media, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { decodeURI, getAudioDuration, playAudio, startPlaylist } from "../../helpers/audio"
+    import { getAudioDuration, playAudio, startPlaylist } from "../../helpers/audio"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
 
@@ -22,7 +22,7 @@
         active={$activeShow?.id === path}
         border
         style="width: 100%;"
-        title={decodeURI(path)}
+        title={path}
         bold={false}
         on:click={(e) => {
             if ($outLocked || e.ctrlKey || e.metaKey) return
@@ -33,10 +33,11 @@
         on:dblclick={(e) => {
             if (e.ctrlKey || e.metaKey) return
 
-            activeShow.set({ id: path, name, type: "audio" })
+            if ($focusMode) activeFocus.set({ id: path })
+            else activeShow.set({ id: path, name, type: "audio" })
         }}
     >
-        <span>
+        <span style="max-width: 90%;">
             <Icon
                 id={$playingAudio[path]?.paused === true ? "play" : $playingAudio[path]?.paused === false ? "pause" : $media[path]?.favourite === true && active !== "favourites" ? "star" : "music"}
                 white={$playingAudio[path]?.paused === true || (!$playingAudio[path] && ($media[path]?.favourite !== true || active === "favourites"))}

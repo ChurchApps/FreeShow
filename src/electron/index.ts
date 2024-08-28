@@ -9,7 +9,7 @@ import { cloudConnect } from "./cloud/cloud"
 import { currentlyDeletedShows } from "./cloud/drive"
 import { startBackup } from "./data/backup"
 import { startExport } from "./data/export"
-import { config, stores, updateDataPath, userDataPath } from "./data/store"
+import { config, getStore, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
@@ -50,9 +50,18 @@ if (isLinux) console.log("libva error on Linux can be ignored")
 // set application menu
 setGlobalMenu()
 
+// disable hardware acceleration by default
+if (config.get("disableHardwareAcceleration") !== false) {
+    // Video flickers, especially on ARM mac otherwise. Performance is actually better without (most of the time).
+    // this should remove flickers on videos, but we have had reports of increased CPU usage in a lot of cases.
+    // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
+    app.disableHardwareAcceleration()
+} else {
+    console.log("Starting with Hardware Acceleration")
+}
+
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
-app.disableHardwareAcceleration() //Video flickers, especially on ARM mac otherwise.  Performance is actually better without.  https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
 app.on("ready", startApp)
 
 function startApp() {
@@ -90,6 +99,9 @@ function mainWindowLoaded() {
 
     if (config.get("maximized")) maximizeMain()
     mainWindow?.show()
+    // this has to be called to actually remove the process!
+    // WIP seems like like loading window process is still up after everything else is closed!
+    loadingWindow?.removeAllListeners("close")
     loadingWindow?.close()
 
     if (RECORD_STARTUP_TIME) console.timeEnd("Full startup")
@@ -101,7 +113,7 @@ let loadingWindow: BrowserWindow | null = null
 function createLoading() {
     loadingWindow = new BrowserWindow(loadingOptions)
     loadingWindow.loadFile("public/loading.html")
-    loadingWindow.on("closed", () => (loadingWindow = null))
+    loadingWindow.once("closed", () => (loadingWindow = null))
 }
 
 // ----- MAIN WINDOW -----
@@ -115,13 +127,13 @@ function createMain() {
     let screenBounds: Rectangle = screen.getPrimaryDisplay().bounds
 
     let options: any = {
-        width: !bounds.width || bounds.width === 800 ? screenBounds.width : bounds.width,
-        height: !bounds.height || bounds.height === 600 ? screenBounds.height : bounds.height,
+        width: !bounds.width || bounds.width === 800 ? screenBounds.width || 800 : bounds.width,
+        height: !bounds.height || bounds.height === 600 ? screenBounds.height || 600 : bounds.height,
         frame: !isProd || !isWindows,
         autoHideMenuBar: isProd && isWindows,
     }
 
-    // should be centered to screen if x & y is not set
+    // should be centered to screen if x & y is not set (or bottom left on mac)
     if (bounds.x) options.x = bounds.x
     if (bounds.y) options.y = bounds.y
 
@@ -217,7 +229,7 @@ function setMainListeners() {
     })
 
     mainWindow.on("close", callClose)
-    mainWindow.on("closed", exitApp)
+    mainWindow.once("closed", exitApp)
 }
 
 function callClose(e: any) {
@@ -230,7 +242,6 @@ function callClose(e: any) {
 export async function exitApp() {
     console.log("Closing app!")
 
-    mainWindow = null
     dialogClose = false
 
     await OutputHelper.Lifecycle.closeAllOutputs()
@@ -244,7 +255,14 @@ export async function exitApp() {
     if (!isProd) {
         console.log("Dev mode active - Relaunching...")
         app.relaunch()
+    } else {
+        // this has to be called to actually remove the process!
+        // https://stackoverflow.com/a/43520274
+        mainWindow?.removeAllListeners("close")
+        ipcMain.removeAllListeners()
     }
+
+    mainWindow = null
 
     try {
         app.quit()
@@ -315,7 +333,7 @@ ipcMain.on(STORE, (e, msg) => {
     if (msg.channel === "UPDATE_PATH") updateDataPath(msg.data)
     else if (msg.channel === "SAVE") save(msg.data)
     else if (msg.channel === "SHOWS") loadShows(msg.data)
-    else if (stores[msg.channel]) e.reply(STORE, { channel: msg.channel, data: stores[msg.channel].store })
+    else if (stores[msg.channel]) getStore(msg.channel, e)
 })
 
 function save(data: any) {

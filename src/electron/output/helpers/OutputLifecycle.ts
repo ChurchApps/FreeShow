@@ -108,15 +108,16 @@ export class OutputLifecycle {
             return
         }
 
-        OutputHelper.getOutput(id).window.on("closed", () => {
+        OutputHelper.getOutput(id).window.once("closed", () => {
             OutputHelper.deleteOutput(id)
             if (reopen) this.createOutput(reopen)
         })
 
         try {
             const output = OutputHelper.getOutput(id)
-            output?.window?.destroy()
-            //output?.previewWindow?.destroy()
+            // this has to be called to actually remove the process!
+            output?.window?.removeAllListeners("close")
+            output?.window?.close()
         } catch (error) {
             console.log(error)
         }

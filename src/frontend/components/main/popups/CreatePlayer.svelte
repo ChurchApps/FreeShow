@@ -13,7 +13,6 @@
 
     let data: any = { name: "", id: "" }
     function add() {
-        // TODO: remove url (keep only id)
         if (!data.id.length) {
             newToast("$toast.no_video_id")
             return activePopup.set(null)
@@ -21,6 +20,7 @@
 
         let id = data.id
 
+        // only get video id from any url
         if (active === "youtube") {
             if (id.includes("?list")) id = id.slice(0, id.indexOf("?list"))
             if (id.includes("?si")) id = id.slice(0, id.indexOf("?si"))
@@ -38,10 +38,6 @@
             a[uid()] = { id, name, type: active as any }
             return a
         })
-
-        // setTimeout(() => {
-        //   data = { name: "", id: "" }
-        // }, 10)
 
         activePopup.set(null)
     }

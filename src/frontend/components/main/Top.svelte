@@ -1,11 +1,13 @@
 <script type="ts">
-    import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, paintCache, saved } from "../../stores"
+    import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, paintCache, saved, shows } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { displayOutputs } from "../helpers/output"
     import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
 
     export let isWindows: boolean = false
+
+    $: editDisabled = (!$activeShow && !$activeEdit.type && ($activeEdit.slide === undefined || $activeEdit.slide === null)) || $shows[$activeShow?.id || ""]?.locked
 </script>
 
 <div class="top" class:drag={!isWindows}>
@@ -25,7 +27,7 @@
     </span>
     <span>
         <TopButton id="show" />
-        <TopButton id="edit" disabled={!$activeShow && !$activeEdit.type && ($activeEdit.slide === undefined || $activeEdit.slide === null)} />
+        <TopButton id="edit" disabled={editDisabled} />
         <!-- <TopButton id="draw" /> -->
         <TopButton id="stage" />
     </span>

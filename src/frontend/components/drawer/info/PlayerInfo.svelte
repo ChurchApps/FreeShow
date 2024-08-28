@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
     import { activeDrawerOnlineTab, photoApiCredits } from "../../../stores"
     import { send } from "../../../utils/request"
@@ -8,6 +8,13 @@
     import Link from "../../inputs/Link.svelte"
 
     $: active = $activeDrawerOnlineTab
+
+    // remove part after ? in URL
+    function removeExtra(link: string) {
+        let extra = link.indexOf("?")
+        if (extra < 0) return link
+        return link.slice(0, extra)
+    }
 </script>
 
 {#if active === "youtube"}
@@ -35,22 +42,23 @@
             </p>
             <p>
                 <span class="title"><T id={"info.artistUrl"} /></span>
-                <span><Link url={$photoApiCredits.artistUrl}>{$photoApiCredits.artistUrl}</Link></span>
+                <span><Link url={$photoApiCredits.artistUrl}>{removeExtra($photoApiCredits.artistUrl)}</Link></span>
             </p>
             <p>
                 <span class="title"><T id={"info.photoUrl"} /></span>
-                <span><Link url={$photoApiCredits.photoUrl}>{$photoApiCredits.photoUrl}</Link></span>
+                <span><Link url={$photoApiCredits.photoUrl}>{removeExtra($photoApiCredits.photoUrl)}</Link></span>
             </p>
             <!-- <p>
                 <span class="title"><T id={"info.download"} /></span>
                 <span>{$photoApiCredits.downloadUrl}</span>
             </p> -->
         </main>
+
+        <div class="credits">
+            Photo by <Link url={$photoApiCredits.artistUrl}>{$photoApiCredits.artist}</Link> on <span style="text-transform: capitalize;"><Link url={$photoApiCredits.homepage || $photoApiCredits.photoUrl}>{$photoApiCredits.type}</Link></span>
+        </div>
     {/if}
 {/if}
-
-<!-- TODO: change quality / resolution -->
-<!-- TODO: toggle captions -->
 
 <style>
     main {
@@ -83,4 +91,11 @@
     margin: 20px 0;
     background-color: var(--primary-lighter);
   } */
+
+    .credits {
+        position: absolute;
+        bottom: 10px;
+        width: 100%;
+        text-align: center;
+    }
 </style>

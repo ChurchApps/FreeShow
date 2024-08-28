@@ -3,7 +3,7 @@
     import { MAIN } from "../../../types/Channels"
     import type { MediaStyle } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
-    import { activeShow, activeTimers, audioFolders, checkedFiles, dictionary, driveData, fullColors, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, showsCache, slidesOptions, styles } from "../../stores"
+    import { activeTimers, audioFolders, checkedFiles, dictionary, driveData, focusMode, fullColors, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, showsCache, slidesOptions, styles } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import { slideHasAction } from "../actions/actions"
@@ -21,6 +21,7 @@
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
 
+    export let showId: string
     export let slide: Slide
     export let layoutSlide: SlideData
     export let layoutSlides: any[] = []
@@ -42,7 +43,8 @@
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
 
     let ghostBackground: Media | null = null
-    $: if (!background) {
+    // don't show ghost backgrounds if more than 25 slides (because of loading!)
+    $: if (!background && layoutSlides.length < 25) {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i <= index) {
@@ -61,7 +63,7 @@
     $: cloudId = $driveData.mediaId
     $: if (bg) locateBackground()
     function locateBackground() {
-        if (!background) return
+        if (!background || !bg?.path) return
 
         let mediaId = layoutSlide.background!
         let folders = Object.values($mediaFolders).map((a) => a.path!)
@@ -72,7 +74,6 @@
     $: audioIds = clone(layoutSlide.audio || [])
     $: if (audioIds.length) locateAudio()
     function locateAudio() {
-        let showId = $activeShow!.id
         let showMedia = $showsCache[showId]?.media
         let folders = Object.values($audioFolders).map((a) => a.path!)
 
@@ -97,7 +98,6 @@
 
         checkedFiles.set([...$checkedFiles, id])
         let exists = (await checkMedia(path)) === "true"
-        let showId = $activeShow!.id
 
         // check for other potentially mathing mediaFolders
         if (!exists) {
@@ -126,10 +126,14 @@
     let thumbnailPath: string = ""
     async function loadBackground() {
         if (ghostBackground) {
-            await wait(100)
-            // will not load if not opened in the drawer (but original image will then be loaded)
-            thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
-            // thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
+            if (index === 1) {
+                // create image (if not created) when it's on slide 2 (slide 1 is the original)
+                thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
+            } else {
+                // load ghost thumbnails (wait a bit to reduce loading lag)
+                await wait(100)
+                thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
+            }
             return
         }
 
@@ -150,11 +154,11 @@
     $: if (slide.globalGroup && $groups[slide.globalGroup]) {
         group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
         color = $groups[slide.globalGroup].color
-        // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
-        // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+        // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
+        // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
     }
 
-    $: name = getGroupName(show, layoutSlide.id, group, index)
+    $: name = getGroupName({ show, showId }, layoutSlide.id, group, index)
 
     // quick edit
     let html: string = ""
@@ -191,7 +195,7 @@
         previousHTML = html
         setTimeout(() => {
             showsCache.update((a) => {
-                let lines = a[$activeShow!.id].slides[layoutSlide.id].items[longest]?.lines || []
+                let lines = a[showId].slides[layoutSlide.id].items[longest]?.lines || []
                 let textItems = getItems(textElem.children)
                 if (textItems.length) {
                     lines.forEach((line) => {
@@ -220,7 +224,7 @@
         if (item?.type !== "timer") return
 
         $activeTimers.forEach((a, i) => {
-            if (a.showId === $activeShow?.id && a.slideId === layoutSlide.id && a.id === item.timer.id) timer.push(i)
+            if (a.showId === showId && a.slideId === layoutSlide.id && a.id === item.timer.id) timer.push(i)
         })
     }
 
@@ -260,9 +264,6 @@
     $: itemsList = clone(slide.items) || []
 </script>
 
-<!-- TODO: faster loading ? lazy load images? -->
-<!-- https://svelte.dev/repl/3bf15c868aa94743b5f1487369378cf3?version=3.21.0 -->
-<!-- animate:flip -->
 <div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || noQuickEdit ? 100 / columns : 100}%;">
     <!-- group box -->
     {#if $fullColors}
@@ -274,11 +275,11 @@
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->
-    <div class="slide context #{name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} on:click>
+    <div class="slide context #{show.locked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} tabindex={0} on:click>
         <div class="hover overlay" />
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">
-            <SelectElem style={colorStyle} id="slide" data={{ index }} draggable trigger={list ? "column" : "row"}>
+            <SelectElem style={colorStyle} id="slide" data={{ index, showId }} draggable={!$focusMode && !show.locked} onlyRightClickSelect={$focusMode} selectable={!show.locked} trigger={list ? "column" : "row"}>
                 <!-- TODO: tab select on enter -->
                 {#if viewMode === "lyrics" && !noQuickEdit}
                     <!-- border-bottom: 1px dashed {color}; -->
@@ -316,7 +317,7 @@
                                     {ratio}
                                     slideIndex={index}
                                     ref={{
-                                        showId: $activeShow?.id,
+                                        showId,
                                         slideId: layoutSlide.id,
                                         id: layoutSlide.id,
                                     }}
@@ -346,7 +347,7 @@
                     <div title={name || ""} style="height: 2px;" />
                 {:else if viewMode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->
-                    <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color};`}>
+                    <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
                         {#if name === null && $fullColors}
                             <!-- WIP this works fine without full colors, but is it neccesary? (UI vs UX) -->
                             <div class="childLink" style="background-color: {color};" class:full={$fullColors} />
@@ -377,7 +378,7 @@
                 {#if slide.items}
                     {#each itemsList as item, itemIndex}
                         {#if item.lines}
-                            <Editbox {item} ref={{ showId: $activeShow?.id, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
+                            <Editbox {item} ref={{ showId, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
                         {/if}
                     {/each}
                 {/if}
@@ -396,7 +397,7 @@
 
     .slide {
         /* padding: 3px; */
-        background-color: var(--primary-darker);
+        background-color: var(--primary-darkest);
         z-index: 0;
         outline-offset: 0;
         width: 100%;
@@ -421,7 +422,8 @@
         /* outline: 3px solid var(--secondary); */
         outline: 2px solid var(--secondary);
         outline-offset: -1px;
-        z-index: 2;
+        /* this z-index causes the button title to show behind! */
+        /* z-index: 2; */
     }
 
     .group_box {
@@ -490,7 +492,7 @@
         left: 0;
         bottom: 0;
         transform: translate(-100%, 100%);
-        width: 12px;
+        width: 8px;
         height: 2px;
     }
     .childLink.full {

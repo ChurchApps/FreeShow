@@ -7,7 +7,7 @@ import fs from "fs"
 import { join } from "path"
 import { EXPORT, MAIN, STARTUP } from "../../types/Channels"
 import { isProd, toApp } from "../index"
-import { dataFolderNames, doesPathExist, getDataFolder, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
+import { dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, makeDir, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
 import { exportOptions } from "../utils/windowOptions"
 import { Message } from "../../types/Socket"
 import { getAllShows } from "../utils/responses"
@@ -43,7 +43,13 @@ export function startExport(_e: any, msg: Message) {
 
     if (msg.channel !== "GENERATE") return
 
+    if (msg.data.showIds && msg.data.showsPath) {
+        // load shows
+        msg.data.shows = getShowsFromIds(msg.data.showIds, msg.data.showsPath)
+    }
+
     if (msg.data.type === "pdf") createPDFWindow(msg.data)
+    else if (msg.data.type === "show") exportShow(msg.data)
     else if (msg.data.type === "txt") exportTXT(msg.data)
     else if (msg.data.type === "project") exportProject(msg.data)
 }
@@ -88,8 +94,8 @@ export function generatePDF(path: string) {
 function exportMessage(message: string = "") {
     toApp(MAIN, { channel: "ALERT", data: message })
 
+    exportWindow?.on("closed", () => (exportWindow = null))
     exportWindow?.close()
-    exportWindow = null
 }
 
 let exportWindow: any = null
@@ -121,11 +127,22 @@ export function exportJSON(content: any, extension: string, path: string) {
     writeFile(join(path, content.name || "Unnamed"), extension, JSON.stringify(content, null, 4), "utf-8", (err: any) => doneWritingFile(err, path))
 }
 
+// ----- SHOW -----
+
+export function exportShow(data: any) {
+    data.shows.forEach((show: any, i: number) => {
+        let id = show.id
+        delete show.id
+
+        writeFile(join(data.path, show.name || id), ".show", JSON.stringify([id, show]), "utf-8", (err: any) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
+    })
+}
+
 // ----- TXT -----
 
 export function exportTXT(data: any) {
     data.shows.forEach((show: any, i: number) => {
-        writeFile(join(data.path, show.name), ".txt", getSlidesText(show), "utf-8", (err: any) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
+        writeFile(join(data.path, show.name || show.id), ".txt", getSlidesText(show), "utf-8", (err: any) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
     })
 }
 
@@ -177,9 +194,10 @@ function getSlidesText(show: any) {
 // ----- ALL SHOWS -----
 
 function exportAllShows(data: any) {
-    let type = data.type || "txt"
+    let type = data.type
 
-    if (type !== "txt") return
+    const supportedTypes = ["txt", "show"]
+    if (!supportedTypes.includes(type)) return
 
     let allShows: string[] = getAllShows({ path: data.showsPath })
     let shows: any[] = []
@@ -189,11 +207,22 @@ function exportAllShows(data: any) {
         // WIP override existing instead of creating new?
         const showContent: any = parseShow(readFile(showFilePath))
 
-        if (showContent?.[1]) shows.push(showContent[1])
+        if (showContent?.[1]) shows.push({ ...showContent[1], id: showContent[0] })
     }
 
-    if (shows.length) exportTXT({ ...data, shows })
-    else toApp(MAIN, { channel: "ALERT", data: "Exported 0 shows!" })
+    if (shows.length) {
+        // create custom folder to organize the amount of files
+        let folderName = new Date().toISOString()
+        folderName = folderName.slice(0, folderName.indexOf("T"))
+        folderName += `_${new Date().getHours()}-${new Date().getMinutes()}`
+        data.path = join(data.path, folderName)
+        makeDir(data.path)
+
+        if (type === "show") exportShow({ ...data, shows })
+        else if (type === "txt") exportTXT({ ...data, shows })
+    } else {
+        toApp(MAIN, { channel: "ALERT", data: "Exported 0 shows!" })
+    }
 }
 
 // ----- PROJECT -----

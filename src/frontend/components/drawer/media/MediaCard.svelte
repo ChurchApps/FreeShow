@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeShow, media, mediaOptions, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
+    import { activeShow, customMessageCredits, media, mediaOptions, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
+    import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
@@ -61,26 +62,22 @@
 
         if (findMatchingOut(path, $outputs)) {
             clearBackground()
-            // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
-
             return
         }
 
         setOutput("background", { path, type, loop: true, muted: false, startAt: 0, ...mediaStyle })
-        // TODO: get actual data
-        // TODO: output/preview control does not always match
-        // window.api.send(OUTPUT, { channel: "VIDEO_DATA", data: { duration: 0, paused: false, muted: false, loop: true } })
+
+        // unsplash requires the download to be triggered when using their images
+        if (credits.type === "unsplash" && credits.trigger_download) {
+            fetch(credits.trigger_download + "?client_id=" + getKey("unsplash"), { method: "GET" }).catch((err) => console.error("Could not trigger download:", err))
+            customMessageCredits.set(`Photo by ${credits.artist} on Unsplash`)
+        }
     }
 
     function dblclick(e: any) {
         if (e.ctrlKey || e.metaKey) return
 
         activeFile = index
-    }
-
-    // TODO: Enter play media
-    function keydown(e: any) {
-        if (e.key === "Enter") dblclick(e)
     }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
@@ -113,7 +110,6 @@
     on:mousedown={mousedown}
     on:click={click}
     on:dblclick={dblclick}
-    on:keydown={keydown}
     on:mouseenter={() => (hover = true)}
     on:mouseleave={() => (hover = false)}
     on:mousemove={move}

@@ -47,7 +47,9 @@
         if (!title?.length) return
         startTimer()
         mouse = { x: e.clientX, y: e.clientY }
-        if (mouse.x + 250 > window.innerWidth) tooltipStyle += "transform: translateX(-100%);"
+
+        tooltipStyle = ""
+        if (mouse.x + 250 > window.innerWidth) tooltipStyle += "transform: translateX(-100%);" + (title.length > 30 ? "width: 250px;" : "white-space: nowrap;")
         if (mouse.y + 80 > window.innerHeight) tooltipStyle += "transform: translateY(-100%);"
     }
 </script>
@@ -130,7 +132,7 @@
         background-color: rgb(255 0 0 / 0.3);
     }
     button.red:not(:disabled) :global(svg) {
-        fill: white;
+        fill: var(--text);
     }
 
     button:not(:disabled):not(.active) {

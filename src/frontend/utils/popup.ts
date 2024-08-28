@@ -20,7 +20,7 @@ import CreateShow from "../components/main/popups/CreateShow.svelte"
 import DeleteShow from "../components/main/popups/DeleteShow.svelte"
 import EditEvent from "../components/main/popups/EditEvent.svelte"
 import EditList from "../components/main/popups/EditList.svelte"
-import Export from "../components/main/popups/Export.svelte"
+import Export from "../components/main/popups/export/Export.svelte"
 import FindReplace from "../components/main/popups/FindReplace.svelte"
 import History from "../components/main/popups/History.svelte"
 import Import from "../components/main/popups/Import.svelte"
@@ -42,6 +42,7 @@ import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import ChooseChord from "../components/main/popups/ChooseChord.svelte"
 import { get } from "svelte/store"
+import ChooseOutput from "../components/main/popups/ChooseOutput.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -69,6 +70,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     import_scripture: ImportScripture,
     edit_event: EditEvent,
     choose_screen: ChooseScreen,
+    choose_output: ChooseOutput,
     change_output_values: ChangeOutputValues,
     set_time: SetTime,
     animate: Animate,

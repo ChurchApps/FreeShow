@@ -3,12 +3,13 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activeProject, categories, drawerTabsData, outLocked, outputs, playScripture, scriptureSettings, templates } from "../../../stores"
+    import { activeProject, categories, drawerTabsData, media, outLocked, outputs, playScripture, scriptureSettings, styles, templates } from "../../../stores"
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { removeDuplicates } from "../../helpers/array"
+    import { removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { getMediaStyle } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import { checkName } from "../../helpers/show"
     import Button from "../../inputs/Button.svelte"
@@ -21,6 +22,7 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
+    import Media from "../../output/layers/Media.svelte"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -32,6 +34,10 @@
     }
 
     let slides: Item[][] = [[]]
+
+    // background
+    $: template = $templates[$scriptureSettings.template] || {}
+    $: templateBackground = template.settings?.backgroundPath
 
     $: if ($drawerTabsData) setTimeout(checkTemplate, 100)
     function checkTemplate() {
@@ -101,6 +107,8 @@
             data: { collection: $drawerTabsData.scripture?.activeSubTab || bibles[0].id || "", version: versions, api: bibles[0].api, book: bibles[0].bookId ?? bibles[0].book, chapter: bibles[0].chapter, verses: bibles[0].activeVerses },
         }
 
+        // WIP add template background?
+
         return { show }
     }
 
@@ -111,9 +119,7 @@
     }
 
     let templateList: any[] = []
-    $: templateList = Object.entries($templates)
-        .map(([id, template]: any) => ({ id, name: template.name }))
-        .sort((a, b) => a.name.localeCompare(b.name))
+    $: templateList = sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))
 
     function update(id: string, value: any) {
         scriptureSettings.update((a) => {
@@ -132,6 +138,16 @@
 
         let tempItems: Item[] = slides[0] || []
         setOutput("slide", { id: "temp", tempItems })
+
+        // play template background
+        if (!templateBackground) return
+
+        // get style (for media "fit")
+        let currentOutput = $outputs[getActiveOutputs()[0]]
+        let currentStyle = $styles[currentOutput?.style || ""] || {}
+
+        let mediaStyle = getMediaStyle($media[templateBackground], currentStyle)
+        setOutput("background", { path: templateBackground, loop: true, muted: true, ...mediaStyle })
     }
 
     $: if ($playScripture) {
@@ -195,6 +211,10 @@
 <div class="scroll">
     <Zoomed style="width: 100%;">
         {#if bibles[0]?.activeVerses}
+            {#if templateBackground}
+                <Media path={templateBackground} videoData={{ paused: false, muted: true, loop: true }} mirror />
+            {/if}
+
             {#each slides[0] as item}
                 <Textbox {item} ref={{ id: "scripture" }} />
             {/each}
@@ -263,6 +283,14 @@
                 <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
             </div>
         </CombinedInput>
+        {#if $scriptureSettings.showVerse && sorted.length > 1}
+            <CombinedInput textWidth={70}>
+                <p><T id="scripture.split_reference" /></p>
+                <div class="alignRight">
+                    <Checkbox id="splitReference" checked={$scriptureSettings.splitReference !== false} on:change={checked} />
+                </div>
+            </CombinedInput>
+        {/if}
         <CombinedInput textWidth={70}>
             <p><T id="scripture.version" /></p>
             <div class="alignRight">

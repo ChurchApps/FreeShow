@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, showsCache } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, showsCache } from "../../../stores"
     import T from "../../helpers/T.svelte"
 
     export let currentOutput: any
@@ -8,11 +8,6 @@
     export let maxLines: null | number
 
     $: slide = currentOutput?.out?.slide
-
-    // $: if (!slide) {
-    //   let outs = getActiveOutputs().map((id) => $outputs[id])
-    //   currentOutput = outs.find((output) => output.out?.slide)
-    // }
 
     $: name = slide && $showsCache[slide?.id] ? $showsCache[slide?.id].name : "—"
     $: length = ref?.length || 0
@@ -27,7 +22,8 @@
             })
         }
 
-        activeShow.set({ id: slide?.id })
+        if ($focusMode) activeFocus.set({ id: slide?.id })
+        else activeShow.set({ id: slide?.id })
     }
 </script>
 
@@ -40,7 +36,6 @@
                 <T id="main.unnamed" />
             {/if}
         </p>
-        <!-- TODO: update -->
         <span style="opacity: 0.6;white-space: nowrap;">
             {(slide?.index || 0) + 1}/{length}
             {#if linesIndex !== null && maxLines !== null}

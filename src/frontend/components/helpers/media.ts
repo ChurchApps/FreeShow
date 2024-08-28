@@ -57,7 +57,7 @@ export function joinPath(path: string[]): string {
 // fix for media files with special characters in file name not playing
 export function encodeFilePath(path: string): string {
     // already encoded
-    if (path.match(/%\d+/g)) return path
+    if (path.match(/%\d+/g) || path.includes("http")) return path
 
     let splittedPath = splitPath(path)
     let fileName = splittedPath.pop() || ""
@@ -65,6 +65,15 @@ export function encodeFilePath(path: string): string {
 
     return joinPath([...splittedPath, encodedName])
 }
+
+// decode only file name in path (not full path)
+// export function decodeFilePath(path: string) {
+//     let splittedPath = splitPath(path)
+//     let fileName = splittedPath.pop() || ""
+//     let decodedName = decodeURI(fileName)
+
+//     return joinPath([...splittedPath, decodedName])
+// }
 
 // convert to base64
 async function toDataURL(url: string): Promise<string> {
@@ -101,7 +110,7 @@ export function checkMedia(src: string) {
         }
 
         elem.onerror = () => finish("false")
-        elem.src = src
+        elem.src = encodeFilePath(src)
 
         let timedout = setTimeout(() => {
             finish("false")
@@ -150,6 +159,9 @@ export async function loadThumbnail(input: string, size: number) {
     // online media (e.g. Pixabay/Unsplash)
     if (input.includes("http")) return input
 
+    // already encoded (this could cause an infinite loop)
+    if (input.includes("freeshow-cache")) return input
+
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
@@ -165,6 +177,9 @@ export function getThumbnailPath(input: string, size: number) {
 
     // online media (e.g. Pixabay/Unsplash)
     if (input.includes("http")) return input
+
+    // already encoded
+    if (input.includes("freeshow-cache")) return input
 
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
@@ -264,7 +279,7 @@ export function captureCanvas(data: any) {
         else setTimeout(() => (isImage ? "" : mediaElem.load()), 3000)
     })
 
-    mediaElem.src = data.input
+    mediaElem.src = encodeFilePath(data.input)
     // document.body.appendChild(mediaElem) // DEBUG
 
     async function captureCanvas(media, mediaSize) {

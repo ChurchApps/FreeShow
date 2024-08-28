@@ -1,8 +1,7 @@
 <script lang="ts">
-    import { Resolution } from "../../../../types/Settings"
     import { outputs } from "../../../stores"
     //import { currentWindow, outputs, styles } from "../../../stores"
-    import { getResolution } from "../../helpers/output"
+    import { getOutputResolution } from "../../helpers/output"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import StageShow from "../../stage/StageShow.svelte"
     import Output from "../Output.svelte"
@@ -13,14 +12,14 @@
     export let outputId: string = ""
     export let style: string = ""
 
-    let resolution: Resolution = getResolution()
-    let width = 160
-    let height = 90
+    $: resolution = getOutputResolution(outputId, $outputs)
+    $: width = resolution.width || 160
+    $: height = resolution.height || 90
 
     $: stageOutput = $outputs[outputId]?.stageOutput
 </script>
 
-<div class="center previewOutput" id={outputId} class:fullscreen={fullscreen && !stageOutput} class:disabled style={style + (stageOutput ? "" : "; aspect-ratio: " + width / height)} bind:offsetWidth={width} bind:offsetHeight={height}>
+<div class="center previewOutput" id={outputId} class:fullscreen={fullscreen && !stageOutput} class:disabled style={style + ("; aspect-ratio: " + width + "/" + height + ";")} bind:offsetWidth={width} bind:offsetHeight={height}>
     {#if stageOutput}
         <StageShow {outputId} stageId={stageOutput} edit={false} />
     {:else}
@@ -50,5 +49,8 @@
 
     .previewOutput :global(.main) {
         width: 100%;
+
+        /* disable e.g. YouTube video controls on hover */
+        pointer-events: none;
     }
 </style>

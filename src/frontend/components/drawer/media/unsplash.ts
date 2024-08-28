@@ -9,7 +9,7 @@ export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
     return new Promise((resolve) => {
         if (cache[query]) return resolve(cache[query])
 
-        let url: string = "https://api.unsplash.com/search/photos/?client_id=" + getKey("unsplash") + "&content_filter=high&per_page=30&query=" // this is still a demo key, so it should be changed before release
+        let url: string = "https://api.unsplash.com/search/photos/?client_id=" + getKey("unsplash") + "&content_filter=high&per_page=30&query="
         url += encodeURIComponent(query)
 
         let results: any = []
@@ -17,7 +17,7 @@ export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
             .then((response) => response.json())
             .then((data) => {
                 results = data.results.map((media) => {
-                    let path = media.urls.full
+                    let path = media.urls.full || media.urls.regular
                     return { path, previewUrl: media.urls.thumb, name: media.alt_description, extension: getExtension(path), credits: getUnsplashCredits(media) }
                 })
 
@@ -33,14 +33,17 @@ export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
     })
 }
 
+const UTM = "?utm_source=freeshow&utm_medium=referral"
 function getUnsplashCredits(media) {
     return {
         type: "unsplash",
         photo: media.description,
-        photoUrl: media.links.html,
+        photoUrl: media.links.html + UTM,
         likes: media.likes,
         artist: media.user.name,
-        artistUrl: "https://unsplash.com/@" + media.user.username,
-        downloadUrl: media.links.download, // download_location
+        artistUrl: "https://unsplash.com/@" + media.user.username + UTM,
+        downloadUrl: media.links.download,
+        trigger_download: media.links.download_location,
+        homepage: "https://unsplash.com/" + UTM,
     }
 }

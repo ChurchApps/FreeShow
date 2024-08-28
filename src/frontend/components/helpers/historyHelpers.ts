@@ -12,6 +12,7 @@ import {
     dictionary,
     drawerTabsData,
     events,
+    focusMode,
     folders,
     globalTags,
     groups,
@@ -33,7 +34,7 @@ import { updateThemeValues } from "../../utils/updateSettings"
 import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE, EMPTY_TAG } from "../../values/empty"
 import { getWeekNumber } from "../drawer/calendar/calendar"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
-import { clone } from "./array"
+import { clone, keysToID, sortByName } from "./array"
 import { isOutCleared } from "./output"
 import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
@@ -69,12 +70,17 @@ export const _updaters = {
                 activeStage.set({ id: null, items: [] })
             }
 
-            // delete any stage output window linked to this stage layout
+            // find any stage output window linked to this stage layout
             let outputId = Object.entries(get(outputs)).find(([_id, output]) => output.stageOutput === id)?.[0] || ""
             if (!outputId) return
 
+            // get first stage layout
+            let stageOutput = sortByName(keysToID(get(stageShows))).filter((a) => a.id !== id)[0] || null
+            if (!stageOutput) return
+
+            // set to new stage output
             outputs.update((a) => {
-                delete a[outputId]
+                a[outputId].stageOutput = stageOutput.id
                 return a
             })
         },
@@ -340,7 +346,7 @@ export const _updaters = {
 
             // don't open when importing lots of songs
             // if (data.open !== false)
-            activeShow.set(showRef)
+            if (!get(focusMode)) activeShow.set(showRef)
 
             // set text cache
             saveTextCache(id, data.data)
@@ -349,6 +355,7 @@ export const _updaters = {
             shows.update((a) => {
                 a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps }
                 if (data.data.private) a[id].private = true
+                if (data.data.locked) a[id].locked = true
 
                 return a
             })

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { io } from "socket.io-client"
     import type { TabsObj } from "../../types/Tabs"
     import Button from "./components/Button.svelte"
@@ -12,6 +13,7 @@
     import Slides from "./components/slide/Slides.svelte"
     import { GetLayout, getNextSlide, nextSlide } from "./helpers/get"
     import { dateToString } from "./helpers/time"
+    import Checkbox from "./components/Checkbox.svelte"
 
     var dictionary: any = {
         empty: {
@@ -38,6 +40,7 @@
             submit: "Submit",
             password: "Password",
             wrong_password: "Wrong password",
+            quick_play: "Quick play",
         },
         clear: {
             all: "Clear all",
@@ -135,13 +138,14 @@
                 break
             case "SHOWS":
                 shows = Object.keys(msg.data).map((id) => ({ id, ...msg.data[id] }))
+                if (quickPlay) activeTab = "shows"
                 break
             // case "SHOWS_CACHE":
             //   showsCache = msg.data
             //   break
             case "SHOW":
                 if (connected) {
-                    if (!activeShow) activeTab = "show"
+                    if (!activeShow && !quickPlay) activeTab = "show"
                     // if (activeTab === "shows" || activeTab === "project" || activeTab === "projects") activeTab = "show"
                     // shows[msg.data.id] = msg.data
                     // activeShow = msg.data.id
@@ -184,7 +188,7 @@
             case "PROJECT":
                 if (!project && msg.data && connected) {
                     project = msg.data
-                    if (!activeShow) activeTab = "project"
+                    if (!activeShow && !quickPlay) activeTab = "project"
                 }
                 break
             // case "MEDIA":
@@ -286,12 +290,10 @@
         filteredShows = []
         filteredStored.forEach((s: any) => {
             let match = search(s)
-            console.log(s, match)
             if (match) filteredShows.push({ ...s, match })
         })
         // filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowId[]
         filteredShows = filteredShows.sort((a: any, b: any) => (a.match < b.match ? -1 : a.match > b.match ? 1 : 0))
-        console.log(filteredShows)
         firstMatch = filteredShows[0]?.id || null
     }
 
@@ -307,8 +309,6 @@
     $: totalMatch = searchValue ? 0 : 0
     function search(obj: any): number {
         let match: any[] = []
-
-        console.log(sva)
 
         sva.forEach((sv: any, i: number) => {
             if (sv.length > 1) {
@@ -336,6 +336,38 @@
         if (e.clientX < window.innerWidth / 3) previous()
         else next()
     }
+
+    // shows list
+    let searchElem: any = null
+    function openShow(id: string) {
+        send("SHOW", id)
+
+        if (quickPlay) {
+            send("OUT", { id, index: 0 })
+            searchElem.select()
+        } else {
+            activeTab = "show"
+        }
+    }
+
+    function showSearchKeydown(e: any) {
+        if (e.key === "Enter") openShow(filteredShows[0].id)
+    }
+
+    // show quick play
+    let quickPlay: boolean = false
+    function toggleQuickPlay(e: any) {
+        quickPlay = e.target.checked
+        localStorage.setItem("quickPlay", quickPlay.toString())
+    }
+
+    onMount(() => {
+        try {
+            quickPlay = localStorage.getItem("quickPlay") === "true"
+        } catch (err) {
+            console.log("Unable to use LocalStorage!")
+        }
+    })
 
     let scrollElem: any
     let lyricsScroll: any
@@ -420,29 +452,27 @@
                 {/if}
             {:else if activeTab === "shows"}
                 {#if shows.length}
-                    <input type="text" class="input" placeholder="Search..." bind:value={searchValue} />
+                    <input type="text" class="input" placeholder="Search..." bind:value={searchValue} on:keydown={showSearchKeydown} bind:this={searchElem} />
                     <!-- {#each shows as showObj}
             <Button on:click={() => (show = showObj.id)}>{showObj.name}</Button>
           {/each} -->
                     <div class="scroll">
                         {#each filteredShows as show}
                             {#if searchValue.length <= 1 || show.match}
-                                <ShowButton
-                                    on:click={(e) => {
-                                        send("SHOW", e.detail)
-                                        activeTab = "show"
-                                    }}
-                                    {activeShow}
-                                    show={shows.find((s) => s.id === show.id)}
-                                    data={dateToString(show.timestamps.created, true)}
-                                    match={show.match || null}
-                                />
+                                <ShowButton on:click={(e) => openShow(e.detail)} {activeShow} show={shows.find((s) => s.id === show.id)} data={dateToString(show.timestamps.created, true)} match={show.match || null} />
                             {/if}
                         {/each}
                     </div>
                     {#if searchValue.length > 1 && totalMatch === 0}
                         <Center faded>{dictionary.empty.search}</Center>
                     {/if}
+
+                    <div class="buttons">
+                        <div class="check">
+                            <p>{dictionary.remote.quick_play}</p>
+                            <Checkbox checked={quickPlay} on:change={toggleQuickPlay} />
+                        </div>
+                    </div>
                 {:else}
                     <Center faded>{dictionary.empty.shows}</Center>
                 {/if}
@@ -761,6 +791,15 @@
     }
     .outSlides :global(.main) {
         width: 50%;
+    }
+
+    /* quick play */
+    .check {
+        display: flex;
+        background-color: var(--primary-darker);
+        justify-content: space-between;
+        padding: 10px;
+        align-items: center;
     }
 
     /* project */

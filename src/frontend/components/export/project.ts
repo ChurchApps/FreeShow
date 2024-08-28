@@ -4,11 +4,10 @@
 import { get } from "svelte/store"
 import { EXPORT } from "../../../types/Channels"
 import type { Project, ProjectShowRef } from "../../../types/Projects"
-import { dataPath } from "../../stores"
+import { dataPath, showsCache } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
-import { _show } from "../helpers/shows"
 import { formatToFileName } from "../helpers/show"
 
 export async function exportProject(project: Project) {
@@ -26,16 +25,16 @@ export async function exportProject(project: Project) {
     let showIds = projectItems.filter((a) => (a.type || "show") === "show").map((a) => a.id)
     await loadShows(showIds)
 
-    await Promise.all(projectItems.map(getShow))
+    projectItems.map(getItem)
 
     // export to file
     send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: formatToFileName(project.name), file: { project, shows } })
 
-    async function getShow(showRef: ProjectShowRef) {
+    function getItem(showRef: ProjectShowRef) {
         let type = showRef.type || "show"
-        // await loadShows(ids) ...
+
         if (type === "show") {
-            shows[showRef.id] = _show(showRef.id).get()
+            shows[showRef.id] = get(showsCache)[showRef.id]
             // TODO: get media in shows
             // TODO: get overlays in shows
             // TODO: get audio in shows

@@ -924,6 +924,19 @@ const duplicateActions = {
             history({ id: "UPDATE", newData: { data: output, replace: { name: output.name + " 2" } }, oldData: { id }, location: { page: "settings", id: "settings_output" } })
         })
     },
+    action: (data: any) => {
+        midiIn.update((a) => {
+            data.forEach(({ id }) => {
+                let newAction = clone(get(midiIn)[id])
+                newAction.name += " 2"
+
+                let newId = uid()
+                a[newId] = newAction
+            })
+
+            return a
+        })
+    },
 }
 
 // HELPER FUNCTIONS

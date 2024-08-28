@@ -1,5 +1,6 @@
 <script lang="ts">
     import { showsCache } from "../../../stores"
+    import { getItemText } from "../../edit/scripts/textStyle"
     import { clone } from "../../helpers/array"
     import { _show } from "../../helpers/shows"
     import Textbox from "../../slide/Textbox.svelte"
@@ -29,15 +30,17 @@
     // $: stageAutoSize = autoSize ? (items[0] ? getAutoSize(items[0], parent) : 0) : fontSize
 
     $: reversedItems = clone(slide?.items || []).reverse()
-    $: items = style ? slide?.items || [] : combineSlideItems()
+    $: items = style ? clone(slide?.items || []) : combineSlideItems(reversedItems)
 
-    function combineSlideItems() {
-        let oneItem: any = null
-        if (!slide?.items) return []
-        reversedItems
-            .filter((item) => (!item.type || item.type === "text") && (!item.bindings?.length || item.bindings.includes("stage")))
+    function combineSlideItems(items: any[]) {
+        let oneItem: any = null // merge all textbox items into one
+        if (!items.length) return []
+
+        items
+            .filter((item) => (item.type || "text") === "text" && (!item.bindings?.length || item.bindings.includes("stage")))
             .forEach((item: any) => {
-                if (item.lines && item.lines[0]?.text?.[0]?.value?.length) {
+                let text = getItemText(item)
+                if (text.length) {
                     if (!oneItem) oneItem = item
                     else oneItem.lines.push(...item.lines)
                 }
@@ -63,7 +66,7 @@
 
         if (timeout) clearTimeout(timeout)
 
-        timeout = setTimeout(() => timeoutFinished(currentlyLoading), items?.length ? waitDuration : 0)
+        timeout = setTimeout(() => timeoutFinished(currentlyLoading), items?.length && stageItem?.auto !== false ? waitDuration : 0)
     }
 
     function timeoutFinished(newActive: boolean) {

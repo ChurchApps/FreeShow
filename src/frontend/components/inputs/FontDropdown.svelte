@@ -1,11 +1,10 @@
 <script lang="ts">
+    import { createEventDispatcher, onMount } from "svelte"
     import { slide } from "svelte/transition"
-    import { createEventDispatcher, onDestroy, onMount } from "svelte"
-    import { destroy, receive, send } from "../../utils/request"
     import { MAIN } from "../../../types/Channels"
     import { systemFonts } from "../../stores"
+    import { awaitRequest } from "../../utils/request"
     import { removeDuplicates } from "../helpers/array"
-    import { uid } from "uid"
 
     export let system: boolean = false
 
@@ -20,23 +19,16 @@
         // "sans-serif",
     ]
 
-    onMount(() => {
+    onMount(async () => {
         if ($systemFonts.length) addFonts($systemFonts)
-        else send(MAIN, ["GET_SYSTEM_FONTS"])
-    })
+        else {
+            let fonts: string[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
+            if (!fonts) return
 
-    let id = uid()
-    receive(
-        MAIN,
-        {
-            GET_SYSTEM_FONTS: (fonts: string[]) => {
-                systemFonts.set(fonts)
-                addFonts(fonts)
-            },
-        },
-        id
-    )
-    onDestroy(() => destroy(MAIN, id))
+            systemFonts.set(fonts)
+            addFonts(fonts)
+        }
+    })
 
     function addFonts(newFonts: string[]) {
         // join and remove duplicates
@@ -62,7 +54,7 @@
         dispatch("click", fonts[index])
 
         // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)
@@ -102,8 +94,11 @@
                 <span
                     id={formatId(option)}
                     on:click={() => {
-                        dispatch("click", option)
                         active = false
+                        // allow dropdown to close before updating, so svelte visual bug don't duplicate inputs on close transition in boxstyle edit etc.
+                        setTimeout(() => {
+                            dispatch("click", option)
+                        }, 50)
                     }}
                     class:active={option === value}
                     style="font-family: {option};"

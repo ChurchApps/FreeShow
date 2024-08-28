@@ -1,15 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
+    import { activeFocus, activeShow, dictionary, focusMode, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
+    import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
-    import { getActiveOutputs } from "../../helpers/output"
-    import { decodeURI } from "../../helpers/audio"
 
     export let currentOutput: any
     export let outputId: string
@@ -42,7 +41,7 @@
     if (path && !type) type = getMediaType(getExtension(path))
 
     let mediaName: string = ""
-    $: outName = path && !path.includes("base64") ? splitPath(path).name : ""
+    $: outName = path && path.includes(".") && !path.includes("base64") ? splitPath(path).name : ""
     $: mediaName = outName ? outName.slice(0, outName.lastIndexOf(".")) : background?.name || ""
 
     $: activeOutputIds = getActiveOutputs($outputs, true, true, true)
@@ -61,12 +60,13 @@
     function openPreview() {
         if (!background) return
 
-        activeShow.set({ id: path, type })
+        if ($focusMode) activeFocus.set({ id: path })
+        else activeShow.set({ id: path, type })
     }
 
     function keydown(e: any) {
         if (e.key !== " ") return
-        if (e.target.closest(".edit") || e.target.closest("input")) return
+        if ($focusMode || e.target.closest(".edit") || e.target.closest("input")) return
 
         let show = $activeShow
         if (show && (show.type === "show" || show.type === undefined)) return
@@ -93,7 +93,7 @@
         {#if background?.type === "player"}
             <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
         {:else}
-            <p>{decodeURI(mediaName)}</p>
+            <p>{mediaName}</p>
         {/if}
     </span>
 

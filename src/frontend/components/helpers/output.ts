@@ -27,8 +27,9 @@ import {
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { customActionActivation } from "../actions/actions"
+import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
-import { clone, keysToID, removeDuplicates, sortByName } from "./array"
+import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
@@ -36,7 +37,7 @@ import { _show } from "./shows"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     // sort so display order can be changed! (needs app restart)
-    let enabledOutputs: any[] = sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id })))
+    let enabledOutputs: any[] = sortObject(sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id }))), "stageOutput")
 
     enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1
@@ -98,6 +99,7 @@ function changeOutputBackground(data, { outs, output, id, i }) {
     }
 
     // mute videos in the other output windows if more than one
+    // WIP fix multiple outputs: if an output with style without background is first the video will be muted... even if another output should not be muted
     data.muted = data.muted || false
     if (outs.length > 1 && i > 0) data.muted = true
 
@@ -130,6 +132,10 @@ function videoStarting() {
     customActionActivation("video_start")
 }
 
+export function startCamera(cam: API_camera) {
+    setOutput("background", { name: cam.name || "", id: cam.id, cameraGroup: cam.groupId, type: "camera" })
+}
+
 let sortedOutputs: any[] = []
 export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {
     // WIP cache outputs
@@ -157,7 +163,7 @@ export function findMatchingOut(id: string, updater: any = get(outputs)): string
 
     // TODO: more than one active
 
-    getActiveOutputs(updater, false).forEach((outputId: string) => {
+    getActiveOutputs(updater, false, true, true).forEach((outputId: string) => {
         let output: any = updater[outputId]
         if (match === null && output.enabled) {
             // TODO: index & layout: $outSlide?.index === i && $outSlide?.id === $activeShow?.id && $outSlide?.layout === activeLayout
@@ -245,6 +251,13 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
     return initial || style || slideRes || { width: 1920, height: 1080 }
 }
 
+export function getOutputResolution(outputId: string, _updater = get(outputs)) {
+    let currentOutput = _updater[outputId]
+    let style = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+
+    return style || { width: 1920, height: 1080 }
+}
+
 export function checkWindowCapture() {
     getActiveOutputs(get(outputs), false, true, true).forEach(shouldBeCaptured)
 }
@@ -326,6 +339,55 @@ export function addOutput(onlyFirst: boolean = false) {
 
         if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
         return output
+    })
+}
+
+export function enableStageOutput(options: any = {}) {
+    let outputIds = getActiveOutputs()
+    let bounds = get(outputs)[outputIds[0]]?.bounds || { x: 0, y: 0, width: 100, height: 100 }
+    let id = uid()
+
+    outputs.update((a) => {
+        a[id] = {
+            enabled: true,
+            active: true,
+            stageOutput: "",
+            name: "",
+            color: "#555555",
+            bounds,
+            screen: null,
+            ...options,
+        }
+
+        send(OUTPUT, ["CREATE"], { ...a[id], id })
+
+        return a
+    })
+
+    return id
+}
+
+export function removeStageOutput(outputId: string) {
+    outputs.update((a) => {
+        if (!a[outputId]) return a
+
+        delete a[outputId]
+        send(OUTPUT, ["REMOVE"], { id: outputId })
+
+        return a
+    })
+}
+
+export function changeStageOutputLayout(data: API_stage_output_layout) {
+    let outputIds = data.outputId ? [data.outputId] : Object.keys(get(outputs))
+
+    outputs.update((a) => {
+        outputIds.forEach((id) => {
+            if (!a[id]?.stageOutput) return
+            a[id].stageOutput = data.stageLayoutId
+        })
+
+        return a
     })
 }
 
@@ -414,6 +476,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
+        if (templateItem.textFit) item.textFit
 
         // remove exiting styling & add new if set in template
         const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings"]
@@ -443,6 +506,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 if (firstChar === "•" || firstChar === "-") {
                     if (text.value[0] === firstChar) return
                     line.text[k].value = `${firstChar} ${text.value.trim()}`
+                } else if (addOverflowTemplateItems && (text.value[0] === "•" || text.value[0] === "-")) {
+                    // remove bullets
+                    line.text[k].value = text.value.replace(text.value[0], "").trim()
                 }
             })
         })
@@ -665,7 +731,7 @@ export interface OutputMetadata {
 const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
 const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
 export function getMetadata(oldMetadata: any, show: Show | undefined, currentStyle: any, templatesUpdater = get(templates), outSlide: any) {
-    let metadata: OutputMetadata = {}
+    let metadata: OutputMetadata = { style: getTemplateStyle("metadata", templatesUpdater) || defaultMetadataStyle }
 
     if (!show) return metadata
     let settings: any = show.metadata || {}

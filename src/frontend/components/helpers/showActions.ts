@@ -8,6 +8,7 @@ import { playPauseGlobal } from "../drawer/timers/timers"
 import { clearOverlays, clearTimers } from "../output/clear"
 import {
     activeEdit,
+    activeFocus,
     activePage,
     activeProject,
     activeShow,
@@ -15,6 +16,7 @@ import {
     audioStreams,
     currentWindow,
     driveData,
+    focusMode,
     media,
     outLocked,
     outputs,
@@ -22,6 +24,7 @@ import {
     projects,
     showsCache,
     slideTimers,
+    stageShows,
     styles,
     templates,
     timers,
@@ -69,16 +72,26 @@ export function checkInput(e: any) {
 
 export function selectProjectShow(select: number | "next" | "previous") {
     let shows = get(projects)[get(activeProject) || ""]?.shows
-    let index: null | number = get(activeShow)?.index !== undefined ? get(activeShow)!.index! : null
+    let index: null | number = (get(focusMode) ? get(activeFocus).index : get(activeShow)?.index) ?? null
     let newIndex: number | null = typeof select === "number" ? select : getProjectIndex[select](index, shows)
 
     if (newIndex === null || !shows[newIndex]) return
 
     // show
-    if (get(showsCache)[shows[newIndex].id]) swichProjectItem(newIndex, shows[newIndex].id)
+    if (!get(focusMode) && (shows[newIndex].type || "show") === "show") {
+        // async waiting for show to load
+        setTimeout(async () => {
+            // preload show (so the layout can be changed)
+            await loadShows([shows[newIndex!].id])
+            if (get(showsCache)[shows[newIndex!].id]) swichProjectItem(newIndex!, shows[newIndex!].id)
+        })
+    }
 
     // set active show in project list
-    if (newIndex !== index) activeShow.set({ ...shows[newIndex], index: newIndex })
+    if (newIndex !== index) {
+        if (get(focusMode)) activeFocus.set({ id: shows[newIndex]?.id, index: newIndex })
+        else activeShow.set({ ...shows[newIndex], index: newIndex })
+    }
 }
 
 export function swichProjectItem(pos: number, id: string) {
@@ -170,10 +183,11 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     }
 
     // go to beginning if live mode & ctrl | no output | last slide active
-    if (get(activeShow) && (start || !slide || e?.ctrlKey || (isLastSlide && (get(activeShow)!.id !== slide?.id || get(showsCache)[get(activeShow)!.id]?.settings.activeLayout !== slide.layout)))) {
-        if (get(activeShow)?.type === "section") return goToNextProjectItem()
+    let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+    if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || get(showsCache)[currentShow.id]?.settings.activeLayout !== slide.layout)))) {
+        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow.id]) return goToNextProjectItem()
 
-        let id = loop ? slide?.id : get(activeShow)?.id
+        let id = loop ? slide?.id : currentShow.id
         if (!id) return
 
         // layout = GetLayout()
@@ -202,7 +216,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     newSlideOut.index = index
 
     // go to next show if end
-    if (index === null && get(activeShow)?.id === slide?.id && get(showsCache)[get(activeShow)?.id || ""]?.settings.activeLayout === slide.layout) {
+    if (index === null && currentShow?.id === slide?.id && get(showsCache)[currentShow?.id || ""]?.settings.activeLayout === slide.layout) {
         if ([" ", "ArrowRight", "PageDown"].includes(e?.key)) goToNextProjectItem()
         return
     }
@@ -241,24 +255,41 @@ async function goToNextShowInProject(slide, customOutputId) {
 
     // open next item in project (if current is open)
     if (get(activeShow)?.index === projectIndex) {
-        activeShow.set({ ...nextShow, index: nextShowInProjectIndex })
+        if (get(focusMode)) activeFocus.set({ id: nextShow.id, index: nextShowInProjectIndex })
+        else activeShow.set({ ...nextShow, index: nextShowInProjectIndex })
     }
 }
 
 export function goToNextProjectItem() {
-    if (!get(activeProject) || typeof get(activeShow)?.index !== "number") return
+    let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+    if (!get(activeProject) || typeof currentShow?.index !== "number") return
 
-    let index: number = get(activeShow)!.index ?? -1
+    let index: number = currentShow.index ?? -1
     if (index + 1 < get(projects)[get(activeProject)!].shows.length) index++
-    if (index > -1 && index !== get(activeShow)?.index) activeShow.set({ ...get(projects)[get(activeProject)!].shows[index], index })
+    if (index > -1 && index !== currentShow.index) {
+        let newShow = get(projects)[get(activeProject)!].shows[index]
+        if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
+        else activeShow.set({ ...newShow, index })
+
+        // skip if section is empty
+        if (newShow.type === "section" && !newShow.notes) goToNextProjectItem()
+    }
 }
 
 export function goToPreviousProjectItem() {
-    if (!get(activeProject) || typeof get(activeShow)?.index !== "number") return
+    let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+    if (!get(activeProject) || typeof currentShow?.index !== "number") return
 
-    let index: number = get(activeShow)!.index ?? get(projects)[get(activeProject)!].shows.length
+    let index: number = currentShow.index ?? get(projects)[get(activeProject)!].shows.length
     if (index - 1 >= 0) index--
-    if (index > -1 && index !== get(activeShow)?.index) activeShow.set({ ...get(projects)[get(activeProject)!].shows[index], index })
+    if (index > -1 && index !== currentShow.index) {
+        let newShow = get(projects)[get(activeProject)!].shows[index]
+        if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
+        else activeShow.set({ ...newShow, index })
+
+        // skip if section is empty
+        if (newShow.type === "section" && !newShow.notes) goToPreviousProjectItem()
+    }
 }
 
 export function previousSlide(e: any) {
@@ -272,13 +303,14 @@ export function previousSlide(e: any) {
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
     let activeLayout: string = _show(slide ? slide.id : "active").get("settings.activeLayout")
+    let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
     let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout ? layout.length - 1 : null
     if (index === null) {
-        if (get(activeShow)?.type === "section") goToPreviousProjectItem()
+        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""]) goToPreviousProjectItem()
         return
     }
 
-    let activeShowLayout = get(showsCache)[get(activeShow)?.id || ""]?.settings?.activeLayout
+    let activeShowLayout = get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout
     if (index < 0 && activeShowLayout !== slide?.layout) {
         slide = null
         layout = _show("active").layouts("active").ref()[0]
@@ -292,11 +324,21 @@ export function previousSlide(e: any) {
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
     let hasLinesEnded: boolean = !slide || linesIndex === null || linesIndex < 1
 
+    // skip disabled slides if clicking previous when another show is selected and no enabled slide is before
+    let isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
+    if (!hasLinesEnded && isFirstSlide) isFirstSlide = false
+    if (isFirstSlide && activeShowLayout !== slide?.layout) {
+        slide = null
+        layout = _show("active").layouts("active").ref()[0]
+        activeLayout = activeShowLayout
+        index = (layout?.length || 0) - 1
+    }
+
     let line: number = linesIndex || 0
     if (hasLinesEnded) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
-            if ((get(activeShow)?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section") {
+            if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""]) {
                 if (["ArrowLeft", "PageUp"].includes(e?.key)) goToPreviousProjectItem()
             }
             return
@@ -316,7 +358,7 @@ export function previousSlide(e: any) {
     }
 
     if (slide) setOutput("slide", { ...slide, index, line }, false)
-    else if (get(activeShow)) setOutput("slide", { id: get(activeShow)!.id, layout: activeLayout, index }, false)
+    else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index }, false)
 
     updateOut(slide ? slide.id : "active", index, layout, !e?.altKey)
 }
@@ -354,7 +396,8 @@ export function randomSlide() {
     let outputId = getActiveOutputs()[0]
     let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
-    let showId = slide?.id || get(activeShow)?.id
+    let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+    let showId = slide?.id || currentShow?.id
     if (!showId) return
 
     let layout: any[] = _show(showId)
@@ -421,9 +464,8 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         }
 
         // background
-        if (background) {
-            let bg = _show(showId).get("media")[background!]
-            console.log(_show(showId).get(), _show(showId).get("media"))
+        if (background && _show(showId).get("media")[background]) {
+            let bg = _show(showId).get("media")[background]
             let outputBg = get(outputs)[outputId]?.out?.background
             let cloudId = get(driveData).mediaId
             let bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path : bg.path
@@ -438,7 +480,6 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
             if (bg && bgPath !== outputBg?.path) {
                 let mediaStyle = getMediaStyle(get(media)[bgPath], { name: "" })
-                console.log(mediaStyle)
                 let bgData: any = {
                     name,
                     type,
@@ -722,26 +763,30 @@ export function sendMidi(data: any) {
     send(MAIN, ["SEND_MIDI"], data)
 }
 
-export function activateTrigger(triggerId: string) {
+export async function activateTrigger(triggerId: string): Promise<string> {
     let trigger = get(triggers)[triggerId]
-    if (!trigger) return
+    if (!trigger) return ""
 
     if (!customTriggers[trigger.type]) {
         console.log("Missing trigger:", trigger.type)
-        return
+        return "error"
     }
 
-    customTriggers[trigger.type](trigger.value)
+    return customTriggers[trigger.type](trigger.value)
 }
 
 const customTriggers = {
     http: (value: string) => {
-        fetch(value, { method: "GET" })
-            // .then((response) => response.json())
-            // .then((json) => console.log(json))
-            .catch((err) => {
-                console.error("Could not send HTTP request:", err)
-            })
+        return new Promise((resolve) => {
+            fetch(value, { method: "GET" })
+                .then(() => resolve("success"))
+                // .then((response) => response.json())
+                // .then((json) => console.log(json))
+                .catch((err) => {
+                    console.error("Could not send HTTP request:", err)
+                    resolve("error")
+                })
+        })
     },
 }
 
@@ -761,17 +806,26 @@ export function getDynamicIds() {
     return [...mainValues, ...metaValues]
 }
 
-export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type }: any, _updater: number = 0) {
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater: number = 0) {
     if (type === "stage" && get(currentWindow) === "output") {
         let outputId = Object.values(get(outputs))[0]?.stageOutput || ""
         let outSlide = get(allOutputs)[outputId]?.out?.slide
         showId = outSlide?.id
+        slideIndex = outSlide?.index
+    } else if (type === "stage") {
+        let stageOutput = get(stageShows)[id]?.settings?.output
+        let outputId = stageOutput || getActiveOutputs(get(outputs), false, true, true)[0]
+        let outSlide = get(outputs)[outputId]?.out?.slide
+        showId = outSlide?.id
+        slideIndex = outSlide?.index
     }
 
     let show = _show(showId).get()
     if (!show) return text
 
     getDynamicIds().forEach((id) => {
+        if (!text.includes(dynamicValueText(id))) return
+
         let newValue = getDynamicValue(id, show)
         text = text.replaceAll(dynamicValueText(id), newValue)
     })

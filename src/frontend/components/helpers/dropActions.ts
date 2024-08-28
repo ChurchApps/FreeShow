@@ -9,12 +9,14 @@ import {
     activeProject,
     activeShow,
     audioExtensions,
+    audioFolders,
     audioPlaylists,
     audioStreams,
     categories,
     drawerTabsData,
     imageExtensions,
     media,
+    mediaFolders,
     projects,
     scriptureSettings,
     shows,
@@ -30,7 +32,7 @@ import { getExtension, getFileName, getMediaType, removeExtension } from "./medi
 import { addToPos, getIndexes, mover } from "./mover"
 import { checkName } from "./show"
 import { _show } from "./shows"
-import { decodeURI } from "./audio"
+import { newToast } from "../../utils/common"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -48,6 +50,7 @@ function getId(drag: any): string {
 export const dropActions: any = {
     slides: ({ drag, drop }: any, history: any) => dropActions.slide({ drag, drop }, history),
     slide: ({ drag, drop }: any, history: any) => {
+        if (!get(activeShow)?.id || get(shows)[get(activeShow)?.id || ""]?.locked) return
         history.location = { page: get(activePage), show: get(activeShow), layout: get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout }
 
         let id: string = getId(drag)
@@ -118,11 +121,11 @@ export const dropActions: any = {
                     let type: string = getMediaType(extension)
 
                     let name: string = a.name || getFileName(a.path)
-                    return { name: decodeURI(removeExtension(name)), id: a.path, type }
+                    return { name: removeExtension(name), id: a.path, type }
                 })
                 .filter((a: any) => a)
         } else if (drag.id === "audio") {
-            data = data.map((a: any) => ({ id: a.path, name: decodeURI(removeExtension(a.name)), type: "audio" }))
+            data = data.map((a: any) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
         } else if (drag.id === "player") {
             data = data.map((a: any) => ({ id: a, type: "player" }))
         } else if (drag.id === "scripture") {
@@ -170,6 +173,11 @@ export const dropActions: any = {
         return h
     },
     navigation: ({ drag, drop }: any, h: any) => {
+        if (drag.id === "files") {
+            dropFileInDrawerNavigation(drag)
+            return
+        }
+
         if (drop.data !== "all" && get(activeDrawerTab) && (drag.id === "show" || drag.id === "show_drawer")) {
             h.id = "SHOWS"
             let data = drop.data === "unlabeled" ? null : drop.data
@@ -287,6 +295,39 @@ export const dropActions: any = {
     },
 }
 
+function dropFileInDrawerNavigation(drag) {
+    let drawerTab = get(activeDrawerTab)
+    console.log(drag, drawerTab)
+
+    // drop folders
+    if (drawerTab === "media" || drawerTab === "audio") {
+        drag.data.forEach((file) => {
+            if (file.type) return
+            addDrawerFolder(file, drawerTab as "media" | "audio")
+        })
+    }
+
+    // WIP drop .show/.json into show categories???
+    // WIP drop .template
+    // WIP drop bibles??
+}
+
+export function addDrawerFolder(file: { path: string }, type: "media" | "audio") {
+    // check if folder already exists
+    let path: string = file.path
+    let exists = Object.values(type === "media" ? get(mediaFolders) : get(audioFolders)).find((a) => a.path === path)
+    if (exists) {
+        newToast("$error.folder_exists")
+        return
+    }
+
+    history({
+        id: "UPDATE",
+        newData: { data: { name: getFileName(path), icon: "folder", path: path } },
+        location: { page: "drawer", id: "category_" + type },
+    })
+}
+
 // "show", "project"
 const fileDropExtensions: any = [...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)]
 const mediaExtensions: any = [...get(imageExtensions), ...get(videoExtensions)]
@@ -311,7 +352,7 @@ const slideDrop: any = {
                 if (files[drop.id].includes(extension)) {
                     data.push({
                         path: a.path,
-                        name: decodeURI(removeExtension(a.name)),
+                        name: removeExtension(a.name),
                         type: getMediaType(extension),
                     })
                 }
@@ -536,9 +577,9 @@ const slideDrop: any = {
         let slides: any = clone(get(showsCache)[get(activeShow)!.id].slides)
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
-        // WIP incorrect index
         if (drop.index === undefined) drop.index = layout.length
         let newIndex: number = drop.index
+        if (drop.trigger?.includes("end")) newIndex++
 
         newSlides.forEach((slide: any) => {
             let id = uid()

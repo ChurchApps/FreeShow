@@ -4,14 +4,13 @@
     import { activeDrawerTab, activePage, activePopup, activeStage, drawer, drawerTabsData, outputs, stageShows, timers, variables } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { keysToID } from "../../helpers/array"
+    import { keysToID, sortByName } from "../../helpers/array"
     import { checkWindowCapture, getActiveOutputs, getResolution } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import Panel from "../../system/Panel.svelte"
     import { updateStageShow } from "../stage"
 
-    // TODO: more stage features
     const titles = {
         // slide_background ++
         slide: ["current_slide_text", "current_slide", "current_slide_notes", "next_slide_text", "next_slide", "next_slide_notes"],
@@ -72,8 +71,8 @@
 
     let timeout: any = null
 
-    let timersList: any[] = keysToID($timers).sort((a, b) => a.name?.localeCompare(b.name))
-    let variablesList: any[] = keysToID($variables).sort((a, b) => a.name?.localeCompare(b.name))
+    let timersList: any[] = sortByName(keysToID($timers))
+    let variablesList: any[] = sortByName(keysToID($variables))
 
     const drawerPages: { [key: string]: DrawerTabIds } = {
         timer: "calendar",
@@ -157,7 +156,6 @@
 
                 {#each items as item}
                     <Button on:click={() => click(title + "#" + item)} active={enabledItems[title + "#" + item]?.enabled} style="width: 100%;" bold={false}>
-                        <span style="font-size: 0;position: absolute;">{console.log(item, customIcons[item], item.split("_")[item.split("_").length - 1])}</span>
                         <Icon id={customIcons[item] || item.split("_")[item.split("_").length - 1]} right />
                         <span class="overflow"><T id="stage.{item}" /></span>
                     </Button>

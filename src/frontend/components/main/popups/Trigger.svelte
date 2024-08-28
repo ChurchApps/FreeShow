@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import { popupData, selected, triggers } from "../../../stores"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
@@ -28,7 +28,7 @@
     let currentTrigger = clone($triggers[triggerId] || DEFAULT_TRIGGER)
 
     let globalList = Object.entries($triggers).map(([id, a]) => ({ ...a, id }))
-    let sortedTriggers = globalList.sort((a, b) => a.name?.localeCompare(b.name))
+    let sortedTriggers = sortByName(globalList)
 
     function updateValue(e: any, key: string) {
         let value = e?.target?.value || e

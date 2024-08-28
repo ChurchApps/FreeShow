@@ -1,27 +1,27 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { currentWindow, overlays, showsCache, slidesOptions, special, templates, variables, volume } from "../../stores"
+    import { currentWindow, overlays, showsCache, slidesOptions, templates, variables, volume } from "../../stores"
     import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
-    import { getAutoSize } from "../edit/scripts/autoSize"
+    import { getAutoSize, MAX_FONT_SIZE, MIN_FONT_SIZE } from "../edit/scripts/autoSize"
     import Icon from "../helpers/Icon.svelte"
     import { clone } from "../helpers/array"
-    import { getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
+    import { encodeFilePath, getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import OutputTransition from "../output/layers/OutputTransition.svelte"
     import Clock from "../system/Clock.svelte"
+    import Captions from "./views/Captions.svelte"
     import DynamicEvents from "./views/DynamicEvents.svelte"
     import ListView from "./views/ListView.svelte"
     import Mirror from "./views/Mirror.svelte"
+    import SlideProgress from "./views/SlideProgress.svelte"
     import Timer from "./views/Timer.svelte"
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
-    import Captions from "./views/Captions.svelte"
-    import SlideProgress from "./views/SlideProgress.svelte"
 
     export let item: Item
     export let itemIndex: number = -1
@@ -162,8 +162,6 @@
 
     let alignElem: any
     let loopStop = false
-    const MAX_FONT_SIZE = $special.max_auto_font_size ?? 800
-    const MIN_FONT_SIZE = 10
 
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
@@ -206,7 +204,36 @@
         loopStop = true
         // cacheText = true
 
-        fontSize = MAX_FONT_SIZE
+        let maxFontSize = MAX_FONT_SIZE
+        let minFontSize = MIN_FONT_SIZE
+
+        // !mirror && !$currentWindow
+        if (!isStage) {
+            // see autoSize.ts
+            let type = item?.textFit || "shrinkToFit"
+            let itemFontSize = Number(getStyles(item?.lines?.[0]?.text?.[0]?.style, true)?.["font-size"] || "")
+            // WIP scripture drawer preview not showing the same as output
+            // console.log(item, ref, type, itemFontSize)
+
+            if (type === "shrinkToFit") {
+                let textIsBiggerThanBox = alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth
+                if (textIsBiggerThanBox) {
+                    // change type if text is bigger than box
+                    type = "growToFit"
+                } else {
+                    // don't change the font size
+                    // fontSize = itemFontSize
+                    if (ref.id === "scripture") maxFontSize = itemFontSize
+                    else return
+                }
+            }
+            if (type === "growToFit") {
+                // set max font size to the current set text font size
+                if (itemFontSize) maxFontSize = itemFontSize
+            }
+        }
+
+        fontSize = maxFontSize
         addStyleToElemText(fontSize)
 
         // syncronus don't work
@@ -218,7 +245,7 @@
         //             fontSize--
         //             addStyleToElemText(fontSize)
 
-        //             if (fontSize > MIN_FONT_SIZE && (alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth)) setTimeout(checkFontSize)
+        //             if (fontSize > minFontSize && (alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth)) setTimeout(checkFontSize)
         //             else resolve(true)
         //         }
         //     })
@@ -226,8 +253,8 @@
 
         // quick search (double divide)
         // WIP duplicate of autoSize.ts
-        let lowestValue = MIN_FONT_SIZE
-        let highestValue = MAX_FONT_SIZE
+        let lowestValue = minFontSize
+        let highestValue = maxFontSize
         let biggerThanSize = true
         while (highestValue - lowestValue > 3) {
             let difference = (highestValue - lowestValue) / 2
@@ -244,7 +271,7 @@
         }
         if (chords && lines?.length) lowestValue -= lines.length * 10
         fontSize = lowestValue // prefer lowest value
-        if (fontSize > MAX_FONT_SIZE) fontSize = MAX_FONT_SIZE
+        if (fontSize > maxFontSize) fontSize = maxFontSize
 
         function addStyleToElemText(fontSize: number) {
             for (let linesElem of alignElem.children) {
@@ -362,15 +389,18 @@
     $: paddingCorrection = getPaddingCorrection(stageItem)
 
     let mediaItemPath = ""
-    $: if (item?.type === "media") getMediaItemPath()
+    $: if (item?.type === "media" && item.src) getMediaItemPath()
     async function getMediaItemPath() {
-        mediaItemPath = item.src || ""
+        mediaItemPath = ""
+        if (!item.src) return
 
         // only load thumbnails in main
-        if ($currentWindow || preview) return
+        if ($currentWindow || preview) {
+            mediaItemPath = item.src
+            return
+        }
 
-        let newPath = await loadThumbnail(mediaItemPath, mediaSize.slideSize)
-        if (newPath) mediaItemPath = newPath
+        mediaItemPath = await loadThumbnail(item.src, mediaSize.slideSize)
     }
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
@@ -425,7 +455,7 @@
                                 {#each line.text || [] as text}
                                     {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                     <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate' ? text.style : ''}">
-                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { showId: ref.showId, layoutId: ref.layoutId, slideIndex, type: ref.type }, updateDynamic) : value}
+                                        {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { ...ref, slideIndex }, updateDynamic) : value}
                                     </span>
                                 {/each}
                             </div>
@@ -441,9 +471,9 @@
             <ListView list={item.list} disableTransition={disableListTransition} />
         {:else if item?.type === "media"}
             {#if mediaItemPath}
-                {#if $currentWindow && getMediaType(getExtension(mediaItemPath)) === "video"}
+                {#if ($currentWindow || preview) && getMediaType(getExtension(mediaItemPath)) === "video"}
                     <video
-                        src={mediaItemPath}
+                        src={encodeFilePath(mediaItemPath)}
                         style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
                         muted={mirror || item.muted}
                         volume={Math.max(1, $volume)}
@@ -474,7 +504,7 @@
         {:else if item?.type === "events"}
             <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
         {:else if item?.type === "variable"}
-            <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ showId: ref.showId, layoutId: ref.layoutId, slideIndex }} />
+            <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ ...ref, slideIndex }} />
         {:else if item?.type === "web"}
             <Website src={item?.web?.src || ""} navigation={!item?.web?.noNavigation} clickable={$currentWindow === "output"} {ratio} />
         {:else if item?.type === "mirror"}

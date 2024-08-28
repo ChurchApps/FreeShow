@@ -4,7 +4,7 @@
     import T from "../helpers/T.svelte"
 
     $: messages = $toastMessages
-    $: if (messages) startTimer()
+    $: if (messages?.length) startTimer()
 
     const toastDuration = 4000 // ms
     let currentTimer: any = null
@@ -22,8 +22,6 @@
     function removeCurrent() {
         toastMessages.update((a) => {
             a.shift()
-
-            if (a.length) startTimer()
             return a
         })
     }

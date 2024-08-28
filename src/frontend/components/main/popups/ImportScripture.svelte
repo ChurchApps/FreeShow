@@ -12,6 +12,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
+    import { sortByName } from "../../helpers/array"
 
     let error: null | string = null
     let bibles: any[] = []
@@ -54,7 +55,7 @@
     $: {
         if (bibles?.length) {
             let langCode = window.navigator.language.slice(-2).toLowerCase()
-            sortedBibles = bibles.sort((a, b) => a.name.localeCompare(b.name))
+            sortedBibles = sortByName(bibles)
             let newSorted: any[] = []
             sortedBibles.forEach((bible) => {
                 newSorted.push(bible)
@@ -89,8 +90,9 @@
     }
 
     const formats: any = [
-        { name: "Zefania", extensions: ["xml"], id: "zefania" }, // OSIS
-        { name: "beblia.com", extensions: ["xml"], id: "beblia" },
+        { name: "Zefania", extensions: ["xml"], id: "zefania" },
+        { name: "OSIS", extensions: ["xml"], icon: "zefania", id: "osis" },
+        { name: "Beblia", extensions: ["xml"], id: "beblia" },
         { name: "OpenSong", extensions: ["xml", "xmm"], id: "opensong" },
         { name: "FreeShow", extensions: ["fsb", "json"], id: "freeshow" },
     ]
@@ -129,7 +131,7 @@
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
                     <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
-                        <Icon id="noIcon" right />{bible.nameLocal}
+                        <Icon id="scripture_alt" right />{bible.nameLocal}
                         {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
                             <span class="description" title={bible.description}>({bible.description})</span>
                         {/if}
@@ -141,7 +143,7 @@
                 {#if searchedBibles.length}
                     {#each searchedBibles as bible}
                         <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
-                            <Icon id="noIcon" right />{bible.name}
+                            <Icon id="scripture_alt" right />{bible.name}
                             {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
                                 <span class="description" title={bible.description}>({bible.description})</span>
                             {/if}
@@ -167,9 +169,8 @@
 
 <span style="display: flex;">
     {#each formats as format}
-        <!-- style="width: 20%;flex-direction: column;min-height: 160px;" -->
         <Button
-            style="width: 25%;flex-direction: column;min-height: 180px;"
+            style="width: 20%;flex-direction: column;min-height: 160px;"
             on:click={() => {
                 send(IMPORT, [format.id + "_bible"], { format })
 

@@ -1,17 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import { encodeFilePath } from "../../helpers/media"
 
     export let src: string
     export let alt: string
     export let transition: boolean = true
 
     let loaded: boolean = false
-    let image: any
+    let image: any = null
 
     onMount(() => {
-        image.onload = () => {
-            loaded = true
-        }
+        // double check loaded
+        if (image?.complete) loaded = true
     })
 
     // retry on error
@@ -32,7 +32,7 @@
 </script>
 
 {#key retryCount}
-    <img style={$$props.style} {src} {alt} class:loaded class:transition bind:this={image} on:error={reload} />
+    <img style={$$props.style} src={encodeFilePath(src)} {alt} draggable="false" class:loaded class:transition bind:this={image} on:load={() => (loaded = true)} on:error={reload} />
 {/key}
 
 <style>

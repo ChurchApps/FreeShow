@@ -64,10 +64,8 @@
     on:mousemove={onMouseMove}
 />
 
-<!-- using capture is too slow -->
 <div class="parent" bind:this={parent} bind:offsetWidth={width} bind:offsetHeight={height}>
     <div style="width: 100%;height: 100%;display: flex;flex-direction: column;justify-content: center;" on:mousedown={onMouseMove} on:wheel|passive={wheel}>
-        <!-- TODO: draw get video time! -->
         <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} bind:ratio mirror />
     </div>
 </div>

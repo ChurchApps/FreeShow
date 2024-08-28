@@ -586,6 +586,10 @@ export function mergeSlides(indexes: { index: number }[]) {
     let newSlide: Slide = clone(_show().slides([firstSlideId]).get()[0])
     let previousTextboxStyle = newSlide.items.find((a) => a.type || "text" === "text")?.style || ""
 
+    if (newSlide.group === null) {
+        newSlide.group = ""
+        newSlide.globalGroup = "verse"
+    }
     newSlide.items = []
     let pushedItems: string[] = []
     let newLines: Line[] = []
@@ -613,15 +617,58 @@ export function mergeSlides(indexes: { index: number }[]) {
     newSlide.items = [{ type: "text", lines: newLines, style: previousTextboxStyle }, ...newSlide.items]
 
     let newShow: Show = clone(_show().get())
+    let activeLayoutId = newShow.settings.activeLayout
+    let layoutIndex = layoutRef[firstSlideIndex].index
+
+    // add to layout if child
+    if (layoutRef[firstSlideIndex].parent) {
+        let slides = newShow.layouts[activeLayoutId].slides
+        let parentIndex = layoutRef[firstSlideIndex].parent.index
+        layoutIndex = parentIndex + 1
+        newShow.layouts[activeLayoutId].slides = [...slides.slice(0, layoutIndex), { id: firstSlideId }, ...slides.slice(layoutIndex)]
+    }
+
+    // delete parents child refs
+    let firstLayoutIndex = layoutRef[firstSlideIndex].parent?.index ?? layoutRef[firstSlideIndex].index
+    indexes.forEach(({ index }) => {
+        let ref = layoutRef[index]
+        if (!ref.parent) {
+            if (firstLayoutIndex > ref.index) layoutIndex--
+            return
+        }
+
+        let children = newShow.slides[ref.parent.id]?.children || []
+        let childIndex = children.indexOf(ref.id)
+        if (childIndex < 0) return
+
+        children.splice(childIndex, 1)
+        newShow.slides[ref.parent.id].children = children
+    })
 
     // delete layout slides (except for first one)
-    let activeLayoutIndex = Object.keys(newShow.layouts).findIndex((id) => id === newShow.settings.activeLayout)
+    let activeLayoutIndex = Object.keys(newShow.layouts).findIndex((id) => id === activeLayoutId)
     Object.values(newShow.layouts).forEach((layout, currentIndex) => {
-        layout.slides = layout.slides.filter((a, i) => (activeLayoutIndex === currentIndex && i === firstSlideIndex) || !allMergedSlideIds.includes(a.id))
+        layout.slides = layout.slides.filter((a, i) => {
+            if (activeLayoutIndex === currentIndex && i === layoutIndex) return true
+            return !allMergedSlideIds.includes(a.id)
+        })
     })
 
     // delete slides
     allMergedSlideIds.forEach((id) => {
+        // only delete if no children or they are selected!
+        let children = newShow.slides[id].children || []
+        // return if at least one children is not selected
+        if (children.find((childId) => !allMergedSlideIds.includes(childId))) {
+            if (id === firstSlideId) {
+                newShow.layouts[activeLayoutId].slides.push({ id: firstSlideId })
+                layoutIndex = newShow.layouts[activeLayoutId].slides.length - 1
+                // remove extra children
+                delete newSlide.children
+            }
+            return
+        }
+
         delete newShow.slides[id]
     })
 
@@ -629,9 +676,10 @@ export function mergeSlides(indexes: { index: number }[]) {
     delete newSlide.id // delete old id if it's there
     let newSlideId = uid()
     newShow.slides[newSlideId] = newSlide
-    newShow.layouts[newShow.settings.activeLayout].slides[firstSlideIndex].id = newSlideId
+    if (!newShow.layouts[newShow.settings.activeLayout].slides[layoutIndex]) return // something went wrong!
+    newShow.layouts[newShow.settings.activeLayout].slides[layoutIndex].id = newSlideId
 
-    history({ id: "UPDATE", newData: { data: newShow }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key", override: "merge_slides" } })
+    history({ id: "UPDATE", newData: { data: newShow }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key" } }) // , override: "merge_slides"
 }
 
 export function mergeTextboxes() {

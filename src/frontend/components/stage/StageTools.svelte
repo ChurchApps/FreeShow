@@ -1,9 +1,6 @@
 <script lang="ts">
-    import { OUTPUT } from "../../../types/Channels"
     import type { TabsObj } from "../../../types/Tabs"
-    import { send } from "../../utils/request"
-    import { activeStage, outputs, stageShows } from "../../stores"
-    import { keysToID } from "../helpers/array"
+    import { activeStage } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getResolution } from "../helpers/output"
@@ -72,21 +69,8 @@
                 location: { page: "stage", id: "stage_item_style", override: stageId + "_reset_item" },
             })
         } else if (active === "slide") {
-            if ($stageShows[stageId]?.settings?.outputScreen) removeOutput(stageId)
             history({ id: "UPDATE", newData: { data: {}, key: "settings" }, oldData: { id: stageId }, location: { page: "stage", id: "stage", override: "stage_reset" } })
         }
-    }
-
-    function removeOutput(stageId: string) {
-        outputs.update((a) => {
-            let outputWithStageId = keysToID(a).find((output) => output.stageOutput === stageId)?.id
-            if (!outputWithStageId) return a
-
-            delete a[outputWithStageId]
-            send(OUTPUT, ["REMOVE"], { id: outputWithStageId })
-
-            return a
-        })
     }
 </script>
 
@@ -111,7 +95,6 @@
         </div>
     {/if}
 
-    <!-- TODO: reset stage -->
     <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
         {#if active !== "items"}
             <Button style="flex: 1;" on:click={resetStageStyle} dark center>

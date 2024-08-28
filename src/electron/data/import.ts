@@ -1,4 +1,4 @@
-import fs, { readFileSync } from "fs"
+import { readFileSync } from "fs"
 import path, { join } from "path"
 // import { pdf } from "pdf-to-img"
 import PPTX2Json from "pptx2json"
@@ -8,7 +8,7 @@ import sqlite3 from "sqlite3"
 import WordExtractor from "word-extractor"
 import { toApp } from ".."
 import { IMPORT } from "../../types/Channels"
-import { dataFolderNames, getDataFolder, readFolder } from "../utils/files"
+import { dataFolderNames, getDataFolder, makeDir, readFolder } from "../utils/files"
 
 const specialImports: any = {
     powerpoint: async (files: string[]) => {
@@ -49,10 +49,11 @@ const specialImports: any = {
         async function pdfToImages(filePath: string) {
             let name = getFileName(filePath)
             let outputPath = path.join(importPath, name)
-            fs.mkdirSync(outputPath, { recursive: true })
+            makeDir(outputPath)
             opts.out_dir = outputPath
 
-            // WIP use pdf-to-img when upgrading node (because of canvas)
+            // WIP use pdf-to-img? (recuires canvas)
+            // canvas needs some binarise for compiling: https://www.npmjs.com/package/canvas?activeTab=readme#compiling
             // const doc = await pdf(filePath)
 
             // let index = 0
@@ -105,7 +106,7 @@ const specialImports: any = {
     },
     songbeamer: async (files: string[], data: any) => {
         let encoding = data.encoding.id
-        let fileContents = await Promise.all(files.map(file => readFile(file, encoding)))
+        let fileContents = await Promise.all(files.map((file) => readFile(file, encoding)))
         return {
             files: fileContents,
             length: fileContents.length,
@@ -113,7 +114,7 @@ const specialImports: any = {
             category: data.category.id,
             translationMethod: data.translation,
         }
-    }
+    },
 }
 
 export async function importShow(id: any, files: string[] | null, importSettings: any) {
@@ -128,7 +129,7 @@ export async function importShow(id: any, files: string[] | null, importSettings
     if (specialImports[importId]) data = await specialImports[importId](files, importSettings)
     else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
-        data = await Promise.all(files.map(file => readFile(file)))
+        data = await Promise.all(files.map((file) => readFile(file)))
     }
 
     if (!data.length) return

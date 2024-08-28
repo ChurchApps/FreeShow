@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "1.2.3",
+    "version": "1.2.6-beta.1",
     "private": true,
     "main": "build/electron/index.js",
     "description": "Show song lyrics and more for free!",
@@ -78,6 +78,7 @@
             "category": "public.app-category.utilities",
             "hardenedRuntime": true,
             "gatekeeperAssess": false,
+            "notarize": false,
             "entitlements": "scripts/entitlements.mac.plist",
             "entitlementsInherit": "scripts/entitlements.mac.plist",
             "extendInfo": {
@@ -90,6 +91,7 @@
         "afterSign": "scripts/notarize.js",
         "dmg": {
             "background": "build/public/dmg.png",
+            "sign": false,
             "contents": [
                 {
                     "x": 140,
@@ -119,7 +121,7 @@
         }
     },
     "devDependencies": {
-        "@electron/notarize": "^2.2.0",
+        "@electron/notarize": "^2.4.0",
         "@playwright/test": "^1.40.1",
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-node-resolve": "^15.2.3",
@@ -132,8 +134,8 @@
         "@types/sqlite3": "^3.1.8",
         "@types/tmp": "^0.2.6",
         "@types/vimeo__player": "^2.16.2",
-        "electron": "^21.2.2",
-        "electron-builder": "24.12.0",
+        "electron": "^31.3.0",
+        "electron-builder": "^24.13.3",
         "playwright": "^1.40.1",
         "rollup": "^4.6.1",
         "rollup-plugin-copy": "^3.5.0",
@@ -157,7 +159,7 @@
         "chord-transposer": "^3.0.9",
         "cross-env": "^7.0.3",
         "electron-store": "^8.0.1",
-        "electron-updater": "^4.6.1",
+        "electron-updater": "^6.3.1",
         "exif": "^0.6.0",
         "express": "^4.17.2",
         "follow-redirects": "^1.15.2",
@@ -168,7 +170,7 @@
         "node-machine-id": "^1.1.12",
         "npm-run-all": "^4.1.5",
         "pdf-poppler": "^0.2.1",
-        "pptx2json": "^0.0.8",
+        "pptx2json": "^0.0.10",
         "protobufjs": "^7.2.3",
         "qrcode-generator": "^1.4.4",
         "sirv-cli": "^1.0.0",

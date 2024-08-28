@@ -7,6 +7,7 @@ export interface Outputs {
 
 export interface Output {
     id?: string
+    hideFromPreview?: boolean
     keyOutput?: string
     isKeyOutput?: boolean
     stageOutput?: string

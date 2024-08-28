@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import { popupData, selected, audioStreams } from "../../../stores"
     import T from "../../helpers/T.svelte"
-    import { clone } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
@@ -24,7 +24,7 @@
     let currentStream = clone($audioStreams[streamId] || DEFAULT_STREAM)
 
     let globalList = Object.entries($audioStreams).map(([id, a]: any) => ({ ...a, id }))
-    let sortedStreams = globalList.sort((a, b) => a.name?.localeCompare(b.name))
+    let sortedStreams = sortByName(globalList)
 
     function updateValue(e: any, key: string) {
         let value = e?.target?.value || e

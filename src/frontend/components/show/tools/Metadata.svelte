@@ -10,6 +10,8 @@
     import Notes from "./Notes.svelte"
     import { getActiveOutputs } from "../../helpers/output"
     import Tags from "../Tags.svelte"
+    import { sortByName } from "../../helpers/array"
+    import { initializeMetadata } from "../../helpers/show"
 
     // WIP duplicate of Outputs.svelte
     const metaDisplay: any[] = [
@@ -32,7 +34,7 @@
     $: if ($activeShow!.id) getValues()
 
     function getValues() {
-        values = { title: "", artist: "", author: "", composer: "", publisher: "", copyright: "", CCLI: "", year: "" }
+        values = initializeMetadata({})
         Object.entries(meta).forEach(([key, value]) => {
             values[key] = value
         })
@@ -40,12 +42,7 @@
         metadata = currentShow.metadata || {}
         message = currentShow.message || {}
 
-        templateList = [
-            { id: null, name: "—" },
-            ...Object.entries($templates)
-                .map(([id, template]: any) => ({ id, name: template.name }))
-                .sort((a, b) => a.name.localeCompare(b.name)),
-        ]
+        templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))]
 
         let outputId = getActiveOutputs($outputs)[0]
         outputShowSettings = $styles[$outputs[outputId]?.style || ""] || {}

@@ -45,7 +45,9 @@
         "id_start_timer",
         "playlist_next",
         "id_select_output_style",
+        "change_stage_output_layout",
         "change_transition",
+        "start_camera",
     ]
     // remove actions that are not fully implemented to CustomInput yet
     const removeActions = ["change_transition", "change_variable"]

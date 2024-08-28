@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item, Line } from "../../../../types/Show"
-    import { activeEdit, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
+    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -14,6 +14,7 @@
     import { uid } from "uid"
     import { addToPos } from "../../helpers/mover"
     import EditboxChords from "./EditboxChords.svelte"
+    import { getStyles } from "../../helpers/style"
 
     export let item: Item
     export let ref: {
@@ -31,6 +32,9 @@
     let html: string = ""
     let previousHTML: string = ""
     let currentStyle: string = ""
+
+    // WIP pressing line break on empty html (textbox) does not work, but it works after typing something
+    // NOTE: undoing a change will set the html to "", causing the same issue
 
     onMount(() => {
         getStyle()
@@ -103,6 +107,13 @@
     }
 
     function keydown(e: any) {
+        if (e.key === "Enter" && e.shiftKey) {
+            // by default the browser contenteditable will add a <br> instead of our custom <span class="break"> when pressing SHIFT
+            // so just prevent shift break!
+            e.preventDefault()
+            return
+        }
+
         // TODO: get working in list view
         if (e.key === "Enter" && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
             // incorrect editbox
@@ -174,7 +185,7 @@
         children = addToPos(children, [id], slideIndex)
         _show().slides([parentId]).set({ key: "children", value: children })
 
-        if (e?.target?.closest(".item")) activeEdit.set({ slide: $activeEdit.slide! + 1, items: [] })
+        if (e?.target?.closest(".item")) activeEdit.set({ slide: $activeEdit.slide! + 1, items: [], showId: $activeShow?.id })
         else getStyle()
     }
 
@@ -256,41 +267,42 @@
     let loaded = false
     $: isTextbox = !!item?.lines
     $: isAuto = item?.auto
-    $: if (isTextbox && (isAuto || textChanged)) getCustomAutoSize()
+    $: textFit = item?.textFit
+    $: itemFontSize = Number(getStyles(item?.lines?.[0]?.text?.[0]?.style, true)?.["font-size"] || "")
+    $: if (isTextbox && (isAuto || textFit || itemFontSize || textChanged)) getCustomAutoSize()
     $: if (!isTextbox && item) autoSize = getAutoSize(item)
 
     let autoSize: number = 0
     let alignElem: any
-    let loopStop = false
+    let updateTimeout: any = null
     function getCustomAutoSize() {
-        if (isTyping || loopStop || !loaded || !textElem || !alignElem || !item.auto) return
-        loopStop = true
+        if (isTyping || !loaded || !textElem || !alignElem || !item.auto) return
 
-        autoSize = getMaxBoxTextSize(textElem, alignElem)
+        autoSize = getMaxBoxTextSize(textElem, alignElem, item)
 
-        // update item with new style
-        if (ref.type === "overlay") {
-            overlays.update((a) => {
-                a[ref.id].items[index].autoFontSize = autoSize
-                return a
-            })
-        } else if (ref.type === "template") {
-            templates.update((a) => {
-                a[ref.id].items[index].autoFontSize = autoSize
-                return a
-            })
-        } else if (ref.showId) {
-            showsCache.update((a) => {
-                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[index]) return a
+        // reduce text stuttering on quick changes
+        if (updateTimeout) clearTimeout(updateTimeout)
+        updateTimeout = setTimeout(() => {
+            // update item with new style
+            if (ref.type === "overlay") {
+                overlays.update((a) => {
+                    a[ref.id].items[index].autoFontSize = autoSize
+                    return a
+                })
+            } else if (ref.type === "template") {
+                templates.update((a) => {
+                    a[ref.id].items[index].autoFontSize = autoSize
+                    return a
+                })
+            } else if (ref.showId) {
+                showsCache.update((a) => {
+                    if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[index]) return a
 
-                a[ref.showId!].slides[ref.id].items[index].autoFontSize = autoSize
-                return a
-            })
-        }
-
-        setTimeout(() => {
-            loopStop = false
-        }, 500)
+                    a[ref.showId!].slides[ref.id].items[index].autoFontSize = autoSize
+                    return a
+                })
+            }
+        }, 200)
     }
 
     // UPDATE STYLE FROM LINES
@@ -482,8 +494,11 @@
 
             if (pastingIndex < 0) {
                 pastingIndex = lineIndex
-                let lastPastedLine = pastingIndex + (clipboard.split("\n").length - 1)
-                caret = { line: lastPastedLine, pos: lineSel.start + clipboard.length }
+                let splitted = clipboard.split("\n")
+                let lastPastedLine = pastingIndex + (splitted.length - 1)
+                let pos = lineSel.start + clipboard.length
+                if (splitted.length > 1) pos = splitted[splitted.length - 1].trim().length
+                caret = { line: lastPastedLine, pos }
             }
 
             let lineText: any[] = []
@@ -557,6 +572,9 @@
     // $: autoSize = height < width ? height / 1.5 : width / 4
     // $: autoSize = Math.min(height, width) / 2
     // $: autoSize = getAutoSize(item)
+
+    // SHOW IS LOCKED FOR EDITING
+    $: isLocked = $showsCache[$activeShow?.id || ""]?.locked
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -569,28 +587,32 @@
                 <T id="empty.text" />
             </span>
         {/if}
-        {#if chordsMode && textElem}
-            <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
+        {#if isLocked}
+            <div class="edit">{@html html}</div>
+        {:else}
+            {#if chordsMode && textElem}
+                <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
+            {/if}
+            <div
+                bind:this={textElem}
+                on:mousemove={(e) => {
+                    let newLines = chordMove(e, { textElem, item })
+                    if (newLines) item.lines = newLines
+                }}
+                on:mouseup={() => storeCurrentCaretPos()}
+                class="edit"
+                class:hidden={chordsMode}
+                class:autoSize={item.auto && autoSize}
+                contenteditable
+                on:keydown={textElemKeydown}
+                bind:innerHTML={html}
+                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
+                class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
+                class:tallLines={chordsMode}
+            />
+            <!-- this did not work on mac: -->
+            <!-- on:paste|preventDefault={paste} -->
         {/if}
-        <div
-            bind:this={textElem}
-            on:mousemove={(e) => {
-                let newLines = chordMove(e, { textElem, item })
-                if (newLines) item.lines = newLines
-            }}
-            on:mouseup={() => storeCurrentCaretPos()}
-            class="edit"
-            class:hidden={chordsMode}
-            class:autoSize={item.auto && autoSize}
-            contenteditable
-            on:keydown={textElemKeydown}
-            bind:innerHTML={html}
-            style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain && lineGap ? `gap: ${lineGap}px;` : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
-            class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
-            class:tallLines={chordsMode}
-        />
-        <!-- this did not work on mac: -->
-        <!-- on:paste|preventDefault={paste} -->
     </div>
 {/if}
 

@@ -1,11 +1,10 @@
 import { get } from "svelte/store"
-import { activeEdit, activePopup, lockedOverlays, outLocked, outputCache, outputs, overlays, playingAudio, playingMetronome, selected, slideTimers, videosData, videosTime } from "../../stores"
+import { activeEdit, activePopup, customMessageCredits, lockedOverlays, outLocked, outputCache, outputs, overlays, playingAudio, playingMetronome, selected, slideTimers, videosData, videosTime } from "../../stores"
 import { clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { clearAudio } from "../helpers/audio"
 import { clone } from "../helpers/array"
 import { customActionActivation } from "../actions/actions"
 
-// TODO: output/clearButtons
 export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
     if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length)) return
@@ -14,7 +13,6 @@ export function clearAll(button: boolean = false) {
     let allCleared = isOutCleared(null) && audioCleared
     if (allCleared) return
 
-    // TODO: audio
     if (!get(outputCache)) outputCache.set(clone(get(outputs)))
 
     clearBackground()
@@ -51,6 +49,7 @@ export function clearBackground(outputId: string = "") {
         })
     })
 
+    customMessageCredits.set("") // unsplash
     customActionActivation("background_cleared")
 }
 

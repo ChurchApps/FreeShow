@@ -1,18 +1,20 @@
 import { get } from "svelte/store"
+import { OUTPUT } from "../../types/Channels"
+import type { ShowType } from "../../types/Show"
 import type { TopViews } from "../../types/Tabs"
 import { menuClick } from "../components/context/menuClick"
+import { clearAudio, playAudio } from "../components/helpers/audio"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { redo, undo } from "../components/helpers/history"
 import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
-import { activeDrawerTab, activePage, activePopup, activeShow, currentWindow, drawer, os, outLocked, outputs, refreshEditSlide, selected, showsCache, special, volume } from "../stores"
-import { drawerTabs } from "../values/tabs"
-import { hideDisplay, togglePanels } from "./common"
-import { save } from "./save"
-import { send } from "./request"
-import { OUTPUT } from "../../types/Channels"
-import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
-import { clearAudio } from "../components/helpers/audio"
 import { nextSlide, previousSlide } from "../components/helpers/showActions"
+import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, currentWindow, drawer, focusMode, os, outLocked, outputs, projects, refreshEditSlide, selected, showsCache, special, volume } from "../stores"
+import { drawerTabs } from "../values/tabs"
+import { activeShow } from "./../stores"
+import { hideDisplay, togglePanels } from "./common"
+import { send } from "./request"
+import { save } from "./save"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -29,8 +31,8 @@ const ctrlKeys: any = {
     h: () => activePopup.set("history"),
     m: () => volume.set(get(volume) ? 0 : 1),
     o: () => displayOutputs(),
-    q: () => togglePanels(),
     s: () => save(),
+    t: () => togglePanels(),
     y: () => redo(),
     z: () => undo(),
     Z: () => redo(),
@@ -105,7 +107,17 @@ export function keydown(e: any) {
 
     if (e.altKey) return
     if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
-    if (document.activeElement === document.body && Object.keys(menus).includes((e.key - 1).toString())) activePage.set(menus[e.key - 1])
+
+    // change tab with number keys
+    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((e.key - 1).toString())) {
+        let menu = menus[e.key - 1]
+        activePage.set(menu)
+
+        // open edit
+        if (menu === "edit" && !get(activeEdit)?.id) {
+            activeEdit.set({ slide: 0, items: [], showId: get(activeShow)?.id })
+        }
+    }
 
     if (keys[e.key]) {
         e.preventDefault()
@@ -153,14 +165,16 @@ export const previewShortcuts: any = {
         else setOutput("transition", null)
     },
     PageDown: (e: any) => {
-        if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
+        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (!get(showsCache)[currentShow?.id || ""]) return
         if (get(special).disablePresenterControllerKeys) return
 
         e.preventDefault()
         nextSlide(e)
     },
     PageUp: (e: any) => {
-        if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
+        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (!get(showsCache)[currentShow?.id || ""]) return
         if (get(special).disablePresenterControllerKeys) return
 
         e.preventDefault()
@@ -178,31 +192,50 @@ export const previewShortcuts: any = {
         previousSlide(e)
     },
     " ": (e: any) => {
-        if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
+        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (!get(showsCache)[currentShow?.id || ""]) return playMedia(e)
         e.preventDefault()
 
         let allActiveOutputs = getActiveOutputs(get(outputs), true, true, true)
         let outputId = allActiveOutputs[0]
         let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
 
-        if (currentOutput.out?.slide?.id !== get(activeShow)?.id || (get(activeShow) && currentOutput.out?.slide?.layout !== get(showsCache)[get(activeShow)?.id || ""].settings.activeLayout)) nextSlide(e, true)
+        if (currentOutput.out?.slide?.id !== currentShow?.id || (currentShow && currentOutput.out?.slide?.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) nextSlide(e, true)
         else {
             if (e.shiftKey) previousSlide(e)
             else nextSlide(e)
         }
     },
     Home: (e: any) => {
-        if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
+        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (!get(showsCache)[currentShow?.id || ""]) return
         if (get(special).disablePresenterControllerKeys) return
 
         e.preventDefault()
         nextSlide(e, true)
     },
     End: (e: any) => {
-        if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
+        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (!get(showsCache)[currentShow?.id || ""]) return
         if (get(special).disablePresenterControllerKeys) return
 
         e.preventDefault()
         nextSlide(e, false, true)
     },
+}
+
+function playMedia(e: Event) {
+    if (get(outLocked) || !get(focusMode)) return
+    let projectItem: any = get(projects)[get(activeProject) || ""]?.shows?.[get(activeFocus).index!]
+
+    let type: ShowType = projectItem.type
+    if (!type) return
+    e.preventDefault()
+
+    if (type === "video" || type === "image" || type === "player") {
+        // , ...mediaStyle
+        setOutput("background", { type: projectItem.type, path: projectItem.id, muted: false, loop: false })
+    } else if (type === "audio") {
+        playAudio({ path: projectItem.id, name: projectItem.name })
+    }
 }

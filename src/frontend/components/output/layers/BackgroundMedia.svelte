@@ -35,7 +35,6 @@
 
     let mediaStyle: MediaStyle = {}
     $: if (data) mediaStyle = getMediaStyle(data, currentStyle)
-    $: console.log(mediaStyle, data)
 
     // VIDEO
 
@@ -142,7 +141,7 @@
     }
 
     // call end just before (to make room for transition) - this also triggers video ended on loop
-    $: if (videoData.duration && duration && videoTime >= videoData.duration - (duration / 1000 + 0.1)) videoEnded()
+    $: if (videoData.duration && videoTime >= videoData.duration - (duration / 1000 + 0.1)) videoEnded()
 
     let endedCalled: boolean = false
     function videoEnded() {
@@ -229,7 +228,7 @@
     {:else if type === "player"}
         <!-- prevent showing controls in output -->
         {#if $special.hideCursor}<div class="overlay" />{/if}
-        <Player {outputId} {id} bind:videoData bind:videoTime title={data.title} startAt={data.startAt} on:loaded />
+        <Player {outputId} {id} bind:videoData bind:videoTime title={data.title} startAt={data.startAt} on:loaded on:ended={videoEnded} />
     {/if}
 </OutputTransition>
 

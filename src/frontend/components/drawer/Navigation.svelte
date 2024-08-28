@@ -1,7 +1,7 @@
 <script lang="ts">
     import { IMPORT } from "../../../types/Channels"
     import type { Category } from "../../../types/Tabs"
-    import { activePopup, audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, overlays, scriptures, shows, templateCategories, templates } from "../../stores"
+    import { activePopup, audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, scriptures, templateCategories } from "../../stores"
     import { send } from "../../utils/request"
     import { keysToID, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -9,10 +9,8 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import FolderPicker from "../inputs/FolderPicker.svelte"
-    import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
-    import SelectElem from "../system/SelectElem.svelte"
-    import NavigationButton from "./NavigationButton.svelte"
+    import NavigationButtons from "./NavigationButtons.svelte"
 
     export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "functions" | "templates" | "timers"
 
@@ -120,41 +118,6 @@
         return [{ id: "SEPERATOR", name: "" }, ...playlists]
     }
 
-    let length: any = {}
-    if (id) length = {}
-    $: {
-        let list: any[] = []
-        if (id === "shows") list = Object.values($shows).filter((a: any) => !a?.private)
-        else if (id === "overlays") list = Object.values($overlays)
-        else if (id === "templates") list = Object.values($templates)
-
-        let totalLength: number = 0
-        buttons.forEach((button) => {
-            length[button.id] = 0
-
-            if (button.id === "all") {
-                length[button.id] = list.length
-                return
-            }
-
-            length[button.id] = list.filter(checkMatch).length
-            totalLength += length[button.id]
-
-            function checkMatch(a) {
-                if (!a) return a
-                if (button.id === "unlabeled") return a.category === null
-                return a.category === button.id
-            }
-        })
-
-        length.unlabeled += list.length - totalLength
-    }
-    $: if (id && $audioPlaylists) {
-        Object.keys($audioPlaylists).forEach((id) => {
-            length[id] = $audioPlaylists[id].songs.length
-        })
-    }
-
     function keydown(e: KeyboardEvent) {
         if (!e.target?.closest(".edit") && (e.ctrlKey || e.metaKey)) {
             if (e.key === "ArrowDown") {
@@ -179,34 +142,21 @@
 
     let selectId: any = "category"
     $: selectId = "category_" + id
+
+    const dropAreas: (typeof id)[] = ["shows", "media", "audio", "overlays", "templates"]
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <div class="main">
     <div class="categories context #category_{id}">
-        <DropArea id="navigation" selectChildren>
-            {#key buttons}
-                {#if buttons.length}
-                    {#each buttons as category}
-                        {#if category.id === "SEPERATOR"}
-                            <hr />
-                        {:else}
-                            <SelectElem id={selectId} borders="center" trigger="column" data={category.id}>
-                                <NavigationButton {id} {category} {length} />
-                            </SelectElem>
-                        {/if}
-                    {/each}
-                {:else}
-                    <Center faded>
-                        <T id="empty.general" />
-                    </Center>
-                {/if}
-            {/key}
-            <!-- {#if id === "scripture"}
-        <a class="source" href="#void" on:click={() => window.api.send(MAIN, { channel: "URL", data: "https://scripture.api.bible/" })}> API.Bible </a>
-      {/if} -->
-        </DropArea>
+        {#if dropAreas.includes(id)}
+            <DropArea id="navigation" selectChildren>
+                <NavigationButtons {buttons} {id} {selectId} />
+            </DropArea>
+        {:else}
+            <NavigationButtons {buttons} {id} {selectId} />
+        {/if}
     </div>
     {#if id === "shows"}
         <div class="tabs">
@@ -273,12 +223,6 @@
     .tabs {
         display: flex;
         background-color: var(--primary-darker);
-    }
-
-    hr {
-        height: 2px;
-        border: none;
-        background-color: var(--primary-lighter);
     }
 
     .source {

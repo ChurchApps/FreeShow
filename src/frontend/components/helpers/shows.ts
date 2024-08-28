@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { activeShow, shows as allShows, driveData, showsCache } from "../../stores"
+import { activeFocus, activeShow, shows as allShows, driveData, focusMode, showsCache } from "../../stores"
 import { addToPos } from "./mover"
 import { clone } from "./array"
 // import { loadShows } from "./setShow"
@@ -11,7 +11,8 @@ export function _show(id: any = "active") {
     // await loadShows(ids)
     let shows: any = get(showsCache)
     // set id to active show
-    if (id === "active" && get(activeShow) !== null && (get(activeShow)!.type === undefined || get(activeShow)!.type === "show")) id = get(activeShow)!.id
+    if (id === "active" && get(focusMode) && get(showsCache)[get(activeFocus).id]) id = get(activeFocus).id
+    else if (id === "active" && get(activeShow) !== null && (get(activeShow)!.type === undefined || get(activeShow)!.type === "show")) id = get(activeShow)!.id
 
     return {
         /** Get key value in shows of leave blank for full show */

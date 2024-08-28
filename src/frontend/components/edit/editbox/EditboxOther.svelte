@@ -1,23 +1,23 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { activeEdit } from "../../../stores"
     import Cam from "../../drawer/live/Cam.svelte"
+    import Image from "../../drawer/media/Image.svelte"
     import Icon from "../../helpers/Icon.svelte"
-    import { getMediaType, getExtension, getThumbnailPath, mediaSize } from "../../helpers/media"
+    import { getThumbnailPath, mediaSize } from "../../helpers/media"
     import { getStyles } from "../../helpers/style"
+    import Captions from "../../slide/views/Captions.svelte"
     import DynamicEvents from "../../slide/views/DynamicEvents.svelte"
     import ListView from "../../slide/views/ListView.svelte"
     import Mirror from "../../slide/views/Mirror.svelte"
+    import SlideProgress from "../../slide/views/SlideProgress.svelte"
     import Timer from "../../slide/views/Timer.svelte"
     import Variable from "../../slide/views/Variable.svelte"
     import Visualizer from "../../slide/views/Visualizer.svelte"
     import Website from "../../slide/views/Website.svelte"
     import Clock from "../../system/Clock.svelte"
-    import Image from "../../drawer/media/Image.svelte"
     import { getAutoSize } from "../scripts/autoSize"
-    import { onMount } from "svelte"
-    import Captions from "../../slide/views/Captions.svelte"
-    import SlideProgress from "../../slide/views/SlideProgress.svelte"
 
     export let item: Item
 
@@ -40,26 +40,19 @@
         }, 50)
     })
 
+    let thumbnailPath: string = ""
     $: mediaPath = item.src || ""
     $: if (mediaPath) getThumbnail()
     function getThumbnail() {
-        mediaPath = getThumbnailPath(mediaPath!, mediaSize.drawerSize) || mediaPath
+        thumbnailPath = getThumbnailPath(mediaPath!, mediaSize.slideSize)
     }
 </script>
 
 {#if item?.type === "list"}
     <ListView list={item.list} disableTransition />
 {:else if item?.type === "media"}
-    {#if item.src}
-        {#if getMediaType(getExtension(mediaPath)) === "video"}
-            <!-- video -->
-            <video src={mediaPath} style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" muted={true} autoplay loop>
-                <track kind="captions" />
-            </video>
-        {:else}
-            <Image src={mediaPath} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
-            <!-- <MediaLoader path={item.src} /> -->
-        {/if}
+    {#if thumbnailPath}
+        <Image src={thumbnailPath} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
     {/if}
 {:else if item?.type === "camera"}
     {#if item.device}

@@ -77,12 +77,15 @@
 
     const cats: any = [
         { id: "", name: "—" },
-        ...sortObject(Object.keys($categories).map((key: string) => ({
-            id: key,
-            ...$categories[key],
-        })), "name").map((cat: any) => ({
+        ...sortObject(
+            Object.keys($categories).map((key: string) => ({
+                id: key,
+                ...$categories[key],
+            })),
+            "name"
+        ).map((cat: any) => ({
             id: cat.id,
-            name: cat.default? `$:${cat.name}:$` : cat.name,
+            name: cat.default ? `$:${cat.name}:$` : cat.name,
         })),
     ]
 
@@ -91,6 +94,10 @@
     if ($drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab]) selectedCategory = cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab)
     // get the category from the active show
     else if ($shows[$activeShow?.id || ""]?.category) selectedCategory = cats.find((a: any) => a.id === $shows[$activeShow?.id || ""]?.category)
+    // set to "Songs" if it exists & nothing else if selected
+    else if ($categories.song) selectedCategory = cats.find((a: any) => a.id === "song")
+    // otherwise set to first category
+    else if (cats.length > 1) selectedCategory = cats[1]
 
     const inputs: any = {
         formatNewShow: (e: any) => formatNewShow.set(e.target.checked),
@@ -184,13 +191,13 @@
 </CombinedInput>
 
 {#if showMore}
-    <CombinedInput textWidth={30}>
+    <CombinedInput textWidth={30} title={$dictionary.create_show?.format_new_show_tip}>
         <p><T id="create_show.format_new_show" /></p>
         <div class="alignRight">
             <Checkbox checked={$formatNewShow} on:change={inputs.formatNewShow} />
         </div>
     </CombinedInput>
-    <CombinedInput textWidth={30}>
+    <CombinedInput textWidth={30} title={$dictionary.create_show?.split_lines_tip}>
         <p><T id="create_show.split_lines" /></p>
         <NumberInput
             disabled={!$formatNewShow}
@@ -260,15 +267,17 @@
     <TextArea placeholder={getQuickExample()} style="height: 250px;min-width: 500px;" value={values.text} on:input={(e) => changeValue(e)} />
 {/if}
 
-<Button on:click={textToShow} style="width: 100%;margin-top: 10px;" dark center data-testid="create.show.popup.new.show">
-    {#if values.text.trim().length > 0}
-        <Icon id="showIcon" right />
-        <T id="new.show" />
-    {:else}
-        <Icon id="showIcon" right white />
-        <T id="new.empty_show" />
-    {/if}
-</Button>
+<CombinedInput style="margin-top: 10px;">
+    <Button on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
+        {#if values.text.trim().length > 0}
+            <Icon id="showIcon" right />
+            <T id="new.show" />
+        {:else}
+            <Icon id="showIcon" right white />
+            <T id="new.empty_show" />
+        {/if}
+    </Button>
+</CombinedInput>
 
 <style>
     .search {

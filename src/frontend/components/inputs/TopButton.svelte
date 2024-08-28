@@ -23,12 +23,17 @@
         let showIsActive = $activeShow && ($activeShow.type || "show") === "show"
         let noEditSlide = $activeEdit.slide === null || $activeEdit.slide === undefined
         if (showIsActive && noEditSlide) updateEditItem()
+        else if (showIsActive && $activeEdit.showId && $activeEdit.showId !== $activeShow?.id) openEdit()
 
         function updateEditItem() {
             // set to show if: media has been opened AND show has not been opened
             if ($activeEdit.id && (!$editHistory.find((a) => $activeEdit.id === a.edit?.id) || $editHistory.find((a) => $activeShow?.id === a.show?.id))) return
 
-            activeEdit.set({ slide: 0, items: [] })
+            openEdit()
+        }
+
+        function openEdit() {
+            activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
         }
     }
 </script>

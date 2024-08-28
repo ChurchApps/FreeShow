@@ -1,12 +1,8 @@
 <script lang="ts">
-    import { uid } from "uid"
-    import { OUTPUT } from "../../../../types/Channels"
     import { activeStage, outputs, stageShows } from "../../../stores"
-    import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
-    import { keysToID } from "../../helpers/array"
+    import { keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getActiveOutputs } from "../../helpers/output"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -25,40 +21,6 @@
     function toggleValue(e: any, key: string) {
         let value = e.target.checked
         updateStageSettings(value, key)
-
-        if (!$activeStage.id) return
-
-        // add / remove physical stage output
-        if (key === "outputScreen") {
-            let outputIds = getActiveOutputs()
-            let bounds = $outputs[outputIds[0]]?.bounds || { x: 0, y: 0, width: 100, height: 100 }
-
-            outputs.update((a) => {
-                if (value) {
-                    let id = uid()
-                    a[id] = {
-                        enabled: true,
-                        active: true,
-                        stageOutput: $activeStage.id!,
-                        name: currentStage.name,
-                        color: "#555555",
-                        bounds,
-                        screen: null,
-                    }
-
-                    // , rate: $special.previewRate || "auto"
-                    send(OUTPUT, ["CREATE"], { ...a[id], id })
-                } else {
-                    // WIP: remove alpha key outputs...
-                    let outputWithStageId = keysToID(a).find((output) => output.stageOutput === $activeStage.id)?.id
-                    if (outputWithStageId) delete a[outputWithStageId]
-
-                    send(OUTPUT, ["REMOVE"], { id: outputWithStageId })
-                }
-
-                return a
-            })
-        }
     }
 
     // VALUES
@@ -80,12 +42,7 @@
     // password
 
     let outputList: any[] = []
-    $: outputList = keysToID($outputs)
-        .filter((a) => !a.isKeyOutput && !a.stageOutput)
-        .sort((a, b) => a.name.localeCompare(b.name))
-
-    // deleting stage layout and undoing will keep this on, but no output
-    $: if (settings.outputScreen && !Object.values($outputs).find((a) => a.stageOutput === $activeStage.id)) settings.outputScreen = false
+    $: outputList = sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput && !a.stageOutput))
 </script>
 
 <div class="section">
@@ -97,12 +54,6 @@
             value={$outputs[settings.output || ""] ? $outputs[settings.output || ""].name : defaultSettings.output}
             on:click={(e) => updateStageSettings(e.detail.id, "output")}
         />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="settings.output_screen" /></p>
-        <div class="alignRight">
-            <Checkbox checked={settings.outputScreen} on:change={(e) => toggleValue(e, "outputScreen")} />
-        </div>
     </CombinedInput>
 
     <h6><T id="edit.style" /></h6>

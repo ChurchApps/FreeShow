@@ -6,10 +6,11 @@ import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
-import { history } from "../components/helpers/history"
-import { captureCanvas, getFileName } from "../components/helpers/media"
+import { addDrawerFolder } from "../components/helpers/dropActions"
+import { captureCanvas } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
+import { clearBackground } from "../components/output/clear"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
@@ -20,15 +21,16 @@ import { importShow, importSpecific } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
+import { convertOSISBible } from "../converters/osisBible"
 import { convertPDF } from "../converters/pdf"
 import { convertPowerpoint } from "../converters/powerpoint"
 import { importProject } from "../converters/project"
 import { convertProPresenter } from "../converters/propresenter"
 import { convertSoftProjector } from "../converters/softprojector"
+import { convertSongbeamerFiles } from "../converters/songbeamer"
 import { convertTexts } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
-import { convertSongbeamerFiles } from "../converters/songbeamer"
 import {
     activePopup,
     activeShow,
@@ -36,9 +38,9 @@ import {
     alertMessage,
     allOutputs,
     audioChannels,
-    audioFolders,
     closeAd,
     currentOutputSettings,
+    customMessageCredits,
     dataPath,
     deviceId,
     dictionary,
@@ -53,7 +55,6 @@ import {
     isDev,
     lessonsLoaded,
     media,
-    mediaFolders,
     ndiData,
     os,
     outputDisplay,
@@ -93,11 +94,10 @@ import { createData } from "./createData"
 import { syncDrive, validateKeys } from "./drive"
 import { sendInitialOutputData } from "./listeners"
 import { receive, send } from "./request"
-import { closeApp, initializeClosing, saveComplete } from "./save"
+import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
-import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { clearBackground } from "../components/output/clear"
 import { previewShortcuts } from "./shortcuts"
+import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -185,18 +185,24 @@ const receiveMAIN: any = {
         activePopup.set("alert")
     },
     LOCATE_MEDIA_FILE: ({ path, ref }) => {
-        newToast("$toast.media_replaced")
+        let prevPath: string = ""
+
         showsCache.update((a) => {
             let media = a[ref.showId].media[ref.mediaId]
             if (ref.cloudId) {
                 if (!media.cloud) a[ref.showId].media[ref.mediaId].cloud = {}
+                prevPath = a[ref.showId].media[ref.mediaId].cloud![ref.cloudId]
                 a[ref.showId].media[ref.mediaId].cloud![ref.cloudId] = path
             } else {
+                prevPath = a[ref.showId].media[ref.mediaId].path || ""
                 a[ref.showId].media[ref.mediaId].path = path
             }
 
             return a
         })
+
+        // sometimes when lagging the image will be "replaced" even when it exists
+        if (prevPath !== path) newToast("$toast.media_replaced")
     },
     API_TRIGGER: (data: any) => triggerAction(data),
 
@@ -239,22 +245,8 @@ const receiveSTORE: any = {
 }
 
 const receiveFOLDER: any = {
-    MEDIA: (a: any, id: "media" | "audio" = "media") => {
-        // check if folder already exists
-        let path: string = a.path
-        let exists = Object.values(id === "media" ? get(mediaFolders) : get(audioFolders)).find((a) => a.path === path)
-        if (exists) {
-            newToast("$error.folder_exists")
-            return
-        }
-
-        history({
-            id: "UPDATE",
-            newData: { data: { name: getFileName(path), icon: "folder", path: path } },
-            location: { page: "drawer", id: "category_" + id },
-        })
-    },
-    AUDIO: (a: any) => receiveFOLDER.MEDIA(a, "audio"),
+    MEDIA: (a: any) => addDrawerFolder(a, "media"),
+    AUDIO: (a: any) => addDrawerFolder(a, "audio"),
     SHOWS: (a: any) => showsPath.set(a.path),
     DATA: (a: any) => dataPath.set(a.path),
     DATA_SHOWS: (a: any) => {
@@ -318,6 +310,16 @@ const receiveOUTPUTasMAIN: any = {
             return a
         })
     },
+    UPDATE_OUTPUTS_DATA: ({ key, value, id, autoSave }) => {
+        outputs.update((a) => {
+            let ids = id ? [id] : Object.keys(get(outputs))
+            ids.forEach((outputId) => {
+                if (a[outputId]) a[outputId][key] = value
+            })
+            return a
+        })
+        if (autoSave) save()
+    },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.log(msg),
     MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
@@ -327,7 +329,7 @@ const receiveOUTPUTasMAIN: any = {
         clearing = true
         setTimeout(() => (clearing = false), msg.duration || 1000)
 
-        let videoPath: string = get(outputs)[msg.id]?.out?.background?.path || ""
+        let videoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
         if (!videoPath) return
 
         // check and execute next after media regardless of loop
@@ -337,7 +339,7 @@ const receiveOUTPUTasMAIN: any = {
 
         setTimeout(() => {
             // double check that output is still the same
-            let newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || ""
+            let newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
             if (newVideoPath !== videoPath) return
 
             clearBackground(msg.id)
@@ -421,6 +423,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     DRAW_SETTINGS: (a: any) => drawSettings.set(a),
     VIZUALISER_DATA: (a: any) => visualizerData.set(a),
     MEDIA: (a: any) => media.set(a),
+    CUSTOM_CREDITS: (a: any) => customMessageCredits.set(a),
     TIMERS: (a: any) => clone(timers.set(a)),
     VARIABLES: (a: any) => clone(variables.set(a)),
     TIME_FORMAT: (a: any) => timeFormat.set(a),
@@ -541,8 +544,12 @@ const receiveCLOUD = {
         showsCache.set({})
         activeShow.set(null)
 
-        popupData.set(changes)
-        activePopup.set("cloud_update")
+        // could show popup with data (but it's better to just show a toast!)
+        newToast("$cloud.sync_complete")
+        popupData.set({})
+        activePopup.set(null)
+        // popupData.set(changes)
+        // activePopup.set("cloud_update")
     },
 }
 
@@ -574,7 +581,8 @@ const receiveIMPORT: any = {
     calendar: (a: any) => convertCalendar(a),
     // Bibles
     freeshow_bible: (a: any) => importFSB(a),
-    beblia_bible: (a: any) => convertBebliaBible(a),
     zefania_bible: (a: any) => convertZefaniaBible(a),
+    osis_bible: (a: any) => convertOSISBible(a),
+    beblia_bible: (a: any) => convertBebliaBible(a),
     opensong_bible: (a: any) => convertOpenSongBible(a),
 }

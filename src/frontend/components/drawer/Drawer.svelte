@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Bible } from "../../../types/Scripture"
-    import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, MENU_BAR_HEIGHT } from "../../utils/common"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
@@ -72,8 +72,6 @@
     }
 
     function openDrawerTab(tab: any) {
-        // || move
-        // TODO: don't open if move is greater than 10px
         if ($activeDrawerTab === tab.id) return
 
         // allow click event first
@@ -118,7 +116,7 @@
         } else if ((e.ctrlKey || e.metaKey) && e.key === "d") {
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
-            if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || !$activeProject) return
+            if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || !$activeProject || $focusMode) return
             if ($activeDrawerTab !== "shows") return
 
             searchElem.select()
@@ -129,13 +127,7 @@
         }
     }
 
-    $: {
-        if ($activeShow?.type === undefined || $activeShow?.type === "show") previousShow.set(JSON.stringify($activeShow))
-        // else if ($activeDrawerTab === "shows" && $previousShow !== null) {
-        //   activeShow.set(JSON.parse($previousShow))
-        //   previousShow.set(null)
-        // }
-    }
+    $: if ($activeShow?.type === undefined || $activeShow?.type === "show") previousShow.set(JSON.stringify($activeShow))
 
     $: tabs = Object.entries(drawerTabs).map(([id, tab]: any) => ({ id, ...tab }))
 
@@ -145,6 +137,8 @@
             searchElem?.focus()
         }, 10)
     }
+
+    const hiddenInFocusMode = ["templates", "calendar"]
 </script>
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} on:keydown={keydown} />
@@ -154,10 +148,10 @@
     <div class="top context #drawer_top" on:mousedown={mousedown} on:click={click}>
         <span class="tabs">
             {#each tabs as tab, i}
-                {#if $drawerTabsData[tab.id]?.enabled !== false}
+                {#if $drawerTabsData[tab.id]?.enabled !== false && (!$focusMode || !hiddenInFocusMode.includes(tab.id))}
                     <Button id={tab.id} on:click={() => openDrawerTab(tab)} active={$activeDrawerTab === tab.id} class="context #drawer_top" title="{$dictionary[tab.name.split('.')[0]]?.[tab.name.split('.')[1]]} [Ctrl+{i + 1}]">
                         <Icon id={tab.icon} size={1.3} />
-                        {#if !$labelsDisabled}
+                        {#if !$labelsDisabled && !$focusMode}
                             <span><T id={tab.name} /></span>
                         {/if}
                     </Button>

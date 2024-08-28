@@ -18,14 +18,12 @@
     export let title: string = ""
     let normalizedValue: any = value
     $: (normalizedValue = value || options[0]?.name || "—"), $language
-    // TODO: disable active on click anywhere
 
     let self: HTMLDivElement
 
     let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (disabled || nextScrollTimeout) return
-        // if (!e.ctrlKey && !e.metaKey) return
         e.preventDefault()
 
         let index = options.findIndex((a) => (activeId ? a.id === activeId : a.name === value))
@@ -34,13 +32,11 @@
         dispatch("click", options[index])
 
         // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)
     }
-
-    // TODO: scroll don't work with multiple of the same name (e.g. EditTimer.svelte)
 
     $: if (active) scrollToActive()
     function scrollToActive() {
@@ -73,19 +69,20 @@
             <Icon id="expand" size={1.2} white />
         {:else}
             {translate(normalizedValue, { parts: true }) || value}
-            <!-- <T id={value} /> -->
         {/if}
     </button>
     {#if active}
         <div class="dropdown" class:arrow style={$$props.style || ""} transition:slide={{ duration: 200 }}>
             {#each options as option}
-                <!-- {#if option.name !== value} -->
                 <span
                     id={formatId(option.name)}
                     on:click={() => {
                         if (disabled) return
-                        dispatch("click", option)
                         active = false
+                        // allow dropdown to close before updating, so svelte visual bug don't duplicate inputs on close transition in boxstyle edit etc.
+                        setTimeout(() => {
+                            dispatch("click", option)
+                        }, 50)
                     }}
                     class:active={activeId && option?.id ? option.id === activeId : option.name === value}
                 >
@@ -93,9 +90,7 @@
                     {#if option.extra}
                         ({option.extra})
                     {/if}
-                    <!-- <T id={option.name} /> -->
                 </span>
-                <!-- {/if} -->
             {/each}
         </div>
     {/if}
