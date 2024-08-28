@@ -111,7 +111,8 @@
             ],
             "category": "AudioVideo",
             "target": [
-                "AppImage"
+                "AppImage",
+                "deb"
             ],
             "icon": "build/public"
         },
