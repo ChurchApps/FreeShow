@@ -44,7 +44,8 @@ jobs:
                    echo apt update
                    apt -q update
                    echo apt install
-                   apt -q install -y wget git python3 make g++
+                   apt -q install -y wget git python3 make g++ ruby-dev build-essential
+                   gem install fpm
                run: |
                    echo fetch nodejs
                    mkdir tools
@@ -59,6 +60,7 @@ jobs:
                    tools/bin/npm install
                    sleep 30
                    echo npm run release
+                   export USE_SYSTEM_FPM=true
                    tools/bin/npm run release:arm64
                    cp dist/*.AppImage /artifacts/
             - name: 'Upload Artifact'
