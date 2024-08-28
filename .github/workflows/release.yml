@@ -64,8 +64,10 @@ jobs:
                    export USE_SYSTEM_FPM=true
                    tools/bin/npm run release:arm64
                    cp dist/*.AppImage /artifacts/
+                   echo env
+                   env
             - name: 'Upload Artifact'
               uses: actions/upload-artifact@v4
               with:
-                name: FreeShow-arm64-${{ github.ref }}.zip
+                name: FreeShow-arm64.zip
                 path: artifacts/FreeShow*AppImage       
