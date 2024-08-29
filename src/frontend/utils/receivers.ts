@@ -99,6 +99,7 @@ import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { createImageShow } from "../converters/imageShow"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -213,6 +214,7 @@ const receiveMAIN: any = {
     // MEDIA CACHE
     CAPTURE_CANVAS: (data: any) => captureCanvas(data),
     LESSONS_DONE: (data: any) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
+    IMAGES_TO_SHOW: (data: any) => createImageShow(data),
 }
 
 const receiveSTORE: any = {

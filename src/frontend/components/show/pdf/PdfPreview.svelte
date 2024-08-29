@@ -1,7 +1,13 @@
 <script lang="ts">
-    import { outLocked, outputs, slidesOptions, styles } from "../../../stores"
+    import { MAIN } from "../../../../types/Channels"
+    import { activeShow, dataPath, labelsDisabled, outLocked, outputs, slidesOptions, styles } from "../../../stores"
+    import { newToast } from "../../../utils/common"
+    import { send } from "../../../utils/request"
+    import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
+    import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
     import { clearBackground } from "../../output/clear"
     import { getViewportSizes } from "./pdfData"
 
@@ -13,6 +19,7 @@
 
     async function getPdfPages() {
         viewports = await getViewportSizes(show.id)
+        if ($activeShow) activeShow.set({ ...$activeShow, data: { viewports } })
 
         // pages = await getPages(show.id)
         pages = viewports.length
@@ -23,7 +30,7 @@
     // set active if output
     let active: number = -1
     $: outSlide = $outputs[activeOutput].out?.slide
-    $: if (outSlide?.type === "pdf" && outSlide?.id === show.id) active = (outSlide?.page || 0) - 1
+    $: if (outSlide?.type === "pdf" && outSlide?.id === show.id) active = outSlide?.page || 0
     else active = -1
 
     // WIP multiple outputs
@@ -33,7 +40,7 @@
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
         let name = show.name || removeExtension(getFileName(show.id))
-        setOutput("slide", { type: "pdf", id: show.id, page, pages, viewport: viewports[page - 1], name })
+        setOutput("slide", { type: "pdf", id: show.id, page, pages, viewport: viewports[page], name })
 
         clearBackground()
     }
@@ -59,6 +66,11 @@
 
     // add extra padding to aspect ratio to ensure page is properly sized (if portrait mode)
     const EXTRA_RATIO = 100 // 45
+
+    function convertToImages() {
+        newToast("$actions.converting")
+        send(MAIN, ["PDF_TO_IMAGE"], { dataPath: $dataPath, path: show.id, viewports, pages })
+    }
 </script>
 
 <!-- SHOW FULL PREVIEW: -->
@@ -68,7 +80,7 @@
 <div class="grid" on:wheel={wheel}>
     {#each [...Array(pages)] as _, page}
         <div class="main" class:active={active === page} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pages > 1 ? $slidesOptions.columns : 1)}%;">
-            <div class="slide" tabindex={0} on:click={(e) => outputPdf(e, page + 1)}>
+            <div class="slide" tabindex={0} on:click={(e) => outputPdf(e, page)}>
                 {#if viewports[page]}
                     <!-- 16 / 9 < -->
                     <div
@@ -84,6 +96,19 @@
             </div>
         </div>
     {/each}
+</div>
+
+<div class="actionbar">
+    <div>
+        <p>PDF</p>
+
+        <Button on:click={convertToImages} style="white-space: nowrap;">
+            <Icon id="image" right={!$labelsDisabled} />
+            {#if !$labelsDisabled}<T id="actions.convert_to_images" />{/if}
+        </Button>
+
+        <!-- WIP: zoom menu etc. (Layouts.svelte) -->
+    </div>
 </div>
 
 <style>
@@ -107,6 +132,9 @@
         padding: 5px;
         width: 100%;
         height: 100%;
+
+        flex: 1;
+        overflow: auto;
     }
 
     .main {
@@ -148,5 +176,38 @@
     .center.wide {
         height: initial;
         width: calc(100% - 5px);
+    }
+
+    /* action bar */
+
+    .actionbar {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        background-color: var(--primary-darkest);
+    }
+
+    /* fixed height for consistent heights */
+    .actionbar :global(button) {
+        min-height: 28px;
+        padding: 0 0.8em !important;
+    }
+    .actionbar :global(button.active) {
+        /* color: var(--secondary) !important; */
+        /* color: rgb(255 255 255 /0.5) !important; */
+        background-color: var(--primary) !important;
+    }
+
+    .actionbar div {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .actionbar p {
+        padding: 0 10px;
+        opacity: 0.8;
     }
 </style>

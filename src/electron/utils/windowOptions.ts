@@ -85,6 +85,7 @@ export const exportOptions: any = {
     // show: !isProd,
     show: false,
     modal: true,
+    frame: false,
     webPreferences: {
         preload: join(__dirname, "..", "preload"),
         webSecurity: isProd,
@@ -96,13 +97,15 @@ export const exportOptions: any = {
     },
 }
 
-// export const captureOptions: any = {
-//     show: false,
-//     resizable: false,
-//     frame: false,
-//     skipTaskbar: true,
-//     webPreferences: {
-//         backgroundThrottling: false,
-//         autoplayPolicy: "no-user-gesture-required",
-//     },
-// }
+export const captureOptions: any = {
+    show: false,
+    modal: true,
+    frame: false,
+    skipTaskbar: true,
+    resizable: false,
+    webPreferences: {
+        webSecurity: isProd,
+        backgroundThrottling: false,
+        offscreen: true,
+    },
+}

@@ -216,9 +216,9 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
     return cleared
 }
 
-export function getOutputContent(outputId: string = "", key: string = "slide") {
-    if (!outputId) outputId = getActiveOutputs(get(outputs), false, true, true)[0]
-    return get(outputs)[outputId]?.out?.[key] || {}
+export function getOutputContent(outputId: string = "", updater = get(outputs), key: string = "slide") {
+    if (!outputId) outputId = getActiveOutputs(updater, false, true, true)[0]
+    return updater[outputId]?.out?.[key] || {}
 }
 
 export function outputSlideHasContent(output) {

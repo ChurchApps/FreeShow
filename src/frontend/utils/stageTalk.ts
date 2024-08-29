@@ -109,7 +109,6 @@ export const receiveSTAGE: any = {
 
         let ref: any[] = _show(out.id).layouts([out.layout]).ref()[0]
         let slides: any = _show(out.id).get()?.slides
-        console.log(ref, slides)
 
         if (!ref?.[out.index!]) return
         msg.data = [slides[ref[out.index!].id]]

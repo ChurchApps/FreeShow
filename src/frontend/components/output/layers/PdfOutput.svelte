@@ -16,48 +16,7 @@
         timeout = Math.min(timeout, 3000)
         setTimeout(() => (loaded = true), timeout)
     }
-
-    // import * as pdfjsLib from "pdfjs-dist"
-
-    // let page
-    // let canvas: any
-    // $: if (slide.id) loadPdf()
-    // async function loadPdf() {
-    //     const pdf = await pdfjsLib.getDocument(slide.id).promise
-    //     // pdf.numPages
-    //     page = await pdf.getPage(slide.page)
-    // }
-    // $: if (page && canvas) renderPage()
-
-    // function renderPage() {
-    //     var scale = 1.5
-    //     var viewport = page.getViewport({ scale: scale })
-    //     // Support HiDPI-screens.
-    //     var outputScale = window.devicePixelRatio || 1
-
-    //     var context = canvas.getContext("2d")
-
-    //     canvas.width = Math.floor(viewport.width * outputScale)
-    //     canvas.height = Math.floor(viewport.height * outputScale)
-    //     canvas.style.width = Math.floor(viewport.width) + "px"
-    //     canvas.style.height = Math.floor(viewport.height) + "px"
-
-    //     var transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
-
-    //     var renderContext = {
-    //         canvasContext: context,
-    //         transform: transform,
-    //         viewport: viewport,
-    //     }
-    //     page.render(renderContext)
-    // }
 </script>
-
-<!-- {#if page}
-    <OutputTransition {transition}>
-        <canvas bind:this={canvas}></canvas>
-    </OutputTransition>
-{/if} -->
 
 <!-- Native Chromium PDF Viewer -->
 {#key slide.page}
@@ -66,7 +25,7 @@
             <div class="center" class:wide={16 / 9 < slide.viewport.width / slide.viewport.height} style="aspect-ratio: {slide.viewport.width / slide.viewport.height};--background: {currentStyle.background || 'black'};"></div>
         {/if}
 
-        <iframe src="{slide.id}#toolbar=0&view=fit&page={slide.page}" class:hideScrollbar={slide.pages > 1} frameborder="0" scrolling="no" on:load={onload}></iframe>
+        <iframe src="{slide.id}#toolbar=0&view=fit&page={slide.page + 1}" class:hideScrollbar={slide.pages > 1} frameborder="0" scrolling="no" on:load={onload}></iframe>
 
         {#if !loaded}
             <div class="fill" style="--background: {currentStyle.background || 'black'};"></div>

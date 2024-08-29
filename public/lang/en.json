@@ -515,6 +515,8 @@
         "zoomIn": "Zoom In",
         "zoomOut": "Zoom Out",
         "reset": "Reset",
+        "convert_to_images": "Convert to images",
+        "converting": "Converting...",
         "remove_template_from_show": "Remove template from show",
         "reset_defaults": "Reset defaults",
         "to_all": "Apply to all",

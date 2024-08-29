@@ -20,6 +20,7 @@ export interface ProjectShowRef extends ShowRef {
     filter?: any[]
     notes?: string
     icon?: string // focus mode
+    data?: any // pdf viewports
 }
 
 export interface ShowRef {
