@@ -1,10 +1,8 @@
 <script lang="ts">
-    import type { Slide } from "../../../../types/Show"
-    import { templates, textLoaded } from "../../../stores"
-    import { getSlideText } from "../../edit/scripts/textStyle"
+    import type { Item } from "../../../../types/Show"
     import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
-    import OutputTransition from "./OutputTransition.svelte"
+    import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
 
     export let outputId: string
     export let outSlide: any
@@ -25,223 +23,83 @@
     export let transitionEnabled: boolean = false
     export let isKeyOutput: boolean = false
 
-    // $: duration = transition?.duration || 500
+    let currentItems: Item[] = []
+    let show: boolean = false
 
-    // LOAD ONE AT A TIME
-    let firstActive: boolean = false
-    let slide1: any = null
-    let slide2: any = null
-
-    let loading: boolean = false
+    $: if (currentSlide.items !== undefined) updateItems()
     let timeout: any = null
-    $: if (currentSlide || lines) createSlide()
-    let isAutoSize: boolean = false
-    function createSlide() {
-        // prevent svelte bug creating multiple items if creating new while old clears
+
+    // if anything is outputted & changing to something that's outputted
+    let transitioningBetween: boolean = false
+
+    function updateItems() {
+        // get any items with no transition between the two slides
+        let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
+        let newItemTransition = currentSlide.items.find((a) => a.actions?.transition)?.actions?.transition
+        let itemTransitionDuration: number | null = null
+        if (oldItemTransition && JSON.stringify(oldItemTransition) === JSON.stringify(newItemTransition)) {
+            itemTransitionDuration = oldItemTransition.duration ?? null
+            if (oldItemTransition.type === "none") itemTransitionDuration = 0
+            // find any item that should have no transition!
+            else if (currentSlide.items.find((a) => a.actions?.transition?.duration === 0 || a.actions?.transition?.type === "none")) itemTransitionDuration = 0
+        }
+
+        let currentTransition = transition.between || transition.in || transition
+        if (currentTransition?.type === "none") currentTransition.duration = 0
+
+        let currentTransitionDuration = transitionEnabled ? itemTransitionDuration ?? currentTransition?.duration ?? 0 : 0
+        let waitToShow = currentTransitionDuration * 0.5
+
+        // between
+        if (currentItems.length && currentSlide.items.length) transitioningBetween = true
+
         if (timeout) clearTimeout(timeout)
 
-        let slideRef = JSON.stringify({ currentSlide, outSlide })
+        // wait for between to update out transition
+        timeout = setTimeout(() => {
+            show = false
 
-        // update existing slide, if same
-        let activeRef = firstActive ? slide1?.ref : slide2?.ref
-        if (activeRef === slideRef) {
-            if (firstActive) {
-                slide1.data = clone(currentSlide)
-                slide1.lines = clone(lines)
-            } else {
-                slide2.data = clone(currentSlide)
-                slide2.lines = clone(lines)
-            }
-            return
-        }
+            // wait for previous items to start fading out (svelte will keep them until the transition is done!)
+            timeout = setTimeout(() => {
+                currentItems = clone(currentSlide.items || [])
 
-        if (loading) loading = false
-
-        timeout = setTimeout(
-            () => {
-                loading = true
-                // always use first if no transition
-                let loadingFirst = !slide1 // || !transitionActive
-
-                if (loadingFirst) slide1 = { ref: slideRef, data: clone(currentSlide), lines: clone(lines) }
-                else slide2 = { ref: slideRef, data: clone(currentSlide), lines: clone(lines) }
-
-                // wait for scripture auto size
-                let autoSize = outSlide?.id === "temp"
-                // check output template auto size
-                if (!autoSize && customTemplate) {
-                    let templateItems = $templates[customTemplate]?.items || []
-                    let hasAuto = templateItems.find((a) => a.auto)
-                    if (hasAuto) autoSize = true
-                }
-
-                // WIP transition.duration === 0 && autoSize will remove text while loading...
-                // WIP wait for autoSize to finish!
-                let timeoutDuration = 10
-                if (autoSize) timeoutDuration = 400
-                isAutoSize = autoSize
-
-                // max 2 seconds loading time...
+                // wait until half transition duration of previous items have passed as it looks better visually
                 timeout = setTimeout(() => {
-                    if (loading) loaded(loadingFirst)
+                    show = true
 
-                    textLoaded.set(true) // not in use
-                }, timeoutDuration)
-            },
-            10 // add a buffer to reduce flickering on rapid changes (duration / 4)
-        )
+                    // wait for between to set in transition
+                    timeout = setTimeout(() => {
+                        transitioningBetween = false
+                    })
+                }, waitToShow)
+            })
+        })
     }
-
-    function loaded(isFirst: boolean) {
-        if (!loading) return
-
-        // check difference
-        let text1 = getSlideText(slide1?.data)
-        let text2 = getSlideText(slide2?.data)
-
-        // start showing next before hiding current (to reduce "black" fade if transitioning to same element)
-        // this might not show very clear if transitioning between two texts that are the same! - That should show a little indication of change...
-        if (text1 === text2) {
-            loading = false
-            firstActive = isFirst
-            timeout = setTimeout(() => {
-                hideCurrent()
-                timeout = null
-            }, customOpacityDuration * 0.7)
-        } else {
-            // if text is different, start hiding current before loading next, this looks better
-            hideCurrent()
-            timeout = setTimeout(() => {
-                loading = false
-                firstActive = isFirst
-                timeout = null
-            }, customOpacityDuration * 0.5)
-        }
-
-        function hideCurrent() {
-            if (isFirst) {
-                slide2 = null
-            } else {
-                slide1 = null
-            }
-        }
-    }
-
-    // don't remove data when clearing
-    let slide1Data: Slide
-    let slide2Data: Slide
-    $: if (slide1) slide1Data = clone(slide1.data)
-    $: if (slide2) slide2Data = clone(slide2.data)
-
-    // this can be used to not wait for auto size if transition is set to 0
-    // $: transitionActive = transition.duration !== 0 && transition.type !== "none"
-    // $: isFirstHidden = transitionActive && loading && !firstActive
-    // $: isSecondHidden = !transitionActive || (loading && firstActive)
-    $: isFirstHidden = loading && !firstActive
-    $: isSecondHidden = loading && firstActive
-
-    $: hasChanged = !!(transition.duration === 0 && !isAutoSize && slide1)
-
-    // WIP text should fade, but items that are the same between slides should not & items with custom transitions should not use the global slide transition
-
-    // WIP transition should be per item, so the item transition will override the global transition!!
-
-    // custom item transition
-    // $: itemTransitionEnabled = transitionEnabled && item.actions?.transition && item.actions.transition.type !== "none" && item.actions.transition.duration > 0
-    // $: itemTransition = transition ? clone(item.actions.transition) : {}
-    // $: if (itemTransition.type === "none") itemTransition = { duration: 0, type: "fade", easing: "linear" }
-
-    $: customOpacityDuration = transition?.type === "none" || !transition?.duration ? 0 : transition.duration
-
-    // WIP fix text clipping in when it has not loaded?
-    // $: console.log(slide1, slide2)
-    // $: console.log(isFirstHidden, isSecondHidden)
 </script>
 
-{#if slide1}
-    <div class="slide" class:hidden={isFirstHidden} style="--duration: {(customOpacityDuration ?? 500) * 0.8}ms">
-        <!-- WIP crossfade: in:cReceive={{ key: "slide" }} out:cSend={{ key: "slide" }} -->
-        <!-- svelte transition bug when changing between pages -->
-        <OutputTransition {transition}>
-            {#key hasChanged}
-                {#if slide1Data?.items}
-                    {#each slide1Data.items as item}
-                        {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                            <Textbox
-                                filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
-                                backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
-                                key={isKeyOutput}
-                                disableListTransition={mirror}
-                                chords={item.chords?.enabled}
-                                animationStyle={animationData.style || {}}
-                                {item}
-                                {ratio}
-                                ref={{ showId: outSlide.id, slideId: slide1Data.id, id: slide1Data.id || "", layoutId: outSlide.layout }}
-                                linesStart={slide1.lines?.[currentLineId]?.start}
-                                linesEnd={slide1.lines?.[currentLineId]?.end}
-                                {transitionEnabled}
-                                outputStyle={currentStyle}
-                                {mirror}
-                                {preview}
-                                slideIndex={outSlide.index}
-                            />
-                        {/if}
-                    {/each}
+{#key show}
+    {#each currentItems as item}
+        {#if show}
+            <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} {currentSlide} {item} {outSlide} {lines} {customTemplate} let:customSlide let:customItem let:customLines let:customOut>
+                {#if !customItem.bindings?.length || customItem.bindings.includes(outputId)}
+                    <Textbox
+                        filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
+                        backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                        key={isKeyOutput}
+                        disableListTransition={mirror}
+                        chords={customItem.chords?.enabled}
+                        animationStyle={animationData.style || {}}
+                        item={customItem}
+                        {ratio}
+                        ref={{ showId: customOut.id, slideId: customSlide.id, id: customSlide.id || "", layoutId: customOut.layout }}
+                        linesStart={customLines?.[currentLineId]?.start}
+                        linesEnd={customLines?.[currentLineId]?.end}
+                        outputStyle={currentStyle}
+                        {mirror}
+                        slideIndex={customOut.index}
+                    />
                 {/if}
-            {/key}
-        </OutputTransition>
-    </div>
-{/if}
-
-{#if slide2}
-    <div class="slide" class:hidden={isSecondHidden} style="--duration: {(customOpacityDuration ?? 500) * 0.8}ms">
-        <OutputTransition {transition}>
-            {#if slide2Data?.items}
-                {#each slide2Data.items as item}
-                    {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                        <Textbox
-                            filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
-                            backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
-                            key={isKeyOutput}
-                            disableListTransition={mirror}
-                            chords={item.chords?.enabled}
-                            animationStyle={animationData.style || {}}
-                            {item}
-                            {ratio}
-                            ref={{ showId: outSlide.id, slideId: slide2Data.id, id: slide2Data.id || "", layoutId: outSlide.layout }}
-                            linesStart={slide2.lines?.[currentLineId]?.start}
-                            linesEnd={slide2.lines?.[currentLineId]?.end}
-                            {transitionEnabled}
-                            outputStyle={currentStyle}
-                            {mirror}
-                            slideIndex={outSlide.index}
-                        />
-                    {/if}
-                {/each}
-            {/if}
-        </OutputTransition>
-    </div>
-{/if}
-
-<style>
-    .slide {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100%;
-        height: 100%;
-        transform: translate(-50%, -50%);
-
-        /* used for drawing */
-        pointer-events: none;
-
-        /* hidden */
-        --duration: 400ms; /* 500 * 0.8 */
-        transition: opacity var(--duration);
-        opacity: 1;
-    }
-    .slide.hidden {
-        transition: none;
-        opacity: 0;
-    }
-</style>
+            </SlideItemTransition>
+        {/if}
+    {/each}
+{/key}

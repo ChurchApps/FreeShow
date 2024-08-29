@@ -1,20 +1,22 @@
 import { get } from "svelte/store"
-import { OUTPUT } from "../../types/Channels"
+import { IMPORT, OUTPUT } from "../../types/Channels"
 import type { ShowType } from "../../types/Show"
 import type { TopViews } from "../../types/Tabs"
 import { menuClick } from "../components/context/menuClick"
 import { clearAudio, playAudio } from "../components/helpers/audio"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
-import { redo, undo } from "../components/helpers/history"
+import { history, redo, undo } from "../components/helpers/history"
 import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
 import { nextSlide, previousSlide } from "../components/helpers/showActions"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, currentWindow, drawer, focusMode, os, outLocked, outputs, projects, refreshEditSlide, selected, showsCache, special, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, currentWindow, drawer, focusedArea, focusMode, os, outLocked, outputs, projects, refreshEditSlide, selected, showsCache, special, volume } from "../stores"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
+import { addSection } from "../converters/project"
+import { addItem } from "../components/edit/scripts/itemHelpers"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -27,7 +29,7 @@ const ctrlKeys: any = {
     x: () => cut(),
     e: () => activePopup.set("export"),
     i: () => activePopup.set("import"),
-    n: () => activePopup.set("show"),
+    n: () => createNew(),
     h: () => activePopup.set("history"),
     m: () => volume.set(get(volume) ? 0 : 1),
     o: () => displayOutputs(),
@@ -192,14 +194,21 @@ export const previewShortcuts: any = {
         previousSlide(e)
     },
     " ": (e: any) => {
-        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-        if (!get(showsCache)[currentShow?.id || ""]) return playMedia(e)
-        e.preventDefault()
+        let currentShow: any = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (currentShow?.type === "pdf") {
+            e.preventDefault()
+            return nextSlide(e, true)
+        }
+        if (!get(showsCache)[currentShow?.id || ""]) {
+            e.preventDefault()
+            return playMedia(e)
+        }
 
         let allActiveOutputs = getActiveOutputs(get(outputs), true, true, true)
         let outputId = allActiveOutputs[0]
         let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
 
+        e.preventDefault()
         if (currentOutput.out?.slide?.id !== currentShow?.id || (currentShow && currentOutput.out?.slide?.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) nextSlide(e, true)
         else {
             if (e.shiftKey) previousSlide(e)
@@ -222,6 +231,29 @@ export const previewShortcuts: any = {
         e.preventDefault()
         nextSlide(e, false, true)
     },
+}
+
+// CTRL + N
+function createNew() {
+    let selectId = get(selected)?.id || get(focusedArea)
+
+    if (selectId === "slide") history({ id: "SLIDES" }) // show
+    else if (selectId === "show") addSection() // project
+    else if (selectId.includes("category_")) {
+        // if (selectId.includes("media") || selectId.includes("audio")) send(MAIN, ["OPEN_FOLDER"], { channel: id, title, path })
+        if (selectId.includes("scripture")) activePopup.set("import_scripture")
+        else if (selectId.includes("calendar")) send(IMPORT, ["calendar"], { format: { name: "Calendar", extensions: ["ics"] } })
+        else history({ id: "UPDATE", location: { page: "drawer", id: selectId } })
+    } else if (selectId === "overlay") history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
+    else if (selectId === "template") history({ id: "UPDATE", location: { page: "drawer", id: "template" } })
+    else if (selectId === "global_timer") activePopup.set("timer")
+    else if (["action", "variable", "trigger"].includes(selectId)) activePopup.set(selectId as any)
+    else if (get(activePage) === "edit") addItem("text")
+    else if (get(activePage) === "stage") history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
+    else {
+        console.log("CREATE NEW", selectId)
+        activePopup.set("show")
+    }
 }
 
 function playMedia(e: Event) {

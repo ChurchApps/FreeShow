@@ -1,5 +1,7 @@
 <script lang="ts">
-    import { currentWindow } from "../../../stores"
+    import { OUTPUT } from "../../../../types/Channels"
+    import { currentWindow, outputs } from "../../../stores"
+    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
 
@@ -18,6 +20,7 @@
 
         // format url
         src = src.replaceAll("&amp;", "&").replaceAll("{", "%7B").replaceAll("}", "%7D")
+        if (!src.includes("://")) src = "http://" + src
 
         try {
             new URL(src)
@@ -40,6 +43,7 @@
 
         if (loaded) setStyle()
         else {
+            webview?.addEventListener("dom-ready", websiteLoaded)
             webview?.addEventListener("did-finish-load", setStyle)
             webview?.addEventListener("did-navigate", () => {
                 checkNavigation()
@@ -58,6 +62,14 @@
             document.body.style.height = '${inverse}%';  // Scale factor inverse to maintain full height
         `)
         }
+    }
+
+    function websiteLoaded() {
+        if ($currentWindow !== "output") return
+
+        // set focus on website
+        send(OUTPUT, ["FOCUS"], { id: Object.keys($outputs)[0] })
+        setTimeout(() => webview?.focus())
     }
 
     let hover: boolean = false

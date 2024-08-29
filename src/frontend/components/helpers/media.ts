@@ -28,7 +28,10 @@ export function isMediaExtension(extension: string, audio: boolean = false): boo
     return extensions.includes(extension.toLowerCase())
 }
 
+export const presentationExtensiond = ["ppt", "pptx"]
 export function getMediaType(extension: string): ShowType {
+    if (extension.toLowerCase() === "pdf") return "pdf"
+    if (presentationExtensiond.includes(extension.toLowerCase())) return "ppt"
     if (get(audioExtensions).includes(extension.toLowerCase())) return "audio"
     if (get(videoExtensions).includes(extension.toLowerCase())) return "video"
     return "image"

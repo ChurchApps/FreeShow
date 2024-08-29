@@ -29,6 +29,8 @@ export class OutputHelper {
 
             IDENTIFY_SCREENS: (data: any) => OutputHelper.Identify.identifyScreens(data),
             //PREVIEW_BOUNDS: (data: any) => OutputHelper.Bounds.setPreviewBounds(data),
+
+            FOCUS: (data: any) => OutputHelper.Lifecycle.focusOutput(data.id),
         }
 
         if (msg.channel.includes("MAIN")) return toApp(OUTPUT, msg)

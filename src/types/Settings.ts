@@ -1,4 +1,5 @@
 import type { MediaFit } from "./Main"
+import type { Transition } from "./Show"
 
 export interface Themes {
     name: string
@@ -8,9 +9,10 @@ export interface Themes {
     border?: any
 }
 
+type StyleLayers = "background" | "slide" | "overlays"
 export interface Styles {
     name: string
-    layers?: ["background", "slide", "overlays"][]
+    layers?: StyleLayers[]
     background?: string
     backgroundImage?: string
     clearStyleBackgroundOnText?: boolean
@@ -24,6 +26,7 @@ export interface Styles {
     displayMetadata?: string
     metadataTemplate?: string
     messageTemplate?: string
+    transition?: Transition
 }
 
 export interface Resolution {

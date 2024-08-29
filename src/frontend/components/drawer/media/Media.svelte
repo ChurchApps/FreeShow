@@ -487,11 +487,11 @@
     }
 
     .grid :global(.selectElem) {
-        outline-offset: -2px;
+        outline-offset: -3px;
     }
-    .grid :global(#media.isSelected .main) {
+    /* .grid :global(#media.isSelected .main) {
         z-index: -1;
-    }
+    } */
 
     .grid :global(svelte-virtual-list-viewport) {
         width: 100%;

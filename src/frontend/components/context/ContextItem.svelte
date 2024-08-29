@@ -72,7 +72,13 @@
             if (!$redoHistory.length) disabled = true
         },
         addToProject: () => {
-            if (!$activeProject) disabled = true
+            if ($selected.id === "media" && $selected.data.length > 1) {
+                id = "addToShow"
+                menu = { label: "context.add_to_show", icon: "slide" }
+                if (!$activeShow || ($activeShow.type || "show") !== "show") disabled = true
+            } else {
+                if (!$activeProject) disabled = true
+            }
         },
         play_no_filters: () => {
             let path = $selected.data[0]?.path || $selected.data[0]?.id

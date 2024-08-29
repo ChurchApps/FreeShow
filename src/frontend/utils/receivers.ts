@@ -22,9 +22,8 @@ import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
 import { convertOSISBible } from "../converters/osisBible"
-import { convertPDF } from "../converters/pdf"
 import { convertPowerpoint } from "../converters/powerpoint"
-import { importProject } from "../converters/project"
+import { addToProject, importProject } from "../converters/project"
 import { convertProPresenter } from "../converters/propresenter"
 import { convertSoftProjector } from "../converters/softprojector"
 import { convertSongbeamerFiles } from "../converters/songbeamer"
@@ -98,6 +97,7 @@ import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { createImageShow } from "../converters/imageShow"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -212,6 +212,7 @@ const receiveMAIN: any = {
     // MEDIA CACHE
     CAPTURE_CANVAS: (data: any) => captureCanvas(data),
     LESSONS_DONE: (data: any) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
+    IMAGES_TO_SHOW: (data: any) => createImageShow(data),
 }
 
 const receiveSTORE: any = {
@@ -575,7 +576,7 @@ const receiveIMPORT: any = {
     softprojector: (a: any) => convertSoftProjector(a),
     songbeamer: (a: any) => convertSongbeamerFiles(a),
     // Media
-    pdf: (a: any) => convertPDF(a),
+    pdf: (a: any) => addToProject("pdf", a),
     lessons: (a: any) => convertLessonsPresentation(a),
     // Other
     calendar: (a: any) => convertCalendar(a),

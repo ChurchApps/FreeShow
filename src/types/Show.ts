@@ -217,6 +217,19 @@ export interface Transition {
     type: TransitionType
     duration: number
     easing: string
+    delay?: number // item in/out wait
+    custom?: any // e.g. transition direction
+
+    between?: TransitionData
+    in?: TransitionData
+    out?: TransitionData
+}
+
+export interface TransitionData {
+    type: TransitionType
+    duration: number
+    easing: string
+    delay?: number // item in/out wait
 }
 
 export interface Media {
@@ -322,8 +335,11 @@ export interface OutSlide {
     tempItems?: Item[]
     line?: number
     // layout: ID ?
-    // type?: ShowType
-    // private?: boolean
+    name?: string // mostly used for PDFs
+    type?: ShowType // mostly used for PDFs
+    page?: number // PDF
+    pages?: number // PDF
+    viewport?: { width: number; height: number } // PDF
 }
 
 export interface OutTransition {
@@ -336,6 +352,6 @@ export interface OutTransition {
 
 export type ID = string
 export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "events" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
-export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" // "private"
+export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" | "pdf" | "ppt" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

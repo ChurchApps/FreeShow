@@ -1,4 +1,5 @@
 import type { Item, Line } from "../../../../types/Show"
+import { clone } from "../../helpers/array"
 
 export class EditboxHelper {
     //Compare text of all the new lines to determine if it's truly a modification or just an index change.
@@ -101,6 +102,14 @@ export class EditboxHelper {
         ]
         if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
         if (!secondLines.length) secondLines = defaultLine
+
+        // add chords (currently only adding full line chords, so splitting in the middle of a line might shift chords)
+        let chordLines = clone(lines.map((a) => a.chords || []))
+        ;[...firstLines, ...secondLines].forEach((line) => {
+            let oldLineChords = chordLines.shift()
+            if (oldLineChords?.length) line.chords = oldLineChords
+        })
+
         return { firstLines, secondLines }
     }
 

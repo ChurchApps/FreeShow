@@ -63,7 +63,7 @@ import { exportProject } from "../export/project"
 import { clone, removeDuplicates } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { GetLayoutRef } from "../helpers/get"
-import { history, redo, undo } from "../helpers/history"
+import { history, HistoryPages, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
 import { defaultOutput, getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
@@ -157,6 +157,16 @@ const actions: any = {
     delete_slide: (obj: any) => actions.delete(obj),
     delete_group: (obj: any) => actions.delete(obj),
     delete: (obj: any) => {
+        // delete shows from project
+        if (obj.sel.id === "show") {
+            // wait to delete until after they are removed from project
+            setTimeout(() => {
+                let sel = { ...obj.sel, id: "show_drawer" }
+                selected.set(sel)
+                actions.delete({ ...obj, sel })
+            })
+        }
+
         if (deleteAction(obj.sel)) return
 
         if (obj.contextElem?.classList.value.includes("#video_marker")) {
@@ -234,6 +244,22 @@ const actions: any = {
             a[get(activeProject)!].shows.push(...obj.sel.data)
             return a
         })
+    },
+    addToShow: (obj: any) => {
+        let data: any[] = obj.sel.data
+
+        let slides: any[] = data.map((a: any) => ({ id: a.id || uid(), group: removeExtension(a.name || a.path || ""), color: null, settings: {}, notes: "", items: [] }))
+
+        let videoData: any = {}
+        // videos are probably not meant to be background if they are added in bulk
+        if (data.length > 1) videoData = { muted: false, loop: false }
+
+        data = data.map((a) => ({ ...a, path: a.path || a.id, ...(a.type === "video" ? videoData : {}) }))
+        let activeLayout = get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout
+        let layoutLength = _show("active").layouts([activeLayout]).get()[0]?.length
+        let newData = { index: layoutLength, data: slides, layout: { backgrounds: data } }
+
+        history({ id: "SLIDES", newData, location: { page: get(activePage) as HistoryPages, show: get(activeShow)!, layout: activeLayout } })
     },
     lock_show: (obj: any) => {
         showsCache.update((a: any) => {

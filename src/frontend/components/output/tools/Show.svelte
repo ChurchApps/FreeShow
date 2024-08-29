@@ -9,7 +9,7 @@
 
     $: slide = currentOutput?.out?.slide
 
-    $: name = slide && $showsCache[slide?.id] ? $showsCache[slide?.id].name : "—"
+    $: name = slide?.name || $showsCache[slide?.id]?.name || "—"
     $: length = ref?.length || 0
 
     function openShow() {
@@ -23,7 +23,7 @@
         }
 
         if ($focusMode) activeFocus.set({ id: slide?.id })
-        else activeShow.set({ id: slide?.id })
+        else activeShow.set({ id: slide?.id, type: slide?.type || "show" })
     }
 </script>
 
@@ -36,12 +36,14 @@
                 <T id="main.unnamed" />
             {/if}
         </p>
-        <span style="opacity: 0.6;white-space: nowrap;">
-            {(slide?.index || 0) + 1}/{length}
-            {#if linesIndex !== null && maxLines !== null}
-                ({linesIndex + 1}/{maxLines})
-            {/if}
-        </span>
+        {#if maxLines}
+            <span style="opacity: 0.6;white-space: nowrap;">
+                {(slide?.index || 0) + 1}/{length}
+                {#if linesIndex !== null && maxLines !== null}
+                    ({linesIndex + 1}/{maxLines})
+                {/if}
+            </span>
+        {/if}
     </span>
 {/if}
 

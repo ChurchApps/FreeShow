@@ -50,9 +50,10 @@
                 <Button style="flex: 1;padding: 0;" class="context #trigger" on:click={() => buttonClick(trigger.id)}>
                     <p>
                         {trigger.name}
-                        {#if trigger.name.length < 18}
+                        <span style="font-size: 0;position: absolute;">{console.log(formatTriggerValue(trigger.value))}</span>
+                        <!-- {#if trigger.name.length < 18}
                             <span>{formatTriggerValue(trigger.value)}</span>
-                        {/if}
+                        {/if} -->
                     </p>
                 </Button>
             </SelectElem>
@@ -90,6 +91,7 @@
     .triggers :global(.selectElem) {
         display: flex;
         border: 2px solid rgb(255 255 255 / 0.4);
+        border-radius: var(--border-radius);
     }
 
     .triggers :global(.selectElem.pending) {

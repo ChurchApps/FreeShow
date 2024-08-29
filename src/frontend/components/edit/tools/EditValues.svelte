@@ -376,6 +376,7 @@
         })
     }
 
+    // WIP resetting will close these menus
     $: if (!sessionId) sessionId = uid()
     $: if (sessionId) updateSectionsState()
     function updateSectionsState() {
@@ -394,7 +395,7 @@
 
 {#each Object.keys(edits || {}) as section, i}
     <div class="section" class:top={section === "default"} style={i === 0 && section !== "default" ? "margin-top: 0;" : ""}>
-        {#if !noClosing && !$storedEditMenuState[sessionId]?.includes(section)}
+        {#if !noClosing && section !== "default" && !$storedEditMenuState[sessionId]?.includes(section)}
             <Button on:click={() => openEdit(section)} style="margin-top: 5px;" dark bold={false}>
                 {#if section === "CSS"}
                     <Icon id="code" right />

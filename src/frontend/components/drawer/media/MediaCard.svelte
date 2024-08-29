@@ -92,29 +92,28 @@
     $: icon = active !== "favourites" && $media[path]?.favourite === true ? "star" : type === "video" ? "movie" : "image"
 </script>
 
-<Card
-    {loaded}
-    class="context #media_card"
-    style={thumbnail ? `width: ${$mediaOptions.mode === "grid" ? 100 : 100 / $mediaOptions.columns}%;` : ""}
-    mode={$mediaOptions.mode}
-    width={100}
-    changed={!!mediaStyle.filter?.length || mediaStyle.flipped || mediaStyle.flippedY}
-    preview={$activeShow?.id === path}
-    outlineColor={findMatchingOut(path, $outputs)}
-    active={findMatchingOut(path, $outputs) !== null}
-    label={name}
-    title={path}
-    icon={thumbnail ? icon : null}
-    white={type === "image"}
-    showPlayOnHover
-    on:mousedown={mousedown}
-    on:click={click}
-    on:dblclick={dblclick}
-    on:mouseenter={() => (hover = true)}
-    on:mouseleave={() => (hover = false)}
-    on:mousemove={move}
->
-    <SelectElem id="media" data={{ name, path, type }} draggable fill>
+<SelectElem id="media" class="context #media_card" data={{ name, path, type }} draggable fill>
+    <Card
+        {loaded}
+        style={thumbnail ? `width: ${$mediaOptions.mode === "grid" ? 100 : 100 / $mediaOptions.columns}%;` : ""}
+        mode={$mediaOptions.mode}
+        width={100}
+        changed={!!mediaStyle.filter?.length || mediaStyle.flipped || mediaStyle.flippedY}
+        preview={$activeShow?.id === path}
+        outlineColor={findMatchingOut(path, $outputs)}
+        active={findMatchingOut(path, $outputs) !== null}
+        label={name}
+        title={path}
+        icon={thumbnail ? icon : null}
+        white={type === "image"}
+        showPlayOnHover
+        on:mousedown={mousedown}
+        on:click={click}
+        on:dblclick={dblclick}
+        on:mouseenter={() => (hover = true)}
+        on:mouseleave={() => (hover = false)}
+        on:mousemove={move}
+    >
         {#if thumbnail}
             <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} />
         {:else}
@@ -122,8 +121,8 @@
                 <Icon size={2.5} id={icon} white={type === "image"} />
             </div>
         {/if}
-    </SelectElem>
-</Card>
+    </Card>
+</SelectElem>
 
 <style>
     .icon {

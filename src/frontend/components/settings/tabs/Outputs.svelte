@@ -349,7 +349,13 @@
         <Icon id="screen" right />
         <p><T id="popup.choose_screen" /></p>
     </Button>
-    <!-- <Screens /> -->
+    <!-- centered? -->
+    <!-- <Button disabled={currentOutput.invisible} on:click={() => activePopup.set("choose_screen")} center>
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="screen" right />
+            <p style="padding: 0;"><T id="popup.choose_screen" /></p>
+        </div>
+    </Button> -->
 </CombinedInput>
 <!-- <CombinedInput>
     <p><T id="settings.position" /></p>

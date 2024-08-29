@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeStyle, dictionary, imageExtensions, outputs, styles, templates, videoExtensions } from "../../../stores"
+    import { activePopup, activeStyle, dictionary, imageExtensions, outputs, popupData, styles, templates, videoExtensions } from "../../../stores"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -230,6 +230,33 @@
         <NumberInput title={$dictionary.screen?.bottom} value={currentStyle.cropping?.bottom || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "bottom")} />
         <NumberInput title={$dictionary.screen?.left} value={currentStyle.cropping?.left || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "left")} />
     </span>
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="popup.transition" /></p>
+    <Button
+        on:click={() => {
+            popupData.set({ action: "style_transition", id: styleId })
+            activePopup.set("transition")
+        }}
+        center
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="screen" right />
+            <p style="padding: 0;"><T id="actions.change_transition" /></p>
+        </div>
+    </Button>
+    {#if currentStyle.transition}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "transition")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
 </CombinedInput>
 
 <h3><T id="preview.slide" /></h3>

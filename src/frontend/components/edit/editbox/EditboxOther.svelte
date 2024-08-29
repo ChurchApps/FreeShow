@@ -56,7 +56,7 @@
     {/if}
 {:else if item?.type === "camera"}
     {#if item.device}
-        <Cam cam={item.device} item />
+        <Cam cam={item.device} item style="object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
     {/if}
 {:else if item?.type === "timer"}
     <Timer {item} id={item.timerId || ""} {today} style={item.auto === false ? "" : `font-size: ${autoSize}px;`} edit />
