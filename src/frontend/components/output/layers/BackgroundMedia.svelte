@@ -12,7 +12,7 @@
     import Camera from "../Camera.svelte"
     import Window from "../Window.svelte"
     import Media from "./Media.svelte"
-    import OutputTransition from "./OutputTransition.svelte"
+    import OutputTransition from "../transitions/OutputTransition.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
 
@@ -35,7 +35,6 @@
 
     let mediaStyle: MediaStyle = {}
     $: if (data) mediaStyle = getMediaStyle(data, currentStyle)
-    $: console.log(mediaStyle, data)
 
     // VIDEO
 
@@ -215,7 +214,7 @@
     }
 </script>
 
-<OutputTransition {transition}>
+<OutputTransition {transition} inTransition={transition.in} outTransition={transition.out}>
     {#if type === "media"}
         <Media path={id} {data} {animationStyle} bind:video bind:videoData bind:videoTime {mirror} {mediaStyle} on:loaded on:ended={videoEnded} />
     {:else if type === "screen"}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activeShow, editHistory, labelsDisabled, overlays, refreshEditSlide, templates } from "../../stores"
+    import { activeEdit, activePage, activeShow, editHistory, focusMode, labelsDisabled, overlays, refreshEditSlide, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -9,6 +9,8 @@
     import Button from "../inputs/Button.svelte"
     import Center from "../system/Center.svelte"
     import Slides from "./Slides.svelte"
+
+    $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
 
     function addSlide(e: any) {
         let index: number = 1
@@ -35,7 +37,7 @@
     function updateEditHistory() {
         editHistory.update((a) => {
             let edit: any = { edit: clone($activeEdit) }
-            edit.id = edit.edit.id || $activeShow?.id || ""
+            edit.id = edit.edit.id || currentShowId
             if (!edit.id) return a
 
             let type = edit.edit.type || "show"
@@ -48,7 +50,13 @@
             edit.name = names[type](edit.id)
             if (edit.name === undefined) return a
 
-            if (type === "show") edit.show = clone($activeShow)
+            if (type === "show") {
+                let active = $activeShow
+                // focus mode
+                if (!active && currentShowId) active = { type: "show", id: currentShowId, index: $activeEdit.slide || 0 }
+
+                edit.show = clone($activeShow)
+            }
 
             a.push(edit)
 
@@ -72,7 +80,16 @@
     $: if ($editHistory.length !== clonedHistory.length || !$activeEdit.id) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
 </script>
 
-{#if $activeEdit.id || (!$activeShow && $editHistory.length)}
+{#if $focusMode}
+    <Button on:click={() => activePage.set("show")} center dark>
+        <Icon id="back" right />
+        <T id="actions.back" />
+    </Button>
+{/if}
+
+{#if $focusMode && currentShowId}
+    <Slides />
+{:else if $activeEdit.id || (!currentShowId && $editHistory.length)}
     <h3><T id="edit.recent" /></h3>
     {#if $editHistory.length}
         <div class="edited">
@@ -83,7 +100,10 @@
                         on:click={() => {
                             activeEdit.set(edited.edit)
                             refreshEditSlide.set(true)
-                            if (edited.show) activeShow.set(edited.show)
+                            if (edited.show) {
+                                if ($focusMode) activeEdit.set({ items: [], slide: edited.show.index, type: "show", showId: edited.show.id })
+                                else activeShow.set(edited.show)
+                            }
                         }}
                         active={$activeEdit.id === edited.id}
                         bold={false}

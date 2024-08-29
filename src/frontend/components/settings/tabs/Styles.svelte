@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeStyle, dictionary, imageExtensions, outputs, styles, templates, videoExtensions } from "../../../stores"
+    import { activePopup, activeStyle, dictionary, imageExtensions, outputs, popupData, styles, templates, videoExtensions } from "../../../stores"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -232,6 +232,33 @@
     </span>
 </CombinedInput>
 
+<CombinedInput>
+    <p><T id="popup.transition" /></p>
+    <Button
+        on:click={() => {
+            popupData.set({ action: "style_transition", id: styleId })
+            activePopup.set("transition")
+        }}
+        center
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="screen" right />
+            <p style="padding: 0;"><T id="actions.change_transition" /></p>
+        </div>
+    </Button>
+    {#if currentStyle.transition}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "transition")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
+</CombinedInput>
+
 <h3><T id="preview.slide" /></h3>
 <CombinedInput>
     <p><T id="settings.active_layers" /></p>
@@ -286,15 +313,6 @@
 <!-- WIP toggle meta -->
 
 <CombinedInput>
-    <p><T id="settings.override_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "template")} />
-</CombinedInput>
-<CombinedInput>
-    <p><T id="settings.override_scripture_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.templateScripture || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "templateScripture")} />
-</CombinedInput>
-
-<CombinedInput>
     <p><T id="settings.lines" /></p>
     <NumberInput
         value={currentStyle.lines || 0}
@@ -305,9 +323,14 @@
         }}
     />
 </CombinedInput>
+
 <CombinedInput>
-    <p><T id="settings.max_auto_font_size" /></p>
-    <NumberInput value={currentStyle.maxAutoFontSize ?? 800} min={20} max={5000} on:change={(e) => updateStyle(e.detail, "maxAutoFontSize")} />
+    <p><T id="settings.override_with_template" /></p>
+    <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "template")} />
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.override_scripture_with_template" /></p>
+    <Dropdown options={templateList} value={$templates[currentStyle.templateScripture || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "templateScripture")} />
 </CombinedInput>
 
 <!-- meta -->

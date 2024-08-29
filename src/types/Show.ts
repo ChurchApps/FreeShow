@@ -6,6 +6,7 @@ export interface Shows {
 
 export interface Show {
     name: string
+    id?: string // this id should not be stored (but often used in the program as a temporary value)
     private?: boolean // hide from drawer
     locked?: boolean // disable edits
     category: null | ID
@@ -78,7 +79,8 @@ export interface Item {
     lines?: Line[]
     list?: List
     auto?: boolean
-    autoFontSize?: number
+    textFit?: string // auto size text fix option (default: shrinkToFit)
+    autoFontSize?: number // only used to store the calculated auto size text size
     style: string
     align?: string
     specialStyle?: any // line gap && line background
@@ -215,6 +217,19 @@ export interface Transition {
     type: TransitionType
     duration: number
     easing: string
+    delay?: number // item in/out wait
+    custom?: any // e.g. transition direction
+
+    between?: TransitionData
+    in?: TransitionData
+    out?: TransitionData
+}
+
+export interface TransitionData {
+    type: TransitionType
+    duration: number
+    easing: string
+    delay?: number // item in/out wait
 }
 
 export interface Media {

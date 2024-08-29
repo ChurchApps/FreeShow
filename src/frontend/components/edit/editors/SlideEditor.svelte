@@ -1,7 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activePopup, activeShow, alertMessage, dictionary, driveData, labelsDisabled, media, outputs, refreshEditSlide, showsCache, styles } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, refreshEditSlide, showsCache, styles } from "../../../stores"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -20,10 +20,10 @@
     import { slideHasAction } from "../../actions/actions"
     import { getUsedChords } from "../scripts/chords"
 
-    $: currentShow = $activeShow?.id
-    $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show("active").slides().get().length) activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
-    $: ref = currentShow && $showsCache[currentShow] ? _show("active").layouts("active").ref()[0] : null
-    $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show("active").slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
+    $: currentShow = $activeShow?.id || $activeEdit.showId || ""
+    $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show(currentShow).slides().get().length) activeEdit.set({ slide: 0, items: [], showId: currentShow })
+    $: ref = currentShow && $showsCache[currentShow] ? _show(currentShow).layouts("active").ref()[0] : null
+    $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show(currentShow).slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
 
     let lines: [string, number][] = []
     let mouse: any = null
@@ -90,7 +90,7 @@
         //     updateStyles()
         // }, CHANGE_POS_TIME)
 
-        let items = $showsCache[$activeShow?.id!].slides[ref[$activeEdit.slide!]?.id].items
+        let items = $showsCache[currentShow].slides[ref[$activeEdit.slide!]?.id].items
         let values: any[] = []
         active.forEach((id) => {
             let item = items[id]
@@ -108,10 +108,15 @@
         let slideId = ref[$activeEdit.slide!].id
         let activeItems = [...active]
 
+        let historyShow = $activeShow
+        // focus mode
+        if (!historyShow && currentShow) historyShow = { type: "show", id: currentShow, index: $activeEdit.slide || 0 }
+        else if (!historyShow) return
+
         history({
             id: "setStyle",
             newData: { style: { key: "style", values } },
-            location: { page: "edit", show: $activeShow!, slide: slideId, items: activeItems },
+            location: { page: "edit", show: historyShow, slide: slideId, items: activeItems },
         })
 
         if (!items[0]?.auto) return
@@ -121,9 +126,9 @@
 
         function resetAutoSize() {
             showsCache.update((a) => {
-                if (!a[$activeShow!.id]?.slides?.[slideId]?.items?.[activeItems[0] || 0]?.autoFontSize) return a
+                if (!a[currentShow]?.slides?.[slideId]?.items?.[activeItems[0] || 0]?.autoFontSize) return a
 
-                delete a[$activeShow!.id].slides[slideId].items[activeItems[0] || 0].autoFontSize
+                delete a[currentShow].slides[slideId].items[activeItems[0] || 0].autoFontSize
                 return a
             })
 
@@ -155,7 +160,7 @@
         zoom = Number(Math.max(0.2, Math.min(4, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
 
         // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)
@@ -276,51 +281,54 @@
             </Center>
         {/if}
     </div>
-    <div class="actions" style="width: 100%;gap: 10px;">
-        <div class="leftActions">
-            {#if chordsMode}
-                <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
-                    <p><T id="popup.choose_chord" /></p>
+
+    {#if !$focusMode}
+        <div class="actions" style="width: 100%;gap: 10px;">
+            <div class="leftActions">
+                {#if chordsMode}
+                    <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
+                        <p><T id="popup.choose_chord" /></p>
+                    </Button>
+                    {#each usedChords as chord}
+                        <Button outline={chordsAction === chord} on:click={() => (chordsAction = chord)}>
+                            {chord}
+                        </Button>
+                    {/each}
+                {:else if Slide?.notes}
+                    <div class="notes">
+                        <Icon id="notes" right white />
+                        {@html Slide.notes.replaceAll("\n", "&nbsp;")}
+                    </div>
+                {/if}
+            </div>
+
+            <div class="actions" style="height: 100%;justify-content: right;">
+                <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
+                    <Icon id="chords" white={!usedChords.length} right={!$labelsDisabled} />
+                    {#if !$labelsDisabled}<T id="edit.chords" />{/if}
                 </Button>
-                {#each usedChords as chord}
-                    <Button outline={chordsAction === chord} on:click={() => (chordsAction = chord)}>
-                        {chord}
-                    </Button>
-                {/each}
-            {:else if Slide?.notes}
-                <div class="notes">
-                    <Icon id="notes" right white />
-                    {@html Slide.notes.replaceAll("\n", "&nbsp;")}
-                </div>
-            {/if}
+
+                <div class="seperator" />
+
+                <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
+                    <Icon size={1.3} id="zoomIn" white />
+                </Button>
+                {#if zoomOpened}
+                    <div class="zoom_container" transition:slide>
+                        <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
+                            <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
+                        </Button>
+                        <Button disabled={zoom <= 0.2} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
+                            <Icon size={1.3} id="add" white />
+                        </Button>
+                        <Button disabled={zoom >= 4} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
+                            <Icon size={1.3} id="remove" white />
+                        </Button>
+                    </div>
+                {/if}
+            </div>
         </div>
-
-        <div class="actions" style="height: 100%;justify-content: right;">
-            <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
-                <Icon id="chords" white={!usedChords.length} right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<T id="edit.chords" />{/if}
-            </Button>
-
-            <div class="seperator" />
-
-            <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
-                <Icon size={1.3} id="zoomIn" white />
-            </Button>
-            {#if zoomOpened}
-                <div class="zoom_container" transition:slide>
-                    <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
-                        <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
-                    </Button>
-                    <Button disabled={zoom <= 0.2} on:click={() => (zoom = Number((zoom - 0.1).toFixed(2)))} title={$dictionary.actions?.zoomIn}>
-                        <Icon size={1.3} id="add" white />
-                    </Button>
-                    <Button disabled={zoom >= 4} on:click={() => (zoom = Number((zoom + 0.1).toFixed(2)))} title={$dictionary.actions?.zoomOut}>
-                        <Icon size={1.3} id="remove" white />
-                    </Button>
-                </div>
-            {/if}
-        </div>
-    </div>
+    {/if}
 </div>
 
 <style>

@@ -9,12 +9,14 @@ import {
     activeProject,
     activeShow,
     audioExtensions,
+    audioFolders,
     audioPlaylists,
     audioStreams,
     categories,
     drawerTabsData,
     imageExtensions,
     media,
+    mediaFolders,
     projects,
     scriptureSettings,
     shows,
@@ -30,6 +32,7 @@ import { getExtension, getFileName, getMediaType, removeExtension } from "./medi
 import { addToPos, getIndexes, mover } from "./mover"
 import { checkName } from "./show"
 import { _show } from "./shows"
+import { newToast } from "../../utils/common"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -170,6 +173,11 @@ export const dropActions: any = {
         return h
     },
     navigation: ({ drag, drop }: any, h: any) => {
+        if (drag.id === "files") {
+            dropFileInDrawerNavigation(drag)
+            return
+        }
+
         if (drop.data !== "all" && get(activeDrawerTab) && (drag.id === "show" || drag.id === "show_drawer")) {
             h.id = "SHOWS"
             let data = drop.data === "unlabeled" ? null : drop.data
@@ -285,6 +293,39 @@ export const dropActions: any = {
         h.newData = { key: "songs", data: songs }
         return h
     },
+}
+
+function dropFileInDrawerNavigation(drag) {
+    let drawerTab = get(activeDrawerTab)
+    console.log(drag, drawerTab)
+
+    // drop folders
+    if (drawerTab === "media" || drawerTab === "audio") {
+        drag.data.forEach((file) => {
+            if (file.type) return
+            addDrawerFolder(file, drawerTab as "media" | "audio")
+        })
+    }
+
+    // WIP drop .show/.json into show categories???
+    // WIP drop .template
+    // WIP drop bibles??
+}
+
+export function addDrawerFolder(file: { path: string }, type: "media" | "audio") {
+    // check if folder already exists
+    let path: string = file.path
+    let exists = Object.values(type === "media" ? get(mediaFolders) : get(audioFolders)).find((a) => a.path === path)
+    if (exists) {
+        newToast("$error.folder_exists")
+        return
+    }
+
+    history({
+        id: "UPDATE",
+        newData: { data: { name: getFileName(path), icon: "folder", path: path } },
+        location: { page: "drawer", id: "category_" + type },
+    })
 }
 
 // "show", "project"

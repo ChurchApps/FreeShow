@@ -2,9 +2,8 @@ import { get } from "svelte/store"
 import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
 import { bibleApiKey, dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
-import { getAutoSize } from "../../edit/scripts/autoSize"
-import { clone, removeDuplicates } from "../../helpers/array"
 import { getKey } from "../../../values/keys"
+import { clone, removeDuplicates } from "../../helpers/array"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
 let tempCache: any = {}
@@ -132,7 +131,7 @@ export function getSlides({ bibles, sorted }) {
         let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
         let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
-        let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {} } // scrolling, bindings
+        let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings
 
         let slideIndex: number = 0
         slides[slideIndex].push(clone(emptyItem))
@@ -245,15 +244,16 @@ export function getSlides({ bibles, sorted }) {
 
         // auto size
         slides.forEach((slide, i) => {
-            slide.forEach((item, j) => {
+            slide.forEach((_item, j) => {
                 if (!templateTextItems[j]?.auto || !slides[i][j].lines?.[0]?.text) return
 
-                let autoSize: number = getAutoSize(item)
+                // let autoSize: number = getAutoSize(item)
                 // WIP historyActions - TEMPLATE...
                 slides[i][j].auto = true
+                if (templateTextItems[j]?.textFit) slides[i][j].textFit = templateTextItems[j]?.textFit
                 slides[i][j].lines![0].text.forEach((_, k) => {
                     if (slides[i][j].lines![0].text[k].customType === "disableTemplate") return
-                    slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
+                    // slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
                 })
             })
         })
@@ -309,6 +309,7 @@ export function getSlides({ bibles, sorted }) {
                     lines,
                     style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
                     specialStyle: metaTemplate?.specialStyle || {},
+                    actions: metaTemplate?.actions || {},
                 })
             }
         }

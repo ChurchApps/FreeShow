@@ -132,7 +132,7 @@
         background-color: rgb(255 0 0 / 0.3);
     }
     button.red:not(:disabled) :global(svg) {
-        fill: white;
+        fill: var(--text);
     }
 
     button:not(:disabled):not(.active) {

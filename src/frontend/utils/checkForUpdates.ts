@@ -2,6 +2,8 @@ import { get } from "svelte/store"
 import { alertMessage, activePopup, dictionary } from "./../stores"
 
 export function checkForUpdates(currentVersion: string) {
+    if (currentVersion.includes("beta")) return
+
     fetch("https://api.github.com/repos/ChurchApps/freeshow/releases")
         .then((response) => response.json())
         .then((a) => {

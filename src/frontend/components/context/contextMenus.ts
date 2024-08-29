@@ -73,6 +73,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     delete_slide: { label: "actions.delete_slide", icon: "delete" },
     delete_group: { label: "actions.delete_group", icon: "delete", shortcuts: ["Del"] },
     slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "remove_group", "SEPERATOR", "LOAD_slide_groups"] },
+    editSlideText: { label: "menu.edit", icon: "edit" }, // actions.edit_slide_text
     selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
     newSlide: { label: "new.slide", icon: "add" },
     // newGroup: { label: "context.createNew", icon: "add" },
@@ -196,6 +197,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     audio_button_playlist: ["preview", "SEPERATOR", "remove"],
     // "addToFirstSlide"
     live_card: ["recording"],
+    // actions
+    action: ["duplicate"],
 
     // PROJECT
     projects: ["newProject", "newFolder", "sort_projects_by"],
@@ -206,7 +209,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_media: ["play", "play_no_filters", "remove"],
     project_audio: ["remove"],
     project_player: ["remove"],
-    project_show: ["rename", "private", "duplicate", "remove"],
+    project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename", "delete"],
     project_section: ["remove"],
     project_pdf: ["remove"], // "rename",
     shows: ["newSlide", "selectAll"],
@@ -224,6 +227,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "copy", "paste"
     slide: ["slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
     slideChild: ["slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
+    slideFocus: ["editSlideText"],
     group: ["rename", "recolor", "selectAll", "SEPERATOR", "duplicate", "delete_group"],
     global_group: ["edit"],
     // global_group: ["rename"],
@@ -248,5 +252,5 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     theme: ["rename", "duplicate", "delete", "SEPERATOR", "export", "SEPERATOR", "reset_theme"],
     style: ["rename", "duplicate", "delete", "SEPERATOR", "reset"],
     output_screen: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
-    output_screen_stage: ["rename", "recolor", "SEPERATOR", "reset"],
+    output_screen_stage: ["rename", "recolor", "duplicate", "delete", "SEPERATOR", "reset"],
 }

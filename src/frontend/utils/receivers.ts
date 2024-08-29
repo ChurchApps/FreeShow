@@ -6,8 +6,8 @@ import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
-import { history } from "../components/helpers/history"
-import { captureCanvas, getFileName } from "../components/helpers/media"
+import { addDrawerFolder } from "../components/helpers/dropActions"
+import { captureCanvas } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
@@ -37,7 +37,6 @@ import {
     alertMessage,
     allOutputs,
     audioChannels,
-    audioFolders,
     closeAd,
     currentOutputSettings,
     customMessageCredits,
@@ -55,7 +54,6 @@ import {
     isDev,
     lessonsLoaded,
     media,
-    mediaFolders,
     ndiData,
     os,
     outputDisplay,
@@ -248,22 +246,8 @@ const receiveSTORE: any = {
 }
 
 const receiveFOLDER: any = {
-    MEDIA: (a: any, id: "media" | "audio" = "media") => {
-        // check if folder already exists
-        let path: string = a.path
-        let exists = Object.values(id === "media" ? get(mediaFolders) : get(audioFolders)).find((a) => a.path === path)
-        if (exists) {
-            newToast("$error.folder_exists")
-            return
-        }
-
-        history({
-            id: "UPDATE",
-            newData: { data: { name: getFileName(path), icon: "folder", path: path } },
-            location: { page: "drawer", id: "category_" + id },
-        })
-    },
-    AUDIO: (a: any) => receiveFOLDER.MEDIA(a, "audio"),
+    MEDIA: (a: any) => addDrawerFolder(a, "media"),
+    AUDIO: (a: any) => addDrawerFolder(a, "audio"),
     SHOWS: (a: any) => showsPath.set(a.path),
     DATA: (a: any) => dataPath.set(a.path),
     DATA_SHOWS: (a: any) => {

@@ -8,7 +8,7 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
 
-    $: showId = $activeShow?.id || ""
+    $: showId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[showId]
     $: layoutSlides = $cachedShowsData[getShowCacheId(showId, currentShow)]?.layout || []
 
@@ -26,9 +26,9 @@
             ;(document.activeElement as any)?.blur()
 
             if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
-                activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
+                activeEdit.set({ slide: 0, items: [], showId })
             } else if ($activeEdit.slide < layoutSlides.length - 1) {
-                activeEdit.set({ slide: $activeEdit.slide + 1, items: [], showId: $activeShow?.id })
+                activeEdit.set({ slide: $activeEdit.slide + 1, items: [], showId })
             }
         } else if (e.key === "ArrowUp") {
             // Arrow Up
@@ -36,9 +36,9 @@
             ;(document.activeElement as any)?.blur()
 
             if ($activeEdit.slide === null || $activeEdit.slide === undefined) {
-                activeEdit.set({ slide: layoutSlides.length - 1, items: [], showId: $activeShow?.id })
+                activeEdit.set({ slide: layoutSlides.length - 1, items: [], showId })
             } else if ($activeEdit.slide > 0) {
-                activeEdit.set({ slide: $activeEdit.slide - 1, items: [], showId: $activeShow?.id })
+                activeEdit.set({ slide: $activeEdit.slide - 1, items: [], showId })
             }
         }
     }
@@ -65,7 +65,7 @@
         columns = Math.max(1, Math.min(4, columns + (e.deltaY < 0 ? -1 : 1)))
 
         // don't start timeout if scrolling with mouse
-        if (e.deltaY > 100 || e.deltaY < -100) return
+        if (e.deltaY >= 100 || e.deltaY <= -100) return
         nextScrollTimeout = setTimeout(() => {
             nextScrollTimeout = null
         }, 500)
@@ -83,7 +83,7 @@
     let loaded: boolean = false
 
     // reset loading when changing view modes
-    $: if ($activeShow?.id) loaded = false
+    $: if (showId) loaded = false
 
     $: if (!loaded && !lazyLoading && layoutSlides?.length) {
         lazyLoading = true
@@ -131,7 +131,9 @@
                                 {altKeyPressed}
                                 {columns}
                                 on:click={(e) => {
-                                    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) activeEdit.set({ slide: i, items: [] })
+                                    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                                        activeEdit.set({ slide: i, items: [], showId })
+                                    }
                                 }}
                             />
                         {/if}

@@ -14,7 +14,7 @@ export function runActionId(id: string) {
 
 export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
     console.log(action)
-    if (!action || action.enabled === false) return
+    if (!action) return
     action = convertOldMidiToNewAction(action)
 
     let triggers = action.triggers || []
@@ -80,7 +80,7 @@ export function checkStartupActions() {
 export function customActionActivation(id: string) {
     Object.keys(get(midiIn)).forEach((actionId) => {
         let action: any = get(midiIn)[actionId]
-        if (action.customActivation === id) runAction(action)
+        if (action.customActivation === id && action.enabled !== false) runAction(action)
     })
 }
 

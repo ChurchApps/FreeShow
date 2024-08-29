@@ -20,7 +20,7 @@
         // "": `${ctrl} + k`,
         "preview._lock": `${ctrl} + l`,
         "actions.mute": `${ctrl} + m`,
-        "new.show": `${ctrl} + n`,
+        "new.create": `${ctrl} + n`,
         "actions.toggle_output": `${ctrl} + o`,
         // "new.project": `${ctrl} + p`,
         // "this_is_default_mac_close!": `${ctrl} + q`,

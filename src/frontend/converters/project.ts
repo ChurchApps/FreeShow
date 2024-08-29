@@ -44,3 +44,10 @@ export function addToProject(type: ShowType, filePaths: string[]) {
     let lastItem = newProjectItems[newProjectItems.length - 1]
     activeShow.set({ ...lastItem, index: project.data.length - 1 })
 }
+
+export function addSection() {
+    let activeShowIndex = get(activeShow)?.index !== undefined ? (get(activeShow)?.index || -1) + 1 : null
+    let index: number = activeShowIndex ?? get(projects)[get(activeProject) || ""]?.shows?.length ?? 0
+
+    history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
+}
