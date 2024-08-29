@@ -61,7 +61,12 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
 
-            if (key === "background") data = changeOutputBackground(data, { outs, output, id, i })
+            if (key === "background") {
+                // don't play background if PDF is active
+                if (data && getOutputContent(id).type === "pdf") data = null
+
+                data = changeOutputBackground(data, { outs, output, id, i })
+            }
 
             let outData = a[id].out?.[key] || null
             if (key === "overlays" && data.length) {
@@ -215,6 +220,11 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
     })
 
     return cleared
+}
+
+export function getOutputContent(outputId: string = "", updater = get(outputs), key: string = "slide") {
+    if (!outputId) outputId = getActiveOutputs(updater, false, true, true)[0]
+    return updater[outputId]?.out?.[key] || {}
 }
 
 export function outputSlideHasContent(output) {

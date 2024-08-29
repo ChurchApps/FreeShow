@@ -155,7 +155,10 @@
                 {:else if id.includes("notes")}
                     <SlideNotes {currentSlide} {next} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
+                    <!-- refresh auto size if changing stage layout - this made item unmovable -->
+                    <!-- {#key item} -->
                     <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} />
+                    <!-- {/key} -->
                 {:else if id.includes("slide")}
                     <span style="pointer-events: none;">
                         {#if currentBackground}

@@ -9,6 +9,7 @@
     import Splash from "../main/Splash.svelte"
     import Layouts from "../slide/Layouts.svelte"
     import AudioPreview from "./AudioPreview.svelte"
+    import PdfPreview from "./pdf/PdfPreview.svelte"
     import Section from "./Section.svelte"
     import Slides from "./Slides.svelte"
     import VideoShow from "./VideoShow.svelte"
@@ -52,6 +53,10 @@
             <AudioPreview active={$activeShow} />
         {:else if show.type === "section"}
             <Section section={show} />
+        {:else if show.type === "pdf"}
+            <PdfPreview {show} />
+        {:else if show.type === "ppt"}
+            <!-- PPT -->
         {:else}
             <Slides showId={$activeShow?.id || ""} />
             <Layouts />

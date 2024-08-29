@@ -2,7 +2,7 @@
     import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
-    import { isOutCleared } from "../../helpers/output"
+    import { getOutputContent, isOutCleared } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../clear"
@@ -48,6 +48,8 @@
         autoChange = false
         activeClear = key
     }
+
+    $: outputContent = getOutputContent("", $outputs)
 </script>
 
 <div class="clear" style="border-top: 2px solid var(--primary-lighter);">
@@ -65,14 +67,16 @@
         {/if}
     </span>
     <span class="group">
-        <div class="combinedButton">
-            <Button disabled={$outLocked || isOutCleared("background", $outputs)} on:click={() => clear("background")} title={$dictionary.clear?.background + " [F1]"} dark red center>
-                <Icon id="background" size={1.2} />
-            </Button>
-            {#if !allCleared}
-                <Button on:click={() => openPreview("background")} title={$dictionary.preview?.background} dark={activeClear !== "background"} />
-            {/if}
-        </div>
+        {#if outputContent?.type !== "pdf"}
+            <div class="combinedButton">
+                <Button disabled={$outLocked || isOutCleared("background", $outputs)} on:click={() => clear("background")} title={$dictionary.clear?.background + " [F1]"} dark red center>
+                    <Icon id="background" size={1.2} />
+                </Button>
+                {#if !allCleared}
+                    <Button on:click={() => openPreview("background")} title={$dictionary.preview?.background} dark={activeClear !== "background"} />
+                {/if}
+            </div>
+        {/if}
 
         <div class="combinedButton">
             <Button disabled={$outLocked || isOutCleared("slide", $outputs)} on:click={() => clear("slide")} title={$dictionary.clear?.slide + " [F2]"} dark red center>
@@ -101,14 +105,16 @@
             {/if}
         </div>
 
-        <div class="combinedButton">
-            <Button disabled={$outLocked || isOutCleared("transition", $outputs)} on:click={() => clear("nextTimer")} title={$dictionary.clear?.nextTimer + ($special.disablePresenterControllerKeys ? " [F5]" : "")} dark red center>
-                <Icon id="clock" size={1.2} />
-            </Button>
-            {#if !allCleared}
-                <Button on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
-            {/if}
-        </div>
+        {#if outputContent?.type !== "pdf"}
+            <div class="combinedButton">
+                <Button disabled={$outLocked || isOutCleared("transition", $outputs)} on:click={() => clear("nextTimer")} title={$dictionary.clear?.nextTimer + ($special.disablePresenterControllerKeys ? " [F5]" : "")} dark red center>
+                    <Icon id="clock" size={1.2} />
+                </Button>
+                {#if !allCleared}
+                    <Button on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
+                {/if}
+            </div>
+        {/if}
     </span>
 </div>
 

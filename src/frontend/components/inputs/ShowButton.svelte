@@ -39,6 +39,7 @@
     let iconID: null | string = null
     let custom: boolean = false
     $: {
+        // WIP simular to focus.ts
         if (icon) {
             custom = false
             if (type === "show") {

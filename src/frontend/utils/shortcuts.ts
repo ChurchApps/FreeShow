@@ -194,7 +194,8 @@ export const previewShortcuts: any = {
         previousSlide(e)
     },
     " ": (e: any) => {
-        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        let currentShow: any = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (currentShow?.type === "pdf") return nextSlide(e, true)
         if (!get(showsCache)[currentShow?.id || ""]) return playMedia(e)
         e.preventDefault()
 

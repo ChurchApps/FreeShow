@@ -8,7 +8,6 @@ import sqlite3 from "sqlite3"
 import WordExtractor from "word-extractor"
 import { toApp } from ".."
 import { IMPORT } from "../../types/Channels"
-import { dataFolderNames, getDataFolder, makeDir, readFolder } from "../utils/files"
 
 const specialImports: any = {
     powerpoint: async (files: string[]) => {
@@ -35,50 +34,7 @@ const specialImports: any = {
 
         return data
     },
-    pdf: async (files: string[], settings: { path: string }) => {
-        let data: any[] = []
-
-        // TODO: linux don't support pdf-poppler!
-        const pdf = require("pdf-poppler")
-
-        let opts: any = { format: "png", scale: 1920, out_prefix: "img", page: null }
-        let importPath = getDataFolder(settings.path, dataFolderNames.imports)
-
-        await Promise.all(files.map(pdfToImages))
-
-        async function pdfToImages(filePath: string) {
-            let name = getFileName(filePath)
-            let outputPath = path.join(importPath, name)
-            makeDir(outputPath)
-            opts.out_dir = outputPath
-
-            // WIP use pdf-to-img? (recuires canvas)
-            // canvas needs some binarise for compiling: https://www.npmjs.com/package/canvas?activeTab=readme#compiling
-            // const doc = await pdf(filePath)
-
-            // let index = 0
-            // for await (const page of doc) {
-            //     index++
-            //     console.log(index, `img-${index}.png`)
-            //     fs.writeFile(path.join(outputPath, `img-${index}.png`), page, (err) => {
-            //         console.error(err)
-            //     })
-            // }
-
-            // data.push({ name, path: outputPath, pages: doc.length })
-
-            try {
-                await pdf.convert(filePath, opts)
-
-                let files = readFolder(outputPath)
-                if (files.length) data.push({ name, path: outputPath, pages: files.length })
-            } catch (err) {
-                console.error(err)
-            }
-        }
-
-        return data
-    },
+    pdf: (files: string[]) => files,
     sqlite: async (files: string[]) => {
         let data: any[] = []
 

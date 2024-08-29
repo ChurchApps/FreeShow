@@ -7,6 +7,7 @@
     import { setOutput } from "../../helpers/output"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import AudioPreview from "../AudioPreview.svelte"
+    import PdfPreview from "../pdf/PdfPreview.svelte"
     import Slides from "../Slides.svelte"
     import VideoShow from "../VideoShow.svelte"
 
@@ -46,6 +47,8 @@
     {#if show.notes}
         <p class="notes">{show.notes}</p>
     {/if}
+{:else if type === "pdf"}
+    <PdfPreview {show} />
 {:else}
     <Slides showId={show.id} layout={show.layout} />
 

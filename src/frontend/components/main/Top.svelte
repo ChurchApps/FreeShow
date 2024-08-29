@@ -7,7 +7,7 @@
 
     export let isWindows: boolean = false
 
-    $: editDisabled = (!$activeShow && !$activeEdit.type && ($activeEdit.slide === undefined || $activeEdit.slide === null)) || $shows[$activeShow?.id || ""]?.locked
+    $: editDisabled = (!$activeShow && !$activeEdit.type && ($activeEdit.slide === undefined || $activeEdit.slide === null)) || $shows[$activeShow?.id || ""]?.locked || $activeShow?.type === "pdf"
 </script>
 
 <div class="top" class:drag={!isWindows}>
