@@ -27,7 +27,8 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
     if (tempCache[urls[load]]) return tempCache[urls[load]]
 
     return new Promise((resolve, reject) => {
-        if (!get(bibleApiKey) && !getKey("bibleapi")) return reject("No API key!")
+        const KEY = get(bibleApiKey) || getKey("bibleapi")
+        if (!KEY) return reject("No API key!")
         if (urls[load].includes("null")) return reject("Something went wrong!")
 
         fetchTimeout[active] = setTimeout(() => {
@@ -35,7 +36,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
             reject("Timed out!")
         }, 40000)
 
-        fetch(urls[load], { headers: { "api-key": get(bibleApiKey) || getKey("bibleapi") } })
+        fetch(urls[load], { headers: { "api-key": KEY } })
             .then((response) => response.json())
             .then((data) => {
                 tempCache[urls[load]] = data.data
@@ -50,12 +51,13 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
 }
 
 export function searchBibleAPI(active: string, searchQuery: string) {
+    const KEY = get(bibleApiKey) || getKey("bibleapi")
     let url = `${api}${active}/search?query=${searchQuery}`
 
     return new Promise((resolve, reject) => {
-        if (!get(bibleApiKey) && !getKey("bibleapi")) return reject("No API key!")
+        if (!KEY) return reject("No API key!")
 
-        fetch(url, { headers: { "api-key": get(bibleApiKey) || getKey("bibleapi") } })
+        fetch(url, { headers: { "api-key": KEY } })
             .then((response) => response.json())
             .then((data) => {
                 resolve(data.data)

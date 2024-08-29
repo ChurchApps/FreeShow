@@ -123,6 +123,10 @@ export class OutputLifecycle {
         }
     }
 
+    static focusOutput(id: string) {
+        OutputHelper.getOutput(id)?.window?.focus()
+    }
+
     static setWindowListeners(window: BrowserWindow, { id, name }: { [key: string]: string }) {
         window.on("ready-to-show", () => {
             mainWindow?.focus()

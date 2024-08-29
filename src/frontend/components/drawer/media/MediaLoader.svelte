@@ -111,7 +111,16 @@
         {:else if readyToLoad}
             {#if type !== "video" || (thumbnailPath && retryCount <= 5)}
                 {#key retryCount}
-                    <img src={type !== "video" && useOriginal ? encodeFilePath(path) : thumbnailPath} alt={name} style={mediaStyleString} loading="lazy" class:loading={!loaded} on:error={reload} on:load={() => (loaded = true)} />
+                    <img
+                        src={type !== "video" && useOriginal ? encodeFilePath(path) : thumbnailPath}
+                        alt={name}
+                        style={mediaStyleString}
+                        loading="lazy"
+                        class:loading={!loaded}
+                        class:hideError={ghost}
+                        on:error={reload}
+                        on:load={() => (loaded = true)}
+                    />
                 {/key}
             {/if}
             {#if type === "video" && useOriginal}
@@ -141,6 +150,10 @@
         opacity: 0;
         position: absolute;
         pointer-events: none;
+    }
+
+    img.hideError {
+        color: transparent;
     }
 
     /* canvas,

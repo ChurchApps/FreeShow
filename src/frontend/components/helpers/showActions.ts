@@ -680,8 +680,6 @@ export function changeOutputStyle({ outputStyle, styleOutputs }: API_output_styl
 }
 
 export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }, extra: boolean = true) {
-    console.log(globalGroupIds)
-    // TODO: get groups from midi!!!
     if (!globalGroupIds.length || get(outLocked)) return
 
     // play first matching group

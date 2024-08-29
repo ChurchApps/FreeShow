@@ -4,7 +4,6 @@
     import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, projects, projectView, sorted } from "../../stores"
     import { sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
-    import { addSection } from "../../converters/project"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
     import { checkInput } from "../helpers/showActions"

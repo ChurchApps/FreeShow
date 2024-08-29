@@ -2,6 +2,7 @@ import { uid } from "uid"
 import { ShowObj } from "../classes/Show"
 import { createCategory, setTempShows } from "./importHelpers"
 import { checkName } from "../components/helpers/show"
+import { getFileName, removeExtension } from "../components/helpers/media"
 
 export function createImageShow({ images, name }: { images: string[]; name: string }) {
     // newToast("Creating show...")
@@ -39,7 +40,7 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
     show.layouts[layoutId].slides = layoutShows
 
     backgrounds.forEach(([id, path]) => {
-        let media = { path }
+        let media = { id: path, name: removeExtension(getFileName(path)) }
         show.media[id] = media
     })
 

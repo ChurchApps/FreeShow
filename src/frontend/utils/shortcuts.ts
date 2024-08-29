@@ -195,14 +195,20 @@ export const previewShortcuts: any = {
     },
     " ": (e: any) => {
         let currentShow: any = get(focusMode) ? get(activeFocus) : get(activeShow)
-        if (currentShow?.type === "pdf") return nextSlide(e, true)
-        if (!get(showsCache)[currentShow?.id || ""]) return playMedia(e)
-        e.preventDefault()
+        if (currentShow?.type === "pdf") {
+            e.preventDefault()
+            return nextSlide(e, true)
+        }
+        if (!get(showsCache)[currentShow?.id || ""]) {
+            e.preventDefault()
+            return playMedia(e)
+        }
 
         let allActiveOutputs = getActiveOutputs(get(outputs), true, true, true)
         let outputId = allActiveOutputs[0]
         let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
 
+        e.preventDefault()
         if (currentOutput.out?.slide?.id !== currentShow?.id || (currentShow && currentOutput.out?.slide?.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) nextSlide(e, true)
         else {
             if (e.shiftKey) previousSlide(e)

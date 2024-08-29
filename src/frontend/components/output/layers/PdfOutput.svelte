@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Transition } from "../../../../types/Show"
-    import OutputTransition from "./OutputTransition.svelte"
+    import OutputTransition from "../transitions/OutputTransition.svelte"
 
     export let slide
     export let currentStyle
