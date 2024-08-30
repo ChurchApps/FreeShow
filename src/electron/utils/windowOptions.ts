@@ -97,15 +97,14 @@ export const exportOptions: any = {
     },
 }
 
-export const captureOptions: any = {
-    show: false,
-    modal: true,
-    frame: false,
-    skipTaskbar: true,
-    resizable: false,
-    webPreferences: {
-        webSecurity: isProd,
-        backgroundThrottling: false,
-        offscreen: true,
-    },
-}
+// export const captureOptions: any = {
+//     show: false,
+//     modal: true,
+//     frame: false,
+//     skipTaskbar: true,
+//     webPreferences: {
+//         webSecurity: isProd,
+//         backgroundThrottling: false,
+//         offscreen: true,
+//     },
+// }

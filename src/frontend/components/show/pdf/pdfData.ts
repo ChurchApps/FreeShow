@@ -34,6 +34,7 @@ export async function getViewportSizes(pdfPath: string): Promise<{ width: number
                         const dimensions =
                             match
                                 .match(/\[(.*?)\]/)?.[1]
+                                .trim()
                                 .split(" ")
                                 .map(Number) || []
                         if (dimensions.length === 4) {
