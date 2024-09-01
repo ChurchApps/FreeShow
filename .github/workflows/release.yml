@@ -70,8 +70,7 @@ jobs:
                    which jq
                    echo jq
                    jq -r .version package.json
-                   jq -r .version package.json >> "$RELEASE_NAME"
-                   export RELEASE_NAME
+                   echo "RELEASE_NAME=$(jq -r .version package.json)" >> $GITHUB_ENV
             - name: 'Upload Artifact'
               uses: actions/upload-artifact@v4
               with:
