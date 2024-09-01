@@ -69,7 +69,8 @@ jobs:
                    echo which jq
                    which jq
                    echo jq
-                   RELEASE_NAME=`jq -r .version package.json`
+                   jq -r .version package.json
+                   jq -r .version package.json >> "$RELEASE_NAME"
                    export RELEASE_NAME
             - name: 'Upload Artifact'
               uses: actions/upload-artifact@v4
