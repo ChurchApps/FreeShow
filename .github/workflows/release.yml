@@ -16,6 +16,9 @@ jobs:
             - name: Check out Git repository
               uses: actions/checkout@v4
 
+            - name: find release
+              run: which jq
+
             - name: Install Node.js and NPM
               uses: actions/setup-node@master
               with:
