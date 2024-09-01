@@ -64,6 +64,10 @@ jobs:
                    export USE_SYSTEM_FPM=true
                    tools/bin/npm run release:arm64
                    cp dist/*.AppImage /artifacts/
+                   echo pwd
+                   pwd
+                   echo which jq
+                   which jq
                    echo jq
                    RELEASE_NAME=`jq -r .version package.json`
                    export RELEASE_NAME
