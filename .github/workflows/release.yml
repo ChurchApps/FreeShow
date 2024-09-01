@@ -67,17 +67,6 @@ jobs:
                    export USE_SYSTEM_FPM=true
                    tools/bin/npm run release:arm64
                    cp dist/*.AppImage /artifacts/
-                   echo pwd
-                   pwd
-                   echo which jq
-                   which jq
-                   echo jq
-                   jq -r .version package.json
-                   echo AA
-                   echo "RELEASE_NAME=$(jq -r .version package.json)"
-                   echo BB
-                   echo "RELEASE_NAME=$(jq -r .version package.json)" >> "$GITHUB_ENV"
-                   echo CC
             - name: 'Upload Artifact'
               uses: actions/upload-artifact@v4
               with:
