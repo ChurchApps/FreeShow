@@ -73,7 +73,7 @@ jobs:
                    ehco AA
                    echo "RELEASE_NAME=$(jq -r .version package.json)"
                    echo BB
-                   echo "RELEASE_NAME=$(jq -r .version package.json)" >> $GITHUB_ENV
+                   echo "RELEASE_NAME=$(jq -r .version package.json)" >> "$GITHUB_ENV"
                    echo CC
             - name: 'Upload Artifact'
               uses: actions/upload-artifact@v4
