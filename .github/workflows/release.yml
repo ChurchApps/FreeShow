@@ -17,7 +17,7 @@ jobs:
               uses: actions/checkout@v4
 
             - name: find release
-              run: which jq
+              run: echo "RELEASE_NAME=$(jq -r .version package.json)" >> "$GITHUB_ENV"
 
             - name: Install Node.js and NPM
               uses: actions/setup-node@master
