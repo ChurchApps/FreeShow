@@ -209,8 +209,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_media: ["play", "play_no_filters", "remove"],
     project_audio: ["remove"],
     project_player: ["remove"],
-    project_show: ["rename", "private", "duplicate", "remove"],
+    project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename", "delete"],
     project_section: ["remove"],
+    project_pdf: ["remove"], // "rename",
     shows: ["newSlide", "selectAll"],
     // TIMER
     timer: ["play", "edit"], // , "reset"

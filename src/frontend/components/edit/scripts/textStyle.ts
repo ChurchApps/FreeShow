@@ -281,6 +281,7 @@ export function getCaretCharacterOffsetWithin(element: any) {
 }
 
 export function setCaret(element: any, { line = 0, pos = 0 }, toEnd: boolean = false) {
+    if (!element) return
     var range = document.createRange()
     var sel = window.getSelection()
 

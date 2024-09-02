@@ -61,7 +61,12 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
 
-            if (key === "background") data = changeOutputBackground(data, { outs, output, id, i })
+            if (key === "background") {
+                // don't play background if PDF is active
+                if (data && getOutputContent(id).type === "pdf") data = null
+
+                data = changeOutputBackground(data, { outs, output, id, i })
+            }
 
             let outData = a[id].out?.[key] || null
             if (key === "overlays" && data.length) {
@@ -215,6 +220,11 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
     })
 
     return cleared
+}
+
+export function getOutputContent(outputId: string = "", updater = get(outputs), key: string = "slide") {
+    if (!outputId) outputId = getActiveOutputs(updater, false, true, true)[0]
+    return updater[outputId]?.out?.[key] || {}
 }
 
 export function outputSlideHasContent(output) {
@@ -666,7 +676,7 @@ export function getCurrentStyle(styles: { [key: string]: Styles }, styleId: stri
     return styles[styleId] || defaultStyle
 }
 
-export function getOutputTransitions(slideData: any, transitionData: any, disableTransitions: boolean) {
+export function getOutputTransitions(slideData: any, styleTransition: any, transitionData: any, disableTransitions: boolean) {
     let transitions: { [key: string]: Transition } = {}
 
     if (disableTransitions) {
@@ -680,9 +690,14 @@ export function getOutputTransitions(slideData: any, transitionData: any, disabl
         media: slideData?.mediaTransition?.type ? slideData.mediaTransition : null,
     }
 
-    transitions.text = slideTransitions.text || transitionData.text || {}
-    transitions.media = slideTransitions.media || transitionData.media || {}
-    transitions.overlay = transitionData.text || {}
+    let styleTransitions = {
+        text: styleTransition?.text || null,
+        media: styleTransition?.media || null,
+    }
+
+    transitions.text = slideTransitions.text || styleTransitions.text || transitionData.text || {}
+    transitions.media = slideTransitions.media || styleTransitions.media || transitionData.media || {}
+    transitions.overlay = styleTransitions.text || transitionData.text || {}
 
     return clone(transitions)
 }

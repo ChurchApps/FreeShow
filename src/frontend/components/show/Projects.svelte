@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
+    import { ShowType } from "../../../types/Show"
     import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, projects, projectView, sorted } from "../../stores"
     import { sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -89,6 +90,12 @@
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: $activeProject }, location: { page: "show", id: "section" } })
     }
 
+    function getContextMenuId(type: ShowType | undefined) {
+        if ((type || "show") === "show") return "show"
+        if (type === "video" || type === "image") return "media"
+        return type
+    }
+
     $: projectActive = !$projectView && $activeProject !== null
 </script>
 
@@ -157,7 +164,7 @@
                                         {/if}
                                     </Button>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class="context #project_{show.type ? (show.type === 'video' || show.type === 'image' ? 'media' : show.type) : 'show'}__project" icon />
+                                    <ShowButton id={show.id} {show} {index} class="context #project_{getContextMenuId(show.type)}__project" icon />
                                 {/if}
                             </SelectElem>
                         {/each}

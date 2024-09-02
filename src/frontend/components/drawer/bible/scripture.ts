@@ -2,9 +2,8 @@ import { get } from "svelte/store"
 import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
 import { bibleApiKey, dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
-import { getAutoSize } from "../../edit/scripts/autoSize"
-import { clone, removeDuplicates } from "../../helpers/array"
 import { getKey } from "../../../values/keys"
+import { clone, removeDuplicates } from "../../helpers/array"
 
 const api = "https://api.scripture.api.bible/v1/bibles/"
 let tempCache: any = {}
@@ -28,7 +27,8 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
     if (tempCache[urls[load]]) return tempCache[urls[load]]
 
     return new Promise((resolve, reject) => {
-        if (!get(bibleApiKey) && !getKey("bibleapi")) return reject("No API key!")
+        const KEY = get(bibleApiKey) || getKey("bibleapi")
+        if (!KEY) return reject("No API key!")
         if (urls[load].includes("null")) return reject("Something went wrong!")
 
         fetchTimeout[active] = setTimeout(() => {
@@ -36,7 +36,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
             reject("Timed out!")
         }, 40000)
 
-        fetch(urls[load], { headers: { "api-key": get(bibleApiKey) || getKey("bibleapi") } })
+        fetch(urls[load], { headers: { "api-key": KEY } })
             .then((response) => response.json())
             .then((data) => {
                 tempCache[urls[load]] = data.data
@@ -51,12 +51,13 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
 }
 
 export function searchBibleAPI(active: string, searchQuery: string) {
+    const KEY = get(bibleApiKey) || getKey("bibleapi")
     let url = `${api}${active}/search?query=${searchQuery}`
 
     return new Promise((resolve, reject) => {
-        if (!get(bibleApiKey) && !getKey("bibleapi")) return reject("No API key!")
+        if (!KEY) return reject("No API key!")
 
-        fetch(url, { headers: { "api-key": get(bibleApiKey) || getKey("bibleapi") } })
+        fetch(url, { headers: { "api-key": KEY } })
             .then((response) => response.json())
             .then((data) => {
                 resolve(data.data)
@@ -132,7 +133,7 @@ export function getSlides({ bibles, sorted }) {
         let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
         let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
-        let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {} } // scrolling, bindings
+        let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings
 
         let slideIndex: number = 0
         slides[slideIndex].push(clone(emptyItem))
@@ -245,16 +246,16 @@ export function getSlides({ bibles, sorted }) {
 
         // auto size
         slides.forEach((slide, i) => {
-            slide.forEach((item, j) => {
+            slide.forEach((_item, j) => {
                 if (!templateTextItems[j]?.auto || !slides[i][j].lines?.[0]?.text) return
 
-                let autoSize: number = getAutoSize(item)
+                // let autoSize: number = getAutoSize(item)
                 // WIP historyActions - TEMPLATE...
                 slides[i][j].auto = true
                 if (templateTextItems[j]?.textFit) slides[i][j].textFit = templateTextItems[j]?.textFit
                 slides[i][j].lines![0].text.forEach((_, k) => {
                     if (slides[i][j].lines![0].text[k].customType === "disableTemplate") return
-                    slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
+                    // slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
                 })
             })
         })
@@ -310,6 +311,7 @@ export function getSlides({ bibles, sorted }) {
                     lines,
                     style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
                     specialStyle: metaTemplate?.specialStyle || {},
+                    actions: metaTemplate?.actions || {},
                 })
             }
         }

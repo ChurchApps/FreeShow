@@ -153,6 +153,14 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
 
+    // PDF
+    if (((!slide || start) && get(activeShow)?.type === "pdf") || (!start && slide?.type === "pdf")) {
+        if (start && slide?.id !== get(activeShow)?.id) slide = null
+        let nextPage = slide?.page !== undefined ? slide.page + 1 : 0
+        playPdf(slide, nextPage)
+        return
+    }
+
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
     let layout: any[] = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
@@ -298,6 +306,14 @@ export function previousSlide(e: any) {
 
     let currentOutput: any = get(outputs)[getActiveOutputs()[0]] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
+
+    // PDF
+    if ((!slide && get(activeShow)?.type === "pdf") || slide?.type === "pdf") {
+        let nextPage = slide?.page ? slide.page - 1 : 0
+        playPdf(slide, nextPage)
+        return
+    }
+
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
     let layout: any[] = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
@@ -363,8 +379,19 @@ export function previousSlide(e: any) {
     updateOut(slide ? slide.id : "active", index, layout, !e?.altKey)
 }
 
+function playPdf(slide: null | OutSlide, nextPage: number) {
+    let viewports = get(activeShow)?.data?.viewports || []
+    let pages = slide?.pages || viewports.length
+    if (nextPage > pages - 1) return
+
+    let data = slide || get(activeShow)
+    let name = data?.name || get(projects)[get(activeProject) || ""]?.shows[get(activeShow)?.index || 0]?.name
+
+    setOutput("slide", { type: "pdf", id: data?.id, page: nextPage, pages, viewport: slide?.viewport || viewports[nextPage], name })
+}
+
 function getNextEnabled(index: null | number, end: boolean = false): null | number {
-    if (index === null) return null
+    if (index === null || isNaN(index)) return null
 
     index++
 
@@ -653,8 +680,6 @@ export function changeOutputStyle({ outputStyle, styleOutputs }: API_output_styl
 }
 
 export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }, extra: boolean = true) {
-    console.log(globalGroupIds)
-    // TODO: get groups from midi!!!
     if (!globalGroupIds.length || get(outLocked)) return
 
     // play first matching group

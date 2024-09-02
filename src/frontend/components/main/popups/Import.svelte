@@ -43,7 +43,7 @@
     ]
 
     const media_formats = [
-        { name: "PDF", extensions: ["pdf"], id: "pdf", tutorial: "This might take a while.<br>Currently not supported on linux!<br>Use an online PDF to Image converter if you are having issues." },
+        { name: "PDF", extensions: ["pdf"], id: "pdf" },
         { name: "Lessons.church", extensions: ["json", "olp", "olf"], id: "lessons" },
     ]
 

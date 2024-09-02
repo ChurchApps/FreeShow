@@ -46,6 +46,7 @@ import { LyricSearch } from "./LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import checkForUpdates from "./updater"
 import { OutputHelper } from "../output/OutputHelper"
+import { convertPDFToImages } from "../data/pdfToImage"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -126,6 +127,7 @@ const mainResponses: any = {
     READ_EXIF: (data: any, e: any) => readExifData(data, e),
     DOWNLOAD_MEDIA: (data: any) => downloadMedia(data),
     MEDIA_BASE64: (data: any) => storeMedia(data),
+    PDF_TO_IMAGE: (data: any) => convertPDFToImages(data),
     ACCESS_CAMERA_PERMISSION: () => getPermission("camera"),
     ACCESS_MICROPHONE_PERMISSION: () => getPermission("microphone"),
     ACCESS_SCREEN_PERMISSION: () => getPermission("screen"),
