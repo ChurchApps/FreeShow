@@ -80,7 +80,8 @@
 
         <div class="combinedButton">
             <Button disabled={$outLocked || isOutCleared("slide", $outputs)} on:click={() => clear("slide")} title={$dictionary.clear?.slide + " [F2]"} dark red center>
-                <Icon id="slide" size={1.2} />
+                <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
+                <Icon id={outputContent?.type === "pdf" ? "background" : "slide"} size={1.2} />
             </Button>
             {#if !allCleared}
                 <Button on:click={() => openPreview("slide")} title={$dictionary.preview?.slide} dark={activeClear !== "slide"} />

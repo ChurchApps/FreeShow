@@ -39,7 +39,7 @@
     }
 
     function updateTextInput(e: any, key: string) {
-        updateSpecial(e.target.value, key)
+        updateSpecial(e.target.value || "", key)
     }
 
     function toggle(e: any, key: string) {
@@ -230,7 +230,7 @@
 
 <CombinedInput>
     <p><T id="settings.capitalize_words" /></p>
-    <TextInput value={$special.capitalize_words} on:change={(e) => updateTextInput(e, "capitalize_words")} />
+    <TextInput value={$special.capitalize_words || ""} on:change={(e) => updateTextInput(e, "capitalize_words")} />
 </CombinedInput>
 
 <CombinedInput title={projectReplacerTitle}>

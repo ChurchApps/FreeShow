@@ -495,7 +495,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             let bg = _show(showId).get("media")[background]
             let outputBg = get(outputs)[outputId]?.out?.background
             let cloudId = get(driveData).mediaId
-            let bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path : bg.path
+            let bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path || bg.id : bg.path || bg.id
             let name = bg.name || removeExtension(getFileName(bgPath))
             let extension = getExtension(bgPath)
             let type = bg.type || getMediaType(extension)
@@ -519,7 +519,6 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 }
 
                 // outBackground.set(bgData)
-                console.log(bg, bgData)
                 setOutput("background", bgData, false, outputId)
             }
         }

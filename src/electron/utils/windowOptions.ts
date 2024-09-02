@@ -4,8 +4,9 @@
 
 import { join } from "path"
 import { isMac, isProd } from ".."
+import { BrowserWindowConstructorOptions } from "electron"
 
-export const loadingOptions: any = {
+export const loadingOptions: BrowserWindowConstructorOptions = {
     width: 500,
     height: 300,
     icon: "public/icon.png",
@@ -20,7 +21,7 @@ export const loadingOptions: any = {
     },
 }
 
-export const mainOptions: any = {
+export const mainOptions: BrowserWindowConstructorOptions = {
     icon: "public/icon.png",
     backgroundColor: "#292c36",
     titleBarStyle: isMac ? "hidden" : "default",
@@ -37,7 +38,7 @@ export const mainOptions: any = {
     },
 }
 
-export const outputOptions: any = {
+export const outputOptions: BrowserWindowConstructorOptions = {
     icon: "public/icon.png",
     backgroundColor: "#000000",
     transparent: true,
@@ -46,7 +47,6 @@ export const outputOptions: any = {
     resizable: false, // disable resizing on mac and windows
     frame: false, // hide title/buttons
     skipTaskbar: true, // hide from taskbar
-    offscreen: true, // offscreen rendering
     hasShadow: false,
     enableLargerThanScreen: true, //
     titleBarStyle: "default", //On mac, electron uses hiddenInset otherwise, which results in rounded corners.
@@ -68,7 +68,7 @@ export const outputOptions: any = {
     },
 }
 
-export const screenIdentifyOptions: any = {
+export const screenIdentifyOptions: BrowserWindowConstructorOptions = {
     transparent: true,
     alwaysOnTop: true,
     resizable: false,
@@ -81,7 +81,7 @@ export const screenIdentifyOptions: any = {
     },
 }
 
-export const exportOptions: any = {
+export const exportOptions: BrowserWindowConstructorOptions = {
     // show: !isProd,
     show: false,
     modal: true,
@@ -97,7 +97,7 @@ export const exportOptions: any = {
     },
 }
 
-// export const captureOptions: any = {
+// export const captureOptions: BrowserWindowConstructorOptions = {
 //     show: false,
 //     modal: true,
 //     frame: false,

@@ -34,6 +34,7 @@ import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
+import { clearSlide } from "../output/clear"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     // sort so display order can be changed! (needs app restart)
@@ -62,8 +63,8 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
 
             if (key === "background") {
-                // don't play background if PDF is active
-                if (data && getOutputContent(id).type === "pdf") data = null
+                // clear if PDF is active
+                if (data && getOutputContent(id).type === "pdf") clearSlide()
 
                 data = changeOutputBackground(data, { outs, output, id, i })
             }

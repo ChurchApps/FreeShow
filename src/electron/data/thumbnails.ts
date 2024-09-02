@@ -73,7 +73,7 @@ export function getThumbnailFolderPath() {
 
 function getThumbnailPath(filePath: string, size: number = 250) {
     let folderPath = thumbnailFolderPath || getThumbnailFolderPath()
-    return path.join(folderPath, `${hashCode(filePath)}-${size}.jpg`)
+    return path.join(folderPath, `${hashCode(filePath)}-${size}.png`)
 }
 
 function hashCode(str: string) {
@@ -167,10 +167,11 @@ function parseSize(sizeStr: string): ResizeOptions {
 
 ///// SAVE /////
 
-const jpegQuality = 90 // 0-100
+// const jpegQuality = 90 // 0-100
 function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolean = true) {
-    let jpgImage = image.toJPEG(jpegQuality)
-    fs.writeFile(savePath, jpgImage, () => {
+    // let jpgImage = image.toJPEG(jpegQuality)
+    let img = image.toPNG() // higher file size, but supports transparent images
+    fs.writeFile(savePath, img, () => {
         exists.push(savePath)
         if (nextOnFinished) generationFinished()
     })

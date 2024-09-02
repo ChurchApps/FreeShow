@@ -32,7 +32,7 @@ export function startup() {
 }
 
 async function startupMain() {
-    setLanguage()
+    setLanguage("", true)
     setupMainReceivers()
     getMainData()
 

@@ -202,7 +202,6 @@
         currentTransition = currentTransitionFull
         if (enableSpecific) currentTransition = currentTransitionFull[selectedSpecific] || currentTransitionFull
     }
-    $: console.log(currentTransition)
 
     $: isDisabled = currentTransition.type === "none"
     $: durationValue = currentTransition.duration

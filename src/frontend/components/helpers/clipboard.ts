@@ -209,7 +209,7 @@ const selectActions: any = {
 
         data.forEach(({ id }: any) => {
             ref.forEach((b, i) => {
-                if (b.type === "child" ? id === b.parent.id : id === b.id) newSelection.push({ index: i })
+                if (b.type === "child" ? id === b.parent.id : id === b.id) newSelection.push({ index: i, showId: get(activeShow)?.id })
             })
         })
 
@@ -263,7 +263,7 @@ const selectActions: any = {
         let ref = _show().layouts("active").ref()[0]
         if (!ref?.length) return
 
-        newSelection = ref.map((_: any, index: number) => ({ index }))
+        newSelection = ref.map((_: any, index: number) => ({ index, showId: get(activeShow)?.id }))
 
         selected.set({ id: "slide", data: newSelection })
     },

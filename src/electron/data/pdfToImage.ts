@@ -5,9 +5,25 @@ import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
 import { dataFolderNames, makeDir } from "../utils/files"
 
-export async function convertPDFToImages(data: { dataPath: string; path: string }) {
+// this should not return a promise to "responses.ts"
+export function convertPDFToImages(data: { dataPath: string; path: string }) {
+    PDFtoIMG(data)
+}
+
+async function PDFtoIMG(data: { dataPath: string; path: string }) {
     const PDF = pdf(data.path)
-    const imageBuffers = await PDF.toPNG({ scale: 2 })
+    let imageBuffers: Buffer[] = []
+
+    try {
+        imageBuffers = await PDF.toPNG({ scale: 1.5 })
+    } catch (err) {
+        // try two times
+        try {
+            imageBuffers = await PDF.toPNG({ scale: 1.5 })
+        } catch (err) {
+            console.error(err)
+        }
+    }
 
     let outputPath = path.join(data.dataPath, dataFolderNames.imports, PDF.name)
     makeDir(outputPath)
