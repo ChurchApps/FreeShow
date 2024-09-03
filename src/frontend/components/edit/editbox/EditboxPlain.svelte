@@ -9,6 +9,7 @@
     import { _show } from "../../helpers/shows"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { isoLanguages } from "../../main/popups/localization/isoLanguages"
 
     export let item: Item
     export let index: number
@@ -68,6 +69,15 @@
 <Movebox {ratio} active={$activeEdit.items.includes(index)} />
 
 <div class="actions">
+    <!-- localization -->
+    {#if item.language}
+        <div title={isoLanguages.find((a) => a.code === item.language)?.name} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+            <span style="padding: 5px;z-index: 3;font-size: 0;">
+                <Icon id="translate" white />
+            </span>
+        </div>
+    {/if}
+
     <!-- bindings -->
     {#if item.bindings?.length}
         <div title={$dictionary.actions?.remove_binding} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
@@ -87,6 +97,7 @@
             {/if}
         </div>
     {/if}
+
     <!-- actions -->
     {#if item.actions}
         {#each Object.keys(item.actions) as action}

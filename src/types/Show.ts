@@ -108,6 +108,7 @@ export interface Item {
     scrolling?: Scrolling
     visualizer?: any
     captions?: any
+    language?: string // used to store auto localized text
     // media: fit, startAt, endAt
     // tag?: string; // p, div????
 }

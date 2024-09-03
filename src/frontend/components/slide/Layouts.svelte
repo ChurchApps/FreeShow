@@ -23,6 +23,7 @@
     $: sortedLayouts = sortByName(keysToID(layouts || {}))
 
     let totalTime: string = "0s"
+    let isTranslated: boolean = false
     $: layoutSlides = layouts?.[activeLayout]?.slides || []
     $: if (layoutSlides.length) getTotalTime()
     function getTotalTime() {
@@ -33,6 +34,14 @@
         let total = ref.reduce((value, slide) => (value += Number(slide.data.nextTimer || 0)), 0)
 
         totalTime = total ? (total > 59 ? joinTime(secondsToTime(total)) : total + "s") : "0s"
+
+        isTranslated = !!layoutSlides.find((a) =>
+            _show()
+                .slides([a.id])
+                .get("items")
+                .flat()
+                .find((a) => a.language)
+        )
     }
 
     function addLayout(e: any): any {
@@ -181,6 +190,9 @@
                 <Icon size={1.1} id="locked" />
             </Button>
         {:else}
+            <Button disabled={!layoutSlides.length} on:click={() => activePopup.set("translate")} title={$dictionary.popup?.translate}>
+                <Icon size={1.1} id="translate" white={!isTranslated} />
+            </Button>
             <Button disabled={!layoutSlides.length} on:click={() => activePopup.set("next_timer")} title="{$dictionary.popup?.next_timer}{totalTime !== '0s' ? ': ' + totalTime : ''}">
                 <Icon size={1.1} id="clock" white={totalTime === "0s"} />
             </Button>

@@ -142,7 +142,7 @@ function getOutputWithLines() {
         if (lines > currentLines) currentLines = lines
     })
 
-    return currentLines
+    return Number(currentLines)
 }
 
 export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string = "", nextAfterMedia: boolean = false) {
@@ -469,10 +469,25 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
     // get output slide
     let outputIds = outputId ? [outputId] : data.bindings?.length ? data.bindings : getActiveOutputs()
+
+    // WIP custom next slide timer duration (has to be changed on slide click & in preview as well)
+    // let outputWithLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line !== undefined)
+    // let outSlide: any = get(outputs)[outputWithLine]?.out?.slide || {}
+    // let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([layout[index].id]).get()[0] : null
+    // let slideLines = showSlide ? getItemWithMostLines(showSlide) : null
+    // let outputWithLines = getOutputWithLines() || 0
+    // let maxLines = slideLines && outSlide.index !== null ? (outputWithLines >= slideLines ? 0 : Math.ceil(slideLines / outputWithLines)) : 0
+    let duration = data.nextTimer
+    // if (maxLines) duration /= maxLines
+
     // find any selected output with no lines
-    let anyNotInLines = outputIds.find((id: string) => !get(outputs)[id].out?.slide?.line)
+    let outputAtLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line)
     // actions will only trigger on index 0 if multiple lines
-    if (!anyNotInLines) return
+    if (outputAtLine) {
+        // restart any next slide timers
+        outputIds.map(nextSlideTimers)
+        return
+    }
 
     outputIds.map(activateActions)
 
@@ -556,17 +571,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         }
 
         // nextTimer
-        // clear any active slide timers
-        Object.keys(get(slideTimers)).forEach((id) => {
-            if (outputIds.includes(id)) get(slideTimers)[id].timer?.clear()
-        })
-
-        if ((data.nextTimer || 0) > 0) {
-            // outTransition.set({ duration: data.nextTimer })
-            setOutput("transition", { duration: data.nextTimer }, false, outputId)
-        } else {
-            clearTimers(outputId)
-        }
+        nextSlideTimers(outputId)
 
         // DEPRECATED since <= 1.1.6, but still in use
         // actions per output
@@ -598,6 +603,20 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             playSlideActions(data.actions.slideActions, outputIds, index)
         }, actionTimeout)
     } else playOutputStyleTemplateActions(outputIds)
+
+    function nextSlideTimers(outputId) {
+        // clear any active slide timers
+        Object.keys(get(slideTimers)).forEach((id) => {
+            if (outputIds.includes(id)) get(slideTimers)[id].timer?.clear()
+        })
+
+        if ((duration || 0) > 0) {
+            // outTransition.set({ duration })
+            setOutput("transition", { duration }, false, outputId)
+        } else {
+            clearTimers(outputId)
+        }
+    }
 }
 
 const runPerOutput = ["clear_background", "clear_overlays"]

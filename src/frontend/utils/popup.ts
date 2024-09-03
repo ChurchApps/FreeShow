@@ -43,6 +43,7 @@ import Variable from "../components/main/popups/Variable.svelte"
 import ChooseChord from "../components/main/popups/ChooseChord.svelte"
 import { get } from "svelte/store"
 import ChooseOutput from "../components/main/popups/ChooseOutput.svelte"
+import Translate from "../components/main/popups/localization/Translate.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -74,6 +75,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     change_output_values: ChangeOutputValues,
     set_time: SetTime,
     animate: Animate,
+    translate: Translate,
     next_timer: NextTimer,
     advanced_settings: AdvancedScreen,
     about: About,

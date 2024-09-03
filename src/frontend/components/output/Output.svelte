@@ -260,7 +260,7 @@
             {preview}
             customTemplate={currentStyle.template}
             transition={transitions.text}
-            transitionEnabled={(!mirror || preview) && transitions.text?.type !== "none" && !!transitions.text?.duration}
+            transitionEnabled={!mirror || preview}
             {isKeyOutput}
         />
     {/if}

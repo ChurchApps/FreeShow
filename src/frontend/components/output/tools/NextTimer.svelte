@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { dictionary } from "../../../stores"
+    import { dictionary, slideTimers } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
+    import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Slider from "../../inputs/Slider.svelte"
 
@@ -16,18 +17,44 @@
     let step: boolean = false
     function transitionChange(e: any) {
         step = true
+
+        let outputIds = getActiveOutputs()
+        outputIds.forEach((id) => {
+            let timer = $slideTimers[id]
+            if (timer) updateTime(e.target.value, timer)
+        })
+    }
+    function updateTime(time, timer) {
         if (!timer.paused) {
             autoPause = true
             timer.timer.pause()
         }
-        timer.time = Number(e.target.value)
+        timer.time = Number(time)
     }
+
     function mouseup() {
         step = false
+
         if (autoPause) {
-            timer.timer.resume()
+            let outputIds = getActiveOutputs()
+            outputIds.forEach((id) => {
+                let timer = $slideTimers[id]
+                if (timer) timer.timer.resume()
+            })
+
             autoPause = false
         }
+    }
+
+    function playPause(isPaused: boolean) {
+        let outputIds = getActiveOutputs()
+        outputIds.forEach((id) => {
+            let timer = $slideTimers[id]
+            if (timer) {
+                if (isPaused) timer.timer.resume()
+                else timer.timer.pause()
+            }
+        })
     }
 
     function round(value: number, step = 1) {
@@ -45,15 +72,7 @@
     {#if timer.timer}
         <span class="group">
             <!-- padding: 0.3em; -->
-            <Button
-                style="flex: 0;"
-                center
-                title={timer.paused ? $dictionary.media?.play : $dictionary.media?.pause}
-                on:click={() => {
-                    if (timer.paused) timer.timer.resume()
-                    else timer.timer.pause()
-                }}
-            >
+            <Button style="flex: 0;" center title={timer.paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={() => playPause(timer.paused)}>
                 <Icon id={timer.paused ? "play" : "pause"} size={1.2} white={timer.paused} />
             </Button>
             <span style="color: var(--secondary);padding: 0 10px;">{round(timer.time)}</span>

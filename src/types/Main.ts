@@ -136,6 +136,7 @@ export type Popups =
     | "change_output_values"
     | "set_time"
     | "animate"
+    | "translate"
     | "next_timer"
     | "advanced_settings"
     | "about"
