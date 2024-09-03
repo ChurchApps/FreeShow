@@ -5,6 +5,7 @@ import { getItemTextArray } from "../../../edit/scripts/textStyle"
 import { clone, sortByName } from "../../../helpers/array"
 import { history } from "../../../helpers/history"
 import { isoLanguages } from "./isoLanguages"
+import { newToast } from "../../../../utils/common"
 
 // https://www.npmjs.com/package/translate
 // https://github.com/ssut/py-googletrans/issues/268
@@ -26,7 +27,7 @@ export async function translate(text: string, language: string, source: string =
 }
 
 export function getIsoLanguages() {
-    return sortByName(isoLanguages).map((a) => ({ id: a.code, name: `${a.flag ? a.flag + " " : ""}${a.name} (${a.nativeName})` }))
+    return sortByName(isoLanguages).map((a) => ({ id: a.code, name: `${a.flag ? a.flag + " " : ""}${a.name}${a.nativeName !== a.name ? " - " + a.nativeName : ""}` }))
 }
 
 export async function translateShow(showId: string, languageCode: string) {
@@ -49,7 +50,14 @@ export async function translateShow(showId: string, languageCode: string) {
                     let text = getItemTextArray(item)
                     if (!text.length) return
 
-                    let translatedText = await translate(text.join("[-] "), languageCode)
+                    let translatedText = ""
+                    try {
+                        translatedText = await translate(text.join("[-] "), languageCode)
+                    } catch (err) {
+                        console.warn("Error when translating:", err)
+                        let tip = err.message.includes("Failed to fetch") ? ". Check your network and try again." : ""
+                        newToast("Error when translating: " + err + tip)
+                    }
                     if (!translatedText.length) return
 
                     let translatedLines = translatedText.split("[-]")

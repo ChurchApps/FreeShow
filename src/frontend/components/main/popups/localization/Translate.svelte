@@ -85,6 +85,12 @@
 
 <style>
     div {
-        min-height: 300px;
+        min-height: 330px;
+    }
+
+    div :global(.dropdown span) {
+        line-height: 0;
+        display: flex;
+        align-items: center;
     }
 </style>

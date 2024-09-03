@@ -183,7 +183,7 @@ export function updateThemeValues(themes: any) {
 
     Object.entries(themes.colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
     Object.entries(themes.font).forEach(([key, value]: any) => {
-        if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
+        if (key === "family" && (!value || value === "sans-serif")) value = '"NotoColorEmojiLimited", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
         document.documentElement.style.setProperty("--font-" + key, value)
     })
 
