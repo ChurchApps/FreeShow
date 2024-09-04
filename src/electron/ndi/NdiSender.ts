@@ -1,7 +1,7 @@
 // import pcmconvert from "pcm-converter"
 import grandiose from "grandiose"
 import os from "os"
-import { isLinux, toApp } from ".."
+import { toApp } from ".."
 import { CaptureHelper } from "../capture/CaptureHelper"
 import util from "./vingester-util"
 
@@ -15,7 +15,7 @@ import util from "./vingester-util"
 
 // TODO: audio
 export class NdiSender {
-    static ndiDisabled = isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
+    static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
     static NDI: any = {}
 
