@@ -62,6 +62,8 @@ import {
     playerVideos,
     playingVideos,
     popupData,
+    presentationApps,
+    presentationData,
     previewBuffers,
     projects,
     shows,
@@ -205,6 +207,8 @@ const receiveMAIN: any = {
         if (prevPath !== path) newToast("$toast.media_replaced")
     },
     API_TRIGGER: (data: any) => triggerAction(data),
+    PRESENTATION_STATE: (data: any) => presentationData.set(data),
+    SLIDESHOW_GET_APPS: (data: any) => presentationApps.set(data),
 
     // TOP BAR
     MAXIMIZED: (data: boolean) => windowState.set({ ...windowState, maximized: data }),
