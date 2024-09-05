@@ -153,6 +153,12 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
 
+    // PPT
+    if (slide?.type === "ppt") {
+        send(MAIN, ["PRESENTATION_CONTROL"], { action: e?.key === "PageDown" ? "last" : "next" })
+        return
+    }
+
     // PDF
     if (((!slide || start) && get(activeShow)?.type === "pdf") || (!start && slide?.type === "pdf")) {
         if (start && slide?.id !== get(activeShow)?.id) slide = null
@@ -306,6 +312,12 @@ export function previousSlide(e: any) {
 
     let currentOutput: any = get(outputs)[getActiveOutputs()[0]] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
+
+    // PPT
+    if (slide?.type === "ppt") {
+        send(MAIN, ["PRESENTATION_CONTROL"], { action: e?.key === "PageUp" ? "first" : "previous" })
+        return
+    }
 
     // PDF
     if ((!slide && get(activeShow)?.type === "pdf") || slide?.type === "pdf") {

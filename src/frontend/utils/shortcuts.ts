@@ -168,7 +168,7 @@ export const previewShortcuts: any = {
     },
     PageDown: (e: any) => {
         let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-        if (!get(showsCache)[currentShow?.id || ""]) return
+        if (!get(showsCache)[currentShow?.id || ""] && get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide?.type !== "ppt") return
         if (get(special).disablePresenterControllerKeys) return
 
         e.preventDefault()
@@ -176,7 +176,7 @@ export const previewShortcuts: any = {
     },
     PageUp: (e: any) => {
         let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-        if (!get(showsCache)[currentShow?.id || ""]) return
+        if (!get(showsCache)[currentShow?.id || ""] && get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide?.type !== "ppt") return
         if (get(special).disablePresenterControllerKeys) return
 
         e.preventDefault()

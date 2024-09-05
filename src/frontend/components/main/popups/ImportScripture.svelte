@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import { IMPORT } from "../../../../types/Channels"
-    import { activePopup, alertMessage, bibleApiKey, dictionary, language, os, scriptures } from "../../../stores"
+    import { activePopup, alertMessage, bibleApiKey, dictionary, isDev, language, os, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -21,7 +21,7 @@
 
     async function fetchBibles() {
         // read cache
-        let cache = JSON.parse(localStorage.getItem("scriptureApiCache") || "{}")
+        let cache = $isDev ? {} : JSON.parse(localStorage.getItem("scriptureApiCache") || "{}")
         if (cache.date) {
             let cacheDate = new Date(cache.date).getTime()
             let today = new Date().getTime()
@@ -33,8 +33,9 @@
             }
         }
 
+        const KEY = $bibleApiKey || getKey("bibleapi")
         const api = "https://api.scripture.api.bible/v1/bibles"
-        fetch(api, { headers: { "api-key": $bibleApiKey || getKey("bibleapi") } })
+        fetch(api, { headers: { "api-key": KEY } })
             .then((response) => response.json())
             .then((data) => {
                 bibles = data.data
@@ -120,45 +121,43 @@
         <h2>
             <T id="scripture.bibles" />
         </h2>
-        {#if $bibleApiKey}
-            <TextInput style="width: 50%;" placeholder={$dictionary.main?.search} value="" on:input={search} />
-        {/if}
+
+        <TextInput style="width: 50%;" placeholder={$dictionary.main?.search} value="" on:input={search} />
     </div>
     <div class="list">
+        <!-- custom key input: -->
         <!-- <BibleApiKey /> -->
 
-        {#if $bibleApiKey}
-            {#if searchedRecommendedBibles.length}
-                {#each searchedRecommendedBibles as bible}
+        {#if searchedRecommendedBibles.length}
+            {#each searchedRecommendedBibles as bible}
+                <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
+                    <Icon id="scripture_alt" right />{bible.nameLocal}
+                    {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
+                        <span class="description" title={bible.description}>({bible.description})</span>
+                    {/if}
+                </Button>
+            {/each}
+            <hr />
+        {/if}
+        {#if sortedBibles.length}
+            {#if searchedBibles.length}
+                {#each searchedBibles as bible}
                     <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
-                        <Icon id="scripture_alt" right />{bible.nameLocal}
-                        {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
+                        <Icon id="scripture_alt" right />{bible.name}
+                        {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
                             <span class="description" title={bible.description}>({bible.description})</span>
                         {/if}
                     </Button>
                 {/each}
-                <hr />
-            {/if}
-            {#if sortedBibles.length}
-                {#if searchedBibles.length}
-                    {#each searchedBibles as bible}
-                        <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
-                            <Icon id="scripture_alt" right />{bible.name}
-                            {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
-                                <span class="description" title={bible.description}>({bible.description})</span>
-                            {/if}
-                        </Button>
-                    {/each}
-                {:else}
-                    <Center faded>
-                        <T id="empty.search" />
-                    </Center>
-                {/if}
             {:else}
-                <Center>
-                    <Loader />
+                <Center faded>
+                    <T id="empty.search" />
                 </Center>
             {/if}
+        {:else}
+            <Center>
+                <Loader />
+            </Center>
         {/if}
     </div>
 {/if}
