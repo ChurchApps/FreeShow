@@ -44,7 +44,7 @@
 </script>
 
 {#if globalList.length}
-    <div class="triggers" class:center={globalList.length <= 16}>
+    <div class="triggers" class:center={globalList.length <= 10}>
         {#each globalList as trigger}
             <SelectElem class={status.id === trigger.id ? status.type || "pending" : ""} id="trigger" data={trigger} draggable>
                 <Button style="flex: 1;padding: 0;" class="context #trigger" on:click={() => buttonClick(trigger.id)}>
