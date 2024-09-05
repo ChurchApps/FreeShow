@@ -1,12 +1,13 @@
 import os from "os"
 import Slideshow from "slideshow"
-import { toApp } from "../.."
+import { mainWindow, toApp } from "../.."
 import { MAIN } from "../../../types/Channels"
+import { OutputHelper } from "../OutputHelper"
 
 // from "slideshow" - "connector.js"
 const connectors: any = {
-    darwin: ["keynote", "keynote5", "keynote6", "powerpoint", "powerpoint2011", "powerpoint2016"],
-    win32: ["powerpoint", "powerpoint2010", "powerpoint2013"],
+    darwin: ["Keynote", "Keynote 5", "Keynote 6", "PowerPoint", "PowerPoint 2011", "PowerPoint 2016"],
+    win32: ["PowerPoint", "PowerPoint 2010", "PowerPoint 2013"],
 }
 
 export function getPresentationApplications() {
@@ -14,23 +15,38 @@ export function getPresentationApplications() {
     return list
 }
 
-type SupportedPrograms = "powerpoint" | "keynote"
-export function startSlideshow(data: { path: string; program: SupportedPrograms }) {
-    initPresentation(data.path, data.program)
+let alwaysOnTopDisabled: string[] = []
+let starting: boolean = false
+export function startSlideshow(data: { path: string; program: string }) {
+    if (closing || starting) return
+    starting = true
+
+    initPresentation(data.path, data.program.toLowerCase().replaceAll(" ", ""))
+
+    if (alwaysOnTopDisabled.length) return
+    OutputHelper.getAllOutputs().forEach(([id, output]) => {
+        if (output.window.isAlwaysOnTop()) {
+            output.window.setAlwaysOnTop(false)
+            alwaysOnTopDisabled.push(id)
+        }
+    })
 }
 
 let closing = false
 function stopSlideshow() {
-    if (!currentSlideshow || closing) return
+    if (!currentSlideshow || closing || starting) return
     closing = true
 
     currentSlideshow
         .stop()
-        .then(() => currentSlideshow!.close())
-        .then(() => currentSlideshow!.quit())
+        // closing does not work, so leave it open to remove confusion
+        // .then(() => currentSlideshow!.close())
+        // .then(() => currentSlideshow!.quit())
         .then(end)
         .catch((err) => {
-            console.error("Error when closing:", err)
+            if (err !== "still no running slideshow" && err !== "still no active presentation") {
+                console.error("Error when closing:", err)
+            }
             end()
         })
     // .done()
@@ -46,18 +62,23 @@ function stopSlideshow() {
         closing = false
         openedPresentation = ""
     }
+
+    alwaysOnTopDisabled.forEach((id) => {
+        OutputHelper.getOutput(id).window.setAlwaysOnTop(true)
+    })
+    alwaysOnTopDisabled = []
 }
 
 let currentSlideshow: Slideshow | null = null
 let openedPresentation: string = ""
-async function initPresentation(path: string, program: SupportedPrograms = "powerpoint") {
-    // check if actually presenting...
-    if (closing || openedPresentation === path) return
-
+async function initPresentation(path: string, program: string = "powerpoint") {
     if (currentSlideshow) {
         try {
             await currentSlideshow.stop()
-            await currentSlideshow.close()
+            // closing does not work, so leave it open to remove confusion
+            // if (openedPresentation !== path) {
+            //     await currentSlideshow.close()
+            // }
             // await currentSlideshow.quit()
         } catch (err) {
             if (err !== "still no running slideshow" && err !== "still no active presentation") {
@@ -66,7 +87,6 @@ async function initPresentation(path: string, program: SupportedPrograms = "powe
         }
     }
 
-    // WIP keynote etc.
     try {
         currentSlideshow = new Slideshow(program)
     } catch (err) {
@@ -76,6 +96,8 @@ async function initPresentation(path: string, program: SupportedPrograms = "powe
             console.error("INIT", err)
             toApp(MAIN, { channel: "ALERT", data: err })
         }
+
+        starting = false
         return
     }
 
@@ -83,7 +105,6 @@ async function initPresentation(path: string, program: SupportedPrograms = "powe
         await currentSlideshow.boot(path)
     } catch (err) {
         console.error("BOOT", err)
-        // WIP send toast to main
         if (err === "application still not running") {
             toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
         } else {
@@ -91,29 +112,39 @@ async function initPresentation(path: string, program: SupportedPrograms = "powe
         }
     }
 
-    openedPresentation = path
+    if (openedPresentation !== path) {
+        try {
+            await currentSlideshow.open(path)
+        } catch (err) {
+            console.error("OPEN", err)
+            if (err === "Something went wrong with the presentation controller") {
+                toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
+            } else {
+                toApp(MAIN, { channel: "ALERT", data: err })
+            }
+        }
+    }
 
-    // if (openedPresentation !== path) {
-    // try {
-    //     await currentSlideshow.open(path)
-    // } catch (err) {
-    //     console.error("OPEN", err)
-    //     if (err === "Something went wrong with the presentation controller") {
-    //         toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
-    //     } else {
-    //         toApp(MAIN, { channel: "ALERT", data: err })
-    //     }
-    // }
-    // }
+    openedPresentation = path
 
     try {
         await currentSlideshow.start()
     } catch (err) {
         console.error("START", err)
-        toApp(MAIN, { channel: "ALERT", data: err })
+        if (err === "still no active presentation") {
+            toApp(MAIN, { channel: "ALERT", data: "Could not start presentation, please open it manually and try again!" })
+        } else {
+            toApp(MAIN, { channel: "ALERT", data: err })
+        }
+
+        starting = false
         return
     }
 
+    // focus on main window instead of PowerPoint window
+    mainWindow?.focus()
+
+    starting = false
     updateState()
 }
 
@@ -151,25 +182,18 @@ async function updateState() {
     let state: any = { id: openedPresentation }
 
     try {
-        state.stat = await currentSlideshow.stat()
+        state.stat = await currentSlideshow?.stat()
     } catch (err) {
-        console.log("STAT", err)
+        if (currentSlideshow) console.log("STAT", err)
         return
     }
 
     try {
-        state.info = await currentSlideshow.info()
+        state.info = await currentSlideshow?.info()
     } catch (err) {
-        console.log("INFO", err)
+        if (currentSlideshow) console.log("INFO", err)
         return
     }
-
-    // try {
-    //     state.thumbnail = await currentSlideshow.thumbs(thumbPath)
-    // } catch (err) {
-    //     console.log("THUMB", err)
-    //     return
-    // }
 
     // return state
     toApp(MAIN, { channel: "PRESENTATION_STATE", data: state })

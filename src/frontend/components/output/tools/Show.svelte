@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeFocus, activeShow, focusMode, showsCache } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, presentationData, showsCache } from "../../../stores"
     import T from "../../helpers/T.svelte"
 
     export let currentOutput: any
@@ -25,6 +25,9 @@
         if ($focusMode) activeFocus.set({ id: slide?.id })
         else activeShow.set({ id: slide?.id, type: slide?.type || "show" })
     }
+
+    $: currentIndex = slide?.type === "ppt" ? $presentationData.stat?.position : (slide?.page || slide?.index || 0) + 1
+    $: totalLength = slide?.type === "ppt" ? $presentationData.stat?.slides : slide?.pages || length
 </script>
 
 {#if slide}
@@ -36,9 +39,9 @@
                 <T id="main.unnamed" />
             {/if}
         </p>
-        {#if maxLines}
+        {#if totalLength}
             <span style="opacity: 0.6;white-space: nowrap;">
-                {(slide?.index || 0) + 1}/{length}
+                {currentIndex}/{totalLength}
                 {#if linesIndex !== null && maxLines !== null}
                     ({linesIndex + 1}/{maxLines})
                 {/if}

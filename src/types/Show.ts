@@ -341,6 +341,7 @@ export interface OutSlide {
     page?: number // PDF
     pages?: number // PDF
     viewport?: { width: number; height: number } // PDF
+    screen?: { id: string; name?: string } // PPT
 }
 
 export interface OutTransition {

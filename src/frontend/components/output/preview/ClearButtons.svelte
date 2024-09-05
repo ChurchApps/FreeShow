@@ -54,7 +54,7 @@
 
 <div class="clear" style="border-top: 2px solid var(--primary-lighter);">
     <span>
-        {#if allCleared && $outputCache}
+        {#if allCleared && $outputCache && $outputCache?.slide?.type !== "ppt"}
             <Button class="clearAll" disabled={$outLocked || !enableRestore} on:click={restoreOutput} dark center>
                 <Icon id="reset" size={1.2} right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id={"preview.restore_output"} />{/if}
@@ -67,7 +67,7 @@
         {/if}
     </span>
     <span class="group">
-        {#if outputContent?.type !== "pdf"}
+        {#if outputContent?.type !== "pdf" && outputContent?.type !== "ppt"}
             <div class="combinedButton">
                 <Button disabled={$outLocked || isOutCleared("background", $outputs)} on:click={() => clear("background")} title={$dictionary.clear?.background + " [F1]"} dark red center>
                     <Icon id="background" size={1.2} />
