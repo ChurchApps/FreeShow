@@ -1,22 +1,30 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activeProject, outLocked, outputs, projects, special } from "../../../stores"
+    import { activeProject, outLocked, outputs, presentationData, projects, special } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs } from "../../helpers/output"
+    import T from "../../helpers/T.svelte"
     import Window from "../../output/Window.svelte"
     import Center from "../../system/Center.svelte"
-    import T from "../../helpers/T.svelte"
 
     export let path: string = ""
 
     // get window
 
     let findWindowTimeout: any = null
-    $: if (path) {
+    $: if (path) requestWindows()
+    function requestWindows() {
         if (findWindowTimeout) clearTimeout(findWindowTimeout)
-        send(MAIN, ["GET_WINDOWS"])
+        // give time for presentation window to start
+        // this is needed if the window is being opened thile the presentation mode has already been active
+        findWindowTimeout = setTimeout(
+            () => {
+                send(MAIN, ["GET_WINDOWS"])
+            },
+            $presentationData?.id === path ? 1800 : 0 // 800 should be enough if the window is opened, but it might be closed
+        )
     }
 
     let chooseWindow: any[] = []
@@ -51,10 +59,11 @@
                     chooseWindow = windows
                 } else {
                     if (findWindowTimeout) clearTimeout(findWindowTimeout)
-                    if (!chosenWindow)
+                    if (!chosenWindow) {
                         findWindowTimeout = setTimeout(() => {
                             send(MAIN, ["GET_WINDOWS"])
-                        })
+                        }, 300)
+                    }
                 }
             },
         },
@@ -91,6 +100,7 @@
 </script>
 
 {#if chosenWindow}
+    <!-- WIP save a snapshot of the first slide to preview? -->
     <Window id={chosenWindow.id} class="media" style="width: 100%;height: 100%;pointer-events: none;position: absolute;" />
 {:else if chooseWindow.length}
     <div style="display: flex;flex-direction: column;width: 100%;height: 100%;">

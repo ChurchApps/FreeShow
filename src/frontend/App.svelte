@@ -9,6 +9,7 @@
     import Popup from "./components/main/Popup.svelte"
     import Recorder from "./components/main/Recorder.svelte"
     import Toast from "./components/main/Toast.svelte"
+    import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
     import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, loaded, os, outputDisplay } from "./stores"
     import { focusArea, logerror, startAutosave, toggleRemoteStream } from "./utils/common"
@@ -54,6 +55,7 @@
             <MainOutput />
         {:else if $loaded}
             <Popup />
+            <QuickSearch />
             <Toast />
             <Recorder />
 

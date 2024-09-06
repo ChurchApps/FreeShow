@@ -2,7 +2,28 @@ import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../types/Channels"
 import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
 import { getActiveOutputs } from "../components/helpers/output"
-import { activeDrawerTab, activeEdit, activePage, activeShow, allOutputs, autosave, currentWindow, disabledServers, drawer, errorHasOccured, focusedArea, os, outputDisplay, outputs, resized, serverData, toastMessages, version } from "../stores"
+import {
+    activeDrawerTab,
+    activeEdit,
+    activePage,
+    activeShow,
+    activeTriggerFunction,
+    allOutputs,
+    autosave,
+    currentWindow,
+    disabledServers,
+    drawer,
+    errorHasOccured,
+    focusedArea,
+    os,
+    outputDisplay,
+    outputs,
+    quickSearchActive,
+    resized,
+    serverData,
+    toastMessages,
+    version,
+} from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
@@ -66,6 +87,8 @@ export function hideDisplay(ctrlKey: boolean = true) {
 
 // select all focus
 export function focusArea(e: any) {
+    if (get(quickSearchActive) && !e.target.closest(".quicksearch")) quickSearchActive.set(false)
+
     if (e.target.closest(".menus") || e.target.closest(".contextMenu")) return
     focusedArea.set(e.target.closest(".selectElem")?.id || e.target.querySelector(".selectElem")?.id || "")
 }
@@ -173,4 +196,15 @@ export function togglePanels() {
     // open all
     if (!drawerIsOpened) drawer.set({ height: get(drawer).stored || DEFAULT_DRAWER_HEIGHT, stored: null })
     if (!panelsManuallyClosed) resized.set({ ...get(resized), leftPanel: leftPanelIsOpened ? get(resized).leftPanel : DEFAULT_WIDTH, rightPanel: rightPanelIsOpened ? get(resized).rightPanel : DEFAULT_WIDTH })
+}
+
+// trigger functions in .svelte files (used to trigger big and old functions still in .svelte files)
+let triggerTimeout: any = null
+export function triggerFunction(id: string) {
+    activeTriggerFunction.set(id)
+
+    if (triggerTimeout) clearTimeout(triggerTimeout)
+    setTimeout(() => {
+        activeTriggerFunction.set("")
+    }, 100)
 }

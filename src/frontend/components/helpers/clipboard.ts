@@ -43,7 +43,7 @@ import {
     variables,
     videoMarkers,
 } from "../../stores"
-import { newToast } from "../../utils/common"
+import { newToast, triggerFunction } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { setCaret } from "../edit/scripts/textStyle"
@@ -161,8 +161,6 @@ export function selectAll(data: any = {}) {
 
     if (selectId === "group" && !data?.length) selectId = "slide"
     if (selectId === "folder" && !data?.length) selectId = "project"
-
-    // WIP select scripture verses
 
     if (selectActions[selectId]) selectActions[selectId](data)
     else console.log("MISSING SELECT:", selectId)
@@ -291,6 +289,7 @@ const selectActions: any = {
         let newSelection: any[] = Object.values(get(scriptures)).map(({ id }) => id)
         selected.set({ id: "category_scripture", data: newSelection })
     },
+    scripture: () => triggerFunction("scripture_selectAll"),
     stage: () => {
         let newSelection: any[] = Object.keys(get(stageShows))
         newSelection = newSelection.map((id) => ({ id }))

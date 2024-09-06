@@ -25,6 +25,7 @@ export type EditInput = {
     values?: any
     popup?: string
     enableNoColor?: boolean
+    relative?: boolean // updated values should be relative to each selected item (only for number px values)
 }
 
 export const mediaFitOptions: any[] = [

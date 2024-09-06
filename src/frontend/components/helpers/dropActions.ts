@@ -28,7 +28,7 @@ import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scriptu
 import { addItem } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
-import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
+import { getExtension, getFileName, getMediaType, presentationExtensions, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
 import { checkName } from "./show"
 import { _show } from "./shows"
@@ -329,7 +329,7 @@ export function addDrawerFolder(file: { path: string }, type: "media" | "audio")
 }
 
 // "show", "project"
-const projectExtra: any = ["pdf", "ppt", "pptx"]
+const projectExtra: any = ["pdf", ...presentationExtensions]
 const fileDropExtensions: any = [...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)]
 const mediaExtensions: any = [...get(imageExtensions), ...get(videoExtensions)]
 

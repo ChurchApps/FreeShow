@@ -36,6 +36,16 @@
         setTimeout(() => (opening ? (retry = true) : ""), 8000)
     }
 
+    function keydown(e: any) {
+        if ($outLocked || !$presentationApps?.length) return
+
+        if (e.key === " ") {
+            e.preventDefault()
+            if (outSlide?.id === show.id) send(MAIN, ["PRESENTATION_CONTROL"], { action: "next" })
+            else if (!opening) newPresentation()
+        }
+    }
+
     $: outSlide = getOutputContent("", $outputs)
 
     $: if (opening && $presentationData?.id === show.id) start()
@@ -61,6 +71,8 @@
         retry = false
     }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 {#if $presentationApps === null}
     <Center faded><T id="remote.loading" /></Center>

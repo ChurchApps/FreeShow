@@ -12,7 +12,7 @@
         "actions.toggle_drawer": `${ctrl} + d`,
         "actions.export": `${ctrl} + e`,
         "main.search": `${ctrl} + f`,
-        // "": `${ctrl} + g`,
+        "main.quick_search": `${ctrl} + g`,
         "popup.history": `${ctrl} + h`,
         "edit._title_italic": `${ctrl} + i`,
         "actions.import": `${ctrl} + i`,
@@ -29,7 +29,7 @@
         "actions.toggle_panels": `${ctrl} + t`,
         "edit._title_underline": `${ctrl} + u`,
         "actions.paste": `${ctrl} + v`,
-        // "": `${ctrl} + w`,
+        // "": `${ctrl} + w`, // closing something
         "actions.cut": `${ctrl} + x`,
         "actions.redo": `${ctrl} + y`,
         "actions.undo": `${ctrl} + z`,
@@ -51,6 +51,7 @@
         // "clear.nextTimer": "f5",
         // "from start": "f5",
         // MAC: cmd + shift + f
+        // "main.quick_search": "f8",
         "actions.fullscreen": "f11",
 
         // presenterKeys: "SEPERATOR",

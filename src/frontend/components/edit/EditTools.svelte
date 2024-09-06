@@ -11,6 +11,7 @@
     import Button from "../inputs/Button.svelte"
     import Tabs from "../main/Tabs.svelte"
     import Center from "../system/Center.svelte"
+    import { addStyleString } from "./scripts/textStyle"
     import BoxStyle from "./tools/BoxStyle.svelte"
     import ItemStyle from "./tools/ItemStyle.svelte"
     import Items from "./tools/Items.svelte"
@@ -371,9 +372,56 @@
         // WIP refresh edit tools after resetting
     }
 
+    function keydown(e: any) {
+        if (document.activeElement?.closest(".edit")) return
+
+        // move items with arrow keys
+        if (e.key.includes("Arrow") && $activeEdit.items.length) {
+            e.preventDefault()
+
+            const key = ["ArrowLeft", "ArrowRight"].includes(e.key) ? "left" : "top"
+            let value = ["ArrowLeft", "ArrowUp"].includes(e.key) ? -1 : 1
+            if (e.ctrlKey || e.metaKey) value *= 10
+
+            let selectedItems: number[] = $activeEdit.items || allSlideItems.map((_, i) => i)
+            if (!selectedItems.length) return
+
+            let values: string[] = []
+
+            selectedItems.forEach((index) => {
+                let item = allSlideItems[index]
+                let previousItemValue = Number(getStyles(item.style, true)?.[key] || "0")
+                let newValue = previousItemValue + value + "px"
+
+                values.push(addStyleString(item.style, [key, newValue]))
+            })
+
+            if ($activeEdit.id) {
+                history({
+                    id: "UPDATE",
+                    oldData: { id: $activeEdit.id },
+                    newData: { key: "items", subkey: "style", data: values, indexes: selectedItems },
+                    location: { page: "edit", id: $activeEdit.type + "_items", override: true },
+                })
+                return
+            }
+
+            let ref: any[] = _show("active").layouts("active").ref()[0] || {}
+            let slideId = ref[$activeEdit.slide ?? ""]?.id
+
+            history({
+                id: "setItems",
+                newData: { style: { key: "style", values } },
+                location: { page: "edit", show: $activeShow!, slide: slideId, items: selectedItems, override: "slideitem_" + slideId + "_items_" + selectedItems.join(",") },
+            })
+        }
+    }
+
     $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <div class="main border editTools">
     {#if slideActive}

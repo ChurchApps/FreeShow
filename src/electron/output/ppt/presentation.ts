@@ -36,6 +36,7 @@ let closing = false
 function stopSlideshow() {
     if (!currentSlideshow || closing || starting) return
     closing = true
+    if (stateUpdater) clearTimeout(stateUpdater)
 
     currentSlideshow
         .stop()
@@ -141,7 +142,7 @@ async function initPresentation(path: string, program: string = "powerpoint") {
         return
     }
 
-    // focus on main window instead of PowerPoint window
+    // focus on main window instead of PowerPoint window (seemingly not working)
     mainWindow?.focus()
 
     starting = false
@@ -177,8 +178,10 @@ export function presentationControl(data: { action: string }) {
     setTimeout(updateState)
 }
 
+let stateUpdater: any = null
 async function updateState() {
     if (!currentSlideshow) return
+    if (stateUpdater) clearTimeout(stateUpdater)
     let state: any = { id: openedPresentation }
 
     try {
@@ -197,4 +200,7 @@ async function updateState() {
 
     // return state
     toApp(MAIN, { channel: "PRESENTATION_STATE", data: state })
+
+    // update state every once in a while in case presentation window is in focus
+    stateUpdater = setTimeout(updateState, 5000)
 }

@@ -9,7 +9,28 @@ import { history, redo, undo } from "../components/helpers/history"
 import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
 import { nextSlide, previousSlide } from "../components/helpers/showActions"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, currentWindow, drawer, focusedArea, focusMode, os, outLocked, outputs, projects, refreshEditSlide, selected, showsCache, special, volume } from "../stores"
+import {
+    activeDrawerTab,
+    activeEdit,
+    activeFocus,
+    activePage,
+    activePopup,
+    activeProject,
+    currentWindow,
+    drawer,
+    focusedArea,
+    focusMode,
+    os,
+    outLocked,
+    outputs,
+    projects,
+    quickSearchActive,
+    refreshEditSlide,
+    selected,
+    showsCache,
+    special,
+    volume,
+} from "../stores"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
@@ -44,6 +65,11 @@ const ctrlKeys: any = {
 export const disablePopupClose = ["initialize", "cloud_method"]
 const keys: any = {
     Escape: () => {
+        if (get(quickSearchActive)) {
+            quickSearchActive.set(false)
+            return
+        }
+
         let popupId = get(activePopup)
 
         // blur focused elements
@@ -80,6 +106,9 @@ export function keydown(e: any) {
 
         return
     }
+
+    // clicking e.g. "Show" tab button will focus that making number tab change not work
+    if (document.activeElement?.nodeName === "BUTTON") (document.activeElement as any).blur()
 
     if (e.ctrlKey || e.metaKey) {
         let drawerMenus: any[] = Object.keys(drawerTabs)
@@ -186,15 +215,20 @@ export const previewShortcuts: any = {
     ArrowRight: (e: any) => {
         // if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
+        if (get(activeEdit).items.length) return
+
         nextSlide(e)
     },
     ArrowLeft: (e: any) => {
         // if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
+        if (get(activeEdit).items.length) return
+
         previousSlide(e)
     },
     " ": (e: any) => {
         let currentShow: any = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (currentShow?.type === "ppt") return
         if (currentShow?.type === "pdf") {
             e.preventDefault()
             return nextSlide(e, true)
