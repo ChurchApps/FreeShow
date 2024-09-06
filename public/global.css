@@ -19,6 +19,13 @@
     font-style: italic;
 }
 
+/* flag emojies */
+@font-face {
+    font-family: NotoColorEmojiLimited;
+    unicode-range: U+1F1E6-1F1FF;
+    src: url("https://raw.githack.com/googlefonts/noto-emoji/main/fonts/NotoColorEmoji.ttf");
+}
+
 :root {
     --primary: #292c36;
     --primary-lighter: #363945;
@@ -37,7 +44,7 @@
     /* --font-family: sans-serif; */
     /* https://css-tricks.com/snippets/css/system-font-stack/ */
     /* --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; */
-    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    --font-family: "NotoColorEmojiLimited", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     --font-size: 1em;
 
     --border-radius: 0;

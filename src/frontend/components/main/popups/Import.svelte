@@ -3,7 +3,7 @@
     import { IMPORT } from "../../../../types/Channels"
     import { Popups } from "../../../../types/Main"
     import { convertText } from "../../../converters/txt"
-    import { activePopup, alertMessage, dataPath } from "../../../stores"
+    import { activePopup, alertMessage, dataPath, os } from "../../../stores"
     import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -21,7 +21,15 @@
         { name: "Clipboard", id: "clipboard" },
         { name: "Text file", extensions: ["txt"], id: "txt" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
-        { name: "PowerPoint", extensions: ["ppt", "pptx"], id: "powerpoint", tutorial: "This will convert all the text to a show. If you want to import all images and styling, please export/convert to PDF and import as PDF." },
+        {
+            name: "PowerPoint",
+            extensions: ["ppt", "pptx"],
+            id: "powerpoint",
+            tutorial:
+                "This will import the plain text as a show." +
+                ($os === "linux" ? "" : " If you would like to use a PowerPoint/Keynote presentation with FreeShow, please drag and drop it into your project.") +
+                " Or you can import directly as PDF or images if you don't need animations.",
+        },
         { name: "Word", extensions: ["doc", "docx"], id: "word" },
         { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "pro", "json"], id: "propresenter" },
         {

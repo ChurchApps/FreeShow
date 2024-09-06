@@ -338,6 +338,8 @@
                     {/if}
                 </Zoomed>
                 {#if viewMode === "simple"}
+                    <!-- WIP get any enabled output with maxLines, not just first one... -->
+                    <!-- Object.values($outputs).find((a) => $styles[a.style || ""]?.lines) -->
                     {#if output?.maxLines}
                         <div class="lineProgress">
                             <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {output.color};" />

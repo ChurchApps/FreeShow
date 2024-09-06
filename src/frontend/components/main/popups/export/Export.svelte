@@ -46,11 +46,6 @@
     }
 
     async function exportClick() {
-        // if ($os.platform === "linux" && format.id === "pdf") {
-        //     newToast("Can't export as PDF on Linux.")
-        //     return
-        // }
-
         // type not supported by format
         if (exportFormats.find((a) => a.id === format.id)?.data?.hide.includes(type.id)) return
 

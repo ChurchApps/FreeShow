@@ -55,7 +55,7 @@
         <script>
             const { ipcRenderer } = require("electron")
 
-            ipcRenderer.on("NUMBER", (e, number) => {
+            ipcRenderer.once("NUMBER", (e, number) => {
                 document.querySelector(".number").innerHTML = number
             })
         </script>

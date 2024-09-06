@@ -9,10 +9,15 @@
     export let light: boolean = false
     export let disabled: boolean = false
     export let autofocus: boolean = false
+    export let autoselect: boolean = false
+
+    function select(elem) {
+        if (autoselect) elem.select()
+    }
 </script>
 
 <!-- svelte-ignore a11y-autofocus -->
-<input {id} {type} class="edit" {value} {placeholder} {style} class:center class:light {disabled} {autofocus} on:input on:change on:keydown />
+<input {id} {type} class="edit" {value} {placeholder} {style} class:center class:light {disabled} {autofocus} use:select on:input on:change on:keydown />
 
 <style>
     input {

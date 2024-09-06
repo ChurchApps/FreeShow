@@ -1,8 +1,7 @@
 // import pcmconvert from "pcm-converter"
-import os from "os"
-import { isLinux, toApp } from ".."
-import { OutputHelper } from "../output/OutputHelper"
+import { toApp } from ".."
 import { NDI } from "../../types/Channels"
+import { OutputHelper } from "../output/OutputHelper"
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -12,7 +11,7 @@ import { NDI } from "../../types/Channels"
 
 // TODO: audio
 export class NdiReceiver {
-    static ndiDisabled = isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
+    static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
     static receiverTimeout = 5000
     static NDI_RECEIVERS: any = {}

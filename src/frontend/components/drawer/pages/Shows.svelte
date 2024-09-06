@@ -1,7 +1,7 @@
 <script lang="ts">
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import type { ShowList } from "../../../../types/Show"
-    import { activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
+    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, dictionary, focusMode, labelsDisabled, sorted, sortedShowsList } from "../../../stores"
     import { formatSearch, showSearch } from "../../../utils/search"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -70,6 +70,7 @@
 
     function keydown(e: any) {
         if (e.target.closest("input") || e.target.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows.length) return
+        if ($activeEdit.items.length) return
 
         let id: any = null
         if (e.key === "ArrowRight") {

@@ -32,8 +32,8 @@ import {
     overlays,
     popupData,
     previousShow,
-    projectView,
     projects,
+    projectView,
     refreshEditSlide,
     scriptures,
     selected,
@@ -48,7 +48,7 @@ import {
     themes,
     toggleOutputEnabled,
 } from "../../stores"
-import { hideDisplay, newToast } from "../../utils/common"
+import { hideDisplay, newToast, triggerFunction } from "../../utils/common"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
@@ -75,6 +75,8 @@ import { activeProject } from "./../../stores"
 
 export function menuClick(id: string, enabled: boolean = true, menu: any = null, contextElem: any = null, actionItem: any = null, sel: any = {}) {
     if (!actions[id]) return console.log("MISSING CONTEXT: ", id)
+
+    if (sel.id) sel.id = sel.id.split("___")[0] // different selection ID, same action (currently used to seperate scripture navigation buttons)
 
     let obj = { sel, actionItem, enabled, contextElem, menu }
     console.log("MENU CLICK: " + id, obj)
@@ -385,6 +387,11 @@ const actions: any = {
             a[uid()] = { name, collection: { versions } }
             return a
         })
+    },
+    create_show: (obj: any) => {
+        if (obj.sel.id === "scripture") {
+            triggerFunction("scripture_newShow")
+        }
     },
 
     // project

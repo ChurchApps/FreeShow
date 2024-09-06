@@ -69,7 +69,7 @@
 
     function convertToImages() {
         newToast("$actions.converting")
-        send(MAIN, ["PDF_TO_IMAGE"], { dataPath: $dataPath, path: show.id, viewports, pages })
+        send(MAIN, ["PDF_TO_IMAGE"], { dataPath: $dataPath, path: show.id })
     }
 </script>
 

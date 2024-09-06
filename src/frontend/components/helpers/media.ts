@@ -28,10 +28,10 @@ export function isMediaExtension(extension: string, audio: boolean = false): boo
     return extensions.includes(extension.toLowerCase())
 }
 
-export const presentationExtensiond = ["ppt", "pptx"]
+export const presentationExtensions = ["ppt", "pptx", "key"]
 export function getMediaType(extension: string): ShowType {
     if (extension.toLowerCase() === "pdf") return "pdf"
-    if (presentationExtensiond.includes(extension.toLowerCase())) return "ppt"
+    if (presentationExtensions.includes(extension.toLowerCase())) return "ppt"
     if (get(audioExtensions).includes(extension.toLowerCase())) return "audio"
     if (get(videoExtensions).includes(extension.toLowerCase())) return "video"
     return "image"
@@ -191,7 +191,7 @@ export function getThumbnailPath(input: string, size: number) {
     return encodedPath
 
     function getFileName(path, size) {
-        return `${path}-${size}.jpg`
+        return `${path}-${size}.png`
     }
 }
 
@@ -239,7 +239,7 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
 
 // CACHE
 
-const jpegQuality = 90 // 0-100
+// const jpegQuality = 90 // 0-100
 let capturing: string[] = []
 let retries: any = {}
 export function captureCanvas(data: any) {
@@ -296,7 +296,7 @@ export function captureCanvas(data: any) {
         ctx.drawImage(media, 0, 0, mediaSize.width, mediaSize.height, 0, 0, canvas.width, canvas.height)
 
         await wait(200)
-        let dataURL = canvas.toDataURL("image/jpeg", jpegQuality)
+        let dataURL = canvas.toDataURL("image/png") // , jpegQuality
 
         send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })
 

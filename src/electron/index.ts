@@ -99,9 +99,6 @@ function mainWindowLoaded() {
 
     if (config.get("maximized")) maximizeMain()
     mainWindow?.show()
-    // this has to be called to actually remove the process!
-    // WIP seems like like loading window process is still up after everything else is closed!
-    loadingWindow?.removeAllListeners("close")
     loadingWindow?.close()
 
     if (RECORD_STARTUP_TIME) console.timeEnd("Full startup")

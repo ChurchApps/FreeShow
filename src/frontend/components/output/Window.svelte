@@ -7,6 +7,9 @@
 
     let constraints: any = {
         video: {
+            // https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackSettings/cursor
+            // hiding the cursor is not yet supported
+            // cursor: "never",
             mandatory: {
                 chromeMediaSource: "desktop",
                 chromeMediaSourceId: id,

@@ -133,7 +133,7 @@
     <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} outline={activeOutput !== null || $playingAudio[id]} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
             {#if icon}
-                <Icon id={iconID || "noIcon"} {custom} right />
+                <Icon id={iconID || "noIcon"} {custom} box={iconID === "ppt" ? 50 : 24} right />
             {/if}
             <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
             {#if show.layoutInfo?.name}

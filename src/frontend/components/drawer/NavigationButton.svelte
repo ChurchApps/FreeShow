@@ -54,7 +54,7 @@
     active={category.id === $drawerTabsData[id]?.activeSubTab}
     {red}
     on:click={(e) => {
-        if (!editActive && !e.ctrlKey && !e.metaKey) setTab(category.id)
+        if (!editActive && !e.ctrlKey && !e.metaKey && !e.shiftKey) setTab(category.id)
     }}
     bold={false}
     title={category.description ? category.description : category.path ? category.path : ""}

@@ -57,6 +57,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     newFolder: { label: "new.folder", icon: "folder" },
     newShowPopup: { label: "new.show", icon: "add" },
     newShow: { label: "new.empty_show", icon: "add" },
+    create_show: { label: "new.show", icon: "slide" },
     // newPrivateShow: { label: "new.private", icon: "private" },
     private: { label: "actions.toggle_private", icon: "private" },
     duplicate: { label: "actions.duplicate", icon: "duplicate", shortcuts: ["Ctrl+D"] },
@@ -199,6 +200,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     live_card: ["recording"],
     // actions
     action: ["duplicate"],
+    scripture_verse: ["create_show", "SEPERATOR", "selectAll"],
 
     // PROJECT
     projects: ["newProject", "newFolder", "sort_projects_by"],
@@ -212,6 +214,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename", "delete"],
     project_section: ["remove"],
     project_pdf: ["remove"], // "rename",
+    project_ppt: ["remove"], // "rename",
     shows: ["newSlide", "selectAll"],
     // TIMER
     timer: ["play", "edit"], // , "reset"

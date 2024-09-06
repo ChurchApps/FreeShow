@@ -90,6 +90,8 @@
         if (!selectable) return
         if (dragged && $activeRename !== null) return e.preventDefault()
 
+        if ($selected.id !== id) selected.set({ id, data: [] })
+
         // this affects the cursor
         // https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/dropEffect
         let type: "copy" | "move" | "link" = "move"

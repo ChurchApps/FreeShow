@@ -44,6 +44,12 @@
             length[id] = $audioPlaylists[id].songs.length
         })
     }
+
+    const ignoreSelection = ["all", "unlabeled", "favourites", "online", "screens", "cameras", "microphones", "audio_streams"]
+    const idIgnore = ["calendar", "functions"]
+    function getCategoryId(category) {
+        return (selectId + (id === "scripture" ? "___" + category.icon : "")) as SelectIds
+    }
 </script>
 
 {#key buttons}
@@ -52,7 +58,7 @@
             {#if category.id === "SEPERATOR"}
                 <hr />
             {:else}
-                <SelectElem id={selectId} borders="center" trigger="column" data={category.id}>
+                <SelectElem id={getCategoryId(category)} selectable={!ignoreSelection.includes(category.id) && !idIgnore.includes(id)} borders="center" trigger="column" data={category.id}>
                     <NavigationButton {id} {category} {length} />
                 </SelectElem>
             {/if}

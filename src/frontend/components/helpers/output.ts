@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { OUTPUT } from "../../../types/Channels"
+import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
@@ -34,6 +34,7 @@ import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
+import { clearSlide } from "../output/clear"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     // sort so display order can be changed! (needs app restart)
@@ -61,9 +62,14 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
 
+            if (key === "slide" && data === null && output.out?.slide?.type === "ppt") {
+                send(MAIN, ["PRESENTATION_CONTROL"], { action: "stop" })
+            }
+
             if (key === "background") {
-                // don't play background if PDF is active
-                if (data && getOutputContent(id).type === "pdf") data = null
+                // clear if PDF/PPT is active
+                let slideContent = getOutputContent(id)
+                if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
 
                 data = changeOutputBackground(data, { outs, output, id, i })
             }

@@ -26,7 +26,7 @@
 
         if (activeID === null) return
         x = e.target.offsetLeft
-        activeMenu = contextMenuLayouts[id]
+        activeMenu = contextMenuLayouts[id] || []
     }
 
     const click = (e: MouseEvent) => {
@@ -108,6 +108,12 @@
         width: 48px;
     }
 
+    /* disable styled border radius */
+    div :global(button),
+    div :global(.menu) {
+        border-radius: 0px !important;
+    }
+
     /* close */
     .window :global(#close):hover {
         background-color: rgb(255 0 0 / 0.35);
@@ -127,7 +133,7 @@
         position: fixed;
         min-width: 250px;
         background-color: var(--primary-darker);
-        border-radius: var(--border-radius);
+        /* border-radius: var(--border-radius); */
         box-shadow: 1px 1px 3px 2px rgb(0 0 0 / 0.2);
         padding: 5px 0;
         z-index: 6000;
