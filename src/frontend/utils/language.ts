@@ -14,7 +14,7 @@ const defaultPath = "./lang/en.json"
 // WIP right to left
 // const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
 
-function setLanguage(locale: string = "") {
+function setLanguage(locale: string = "", init: boolean = false) {
     if (!locale) {
         // locale = getLocaleFromHostname(/^(.*?)\./) || getLocaleFromPathname(/^\/(.*?)\//) || getLocaleFromNavigator() || getLocaleFromHash('lang') || 'en';
         // locale = window.navigator.userLanguage || window.navigator.language || 'en';
@@ -46,8 +46,11 @@ function setLanguage(locale: string = "") {
             })
         }
 
+        // a new language might have loaded
+        if (init && get(language) !== locale) return
+
         dictionary.set(messages)
-        language.set(locale)
+        if (!init) language.set(locale)
 
         let msg = { lang: locale, strings: messages }
         send(MAIN, ["LANGUAGE"], msg)

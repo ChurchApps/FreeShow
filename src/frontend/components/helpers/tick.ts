@@ -22,6 +22,13 @@ export function newSlideTimer(id: string, duration: number) {
         // delete timers[id]
     }
 
+    // let currentOutput = getActiveOutputs(get(outputs), false, true, true)[0]
+    // let outputStyle =get(styles)[currentOutput.style] || {}
+    // let lines = outputStyle.lines || 0
+    // let currentLine = get(outputs)[currentOutput]?.out?.slide?.line || 0
+    // if (lines) duration /= lines
+    // , currentLine, lines
+
     slideTimers.update((a) => {
         a[id] = { time: 0, paused: true, sliderTimer: null, autoPlay: true, max: duration, timer: new Timer(timerEnded, duration * 1000, id) }
         return a

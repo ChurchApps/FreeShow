@@ -1,7 +1,7 @@
 <script lang="ts">
     import { IMPORT } from "../../../types/Channels"
     import type { Category } from "../../../types/Tabs"
-    import { activePopup, audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, scriptures, templateCategories } from "../../stores"
+    import { activeEdit, activePopup, audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, scriptures, templateCategories } from "../../stores"
     import { send } from "../../utils/request"
     import { keysToID, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -119,6 +119,7 @@
     }
 
     function keydown(e: KeyboardEvent) {
+        if ($activeEdit.items.length) return
         if (!e.target?.closest(".edit") && (e.ctrlKey || e.metaKey)) {
             if (e.key === "ArrowDown") {
                 // Ctrl + Arrow Down = change active drawer sub tab

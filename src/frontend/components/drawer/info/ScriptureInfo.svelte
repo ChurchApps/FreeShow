@@ -3,7 +3,7 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activeProject, categories, drawerTabsData, media, outLocked, outputs, playScripture, scriptureSettings, styles, templates } from "../../../stores"
+    import { activeProject, activeTriggerFunction, categories, drawerTabsData, media, outLocked, outputs, playScripture, scriptureSettings, styles, templates } from "../../../stores"
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -55,6 +55,7 @@
         else slides = [[]]
     }
 
+    $: if ($activeTriggerFunction === "scripture_newShow") createShow()
     function createShow() {
         if (verseRange) {
             let { show } = createSlides()
@@ -324,7 +325,7 @@
 </div>
 
 <Button on:click={createShow} style="width: 100%;" disabled={!verseRange} dark center>
-    <Icon id="show" right />
+    <Icon id="slide" right />
     <T id="new.show" />
     {#if slides.length > 1}
         <span style="opacity: 0.5;margin-left: 0.5em;">({slides.length})</span>

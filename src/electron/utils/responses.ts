@@ -6,14 +6,16 @@ import { getFonts } from "font-list"
 import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
-import { closeMain, isLinux, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
+import { closeMain, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
 import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { Show } from "../../types/Show"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
+import { convertPDFToImages } from "../data/pdfToImage"
 import { config, error_log, stores } from "../data/store"
 import { getThumbnail, getThumbnailFolderPath, saveImage } from "../data/thumbnails"
+import { OutputHelper } from "../output/OutputHelper"
 import { closeServers, startServers } from "../servers"
 import { Message } from "./../../types/Socket"
 import { startWebSocketAndRest, stopApiListener } from "./api"
@@ -45,16 +47,14 @@ import {
 import { LyricSearch } from "./LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import checkForUpdates from "./updater"
-import { OutputHelper } from "../output/OutputHelper"
-import { convertPDFToImages } from "../data/pdfToImage"
+import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
     let files: string[] = selectFilesDialog("", msg.data.format)
 
-    let isLinuxAndPfdImport = isLinux && msg.channel === "pdf"
     let needsFileAndNoFileSelected = msg.data.format.extensions && !files.length
-    if (needsFileAndNoFileSelected || isLinuxAndPfdImport) return
+    if (needsFileAndNoFileSelected) return
 
     importShow(msg.channel, files || null, msg.data)
 }
@@ -131,6 +131,10 @@ const mainResponses: any = {
     ACCESS_CAMERA_PERMISSION: () => getPermission("camera"),
     ACCESS_MICROPHONE_PERMISSION: () => getPermission("microphone"),
     ACCESS_SCREEN_PERMISSION: () => getPermission("screen"),
+    // PPT
+    SLIDESHOW_GET_APPS: () => getPresentationApplications(),
+    START_SLIDESHOW: (data: any) => startSlideshow(data),
+    PRESENTATION_CONTROL: (data: any) => presentationControl(data),
     // SERVERS
     START: (data: any): void => startServers(data),
     STOP: (): void => closeServers(),

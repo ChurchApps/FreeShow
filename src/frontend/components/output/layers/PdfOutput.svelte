@@ -7,7 +7,8 @@
     export let transition: Transition
 
     let loaded = false
-    $: if (slide) loaded = false
+    $: path = slide.id
+    $: if (path) loaded = false
 
     function onload() {
         // give PDF a bit of time to load after "page" has loaded
@@ -20,12 +21,12 @@
 
 <!-- Native Chromium PDF Viewer -->
 {#key slide.page}
-    <OutputTransition {transition}>
+    <OutputTransition {transition} inTransition={transition.in} outTransition={transition.out}>
         {#if slide.viewport}
             <div class="center" class:wide={16 / 9 < slide.viewport.width / slide.viewport.height} style="aspect-ratio: {slide.viewport.width / slide.viewport.height};--background: {currentStyle.background || 'black'};"></div>
         {/if}
 
-        <iframe src="{slide.id}#toolbar=0&view=fit&page={slide.page + 1}" class:hideScrollbar={slide.pages > 1} frameborder="0" scrolling="no" on:load={onload}></iframe>
+        <iframe src="{path}#toolbar=0&view=fit&page={slide.page + 1}" class:hideScrollbar={slide.pages > 1} frameborder="0" scrolling="no" on:load={onload}></iframe>
 
         {#if !loaded}
             <div class="fill" style="--background: {currentStyle.background || 'black'};"></div>

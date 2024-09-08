@@ -87,7 +87,7 @@
             const { ipcRenderer } = require("electron")
 
             ipcRenderer.send("MAIN", { channel: "VERSION" })
-            ipcRenderer.on("MAIN", (e, msg) => {
+            ipcRenderer.once("MAIN", (e, msg) => {
                 if (msg.channel !== "VERSION" || !msg.data) return
                 document.querySelector(".version").innerHTML = msg.data
             })

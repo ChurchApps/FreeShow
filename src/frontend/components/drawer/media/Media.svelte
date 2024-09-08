@@ -188,9 +188,11 @@
 
     const shortcuts: any = {
         ArrowRight: () => {
+            if ($activeEdit.items.length) return
             if (activeFile === null || activeFile < content - 1) activeFile = activeFile === null ? 0 : activeFile + 1
         },
         ArrowLeft: () => {
+            if ($activeEdit.items.length) return
             if (activeFile === null || activeFile > 0) activeFile = activeFile === null ? content - 1 : activeFile - 1
         },
         Backspace: () => {

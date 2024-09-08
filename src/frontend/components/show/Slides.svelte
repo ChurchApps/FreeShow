@@ -135,6 +135,7 @@
         function capitalize(value: string) {
             $special.capitalize_words.split(",").forEach((newWord) => {
                 newWord = newWord.trim().toLowerCase()
+                if (!newWord.length) return
 
                 value = value
                     .split(" ")
@@ -143,7 +144,7 @@
 
                         let matching = word.toLowerCase().indexOf(newWord)
                         if (matching >= 0) {
-                            let capitalized = newWord[0].toUpperCase() + word.slice(1)
+                            let capitalized = newWord[0]?.toUpperCase() + word.slice(1)
                             word = word.slice(0, matching) + capitalized + word.slice(matching + capitalized.length)
                         }
 

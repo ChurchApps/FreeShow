@@ -1,8 +1,9 @@
 import { get } from "svelte/store"
-import { alertMessage, activePopup, dictionary } from "./../stores"
+import { alertMessage, activePopup, dictionary, isDev } from "./../stores"
 
 export function checkForUpdates(currentVersion: string) {
-    if (currentVersion.includes("beta")) return
+    if (get(isDev)) return
+    const isBeta = currentVersion.includes("beta")
 
     fetch("https://api.github.com/repos/ChurchApps/freeshow/releases")
         .then((response) => response.json())
@@ -14,7 +15,7 @@ export function checkForUpdates(currentVersion: string) {
             if (currentVersion === latestVersionAll) return
 
             let latestRelease = a.filter((a: any) => a.draft === false && a.prerelease === false)[0]
-            let latestVersion = latestRelease.tag_name.slice(1)
+            let latestVersion = isBeta ? latestVersionAll : latestRelease.tag_name.slice(1)
             if (currentVersion === latestVersion) return
 
             alertMessage.set(
@@ -26,6 +27,5 @@ export function checkForUpdates(currentVersion: string) {
         })
         .catch((error) => {
             console.warn(error)
-            return []
         })
 }

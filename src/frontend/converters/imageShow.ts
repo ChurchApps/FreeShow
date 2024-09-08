@@ -40,7 +40,7 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
     show.layouts[layoutId].slides = layoutShows
 
     backgrounds.forEach(([id, path]) => {
-        let media = { id: path, name: removeExtension(getFileName(path)) }
+        let media = { path, name: removeExtension(getFileName(path)) }
         show.media[id] = media
     })
 

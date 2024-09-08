@@ -62,6 +62,9 @@
         // update all items if nothing is selected
         if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
 
+        // reverse to get same order as "Item" & "Items" etc., uses
+        allItems = allItems.reverse()
+
         /////
 
         let ref: any[] = _show("active").layouts("active").ref()[0] || {}
@@ -91,6 +94,15 @@
 
         let values: any = {}
 
+        // get relative value
+        let relativeValue = 0
+        if (input.relative) {
+            let items = showSlides[slides[0]]?.items || allSlideItems
+            let firstItemStyle = items?.[allItems[0]]?.style || ""
+            let previousValue = Number(getStyles(firstItemStyle, true)?.[input.key] || "0")
+            relativeValue = Number(input.value.replace("px", "")) - previousValue
+        }
+
         slides.forEach((slide, i) => {
             if (!slideItems[i].length) return
             values[slide] = []
@@ -98,7 +110,14 @@
             // loop through all items
             slideItems[i].forEach((itemIndex) => {
                 let currentSlideItem = showSlides[slide]?.items?.[itemIndex] || allSlideItems[itemIndex]
-                values[slide].push(addStyleString(currentSlideItem.style, [input.key, input.value]))
+
+                let newValue = input.value
+                if (input.relative) {
+                    let previousItemValue = Number(getStyles(currentSlideItem.style, true)?.[input.key] || "0")
+                    newValue = previousItemValue + relativeValue + "px"
+                }
+
+                values[slide].push(addStyleString(currentSlideItem.style, [input.key, newValue]))
             })
         })
 

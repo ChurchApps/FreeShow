@@ -19,6 +19,7 @@
     import Overlays from "./layers/Overlays.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
     import PdfOutput from "./layers/PdfOutput.svelte"
+    import Window from "./Window.svelte"
 
     export let outputId: string = ""
     export let style = ""
@@ -222,9 +223,11 @@
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
     $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
     $: backgroundData = templateBackground ? templateBackgroundData : background
+
+    $: console.log(slide)
 </script>
 
-<Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.duration || 800} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
+<Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
     <!-- always show style background (behind other backgrounds) -->
     {#if styleBackground && slide?.type !== "pdf"}
         <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror styleBackground />
@@ -241,30 +244,34 @@
     {/if}
 
     <!-- slide -->
-    {#if slide && layers.includes("slide")}
-        {#if slide.type === "pdf"}
-            <span style="zoom: {1 / ratio};">
-                <PdfOutput {slide} {currentStyle} transition={transitions.text} />
-            </span>
-        {:else}
-            <SlideContent
-                {outputId}
-                outSlide={slide}
-                {slideData}
-                {currentSlide}
-                {currentStyle}
-                {animationData}
-                {currentLineId}
-                {lines}
-                {ratio}
-                {mirror}
-                {preview}
-                customTemplate={currentStyle.template}
-                transition={transitions.text}
-                transitionEnabled={(!mirror || preview) && transitions.text?.type !== "none" && !!transitions.text?.duration}
-                {isKeyOutput}
-            />
-        {/if}
+    {#if slide?.type === "pdf" && layers.includes("background")}
+        <span style="zoom: {1 / ratio};">
+            <PdfOutput {slide} {currentStyle} transition={transitions.media} />
+        </span>
+    {:else if slide?.type === "ppt" && layers.includes("slide")}
+        <span style="zoom: {1 / ratio};">
+            {#if slide?.screen?.id}
+                <Window id={slide?.screen?.id} class="media" style="width: 100%;height: 100%;" />
+            {/if}
+        </span>
+    {:else if slide && slide.type !== "pdf" && layers.includes("slide")}
+        <SlideContent
+            {outputId}
+            outSlide={slide}
+            {slideData}
+            {currentSlide}
+            {currentStyle}
+            {animationData}
+            {currentLineId}
+            {lines}
+            {ratio}
+            {mirror}
+            {preview}
+            customTemplate={currentStyle.template}
+            transition={transitions.text}
+            transitionEnabled={!mirror || preview}
+            {isKeyOutput}
+        />
     {/if}
 
     {#if layers.includes("overlays")}

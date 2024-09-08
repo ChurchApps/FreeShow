@@ -1,11 +1,21 @@
 <script lang="ts">
-    import { activePopup, activeProject, dictionary, version } from "../../stores"
+    import { activePopup, activeProject, dictionary, projects, projectView, version } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import Link from "../inputs/Link.svelte"
     import Center from "../system/Center.svelte"
+
+    function createProject() {
+        // if opened project is empty go to project list (to reduce confusion)
+        if ($projects[$activeProject || ""]?.shows?.length === 0) {
+            activeProject.set(null)
+            projectView.set(true)
+        }
+
+        history({ id: "UPDATE", location: { page: "show", id: "project" } })
+    }
 </script>
 
 <Center>
@@ -19,7 +29,7 @@
     </p>
 
     <span class="buttons">
-        <Button on:click={() => history({ id: "UPDATE", location: { page: "show", id: "project" } })} title={$dictionary.tooltip?.project} dark>
+        <Button on:click={createProject} title={$dictionary.tooltip?.project} dark>
             <Icon id="project" right />
             <p><T id="new.project" /></p>
         </Button>

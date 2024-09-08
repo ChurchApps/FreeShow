@@ -6,7 +6,6 @@
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
     import { history } from "../helpers/history"
-    import { setDrawerTabData } from "../helpers/historyHelpers"
     import Icon from "../helpers/Icon.svelte"
     import { selectTextOnFocus } from "../helpers/inputActions"
     import T from "../helpers/T.svelte"
@@ -109,10 +108,11 @@
             searchActive = true
 
             // change to "Show" and "All" when searching when drawer is closed
-            if ($drawer.height <= minHeight) {
-                setDrawerTabData("shows", "all")
-                activeDrawerTab.set("shows")
-            }
+            // (not needed now as there is Quick search)
+            // if ($drawer.height <= minHeight) {
+            //     setDrawerTabData("shows", "all")
+            //     activeDrawerTab.set("shows")
+            // }
         } else if ((e.ctrlKey || e.metaKey) && e.key === "d") {
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {

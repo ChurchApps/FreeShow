@@ -7,6 +7,7 @@
         "unnamed": "Unnamed",
         "drop": "Drop here",
         "search": "Search",
+        "quick_search": "Quick search",
         "none": "None",
         "finished": "Finished",
         "open": "Open",
@@ -374,6 +375,7 @@
         "choose_chord": "Choose chord",
         "set_time": "Set time",
         "animate": "Animate",
+        "translate": "Localization",
         "next_timer": "Next slide timer",
         "import": "Import",
         "songbeamer_import": "Songbeamer Import",
@@ -898,6 +900,12 @@
         "showtime": "Display duration",
         "powered_by": "Powered by"
     },
+    "localization": {
+        "translate": "Translate",
+        "add": "Add translation",
+        "update": "Update translation",
+        "remove": "Remove translated items"
+    },
     "midi": {
         "midi": "MIDI",
         "activate": "Activate by MIDI signal",
@@ -1137,6 +1145,15 @@
         "cameras": "Cameras",
         "microphones": "Microphones",
         "audio_streams": "Audio streams"
+    },
+    "presentation_control": {
+        "unsupported": "Presentation controller not supported on",
+        "unsupported_tip": "You can convert them to images and create a show, or turn off 'Always on top' to present from any other app.",
+        "opening": "Opening! Please wait...",
+        "retry": "Please try opening manually, or",
+        "try_again": "Try again",
+        "start": "Start",
+        "choose_window": "Please select a window"
     },
     "transition": {
         "current_slide": "for current slide",

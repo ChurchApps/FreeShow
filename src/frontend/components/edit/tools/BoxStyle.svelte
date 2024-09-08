@@ -310,6 +310,9 @@
         if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
         allSlideItems = clone(allSlideItems)
 
+        // reverse to get same order as "Textbox" & "Items" etc., uses
+        allItems = allItems.reverse()
+
         // only same type
         let currentType = id || allSlideItems[allItems[0]].type || "text"
         allItems = allItems.filter((index) => (allSlideItems[index].type || "text") === currentType)

@@ -1,0 +1,97 @@
+<!-- Quickly find shows/elements globally in the program -->
+
+<script lang="ts">
+    import { fade } from "svelte/transition"
+    import { dictionary, quickSearchActive } from "../../stores"
+    import TextInput from "../inputs/TextInput.svelte"
+    import { quicksearch, selectQuicksearchValue } from "./quicksearch"
+    import Icon from "../helpers/Icon.svelte"
+    import Button from "../inputs/Button.svelte"
+    import Center from "../system/Center.svelte"
+    import T from "../helpers/T.svelte"
+    import { formatSearch } from "../../utils/search"
+
+    let values: any[] = []
+    let searchValue: string = ""
+    function search(e: any) {
+        searchValue = e.target.value
+        values = quicksearch(formatSearch(searchValue))
+        selectedIndex = 0
+    }
+
+    let selectedIndex: number = 0
+
+    function keydown(e: any) {
+        // CTRL + G or F8
+        if (((e.ctrlKey || e.metKey) && e.key === "g") || e.key === "F8") {
+            // refocus on search bar?
+            quickSearchActive.set(true)
+            return
+        }
+
+        if (!$quickSearchActive || !values) return
+
+        if (e.key === "Enter") {
+            selectQuicksearchValue(values[selectedIndex])
+            selectedIndex = 0
+        } else if (e.key === "ArrowDown") selectedIndex = Math.min(values.length - 1, selectedIndex + 1)
+        else if (e.key === "ArrowUp") selectedIndex = Math.max(0, selectedIndex - 1)
+    }
+</script>
+
+<svelte:window on:keydown={keydown} />
+
+{#if $quickSearchActive}
+    <div class="quicksearch" transition:fade={{ duration: 50 }}>
+        <div class="box">
+            <TextInput value={searchValue} placeholder="{$dictionary.main?.quick_search}..." style="padding: 8px 15px;font-size: 1.2em;min-width: 400px;" autofocus autoselect on:input={search} />
+
+            {#if searchValue}
+                {#if values.length}
+                    <div class="values">
+                        {#each values as value, i}
+                            <Button style="gap: 10px;font-size: 1em;" active={i === selectedIndex} on:click={() => selectQuicksearchValue(value)} bold={false}>
+                                <Icon id={value.icon || value.type} />
+                                <p title={value.name}>{value.name}</p>
+                            </Button>
+                        {/each}
+                    </div>
+                {:else}
+                    <Center faded>
+                        <T id="empty.search" />
+                    </Center>
+                {/if}
+            {/if}
+        </div>
+    </div>
+{/if}
+
+<style>
+    .quicksearch {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        max-width: calc(100% - var(--navigation-width) * 2);
+
+        z-index: 5001;
+    }
+
+    .box {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        background-color: var(--primary);
+        border-radius: var(--border-radius);
+        padding: 10px;
+
+        box-shadow: 0 0 3px rgb(0 0 0 / 0.4);
+        border: 2px solid var(--primary-darkest);
+    }
+
+    .values {
+        display: flex;
+        flex-direction: column;
+    }
+</style>

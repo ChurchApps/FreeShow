@@ -35,6 +35,7 @@ export const clipboard: Writable<{ id: null | string; data: any[] }> = writable(
 export const connections: Writable<{ [key: string]: any }> = writable({})
 export const activePopup: Writable<null | Popups> = writable(null)
 export const activePage: Writable<TopViews> = writable("show")
+export const quickSearchActive: Writable<boolean> = writable(false)
 export const focusMode: Writable<boolean> = writable(false)
 export const activeFocus: Writable<{ id: string; index?: number }> = writable({ id: "" })
 export const activeShow: Writable<null | ShowRef> = writable(null)
@@ -55,6 +56,7 @@ export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
 export const activeScripture: Writable<any> = writable({})
 export const activeTagFilter: Writable<string[]> = writable([])
+export const activeTriggerFunction: Writable<string> = writable("")
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -88,6 +90,8 @@ export const videosTime: Writable<any> = writable({})
 export const textLoaded: Writable<boolean> = writable(false)
 export const toggleOutputEnabled: Writable<boolean> = writable(false)
 export const customMessageCredits: Writable<string> = writable("")
+export const presentationData: Writable<any> = writable({})
+export const presentationApps: Writable<null | string[]> = writable(null)
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })

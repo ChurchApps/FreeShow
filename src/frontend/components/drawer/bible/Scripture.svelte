@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { BIBLE } from "../../../../types/Channels"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
-    import { activeScripture, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
+    import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -104,7 +104,7 @@
 
                 if (load === "books" && data?.length) setBooksCache(objectId, data)
             } catch (err) {
-                error = err
+                if (bibles[0].api) error = err
             }
         }
 
@@ -328,6 +328,7 @@
 
     function selectVerse(e: any, id: string) {
         autoComplete = false
+        const rightClick = e.button === 2
 
         if (e.ctrlKey || e.metaKey) {
             if (activeVerses.includes(id)) {
@@ -351,7 +352,7 @@
                 if (id === last) found = false
             })
             activeVerses = activeVerses
-        } else activeVerses = [id]
+        } else if (!rightClick) activeVerses = [id]
 
         updateActiveVerses()
     }
@@ -672,18 +673,15 @@
             return
         }
 
-        if (e.key === "a") {
-            if ($selected?.id !== "scripture") return
-            return selectAllVerses()
-        }
-
         if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
+        if ($activeEdit.items.length) return
 
         // go to next/previous verse
         let left = e.key.includes("Left")
         moveSelection(left)
     }
 
+    $: if ($activeTriggerFunction === "scripture_selectAll") selectAllVerses()
     function selectAllVerses() {
         let currentVerses: string[] = []
         Object.keys(verses[firstBibleId]).forEach((id) => {
@@ -856,7 +854,7 @@
                     <Loader />
                 {/if}
             </div>
-            <div class="verses" bind:this={versesScrollElem} class:center={!Object.keys(verses[firstBibleId] || {}).length}>
+            <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(verses[firstBibleId] || {}).length}>
                 {#if Object.keys(verses[firstBibleId] || {}).length}
                     {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
                         <!-- custom drag -->

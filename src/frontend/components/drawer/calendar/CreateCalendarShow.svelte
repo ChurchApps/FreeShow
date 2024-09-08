@@ -71,7 +71,7 @@
     </div>
 
     <Button on:click={createShow} disabled={!currentEvents.length} dark center>
-        <Icon id="show" right />
+        <Icon id="slide" right />
         <T id="new.show" />
         {#if currentEvents.length > 1}
             <span style="opacity: 0.5;margin-left: 0.5em;">({currentEvents.length})</span>

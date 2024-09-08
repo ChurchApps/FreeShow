@@ -10,6 +10,7 @@
     import Layouts from "../slide/Layouts.svelte"
     import AudioPreview from "./AudioPreview.svelte"
     import PdfPreview from "./pdf/PdfPreview.svelte"
+    import PowerPointPreview from "./ppt/PowerPointPreview.svelte"
     import Section from "./Section.svelte"
     import Slides from "./Slides.svelte"
     import VideoShow from "./VideoShow.svelte"
@@ -56,7 +57,7 @@
         {:else if show.type === "pdf"}
             <PdfPreview {show} />
         {:else if show.type === "ppt"}
-            <!-- PPT -->
+            <PowerPointPreview {show} />
         {:else}
             <Slides showId={$activeShow?.id || ""} />
             <Layouts />
