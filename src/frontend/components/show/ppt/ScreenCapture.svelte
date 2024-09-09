@@ -34,7 +34,6 @@
         MAIN,
         {
             GET_WINDOWS: (a: any) => {
-                chooseWindow = []
                 chosenWindow = null
 
                 let savedScreen = $projects[$activeProject || ""].shows.find((a) => a.id === path)?.data?.screenName
@@ -58,11 +57,13 @@
                 } else if (windows.length > 1) {
                     chooseWindow = windows
                 } else {
+                    chooseWindow = windows
+
                     if (findWindowTimeout) clearTimeout(findWindowTimeout)
                     if (!chosenWindow) {
                         findWindowTimeout = setTimeout(() => {
                             send(MAIN, ["GET_WINDOWS"])
-                        }, 300)
+                        }, 800)
                     }
                 }
             },
@@ -72,6 +73,8 @@
     onDestroy(() => destroy(MAIN, "GET_WINDOWS_PPT"))
 
     function selectWindow(screenData: any, save: boolean = false) {
+        if (findWindowTimeout) clearTimeout(findWindowTimeout)
+
         chosenWindow = screenData
 
         // save chosen screen in project item

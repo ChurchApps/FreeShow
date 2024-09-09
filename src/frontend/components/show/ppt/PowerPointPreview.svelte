@@ -79,7 +79,7 @@
 {:else if !$presentationApps.length}
     <Center>
         <T id="presentation_control.unsupported" />
-        {$os || "this OS"}.
+        {$os.platform || "this OS"}.
         <br />
         <T id="presentation_control.unsupported_tip" />
     </Center>
