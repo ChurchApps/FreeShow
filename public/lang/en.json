@@ -13,6 +13,10 @@
         "open": "Open",
         "system_open": "Open in system"
     },
+    "guide": {
+        "start": "Quick start guide",
+        "skip": "Skip"
+    },
     "titlebar": {
         "file": "File",
         "edit": "Edit",

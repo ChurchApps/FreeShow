@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, dataPath, showsPath } from "../../../stores"
+    import { activePopup, dataPath, guideActive, showsPath } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -22,6 +22,7 @@
         send(MAIN, ["GET_PATHS"])
         send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
 
+        guideActive.set(true)
         activePopup.set(null)
     }
 </script>
