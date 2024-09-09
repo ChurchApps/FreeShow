@@ -104,13 +104,13 @@ export class OutputLifecycle {
         if (!OutputHelper.getOutput(id)) return
         if (OutputHelper.getOutput(id).window.isDestroyed()) {
             OutputHelper.deleteOutput(id)
-            if (reopen) this.createOutput(reopen)
+            if (reopen) OutputLifecycle.createOutput(reopen)
             return
         }
 
         OutputHelper.getOutput(id).window.once("closed", () => {
             OutputHelper.deleteOutput(id)
-            if (reopen) this.createOutput(reopen)
+            if (reopen) OutputLifecycle.createOutput(reopen)
         })
 
         try {

@@ -909,6 +909,7 @@
     "midi": {
         "midi": "MIDI",
         "activate": "Activate by MIDI signal",
+        "activate_keypress": "Activate by keypress",
         "name": "Name",
         "input": "Input",
         "output": "Output",

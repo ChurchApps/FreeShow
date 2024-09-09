@@ -8,6 +8,7 @@
     import { getFileName } from "../../helpers/media"
     import { getActiveOutputs, getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
@@ -74,6 +75,11 @@
                 <p style="padding: 0;"><T id="edit.choose_media" /></p>
             {/if}
         </MediaPicker>
+        {#if settings.backgroundPath}
+            <Button title={$dictionary.actions?.remove} on:click={() => setValue("", "backgroundPath")} redHover>
+                <Icon id="close" size={1.2} white />
+            </Button>
+        {/if}
     </CombinedInput>
 
     <CombinedInput>

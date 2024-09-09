@@ -1,5 +1,6 @@
+import os from "os"
 // import pcmconvert from "pcm-converter"
-import { toApp } from ".."
+import { isLinux, toApp } from ".."
 import { NDI } from "../../types/Channels"
 import { OutputHelper } from "../output/OutputHelper"
 
@@ -11,7 +12,7 @@ import { OutputHelper } from "../output/OutputHelper"
 
 // TODO: audio
 export class NdiReceiver {
-    static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
+    static ndiDisabled = isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
     static receiverTimeout = 5000
     static NDI_RECEIVERS: any = {}

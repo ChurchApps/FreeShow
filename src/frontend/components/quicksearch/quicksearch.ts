@@ -43,5 +43,6 @@ export function selectQuicksearchValue(value: QuickSearchValue) {
     }
 
     quickSearchActive.set(false)
+    activePage.set("show")
     actions[value.type](value.id)
 }

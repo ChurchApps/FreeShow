@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { activePage, activeShow, dictionary, groups, outLocked, outputs, playingAudio, slideTimers, special, styles } from "../../../stores"
+    import { activePage, activeShow, dictionary, groups, midiIn, outLocked, outputs, playingAudio, slideTimers, special, styles } from "../../../stores"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
+    import { runAction } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getActiveOutputs, isOutCleared, outputSlideHasContent, setOutput } from "../../helpers/output"
@@ -34,6 +35,12 @@
 
         if (e.target.closest("input") || e.target.closest(".edit")) return
 
+        // start action with custom shortcut key (A-Z)
+        if (!e.ctrlKey && !e.metaKey && /^[A-Z]{1}$/i.test(e.key) && actionKeyActivate(e.key.toUpperCase())) {
+            e.preventDefault()
+            return
+        }
+
         // group shortcuts
         if ($activeShow && !e.ctrlKey && !e.metaKey && !$outLocked) {
             // play group with custom shortcut keys (A-Z)
@@ -63,6 +70,19 @@
             if (previewShortcuts[e.key](e)) e.preventDefault()
             return
         }
+    }
+
+    function actionKeyActivate(key: string) {
+        let actionTriggered: boolean = false
+
+        Object.values($midiIn).forEach((action) => {
+            if (action.keypressActivate === key && action.enabled !== false) {
+                runAction(action)
+                actionTriggered = true
+            }
+        })
+
+        return actionTriggered
     }
 
     function checkGroupShortcuts(e: any) {

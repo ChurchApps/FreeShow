@@ -51,7 +51,7 @@
 
                 let windows = a.filter((a) => a.name.includes(appName) && a.name.includes(fileName) && !a.name.includes(fileName + " - " + appName))
                 if (!windows.length) windows = a.filter((a) => a.name.includes(removeExtension(fileName)) && a.name.includes(appName))
-                if (!windows.length) windows = a.filter((a) => a.name.toLowerCase().includes(appName.toLowerCase()))
+                if (!windows.length) windows = a.filter((a) => a.name.toLowerCase().includes(appName.toLowerCase()) || a.name.toLowerCase().includes(removeExtension(fileName).toLowerCase()))
 
                 if (windows.length === 1) {
                     selectWindow(windows[0])

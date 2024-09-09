@@ -1,7 +1,6 @@
 // import pcmconvert from "pcm-converter"
-import grandiose from "grandiose"
 import os from "os"
-import { toApp } from ".."
+import { isLinux, toApp } from ".."
 import { CaptureHelper } from "../capture/CaptureHelper"
 import util from "./vingester-util"
 
@@ -15,7 +14,7 @@ import util from "./vingester-util"
 
 // TODO: audio
 export class NdiSender {
-    static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
+    static ndiDisabled = isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
     static NDI: any = {}
 
@@ -35,16 +34,11 @@ export class NdiSender {
     }
 
     static async createSenderNDI(id: string, title: string = "") {
-        if (this.ndiDisabled) return
+        if (this.ndiDisabled || this.NDI[id]) return
+        const grandiose = require("grandiose")
 
-        if (this.NDI[id]) return
-        this.NDI[id] = {}
-
-        this.NDI[id].name = "FreeShow NDI"
-        if (title) this.NDI[id].name = this.NDI[id].name + " - " + title
+        this.NDI[id] = { name: `FreeShow NDI${title ? ` - ${title}` : ""}` }
         console.log("NDI - creating sender: " + this.NDI[id].name)
-
-        let error = false
 
         try {
             this.NDI[id].sender = await grandiose.send({
@@ -54,10 +48,6 @@ export class NdiSender {
             })
         } catch (err) {
             console.log("Could not create NDI sender:", err)
-            error = true
-        }
-
-        if (error) {
             delete this.NDI[id]
             return
         }
@@ -65,9 +55,7 @@ export class NdiSender {
         this.NDI[id].timer = setInterval(() => {
             /*  poll NDI for connections  */
             const conns = this.NDI[id].sender?.connections() || 0
-
-            this.NDI[id].status = "unconnected"
-            if (conns > 0) this.NDI[id].status = "connected"
+            this.NDI[id].status = conns > 0 ? "connected" : "unconnected"
 
             let newStatus = this.NDI[id].status + conns
             if (newStatus !== this.NDI[id].previousStatus) {
@@ -80,8 +68,8 @@ export class NdiSender {
     }
 
     static async sendVideoBufferNDI(id: string, buffer: Buffer, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
-        if (!this.NDI[id]?.sender) return
-        if (this.ndiDisabled) return
+        if (this.ndiDisabled || !this.NDI[id]?.sender) return
+        const grandiose = require("grandiose")
 
         /*  convert from ARGB (Electron/Chromium on big endian CPU)
         to BGRA (supported input of NDI SDK). On little endian
@@ -128,9 +116,8 @@ export class NdiSender {
     }
 
     static async sendAudioBufferNDI(id: string, buffer: Buffer, { sampleRate, noChannels, bytesForFloat32 }: any) {
-        if (!this.NDI[id].sender) return
-
-        if (this.ndiDisabled) return
+        if (this.ndiDisabled || !this.NDI[id].sender) return
+        const grandiose = require("grandiose")
 
         /*  convert from PCM/signed-16-bit/little-endian data
         to NDI's "PCM/planar/signed-float32/little-endian  */
