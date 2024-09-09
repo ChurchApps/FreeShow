@@ -6,44 +6,7 @@ import { save } from "./save"
 
 export function createData(paths: any) {
     if (!get(shows).default) {
-        setShow("default", {
-            name: get(dictionary).example?.welcome || "Welcome",
-            category: "presentation",
-            settings: {
-                activeLayout: "default",
-                template: "header",
-            },
-            timestamps: {
-                created: new Date().getTime(), // new Date("2022-01-01").getTime(),
-                modified: null,
-                used: null,
-            },
-            quickAccess: {},
-            meta: {},
-            slides: {
-                1: {
-                    group: "",
-                    color: null,
-                    settings: {},
-                    notes: "",
-                    items: [
-                        {
-                            style: "top:428.50px;left:208.50px;height:220px;width:1500px;",
-                            align: "",
-                            lines: [{ align: "", text: [{ value: (get(dictionary).example?.welcome || "Welcome") + "!", style: "font-size: 180px;font-weight: bold;" }] }],
-                        },
-                    ],
-                },
-            },
-            layouts: {
-                default: {
-                    name: get(dictionary).example?.default || "",
-                    notes: "",
-                    slides: [{ id: "1" }],
-                },
-            },
-            media: {},
-        })
+        createDefaultShow()
     }
 
     stageShows.set({
@@ -618,5 +581,46 @@ export function setExampleTemplates() {
             ],
         }
         return a
+    })
+}
+
+export function createDefaultShow() {
+    setShow("default", {
+        name: get(dictionary).example?.welcome || "Welcome",
+        category: "presentation",
+        settings: {
+            activeLayout: "default",
+            template: "header",
+        },
+        timestamps: {
+            created: new Date().getTime(), // new Date("2022-01-01").getTime(),
+            modified: null,
+            used: null,
+        },
+        quickAccess: {},
+        meta: {},
+        slides: {
+            1: {
+                group: "",
+                color: null,
+                settings: {},
+                notes: "",
+                items: [
+                    {
+                        style: "top:428.50px;left:208.50px;height:220px;width:1500px;",
+                        align: "",
+                        lines: [{ align: "", text: [{ value: (get(dictionary).example?.welcome || "Welcome") + "!", style: "font-size: 180px;font-weight: bold;" }] }],
+                    },
+                ],
+            },
+        },
+        layouts: {
+            default: {
+                name: get(dictionary).example?.default || "",
+                notes: "",
+                slides: [{ id: "1" }],
+            },
+        },
+        media: {},
     })
 }

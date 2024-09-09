@@ -57,6 +57,7 @@ export const allOutputs: Writable<Outputs> = writable({}) // stage data in outpu
 export const activeScripture: Writable<any> = writable({})
 export const activeTagFilter: Writable<string[]> = writable([])
 export const activeTriggerFunction: Writable<string> = writable("")
+export const guideActive: Writable<boolean> = writable(false)
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])

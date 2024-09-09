@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activeShow, dictionary, groups, midiIn, outLocked, outputs, playingAudio, slideTimers, special, styles } from "../../../stores"
+    import { activePage, activeShow, dictionary, groups, guideActive, midiIn, outLocked, outputs, playingAudio, slideTimers, special, styles } from "../../../stores"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
@@ -28,6 +28,7 @@
     let numberKeyTimeout: any = null
     let previousNumberKey: string = ""
     function keydown(e: any) {
+        if ($guideActive) return
         if ((e.ctrlKey || e.metaKey || e.altKey) && previewCtrlShortcuts[e.key]) {
             e.preventDefault()
             previewCtrlShortcuts[e.key]()
@@ -166,7 +167,7 @@
 
 <svelte:window on:keydown={keydown} />
 
-<div class="main">
+<div id="previewArea" class="main">
     {#if enablePreview}
         <PreviewOutputs bind:currentOutputId={outputId} />
 

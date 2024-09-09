@@ -122,13 +122,13 @@
     </span>
 
     {#if !projectActive}
-        <div class="list projects context #projects" style="overflow: auto;">
+        <div id="projectsArea" class="list projects context #projects" style="overflow: auto;">
             <DropArea id="projects">
                 <ProjectList {tree} />
             </DropArea>
         </div>
 
-        <div class="tabs">
+        <div id="projectsButtons" class="tabs">
             <Button on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $projects[$activeProject || ""]?.parent || "/" } }, location: { page: "show", id: "project_folder" } })} center title={$dictionary.new?.folder}>
                 <Icon id="folder" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<p><T id="new.folder" /></p>{/if}
@@ -139,7 +139,7 @@
             </Button>
         </div>
     {:else}
-        <div class="list context #project">
+        <div id="projectArea" class="list context #project">
             <Autoscroll {offset} bind:scrollElem timeout={150}>
                 <DropArea id="project" selectChildren let:fileOver file>
                     {#if $projects[$activeProject || ""]?.shows.length}
