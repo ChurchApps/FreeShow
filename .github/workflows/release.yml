@@ -59,25 +59,65 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
+
+            - name: find release
+              run: echo "RELEASE_NAME=$(jq -r .version package.json)" >> "$GITHUB_ENV"
 
             - name: Install Node.js and NPM
               uses: actions/setup-node@master
               with:
                   node-version: 20
+                  architecture: 'arm64'
 
-            - name: Install dependencies
-              run: npm install
-
-            # wait because this will only publish if the draft exists
-            - name: Sleep for 30 seconds
-              run: sleep 30s
-              shell: bash
-
-            - name: Build and release app
-              env:
+            - uses: uraimo/run-on-arch-action@v2
+              name: Run commands
+              id: runcmd
+              with:
+               arch: aarch64
+               distro: ubuntu22.04
+                   
+               # Create an artifacts directory
+               setup: |
+                 mkdir -p "${PWD}/artifacts"
+    
+               # Mount the artifacts directory as /artifacts in the container
+               dockerRunArgs: |
+                 --volume "${PWD}/artifacts:/artifacts"
+                 
+               env: |
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: npm run release:arm64
+               githubToken: ${{ github.token }}
+               install: |
+                   echo apt update
+                   apt -q update
+                   echo apt install
+                   apt -q install -y wget git python3 make g++ ruby-dev build-essential jq
+                   #  https://github.com/electron-userland/electron-builder/issues/6116#issuecomment-1091205145
+                   gem install fpm
+               run: |
+                   echo fetch nodejs
+                   mkdir tools
+                   cd tools
+                   wget -q https://github.com/actions/node-versions/releases/download/20.15.0-9607683765/node-20.15.0-linux-arm64.tar.gz
+                   echo unpack
+                   tar xzf node-20.15.0-linux-arm64.tar.gz
+                   cd ..
+                   export PATH=`pwd`/tools/bin:$PATH
+                   echo $PATH
+                   echo npm install
+                   tools/bin/npm install
+                   sleep 30
+                   echo npm run release
+                   export USE_SYSTEM_FPM=true
+                   tools/bin/npm run release:arm64
+                   cp dist/*.AppImage /artifacts/
+            - name: 'Upload Artifact'
+              uses: actions/upload-artifact@v4
+              with:
+                name: FreeShow-arm64-${{ env.RELEASE_NAME }}
+                path: artifacts/FreeShow*AppImage
+
 
     publish_mac:
         name: "Publish MacOS"
