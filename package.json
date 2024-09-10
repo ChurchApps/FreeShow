@@ -184,7 +184,7 @@
         "protobufjs": "^7.2.3",
         "qrcode-generator": "^1.4.4",
         "sirv-cli": "^1.0.0",
-        "slideshow": "vassbo/slideshow#81d4758",
+        "slideshow": "vassbo/slideshow#224d50f",
         "socket.io": "^4.4.1",
         "socket.io-client": "^4.4.1",
         "sqlite-to-json": "^0.1.3",
