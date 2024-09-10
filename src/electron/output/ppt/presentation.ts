@@ -1,13 +1,13 @@
 import os from "os"
 import Slideshow from "slideshow"
-import { mainWindow, toApp } from "../.."
+import { isProd, mainWindow, toApp } from "../.."
 import { MAIN } from "../../../types/Channels"
 import { OutputHelper } from "../OutputHelper"
 
 // from "slideshow" - "connector.js"
 const connectors: any = {
-    darwin: ["Keynote", "Keynote 5", "Keynote 6", "PowerPoint", "PowerPoint 2011", "PowerPoint 2016"],
-    win32: ["PowerPoint", "PowerPoint 2010", "PowerPoint 2013"],
+    darwin: ["Keynote", "Keynote 5", "Keynote 6", "PowerPoint"], // , "PowerPoint 2011", "PowerPoint 2016"
+    win32: ["PowerPoint"], // , "PowerPoint 2010", "PowerPoint 2013"
 }
 
 export function getPresentationApplications() {
@@ -89,7 +89,7 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     }
 
     try {
-        currentSlideshow = new Slideshow(program)
+        currentSlideshow = new Slideshow(program, isProd)
     } catch (err) {
         if (err.includes("unsupported platform")) {
             toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })

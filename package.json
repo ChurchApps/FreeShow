@@ -57,6 +57,15 @@
             "build/types/**/*",
             "public/**/*"
         ],
+        "extraResources": [
+            {
+                "from": "node_modules/slideshow/",
+                "to": "slideshow",
+                "filter": [
+                    "connector-*"
+                ]
+            }
+        ],
         "mac": {
             "icon": "build/public/icon.png",
             "target": [
@@ -175,7 +184,7 @@
         "protobufjs": "^7.2.3",
         "qrcode-generator": "^1.4.4",
         "sirv-cli": "^1.0.0",
-        "slideshow": "vassbo/slideshow#85867ad",
+        "slideshow": "vassbo/slideshow#81d4758",
         "socket.io": "^4.4.1",
         "socket.io-client": "^4.4.1",
         "sqlite-to-json": "^0.1.3",
