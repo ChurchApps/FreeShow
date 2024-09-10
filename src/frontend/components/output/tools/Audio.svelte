@@ -64,6 +64,8 @@
         if ($focusMode) activeFocus.set({ id })
         else activeShow.set({ id, type: "audio", data: { isMic: audio.mic } })
     }
+
+    let fullLength: boolean = false
 </script>
 
 {#if Object.keys($playingAudio).length > 1}
@@ -106,14 +108,18 @@
                 </span>
             {:else}
                 <span style="color: var(--secondary)">
-                    {joinTime(secondsToTime(currentTime))}
+                    {joinTime(secondsToTime(Math.floor(currentTime)))}
                 </span>
             {/if}
 
             <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={(e) => setTime(e, path)} />
 
-            <span>
-                {joinTime(secondsToTime(duration))}
+            <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)}>
+                {#if fullLength}
+                    {joinTime(secondsToTime(duration))}
+                {:else}
+                    {joinTime(secondsToTime(duration - Math.floor(currentTime)))}
+                {/if}
             </span>
 
             {#if $activePlaylist?.active === path}

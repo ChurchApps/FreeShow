@@ -64,7 +64,8 @@ export function getMaxBoxTextSize(elem: any, parentElem: HTMLElement, item: Item
     // shrinkToFit: text is set font size by default, but can shrink if the text does not fit in the textbox
     // growToFit: text will grow to fill the entire textbox, but maximum the set font size
 
-    let itemFontSize = Number(getStyles(item?.lines?.[0]?.text?.[0]?.style, true)?.["font-size"] || "") || 100
+    const itemText = item?.lines?.[0]?.text?.filter((a) => a.customType !== "disableTemplate") || []
+    let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
     if (type === "shrinkToFit") {
         let textIsBiggerThanBox = invisibleBox.scrollHeight > invisibleBox.offsetHeight || invisibleBox.scrollWidth > invisibleBox.offsetWidth
         if (textIsBiggerThanBox) {

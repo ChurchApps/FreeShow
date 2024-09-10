@@ -3,6 +3,7 @@ import Slideshow from "slideshow"
 import { isProd, mainWindow, toApp } from "../.."
 import { MAIN } from "../../../types/Channels"
 import { OutputHelper } from "../OutputHelper"
+import { OutputValues } from "../helpers/OutputValues"
 
 // from "slideshow" - "connector.js"
 const connectors: any = {
@@ -26,7 +27,7 @@ export function startSlideshow(data: { path: string; program: string }) {
     if (alwaysOnTopDisabled.length) return
     OutputHelper.getAllOutputs().forEach(([id, output]) => {
         if (output.window.isAlwaysOnTop()) {
-            output.window.setAlwaysOnTop(false)
+            OutputValues.updateValue({ id, key: "alwaysOnTop", value: false })
             alwaysOnTopDisabled.push(id)
         }
     })
@@ -62,12 +63,14 @@ function stopSlideshow() {
         currentSlideshow = null
         closing = false
         openedPresentation = ""
-    }
 
-    alwaysOnTopDisabled.forEach((id) => {
-        OutputHelper.getOutput(id).window.setAlwaysOnTop(true)
-    })
-    alwaysOnTopDisabled = []
+        setTimeout(() => {
+            alwaysOnTopDisabled.forEach((id) => {
+                OutputValues.updateValue({ id, key: "alwaysOnTop", value: true })
+            })
+            alwaysOnTopDisabled = []
+        })
+    }
 }
 
 let currentSlideshow: Slideshow | null = null
