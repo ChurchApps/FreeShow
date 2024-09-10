@@ -150,6 +150,8 @@
     $: if ($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) getCustomAutoSize(true)
     else outputTemplateAutoSize = false
 
+    let customTypeRatio = 0
+
     function getCustomAutoSize(force: boolean = false) {
         if (!item) return
 
@@ -182,7 +184,13 @@
         if (!isStage) {
             // see autoSize.ts
             let type = item?.textFit || "shrinkToFit"
-            let itemFontSize = Number(getStyles(item?.lines?.[0]?.text?.[0]?.style, true)?.["font-size"] || "") || 100
+            const itemText = item?.lines?.[0]?.text?.filter((a) => a.customType !== "disableTemplate") || []
+            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
+
+            // get scripture verse ratio
+            const verseItemText = item?.lines?.[0]?.text?.filter((a) => a.customType === "disableTemplate") || []
+            const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
+            customTypeRatio = verseItemSize / 100
 
             if (type === "shrinkToFit") {
                 let textIsBiggerThanBox = alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth
@@ -421,7 +429,11 @@
                         <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                             {#each line.text || [] as text}
                                 {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
-                                <span style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate' ? text.style : ''}">
+                                <span
+                                    style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate'
+                                        ? text.style + (customTypeRatio && autoSize ? `;font-size: ${fontSize * customTypeRatio}px;` : '')
+                                        : ''}"
+                                >
                                     {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { ...ref, slideIndex }, updateDynamic) : value}
                                 </span>
                             {/each}

@@ -24,14 +24,16 @@ export class CaptureTransmitter {
     static channels: { [key: string]: Channel } = {}
 
     static startTransmitting(captureId: string) {
-        const capture = OutputHelper.getOutput(captureId)?.captureOptions
-        if (!capture) return
+        const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
+        if (!captureOptions) return
         //this.startChannel(captureId, "preview")
-        if (capture.options.ndi) this.startChannel(captureId, "ndi")
-        if (capture.options.server) this.startChannel(captureId, "server")
-        if (capture.options.stage) this.startChannel(captureId, "stage")
 
-        if (capture.options.ndi) {
+        const { ndi, server, stage } = captureOptions.options
+        if (ndi) this.startChannel(captureId, "ndi")
+        if (server) this.startChannel(captureId, "server")
+        if (stage) this.startChannel(captureId, "stage")
+
+        if (ndi) {
             //ENABLE TO TRACK NDI FRAME RATES
             /*
             console.log("SETTING INTERVAL");
@@ -89,7 +91,7 @@ export class CaptureTransmitter {
             channel.lastCheck = 0
 
             // console.time("toBitmap")
-            let imgData = image.toBitmap({ scaleFactor: 0.5 })
+            const imgData = image.toBitmap({ scaleFactor: 0.5 })
             // https://stackoverflow.com/a/78093344
             channel.imageIsSame = channel.lastImage.equals(imgData)
             // console.timeEnd("toBitmap") // aprx. 4ms

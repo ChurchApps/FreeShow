@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN, STORE } from "../../../../types/Channels"
-    import { activePopup, alertMessage, dataPath, dictionary, shows, showsCache, showsPath, special } from "../../../stores"
+    import { activePopup, alertMessage, dataPath, dictionary, guideActive, shows, showsCache, showsPath, special } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
@@ -294,8 +294,14 @@
 </CombinedInput>
 
 <CombinedInput>
-    <Button style="width: 100%;" on:click={bundleMediaFiles} title={$dictionary?.media?.bundle_media_files_tip}>
+    <Button style="width: 100%;" on:click={bundleMediaFiles} title={$dictionary.media?.bundle_media_files_tip}>
         <Icon id="image" right /><T id="media.bundle_media_files" />
+    </Button>
+</CombinedInput>
+
+<CombinedInput>
+    <Button style="width: 100%;" on:click={() => guideActive.set(true)} title={$dictionary.guide?.start}>
+        <Icon id="guide" right /><T id="guide.start" />
     </Button>
 </CombinedInput>
 

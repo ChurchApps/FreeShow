@@ -122,6 +122,7 @@
 </Autoscroll>
 <div class="tabs">
     <Button
+        id="newShowBtn"
         style="flex: 1;"
         on:click={(e) => {
             if (e.ctrlKey || e.metaKey) {

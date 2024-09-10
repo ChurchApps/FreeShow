@@ -20,6 +20,7 @@ import {
     drawer,
     focusedArea,
     focusMode,
+    guideActive,
     os,
     outLocked,
     outputs,
@@ -106,6 +107,8 @@ export function keydown(e: any) {
 
         return
     }
+
+    if (get(guideActive)) return
 
     // clicking e.g. "Show" tab button will focus that making number tab change not work
     if (document.activeElement?.nodeName === "BUTTON") (document.activeElement as any).blur()

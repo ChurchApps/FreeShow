@@ -3,6 +3,7 @@
     import MainOutput from "./MainOutput.svelte"
     import ContextMenu from "./components/context/ContextMenu.svelte"
     import Pdf from "./components/export/Pdf.svelte"
+    import Guide from "./components/guide/Guide.svelte"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import Loader from "./components/main/Loader.svelte"
     import MenuBar from "./components/main/MenuBar.svelte"
@@ -58,6 +59,7 @@
             <QuickSearch />
             <Toast />
             <Recorder />
+            <Guide />
 
             <MainLayout />
         {:else}

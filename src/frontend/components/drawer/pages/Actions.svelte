@@ -67,6 +67,12 @@
                                     {#if action.midi}
                                         ({action.midi.input || "—"})
                                     {/if}
+
+                                    {#if action.keypressActivate}
+                                        <span class="faded">
+                                            ({action.keypressActivate})
+                                        </span>
+                                    {/if}
                                 </p>
 
                                 {#if action.midiEnabled && action.midi}
@@ -138,5 +144,9 @@
     .tabs {
         display: flex;
         background-color: var(--primary-darkest);
+    }
+
+    .faded {
+        opacity: 0.5;
     }
 </style>

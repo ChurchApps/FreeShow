@@ -1,7 +1,7 @@
 // ----- FreeShow -----
 // Expose protected methods that allow the renderer process to use the ipcRenderer without exposing the entire object
 
-import { IpcRendererEvent, contextBridge, ipcRenderer } from "electron"
+import { IpcRendererEvent, contextBridge, ipcRenderer, webUtils } from "electron"
 import type { ValidChannels } from "../types/Channels"
 
 // const maxInterval: number = 500
@@ -41,5 +41,9 @@ contextBridge.exposeInMainWorld("api", {
 
         ipcRenderer.removeListener(channel, storedReceivers[id])
         delete storedReceivers[id]
+    },
+    // https://www.electronjs.org/blog/electron-32-0#breaking-changes
+    showFilePath(file: File) {
+        return webUtils.getPathForFile(file)
     },
 })

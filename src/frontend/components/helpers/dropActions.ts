@@ -24,6 +24,7 @@ import {
     templates,
     videoExtensions,
 } from "../../stores"
+import { newToast } from "../../utils/common"
 import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
 import { addItem } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
@@ -32,7 +33,6 @@ import { getExtension, getFileName, getMediaType, presentationExtensions, remove
 import { addToPos, getIndexes, mover } from "./mover"
 import { checkName } from "./show"
 import { _show } from "./shows"
-import { newToast } from "../../utils/common"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -115,17 +115,18 @@ export const dropActions: any = {
         if (drag.id === "media" || drag.id === "files") {
             data = data
                 .map((a: any) => {
-                    const extension: string = getExtension(a.path || a.name)
+                    const path = window.api.showFilePath(a)
+                    const extension: string = getExtension(path || a.name)
                     if (drag.id === "files" && !files[drop.id].includes(extension)) return null
 
                     let type: string = getMediaType(extension)
 
-                    let name: string = a.name || getFileName(a.path)
-                    return { name: removeExtension(name), id: a.path, type }
+                    let name: string = a.name || getFileName(path)
+                    return { name: removeExtension(name), id: path, type }
                 })
                 .filter((a: any) => a)
         } else if (drag.id === "audio") {
-            data = data.map((a: any) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
+            data = data.map((a: any) => ({ id: window.api.showFilePath(a), name: removeExtension(a.name), type: "audio" }))
         } else if (drag.id === "player") {
             data = data.map((a: any) => ({ id: a, type: "player" }))
         } else if (drag.id === "scripture") {
@@ -233,7 +234,7 @@ export const dropActions: any = {
     },
     templates: ({ drag, drop }: any) => {
         if (drag.id === "files") {
-            let mediaPath: string = drag.data?.[0]?.path
+            let mediaPath: string = window.api.showFilePath(drag.data?.[0])
             let templateId: string = drop.data
             if (!mediaPath || !templateId) return
 
@@ -268,7 +269,7 @@ export const dropActions: any = {
     edit: ({ drag }: any) => {
         if (drag.id !== "media" && drag.id !== "files") return
 
-        drag.data.forEach(({ path }: any) => addItem("media", null, { src: path }))
+        drag.data.forEach((file: any) => addItem("media", null, { src: window.api.showFilePath(file) }))
     },
     audio_playlist: ({ drag, drop }: any, h: any) => {
         h.id = "UPDATE"
@@ -284,7 +285,7 @@ export const dropActions: any = {
         if (drag.id === "files") {
             let dropIndex = drop.index
             if (dropIndex === undefined) dropIndex = songs.length
-            let audioFiles = drag.data.map((a) => a.path)
+            let audioFiles = drag.data.map((a) => window.api.showFilePath(a))
             songs = addToPos(songs, audioFiles, dropIndex)
         } else {
             songs = mover(songs, getIndexes(drag.data), drop.index)
@@ -312,9 +313,9 @@ function dropFileInDrawerNavigation(drag) {
     // WIP drop bibles??
 }
 
-export function addDrawerFolder(file: { path: string }, type: "media" | "audio") {
+export function addDrawerFolder(file: File, type: "media" | "audio") {
     // check if folder already exists
-    let path: string = file.path
+    let path: string = window.api.showFilePath(file)
     let exists = Object.values(type === "media" ? get(mediaFolders) : get(audioFolders)).find((a) => a.path === path)
     if (exists) {
         newToast("$error.folder_exists")
@@ -352,7 +353,7 @@ const slideDrop: any = {
                 const extension: string = getExtension(a.name)
                 if (files[drop.id].includes(extension)) {
                     data.push({
-                        path: a.path,
+                        path: window.api.showFilePath(a),
                         name: removeExtension(a.name),
                         type: getMediaType(extension),
                     })
@@ -402,7 +403,7 @@ const slideDrop: any = {
                 const extension: string = getExtension(a.name)
                 if (files[drop.id].includes(extension)) {
                     data.push({
-                        path: a.path,
+                        path: window.api.showFilePath(a),
                         name: removeExtension(a.name),
                         type: getMediaType(extension),
                     })

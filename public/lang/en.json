@@ -13,6 +13,10 @@
         "open": "Open",
         "system_open": "Open in system"
     },
+    "guide": {
+        "start": "Quick start guide",
+        "skip": "Skip"
+    },
     "titlebar": {
         "file": "File",
         "edit": "Edit",
@@ -909,6 +913,7 @@
     "midi": {
         "midi": "MIDI",
         "activate": "Activate by MIDI signal",
+        "activate_keypress": "Activate by keypress",
         "name": "Name",
         "input": "Input",
         "output": "Output",

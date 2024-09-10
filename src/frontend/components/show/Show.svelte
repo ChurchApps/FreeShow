@@ -24,7 +24,7 @@
     $: if (show?.id) createGlobalTimerFromLocalTimer(show?.id)
 </script>
 
-<div class="main">
+<div id="showArea" class="main">
     {#if show}
         {#if show.type === "video" || show.type === "image" || show.type === "player"}
             <!-- WIP indicate that this does not loop when played! -->

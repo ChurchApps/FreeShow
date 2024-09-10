@@ -248,6 +248,10 @@
     // custom activations
     const customActivations = [{ id: "", name: "—" }, ...customActionActivations]
     $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""
+
+    // keys
+    const keys = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+    let shortcuts: any[] = [{ name: "—", id: "" }, ...keys.map((key) => ({ name: key }))]
 </script>
 
 <div style="min-width: 45vw;min-height: 50vh;">
@@ -289,8 +293,14 @@
                 <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} />
             </CombinedInput>
 
-            <!-- only used to disable customActionActivation if any -->
-            {#if customActivation || action.enabled === false}
+            <!-- can be activated by Keypress -->
+            <CombinedInput>
+                <p><T id="midi.activate_keypress" /></p>
+                <Dropdown options={shortcuts} value={shortcuts.find((a) => a.name === action.keypressActivate)?.name || "—"} on:click={(e) => updateValue("keypressActivate", e.detail.id ?? e.detail.name)} />
+            </CombinedInput>
+
+            <!-- only used to disable keypressActivate/customActionActivation if any -->
+            {#if action.keypressActivate || customActivation || action.enabled === false}
                 <CombinedInput>
                     <p><T id="settings.enabled" /></p>
                     <div class="alignRight">

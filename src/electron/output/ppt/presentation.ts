@@ -1,13 +1,14 @@
 import os from "os"
 import Slideshow from "slideshow"
-import { mainWindow, toApp } from "../.."
+import { isProd, mainWindow, toApp } from "../.."
 import { MAIN } from "../../../types/Channels"
 import { OutputHelper } from "../OutputHelper"
+import { OutputValues } from "../helpers/OutputValues"
 
 // from "slideshow" - "connector.js"
 const connectors: any = {
-    darwin: ["Keynote", "Keynote 5", "Keynote 6", "PowerPoint", "PowerPoint 2011", "PowerPoint 2016"],
-    win32: ["PowerPoint", "PowerPoint 2010", "PowerPoint 2013"],
+    darwin: ["Keynote", "Keynote 5", "Keynote 6", "PowerPoint"], // , "PowerPoint 2011", "PowerPoint 2016"
+    win32: ["PowerPoint"], // , "PowerPoint 2010", "PowerPoint 2013"
 }
 
 export function getPresentationApplications() {
@@ -26,7 +27,7 @@ export function startSlideshow(data: { path: string; program: string }) {
     if (alwaysOnTopDisabled.length) return
     OutputHelper.getAllOutputs().forEach(([id, output]) => {
         if (output.window.isAlwaysOnTop()) {
-            output.window.setAlwaysOnTop(false)
+            OutputValues.updateValue({ id, key: "alwaysOnTop", value: false })
             alwaysOnTopDisabled.push(id)
         }
     })
@@ -62,12 +63,14 @@ function stopSlideshow() {
         currentSlideshow = null
         closing = false
         openedPresentation = ""
-    }
 
-    alwaysOnTopDisabled.forEach((id) => {
-        OutputHelper.getOutput(id).window.setAlwaysOnTop(true)
-    })
-    alwaysOnTopDisabled = []
+        setTimeout(() => {
+            alwaysOnTopDisabled.forEach((id) => {
+                OutputValues.updateValue({ id, key: "alwaysOnTop", value: true })
+            })
+            alwaysOnTopDisabled = []
+        })
+    }
 }
 
 let currentSlideshow: Slideshow | null = null
@@ -89,7 +92,7 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     }
 
     try {
-        currentSlideshow = new Slideshow(program)
+        currentSlideshow = new Slideshow(program, isProd)
     } catch (err) {
         if (err.includes("unsupported platform")) {
             toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })

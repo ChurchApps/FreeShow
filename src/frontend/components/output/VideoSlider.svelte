@@ -92,6 +92,8 @@
 
         send(OUTPUT, ["DATA"], dataValues)
     }
+
+    let fullLength: boolean = false
 </script>
 
 <svelte:window
@@ -107,7 +109,7 @@
         </span>
     {:else}
         <span style="color: var(--secondary)">
-            {joinTime(secondsToTime(videoTime))}
+            {joinTime(secondsToTime(Math.floor(videoTime)))}
         </span>
     {/if}
     <div class="slider">
@@ -126,7 +128,13 @@
             on:input={sliderInput}
         />
     </div>
-    <span>{joinTime(secondsToTime(videoData.duration || 0))}</span>
+    <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)}>
+        {#if fullLength}
+            {joinTime(secondsToTime(videoData.duration || 0))}
+        {:else}
+            {joinTime(secondsToTime((videoData.duration || 0) - Math.floor(videoTime)))}
+        {/if}
+    </span>
 </div>
 
 <style>

@@ -8,8 +8,8 @@ export class CaptureLifecycle {
         const output = OutputHelper.getOutput(id)
         if (!output) return
 
-        let window = output.window
-        let windowIsRemoved = !window || window.isDestroyed()
+        const window = output.window
+        const windowIsRemoved = !window || window.isDestroyed()
         if (windowIsRemoved) {
             delete output.captureOptions
             return
@@ -45,9 +45,8 @@ export class CaptureLifecycle {
             if (!output.captureOptions) return
 
             // use highest frame rate
-            let frameRate = output.captureOptions.framerates.ndi
-            if (output.captureOptions.framerates.server > frameRate) frameRate = output.captureOptions.framerates.server
-            if (output.captureOptions.framerates.stage > frameRate) frameRate = output.captureOptions.framerates.stage
+            const frameRates = output.captureOptions.framerates
+            const frameRate = Math.max(frameRates.ndi, frameRates.server, frameRates.stage)
 
             const ms = Math.round(1000 / frameRate)
             output.captureOptions.frameSubscription = setTimeout(captureFrame, ms)
@@ -68,10 +67,12 @@ export class CaptureLifecycle {
     static stopCapture(id: string) {
         const output = OutputHelper.getOutput(id)
         const capture = output.captureOptions
+
         return new Promise((resolve) => {
             if (!capture) return resolve(true)
+
             CaptureHelper.Transmitter.removeAllChannels(id)
-            let windowIsRemoved = !capture.window || capture.window.isDestroyed()
+            const windowIsRemoved = !capture.window || capture.window.isDestroyed()
             if (windowIsRemoved) return deleteAndResolve()
 
             console.log("Capture - stopping: " + id)
@@ -80,22 +81,22 @@ export class CaptureLifecycle {
             removeListeners()
             deleteAndResolve()
 
+            function endSubscription() {
+                if (!capture?.frameSubscription) return
+
+                clearTimeout(capture.frameSubscription)
+                capture.frameSubscription = null
+            }
+
+            function removeListeners() {
+                capture?.window.removeAllListeners()
+                capture?.window.webContents.removeAllListeners()
+            }
+
             function deleteAndResolve() {
                 delete output.captureOptions
                 resolve(true)
             }
         })
-
-        function endSubscription() {
-            if (!capture?.frameSubscription) return
-
-            clearTimeout(capture.frameSubscription)
-            capture.frameSubscription = null
-        }
-
-        function removeListeners() {
-            capture?.window.removeAllListeners()
-            capture?.window.webContents.removeAllListeners()
-        }
     }
 }
