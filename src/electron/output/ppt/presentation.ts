@@ -153,7 +153,10 @@ async function initPresentation(path: string, program: string = "powerpoint") {
 }
 
 const presentationActions: any = {
-    next: () => currentSlideshow!.next(),
+    next: () => {
+        if (stat.position >= stat.slides) return
+        currentSlideshow!.next()
+    },
     previous: () => currentSlideshow!.prev(),
     // WIP black screen not working
     // black: () => {
@@ -182,6 +185,7 @@ export function presentationControl(data: { action: string }) {
 }
 
 let stateUpdater: any = null
+let stat: any = {}
 async function updateState() {
     if (!currentSlideshow) return
     if (stateUpdater) clearTimeout(stateUpdater)
@@ -189,6 +193,7 @@ async function updateState() {
 
     try {
         state.stat = await currentSlideshow?.stat()
+        stat = state.stat
     } catch (err) {
         if (currentSlideshow) console.log("STAT", err)
         return
