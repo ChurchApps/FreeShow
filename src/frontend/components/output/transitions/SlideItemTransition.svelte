@@ -36,7 +36,7 @@
         let inTransition = clone(transition.in || transition)
         let outTransition = clone(transition.out || transition)
         let transitionBetween = clone(transition.between || transition)
-        if (transitioningBetween) inTransition = transitionBetween
+        if (transitioningBetween) inTransition = clone(transitionBetween)
 
         let inDelay: number = 0
         let outDelay: number = 0
@@ -61,7 +61,7 @@
                 if (hasAuto) outDelay = 400
             }
 
-            inDelay = outDelay * 0.98
+            if (!inDelay) inDelay = outDelay * 0.98
         }
 
         // add some time in case an identical item is "fading" in
@@ -71,6 +71,7 @@
 
         inTransition.delay = inDelay
         outTransition.delay = outDelay
+        transitionBetween.delay = outDelay
 
         // delay won't work if no transition
         if (inDelay && (inTransition.type === "none" || inTransition?.duration === 0)) inTransition = { ...inTransition, type: "fade", duration: 1 }

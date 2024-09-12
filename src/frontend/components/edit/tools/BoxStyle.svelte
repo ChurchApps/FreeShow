@@ -359,6 +359,9 @@
 
         /////
 
+        // WIP get relative value
+        // ItemStyle.svelte
+
         let values: any = {}
         slides.forEach((slide, i) => {
             if (!slideItems[i].length) return

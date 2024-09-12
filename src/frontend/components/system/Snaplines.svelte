@@ -26,7 +26,7 @@
 
         if (moveCondition) [styles, lines] = moveBox(e, mouse, ratio, active, lines)
         else if (mouse.e.target.closest(".square")) {
-            styles = resizeBox(e, mouse, square, ratio)
+            styles = resizeBox(e, mouse, square, ratio, lines)
             if (!e.altKey) [styles, lines] = moveBox(null, mouse, ratio, active, lines, styles)
         }
 

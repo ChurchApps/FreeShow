@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
     import { ShowRef } from "../../../../types/Projects"
-    import { activeShow, os, outLocked, outputs, presentationApps, presentationData, special } from "../../../stores"
+    import { activeShow, dictionary, os, outLocked, outputs, presentationApps, presentationData, special } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
@@ -70,6 +70,11 @@
         opening = false
         retry = false
     }
+
+    function restartPresentation() {
+        presentationData.set({})
+        newPresentation()
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -90,6 +95,9 @@
 
     {#if $presentationData?.id === show.id && $presentationData?.stat?.slides}
         <div class="info">
+            <Button on:click={restartPresentation} title={$dictionary.presentation_control?.restart}>
+                <Icon id="refresh" />
+            </Button>
             <p style="white-space: normal;overflow: auto;padding: 3px 8px;">
                 <b>{$presentationData.info?.titles[$presentationData.stat?.position - 1] || ""}</b>
                 <span style="padding-left: 10px;">{$presentationData.info?.notes[$presentationData.stat?.position - 1] || ""}</span>
@@ -142,6 +150,5 @@
         background-color: var(--primary-darkest);
 
         display: flex;
-        gap: 10px;
     }
 </style>

@@ -236,6 +236,7 @@
     <p><T id="popup.transition" /></p>
     <Button
         on:click={() => {
+            if (!$styles[styleId]) updateStyle("", "transition") // set initial style
             popupData.set({ action: "style_transition", id: styleId })
             activePopup.set("transition")
         }}
