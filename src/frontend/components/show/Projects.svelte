@@ -110,7 +110,7 @@
                 </Button>
                 <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
                     <!-- <Icon id="project" white right /> -->
-                    <p style="color: white;">{$projects[$activeProject || ""]?.name || ""}</p>
+                    <p>{$projects[$activeProject || ""]?.name || ""}</p>
                 </div>
             {/if}
         {:else}

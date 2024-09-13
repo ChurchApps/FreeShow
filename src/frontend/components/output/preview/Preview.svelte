@@ -51,7 +51,7 @@
             }
 
             // play slide with number keys
-            if ($special.numberKeys && !isNaN(e.key)) {
+            if ($special.numberKeys && e.key !== " " && !isNaN(e.key)) {
                 previousNumberKey += e.key
 
                 if (numberKeyTimeout) clearTimeout(numberKeyTimeout)
@@ -108,6 +108,7 @@
 
     function playSlideAtIndex(index: number) {
         let slideRef: any = _show("active").layouts("active").ref()[0]
+        if (index === -1) index = slideRef.length - 1
         if (!slideRef[index]) return
 
         updateOut("active", index, slideRef)

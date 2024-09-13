@@ -505,6 +505,10 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
 
     specialCaseFixer()
 
+    // check if Shows folder exist
+    // makeDir(showsPath)
+    if (!doesPathExist(showsPath)) return {}
+
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 

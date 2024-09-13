@@ -5,14 +5,14 @@ import { removeItemValues } from "../../show/slides"
 import { activeEdit, activePage, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { EMPTY_SHOW_SLIDE } from "../../values/empty"
+import { customActionActivation } from "../actions/actions"
 import { clone, keysToID } from "./array"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayoutsFromTemplate, updateSlideFromTemplate } from "./output"
-import { loadShows } from "./setShow"
-import { _show } from "./shows"
-import { customActionActivation } from "../actions/actions"
+import { loadShows, saveTextCache } from "./setShow"
 import { getShowCacheId } from "./show"
+import { _show } from "./shows"
 
 // TODO: move history switch to actions
 
@@ -301,8 +301,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         }
 
                         a[id] = show
-                        // skip text cache for faster import
-                        // saveTextCache(id, show)
+
+                        // this can slow down large show imports a little bit
+                        saveTextCache(id, show)
                     }
                 })
                 return a

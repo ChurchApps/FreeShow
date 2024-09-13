@@ -359,7 +359,7 @@
                                 <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {output.color};" />
                             </div>
                         {/if}
-                        {#if slide.notes && icons}<p class="notes">{slide.notes}</p>{/if}
+                        {#if slide.notes && icons}<p class="notes" title={slide.notes}>{slide.notes}</p>{/if}
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->
                         <span style="position: absolute;display: contents;">{index + 1}</span>

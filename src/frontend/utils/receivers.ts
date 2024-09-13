@@ -31,6 +31,7 @@ import { convertTexts } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
 import {
+    activePage,
     activePopup,
     activeShow,
     activeTimers,
@@ -171,6 +172,7 @@ const receiveMAIN: any = {
 
         shows.set(a)
 
+        if (get(activePopup) || get(activePage) !== "settings") return
         alertMessage.set("<h3>Updated shows</h3><br>● Old shows: " + oldCount + "<br>● New shows: " + newCount)
         activePopup.set("alert")
     },
