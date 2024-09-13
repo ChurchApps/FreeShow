@@ -152,9 +152,29 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     updateState()
 }
 
+// prevent rapid changes
+let navigationTimeout: any = null
+let navigationWait = 100
 const presentationActions: any = {
-    next: () => currentSlideshow!.next(),
-    previous: () => currentSlideshow!.prev(),
+    next: () => {
+        if (navigationTimeout) return
+        if (stat.position >= stat.slides) return
+
+        currentSlideshow!.next()
+
+        navigationTimeout = setTimeout(() => {
+            navigationTimeout = null
+        }, navigationWait)
+    },
+    previous: () => {
+        if (navigationTimeout) return
+
+        currentSlideshow!.prev()
+
+        navigationTimeout = setTimeout(() => {
+            navigationTimeout = null
+        }, navigationWait)
+    },
     // WIP black screen not working
     // black: () => {
     //     if (isPaused) currentSlideshow!.resume()
@@ -182,6 +202,7 @@ export function presentationControl(data: { action: string }) {
 }
 
 let stateUpdater: any = null
+let stat: any = {}
 async function updateState() {
     if (!currentSlideshow) return
     if (stateUpdater) clearTimeout(stateUpdater)
@@ -189,6 +210,7 @@ async function updateState() {
 
     try {
         state.stat = await currentSlideshow?.stat()
+        stat = state.stat
     } catch (err) {
         if (currentSlideshow) console.log("STAT", err)
         return
@@ -205,5 +227,6 @@ async function updateState() {
     toApp(MAIN, { channel: "PRESENTATION_STATE", data: state })
 
     // update state every once in a while in case presentation window is in focus
+    if (stateUpdater) clearTimeout(stateUpdater)
     stateUpdater = setTimeout(updateState, 5000)
 }

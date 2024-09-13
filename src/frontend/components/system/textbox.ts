@@ -78,7 +78,7 @@ export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: a
     return [styles, lines]
 }
 
-export function resizeBox(e: any, mouse: any, square: boolean, ratio: number) {
+export function resizeBox(e: any, mouse: any, square: boolean, ratio: number, lines: any) {
     let itemElem = mouse.e.target.closest(".item")
     let styles: any = {}
     let store: null | number = null
@@ -125,6 +125,27 @@ export function resizeBox(e: any, mouse: any, square: boolean, ratio: number) {
         styles.top = mouse.top // only for snap
         styles.height = e.clientY / ratio - mouse.offset.height
     }
+
+    // WIP snap when resizing!
+    console.log(lines)
+    // let xSnap = lines.filter((a) => a[0] === "x").map((a) => a[1])
+    // let ySnap = lines.filter((a) => a[0] === "y").map((a) => a[1])
+    // const margin = 10
+    // if (xSnap.length >= 2) {
+    //     let newLeft = Math.min(...xSnap)
+    //     let newWidth = Math.max(...xSnap)
+    //     console.log(styles, newLeft, newWidth)
+
+    //     if (Math.abs(newLeft - styles.left) < margin) styles.left = newLeft
+    //     if (Math.abs(newWidth - styles.width) < margin) styles.width = newWidth
+    // }
+    // if (ySnap.length >= 2) {
+    //     let newTop = Math.min(...ySnap)
+    //     let newHeight = Math.max(...ySnap)
+
+    //     if (Math.abs(newTop - styles.top) < margin) styles.top = newTop
+    //     if (Math.abs(newHeight - styles.height) < margin) styles.height = newHeight
+    // }
 
     return styles
 }

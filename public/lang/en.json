@@ -1157,6 +1157,7 @@
         "opening": "Opening! Please wait...",
         "retry": "Please try opening manually, or",
         "try_again": "Try again",
+        "restart": "Restart",
         "start": "Start",
         "choose_window": "Please select a window"
     },

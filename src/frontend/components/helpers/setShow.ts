@@ -142,26 +142,19 @@ export async function loadShows(s: string[]) {
     })
 }
 
+let updateTimeout: any = null
+let tempCache: any = {}
 export function saveTextCache(id: string, show: Show) {
     if (!show?.slides) return
 
-    // get text
-    let txt = ""
-    Object.values(show.slides).forEach((slide) => {
-        slide.items.forEach((item) => {
-            item.lines?.forEach((line) => {
-                line.text?.forEach((text) => {
-                    txt += text.value
-                })
-                txt += " "
-            })
-            // txt += " - LINE - "
-        })
-    })
-
-    // trim
-    txt = txt.toLowerCase()
-    // txt = txt.toLowerCase().replace(/[^a-z0-9 ]+/g, "")
+    const txt = Object.values(show.slides)
+        .flatMap((slide) => slide.items)
+        .flatMap((item) => item.lines || [])
+        .flatMap((line) => line.text || [])
+        .map((text) => text.value)
+        .join(" ")
+        .toLowerCase()
+    // .replace(/[^a-z0-9 ]+/g, "")
 
     // encode
     // txt = window.btoa(txt)
@@ -169,8 +162,12 @@ export function saveTextCache(id: string, show: Show) {
     // Buffer.from(encode, 'base64').toString('utf-8')
     // window.atob(encode)
 
-    textCache.update((a) => {
-        a[id] = txt
-        return a
-    })
+    tempCache[id] = txt
+
+    // prevent rapid updates
+    if (updateTimeout) clearTimeout(updateTimeout)
+    updateTimeout = setTimeout(() => {
+        textCache.set({ ...get(textCache), ...tempCache })
+        tempCache = {}
+    }, 1000)
 }

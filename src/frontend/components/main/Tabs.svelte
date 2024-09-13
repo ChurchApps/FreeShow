@@ -18,7 +18,7 @@
         active = tabId
     }
 
-    let firstOverflowIndex: number = Object.values(tabs).findIndex((a) => a.overflow)
+    $: firstOverflowIndex = Object.values(tabs).findIndex((a) => a.overflow)
     export let overflowHidden: boolean = true
 </script>
 

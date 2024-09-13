@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Show } from "../../../types/Show"
+import type { Show, Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
 import {
@@ -17,6 +17,7 @@ import {
     imageExtensions,
     media,
     mediaFolders,
+    overlays,
     projects,
     scriptureSettings,
     shows,
@@ -146,9 +147,8 @@ export const dropActions: any = {
         if (drag.id === "template") {
             h.id = "TEMPLATE"
 
-            // TODO: add slide
-            // if (trigger) location.layoutSlide = index
             let indexes: number[] = []
+            // dropping on the center of a slide will add the template to just that slide
             if (drop.center) {
                 // indexes.push(drop.index)
                 // history({ id: "UPDATE", newData: { data: templateId, key: "settings", keys: ["template"] }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key" } })
@@ -168,6 +168,23 @@ export const dropActions: any = {
                 })
                 return
             }
+
+            // create slide from template if dropping on a slide
+            if (drop.trigger) {
+                let slides: Slide[] = []
+                drag.data.forEach((id) => {
+                    let template = clone(get(templates)[id])
+                    slides.push({ group: template.name, color: template.color, items: template.items, settings: { template: id }, notes: "" })
+                })
+
+                history({
+                    id: "SLIDES",
+                    newData: { data: slides },
+                    location: { page: "show", show: get(activeShow)! },
+                })
+                return
+            }
+
             h.newData = { id: templateId, data: { createItems: true }, indexes }
         }
 
@@ -551,7 +568,20 @@ const slideDrop: any = {
         history.id = "SHOW_LAYOUT"
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let data: any[] = removeDuplicates([...(ref?.data?.overlays || []), ...drag.data])
+        if (!ref) {
+            // create slide from overlay if dropping not on a slide
+            let slides: Slide[] = []
+            drag.data.forEach((id) => {
+                let overlay = clone(get(overlays)[id])
+                slides.push({ group: overlay.name, color: overlay.color, items: overlay.items, settings: {}, notes: "" })
+            })
+
+            history.id = "SLIDES"
+            history.newData = { data: slides }
+            return history
+        }
+
+        let data: any[] = removeDuplicates([...(ref.data?.overlays || []), ...drag.data])
 
         history.newData = { key: "overlays", data, dataIsArray: true, indexes: [drop.index] }
         return history

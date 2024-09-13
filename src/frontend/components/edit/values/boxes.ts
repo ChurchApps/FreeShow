@@ -218,6 +218,9 @@ export const boxes: Box = {
                 { name: "actions.mute", id: "muted", input: "checkbox", value: false },
                 { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
                 { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false },
+                // WIP crop image
+                // object-position: 20px 20px;
+                // transform: scale(1.2) translate(0, 5%);
             ],
             filters: [
                 { name: "filter.hue-rotate", id: "filter", key: "hue-rotate", input: "number", value: 0, values: { max: 360 }, extension: "deg" },

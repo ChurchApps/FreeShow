@@ -55,6 +55,8 @@
         playingAudio.update((a) => {
             if (a[id]?.audio?.currentTime === undefined) return a
             a[id].audio.currentTime = e.target.value
+            // something (in audio.ts I guess) plays the audio when updating the time, so this will pause it again
+            if (paused) setTimeout(() => a[id].audio.pause(), 20)
 
             return a
         })

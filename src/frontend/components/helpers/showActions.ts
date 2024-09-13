@@ -171,7 +171,8 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let layout: any[] = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
-    let isLastSlide: boolean = slide && layout ? (slide.index || 0) >= layout.filter((a) => !a?.data?.disabled).length - 1 && !layout[slide.index || 0].end : false
+    if (!layout) return
+    let isLastSlide: boolean = slide ? (slide.index || 0) >= layout.filter((a) => !a?.data?.disabled).length - 1 && !layout[slide.index || 0].end : false
 
     let index: null | number = null
 

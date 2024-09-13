@@ -86,12 +86,23 @@
 
         return true
     }
+
+    let top = false
+    $: if (contextActive && contextElem) updateTop()
+    function updateTop() {
+        top = false
+        // timeout to allow contextMenu to render/update
+        setTimeout(() => {
+            if (!document.querySelector(".contextMenu")) return
+            top = document.querySelector(".contextMenu")!.getBoundingClientRect().top <= 0
+        })
+    }
 </script>
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} />
 
 {#if contextActive}
-    <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);">
+    <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);" class:top>
         {#key activeMenu}
             {#each activeMenu as id}
                 {#if id === "SEPERATOR"}
@@ -118,6 +129,11 @@
         box-shadow: 1px 1px 3px 2px rgb(0 0 0 / 0.2);
         padding: 5px 0;
         z-index: 5000;
+    }
+
+    .top {
+        top: 0 !important;
+        transform: none !important;
     }
 
     hr {

@@ -231,6 +231,8 @@ export const previewShortcuts: any = {
     },
     " ": (e: any) => {
         let currentShow: any = get(focusMode) ? get(activeFocus) : get(activeShow)
+        console.log(currentShow)
+
         if (currentShow?.type === "ppt") return
         if (currentShow?.type === "pdf") {
             e.preventDefault()

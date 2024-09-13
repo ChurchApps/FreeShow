@@ -13,6 +13,7 @@ export const guideSteps = [
         query: ".column",
         pre: () => {
             activePage.set("show")
+            activePopup.set(null)
             if (get(shows).default) loadShows(["default"])
         },
         timeout: 200,

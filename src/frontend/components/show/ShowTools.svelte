@@ -10,7 +10,7 @@
 
     const tabs: TabsObj = {
         groups: { name: "tools.groups", icon: "groups" },
-        media: { name: "tools.media", icon: "media", disabled: true },
+        media: { name: "tools.media", icon: "media", remove: true },
         metadata: { name: "tools.metadata", icon: "info", overflow: true },
         notes: { name: "tools.notes", icon: "notes", overflow: true },
     }
@@ -44,15 +44,21 @@
     function checkMedia() {
         let refs = _show("active").layouts().ref()
 
-        if (refs.find((ref) => ref.find((slide) => slide.data.background))) return (tabs.media.disabled = false)
-        if (refs.find((ref) => ref.find((slide) => slide.data.audio))) return (tabs.media.disabled = false)
-        if (refs.find((ref) => ref.find((slide) => slide.data.mics))) return (tabs.media.disabled = false)
-        if (refs.find((ref) => ref.find((slide) => slide.data.actions?.slideActions?.length))) return (tabs.media.disabled = false)
+        let disableMedia = true
 
-        // if (Object.keys(show?.midi || {}).length) return (tabs.media.disabled = false)
-        // if (Object.values($midiIn).find((value: any) => value.shows?.find((a) => a.id === $activeShow?.id))) return (tabs.media.disabled = false)
+        if (refs.find((ref) => ref.find((slide) => slide.data.background))) disableMedia = false
+        else if (refs.find((ref) => ref.find((slide) => slide.data.audio))) disableMedia = false
+        else if (refs.find((ref) => ref.find((slide) => slide.data.mics))) disableMedia = false
+        else if (refs.find((ref) => ref.find((slide) => slide.data.actions?.slideActions?.length))) disableMedia = false
+        // else if (Object.keys(show?.midi || {}).length) disableMedia = false
+        // else if (Object.values($midiIn).find((value: any) => value.shows?.find((a) => a.id === $activeShow?.id))) disableMedia = false
 
-        return (tabs.media.disabled = true)
+        tabs.media.remove = disableMedia
+        // could change page back, but could be useful to keep it open in some cases
+        // if (disableMedia && active === "media") active = Object.keys(tabs)[0]
+
+        // show metadata tab if media is disabled
+        tabs.metadata.overflow = !disableMedia
     }
 </script>
 

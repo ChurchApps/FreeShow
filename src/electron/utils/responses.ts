@@ -24,6 +24,7 @@ import {
     checkShowsFolder,
     dataFolderNames,
     deleteFile,
+    doesPathExist,
     getDataFolder,
     getDocumentsFolder,
     getFileInfo,
@@ -203,11 +204,15 @@ function deleteShowsNotIndexed(data: any) {
 }
 
 export function getAllShows(data: any) {
+    if (!doesPathExist(data.path)) return []
+
     let filesInFolder: string[] = readFolder(data.path).filter((a) => a.includes(".show") && a.length > 5)
     return filesInFolder
 }
 
 function refreshAllShows(data: any) {
+    if (!doesPathExist(data.path)) return
+
     // list all shows in folder
     let filesInFolder: string[] = readFolder(data.path)
     if (!filesInFolder.length) return

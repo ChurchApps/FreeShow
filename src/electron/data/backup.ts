@@ -1,7 +1,7 @@
 import path from "path"
 import { toApp } from ".."
 import { MAIN, STORE } from "../../types/Channels"
-import { dataFolderNames, getDataFolder, openSystemFolder, readFile, selectFilesDialog, writeFile } from "../utils/files"
+import { dataFolderNames, doesPathExist, getDataFolder, makeDir, openSystemFolder, readFile, selectFilesDialog, writeFile } from "../utils/files"
 import { stores } from "./store"
 
 // "SYNCED_SETTINGS" and "STAGE_SHOWS" has to be before "SETTINGS" and "SHOWS"
@@ -71,6 +71,10 @@ export function restoreFiles({ showsPath }: any) {
     let files: any = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] })
     if (!files?.length) return toApp(MAIN, { channel: "RESTORE", data: { finished: false } })
 
+    // don't replace certain settings
+    let settings = stores.SETTINGS.store
+    let dataPath: string = settings.dataPath
+
     files.forEach((path: string) => {
         if (path.includes("SHOWS_CONTENT")) {
             restoreShows(path)
@@ -94,6 +98,12 @@ export function restoreFiles({ showsPath }: any) {
 
         let data = JSON.parse(file)
 
+        // don't replace certain settings
+        if (storeId === "SETTINGS") {
+            data.dataPath = dataPath
+            data.showsPath = showsPath
+        }
+
         stores[storeId].clear()
         stores[storeId].set(data)
         // WIP restoring synced settings will reset settings
@@ -105,6 +115,9 @@ export function restoreFiles({ showsPath }: any) {
         if (!file || !isValidJSON(file)) return
 
         let shows = JSON.parse(file)
+
+        // create Shows folder if it does not exist
+        if (!doesPathExist(showsPath)) makeDir(showsPath)
 
         Object.entries(shows).forEach(saveShow)
         function saveShow([id, value]: any) {

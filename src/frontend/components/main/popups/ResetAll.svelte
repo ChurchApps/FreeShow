@@ -1,6 +1,6 @@
 <script lang="ts">
     import { STORE } from "../../../../types/Channels"
-    import { activeEdit, activePopup, activeShow, deletedShows, renamedShows, scripturesCache, showsCache, showsPath } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, deletedShows, renamedShows, scripturesCache, showsCache, showsPath } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -39,6 +39,7 @@
         activeShow.set(null)
         activeEdit.set({ items: [] })
 
+        activePage.set("show")
         activePopup.set("initialize")
     }
 </script>

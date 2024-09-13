@@ -233,7 +233,7 @@
 
     $: activeOutputs = Object.values($outputs).filter((a) => !a.stageOutput && a.enabled && a.active === true)
 
-    const ndiNotSupported = $os.platform === "linux" && $os.arch !== "x64" && $os.arch !== "ia32"
+    const ndiNotSupported = false // $os.platform === "linux" && $os.arch !== "x64" && $os.arch !== "ia32"
 
     // RECEIVE BLACKMAGIC DEVICES
 

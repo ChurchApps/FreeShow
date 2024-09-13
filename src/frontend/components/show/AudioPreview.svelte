@@ -41,8 +41,14 @@
 
     function setTime(e: any) {
         sliderValue = null
-        if (playing.audio) playing.audio.currentTime = e.target.value
-        else currentTime = e.target.value
+        if (playing.audio) {
+            playing.audio.currentTime = e.target.value
+
+            // something (in audio.ts I guess) plays the audio when updating the time, so this will pause it again
+            if (paused) setTimeout(() => playing.audio.pause(), 20)
+        } else {
+            currentTime = e.target.value
+        }
     }
 
     let sliderValue: any = null
@@ -125,6 +131,8 @@
 
         renderFrame()
     }
+
+    let fullLength: boolean = false
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -157,9 +165,15 @@
                 {joinTime(secondsToTime(currentTime))}
             </span>
         {/if}
+
         <Slider disabled={isMic} value={currentTime} max={duration} on:input={setSliderValue} on:change={setTime} />
-        <span style={isMic ? "opacity: 0.5;" : ""}>
-            {joinTime(secondsToTime(duration))}
+
+        <span style={isMic ? "opacity: 0.5;" : fullLength || !currentTime ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)}>
+            {#if !isMic && fullLength}
+                {joinTime(secondsToTime(duration))}
+            {:else}
+                {joinTime(secondsToTime(duration - Math.floor(currentTime)))}
+            {/if}
         </span>
 
         <div style="display: flex;">
