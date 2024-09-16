@@ -45,8 +45,8 @@ export class CaptureLifecycle {
             if (!output.captureOptions) return
 
             // use highest frame rate
-            const frameRates = output.captureOptions.framerates
-            const frameRate = Math.max(frameRates.ndi, frameRates.server, frameRates.stage)
+            const frameRates = output.captureOptions.framerates || {}
+            const frameRate = Math.max(frameRates.ndi || 1, frameRates.server || 1, frameRates.stage || 1)
 
             const ms = Math.round(1000 / frameRate)
             output.captureOptions.frameSubscription = setTimeout(captureFrame, ms)

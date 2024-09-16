@@ -35,6 +35,7 @@ export interface StageLayout {
             alignX?: string
             label?: string // sending translated label to stage
             tracker?: any // slide tracker data
+            lineCount?: number // max lines to show in next slide preview
         }
     }
 }

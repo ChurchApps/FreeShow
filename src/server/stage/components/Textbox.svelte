@@ -15,6 +15,7 @@
     export let fontSize: number = 0
     export let autoSize: boolean = true
     export let ratio: number = 1
+    export let maxLines: number = 0 // stage next item preview
 
     // dynamic resolution
     let resolution = { width: window.innerWidth, height: window.innerHeight }
@@ -234,17 +235,19 @@
         <div class="align" style={style ? item.align : null} bind:this={alignElem}>
             <div class="lines" style={style && lineGap ? `gap: ${lineGap}px;` : ""}>
                 {#each item.lines as line, i}
-                    <!-- WIP chords are way bigger than stage preview for some reason -->
-                    {#if chordLines[i]}
-                        <div class:first={i === 0} class="break chords" style="--chord-size: {stageItem?.chordsData?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || '#FF851B'};--font-size: {fontSize}px;">
-                            {@html chordLines[i]}
+                    {#if !maxLines || i < maxLines}
+                        <!-- WIP chords are way bigger than stage preview for some reason -->
+                        {#if chordLines[i]}
+                            <div class:first={i === 0} class="break chords" style="--chord-size: {stageItem?.chordsData?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || '#FF851B'};--font-size: {fontSize}px;">
+                                {@html chordLines[i]}
+                            </div>
+                        {/if}
+                        <div class="break" style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
+                            {#each line.text || [] as text}
+                                <span style={style ? text.style + (fontSize ? "font-size: " + fontSize + "px;" : "") : "font-size: " + fontSize + "px;"}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                            {/each}
                         </div>
                     {/if}
-                    <div class="break" style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
-                        {#each line.text || [] as text}
-                            <span style={style ? text.style + (fontSize ? "font-size: " + fontSize + "px;" : "") : "font-size: " + fontSize + "px;"}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
-                        {/each}
-                    </div>
                 {/each}
             </div>
         </div>

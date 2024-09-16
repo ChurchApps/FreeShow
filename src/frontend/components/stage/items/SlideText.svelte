@@ -83,7 +83,7 @@
         <Main let:resolution let:width let:height>
             <Zoomed background="transparent" style={getStyleResolution(resolution, width, height, "fit")} center>
                 {#each items as item}
-                    <Textbox {item} {style} {stageItem} {chords} {ref} stageAutoSize={item.auto && autoSize} {fontSize} addDefaultItemStyle={style} />
+                    <Textbox {item} {style} {stageItem} {chords} {ref} maxLines={Number(next && stageItem.lineCount)} stageAutoSize={item.auto && autoSize} {fontSize} addDefaultItemStyle={style} />
                 {/each}
             </Zoomed>
         </Main>
@@ -91,12 +91,12 @@
 {:else}
     <div class:loading={items1 && !firstActive}>
         {#each items1 as item}
-            <Textbox {item} {style} {stageItem} {chords} {ref} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} isStage />
+            <Textbox {item} {style} {stageItem} {chords} {ref} maxLines={Number(next && stageItem.lineCount)} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} isStage />
         {/each}
     </div>
     <div class:loading={items2 && firstActive}>
         {#each items2 as item}
-            <Textbox {item} {style} {stageItem} {chords} {ref} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} isStage />
+            <Textbox {item} {style} {stageItem} {chords} {ref} maxLines={Number(next && stageItem.lineCount)} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} isStage />
         {/each}
     </div>
 {/if}

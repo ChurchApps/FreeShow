@@ -54,6 +54,7 @@
     export let linesEnd: null | number = null
     export let stageAutoSize: boolean = false
     export let fontSize: number = 0
+    export let maxLines: number = 0 // stage next item preview
 
     // let height: number = 0
     // let width: number = 0
@@ -175,7 +176,6 @@
             return
         }
         loopStop = true
-        // cacheText = true
 
         let maxFontSize = MAX_FONT_SIZE
         let minFontSize = MIN_FONT_SIZE
@@ -288,20 +288,6 @@
         }
     }
 
-    // CACHE TO PREVENT SHOWING AUTO TEXT CHANGING SIZES
-
-    let cacheText: boolean = false
-    let cachedLines: string = ""
-    // $: if (cacheText) startTextCaching()
-    // TODO: function startTextCaching() {
-    //     if (!alignElem) return
-
-    //     setTimeout(() => {
-    //         cacheText = false
-    //         cachedLines = alignElem.querySelector(".lines")?.outerHTML
-    //     }, 1000)
-    // }
-
     // CHORDS
 
     let chordLines: string[] = []
@@ -409,11 +395,10 @@
         >
             <div
                 class="lines"
-                class:cacheText
                 style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
             >
                 {#each lines as line, i}
-                    {#if linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)}
+                    {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || i < maxLines)}
                         {#if chords && chordLines[i]}
                             <div
                                 class:first={i === 0}
@@ -441,10 +426,6 @@
                     {/if}
                 {/each}
             </div>
-
-            {#if cacheText}
-                {@html cachedLines}
-            {/if}
         </div>
     {:else if item?.type === "list"}
         <ListView list={item.list} disableTransition={disableListTransition} />
@@ -512,10 +493,6 @@
     /* .align .lines:nth-child(1) {
         position: absolute;
     } */
-    .cacheText {
-        opacity: 0;
-        position: absolute;
-    }
 
     .align {
         height: 100%;

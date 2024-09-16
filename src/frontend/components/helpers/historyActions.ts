@@ -714,7 +714,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 _show(data.remember.showId).set({ key: "slides", value: previousData.slides || {} })
                 _show(data.remember.showId).set({ key: "settings.template", value: previousData.template })
             } else {
-                data.previousData = { template: show.settings?.template, slides: clone(slides) }
+                data.previousData = clone({ template: show.settings?.template, slides: slides })
                 let templateId: string = data.id
 
                 if (templateId && !slideId && show.settings?.template !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
@@ -765,7 +765,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (!slideTemplate?.items?.length) return
 
                     // roll items around
-                    if (createItems && !slide.settings?.template) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
+                    let newTemplate = data.previousData.template !== data.id
+                    if (createItems && !slide.settings?.template && !newTemplate) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 
                     let changeOverflowItems = slide.settings?.template || createItems
                     let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false)

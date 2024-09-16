@@ -29,7 +29,7 @@
             hold: false,
         },
         zoom: {
-            opacity: 1,
+            opacity: 0.8,
             size: 300,
             radius: 50,
             hold: false,

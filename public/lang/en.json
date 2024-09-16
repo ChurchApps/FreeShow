@@ -760,6 +760,7 @@
         "different_first_template": "Custom template on first slide",
         "media_fit": "Media fit",
         "size": "Size",
+        "max_lines": "Max lines",
         "chords": "Chords",
         "transpose": "Transpose",
         "auto_size": "Auto size",
@@ -931,6 +932,7 @@
     "draw": {
         "focus": "Focus",
         "pointer": "Pointer",
+        "zoom": "Zoom",
         "fill": "Fill",
         "paint": "Paint",
         "particles": "Particles",
