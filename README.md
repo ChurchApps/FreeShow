@@ -26,7 +26,7 @@
 
 FreeShow is a free and open-source presentation program that makes it easy to show text on a big screen. It supports stage display, remote control, media, and many other advanced features. It is open-sourced meaning anyone can contribute.
 
-FreeShow exists because the creator found that other simular programs was either expensive or complex to use. He wanted to create a program that was easy to use and affordable for everyone, from small churches to large venues. FreeShow is now used by people all over the world.
+FreeShow exists because the creator found that other similar programs were either expensive or complex to use. He wanted to create a program that is easy to use and affordable for everyone, from small churches to large venues. FreeShow is now used by people all over the world.
 
 ## Support Us
 
