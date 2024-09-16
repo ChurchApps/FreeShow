@@ -116,7 +116,7 @@ export const dropActions: any = {
         if (drag.id === "media" || drag.id === "files") {
             data = data
                 .map((a: any) => {
-                    const path = window.api.showFilePath(a)
+                    const path = a.path || window.api.showFilePath(a)
                     const extension: string = getExtension(path || a.name)
                     if (drag.id === "files" && !files[drop.id].includes(extension)) return null
 
@@ -127,7 +127,7 @@ export const dropActions: any = {
                 })
                 .filter((a: any) => a)
         } else if (drag.id === "audio") {
-            data = data.map((a: any) => ({ id: window.api.showFilePath(a), name: removeExtension(a.name), type: "audio" }))
+            data = data.map((a: any) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
         } else if (drag.id === "player") {
             data = data.map((a: any) => ({ id: a, type: "player" }))
         } else if (drag.id === "scripture") {
@@ -286,7 +286,7 @@ export const dropActions: any = {
     edit: ({ drag }: any) => {
         if (drag.id !== "media" && drag.id !== "files") return
 
-        drag.data.forEach((file: any) => addItem("media", null, { src: window.api.showFilePath(file) }))
+        drag.data.forEach((file: any) => addItem("media", null, { src: file.path || window.api.showFilePath(file) }))
     },
     audio_playlist: ({ drag, drop }: any, h: any) => {
         h.id = "UPDATE"
@@ -330,9 +330,9 @@ function dropFileInDrawerNavigation(drag) {
     // WIP drop bibles??
 }
 
-export function addDrawerFolder(file: File, type: "media" | "audio") {
+export function addDrawerFolder(file: any, type: "media" | "audio") {
     // check if folder already exists
-    let path: string = window.api.showFilePath(file)
+    let path: string = file.path || window.api.showFilePath(file)
     let exists = Object.values(type === "media" ? get(mediaFolders) : get(audioFolders)).find((a) => a.path === path)
     if (exists) {
         newToast("$error.folder_exists")

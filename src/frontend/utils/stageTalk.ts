@@ -6,10 +6,11 @@ import { getBase64Path } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { events, media, outputs, previewBuffers, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
+import { dictionary, events, groups, media, outputs, previewBuffers, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendData } from "./sendData"
+import { getGroupName } from "../components/helpers/show"
 
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
     let currentOutput = updater[outputId]?.out
@@ -136,7 +137,21 @@ export const receiveSTAGE: any = {
         let currentLayoutRef = _show(currentShowId).layouts("active").ref()[0] || []
         let currentShowSlides = _show(currentShowId).get("slides") || {}
         let slidesLength = currentLayoutRef.length || 0
-        let layoutGroups = currentLayoutRef.map((ref) => currentShowSlides[ref.parent?.id || ref.id]?.group || "—")
+
+        // get custom group names
+        let layoutGroups = currentLayoutRef.map((a) => {
+            let ref = a.parent || a
+            let slide = currentShowSlides[ref.id]
+            if (!slide) return { name: "—" }
+
+            let group = slide.group
+            if (slide.globalGroup && get(groups)[slide.globalGroup]) {
+                group = get(groups)[slide.globalGroup].default ? get(dictionary).groups?.[get(groups)[slide.globalGroup].name] : get(groups)[slide.globalGroup].name
+            }
+
+            let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)
+            return { name: name || "—", index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
+        })
 
         msg.data.progress = { currentShowSlide, slidesLength, layoutGroups }
 

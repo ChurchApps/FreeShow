@@ -1,12 +1,12 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Layout, Slide, SlideData } from "../../types/Show"
+import { getExtension, getFileName, getMediaType } from "../components/helpers/media"
 import { checkName, getGlobalGroup, initializeMetadata, newSlide } from "../components/helpers/show"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
-import { getExtension, getFileName, getMediaType } from "../components/helpers/media"
 
 const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
 
@@ -21,6 +21,11 @@ export function convertProPresenter(data: any) {
     setTimeout(() => {
         data?.forEach(({ content, name, extension }: any) => {
             let song: any = {}
+
+            if (!content) {
+                console.log("File missing content!")
+                return
+            }
 
             if (extension === "json" || extension === "pro") {
                 try {
@@ -356,6 +361,7 @@ function RTFToText(input: string) {
     input = input.replaceAll("\\par", "__BREAK__")
     input = input.replaceAll("\\\n", "__BREAK__")
     input = input.replaceAll("\n", "__BREAK__")
+    input = input.replaceAll("\\u8232", "__BREAK__")
 
     // https://stackoverflow.com/a/188877
     const regex = /\{\*?\\[^{}]+}|[{}]|\\\n?[A-Za-z]+\n?(?:-?\d+)?[ ]?/gm

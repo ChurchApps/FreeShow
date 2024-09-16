@@ -484,6 +484,15 @@ export function mergeDuplicateSlides({ slides, layout }) {
 export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) {
     let lines: Line[] = _show().slides([slideRef.id]).items([itemIndex]).get("lines")[0][0]
 
+    // if only one line (like scriptures, split by text)
+    if (lines.length === 1 && lines[0].text?.length > 1) {
+        let newLines: any[] = []
+        let centerTextIndex = Math.ceil(lines[0].text.length / 2)
+        newLines.push({ ...lines[0], text: lines[0].text.slice(0, centerTextIndex) })
+        newLines.push({ ...lines[0], text: lines[0].text.slice(centerTextIndex) })
+        lines = newLines
+    }
+
     // auto find center line
     if (!sel.length) {
         // round up to 5 = 3+2
@@ -548,6 +557,8 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     ]
     if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
     if (!secondLines.length) secondLines = defaultLine
+
+    console.log(firstLines, secondLines)
 
     // add chords
     let chordLines = clone(lines.map((a) => a.chords || []))

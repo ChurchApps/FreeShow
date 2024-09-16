@@ -298,6 +298,7 @@ export function getSlides({ bibles, sorted }) {
         if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + referenceDivider + range)
 
         text.split("\n").forEach((line) => {
+            if (!line.trim()) return
             lines.push({ text: [{ value: line, style: verseStyle }], align: alignStyle })
         })
 

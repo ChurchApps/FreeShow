@@ -113,7 +113,8 @@
                 })
             }
 
-            _show().slides().get().forEach(updateSlideStyle)
+            let slides = clone(_show().slides().get())
+            slides.forEach(updateSlideStyle)
 
             return
 
@@ -203,7 +204,8 @@
                 })
             }
 
-            _show().slides().get().forEach(updateSlideStyle)
+            let slides = clone(_show().slides().get())
+            slides.forEach(updateSlideStyle)
 
             return
 
@@ -213,6 +215,8 @@
 
                 let items: number[] = []
                 slide.items.forEach(updateItemStyle)
+                // fix items swapping positions!
+                items = items.reverse()
 
                 history({
                     id: "setStyle",

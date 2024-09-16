@@ -340,6 +340,7 @@
     .break {
         width: 100%;
 
+        font-size: 0; /* auto size fix */
         /* height: 100%; */
         user-select: text;
 
