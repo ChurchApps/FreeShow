@@ -3,7 +3,7 @@
     import { GetLayout } from "../helpers/get"
     import Icon from "../helpers/Icon.svelte"
     import { refreshOut, setOutput } from "../helpers/output"
-    import { nextSlide, previousSlide, updateOut } from "../helpers/showActions"
+    import { nextSlideIndividual, previousSlideIndividual, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
 
@@ -27,7 +27,7 @@
 
 <span class="group">
     <Button
-        on:click={previousSlide}
+        on:click={previousSlideIndividual}
         title={$dictionary.preview?._previous_slide}
         disabled={$outLocked || slide?.id === "temp" || (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)}
         center
@@ -35,7 +35,7 @@
         <Icon id="previous" size={1.2} />
     </Button>
     <Button
-        on:click={nextSlide}
+        on:click={nextSlideIndividual}
         title={$dictionary.preview?._next_slide}
         disabled={$outLocked || slide?.id === "temp" || (slide ? (slide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)}
         center

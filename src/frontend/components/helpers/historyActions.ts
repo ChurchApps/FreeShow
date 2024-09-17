@@ -2,11 +2,12 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
 import { removeItemValues } from "../../show/slides"
-import { activeEdit, activePage, activePopup, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
+import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, projects, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { EMPTY_SHOW_SLIDE } from "../../values/empty"
 import { customActionActivation } from "../actions/actions"
 import { clone, keysToID } from "./array"
+import { history } from "./history"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
 import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayoutsFromTemplate, updateSlideFromTemplate } from "./output"
@@ -265,7 +266,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let oldShows: any = {}
             let rename: any = {}
 
-            // load shows cache
+            // load shows cache (to save in undo history)
             if (deleting && showsList.length < 20) {
                 await loadShows(showsList.map((a) => a.id))
             }
@@ -388,6 +389,21 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     showsCache.set({})
                     activeShow.set(null)
                 }, 2000)
+            }
+
+            if (deleting && initializing) {
+                // remove any show in the active project
+                // only active because of undo
+                if (get(activeProject)) {
+                    let shows = get(projects)[get(activeProject)!]?.shows || []
+                    let newShows = shows
+                    showsList.forEach(({ id }) => {
+                        newShows = newShows.filter((a) => a.id !== id)
+                    })
+                    if (showsList.length < shows.length) {
+                        history({ id: "UPDATE", newData: { key: "shows", data: newShows }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_key" } })
+                    }
+                }
             }
         },
         SLIDES: () => {

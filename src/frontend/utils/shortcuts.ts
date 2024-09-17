@@ -3,12 +3,14 @@ import { IMPORT, OUTPUT } from "../../types/Channels"
 import type { ShowType } from "../../types/Show"
 import type { TopViews } from "../../types/Tabs"
 import { menuClick } from "../components/context/menuClick"
+import { addItem } from "../components/edit/scripts/itemHelpers"
 import { clearAudio, playAudio } from "../components/helpers/audio"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
 import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
-import { nextSlide, previousSlide } from "../components/helpers/showActions"
+import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
+import { addSection } from "../converters/project"
 import {
     activeDrawerTab,
     activeEdit,
@@ -37,8 +39,6 @@ import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
-import { addSection } from "../converters/project"
-import { addItem } from "../components/edit/scripts/itemHelpers"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -195,7 +195,7 @@ export const previewShortcuts: any = {
         if (!get(outLocked)) clearAudio()
     },
     F5: () => {
-        if (!get(special).disablePresenterControllerKeys) nextSlide(null)
+        if (!get(special).disablePresenterControllerKeys) nextSlideIndividual(null)
         else setOutput("transition", null)
     },
     PageDown: (e: any) => {
@@ -204,7 +204,7 @@ export const previewShortcuts: any = {
         if (get(special).disablePresenterControllerKeys) return
 
         e.preventDefault()
-        nextSlide(e)
+        nextSlideIndividual(e)
     },
     PageUp: (e: any) => {
         let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
@@ -212,7 +212,7 @@ export const previewShortcuts: any = {
         if (get(special).disablePresenterControllerKeys) return
 
         e.preventDefault()
-        previousSlide(e)
+        previousSlideIndividual(e)
     },
 
     ArrowRight: (e: any) => {
@@ -220,14 +220,14 @@ export const previewShortcuts: any = {
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
         if (get(activeEdit).items.length) return
 
-        nextSlide(e)
+        nextSlideIndividual(e)
     },
     ArrowLeft: (e: any) => {
         // if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
         if (get(activeEdit).items.length) return
 
-        previousSlide(e)
+        previousSlideIndividual(e)
     },
     " ": (e: any) => {
         let currentShow: any = get(focusMode) ? get(activeFocus) : get(activeShow)
@@ -236,7 +236,7 @@ export const previewShortcuts: any = {
         if (currentShow?.type === "ppt") return
         if (currentShow?.type === "pdf") {
             e.preventDefault()
-            return nextSlide(e, true)
+            return nextSlideIndividual(e, true)
         }
         if (!get(showsCache)[currentShow?.id || ""]) {
             e.preventDefault()
@@ -248,10 +248,10 @@ export const previewShortcuts: any = {
         let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
 
         e.preventDefault()
-        if (currentOutput.out?.slide?.id !== currentShow?.id || (currentShow && currentOutput.out?.slide?.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) nextSlide(e, true)
+        if (currentOutput.out?.slide?.id !== currentShow?.id || (currentShow && currentOutput.out?.slide?.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) nextSlideIndividual(e, true)
         else {
-            if (e.shiftKey) previousSlide(e)
-            else nextSlide(e)
+            if (e.shiftKey) previousSlideIndividual(e)
+            else nextSlideIndividual(e)
         }
     },
     Home: (e: any) => {
@@ -260,7 +260,7 @@ export const previewShortcuts: any = {
         if (get(special).disablePresenterControllerKeys) return
 
         e.preventDefault()
-        nextSlide(e, true)
+        nextSlideIndividual(e, true)
     },
     End: (e: any) => {
         let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
@@ -268,7 +268,7 @@ export const previewShortcuts: any = {
         if (get(special).disablePresenterControllerKeys) return
 
         e.preventDefault()
-        nextSlide(e, false, true)
+        nextSlideIndividual(e, false, true)
     },
 }
 
