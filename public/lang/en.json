@@ -1073,6 +1073,7 @@
         "reset_theme": "Reset theme",
         "reset_themes": "Reset themes",
         "capitalize_words": "Capitalize words",
+        "comma_seperated": "Seperated by comma",
         "backup_all": "Backup everything",
         "restore": "Restore",
         "backup_started": "Backing up...",

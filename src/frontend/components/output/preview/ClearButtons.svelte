@@ -15,7 +15,12 @@
     $: if (allCleared) autoChange = true
 
     let enableRestore: boolean = false
-    $: if ($outputCache) setTimeout(() => (enableRestore = true), 1000)
+    let restoreTimeout: any = null
+    $: if ($outputCache) {
+        enableRestore = false
+        if (restoreTimeout) clearTimeout(restoreTimeout)
+        restoreTimeout = setTimeout(() => (enableRestore = true), 1000)
+    }
     $: if (!allCleared) {
         enableRestore = false
         outputCache.set(null)

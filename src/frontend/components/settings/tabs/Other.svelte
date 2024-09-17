@@ -229,7 +229,7 @@
 </CombinedInput> -->
 
 <CombinedInput>
-    <p><T id="settings.capitalize_words" /></p>
+    <p title={$dictionary.settings?.comma_seperated}><T id="settings.capitalize_words" /></p>
     <TextInput value={$special.capitalize_words || ""} on:change={(e) => updateTextInput(e, "capitalize_words")} />
 </CombinedInput>
 

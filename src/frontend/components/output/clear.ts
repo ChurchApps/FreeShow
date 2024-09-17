@@ -13,7 +13,7 @@ export function clearAll(button: boolean = false) {
     let allCleared = isOutCleared(null) && audioCleared
     if (allCleared) return
 
-    if (!get(outputCache)) outputCache.set(clone(get(outputs)))
+    storeCache()
 
     clearBackground()
     clearSlide()
@@ -22,11 +22,36 @@ export function clearAll(button: boolean = false) {
     clearTimers()
 }
 
-// WIP restore only selected outputs
+function storeCache() {
+    if (!get(outputCache)) outputCache.set({})
+
+    let activeOutputs = getActiveOutputs()
+
+    outputCache.update((a) => {
+        // only store active outputs
+        activeOutputs.forEach((id) => {
+            let out = get(outputs)[id]?.out
+            if (out) a[id] = clone(out)
+        })
+        return a
+    })
+}
+
 export function restoreOutput() {
     if (get(outLocked) || !get(outputCache)) return
 
-    outputs.set(get(outputCache))
+    let activeOutputs = getActiveOutputs()
+
+    outputs.update((a) => {
+        Object.keys(get(outputCache)).forEach((id) => {
+            // restore only selected outputs
+            if (!activeOutputs.includes(id) || !a[id]) return
+            a[id].out = get(outputCache)[id]
+        })
+
+        return a
+    })
+
     outputCache.set(null)
 }
 
