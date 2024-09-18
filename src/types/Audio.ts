@@ -5,3 +5,12 @@ export interface Playlist {
     loop?: boolean
     crossfade?: number
 }
+
+export interface Channels {
+    volume?: { left: number; right: number }
+    dB?: {
+        value: { left: number; right: number }
+        min: number
+        max: number
+    }
+}

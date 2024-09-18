@@ -9,6 +9,7 @@ import {
     activeProject,
     activeShow,
     cachedShowsData,
+    colorbars,
     customMessageCredits,
     draw,
     drawSettings,
@@ -225,6 +226,10 @@ export function storeSubscriber() {
     })
     activeProject.subscribe((data) => {
         send(REMOTE, ["PROJECT"], data)
+    })
+
+    colorbars.subscribe((a) => {
+        send(OUTPUT, ["COLORBARS"], a)
     })
 
     //

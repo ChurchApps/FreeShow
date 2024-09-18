@@ -17,7 +17,8 @@
 
 <img
     class="media"
-    style="width: 100%;height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});"
+    style="width: 100%;height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});image-rendering: {mediaStyle.rendering ||
+        'initial'};"
     src={encodeFilePath(path)}
     alt=""
     draggable="false"

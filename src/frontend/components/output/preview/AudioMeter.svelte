@@ -2,60 +2,173 @@
     import { audioChannels } from "../../../stores"
 
     export let advanced: boolean = false
-    const numbers: number = 8
+    // const numbers: number = 8
+    const numbers: number[] = [-10, -15, -20, -25, -30, -50, -70, -85, -100]
+
+    function getDBValue(dB: any, side: "left" | "right") {
+        if (!dB) return 0
+
+        let value: number = dB.value[side]
+        const max: number = dB.max
+        const min: number = dB.min
+
+        if (value > max) value = max
+        if (value < min) value = min
+
+        let percentage = (value - min) / (max - min)
+        percentage = 1 - transformRange(1 - percentage)
+
+        return percentage * 100
+    }
+
+    const newRange = 1 - 0.4 // %
+    const threshold = 1 - 0.78 // bottom X% will be compressed into new range
+    const compressionFactor = threshold / newRange
+    const expansionFactor = (1 - newRange) / (1 - threshold)
+
+    function transformRange(value) {
+        if (value <= threshold) {
+            return value / compressionFactor
+        } else {
+            return newRange + (value - threshold) * expansionFactor
+        }
+    }
+
+    // function getDBFromPercentage(percentage: number) {
+    //     const dB = $audioChannels.dB
+
+    //     const max: number = dB?.max ?? -10
+    //     const min: number = dB?.min ?? -100
+
+    //     percentage = 1 - transformRange(percentage)
+    //     return (max - min) * percentage + min
+    // }
+
+    function getPercentageFromDB(dB: number) {
+        const max: number = $audioChannels.dB?.max ?? -10
+        const min: number = $audioChannels.dB?.min ?? -100
+
+        // invert
+        // dB = max + min - dB
+        let percentage = (dB - min) / (max - min)
+        percentage = 1 - percentage
+        console.log(dB, percentage, transformRange(percentage))
+        return transformRange(percentage) * 100
+
+        // const percentage = 1 - transformRange(percentage)
+        // return (max - min) * percentage + min
+
+        // (transformRange(1 - 1 / (i * -1))) * 100
+    }
 </script>
 
-<div class="main" class:advanced>
-    <span class="left">
-        <div style="height: {100 - $audioChannels.left}%" />
-    </span>
-    <span class="right">
-        <div style="height: {100 - $audioChannels.right}%" />
-    </span>
+{#if advanced}
+    <div class="main advanced">
+        <!-- WIP volume dots!!! instead of transition.. -->
+        <span class="left">
+            <div style="height: {100 - getDBValue($audioChannels.dB, 'left')}%" />
+        </span>
+        <span class="right">
+            <div style="height: {100 - getDBValue($audioChannels.dB, 'right')}%" />
+        </span>
 
-    {#if advanced}
-        <div class="lines">
-            {#each { length: numbers } as _}
-                <div class="line" />
-            {/each}
-        </div>
-        <div class="lines" style="padding: 0 8px;">
+        <!-- <div class="lines">
             {#each { length: numbers } as _, i}
-                <p>{numbers - i}</p>
+                {@const hide = i === 0 || i + 1 === numbers}
+                <p class="line" class:hide>-</p>
+            {/each}
+        </div> -->
+        <!-- <div class="lines" style="padding: 0 5px;">
+            {#each { length: numbers } as _, i}
+                {@const hide = i === 0 || i + 1 === numbers}
+                <p class:hide class:start={i === 0} class:end={i + 1 === numbers}>{i + 1 === numbers ? "-∞" : Math.round(getDBFromPercentage(i / (numbers - 1)))}</p>
+            {/each}
+        </div> -->
+        <div class="lines" style="padding: 0 5px;">
+            {#each numbers as i}
+                <p class="absolute" style="top: {getPercentageFromDB(i)}%;" class:start={i === numbers[0]} class:end={i === numbers[numbers.length - 1]}>{i <= -100 ? "-∞" : i}</p>
             {/each}
         </div>
-    {/if}
-</div>
+    </div>
+{:else}
+    <div class="main">
+        <!-- <span class="left">
+            <div style="height: {100 - ($audioChannels.volume?.left || 0)}%" />
+        </span>
+        <span class="right">
+            <div style="height: {100 - ($audioChannels.volume?.right || 0)}%" />
+        </span> -->
+        <span class="left">
+            <div style="height: {100 - getDBValue($audioChannels.dB, 'left')}%" />
+        </span>
+        <span class="right">
+            <div style="height: {100 - getDBValue($audioChannels.dB, 'right')}%" />
+        </span>
+    </div>
+{/if}
 
 <style>
     .main {
         width: 6px;
         display: flex;
-
-        /* position: absolute;
-        right: 0;
-        height: 100%; */
     }
 
     .main.advanced {
-        width: 70px;
+        width: 48px;
     }
     .lines {
+        position: relative;
+
         display: flex;
         flex-direction: column;
-        justify-content: space-around;
+        /* justify-content: space-between; */
 
         text-align: center;
         opacity: 0.8;
 
         background: var(--primary-lighter);
     }
-    .lines .line {
-        height: 1px;
-        width: 8px;
-        background-color: var(--text);
+    /* .lines .line {
         opacity: 0.4;
-        margin: 0 5px;
+        margin: 0 3px;
+    } */
+
+    /* .lines .hide {
+        opacity: 0;
+        / * line-height: 0; * /
+    } */
+
+    .lines p {
+        display: flex;
+        align-items: center;
+        flex: 2;
+
+        font-size: 0.8em;
+    }
+    /* .lines p.hide {
+        flex: 1;
+    } */
+
+    .absolute {
+        position: absolute;
+        top: 0;
+        left: 5px;
+        transform: translateY(-50%);
+    }
+
+    .lines p.start,
+    .lines p.end {
+        position: initial;
+        transform: none;
+    }
+
+    .lines p.start {
+        align-items: start;
+        padding-top: 2px;
+    }
+    .lines p.end {
+        align-items: end;
+        padding-bottom: 2px;
     }
 
     span {

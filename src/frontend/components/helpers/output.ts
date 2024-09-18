@@ -495,7 +495,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (templateItem.textFit) item.textFit
 
         // remove exiting styling & add new if set in template
-        const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings"]
+        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings"]
         extraStyles.forEach((style) => {
             delete item[style]
             if (templateItem![style]) item[style] = templateItem![style]

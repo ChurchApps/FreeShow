@@ -4,147 +4,144 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/BaseAudioContext/createChannelSplitter
 
 export function audioAnalyser(analyser: any) {
-  // Pan to L / R
-  // https://stackoverflow.com/questions/5123844/change-left-right-balance-on-playing-audio-in-javascript
+    // Pan to L / R
+    // https://stackoverflow.com/questions/5123844/change-left-right-balance-on-playing-audio-in-javascript
 
-  // let buffer = ac.createBuffer(2, 512, ac.sampleRate)
-  // let one = buffer.getChannelData(0)
-  // let two = buffer.getChannelData(1)
+    // let buffer = ac.createBuffer(2, 512, ac.sampleRate)
+    // let one = buffer.getChannelData(0)
+    // let two = buffer.getChannelData(1)
 
-  // console.log(source)
+    // console.log(source)
 
-  // let someStereoBuffer: ArrayBuffer = new ArrayBuffer(512)
-  // ac.decodeAudioData(
-  //   someStereoBuffer,
-  //   (data) => {
-  //     console.log("DECODED")
+    // let someStereoBuffer: ArrayBuffer = new ArrayBuffer(512)
+    // ac.decodeAudioData(
+    //   someStereoBuffer,
+    //   (data) => {
+    //     console.log("DECODED")
 
-  //     let source = ac.createBufferSource()
-  //     source.buffer = data
-  //     let splitter = ac.createChannelSplitter(2)
-  //     source.connect(splitter)
-  //     console.log(splitter)
-  //     let merger = ac.createChannelMerger(2)
+    //     let source = ac.createBufferSource()
+    //     source.buffer = data
+    //     let splitter = ac.createChannelSplitter(2)
+    //     source.connect(splitter)
+    //     console.log(splitter)
+    //     let merger = ac.createChannelMerger(2)
 
-  //     // Reduce the volume of the left channel only
-  //     let gainNode = ac.createGain()
-  //     gainNode.gain.setValueAtTime(0.5, ac.currentTime)
-  //     splitter.connect(gainNode, 0)
+    //     // Reduce the volume of the left channel only
+    //     let gainNode = ac.createGain()
+    //     gainNode.gain.setValueAtTime(0.5, ac.currentTime)
+    //     splitter.connect(gainNode, 0)
 
-  //     // Connect the splitter back to the second input of the merger: we
-  //     // effectively swap the channels, here, reversing the stereo image.
-  //     gainNode.connect(merger, 0, 1)
-  //     splitter.connect(merger, 1, 0)
+    //     // Connect the splitter back to the second input of the merger: we
+    //     // effectively swap the channels, here, reversing the stereo image.
+    //     gainNode.connect(merger, 0, 1)
+    //     splitter.connect(merger, 1, 0)
 
-  //     let dest = ac.createMediaStreamDestination()
+    //     let dest = ac.createMediaStreamDestination()
 
-  //     // Because we have used a ChannelMergerNode, we now have a stereo
-  //     // MediaStream we can use to pipe the Web Audio graph to WebRTC,
-  //     // MediaRecorder, etc.
-  //     merger.connect(dest)
-  //   },
-  //   (err) => console.log(err)
-  // )
+    //     // Because we have used a ChannelMergerNode, we now have a stereo
+    //     // MediaStream we can use to pipe the Web Audio graph to WebRTC,
+    //     // MediaRecorder, etc.
+    //     merger.connect(dest)
+    //   },
+    //   (err) => console.log(err)
+    // )
 
-  // window.ctx = document.getElementById("c").getContext("2d")
+    // window.ctx = document.getElementById("c").getContext("2d")
 
-  //       analyser.fftSize = 2048;
-  // var bufferLength = analyser.frequencyBinCount;
-  // var dataArray = new Uint8Array(bufferLength);
+    //       analyser.fftSize = 2048;
+    // var bufferLength = analyser.frequencyBinCount;
+    // var dataArray = new Uint8Array(bufferLength);
 
-  // console.log(analyser)
+    // console.log(analyser)
 
-  // let buffer = ac.createBuffer(2, 2, 3000)
-  // console.log(buffer)
+    // let buffer = ac.createBuffer(2, 2, 3000)
+    // console.log(buffer)
 
-  // let bufferSource: any = ac.createBufferSource()
-  // let someStereoBuffer: ArrayBuffer = null
+    // let bufferSource: any = ac.createBufferSource()
+    // let someStereoBuffer: ArrayBuffer = null
 
-  // console.log(analyser.channelCount)
-  // var source = ac.createBufferSource()
+    // console.log(analyser.channelCount)
+    // var source = ac.createBufferSource()
 
-  // var bufferSource = ac.createBuffer(2, 5000, ac.sampleRate);
-  // var bufferSource = ac.createBufferSource()
-  // const buffer = new ArrayBuffer(8)
+    // var bufferSource = ac.createBuffer(2, 5000, ac.sampleRate);
+    // var bufferSource = ac.createBufferSource()
+    // const buffer = new ArrayBuffer(8)
 
-  // ac.decodeAudioData(buffer, function (data) {
-  // var bufferSurce = ac.createBufferSource()
-  // bufferSurce.buffer = data
-  // var splitter = ac.createChannelSplitter(2)
-  // // bufferSource.connect(splitter)
-  // var merger = ac.createChannelMerger(2)
+    // ac.decodeAudioData(buffer, function (data) {
+    // var bufferSurce = ac.createBufferSource()
+    // bufferSurce.buffer = data
+    // var splitter = ac.createChannelSplitter(2)
+    // // bufferSource.connect(splitter)
+    // var merger = ac.createChannelMerger(2)
 
-  // console.log(splitter)
+    // console.log(splitter)
 
-  // Reduce the volume of the left channel only
-  // var gainNode = ac.createGain()
-  // gainNode.gain.setValueAtTime(0.5, ac.currentTime)
-  // splitter.connect(gainNode, 0)
+    // Reduce the volume of the left channel only
+    // var gainNode = ac.createGain()
+    // gainNode.gain.setValueAtTime(0.5, ac.currentTime)
+    // splitter.connect(gainNode, 0)
 
-  // // Connect the splitter back to the second input of the merger: we
-  // // effectively swap the channels, here, reversing the stereo image.
-  // gainNode.connect(merger, 0, 1)
-  // splitter.connect(merger, 1, 0)
+    // // Connect the splitter back to the second input of the merger: we
+    // // effectively swap the channels, here, reversing the stereo image.
+    // gainNode.connect(merger, 0, 1)
+    // splitter.connect(merger, 1, 0)
 
-  // var dest = ac.createMediaStreamDestination()
+    // var dest = ac.createMediaStreamDestination()
 
-  // // Because we have used a ChannelMergerNode, we now have a stereo
-  // // MediaStream we can use to pipe the Web Audio graph to WebRTC,
-  // // MediaRecorder, etc.
-  // merger.connect(dest)
-  // // })
+    // // Because we have used a ChannelMergerNode, we now have a stereo
+    // // MediaStream we can use to pipe the Web Audio graph to WebRTC,
+    // // MediaRecorder, etc.
+    // merger.connect(dest)
+    // // })
 
-  // var splitter = context.createChannelSplitter(2)
-  // console.log(splitter)
-  // var merger = context.createChannelMerger(2)
-  // var dest = context.createMediaStreamDestination()
-  // merger.connect(dest)
+    // var splitter = context.createChannelSplitter(2)
+    // console.log(splitter)
+    // var merger = context.createChannelMerger(2)
+    // var dest = context.createMediaStreamDestination()
+    // merger.connect(dest)
 
-  return channels(analyser)
+    return channels(analyser)
 }
 
 function channels(analyser: any) {
-  // let audioChannels: { left: number; right: number } = { left: 0, right: 0 }
-  let channel: number = 0
+    // let audioChannels: { left: number; right: number } = { left: 0, right: 0 }
+    let channel: number = 0
 
-  // TODO: no interval?
-  var array = new Uint8Array(analyser.fftSize)
-  analyser.getByteTimeDomainData(array)
-  // console.log(array)
+    // TODO: no interval?
+    var array = new Uint8Array(analyser.fftSize)
+    analyser.getByteTimeDomainData(array)
+    // console.log(array)
 
-  // ctx.clearRect(0, 0, 512, 512)
+    // ctx.clearRect(0, 0, 512, 512)
 
-  var average = 0
-  var max = 0
-  for (let i = 0; i < array.length; i++) {
-    let a = Math.abs(array[i] - 128)
-    average += a
-    max = Math.max(max, a)
-  }
+    var average = 0
+    var max = 0
+    for (let i = 0; i < array.length; i++) {
+        let a = Math.abs(array[i] - 128)
+        average += a
+        max = Math.max(max, a)
+    }
 
-  average /= array.length
+    average /= array.length
 
-  // const GAIN = 2
-  // audioChannels.left = Math.min(100, (average / 128) * 100 * GAIN)
-  // audioChannels.right = Math.min(100, (average / 128) * 100 * GAIN)
-  // channel = Math.min(100, (average / 128) * 100 * GAIN)
-  channel = (average / 256) * 100
-  // not sure about this
-  if (channel < 25) channel *= 3
-  else if (channel < 50) channel *= 2
-  else if (channel < 75) channel *= 1.2
+    // const GAIN = 2
+    // audioChannels.left = Math.min(100, (average / 128) * 100 * GAIN)
+    // audioChannels.right = Math.min(100, (average / 128) * 100 * GAIN)
+    // channel = Math.min(100, (average / 128) * 100 * GAIN)
+    channel = (average / 256) * 100
+    // not sure about this
+    if (channel < 25) channel *= 3
+    else if (channel < 50) channel *= 2
+    else if (channel < 75) channel *= 1.2
 
-  // console.log((average / 128) * 100)
+    // decibels
 
-  //ctx.fillStyle = 'blue';
-  //ctx.fillRect(0, 512-average, 512, 512);
-  // ctx.beginPath()
-  // ctx.arc(128, 128, average, 0, Math.PI * 2, true)
-  // ctx.arc(128 + 256, 128, max, 0, Math.PI * 2, true)
-  // ctx.closePath()
-  // ctx.fill()
+    analyser.getByteFrequencyData(array)
+    analyser.maxDecibels = -10
+    // analyser.maxDecibels = 0
+    let value = array[0]
+    let percent = value / 255
+    let dB = analyser.minDecibels + (analyser.maxDecibels - analyser.minDecibels) * percent
 
-  // requestAnimationFrame(draw)
-  // return audioChannels
-  return channel
+    return { volume: channel, dB: { value: dB, min: analyser.minDecibels, max: analyser.maxDecibels } }
 }

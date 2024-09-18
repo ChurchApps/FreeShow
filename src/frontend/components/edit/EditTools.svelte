@@ -361,7 +361,7 @@
             })
         }
 
-        let deleteKeys = ["auto", "specialStyle", "scrolling"]
+        let deleteKeys = ["auto", "textFit", "specialStyle", "scrolling"]
         // reset timer/icon/media/mirror etc. style
         if (item[item.type]) deleteKeys = [item.type]
 

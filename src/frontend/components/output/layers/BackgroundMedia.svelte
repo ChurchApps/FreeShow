@@ -186,7 +186,7 @@
         if (updateCount < 2) return
         updateCount = 0
 
-        let current = JSON.stringify($audioChannels)
+        let current = JSON.stringify($audioChannels.volume)
         if (previousChannels === current) return
         previousChannels = current
 

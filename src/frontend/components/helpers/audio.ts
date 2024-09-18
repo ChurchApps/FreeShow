@@ -324,11 +324,11 @@ export function analyseAudio() {
         allAudio = getPlayingOutputVideos(allAudio) // only used in main window
 
         if (!allAudio.length) {
-            audioChannels.set({ left: 0, right: 0 })
+            audioChannels.set({})
             clearInterval(interval)
             interval = null
 
-            send(OUTPUT, ["AUDIO_MAIN"], { channels: { left: 0, right: 0 } })
+            send(OUTPUT, ["AUDIO_MAIN"], { channels: {} })
             return
         }
 
@@ -343,23 +343,54 @@ function mergeAudio(allAudio) {
 
     let allLefts: number[] = []
     let allRights: number[] = []
+    let allLeftsDB: number[] = []
+    let allRightsDB: number[] = []
+    let min: number = -100
+    let max: number = -30 // -10
 
     allAudio.forEach((a: any) => {
         let channels: any
-        if (a.channels !== undefined) channels = a.channels
-        else channels = { left: audioAnalyser(a.analyser.left), right: audioAnalyser(a.analyser.right) }
 
-        if (channels.left > 0 || channels.right > 0) {
-            allLefts.push(channels.left)
-            allRights.push(channels.right)
+        if (a.channels?.volume?.left !== undefined) {
+            channels = { left: { volume: a.channels.volume.left, dB: { ...a.channels.dB, value: a.channels.dB.value.left } }, right: { volume: a.channels.volume.right, dB: { ...a.channels.dB, value: a.channels.dB.value.right } } }
+        } else if (a.analyser) {
+            channels = { left: audioAnalyser(a.analyser.left), right: audioAnalyser(a.analyser.right) }
+        } else return
+
+        if (channels.left.volume > 0 || channels.right.volume > 0) {
+            allLefts.push(channels.left.volume)
+            allRights.push(channels.right.volume)
+        }
+
+        if (typeof channels.left.dB?.value === "number" && typeof channels.right.dB?.value === "number") {
+            allLeftsDB.push(channels.left.dB.value)
+            allRightsDB.push(channels.right.dB.value)
+
+            if (channels.left.dB.min < min) min = channels.left.dB.min
+            if (channels.left.dB.max > max) max = channels.left.dB.max
         }
     })
 
     let merged = { left: 0, right: 0 }
     if (allLefts.length || allRights.length) merged = { left: getHighestNumber(allLefts), right: getHighestNumber(allRights) }
 
-    audioChannels.set(merged)
+    let mergedDB = { left: 0, right: 0 }
+    if (allLeftsDB.length || allRightsDB.length) mergedDB = { left: mergeDB(allLeftsDB), right: mergeDB(allRightsDB) }
+
+    audioChannels.set({ volume: merged, dB: { value: mergedDB, min, max } })
     previousMerge = Date.now()
+}
+
+function mergeDB(array: number[]) {
+    // https://stackoverflow.com/a/22613964
+    let sum = array.reduce((value, number) => (value += Math.pow(10, number / 20)), 0)
+
+    if (!get(special).preFaderVolumeMeter) {
+        // add gain & volume
+        sum *= get(volume) * get(gain)
+    }
+
+    return (Math.log(sum) / Math.LN10) * 20
 }
 
 const extraMargin = 0.1 // s
@@ -461,10 +492,15 @@ function getPlayingOutputVideos(allAudio) {
             }
 
             allAudio[existing].channels = v.channels
+            // allAudio[existing].channels = { left: audioAnalyser(v.analyser.left), right: audioAnalyser(v.analyser.right) }
             return
         }
 
         if (v.paused) return
+
+        // console.log(v.channels, v.analyser)
+        // let channels = { left: audioAnalyser(v.analyser.left), right: audioAnalyser(v.analyser.right) }
+        // v.channels = channels
         allAudio.push(v)
     })
 

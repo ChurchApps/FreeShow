@@ -5,7 +5,7 @@
     import { uid } from "uid"
     import { MAIN } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
-    import { customMessageCredits, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { colorbars, customMessageCredits, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { destroy, receive, send } from "../../utils/request"
     import Draw from "../draw/Draw.svelte"
@@ -20,6 +20,7 @@
     import SlideContent from "./layers/SlideContent.svelte"
     import PdfOutput from "./layers/PdfOutput.svelte"
     import Window from "./Window.svelte"
+    import Image from "../media/Image.svelte"
 
     export let outputId: string = ""
     export let style = ""
@@ -223,8 +224,6 @@
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
     $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
     $: backgroundData = templateBackground ? templateBackgroundData : background
-
-    $: console.log(slide)
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
@@ -236,6 +235,11 @@
     <!-- background -->
     {#if layers.includes("background") && backgroundData}
         <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror={isKeyOutput || mirror} />
+    {/if}
+
+    <!-- colorbars for testing -->
+    {#if $colorbars}
+        <Image path="../assets/{$colorbars}" mediaStyle={{ rendering: "pixelated" }} />
     {/if}
 
     <!-- "underlays" -->

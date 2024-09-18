@@ -40,6 +40,7 @@ import {
     allOutputs,
     audioChannels,
     closeAd,
+    colorbars,
     currentOutputSettings,
     customMessageCredits,
     dataPath,
@@ -444,6 +445,8 @@ export const receiveOUTPUTasOUTPUT: any = {
 
     VOLUME: (a: any) => volume.set(a),
     GAIN: (a: any) => gain.set(a),
+
+    COLORBARS: (a: any) => colorbars.set(a),
 }
 
 // NDI

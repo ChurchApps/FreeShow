@@ -52,12 +52,12 @@
             </Button>
         {/each}
     </div>
-{/if}
 
-<Button style="width: 100%;margin-top: 10px;" on:click={() => activePopup.set("manage_icons")} dark center>
-    <Icon id="edit" style="border: 0;" right />
-    <p style="padding: 0;"><T id="popup.manage_icons" /></p>
-</Button>
+    <Button style="width: 100%;margin-top: 10px;" on:click={() => activePopup.set("manage_icons")} dark center>
+        <Icon id="edit" style="border: 0;" right />
+        <p style="padding: 0;"><T id="popup.manage_icons" /></p>
+    </Button>
+{/if}
 
 <style>
     .grid {

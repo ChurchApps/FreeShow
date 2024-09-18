@@ -81,6 +81,13 @@
         </CombinedInput>
 
         <CombinedInput>
+            <p title={$dictionary.audio?.pre_fader_volume_meter}><T id="audio.pre_fader_volume_meter" /></p>
+            <div class="alignRight">
+                <Checkbox checked={$special.preFaderVolumeMeter || false} on:change={(e) => updateSpecial(isChecked(e), "preFaderVolumeMeter")} />
+            </div>
+        </CombinedInput>
+
+        <CombinedInput>
             <p title={$dictionary.audio?.custom_output}><T id="audio.custom_output" /></p>
             <Dropdown style="width: 100%;" options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail?.id, "audioOutput")} />
         </CombinedInput>

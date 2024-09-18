@@ -119,7 +119,8 @@
         "to_start": "Go to start",
         "nextTimer": "Next slide timer",
         "lock": "Lock",
-        "unlock": "Unlock"
+        "unlock": "Unlock",
+        "test_pattern": "Test pattern"
     },
     "clear": {
         "all": "Clear all",
@@ -177,6 +178,7 @@
         "playlist_settings": "Playlist settings",
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
+        "pre_fader_volume_meter": "Pre fader volume meter",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "tempo": "Tempo",
