@@ -29,10 +29,7 @@
             hold: false,
         },
         zoom: {
-            opacity: 0.8,
-            size: 300,
-            radius: 50,
-            hold: false,
+            size: 200,
         },
         particles: {
             color: "#1e1eb4",

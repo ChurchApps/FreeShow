@@ -5,7 +5,7 @@
     import { uid } from "uid"
     import { MAIN } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
-    import { colorbars, customMessageCredits, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { colorbars, customMessageCredits, drawSettings, drawTool, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { destroy, receive, send } from "../../utils/request"
     import Draw from "../draw/Draw.svelte"
@@ -224,9 +224,12 @@
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
     $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
     $: backgroundData = templateBackground ? templateBackgroundData : background
+
+    // draw zoom
+    $: drawZoom = $drawTool === "zoom" ? ($drawSettings.zoom?.size || 200) / 100 : 1
 </script>
 
-<Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} center {style} {resolution} {mirror} cropping={currentStyle.cropping} bind:ratio>
+<Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} center {style} {resolution} {mirror} {drawZoom} cropping={currentStyle.cropping} bind:ratio>
     <!-- always show style background (behind other backgrounds) -->
     {#if styleBackground && slide?.type !== "pdf"}
         <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror styleBackground />

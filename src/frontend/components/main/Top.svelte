@@ -33,7 +33,7 @@
     </span>
     <span style="width: var(--navigation-width);justify-content: flex-end;">
         <!-- <TopButton id="stage" hideLabel /> -->
-        <TopButton id="draw" red={$drawTool === "fill" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
+        <TopButton id="draw" red={$drawTool === "fill" || $drawTool === "zoom" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
         <TopButton id="settings" hideLabel />
         <Button title={($outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display) + " [Ctrl+O]"} on:click={displayOutputs} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay}>
             {#if $outputDisplay}

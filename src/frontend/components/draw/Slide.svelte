@@ -45,11 +45,13 @@
             if (e.ctrlKey || e.metaKey) newSize = 25
 
             let direction: number = e.deltaY > 0 ? 1 : -1
-            newSize = Math.max(1, Math.min(2000, a[$drawTool].size - newSize * direction))
+            const previousSize = a[$drawTool].size
+            newSize = Math.max(1, Math.min(2000, previousSize - newSize * direction))
 
-            let sizeDiff = newSize - a[$drawTool].size
+            let sizeDiff = newSize - previousSize
             a[$drawTool].size = newSize
 
+            if ($drawTool === "zoom") sizeDiff = 0
             if ($draw) draw.set({ x: $draw.x - sizeDiff / 2, y: $draw.y - sizeDiff / 2 })
 
             return a

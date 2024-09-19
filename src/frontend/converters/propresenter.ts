@@ -16,6 +16,26 @@ export function convertProPresenter(data: any) {
 
     let categoryId = createCategory("ProPresenter")
 
+    // JSON Bundle
+    let newData: any[] = []
+    data?.forEach(({ content, name, extension }: any) => {
+        if (extension !== "json") return
+
+        let song: any = {}
+        try {
+            song = JSON.parse(content)
+        } catch (err) {
+            console.error(err)
+        }
+
+        if (Array.isArray(song.data)) {
+            song.data.forEach((data) => {
+                newData.push({ content: data, name, extension: "jsonbundle" })
+            })
+        }
+    })
+    if (newData.length) data = newData
+
     let tempShows: any[] = []
 
     setTimeout(() => {
@@ -33,6 +53,8 @@ export function convertProPresenter(data: any) {
                 } catch (err) {
                     console.error(err)
                 }
+            } else if (extension === "jsonbundle") {
+                song = content
             } else {
                 song = xml2json(content)?.RVPresentationDocument
             }
@@ -41,8 +63,8 @@ export function convertProPresenter(data: any) {
 
             let layoutID = uid()
             let show = new ShowObj(false, categoryId, layoutID)
-            let showId = song["@uuid"] || song.uuid?.string || uid()
-            show.name = checkName(song.name === "Untitled" ? name : song.name || name, showId)
+            let showId = song["@uuid"] || song.uuid?.string || song._id || uid()
+            show.name = checkName(song.name === "Untitled" ? name : song.name || song.title || name, showId)
 
             // propresenter often uses the same id for duplicated songs
             let existingShow = get(shows)[showId] || tempShows.find((a) => a.id === showId)?.show
@@ -50,15 +72,18 @@ export function convertProPresenter(data: any) {
 
             let converted: any = {}
 
-            if (extension === "json") {
-                converted = convertJSONToSlides(song)
-            } else if (extension === "pro") {
+            if (extension === "pro") {
                 converted = convertProToSlides(song)
+            } else if (extension === "json") {
+                converted = convertJSONToSlides(song)
+            } else if (extension === "jsonbundle") {
+                converted = convertJSONBundleToSlides(song)
             } else {
                 converted = convertToSlides(song, extension)
             }
 
             let { slides, layouts, media }: any = converted
+            if (!Object.keys(slides).length) return
 
             show.slides = slides
             show.layouts = {}
@@ -67,8 +92,9 @@ export function convertProPresenter(data: any) {
             show.meta = initializeMetadata({
                 title: song["@CCLISongTitle"] || song.ccli?.songTitle,
                 artist: song["@CCLIArtistCredits"],
-                author: song["@CCLIAuthor"] || song.ccli?.author,
+                author: song["@CCLIAuthor"] || song.ccli?.author || song.author,
                 publisher: song["@CCLIPublisher"] || song.ccli?.publisher,
+                copyright: song.copyrights_info,
                 CCLI: song["@CCLISongNumber"] || song.ccli?.songNumber,
                 year: song["@CCLICopyrightYear"] || song.ccli?.copyrightYear,
             })
@@ -86,6 +112,47 @@ export function convertProPresenter(data: any) {
 
         setTempShows(tempShows)
     }, 10)
+}
+
+function convertJSONBundleToSlides(song: any) {
+    let slides: any = {}
+    let layoutSlides: any = []
+
+    const parentId = uid()
+    let children: string[] = []
+
+    console.log(song.lyrics)
+    song.lyrics.forEach(({ lyrics }) => {
+        if (!lyrics) return
+
+        const parent = !Object.keys(slides).length
+        let id: string = parent ? parentId : uid()
+
+        if (parent) layoutSlides.push({ id })
+
+        lyrics = lyrics.replaceAll("<p>", "").replaceAll("</p>", "")
+        let items = [
+            {
+                style: itemStyle,
+                lines: lyrics.split("<br>").map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
+            },
+        ]
+
+        slides[id] = newSlide({ items })
+
+        if (parent) {
+            slides[id].group = ""
+            if (get(groups).verse) slides[id].globalGroup = "verse"
+        } else {
+            children.push(id)
+        }
+    })
+
+    slides[parentId].children = children
+
+    let layouts = [{ id: uid(), name: "", notes: "", slides: layoutSlides }]
+    console.log(layouts, slides)
+    return { slides, layouts }
 }
 
 const JSONgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }

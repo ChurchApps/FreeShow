@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Cropping, Resolution } from "../../../types/Settings"
-    import { outputs, styles } from "../../stores"
+    import { draw, outputs, styles } from "../../stores"
     import { getActiveOutputs, getResolution } from "../helpers/output"
 
     export let id: string = ""
@@ -11,6 +11,7 @@
     export let mirror: boolean = false
     export let showMirror: boolean = false
     export let disableStyle: boolean = false
+    export let drawZoom: number = 1
 
     export let outline: string = ""
     export let disabled: boolean = false
@@ -52,6 +53,8 @@
 
         return style
     }
+
+    // $: zoomTransform = 50 * (drawZoom - 1) * -1
 </script>
 
 <div {id} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}">
@@ -65,7 +68,14 @@
         style="{$$props.style || ''}background-color: {background};transition: {backgroundDuration}ms background-color;{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};"
     >
         {#if zoom}
-            <span class="zoom" style="zoom: {ratio};">
+            <span
+                class="zoom"
+                style="zoom: {ratio};{drawZoom === 1
+                    ? ''
+                    : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` +
+                      ($draw ? `left: ${($draw.x / resolution.width - 0.5) * (drawZoom - 1) * -1 * 100}%;top: ${($draw.y / resolution.height - 0.5) * (drawZoom - 1) * -1 * 100}%;` : '')}"
+            >
+                <!-- ($draw ? `left: calc(${zoomTransform}% + ${($draw.x / resolution.width - 0.5) * -2 * 100}%);top: calc(${zoomTransform}% + ${($draw.y / resolution.height - 0.5) * -2 * 100}%);` : `left: ${zoomTransform}%;top: ${zoomTransform}%;`)}" -->
                 <slot {ratio} />
             </span>
         {:else}

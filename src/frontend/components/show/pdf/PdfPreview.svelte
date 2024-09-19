@@ -12,16 +12,17 @@
     import { getViewportSizes } from "./pdfData"
 
     export let show
+    $: path = show.id
 
     let viewports: { width: number; height: number }[] = []
     let pages = 0
-    $: if (show.id) getPdfPages()
+    $: if (path) getPdfPages()
 
     async function getPdfPages() {
-        viewports = await getViewportSizes(show.id)
+        viewports = await getViewportSizes(path)
         if ($activeShow) activeShow.set({ ...$activeShow, data: { viewports } })
 
-        // pages = await getPages(show.id)
+        // pages = await getPages(path)
         pages = viewports.length
     }
 
@@ -30,7 +31,7 @@
     // set active if output
     let active: number = -1
     $: outSlide = $outputs[activeOutput].out?.slide
-    $: if (outSlide?.type === "pdf" && outSlide?.id === show.id) active = outSlide?.page || 0
+    $: if (outSlide?.type === "pdf" && outSlide?.id === path) active = outSlide?.page || 0
     else active = -1
 
     // WIP multiple outputs
@@ -39,8 +40,8 @@
     function outputPdf(e: any, page: number) {
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
-        let name = show.name || removeExtension(getFileName(show.id))
-        setOutput("slide", { type: "pdf", id: show.id, page, pages, viewport: viewports[page], name })
+        let name = show.name || removeExtension(getFileName(path))
+        setOutput("slide", { type: "pdf", id: path, page, pages, viewport: viewports[page], name })
 
         clearBackground()
     }
@@ -69,32 +70,47 @@
 
     function convertToImages() {
         newToast("$actions.converting")
-        send(MAIN, ["PDF_TO_IMAGE"], { dataPath: $dataPath, path: show.id })
+        send(MAIN, ["PDF_TO_IMAGE"], { dataPath: $dataPath, path: path })
+    }
+
+    // slow loader
+    let currentIndex: number = 1
+    $: if (path) startLoading(true)
+    let loadingTimeout: any = null
+    function startLoading(reset: boolean = false) {
+        if (reset) currentIndex = 1
+        if (loadingTimeout) clearTimeout(loadingTimeout)
+        loadingTimeout = setTimeout(() => {
+            currentIndex++
+            if (currentIndex < pages) startLoading()
+        }, 100)
     }
 </script>
 
 <!-- SHOW FULL PREVIEW: -->
 <!-- https://stackoverflow.com/a/64490933/10803046 -->
-<!-- <iframe src="{show.id}#toolbar=1" frameborder="0"></iframe> -->
+<!-- <iframe src="{path}#toolbar=1" frameborder="0"></iframe> -->
 
 <div class="grid" on:wheel={wheel}>
     {#each [...Array(pages)] as _, page}
-        <div class="main" class:active={active === page} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pages > 1 ? $slidesOptions.columns : 1)}%;">
-            <div class="slide" tabindex={0} on:click={(e) => outputPdf(e, page)}>
-                {#if viewports[page]}
-                    <!-- 16 / 9 < -->
-                    <div
-                        class="center"
-                        class:wide={(viewports[page].width + EXTRA_RATIO) / viewports[page].height < viewports[page].width / viewports[page].height}
-                        style="aspect-ratio: {viewports[page].width / viewports[page].height};--background: {currentStyle.background || 'black'};"
-                    ></div>
-                {/if}
+        {#if page < currentIndex}
+            <div class="main" class:active={active === page} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pages > 1 ? $slidesOptions.columns : 1)}%;">
+                <div class="slide" tabindex={0} on:click={(e) => outputPdf(e, page)}>
+                    {#if viewports[page]}
+                        <!-- 16 / 9 < -->
+                        <div
+                            class="center"
+                            class:wide={(viewports[page].width + EXTRA_RATIO) / viewports[page].height < viewports[page].width / viewports[page].height}
+                            style="aspect-ratio: {viewports[page].width / viewports[page].height};--background: {currentStyle.background || 'black'};"
+                        ></div>
+                    {/if}
 
-                {#key $slidesOptions.columns}
-                    <iframe src="{show.id}#toolbar=0&view=fit&page={page + 1}" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no" style="aspect-ratio: {viewports[page].width + EXTRA_RATIO} / {viewports[page].height};"></iframe>
-                {/key}
+                    {#key $slidesOptions.columns}
+                        <iframe src="{path}#toolbar=0&view=fit&page={page + 1}" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no" style="aspect-ratio: {viewports[page].width + EXTRA_RATIO} / {viewports[page].height};"></iframe>
+                    {/key}
+                </div>
             </div>
-        </div>
+        {/if}
     {/each}
 </div>
 

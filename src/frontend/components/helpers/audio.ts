@@ -286,10 +286,10 @@ export function clearAudioStreams(id: string = "") {
 
 // const audioUpdateInterval: number = 100 // ms
 const audioUpdateInterval: number = 50 // ms
-let interval: any = null
+let analyseTimeout: any = null
 let isCrossfading: boolean = false
 export function analyseAudio() {
-    if (interval) return
+    if (analyseTimeout) return
 
     let allAudio: any[] = []
 
@@ -297,43 +297,55 @@ export function analyseAudio() {
     // if (get(volume) && get(playingVideos).length) get(playingVideos).map((a) => allAudio.push({ ...a }))
 
     let updateAudio: number = 10
-    interval = setInterval(() => {
-        // get new audio
-
-        let playlistPath: string = get(activePlaylist)?.active || ""
-        if (!isfading && playlistPath && !get(media)[playlistPath]?.loop) {
-            if (isCrossfading) return
-
-            let crossfadeDuration = checkCrossfade()
-            if (crossfadeDuration) {
-                isCrossfading = true
-                setTimeout(() => (isCrossfading = false), crossfadeDuration)
+    let previousUpdate = 0
+    timeoutRun()
+    function timeoutRun() {
+        analyseTimeout = setTimeout(() => {
+            let timeSinceLast = Date.now() - previousUpdate
+            if (timeSinceLast > 100 && timeSinceLast < 200) {
+                // skip if overloaded
+                analyseTimeout = setTimeout(timeoutRun, audioUpdateInterval)
                 return
             }
-        } else {
-            isCrossfading = false
-        }
 
-        updateAudio++
-        if (updateAudio >= 10) {
-            updateAudio = 0
-            allAudio = getPlayingAudio()
-            allAudio.push(...getPlayingVideos()) // only used in output window I guess
-        }
+            // get new audio
 
-        allAudio = getPlayingOutputVideos(allAudio) // only used in main window
+            let playlistPath: string = get(activePlaylist)?.active || ""
+            if (!isfading && playlistPath && !get(media)[playlistPath]?.loop) {
+                if (isCrossfading) return
 
-        if (!allAudio.length) {
-            audioChannels.set({})
-            clearInterval(interval)
-            interval = null
+                let crossfadeDuration = checkCrossfade()
+                if (crossfadeDuration) {
+                    isCrossfading = true
+                    setTimeout(() => (isCrossfading = false), crossfadeDuration)
+                    return
+                }
+            } else {
+                isCrossfading = false
+            }
 
-            send(OUTPUT, ["AUDIO_MAIN"], { channels: {} })
-            return
-        }
+            updateAudio++
+            if (updateAudio >= 10) {
+                updateAudio = 0
+                allAudio = getPlayingAudio()
+                allAudio.push(...getPlayingVideos()) // only used in output window I guess
+            }
 
-        mergeAudio(allAudio)
-    }, audioUpdateInterval)
+            allAudio = getPlayingOutputVideos(allAudio) // only used in main window
+
+            if (!allAudio.length) {
+                audioChannels.set({})
+                clearTimeout(analyseTimeout)
+                analyseTimeout = null
+
+                send(OUTPUT, ["AUDIO_MAIN"], { channels: {} })
+                return
+            }
+
+            mergeAudio(allAudio)
+            timeoutRun()
+        }, audioUpdateInterval)
+    }
 }
 
 let previousMerge = 0
