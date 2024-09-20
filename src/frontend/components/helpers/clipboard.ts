@@ -47,7 +47,7 @@ import { newToast, triggerFunction } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { setCaret } from "../edit/scripts/textStyle"
-import { clone, removeDuplicates } from "./array"
+import { clone, keysToID, removeDeleted, removeDuplicates } from "./array"
 import { pasteText } from "./caretHelper"
 import { history } from "./history"
 import { getFileName, removeExtension } from "./media"
@@ -300,7 +300,7 @@ const selectActions: any = {
         selected.set({ id: "folder", data: newSelection })
     },
     project: () => {
-        let newSelection: any[] = Object.keys(get(projects)).map((id) => ({ type: "project", id }))
+        let newSelection: any[] = removeDeleted(keysToID(get(projects))).map(({ id }) => ({ type: "project", id }))
         selected.set({ id: "project", data: newSelection })
     },
     show: () => {
@@ -872,7 +872,7 @@ const duplicateActions = {
                     duplicateFolder(folder.id!, newId)
                 })
 
-                let projectList = Object.values(get(projects)).filter((a) => a.parent === oldParent)
+                let projectList = removeDeleted(keysToID(get(projects))).filter((a) => a.parent === oldParent)
                 projectList.forEach((project) => {
                     newProjects.push({ ...clone(project), parent: newParent })
                 })

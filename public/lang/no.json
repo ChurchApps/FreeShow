@@ -7,10 +7,15 @@
         "unnamed": "Uten navn",
         "drop": "Slipp her",
         "search": "Søk",
+        "quick_search": "Hurtigsøk",
         "none": "Ingen",
         "finished": "Fullført",
         "open": "Åpne",
         "system_open": "Vis i systemet"
+    },
+    "guide": {
+        "start": "Hurtigstart-guide",
+        "skip": "Hopp over"
     },
     "titlebar": {
         "file": "Fil",
@@ -114,7 +119,8 @@
         "to_start": "Gå til start",
         "nextTimer": "Tid til neste lysbilde",
         "lock": "Lås",
-        "unlock": "Lås opp"
+        "unlock": "Lås opp",
+        "test_pattern": "Prøvebilde"
     },
     "clear": {
         "all": "Fjern alt",
@@ -172,6 +178,7 @@
         "playlist_settings": "Innstillinger for spilleliste",
         "custom_output": "Egendefinert lydutgang",
         "mute_when_video_plays": "Demp når video spilles",
+        "pre_fader_volume_meter": "Vis volumnivå før fadere",
         "metronome": "Metronom",
         "toggle_metronome": "Veksle metronom",
         "tempo": "Tempo",
@@ -755,6 +762,7 @@
         "different_first_template": "Egen mal på første lysbilde",
         "media_fit": "Tilpass medier",
         "size": "Størrelse",
+        "max_lines": "Maks linjer",
         "chords": "Akkorder",
         "transpose": "Transponer",
         "auto_size": "Auto-størrelse",
@@ -908,6 +916,7 @@
     "midi": {
         "midi": "MIDI",
         "activate": "Aktiver ved MIDI signal",
+        "activate_keypress": "Aktiver med tastetrykk",
         "name": "Navn",
         "input": "Inngang",
         "output": "Utgang",
@@ -925,6 +934,7 @@
     "draw": {
         "focus": "Fokus",
         "pointer": "Peker",
+        "zoom": "Zoom",
         "fill": "Fyll",
         "paint": "Maling",
         "particles": "Partikler",
@@ -1065,6 +1075,7 @@
         "reset_theme": "Tilbakestill tema",
         "reset_themes": "Tilbakestill temaer",
         "capitalize_words": "Endre til stor forbokstav",
+        "comma_seperated": "Separer med komma",
         "backup_all": "Sikkerhetskopier alt",
         "restore": "Gjenopprett",
         "backup_started": "Sikkerhetskopierer...",
@@ -1151,6 +1162,7 @@
         "opening": "Åpner! Vent litt...",
         "retry": "Prøv å åpne manuellt, eller",
         "try_again": "Prøv igjen",
+        "restart": "Omstart",
         "start": "Start",
         "choose_window": "Velg et vindu"
     },

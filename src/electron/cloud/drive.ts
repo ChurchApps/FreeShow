@@ -166,6 +166,7 @@ export async function downloadFile(fileId: string) {
 }
 
 const SHOWS_CONTENT = "SHOWS_CONTENT"
+const combineLocations = ["PROJECTS"]
 const storesToSave = ["EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTINGS", "STAGE_SHOWS", "TEMPLATES", "THEMES", "MEDIA"]
 // don't upload: settings.json, config.json, cache.json, history.json
 
@@ -215,6 +216,28 @@ export async function syncDataDrive(data: any) {
         let matchingContent: boolean = driveContent && JSON.stringify(driveContent) === storeContent
 
         if (matchingContent) return
+
+        // combine
+        if (data.method !== "upload" && data.method !== "download" && driveFile && storeContent && combineLocations.includes(id)) {
+            const project = () => ({ projects: combineFiles(driveContent.projects, store.store.projects, newest), folders: combineFiles(driveContent.folders, store.store.folders, newest) })
+            const combined = id === "PROJECTS" ? project() : combineFiles(driveContent, store.store, newest)
+
+            // download
+            toApp(STORE, { channel: id, data: combined })
+            changes.push({ type: "config", action: "download", name })
+
+            // upload
+            let file = createFile(data.mainFolderId, { type: "json", name }, JSON.stringify(combined))
+            let response = await uploadFile(file, driveFileId)
+            if (response?.status != 200) {
+                changes.push({ type: "config", action: "upload_failed", name })
+                return
+            }
+            changes.push({ type: "config", action: "upload", name })
+
+            if (DEBUG) console.log("COMBINED " + name)
+            return
+        }
 
         // download
         if (driveFile && (newest === "cloud" || data.method === "download") && data.method !== "upload") {
@@ -484,6 +507,19 @@ async function getNewest({ driveFile, localPath }: any) {
     if (driveModified > storeModified + TEN_SECONDS_MS) return "cloud"
 
     return "same"
+}
+
+// combine local & cloud based on modified
+function combineFiles(cloudContent: any, localContent: any, newest: string) {
+    let content = newest === "cloud" ? cloudContent : localContent
+    const olderContent = newest === "cloud" ? localContent : cloudContent
+
+    Object.keys(olderContent).forEach((id) => {
+        const olderIsNewer = (content[id]?.modified || 0) < (olderContent[id]?.modified || 0)
+        if (!content[id] || olderIsNewer) content[id] = olderContent[id]
+    })
+
+    return content
 }
 
 // a custom drive media folder is not planned as discussed here:

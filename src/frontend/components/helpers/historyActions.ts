@@ -134,7 +134,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 data = { ...data, data: clone(a[id]) }
 
                 if (previousData) a[id] = previousData
-                else delete a[id]
+                else {
+                    if (updater.cloudCombine) a[id] = { id, deleted: true }
+                    else delete a[id]
+                }
 
                 return a
             }
@@ -159,6 +162,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (subkey && index !== undefined && index > -1 && !Array.isArray(a[id][key][subkey])) delete data.previousData
 
+                if (initializing && updater.timestamp) a[id].modified = Date.now()
                 if (data.previousData === data.data) error("Previous data is the same as current data. Try using clone()!")
                 return a
             }

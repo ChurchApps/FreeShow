@@ -5,6 +5,7 @@ import { createDefaultShow } from "../../utils/createData"
 import { loadShows } from "../helpers/setShow"
 import { nextSlide } from "../helpers/showActions"
 import { clearAll } from "../output/clear"
+import { keysToID, removeDeleted } from "../helpers/array"
 
 export const guideSteps = [
     {
@@ -45,8 +46,8 @@ export const guideSteps = [
         query: "#projectArea",
         pre: () => {
             let projectId = "default"
-            if (!get(projects)[projectId]) {
-                if (Object.keys(get(projects)).length) projectId = Object.keys(get(projects))[0]
+            if (!get(projects)[projectId] || get(projects)[projectId].deleted) {
+                if (removeDeleted(keysToID(get(projects))).length) projectId = Object.keys(get(projects))[0]
                 else {
                     projects.update((a) => {
                         a.default = {

@@ -89,8 +89,9 @@ export const _updaters = {
     project: {
         store: projects,
         empty: EMPTY_PROJECT,
+        cloudCombine: true,
         initialize: (data) => {
-            return replaceEmptyValues(data, { name: getProjectName(), created: Date.now() })
+            return replaceEmptyValues(data, { name: getProjectName(), created: Date.now(), modified: Date.now() })
         },
         select: (id: string, { data }: any, initializing: boolean) => {
             activeProject.set(id)
@@ -128,8 +129,9 @@ export const _updaters = {
     project_folder: {
         store: folders,
         empty: EMPTY_PROJECT_FOLDER,
+        cloudCombine: true,
         initialize: (data) => {
-            return replaceEmptyValues(data, { created: Date.now() })
+            return replaceEmptyValues(data, { created: Date.now(), modified: Date.now() })
         },
         select: (id: string, { data, changed }: any, initializing: boolean) => {
             // open parent folders if closed
@@ -196,10 +198,13 @@ export const _updaters = {
         },
     },
 
-    project_key: { store: projects },
-    project_folder_key: { store: folders },
+    project_key: {
+        store: projects,
+        timestamp: true,
+    },
+    project_folder_key: { store: folders, timestamp: true },
 
-    project_ref: { store: projects },
+    project_ref: { store: projects, timestamp: true },
     section: {
         store: projects,
         empty: EMPTY_SECTION,
@@ -335,7 +340,7 @@ export const _updaters = {
         select: (id: string, data: any) => {
             // add to current(stored) project
             let showRef: any = { id, type: "show" }
-            if (data.remember?.project && get(projects)[data.remember.project]) {
+            if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
                 projects.update((p) => {
                     p[data.remember.project].shows.push({ id })
                     return p
@@ -372,7 +377,7 @@ export const _updaters = {
             if (get(activeShow)?.id === id) activeShow.set(null)
 
             // remove from stored project
-            if (data.remember?.project && get(projects)[data.remember.project]) {
+            if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
                 projects.update((a) => {
                     a[data.remember.project].shows = a[data.remember.project].shows.filter((a) => a.id !== id)
                     return a

@@ -18,8 +18,12 @@
     import ProjectList from "./ProjectList.svelte"
 
     let tree: Tree[] = []
-    $: f = Object.entries($folders).map(([id, folder]) => ({ ...folder, id, type: "folder" as "folder" }))
-    $: p = Object.entries($projects).map(([id, project]) => ({ ...project, id, shows: [] as any }))
+    $: f = Object.entries($folders)
+        .filter(([_, a]) => !a.deleted)
+        .map(([id, folder]) => ({ ...folder, id, type: "folder" as "folder" }))
+    $: p = Object.entries($projects)
+        .filter(([_, a]) => !a.deleted)
+        .map(([id, project]) => ({ ...project, parent: $folders[project.parent] ? project.parent : "/", id, shows: [] as any }))
     $: {
         let sortType = $sorted.projects?.type || "name"
         // sort by name regardless because project folders <= 0.9.5 doesn't have created date

@@ -47,7 +47,7 @@
         let currentTransition = transition.between || transition.in || transition
         if (currentTransition?.type === "none") currentTransition.duration = 0
 
-        let currentTransitionDuration = transitionEnabled ? itemTransitionDuration ?? currentTransition?.duration ?? 0 : 0
+        let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
         let waitToShow = currentTransitionDuration * 0.5
 
         // between
@@ -77,7 +77,7 @@
     }
 </script>
 
-{#key show}
+{#key show && outSlide}
     {#each currentItems as item}
         {#if show}
             <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} {currentSlide} {item} {outSlide} {lines} {customTemplate} let:customSlide let:customItem let:customLines let:customOut>

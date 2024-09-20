@@ -102,6 +102,12 @@ export function removeValues(object: any[], key: string, value: any): any[] {
     return object.filter((o: any) => o[key] !== value)
 }
 
+// remove deleted values (used by cloud sync)
+export function removeDeleted<T>(object: T): T {
+    if (!Array.isArray(object)) return object
+    return (object as any).filter((o) => !o.deleted)
+}
+
 // change values from one object to another
 export function changeValues(object: any, values: { [key: string]: any }) {
     Object.entries(values).forEach(([key, value]: any) => {
