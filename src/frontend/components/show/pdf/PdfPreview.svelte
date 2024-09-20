@@ -106,7 +106,7 @@
                     {/if}
 
                     {#key $slidesOptions.columns}
-                        <iframe src="{path}#toolbar=0&view=fit&page={page + 1}" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no" style="aspect-ratio: {viewports[page].width + EXTRA_RATIO} / {viewports[page].height};"></iframe>
+                        <iframe src="{path}#toolbar=0&view=fit&page={page + 1}" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no" style="aspect-ratio: {viewports[page]?.width + EXTRA_RATIO} / {viewports[page]?.height};"></iframe>
                     {/key}
                 </div>
             </div>
