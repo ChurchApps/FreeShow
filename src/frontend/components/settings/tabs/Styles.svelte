@@ -243,13 +243,19 @@
         center
     >
         <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="screen" right />
-            <p style="padding: 0;"><T id="actions.change_transition" /></p>
+            <Icon id="transition" right />
+            <p style="padding: 0;">
+                {#if currentStyle.transition}
+                    <T id="actions.change_transition" />
+                {:else}
+                    <T id="popup.transition" />
+                {/if}
+            </p>
         </div>
     </Button>
     {#if currentStyle.transition}
         <Button
-            title={$dictionary.actions?.remove}
+            title={$dictionary.remove?.transition}
             on:click={() => {
                 updateStyle("", "transition")
             }}

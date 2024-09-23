@@ -320,6 +320,8 @@
     </Button>
 </CombinedInput>
 
+<div class="filler" />
+
 <style>
     .path {
         display: flex;
@@ -336,4 +338,8 @@
         height: 2px;
         background-color: var(--primary-lighter);
     } */
+
+    .filler {
+        height: 18px;
+    }
 </style>

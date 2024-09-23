@@ -23,4 +23,4 @@
     }
 </script>
 
-<Dropdown value={getNameWithFlag($language)} {options} on:click={(e) => setLanguage(e.detail.id)} />
+<Dropdown flags value={getNameWithFlag($language)} {options} on:click={(e) => setLanguage(e.detail.id)} />

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { currentOutputSettings, outputs } from "../../../stores"
+    import { currentOutputSettings, outputs, dictionary, activePopup } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -34,6 +34,10 @@
 
     const isChecked = (e: any) => e.target.checked
 </script>
+
+<Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => activePopup.set("choose_screen")}>
+    <Icon id="back" size={2} white />
+</Button>
 
 <div>
     <p style="margin-bottom: 10px;"><T id="settings.manual_drag_hint" /></p>

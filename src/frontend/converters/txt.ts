@@ -11,12 +11,13 @@ import { linesToTextboxes } from "../components/show/formatTextEditor"
 import { activeProject, dictionary, formatNewShow, groups, splitLines } from "../stores"
 
 export function getQuickExample() {
+    let tip = get(dictionary).create_show?.quick_lyrics_example_tip || ""
     let line = get(dictionary).create_show?.quick_lyrics_example_text || "Line"
     let verse = get(dictionary).groups?.verse || "Verse"
     let chorus = get(dictionary).groups?.chorus || "Chorus"
 
     // [Verse]\nLine 1\nLine 2\n\nLine 3\nLine 4\n\n[Chorus]\nLine 1\nLine 2\nx2
-    return `[${verse}]\n${line} 1\n${line} 2\n\n${line} 3\n${line} 4\n\n[${chorus}]\n${line} 1\n${line} 2\nx2`
+    return `${tip}...\n\n[${verse}]\n${line} 1\n${line} 2\n\n${line} 3\n${line} 4\n\n[${chorus}]\n${line} 1\n${line} 2\nx2`
 }
 
 // convert .txt files to shows

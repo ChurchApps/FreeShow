@@ -1,8 +1,14 @@
-<textarea class="edit" placeholder={$$props.placeholder || null} value={$$props.value} style={$$props.style} class:center={$$props.center} on:input />
+<script lang="ts">
+    export let value: string
+    export let placeholder: string = ""
+    export let style: string = ""
 
-<!-- <div class="edit" style={$$props.style} class:center={$$props.center} contenteditable>
-  {$$props.value}
-</div> -->
+    export let center: boolean = false
+    export let autofocus: boolean = false
+</script>
+
+<textarea class="edit" {placeholder} {value} {style} class:center {autofocus} on:input />
+
 <style>
     textarea {
         background-color: var(--primary-darker);

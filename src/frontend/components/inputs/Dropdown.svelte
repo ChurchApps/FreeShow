@@ -16,6 +16,7 @@
     export let value: string
     export let activeId: string = ""
     export let title: string = ""
+    export let flags: boolean = false
     let normalizedValue: any = value
     $: (normalizedValue = value || options[0]?.name || "—"), $language
 
@@ -63,7 +64,7 @@
     }}
 />
 
-<div class:disabled class:center bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
+<div class:disabled class:center class:flags bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
     <button {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
         {#if arrow}
             <Icon id="expand" size={1.2} white />
@@ -97,6 +98,20 @@
 </div>
 
 <style>
+    .dropdownElem.flags {
+        font-family:
+            "NotoColorEmojiLimited",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            Oxygen-Sans,
+            Ubuntu,
+            Cantarell,
+            "Helvetica Neue",
+            sans-serif !important;
+    }
+
     div {
         /* width: fit-content;
     min-width: 200px; */
