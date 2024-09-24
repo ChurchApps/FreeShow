@@ -146,22 +146,6 @@
         opacity: 0.9;
     }
 
-    .search {
-        display: flex;
-        align-items: center;
-
-        align-self: center;
-    }
-    .search.loading {
-        padding: 0 6px;
-    }
-
-    /* loader */
-    .search :global(div) {
-        width: 25px;
-        height: 25px;
-    }
-
     .searchResultTable {
         /* width: 100%; */
         table-layout: fixed;

@@ -111,6 +111,7 @@ export const refreshEditSlide: Writable<boolean> = writable(false)
 export const refreshListBoxes: Writable<number> = writable(-1)
 export const triggerAutoSplit: Writable<boolean> = writable(false)
 export const storedEditMenuState: Writable<any> = writable({})
+export const copyPasteEdit: Writable<any> = writable({})
 
 // OTHER
 export const notFound: Writable<any> = writable({ show: [], bible: [] })

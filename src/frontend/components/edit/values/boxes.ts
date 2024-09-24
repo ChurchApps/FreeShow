@@ -513,7 +513,7 @@ export const boxes: Box = {
         },
     },
     icon: {
-        icon: "icon",
+        icon: "star",
         edit: {
             default: [{ name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" }],
         },
