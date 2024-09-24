@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, outputs, toggleOutputEnabled } from "../../../stores"
+    import { colorbars, dictionary, outputs, toggleOutputEnabled } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
@@ -15,7 +15,7 @@
     let fullscreen: boolean = false
     let fullscreenId = ""
     function toggleFullscreen(e: any) {
-        if (!e.target.closest(".multipleOutputs")) return
+        if (!e.target.closest(".multipleOutputs") || e.target.closest("button")) return
 
         if (fullscreen) {
             fullscreen = false
@@ -52,6 +52,11 @@
         <span class="resolution">
             <p><b><T id="screen.width" />:</b> {resolution?.width || 0} <T id="screen.pixels" /></p>
             <p><b><T id="screen.height" />:</b> {resolution?.height || 0} <T id="screen.pixels" /></p>
+
+            <Button style="background-color: var(--primary-darkest);" on:click={() => colorbars.set($colorbars ? "" : "colorbars.png")} outline={!!$colorbars} center>
+                <Icon id="test" white={!$colorbars} right />
+                <T id="preview.test_pattern" />
+            </Button>
         </span>
     {/if}
 
@@ -100,17 +105,17 @@
         flex-direction: column;
         gap: 5px;
         padding: 10px 12px;
-        opacity: 0.8;
         transition: opacity ease-in-out 0.2s;
 
         z-index: 30;
     }
-    .resolution:hover {
+    /* .resolution:hover {
         opacity: 0;
-    }
+    } */
     .resolution p {
         display: flex;
         gap: 5px;
         justify-content: space-between;
+        opacity: 0.8;
     }
 </style>

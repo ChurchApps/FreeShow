@@ -708,7 +708,7 @@ const actions: any = {
     play_no_filters: (obj: any) => {
         let path = obj.sel.data[0].path || obj.sel.data[0].id
         if (!path) return
-        if (!get(outLocked)) setOutput("background", { path })
+        if (!get(outLocked)) setOutput("background", { path, type: getMediaType(getExtension(path)) })
     },
     favourite: (obj: any) => {
         let favourite: boolean = get(media)[obj.sel.data[0].path || obj.sel.data[0].id]?.favourite !== true

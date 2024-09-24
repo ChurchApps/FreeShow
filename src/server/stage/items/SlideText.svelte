@@ -40,6 +40,8 @@
 
         return oneItem ? [oneItem] : []
     }
+
+    $: console.log(stageItem)
 </script>
 
 {#if slide}
@@ -47,13 +49,13 @@
         <Main let:width let:height>
             <Zoomed {show} style={getStyleResolution(resolution, width, height, "fit")} center>
                 {#each items as item}
-                    <Textbox {item} {style} {chords} {stageItem} autoSize={item.auto && autoSize} {fontSize} {autoStage} />
+                    <Textbox {item} {style} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} autoSize={item.auto && autoSize} {fontSize} {autoStage} />
                 {/each}
             </Zoomed>
         </Main>
     {:else}
         {#each items as item}
-            <Textbox {item} {style} {chords} {stageItem} {autoSize} {fontSize} {autoStage} />
+            <Textbox {item} {style} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} {autoSize} {fontSize} {autoStage} />
         {/each}
     {/if}
 {/if}

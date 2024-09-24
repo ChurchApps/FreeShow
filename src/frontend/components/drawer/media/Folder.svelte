@@ -28,12 +28,10 @@
         console.log("MSG", msg)
         if (msg.path === path) {
             let filtered = msg.files.filter((file: any) => extensions.includes(file.extension)) // || file.folder
-            files = filtered
-                .map((a) => {
-                    a.path = getThumbnailPath(a.path, mediaSize.drawerSize)
-                    return a
-                })
-                .slice(0, 4)
+            files = filtered.map((a) => {
+                a.path = getThumbnailPath(a.path, mediaSize.drawerSize)
+                return a
+            })
         }
     }
 
@@ -46,7 +44,7 @@
             {#key path}
                 {#if folderPreview && mode === "grid" && files.length}
                     <div class="images">
-                        {#each files as file}
+                        {#each files.slice(0, 4) as file}
                             <img loading="lazy" src={file.path} alt={file.name} on:error={removeBrokenImg} />
                         {/each}
                     </div>

@@ -158,6 +158,12 @@
 <div class="content">
     {#if screens.length}
         <div class="screens" style="transform: translateX(-{totalScreensWidth}px)">
+            {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)}
+                <div class="screen noClick" style="width: {currentScreen.bounds.width}px;height: {currentScreen.bounds.height}px;left: {currentScreen.bounds.x}px;top: {currentScreen.bounds.y}px;">
+                    <!-- Current screen position -->
+                </div>
+            {/if}
+
             {#each screens as screen, i}
                 <div
                     class="screen"
@@ -214,14 +220,22 @@
         transition: background-color 0.1s;
     }
 
-    .screen:hover:not(.disabled) {
+    .screen.noClick {
+        opacity: 0.5;
+        pointer-events: none;
+        outline: 40px solid var(--secondary);
+    }
+
+    .screen:hover:not(.disabled):not(.noClick) {
         background-color: var(--primary-lighter);
         cursor: pointer;
     }
 
     .screen.active {
-        background-color: var(--secondary);
-        color: var(--secondary-text);
+        /* background-color: var(--secondary);
+        color: var(--secondary-text); */
+        outline: 40px solid var(--secondary);
+        z-index: 1;
     }
 
     .screen.disabled {

@@ -3,7 +3,6 @@
     import Fill from "./Fill.svelte"
     import Paint from "./Paint.svelte"
     import Particles from "./Particles.svelte"
-    import Zoom from "./Zoom.svelte"
 
     $: tool = $drawTool
     $: settings = $drawSettings[tool]
@@ -29,12 +28,12 @@
                 ? `box-shadow: 0 0 ${settings?.size / 5}px ${settings?.size / 20}px ${settings?.color}`
                 : ''}"
         />
-    {:else if tool === "zoom"}
-        <Zoom {settings} />
     {:else if tool === "particles"}
         <Particles {settings} />
     {/if}
 {/if}
+
+<!-- zoom is directly used in <Zoomed /> -->
 
 <style>
     .point {

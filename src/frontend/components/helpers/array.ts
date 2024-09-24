@@ -79,8 +79,10 @@ export function sortByNameAndNumber(array: any[]) {
         let bName = b.name || ""
 
         // get numbers in front of name
-        const numA = parseInt(aName.match(/^\d+/))
-        const numB = parseInt(bName.match(/^\d+/))
+        const matchA = aName.match(/^\d+/)
+        const matchB = bName.match(/^\d+/)
+        const numA = matchA ? parseInt(matchA[0], 10) : Infinity
+        const numB = matchB ? parseInt(matchB[0], 10) : Infinity
 
         if (numA !== numB) return numA - numB
 
@@ -98,6 +100,12 @@ export function keysToID(object: { [key: string]: any }): any[] {
 // remove values in array object where key is value
 export function removeValues(object: any[], key: string, value: any): any[] {
     return object.filter((o: any) => o[key] !== value)
+}
+
+// remove deleted values (used by cloud sync)
+export function removeDeleted<T>(object: T): T {
+    if (!Array.isArray(object)) return object
+    return (object as any).filter((o) => !o.deleted)
 }
 
 // change values from one object to another

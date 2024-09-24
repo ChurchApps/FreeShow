@@ -29,10 +29,7 @@
             hold: false,
         },
         zoom: {
-            opacity: 1,
-            size: 300,
-            radius: 50,
-            hold: false,
+            size: 200,
         },
         particles: {
             color: "#1e1eb4",
@@ -78,61 +75,77 @@
 </script>
 
 <div class="main border">
-    <Panel>
-        {#key $drawTool}
-            <h6 style="margin-top: 10px;"><T id="draw.{$drawTool}" /></h6>
-            {#key $drawSettings}
-                {#if $drawSettings[$drawTool]}
-                    {#each Object.entries($drawSettings[$drawTool]) as [key, value]}
-                        <CombinedInput>
+    <div class="padding">
+        <Panel>
+            {#key $drawTool}
+                <h6 style="margin-top: 10px;"><T id="draw.{$drawTool}" /></h6>
+                {#key $drawSettings}
+                    {#if $drawSettings[$drawTool]}
+                        {#each Object.entries($drawSettings[$drawTool]) as [key, value]}
                             {#if key !== "clear" && (key !== "hold" || $drawTool !== "paint")}
-                                <p><T id="draw.{key}" /></p>
+                                <CombinedInput>
+                                    {#if key !== "clear" && (key !== "hold" || $drawTool !== "paint")}
+                                        <p><T id="draw.{key}" /></p>
+                                    {/if}
+                                    {#if key === "color"}
+                                        <Color {value} on:input={(e) => change(e, key)} style="width: 100%;" />
+                                    {:else if ["glow", "hold", "rainbow", "hollow", "dots", "threed"].includes(key)}
+                                        <div class="alignRight">
+                                            <Checkbox checked={value} on:change={(e) => check(e, key)} />
+                                        </div>
+                                    {:else if key === "opacity"}
+                                        <NumberInput {value} step={0.1} decimals={1} max={1} inputMultiplier={10} on:change={(e) => change(e, key)} />
+                                    {:else if key === "radius"}
+                                        <NumberInput {value} step={0.5} decimals={1} max={50} inputMultiplier={2} on:change={(e) => change(e, key)} />
+                                    {:else if key !== "clear" && key !== "hold"}
+                                        <NumberInput {value} min={1} max={2000} on:change={(e) => change(e, key)} />
+                                    {:else}
+                                        <div class="empty" id={key}></div>
+                                    {/if}
+                                </CombinedInput>
                             {/if}
-                            {#if key === "color"}
-                                <Color {value} on:input={(e) => change(e, key)} style="width: 100%;" />
-                            {:else if (key !== "hold" || $drawTool !== "paint") && ["glow", "hold", "rainbow", "hollow", "dots", "threed"].includes(key)}
-                                <div class="alignRight">
-                                    <Checkbox checked={value} on:change={(e) => check(e, key)} />
-                                </div>
-                            {:else if key === "opacity"}
-                                <NumberInput {value} step={0.1} decimals={1} max={1} inputMultiplier={10} on:change={(e) => change(e, key)} />
-                            {:else if key === "radius"}
-                                <NumberInput {value} step={0.5} decimals={1} max={50} inputMultiplier={2} on:change={(e) => change(e, key)} />
-                            {:else if key !== "clear" && key !== "hold"}
-                                <NumberInput {value} min={1} max={2000} on:change={(e) => change(e, key)} />
-                            {:else}
-                                <div class="empty">
-                                    <!-- {key} -->
-                                </div>
-                            {/if}
-                        </CombinedInput>
-                    {/each}
-                {/if}
+                        {/each}
+                    {/if}
+                {/key}
             {/key}
-        {/key}
-    </Panel>
+        </Panel>
+    </div>
+
+    <div class="bottom">
+        {#if $drawTool === "paint"}
+            <Button style="flex: 1;padding: 10px;" on:click={() => update("clear", true)} dark center>
+                <Icon id="clear" size={2} right />
+                <T id="clear.drawing" />
+            </Button>
+        {/if}
+
+        <Button style="flex: 1;" on:click={reset} dark center>
+            <Icon id="reset" right />
+            <T id="actions.reset" />
+        </Button>
+    </div>
 </div>
-
-{#if $drawTool === "paint"}
-    <Button style="flex: 1;padding: 10px;" on:click={() => update("clear", true)} dark center>
-        <Icon id="clear" size={2} right />
-        <T id="clear.drawing" />
-    </Button>
-{/if}
-
-<Button style="flex: 1;" on:click={reset} dark center>
-    <Icon id="reset" right />
-    <T id="actions.reset" />
-</Button>
 
 <style>
     .main {
         display: flex;
         flex-direction: column;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .padding {
+        display: flex;
+        flex-direction: column;
         overflow-y: auto;
         overflow-x: hidden;
-        height: 100%;
         padding: 10px;
+        height: 100%;
+    }
+
+    .bottom {
+        display: flex;
+        flex-direction: column;
     }
 
     .empty {

@@ -131,7 +131,7 @@
         }}
         class="context #drawer_new_show"
         center
-        title={$dictionary.tooltip?.show}
+        title="{$dictionary.tooltip?.show} [Ctrl+N]"
     >
         <Icon id="add" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<T id="new.show" />{/if}

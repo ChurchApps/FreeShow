@@ -59,13 +59,13 @@
             if (active !== prevActive) {
                 prevActive = active
                 files = []
-                Object.values($audioFolders).forEach((data) => send(MAIN, ["READ_FOLDER"], { path: data.path }))
+                Object.values($audioFolders).forEach((data) => send(MAIN, ["READ_FOLDER"], { path: data.path, disableThumbnails: true }))
             }
         } else if (path.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
-                send(MAIN, ["READ_FOLDER"], { path, listFilesInFolders: true })
+                send(MAIN, ["READ_FOLDER"], { path, listFilesInFolders: true, disableThumbnails: true })
             }
         } else {
             // microphones & audio_streams

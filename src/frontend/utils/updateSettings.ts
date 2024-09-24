@@ -62,6 +62,7 @@ import {
     timers,
     triggers,
     variables,
+    version,
     videoExtensions,
     videoMarkers,
     videosData,
@@ -72,6 +73,7 @@ import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Sav
 import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
 import { setLanguage } from "./language"
 import { send } from "./request"
+import { checkForUpdates } from "./checkForUpdates"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -183,7 +185,7 @@ export function updateThemeValues(themes: any) {
 
     Object.entries(themes.colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
     Object.entries(themes.font).forEach(([key, value]: any) => {
-        if (key === "family" && (!value || value === "sans-serif")) value = '"NotoColorEmojiLimited", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
+        if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
         document.documentElement.style.setProperty("--font-" + key, value)
     })
 
@@ -229,7 +231,10 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         language.set(v)
         setLanguage(v)
     },
-    alertUpdates: (v: any) => alertUpdates.set(v === false ? false : true),
+    alertUpdates: (v: any) => {
+        alertUpdates.set(v !== false)
+        checkForUpdates(get(version))
+    },
     autoOutput: (v: any) => autoOutput.set(v),
     maxConnections: (v: any) => maxConnections.set(v),
     ports: (v: any) => ports.set(v),

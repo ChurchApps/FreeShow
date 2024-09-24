@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Item } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activeShow, overlays, showsCache, storedEditMenuState, templates } from "../../stores"
+    import { activeEdit, activeShow, copyPasteEdit, dictionary, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -11,6 +11,7 @@
     import Button from "../inputs/Button.svelte"
     import Tabs from "../main/Tabs.svelte"
     import Center from "../system/Center.svelte"
+    import { getBoxStyle, getFilterStyle, getItemStyle, getSlideStyle, setBoxStyle, setFilterStyle, setItemStyle, setSlideStyle } from "./scripts/itemClipboard"
     import { addStyleString } from "./scripts/textStyle"
     import BoxStyle from "./tools/BoxStyle.svelte"
     import ItemStyle from "./tools/ItemStyle.svelte"
@@ -19,7 +20,6 @@
     import SlideStyle from "./tools/SlideStyle.svelte"
     import TemplateStyle from "./tools/TemplateStyle.svelte"
     import { boxes } from "./values/boxes"
-    import { itemEdits } from "./values/item"
 
     let tabs: TabsObj = {
         text: { name: "items.text", icon: "text" },
@@ -80,208 +80,70 @@
     // select last item
     $: item = items?.length ? items[items.length - 1] : null
 
-    function applyStyleToAllSlides() {
-        if (!isShow) return
-        let type = item?.type || "text"
+    // COPY
 
-        // just replace item style or anything else if not textbox
-        let itemKeys: string[] = []
-        if (type !== "text" && (active === "text" || active === "item")) {
-            Object.values(itemEdits).forEach((values) => {
-                itemKeys.push(...values.map((a) => a.key || ""))
-            })
+    $: itemType = active === "text" ? item?.type || "text" : ""
+    $: type = `${active}${itemType}`
+    function copyStyle() {
+        const style = getCurrentStyle(item)
+
+        copyPasteEdit.update((a) => {
+            a[type] = style
+            return a
+        })
+
+        console.log("COPIED STYLE", $copyPasteEdit)
+    }
+
+    function getCurrentStyle(item, _updater: any = null) {
+        if (active === "text") return getBoxStyle(item)
+        if (active === "item") return getItemStyle(item)
+        if (active === "slide") return getSlideStyle()
+        if (active === "filters") return getFilterStyle()
+        return {}
+    }
+
+    // PASTE
+
+    function pasteStyle(applyToAll: boolean = false, applyToFollowing: boolean = false) {
+        let style = $copyPasteEdit[type]
+        if (!style) return
+
+        // get selected slide(s)
+        let slides: any[] = []
+        if ($activeEdit.type === "overlay") slides = [$overlays[$activeEdit.id!]]
+        else if ($activeEdit.type === "template") slides = [$templates[$activeEdit.id!]]
+        else {
+            let activeSlides: any[] = []
+            // all slides
+            if (applyToAll) activeSlides = []
+            // selected slides
+            else if ($selected.id === "slide" && $selected.data.length) activeSlides = $selected.data.map(({ index }) => ref[index]?.id)
+            // active slide
+            else activeSlides = [ref[$activeEdit.slide!]?.id]
+
+            slides = _show().slides(activeSlides).get()
         }
 
-        if (active === "text") {
-            // get current text style
-            // don't style scripture verses
-            let normalText = item?.lines?.[0].text?.filter((a) => !a.customType) || []
-            let style = normalText[0]?.style || item?.style
-            let extraKeys = {
-                auto: item?.auto,
-                textFit: item?.textFit,
-                specialStyle: item?.specialStyle,
-                scrolling: item?.scrolling,
-            }
+        slides = clone(slides)
 
-            let newStyle: string = ""
-            // remove all "item" style from new style
-            if (type !== "text") {
-                let newStyles: any = getStyles(style)
-                Object.entries(newStyles).forEach(([key, value]: any) => {
-                    if (!itemKeys.includes(key)) newStyle += `${key}: ${value};`
-                })
-            }
+        setNewStyle()
+        function setNewStyle() {
+            if (active === "text") return setBoxStyle(style, slides, itemType)
+            if (active === "item") return setItemStyle(style, slides)
+            if (active === "slide") return setSlideStyle(style, slides)
+            if (active === "filters") {
+                let indexes: number[] = []
+                if (applyToFollowing) indexes = ref.map((_, i) => i).filter((a) => a >= $activeEdit.slide!)
+                else if (applyToAll) indexes = ref.map((_, i) => i)
+                else indexes = [$activeEdit.slide!]
 
-            _show().slides().get().forEach(updateSlideStyle)
-
-            return
-
-            function updateSlideStyle(slide) {
-                let items: any[] = []
-                let values: any[] = []
-
-                slide.items.forEach(updateItemStyle)
-
-                if (!items.length || !values.length) return
-
-                if (type !== "text") {
-                    history({
-                        id: "setStyle",
-                        newData: { style: { key: "style", values } },
-                        location: { page: "edit", show: $activeShow!, slide: slide.id, items },
-                    })
-
-                    return
-                }
-
-                history({
-                    id: "textStyle",
-                    newData: { style: { key: "text", values } },
-                    location: { page: "edit", show: $activeShow!, slide: slide.id, items },
-                })
-
-                Object.keys(extraKeys).forEach((key) => {
-                    history({
-                        id: "setItems",
-                        newData: { style: { key, values: [extraKeys[key]] } },
-                        location: { page: "edit", show: $activeShow!, slide: slide.id, items },
-                    })
-                })
-
-                function updateItemStyle(item: any, i: number) {
-                    let itemType = item.type || "text"
-                    if (itemType !== type) return
-
-                    items.push(i)
-
-                    if (type !== "text") {
-                        let itemStyles = getStyles(item.style)
-                        let newItemStyle = ""
-
-                        // get only current "item" style
-                        Object.entries(itemStyles).forEach(([key, value]: any) => {
-                            if (itemKeys.includes(key)) newItemStyle += `${key}: ${value};`
-                        })
-
-                        values.push(newItemStyle + newStyle)
-
-                        return
-                    }
-
-                    if (type !== "text" || !item.lines) return
-
-                    let text = item.lines.map((a: any) => {
-                        if (!a.text) return
-
-                        return a.text.map((a: any) => {
-                            // don't style scripture verses
-                            if (a.customType) return a
-
-                            a.style = style
-
-                            return a
-                        })
-                    })
-
-                    values.push(text)
-                }
-            }
-        }
-
-        if (active === "item") {
-            // get current item style
-            let style = item?.style
-            if (!style) return
-
-            let newStyle: string = ""
-            // get only "item" style from new style
-            if (type !== "text") {
-                let newStyles: any = getStyles(style)
-                Object.entries(newStyles).forEach(([key, value]: any) => {
-                    if (itemKeys.includes(key)) newStyle += `${key}: ${value};`
-                })
-            }
-
-            _show().slides().get().forEach(updateSlideStyle)
-
-            return
-
-            function updateSlideStyle(slide) {
-                let values: string[] = []
-                if (type === "text") values = [style!]
-
-                let items: number[] = []
-                slide.items.forEach(updateItemStyle)
-
-                history({
-                    id: "setStyle",
-                    newData: { style: { key: "style", values } },
-                    location: { page: "edit", show: $activeShow!, slide: slide.id, items },
-                })
-
-                function updateItemStyle(item, i) {
-                    if ((item.type || "text") !== type) return
-
-                    items.push(i)
-
-                    // get only current style
-                    let itemStyles = getStyles(item.style)
-                    let newItemStyle = ""
-
-                    // get only current "item" style
-                    Object.entries(itemStyles).forEach(([key, value]: any) => {
-                        if (!itemKeys.includes(key)) newItemStyle += `${key}: ${value};`
-                    })
-
-                    values.push(newStyle + newItemStyle)
-                }
-            }
-        }
-
-        if (active === "filters") {
-            let ref = _show().layouts("active").ref()[0]
-            let slideData = ref[$activeEdit.slide!].data
-            let indexes = ref.map((_, i) => i)
-
-            history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: slideData.filterEnabled || ["background"], dataIsArray: true, indexes } })
-            history({ id: "SHOW_LAYOUT", newData: { key: "backdrop-filter", data: slideData["backdrop-filter"], indexes } })
-            history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: slideData.filter, indexes } })
-            return
-        }
-
-        if (active === "slide") {
-            let ref = _show().layouts("active").ref()[0]
-            let slideStyle = _show().slides([ref[$activeEdit.slide!].id]).get("settings")[0]
-
-            _show().slides().get().forEach(updateSlideStyle)
-
-            return
-
-            function updateSlideStyle(slide) {
-                let oldData = { style: slide.settings }
-
-                history({
-                    id: "slideStyle",
-                    oldData,
-                    newData: { style: slideStyle },
-                    location: { page: "edit", show: $activeShow!, slide: slide.id },
-                })
+                return setFilterStyle(style, indexes)
             }
         }
     }
 
-    function addToFollowing() {
-        if (active !== "filters") return
-
-        let ref = _show().layouts("active").ref()[0]
-        let slideData = ref[$activeEdit.slide!].data
-        let indexes = ref.map((_, i) => i).filter((a) => a >= $activeEdit.slide!)
-
-        history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: slideData.filterEnabled || ["background"], dataIsArray: true, indexes } })
-        history({ id: "SHOW_LAYOUT", newData: { key: "backdrop-filter", data: slideData["backdrop-filter"], indexes } })
-        history({ id: "SHOW_LAYOUT", newData: { key: "filter", data: slideData.filter, indexes } })
-    }
+    // RESET
 
     function reset() {
         if (!isShow) {
@@ -357,7 +219,7 @@
             })
         }
 
-        let deleteKeys = ["auto", "specialStyle", "scrolling"]
+        let deleteKeys = ["auto", "textFit", "specialStyle", "scrolling"]
         // reset timer/icon/media/mirror etc. style
         if (item[item.type]) deleteKeys = [item.type]
 
@@ -419,6 +281,9 @@
 
     $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
+
+    $: currentCopied = $copyPasteEdit[type]
+    $: copiedStyleDifferent = currentCopied && JSON.stringify(currentCopied) !== JSON.stringify(getCurrentStyle(item, $showsCache[$activeEdit?.id || $activeShow?.id || ""]))
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -462,21 +327,39 @@
         <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
             {#if active !== "items"}
                 {#if isShow}
-                    <Button style="flex: 1;" on:click={applyStyleToAllSlides} dark center>
-                        <Icon id="copy" right />
-                        <T id={"actions.to_all"} />
-                    </Button>
+                    <!-- WIP copy/paste style for overlay/templates! -->
+
+                    {#if currentCopied && !copiedStyleDifferent}
+                        {#if isShow}
+                            {#if active === "filters"}
+                                <Button title={$dictionary.actions?.to_following} on:click={() => pasteStyle(false, true)} dark center>
+                                    <Icon id="down" />
+                                    <!-- <T id="actions.to_following" /> -->
+                                </Button>
+                            {/if}
+                            <Button style="flex: 1;" title={$dictionary.actions?.to_all} on:click={() => pasteStyle(true)} dark center>
+                                <Icon id="paste" right />
+                                <T id="actions.to_all" />
+                            </Button>
+                        {/if}
+                    {:else}
+                        <Button style={copiedStyleDifferent ? "" : "flex: 1;"} title={$dictionary.actions?.copy} on:click={copyStyle} dark center>
+                            <Icon id="copy" right={!copiedStyleDifferent} white />
+                            {#if !copiedStyleDifferent}<T id="actions.copy" />{/if}
+                        </Button>
+                    {/if}
+                    {#if copiedStyleDifferent}
+                        <Button style="flex: 1;" title={$dictionary.actions?.paste} on:click={() => pasteStyle()} dark center>
+                            <Icon id="paste" right />
+                            <T id="actions.paste" />
+                        </Button>
+                    {/if}
                 {/if}
-                {#if active === "filters"}
-                    <Button style="flex: 1;" on:click={addToFollowing} dark center>
-                        <Icon id="down" right />
-                        <T id={"actions.to_following"} />
-                    </Button>
-                {/if}
+
                 <!-- TODO: reset template/overlay -->
-                <Button style="flex: 1;" on:click={reset} disabled={!isShow && ($activeEdit.type !== "template" || active !== "slide")} dark center>
+                <Button style="flex: 1;" title={$dictionary.actions?.reset} on:click={reset} disabled={!isShow && ($activeEdit.type !== "template" || active !== "slide")} dark center>
                     <Icon id="reset" right />
-                    <T id={"actions.reset"} />
+                    <T id="actions.reset" />
                 </Button>
             {/if}
         </span>

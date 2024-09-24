@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
-import { keysToID, sortByName } from "../helpers/array"
+import { keysToID, removeDeleted, sortByName } from "../helpers/array"
 import { getActiveOutputs, setOutput } from "../helpers/output"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
@@ -53,7 +53,7 @@ export function selectProjectByIndex(index: number) {
     if (index < 0) return
 
     // select project
-    let selectedProject = sortByName(keysToID(get(projects)))[index]
+    let selectedProject = sortByName(removeDeleted(keysToID(get(projects))))[index]
     if (!selectedProject) {
         newToast(get(dictionary).toast?.midi_no_project + " " + index)
         return

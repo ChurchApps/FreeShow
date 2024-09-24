@@ -83,7 +83,7 @@
                 <Metadata />
             </div>
         {:else if active === "notes"}
-            <div class="content">
+            <div class="content" style="background-color: var(--primary-darker);">
                 <Notes on:edit={edit} value={note} />
             </div>
         {/if}

@@ -464,7 +464,7 @@ export const boxes: Box = {
         },
     },
     slide_tracker: {
-        icon: "slide_tracker",
+        icon: "percentage",
         edit: {
             default: trackerEdits,
             font: [
@@ -513,7 +513,7 @@ export const boxes: Box = {
         },
     },
     icon: {
-        icon: "icon",
+        icon: "star",
         edit: {
             default: [{ name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" }],
         },

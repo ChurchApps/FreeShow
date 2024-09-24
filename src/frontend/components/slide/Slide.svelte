@@ -3,7 +3,26 @@
     import { MAIN } from "../../../types/Channels"
     import type { MediaStyle } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
-    import { activeTimers, audioFolders, checkedFiles, dictionary, driveData, focusMode, fullColors, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, showsCache, slidesOptions, styles } from "../../stores"
+    import {
+        activePage,
+        activeTimers,
+        audioFolders,
+        checkedFiles,
+        dictionary,
+        driveData,
+        focusMode,
+        fullColors,
+        groups,
+        media,
+        mediaFolders,
+        outputs,
+        overlays,
+        refreshListBoxes,
+        refreshSlideThumbnails,
+        showsCache,
+        slidesOptions,
+        styles,
+    } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import { slideHasAction } from "../actions/actions"
@@ -350,7 +369,7 @@
                 {:else if viewMode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->
                     <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
-                        {#if name === null && $fullColors}
+                        {#if name === null && $fullColors && $activePage === "show"}
                             <!-- WIP this works fine without full colors, but is it neccesary? (UI vs UX) -->
                             <div class="childLink" style="background-color: {color};" class:full={$fullColors} />
                         {/if}

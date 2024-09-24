@@ -284,7 +284,6 @@ async function searchLyrics({ artist, title }: any) {
 // GET_LYRICS
 async function getLyrics({ song }: any) {
     const lyrics = await LyricSearch.get(song)
-    console.log("****LYRICS", lyrics)
     toApp("MAIN", { channel: "GET_LYRICS", data: { lyrics, source: song.source } })
 }
 

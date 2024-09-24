@@ -14,7 +14,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { bookIds, fetchBible, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
+    import { bookIds, fetchBible, getColorCode, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
 
     export let active: any
     export let bibles: Bible[]
@@ -775,6 +775,8 @@
             scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
         }, 150)
     }
+
+    let gridMode: boolean = false
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />
@@ -813,12 +815,94 @@
                     <T id="empty.search" />
                 </Center>
             {/if}
+        {:else if gridMode}
+            <!-- GRID MODE -->
+            <div class="grid">
+                <div class="books">
+                    {#if books[firstBibleId]?.length}
+                        {#key books[firstBibleId]}
+                            {#each books[firstBibleId] as book, i}
+                                {@const id = bibles[0].api ? book.id : i}
+                                {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
+                                {@const name = isNaN(parseInt(book.name[0])) ? book.name.slice(0, 3) : book.name.replace(" ", "").slice(0, 4)}
+
+                                <span
+                                    id={id.toString()}
+                                    on:click={() => {
+                                        bookId = id
+                                        autoComplete = false
+                                    }}
+                                    class:active={bibles[0].api ? bookId === book.id : bookId === i}
+                                    style="color: {color};"
+                                    title={book.name}
+                                >
+                                    {name}
+                                </span>
+                            {/each}
+                        {/key}
+                    {:else}
+                        <Loader />
+                    {/if}
+                </div>
+                <div class="content">
+                    <div class="chapters" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
+                        {#if chapters[firstBibleId]?.length}
+                            {#each chapters[firstBibleId] as chapter, i}
+                                {@const id = bibles[0].api ? chapter.id : i}
+                                <span
+                                    id={id.toString()}
+                                    on:click={() => {
+                                        chapterId = id
+                                        autoComplete = false
+                                    }}
+                                    class:active={bibles[0].api ? chapterId === chapter.id : chapterId === i}
+                                >
+                                    {chapter.number}
+                                </span>
+                            {/each}
+                        {:else}
+                            <Loader />
+                        {/if}
+                    </div>
+                    <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(verses[firstBibleId] || {}).length}>
+                        {#if Object.keys(verses[firstBibleId] || {}).length}
+                            {#each Object.keys(verses[firstBibleId] || {}) as id}
+                                <!-- custom drag -->
+                                <span
+                                    class:showAllText={$resized.rightPanelDrawer <= 5}
+                                    {id}
+                                    draggable="true"
+                                    on:mouseup={(e) => selectVerse(e, id)}
+                                    on:mousedown={(e) => {
+                                        if (e.ctrlKey || e.metaKey || e.shiftKey) return
+                                        if (!activeVerses.includes(id)) activeVerses = [id]
+                                        updateActiveVerses()
+                                    }}
+                                    on:dblclick={() => playOrClearScripture(true)}
+                                    class:active={activeVerses.includes(id)}
+                                    title={$dictionary.tooltip?.scripture}
+                                >
+                                    {id}
+                                </span>
+                            {/each}
+                        {:else}
+                            <Loader />
+                        {/if}
+                    </div>
+                </div>
+                <!-- {#if bibles[0].copyright}
+                    <copy>{bibles[0].copyright}</copy>
+                {/if} -->
+            </div>
         {:else}
+            <!-- LIST MODE -->
             <div class="books" bind:this={booksScrollElem} class:center={!books[firstBibleId]?.length}>
                 {#if books[firstBibleId]?.length}
                     {#key books[firstBibleId]}
                         {#each books[firstBibleId] as book, i}
                             {@const id = bibles[0].api ? book.id : i}
+                            {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
+
                             <span
                                 id={id.toString()}
                                 on:click={() => {
@@ -826,6 +910,7 @@
                                     autoComplete = false
                                 }}
                                 class:active={bibles[0].api ? bookId === book.id : bookId === i}
+                                style={color ? `border-left: 2px solid ${color};` : ""}
                             >
                                 {book.name}
                             </span>
@@ -920,6 +1005,11 @@
         </Button>
 
         <div class="seperator" />
+        <Button on:click={() => (gridMode = !gridMode)} title={$dictionary.show?.[gridMode ? "grid" : "list"]}>
+            <Icon size={1.3} id={gridMode ? "grid" : "list"} white />
+        </Button>
+
+        <div class="seperator" />
         <Button title={$dictionary.scripture?.search} on:click={() => (searchBibleActive = true)}>
             <Icon size={1.1} id="search" white />
         </Button>
@@ -952,7 +1042,7 @@
         position: relative;
         scroll-behavior: smooth;
     }
-    .main div:not(.verses) {
+    .main div:not(.verses):not(.grid):not(.grid div) {
         border-right: 2px solid var(--primary-lighter);
     }
     .main .verses {
@@ -1025,5 +1115,55 @@
         font-style: italic;
         width: 100%;
         text-align: center;
+    }
+
+    /* GRID MODE */
+
+    .grid {
+        display: flex;
+        flex-direction: column;
+    }
+    .grid .books {
+        border-bottom: 2px solid var(--primary-lighter);
+    }
+    .grid .chapters {
+        border-right: 2px solid var(--primary-lighter);
+    }
+
+    .grid .books,
+    .grid .content {
+        flex-direction: row;
+        height: 50%;
+    }
+    .grid .chapters,
+    .grid .verses {
+        flex-direction: row;
+        width: 50%;
+    }
+
+    .grid .books,
+    .grid .chapters,
+    .grid .verses {
+        flex-wrap: wrap;
+        align-content: normal;
+    }
+
+    .grid span {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        min-width: 40px;
+        flex: 1;
+
+        font-weight: 600;
+    }
+    .grid .books span {
+        min-width: 52px;
+    }
+
+    .grid .verses {
+        color: var(--secondary);
+        font-weight: bold;
     }
 </style>

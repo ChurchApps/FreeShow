@@ -21,7 +21,7 @@
         <!-- logo -->
         <h1 style="align-self: center;width: 100%;padding: 0px 10px;text-align: center;font-size: 1.8em;">FreeShow</h1>
         <!-- <div class="logo">
-            <img style="height: 35px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" />
+            <img style="height: 35px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
             <h1 style="color: var(--text);font-size: 1.7em;">FreeShow</h1>
         </div> -->
     </span>
@@ -33,7 +33,7 @@
     </span>
     <span style="width: var(--navigation-width);justify-content: flex-end;">
         <!-- <TopButton id="stage" hideLabel /> -->
-        <TopButton id="draw" red={$drawTool === "fill" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
+        <TopButton id="draw" red={$drawTool === "fill" || $drawTool === "zoom" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
         <TopButton id="settings" hideLabel />
         <Button title={($outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display) + " [Ctrl+O]"} on:click={displayOutputs} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay}>
             {#if $outputDisplay}

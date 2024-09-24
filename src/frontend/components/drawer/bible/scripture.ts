@@ -298,6 +298,7 @@ export function getSlides({ bibles, sorted }) {
         if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + referenceDivider + range)
 
         text.split("\n").forEach((line) => {
+            if (!line.trim()) return
             lines.push({ text: [{ value: line, style: verseStyle }], align: alignStyle })
         })
 
@@ -411,3 +412,15 @@ export const bookIds: string[] = [
     "JUD",
     "REV",
 ]
+
+const colorCodesFull = [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8]
+const colorCodesNT = [5, 5, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8]
+const colors = ["", "#f17d46", "#ffd17c", "#8cdfff", "#8888ff", "#ff97f2", "#ffdce7", "#88ffa9", "#ffd3b6"]
+
+export function getColorCode(books, bookId: number | string) {
+    let bookIndex = typeof bookId === "number" ? bookId : books.findIndex((a) => a.id === bookId)
+
+    if (books.length === colorCodesFull.length) return colors[colorCodesFull[bookIndex]]
+    else if (books.length === colorCodesNT.length) return colors[colorCodesNT[bookIndex]]
+    return ""
+}

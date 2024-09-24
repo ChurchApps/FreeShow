@@ -17,6 +17,7 @@ import { importFSB } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
 import { convertEasyWorship } from "../converters/easyworship"
+import { createImageShow } from "../converters/imageShow"
 import { importShow, importSpecific } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
@@ -39,6 +40,7 @@ import {
     allOutputs,
     audioChannels,
     closeAd,
+    colorbars,
     currentOutputSettings,
     customMessageCredits,
     dataPath,
@@ -90,7 +92,6 @@ import {
     windowState,
 } from "../stores"
 import { redoHistory, undoHistory } from "./../stores"
-import { checkForUpdates } from "./checkForUpdates"
 import { newToast, startDevMode } from "./common"
 import { createData } from "./createData"
 import { syncDrive, validateKeys } from "./drive"
@@ -100,7 +101,6 @@ import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { createImageShow } from "../converters/imageShow"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -122,10 +122,7 @@ export function remoteListen() {
 }
 
 const receiveMAIN: any = {
-    VERSION: (a: any) => {
-        version.set(a)
-        checkForUpdates(a)
-    },
+    VERSION: (a: any) => version.set(a),
     IS_DEV: (a: any) => {
         isDev.set(a)
         if (a) startDevMode()
@@ -448,6 +445,8 @@ export const receiveOUTPUTasOUTPUT: any = {
 
     VOLUME: (a: any) => volume.set(a),
     GAIN: (a: any) => gain.set(a),
+
+    COLORBARS: (a: any) => colorbars.set(a),
 }
 
 // NDI

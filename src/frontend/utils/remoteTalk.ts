@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { clone } from "../components/helpers/array"
+import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { getBase64Path, mediaSize } from "../components/helpers/media"
 import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
@@ -23,6 +23,8 @@ export const receiveREMOTE: any = {
         if (msg.data.password) return msg
 
         connections.update((a: any) => {
+            if (!a.REMOTE) a.REMOTE = {}
+            if (!a.REMOTE[msg.id]) a.REMOTE[msg.id] = {}
             a.REMOTE[msg.id].entered = true
             return a
         })
@@ -37,7 +39,8 @@ export const receiveREMOTE: any = {
         if (get(remotePassword).length && msg.data !== get(remotePassword)) return { id: msg.id, channel: "ERROR", data: "wrongPass" }
 
         connections.update((a: any) => {
-            console.log(a, msg.id)
+            if (!a.REMOTE) a.REMOTE = {}
+            if (!a.REMOTE[msg.id]) a.REMOTE[msg.id] = {}
             a.REMOTE[msg.id].entered = true
             return a
         })
@@ -137,7 +140,7 @@ export const receiveREMOTE: any = {
         return msg
     },
     PROJECTS: (msg: any) => {
-        msg.data = get(projects)
+        msg.data = removeDeleted(keysToID(get(projects)))
         return msg
     },
 }
@@ -147,7 +150,7 @@ export function initializeRemote(id: string) {
     console.log(id)
     window.api.send(REMOTE, { channel: "ACCESS" })
 
-    sendData(REMOTE, { channel: "PROJECTS", data: get(projects) })
+    sendData(REMOTE, { channel: "PROJECTS", data: removeDeleted(keysToID(get(projects))) })
     window.api.send(REMOTE, { channel: "FOLDERS", data: { folders: get(folders), opened: get(openedFolders) } })
     window.api.send(REMOTE, { channel: "PROJECT", data: get(activeProject) })
 

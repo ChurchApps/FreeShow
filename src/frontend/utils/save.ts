@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { MAIN, STORE } from "../../types/Channels"
-import { clone } from "../components/helpers/array"
+import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import {
     activePopup,
     activeProject,
@@ -281,8 +281,8 @@ const customSavedListener = {
         return data
     },
     projects: (data: any) => {
-        Object.keys(data).forEach((id) => {
-            data[id].shows.map((show) => {
+        removeDeleted(keysToID(data)).forEach((a) => {
+            data[a.id].shows.map((show) => {
                 delete show.layout
             })
         })

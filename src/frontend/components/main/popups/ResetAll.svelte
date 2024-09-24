@@ -1,9 +1,10 @@
 <script lang="ts">
     import { STORE } from "../../../../types/Channels"
-    import { activeEdit, activePage, activePopup, activeShow, deletedShows, renamedShows, scripturesCache, showsCache, showsPath } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, deletedShows, drawSettings, renamedShows, scripturesCache, showsCache, showsPath } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import { clearAll } from "../../output/clear"
 
     function reset() {
         window.api.send(STORE, {
@@ -28,6 +29,9 @@
                 HISTORY: { undo: [], redo: [] },
             },
         })
+
+        clearAll()
+        drawSettings.set({})
 
         showsPath.set(null)
         // dataPath.set("")

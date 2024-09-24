@@ -24,18 +24,18 @@ export async function getViewportSizes(pdfPath: string): Promise<{ width: number
             try {
                 const dataURL = reader.result?.toString() || ""
                 const pageMatches = dataURL.match(/\/Type\s*\/Page[^s]/g) || []
-                const mediaBoxMatches = dataURL.match(/\/MediaBox\s*\[(.*?)\]/g) || []
+                const boxMatch = getBoxes(dataURL)
 
                 let viewports: { width: number; height: number }[] = []
-                for (let i = 0; i < mediaBoxMatches.length; i++) {
-                    let dimensions = getMediaBoxDimensions(mediaBoxMatches[i])
+                for (let i = 0; i < boxMatch.length; i++) {
+                    let dimensions = getMediaBoxDimensions(boxMatch[i])
                     if (dimensions) viewports.push(dimensions)
                 }
 
                 // pages might be wrongly double the actual mediabox size,
                 // but in cases where pages is less than mediabox or not double, use that count
-                if (pageMatches.length < viewports.length) viewports = viewports.slice(0, pageMatches.length)
-                else if (pageMatches.length > viewports.length && pageMatches.length !== viewports.length * 2) {
+                if (pageMatches.length && pageMatches.length < viewports.length) viewports = viewports.slice(0, pageMatches.length)
+                else if (viewports.length && pageMatches.length > viewports.length && pageMatches.length !== viewports.length * 2) {
                     ;[...Array(pageMatches.length - viewports.length)].forEach(() => {
                         viewports.push(viewports[0])
                     })
@@ -49,6 +49,24 @@ export async function getViewportSizes(pdfPath: string): Promise<{ width: number
 
         reader.readAsText(data)
     })
+}
+
+// /MediaBox\n[\n0\n0\n960\n540\n] OR /MediaBox[ 0 0 960 540]
+function getBoxes(dataURL: string) {
+    const boxTypes = ["MediaBox", "CropBox", "BleedBox", "TrimBox", "ArtBox"]
+
+    for (const type of boxTypes) {
+        const regex = new RegExp(`/${type}\\s*\\[([^\\]]+)\\]`, "g")
+        let boxes: string[] = []
+        let match
+        while ((match = regex.exec(dataURL)) !== null) {
+            boxes.push(match[0].replace(/\n/g, " "))
+        }
+
+        if (boxes.length) return boxes
+    }
+
+    return []
 }
 
 function getMediaBoxDimensions(mediaBox: string): { width: number; height: number } | null {

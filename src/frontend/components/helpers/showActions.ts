@@ -145,6 +145,11 @@ function getOutputWithLines() {
     return Number(currentLines)
 }
 
+// this will go to next for each slide (better for multiple outputs with "Specific outputs")
+export function nextSlideIndividual(e: any, start: boolean = false, end: boolean = false) {
+    getActiveOutputs().forEach((id) => nextSlide(e, start, end, false, false, id))
+}
+
 export function nextSlide(e: any, start: boolean = false, end: boolean = false, loop: boolean = false, bypassLock: boolean = false, customOutputId: string = "", nextAfterMedia: boolean = false) {
     if (get(outLocked) && !bypassLock) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
@@ -211,7 +216,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
         if (!layout?.filter((a) => !a.data.disabled).length) return
 
         index = 0
-        while (layout[index].data.disabled) index++
+        while (layout[index].data.disabled || notBound(layout[index], customOutputId)) index++
 
         setOutput("slide", { id, layout: _show(id).get("settings.activeLayout"), index }, false, customOutputId)
         updateOut(id, index, layout, !e?.altKey, customOutputId)
@@ -226,7 +231,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
         newSlideOut.line = linesIndex! + 1
     } else {
         // TODO: Check for loop to beginning slide...
-        index = getNextEnabled(slide.index!, end)
+        index = getNextEnabled(slide.index!, end, customOutputId)
     }
     newSlideOut.index = index
 
@@ -307,11 +312,17 @@ export function goToPreviousProjectItem() {
     }
 }
 
-export function previousSlide(e: any) {
+// this will go to next for each slide (better for multiple outputs with "Specific outputs")
+export function previousSlideIndividual(e: any) {
+    getActiveOutputs().forEach((id) => previousSlide(e, id))
+}
+
+export function previousSlide(e: any, customOutputId?: string) {
     if (get(outLocked)) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-    let currentOutput: any = get(outputs)[getActiveOutputs()[0]] || {}
+    let outputId = customOutputId || getActiveOutputs()[0]
+    let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
 
     // PPT
@@ -373,7 +384,7 @@ export function previousSlide(e: any) {
             return
         }
 
-        while (layout[index].data.disabled) index--
+        while (layout[index].data.disabled || notBound(layout[index], customOutputId)) index--
 
         // get slide line
         let showSlide: any = _show(slide ? slide.id : "active")
@@ -386,10 +397,15 @@ export function previousSlide(e: any) {
         line--
     }
 
-    if (slide) setOutput("slide", { ...slide, index, line }, false)
-    else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index }, false)
+    if (slide) setOutput("slide", { ...slide, index, line }, false, customOutputId)
+    else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index }, false, customOutputId)
 
-    updateOut(slide ? slide.id : "active", index, layout, !e?.altKey)
+    updateOut(slide ? slide.id : "active", index, layout, !e?.altKey, customOutputId)
+}
+
+// skip slides that are bound to specific output not customId
+function notBound(ref, outputId: string | undefined) {
+    return outputId && ref.data.bindings?.length && !ref.data.bindings.includes(outputId)
 }
 
 function playPdf(slide: null | OutSlide, nextPage: number) {
@@ -403,12 +419,13 @@ function playPdf(slide: null | OutSlide, nextPage: number) {
     setOutput("slide", { type: "pdf", id: data?.id, page: nextPage, pages, viewport: slide?.viewport || viewports[nextPage], name })
 }
 
-function getNextEnabled(index: null | number, end: boolean = false): null | number {
+function getNextEnabled(index: null | number, end: boolean = false, customOutputId: string = ""): null | number {
     if (index === null || isNaN(index)) return null
 
     index++
 
-    let currentOutput: any = get(outputs)[getActiveOutputs()[0]] || {}
+    let outputId = customOutputId || getActiveOutputs()[0]
+    let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     let layout: any[] = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
@@ -418,11 +435,11 @@ function getNextEnabled(index: null | number, end: boolean = false): null | numb
     if (!layout[index]) return null
     if (index >= layout.length || !layout.slice(index, layout.length).filter((a) => !a.data.disabled).length) return null
 
-    while (layout[index].data.disabled && index < layout.length) index++
+    while ((layout[index].data.disabled || notBound(layout[index], customOutputId)) && index < layout.length) index++
 
     if (end) {
         index = layout.length - 1
-        while (layout[index].data.disabled && index > 0) index--
+        while ((layout[index].data.disabled || notBound(layout[index], customOutputId)) && index > 0) index--
     }
 
     return index
@@ -835,7 +852,10 @@ const customTriggers = {
     http: (value: string) => {
         return new Promise((resolve) => {
             fetch(value, { method: "GET" })
-                .then(() => resolve("success"))
+                .then((r) => {
+                    if (!r.ok) return resolve("error")
+                    resolve("success")
+                })
                 // .then((response) => response.json())
                 // .then((json) => console.log(json))
                 .catch((err) => {

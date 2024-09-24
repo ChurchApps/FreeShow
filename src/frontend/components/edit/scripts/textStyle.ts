@@ -432,3 +432,14 @@ export function setCurrentCursorPosition(element: any, pos: number) {
         }
     }
 }
+
+export function setCaretPosition(elem: any, pos: number = 0) {
+    if (elem.createTextRange) {
+        var range = elem.createTextRange()
+        range.move("character", pos)
+        range.select()
+    } else {
+        elem.focus()
+        if (elem.selectionStart) elem.setSelectionRange(pos, pos)
+    }
+}

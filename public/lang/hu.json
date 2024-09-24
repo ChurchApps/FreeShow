@@ -7,10 +7,15 @@
         "unnamed": "Névtelen",
         "drop": "Ejtse ide",
         "search": "Keresés",
+        "quick_search": "Gyorskeresés",
         "none": "Nincs",
         "finished": "Befejezett",
         "open": "Megnyitás",
         "system_open": "Megnyitás a rendszerben"
+    },
+    "guide": {
+        "start": "Gyors indulási útmutató",
+        "skip": "Átugrás"
     },
     "titlebar": {
         "file": "Fájl",
@@ -114,7 +119,8 @@
         "to_start": "Ugrás az elejére",
         "nextTimer": "Következő dia időzítője",
         "lock": "Zárolás",
-        "unlock": "Feloldás"
+        "unlock": "Feloldás",
+        "test_pattern": "Teszt minta"
     },
     "clear": {
         "all": "Minden törlése",
@@ -172,6 +178,7 @@
         "playlist_settings": "Lejátszási lista beállítások",
         "custom_output": "Egyedi hangkimenet",
         "mute_when_video_plays": "Némítás videó lejátszása alatt",
+        "pre_fader_volume_meter": "Hangerő-szabályozó előszabolyozó",
         "metronome": "Metronóm",
         "toggle_metronome": "Metronóm átváltása",
         "tempo": "Tempó",
@@ -755,6 +762,7 @@
         "different_first_template": "Egyedi sablon az első dián",
         "media_fit": "Média méretezése",
         "size": "Méret",
+        "max_lines": "Maximum sor",
         "chords": "Akkordok",
         "transpose": "Transzponálás",
         "auto_size": "Automatikus méret",
@@ -908,6 +916,7 @@
     "midi": {
         "midi": "MIDI",
         "activate": "Aktiválás MIDI jel alapján",
+        "activate_keypress": "Aktiválás billentyűleütésre ",
         "name": "Név",
         "input": "Bemenet",
         "output": "Kimenet",
@@ -925,6 +934,7 @@
     "draw": {
         "focus": "Fókusz",
         "pointer": "Mutató",
+        "zoom": "Nagyítás",
         "fill": "Kitöltés",
         "paint": "Festés",
         "particles": "Részecskék",
@@ -1065,6 +1075,7 @@
         "reset_theme": "Téma visszaállítása",
         "reset_themes": "Témák visszaállítása",
         "capitalize_words": "Szavak nagybetűsítése",
+        "comma_seperated": "Vesszővel elválasztva",
         "backup_all": "Teljes biztonsági mentés",
         "restore": "Visszaállítás",
         "backup_started": "Biztonsági mentés…",
@@ -1151,6 +1162,7 @@
         "opening": "Megnyitás folyamatban! Kérjük, várjon…",
         "retry": "Kérjük, próbálja meg manuálisan megnyitni, vagy",
         "try_again": "Ismét",
+        "restart": "Újraindítás",
         "start": "Kezdés",
         "choose_window": "Jelöljön ki egy ablakot"
     },

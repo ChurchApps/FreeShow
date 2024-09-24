@@ -57,7 +57,7 @@
 <div>
     <CombinedInput textWidth={25}>
         <p><T id="settings.language" /></p>
-        <Dropdown options={languageList} value={languageList.find((a) => a.id === $special.translationLanguage)?.name || "—"} on:click={updateLanguage} />
+        <Dropdown flags options={languageList} value={languageList.find((a) => a.id === $special.translationLanguage)?.name || "—"} on:click={updateLanguage} />
     </CombinedInput>
 
     <CombinedInput>

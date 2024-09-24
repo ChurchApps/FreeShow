@@ -225,7 +225,7 @@ export function getFolderContent(data: any) {
     for (const name of fileList) {
         let p: string = path.join(folderPath, name)
         let stats: any = getFileStats(p)
-        if (stats) files.push({ ...stats, name, thumbnailPath: isMedia() ? createThumbnail(p) : "" })
+        if (stats) files.push({ ...stats, name, thumbnailPath: !data.disableThumbnails && isMedia() ? createThumbnail(p) : "" })
 
         function isMedia() {
             if (stats.folder) return false

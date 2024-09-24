@@ -49,7 +49,7 @@
     },
     "tooltip": {
         "project": "Create a new project where you can add and arrange shows.",
-        "show": "Create a new show where you can add song lyrics, presentations and media. Hold Ctrl/Cmd to create empty.",
+        "show": "Create a new show where you can add song lyrics, presentations and media.",
         "groups": "All the groups in the current show and all the global groups. Click or drag them to add them to the current layout.",
         "layout": "Add transitions and next timers to slides in current layout.",
         "media": "All media in current show. Show them, or drag them to current layout.",
@@ -90,13 +90,19 @@
         "bold": "Bold"
     },
     "create_show": {
+        "web": "Web search",
         "search_web": "Search for song on the web",
+        "search_results": "Search results",
         "more_options": "More options",
         "format_new_show": "Format text",
         "format_new_show_tip": "Improve text format with auto capitalize, split text, assign groups & more.",
         "split_lines": "Numbers of lines",
         "split_lines_tip": "Numbers of lines allowed per slide before auto splitting",
-        "quick_lyrics_example_text": "Line"
+        "quick_lyrics": "Quick lyrics",
+        "quick_lyrics_tip": "Paste text or enter manually",
+        "quick_lyrics_example_tip": "Enter lyrics or any text here",
+        "quick_lyrics_example_text": "Line",
+        "empty": "Empty show"
     },
     "preview": {
         "_previous_show": "Previous show",
@@ -119,7 +125,8 @@
         "to_start": "Go to start",
         "nextTimer": "Next slide timer",
         "lock": "Lock",
-        "unlock": "Unlock"
+        "unlock": "Unlock",
+        "test_pattern": "Test pattern"
     },
     "clear": {
         "all": "Clear all",
@@ -177,6 +184,7 @@
         "playlist_settings": "Playlist settings",
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
+        "pre_fader_volume_meter": "Pre fader volume meter",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "tempo": "Tempo",
@@ -261,7 +269,7 @@
         "message": "Message",
         "message_tip": "Display something on all slides",
         "auto_media": "Get meta from media content",
-        "override_output": "Override styling in output",
+        "override_output": "Override output style",
         "display_metadata": "Display metadata",
         "meta_template": "Metadata template",
         "text_divider": "Text separator",
@@ -464,7 +472,6 @@
     "show": {
         "name": "Name",
         "category": "Category",
-        "quick_lyrics": "Quick Lyrics",
         "new_layout": "New layout",
         "grid": "Grid view",
         "simple": "Simple view",
@@ -475,7 +482,6 @@
         "locked": "This show has been locked!",
         "locked_info": "This show has been locked for editing. Unlock it again in the shows drawer.",
         "slide_template": "Slide template",
-        "search_results": "Search Results",
         "source": "Source",
         "artist": "Artist",
         "song": "Song"
@@ -686,7 +692,6 @@
         "all_shows": "All shows",
         "all_projects": "All projects",
         "project": "Project",
-        "options": "Options",
         "preview": "Preview",
         "title": "Title",
         "metadata": "Metadata",
@@ -760,6 +765,7 @@
         "different_first_template": "Custom template on first slide",
         "media_fit": "Media fit",
         "size": "Size",
+        "max_lines": "Max lines",
         "chords": "Chords",
         "transpose": "Transpose",
         "auto_size": "Auto size",
@@ -931,6 +937,7 @@
     "draw": {
         "focus": "Focus",
         "pointer": "Pointer",
+        "zoom": "Zoom",
         "fill": "Fill",
         "paint": "Paint",
         "particles": "Particles",
@@ -1071,6 +1078,7 @@
         "reset_theme": "Reset theme",
         "reset_themes": "Reset themes",
         "capitalize_words": "Capitalize words",
+        "comma_seperated": "Seperated by comma",
         "backup_all": "Backup everything",
         "restore": "Restore",
         "backup_started": "Backing up...",

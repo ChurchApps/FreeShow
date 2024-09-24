@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import { io } from "socket.io-client"
+    import { onMount } from "svelte"
     import type { TabsObj } from "../../types/Tabs"
     import Button from "./components/Button.svelte"
     import Center from "./components/Center.svelte"
+    import Checkbox from "./components/Checkbox.svelte"
     import Icon from "./components/Icon.svelte"
     import ProjectButton from "./components/ProjectButton.svelte"
     import ShowButton from "./components/ShowButton.svelte"
@@ -13,7 +14,6 @@
     import Slides from "./components/slide/Slides.svelte"
     import { GetLayout, getNextSlide, nextSlide } from "./helpers/get"
     import { dateToString } from "./helpers/time"
-    import Checkbox from "./components/Checkbox.svelte"
 
     var dictionary: any = {
         empty: {
@@ -180,7 +180,7 @@
                 break
             case "PROJECTS":
                 if (connected) {
-                    projects = Object.keys(msg.data).map((id) => ({ id, ...msg.data[id] }))
+                    projects = msg.data
                     // newest first
                     projects = projects.sort((a, b) => b.created - a.created)
                 }

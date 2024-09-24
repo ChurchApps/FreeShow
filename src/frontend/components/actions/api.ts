@@ -4,7 +4,7 @@ import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
 import { changeStageOutputLayout, displayOutputs, startCamera } from "../helpers/output"
-import { activateTrigger, changeOutputStyle, nextSlide, playSlideTimers, previousSlide, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShow } from "../helpers/showActions"
+import { activateTrigger, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShow } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { runActionId, toggleAction } from "./actions"
@@ -97,8 +97,8 @@ export const API_ACTIONS = {
     start_show: (data: API_id) => startShow(data.id),
 
     // PRESENTATION
-    next_slide: () => nextSlide({ key: "ArrowRight" }), // BC
-    previous_slide: () => previousSlide({ key: "ArrowLeft" }), // BC
+    next_slide: () => nextSlideIndividual({ key: "ArrowRight" }), // BC
+    previous_slide: () => previousSlideIndividual({ key: "ArrowLeft" }), // BC
     random_slide: () => randomSlide(), // BC
     index_select_slide: (data: API_index) => selectSlideByIndex(data.index), // BC
     name_select_slide: (data: API_strval) => selectSlideByName(data.value), // BC
