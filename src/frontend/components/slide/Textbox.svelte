@@ -200,7 +200,7 @@
                 } else {
                     // don't change the font size
                     // fontSize = itemFontSize
-                    if (ref.id === "scripture") maxFontSize = itemFontSize
+                    if (ref.id === "scripture" || ref.showId === "temp") maxFontSize = itemFontSize
                     else return
                 }
             }

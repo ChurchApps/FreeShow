@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition"
-    import { activePopup, os } from "../../stores"
+    import { activePopup, dictionary, os } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
     import { disablePopupClose } from "../../utils/shortcuts"
     import Icon from "../helpers/Icon.svelte"
@@ -40,7 +40,7 @@
                     {/if}
 
                     {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
-                        <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 40px;" on:click={() => activePopup.set(null)}>
+                        <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 40px;" title={$dictionary.actions?.close} on:click={() => activePopup.set(null)}>
                             <Icon id="close" size={2} />
                         </Button>
                     {/if}

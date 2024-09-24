@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { audioChannels } from "../../../stores"
+    import { activeDrawerTab, activePage, audioChannels, drawer } from "../../../stores"
+    import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
 
     export let advanced: boolean = false
     // const numbers: number = 8
@@ -60,6 +61,14 @@
 
         // (transformRange(1 - 1 / (i * -1))) * 100
     }
+
+    function openAudioMix() {
+        activePage.set("show")
+        activeDrawerTab.set("audio")
+
+        const minHeight = 40
+        if ($drawer.height <= minHeight) drawer.set({ height: $drawer.stored || DEFAULT_DRAWER_HEIGHT, stored: null })
+    }
 </script>
 
 {#if advanced}
@@ -91,7 +100,7 @@
         </div>
     </div>
 {:else}
-    <div class="main">
+    <div class="main" on:click={openAudioMix}>
         <!-- <span class="left">
             <div style="height: {100 - ($audioChannels.volume?.left || 0)}%" />
         </span>

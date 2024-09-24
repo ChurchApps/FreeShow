@@ -184,7 +184,7 @@
             bold={false}
             center
         >
-            <img src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" />
+            <img src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" draggable={false} />
             <p>{format.name}</p>
         </Button>
     {/each}

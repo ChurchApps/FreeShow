@@ -51,6 +51,8 @@ export function convertText({ name = "", category = null, text, noFormatting = f
         name = firstSlideText[0]
         if (firstSlideText.length > 1 && (name.includes("[") || name.includes(":"))) name = firstSlideText[1]
         name = name.replace(/[,.!]/g, "").trim()
+        if (name.length > 30) name = name.slice(0, name.indexOf(" ", 30))
+        if (name.length > 38) name = name.slice(0, 30)
     }
 
     let layoutID: string = uid()

@@ -159,7 +159,7 @@
 {#if selectedOption === "text"}
     <div class="header"><T id="create_show.quick_lyrics" /></div>
     <!-- WIP buttons for paste / format(remove chords, remove empty lines), etc. -->
-    <TextArea placeholder={getQuickExample()} style="height: 250px;min-width: 500px;" value={values.text} autofocus on:input={(e) => changeValue(e)} />
+    <TextArea placeholder={getQuickExample()} style="height: 250px;min-width: 500px;" value={values.text} autofocus={!values.text} on:input={(e) => changeValue(e)} />
 {:else if selectedOption === "web"}
     <WebSearch query={values.name} on:update={updateLyrics} />
 {/if}
@@ -187,8 +187,8 @@
         {:else}
             <CombinedInput>
                 <Button on:click={() => (showMore = !showMore)} style="width: 100%;" dark center>
-                    <Icon id="options" right white={showMore} />
-                    <T id="create_show.more_options" />
+                    <Icon id="options" right white={!$formatNewShow} />
+                    <T id="edit.options" />
                 </Button>
             </CombinedInput>
         {/if}

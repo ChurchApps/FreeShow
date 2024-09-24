@@ -39,7 +39,7 @@
 
 <div style="display: flex;gap: 20px;">
     <div class="options">
-        <h4 style="text-align: center;"><T id="export.options" /></h4>
+        <h4 style="text-align: center;"><T id="edit.options" /></h4>
         <br />
 
         <div class="line">

@@ -22,7 +22,7 @@
 
 <div style="text-align: center;">
     <div class="logo">
-        <img style="height: 35px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" />
+        <img style="height: 35px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
         <h1 style="color: var(--text);font-size: 1.7em;">FreeShow</h1>
     </div>
 

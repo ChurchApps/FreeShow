@@ -86,14 +86,14 @@
                 prevActive = active
                 files = []
                 fullFilteredFiles = []
-                Object.values($mediaFolders).forEach((data) => send(MAIN, ["READ_FOLDER"], { path: data.path }))
+                Object.values($mediaFolders).forEach((data) => send(MAIN, ["READ_FOLDER"], { path: data.path, disableThumbnails: $mediaOptions.mode === "list" }))
             }
         } else if (path?.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
                 fullFilteredFiles = []
-                send(MAIN, ["READ_FOLDER"], { path, listFilesInFolders: true })
+                send(MAIN, ["READ_FOLDER"], { path, listFilesInFolders: true, disableThumbnails: $mediaOptions.mode === "list" })
             }
         } else {
             // screens && cameras

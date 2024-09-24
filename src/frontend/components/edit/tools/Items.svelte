@@ -14,19 +14,25 @@
     import { getItemText } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
 
-    const items: { id: ItemType; icon?: string; name?: string; maxAmount?: number }[] = [
+    type ItemRef = { id: ItemType; icon?: string; name?: string; maxAmount?: number }
+
+    const items: ItemRef[] = [
         { id: "text" },
-        { id: "list" },
-        // { id: "table" },
         { id: "media", icon: "image" },
-        { id: "camera" },
+        { id: "web" },
         { id: "timer" },
         { id: "clock" },
-        { id: "events", icon: "calendar" },
+        // { id: "variable" },
+    ]
+
+    const specialItems: ItemRef[] = [
+        { id: "list" },
+        // { id: "table" },
+        { id: "camera" },
         { id: "variable" },
-        { id: "web" },
-        { id: "mirror" },
         { id: "slide_tracker", icon: "percentage" },
+        { id: "events", icon: "calendar" },
+        { id: "mirror" },
         { id: "visualizer", maxAmount: 1 },
         { id: "captions", maxAmount: 1 }, // max one because there can't be multiple translations at this point
     ]
@@ -70,11 +76,41 @@
 
 <Panel>
     <h6 style="margin-top: 10px;"><T id="edit.add_items" /></h6>
+
     <div class="grid">
-        {#each items as item}
-            <IconButton name title={$dictionary.items?.[item.name || item.id]} icon={item.icon || item.id} disabled={item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount} on:click={() => addItem(item.id)} />
+        {#each items as item, i}
+            <IconButton
+                style={i === 0 ? "min-width: 100%;" : "justify-content: start;padding-left: 15px;"}
+                name
+                title={$dictionary.items?.[item.name || item.id]}
+                icon={item.icon || item.id}
+                disabled={item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount}
+                on:click={() => addItem(item.id)}
+            />
+
+            {#if i === 0}
+                <hr class="divider" />
+            {/if}
         {/each}
     </div>
+
+    <hr class="divider" />
+
+    <div class="grid special">
+        {#each specialItems as item}
+            <IconButton
+                style="justify-content: start;padding-left: 15px;"
+                name
+                title={$dictionary.items?.[item.name || item.id]}
+                icon={item.icon || item.id}
+                disabled={item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount}
+                on:click={() => addItem(item.id)}
+            />
+        {/each}
+    </div>
+
+    <hr class="divider" />
+
     <div>
         <!-- square, circle, triangle, star, heart, ... -->
         <Button
@@ -150,14 +186,35 @@
     }
 
     .grid :global(#icon) {
-        /* min-width: 32%; */
         flex: 1;
         background-color: var(--primary-darker);
         padding: 9px;
-        min-width: 49%;
+
+        /* min-width: 100%; */
     }
     .grid :global(#icon:hover) {
         background-color: var(--primary-lighter);
+    }
+
+    /* .special */
+    .grid :global(#icon) {
+        /* min-width: 32%; */
+        min-width: 49%;
+    }
+
+    /* p.divider {
+        background-color: var(--primary-darkest);
+        text-align: center;
+        padding: 2px;
+        font-size: 0.8em;
+        / * font-weight: 600;
+        text-transform: uppercase; * /
+    } */
+    .divider {
+        height: 2px;
+        width: 100%;
+        background-color: var(--primary);
+        margin: 0;
     }
 
     .items p {

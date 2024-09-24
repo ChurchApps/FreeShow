@@ -293,14 +293,14 @@
     </Button>
 </CombinedInput>
 
-<CombinedInput>
-    <Button style="width: 100%;" on:click={bundleMediaFiles} title={$dictionary.media?.bundle_media_files_tip}>
+<CombinedInput title={$dictionary.media?.bundle_media_files_tip}>
+    <Button style="width: 100%;" on:click={bundleMediaFiles}>
         <Icon id="image" right /><T id="media.bundle_media_files" />
     </Button>
 </CombinedInput>
 
-<CombinedInput>
-    <Button style="width: 100%;" on:click={() => guideActive.set(true)} title={$dictionary.guide?.start}>
+<CombinedInput title={$dictionary.guide?.start}>
+    <Button style="width: 100%;" on:click={() => guideActive.set(true)}>
         <Icon id="guide" right /><T id="guide.start" />
     </Button>
 </CombinedInput>

@@ -464,7 +464,7 @@ export const boxes: Box = {
         },
     },
     slide_tracker: {
-        icon: "slide_tracker",
+        icon: "percentage",
         edit: {
             default: trackerEdits,
             font: [

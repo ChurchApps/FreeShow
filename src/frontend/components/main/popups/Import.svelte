@@ -88,7 +88,7 @@
             }}
             center
         >
-            <img style="height: 60px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" />
+            <img style="height: 60px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
             <p style="margin-left: 5px;">{format.name}</p>
         </Button>
     {/each}
@@ -117,7 +117,7 @@
             bold={false}
             center
         >
-            <img src="./import-logos/{format.id}.webp" alt="{format.id}-logo" />
+            <img src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
             <p>{format.name}</p>
         </Button>
     {/each}
@@ -135,7 +135,7 @@
             bold={false}
             center
         >
-            <img src="./import-logos/{format.id}.webp" alt="{format.id}-logo" />
+            <img src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
             <p>{format.name}</p>
         </Button>
     {/each}

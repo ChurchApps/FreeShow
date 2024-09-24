@@ -741,6 +741,10 @@ const deleteActions = {
                 delete a!.index
                 return a
             })
+
+            if (get(activeShow)!.type === "section") {
+                activeShow.set(null)
+            }
         }
 
         history({ id: "UPDATE", newData: { key: "shows", data: shows.filter((_a, i) => !indexes.includes(i)) }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_key" } })

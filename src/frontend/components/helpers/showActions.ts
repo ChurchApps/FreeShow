@@ -852,7 +852,10 @@ const customTriggers = {
     http: (value: string) => {
         return new Promise((resolve) => {
             fetch(value, { method: "GET" })
-                .then(() => resolve("success"))
+                .then((r) => {
+                    if (!r.ok) return resolve("error")
+                    resolve("success")
+                })
                 // .then((response) => response.json())
                 // .then((json) => console.log(json))
                 .catch((err) => {

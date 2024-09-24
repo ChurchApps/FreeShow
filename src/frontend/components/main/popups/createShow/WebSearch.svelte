@@ -163,9 +163,11 @@
     }
 
     .searchResultTable {
-        width: 100%;
+        /* width: 100%; */
         table-layout: fixed;
         border-spacing: 0;
+
+        background-color: var(--primary-darker);
     }
 
     .searchResultTable th {

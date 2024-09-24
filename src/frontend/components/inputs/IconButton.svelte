@@ -4,10 +4,11 @@
     import Button from "./Button.svelte"
 
     export let title: string = ""
+    export let style: string = ""
     export let name: boolean = false
 </script>
 
-<Button id="icon" on:click {title} disabled={$$props.disabled} center style={"flex: 1;"}>
+<Button id="icon" on:click {title} disabled={$$props.disabled} center style="flex: 1;{style}">
     <Icon id={$$props.icon} size={1.2} white={!$$props.active && (!name || !title || $labelsDisabled)} right={name && !!title && !$labelsDisabled} />
     {#if name && title && !$labelsDisabled}{title}{/if}
 </Button>
