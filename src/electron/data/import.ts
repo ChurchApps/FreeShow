@@ -1,6 +1,4 @@
-import { readFileSync } from "fs"
 import path, { join } from "path"
-// import { pdf } from "pdf-to-img"
 import PPTX2Json from "pptx2json"
 import protobufjs from "protobufjs"
 import SqliteToJson from "sqlite-to-json"
@@ -8,6 +6,7 @@ import sqlite3 from "sqlite3"
 import WordExtractor from "word-extractor"
 import { toApp } from ".."
 import { IMPORT } from "../../types/Channels"
+import { readFileAsync, readFileBufferAsync } from "../utils/files"
 
 const specialImports: any = {
     powerpoint: async (files: string[]) => {
@@ -62,7 +61,7 @@ const specialImports: any = {
     },
     songbeamer: async (files: string[], data: any) => {
         let encoding = data.encoding.id
-        let fileContents = await Promise.all(files.map((file) => readFile(file, encoding)))
+        let fileContents = await Promise.all(files.map(async (file) => await readFile(file, encoding)))
         return {
             files: fileContents,
             length: fileContents.length,
@@ -85,7 +84,7 @@ export async function importShow(id: any, files: string[] | null, importSettings
     if (specialImports[importId]) data = await specialImports[importId](files, importSettings)
     else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
-        data = await Promise.all(files.map((file) => readFile(file)))
+        data = await Promise.all(files.map(async (file) => await readFile(file)))
     }
 
     if (!data.length) return
@@ -93,7 +92,7 @@ export async function importShow(id: any, files: string[] | null, importSettings
     toApp(IMPORT, { channel: id, data })
 }
 
-async function readFile(filePath: string, encoding: BufferEncoding | null = "utf8") {
+async function readFile(filePath: string, encoding: BufferEncoding = "utf8") {
     let content: string = ""
 
     let name: string = getFileName(filePath) || ""
@@ -101,7 +100,7 @@ async function readFile(filePath: string, encoding: BufferEncoding | null = "utf
 
     try {
         if (extension === "pro") content = await decodeProto(filePath)
-        else content = readFileSync(filePath, encoding).toString()
+        else content = await readFileAsync(filePath, encoding)
     } catch (err) {
         console.error("Error reading file:", err.stack)
     }
@@ -122,8 +121,7 @@ async function decodeProto(filePath: string) {
 
     const Presentation = root.lookupType("Presentation")
 
-    const fileContent = readFileSync(filePath)
-    const buffer = Buffer.from(fileContent)
+    const buffer = await readFileBufferAsync(filePath)
     const message = Presentation.decode(buffer)
 
     return JSON.stringify(message)

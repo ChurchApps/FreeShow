@@ -550,12 +550,18 @@ const receiveCLOUD = {
         showsCache.set({})
         activeShow.set(null)
 
-        // could show popup with data (but it's better to just show a toast!)
+        // show completed toast
         newToast("$cloud.sync_complete")
-        popupData.set({})
-        activePopup.set(null)
-        // popupData.set(changes)
-        // activePopup.set("cloud_update")
+
+        // show popup if manually syncing
+        if (get(activePopup) === "cloud_update") {
+            popupData.set(changes)
+            // activePopup.set("cloud_update")
+        }
+
+        // hide sync popup on startup/close sync
+        // popupData.set({})
+        // activePopup.set(null)
     },
 }
 

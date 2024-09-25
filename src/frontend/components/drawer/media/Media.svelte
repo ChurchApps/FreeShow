@@ -245,6 +245,7 @@
 
     const slidesViews: any = { grid: "list", list: "grid" }
     const nextActiveView: any = { all: "folder", folder: "image", image: "video", video: "all" }
+    $: if (notFolders.includes(active || "") && activeView === "folder") activeView = "image"
 
     let zoomOpened: boolean = false
     function mousedown(e: any) {
@@ -430,14 +431,14 @@
                     <!-- only images!! -->
                 {:else if active === "online" && onlineTab === "pixabay"}
                     <Button title={$dictionary.media?.image} on:click={() => (activeView = "image")}>
-                        <Icon size={1.3} id="image" white={activeView !== "image"} />
+                        <Icon size={1.2} id="image" white={activeView !== "image"} />
                     </Button>
                     <Button title={$dictionary.media?.video} on:click={() => (activeView = "video")}>
-                        <Icon size={1.3} id="video" white={activeView !== "video"} />
+                        <Icon size={1.2} id="video" white={activeView !== "video"} />
                     </Button>
                 {:else}
                     <Button title={$dictionary.media?.[activeView]} on:click={() => (activeView = nextActiveView[activeView])}>
-                        <Icon size={1.3} id={activeView} white={activeView === "all"} />
+                        <Icon size={1.2} id={activeView === "all" ? "media" : activeView} white={activeView === "all"} />
                     </Button>
                 {/if}
 

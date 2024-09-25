@@ -51,6 +51,33 @@ export function readFolder(path: string): string[] {
     }
 }
 
+export async function readFileAsync(path: string, encoding: BufferEncoding = "utf8"): Promise<string> {
+    return new Promise((resolve) =>
+        fs.readFile(path, (err, buffer) => {
+            if (err) console.error(err)
+            resolve(err ? "" : buffer.toString(encoding))
+        })
+    )
+}
+
+export async function readFileBufferAsync(path: string): Promise<Buffer> {
+    return new Promise((resolve) =>
+        fs.readFile(path, (err, buffer) => {
+            if (err) console.error(err)
+            resolve(err ? Buffer.of(0) : buffer)
+        })
+    )
+}
+
+export async function readFolderAsync(path: string): Promise<string[]> {
+    return new Promise((resolve) =>
+        fs.readdir(path, (err, files) => {
+            if (err) console.error(err)
+            resolve(err ? [] : files)
+        })
+    )
+}
+
 export function writeFile(path: string, content: string | NodeJS.ArrayBufferView, id: string = "") {
     // don't know if it's necessary to check the file
     if (fileContentMatches(content, path)) return
@@ -450,14 +477,6 @@ async function checkIsFolder(path: string): Promise<boolean> {
     return new Promise((resolve) =>
         fs.stat(path, (err, stats) => {
             resolve(err ? false : stats.isDirectory())
-        })
-    )
-}
-
-async function readFolderAsync(path: string): Promise<string[]> {
-    return new Promise((resolve) =>
-        fs.readdir(path, (err, files) => {
-            resolve(err ? [] : files)
         })
     )
 }
