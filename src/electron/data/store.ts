@@ -8,6 +8,7 @@ import path from "path"
 import { STORE } from "../../types/Channels"
 import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
+import { statSync } from "original-fs"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",
@@ -36,21 +37,37 @@ if (process.env.FS_MOCK_STORE_PATH != undefined) {
 // MAIN WINDOW
 export const config = new Store<any>({ defaults: defaultConfig, ...storeExtraConfig })
 
-// Check that files are parsed properly!
 let dataPath = config.path
-Object.values(fileNames).forEach((fileName) => {
-    let p = path.join(path.dirname(dataPath), fileName + ".json")
-    if (!doesPathExist(p)) return
-    let jsonData = readFile(p)
+checkStores(dataPath)
 
-    try {
-        JSON.parse(jsonData)
-    } catch (err) {
-        console.error("Could not read the " + fileName + ".json settings file, probably wrong JSON format!", err)
-        // auto delete files that can't be parsed!
-        deleteFile(p)
-    }
-})
+// Check that files are parsed properly!
+function checkStores(dataPath: string) {
+    Object.values(fileNames).forEach((fileName) => {
+        let p = path.join(path.dirname(dataPath), fileName + ".json")
+        if (!doesPathExist(p)) return
+
+        // delete if too large
+        if (fileName === "history") {
+            const MAX_BYTES = 30 * 1024 * 1024 // 30 MB
+            let stats = statSync(p)
+            if (stats.size > MAX_BYTES) {
+                deleteFile(p)
+                console.log(`DELETED ${fileName + ".json"} file as it exceeded 30 MB!`)
+                return
+            }
+        }
+
+        let jsonData = readFile(p)
+
+        try {
+            JSON.parse(jsonData)
+        } catch (err) {
+            console.error("Could not read the " + fileName + ".json settings file, probably wrong JSON format!", err)
+            // auto delete files that can't be parsed!
+            deleteFile(p)
+        }
+    })
+}
 
 // ERROR LOG
 export const error_log = new Store({ name: fileNames.error_log, defaults: {}, ...storeExtraConfig })
@@ -135,6 +152,7 @@ export function updateDataPath({ reset, dataPath, load }: any = {}) {
     if (!userDataPath) return
 
     userDataPath = path.join(userDataPath, dataFolderNames.userData)
+    checkStores(path.join(userDataPath, "config.json"))
     updateStoresPath(load)
 }
 

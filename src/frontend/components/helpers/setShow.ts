@@ -5,6 +5,7 @@ import { cachedShowsData, notFound, saved, shows, showsCache, showsPath, textCac
 import { getShowCacheId, updateCachedShow } from "./show"
 import { uid } from "uid"
 import { destroy } from "../../utils/request"
+import { fixShowIssues } from "../../converters/importHelpers"
 
 export function setShow(id: string, value: "delete" | Show): Show {
     let previousValue: Show
@@ -122,7 +123,8 @@ export async function loadShows(s: string[]) {
                     })
                 }
 
-                setShow(msg.id || msg.content[0], msg.content[1])
+                let show = fixShowIssues(msg.content[1])
+                setShow(msg.id || msg.content[0], show)
             }
 
             if (count >= s.length) setTimeout(finished, 50)

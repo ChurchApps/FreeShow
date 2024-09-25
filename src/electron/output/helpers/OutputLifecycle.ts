@@ -7,6 +7,7 @@ import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
 import { OUTPUT } from "../../../types/Channels"
 import { CaptureHelper } from "../../capture/CaptureHelper"
+import { wait } from "../../utils/helpers"
 
 export class OutputLifecycle {
     static async createOutput(output: Output) {
@@ -118,6 +119,7 @@ export class OutputLifecycle {
             // this has to be called to actually remove the process!
             output?.window?.removeAllListeners("close")
             output?.window?.close()
+            await wait(80)
         } catch (error) {
             console.log(error)
         }
