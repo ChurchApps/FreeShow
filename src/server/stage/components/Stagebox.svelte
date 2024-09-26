@@ -103,7 +103,7 @@
     class="item"
     class:border={show?.settings.labels}
     class:isDisabledVariable
-    style="{itemStyle + (show.settings.autoStretch === false ? '' : newSizes)}--labelColor: {show?.settings?.labelColor || '#d0a853'};"
+    style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{show.settings.autoStretch === false ? '' : newSizes}--labelColor: {show?.settings?.labelColor || '#d0a853'};"
     bind:offsetHeight={height}
     bind:offsetWidth={width}
 >
@@ -201,7 +201,12 @@
 
         background: rgb(0 0 0 / 0.4);
         color: var(--labelColor);
+
+        /* RESET LABEL STYLE */
+        font-family: sans-serif;
         font-size: 42px;
+        -webkit-text-stroke-width: 0;
+        text-shadow: none;
 
         font-weight: normal;
         font-style: normal;

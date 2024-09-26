@@ -134,6 +134,13 @@ export function setExampleOverlays() {
                 { style: "bottom:0px;left:0px;height:50px;width:50px;background:radial-gradient(circle at 100% 0, transparent 50px, black 0px);" },
             ],
         }
+        a.vignette = {
+            name: "Vignette",
+            color: "#dddddd",
+            category: "visuals",
+            locked: true,
+            items: [{ style: "top: -180px;left: -200px;width: 2320px;height: 1440px;border-radius: 500px;box-shadow: inset 0px 0px 248px 0px #FFFFFF;" }],
+        }
         return a
     })
 }

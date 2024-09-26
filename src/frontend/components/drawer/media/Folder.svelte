@@ -36,9 +36,11 @@
     }
 
     const removeBrokenImg = (e: any) => (e.target.style.display = "none")
+
+    $: folderLabel = name + (fileCount ? ` (${fileCount})` : "")
 </script>
 
-<Card on:click={() => (rootPath = path)} width={100} label="{name}{fileCount ? ` (${fileCount})` : ''}" icon={mode === "grid" ? "folder" : null} color={mode === "grid" ? "var(--secondary);" : ""} {mode}>
+<Card on:click={() => (rootPath = path)} width={100} title={folderLabel} label={folderLabel} icon={mode === "grid" ? "folder" : null} color={mode === "grid" ? "var(--secondary);" : ""} {mode}>
     <div class="flex" style="width: 100%;height: 100%;">
         <div class="grid">
             {#key path}

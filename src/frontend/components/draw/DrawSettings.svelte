@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { drawSettings, drawTool } from "../../stores"
+    import { drawSettings, drawTool, paintCache } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -113,7 +113,7 @@
 
     <div class="bottom">
         {#if $drawTool === "paint"}
-            <Button style="flex: 1;padding: 10px;" on:click={() => update("clear", true)} dark center>
+            <Button style="flex: 1;padding: 10px;" on:click={() => update("clear", true)} disabled={!$paintCache?.length} red={!!$paintCache?.length} dark center>
                 <Icon id="clear" size={2} right />
                 <T id="clear.drawing" />
             </Button>

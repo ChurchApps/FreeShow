@@ -145,7 +145,7 @@
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
-    style="{itemStyle};{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};"
+    style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}
@@ -261,7 +261,12 @@
 
         background: rgb(0 0 0 / 0.4);
         color: var(--labelColor);
+
+        /* RESET LABEL STYLE */
+        font-family: sans-serif;
         font-size: 42px;
+        -webkit-text-stroke-width: 0;
+        text-shadow: none;
 
         font-weight: normal;
         font-style: normal;
