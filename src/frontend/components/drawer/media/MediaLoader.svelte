@@ -54,11 +54,12 @@
 
     // retry on error
     let retryCount = 0
+    const MAX_RETRIES = 3
     $: if (path || thumbnailPath) retryCount = 0
     function reload() {
         if (ghost) return
 
-        if (retryCount > 5) {
+        if (retryCount > MAX_RETRIES) {
             loaded = true
             return
         }
@@ -73,7 +74,7 @@
     // path starting at "/" auto completes to app root, but should be file://
     $: if (path[0] === "/") path = `file://${path}`
 
-    $: useOriginal = hover || loadFullImage || retryCount > 5 || !thumbnailPath
+    $: useOriginal = hover || loadFullImage || retryCount > MAX_RETRIES || !thumbnailPath
 
     // get duration
     $: if (getDuration && type === "video" && thumbnailPath) getVideoDuration()
@@ -109,7 +110,9 @@
         {:else if type === "screen"}
             <Capture screen={{ id: path, name }} streams={[]} background />
         {:else if readyToLoad}
-            {#if type !== "video" || (thumbnailPath && retryCount <= 5)}
+            {#if ghost && !thumbnailPath}
+                <!-- show nothing if ghost without thumbnail -->
+            {:else if type !== "video" || (thumbnailPath && retryCount <= MAX_RETRIES)}
                 {#key retryCount}
                     <img
                         src={type !== "video" && useOriginal ? encodeFilePath(path) : thumbnailPath}
@@ -123,7 +126,7 @@
                     />
                 {/key}
             {/if}
-            {#if type === "video" && useOriginal}
+            {#if type === "video" && useOriginal && !ghost}
                 <video style={mediaStyleString} bind:this={videoElem} on:error={reload} src={encodeFilePath(path)} on:canplaythrough={getCurrentDuration}>
                     <track kind="captions" />
                 </video>

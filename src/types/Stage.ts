@@ -22,6 +22,7 @@ export interface StageLayout {
         // resolution?: boolean
         // size?: Resolution
         labels?: boolean
+        labelColor?: string
         showLabelIfEmptySlide?: boolean
     }
     items: {

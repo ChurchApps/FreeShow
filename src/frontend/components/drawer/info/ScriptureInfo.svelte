@@ -3,7 +3,7 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activeProject, activeTriggerFunction, categories, drawerTabsData, media, outLocked, outputs, playScripture, scriptureSettings, styles, templates } from "../../../stores"
+    import { activeProject, activeTriggerFunction, categories, drawerTabsData, media, outLocked, outputs, playScripture, scriptureHistory, scriptureSettings, styles, templates } from "../../../stores"
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -133,6 +133,25 @@
 
     function showVerse() {
         if ($outLocked) return
+
+        // add to scripture history
+        scriptureHistory.update((a) => {
+            let newItem = {
+                id: bibles[0].id,
+                book: bibles[0].bookId,
+                chapter: bibles[0].api ? bibles[0].chapter : Number(bibles[0].chapter) - 1,
+                verse: sorted[0],
+                reference: `${bibles[0].book} ${bibles[0].chapter}:${sorted[0]}`,
+                text: bibles[0].verses[sorted[0]],
+            }
+            // WIP multiple verses, play from another version
+
+            let existingIndex = a.findIndex((a) => JSON.stringify(a) === JSON.stringify(newItem))
+            if (existingIndex > -1) a.splice(existingIndex, 1)
+            a.push(newItem)
+
+            return a
+        })
 
         let outputIsScripture = $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
         if (!outputIsScripture) customActionActivation("scripture_start")

@@ -1,5 +1,6 @@
 <script type="ts">
     import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, paintCache, saved, shows } from "../../stores"
+    import { newToast } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import { displayOutputs } from "../helpers/output"
     import Button from "../inputs/Button.svelte"
@@ -8,6 +9,24 @@
     export let isWindows: boolean = false
 
     $: editDisabled = (!$activeShow && !$activeEdit.type && ($activeEdit.slide === undefined || $activeEdit.slide === null)) || $shows[$activeShow?.id || ""]?.locked || $activeShow?.type === "pdf"
+
+    let confirm: boolean = false
+    let cancelConfirmTimeout: any = null
+    function toggleOutput() {
+        if (cancelConfirmTimeout) clearTimeout(cancelConfirmTimeout)
+
+        if (!$outputDisplay || confirm) {
+            confirm = false
+            displayOutputs()
+            return
+        }
+
+        confirm = true
+        newToast("$menu.again_confirm")
+        cancelConfirmTimeout = setTimeout(() => {
+            confirm = false
+        }, 1800)
+    }
 </script>
 
 <div class="top" class:drag={!isWindows}>
@@ -35,9 +54,18 @@
         <!-- <TopButton id="stage" hideLabel /> -->
         <TopButton id="draw" red={$drawTool === "fill" || $drawTool === "zoom" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
         <TopButton id="settings" hideLabel />
-        <Button title={($outputDisplay ? $dictionary.menu?._title_display_stop : $dictionary.menu?._title_display) + " [Ctrl+O]"} on:click={displayOutputs} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay}>
+        <Button
+            title={($outputDisplay ? (confirm ? $dictionary.menu?.again_confirm : $dictionary.menu?._title_display_stop) : $dictionary.menu?._title_display) + " [Ctrl+O]"}
+            on:click={toggleOutput}
+            class="context #output display {$outputDisplay ? 'on' : 'off'}"
+            red={$outputDisplay}
+        >
             {#if $outputDisplay}
-                <Icon id="cancelDisplay" size={1.6} white />
+                {#if confirm}
+                    <Icon id="close" size={1.6} white />
+                {:else}
+                    <Icon id="cancelDisplay" size={1.6} white />
+                {/if}
             {:else}
                 <Icon id="outputs" size={1.6} white />
             {/if}

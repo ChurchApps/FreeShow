@@ -205,7 +205,8 @@
         "settings": "Settings",
         "_title_settings": "Settings",
         "_title_display": "Present",
-        "_title_display_stop": "Stop presentation"
+        "_title_display_stop": "Stop presentation",
+        "again_confirm": "Click again to confirm"
     },
     "empty": {
         "general": "Nothing here",
@@ -977,7 +978,8 @@
         "overrun": "Overrun Color",
         "source_output": "Source output",
         "auto_stretch": "Auto stretch content",
-        "labels": "Show labels"
+        "labels": "Show labels",
+        "label_color": "Label color"
     },
     "settings": {
         "general": "General",

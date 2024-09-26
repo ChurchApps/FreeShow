@@ -80,10 +80,33 @@
         firstTimerId = $activeTimers[0]?.id
         if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
     }
+
+    let itemStyle: string = ""
+    let textStyle: string = ""
+    $: if (style) updateStyles()
+    function updateStyles() {
+        const styles = getStyles(style)
+        const textStyleKeys = ["line-height", "text-decoration"]
+
+        itemStyle = ""
+        textStyle = ""
+
+        Object.entries(styles).forEach(([key, value]) => {
+            if (textStyleKeys.includes(key)) textStyle += `${key}: ${value};`
+            else itemStyle += `${key}: ${value};`
+        })
+    }
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
-<div class="item" class:border={show?.settings.labels} class:isDisabledVariable style={style + (show.settings.autoStretch === false ? "" : newSizes)} bind:offsetHeight={height} bind:offsetWidth={width}>
+<div
+    class="item"
+    class:border={show?.settings.labels}
+    class:isDisabledVariable
+    style="{itemStyle + (show.settings.autoStretch === false ? '' : newSizes)}--labelColor: {show?.settings?.labelColor || '#d0a853'};"
+    bind:offsetHeight={height}
+    bind:offsetWidth={width}
+>
     {#if show?.settings.labels}
         <div class="label">{item.label || ""}</div>
     {/if}
@@ -101,7 +124,7 @@
                     <SlideNotes notes={slide?.notes || ""} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
                     {#key item || slide}
-                        <SlideText {slide} stageItem={item} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} />
+                        <SlideText {slide} stageItem={item} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} {textStyle} />
                     {/key}
                 {:else if id.includes("slide")}
                     {@const slideBackground = next ? background.next : background}
@@ -111,7 +134,7 @@
                             <MediaOutput path={slideBackground.path} mediaStyle={slideBackground.mediaStyle} />
                         {/if}
 
-                        <SlideText {slide} stageItem={item} {show} {resolution} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} style />
+                        <SlideText {slide} stageItem={item} {show} {resolution} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} {textStyle} style />
                     </span>
                 {:else if id.includes("clock")}
                     <Clock autoSize={item.auto !== false ? autoSize : fontSize} />
@@ -139,12 +162,16 @@
     .item {
         font-family: Arial, Helvetica, sans-serif;
 
+        border-width: 0;
+        border-style: solid;
+
         /* make label visible */
         overflow: visible !important;
     }
 
     .item.border {
-        border: 3px solid #5a4c00;
+        outline: 3px solid var(--labelColor);
+        outline-offset: 0;
     }
 
     .align {
@@ -172,10 +199,16 @@
         transform: translateY(calc(-100% - 3px));
         width: 100%;
 
-        background: rgb(0 0 0 / 0.5);
-        color: #dfd9b8;
+        background: rgb(0 0 0 / 0.4);
+        color: var(--labelColor);
         font-size: 42px;
+
         font-weight: normal;
+        font-style: normal;
         text-align: center;
+
+        line-height: normal;
+        letter-spacing: normal;
+        word-spacing: normal;
     }
 </style>

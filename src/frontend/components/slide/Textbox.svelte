@@ -48,6 +48,7 @@
         id: string
     }
     export let style: boolean = true
+    export let customStyle: string = ""
     export let stageItem: any = {}
     export let chords: boolean = false
     export let linesStart: null | number = null
@@ -415,7 +416,7 @@
                             {#each line.text || [] as text}
                                 {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                 <span
-                                    style="{style ? getAlphaStyle(text.style) : ''}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate'
+                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate'
                                         ? text.style + (customTypeRatio && autoSize ? `;font-size: ${fontSize * customTypeRatio}px;` : '')
                                         : ''}"
                                 >

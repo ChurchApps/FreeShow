@@ -232,12 +232,13 @@ export function setFilterStyle(style: StyleClipboard, indexes: number[]) {
 
 /////
 
-function getItemKeys() {
+export function getItemKeys() {
     // replace just item style or just box style if not textbox
     let itemKeys: string[] = []
 
     Object.values(itemEdits).forEach((values) => {
         itemKeys.push(...values.map((a) => a.key || ""))
+        // WIP transform not working with this
     })
 
     return itemKeys

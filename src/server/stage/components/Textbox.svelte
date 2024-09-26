@@ -16,6 +16,7 @@
     export let autoSize: boolean = true
     export let ratio: number = 1
     export let maxLines: number = 0 // stage next item preview
+    export let customStyle: string = ""
 
     // dynamic resolution
     let resolution = { width: window.innerWidth, height: window.innerHeight }
@@ -244,7 +245,7 @@
                         {/if}
                         <div class="break" style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                             {#each line.text || [] as text}
-                                <span style={style ? text.style + (fontSize ? "font-size: " + fontSize + "px;" : "") : "font-size: " + fontSize + "px;"}>{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                                <span style="{style ? text.style + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
                             {/each}
                         </div>
                     {/if}
