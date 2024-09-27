@@ -5,6 +5,7 @@ import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
 import {
+    activeRename,
     currentOutputSettings,
     currentWindow,
     disabledServers,
@@ -334,6 +335,7 @@ export function keyOutput(keyId: string, delOutput: boolean = false) {
     })
 }
 
+// WIP history
 export function addOutput(onlyFirst: boolean = false) {
     if (onlyFirst && get(outputs).length) return
 
@@ -354,10 +356,12 @@ export function addOutput(onlyFirst: boolean = false) {
         if (!onlyFirst && get(outputDisplay)) send(OUTPUT, ["DISPLAY"], { enabled: true, output: { id, ...output[id] } })
 
         if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
+        activeRename.set("output_" + id)
         return output
     })
 }
 
+// WIP history
 export function enableStageOutput(options: any = {}) {
     let outputIds = getActiveOutputs()
     let bounds = get(outputs)[outputIds[0]]?.bounds || { x: 0, y: 0, width: 100, height: 100 }
@@ -376,6 +380,7 @@ export function enableStageOutput(options: any = {}) {
         }
 
         send(OUTPUT, ["CREATE"], { ...a[id], id })
+        activeRename.set("output_" + id)
 
         return a
     })
