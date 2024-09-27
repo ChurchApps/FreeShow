@@ -20,8 +20,10 @@
     }
 
     function convert() {
-        translateShow(showId, $special.translationLanguage || "en")
-        translatedLangs.push($special.translationLanguage || "en")
+        if (!$special.translationLanguage) return
+
+        translateShow(showId, $special.translationLanguage)
+        translatedLangs.push($special.translationLanguage)
         translatedLangs = translatedLangs
     }
 
@@ -61,7 +63,7 @@
     </CombinedInput>
 
     <CombinedInput>
-        <Button style="width: 100%;" on:click={convert} center>
+        <Button style="width: 100%;" disabled={!$special.translationLanguage} on:click={convert} center>
             <Icon size={1.1} id="translate" right />
             {#if translatedLangs.includes($special.translationLanguage)}
                 <T id="localization.update" />

@@ -106,7 +106,6 @@
     async function locateFile(fileId: string, path: string, folders: string[], mediaObj: any) {
         if (!path) return
 
-        let checkCloud = cloudId && cloudId !== "default"
         if (checkCloud) {
             let cloudBg = mediaObj.cloud?.[cloudId]
             if (cloudBg) path = cloudBg
@@ -139,8 +138,13 @@
 
     let duration: number = 0
 
+    // CLOUD BG
+    let cloudBg = ""
+    $: checkCloud = cloudId && cloudId !== "default"
+    $: if (checkCloud) cloudBg = bg?.cloud?.[cloudId] || ""
+
     // LOAD BACKGROUND
-    $: bgPath = bg?.path || bg?.id || ""
+    $: bgPath = cloudBg || bg?.path || bg?.id || ""
     $: if (bgPath && !disableThumbnails) loadBackground()
     let thumbnailPath: string = ""
     async function loadBackground() {

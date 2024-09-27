@@ -3,7 +3,7 @@ import path from "path"
 import { isProd, toApp } from ".."
 import { STORE } from "../../types/Channels"
 import { stores } from "../data/store"
-import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, getFileStats, loadShows, readFile, writeFile } from "../utils/files"
+import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, getFileStats, loadShows, readFileAsync, writeFile } from "../utils/files"
 import { trimShow } from "../utils/responses"
 
 let driveClient: any = null
@@ -301,7 +301,7 @@ export async function syncDataDrive(data: any) {
             let driveFile = await getFile(driveFileId)
 
             let localBiblePath: string = path.resolve(localBiblesFolder, name)
-            let localFile: string = readFile(localBiblePath)
+            let localFile: string = await readFileAsync(localBiblePath)
 
             let newest = await getNewest({ driveFile, localPath: localBiblePath })
 
@@ -374,14 +374,14 @@ export async function syncDataDrive(data: any) {
             syncStates[newest]++
 
             if (newest === "same") {
-                let showContent = driveContent?.[id] || readFile(localShowPath)
+                let showContent = driveContent?.[id] || (await readFileAsync(localShowPath))
                 if (showContent) allShows[id] = showContent
                 return
             }
 
             // get existing content
             let cloudContent = driveContent?.[id] ? JSON.stringify([id, driveContent[id]]) : null
-            let localContent = readFile(localShowPath, "utf8", true)
+            let localContent = await readFileAsync(localShowPath, "utf8")
 
             // double check with content timestamp
             if (newest === "cloud" && cloudContent && localContent) {

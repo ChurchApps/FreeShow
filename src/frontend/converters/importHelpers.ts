@@ -60,6 +60,8 @@ export function importShow(files: any[]) {
             }
         }
 
+        show = fixShowIssues(show)
+
         tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
     })
 
@@ -79,4 +81,45 @@ export function importSpecific(data: any, store: any) {
     })
 
     newToast("$main.finished")
+}
+
+export function fixShowIssues(show) {
+    // remove unused children slides
+    let allUsedSlides: string[] = Object.keys(show.slides).reduce((ids: string[], slideId: string) => {
+        let slide = show.slides[slideId]
+        if (slide.group === null) return ids
+
+        ids.push(slideId)
+        ids.push(...(slide.children || []))
+        return ids
+    }, [])
+
+    Object.keys(show.slides).forEach((slideId: string) => {
+        let slide = show.slides[slideId]
+
+        // remove if unused
+        if (!allUsedSlides.includes(slideId) && slide.group === null) {
+            delete show.slides[slideId]
+            return
+        }
+
+        // check & fix looping items bug
+        if (slide.items?.length < 30) return
+
+        let previousItem: string = ""
+        let matchCount: number = 0
+        for (let item of slide.items) {
+            let currentItem = JSON.stringify(item)
+
+            if (previousItem === currentItem) matchCount++
+            if (matchCount >= 30) {
+                show.slides[slideId].items = []
+                return
+            }
+
+            previousItem = currentItem
+        }
+    })
+
+    return show
 }

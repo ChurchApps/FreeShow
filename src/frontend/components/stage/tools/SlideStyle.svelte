@@ -67,12 +67,19 @@
             <Checkbox checked={settings.autoStretch ?? true} on:change={(e) => toggleValue(e, "autoStretch")} />
         </div>
     </CombinedInput>
+
     <CombinedInput>
         <p><T id="stage.labels" /></p>
         <div class="alignRight">
             <Checkbox checked={settings.labels ?? false} on:change={(e) => toggleValue(e, "labels")} />
         </div>
     </CombinedInput>
+    {#if settings.labels}
+        <CombinedInput>
+            <p><T id="stage.label_color" /></p>
+            <Color value={settings.labelColor || "#ac9c35"} on:input={(e) => updateStageSettings(e.detail, "labelColor")} />
+        </CombinedInput>
+    {/if}
 
     <!-- <h6><T id="settings.resolution" /></h6>
   <CombinedInput>

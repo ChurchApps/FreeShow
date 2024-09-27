@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeShow, customMessageCredits, media, mediaOptions, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
+    import { activeShow, customMessageCredits, media, mediaOptions, outLocked, outputs, photoApiCredits, selected, styles } from "../../../stores"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
@@ -48,6 +48,18 @@
         if (credits) {
             photoApiCredits.set(credits)
         }
+    }
+
+    function mouseenter() {
+        const mediaGrid = document.querySelector(".grid")?.querySelector(".grid")
+        if (!mediaGrid) return
+
+        const scrollTop = mediaGrid.scrollTop
+        setTimeout(() => {
+            // return if scrolling or selected
+            if (scrollTop !== mediaGrid.scrollTop || $selected.data.find((a) => a.path === path)) return
+            hover = true
+        }, 200)
     }
 
     let wait = false
@@ -110,7 +122,7 @@
         on:mousedown={mousedown}
         on:click={click}
         on:dblclick={dblclick}
-        on:mouseenter={() => (hover = true)}
+        on:mouseenter={mouseenter}
         on:mouseleave={() => (hover = false)}
         on:mousemove={move}
     >

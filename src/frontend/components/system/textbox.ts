@@ -33,7 +33,7 @@ export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: a
             if (active.includes(id)) return
 
             let style: any = getStyles(item.getAttribute("style"))
-            Object.entries(style).map((s: any) => (style[s[0]] = Number(s[1].replace(/\D.+/g, ""))))
+            Object.entries(style).map((s: any) => (style[s[0]] = Number(s[1].replace(/[^-0-9\.]+/g, ""))))
             xLines.push(style.left, style.left + style.width / 2, style.left + style.width)
             yLines.push(style.top, style.top + style.height / 2, style.top + style.height)
         }
@@ -50,7 +50,7 @@ export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: a
         const side = id.includes("x") ? "left" : "top"
 
         allLines.forEach((l: number) => {
-            let style = styles[side]?.toString().replace(/[^0-9\.]+/g, "")
+            let style = Number(styles[side]?.toString().replace(/[^-0-9\.]+/g, ""))
             let match: undefined | number = items.find((i: any) => style > l - i - margin && style < l - i + margin)
             if (match !== undefined) styles[side] = l - match
 

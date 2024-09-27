@@ -51,6 +51,33 @@ export function readFolder(path: string): string[] {
     }
 }
 
+export async function readFileAsync(path: string, encoding: BufferEncoding = "utf8"): Promise<string> {
+    return new Promise((resolve) =>
+        fs.readFile(path, (err, buffer) => {
+            if (err) console.error(err)
+            resolve(err ? "" : buffer.toString(encoding))
+        })
+    )
+}
+
+export async function readFileBufferAsync(path: string): Promise<Buffer> {
+    return new Promise((resolve) =>
+        fs.readFile(path, (err, buffer) => {
+            if (err) console.error(err)
+            resolve(err ? Buffer.of(0) : buffer)
+        })
+    )
+}
+
+export async function readFolderAsync(path: string): Promise<string[]> {
+    return new Promise((resolve) =>
+        fs.readdir(path, (err, files) => {
+            if (err) console.error(err)
+            resolve(err ? [] : files)
+        })
+    )
+}
+
 export function writeFile(path: string, content: string | NodeJS.ArrayBufferView, id: string = "") {
     // don't know if it's necessary to check the file
     if (fileContentMatches(content, path)) return
@@ -369,50 +396,59 @@ export function readExifData({ id }: any, e: any) {
     }
 }
 
+//////
+
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
 const NESTED_SEARCH = 8 // folder levels deep
 export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
+    locateMediaFileAsync({ fileName, splittedPath, folders, ref })
+}
+
+async function locateMediaFileAsync({ fileName, splittedPath, folders, ref }: any) {
     let matches: string[] = []
 
-    findMatches()
+    await findMatches()
     if (!matches.length) return
 
     toApp(MAIN, { channel: "LOCATE_MEDIA_FILE", data: { path: matches[0], ref } })
 
-    /////
-
-    function findMatches() {
+    async function findMatches() {
         for (const folderPath of folders) {
             // if (matches.length > 1) return // this might be used if we want the user to choose if more than one match is found
             if (matches.length) return
-            searchInFolder(folderPath)
+            await searchInFolder(folderPath)
         }
     }
 
-    function searchInFolder(folderPath: string, level: number = 1) {
+    async function searchInFolder(folderPath: string, level: number = 1) {
         if (level > NESTED_SEARCH || matches.length) return
 
         let currentFolderFolders: string[] = []
-        let files = readFolder(folderPath)
-        for (const name of files) {
-            let currentFilePath: string = path.join(folderPath, name)
-            let fileStat = getFileStats(currentFilePath)
+        let files = await readFolderAsync(folderPath)
 
-            if (fileStat?.folder) {
-                // search all files in current folder before searching in any nested folders
-                currentFolderFolders.push(currentFilePath)
-            } else {
-                checkFileForMatch(name, folderPath)
-                if (matches.length) return
-            }
-        }
+        await Promise.all(
+            files.map(async (name) => {
+                let currentFilePath: string = path.join(folderPath, name)
+                let isFolder = await checkIsFolder(currentFilePath)
+
+                if (isFolder) {
+                    // search all files in current folder before searching in any nested folders
+                    currentFolderFolders.push(currentFilePath)
+                } else {
+                    checkFileForMatch(name, folderPath)
+                    if (matches.length) return
+                }
+            })
+        )
 
         if (matches.length) return
 
-        for (const folderName of currentFolderFolders) {
-            searchInFolder(folderName, level + 1)
-            if (matches.length) return
-        }
+        await Promise.all(
+            currentFolderFolders.map(async (folderName) => {
+                await searchInFolder(folderName, level + 1)
+                if (matches.length) return
+            })
+        )
     }
 
     function checkFileForMatch(currentFileName: string, folderPath: string) {
@@ -436,6 +472,16 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
         }
     }
 }
+
+async function checkIsFolder(path: string): Promise<boolean> {
+    return new Promise((resolve) =>
+        fs.stat(path, (err, stats) => {
+            resolve(err ? false : stats.isDirectory())
+        })
+    )
+}
+
+//////
 
 // BUNDLE MEDIA FILES FROM ALL SHOWS (IMAGE/VIDEO/AUDIO)
 let currentlyBundling: boolean = false

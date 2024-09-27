@@ -526,9 +526,9 @@ function convertProToSlides(song: any) {
     // console.log(song)
 
     let tempLayouts: any = {}
-    const tempArrangements: any[] = getArrangements(song.arrangements)
-    const tempGroups: any[] = getGroups(song.cueGroups)
-    const tempSlides: any[] = getSlides(song.cues)
+    const tempArrangements: any[] = getArrangements(song.arrangements || [])
+    const tempGroups: any[] = getGroups(song.cueGroups || [])
+    const tempSlides: any[] = getSlides(song.cues || [])
     // console.log(tempArrangements, tempGroups, tempSlides)
 
     if (!tempArrangements?.length) {
@@ -635,7 +635,7 @@ function getArrangements(arrangements: any) {
     arrangements.forEach((a) => {
         newArrangements.push({
             name: a.name,
-            groups: a.groupIdentifiers.map((a) => a.string),
+            groups: a.groupIdentifiers?.map((a) => a.string) || [],
         })
     })
 
@@ -650,7 +650,7 @@ function getGroups(groups) {
         newGroups[group.uuid.string] = {
             name: group.name,
             color: getColorValue(group.color),
-            slides: cueIdentifiers.map((a) => a.string),
+            slides: cueIdentifiers?.map((a) => a.string) || [],
         }
     })
 

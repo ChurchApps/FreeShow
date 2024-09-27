@@ -9,6 +9,7 @@ const app = express()
 let servers: any = {}
 const DEFAULT_PORTS = { WebSocket: 5505, REST: 5506 }
 
+// WebSocket on 5506, REST on +1 (5506), but works with 5505 as well!
 export function startWebSocketAndRest(port: number | undefined) {
     startRestListener(port ? port + 1 : 0)
     startWebSocket(port)
@@ -74,7 +75,11 @@ export function startRestListener(PORT: number | undefined) {
 
     app.use(express.json())
     app.post("/", (req) => {
+        // {action: ACTION_ID, ...{}}
         let data = req.body
+        // ?action=ACTION_ID&data={}
+        if (!data.action && req.query.action) data = { action: req.query.action, ...JSON.parse((req.query.data || "{}") as string) }
+
         receivedData(data, (msg: string) => console.log(`REST: ${msg}`))
     })
 }

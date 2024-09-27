@@ -452,7 +452,9 @@
                             center
                         >
                             <Icon id={input.icon || input.id} right />
-                            <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
+                            {#key input.name}
+                                <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
+                            {/key}
                         </Button>
                     </CombinedInput>
                 {:else if input.input === "media"}
@@ -510,7 +512,9 @@
                     {#if !input.hidden}
                         <CombinedInput>
                             <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
-                                <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
+                                {#key input.name}
+                                    <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
+                                {/key}
                             </p>
                             <div class="alignRight">
                                 <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
@@ -524,7 +528,9 @@
                     {#if !input.hidden}
                         <CombinedInput>
                             <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
-                                <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
+                                {#key input.name}
+                                    <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
+                                {/key}
                             </p>
                             <svelte:component
                                 this={inputs[input.input]}

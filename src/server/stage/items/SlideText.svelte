@@ -19,6 +19,7 @@
     export let fontSize: number = 0
 
     export let style: boolean = false
+    export let textStyle: string = ""
 
     // $: stageAutoSize = autoSize ? (slide ? getAutoSize(slide.items[0], parent) : 1) : fontSize
     // $: stageAutoSize = autoSize ? (getCustomAutoSize()) : fontSize
@@ -49,13 +50,13 @@
         <Main let:width let:height>
             <Zoomed {show} style={getStyleResolution(resolution, width, height, "fit")} center>
                 {#each items as item}
-                    <Textbox {item} {style} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} autoSize={item.auto && autoSize} {fontSize} {autoStage} />
+                    <Textbox {item} {style} customStyle={textStyle} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} autoSize={item.auto && autoSize} {fontSize} {autoStage} />
                 {/each}
             </Zoomed>
         </Main>
     {:else}
         {#each items as item}
-            <Textbox {item} {style} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} {autoSize} {fontSize} {autoStage} />
+            <Textbox {item} {style} customStyle={textStyle} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} {autoSize} {fontSize} {autoStage} />
         {/each}
     {/if}
 {/if}

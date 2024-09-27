@@ -50,7 +50,7 @@
         edits.default[1].value = item.tracker.accent || $themes[$theme]?.colors?.secondary || "#F0008C"
     }
     $: if (item && items[0].includes("next_slide_text")) {
-        edits.default[4].value = item.lineCount || 0
+        edits.default[5].value = item.lineCount || 0
     }
 
     // CSS

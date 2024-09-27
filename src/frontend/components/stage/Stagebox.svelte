@@ -115,6 +115,22 @@
         firstTimerId = $activeTimers[0]?.id
         if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
     }
+
+    let itemStyle: string = ""
+    let textStyle: string = ""
+    $: if (item.style) updateStyles()
+    function updateStyles() {
+        const styles = getStyles(item.style)
+        const textStyleKeys = ["line-height", "text-decoration"]
+
+        itemStyle = ""
+        textStyle = ""
+
+        Object.entries(styles).forEach(([key, value]) => {
+            if (textStyleKeys.includes(key)) textStyle += `${key}: ${value};`
+            else itemStyle += `${key}: ${value};`
+        })
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -129,7 +145,7 @@
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
-    style="{item.style};{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}"
+    style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}
@@ -157,7 +173,7 @@
                 {:else if id.includes("slide_text")}
                     <!-- refresh auto size if changing stage layout - this made item unmovable -->
                     <!-- {#key item} -->
-                    <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} />
+                    <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} />
                     <!-- {/key} -->
                 {:else if id.includes("slide")}
                     <span style="pointer-events: none;">
@@ -170,7 +186,7 @@
                             {/if}
                         {/if}
 
-                        <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} style />
+                        <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} style />
                     </span>
                 {:else if id.includes("clock")}
                     <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} />
@@ -197,10 +213,14 @@
 <style>
     .stage_item {
         font-family: Arial, Helvetica, sans-serif;
+
+        border-width: 0;
+        border-style: solid;
     }
 
     .item.border {
-        border: 3px solid #5a4c00;
+        outline: 3px solid var(--labelColor) !important;
+        outline-offset: 0;
     }
 
     .stage_item.outline {
@@ -239,11 +259,22 @@
         transform: translateY(calc(-100% - 3px));
         width: 100%;
 
-        background: rgb(0 0 0 / 0.5);
-        color: #dfd9b8;
+        background: rgb(0 0 0 / 0.4);
+        color: var(--labelColor);
+
+        /* RESET LABEL STYLE */
+        font-family: sans-serif;
         font-size: 42px;
+        -webkit-text-stroke-width: 0;
+        text-shadow: none;
+
         font-weight: normal;
+        font-style: normal;
         text-align: center;
+
+        line-height: normal;
+        letter-spacing: normal;
+        word-spacing: normal;
     }
 
     .align :global(.item .align) {

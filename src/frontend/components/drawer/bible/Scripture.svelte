@@ -3,12 +3,12 @@
     import { uid } from "uid"
     import { BIBLE } from "../../../../types/Channels"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
-    import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptures, scripturesCache, selected } from "../../../stores"
+    import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { removeDuplicates } from "../../helpers/array"
+    import { clone, removeDuplicates } from "../../helpers/array"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
@@ -777,6 +777,9 @@
     }
 
     let gridMode: boolean = false
+    let history: boolean = false
+
+    $: currentHistory = clone($scriptureHistory.filter((a) => a.id === bibles[0].id)).reverse()
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />
@@ -813,6 +816,28 @@
             {:else}
                 <Center faded>
                     <T id="empty.search" />
+                </Center>
+            {/if}
+        {:else if history}
+            {#if currentHistory.length}
+                <div class="verses">
+                    {#each currentHistory as verse}
+                        <p
+                            on:dblclick={() => {
+                                bookId = verse.book
+                                chapterId = verse.chapter
+                                selectVerse({}, verse.verse)
+                                setTimeout(() => playOrClearScripture(true), verse.api ? 500 : 10)
+                            }}
+                            title={verse.text.replaceAll("/ ", " ")}
+                        >
+                            <span style="width: 250px;text-align: left;color: var(--text);" class="v">{verse.reference}</span>{@html verse.text.replaceAll("/ ", " ")}
+                        </p>
+                    {/each}
+                </div>
+            {:else}
+                <Center faded>
+                    <T id="empty.general" />
                 </Center>
             {/if}
         {:else if gridMode}
@@ -1010,6 +1035,10 @@
         </Button>
 
         <div class="seperator" />
+        <Button disabled={!currentHistory.length} active={history} on:click={() => (history = !history)} title={$dictionary.popup?.history}>
+            <Icon size={1.2} id="history" white={!currentHistory.length} />
+        </Button>
+
         <Button title={$dictionary.scripture?.search} on:click={() => (searchBibleActive = true)}>
             <Icon size={1.1} id="search" white />
         </Button>
