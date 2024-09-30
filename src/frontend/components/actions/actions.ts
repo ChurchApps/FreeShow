@@ -1,18 +1,19 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { audioPlaylists, audioStreams, midiIn, outputs, shows, stageShows, styles, triggers } from "../../stores"
+import { audioPlaylists, audioStreams, midiIn, outputs, runningActions, shows, stageShows, styles, triggers } from "../../stores"
 import { clone } from "../helpers/array"
 import { history } from "../helpers/history"
 import { _show } from "../helpers/shows"
 import { API_ACTIONS, API_toggle } from "./api"
 import { convertOldMidiToNewAction } from "./midi"
 import { getActiveOutputs } from "../helpers/output"
+import { wait } from "../../utils/common"
 
 export function runActionId(id: string) {
     runAction(get(midiIn)[id])
 }
 
-export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
+export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
     console.log(action)
     if (!action) return
     action = convertOldMidiToNewAction(action)
@@ -22,15 +23,36 @@ export function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
 
     let data = action.actionValues || {}
 
-    triggers.forEach(runTrigger)
-    function runTrigger(actionId) {
+    // set to active
+    runningActions.set([...get(runningActions), action.id])
+
+    for (let actionId of triggers) {
+        await runTrigger(actionId)
+    }
+
+    // remove from active (timeout to show outline)
+    setTimeout(() => {
+        runningActions.update((a) => {
+            let currentIndex = a.findIndex((id) => action.id === id)
+            if (currentIndex < 0) return a
+            a.splice(currentIndex, 1)
+            return a
+        })
+    }, 20)
+
+    async function runTrigger(actionId) {
+        let triggerData = data[actionId] || {}
+        if (midiIndex > -1) triggerData = { ...triggerData, index: midiIndex }
+
+        if (actionId === "wait") {
+            await wait(triggerData.number * 1000)
+            return
+        }
+
         if (!API_ACTIONS[actionId]) {
             console.log("Missing API for trigger")
             return
         }
-
-        let triggerData = data[actionId] || {}
-        if (midiIndex > -1) triggerData = { ...triggerData, index: midiIndex }
 
         if (actionId === "start_slide_timers" && slideIndex > -1) {
             let outputRef: any = get(outputs)[getActiveOutputs()[0]]?.out?.slide || {}

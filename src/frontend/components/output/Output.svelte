@@ -11,16 +11,17 @@
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
     import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, setTemplateStyle } from "../helpers/output"
+    import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
+    import Image from "../media/Image.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
     import { updateAnimation } from "./animation"
     import Background from "./layers/Background.svelte"
     import Metadata from "./layers/Metadata.svelte"
     import Overlays from "./layers/Overlays.svelte"
-    import SlideContent from "./layers/SlideContent.svelte"
     import PdfOutput from "./layers/PdfOutput.svelte"
+    import SlideContent from "./layers/SlideContent.svelte"
     import Window from "./Window.svelte"
-    import Image from "../media/Image.svelte"
 
     export let outputId: string = ""
     export let style = ""
@@ -218,7 +219,7 @@
     // values
     $: isKeyOutput = currentOutput.isKeyOutput
     $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : currentSlide?.settings?.color || currentStyle.background || "black"
-    $: messageText = $showsCache[slide?.id]?.message?.text || ""
+    $: messageText = $showsCache[slide?.id]?.message?.text?.replaceAll("\n", "<br>") || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && slide ? "" : currentStyle?.backgroundImage || ""
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
@@ -227,6 +228,12 @@
 
     // draw zoom
     $: drawZoom = $drawTool === "zoom" ? ($drawSettings.zoom?.size || 200) / 100 : 1
+
+    // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
+    let updateDynamic = 0
+    setInterval(() => {
+        updateDynamic++
+    }, 1000)
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} center {style} {resolution} {mirror} {drawZoom} cropping={currentStyle.cropping} bind:ratio>
@@ -284,11 +291,17 @@
     {#if layers.includes("overlays")}
         <!-- message -->
         {#if messageText}
-            <Metadata value={messageText.replaceAll("\n", "<br>") || ""} style={metadata.messageStyle || ""} transition={transitions.overlay} {isKeyOutput} />
+            <Metadata
+                value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: slide?.id, layoutId: slide?.layout, slideIndex: slide?.index }, updateDynamic) : messageText}
+                style={metadata.messageStyle || ""}
+                transition={transitions.overlay}
+                {isKeyOutput}
+            />
         {/if}
 
         <!-- metadata -->
         {#if metadataValue || $customMessageCredits}
+            <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: slide?.id, layoutId: slide?.layout, slideIndex: slide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
             <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} transition={transitions.overlay} {isKeyOutput} />
         {/if}
 

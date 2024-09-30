@@ -280,36 +280,49 @@ async function goToNextShowInProject(slide, customOutputId) {
     }
 }
 
+// only let "first" output change project item if multiple outputs
+let changeProjectItemTimeout: any = null
+
 export function goToNextProjectItem() {
-    let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-    if (!get(activeProject) || typeof currentShow?.index !== "number") return
+    if (changeProjectItemTimeout) return
+    changeProjectItemTimeout = setTimeout(() => {
+        changeProjectItemTimeout = null
 
-    let index: number = currentShow.index ?? -1
-    if (index + 1 < get(projects)[get(activeProject)!].shows.length) index++
-    if (index > -1 && index !== currentShow.index) {
-        let newShow = get(projects)[get(activeProject)!].shows[index]
-        if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
-        else activeShow.set({ ...newShow, index })
+        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (!get(activeProject) || typeof currentShow?.index !== "number") return
 
-        // skip if section is empty
-        if (newShow.type === "section" && !newShow.notes) goToNextProjectItem()
-    }
+        let index: number = currentShow.index ?? -1
+        if (index + 1 < get(projects)[get(activeProject)!].shows.length) index++
+        if (index > -1 && index !== currentShow.index) {
+            let newShow = get(projects)[get(activeProject)!].shows[index]
+            if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
+            else activeShow.set({ ...newShow, index })
+
+            // skip if section is empty
+            if (newShow.type === "section" && !newShow.notes) goToNextProjectItem()
+        }
+    })
 }
 
 export function goToPreviousProjectItem() {
-    let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-    if (!get(activeProject) || typeof currentShow?.index !== "number") return
+    if (changeProjectItemTimeout) return
+    changeProjectItemTimeout = setTimeout(() => {
+        changeProjectItemTimeout = null
 
-    let index: number = currentShow.index ?? get(projects)[get(activeProject)!].shows.length
-    if (index - 1 >= 0) index--
-    if (index > -1 && index !== currentShow.index) {
-        let newShow = get(projects)[get(activeProject)!].shows[index]
-        if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
-        else activeShow.set({ ...newShow, index })
+        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (!get(activeProject) || typeof currentShow?.index !== "number") return
 
-        // skip if section is empty
-        if (newShow.type === "section" && !newShow.notes) goToPreviousProjectItem()
-    }
+        let index: number = currentShow.index ?? get(projects)[get(activeProject)!].shows.length
+        if (index - 1 >= 0) index--
+        if (index > -1 && index !== currentShow.index) {
+            let newShow = get(projects)[get(activeProject)!].shows[index]
+            if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
+            else activeShow.set({ ...newShow, index })
+
+            // skip if section is empty
+            if (newShow.type === "section" && !newShow.notes) goToPreviousProjectItem()
+        }
+    })
 }
 
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")

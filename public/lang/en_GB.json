@@ -7,10 +7,15 @@
         "unnamed": "Unnamed",
         "drop": "Drop here",
         "search": "Search",
+        "quick_search": "Quick search",
         "none": "None",
         "finished": "Finished",
         "open": "Open",
         "system_open": "Open in system"
+    },
+    "guide": {
+        "start": "Quick start guide",
+        "skip": "Skip"
     },
     "titlebar": {
         "file": "File",
@@ -114,7 +119,8 @@
         "to_start": "Go to start",
         "nextTimer": "Next slide timer",
         "lock": "Lock",
-        "unlock": "Unlock"
+        "unlock": "Unlock",
+        "test_pattern": "Test pattern"
     },
     "clear": {
         "all": "Clear all",
@@ -172,6 +178,7 @@
         "playlist_settings": "Playlist settings",
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
+        "pre_fader_volume_meter": "Pre fader volume meter",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "tempo": "Tempo",
@@ -755,6 +762,7 @@
         "different_first_template": "Custom template on first slide",
         "media_fit": "Media fit",
         "size": "Size",
+        "max_lines": "Max lines",
         "chords": "Chords",
         "transpose": "Transpose",
         "auto_size": "Auto size",
@@ -908,6 +916,7 @@
     "midi": {
         "midi": "MIDI",
         "activate": "Activate by MIDI signal",
+        "activate_keypress": "Activate by keypress",
         "name": "Name",
         "input": "Input",
         "output": "Output",
@@ -925,6 +934,7 @@
     "draw": {
         "focus": "Focus",
         "pointer": "Pointer",
+        "zoom": "Zoom",
         "fill": "Fill",
         "paint": "Paint",
         "particles": "Particles",
@@ -1065,6 +1075,7 @@
         "reset_theme": "Reset theme",
         "reset_themes": "Reset themes",
         "capitalize_words": "Capitalise words",
+        "comma_seperated": "Seperated by comma",
         "backup_all": "Backup everything",
         "restore": "Restore",
         "backup_started": "Backing up...",
@@ -1151,6 +1162,7 @@
         "opening": "Opening! Please wait...",
         "retry": "Please try opening manually, or",
         "try_again": "Try again",
+        "restart": "Restart",
         "start": "Start",
         "choose_window": "Please select a window"
     },

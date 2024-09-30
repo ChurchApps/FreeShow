@@ -302,7 +302,16 @@
         <div class="hover overlay" />
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">
-            <SelectElem style={colorStyle} id="slide" data={{ index, showId }} draggable={!$focusMode && !show.locked} onlyRightClickSelect={$focusMode} selectable={!show.locked} trigger={list ? "column" : "row"}>
+            <SelectElem
+                style={colorStyle}
+                id="slide"
+                data={{ index, showId }}
+                draggable={!$focusMode && !show.locked}
+                shiftRange={layoutSlides.map((_, index) => ({ index, showId }))}
+                onlyRightClickSelect={$focusMode}
+                selectable={!show.locked}
+                trigger={list ? "column" : "row"}
+            >
                 <!-- TODO: tab select on enter -->
                 {#if viewMode === "lyrics" && !noQuickEdit}
                     <!-- border-bottom: 1px dashed {color}; -->

@@ -238,6 +238,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics", "view_text"],
     tag: ["rename", "recolor", "SEPERATOR", "delete"],
     chord: ["set_key", "chord_list", "custom_key", "SEPERATOR", "delete"],
+    meta_message: ["dynamic_values"],
 
     // MEDIA
     video_marker: ["rename", "delete"],

@@ -24,7 +24,7 @@
     // $: stageAutoSize = autoSize ? (slide ? getAutoSize(slide.items[0], parent) : 1) : fontSize
     // $: stageAutoSize = autoSize ? (getCustomAutoSize()) : fontSize
 
-    $: reversedItems = JSON.parse(JSON.stringify(slide?.items || [])).reverse()
+    $: reversedItems = stageItem?.invertItems ? JSON.parse(JSON.stringify(slide?.items || [])) : JSON.parse(JSON.stringify(slide?.items || [])).reverse()
     $: items = style ? slide?.items || [] : combineSlideItems()
 
     function combineSlideItems() {

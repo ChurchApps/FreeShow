@@ -767,6 +767,7 @@
         "media_fit": "Media fit",
         "size": "Size",
         "max_lines": "Max lines",
+        "invert_items": "Invert items",
         "chords": "Chords",
         "transpose": "Transpose",
         "auto_size": "Auto size",

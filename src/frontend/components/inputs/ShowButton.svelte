@@ -59,7 +59,7 @@
 
     let editActive: boolean = false
     function click(e: any) {
-        if (editActive) return
+        if (editActive || e.ctrlKey || e.metaKey || e.shiftKey || active || e.target.closest("input")) return
 
         // set active show
         let pos = index
@@ -67,8 +67,6 @@
             let i = $projects[$activeProject].shows.findIndex((p) => p.id === id)
             if (i > -1) pos = i
         }
-
-        if (e.ctrlKey || e.metaKey || active || e.target.closest("input")) return
 
         let newShow: any = { id, type }
 

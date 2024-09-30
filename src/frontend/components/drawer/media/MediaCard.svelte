@@ -15,6 +15,7 @@
     export let credits: any = {}
     export let type: any
     export let active: string | null
+    export let shiftRange: any[] = []
     export let thumbnailPath: string = ""
     export let thumbnail: boolean = true
 
@@ -64,7 +65,7 @@
 
     let wait = false
     function click(e: any) {
-        if (e.ctrlKey || e.metaKey || $outLocked || wait) return
+        if (e.ctrlKey || e.metaKey || e.shiftKey || $outLocked || wait) return
 
         // don't hide again when double clicking
         wait = true
@@ -104,7 +105,7 @@
     $: icon = active !== "favourites" && $media[path]?.favourite === true ? "star" : type === "video" ? "movie" : "image"
 </script>
 
-<SelectElem id="media" class="context #media_card" data={{ name, path, type }} draggable fill>
+<SelectElem id="media" class="context #media_card" data={{ name, path, type }} {shiftRange} draggable fill>
     <Card
         {loaded}
         style={thumbnail ? `width: ${$mediaOptions.mode === "grid" ? 100 : 100 / $mediaOptions.columns}%;` : ""}

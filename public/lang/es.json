@@ -7,10 +7,15 @@
         "unnamed": "Sin nombre",
         "drop": "Soltar aquí",
         "search": "Buscar",
+        "quick_search": "Búsqueda rápida",
         "none": "Ninguno",
         "finished": "Finalizado",
         "open": "Abrir",
         "system_open": "Abrir en sistema"
+    },
+    "guide": {
+        "start": "Guía de inicio rápido",
+        "skip": "Omitir"
     },
     "titlebar": {
         "file": "Carpeta",
@@ -114,7 +119,8 @@
         "to_start": "Iniciar",
         "nextTimer": "Temporizador de siguiente diapositiva",
         "lock": "Bloquear",
-        "unlock": "Desbloquear"
+        "unlock": "Desbloquear",
+        "test_pattern": "Patrón de prueba"
     },
     "clear": {
         "all": "Borrar todo",
@@ -172,6 +178,7 @@
         "playlist_settings": "Ajuste de Lista de Reproducción",
         "custom_output": "Salida de audio personalizada",
         "mute_when_video_plays": "Silenciar cuando un vídeo se reproduce",
+        "pre_fader_volume_meter": "Medidor de volumen pre-fader",
         "metronome": "Metrónomo",
         "toggle_metronome": "Activar metrónomo",
         "tempo": "Tempo",
@@ -489,7 +496,7 @@
         "view_private": "Mostrar privado",
         "import": "Importar",
         "export": "Exportar",
-        "duplicate": "Repetir",
+        "duplicate": "Duplicar",
         "delete": "Eliminar",
         "delete_slide": "Eliminar diapositiva",
         "delete_group": "Eliminar grupo",
@@ -755,6 +762,7 @@
         "different_first_template": "Plantilla personalizada en la primera diapositiva",
         "media_fit": "Ajuste de medios",
         "size": "Tamaño",
+        "max_lines": "Máximo de líneas",
         "chords": "Acordes",
         "transpose": "Transponer",
         "auto_size": "Tamaño automático",
@@ -908,6 +916,7 @@
     "midi": {
         "midi": "MIDI",
         "activate": "Activar por señal MIDI",
+        "activate_keypress": "Activar presionando una tecla",
         "name": "Nombre",
         "input": "Entrada",
         "output": "Salida",
@@ -925,6 +934,7 @@
     "draw": {
         "focus": "Enfoque",
         "pointer": "Puntero",
+        "zoom": "Zoom",
         "fill": "Rellenar",
         "paint": "Pintar",
         "particles": "Partículas",
@@ -1031,7 +1041,7 @@
         "display_mode": "Modo de visualización",
         "pixel_format": "Formato de píxel",
         "alpha_key": "Clave Alfa",
-        "transparent": "Transparent",
+        "transparent": "Transparente",
         "invisible_window": "Ventana invisible",
         "video_extensions": "Extensiones de video",
         "image_extensions": "Extensiones de imagen",
@@ -1065,6 +1075,7 @@
         "reset_theme": "Resetear tema",
         "reset_themes": "Resetear temas",
         "capitalize_words": "Capitalizar palabras",
+        "comma_seperated": "Separadas por coma",
         "backup_all": "Respaldar todo",
         "restore": "Restaurar",
         "backup_started": "Respaldando...",
@@ -1117,7 +1128,7 @@
         "bibles": "Biblias desde el API.Bible",
         "custom": "O importar de forma local",
         "max_verses": "Cantidad máxima de versos por diapositiva",
-        "verse_numbers": "Números de versos",
+        "verse_numbers": "Números de versículo",
         "verses_on_individual_lines": "Versículos en líneas individuales",
         "version": "Mostrar versión",
         "reference": "Mostrar referencia",
@@ -1151,6 +1162,7 @@
         "opening": "¡Abriendo! Por favor espere...",
         "retry": "Por favor intente abriendo manualmente, o",
         "try_again": "Intentar otra vez",
+        "restart": "Reiniciar",
         "start": "Iniciar",
         "choose_window": "Por favor seleccione una ventana"
     },

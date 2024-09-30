@@ -30,12 +30,12 @@ import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { customActionActivation } from "../actions/actions"
 import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
+import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
-import { clearSlide } from "../output/clear"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     // sort so display order can be changed! (needs app restart)
@@ -745,6 +745,14 @@ export function getOutputLines(outSlide: any, styleLines: any = 0) {
     return { start, end, index: linesIndex, max: maxLines }
 }
 
+// METADATA
+
+// WIP dynamic placeholder values??: {meta_title?No title}
+export const DEFAULT_META_LAYOUT = "Title: {meta_title?No title}; {meta_artist}; {meta_author}; {meta_year};\n{meta_copyright}"
+export function createMetadataLayout(layout: string, ref: any, _updater: number = 0) {
+    return replaceDynamicValues(layout, ref)
+}
+
 export interface OutputMetadata {
     message?: { [key: string]: string }
     display?: string
@@ -786,6 +794,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
 
         if (!metadata.message) return
 
+        // metadata.value = currentStyle.metadataLayout || DEFAULT_META_LAYOUT
         metadata.value = joinMetadata(metadata.message, currentStyle.metadataDivider)
     }
 

@@ -8,6 +8,7 @@
     export let data: any
     export let fill: boolean = false
     export let draggable: boolean = false
+    export let shiftRange: any[] = []
     export let onlyRightClickSelect: boolean = false
     export let selectable: boolean = true
     export let trigger: null | "row" | "column" = null
@@ -104,7 +105,7 @@
         // if (id === "folder" && ($selected.data[0]?.id === "project" || data.index > $selected.data[0]?.index)) return
 
         let newData: any
-        let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
+        const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         if (onlyRightClickSelect) {
             if (rightClick) selected.set({ id, data: [data] })
@@ -112,9 +113,11 @@
         }
 
         // shift select range
-        if (e.shiftKey && $selected.data[0]?.index !== undefined) {
-            let lastSelectedIndex = $selected.data[$selected.data.length - 1].index
-            let newIndex = data.index
+        if (e.shiftKey && (shiftRange.length || $selected.data[0]?.index !== undefined)) {
+            const searchKeys = ["id", "index", "path"]
+            let lastSelected = $selected.data[$selected.data.length - 1]
+            let lastSelectedIndex = shiftRange.length ? shiftRange.findLastIndex((a) => searchKeys.find((key) => lastSelected[key] !== undefined && lastSelected[key] === a[key])) : lastSelected.index
+            let newIndex = shiftRange.length ? shiftRange.findIndex((a) => searchKeys.find((key) => data[key] !== undefined && data[key] === a[key])) : data.index
             let lowestNumber = Math.min(lastSelectedIndex, newIndex) + 1
             let highestNumber = Math.max(lastSelectedIndex, newIndex) - 1
 
@@ -125,15 +128,30 @@
                     .map((_, idx) => start + idx)
             }
 
-            let numbersBetween = selectedBetween.map((index) => ({ index }))
-            let allNewIndexes = [...$selected.data, ...numbersBetween, data]
+            let dataBetween = selectedBetween.map((index) => (shiftRange.length ? shiftRange[index] : { index }))
+            let allNewData = [...$selected.data, ...dataBetween, data]
+
+            let keys = Object.keys(data)
+            // add all previous keys to new data
+            if (shiftRange) {
+                allNewData = allNewData
+                    .map((data) => {
+                        let newData: any = {}
+                        keys.forEach((key) => {
+                            newData[key] = data[key]
+                        })
+                        return newData
+                    })
+                    .filter((a) => a)
+            }
 
             // remove duplicates
-            let alreadyAdded: number[] = []
-            newData = allNewIndexes.filter(({ index }) => {
-                if (alreadyAdded.includes(index)) return false
+            let alreadyAdded: string[] = []
+            newData = allNewData.filter((data) => {
+                let dataString = JSON.stringify(data)
+                if (alreadyAdded.find((a) => JSON.stringify(a) === dataString)) return false
 
-                alreadyAdded.push(index)
+                alreadyAdded.push(dataString)
                 return true
             })
 
