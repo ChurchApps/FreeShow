@@ -78,7 +78,7 @@
                     <Icon id="background" size={1.2} />
                 </Button>
                 {#if !allCleared}
-                    <Button on:click={() => openPreview("background")} title={$dictionary.preview?.background} dark={activeClear !== "background"} />
+                    <Button disabled={$outLocked || isOutCleared("background", $outputs)} on:click={() => openPreview("background")} title={$dictionary.preview?.background} dark={activeClear !== "background"} />
                 {/if}
             </div>
         {/if}
@@ -89,7 +89,7 @@
                 <Icon id={outputContent?.type === "pdf" ? "background" : "slide"} size={1.2} />
             </Button>
             {#if !allCleared}
-                <Button on:click={() => openPreview("slide")} title={$dictionary.preview?.slide} dark={activeClear !== "slide"} />
+                <Button disabled={$outLocked || isOutCleared("slide", $outputs)} on:click={() => openPreview("slide")} title={$dictionary.preview?.slide} dark={activeClear !== "slide"} />
             {/if}
         </div>
 
@@ -98,7 +98,7 @@
                 <Icon id="overlays" size={1.2} />
             </Button>
             {#if !allCleared}
-                <Button on:click={() => openPreview("overlays")} title={$dictionary.preview?.overlays} dark={activeClear !== "overlays"} />
+                <Button disabled={$outLocked || isOutCleared("overlays", $outputs, true)} on:click={() => openPreview("overlays")} title={$dictionary.preview?.overlays} dark={activeClear !== "overlays"} />
             {/if}
         </div>
 
@@ -107,7 +107,7 @@
                 <Icon id="audio" size={1.2} />
             </Button>
             {#if !allCleared}
-                <Button on:click={() => openPreview("audio")} title={$dictionary.preview?.audio} dark={activeClear !== "audio"} />
+                <Button disabled={$outLocked || audioCleared} on:click={() => openPreview("audio")} title={$dictionary.preview?.audio} dark={activeClear !== "audio"} />
             {/if}
         </div>
 
@@ -117,7 +117,7 @@
                     <Icon id="clock" size={1.2} />
                 </Button>
                 {#if !allCleared}
-                    <Button on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
+                    <Button disabled={$outLocked || isOutCleared("transition", $outputs)} on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
                 {/if}
             </div>
         {/if}

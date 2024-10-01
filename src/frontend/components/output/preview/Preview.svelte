@@ -25,6 +25,9 @@
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
+    $: backgroundOutputId = allActiveOutputs.find((id) => ($styles[$outputs[id]?.style || ""]?.layers || ["background"]).includes("background")) || outputId
+    $: currentBgOutput = backgroundOutputId ? $outputs[backgroundOutputId] || {} : {}
+
     let numberKeyTimeout: any = null
     let previousNumberKey: string = ""
     function keydown(e: any) {
@@ -195,7 +198,7 @@
         <ClearButtons bind:autoChange bind:activeClear />
 
         {#if activeClear === "background"}
-            <MediaControls {currentOutput} {outputId} />
+            <MediaControls currentOutput={currentBgOutput} outputId={backgroundOutputId} />
         {:else if activeClear === "slide"}
             <Show {currentOutput} {ref} {linesIndex} {maxLines} />
         {:else if activeClear === "overlays"}
