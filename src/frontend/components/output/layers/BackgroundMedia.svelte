@@ -220,7 +220,9 @@
     {:else if type === "screen"}
         <Window {id} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "ndi"}
-        <NdiStream screen={{ id, name: "" }} background {mirror} />
+        {#key id}
+            <NdiStream screen={{ id, name: "" }} background {mirror} />
+        {/key}
     {:else if type === "blackmagic"}
         <BmdStream screen={{ id, name: "" }} background {mirror} />
     {:else if type === "camera"}

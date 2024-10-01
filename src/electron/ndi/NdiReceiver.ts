@@ -13,7 +13,7 @@ import { OutputHelper } from "../output/OutputHelper"
 export class NdiReceiver {
     static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
-    static receiverTimeout = 5000
+    static receiverTimeout = -1 // 5000 // looks like this timeout exits the app even if the request is successful (if video() is called rapidly)
     static NDI_RECEIVERS: any = {}
 
     static async findStreamsNDI(): Promise<any> {
@@ -47,7 +47,7 @@ export class NdiReceiver {
 
         // https://github.com/Streampunk/grandiose/issues/12
         if (!this.allActiveReceivers[source.id]) {
-            this.allActiveReceivers[source.id] = await grandiose.receive({ source, colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA })
+            this.allActiveReceivers[source.id] = await grandiose.receive({ source: { name: source.name, urlAddress: source.urlAddress || source.id }, colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA })
         }
         // , allowVideoFields: false
 
@@ -82,7 +82,7 @@ export class NdiReceiver {
         // this.NDI_RECEIVERS[source.id] = { frameRate: frameRate || 0.1 }
         let receiver = this.allActiveReceivers[source.id]
         if (!receiver) {
-            this.allActiveReceivers[source.id] = receiver = await grandiose.receive({ source, colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA })
+            this.allActiveReceivers[source.id] = receiver = await grandiose.receive({ source: { name: source.name, urlAddress: source.urlAddress || source.id }, colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA })
         }
 
         let frameRate = (receiver.frameRateN || 30000) / (receiver.frameRateD || 1001)
