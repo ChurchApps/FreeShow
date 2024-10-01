@@ -651,6 +651,11 @@
         "activate_show_created": "Activate when show is created",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended"
     },
+    "recording": {
+        "remove": "Remove recording",
+        "layout_changed": "Layout has changed since last recording!",
+        "tip": "Record and replay the timings of slides."
+    },
     "animate": {
         "change": "Change",
         "set": "Set",

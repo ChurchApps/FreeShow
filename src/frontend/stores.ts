@@ -59,6 +59,7 @@ export const activeTagFilter: Writable<string[]> = writable([])
 export const activeTriggerFunction: Writable<string> = writable("")
 export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
+export const activeSlideRecording: Writable<any> = writable(null)
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
