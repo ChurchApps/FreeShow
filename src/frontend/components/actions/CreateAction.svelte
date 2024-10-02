@@ -48,7 +48,6 @@
         "change_stage_output_layout",
         "change_transition",
         "start_camera",
-        "wait",
     ]
     // remove actions that are not fully implemented to CustomInput yet
     const removeActions = ["change_transition", "change_variable"]
@@ -76,7 +75,7 @@
                 return true
             }),
         // custom special
-        { id: "wait", name: $dictionary.animate?.wait, icon: "time_in", common: false },
+        ...(list ? [] : [{ id: "wait", name: $dictionary.animate?.wait, icon: "time_in", common: false }]),
     ]
 
     let pickAction: boolean = false

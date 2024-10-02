@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
+    import { activeSlideRecording, dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
     import { getOutputContent, isOutCleared } from "../../helpers/output"
@@ -86,7 +86,8 @@
         <div class="combinedButton">
             <Button disabled={$outLocked || isOutCleared("slide", $outputs)} on:click={() => clear("slide")} title={$dictionary.clear?.slide + " [F2]"} dark red center>
                 <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
-                <Icon id={outputContent?.type === "pdf" ? "background" : "slide"} size={1.2} />
+                <!-- display recording icon here if a slide recoring is playing -->
+                <Icon id={outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} />
             </Button>
             {#if !allCleared}
                 <Button disabled={$outLocked || isOutCleared("slide", $outputs)} on:click={() => openPreview("slide")} title={$dictionary.preview?.slide} dark={activeClear !== "slide"} />

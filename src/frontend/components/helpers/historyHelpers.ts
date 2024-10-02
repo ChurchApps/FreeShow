@@ -413,7 +413,7 @@ export const _updaters = {
             if (_show(id).get("settings.activeLayout") !== subkey) return
 
             let firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((id) => id !== subkey)[0]
-            _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
+            if (firstLayoutId) _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
         },
     },
 

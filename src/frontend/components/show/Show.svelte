@@ -1,10 +1,10 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../types/Main"
-    import { activeShow, dictionary, media, outLocked } from "../../stores"
+    import { activeShow, dictionary, media, outLocked, outputs, styles } from "../../stores"
     import Image from "../drawer/media/Image.svelte"
     import { createGlobalTimerFromLocalTimer } from "../drawer/timers/timers"
     import { getMediaStyle } from "../helpers/media"
-    import { setOutput } from "../helpers/output"
+    import { getActiveOutputs, getCurrentStyle, setOutput } from "../helpers/output"
     import HoverButton from "../inputs/HoverButton.svelte"
     import Splash from "../main/Splash.svelte"
     import Layouts from "../slide/Layouts.svelte"
@@ -17,8 +17,12 @@
 
     $: show = $activeShow
 
+    $: outputId = getActiveOutputs($outputs)[0]
+    $: currentOutput = $outputs[outputId] || {}
+    $: currentStyle = getCurrentStyle($styles, currentOutput.style)
+
     let mediaStyle: MediaStyle = {}
-    $: if (show) mediaStyle = getMediaStyle($media[show.id], { name: "" })
+    $: if (show) mediaStyle = getMediaStyle($media[show.id], currentStyle)
 
     // check for timer & create global
     $: if (show?.id) createGlobalTimerFromLocalTimer(show?.id)

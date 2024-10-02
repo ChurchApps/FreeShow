@@ -2,6 +2,8 @@ import { uid } from "uid"
 import type { Event } from "../../types/Calendar"
 import { splitDate } from "../components/helpers/time"
 import { events } from "../stores"
+import { createRepeatedEvents } from "../components/drawer/calendar/event"
+import { clone } from "../components/helpers/array"
 
 // https://github.com/adrianlee44/ical2json/blob/main/src/ical2json.ts
 const NEW_LINE = /\r\n|\n|\r/
@@ -13,11 +15,14 @@ interface IcalObject {
 }
 
 interface VEvent {
+    CLASS?: string
     CREATED: string
     DESCRIPTION: string
     "DTEND;VALUE=DATE"?: string
     "DTEND;TZID=Europe/Oslo"?: string
     DTEND?: string
+    RRULE?: string // FREQ=WEEKLY;WKST=MO;UNTIL={DATE};INTERVAL={NUMBER};BYDAY={WEEKDAY}
+    EXDATE?: string
     DTSTAMP: string
     DTSTART?: string
     "DTSTART;VALUE=DATE"?: string
@@ -34,7 +39,6 @@ export function convertCalendar(data: any) {
     data.forEach(({ content }: any) => {
         let object: any = convertToJSON(content)
         // TODO: convert timezone
-        console.log(content)
 
         let icaEvents: VEvent[] = object.VCALENDAR?.[0]?.VEVENT || []
         if (!icaEvents.length) return
@@ -82,6 +86,43 @@ export function convertCalendar(data: any) {
                 newEvent.fromTime = from.hours + ":" + from.minutes
                 newEvent.toTime = to.hours + ":" + to.minutes
             }
+
+            // get repeats
+            if (event.RRULE) {
+                let repeatData: { FREQ?: string; WKST?: "MO" | "SU"; UNTIL?: string; INTERVAL?: number; BYDAY?: string; COUNT?: string } = {}
+                event.RRULE.split(";").forEach((rule) => {
+                    let data = rule.split("=")
+                    repeatData[data[0]] = data[1]
+                })
+
+                let date: any = repeatData.UNTIL
+                if (date) {
+                    date = date.slice(0, 8)
+                    date = addCharAtPos(date, "-", 6)
+                    date = addCharAtPos(date, "-", 4)
+                    date = new Date(date).toISOString().substring(0, 10)
+                }
+
+                const types = { DAILY: "day", WEEKLY: "week", MONTHLY: "month", YEARLY: "year" }
+                if (types[repeatData.FREQ || ""]) {
+                    newEvent.repeat = true
+                    newEvent.repeatData = {
+                        type: types[repeatData.FREQ || ""],
+                        // weekday: weekdays[BYDAY], // MO TU WE TH FR SA SU 4SU
+                        ending: repeatData.UNTIL ? "date" : "after",
+                        count: Number(repeatData.INTERVAL || 1),
+                        endingDate: date || "",
+                        afterRepeats: Number(repeatData.COUNT || 10),
+                    }
+
+                    // create repeated events
+                    // WIP this does not account for "deleted" repeating events
+                    setTimeout(() => {
+                        createRepeatedEvents(clone(newEvent), true)
+                    }, 100)
+                }
+            }
+
             return newEvent
         })
 

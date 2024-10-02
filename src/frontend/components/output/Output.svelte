@@ -35,7 +35,7 @@
     $: currentStyling = getCurrentStyle($styles, currentOutput.style)
     let currentStyle: Styles = { name: "" }
     // don't refresh content unless it changes
-    $: if (JSON.stringify(currentStyling) !== JSON.stringify(currentStyle)) currentStyle = currentStyling
+    $: if (JSON.stringify(currentStyling) !== JSON.stringify(currentStyle)) currentStyle = clone(currentStyling)
 
     // layers
     let layers: string[] = []

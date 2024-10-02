@@ -18,6 +18,7 @@ import {
     activePage,
     activePopup,
     activeProject,
+    activeSlideRecording,
     currentWindow,
     drawer,
     focusedArea,
@@ -39,6 +40,7 @@ import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
+import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -218,21 +220,21 @@ export const previewShortcuts: any = {
     ArrowRight: (e: any) => {
         // if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
-        if (get(activeEdit).items.length) return
+        if (!e.preview && get(activeEdit).items.length) return
+        if (get(activeSlideRecording)) return updateSlideRecording("next")
 
         nextSlideIndividual(e)
     },
     ArrowLeft: (e: any) => {
         // if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
-        if (get(activeEdit).items.length) return
+        if (!e.preview && get(activeEdit).items.length) return
+        if (get(activeSlideRecording)) return updateSlideRecording("previous")
 
         previousSlideIndividual(e)
     },
     " ": (e: any) => {
         let currentShow: any = get(focusMode) ? get(activeFocus) : get(activeShow)
-        console.log(currentShow)
-
         if (currentShow?.type === "ppt") return
         if (currentShow?.type === "pdf") {
             e.preventDefault()
@@ -248,8 +250,11 @@ export const previewShortcuts: any = {
         let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
 
         e.preventDefault()
-        if (currentOutput.out?.slide?.id !== currentShow?.id || (currentShow && currentOutput.out?.slide?.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) nextSlideIndividual(e, true)
-        else {
+        if (currentOutput.out?.slide?.id !== currentShow?.id || (currentShow && currentOutput.out?.slide?.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) {
+            if (get(activeSlideRecording)) stopSlideRecording()
+            nextSlideIndividual(e, true)
+        } else {
+            if (get(activeSlideRecording)) return updateSlideRecording("next")
             if (e.shiftKey) previousSlideIndividual(e)
             else nextSlideIndividual(e)
         }

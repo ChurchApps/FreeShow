@@ -50,6 +50,7 @@ export const actionData = {
     id_start_timer: { name: "actions.id_start_timer", icon: "timer", input: "id" },
     start_slide_timers: { slideId: "startTimer", name: "actions.start_slide_timers", icon: "timer" },
     stop_timers: { slideId: "stopTimers", name: "actions.stop_timers", icon: "stop", red: true },
+    start_slide_recording: { name: "recording.start", icon: "record" },
 
     // VISUAL
     id_select_output_style: { name: "actions.id_select_output_style", icon: "styles", input: "id" },

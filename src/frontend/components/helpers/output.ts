@@ -3,15 +3,13 @@ import { uid } from "uid"
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
-import type { Item, Layout, Media, OutSlide, Recording, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
+import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
 import {
     activeRename,
-    activeSlideRecording,
     currentOutputSettings,
     currentWindow,
     disabledServers,
     lockedOverlays,
-    outLocked,
     outputDisplay,
     outputs,
     overlays,
@@ -36,7 +34,7 @@ import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
-import { replaceDynamicValues, updateOut } from "./showActions"
+import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
@@ -870,43 +868,4 @@ export function getSlideFilter(slideData: any) {
     if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
 
     return slideFilter
-}
-
-///// SLIDE RECORDING /////
-
-export function playRecording(recording: Recording, { showId, layoutId }) {
-    if (get(outLocked)) return
-
-    // WIP manually stop recording
-    if (get(activeSlideRecording)) clearTimeout(get(activeSlideRecording))
-
-    playSequence()
-    function playSequence(index = 0) {
-        if (get(outLocked)) {
-            activeSlideRecording.set(null)
-            return
-        }
-
-        let sequence = recording.sequence[index]
-
-        updateOut("active", index, _show(showId).layouts([layoutId]).ref()[0])
-        let slideIndex = sequence.slideRef.index
-        // WIP check that slide is the correct ID ??
-        setOutput("slide", { id: showId, layout: layoutId, index: slideIndex, line: 0 })
-
-        // next
-        index++
-        if (!recording.sequence[index]) {
-            activeSlideRecording.set(null)
-            return
-        }
-        activeSlideRecording.set(setTimeout(() => playSequence(index), recording.sequence[index].time))
-    }
-}
-
-export function stopSlideRecording() {
-    if (!get(activeSlideRecording)) return
-
-    clearTimeout(get(activeSlideRecording))
-    activeSlideRecording.set(null)
 }

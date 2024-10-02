@@ -588,6 +588,7 @@ const receiveIMPORT: any = {
     songbeamer: (a: any) => convertSongbeamerFiles(a),
     // Media
     pdf: (a: any) => addToProject("pdf", a),
+    powerkey: (a: any) => addToProject("ppt", a),
     lessons: (a: any) => convertLessonsPresentation(a),
     // Other
     calendar: (a: any) => convertCalendar(a),

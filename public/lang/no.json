@@ -49,7 +49,7 @@
     },
     "tooltip": {
         "project": "Opprett ett nytt prosjekt hvor du kan legge til og organisere show.",
-        "show": "Opprett ett nytt show hvor du kan legge til sangtekster, presentasjoner og medier. Hold Ctrl/Cmd for å opprette tomt.",
+        "show": "Opprett ett nytt show hvor du kan legge til sangtekster, presentasjoner og medier.",
         "groups": "Alle gruppene i valgt show og alle globale grupper. Klikk eller dra dem for å legge dem til i valgt oppsett.",
         "layout": "Legg til overganger og tid til neste til lysbilder i valgt oppsett.",
         "media": "Alle medier i valgt show. Vis dem, eller dra dem til nåværende oppsett.",
@@ -90,13 +90,19 @@
         "bold": "Fet"
     },
     "create_show": {
+        "web": "Nettsøk",
         "search_web": "Søk etter sang på nettet",
+        "search_results": "Søkeresultater",
         "more_options": "Flere alternativer",
         "format_new_show": "Formater tekst",
         "format_new_show_tip": "Teksten blir forbedret med automatisk store bokstaver, deling av tekst, tilordning av grupper og mer.",
         "split_lines": "Antall linjer",
         "split_lines_tip": "Antall linjer tillatt på hvert lysbilde før det deles opp i flere lysbilder",
-        "quick_lyrics_example_text": "Linje"
+        "quick_lyrics": "Hurtigtekst",
+        "quick_lyrics_tip": "Lim inn tekst eller skriv inn manuellt",
+        "quick_lyrics_example_tip": "Legg inn sangtekst eller annen tekst her",
+        "quick_lyrics_example_text": "Linje",
+        "empty": "Tomt show"
     },
     "preview": {
         "_previous_show": "Forrige show",
@@ -199,7 +205,8 @@
         "settings": "Innstillinger",
         "_title_settings": "Innstillinger",
         "_title_display": "Presenter",
-        "_title_display_stop": "Stopp presentatsjon"
+        "_title_display_stop": "Stopp presentatsjon",
+        "again_confirm": "Klikk igjen for å bekrefte"
     },
     "empty": {
         "general": "Ingenting her",
@@ -263,7 +270,7 @@
         "message": "Melding",
         "message_tip": "Vis noe på alle lysbildene",
         "auto_media": "Hent meta fra medier",
-        "override_output": "Overskriv stil i utgangsskjermen",
+        "override_output": "Overstyr stil fra utgangsskjerm",
         "display_metadata": "Vis metadata",
         "meta_template": "Mal for metadata",
         "text_divider": "Tekstskilletegn",
@@ -466,7 +473,6 @@
     "show": {
         "name": "Navn",
         "category": "Kategori",
-        "quick_lyrics": "Hurtigtekst",
         "new_layout": "Nytt oppsett",
         "grid": "Rutenett",
         "simple": "Enkel visning",
@@ -477,7 +483,6 @@
         "locked": "Dette showet har blitt låst!",
         "locked_info": "Dette showet har blitt låst for redigering. Lås det opp igjen i show-skuffen.",
         "slide_template": "Mal for lysbilde",
-        "search_results": "Søkeresultater",
         "source": "Kilde",
         "artist": "Artist",
         "song": "Sang"
@@ -646,6 +651,13 @@
         "activate_show_created": "Aktiver når show blir laget",
         "activate_audio_playlist_ended": "Aktiver når spilleliste er ferdig"
     },
+    "recording": {
+        "remove": "Fjern opptak",
+        "tip": "Ta opp og spill av en fast rekkefølge for lysbildene. Synkroniser med en lydfil på første lysbilde.",
+        "layout_changed": "Oppsett har blitt endret siden sist opptak",
+        "audio_synced": "Synkronisert med lyd!",
+        "start": "Start lysbildeopptak"
+    },
     "animate": {
         "change": "Endre",
         "set": "Sett",
@@ -688,7 +700,6 @@
         "all_shows": "Alle show",
         "all_projects": "Alle prosjekter",
         "project": "Prosjekt",
-        "options": "Alternativer",
         "preview": "Forhåndsvisning",
         "title": "Tittel",
         "metadata": "Metadata",
@@ -763,6 +774,7 @@
         "media_fit": "Tilpass medier",
         "size": "Størrelse",
         "max_lines": "Maks linjer",
+        "invert_items": "Inverter elementer",
         "chords": "Akkorder",
         "transpose": "Transponer",
         "auto_size": "Auto-størrelse",
@@ -974,7 +986,8 @@
         "overrun": "Utløpt Farge",
         "source_output": "Utgangskilde",
         "auto_stretch": "Strekk ut innhold automatisk",
-        "labels": "Vis etiketter"
+        "labels": "Vis etiketter",
+        "label_color": "Etikettfarge"
     },
     "settings": {
         "general": "Generelt",

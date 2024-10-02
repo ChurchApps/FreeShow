@@ -127,7 +127,7 @@ export function checkMedia(src: string) {
 }
 
 export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
-    if (!mediaObj) return {}
+    if (!mediaObj && !currentStyle) return {}
 
     let mediaStyle: MediaStyle = {
         filter: "",
@@ -140,7 +140,7 @@ export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
     }
 
     Object.keys(mediaStyle).forEach((key) => {
-        if (!mediaObj[key]) return
+        if (!mediaObj?.[key]) return
         mediaStyle[key] = mediaObj[key]
     })
 

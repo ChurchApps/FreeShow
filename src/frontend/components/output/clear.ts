@@ -4,6 +4,7 @@ import { clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "..
 import { clearAudio } from "../helpers/audio"
 import { clone } from "../helpers/array"
 import { customActionActivation } from "../actions/actions"
+import { stopSlideRecording } from "../helpers/slideRecording"
 
 export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
@@ -80,6 +81,7 @@ export function clearBackground(outputId: string = "") {
 
 export function clearSlide() {
     setOutput("slide", null)
+    stopSlideRecording()
     customActionActivation("slide_cleared")
 }
 
