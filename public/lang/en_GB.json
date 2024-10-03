@@ -49,7 +49,7 @@
     },
     "tooltip": {
         "project": "Create a new project where you can add and arrange shows.",
-        "show": "Create a new show where you can add song lyrics, presentations and media. Hold Ctrl/Cmd to create empty.",
+        "show": "Create a new show where you can add song lyrics, presentations and media.",
         "groups": "All the groups in the current show and all the global groups. Click or drag them to add them to the current layout.",
         "layout": "Add transitions and next timers to slides in current layout.",
         "media": "All media in current show. Show them, or drag them to current layout.",
@@ -90,13 +90,19 @@
         "bold": "Bold"
     },
     "create_show": {
+        "web": "Web search",
         "search_web": "Search for song on the web",
+        "search_results": "Search results",
         "more_options": "More options",
         "format_new_show": "Format text",
         "format_new_show_tip": "Improve text format with auto capitalise, split text, assign groups & more.",
         "split_lines": "Numbers of lines",
         "split_lines_tip": "Numbers of lines allowed per slide before auto splitting",
-        "quick_lyrics_example_text": "Line"
+        "quick_lyrics": "Quick lyrics",
+        "quick_lyrics_tip": "Paste text or enter manually",
+        "quick_lyrics_example_tip": "Enter lyrics or any text here",
+        "quick_lyrics_example_text": "Line",
+        "empty": "Empty show"
     },
     "preview": {
         "_previous_show": "Previous show",
@@ -199,7 +205,8 @@
         "settings": "Settings",
         "_title_settings": "Settings",
         "_title_display": "Present",
-        "_title_display_stop": "Stop presentation"
+        "_title_display_stop": "Stop presentation",
+        "again_confirm": "Click again to confirm"
     },
     "empty": {
         "general": "Nothing here",
@@ -263,7 +270,7 @@
         "message": "Message",
         "message_tip": "Display something on all slides",
         "auto_media": "Get meta from media content",
-        "override_output": "Override styling in output",
+        "override_output": "Override output style",
         "display_metadata": "Display metadata",
         "meta_template": "Metadata template",
         "text_divider": "Text separator",
@@ -466,7 +473,6 @@
     "show": {
         "name": "Name",
         "category": "Category",
-        "quick_lyrics": "Quick Lyrics",
         "new_layout": "New layout",
         "grid": "Grid view",
         "simple": "Simple view",
@@ -477,7 +483,6 @@
         "locked": "This show has been locked!",
         "locked_info": "This show has been locked for editing. Unlock it again in the shows drawer.",
         "slide_template": "Slide template",
-        "search_results": "Search Results",
         "source": "Source",
         "artist": "Artist",
         "song": "Song"
@@ -646,6 +651,13 @@
         "activate_show_created": "Activate when show is created",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended"
     },
+    "recording": {
+        "remove": "Remove recording",
+        "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",
+        "layout_changed": "Layout has changed since last recording!",
+        "audio_synced": "Synced with audio!",
+        "start": "Start slide recording"
+    },
     "animate": {
         "change": "Change",
         "set": "Set",
@@ -688,7 +700,6 @@
         "all_shows": "All shows",
         "all_projects": "All projects",
         "project": "Project",
-        "options": "Options",
         "preview": "Preview",
         "title": "Title",
         "metadata": "Metadata",
@@ -763,6 +774,7 @@
         "media_fit": "Media fit",
         "size": "Size",
         "max_lines": "Max lines",
+        "invert_items": "Invert items",
         "chords": "Chords",
         "transpose": "Transpose",
         "auto_size": "Auto size",
@@ -974,7 +986,8 @@
         "overrun": "Overrun Colour",
         "source_output": "Source output",
         "auto_stretch": "Auto stretch content",
-        "labels": "Show labels"
+        "labels": "Show labels",
+        "label_color": "Label colour"
     },
     "settings": {
         "general": "General",

@@ -12,12 +12,12 @@
 
     let confirm: boolean = false
     let cancelConfirmTimeout: any = null
-    function toggleOutput() {
+    function toggleOutput(e: any) {
         if (cancelConfirmTimeout) clearTimeout(cancelConfirmTimeout)
 
         if (!$outputDisplay || confirm) {
             confirm = false
-            displayOutputs()
+            displayOutputs(e)
             return
         }
 

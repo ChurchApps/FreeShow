@@ -8,6 +8,7 @@ import {
     activeRename,
     currentOutputSettings,
     currentWindow,
+    dictionary,
     disabledServers,
     lockedOverlays,
     outputDisplay,
@@ -354,7 +355,7 @@ export function addOutput(onlyFirst: boolean = false) {
         let n = 0
         while (Object.values(output).find((a) => a.name === output[id].name + (n ? " " + n : ""))) n++
         if (n) output[id].name = output[id].name + " " + n
-        if (onlyFirst) output[id].name = "Primary"
+        if (onlyFirst) output[id].name = get(dictionary).theme?.primary || "Primary"
 
         // show
         // , rate: get(special).previewRate || "auto"

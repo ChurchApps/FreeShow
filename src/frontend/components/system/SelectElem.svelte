@@ -87,6 +87,16 @@
         return slideData.filter((a) => a.slide)
     }
 
+    // mac bug causes two finger trackpad to not register as a button 2 input,
+    // this could be a workaround, but contetxmenu is triggered last!
+    // let rightClickMenu = false
+    // function contextmenu() {
+    //     rightClickMenu = true
+    // }
+    // function mouseup() {
+    //     rightClickMenu = false
+    // }
+
     function mousedown(e: any, dragged: boolean = false) {
         if (!selectable) return
         if (dragged && $activeRename !== null) return e.preventDefault()
@@ -241,6 +251,8 @@
     on:mousedown={mousedown}
     on:dragstart={(e) => mousedown(e, true)}
 >
+    <!-- on:mouseup={mouseup}
+    on:contextmenu={contextmenu} -->
     <!-- TODO: validateDrop(id, $selected.id, true) -->
     {#if trigger && (dragActive || fileOver)}
         <div class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={stopDrag}>

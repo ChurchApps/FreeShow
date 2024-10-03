@@ -1,4 +1,4 @@
-import { writeFileSync } from "original-fs"
+import { writeFileSync } from "fs"
 import path from "path"
 import pdf from "pdf2img-electron"
 import { toApp } from ".."

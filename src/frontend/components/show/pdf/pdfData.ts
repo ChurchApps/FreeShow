@@ -1,3 +1,5 @@
+import { newToast } from "../../../utils/common"
+
 export async function getPages(pdfPath: string): Promise<number> {
     let response = await fetch(pdfPath)
     let data = await response.blob()
@@ -15,8 +17,17 @@ export async function getPages(pdfPath: string): Promise<number> {
 }
 
 export async function getViewportSizes(pdfPath: string): Promise<{ width: number; height: number }[]> {
-    let response = await fetch(pdfPath)
-    let data = await response.blob()
+    // path starting at "/" auto completes to app root, but should be file://
+    if (pdfPath[0] === "/") pdfPath = `file://${pdfPath}`
+
+    let data: Blob
+    try {
+        let response = await fetch(pdfPath)
+        data = await response.blob()
+    } catch (err) {
+        newToast(err + ": " + pdfPath)
+        return []
+    }
 
     const reader = new FileReader()
     return new Promise((resolve, reject) => {

@@ -24,7 +24,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
             color: "#F0008C",
             bounds: { x: 0, y: 0, width: 1920, height: 1080 },
             screen: null,
-            kiosk: true,
             style: "default",
             show: {},
         },
