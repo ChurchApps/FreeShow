@@ -59,5 +59,7 @@
         font-size: 1.2em;
 
         padding: 8px 16px;
+
+        line-break: anywhere;
     }
 </style>

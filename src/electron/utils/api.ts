@@ -74,6 +74,7 @@ export function startRestListener(PORT: number | undefined) {
     })
 
     app.use(express.json())
+    // app.use(cors()) // if a browser should send body data (https://stackoverflow.com/a/63547498/10803046)
     app.post("/", (req) => {
         // {action: ACTION_ID, ...{}}
         let data = req.body

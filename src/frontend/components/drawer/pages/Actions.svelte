@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, dictionary, labelsDisabled, midiIn, popupData } from "../../../stores"
+    import { activePopup, dictionary, labelsDisabled, midiIn, popupData, runningActions } from "../../../stores"
     import { send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
     import { runAction } from "../../actions/actions"
@@ -47,7 +47,13 @@
                 <div class="action context #action">
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
-                        <Button style={action.enabled === false ? "opacity: 0.6;" : ""} title={$dictionary.media?.play} on:click={() => (action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action))} dark>
+                        <Button
+                            style={action.enabled === false ? "opacity: 0.6;" : ""}
+                            title={$dictionary.media?.play}
+                            on:click={() => (action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action))}
+                            outline={$runningActions.includes(action.id)}
+                            dark
+                        >
                             <span style="display: flex;align-items: center;width: 100%;">
                                 {#if action.shows?.length}
                                     <Icon id="slide" white right />

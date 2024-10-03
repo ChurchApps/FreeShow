@@ -33,7 +33,8 @@
 
     let loaded: boolean = false
     onMount(getValues)
-    $: if ($activeShow!.id) getValues()
+    $: messageUpdate = $showsCache[$activeShow?.id || ""]?.message
+    $: if ($activeShow!.id || messageUpdate) getValues()
 
     function getValues() {
         values = initializeMetadata({})
@@ -112,7 +113,7 @@
     <h5><T id="meta.message" /></h5>
     <div class="message">
         <p style="padding-bottom: 10px;"><T id="meta.message_tip" /></p>
-        <Notes value={message.text || ""} on:change={(e) => updateData({ ...message, text: e.detail }, "message")} lines={2} />
+        <Notes value={message.text || ""} class="context #meta_message" on:change={(e) => updateData({ ...message, text: e.detail }, "message")} lines={2} />
     </div>
 
     <!-- styling -->

@@ -354,6 +354,10 @@
     <p><T id="meta.text_divider" /></p>
     <TextInput value={currentStyle.metadataDivider === undefined ? "; " : currentStyle.metadataDivider} on:change={(e) => updateStyle(e, "metadataDivider")} on:keydown={keydown} />
 </CombinedInput>
+<!-- <CombinedInput>
+    <p><T id="meta.metadata_layout" /></p>
+    <TextInput value={currentStyle.metadataLayout || DEFAULT_META_LAYOUT} on:change={(e) => updateStyle(e, "metadataLayout")} on:keydown={keydown} />
+</CombinedInput> -->
 <CombinedInput>
     <p><T id="meta.message_template" /></p>
     <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} />

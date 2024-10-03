@@ -321,6 +321,7 @@
                                 path={item.path}
                                 thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)}
                                 type={getMediaType(item.extension)}
+                                shiftRange={fullFilteredFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
                                 bind:activeFile
                                 {allFiles}
                                 {active}
@@ -332,7 +333,17 @@
                         {#if file.folder}
                             <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
                         {:else}
-                            <Media credits={file.credits} thumbnail={$mediaOptions.mode !== "list"} name={file.name} path={file.path} type={getMediaType(file.extension)} bind:activeFile {allFiles} {active} />
+                            <Media
+                                credits={file.credits}
+                                thumbnail={$mediaOptions.mode !== "list"}
+                                name={file.name}
+                                path={file.path}
+                                type={getMediaType(file.extension)}
+                                shiftRange={fullFilteredFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
+                                bind:activeFile
+                                {allFiles}
+                                {active}
+                            />
                         {/if}
                     </VirtualList>
                 {/if}

@@ -47,8 +47,8 @@
     $: activeOutputIds = getActiveOutputs($outputs, true, true, true)
     const sendToOutput = () => {
         let dataValues: any = {}
-        activeOutputIds.forEach((id, i: number) => {
-            dataValues[id] = { ...videoData, muted: i > 0 ? true : videoData.muted }
+        activeOutputIds.forEach((id) => {
+            dataValues[id] = { ...videoData, muted: id !== outputId ? true : videoData.muted }
 
             let keyOutput = $outputs[id].keyOutput
             if (keyOutput) dataValues[keyOutput] = videoData
@@ -103,7 +103,7 @@
                 <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
             </Button>
 
-            <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue toOutput />
+            <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput />
 
             <Button
                 center

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
+    import { activeSlideRecording, dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
     import { getOutputContent, isOutCleared } from "../../helpers/output"
@@ -78,7 +78,7 @@
                     <Icon id="background" size={1.2} />
                 </Button>
                 {#if !allCleared}
-                    <Button on:click={() => openPreview("background")} title={$dictionary.preview?.background} dark={activeClear !== "background"} />
+                    <Button disabled={$outLocked || isOutCleared("background", $outputs)} on:click={() => openPreview("background")} title={$dictionary.preview?.background} dark={activeClear !== "background"} />
                 {/if}
             </div>
         {/if}
@@ -86,10 +86,11 @@
         <div class="combinedButton">
             <Button disabled={$outLocked || isOutCleared("slide", $outputs)} on:click={() => clear("slide")} title={$dictionary.clear?.slide + " [F2]"} dark red center>
                 <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
-                <Icon id={outputContent?.type === "pdf" ? "background" : "slide"} size={1.2} />
+                <!-- display recording icon here if a slide recoring is playing -->
+                <Icon id={outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} />
             </Button>
             {#if !allCleared}
-                <Button on:click={() => openPreview("slide")} title={$dictionary.preview?.slide} dark={activeClear !== "slide"} />
+                <Button disabled={$outLocked || isOutCleared("slide", $outputs)} on:click={() => openPreview("slide")} title={$dictionary.preview?.slide} dark={activeClear !== "slide"} />
             {/if}
         </div>
 
@@ -98,7 +99,7 @@
                 <Icon id="overlays" size={1.2} />
             </Button>
             {#if !allCleared}
-                <Button on:click={() => openPreview("overlays")} title={$dictionary.preview?.overlays} dark={activeClear !== "overlays"} />
+                <Button disabled={$outLocked || isOutCleared("overlays", $outputs, true)} on:click={() => openPreview("overlays")} title={$dictionary.preview?.overlays} dark={activeClear !== "overlays"} />
             {/if}
         </div>
 
@@ -107,7 +108,7 @@
                 <Icon id="audio" size={1.2} />
             </Button>
             {#if !allCleared}
-                <Button on:click={() => openPreview("audio")} title={$dictionary.preview?.audio} dark={activeClear !== "audio"} />
+                <Button disabled={$outLocked || audioCleared} on:click={() => openPreview("audio")} title={$dictionary.preview?.audio} dark={activeClear !== "audio"} />
             {/if}
         </div>
 
@@ -117,7 +118,7 @@
                     <Icon id="clock" size={1.2} />
                 </Button>
                 {#if !allCleared}
-                    <Button on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
+                    <Button disabled={$outLocked || isOutCleared("transition", $outputs)} on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
                 {/if}
             </div>
         {/if}

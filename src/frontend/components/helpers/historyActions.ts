@@ -162,7 +162,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (subkey && index !== undefined && index > -1 && !Array.isArray(a[id][key][subkey])) delete data.previousData
 
-                if (initializing && updater.timestamp) a[id].modified = Date.now()
+                if (initializing && updater.timestamp && a[id]) a[id].modified = Date.now()
                 if (data.previousData === data.data) error("Previous data is the same as current data. Try using clone()!")
                 return a
             }

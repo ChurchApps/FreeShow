@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { activeEdit, activePage, activePopup, activeShow, dictionary, outLocked, showsCache } from "../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, activeSlideRecording, dictionary, outLocked, showsCache } from "../../stores"
+    import { previewShortcuts } from "../../utils/shortcuts"
     import { GetLayout } from "../helpers/get"
     import Icon from "../helpers/Icon.svelte"
     import { refreshOut, setOutput } from "../helpers/output"
-    import { nextSlideIndividual, previousSlideIndividual, updateOut } from "../helpers/showActions"
+    import { updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
 
@@ -27,17 +28,18 @@
 
 <span class="group">
     <Button
-        on:click={previousSlideIndividual}
+        on:click={() => previewShortcuts.ArrowLeft({ preview: true })}
         title={$dictionary.preview?._previous_slide}
-        disabled={$outLocked || slide?.id === "temp" || (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)}
+        disabled={$outLocked || (!$activeSlideRecording && (slide?.id === "temp" || (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)))}
         center
     >
         <Icon id="previous" size={1.2} />
     </Button>
     <Button
-        on:click={nextSlideIndividual}
+        on:click={() => previewShortcuts.ArrowRight({ preview: true, key: "ArrowRight" })}
         title={$dictionary.preview?._next_slide}
-        disabled={$outLocked || slide?.id === "temp" || (slide ? (slide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)}
+        disabled={$outLocked ||
+            (!$activeSlideRecording && (slide?.id === "temp" || (slide ? (slide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)))}
         center
     >
         <Icon id="next" size={1.2} />

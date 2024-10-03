@@ -5,6 +5,7 @@ import { startMetronome } from "../drawer/audio/metronome"
 import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
 import { changeStageOutputLayout, displayOutputs, startCamera } from "../helpers/output"
 import { activateTrigger, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShow } from "../helpers/showActions"
+import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { runActionId, toggleAction } from "./actions"
@@ -153,6 +154,7 @@ export const API_ACTIONS = {
     id_start_timer: (data: API_id) => startTimerById(data.id),
     start_slide_timers: (data: API_slide) => playSlideTimers(data),
     stop_timers: () => stopTimers(),
+    start_slide_recording: () => playSlideRecording(),
 
     // VISUAL
     id_select_output_style: (data: API_id) => changeOutputStyle({ outputStyle: data.id }), // BC

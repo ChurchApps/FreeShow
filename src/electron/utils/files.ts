@@ -3,8 +3,7 @@
 
 import { app, dialog, shell } from "electron"
 import { ExifImage } from "exif"
-import fs from "fs"
-import { Stats } from "original-fs"
+import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
 import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"

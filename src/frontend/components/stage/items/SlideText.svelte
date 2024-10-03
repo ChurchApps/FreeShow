@@ -30,7 +30,7 @@
 
     // $: stageAutoSize = autoSize ? (items[0] ? getAutoSize(items[0], parent) : 0) : fontSize
 
-    $: reversedItems = clone(slide?.items || []).reverse()
+    $: reversedItems = stageItem?.invertItems ? clone(slide?.items || []) : clone(slide?.items || []).reverse()
     $: items = style ? clone(slide?.items || []) : combineSlideItems(reversedItems)
 
     function combineSlideItems(items: any[]) {

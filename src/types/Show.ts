@@ -187,7 +187,18 @@ export interface Layout {
     id?: string
     name: string
     notes: string
+    recording?: Recording[]
     slides: SlideData[]
+}
+
+export interface Recording {
+    id: string
+    // name: string
+    layoutAtRecording: string // store layout ids to detect changes
+    sequence: {
+        time: number
+        slideRef: { id: string; index: number }
+    }[]
 }
 
 export interface SlideData {

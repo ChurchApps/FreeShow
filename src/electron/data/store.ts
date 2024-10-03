@@ -4,11 +4,11 @@
 
 import { app } from "electron"
 import Store from "electron-store"
+import { statSync } from "fs"
 import path from "path"
 import { STORE } from "../../types/Channels"
 import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
-import { statSync } from "original-fs"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",

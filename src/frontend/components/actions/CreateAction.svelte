@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { activePopup, popupData } from "../../stores"
+    import { activePopup, dictionary, popupData } from "../../stores"
     import { translate } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -53,26 +53,30 @@
     const removeActions = ["change_transition", "change_variable"]
     if (list) removeActions.push(...removeFromSlideAction)
 
-    $: ACTIONS = Object.keys(API_ACTIONS)
-        .map((id) => {
-            let data = actionData[id] || {}
-            let name = translate(data.name || "") || id
-            let icon = data.icon || "actions"
-            let common = !!data.common
+    $: ACTIONS = [
+        ...Object.keys(API_ACTIONS)
+            .map((id) => {
+                let data = actionData[id] || {}
+                let name = translate(data.name || "") || id
+                let icon = data.icon || "actions"
+                let common = !!data.common
 
-            return { id, name, icon, common }
-        })
-        .filter(({ id }) => {
-            // show if it is the currently selected
-            if (id === actionId) return true
-            // WIP MIDI multiple of the same (needs a new way of setting the id)
-            // show if it has an input (because you probably want to have multiple)
-            // if (actionData[actionId]?.input) return true
-            // remove already added or custom ones
-            if (removeActions.includes(id) || existingActions.includes(id)) return false
-            if (list && id.includes("index_select")) return false
-            return true
-        })
+                return { id, name, icon, common }
+            })
+            .filter(({ id }) => {
+                // show if it is the currently selected
+                if (id === actionId) return true
+                // WIP MIDI multiple of the same (needs a new way of setting the id)
+                // show if it has an input (because you probably want to have multiple)
+                // if (actionData[actionId]?.input) return true
+                // remove already added or custom ones
+                if (removeActions.includes(id) || existingActions.includes(id)) return false
+                if (list && id.includes("index_select")) return false
+                return true
+            }),
+        // custom special
+        ...(list ? [] : [{ id: "wait", name: $dictionary.animate?.wait, icon: "time_in", common: false }]),
+    ]
 
     let pickAction: boolean = false
 

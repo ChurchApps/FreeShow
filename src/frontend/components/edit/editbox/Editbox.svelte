@@ -28,7 +28,7 @@
         if (e.target.closest(".chords") || e.target.closest(".editTools")) return
         if (!e.target.closest(".line") && !e.target.closest(".square")) openToolsTab.set("text")
 
-        let rightClick: boolean = e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
+        const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         activeEdit.update((ae) => {
             if (rightClick) {

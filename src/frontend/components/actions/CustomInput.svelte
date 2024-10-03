@@ -120,6 +120,8 @@
     <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
         {#if inputId === "index"}
             <NumberInput value={value?.index || 0} on:change={(e) => updateValue("index", e)} />
+        {:else if inputId === "number"}
+            <NumberInput value={value?.number || 0} decimals={1} fixed={1} step={0.5} on:change={(e) => updateValue("number", e)} />
         {:else if inputId === "strval"}
             <TextInput value={value?.value || ""} placeholder={$dictionary.inputs?.name} on:change={(e) => updateValue("value", e)} />
         {:else if inputId === "bolval"}

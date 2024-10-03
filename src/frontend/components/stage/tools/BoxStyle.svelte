@@ -21,8 +21,10 @@
 
         // custom input values
         if (items[0].includes("slide") && !items[0].includes("text") && !items[0].includes("notes") && !items[0].includes("tracker")) edits = { chords: edits.chords }
-        else if (items[0].includes("next_slide_text")) {
-            edits.default.push({ name: "max_lines", id: "lineCount", input: "number", value: 0 })
+        else if (items[0].includes("slide_text")) {
+            if (items[0].includes("next_slide_text")) edits.default.push({ name: "max_lines", id: "lineCount", input: "number", value: 0 })
+            // WIP only show this if current output has more than one item:
+            edits.default.push({ name: "invert_items", id: "invertItems", input: "checkbox", value: false })
         } else if (items[0].includes("tracker")) {
             let newEdits = clone(textEdits)
             delete newEdits.default
@@ -49,8 +51,11 @@
         if (item.tracker.type) edits.default[0].value = item.tracker.type
         edits.default[1].value = item.tracker.accent || $themes[$theme]?.colors?.secondary || "#F0008C"
     }
-    $: if (item && items[0].includes("next_slide_text")) {
+    $: if (item && items[0].includes("next_slide_text") && edits.default[5]) {
         edits.default[5].value = item.lineCount || 0
+    }
+    $: if (item && items[0].includes("slide_text") && edits.default[6]) {
+        edits.default[6].value = !!item.invertItems
     }
 
     // CSS

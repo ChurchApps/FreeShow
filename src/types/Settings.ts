@@ -23,6 +23,7 @@ export interface Styles {
     template?: string // slide
     templateScripture?: string
     metadataDivider?: string
+    metadataLayout?: string // not in use yet 1.2.8
     displayMetadata?: string
     metadataTemplate?: string
     messageTemplate?: string

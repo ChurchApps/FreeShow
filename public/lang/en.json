@@ -651,6 +651,13 @@
         "activate_show_created": "Activate when show is created",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended"
     },
+    "recording": {
+        "remove": "Remove recording",
+        "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",
+        "layout_changed": "Layout has changed since last recording!",
+        "audio_synced": "Synced with audio!",
+        "start": "Start slide recording"
+    },
     "animate": {
         "change": "Change",
         "set": "Set",
@@ -767,6 +774,7 @@
         "media_fit": "Media fit",
         "size": "Size",
         "max_lines": "Max lines",
+        "invert_items": "Invert items",
         "chords": "Chords",
         "transpose": "Transpose",
         "auto_size": "Auto size",

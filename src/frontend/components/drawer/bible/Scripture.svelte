@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { BIBLE } from "../../../../types/Channels"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
-    import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, selected } from "../../../stores"
+    import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, os, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, selected } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -328,7 +328,7 @@
 
     function selectVerse(e: any, id: string) {
         autoComplete = false
-        const rightClick = e.button === 2
+        const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
         if (e.ctrlKey || e.metaKey) {
             if (activeVerses.includes(id)) {
@@ -545,7 +545,8 @@
             let matchingArray: any[] = []
 
             booksList.forEach((book: any) => {
-                if (book.name.toLowerCase().includes(value)) matchingArray.push(book)
+                let bookName = book.name.toLowerCase()
+                if (bookName.includes(value) || bookName.replaceAll(" ", "").includes(value)) matchingArray.push(book)
             })
 
             if (matchingArray.length) findMatches = matchingArray

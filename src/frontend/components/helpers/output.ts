@@ -8,6 +8,7 @@ import {
     activeRename,
     currentOutputSettings,
     currentWindow,
+    dictionary,
     disabledServers,
     lockedOverlays,
     outputDisplay,
@@ -30,12 +31,12 @@ import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { customActionActivation } from "../actions/actions"
 import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
+import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
-import { clearSlide } from "../output/clear"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     // sort so display order can be changed! (needs app restart)
@@ -55,13 +56,18 @@ export function displayOutputs(e: any = {}, auto: boolean = false) {
 export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string = "", add: boolean = false) {
     outputs.update((a: any) => {
         let bindings = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0]?.[data.index]?.data?.bindings || [] : []
-        let outs = bindings.length ? bindings : getActiveOutputs()
-        if (outputId) outs = [outputId]
+        let allOutputs = bindings.length ? bindings : getActiveOutputs()
+        let outs = outputId ? [outputId] : allOutputs
+        let inputData = clone(data)
 
-        outs.forEach((id: string, i: number) => {
+        let firstOutputWithBackground = allOutputs.findIndex((id) => (get(styles)[get(outputs)[id]?.style || ""]?.layers || ["background"]).includes("background"))
+        firstOutputWithBackground = Math.max(0, firstOutputWithBackground)
+
+        outs.forEach((id: string) => {
             let output: any = a[id]
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
+            data = clone(inputData)
 
             if (key === "slide" && data === null && output.out?.slide?.type === "ppt") {
                 send(MAIN, ["PRESENTATION_CONTROL"], { action: "stop" })
@@ -72,7 +78,8 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 let slideContent = getOutputContent(id)
                 if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
 
-                data = changeOutputBackground(data, { outs, output, id, i })
+                let index = allOutputs.findIndex((outId) => outId === id)
+                data = changeOutputBackground(data, { output, id, mute: allOutputs.length > 1 && index !== firstOutputWithBackground })
             }
 
             let outData = a[id].out?.[key] || null
@@ -93,7 +100,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
     })
 }
 
-function changeOutputBackground(data, { outs, output, id, i }) {
+function changeOutputBackground(data, { output, id, mute }) {
     if (get(currentWindow) === null) {
         setTimeout(() => {
             // update stage background if any
@@ -113,7 +120,7 @@ function changeOutputBackground(data, { outs, output, id, i }) {
     // mute videos in the other output windows if more than one
     // WIP fix multiple outputs: if an output with style without background is first the video will be muted... even if another output should not be muted
     data.muted = data.muted || false
-    if (outs.length > 1 && i > 0) data.muted = true
+    if (mute) data.muted = true
 
     let videoData: any = { muted: data.muted, loop: data.loop || false }
 
@@ -348,7 +355,7 @@ export function addOutput(onlyFirst: boolean = false) {
         let n = 0
         while (Object.values(output).find((a) => a.name === output[id].name + (n ? " " + n : ""))) n++
         if (n) output[id].name = output[id].name + " " + n
-        if (onlyFirst) output[id].name = "Primary"
+        if (onlyFirst) output[id].name = get(dictionary).theme?.primary || "Primary"
 
         // show
         // , rate: get(special).previewRate || "auto"
@@ -745,6 +752,14 @@ export function getOutputLines(outSlide: any, styleLines: any = 0) {
     return { start, end, index: linesIndex, max: maxLines }
 }
 
+// METADATA
+
+// WIP dynamic placeholder values??: {meta_title?No title}
+export const DEFAULT_META_LAYOUT = "Title: {meta_title?No title}; {meta_artist}; {meta_author}; {meta_year};\n{meta_copyright}"
+export function createMetadataLayout(layout: string, ref: any, _updater: number = 0) {
+    return replaceDynamicValues(layout, ref)
+}
+
 export interface OutputMetadata {
     message?: { [key: string]: string }
     display?: string
@@ -786,6 +801,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
 
         if (!metadata.message) return
 
+        // metadata.value = currentStyle.metadataLayout || DEFAULT_META_LAYOUT
         metadata.value = joinMetadata(metadata.message, currentStyle.metadataDivider)
     }
 

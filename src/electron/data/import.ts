@@ -34,6 +34,7 @@ const specialImports: any = {
         return data
     },
     pdf: (files: string[]) => files,
+    powerkey: (files: string[]) => files,
     sqlite: async (files: string[]) => {
         let data: any[] = []
 

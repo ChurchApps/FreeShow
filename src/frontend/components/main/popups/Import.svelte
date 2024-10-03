@@ -7,6 +7,7 @@
     import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import { presentationExtensions } from "../../helpers/media"
 
     const freeshow_formats = [
         { name: "Show", extensions: ["show", "json"], id: "freeshow" },
@@ -27,7 +28,7 @@
             id: "powerpoint",
             tutorial:
                 "This will import the plain text as a show." +
-                ($os === "linux" ? "" : " If you would like to use a PowerPoint/Keynote presentation with FreeShow, please drag and drop it into your project.") +
+                ($os === "linux" ? "" : " If you would like to use a PowerPoint/Keynote presentation with FreeShow, please choose the media import option, or drag and drop it into your project.") +
                 " Or you can import directly as PDF or images if you don't need animations.",
         },
         { name: "Word", extensions: ["doc", "docx"], id: "word" },
@@ -52,6 +53,7 @@
 
     const media_formats = [
         { name: "PDF", extensions: ["pdf"], id: "pdf" },
+        { name: "PowerPoint/Keynote", extensions: presentationExtensions, id: "powerkey" },
         { name: "Lessons.church", extensions: ["json", "olp", "olf"], id: "lessons" },
     ]
 

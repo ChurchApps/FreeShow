@@ -7,6 +7,7 @@
     export let videoData: any
     export let videoTime: any
     export let activeOutputIds: string[] = []
+    export let unmutedId: string = ""
     export let toOutput: boolean = false
     export let disabled: boolean = false
     export let changeValue: number = 0
@@ -86,8 +87,8 @@
         if (!toOutput) return
 
         let dataValues: any = {}
-        activeOutputIds.forEach((id, i: number) => {
-            dataValues[id] = { ...videoData, muted: i > 0 ? true : videoData.muted }
+        activeOutputIds.forEach((id) => {
+            dataValues[id] = { ...videoData, muted: id !== unmutedId ? true : videoData.muted }
         })
 
         send(OUTPUT, ["DATA"], dataValues)

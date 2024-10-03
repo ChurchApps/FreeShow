@@ -66,7 +66,7 @@
         bind:currentTime={videoTime}
         bind:paused={videoData.paused}
         bind:duration={videoData.duration}
-        muted={mirror ? true : videoData.muted ?? true}
+        muted={mirror ? true : (videoData.muted ?? true)}
         src={encodeFilePath(path)}
         autoplay
         loop={videoData.loop || false}

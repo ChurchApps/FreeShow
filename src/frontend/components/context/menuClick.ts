@@ -847,6 +847,15 @@ const actions: any = {
     dynamic_values: (obj: any) => {
         let id = obj.menu.id
 
+        if (obj.contextElem.classList.contains("#meta_message")) {
+            let message = _show().get("message") || {}
+            let data = { ...message, text: (message.text || "") + `{${id}}` }
+            let override = "show#" + get(activeShow)!.id + "_message"
+
+            history({ id: "UPDATE", newData: { data, key: "message" }, oldData: { id: get(activeShow)!.id }, location: { page: "show", id: "show_key", override } })
+            return
+        }
+
         let sel = getSelectionRange()
         let lineIndex = sel.findIndex((a) => a?.start !== undefined)
         console.log(sel, lineIndex)

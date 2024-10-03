@@ -1,3 +1,5 @@
+import { newToast } from "../../../utils/common"
+
 export async function getPages(pdfPath: string): Promise<number> {
     let response = await fetch(pdfPath)
     let data = await response.blob()
@@ -15,14 +17,24 @@ export async function getPages(pdfPath: string): Promise<number> {
 }
 
 export async function getViewportSizes(pdfPath: string): Promise<{ width: number; height: number }[]> {
-    let response = await fetch(pdfPath)
-    let data = await response.blob()
+    // path starting at "/" auto completes to app root, but should be file://
+    if (pdfPath[0] === "/") pdfPath = `file://${pdfPath}`
+
+    let data: Blob
+    try {
+        let response = await fetch(pdfPath)
+        data = await response.blob()
+    } catch (err) {
+        newToast(err + ": " + pdfPath)
+        return []
+    }
 
     const reader = new FileReader()
     return new Promise((resolve, reject) => {
         reader.onload = (_) => {
             try {
                 const dataURL = reader.result?.toString() || ""
+                const pageCount = getPagesCount(dataURL)
                 const pageMatches = dataURL.match(/\/Type\s*\/Page[^s]/g) || []
                 const boxMatch = getBoxes(dataURL)
 
@@ -41,6 +53,15 @@ export async function getViewportSizes(pdfPath: string): Promise<{ width: number
                     })
                 }
 
+                // some large PDFs have multiple portrait pages combined to one landscape
+                if (pageCount && pageCount < viewports.length) {
+                    let newViewports: any[] = []
+                    for (let i = 0; i < pageCount; i += 2) {
+                        newViewports.push({ width: viewports[i].width + (viewports[i + 1]?.width || 0), height: viewports[i].height })
+                    }
+                    viewports = newViewports
+                }
+
                 resolve(viewports)
             } catch (error) {
                 reject(error)
@@ -49,6 +70,11 @@ export async function getViewportSizes(pdfPath: string): Promise<{ width: number
 
         reader.readAsText(data)
     })
+}
+
+function getPagesCount(dataURL: string) {
+    const countMatch = dataURL.match(/\/Count\s+(\d+)/)
+    return countMatch ? parseInt(countMatch[1], 10) : 0
 }
 
 // /MediaBox\n[\n0\n0\n960\n540\n] OR /MediaBox[ 0 0 960 540]

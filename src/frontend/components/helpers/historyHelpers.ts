@@ -413,7 +413,7 @@ export const _updaters = {
             if (_show(id).get("settings.activeLayout") !== subkey) return
 
             let firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((id) => id !== subkey)[0]
-            _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
+            if (firstLayoutId) _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
         },
     },
 
@@ -481,22 +481,32 @@ export const _updaters = {
         select: (id: string) => {
             currentOutputSettings.set(id)
         },
-        // deselect: () => {
-        //     // WIP this is not triggered upon deletion
-        //     // enable output if only 1 left
-        //     let stageOutputIds = Object.keys(get(outputs)).filter((outputId) => get(outputs)[outputId].stageOutput)
-        //     let allNormalOutputs = Object.keys(get(outputs)).filter((outputId) => {
-        //         let output = get(outputs)[outputId]
-        //         return !output.isKeyOutput && !stageOutputIds.includes(outputId)
-        //     })
+        deselect: () => {
+            setTimeout(() => {
+                let allNormalOutputs = Object.keys(get(outputs)).filter((outputId) => {
+                    let output = get(outputs)[outputId]
+                    return !output.isKeyOutput && !output.stageOutput
+                })
 
-        //     if (allNormalOutputs.length !== 1) return
+                if (allNormalOutputs.length > 0) {
+                    // enable if no enabled
+                    let allEnabled = allNormalOutputs.filter((id) => get(outputs)[id].enabled)
+                    if (!allEnabled.length) {
+                        outputs.update((a) => {
+                            a[allNormalOutputs[0]].enabled = true
+                            return a
+                        })
+                    }
+                    return
+                }
 
-        //     outputs.update((a) => {
-        //         a[allNormalOutputs[0]].enabled = true
-        //         return a
-        //     })
-        // },
+                // create output if no normal outputs (in case stage outputs are still active)
+                outputs.update((a) => {
+                    a.default = { enabled: true, active: true, name: get(dictionary).theme?.primary || "Primary", color: "#F0008C", bounds: { x: 0, y: 0, width: 1920, height: 1080 }, screen: null, style: "default", show: {} }
+                    return a
+                })
+            }, 100)
+        },
     },
 }
 
