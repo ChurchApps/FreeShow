@@ -110,6 +110,8 @@
         z-index: 5999;
 
         /* pointer-events: none; */
+
+        color: #eee;
     }
 
     .focus {

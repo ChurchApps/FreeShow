@@ -13,11 +13,9 @@
     let current = new Date($activeDays[0])
     let currentEvents: any[] = []
 
-    activeDays.subscribe(updateEvents)
-    events.subscribe(updateEvents)
-    $: if (type) updateEvents()
+    $: updateEvents({ type, $activeDays, $events })
 
-    function updateEvents() {
+    function updateEvents(_updater: any) {
         current = new Date($activeDays[0])
         let tempEvents: any[] = []
 

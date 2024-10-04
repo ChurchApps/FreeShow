@@ -18,9 +18,8 @@
     $: backgroundColor = $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background
 
     let settings: any = {}
-    showsCache.subscribe(setValues)
 
-    $: if (editSlide) setValues()
+    $: if ($showsCache || editSlide) setValues()
     function setValues() {
         let res = getResolution(editSlide?.settings?.resolution)
         settings = {

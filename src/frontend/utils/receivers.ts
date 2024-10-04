@@ -298,7 +298,7 @@ const receiveOUTPUTasMAIN: any = {
                 let wasPaused = a[existing].paused
                 a[existing] = { ...data, location: "output" }
                 if (wasPaused === true && !data.paused) analyseAudio()
-            } else {
+            } else if (get(outputs)[data.id]?.out?.background) {
                 a.push({ location: "output", ...data })
                 analyseAudio()
             }

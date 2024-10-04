@@ -14,6 +14,7 @@
     import { getGroupName } from "../../helpers/show"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import { playRecording, stopSlideRecording } from "../../helpers/slideRecording"
+    import { onDestroy } from "svelte"
 
     export let showId: string
 
@@ -31,6 +32,7 @@
     $: hasChanged = recordingData?.layoutAtRecording !== layoutSequence
 
     let started: boolean = false
+    let outputListenerUnsubscribe: any = null
     let currentSequence: any[] = []
     function toggleRecording() {
         if (started) {
@@ -43,7 +45,7 @@
 
         // LISTEN
         let firstOutputId = getActiveOutputs()[0]
-        outputs.subscribe((a) => {
+        outputListenerUnsubscribe = outputs.subscribe((a) => {
             let outSlide: any = a[firstOutputId]?.out?.slide
             // clear output to stop recording
             if (started && currentSequence.length && !outSlide) return stopRecording()
@@ -64,9 +66,14 @@
         // record clear actions as well?? - I guess slide actions should be used in that case
     }
 
+    onDestroy(stopRecording)
+
     function stopRecording() {
+        if (!started) return
+
         newToast("$toast.recording_stopped")
         started = false
+        if (outputListenerUnsubscribe) outputListenerUnsubscribe()
 
         if (currentSequence.length < 2) return
 

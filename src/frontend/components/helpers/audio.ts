@@ -1,14 +1,15 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN, OUTPUT } from "../../../types/Channels"
-import { activePlaylist, audioChannels, audioPlaylists, gain, media, outLocked, playingAudio, playingVideos, special, volume } from "../../stores"
+import { activePlaylist, audioChannels, audioPlaylists, gain, media, outLocked, playingAudio, playingVideos, special } from "../../stores"
 import { send } from "../../utils/request"
+import { customActionActivation } from "../actions/actions"
 import { stopMetronome } from "../drawer/audio/metronome"
 import { audioAnalyser } from "../output/audioAnalyser"
+import { volume } from "./../../stores"
 import { clone, shuffleArray } from "./array"
 import { encodeFilePath } from "./media"
 import { checkNextAfterMedia } from "./showActions"
-import { customActionActivation } from "../actions/actions"
 
 export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0) {
     let existing: any = get(playingAudio)[path]
@@ -386,7 +387,7 @@ function mergeAudio(allAudio) {
     let merged = { left: 0, right: 0 }
     if (allLefts.length || allRights.length) merged = { left: getHighestNumber(allLefts), right: getHighestNumber(allRights) }
 
-    let mergedDB = { left: 0, right: 0 }
+    let mergedDB = { left: min, right: min }
     if (allLeftsDB.length || allRightsDB.length) mergedDB = { left: mergeDB(allLeftsDB), right: mergeDB(allRightsDB) }
 
     audioChannels.set({ volume: merged, dB: { value: mergedDB, min, max } })
@@ -485,7 +486,9 @@ function getPlayingVideos() {
             a.analyser.gainNode.gain.value = gainedValue
         } else a.video.volume = newVolume
 
-        if (!a.paused) allAudio.push(a)
+        // don't think a.paused it used
+        if (a.paused || a.video.muted) allAudio.push({})
+        else allAudio.push(a)
     })
 
     return allAudio
@@ -498,7 +501,7 @@ function getPlayingOutputVideos(allAudio) {
     outputVideos.map((v) => {
         let existing = allAudio.findIndex((a) => a.id === v.id && a.location === "output")
         if (existing > -1) {
-            if (v.paused) {
+            if (v.paused || v.muted) {
                 allAudio.splice(existing, 1)
                 return
             }
@@ -508,11 +511,18 @@ function getPlayingOutputVideos(allAudio) {
             return
         }
 
-        if (v.paused) return
+        // v.paused & v.muted probably not in use
+        if (v.paused || v.muted) return
 
         // console.log(v.channels, v.analyser)
         // let channels = { left: audioAnalyser(v.analyser.left), right: audioAnalyser(v.analyser.right) }
         // v.channels = channels
+
+        // fix dB volume not minimum when muted
+        if (v.channels?.volume?.left === 0 && v.channels?.volume?.right === 0 && v.channels?.dB?.value) {
+            v.channels.dB.value = { left: -100, right: -100 }
+        }
+
         allAudio.push(v)
     })
 

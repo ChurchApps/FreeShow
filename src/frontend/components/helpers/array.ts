@@ -90,6 +90,31 @@ export function sortByNameAndNumber(array: any[]) {
     })
 }
 
+// sort object by name and numbers any location (file names)
+export function sortFilenames(filenames) {
+    return filenames.sort(({ name: a }, { name: b }) => {
+        // extract name, number, and extension
+        const regex = /^(.*?)(?:_(\d+))?(\.\w+)?$/
+
+        // extract parts
+        const [_, nameA, numA, extA] = a.match(regex) || [a, a, null, null]
+        const [__, nameB, numB, extB] = b.match(regex) || [b, b, null, null]
+
+        // compare difference in the names
+        const nameComparison = nameA.localeCompare(nameB)
+        if (nameComparison !== 0) return nameComparison
+
+        // compare any numbers
+        const numComparison = (parseInt(numA) || 0) - (parseInt(numB) || 0)
+        if (numComparison !== 0) return numComparison
+
+        // compare extensions at last
+        const extAValue = extA || ""
+        const extBValue = extB || ""
+        return extAValue.localeCompare(extBValue)
+    })
+}
+
 // move keys to IDs in object and return array
 export function keysToID(object: { [key: string]: any }): any[] {
     if (!object) return []

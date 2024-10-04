@@ -49,7 +49,7 @@
     },
     "tooltip": {
         "project": "Crear un nuevo proyecto que le permita añadir y organizar programas.",
-        "show": "Crear un nuevo programa que le permita agregar letras de canciones, presentaciones y medios. Presionar ctrl para crear nuevos programas.",
+        "show": "Crear un nuevo programa que le permita agregar letras de canciones, presentaciones y medios. ",
         "groups": "Todos los grupos en el programa actual y todos los grupos en general. Seleccionarlos o arrastrarlos para añadirlos al diseño actual.",
         "layout": "Añadir transiciones y temporizadores a la diapositiva del diseño actual.",
         "media": "Todos los medios en el programa actual. Mostrarlos o arrastrarlos al diseño actual.",
@@ -90,13 +90,19 @@
         "bold": "Bold"
     },
     "create_show": {
+        "web": "Búsqueda web",
         "search_web": "Buscar canción en la web",
+        "search_results": "Resultados de búsqueda",
         "more_options": "Más opciones",
         "format_new_show": "Dar formato al texto",
         "format_new_show_tip": "Mejore el formato del texto con capitalización automática, división de texto, asignación de grupos y más.",
         "split_lines": "Número de líneas",
         "split_lines_tip": "Número de lineas permitidas por diapositiva antes de la división automática",
-        "quick_lyrics_example_text": "Línea"
+        "quick_lyrics": "Letras rápidas",
+        "quick_lyrics_tip": "Pegue el texto o ingréselo manualmente",
+        "quick_lyrics_example_tip": "Ingrese la letra o cualquier texto aquí",
+        "quick_lyrics_example_text": "Línea",
+        "empty": "Programa vacío"
     },
     "preview": {
         "_previous_show": "Programa anterior",
@@ -199,7 +205,8 @@
         "settings": "Ajustes",
         "_title_settings": "Ajustes",
         "_title_display": "Presentar",
-        "_title_display_stop": "Detener presentación"
+        "_title_display_stop": "Detener presentación",
+        "again_confirm": "Haga clic otra vez para confirmar"
     },
     "empty": {
         "general": "Seleccionar un proyecto",
@@ -263,7 +270,7 @@
         "message": "Mensaje",
         "message_tip": "Mostrar algo en todas las diapositivas",
         "auto_media": "Obtener metadatos del contenido multimedia",
-        "override_output": "Anular el estilo en la salida",
+        "override_output": "Anular el estilo de salida",
         "display_metadata": "Visualizar metadatos",
         "meta_template": "Metadata template",
         "text_divider": "Separador de texto",
@@ -466,7 +473,6 @@
     "show": {
         "name": "Nombre",
         "category": "Categoría",
-        "quick_lyrics": "Letras rápidas",
         "new_layout": "Nuevo diseño",
         "grid": "Ver cuadrícula",
         "simple": "Vista simple",
@@ -477,7 +483,6 @@
         "locked": "¡Éste programa ha sido bloqueado!",
         "locked_info": "Éste programa ha sido bloqueado para edición. Desbloquéalo nuevamente en el cajón de programas",
         "slide_template": "Plantilla de diapositiva",
-        "search_results": "Resultados de búsqueda",
         "source": "Fuente",
         "artist": "Artista",
         "song": "Canción"
@@ -513,7 +518,7 @@
         "paste": "Pegar",
         "pasteAndMatchStyle": "Pegar y coincidir estilo",
         "selectAll": "Seleccionar todo",
-        "remove_selection": "Remove selection",
+        "remove_selection": "Eliminar selección",
         "speech": "Discurso",
         "startSpeaking": "Comenzar a hablar",
         "stopSpeaking": "Dejar de Hablar",
@@ -646,6 +651,13 @@
         "activate_show_created": "Activar cuando se crea un programa",
         "activate_audio_playlist_ended": "Activar cuando la lista de reproducción de audio haya finalizado"
     },
+    "recording": {
+        "remove": "Eliminar grabación",
+        "tip": "Graba y reproduce la duración de las diapositivas. Sincroniza con una pista de audio en la primera diapositiva.",
+        "layout_changed": "¡El diseño cambió desde la última grabación!",
+        "audio_synced": "¡Sincronizado con el audio!",
+        "start": "Iniciar grabación de diapositiva"
+    },
     "animate": {
         "change": "Cambiar",
         "set": "Establecer",
@@ -688,7 +700,6 @@
         "all_shows": "Todos los programas",
         "all_projects": "Todos los proyectos",
         "project": "Proyecto",
-        "options": "Opciones",
         "preview": "Vista previa",
         "title": "Título",
         "metadata": "Metadato",
@@ -763,6 +774,7 @@
         "media_fit": "Ajuste de medios",
         "size": "Tamaño",
         "max_lines": "Máximo de líneas",
+        "invert_items": "Invertir elementos",
         "chords": "Acordes",
         "transpose": "Transponer",
         "auto_size": "Tamaño automático",
@@ -974,7 +986,8 @@
         "overrun": "Desborde de color",
         "source_output": "Fuente de salida",
         "auto_stretch": "Estirar automáticamente el contenido",
-        "labels": "Mostrar etiquetas"
+        "labels": "Mostrar etiquetas",
+        "label_color": "Color de etiqueta"
     },
     "settings": {
         "general": "General",

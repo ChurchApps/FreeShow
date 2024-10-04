@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Item, ItemType } from "../../../../types/Show"
-import { activeEdit, activeShow } from "../../../stores"
+import { activeEdit, activeShow, showsCache } from "../../../stores"
 import { clone } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { _show } from "../../helpers/shows"
@@ -11,6 +11,7 @@ import { itemEdits } from "../values/item"
 type StyleClipboard = {
     keys: { [key: string]: any }
     style: { [key: string]: any }
+    linesAlign?: string
 }
 
 // COPY //
@@ -22,6 +23,7 @@ export function getBoxStyle(item: Item): StyleClipboard {
     // skip scripture verse numbers (customType)
     let normalText = item.lines?.[0].text?.filter((a) => !a.customType) || []
     let style = normalText[0]?.style || item.style
+    let linesAlign = item.lines?.[0].align || ""
 
     const extraKeyValues: string[] = getSpecialBoxValues(item)
 
@@ -33,7 +35,7 @@ export function getBoxStyle(item: Item): StyleClipboard {
         if (newStyles[key]) delete newStyles[key]
     })
 
-    return clone({ keys: extraKeyValues, style: newStyles })
+    return clone({ keys: extraKeyValues, style: newStyles, linesAlign })
 }
 
 // get current item style
@@ -90,6 +92,7 @@ export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) 
 
         if (!items.length || !values.length) return
 
+        // item keys
         Object.keys(style.keys).forEach((key) => {
             history({
                 id: "setItems",
@@ -98,18 +101,30 @@ export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) 
             })
         })
 
-        if (type === "text") {
-            // TEXTBOX
-            history({
-                id: "textStyle",
-                newData: { style: { key: "text", values } },
-                location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
+        // line align
+        if (style.linesAlign) {
+            // history({
+            //     id: "textStyle",
+            //     newData: { style: { key: "align", values: [style.linesAlign] } },
+            //     location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
+            // })
+            showsCache.update((a) => {
+                ;(a[get(activeShow)!.id].slides[slide.id || ""]?.items || [])
+                    .filter((_, i) => items.includes(i))
+                    .forEach((item) => {
+                        item.lines?.forEach((line) => {
+                            line.align = style.linesAlign!
+                        })
+                    })
+                return a
             })
-        } else {
-            // OTHER ITEMS
+        }
+
+        if (type === "text") {
+            // TEXTBOX or OTHER ITEMS
             history({
-                id: "setStyle",
-                newData: { style: { key: "style", values } },
+                id: type === "text" ? "textStyle" : "setStyle",
+                newData: { style: { key: type === "text" ? "text" : "style", values } },
                 location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
             })
         }
@@ -247,6 +262,7 @@ export function getItemKeys() {
 function getSpecialBoxValues(item: Item) {
     let keyValues: any = {}
     let inputs = Object.values(boxes[item.type || "text"]?.edit || {}).flat()
+    inputs.push({ id: "align", input: "" })
 
     inputs.forEach((input) => {
         let id = input.id

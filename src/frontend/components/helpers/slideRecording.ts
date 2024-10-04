@@ -17,7 +17,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
 
     let layoutData = layoutRef[recording.sequence?.[0]?.slideRef?.index]?.data || {}
     let audio = layoutData.audio?.[0]
-    if (audio || listenerActive) {
+    if (audio || audioListener) {
         let showMedia = _show(showId).get("media")
         audio = showMedia[audio]?.path
         startAudioListener(audio)
@@ -59,14 +59,13 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
     }
 }
 
-let listenerActive: boolean = false
+let audioListener: any = null
 let audioPathListener: string = ""
 function startAudioListener(path: string) {
     audioPathListener = path
-    if (listenerActive) return
-    listenerActive = true
+    if (audioListener) return
 
-    playingAudio.subscribe((a) => {
+    audioListener = playingAudio.subscribe((a) => {
         let audio = a[audioPathListener]?.audio
         if (!audio || !get(activeSlideRecording)) return
 
@@ -99,6 +98,9 @@ export function stopSlideRecording() {
 
     clearTimeout(get(activeSlideRecording).timeout)
     activeSlideRecording.set(null)
+
+    if (audioListener) audioListener()
+    audioListener = null
 }
 
 // slide click update recording to closest same slide

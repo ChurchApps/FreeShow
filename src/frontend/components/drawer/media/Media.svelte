@@ -8,7 +8,7 @@
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, sortByName } from "../../helpers/array"
+    import { clone, sortByName, sortFilenames } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -109,12 +109,12 @@
     // receive files
     window.api.receive(READ_FOLDER, receiveContent, listenerId)
     function receiveContent(msg: any) {
-        filesInFolders = sortByName(msg.filesInFolders || [])
+        filesInFolders = sortFilenames(msg.filesInFolders || [])
 
         if (active !== "all" && msg.path !== path) return
 
         files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
-        files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        files = sortFilenames(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
@@ -128,9 +128,10 @@
     let allFiles: string[] = []
     let content = allFiles.length
 
-    activeShow.subscribe((a) => {
+    $: showUpdate($activeShow)
+    function showUpdate(a) {
         if (a?.type !== "video" && a?.type !== "image") activeFile = null
-    })
+    }
 
     // filter files
     let activeView: "all" | "folder" | "image" | "video" = "all"
