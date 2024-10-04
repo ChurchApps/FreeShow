@@ -100,13 +100,14 @@ export function waitForPopupData(popupId: Popups): Promise<any> {
             if (get(activePopup) !== popupId) finish(undefined)
         }, 1000)
 
-        popupData.subscribe((a) => {
+        const unsubscribe = popupData.subscribe((a) => {
             if (a.id !== popupId) return
             activePopup.set(null)
             finish(a.value)
         })
 
         function finish(value) {
+            unsubscribe()
             clearTimeout(interval)
             resolve(value)
         }

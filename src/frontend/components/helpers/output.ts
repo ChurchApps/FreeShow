@@ -353,7 +353,7 @@ export function addOutput(onlyFirst: boolean = false) {
 
         // set name
         let n = 0
-        while (Object.values(output).find((a) => a.name === output[id].name + (n ? " " + n : ""))) n++
+        while (Object.values(output).find((a: any) => a.name === output[id].name + (n ? " " + n : ""))) n++
         if (n) output[id].name = output[id].name + " " + n
         if (onlyFirst) output[id].name = get(dictionary).theme?.primary || "Primary"
 

@@ -13,10 +13,15 @@
     import Center from "../../system/Center.svelte"
     import Snaplines from "../../system/Snaplines.svelte"
     import Editbox from "../editbox/Editbox.svelte"
+    import { clone } from "../../helpers/array"
+    import { onDestroy } from "svelte"
 
+    const update = () => (Slide = clone($overlays[currentId]))
     $: currentId = $activeEdit.id!
-    $: Slide = $overlays[currentId]
-    overlays.subscribe((a) => (Slide = a[currentId]))
+    $: if (currentId) update()
+    let Slide = clone($overlays[currentId])
+    const unsubscribe = overlays.subscribe((a) => clone((Slide = a[currentId])))
+    onDestroy(unsubscribe)
 
     let lines: [string, number][] = []
     let mouse: any = null

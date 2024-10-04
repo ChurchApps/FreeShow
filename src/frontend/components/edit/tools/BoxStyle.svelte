@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import type { Item, ItemType } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, selected, showsCache, templates, theme, themes } from "../../../stores"
     import { newToast } from "../../../utils/common"
@@ -23,9 +23,10 @@
 
     // selection
     let selection: null | { start: number; end: number }[] = null
-    activeEdit.subscribe((a) => {
+    const unsubscribe = activeEdit.subscribe((a) => {
         if (!a.items.length) selection = null
     })
+    onDestroy(unsubscribe)
 
     onMount(() => {
         getTextSelection()

@@ -7,6 +7,7 @@ import { historyActions } from "./historyActions"
 import { deselect } from "./select"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
+import { removeTemplatesFromShow } from "./show"
 
 export type HistoryPages = "none" | "drawer" | "show" | "edit" | "calendar" | "draw" | "stage" | "settings"
 export type HistoryIDs =
@@ -105,14 +106,15 @@ export function history(obj: History, undo: null | boolean = null) {
                 // CSS text style
                 // if (obj.newData?.style?.key === "text-style" && old.style.values?.[0]?.[0]) old.style.values = old.style.values[0]
 
-                if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
-                if (old.template) _show(showID).set(old.template)
+                // remove templates because slide has manual updates
+                if (!undo) removeTemplatesFromShow(showID)
                 break
             case "setItems":
             case "setStyle":
                 old = { style: _show(showID).slides([obj.location!.slide!]).items(obj.location!.items!).set(obj.newData.style) }
-                if (!undo && _show(showID).get("settings.template")) old.template = { key: "settings.template", value: null }
-                if (old.template) _show(showID).set(old.template)
+
+                // remove templates because slide has manual updates
+                if (!undo) removeTemplatesFromShow(showID)
                 break
             case "slideStyle":
                 old = { style: _show(showID).slides([obj.location?.slide!]).set({ key: "settings", value: obj.newData.style }) }

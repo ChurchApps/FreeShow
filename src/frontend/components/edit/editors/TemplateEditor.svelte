@@ -9,10 +9,14 @@
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import { clone } from "../../helpers/array"
+    import { onDestroy } from "svelte"
 
+    const update = () => (Slide = clone($templates[currentId]))
     $: currentId = $activeEdit.id!
-    $: Slide = $templates[currentId]
-    templates.subscribe((a) => (Slide = clone(a[currentId])))
+    $: if (currentId) update()
+    let Slide = clone($templates[currentId])
+    const unsubscribe = templates.subscribe((a) => clone((Slide = a[currentId])))
+    onDestroy(unsubscribe)
 
     let newStyles: any = {}
     $: active = $activeEdit.items

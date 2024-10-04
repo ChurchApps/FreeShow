@@ -4,6 +4,7 @@ import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, s
 import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
 import { _show } from "./shows"
+import { history } from "./history"
 
 // check if name exists and add number
 export function checkName(name: string = "", showId: string = "") {
@@ -252,4 +253,23 @@ export function updateCachedShow(id: string, show: Show, layoutId: string = "") 
     )
 
     return { layout, endIndex, template, groups: sortedGroups }
+}
+
+export function removeTemplatesFromShow(showId: string, enableHistory: boolean = false) {
+    // remove show template
+    if (enableHistory) {
+        let settings = { ...clone(_show(showId).get("settings") || {}), template: null }
+        history({ id: "UPDATE", newData: { data: settings, key: "settings" }, oldData: { id: showId }, location: { page: "none", id: "show_key" } })
+    } else {
+        _show(showId).set({ key: "settings.template", value: null })
+    }
+
+    // remove any slide templates
+    showsCache.update((a) => {
+        let show = a[showId]
+        Object.values(show.slides).forEach((slide) => {
+            if (slide.settings.template) delete slide.settings.template
+        })
+        return a
+    })
 }

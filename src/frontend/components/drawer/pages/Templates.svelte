@@ -23,7 +23,6 @@
 
     let fullFilteredTemplates: any[] = []
     $: if ($templates || active) updateTemplates()
-    templates.subscribe(updateTemplates)
 
     function updateTemplates() {
         filteredTemplates = sortByName(keysToID(clone($templates)).filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category]))))

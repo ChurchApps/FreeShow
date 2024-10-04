@@ -14,6 +14,7 @@
     import { getGroupName } from "../../helpers/show"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import { playRecording, stopSlideRecording } from "../../helpers/slideRecording"
+    import { onDestroy } from "svelte"
 
     export let showId: string
 
@@ -31,6 +32,7 @@
     $: hasChanged = recordingData?.layoutAtRecording !== layoutSequence
 
     let started: boolean = false
+    let outputListenerUnsubscribe: any = null
     let currentSequence: any[] = []
     function toggleRecording() {
         if (started) {
@@ -43,7 +45,7 @@
 
         // LISTEN
         let firstOutputId = getActiveOutputs()[0]
-        outputs.subscribe((a) => {
+        outputListenerUnsubscribe = outputs.subscribe((a) => {
             let outSlide: any = a[firstOutputId]?.out?.slide
             // clear output to stop recording
             if (started && currentSequence.length && !outSlide) return stopRecording()
@@ -64,9 +66,14 @@
         // record clear actions as well?? - I guess slide actions should be used in that case
     }
 
+    onDestroy(stopRecording)
+
     function stopRecording() {
+        if (!started) return
+
         newToast("$toast.recording_stopped")
         started = false
+        if (outputListenerUnsubscribe) outputListenerUnsubscribe()
 
         if (currentSequence.length < 2) return
 
@@ -171,10 +178,13 @@
         <div class="sequence">
             {#each recordingData.sequence as action, i}
                 <div class="row">
-                    <p><span style="opacity: 0.5;padding-right: 3px;min-width: 22px;display: inline-block;">{i + 1}</span> {groupName(action.slideRef)}</p>
+                    <p>
+                        <span style="opacity: 0.5;padding-right: 3px;min-width: 22px;display: inline-block;">{i + 1}</span>
+                        <span style={action.time || i === recordingData.sequence.length - 1 ? "" : "opacity: 0.4;"}>{groupName(action.slideRef)}</span>
+                    </p>
 
                     {#if i < recordingData.sequence.length - 1}
-                        <NumberInput style="width: 100px;" buttons={false} value={action.time} min={10} inputMultiplier={0.001} fixed={2} step={500} max={10000000} on:change={(e) => updateTime(e, i)} />
+                        <NumberInput style="width: 100px;" buttons={false} value={action.time} inputMultiplier={0.001} fixed={2} step={500} max={10000000} on:change={(e) => updateTime(e, i)} />
                     {:else}
                         <NumberInput disabled style="width: 100px;" buttons={false} fixed={2} value={0} />
                     {/if}

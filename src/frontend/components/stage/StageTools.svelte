@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { TabsObj } from "../../../types/Tabs"
     import { activeStage, stageShows } from "../../stores"
     import { getItemKeys } from "../edit/scripts/itemClipboard"
@@ -29,7 +30,7 @@
 
     let active: string = $activeStage.items.length ? "item" : "items"
 
-    activeStage.subscribe((as) => {
+    const unsubscribe = activeStage.subscribe((as) => {
         if (as.items.length && active !== "item" && active !== "text") {
             tabs.text.disabled = tabs.item.disabled = false
             active = "text"
@@ -38,6 +39,7 @@
             if (active === "item" || active === "text") active = "items"
         }
     })
+    onDestroy(unsubscribe)
 
     function resetStageStyle() {
         let resolution = getResolution()

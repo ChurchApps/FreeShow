@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { dictionary, outputs, selected, theme, themes } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { updateThemeValues } from "../../../utils/updateSettings"
@@ -29,10 +30,11 @@
         // "focus",
     ]
 
-    theme.subscribe((a: string) => {
+    const unsubscribe = theme.subscribe((a: string) => {
         if (!$themes[a]) return
         updateThemeValues($themes[a])
     })
+    onDestroy(unsubscribe)
 
     $: themeNames = getThemesArray($themes)
 

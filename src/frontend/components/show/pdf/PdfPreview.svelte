@@ -19,6 +19,9 @@
     $: if (path) getPdfPages()
 
     async function getPdfPages() {
+        viewports = []
+        pages = 0
+
         viewports = await getViewportSizes(path)
         if ($activeShow) activeShow.set({ ...$activeShow, data: { viewports } })
 
@@ -75,7 +78,7 @@
 
     // slow loader
     let currentIndex: number = 1
-    $: if (path) startLoading(true)
+    $: if (path && pages) startLoading(true)
     let loadingTimeout: any = null
     function startLoading(reset: boolean = false) {
         if (reset) currentIndex = 1
@@ -83,7 +86,7 @@
         loadingTimeout = setTimeout(() => {
             currentIndex++
             if (currentIndex < pages) startLoading()
-        }, 100)
+        }, 500)
     }
 </script>
 

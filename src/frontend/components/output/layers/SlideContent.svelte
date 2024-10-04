@@ -26,7 +26,7 @@
     let currentItems: Item[] = []
     let show: boolean = false
 
-    $: if (currentSlide.items !== undefined) updateItems()
+    $: if (currentSlide.items !== undefined || outSlide) updateItems()
     let timeout: any = null
 
     // if anything is outputted & changing to something that's outputted
@@ -77,7 +77,8 @@
     }
 </script>
 
-{#key show && outSlide}
+<!-- Updating this with another "store" causes svelte transition bug! -->
+{#key show}
     {#each currentItems as item}
         {#if show}
             <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} {currentSlide} {item} {outSlide} {lines} {customTemplate} let:customSlide let:customItem let:customLines let:customOut>

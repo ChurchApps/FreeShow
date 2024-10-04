@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "1.2.8",
+    "version": "1.2.9-beta.1",
     "private": true,
     "main": "build/electron/index.js",
     "description": "Show song lyrics and more for free!",
@@ -156,7 +156,7 @@
         "rollup-plugin-livereload": "^2.0.5",
         "rollup-plugin-serve": "^3.0.0",
         "rollup-plugin-svelte": "^7.1.6",
-        "svelte": "^3.46.0",
+        "svelte": "^3.59.2",
         "svelte-check": "^2.2.12",
         "svelte-inspector": "vassbo/svelte-inspector#78307db",
         "svelte-preprocess": "^4.10.1",

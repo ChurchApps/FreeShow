@@ -67,7 +67,7 @@ import { history, HistoryPages, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
 import { defaultOutput, getActiveOutputs, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
-import { updateShowsList } from "../helpers/show"
+import { removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { dynamicValueText, sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
@@ -269,8 +269,7 @@ const actions: any = {
                 if (!a[b.id]) return
                 a[b.id].locked = !a[b.id].locked
 
-                // remove template
-                a[b.id].settings.template = null
+                removeTemplatesFromShow(b.id)
             })
             return a
         })

@@ -49,10 +49,9 @@
     }
 
     let currentEvents: any[] = []
-    events.subscribe(updateEvents)
-    $: if (month) updateEvents($events)
+    $: updateEvents($events, { month })
 
-    function updateEvents(events: any) {
+    function updateEvents(events: any, _updater: any) {
         if (!days[0]) return
 
         currentEvents = []

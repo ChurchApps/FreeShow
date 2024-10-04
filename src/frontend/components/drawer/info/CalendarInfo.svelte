@@ -12,12 +12,7 @@
     $: type = $drawerTabsData.calendar?.activeSubTab || "event"
 
     let currentEvents: any[] = []
-    activeDays.subscribe(() => {
-        currentEvents = getSelectedEvents()
-    })
-    events.subscribe(() => {
-        currentEvents = getSelectedEvents()
-    })
+    $: if ($activeDays || $events) currentEvents = getSelectedEvents()
 
     // $: currentEvents = currentEvents.filter((a) => a.type === type)
 </script>

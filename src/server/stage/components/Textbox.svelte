@@ -219,7 +219,8 @@
 
 <!-- bind:offsetHeight={height} -->
 <div bind:this={thisElem} class="item" style={style ? itemStyle : null} on:click={toggleActions}>
-    {#if actionButtons}
+    <!-- can have more actions here if needed -->
+    {#if actionButtons && (chordLines.length || false)}
         <div class="actions">
             {#if chordLines.length}
                 <div class="flex">
@@ -315,7 +316,7 @@
         background-color: var(--primary);
         padding: 5px 10px;
         font-size: 0.8em;
-        z-index: 2;
+        z-index: 5;
     }
 
     .flex {
@@ -373,13 +374,19 @@
         position: absolute;
         color: var(--chord-color);
         font-size: var(--chord-size) !important;
-        bottom: -5px;
-        transform: translateX(-25%);
+
+        transform: translate(-50%, -20%);
+        line-height: initial;
         z-index: 2;
     }
     .break.chords {
         line-height: 0.5em;
+        max-height: 15px;
         position: relative;
+
+        /* reset */
+        font-weight: normal;
+        font-style: normal;
     }
     .break.chords.first {
         line-height: var(--chord-size) !important;

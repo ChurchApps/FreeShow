@@ -142,6 +142,13 @@ export class OutputLifecycle {
             let bounds = window.getBounds()
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
         })
+
+        window.on("resize", (e: any) => {
+            if (OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()
+
+            let bounds = window.getBounds()
+            toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
+        })
     }
 
     static async closeAllOutputs() {

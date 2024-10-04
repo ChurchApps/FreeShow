@@ -522,7 +522,7 @@ const pasteActions: any = {
             // add layout
             let layout = data.layouts?.[i]
             if (!layout) return
-            layouts[i] = layout || {}
+            layouts[i] = layout
         })
         // TODO: children next to each other should be grouped
 

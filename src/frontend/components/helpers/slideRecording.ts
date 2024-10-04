@@ -17,7 +17,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
 
     let layoutData = layoutRef[recording.sequence?.[0]?.slideRef?.index]?.data || {}
     let audio = layoutData.audio?.[0]
-    if (audio || listenerActive) {
+    if (audio || audioListener) {
         let showMedia = _show(showId).get("media")
         audio = showMedia[audio]?.path
         startAudioListener(audio)
@@ -44,6 +44,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
 
         // next
         let nextIndex = index + 1
+        while (recording.sequence[nextIndex] && recording.sequence[nextIndex]?.time === 0 && nextIndex < recording.sequence.length - 1) nextIndex++
         if (!recording.sequence[nextIndex]) {
             activeSlideRecording.set(null)
             return
@@ -59,14 +60,13 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
     }
 }
 
-let listenerActive: boolean = false
+let audioListener: any = null
 let audioPathListener: string = ""
 function startAudioListener(path: string) {
     audioPathListener = path
-    if (listenerActive) return
-    listenerActive = true
+    if (audioListener) return
 
-    playingAudio.subscribe((a) => {
+    audioListener = playingAudio.subscribe((a) => {
         let audio = a[audioPathListener]?.audio
         if (!audio || !get(activeSlideRecording)) return
 
@@ -99,6 +99,9 @@ export function stopSlideRecording() {
 
     clearTimeout(get(activeSlideRecording).timeout)
     activeSlideRecording.set(null)
+
+    if (audioListener) audioListener()
+    audioListener = null
 }
 
 // slide click update recording to closest same slide
@@ -142,8 +145,12 @@ export function updateSlideRecording(state: "next" | "previous") {
     if (!recording) return
 
     let index = get(activeSlideRecording).index
-    if (state === "next") index++
-    else if (state === "previous") index--
+    let increment = 0
+    if (state === "next") increment = 1
+    else if (state === "previous") increment = -1
+
+    index += increment
+    while (recording.sequence[index] && recording.sequence[index]?.time === 0) index += increment
 
     playRecording(recording, ref, Math.min(recording.sequence.length - 1, Math.max(0, index)))
 
