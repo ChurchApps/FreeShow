@@ -643,7 +643,7 @@
         color: var(--chord-color);
         font-size: var(--chord-size) !important;
 
-        transform: translate(-50%, -10%);
+        transform: translate(-50%, -20%);
         line-height: initial;
         /* WIP chords goes over other (stage) items */
         z-index: 2;
@@ -653,6 +653,10 @@
         max-height: 15px;
         position: relative;
         pointer-events: none;
+
+        /* reset */
+        font-weight: normal;
+        font-style: normal;
     }
     .break.chords.first {
         line-height: var(--chord-size) !important;

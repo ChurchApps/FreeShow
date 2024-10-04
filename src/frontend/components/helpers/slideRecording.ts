@@ -44,6 +44,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
 
         // next
         let nextIndex = index + 1
+        while (recording.sequence[nextIndex] && recording.sequence[nextIndex]?.time === 0 && nextIndex < recording.sequence.length - 1) nextIndex++
         if (!recording.sequence[nextIndex]) {
             activeSlideRecording.set(null)
             return
@@ -144,8 +145,12 @@ export function updateSlideRecording(state: "next" | "previous") {
     if (!recording) return
 
     let index = get(activeSlideRecording).index
-    if (state === "next") index++
-    else if (state === "previous") index--
+    let increment = 0
+    if (state === "next") increment = 1
+    else if (state === "previous") increment = -1
+
+    index += increment
+    while (recording.sequence[index] && recording.sequence[index]?.time === 0) index += increment
 
     playRecording(recording, ref, Math.min(recording.sequence.length - 1, Math.max(0, index)))
 

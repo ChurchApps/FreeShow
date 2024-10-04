@@ -2,6 +2,7 @@ import { BrowserWindow, Rectangle, screen } from "electron"
 import { mainWindow, toApp } from "../.."
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import { OutputHelper } from "../OutputHelper"
+import { OutputBounds } from "./OutputBounds"
 
 export class OutputVisibility {
     static displayOutput(data: any) {
@@ -94,6 +95,8 @@ export class OutputVisibility {
 
     static hideWindow(window: BrowserWindow, data: any) {
         if (!window || window.isDestroyed()) return
+
+        OutputBounds.disableWindowMoveListener()
 
         window.setKiosk(false)
         window.hide()

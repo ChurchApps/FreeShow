@@ -33,7 +33,7 @@
         reversedItems
             .filter((item: any) => (!item.type || item.type === "text") && (!item.bindings?.length || item.bindings.includes("stage")))
             .forEach((item: any) => {
-                if (!item.lines || !item.lines[0]?.text?.[0]?.value?.length) return
+                if (!item.lines || !item.lines.find((a: any) => a?.text?.[0]?.value?.length)) return
 
                 if (!oneItem) oneItem = item
                 else oneItem.lines.push(...item.lines)
