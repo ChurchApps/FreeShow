@@ -148,11 +148,11 @@ export function openSystemFolder(path: string) {
 }
 
 const appFolderName = "FreeShow"
-export function getDocumentsFolder(p: any = null, folderName: string = "Shows"): string {
+export function getDocumentsFolder(p: any = null, folderName: string = "Shows", createFolder: boolean = true): string {
     let folderPath = [app.getPath("documents"), appFolderName]
     if (folderName) folderPath.push(folderName)
     if (!p) p = path.join(...folderPath)
-    if (!doesPathExist(p)) p = makeDir(p)
+    if (!doesPathExist(p) && createFolder) p = makeDir(p)
 
     return p
 }
@@ -657,7 +657,9 @@ const FIXES: any = {
     },
 }
 function specialCaseFixer() {
-    let defaultDataFolder = getDocumentsFolder(null, "")
+    let defaultDataFolder = getDocumentsFolder(null, "", false)
+    if (!doesPathExist(defaultDataFolder)) return
+
     let files: string[] = readFolder(defaultDataFolder)
     files.forEach((fileName) => {
         let matchFound = Object.keys(FIXES).find((key) => fileName.includes(key))

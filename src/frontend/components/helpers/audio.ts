@@ -85,6 +85,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
             if (!get(playingAudio)[path]?.audio) return
 
             get(playingAudio)[path].audio.play()
+            customActionActivation("audio_start")
             analyseAudio()
         }, waitToPlay * 1000)
     })
@@ -576,6 +577,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true) {
             if (!a[path]?.audio) return deleteAudio(path)
 
             a[path].audio.pause()
+            customActionActivation("audio_end")
             deleteAudio(path)
         }
 

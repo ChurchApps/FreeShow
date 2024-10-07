@@ -644,6 +644,8 @@
         "activate_slide_clicked": "Activate on slide click",
         "activate_video_starting": "Activate when video is starting",
         "activate_video_ending": "Activate when video is ending",
+        "activate_audio_starting": "Activate when audio is starting",
+        "activate_audio_ending": "Activate when audio is ending",
         "activate_timer_ending": "Activate when timer is ending",
         "activate_scripture_start": "Activate when scripture is started",
         "activate_slide_cleared": "Activate when slide is cleared",
