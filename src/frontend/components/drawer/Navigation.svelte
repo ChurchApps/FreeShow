@@ -67,7 +67,7 @@
             buttons = getBibleVersions()
         } else if (id === "calendar") {
             buttons = [
-                { id: "event", name: "calendar.event", default: true, icon: "calendar" },
+                { id: "event", name: "menu._title_calendar", default: true, icon: "calendar" },
                 { id: "action", name: "calendar.schedule_action", default: true, icon: "actions" },
                 // WIP very few tabs
             ]

@@ -258,8 +258,9 @@ export function outputSlideHasContent(output) {
 
 // WIP style should override any slide resolution & color ? (it does not)
 
-export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, getSlideRes: boolean = false): Resolution {
-    let currentOutput = get(outputs)[getActiveOutputs()[0]]
+export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, getSlideRes: boolean = false, outputId: string = ""): Resolution {
+    if (!outputId) outputId = getActiveOutputs()[0]
+    let currentOutput = get(outputs)[outputId]
     let style = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
     let slideRes: any = null
 

@@ -19,7 +19,8 @@
     $: stageOutput = $outputs[outputId]?.stageOutput
 </script>
 
-<div class="center previewOutput" id={outputId} class:fullscreen={fullscreen && !stageOutput} class:disabled style={style + ("; aspect-ratio: " + width + "/" + height + ";")} bind:offsetWidth={width} bind:offsetHeight={height}>
+<!-- bind:offsetWidth={width} bind:offsetHeight={height} -->
+<div class="center previewOutput" id={outputId} class:fullscreen={fullscreen && !stageOutput} class:disabled style={style + ("; aspect-ratio: " + width + "/" + height + ";")}>
     {#if stageOutput}
         <StageShow {outputId} stageId={stageOutput} edit={false} />
     {:else}

@@ -102,7 +102,8 @@
         "quick_lyrics_tip": "Paste text or enter manually",
         "quick_lyrics_example_tip": "Enter lyrics or any text here",
         "quick_lyrics_example_text": "Line",
-        "empty": "Empty show"
+        "empty": "Empty show",
+        "exists": "Found an existing show with the same name"
     },
     "preview": {
         "_previous_show": "Previous show",
@@ -381,6 +382,7 @@
         "transition": "Transition",
         "delete_show": "Delete show",
         "delete_show_confirmation": "Are you sure you want to delete",
+        "delete_duplicated_shows": "Delete duplicated shows",
         "change_name": "Change name on",
         "choose_screen": "Choose screen",
         "choose_output": "Choose output type",
@@ -485,7 +487,11 @@
         "slide_template": "Slide template",
         "source": "Source",
         "artist": "Artist",
-        "song": "Song"
+        "song": "Song",
+        "delete_manual": "Manual check",
+        "delete_match": "Delete if exact match",
+        "delete_keep_last_modified": "Delete all except last modified",
+        "delete_keep_first_created": "Delete all except first created"
     },
     "actions": {
         "rename": "Rename",
@@ -1066,7 +1072,7 @@
         "show_location": "Show location",
         "data_location": "Data location",
         "user_data_location": "Save user settings at 'Data location'",
-        "popup_before_close": "Always display popup before closing",
+        "popup_before_close": "Enable close confirmation popup",
         "disable_hardware_acceleration": "Disable hardware acceleration",
         "restart_for_change": "You have to restart the program for the change to take effect!",
         "font": "Font",

@@ -278,8 +278,6 @@
 
 <!-- main -->
 
-<br />
-
 {#if outputsList.length > 1 || !currentOutput.enabled}
     <CombinedInput>
         <p><T id="settings.enabled" /></p>
@@ -346,7 +344,7 @@
 <CombinedInput>
     <p><T id="settings.output_screen" /></p>
     <Button disabled={currentOutput.invisible} on:click={() => activePopup.set("choose_screen")}>
-        <Icon id="screen" right />
+        <Icon id="screen" style="margin-left: 0.5em;" right />
         <p><T id="popup.choose_screen" /></p>
     </Button>
     <!-- centered? -->
@@ -517,6 +515,7 @@
 
         min-height: 38px;
         margin: 5px 0;
+        margin-bottom: 15px;
         font-style: italic;
         opacity: 0.8;
     }

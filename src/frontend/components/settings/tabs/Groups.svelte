@@ -33,14 +33,18 @@
         history({ id: "UPDATE", newData: { key, data: value }, oldData: { id: id }, location: { page: "settings", id: "global_group", override: "group_" + key } })
     }
 
-    const inputs: any = {
+    const inputs = {
         colors: (e: any) => fullColors.set(e.target.checked),
         groupNumber: (e: any) => groupNumbers.set(e.target.checked),
-        numberKeys: (e: any) =>
-            special.update((a) => {
-                a.numberKeys = e.target.checked
-                return a
-            }),
+        numberKeys: (e: any) => updateSpecial(e.target.checked, "numberKeys"),
+        capitalizeWords: (e: any) => updateSpecial(e.target.value || "", "capitalize_words"),
+    }
+
+    function updateSpecial(value, key) {
+        special.update((a) => {
+            a[key] = value
+            return a
+        })
     }
 
     const defaultGroups: any = {
@@ -75,6 +79,19 @@
         // value.group = ""
     }
 
+    function reset() {
+        fullColors.set(false)
+        groupNumbers.set(true)
+
+        groups.set(clone(defaultGroups))
+
+        special.update((a) => {
+            delete a.numberKeys
+            a.capitalize_words = "Jesus, Lord" // updateSettings.ts
+            return a
+        })
+    }
+
     let templateList: any[] = []
     $: console.log($templates, templateList)
     $: templateList = getList($templates, true)
@@ -97,6 +114,11 @@
     <div class="alignRight">
         <Checkbox checked={$special.numberKeys} on:change={inputs.numberKeys} />
     </div>
+</CombinedInput>
+
+<CombinedInput>
+    <p title={$dictionary.settings?.comma_seperated}><T id="settings.capitalize_words" /></p>
+    <TextInput value={$special.capitalize_words || ""} on:change={inputs.capitalizeWords} />
 </CombinedInput>
 
 <h3><T id="groups.global" /></h3>
@@ -143,15 +165,7 @@
             <Icon id="add" right />
             <T id="settings.add" />
         </Button>
-        <Button
-            style="width: 100%;"
-            center
-            on:click={() => {
-                fullColors.set(false)
-                groupNumbers.set(true)
-                groups.set(clone(defaultGroups))
-            }}
-        >
+        <Button style="width: 100%;" center on:click={reset}>
             <Icon id="reset" right />
             <T id="actions.reset" />
         </Button>

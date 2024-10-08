@@ -44,6 +44,7 @@ import ChooseChord from "../components/main/popups/ChooseChord.svelte"
 import { get } from "svelte/store"
 import ChooseOutput from "../components/main/popups/ChooseOutput.svelte"
 import Translate from "../components/main/popups/localization/Translate.svelte"
+import DeleteDuplicatedShows from "../components/main/popups/DeleteDuplicatedShows.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -53,6 +54,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     show: CreateShow,
     delete_show: DeleteShow,
     select_show: SelectShow,
+    delete_duplicated_shows: DeleteDuplicatedShows,
     icon: ChangeIcon,
     manage_icons: ManageIcons,
     manage_colors: ManageColors,

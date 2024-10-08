@@ -147,6 +147,7 @@
 
         min-height: 38px;
         margin: 5px 0;
+        margin-bottom: 15px;
         font-style: italic;
         opacity: 0.8;
     }

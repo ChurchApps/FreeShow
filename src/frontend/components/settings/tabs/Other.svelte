@@ -1,23 +1,22 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN, STORE } from "../../../../types/Channels"
-    import { activePopup, alertMessage, dataPath, dictionary, guideActive, shows, showsCache, showsPath, special } from "../../../stores"
+    import { activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, guideActive, popupData, shows, showsCache, showsPath, special } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
 
     onMount(() => {
         // getCacheSize()
         // getAudioOutputs()
         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
         send(MAIN, ["GET_STORE_VALUE"], { file: "config", key: "disableHardwareAcceleration" })
+        getDuplicatedShows()
     })
 
     // const previewRates = [
@@ -29,7 +28,7 @@
 
     function updateSpecial(value, key) {
         special.update((a) => {
-            if (!value && key !== "clearMediaOnFinish") delete a[key]
+            if (!value && key !== "autoUpdates") delete a[key]
             else a[key] = value
 
             return a
@@ -38,9 +37,7 @@
         // if (key === "previewRate") restartOutputs()
     }
 
-    function updateTextInput(e: any, key: string) {
-        updateSpecial(e.target.value || "", key)
-    }
+    const isChecked = (e: any) => e.target.checked
 
     function toggle(e: any, key: string) {
         let checked = e.target.checked
@@ -67,7 +64,11 @@
         MAIN,
         {
             // this will not include newly created shows not saved yet, but it should not be an issue.
-            FULL_SHOWS_LIST: (data: any) => (hiddenShows = data || []),
+            FULL_SHOWS_LIST: (data: any) => {
+                hiddenShows = data || []
+                let deletedShowNames = $deletedShows.map((a) => a.name + ".show")
+                hiddenShows = hiddenShows.filter((name) => !deletedShowNames.includes(name))
+            },
             GET_STORE_VALUE: (data: any) => {
                 if (data.key === "disableHardwareAcceleration") disableHardwareAcceleration = data.value
             },
@@ -101,6 +102,31 @@
         setTimeout(() => {
             send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
         }, 800)
+    }
+
+    let duplicatedShows: { ids: string[] }[] = []
+    function getDuplicatedShows() {
+        let names: { [key: string]: string[] } = {}
+        Object.entries($shows).forEach(([id, show]: any) => {
+            // remove any numbers (less than 4 chars) at the end of name (but not if "1-3"|"-5" in case of scripture)
+            let trimmedName = show.name
+                .toLowerCase()
+                .replace(/(?<![-\d])\d{1,3}$/, "")
+                .trim()
+            if (!trimmedName.length) return
+
+            if (names[trimmedName]) names[trimmedName].push(id)
+            else names[trimmedName] = [id]
+        })
+
+        duplicatedShows = Object.values(names)
+            .filter((a) => a.length > 1)
+            .map((ids) => ({ ids }))
+    }
+    function deleteDuplicatedShows() {
+        popupData.set({ id: "delete_duplicated_shows", data: duplicatedShows })
+        activePopup.set("delete_duplicated_shows")
+        // duplicatedShows = []
     }
 
     // delete media thumbnail cache
@@ -140,16 +166,6 @@
         alertMessage.set($dictionary.settings?.restore_started)
         activePopup.set("alert")
         send(MAIN, ["RESTORE"], { showsPath: $showsPath })
-    }
-
-    let projectReplacerTitle = getReplacerTitle()
-    function getReplacerTitle() {
-        let titles: string[] = []
-        projectReplacers.forEach((a) => {
-            titles.push(`${a.title}: {${a.id}}`)
-        })
-
-        return titles.join(", ")
     }
 </script>
 
@@ -195,22 +211,31 @@
         <Checkbox disabled={!$dataPath} checked={$special.customUserDataLocation || false} on:change={(e) => toggle(e, "customUserDataLocation")} />
     </div>
 </CombinedInput>
+
 <CombinedInput>
-    <p><T id="settings.clear_media_when_finished" /></p>
+    <p><T id="settings.auto_updates" /></p>
     <div class="alignRight">
-        <Checkbox checked={$special.clearMediaOnFinish ?? true} on:change={(e) => toggle(e, "clearMediaOnFinish")} />
+        <Checkbox checked={$special.autoUpdates !== false} on:change={(e) => toggle(e, "autoUpdates")} />
     </div>
 </CombinedInput>
 <CombinedInput>
-    <p><T id="settings.disable_presenter_controller_keys" /></p>
+    <p><T id="settings.alert_updates" /></p>
     <div class="alignRight">
-        <Checkbox checked={$special.disablePresenterControllerKeys || false} on:change={(e) => toggle(e, "disablePresenterControllerKeys")} />
+        <Checkbox checked={$alertUpdates} on:change={(e) => alertUpdates.set(isChecked(e))} />
     </div>
 </CombinedInput>
+
 <CombinedInput>
     <p><T id="settings.popup_before_close" /></p>
     <div class="alignRight">
         <Checkbox disabled={!$dataPath} checked={$special.showClosePopup || false} on:change={(e) => toggle(e, "showClosePopup")} />
+    </div>
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.disable_presenter_controller_keys" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.disablePresenterControllerKeys || false} on:change={(e) => toggle(e, "disablePresenterControllerKeys")} />
     </div>
 </CombinedInput>
 
@@ -227,16 +252,6 @@
     <p><T id="settings.preview_frame_rate" /></p>
     <Dropdown options={previewRates} value={previewRates.find((a) => a.id === ($special.previewRate || "auto"))?.name} on:click={(e) => updateSpecial(e.detail.id, "previewRate")} />
 </CombinedInput> -->
-
-<CombinedInput>
-    <p title={$dictionary.settings?.comma_seperated}><T id="settings.capitalize_words" /></p>
-    <TextInput value={$special.capitalize_words || ""} on:change={(e) => updateTextInput(e, "capitalize_words")} />
-</CombinedInput>
-
-<CombinedInput title={projectReplacerTitle}>
-    <p><T id="settings.default_project_name" /></p>
-    <TextInput value={$special.default_project_name ?? DEFAULT_PROJECT_NAME} on:change={(e) => updateTextInput(e, "default_project_name")} />
-</CombinedInput>
 
 <!-- WIP custom metadata order -->
 <!-- "Song: {title} - {author}, License: {ccli}" -->
@@ -274,6 +289,19 @@
     </CombinedInput>
 {/if}
 
+<!-- REMOVE DUPLICATED SHOWS -->
+{#if duplicatedShows.length}
+    <CombinedInput>
+        <Button style="width: 100%;" on:click={deleteDuplicatedShows}>
+            <Icon id="delete" style="border: 0;" right />
+            <p style="padding: 0;">
+                <T id="popup.delete_duplicated_shows" />
+                <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({duplicatedShows.length})</span>
+            </p>
+        </Button>
+    </CombinedInput>
+{/if}
+
 <!-- <CombinedInput>
     <Button style="width: 100%;" on:click={deleteCache}>
         <Icon id="delete" style="border: 0;" right />
@@ -284,12 +312,9 @@
     </Button>
 </CombinedInput> -->
 
-<CombinedInput>
-    <Button style="width: 50%;" on:click={openLog}>
-        <Icon id="document" right /><T id="actions.open_log_file" />
-    </Button>
-    <Button on:click={openCache}>
-        <Icon id="folder" right /><T id="actions.open_cache_folder" />
+<CombinedInput title={$dictionary.guide?.start}>
+    <Button style="width: 100%;" on:click={() => guideActive.set(true)}>
+        <Icon id="guide" right /><T id="guide.start" />
     </Button>
 </CombinedInput>
 
@@ -299,9 +324,12 @@
     </Button>
 </CombinedInput>
 
-<CombinedInput title={$dictionary.guide?.start}>
-    <Button style="width: 100%;" on:click={() => guideActive.set(true)}>
-        <Icon id="guide" right /><T id="guide.start" />
+<CombinedInput>
+    <Button style="width: 50%;" on:click={openLog}>
+        <Icon id="document" right /><T id="actions.open_log_file" />
+    </Button>
+    <Button on:click={openCache}>
+        <Icon id="folder" right /><T id="actions.open_cache_folder" />
     </Button>
 </CombinedInput>
 

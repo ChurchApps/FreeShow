@@ -2,6 +2,7 @@
     import { ShowObj } from "../../../../classes/Show"
     import { convertText, getQuickExample } from "../../../../converters/txt"
     import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, splitLines } from "../../../../stores"
+    import { newToast } from "../../../../utils/common"
     import { sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
     import Icon from "../../../helpers/Icon.svelte"
@@ -70,6 +71,12 @@
             textToShow()
         } else {
             selectedOption = id
+
+            // look for existing shows with the same title
+            if (values.name) {
+                const exists = Object.values($shows).find((a: any) => a.name.toLowerCase() === values.name.toLowerCase())
+                if (exists) newToast("$create_show.exists")
+            }
         }
     }
 
@@ -119,7 +126,7 @@
             e.preventDefault()
 
             if (document.activeElement?.closest("#name")) {
-                selectedOption = "text"
+                selectOption("text")
                 return
             }
 
