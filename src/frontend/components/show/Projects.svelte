@@ -2,7 +2,7 @@
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
     import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, projects, projectView, sorted } from "../../stores"
-    import { sortByName } from "../helpers/array"
+    import { removeDuplicateValues, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
@@ -18,6 +18,12 @@
     import ProjectList from "./ProjectList.svelte"
 
     let tree: Tree[] = []
+
+    if (Object.keys($projects).length) deleteDuplicatedProjects()
+    function deleteDuplicatedProjects() {
+        projects.set(removeDuplicateValues($projects))
+    }
+
     $: f = Object.entries($folders)
         .filter(([_, a]) => !a.deleted)
         .map(([id, folder]) => ({ ...folder, id, type: "folder" as "folder" }))
@@ -101,6 +107,15 @@
     }
 
     $: projectActive = !$projectView && $activeProject !== null
+
+    let listScrollElem: any = null
+    let listOffset: number = -1
+    $: if (listScrollElem) {
+        let time = tree.length * 0.5 + 20
+        setTimeout(() => {
+            listOffset = autoscroll(listScrollElem, Math.max(0, [...(listScrollElem.querySelector(".ParentBlock")?.children || [])].findIndex((a) => a?.querySelector(".active")) - itemsBefore))
+        }, time)
+    }
 </script>
 
 <svelte:window on:keydown={checkInput} />
@@ -126,10 +141,12 @@
     </span>
 
     {#if !projectActive}
-        <div id="projectsArea" class="list projects context #projects" style="overflow: auto;">
-            <DropArea id="projects">
-                <ProjectList {tree} />
-            </DropArea>
+        <div id="projectsArea" class="list projects context #projects">
+            <Autoscroll offset={listOffset} bind:scrollElem={listScrollElem} timeout={150} smoothTimeout={0}>
+                <DropArea id="projects">
+                    <ProjectList {tree} />
+                </DropArea>
+            </Autoscroll>
         </div>
 
         <div id="projectsButtons" class="tabs">

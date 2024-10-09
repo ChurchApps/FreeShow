@@ -28,7 +28,7 @@
     textarea.center {
         text-align: center;
     }
-    textarea:hover {
+    textarea:hover:not(:disabled) {
         background-color: var(--hover);
     }
 

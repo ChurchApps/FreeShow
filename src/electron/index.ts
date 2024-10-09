@@ -18,8 +18,9 @@ import { stopApiListener } from "./utils/api"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, loadShows, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { stopMidi } from "./utils/midi"
-import { catchErrors, loadScripture, loadShow, receiveMain, renameShows, saveRecording, startImport } from "./utils/responses"
+import { catchErrors, loadScripture, loadShow, receiveMain, saveRecording, startImport } from "./utils/responses"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { renameShows } from "./utils/shows"
 
 // ----- STARTUP -----
 

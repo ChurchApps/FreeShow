@@ -38,6 +38,26 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
 
     let encodedPath = encodeFilePath(path)
     audio = audio || new Audio(encodedPath)
+
+    // LISTENERS
+
+    audio.addEventListener("error", (err) => {
+        console.error("Could not get audio:", err)
+
+        playingAudio.update((a) => {
+            delete a[path]
+            return a
+        })
+    })
+
+    let readyToPlay: boolean = false
+    audio.addEventListener("canplay", () => {
+        readyToPlay = true
+        if (get(playingAudio)[path]?.audio) initAudio()
+    })
+
+    /////
+
     let analyser: any = await getAnalyser(audio, stream)
 
     // another audio might have been started while awaiting (if played rapidly)
@@ -70,16 +90,8 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
 
     if (startAt > 0) audio.currentTime = startAt
 
-    audio.addEventListener("error", (err) => {
-        console.error("Could not get audio:", err)
-
-        playingAudio.update((a) => {
-            delete a[path]
-            return a
-        })
-    })
-
-    audio.addEventListener("canplay", () => {
+    if (readyToPlay) initAudio()
+    function initAudio() {
         setTimeout(() => {
             // audio might have been cleared
             if (!get(playingAudio)[path]?.audio) return
@@ -88,7 +100,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
             customActionActivation("audio_start")
             analyseAudio()
         }, waitToPlay * 1000)
-    })
+    }
 }
 
 let currentlyCrossfading: string[] = []

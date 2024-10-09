@@ -600,6 +600,7 @@
         "play_on_midi_tip": "Activate this specific slide when receiving chosen MIDI signal",
         "send_midi": "Send MIDI signal",
         "delete_shows_not_indexed": "Delete shows in 'Shows' folder that are not indexed",
+        "delete_empty_shows": "Delete empty shows",
         "delete_thumbnail_cache": "Delete thumbnail cache",
         "open_log_file": "Open log file",
         "open_cache_folder": "Open cache folder",

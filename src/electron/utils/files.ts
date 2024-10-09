@@ -14,7 +14,7 @@ import { createThumbnail } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
 import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
-import { getAllShows, trimShow } from "./responses"
+import { getAllShows, trimShow } from "./shows"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)

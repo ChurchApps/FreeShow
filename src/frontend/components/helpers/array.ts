@@ -133,6 +133,24 @@ export function removeDeleted<T>(object: T): T {
     return (object as any).filter((o) => !o.deleted)
 }
 
+// remove every duplicated values in object
+export function removeDuplicateValues<T>(obj: T): T {
+    if (typeof obj !== "object") return obj
+
+    let uniqueObj: T = {} as T
+    const valueSet = new Set()
+
+    for (const [key, value] of Object.entries(obj!)) {
+        const valueStr = JSON.stringify(value)
+        if (!valueSet.has(valueStr)) {
+            valueSet.add(valueStr)
+            uniqueObj[key] = value
+        }
+    }
+
+    return uniqueObj
+}
+
 // change values from one object to another
 export function changeValues(object: any, values: { [key: string]: any }) {
     Object.entries(values).forEach(([key, value]: any) => {

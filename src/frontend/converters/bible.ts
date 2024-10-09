@@ -1,3 +1,4 @@
+import { uid } from "uid"
 import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "../stores"
 
@@ -12,8 +13,8 @@ export function importFSB(data: any[]) {
 
         if (!bible) return
 
-        let id: string = bible[0]
-        bible = bible[1]
+        let id: string = bible[0] || uid()
+        bible = bible[1] || bible
 
         scripturesCache.update((a) => {
             a[id] = bible

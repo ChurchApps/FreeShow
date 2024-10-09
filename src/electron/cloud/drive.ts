@@ -4,7 +4,7 @@ import { isProd, toApp } from ".."
 import { STORE } from "../../types/Channels"
 import { stores } from "../data/store"
 import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, getFileStats, loadShows, readFileAsync, writeFile } from "../utils/files"
-import { trimShow } from "../utils/responses"
+import { trimShow } from "../utils/shows"
 
 let driveClient: any = null
 const DEBUG = !isProd

@@ -11,6 +11,7 @@
     export let outSlide: any
     export let outLayout: any
     export let styleRes: any
+    export let preview: boolean = false
 
     let width: number = 0
     let height: number = 0
@@ -28,8 +29,8 @@
     $: newResolution = isCustomRes ? resolution : slideResolution || { width: 1920, height: 1080 }
 </script>
 
-<div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
-    <Zoomed center style={getStyleResolution(newResolution, width, height)} resolution={newResolution} bind:ratio>
+<div class="main" style={preview ? "width: 100%;" : ""} bind:offsetWidth={width} bind:offsetHeight={height}>
+    <Zoomed center style={preview ? "width: 100%;" : getStyleResolution(newResolution, width, height)} resolution={newResolution} bind:ratio>
         <!-- {#if $outBackground !== null}
     <MediaOutput {...$outBackground} {transition} bind:video bind:videoData />
   {/if} -->

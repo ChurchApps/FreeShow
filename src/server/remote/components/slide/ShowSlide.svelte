@@ -16,6 +16,9 @@
     $: isCustomRes = resolution.width !== 1920 || resolution.height !== 1080
     $: slideResolution = slide?.settings?.resolution
     $: newResolution = isCustomRes ? resolution : slideResolution || { width: 1920, height: 1080 }
+
+    // WIP NAME
+    // $: name = getGroupName({ show, showId }, layoutSlide.id, slide.group, index)
 </script>
 
 <!-- TODO: disabled -->
@@ -39,8 +42,8 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         </Zoomed>
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {newResolution.width * zoom}px;" -->
-        <div class="label" title={slide.group || ""}>
-            <!-- font-size: 0.8em; -->
+
+        <div class="label" title={slide.group || ""} style={`color: ${color};border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
             <span style="position: absolute;display: contents;">{index + 1}</span>
             <span class="text">{slide.group || ""}</span>
         </div>
@@ -51,7 +54,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     .main {
         display: flex;
         position: relative;
-        padding: 5px;
+        padding: 2px;
     }
 
     .slide {
@@ -67,7 +70,9 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         /* outline: 2px solid var(--secondary);
     outline-offset: 4px; */
         outline: 3px solid var(--secondary);
-        outline-offset: 4px;
+        outline-offset: -1px;
+
+        z-index: 2;
     }
     .slide.disabled {
         opacity: 0.2;
@@ -89,6 +94,8 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     }
 
     .label {
+        position: relative;
+        background-color: var(--primary-darkest);
         display: flex;
         padding: 5px;
         padding-bottom: 3px;

@@ -3,10 +3,11 @@
 
     export let scrollElem: any = null
     export let timeout: number = 0
+    export let smoothTimeout: number = 800
     export let offset: number = -1
 
     let behaviour: string = ""
-    setTimeout(() => (behaviour = "scroll-behavior: smooth;"), 800)
+    setTimeout(() => (behaviour = "scroll-behavior: smooth;"), smoothTimeout)
 
     let t: any = null
     let st: any = null

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN, STORE } from "../../../../types/Channels"
-    import { activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, guideActive, popupData, shows, showsCache, showsPath, special } from "../../../stores"
+    import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, guideActive, popupData, shows, showsCache, showsPath, special } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
@@ -16,6 +16,7 @@
         // getAudioOutputs()
         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
         send(MAIN, ["GET_STORE_VALUE"], { file: "config", key: "disableHardwareAcceleration" })
+        send(MAIN, ["GET_EMPTY_SHOWS"], { path: $showsPath, cached: $showsCache })
         getDuplicatedShows()
     })
 
@@ -72,6 +73,9 @@
             GET_STORE_VALUE: (data: any) => {
                 if (data.key === "disableHardwareAcceleration") disableHardwareAcceleration = data.value
             },
+            GET_EMPTY_SHOWS: (data: any) => {
+                emptyShows = data
+            },
         },
         listenerId
     )
@@ -97,11 +101,18 @@
 
     // delete shows from folder that are not indexed
     function deleteShows() {
-        send(MAIN, ["DELETE_SHOWS"], { shows: $shows, path: $showsPath })
+        send(MAIN, ["DELETE_SHOWS_NI"], { shows: $shows, path: $showsPath })
 
         setTimeout(() => {
             send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
         }, 800)
+    }
+
+    let emptyShows: { id: string; name: string }[] = []
+    function deleteEmptyShows() {
+        send(MAIN, ["DELETE_SHOWS"], { shows: emptyShows, path: $showsPath })
+        // emptyShows = []
+        activePage.set("show")
     }
 
     let duplicatedShows: { ids: string[] }[] = []
@@ -284,6 +295,19 @@
             <p style="padding: 0;">
                 <T id="actions.delete_shows_not_indexed" />
                 <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({hiddenShows.length - Object.keys($shows).length})</span>
+            </p>
+        </Button>
+    </CombinedInput>
+{/if}
+
+<!-- DELETE EMPTY SHOWS -->
+{#if emptyShows.length}
+    <CombinedInput>
+        <Button style="width: 100%;" on:click={deleteEmptyShows}>
+            <Icon id="delete" style="border: 0;" right />
+            <p style="padding: 0;">
+                <T id="actions.delete_empty_shows" />
+                <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({emptyShows.length})</span>
             </p>
         </Button>
     </CombinedInput>

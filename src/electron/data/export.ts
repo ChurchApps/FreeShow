@@ -10,7 +10,7 @@ import { isProd, toApp } from "../index"
 import { dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, makeDir, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
 import { exportOptions } from "../utils/windowOptions"
 import { Message } from "../../types/Socket"
-import { getAllShows } from "../utils/responses"
+import { getAllShows } from "../utils/shows"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions: any = {
