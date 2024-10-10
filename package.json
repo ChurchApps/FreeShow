@@ -197,6 +197,7 @@
         "tmp": "^0.2.3",
         "uid": "^2.0.0",
         "word-extractor": "^1.0.4",
-        "youtube-iframe": "^1.0.3"
+        "youtube-iframe": "^1.0.3",
+        "yuv-render": "^1.0.1"
     }
 }

@@ -174,7 +174,7 @@ export class CaptureTransmitter {
         let framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
         if (!framerate) return
         // WIP blackmagic audio
-        BlackmagicSender.scheduleFrame(captureId, buffer, null, framerate)
+        BlackmagicSender.scheduleFrame(captureId, buffer, null, framerate, image.getSize())
     }
 
     // MAIN (STAGE OUTPUT)
@@ -188,6 +188,13 @@ export class CaptureTransmitter {
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
+
+        // DEBUG YUV
+        // // console.log(os.endianness()) // LE
+        // // if (os.endianness() === "BE") buffer = ImageBufferConverter.BGRAtoYUV(buffer)
+        // // else buffer = ImageBufferConverter.ARGBtoYUV(buffer)
+        // if (os.endianness() === "BE") buffer = ImageBufferConverter.ARGBtoYUV(buffer, size)
+        // else buffer = ImageBufferConverter.BGRAtoYUV(buffer, size)
 
         let msg = { channel: "BUFFER", data: { id: captureId, time: Date.now(), buffer, size } }
         toApp(OUTPUT, msg)

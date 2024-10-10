@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    // import YUVRender from "yuv-render"
 
     export let capture: any
     export let fullscreen: any = false
@@ -37,6 +38,20 @@
     $: if (capture) updateCanvas()
     async function updateCanvas() {
         if (!canvas) return
+
+        // const yuv = new YUVRender(canvas)
+        // // yuv.setDimension((capture.size.width / 4) * 3, (capture.size.height / 4) * 3)
+        // yuv.setDimension(capture.size.width, capture.size.height)
+        // console.log(capture.buffer, capture.size)
+        // yuv.render(capture.buffer)
+
+        // // yuv.setDimension(768, 320)
+        // // // Uint8Array data
+        // // let buffer = new Uint8Array(testFrame)
+        // // console.log(buffer)
+        // // yuv.render(buffer)
+
+        ///////////////////
 
         const arr = new Uint8ClampedArray(capture.buffer)
         const pixels = new ImageData(arr, capture.size.width, capture.size.height)
