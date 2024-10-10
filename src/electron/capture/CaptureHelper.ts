@@ -1,10 +1,10 @@
 import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
 import { NdiSender } from "../ndi/NdiSender"
-import { CaptureTransmitter } from "./helpers/CaptureTransmitter"
+import { OutputHelper } from "../output/OutputHelper"
 import { CaptureOptions } from "./CaptureOptions"
 import { CaptureLifecycle } from "./helpers/CaptureLifecycle"
-import { OutputHelper } from "../output/OutputHelper"
+import { CaptureTransmitter } from "./helpers/CaptureTransmitter"
 
 export class CaptureHelper {
     static Lifecycle = CaptureLifecycle
@@ -23,6 +23,7 @@ export class CaptureHelper {
 
         let defaultFramerates = {
             ndi: this.framerates.connected,
+            blackmagic: this.framerates.unconnected,
             server: this.framerates.server,
             stage: this.framerates.stage,
         }
@@ -31,7 +32,7 @@ export class CaptureHelper {
             window,
             frameSubscription: null,
             displayFrequency: screen.displayFrequency || 60,
-            options: { ndi: false, server: false, stage: false },
+            options: { ndi: false, blackmagic: false, server: false, stage: false },
             framerates: defaultFramerates,
             id,
         }

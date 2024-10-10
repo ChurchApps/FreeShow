@@ -1,4 +1,6 @@
 import { BrowserWindow } from "electron"
+import type { Output } from "../../../types/Output"
+import { initializeSender } from "../../blackmagic/talk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 import { NdiSender } from "../../ndi/NdiSender"
 import { OutputHelper } from "../OutputHelper"
@@ -25,6 +27,9 @@ export class OutputValues {
         },
         kioskMode: (value: boolean, window: BrowserWindow) => {
             window.setKiosk(value)
+        },
+        blackmagic: (data: Output, window: BrowserWindow, id: string) => {
+            initializeSender(data, window, id)
         },
     }
 

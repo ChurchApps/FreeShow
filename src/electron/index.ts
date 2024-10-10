@@ -3,8 +3,9 @@
 
 import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
-import { CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
+import { BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
+import { receiveBM } from "./blackmagic/talk"
 import { cloudConnect } from "./cloud/cloud"
 import { currentlyDeletedShows } from "./cloud/drive"
 import { startBackup } from "./data/backup"
@@ -19,8 +20,8 @@ import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, loadShows
 import { template } from "./utils/menuTemplate"
 import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, saveRecording, startImport } from "./utils/responses"
-import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { renameShows } from "./utils/shows"
+import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
 
@@ -408,6 +409,7 @@ ipcMain.on(BIBLE, loadScripture)
 ipcMain.on(CLOUD, cloudConnect)
 ipcMain.on(RECORDER, saveRecording)
 ipcMain.on(NDI, receiveNDI)
+ipcMain.on(BLACKMAGIC, receiveBM)
 
 // ----- HELPERS -----
 

@@ -1,6 +1,6 @@
 import { NativeImage } from "electron"
-import { CaptureHelper } from "../CaptureHelper"
 import { OutputHelper } from "../../output/OutputHelper"
+import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 
 export class CaptureLifecycle {
@@ -46,7 +46,7 @@ export class CaptureLifecycle {
 
             // use highest frame rate
             const frameRates = output.captureOptions.framerates || {}
-            const frameRate = Math.max(frameRates.ndi || 1, frameRates.server || 1, frameRates.stage || 1)
+            const frameRate = Math.max(frameRates.ndi || 1, frameRates.blackmagic || 1, frameRates.server || 1, frameRates.stage || 1)
 
             const ms = Math.round(1000 / frameRate)
             output.captureOptions.frameSubscription = setTimeout(captureFrame, ms)
