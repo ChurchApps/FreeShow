@@ -50,6 +50,7 @@
     export let style: boolean = true
     export let customStyle: string = ""
     export let stageItem: any = {}
+    export let showList: boolean = false
     export let chords: boolean = false
     export let linesStart: null | number = null
     export let linesEnd: null | number = null
@@ -172,7 +173,7 @@
 
         previousItem = JSON.stringify(item)
 
-        if (loopStop || !loaded || !alignElem || (!stageAutoSize && !outputTemplateAutoSize && (!item.auto || item.autoFontSize))) {
+        if (loopStop || !loaded || !alignElem || (!stageAutoSize && !outputTemplateAutoSize && (!item.auto || item.autoFontSize) && !showList)) {
             if (item.auto && item.autoFontSize) fontSize = item.autoFontSize
             return
         }
