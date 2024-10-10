@@ -353,27 +353,63 @@ export class ImageBufferConverter10Bit {
 
 export class InputImageBufferConverter {
     /*  convert from YUV to RGBA  */
-    static YUVtoRGBA(data: Buffer) {
-        const newData = []
-        for (let i = 0; i < data.length; i += 3) {
-            const Y = data[i]
-            const U = data[i + 1] - 128
-            const V = data[i + 2] - 128
+    // static YUVtoRGBA(data: Buffer) {
+    //     const newData = []
+    //     for (let i = 0; i < data.length; i += 3) {
+    //         const Y = data[i]
+    //         const U = data[i + 1] - 128
+    //         const V = data[i + 2] - 128
 
-            // Convert YUV to RGB
-            const R = Y + 1.402 * V
-            const G = Y - 0.344136 * U - 0.714136 * V
-            const B = Y + 1.772 * U
+    //         // Convert YUV to RGB
+    //         const R = Y + 1.402 * V
+    //         const G = Y - 0.344136 * U - 0.714136 * V
+    //         const B = Y + 1.772 * U
 
-            // Ensure RGB values are within the 0-255 range
-            newData.push(
-                Math.max(0, Math.min(255, R)),
-                Math.max(0, Math.min(255, G)),
-                Math.max(0, Math.min(255, B)),
-                255 // Alpha channel
-            )
+    //         // Ensure RGB values are within the 0-255 range
+    //         newData.push(
+    //             Math.max(0, Math.min(255, R)),
+    //             Math.max(0, Math.min(255, G)),
+    //             Math.max(0, Math.min(255, B)),
+    //             255 // Alpha channel
+    //         )
+    //     }
+    //     return Buffer.from(newData)
+    // }
+    /*  convert from YUV240 to RGBA  */
+    static YUVtoRGBA(yuvData: Buffer, { width, height }: Size) {
+        const numPixels = width * height
+        const rgbaData = Buffer.alloc(numPixels * 4) // RGBA has 4 bytes per pixel
+
+        const yPlane = yuvData.slice(0, numPixels)
+        const uPlane = yuvData.slice(numPixels, numPixels + numPixels / 4)
+        const vPlane = yuvData.slice(numPixels + numPixels / 4, numPixels + numPixels / 2)
+
+        let rgbaIndex = 0
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const yIndex = y * width + x
+                const uIndex = Math.floor(y / 2) * (width / 2) + Math.floor(x / 2)
+                const vIndex = uIndex
+
+                const Y = yPlane[yIndex]
+                const U = uPlane[uIndex] - 128
+                const V = vPlane[vIndex] - 128
+
+                // Convert YUV to RGB
+                const R = Y + 1.402 * V
+                const G = Y - 0.344136 * U - 0.714136 * V
+                const B = Y + 1.772 * U
+
+                // Ensure RGB values are within the 0-255 range
+                rgbaData[rgbaIndex++] = Math.max(0, Math.min(255, Math.round(R)))
+                rgbaData[rgbaIndex++] = Math.max(0, Math.min(255, Math.round(G)))
+                rgbaData[rgbaIndex++] = Math.max(0, Math.min(255, Math.round(B)))
+                rgbaData[rgbaIndex++] = 255 // Alpha channel
+            }
         }
-        return Buffer.from(newData)
+
+        return rgbaData
     }
 
     /*  convert from RGBXLE to RGBA  */
