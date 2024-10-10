@@ -18,7 +18,7 @@ interface Song {
     // user1: string
     // user2: string
     // user3: string
-    lyrics: string[]
+    lyrics: string
     hymn_number: string
     key: string
     // aka: string
@@ -68,8 +68,13 @@ function createSlides({ lyrics }: Song) {
     let slides: any = {}
     let layout: any[] = []
     if (!lyrics) return { slides, layout }
-    lyrics.forEach((slide) => {
-        let lines = slide.split("\n")
+
+    // fix incorrect formatting
+    lyrics = lyrics.replaceAll("[", "\n\n[").trim()
+    lyrics = lyrics.replaceAll("\n\n\n\n", "\n\n")
+
+    lyrics.split("\n\n").forEach((slide) => {
+        let lines = slide.trim().split("\n")
         let group = lines.splice(0, 1)[0]
         let chords = lines.filter((_v: string) => _v.startsWith("."))
         let text = lines.filter((_v: string) => !_v.startsWith("."))
@@ -115,7 +120,7 @@ function XMLtoObject(xml: string) {
         // user1: song.getElementsByTagName("user1")[0]?.textContent!,
         // user2: song.getElementsByTagName("user2")[0]?.textContent!,
         // user3: song.getElementsByTagName("user3")[0]?.textContent!,
-        lyrics: song.getElementsByTagName("lyrics")[0]?.textContent!.split("\n\n"),
+        lyrics: song.getElementsByTagName("lyrics")[0]?.textContent!,
         hymn_number: song.getElementsByTagName("hymn_number")[0]?.textContent!,
         key: song.getElementsByTagName("key")[0]?.textContent!,
         // aka: song.getElementsByTagName("aka")[0]?.textContent!,
