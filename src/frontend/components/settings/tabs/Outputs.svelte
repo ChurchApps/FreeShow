@@ -119,7 +119,9 @@
 
             // UPDATE OUTPUT WINDOW
 
-            if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
+            if (["blackmagic"].includes(key)) {
+                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: a[outputId] })
+            } else if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
                 send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
 
                 // update key output
@@ -195,7 +197,7 @@
 
                 let displayModes = device.data?.displayModes || []
                 updateBlackmagicData(displayModes, "displayModes")
-                if (displayModes.length && !newData.displayMode) {
+                if (displayModes.length) {
                     // try setting to "preferred" modes, or set to first available
                     updateBlackmagicData(displayModes.find((a) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
                 }
@@ -221,7 +223,7 @@
                 setTimeout(() => {
                     if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput.id, key: "blackmagic", value: currentOutput })
                 }, 50)
-            } else if (key === "pixelFormat") {
+            } else if (key === "pixelFormat" || key === "alphaKey") {
                 setTimeout(() => {
                     if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput.id, key: "blackmagic", value: currentOutput })
                 })
@@ -246,6 +248,12 @@
         },
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
+
+    // Pixel format must include an alpha channel. Only 8-bit ARGB and BGRA are supported.
+    function isAlphaSupported(pixelFormat: string) {
+        if (!pixelFormat.includes("8")) return false
+        return pixelFormat.includes("BGRA") || pixelFormat.includes("ARGB")
+    }
 
     // CREATE
 
@@ -444,12 +452,14 @@
             />
         </CombinedInput>
 
-        <CombinedInput>
-            <p><T id="settings.alpha_key" /></p>
-            <div class="alignRight">
-                <Checkbox checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(isChecked(e), "alphaKey")} />
-            </div>
-        </CombinedInput>
+        {#if isAlphaSupported(currentOutput.blackmagicData?.pixelFormat || "")}
+            <CombinedInput>
+                <p><T id="settings.alpha_key" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(isChecked(e), "alphaKey")} />
+                </div>
+            </CombinedInput>
+        {/if}
     {/if}
 {/if}
 

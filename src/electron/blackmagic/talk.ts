@@ -40,6 +40,7 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
     let deviceIndex = BlackmagicManager.getIndexById(deviceId)
     if (deviceIndex < 0) return
 
+    // console.log(bmdData, deviceIndex)
     if (data.blackmagic) await BlackmagicSender.initialize(id, deviceIndex, bmdData.displayMode, bmdData.pixelFormat, bmdData.alphaKey)
     else BlackmagicSender.stop(id)
 

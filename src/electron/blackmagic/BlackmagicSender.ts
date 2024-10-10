@@ -20,7 +20,7 @@ export class BlackmagicSender {
                 deviceIndex,
                 displayMode: BlackmagicManager.getDisplayMode(displayModeName),
                 pixelFormat: BlackmagicManager.getPixelFormat(pixelFormat),
-                enableKeying,
+                enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
                 channels: audioChannels ? 0 : 0, // WIP send audio!
                 sampleRate: macadam.bmdAudioSampleRate48kHz,
                 sampleType: macadam.bmdAudioSampleType16bitInteger,
