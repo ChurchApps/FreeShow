@@ -4,10 +4,11 @@
     export let style: string = ""
 
     export let center: boolean = false
+    export let disabled: boolean = false
     export let autofocus: boolean = false
 </script>
 
-<textarea class="edit" {placeholder} {value} {style} class:center {autofocus} on:input />
+<textarea class="edit" {placeholder} {value} {style} class:center {disabled} {autofocus} on:input />
 
 <style>
     textarea {
@@ -27,7 +28,7 @@
     textarea.center {
         text-align: center;
     }
-    textarea:hover {
+    textarea:hover:not(:disabled) {
         background-color: var(--hover);
     }
 

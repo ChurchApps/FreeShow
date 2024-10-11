@@ -1,21 +1,32 @@
 <script lang="ts">
-    import { activePopup, alertUpdates, autoOutput, autosave, labelsDisabled, special, timeFormat } from "../../../stores"
+    import { activePopup, autoOutput, autosave, labelsDisabled, special, timeFormat } from "../../../stores"
     import { setLanguage } from "../../../utils/language"
+    import { DEFAULT_PROJECT_NAME, projectReplacers } from "../../helpers/historyHelpers"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
     import LocaleSwitcher from "../LocaleSwitcher.svelte"
 
-    const inputs: any = {
+    const inputs = {
+        defaultProjectName: (e: any) => updateSpecial(e.target.value || "", "default_project_name"),
         timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12"),
-        updates: (e: any) => alertUpdates.set(e.target.checked),
-        autoUpdates: (e: any) => updateSpecial(e.target.checked, "autoUpdates"),
         labels: (e: any) => labelsDisabled.set(e.target.checked),
         autoOutput: (e: any) => autoOutput.set(e.target.checked),
         hideCursor: (e: any) => updateSpecial(e.target.checked, "hideCursor"),
+        clearMediaOnFinish: (e: any) => updateSpecial(e.target.checked, "clearMediaOnFinish"),
+    }
+
+    function updateSpecial(value, key) {
+        special.update((a) => {
+            if (key === "hideCursor" && !value) delete a[key]
+            else a[key] = value
+
+            return a
+        })
     }
 
     const autosaveList: any = [
@@ -27,27 +38,31 @@
         { id: "30min", name: "30 $:settings.minutes:$" },
     ]
 
-    function updateSpecial(value, key) {
-        special.update((a) => {
-            if (key === "hideCursor" && !value) delete a[key]
-            else a[key] = value
+    function reset() {
+        setLanguage()
+        timeFormat.set("24")
+        labelsDisabled.set(false)
 
+        autoOutput.set(false)
+
+        special.update((a) => {
+            delete a.default_project_name
+            delete a.hideCursor
+            delete a.clearMediaOnFinish
             return a
         })
     }
 
-    function reset() {
-        setLanguage()
-        timeFormat.set("24")
-        alertUpdates.set(true)
-        autoOutput.set(false)
-        labelsDisabled.set(false)
+    /////
 
-        special.update((a) => {
-            delete a.hideCursor
-            delete a.autoUpdates
-            return a
+    let projectReplacerTitle = getReplacerTitle()
+    function getReplacerTitle() {
+        let titles: string[] = []
+        projectReplacers.forEach((a) => {
+            titles.push(`${a.title}: {${a.id}}`)
         })
+
+        return titles.join(", ")
     }
 
     // WIP set calendar starting day
@@ -63,22 +78,15 @@
     <Dropdown options={autosaveList} value={autosaveList.find((a) => a.id === ($autosave || "never"))?.name || ""} on:click={(e) => autosave.set(e.detail.id)} />
 </CombinedInput>
 
+<CombinedInput title={projectReplacerTitle}>
+    <p><T id="settings.default_project_name" /></p>
+    <TextInput value={$special.default_project_name ?? DEFAULT_PROJECT_NAME} on:change={inputs.defaultProjectName} />
+</CombinedInput>
+
 <CombinedInput>
     <p><T id="settings.use24hClock" /></p>
     <div class="alignRight">
         <Checkbox checked={$timeFormat === "24"} on:change={inputs.timeFormat} />
-    </div>
-</CombinedInput>
-<CombinedInput>
-    <p><T id="settings.alert_updates" /></p>
-    <div class="alignRight">
-        <Checkbox checked={$alertUpdates} on:change={inputs.updates} />
-    </div>
-</CombinedInput>
-<CombinedInput>
-    <p><T id="settings.auto_updates" /></p>
-    <div class="alignRight">
-        <Checkbox checked={$special.autoUpdates !== false} on:change={inputs.autoUpdates} />
     </div>
 </CombinedInput>
 <CombinedInput>
@@ -87,6 +95,7 @@
         <Checkbox checked={$labelsDisabled} on:change={inputs.labels} />
     </div>
 </CombinedInput>
+
 <CombinedInput>
     <p><T id="settings.auto_output" /></p>
     <div class="alignRight">
@@ -101,13 +110,20 @@
 </CombinedInput>
 
 <CombinedInput>
+    <p><T id="settings.clear_media_when_finished" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.clearMediaOnFinish ?? true} on:change={inputs.clearMediaOnFinish} />
+    </div>
+</CombinedInput>
+
+<CombinedInput>
     <Button style="width: 50%;" on:click={() => activePopup.set("manage_colors")}>
-        <Icon id="color" style="border: 0;" right />
-        <p style="padding: 0;"><T id="popup.manage_colors" /></p>
+        <Icon id="color" style="margin-left: 0.5em;" right />
+        <p><T id="popup.manage_colors" /></p>
     </Button>
     <Button on:click={() => activePopup.set("manage_icons")}>
-        <Icon id="star" style="border: 0;" right />
-        <p style="padding: 0;"><T id="popup.manage_icons" /></p>
+        <Icon id="star" style="margin-left: 0.5em;" right />
+        <p><T id="popup.manage_icons" /></p>
     </Button>
 </CombinedInput>
 

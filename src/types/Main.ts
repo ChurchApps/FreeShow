@@ -115,6 +115,7 @@ export type Popups =
     | "show"
     | "delete_show"
     | "select_show"
+    | "delete_duplicated_shows"
     | "icon"
     | "manage_icons"
     | "manage_colors"

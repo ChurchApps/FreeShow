@@ -24,6 +24,7 @@ import {
     theme,
     themes,
     transitionData,
+    usageLog,
     videoExtensions,
 } from "../../stores"
 import { send } from "../../utils/request"
@@ -63,6 +64,9 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         let firstOutputWithBackground = allOutputs.findIndex((id) => (get(styles)[get(outputs)[id]?.style || ""]?.layers || ["background"]).includes("background"))
         firstOutputWithBackground = Math.max(0, firstOutputWithBackground)
 
+        // append show usage if not already outputted
+        if (key === "slide" && data?.id && get(outputs)[outs[0]]?.out?.slide?.id !== data?.id) appendShowUsage(data.id)
+
         outs.forEach((id: string) => {
             let output: any = a[id]
             if (!output.out) a[id].out = {}
@@ -96,6 +100,26 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             if (key === "overlays") lockedOverlays.set(outData)
         })
 
+        return a
+    })
+}
+
+function appendShowUsage(showId: string) {
+    let show = get(showsCache)[showId]
+    if (!show) return
+
+    usageLog.update((a) => {
+        let metadata = show.meta || {}
+        // remove empty values
+        Object.keys(metadata).forEach((key) => {
+            if (!metadata[key]) delete metadata[key]
+        })
+
+        a.all.push({
+            name: show.name,
+            time: Date.now(),
+            metadata,
+        })
         return a
     })
 }
@@ -258,8 +282,9 @@ export function outputSlideHasContent(output) {
 
 // WIP style should override any slide resolution & color ? (it does not)
 
-export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, getSlideRes: boolean = false): Resolution {
-    let currentOutput = get(outputs)[getActiveOutputs()[0]]
+export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, getSlideRes: boolean = false, outputId: string = ""): Resolution {
+    if (!outputId) outputId = getActiveOutputs()[0]
+    let currentOutput = get(outputs)[outputId]
     let style = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
     let slideRes: any = null
 
@@ -727,6 +752,10 @@ export function getStyleTemplate(outSlide: any, currentStyle: any) {
     let template = get(templates)[templateId || ""] || {}
 
     return template
+}
+
+export function slideHasAutoSizeItem(slide: any) {
+    return slide?.items?.find((a) => a.auto)
 }
 
 export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]) {

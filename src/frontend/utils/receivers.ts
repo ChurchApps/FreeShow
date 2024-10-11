@@ -83,6 +83,7 @@ import {
     timeFormat,
     timers,
     transitionData,
+    usageLog,
     variables,
     version,
     videosData,
@@ -176,14 +177,15 @@ const receiveMAIN: any = {
     BACKUP: ({ finished, path }) => {
         if (!finished) return activePopup.set(null)
 
-        alertMessage.set(get(dictionary).settings?.backup_finished + "<br><br>" + path)
-        activePopup.set("alert")
+        console.log("Backed up to:", path)
+        newToast(get(dictionary).settings?.backup_finished) // + ": " + path)
+        // if (changeUserData) send(STORE, ["UPDATE_PATH"], changeUserData)
     },
     RESTORE: ({ finished }) => {
         if (!finished) return activePopup.set(null)
 
-        alertMessage.set("settings.restore_finished")
-        activePopup.set("alert")
+        activePage.set("show")
+        newToast("$settings.restore_finished")
     },
     LOCATE_MEDIA_FILE: ({ path, ref }) => {
         let prevPath: string = ""
@@ -246,6 +248,7 @@ const receiveSTORE: any = {
         undoHistory.set(a.undo || [])
         redoHistory.set(a.redo || [])
     },
+    USAGE: (a: any) => usageLog.set(a),
 }
 
 const receiveFOLDER: any = {

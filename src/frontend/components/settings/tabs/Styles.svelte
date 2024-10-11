@@ -136,8 +136,6 @@
     <p><T id="settings.styles_hint" /></p>
 </div>
 
-<br />
-
 <!-- TODO: use stage (dropdown) -->
 <CombinedInput>
     <p><T id="edit.background_color" /></p>
@@ -151,16 +149,19 @@
         id="styles"
         title={currentStyle.backgroundImage}
         filter={{ name: "Media files", extensions: [...$imageExtensions, $videoExtensions] }}
+        center={false}
         on:picked={(e) => {
             if (e.detail) updateStyle(e, "backgroundImage")
         }}
     >
-        <Icon id="image" right />
-        {#if currentStyle.backgroundImage}
-            {getFileName(currentStyle.backgroundImage)}
-        {:else}
-            <T id="edit.choose_media" />
-        {/if}
+        <Icon id="image" style="margin-left: 0.5em;" right />
+        <p>
+            {#if currentStyle.backgroundImage}
+                {getFileName(currentStyle.backgroundImage)}
+            {:else}
+                <T id="edit.choose_media" />
+            {/if}
+        </p>
     </MediaPicker>
     {#if currentStyle.backgroundImage}
         <Button
@@ -182,6 +183,40 @@
         </div>
     </CombinedInput>
 {/if}
+
+<CombinedInput>
+    <p><T id="popup.transition" /></p>
+    <Button
+        on:click={() => {
+            if (!$styles[styleId]) updateStyle("", "transition") // set initial style
+            popupData.set({ action: "style_transition", id: styleId })
+            activePopup.set("transition")
+        }}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="transition" style="margin-left: 0.5em;" right />
+            <p>
+                {#if currentStyle.transition}
+                    <T id="actions.change_transition" />
+                {:else}
+                    <T id="popup.transition" />
+                {/if}
+            </p>
+        </div>
+    </Button>
+    {#if currentStyle.transition}
+        <Button
+            title={$dictionary.remove?.transition}
+            on:click={() => {
+                updateStyle("", "transition")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
+</CombinedInput>
+
 <CombinedInput>
     <p><T id="edit.media_fit" /></p>
     <Dropdown value={mediaFitOptions.find((a) => a.id === currentStyle.fit)?.name || "—"} options={[{ id: null, name: "—" }, ...mediaFitOptions]} on:click={(e) => updateStyle(e.detail.id, "fit")} />
@@ -230,40 +265,6 @@
         <NumberInput title={$dictionary.screen?.bottom} value={currentStyle.cropping?.bottom || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "bottom")} />
         <NumberInput title={$dictionary.screen?.left} value={currentStyle.cropping?.left || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "left")} />
     </span>
-</CombinedInput>
-
-<CombinedInput>
-    <p><T id="popup.transition" /></p>
-    <Button
-        on:click={() => {
-            if (!$styles[styleId]) updateStyle("", "transition") // set initial style
-            popupData.set({ action: "style_transition", id: styleId })
-            activePopup.set("transition")
-        }}
-        center
-    >
-        <div style="display: flex;align-items: center;padding: 0;">
-            <Icon id="transition" right />
-            <p style="padding: 0;">
-                {#if currentStyle.transition}
-                    <T id="actions.change_transition" />
-                {:else}
-                    <T id="popup.transition" />
-                {/if}
-            </p>
-        </div>
-    </Button>
-    {#if currentStyle.transition}
-        <Button
-            title={$dictionary.remove?.transition}
-            on:click={() => {
-                updateStyle("", "transition")
-            }}
-            redHover
-        >
-            <Icon id="close" size={1.2} white />
-        </Button>
-    {/if}
 </CombinedInput>
 
 <h3><T id="preview.slide" /></h3>
@@ -346,18 +347,20 @@
     <p><T id="meta.display_metadata" /></p>
     <Dropdown options={meta} value={meta.find((a) => a.id === (currentStyle.displayMetadata || "never"))?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "displayMetadata")} />
 </CombinedInput>
-<CombinedInput>
-    <p><T id="meta.meta_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} />
-</CombinedInput>
-<CombinedInput>
-    <p><T id="meta.text_divider" /></p>
-    <TextInput value={currentStyle.metadataDivider === undefined ? "; " : currentStyle.metadataDivider} on:change={(e) => updateStyle(e, "metadataDivider")} on:keydown={keydown} />
-</CombinedInput>
-<!-- <CombinedInput>
-    <p><T id="meta.metadata_layout" /></p>
-    <TextInput value={currentStyle.metadataLayout || DEFAULT_META_LAYOUT} on:change={(e) => updateStyle(e, "metadataLayout")} on:keydown={keydown} />
-</CombinedInput> -->
+{#if (currentStyle.displayMetadata || "never") !== "never"}
+    <CombinedInput>
+        <p><T id="meta.meta_template" /></p>
+        <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="meta.text_divider" /></p>
+        <TextInput value={currentStyle.metadataDivider === undefined ? "; " : currentStyle.metadataDivider} on:change={(e) => updateStyle(e, "metadataDivider")} on:keydown={keydown} />
+    </CombinedInput>
+    <!-- <CombinedInput>
+        <p><T id="meta.metadata_layout" /></p>
+        <TextInput value={currentStyle.metadataLayout || DEFAULT_META_LAYOUT} on:change={(e) => updateStyle(e, "metadataLayout")} on:keydown={keydown} />
+    </CombinedInput> -->
+{/if}
 <CombinedInput>
     <p><T id="meta.message_template" /></p>
     <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} />
@@ -409,6 +412,7 @@
 
         min-height: 38px;
         margin: 5px 0;
+        margin-bottom: 15px;
         font-style: italic;
         opacity: 0.8;
     }

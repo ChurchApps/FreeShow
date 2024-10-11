@@ -149,6 +149,7 @@ export const deviceId: Writable<string> = writable("")
 export const undoHistory: Writable<History[]> = writable([])
 export const redoHistory: Writable<History[]> = writable([])
 export const historyCacheCount: Writable<number> = writable(250)
+export const usageLog: Writable<any> = writable({ all: [] })
 
 // SHOW
 export const shows: Writable<any> = writable({}) // {default}

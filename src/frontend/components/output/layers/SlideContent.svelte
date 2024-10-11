@@ -18,7 +18,6 @@
     export let ratio: number
     export let mirror: boolean = false
     export let preview: boolean = false
-    export let customTemplate: string = ""
     export let transition: any = {}
     export let transitionEnabled: boolean = false
     export let isKeyOutput: boolean = false
@@ -81,7 +80,7 @@
 {#key show}
     {#each currentItems as item}
         {#if show}
-            <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} {currentSlide} {item} {outSlide} {lines} {customTemplate} let:customSlide let:customItem let:customLines let:customOut>
+            <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} {currentSlide} {item} {outSlide} {lines} {currentStyle} let:customSlide let:customItem let:customLines let:customOut>
                 {#if !customItem.bindings?.length || customItem.bindings.includes(outputId)}
                     <Textbox
                         filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}

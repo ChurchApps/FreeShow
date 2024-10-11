@@ -27,6 +27,7 @@
                 DRIVE_API_KEY: {},
                 CACHE: { media: {}, text: {} },
                 HISTORY: { undo: [], redo: [] },
+                USAGE: { all: [] },
             },
         })
 

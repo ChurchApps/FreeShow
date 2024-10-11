@@ -67,7 +67,7 @@
     fill: white;
   }
 
-  button:not(:disabled):not(.active) {
+  button:not(:disabled) {
     cursor: pointer;
   }
   button:hover:not(:disabled):not(.active) {

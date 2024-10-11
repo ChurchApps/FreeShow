@@ -136,18 +136,20 @@
                     }}
                 />
             </CombinedInput>
-            <!-- meta template -->
-            <CombinedInput>
-                <p title={$dictionary.meta?.meta_template}><T id="meta.meta_template" /></p>
-                <Dropdown
-                    options={templateList}
-                    value={$templates[metadata.template === undefined ? outputShowSettings.metadataTemplate || "metadata" : metadata.template]?.name || "—"}
-                    on:click={(e) => {
-                        metadata.template = e.detail.id
-                        updateData(metadata, "metadata")
-                    }}
-                />
-            </CombinedInput>
+            {#if (metadata.display || "never") !== "never"}
+                <!-- meta template -->
+                <CombinedInput>
+                    <p title={$dictionary.meta?.meta_template}><T id="meta.meta_template" /></p>
+                    <Dropdown
+                        options={templateList}
+                        value={$templates[metadata.template === undefined ? outputShowSettings.metadataTemplate || "metadata" : metadata.template]?.name || "—"}
+                        on:click={(e) => {
+                            metadata.template = e.detail.id
+                            updateData(metadata, "metadata")
+                        }}
+                    />
+                </CombinedInput>
+            {/if}
             <!-- message display -->
             <!-- <CombinedInput>
                 <p title={$dictionary.meta?.display_message}><T id="meta.display_message" /></p>

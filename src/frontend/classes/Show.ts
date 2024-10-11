@@ -12,6 +12,17 @@ export class ShowObj implements Show {
     settings: any
     timestamps: any
     quickAccess: any
+    message?: {
+        text: string
+        template?: string
+    }
+    metadata?: {
+        autoMedia?: boolean
+        override: boolean
+        display: string
+        template: string
+        tags?: string[]
+    }
     meta: any
     slides: any
     layouts: any

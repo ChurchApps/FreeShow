@@ -60,6 +60,7 @@
 
         padding: 8px 16px;
 
-        line-break: anywhere;
+        /* line-break: anywhere; */
+        overflow-x: auto;
     }
 </style>

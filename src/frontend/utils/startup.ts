@@ -1,14 +1,15 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STARTUP, STORE } from "../../types/Channels"
 import { checkStartupActions } from "../components/actions/actions"
-import { currentWindow, loaded, loadedState } from "../stores"
+import { currentWindow, loaded, loadedState, special } from "../stores"
 import { startTracking } from "./analytics"
 import { wait } from "./common"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { receive, send } from "./request"
-import { unsavedUpdater } from "./save"
+import { save, unsavedUpdater } from "./save"
+import { getTimeFromInterval } from "../components/helpers/time"
 
 let initialized: boolean = false
 export function startup() {
@@ -43,10 +44,28 @@ async function startupMain() {
     storeSubscriber()
     remoteListen()
     checkStartupActions()
+    autoBackup()
     startTracking()
 
     await wait(5000)
     unsavedUpdater()
+}
+
+function autoBackup() {
+    let interval = get(special).autoBackup || "never"
+    if (interval === "never") return
+
+    let now = Date.now()
+    let lastBackup = get(special).autoBackupPrevious || 0
+    let minTimeToBackup = getTimeFromInterval(interval)
+
+    if (now - lastBackup > minTimeToBackup) {
+        save(false, { backup: true, silent: true })
+        special.update((a) => {
+            a.autoBackupPrevious = now
+            return a
+        })
+    }
 }
 
 function getMainData() {
@@ -54,7 +73,7 @@ function getMainData() {
 }
 
 async function getStoredData() {
-    send(STORE, ["SYNCED_SETTINGS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "CACHE"])
+    send(STORE, ["SYNCED_SETTINGS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "USAGE", "CACHE"])
 
     await waitUntilDefined(() => get(loadedState).includes("synced_settings"))
     send(STORE, ["SETTINGS"])

@@ -117,7 +117,7 @@
     }
 
     // slide styling
-    $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle })
+    $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle }, false, outputId)
     $: transitions = getOutputTransitions(slideData, currentStyle.transition, $transitionData, mirror && !preview)
     $: slideFilter = getSlideFilter(slideData)
 
@@ -269,23 +269,7 @@
             {/if}
         </span>
     {:else if slide && slide.type !== "pdf" && layers.includes("slide")}
-        <SlideContent
-            {outputId}
-            outSlide={slide}
-            {slideData}
-            {currentSlide}
-            {currentStyle}
-            {animationData}
-            {currentLineId}
-            {lines}
-            {ratio}
-            {mirror}
-            {preview}
-            customTemplate={currentStyle.template}
-            transition={transitions.text}
-            transitionEnabled={!mirror || preview}
-            {isKeyOutput}
-        />
+        <SlideContent {outputId} outSlide={slide} {slideData} {currentSlide} {currentStyle} {animationData} {currentLineId} {lines} {ratio} {mirror} {preview} transition={transitions.text} transitionEnabled={!mirror || preview} {isKeyOutput} />
     {/if}
 
     {#if layers.includes("overlays")}

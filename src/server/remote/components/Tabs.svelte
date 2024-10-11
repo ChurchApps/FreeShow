@@ -1,44 +1,47 @@
 <script lang="ts">
-  import type { TabsObj } from "../../../types/Tabs"
-  import Icon from "./Icon.svelte"
-  // import T from "../helpers/T.svelte"
-  import Button from "./Button.svelte"
+    import type { TabsObj } from "../../../types/Tabs"
+    import Icon from "./Icon.svelte"
+    // import T from "../helpers/T.svelte"
+    import Button from "./Button.svelte"
 
-  export let tabs: TabsObj
-  export let active: string
-  export let disabled: any
+    export let tabs: TabsObj
+    export let active: string
+    export let disabled: any
+    export let icons: boolean = false
 </script>
 
 <div class="tabs">
-  {#each Object.entries(tabs) as [id, tab]}
-    <Button on:click={() => (active = id)} title={tab.name} active={active === id} center disabled={!disabled[id]}>
-      <Icon id={tab.icon} size={2} />
-      <!-- {#if labels}
+    {#each Object.entries(tabs) as [id, tab]}
+        <Button on:click={() => (active = id)} title={tab.name} active={active === id} center disabled={!disabled[id]}>
+            <Icon id={tab.icon} size={2} />
+            <!-- {#if labels}
         <T id={tab.name} />
       {/if} -->
-      <span class="label">{tab.name}</span>
-    </Button>
-  {/each}
+            {#if !icons}
+                <span class="label">{tab.name}</span>
+            {/if}
+        </Button>
+    {/each}
 </div>
 
 <style>
-  .tabs {
-    display: flex;
-    flex-wrap: wrap;
-    background-color: var(--primary-darkest);
-  }
+    .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        background-color: var(--primary-darkest);
+    }
 
-  .tabs :global(button) {
-    flex: auto;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
+    .tabs :global(button) {
+        flex: auto;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
 
-  .label {
-    padding-left: 10px;
-  }
+    .label {
+        padding-left: 10px;
+    }
 
-  /* @media screen and (max-width: 1500px) {
+    /* @media screen and (max-width: 1500px) {
     .label {
       font-size: 0.8em;
     }
@@ -48,9 +51,9 @@
       font-size: 0.5em;
     }
   } */
-  @media screen and (max-width: 800px) {
-    .label {
-      display: none;
+    @media screen and (max-width: 800px) {
+        .label {
+            display: none;
+        }
     }
-  }
 </style>

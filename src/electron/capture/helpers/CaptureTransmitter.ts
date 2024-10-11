@@ -105,6 +105,7 @@ export class CaptureTransmitter {
         if (channel.imageIsSame) return
 
         const size = image.getSize()
+        if (!size.width || !size.height) return
 
         switch (key) {
             //case "preview":

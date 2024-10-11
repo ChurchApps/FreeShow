@@ -7,10 +7,10 @@ import fs from "fs"
 import { join } from "path"
 import { EXPORT, MAIN, STARTUP } from "../../types/Channels"
 import { isProd, toApp } from "../index"
-import { dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, makeDir, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
+import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, getTimePointString, makeDir, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
 import { exportOptions } from "../utils/windowOptions"
 import { Message } from "../../types/Socket"
-import { getAllShows } from "../utils/responses"
+import { getAllShows } from "../utils/shows"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions: any = {
@@ -33,6 +33,12 @@ export function startExport(_e: any, msg: Message) {
     let customExt = customJSONExtensions[msg.channel]
     if (customExt) {
         exportJSON(msg.data.content, customExt, msg.data.path)
+        return
+    }
+
+    if (msg.channel === "USAGE") {
+        let path = createFolder(join(msg.data.path, "Usage"))
+        exportJSONFile(msg.data.content, path, getTimePointString())
         return
     }
 
@@ -127,6 +133,10 @@ export function exportJSON(content: any, extension: string, path: string) {
     writeFile(join(path, content.name || "Unnamed"), extension, JSON.stringify(content, null, 4), "utf-8", (err: any) => doneWritingFile(err, path))
 }
 
+export function exportJSONFile(content: any, path: string, name: string) {
+    writeFile(join(path, name), ".json", JSON.stringify(content, null, 4), "utf-8", (err: any) => doneWritingFile(err, path))
+}
+
 // ----- SHOW -----
 
 export function exportShow(data: any) {
@@ -212,10 +222,7 @@ function exportAllShows(data: any) {
 
     if (shows.length) {
         // create custom folder to organize the amount of files
-        let folderName = new Date().toISOString()
-        folderName = folderName.slice(0, folderName.indexOf("T"))
-        folderName += `_${new Date().getHours()}-${new Date().getMinutes()}`
-        data.path = join(data.path, folderName)
+        data.path = join(data.path, getTimePointString())
         makeDir(data.path)
 
         if (type === "show") exportShow({ ...data, shows })

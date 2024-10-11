@@ -1,19 +1,20 @@
 import path from "path"
 import { toApp } from ".."
 import { MAIN, STORE } from "../../types/Channels"
-import { dataFolderNames, doesPathExist, getDataFolder, makeDir, openSystemFolder, readFile, selectFilesDialog, writeFile } from "../utils/files"
-import { stores } from "./store"
+import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePointString, makeDir, openSystemFolder, readFile, selectFilesDialog, writeFile } from "../utils/files"
+import { stores, updateDataPath } from "./store"
 
 // "SYNCED_SETTINGS" and "STAGE_SHOWS" has to be before "SETTINGS" and "SHOWS"
 const storesToSave = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA", "DRIVE_API_KEY"]
 // don't upload: config.json, cache.json, history.json
 
-export async function startBackup({ showsPath, dataPath, scripturePath }: any) {
+export async function startBackup({ showsPath, dataPath, scripturePath, customTriggers }: any) {
     let shows: any = null
     // let bibles: any = null
     console.log(scripturePath)
 
     let backupPath: string = getDataFolder(dataPath, dataFolderNames.backups)
+    let backupFolder = createFolder(path.join(backupPath, getTimePointString()))
 
     // CONFIGS
     await Promise.all(storesToSave.map(syncStores))
@@ -25,8 +26,10 @@ export async function startBackup({ showsPath, dataPath, scripturePath }: any) {
     // SHOWS
     await syncAllShows()
 
-    toApp(MAIN, { channel: "BACKUP", data: { finished: true, path: backupPath } })
-    openSystemFolder(backupPath)
+    toApp(MAIN, { channel: "BACKUP", data: { finished: true, path: backupFolder } })
+
+    if (customTriggers?.changeUserData) updateDataPath(customTriggers.changeUserData)
+    else if (!customTriggers?.silent) openSystemFolder(backupFolder)
 
     return
 
@@ -40,7 +43,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath }: any) {
         // else if (id === "SYNCED_SETTINGS") bibles = store.store?.scriptures
 
         let content: string = JSON.stringify(store.store)
-        let p: string = path.resolve(backupPath, name)
+        let p: string = path.resolve(backupFolder, name)
         writeFile(p, content)
     }
 
@@ -60,7 +63,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath }: any) {
         }
 
         let content: string = JSON.stringify(allShows)
-        let p: string = path.resolve(backupPath, name)
+        let p: string = path.resolve(backupFolder, name)
         writeFile(p, content)
     }
 }

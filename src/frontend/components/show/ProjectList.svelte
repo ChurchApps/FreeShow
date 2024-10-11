@@ -6,6 +6,8 @@
     import ProjectFolder from "../inputs/ProjectFolder.svelte"
     import Center from "../system/Center.svelte"
     import T from "../helpers/T.svelte"
+    import { onMount } from "svelte"
+    import Loader from "../main/Loader.svelte"
 
     export let tree: Tree[]
 
@@ -16,23 +18,32 @@
         })
         return allOpened
     }
+
+    let startLoading: boolean = tree.length < 50
+    onMount(() => setTimeout(() => (startLoading = true), 20))
 </script>
 
 {#if tree.length}
-    {#each tree as project}
-        {@const opened = $openedFolders.includes(project.id || "")}
-        {@const shown = checkIfShown(project)}
-        <div style="margin-left: {8 * (project.index || 0)}px;background-color: rgb(255 255 255 / {0.01 * (project.index || 0)});">
-            <!-- , path: project.path -->
-            <SelectElem id={project.type || "project"} data={{ type: project.type || "project", id: project.id }} draggable trigger="column" borders="center">
-                {#if project.type === "folder" && (project.parent === "/" || shown)}
-                    <ProjectFolder {project} {opened} />
-                {:else if project.id && shown}
-                    <ProjectButton name={project.name} parent={project.parent} id={project.id} />
-                {/if}
-            </SelectElem>
-        </div>
-    {/each}
+    {#if startLoading}
+        {#each tree as project}
+            {@const opened = $openedFolders.includes(project.id || "")}
+            {@const shown = checkIfShown(project)}
+            <div style="margin-left: {8 * (project.index || 0)}px;background-color: rgb(255 255 255 / {0.01 * (project.index || 0)});">
+                <!-- , path: project.path -->
+                <SelectElem id={project.type || "project"} data={{ type: project.type || "project", id: project.id }} draggable trigger="column" borders="center">
+                    {#if project.type === "folder" && (project.parent === "/" || shown)}
+                        <ProjectFolder {project} {opened} />
+                    {:else if project.id && shown}
+                        <ProjectButton name={project.name} parent={project.parent} id={project.id} />
+                    {/if}
+                </SelectElem>
+            </div>
+        {/each}
+    {:else}
+        <Center>
+            <Loader />
+        </Center>
+    {/if}
 {:else}
     <Center faded>
         <T id="empty.general" />

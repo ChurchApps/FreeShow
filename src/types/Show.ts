@@ -27,7 +27,7 @@ export interface Show {
     }
     message?: {
         text: string
-        template: string
+        template?: string
     }
     metadata?: {
         autoMedia?: boolean

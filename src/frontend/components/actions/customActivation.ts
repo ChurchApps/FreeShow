@@ -12,6 +12,8 @@ export const customActionActivations = [
     { id: "slide_click", name: "$:actions.activate_slide_clicked:$" },
     { id: "video_start", name: "$:actions.activate_video_starting:$" },
     { id: "video_end", name: "$:actions.activate_video_ending:$" },
+    { id: "audio_start", name: "$:actions.activate_audio_starting:$" },
+    { id: "audio_end", name: "$:actions.activate_audio_ending:$" },
     { id: "timer_end", name: "$:actions.activate_timer_ending:$" },
     { id: "scripture_start", name: "$:actions.activate_scripture_start:$" },
     { id: "slide_cleared", name: "$:actions.activate_slide_cleared:$" },

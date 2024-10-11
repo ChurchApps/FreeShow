@@ -10,7 +10,7 @@ interface Song {
     title: string
     author: string
     copyright: string
-    // presentation: string
+    presentation?: string
     // capo: string
     // tempo: string
     ccli: string
@@ -18,10 +18,10 @@ interface Song {
     // user1: string
     // user2: string
     // user3: string
-    lyrics: string[]
+    lyrics: string
     hymn_number: string
     key: string
-    // aka: string
+    aka?: string
     // key_line: string
     // linked_songs: string
     time_sig: string
@@ -50,11 +50,12 @@ export function convertOpenSong(data: any) {
                 copyright: song.copyright,
                 CCLI: song.ccli,
             }
+            show.message = { text: song.hymn_number }
 
             let { slides, layout }: any = createSlides(song)
 
             show.slides = slides
-            show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
+            show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song.aka || "", slides: layout } }
 
             tempShows.push({ id: uid(), show })
         })
@@ -64,24 +65,35 @@ export function convertOpenSong(data: any) {
 }
 
 const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }
-function createSlides({ lyrics }: Song) {
+function createSlides({ lyrics, presentation }: Song) {
     let slides: any = {}
     let layout: any[] = []
     if (!lyrics) return { slides, layout }
-    lyrics.forEach((slide) => {
-        let lines = slide.split("\n")
-        let group = lines.splice(0, 1)[0]
+
+    // fix incorrect formatting
+    lyrics = lyrics.replaceAll("[", "\n\n[").trim()
+    lyrics = lyrics.replaceAll("\n\n\n\n", "\n\n")
+
+    let slideRef: any = {}
+    let slideOrder: string[] = []
+
+    lyrics.split("\n\n").forEach((slide) => {
+        let lines = slide.trim().split("\n")
+        let group = lines.splice(0, 1)[0]?.replace(/[\[\]]/g, "")
         let chords = lines.filter((_v: string) => _v.startsWith("."))
         let text = lines.filter((_v: string) => !_v.startsWith("."))
         if (text) {
             let id: string = uid()
-            layout.push({ id })
+            slideRef[group] = id
+            slideOrder.push(group)
+
             let items = [
                 {
                     style: "left:50px;top:120px;width:1820px;height:840px;",
-                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
+                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;") }] })),
                 },
             ]
+
             // TODO: chords
             console.log(chords)
             slides[id] = {
@@ -91,10 +103,20 @@ function createSlides({ lyrics }: Song) {
                 notes: "",
                 items,
             }
-            let globalGroup = OSgroups[group.replace(/[\[\]0-9]/g, "")]
+            let globalGroup = OSgroups[group.replace(/[0-9]/g, "")]
             if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
         }
     })
+
+    // custom slide order
+    if (presentation) slideOrder = presentation.split(" ")
+    if (slideOrder.length) {
+        layout = []
+        slideOrder.forEach((group) => {
+            let id = slideRef[group]
+            layout.push({ id })
+        })
+    }
 
     return { slides, layout }
 }
@@ -107,7 +129,7 @@ function XMLtoObject(xml: string) {
         title: song.getElementsByTagName("title")[0]?.textContent!,
         author: song.getElementsByTagName("author")[0]?.textContent!,
         copyright: song.getElementsByTagName("copyright")[0]?.textContent!,
-        // presentation: song.getElementsByTagName("presentation")[0]?.textContent!,
+        presentation: song.getElementsByTagName("presentation")[0]?.textContent!,
         // capo: song.getElementsByTagName("capo")[0]?.textContent!,
         // tempo: song.getElementsByTagName("tempo")[0]?.textContent!,
         ccli: song.getElementsByTagName("ccli")[0]?.textContent!,
@@ -115,10 +137,10 @@ function XMLtoObject(xml: string) {
         // user1: song.getElementsByTagName("user1")[0]?.textContent!,
         // user2: song.getElementsByTagName("user2")[0]?.textContent!,
         // user3: song.getElementsByTagName("user3")[0]?.textContent!,
-        lyrics: song.getElementsByTagName("lyrics")[0]?.textContent!.split("\n\n"),
+        lyrics: song.getElementsByTagName("lyrics")[0]?.textContent!,
         hymn_number: song.getElementsByTagName("hymn_number")[0]?.textContent!,
         key: song.getElementsByTagName("key")[0]?.textContent!,
-        // aka: song.getElementsByTagName("aka")[0]?.textContent!,
+        aka: song.getElementsByTagName("aka")[0]?.textContent!,
         // key_line: song.getElementsByTagName("key_line")[0]?.textContent!,
         // linked_songs: song.getElementsByTagName("linked_songs")[0]?.textContent!,
         time_sig: song.getElementsByTagName("time_sig")[0]?.textContent!,

@@ -10,8 +10,8 @@
     export let outSlide: null | number
     export let styleRes: null | any
     export let dictionary: any
+    export let columns: number = 2
     let resolution: Resolution = styleRes || { width: 1920, height: 1080 }
-    let columns: number = 2
 
     // $: id = $activeShow!.id
     // $: currentShow = $shows[$activeShow!.id]
@@ -22,7 +22,7 @@
     export let scrollElem: any
     let lastScrollId = "-1"
     $: {
-        if (scrollElem && outSlide !== null && outShow?.id === activeShow.id) {
+        if (scrollElem?.querySelector(".grid") && outSlide !== null && outShow?.id === activeShow.id) {
             let index = Math.max(0, outSlide)
             if (outShow.id + index !== lastScrollId) {
                 lastScrollId = outShow.id + index

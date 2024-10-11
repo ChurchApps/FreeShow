@@ -49,7 +49,7 @@
     },
     "tooltip": {
         "project": "Új projekt létrehozása, ahol bemutatókat adhat hozzá és elrendezheti azokat.",
-        "show": "Új bemutató létrehozása, ahol hozzáadhat dalszövegeket, prezentációkat és médiaanyagokat. Tartsa lenyomva a Ctrl/Cmd billentyűt üres műsor létrehozásához.",
+        "show": "Új bemutató létrehozása, ahol hozzáadhat dalszövegeket, prezentációkat és médiaanyagokat.",
         "groups": "Az összes csoport a jelenlegi bemutatóban és az összes globális csoport. Kattintson rájuk vagy húzza őket a jelenlegi elrendezéshez.",
         "layout": "Átmenetek és következő időzítők hozzáadása a jelenlegi elrendezésben található diákhoz.",
         "media": "Az összes média a jelenlegi bemutatóban. Tegye ki élőbe, vagy húzza őket az aktuális elrendezéshez.",
@@ -90,13 +90,19 @@
         "bold": "Félkövér"
     },
     "create_show": {
+        "web": "Webes keresés",
         "search_web": "Dal keresése a weben",
+        "search_results": "Keresési eredmények",
         "more_options": "További lehetőségek",
         "format_new_show": "Szövegformázás",
         "format_new_show_tip": "A szövegformátum fejlesztése automatikus nagybetűzéssel, a szöveg felosztásával, csoportok hozzárendelésével és még sok mással.",
         "split_lines": "Sorok száma",
         "split_lines_tip": "Diánként engedélyezett sorok száma az automatikus felosztás előtt",
-        "quick_lyrics_example_text": "Sor"
+        "quick_lyrics": "Gyors dalszöveg",
+        "quick_lyrics_tip": "Illessze be a vágólapról vagy gépeljen",
+        "quick_lyrics_example_tip": "Adja meg a dalszöveget vagy bármilyen szöveget itt",
+        "quick_lyrics_example_text": "Sor",
+        "empty": "Üres bemutató"
     },
     "preview": {
         "_previous_show": "Előző bemutató",
@@ -199,7 +205,8 @@
         "settings": "Beállítások",
         "_title_settings": "Beállítások",
         "_title_display": "Prezentálás",
-        "_title_display_stop": "Prezentáció leállítása"
+        "_title_display_stop": "Prezentáció leállítása",
+        "again_confirm": "Kattintás a megerősítéshez"
     },
     "empty": {
         "general": "Itt nincs semmi",
@@ -263,7 +270,7 @@
         "message": "Üzenet",
         "message_tip": "Valamit jelenítsen meg az összes dián",
         "auto_media": "Metaadatok lekérése a média tartalmából",
-        "override_output": "Stílus felülírása a kimeneten",
+        "override_output": "Kimeneti stílus felülírása",
         "display_metadata": "Metaadatok megjelenítése",
         "meta_template": "Metaadat sablon",
         "text_divider": "Szövegelválasztó",
@@ -466,7 +473,6 @@
     "show": {
         "name": "Név",
         "category": "Kategória",
-        "quick_lyrics": "Gyors dalszöveg",
         "new_layout": "Új elrendezés",
         "grid": "Rács nézet",
         "simple": "Egyszerű nézet",
@@ -477,7 +483,6 @@
         "locked": "Ez a bemutató zárolva van!",
         "locked_info": "Ez a bemutató zárolva lett és nem lehet szerkeszteni. Oldja fel a bemutató rajzolóban. ",
         "slide_template": "Diasablon",
-        "search_results": "Keresési eredmény",
         "source": "Forrás",
         "artist": "Művész",
         "song": "Dal"
@@ -646,6 +651,13 @@
         "activate_show_created": "Aktiválás bemutató létrehozásakor",
         "activate_audio_playlist_ended": "Aktiválás hanglejátszási lista végén"
     },
+    "recording": {
+        "remove": "Felvétel eltávolítása",
+        "tip": "Diák időzítésének rögzítése és lejátszása . Szinkronizálás az első dia hangsávjával.",
+        "layout_changed": "Az elrendezés módosult az utolsó rögzítés óta!",
+        "audio_synced": "Hanggal szinkronizálva!",
+        "start": "Diarögzítés indítása"
+    },
     "animate": {
         "change": "Módosítás",
         "set": "Beállítás",
@@ -688,7 +700,6 @@
         "all_shows": "Összes bemutató",
         "all_projects": "Összes projekt",
         "project": "Projekt",
-        "options": "Beállítások",
         "preview": "Előnézet",
         "title": "Cím",
         "metadata": "Metaadatok",
@@ -763,6 +774,7 @@
         "media_fit": "Média méretezése",
         "size": "Méret",
         "max_lines": "Maximum sor",
+        "invert_items": "Elemek megfordítása",
         "chords": "Akkordok",
         "transpose": "Transzponálás",
         "auto_size": "Automatikus méret",
@@ -974,7 +986,8 @@
         "overrun": "Túlcsordulás színe",
         "source_output": "Forráskimenet",
         "auto_stretch": "Tartalom automatikus nyújtása",
-        "labels": "Címkék megjelenítése"
+        "labels": "Címkék megjelenítése",
+        "label_color": "Színek címkézése"
     },
     "settings": {
         "general": "Általános",

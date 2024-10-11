@@ -1,9 +1,10 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Item, Transition } from "../../../../types/Show"
-    import { currentWindow, templates } from "../../../stores"
+    import { currentWindow, scriptureSettings, templates } from "../../../stores"
     import { clone } from "../../helpers/array"
     import OutputTransition from "./OutputTransition.svelte"
+    import { getStyleTemplate, slideHasAutoSizeItem } from "../../helpers/output"
     // import { onMount } from "svelte"
 
     export let globalTransition: Transition
@@ -14,7 +15,7 @@
     export let currentSlide: any = {}
     export let outSlide: any = {}
     export let lines: any[] = []
-    export let customTemplate: string = ""
+    export let currentStyle: any = {}
 
     let currentlyTransitioning: { [key: string]: any } = {}
 
@@ -51,15 +52,11 @@
 
         // auto size delay
         if (!outDelay) {
-            // wait for scripture auto size
-            outDelay = outSlide?.id === "temp" ? 400 : 0
+            let customTemplate = getStyleTemplate(outSlide, currentStyle)
+            if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template]
 
-            // check output template auto size
-            if (!outDelay && customTemplate) {
-                let templateItems = $templates[customTemplate]?.items || []
-                let hasAuto = templateItems.find((a) => a.auto)
-                if (hasAuto) outDelay = 400
-            }
+            // wait output style/scripture template auto size
+            if (Object.keys(customTemplate).length && slideHasAutoSizeItem(customTemplate)) outDelay = 400
 
             if (!inDelay) inDelay = outDelay * 0.98
         }

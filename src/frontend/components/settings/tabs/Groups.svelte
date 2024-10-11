@@ -33,25 +33,29 @@
         history({ id: "UPDATE", newData: { key, data: value }, oldData: { id: id }, location: { page: "settings", id: "global_group", override: "group_" + key } })
     }
 
-    const inputs: any = {
+    const inputs = {
         colors: (e: any) => fullColors.set(e.target.checked),
         groupNumber: (e: any) => groupNumbers.set(e.target.checked),
-        numberKeys: (e: any) =>
-            special.update((a) => {
-                a.numberKeys = e.target.checked
-                return a
-            }),
+        numberKeys: (e: any) => updateSpecial(e.target.checked, "numberKeys"),
+        capitalizeWords: (e: any) => updateSpecial(e.target.value || "", "capitalize_words"),
+    }
+
+    function updateSpecial(value, key) {
+        special.update((a) => {
+            a[key] = value
+            return a
+        })
     }
 
     const defaultGroups: any = {
         break: { name: "break", default: true, color: "#f5255e" },
-        bridge: { name: "bridge", default: true, color: "#f52598" },
-        chorus: { name: "chorus", default: true, color: "#f525d2" },
+        bridge: { name: "bridge", default: true, color: "#f52598", shortcut: "B" },
+        chorus: { name: "chorus", default: true, color: "#f525d2", shortcut: "C" },
         intro: { name: "intro", default: true, color: "#d525f5" },
         outro: { name: "outro", default: true, color: "#a525f5" },
         pre_chorus: { name: "pre_chorus", default: true, color: "#8825f5" },
         tag: { name: "tag", default: true, color: "#7525f5" },
-        verse: { name: "verse", default: true, color: "#5825f5" },
+        verse: { name: "verse", default: true, color: "#5825f5", shortcut: "V" },
     }
 
     const keys = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
@@ -73,6 +77,19 @@
         let value: any = { group: "", groupColor: "#ffffff" }
         history({ id: "UPDATE", newData: { data: { name: value.group, color: value.groupColor } }, location: { page: "settings", id: "global_group" } })
         // value.group = ""
+    }
+
+    function reset() {
+        fullColors.set(false)
+        groupNumbers.set(true)
+
+        groups.set(clone(defaultGroups))
+
+        special.update((a) => {
+            delete a.numberKeys
+            a.capitalize_words = "Jesus, Lord" // updateSettings.ts
+            return a
+        })
     }
 
     let templateList: any[] = []
@@ -97,6 +114,11 @@
     <div class="alignRight">
         <Checkbox checked={$special.numberKeys} on:change={inputs.numberKeys} />
     </div>
+</CombinedInput>
+
+<CombinedInput>
+    <p title={$dictionary.settings?.comma_seperated}><T id="settings.capitalize_words" /></p>
+    <TextInput value={$special.capitalize_words || ""} on:change={inputs.capitalizeWords} />
 </CombinedInput>
 
 <h3><T id="groups.global" /></h3>
@@ -143,15 +165,7 @@
             <Icon id="add" right />
             <T id="settings.add" />
         </Button>
-        <Button
-            style="width: 100%;"
-            center
-            on:click={() => {
-                fullColors.set(false)
-                groupNumbers.set(true)
-                groups.set(clone(defaultGroups))
-            }}
-        >
+        <Button style="width: 100%;" center on:click={reset}>
             <Icon id="reset" right />
             <T id="actions.reset" />
         </Button>

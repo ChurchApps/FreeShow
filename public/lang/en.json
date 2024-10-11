@@ -102,7 +102,8 @@
         "quick_lyrics_tip": "Paste text or enter manually",
         "quick_lyrics_example_tip": "Enter lyrics or any text here",
         "quick_lyrics_example_text": "Line",
-        "empty": "Empty show"
+        "empty": "Empty show",
+        "exists": "Found an existing show with the same name"
     },
     "preview": {
         "_previous_show": "Previous show",
@@ -381,6 +382,7 @@
         "transition": "Transition",
         "delete_show": "Delete show",
         "delete_show_confirmation": "Are you sure you want to delete",
+        "delete_duplicated_shows": "Delete duplicated shows",
         "change_name": "Change name on",
         "choose_screen": "Choose screen",
         "choose_output": "Choose output type",
@@ -485,7 +487,11 @@
         "slide_template": "Slide template",
         "source": "Source",
         "artist": "Artist",
-        "song": "Song"
+        "song": "Song",
+        "delete_manual": "Manual check",
+        "delete_match": "Delete if exact match",
+        "delete_keep_last_modified": "Delete all except last modified",
+        "delete_keep_first_created": "Delete all except first created"
     },
     "actions": {
         "rename": "Rename",
@@ -594,7 +600,10 @@
         "play_on_midi_tip": "Activate this specific slide when receiving chosen MIDI signal",
         "send_midi": "Send MIDI signal",
         "delete_shows_not_indexed": "Delete shows in 'Shows' folder that are not indexed",
+        "delete_empty_shows": "Delete empty shows",
         "delete_thumbnail_cache": "Delete thumbnail cache",
+        "export_usage_log": "Export usage log",
+        "reset_usage_log": "Reset usage log",
         "open_log_file": "Open log file",
         "open_cache_folder": "Open cache folder",
         "refresh_all_shows": "Get all shows in 'Shows' folder",
@@ -644,6 +653,8 @@
         "activate_slide_clicked": "Activate on slide click",
         "activate_video_starting": "Activate when video is starting",
         "activate_video_ending": "Activate when video is ending",
+        "activate_audio_starting": "Activate when audio is starting",
+        "activate_audio_ending": "Activate when audio is ending",
         "activate_timer_ending": "Activate when timer is ending",
         "activate_scripture_start": "Activate when scripture is started",
         "activate_slide_cleared": "Activate when slide is cleared",
@@ -1064,7 +1075,7 @@
         "show_location": "Show location",
         "data_location": "Data location",
         "user_data_location": "Save user settings at 'Data location'",
-        "popup_before_close": "Always display popup before closing",
+        "popup_before_close": "Enable close confirmation popup",
         "disable_hardware_acceleration": "Disable hardware acceleration",
         "restart_for_change": "You have to restart the program for the change to take effect!",
         "font": "Font",
@@ -1095,6 +1106,7 @@
         "restore_started": "Restoring...",
         "backup_finished": "Backup complete!",
         "restore_finished": "Restore complete!",
+        "auto_backup": "Auto backup",
         "preview_frame_rate": "Preview frame rate",
         "auto": "Auto",
         "optimized": "Optimized",
@@ -1241,6 +1253,11 @@
         "5": "Friday",
         "6": "Saturday",
         "7": "Sunday"
+    },
+    "interval": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "mothly": "Monthly"
     },
     "info": {
         "created": "Created",

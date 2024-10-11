@@ -8,6 +8,7 @@
     import Icon from "./components/Icon.svelte"
     import ProjectButton from "./components/ProjectButton.svelte"
     import ShowButton from "./components/ShowButton.svelte"
+    import TabletMode from "./components/tablet/TabletMode.svelte"
     import Tabs from "./components/Tabs.svelte"
     import Clear from "./components/slide/Clear.svelte"
     import Slide from "./components/slide/Slide.svelte"
@@ -402,7 +403,11 @@
 {/if}
 
 {#if connected}
-    <section class="justify">
+    <section class="tabletMode">
+        <TabletMode {dictionary} {projects} {activeProject} {activeShow} {shows} {send} {outSlide} {outShow} {styleRes} {outLayout} {layout} {transition} {totalSlides} {previous} {next} />
+    </section>
+
+    <section class="phoneMode justify">
         <div class="content">
             {#if activeTab === "projects"}
                 <h2>{dictionary.remote.projects}</h2>
@@ -833,5 +838,25 @@
     .lyric {
         font-size: 1.1em;
         text-align: center;
+    }
+
+    .phoneMode {
+        display: flex;
+    }
+    .tabletMode {
+        display: none;
+
+        height: 100%;
+        justify-content: space-between;
+    }
+
+    /* tablet & computers */
+    @media only screen and (min-width: 1000px) {
+        .phoneMode {
+            display: none;
+        }
+        .tabletMode {
+            display: flex;
+        }
     }
 </style>

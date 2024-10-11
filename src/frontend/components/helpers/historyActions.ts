@@ -728,6 +728,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let slideId: string = data.indexes ? ref[data.indexes[0]]?.id : ""
 
             let createItems: boolean = !!data.data?.createItems
+            let shiftItems: boolean = !!data.data?.shiftItems
 
             if (deleting) {
                 let previousData = data.previousData
@@ -788,7 +789,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     // roll items around
                     let newTemplate = data.previousData.template !== data.id
-                    if (createItems && !slide.settings?.template && !newTemplate) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
+                    if (shiftItems && !slide.settings?.template && !newTemplate) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 
                     let changeOverflowItems = slide.settings?.template || createItems
                     let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false)

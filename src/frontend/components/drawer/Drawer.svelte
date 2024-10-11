@@ -15,7 +15,7 @@
 
     const minHeight = 40
     const topHeight = 40
-    let maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? MENU_BAR_HEIGHT : 0)
+    let maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? MENU_BAR_HEIGHT - 0.3 : 0)
     $: height = $drawer.height
 
     let move: boolean = false
@@ -23,7 +23,7 @@
     function mousedown(e: any) {
         if (e.target.closest(".search")) return
 
-        maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? MENU_BAR_HEIGHT : 0)
+        maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? MENU_BAR_HEIGHT - 0.3 : 0)
         mouse = {
             x: e.clientX,
             y: e.clientY,

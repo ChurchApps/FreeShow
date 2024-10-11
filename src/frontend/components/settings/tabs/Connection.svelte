@@ -45,6 +45,7 @@
         ports.set({ remote: 5510, stage: 5511 })
         maxConnections.set(10)
         disabledServers.set({})
+        serverData.set({})
     }
 
     const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
@@ -99,7 +100,7 @@
         })
     }
 
-    let enableOutputSelector = $serverData?.output_stream?.outputId || getActiveOutputs($outputs, false, true).length > 1
+    $: enableOutputSelector = $serverData?.output_stream?.outputId || (getActiveOutputs($outputs, false, true).length > 1 && $disabledServers.output_stream === false)
 
     function restart() {
         send(MAIN, ["START"], { ports: $ports, max: $maxConnections, disabled: $disabledServers })
@@ -186,10 +187,14 @@
     <p><T id="settings.max_connections" /></p>
     <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} />
 </CombinedInput>
-<CombinedInput>
-    <p>RemoteShow <T id="settings.password" /></p>
-    <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />
-</CombinedInput>
+
+{#if $disabledServers.remote !== true}
+    <CombinedInput>
+        <p>RemoteShow <T id="settings.password" /></p>
+        <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />
+    </CombinedInput>
+{/if}
+
 {#if enableOutputSelector}
     <CombinedInput>
         <p>OutputShow <T id="midi.output" /></p>

@@ -73,13 +73,15 @@
 
 <CombinedInput>
     <p><T id="cloud.google_drive_api" /></p>
-    <Button on:click={getKeysFile} center>
-        <Icon id="key" right />
-        {#if validKeys}
-            <T id="cloud.update_key" />
-        {:else}
-            <T id="cloud.select_key" />
-        {/if}
+    <Button on:click={getKeysFile}>
+        <Icon id="key" style="margin-left: 0.5em;" right />
+        <p>
+            {#if validKeys}
+                <T id="cloud.update_key" />
+            {:else}
+                <T id="cloud.select_key" />
+            {/if}
+        </p>
     </Button>
 </CombinedInput>
 
@@ -147,6 +149,7 @@
 
         min-height: 38px;
         margin: 5px 0;
+        margin-bottom: 15px;
         font-style: italic;
         opacity: 0.8;
     }
