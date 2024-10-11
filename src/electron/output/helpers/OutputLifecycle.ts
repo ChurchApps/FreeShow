@@ -136,6 +136,7 @@ export class OutputLifecycle {
             window.setTitle(name || "Output")
         })
 
+        // @ts-ignore
         window.on("move", (e: any) => {
             if (!OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()
 
@@ -143,6 +144,7 @@ export class OutputLifecycle {
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
         })
 
+        // @ts-ignore
         window.on("resize", (e: any) => {
             if (OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()
 
