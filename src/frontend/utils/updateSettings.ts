@@ -122,7 +122,7 @@ export function updateSettings(data: any) {
         setTimeout(() => {
             restartOutputs()
             if (get(autoOutput)) setTimeout(() => displayOutputs({}, true), 500)
-            checkWindowCapture()
+            setTimeout(checkWindowCapture, 1000)
         }, 1500)
     }
 

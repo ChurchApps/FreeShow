@@ -151,3 +151,10 @@ export function timeAgo(time: number) {
     const count = Math.floor(seconds / interval.seconds)
     return `${count} ${interval.label}${count !== 1 ? "s" : ""} ago`
 }
+
+export function getTimeFromInterval(interval) {
+    if (interval === "daily") return 86400000
+    if (interval === "weekly") return 604800000
+    if (interval === "mothly") return 2592000000
+    return 0
+}

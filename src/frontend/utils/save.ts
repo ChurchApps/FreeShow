@@ -76,6 +76,7 @@ import {
     transitionData,
     triggers,
     undoHistory,
+    usageLog,
     variables,
     videoExtensions,
     videoMarkers,
@@ -86,11 +87,14 @@ import { audioStreams, companion } from "./../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
 import { customActionActivation } from "../components/actions/actions"
+import { send } from "./request"
 
-export function save(closeWhenFinished: boolean = false, backup: boolean = false) {
+export function save(closeWhenFinished: boolean = false, customTriggers: { backup?: boolean; silent?: boolean; changeUserData?: any } = {}) {
     console.log("SAVING...")
-    newToast("$toast.saving")
-    customActionActivation("save")
+    if (!customTriggers.backup) {
+        newToast("$toast.saving")
+        customActionActivation("save")
+    }
 
     let settings: { [key in SaveListSettings]: any } = {
         initialized: true,
@@ -195,21 +199,25 @@ export function save(closeWhenFinished: boolean = false, backup: boolean = false
         ...allSavedData,
         CACHE: { text: get(textCache) },
         HISTORY: { undo: get(undoHistory), redo: get(redoHistory) },
+        USAGE: get(usageLog),
     }
 
     allSavedData.closeWhenFinished = closeWhenFinished
-    allSavedData.backup = backup
-    window.api.send(STORE, { channel: "SAVE", data: allSavedData })
+    allSavedData.customTriggers = customTriggers
+
+    if (customTriggers.backup) newToast("$settings.backup_started")
+    send(STORE, ["SAVE"], allSavedData)
 }
 
-export function saveComplete({ closeWhenFinished, backup }: any) {
+export function saveComplete({ closeWhenFinished, customTriggers }: any) {
     if (!closeWhenFinished) {
         saved.set(true)
         console.log("SAVED!")
-        newToast("$toast.saved")
+
+        if (!customTriggers?.backup) newToast("$toast.saved")
     }
 
-    if (backup) return
+    if (customTriggers?.backup || customTriggers?.changeUserData) return
 
     let mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId || get(driveData)?.disabled === true) {

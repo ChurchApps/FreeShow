@@ -57,7 +57,6 @@
     export let noQuickEdit: boolean = false
     export let altKeyPressed: boolean = false
     export let disableThumbnails: boolean = false
-    export let showList: boolean = false
 
     $: viewMode = $slidesOptions.mode || "grid"
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
@@ -356,7 +355,6 @@
                                     }}
                                     style={viewMode !== "lyrics" || noQuickEdit}
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
-                                    {showList}
                                 />
                             {/if}
                         {/each}

@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { MAIN, STORE } from "../../../../types/Channels"
-    import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, guideActive, popupData, shows, showsCache, showsPath, special } from "../../../stores"
+    import { EXPORT, MAIN } from "../../../../types/Channels"
+    import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, guideActive, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
+    import { newToast } from "../../../utils/common"
     import { destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
@@ -10,6 +11,7 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
 
     onMount(() => {
         // getCacheSize()
@@ -44,7 +46,9 @@
         let checked = e.target.checked
         updateSpecial(checked, key)
 
-        if (key === "customUserDataLocation") send(STORE, ["UPDATE_PATH"], { reset: !checked, dataPath: $dataPath })
+        if (key === "customUserDataLocation") {
+            save(false, { backup: true, changeUserData: { reset: !checked, dataPath: $dataPath } })
+        }
     }
 
     // hardware acceleration
@@ -167,16 +171,33 @@
 
     // backup
     function backup() {
-        alertMessage.set($dictionary.settings?.backup_started)
-        activePopup.set("alert")
-        save(false, true)
+        save(false, { backup: true })
     }
 
     function restore() {
         showsCache.set({})
-        alertMessage.set($dictionary.settings?.restore_started)
-        activePopup.set("alert")
+        newToast("$settings.restore_started")
         send(MAIN, ["RESTORE"], { showsPath: $showsPath })
+    }
+
+    const autobackupList: any = [
+        { id: "never", name: "$:settings.never:$" },
+        { id: "daily", name: "$:interval.daily:$" },
+        { id: "weekly", name: "$:interval.weekly:$" },
+        { id: "mothly", name: "$:interval.mothly:$" },
+    ]
+
+    // usage log
+
+    let exportingUsageLog: boolean = false
+    let usageLogExported: boolean = false
+    function exportUsageLog() {
+        exportingUsageLog = true
+        setTimeout(() => (usageLogExported = true), 1000)
+        send(EXPORT, ["USAGE"], { path: $dataPath, content: $usageLog })
+    }
+    function resetUsageLog() {
+        usageLog.set({ all: [] })
     }
 </script>
 
@@ -184,12 +205,14 @@
     <p><T id="settings.data_location" /></p>
     <span class="path" title={$dataPath || ""}>
         <FolderPicker style="width: 100%;" id="DATA" center={false} path={$dataPath}>
-            <Icon id="folder" right />
-            {#if $dataPath}
-                {$dataPath}
-            {:else}
-                <T id="inputs.change_folder" />
-            {/if}
+            <Icon id="folder" style="margin-left: 0.5em;" right />
+            <p>
+                {#if $dataPath}
+                    {$dataPath}
+                {:else}
+                    <T id="inputs.change_folder" />
+                {/if}
+            </p>
         </FolderPicker>
         <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $dataPath)}>
             <Icon id="launch" white />
@@ -203,12 +226,14 @@
         <!-- <p style="font-size: 0.9em;opacity: 0.7;">{$showsPath}</p> -->
         <!-- title={$dictionary.inputs?.change_folder} -->
         <FolderPicker style="width: 100%;" id="SHOWS" center={false} path={$showsPath}>
-            <Icon id="folder" right />
-            {#if $showsPath}
-                {$showsPath}
-            {:else}
-                <T id="inputs.change_folder" />
-            {/if}
+            <Icon id="folder" style="margin-left: 0.5em;" right />
+            <p>
+                {#if $showsPath}
+                    {$showsPath}
+                {:else}
+                    <T id="inputs.change_folder" />
+                {/if}
+            </p>
         </FolderPicker>
         <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $showsPath)}>
             <Icon id="launch" white />
@@ -269,8 +294,8 @@
 <!-- or just allow to enter in a template... -->
 <!-- <CombinedInput>
     <Button style="width: 100%;" on:click={() => activePopup.set("custom_metadata_order")}>
-        <Icon id="meta" style="border: 0;" right />
-        <p style="padding: 0;"><T id="popup.custom_metadata_order" /></p>
+        <Icon id="meta" style="margin-left: 0.5em;" right />
+        <p><T id="popup.custom_metadata_order" /></p>
     </Button>
 </CombinedInput> -->
 
@@ -279,8 +304,8 @@
 <!-- {#if brokenShows > 0 || hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={refreshShows}>
-            <Icon id="refresh" style="border: 0;" right />
-            <p style="padding: 0;">
+            <Icon id="refresh" style="margin-left: 0.5em;" right />
+            <p>
                 <T id="actions.refresh_all_shows" />
                 <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({brokenShows || hiddenShows.length - Object.keys($shows).length})</span>
             </p>
@@ -291,8 +316,8 @@
 {#if hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={deleteShows}>
-            <Icon id="delete" style="border: 0;" right />
-            <p style="padding: 0;">
+            <Icon id="delete" style="margin-left: 0.5em;" right />
+            <p>
                 <T id="actions.delete_shows_not_indexed" />
                 <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({hiddenShows.length - Object.keys($shows).length})</span>
             </p>
@@ -304,8 +329,8 @@
 {#if emptyShows.length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={deleteEmptyShows}>
-            <Icon id="delete" style="border: 0;" right />
-            <p style="padding: 0;">
+            <Icon id="delete" style="margin-left: 0.5em;" right />
+            <p>
                 <T id="actions.delete_empty_shows" />
                 <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({emptyShows.length})</span>
             </p>
@@ -317,8 +342,8 @@
 {#if duplicatedShows.length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={deleteDuplicatedShows}>
-            <Icon id="delete" style="border: 0;" right />
-            <p style="padding: 0;">
+            <Icon id="delete" style="margin-left: 0.5em;" right />
+            <p>
                 <T id="popup.delete_duplicated_shows" />
                 <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({duplicatedShows.length})</span>
             </p>
@@ -328,8 +353,8 @@
 
 <!-- <CombinedInput>
     <Button style="width: 100%;" on:click={deleteCache}>
-        <Icon id="delete" style="border: 0;" right />
-        <p style="padding: 0;">
+        <Icon id="delete" style="margin-left: 0.5em;" right />
+        <p>
             <T id="actions.delete_thumbnail_cache" />
             <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({cacheSize})</span>
         </p>
@@ -338,32 +363,61 @@
 
 <CombinedInput title={$dictionary.guide?.start}>
     <Button style="width: 100%;" on:click={() => guideActive.set(true)}>
-        <Icon id="guide" right /><T id="guide.start" />
+        <Icon id="guide" style="margin-left: 0.5em;" right />
+        <p><T id="guide.start" /></p>
     </Button>
 </CombinedInput>
 
 <CombinedInput title={$dictionary.media?.bundle_media_files_tip}>
     <Button style="width: 100%;" on:click={bundleMediaFiles}>
-        <Icon id="image" right /><T id="media.bundle_media_files" />
+        <Icon id="image" style="margin-left: 0.5em;" right />
+        <p><T id="media.bundle_media_files" /></p>
     </Button>
 </CombinedInput>
 
+{#if $usageLog.all?.length}
+    {#if usageLogExported}
+        <CombinedInput title={$dictionary.actions?.reset_usage_log}>
+            <Button style="width: 100%;" on:click={resetUsageLog}>
+                <Icon id="reset" style="margin-left: 0.5em;" right />
+                <p><T id="actions.reset_usage_log" /></p>
+            </Button>
+        </CombinedInput>
+    {:else}
+        <CombinedInput title={$dictionary.actions?.export_usage_log}>
+            <Button disabled={exportingUsageLog} style="width: 100%;" on:click={exportUsageLog}>
+                <Icon id="download" style="margin-left: 0.5em;" right />
+                <p><T id="actions.export_usage_log" /></p>
+            </Button>
+        </CombinedInput>
+    {/if}
+{/if}
+
 <CombinedInput>
     <Button style="width: 50%;" on:click={openLog}>
-        <Icon id="document" right /><T id="actions.open_log_file" />
+        <Icon id="document" style="margin-left: 0.5em;" right />
+        <p><T id="actions.open_log_file" /></p>
     </Button>
     <Button on:click={openCache}>
-        <Icon id="folder" right /><T id="actions.open_cache_folder" />
+        <Icon id="folder" style="margin-left: 0.5em;" right />
+        <p><T id="actions.open_cache_folder" /></p>
     </Button>
 </CombinedInput>
 
 <CombinedInput>
     <Button style="width: 50%;" on:click={backup}>
-        <Icon id="download" right /><T id="settings.backup_all" />
+        <Icon id="download" style="margin-left: 0.5em;" right />
+        <p><T id="settings.backup_all" /></p>
     </Button>
     <Button on:click={restore}>
-        <Icon id="upload" right /><T id="settings.restore" />
+        <Icon id="upload" style="margin-left: 0.5em;" right />
+        <p><T id="settings.restore" /></p>
     </Button>
+</CombinedInput>
+
+<CombinedInput>
+    <p><T id="settings.auto_backup" /></p>
+    <Dropdown options={autobackupList} value={autobackupList.find((a) => a.id === ($special.autoBackup || "never"))?.name || ""} on:click={(e) => updateSpecial(e.detail.id, "autoBackup")} />
 </CombinedInput>
 
 <CombinedInput>

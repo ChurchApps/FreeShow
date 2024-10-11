@@ -330,8 +330,8 @@ app.on("web-contents-created", (_e, contents) => {
 ipcMain.on(STORE, (e, msg) => {
     if (userDataPath === null) updateDataPath()
 
-    if (msg.channel === "UPDATE_PATH") updateDataPath(msg.data)
-    else if (msg.channel === "SAVE") save(msg.data)
+    // if (msg.channel === "UPDATE_PATH") updateDataPath(msg.data)
+    if (msg.channel === "SAVE") save(msg.data)
     else if (msg.channel === "SHOWS") loadShows(msg.data)
     else if (stores[msg.channel]) getStore(msg.channel, e)
 })
@@ -389,11 +389,11 @@ function save(data: any) {
         // SAVED
         if (!data.reset) {
             setTimeout(() => {
-                toApp(STORE, { channel: "SAVE", data: { closeWhenFinished: data.closeWhenFinished, backup: data.backup } })
+                toApp(STORE, { channel: "SAVE", data: { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers } })
             }, 300)
         }
 
-        if (data.backup) startBackup({ showsPath: data.path, dataPath: data.dataPath, scripturePath })
+        if (data.customTriggers?.backup || data.customTriggers?.changeUserData) startBackup({ showsPath: data.path, dataPath: data.dataPath, scripturePath, customTriggers: data.customTriggers })
     }, 700)
 }
 

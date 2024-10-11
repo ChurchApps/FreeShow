@@ -188,9 +188,18 @@ export function getDataFolder(dataPath: string, name: string) {
 
 // HELPERS
 
-function createFolder(path: string) {
+export function createFolder(path: string) {
     if (doesPathExist(path)) return path
     return makeDir(path)
+}
+
+export function getTimePointString() {
+    const date = new Date()
+    let name = date.toISOString()
+    name = name.slice(0, name.indexOf("T"))
+    name += `_${("0" + date.getHours()).slice(-2)}-${("0" + date.getMinutes()).slice(-2)}`
+
+    return name
 }
 
 export function fileContentMatches(content: string | NodeJS.ArrayBufferView, path: string): boolean {

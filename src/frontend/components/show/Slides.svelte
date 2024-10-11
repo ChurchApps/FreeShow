@@ -374,7 +374,6 @@
                                     icons
                                     {altKeyPressed}
                                     disableThumbnails={isLessons && !loaded}
-                                    showList
                                     on:click={(e) => slideClick(e, i)}
                                 />
                             {/if}

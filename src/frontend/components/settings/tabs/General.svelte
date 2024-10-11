@@ -118,12 +118,12 @@
 
 <CombinedInput>
     <Button style="width: 50%;" on:click={() => activePopup.set("manage_colors")}>
-        <Icon id="color" style="border: 0;" right />
-        <p style="padding: 0;"><T id="popup.manage_colors" /></p>
+        <Icon id="color" style="margin-left: 0.5em;" right />
+        <p><T id="popup.manage_colors" /></p>
     </Button>
     <Button on:click={() => activePopup.set("manage_icons")}>
-        <Icon id="star" style="border: 0;" right />
-        <p style="padding: 0;"><T id="popup.manage_icons" /></p>
+        <Icon id="star" style="margin-left: 0.5em;" right />
+        <p><T id="popup.manage_icons" /></p>
     </Button>
 </CombinedInput>
 

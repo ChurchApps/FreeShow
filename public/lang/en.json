@@ -602,6 +602,8 @@
         "delete_shows_not_indexed": "Delete shows in 'Shows' folder that are not indexed",
         "delete_empty_shows": "Delete empty shows",
         "delete_thumbnail_cache": "Delete thumbnail cache",
+        "export_usage_log": "Export usage log",
+        "reset_usage_log": "Reset usage log",
         "open_log_file": "Open log file",
         "open_cache_folder": "Open cache folder",
         "refresh_all_shows": "Get all shows in 'Shows' folder",
@@ -1104,6 +1106,7 @@
         "restore_started": "Restoring...",
         "backup_finished": "Backup complete!",
         "restore_finished": "Restore complete!",
+        "auto_backup": "Auto backup",
         "preview_frame_rate": "Preview frame rate",
         "auto": "Auto",
         "optimized": "Optimized",
@@ -1250,6 +1253,11 @@
         "5": "Friday",
         "6": "Saturday",
         "7": "Sunday"
+    },
+    "interval": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "mothly": "Monthly"
     },
     "info": {
         "created": "Created",

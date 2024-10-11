@@ -184,6 +184,7 @@
         /* padding: 0 0.5em; */
         /* padding-left: 0.2em; */
         box-sizing: content-box;
+        border: 0 !important; /* remove CombinedInput border */
     }
     button.active :global(svg) {
         fill: var(--text);

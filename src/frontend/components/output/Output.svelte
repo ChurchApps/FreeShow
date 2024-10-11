@@ -269,23 +269,7 @@
             {/if}
         </span>
     {:else if slide && slide.type !== "pdf" && layers.includes("slide")}
-        <SlideContent
-            {outputId}
-            outSlide={slide}
-            {slideData}
-            {currentSlide}
-            {currentStyle}
-            {animationData}
-            {currentLineId}
-            {lines}
-            {ratio}
-            {mirror}
-            {preview}
-            customTemplate={currentStyle.template}
-            transition={transitions.text}
-            transitionEnabled={!mirror || preview}
-            {isKeyOutput}
-        />
+        <SlideContent {outputId} outSlide={slide} {slideData} {currentSlide} {currentStyle} {animationData} {currentLineId} {lines} {ratio} {mirror} {preview} transition={transitions.text} transitionEnabled={!mirror || preview} {isKeyOutput} />
     {/if}
 
     {#if layers.includes("overlays")}

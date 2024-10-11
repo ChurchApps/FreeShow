@@ -70,7 +70,7 @@
                             if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
                             if ($showsCache[$activeShow.id]?.locked) return
 
-                            history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true } }, location: { page: "none", override: "show#" + $activeShow.id } })
+                            history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true, shiftItems: e.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
                         }}
                     >
                         <!-- icons -->

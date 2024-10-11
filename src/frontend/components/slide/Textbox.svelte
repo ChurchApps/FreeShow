@@ -50,7 +50,6 @@
     export let style: boolean = true
     export let customStyle: string = ""
     export let stageItem: any = {}
-    export let showList: boolean = false
     export let chords: boolean = false
     export let linesStart: null | number = null
     export let linesEnd: null | number = null
@@ -65,7 +64,7 @@
     // $: autoTextSize = autoSize ? autoSize * 0.8 : getAutoSize(item)
     // $: autoSize = autoSize || getAutoSize(item)
 
-    $: autoSize = item.autoFontSize || getAutoSize(item)
+    $: autoSize = item.autoFontSize || ((item?.type || "text") === "text" || isStage ? 0 : getAutoSize(item))
 
     $: lines = clone(item?.lines)
     $: if (linesStart !== null && linesEnd !== null && lines?.length) {
@@ -142,8 +141,10 @@
     $: itemAutoSize = item.auto
     $: itemAutoFontSize = item.autoFontSize
     $: if (alignElem && loaded && (stageAutoSize || newItem !== previousItem || chordLines)) {
+        // set to default
+        if ((itemAutoSize && !itemAutoFontSize) || stageAutoSize) fontSize = 0
         // set smaller text for easier reading while calculating new size
-        if ((itemAutoSize && !itemAutoFontSize) || outputTemplateAutoSize || stageAutoSize) fontSize = 70
+        else if (outputTemplateAutoSize) fontSize = 70
         setTimeout(getCustomAutoSize, 150)
     }
 
@@ -173,11 +174,15 @@
 
         previousItem = JSON.stringify(item)
 
-        if (loopStop || !loaded || !alignElem || (!stageAutoSize && !outputTemplateAutoSize && (!item.auto || item.autoFontSize) && !showList)) {
-            if (item.auto && item.autoFontSize) fontSize = item.autoFontSize
+        if (loopStop || !loaded || !alignElem || (!stageAutoSize && !outputTemplateAutoSize && (!item.auto || item.autoFontSize))) {
+            if (item.auto && item.autoFontSize && !stageAutoSize) fontSize = item.autoFontSize
             return
         }
+
         loopStop = true
+        setTimeout(() => {
+            loopStop = false
+        }, 100)
 
         let maxFontSize = MAX_FONT_SIZE
         let minFontSize = MIN_FONT_SIZE
@@ -203,7 +208,11 @@
                     // don't change the font size
                     // fontSize = itemFontSize
                     if (ref.id === "scripture" || ref.showId === "temp") maxFontSize = itemFontSize
-                    else return
+                    else {
+                        fontSize = itemFontSize
+                        setItemAutoFontSize(fontSize)
+                        return
+                    }
                 }
             }
             if (type === "growToFit") {
@@ -262,13 +271,11 @@
             }
         }
 
-        setTimeout(() => {
-            loopStop = false
-        }, 100)
+        setItemAutoFontSize(fontSize)
+    }
 
-        if (stageAutoSize || itemIndex < 0 || $currentWindow) return
-
-        // UPDATE item
+    function setItemAutoFontSize(fontSize) {
+        if (isStage || itemIndex < 0 || $currentWindow) return
 
         if (ref.type === "overlay") {
             overlays.update((a) => {
@@ -315,7 +322,7 @@
                         chords.splice(chordIndex, 1)
                     }
 
-                    html += `<span class="invisible" style="${style ? getAlphaStyle(text.style) : ""}${fontSizeValue ? `font-size: ${fontSizeValue};` : ""}">${letter}</span>`
+                    html += `<span class="invisible" style="${style ? getAlphaStyle(text.style) : ""}${fontSizeValue ? `font-size: ${fontSizeValue}px;` : ""}">${letter}</span>`
 
                     index++
                 })
@@ -346,10 +353,9 @@
     }
 
     $: if (chords && !stageItem && item?.auto && fontSize) fontSize *= 0.7
-    $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? (fontSize || autoSize) + "px" : fontSize ? fontSize + "px" : ""
+    $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize || autoSize : fontSize
 
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
-
     let paddingCorrection = {}
     $: paddingCorrection = getPaddingCorrection(stageItem)
 
@@ -417,7 +423,7 @@
                             {#each line.text || [] as text}
                                 {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                 <span
-                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{fontSizeValue ? `font-size: ${fontSizeValue};` : ''}{text.customType === 'disableTemplate'
+                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{fontSizeValue ? `font-size: ${fontSizeValue}px;` : ''}{text.customType === 'disableTemplate'
                                         ? text.style + (customTypeRatio && autoSize ? `;font-size: ${fontSize * customTypeRatio}px;` : '')
                                         : ''}"
                                 >
