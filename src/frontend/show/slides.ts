@@ -602,7 +602,7 @@ export function mergeSlides(indexes: { index: number }[]) {
     let firstSlideIndex = indexes[0].index
     let firstSlideId: string = layoutRef[firstSlideIndex]?.id
     let newSlide: Slide = clone(_show().slides([firstSlideId]).get()[0])
-    let previousTextboxStyle = newSlide.items.find((a) => a.type || "text" === "text")?.style || ""
+    let previousTextboxStyles = newSlide.items.filter((a) => (a.type || "text") === "text").map((a) => a.style || "")
 
     if (newSlide.group === null) {
         newSlide.group = ""
@@ -610,7 +610,14 @@ export function mergeSlides(indexes: { index: number }[]) {
     }
     newSlide.items = []
     let pushedItems: string[] = []
-    let newLines: Line[] = []
+    let newLines: Line[][] = []
+    let sameTextboxCount =
+        new Set(
+            indexes.map(({ index }) => {
+                let slide: Slide = _show().slides([layoutRef[index]?.id]).get()[0]
+                return (slide?.items || []).filter((a) => (a.type || "text") === "text").length
+            })
+        ).size === 1
 
     indexes.forEach(({ index }) => {
         let ref = layoutRef[index]
@@ -618,9 +625,13 @@ export function mergeSlides(indexes: { index: number }[]) {
         allMergedSlideIds.push(ref.id)
 
         let currentSlide: Slide = _show().slides([ref.id]).get()[0]
+        let textItemIndex = 0
         currentSlide.items.forEach((item) => {
             if ((item.type || "text") === "text") {
-                newLines.push(...(item.lines || []))
+                let index = sameTextboxCount ? textItemIndex : 0
+                if (!newLines[index]) newLines[index] = []
+                newLines[index].push(...(item.lines || []))
+                textItemIndex++
             } else {
                 let uniqueItem = JSON.stringify(item)
                 if (pushedItems.includes(uniqueItem)) return
@@ -632,7 +643,10 @@ export function mergeSlides(indexes: { index: number }[]) {
     })
 
     // add textbox
-    newSlide.items = [{ type: "text", lines: newLines, style: previousTextboxStyle }, ...newSlide.items]
+    newSlide.items = [...getTextItems(), ...newSlide.items]
+    function getTextItems() {
+        return newLines.map((lines, i) => ({ type: "text", lines, style: previousTextboxStyles[i] } as Item))
+    }
 
     let newShow: Show = clone(_show().get())
     let activeLayoutId = newShow.settings.activeLayout
@@ -700,8 +714,8 @@ export function mergeSlides(indexes: { index: number }[]) {
     history({ id: "UPDATE", newData: { data: newShow }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key" } }) // , override: "merge_slides"
 }
 
-export function mergeTextboxes() {
-    let editSlideIndex: number = get(activeEdit).slide ?? -1
+export function mergeTextboxes(customSlideIndex: number = -1) {
+    let editSlideIndex: number = customSlideIndex < 0 ? get(activeEdit).slide ?? -1 : customSlideIndex
     if (editSlideIndex < 0) return
 
     let slideRef = _show().layouts("active").ref()[0][editSlideIndex] || {}
@@ -713,6 +727,7 @@ export function mergeTextboxes() {
     if (!slide) return
 
     let selected = get(activeEdit).items
+    if (!selected.length) selected = slide.items.map((_, i) => i)
     let selectedItems = slide.items.filter((a, i) => selected.includes(i) && (a.type || "text") === "text")
     if (selectedItems.length < 2) return
 

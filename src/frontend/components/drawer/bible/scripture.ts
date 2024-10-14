@@ -244,6 +244,14 @@ export function getSlides({ bibles, sorted }) {
             else slides[slideIndex].push(clone(emptyItem))
         })
 
+        // add remaining
+        if (bibleIndex + 1 >= bibles.length) {
+            let remainder = sorted.length % get(scriptureSettings).versesPerSlide
+            let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
+            if (get(scriptureSettings).splitReference === false) range = sorted
+            if (remainder) addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: bibles.length })
+        }
+
         // auto size
         slides.forEach((slide, i) => {
             slide.forEach((_item, j) => {
@@ -259,12 +267,6 @@ export function getSlides({ bibles, sorted }) {
                 })
             })
         })
-
-        if (bibleIndex + 1 < bibles.length) return
-        let remainder = sorted.length % get(scriptureSettings).versesPerSlide
-        let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
-        if (get(scriptureSettings).splitReference === false) range = sorted
-        if (remainder) addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: bibles.length })
     })
 
     // add other items

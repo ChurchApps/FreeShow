@@ -270,11 +270,15 @@
             return slide.items[allItems[0]]
         }
 
+        let newFontSize = 0
         if (input.id === "textFit") {
             // change font size to more clearly indicate what the different text fit does
-            let newFontSize = input.value === "shrinkToFit" ? 100 : MAX_FONT_SIZE
-            updateValue({ detail: { name: "font_size", id: "style", key: "font-size", value: newFontSize + "px" } })
+            newFontSize = input.value === "shrinkToFit" ? 100 : MAX_FONT_SIZE
+        } else if (input.id === "auto" && item?.textFit === "growToFit") {
+            if (input.value && Number(styles["font-size"]) < MAX_FONT_SIZE) newFontSize = MAX_FONT_SIZE
+            else if (!input.value && Number(styles["font-size"]) === MAX_FONT_SIZE) newFontSize = 100
         }
+        if (newFontSize) updateValue({ detail: { name: "font_size", id: "style", key: "font-size", value: newFontSize + "px" } })
 
         // UPDATE
 

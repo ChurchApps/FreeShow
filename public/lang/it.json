@@ -7,10 +7,15 @@
         "unnamed": "Senza nome",
         "drop": "Rilascia qui",
         "search": "Cerca",
+        "quick_search": "Ricerca veloce",
         "none": "Nessuno",
         "finished": "Finito",
         "open": "Apri",
         "system_open": "Apri nel sistema"
+    },
+    "guide": {
+        "start": "Guida rapida",
+        "skip": "Salta"
     },
     "titlebar": {
         "file": "File",
@@ -44,7 +49,7 @@
     },
     "tooltip": {
         "project": "Crea un nuovo progetto in cui puoi aggiungere e organizzare le scene.",
-        "show": "Crea una nuova scena in cui puoi aggiungere testi di canzoni, presentazioni e contenuti multimediali. Tieni premuto Ctrl/Cmd per crearne uno vuoto.",
+        "show": "Crea un nuovo spettacolo in cui puoi aggiungere testi di canzoni, presentazioni e contenuti multimediali.",
         "groups": "Tutti i gruppi nella scena in corso e tutti i gruppi globali. Fare clic o trascinarli per aggiungerli al layout corrente.",
         "layout": "Aggiungi transizioni e timer successivi alle diapositive nel layout corrente.",
         "media": "Tutti i media nella scena in corso. Mostrali o trascinali nel layout corrente.",
@@ -85,13 +90,19 @@
         "bold": "Grassetto"
     },
     "create_show": {
+        "web": "Ricerca web",
         "search_web": "Cerca canzone sul web",
+        "search_results": "Risultati della ricerca",
         "more_options": "Altre opzioni",
         "format_new_show": "Formato del testo",
         "format_new_show_tip": "Migliora il formato del testo con l'aggiunta automatica delle maiuscole, la suddivisione del testo, l'assegnazione di gruppi e altro ancora.",
         "split_lines": "Nummero di linee",
         "split_lines_tip": "Numero di righe consentite per diapositiva prima della divisione automatica",
-        "quick_lyrics_example_text": "Linea"
+        "quick_lyrics": "Testi veloci",
+        "quick_lyrics_tip": "Incolla il testo o inseriscilo manualmente",
+        "quick_lyrics_example_tip": "Inserisci qui il testo o qualsiasi altro testo",
+        "quick_lyrics_example_text": "Linea",
+        "empty": "Spettacolo vuoto"
     },
     "preview": {
         "_previous_show": "Scena precedente",
@@ -114,7 +125,8 @@
         "to_start": "Vai all'inizio",
         "nextTimer": "Timer diapositiva successiva",
         "lock": "Blocca",
-        "unlock": "Sblocca"
+        "unlock": "Sblocca",
+        "test_pattern": "Modello di prova"
     },
     "clear": {
         "all": "Cancella tutto",
@@ -172,6 +184,7 @@
         "playlist_settings": "Impostazioni della playlist",
         "custom_output": "Uscita audio personalizzata",
         "mute_when_video_plays": "Disattiva l'audio durante la riproduzione del video",
+        "pre_fader_volume_meter": "Misuratore del volume pre-fader",
         "metronome": "Metronomo",
         "toggle_metronome": "Attiva metronomo",
         "tempo": "Tempo",
@@ -192,7 +205,8 @@
         "settings": "Impostazioni",
         "_title_settings": "Impostazioni",
         "_title_display": "Presentazione",
-        "_title_display_stop": "Ferma presentazione"
+        "_title_display_stop": "Ferma presentazione",
+        "again_confirm": "Clicca di nuovo per confermare"
     },
     "empty": {
         "general": "Non c'è niente qui",
@@ -256,7 +270,7 @@
         "message": "Messaggio",
         "message_tip": "Mostra qualcosa su tutte le diapositive",
         "auto_media": "Ottieni meta dai contenuti multimediali",
-        "override_output": "Sostituisci lo stile nell'output",
+        "override_output": "Sostituisci stile output",
         "display_metadata": "Mostra i metadati",
         "meta_template": "Modello di metadati",
         "text_divider": "Separatore di testo",
@@ -459,7 +473,6 @@
     "show": {
         "name": "Nome",
         "category": "Categoria",
-        "quick_lyrics": "Testi veloci",
         "new_layout": "Nuovo layout",
         "grid": "Vista griglia",
         "simple": "Vista semplice",
@@ -470,7 +483,6 @@
         "locked": "Questo spettacolo è stato bloccato!",
         "locked_info": "Questo spettacolo è stato bloccato per la modifica. Sbloccalo di nuovo nel cassetto degli spettacoli.",
         "slide_template": "Modello di diapositiva",
-        "search_results": "Risultati della ricerca",
         "source": "Sorgente",
         "artist": "Artista",
         "song": "Canzone"
@@ -639,6 +651,13 @@
         "activate_show_created": "Attiva quando viene creato lo spettacolo",
         "activate_audio_playlist_ended": "Attiva quando la playlist audio è terminata"
     },
+    "recording": {
+        "remove": "Rimuovi registrazione",
+        "tip": "Registra e riproduci i tempi delle diapositive. Sincronizza con una traccia audio sulla prima diapositiva.",
+        "layout_changed": "Il layout è cambiato dall'ultima registrazione!",
+        "audio_synced": "Sincronizzato con l'audio!",
+        "start": "Avvia la registrazione delle diapositive"
+    },
     "animate": {
         "change": "cambia",
         "set": "imposta",
@@ -681,7 +700,6 @@
         "all_shows": "Tutte le scene",
         "all_projects": "Tutti i progetti",
         "project": "Progetto",
-        "options": "Opzioni",
         "preview": "Anteprima",
         "title": "Titolo",
         "metadata": "Metadata",
@@ -755,6 +773,8 @@
         "different_first_template": "Modello personalizzato sulla prima diapositiva",
         "media_fit": "Adatta media",
         "size": "Dimensione",
+        "max_lines": "Numero massimo di linee",
+        "invert_items": "Inverti elementi",
         "chords": "Accordi",
         "transpose": "Trasporre",
         "auto_size": "Dimensione automatica",
@@ -908,6 +928,7 @@
     "midi": {
         "midi": "MIDI",
         "activate": "Attivazione tramite segnale MIDI",
+        "activate_keypress": "Attivazione tramite pressione del tasto",
         "name": "Nome",
         "input": "Input",
         "output": "Output",
@@ -925,6 +946,7 @@
     "draw": {
         "focus": "Messa a fuoco",
         "pointer": "Puntatore",
+        "zoom": "Zoom",
         "fill": "Riempi",
         "paint": "Dipingi",
         "particles": "Particelle",
@@ -964,7 +986,8 @@
         "overrun": "Colore in eccesso",
         "source_output": "Sorgente di uscita",
         "auto_stretch": "Estensione automatica dei contenuti",
-        "labels": "Mostra etichette"
+        "labels": "Mostra etichette",
+        "label_color": "Colore dell'etichetta"
     },
     "settings": {
         "general": "Generale",
@@ -1065,6 +1088,7 @@
         "reset_theme": "Ripristina tema",
         "reset_themes": "Ripristina temi",
         "capitalize_words": "Metti in maiuscolo le parole",
+        "comma_seperated": "Separati da virgola",
         "backup_all": "Fai il backup di tutto",
         "restore": "Ripristina",
         "backup_started": "Backup in corso...",
@@ -1151,6 +1175,7 @@
         "opening": "In apertura! Attendi...",
         "retry": "Prova ad aprire manualmente oppure",
         "try_again": "Prova di nuovo",
+        "restart": "Riavvia",
         "start": "Inizio",
         "choose_window": "Seleziona una finestra"
     },

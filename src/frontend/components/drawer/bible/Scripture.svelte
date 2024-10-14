@@ -480,7 +480,9 @@
             matches = contentSearchMatches.filter((a) => formatText(a.text).includes(searchValue))
             cachedSearches++
         } else if (bible.api) {
-            let searchResult: any = await searchBibleAPI(active, contentSearch)
+            let bibleId: string = getBibleId(0, bible)
+            let apiId = $scriptures[bibleId]?.id || bibleId
+            let searchResult: any = await searchBibleAPI(apiId, contentSearch)
             matches = searchResult?.verses?.map((a) => ({ book: a.bookId, chapter: a.chapterId, verse: a.reference.slice(a.reference.indexOf(":") + 1), reference: a.reference, text: a.text, api: true })) || []
         } else {
             let allBooks: any[] = books[firstBibleId]
@@ -777,6 +779,18 @@
         }, 150)
     }
 
+    let usedNames: string[] = []
+    function getShortName(name: string, i: number) {
+        let shortName = isNaN(parseInt(name[0])) ? name.slice(0, 3) : name.replace(" ", "").slice(0, 4)
+
+        // use four characters if same short name ("Jud"ges="Jud"e)
+        if (i === 0) usedNames = []
+        if (usedNames.includes(shortName) && shortName.length === 3) shortName = name.slice(0, 4)
+        usedNames.push(shortName)
+
+        return shortName
+    }
+
     let gridMode: boolean = false
     let history: boolean = false
 
@@ -850,7 +864,7 @@
                             {#each books[firstBibleId] as book, i}
                                 {@const id = bibles[0].api ? book.id : i}
                                 {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
-                                {@const name = isNaN(parseInt(book.name[0])) ? book.name.slice(0, 3) : book.name.replace(" ", "").slice(0, 4)}
+                                {@const name = getShortName(book.name, i)}
 
                                 <span
                                     id={id.toString()}
