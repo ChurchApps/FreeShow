@@ -18,7 +18,7 @@
         } else if (a.channel === "NEXT") {
             index++
             if (shows.length > index) exportPDF()
-            else send(EXPORT, ["DONE"])
+            else send(EXPORT, ["DONE"], { path, name: shows[index - 1].name })
         }
     })
 

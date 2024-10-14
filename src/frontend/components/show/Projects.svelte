@@ -1,14 +1,15 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, projects, projectView, sorted } from "../../stores"
-    import { removeDuplicateValues, sortByName } from "../helpers/array"
+    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, projects, projectView, showRecentlyUsedProjects, sorted } from "../../stores"
+    import { keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
     import { checkInput } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import ProjectButton from "../inputs/ProjectButton.svelte"
     import ShowButton from "../inputs/ShowButton.svelte"
     import { autoscroll } from "../system/autoscroll"
     import Autoscroll from "../system/Autoscroll.svelte"
@@ -113,8 +114,32 @@
     $: if (listScrollElem) {
         let time = tree.length * 0.5 + 20
         setTimeout(() => {
+            if (!listScrollElem) return
             listOffset = autoscroll(listScrollElem, Math.max(0, [...(listScrollElem.querySelector(".ParentBlock")?.children || [])].findIndex((a) => a?.querySelector(".active")) - itemsBefore))
         }, time)
+    }
+
+    function back() {
+        projectView.set(true)
+        showRecentlyUsedProjects.set(false)
+    }
+
+    // last used
+    let recentlyUsedList: any[] = []
+    $: if ($showRecentlyUsedProjects) lastUsed()
+    else recentlyUsedList = []
+
+    function lastUsed() {
+        const ONE_WEEK = 604800000
+        // get all projects used within the last week
+        recentlyUsedList = keysToID($projects).filter((a) => a.used && Date.now() - a.used < ONE_WEEK)
+        // last used first
+        recentlyUsedList = sortByTimeNew(recentlyUsedList, "used").reverse()
+
+        if (recentlyUsedList.length < 2) {
+            recentlyUsedList = []
+            showRecentlyUsedProjects.set(false)
+        }
     }
 </script>
 
@@ -122,14 +147,18 @@
 
 <div class="main">
     <span class="tabs">
-        {#if projectActive}
+        {#if projectActive || recentlyUsedList.length}
             {#if !$focusMode}
-                <Button style="flex: 1" on:click={() => projectView.set(true)} active={$projectView} center dark title={$dictionary.remote?.projects}>
+                <Button style="flex: 1" on:click={back} active={$projectView} center dark title={$dictionary.remote?.projects}>
                     <Icon id="back" size={1.2} />
                 </Button>
                 <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
                     <!-- <Icon id="project" white right /> -->
-                    <p>{$projects[$activeProject || ""]?.name || ""}</p>
+                    {#if recentlyUsedList.length}
+                        <p style="font-style: italic;opacity: 0.7;"><T id="info.recently_used" /></p>
+                    {:else}
+                        <p>{$projects[$activeProject || ""]?.name || ""}</p>
+                    {/if}
                 </div>
             {/if}
         {:else}
@@ -140,7 +169,13 @@
         {/if}
     </span>
 
-    {#if !projectActive}
+    {#if recentlyUsedList.length}
+        <div id="projectsArea" class="list projects" style="overflow: auto;">
+            {#each recentlyUsedList as project}
+                <ProjectButton name={project.name} parent={project.parent} id={project.id} recentlyUsed />
+            {/each}
+        </div>
+    {:else if !projectActive}
         <div id="projectsArea" class="list projects context #projects">
             <Autoscroll offset={listOffset} bind:scrollElem={listScrollElem} timeout={150} smoothTimeout={0}>
                 <DropArea id="projects">
@@ -200,7 +235,7 @@
     {/if}
 </div>
 
-{#if $activeProject && !$projectView && !$focusMode}
+{#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length}
     <div class="tabs">
         <Button style="width: 100%;" title={$dictionary.new?.section} on:click={addSection} center>
             <Icon id="section" right={!$labelsDisabled} />

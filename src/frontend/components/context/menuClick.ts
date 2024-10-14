@@ -25,6 +25,7 @@ import {
     events,
     focusMode,
     forceClock,
+    guideActive,
     media,
     mediaFolders,
     outLocked,
@@ -38,6 +39,7 @@ import {
     scriptures,
     selected,
     settingsTab,
+    showRecentlyUsedProjects,
     shows,
     showsCache,
     slidesOptions,
@@ -102,6 +104,7 @@ const actions: any = {
 
         previousShow.set(null)
         activeShow.set(null)
+        showRecentlyUsedProjects.set(false)
 
         let firstItem = project.shows[0].id
         activeFocus.set({ id: firstItem, index: 0 })
@@ -122,6 +125,7 @@ const actions: any = {
     docs: () => window.api.send(MAIN, { channel: "URL", data: "https://freeshow.app/docs" }),
     shortcuts: () => activePopup.set("shortcuts"),
     about: () => activePopup.set("about"),
+    quick_start_guide: () => guideActive.set(true),
 
     // main
     rename: (obj: any) => {

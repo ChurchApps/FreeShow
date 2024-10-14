@@ -96,6 +96,7 @@ import { redoHistory, undoHistory } from "./../stores"
 import { newToast, startDevMode } from "./common"
 import { createData } from "./createData"
 import { syncDrive, validateKeys } from "./drive"
+import { setLanguage } from "./language"
 import { sendInitialOutputData } from "./listeners"
 import { receive, send } from "./request"
 import { closeApp, initializeClosing, save, saveComplete } from "./save"
@@ -410,6 +411,7 @@ export const receiveOUTPUTasOUTPUT: any = {
         })
     },
     CLOSE_AD: () => closeAd.set(true),
+    LANGUAGE: (a: any) => setLanguage(a),
     STYLES: (a: any) => styles.set(a),
     // BACKGROUND: (a: any) => outBackground.set(a),
     TRANSITION: (a: any) => transitionData.set(a),

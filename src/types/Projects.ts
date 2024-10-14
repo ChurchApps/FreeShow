@@ -10,6 +10,7 @@ export interface Project {
     notes?: string // pre v0.6.1
     created: number
     modified?: number // used for cloud sync updates
+    used?: number // used to create startup "last used" list
     parent: string
     shows: ProjectShowRef[]
 }

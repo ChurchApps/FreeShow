@@ -1264,6 +1264,7 @@
         "modified": "Modified",
         "used": "Used",
         "changed": "Changed",
+        "recently_used": "Recently used",
         "extension": "File extension",
         "size": "Size",
         "slides": "Slides",

@@ -22,6 +22,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     copy: { label: "actions.copy", icon: "copy", shortcuts: ["Ctrl+C"] },
     paste: { label: "actions.paste", icon: "paste", shortcuts: ["Ctrl+V"] },
     docs: { label: "main.docs", icon: "document" },
+    quick_start_guide: { label: "guide.start", icon: "guide" },
     focus_mode: { label: "actions.focus_mode", icon: "focus_mode" },
     fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11"] },
     resetZoom: { label: "actions.resetZoom", icon: "reset" },
@@ -141,7 +142,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     file: ["save", "import", "export_more", "SEPERATOR", "quit"],
     edit: ["undo", "redo", "history", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
     view: ["focus_mode", "fullscreen"], // , "resetZoom", "zoomIn", "zoomOut"
-    help: ["shortcuts", "docs", "about"],
+    help: ["shortcuts", "docs", "quick_start_guide", "about"],
     // MAIN
     default: ["save", "settings", "history", "SEPERATOR", "about", "quit"],
     rename: ["rename"],

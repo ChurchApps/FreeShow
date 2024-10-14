@@ -107,9 +107,12 @@
 
         if (window.getSelection()) window.getSelection()?.removeAllRanges()
 
-        activeEdit.update((ae) => {
-            ae.items = []
-            return ae
+        // timeout to allow CSS to update selected items first if any
+        setTimeout(() => {
+            activeEdit.update((ae) => {
+                ae.items = []
+                return ae
+            })
         })
     }
 

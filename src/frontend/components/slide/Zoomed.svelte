@@ -4,7 +4,7 @@
     import { getActiveOutputs, getResolution } from "../helpers/output"
 
     export let id: string = ""
-    export let background: string = $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background || "#000000"
+    export let background: string = $styles[$outputs[getActiveOutputs()[0]]?.style || ""]?.background || "#000000"
     export let backgroundDuration: number = 800
     export let center: boolean = false
     export let zoom: boolean = true

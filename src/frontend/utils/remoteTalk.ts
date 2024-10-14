@@ -6,10 +6,11 @@ import { loadShows } from "../components/helpers/setShow"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, openedFolders, outLocked, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
+import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
 import { sendData } from "./sendData"
 import { uid } from "uid"
 import { clearAll } from "../components/output/clear"
+import { send } from "./request"
 
 // REMOTE
 
@@ -37,6 +38,8 @@ export const receiveREMOTE: any = {
     },
     ACCESS: (msg: any) => {
         if (get(remotePassword).length && msg.data !== get(remotePassword)) return { id: msg.id, channel: "ERROR", data: "wrongPass" }
+
+        send(REMOTE, ["LANGUAGE"], { lang: get(language), strings: get(dictionary) })
 
         connections.update((a: any) => {
             if (!a.REMOTE) a.REMOTE = {}

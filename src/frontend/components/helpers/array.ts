@@ -46,6 +46,11 @@ export function sortByTime(a, b) {
     return new Date(a).getTime() - new Date(b).getTime()
 }
 
+export function sortByTimeNew<T>(array: T, key: string = "time") {
+    if (!Array.isArray(array)) return array
+    return array.sort((a, b) => new Date(a[key]).getTime() - new Date(b[key]).getTime())
+}
+
 // OBJETS
 
 // sort objects in array by name

@@ -92,7 +92,9 @@
 {#if $focusMode && currentShowId}
     <Slides />
 {:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length)}
-    <h3><T id="edit.recent" /></h3>
+    <div class="title">
+        <h3><T id="edit.recent" /></h3>
+    </div>
     {#if $editHistory.length}
         <div class="edited">
             {#each clonedHistory as edited}
@@ -135,12 +137,17 @@
 {/if}
 
 <style>
+    .title {
+        background-color: var(--primary-darker);
+        text-align: center;
+        padding: 3px 0;
+        overflow: initial;
+    }
     h3 {
         color: var(--text);
-        background-color: var(--primary-darkest);
-        text-align: center;
-        padding: 5px 0;
-        overflow: initial;
+        font-style: italic;
+        font-size: 1em;
+        opacity: 0.7;
     }
 
     .edited {
