@@ -208,19 +208,19 @@ function XMLtoBible(xml: string): Bible {
             let number = chapter.getAttribute("n")
             let verses: any[] = []
             ;[...getChildren(chapter, "v")].forEach((verse: any) => {
-                let value = verse.innerHTML
+                let text = verse.innerHTML
                     .toString()
                     .replace(/\[\d+\] /g, "") // remove [1], not [text]
                     .trim()
-                length += value.length
-                if (value.length) verses.push({ number: verse.getAttribute("n"), value })
+                length += text.length
+                if (text.length) verses.push({ number: verse.getAttribute("n"), text })
             })
             chapters.push({ number, verses })
         })
         if (length) books.push({ name, number, chapters })
     })
 
-    return { name: "", copyright: "", books }
+    return { name: "", metadata: { copyright: "" }, books }
 }
 
 const getChildren = (parent: any, name: string) => parent.getElementsByTagName(name)

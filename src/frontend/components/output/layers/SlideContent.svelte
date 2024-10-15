@@ -96,6 +96,7 @@
                         linesEnd={customLines?.[currentLineId]?.end}
                         outputStyle={currentStyle}
                         {mirror}
+                        {preview}
                         slideIndex={customOut.index}
                     />
                 {/if}

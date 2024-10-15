@@ -230,7 +230,7 @@ const actions: any = {
         if (currentIndex < 0) activeTags.push(tagId)
         else activeTags.splice(currentIndex, 1)
 
-        activeTagFilter.set(activeTags)
+        activeTagFilter.set(activeTags || [])
     },
     addToProject: (obj: any) => {
         if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return

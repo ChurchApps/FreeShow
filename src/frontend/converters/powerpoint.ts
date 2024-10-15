@@ -16,11 +16,16 @@ export function convertPowerpoint(files: any[]) {
 
     setTimeout(() => {
         files.forEach(({ name, content }: any) => {
-            let slides: string[][][] = []
-            Object.keys(content).forEach((key) => {
-                if (key.includes("ppt/slides/slide")) slides.push(convertPPTX(content[key]))
-                else alertMessage.set('This format is unsupported, try using an online "PPT to TXT converter".')
-            })
+            // sort by name to ensure correct slide order (ppt/slides/slide1.xml)
+            const slideKeys = Object.keys(content)
+                .filter((a) => a.includes("ppt/slides/slide"))
+                .sort((a, b) => a.localeCompare(b))
+
+            let slides: string[][][] = slideKeys.map((key) => convertPPTX(content[key]))
+            if (!slides.length) {
+                alertMessage.set('This format is unsupported, try using an online "PPT to TXT converter".')
+                return
+            }
 
             // create show
             let layoutID = uid()

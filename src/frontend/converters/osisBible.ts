@@ -41,10 +41,10 @@ function XMLtoObject(xml: string): Bible {
 
             if (!Array.isArray(chapter.verse)) chapter.verse = [chapter.verse]
             chapter.verse.forEach((verse: any, i: number) => {
-                let value = verse["#text"] || ""
+                let text = verse["#text"] || ""
                 let number = verse["@osisID"].split(".")?.[2] ?? i + 1
 
-                verses.push({ number, value })
+                verses.push({ number, text })
             })
 
             chapters.push({ number, verses })
@@ -56,7 +56,7 @@ function XMLtoObject(xml: string): Bible {
     // header.work: title, contributor, creator, subject, date, description, publisher, type, identifier, source, language, relation, coverage, rights, scope, refSystem
     let info = bible.header?.work || {}
 
-    return { name: info.title || info.description || "", copyright: info.publisher + " - " + info.rights || "", books }
+    return { name: info.title || info.description || "", metadata: { ...info, copyright: info.rights || "" }, books }
 }
 
 const defaultNames: any = {

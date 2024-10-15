@@ -27,7 +27,7 @@
     }
 </script>
 
-{#if messages[0]}
+{#if messages?.[0]}
     <div class="toast" transition:slide>
         {#if messages[0][0] === "$"}
             {#key messages[0]}

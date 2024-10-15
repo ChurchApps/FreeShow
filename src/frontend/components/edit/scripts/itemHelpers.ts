@@ -81,7 +81,7 @@ export function getEditItems(onlyActive: boolean = false) {
     let editItems = editSlide.items
     if (onlyActive) editItems = editItems.filter((_, i) => selectedItems.includes(i))
 
-    return editItems
+    return editItems || []
 }
 
 // rearrange

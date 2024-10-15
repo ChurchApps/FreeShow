@@ -1,7 +1,8 @@
 export interface Bible {
     id?: string
     name: string
-    copyright: string
+    metadata?: { [key: string]: string }
+    copyright?: string // displayed in the drawer
     books: {
         number: number
         name: string
@@ -9,7 +10,8 @@ export interface Bible {
             number: number
             verses: {
                 number: number
-                value: string
+                value?: string
+                text: string
             }[]
         }[]
     }[]

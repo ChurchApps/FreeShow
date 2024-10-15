@@ -172,7 +172,10 @@
             if (newVerses[verse]) newVerses[verse] = newVerses[verse].replaceAll("¶ ", "")
         }
 
-        if (bibles[index]) bibles[index].copyright = data.copyright
+        if (bibles[index]) {
+            bibles[index].metadata = data.metadata || {}
+            if (data.copyright) bibles[index].metadata.copyright = data.copyright
+        }
 
         return newVerses
     }
@@ -207,7 +210,8 @@
         let id = msg.content[0] || msg.id
 
         bibles[currentIndex].version = $scriptures[id]?.customName || msg.content[1].name || $scriptures[id]?.name || ""
-        bibles[currentIndex].copyright = msg.content[1].copyright || ""
+        bibles[currentIndex].metadata = msg.content[1].metadata || {}
+        if (msg.content[1].copyright) bibles[currentIndex].copyright = msg.content[1].copyright
         bibles[currentIndex].id = msg.content[0]
         books[id] = msg.content[1].books as any
 
@@ -281,7 +285,7 @@
                 let content: any = {}
                 bibles[i].chapter = (chapters[id][chapterId] as any).number || 0
                 ;(chapters[id][chapterId] as any).verses?.forEach((a: any) => {
-                    content[a.number] = a.value
+                    content[a.number] = a.text || a.value || ""
                 })
 
                 verses[id] = content
@@ -495,7 +499,8 @@
                         } else {
                             let wordInSearch = searchValue.split(" ")
                             let matchingWords = wordInSearch.reduce((count, word) => (count += verseValue.includes(word) ? 1 : 0), 0)
-                            if (matchingWords === wordInSearch.length) extraMatches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.value })
+                            if (matchingWords === wordInSearch.length)
+                                extraMatches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value || "" })
                         }
                     })
                 })
@@ -1000,8 +1005,8 @@
                             <span class="v">{id}</span>{@html content?.replaceAll("/ ", " ") || ""}
                         </p>
                     {/each}
-                    {#if bibles[0].copyright}
-                        <copy>{bibles[0].copyright}</copy>
+                    {#if bibles[0].copyright || bibles[0].metadata?.copyright}
+                        <copy>{bibles[0].copyright || bibles[0].metadata?.copyright}</copy>
                     {/if}
                 {:else}
                     <Loader />

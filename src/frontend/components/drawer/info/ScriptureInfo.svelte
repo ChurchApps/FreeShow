@@ -96,6 +96,9 @@
             })
         }
 
+        show.meta = bibles[0].metadata || {}
+        if (bibles[0].copyright) show.meta.copyright = bibles[0].copyright
+
         let bibleShowName = `${bibles[0].book} ${bibles[0].chapter},${verseRange}`
         show.name = checkName(bibleShowName)
         if (show.name !== bibleShowName) show.name = checkName(`${bibleShowName} - ${getShortBibleName(bibles[0].version || "")}`)

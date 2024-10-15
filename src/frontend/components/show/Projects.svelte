@@ -198,7 +198,7 @@
         <div id="projectArea" class="list context #project">
             <Autoscroll {offset} bind:scrollElem timeout={150}>
                 <DropArea id="project" selectChildren let:fileOver file>
-                    {#if $projects[$activeProject || ""]?.shows.length}
+                    {#if $projects[$activeProject || ""]?.shows?.length}
                         {#each $projects[$activeProject || ""]?.shows as show, index}
                             <SelectElem id="show" triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}

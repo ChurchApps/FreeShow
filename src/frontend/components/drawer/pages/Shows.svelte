@@ -21,7 +21,7 @@
     $: formattedSearch = formatSearch(searchValue)
     $: showsSorted = $sortedShowsList
 
-    let filteredShows: ShowList[]
+    let filteredShows: ShowList[] = []
     let filteredStored: any
     $: filteredStored = filteredShows = active === "all" ? showsSorted : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
 
@@ -69,7 +69,7 @@
     // }
 
     function keydown(e: any) {
-        if (e.target.closest("input") || e.target.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows.length) return
+        if (e.target.closest("input") || e.target.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows?.length) return
         if ($activeEdit.items.length) return
 
         let id: any = null
