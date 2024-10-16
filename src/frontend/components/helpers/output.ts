@@ -25,7 +25,6 @@ import {
     themes,
     transitionData,
     usageLog,
-    videoExtensions,
 } from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
@@ -35,7 +34,7 @@ import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
-import { getExtension, getFileName, removeExtension } from "./media"
+import { getExtension, getFileName, removeExtension, videoExtensions } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 
@@ -132,7 +131,7 @@ function changeOutputBackground(data, { output, id, mute }) {
         }, 100)
     }
 
-    let previousWasVideo: boolean = get(videoExtensions).includes(getExtension(output.out?.background?.path))
+    let previousWasVideo: boolean = videoExtensions.includes(getExtension(output.out?.background?.path))
 
     if (data === null) {
         fadeinAllPlayingAudio()
@@ -149,7 +148,7 @@ function changeOutputBackground(data, { output, id, mute }) {
     let videoData: any = { muted: data.muted, loop: data.loop || false }
 
     let muteAudio = get(special).muteAudioWhenVideoPlays
-    let isVideo = get(videoExtensions).includes(getExtension(data.path))
+    let isVideo = videoExtensions.includes(getExtension(data.path))
     if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
     else fadeinAllPlayingAudio()
 

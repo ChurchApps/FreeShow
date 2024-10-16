@@ -270,11 +270,6 @@ export const maxConnections: Writable<number> = writable(10) // 10
 export const remotePassword: Writable<string> = writable("1234") // generate 4 numbers
 export const companion: Writable<any> = writable({ enabled: false }) // {}
 
-// HIDDEN
-export const videoExtensions: Writable<string[]> = writable(["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"]) // [default]
-export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif", "webp", "avif"]) // [default]
-export const audioExtensions: Writable<string[]> = writable(["mp3", "wav", "m4a", "flac", "wma", "aac", "ogg", "weba", "aiff"])
-
 // CLOUD
 export const driveKeys: Writable<any> = writable({})
 export const driveData: Writable<any> = writable({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
@@ -375,9 +370,6 @@ export const $ = {
     ports,
     maxConnections,
     remotePassword,
-    videoExtensions,
-    imageExtensions,
-    audioExtensions,
 }
 
 // DEBUG STORE UPDATES

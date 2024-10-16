@@ -260,6 +260,15 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     name = number > 1 ? name + " " + number : name
 
                     showsList[i].show.name = name
+
+                    // if renaming to another newly deleted show (with same name) - don't delete!
+                    let deletedIndex = get(deletedShows).findIndex((a) => a.name === name)
+                    if (deletedIndex > -1) {
+                        deletedShows.update((a) => {
+                            a.splice(deletedIndex, 1)
+                            return a
+                        })
+                    }
                 })
 
                 // reset this on redo
@@ -388,7 +397,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             if (!deleting && Object.keys(get(showsCache)).length >= 100) {
                 // store all to files
                 if (initializing) save()
-                // then delete showsCache
+                // delete showsCache (to reduce lag)
                 setTimeout(() => {
                     showsCache.set({})
                     activeShow.set(null)

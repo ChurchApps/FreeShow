@@ -1,11 +1,11 @@
 <script lang="ts">
     import type { TemplateSettings } from "../../../../types/Show"
-    import { activeEdit, dictionary, imageExtensions, outputs, overlays, styles, templates, videoExtensions } from "../../../stores"
+    import { activeEdit, dictionary, outputs, overlays, styles, templates } from "../../../stores"
     import { getList } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
-    import { getFileName } from "../../helpers/media"
+    import { getFileName, mediaExtensions } from "../../helpers/media"
     import { getActiveOutputs, getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -67,7 +67,7 @@
     </CombinedInput>
     <CombinedInput>
         <p><T id="edit.background_media" /></p>
-        <MediaPicker id={"bg_" + templateId} title={settings.backgroundPath} style="overflow: hidden;" filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }} on:picked={(e) => setValue(e, "backgroundPath")}>
+        <MediaPicker id={"bg_" + templateId} title={settings.backgroundPath} style="overflow: hidden;" filter={{ name: "Media files", extensions: mediaExtensions }} on:picked={(e) => setValue(e, "backgroundPath")}>
             <Icon id="image" right />
             {#if settings.backgroundPath}
                 <p style="padding: 0;opacity: 1;">{getFileName(settings.backgroundPath)}</p>

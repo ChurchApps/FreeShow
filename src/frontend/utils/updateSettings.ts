@@ -30,7 +30,6 @@ import {
     globalTags,
     groupNumbers,
     groups,
-    imageExtensions,
     labelsDisabled,
     language,
     loaded,
@@ -63,7 +62,6 @@ import {
     triggers,
     variables,
     version,
-    videoExtensions,
     videoMarkers,
     videosData,
     videosTime,
@@ -71,9 +69,9 @@ import {
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { currentWindow, maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
+import { checkForUpdates } from "./checkForUpdates"
 import { setLanguage } from "./language"
 import { send } from "./request"
-import { checkForUpdates } from "./checkForUpdates"
 
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
@@ -280,13 +278,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     audioPlaylists: (v: any) => audioPlaylists.set(v),
     theme: (v: any) => theme.set(v),
     transitionData: (v: any) => transitionData.set(v),
-    imageExtensions: (v: any) => {
-        // set this in case it's not up to date with stores
-        if (!v.includes("webp")) v.push("webp")
-        if (!v.includes("avif")) v.push("avif")
-        imageExtensions.set(v)
-    },
-    videoExtensions: (v: any) => videoExtensions.set(v),
     volume: (v: any) => volume.set(v),
     gain: (v: any) => gain.set(v),
     midiIn: (v: any) => midiIn.set(v),

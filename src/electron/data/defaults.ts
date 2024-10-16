@@ -66,8 +66,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     dataPath: "",
     lockedOverlays: [],
     splitLines: 0,
-    videoExtensions: ["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"],
-    imageExtensions: ["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif", "webp", "avif"],
     theme: "default",
     transitionData: {
         text: { type: "fade", duration: 500, easing: "sine" },

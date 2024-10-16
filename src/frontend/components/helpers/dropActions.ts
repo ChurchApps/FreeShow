@@ -3,34 +3,13 @@ import { uid } from "uid"
 import type { Show, Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import {
-    activeDrawerTab,
-    activePage,
-    activeProject,
-    activeShow,
-    audioExtensions,
-    audioFolders,
-    audioPlaylists,
-    audioStreams,
-    categories,
-    drawerTabsData,
-    imageExtensions,
-    media,
-    mediaFolders,
-    overlays,
-    projects,
-    scriptureSettings,
-    shows,
-    showsCache,
-    templates,
-    videoExtensions,
-} from "../../stores"
+import { activeDrawerTab, activePage, activeProject, activeShow, audioFolders, audioPlaylists, audioStreams, categories, drawerTabsData, media, mediaFolders, overlays, projects, scriptureSettings, shows, showsCache, templates } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
 import { addItem } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
-import { getExtension, getFileName, getMediaType, presentationExtensions, removeExtension } from "./media"
+import { audioExtensions, getExtension, getFileName, getMediaType, imageExtensions, mediaExtensions, presentationExtensions, removeExtension, videoExtensions } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
 import { checkName } from "./show"
 import { _show } from "./shows"
@@ -348,8 +327,7 @@ export function addDrawerFolder(file: any, type: "media" | "audio") {
 
 // "show", "project"
 const projectExtra: any = ["pdf", ...presentationExtensions]
-const fileDropExtensions: any = [...get(imageExtensions), ...get(videoExtensions), ...get(audioExtensions)]
-const mediaExtensions: any = [...get(imageExtensions), ...get(videoExtensions)]
+const fileDropExtensions: any = [...imageExtensions, ...videoExtensions, ...audioExtensions]
 
 const files: any = {
     project: [...fileDropExtensions, ...projectExtra],

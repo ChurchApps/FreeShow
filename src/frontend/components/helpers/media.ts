@@ -1,14 +1,20 @@
-import { get } from "svelte/store"
-import type { ShowType } from "../../../types/Show"
 // ----- FreeShow -----
 // This is for media/file functions
 
+import { get } from "svelte/store"
 import { MAIN } from "../../../types/Channels"
 import type { MediaStyle } from "../../../types/Main"
 import type { Styles } from "../../../types/Settings"
-import { audioExtensions, imageExtensions, loadedMediaThumbnails, tempPath, videoExtensions } from "../../stores"
-import { wait, waitUntilValueIsDefined } from "../../utils/common"
+import type { ShowType } from "../../../types/Show"
+import { loadedMediaThumbnails, media, tempPath } from "../../stores"
+import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { awaitRequest, send } from "../../utils/request"
+
+// electron/data/media.ts
+export const videoExtensions = ["mp4", "webm", "ogv", "mov", "m4v", "3gp", "3g2", "avi", "mkv", "flv", "ts", "dvr-ms", "mpeg", "mpg"]
+export const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "svg", "webp", "tiff", "tif", "jfif", "avif"]
+export const audioExtensions = ["mp3", "wav", "ogg", "aac", "m4a", "flac", "wma", "opus", "aiff", "aif", "weba"]
+export const mediaExtensions = [...videoExtensions, ...imageExtensions]
 
 export function getExtension(path: string): string {
     if (!path) return ""
@@ -23,8 +29,8 @@ export function removeExtension(name: string): string {
 }
 
 export function isMediaExtension(extension: string, audio: boolean = false): boolean {
-    let extensions: string[] = [...get(imageExtensions), ...get(videoExtensions)]
-    if (audio) extensions = get(audioExtensions)
+    let extensions: string[] = [...imageExtensions, ...videoExtensions]
+    if (audio) extensions = audioExtensions
     return extensions.includes(extension.toLowerCase())
 }
 
@@ -32,8 +38,8 @@ export const presentationExtensions = ["ppt", "pptx", "key"]
 export function getMediaType(extension: string): ShowType {
     if (extension.toLowerCase() === "pdf") return "pdf"
     if (presentationExtensions.includes(extension.toLowerCase())) return "ppt"
-    if (get(audioExtensions).includes(extension.toLowerCase())) return "audio"
-    if (get(videoExtensions).includes(extension.toLowerCase())) return "video"
+    if (audioExtensions.includes(extension.toLowerCase())) return "audio"
+    if (videoExtensions.includes(extension.toLowerCase())) return "video"
     return "image"
 }
 
@@ -96,8 +102,8 @@ async function toDataURL(url: string): Promise<string> {
 // check if media file exists in plain js
 export function checkMedia(src: string) {
     let extension = getExtension(src)
-    let isVideo = get(videoExtensions).includes(extension)
-    let isAudio = !isVideo && get(audioExtensions).includes(extension)
+    let isVideo = videoExtensions.includes(extension)
+    let isAudio = !isVideo && audioExtensions.includes(extension)
 
     return new Promise((resolve) => {
         let elem
@@ -124,6 +130,45 @@ export function checkMedia(src: string) {
             resolve(response)
         }
     })
+}
+
+export async function getMediaInfo(path: string) {
+    const cachedInfo = get(media)[path]?.info
+    if (cachedInfo) return cachedInfo
+
+    let info
+    try {
+        info = await awaitRequest(MAIN, "MEDIA_CODEC", { path })
+    } catch (err) {
+        return {}
+    }
+
+    if (!info) return {}
+
+    delete info.path
+    console.log(info)
+    media.update((a) => {
+        if (!a[path]) a[path] = {}
+        a[path].info = info
+        return a
+    })
+
+    return info
+}
+
+export async function isVideoSupported(path: string) {
+    const info = await getMediaInfo(path)
+    if (!info?.codecs) return true
+
+    // HEVC (H.265) / Timecode
+    const unsupportedCodecs = /(hevc|hvc1|ap4h|tmcd)/i
+    const isUnsupported = info.codecs.every((codec) => unsupportedCodecs.test(codec))
+
+    // not reliable:
+    // const isSupported = MediaSource.isTypeSupported(info.mimeCodec)
+
+    if (isUnsupported) newToast("$toast.unsupported_video")
+    return !isUnsupported
 }
 
 export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
@@ -248,7 +293,7 @@ export function captureCanvas(data: any) {
 
     let canvas = document.createElement("canvas")
 
-    let isImage: boolean = get(imageExtensions).includes(data.extension)
+    let isImage: boolean = imageExtensions.includes(data.extension)
     let mediaElem: any = document.createElement(isImage ? "img" : "video")
 
     mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {

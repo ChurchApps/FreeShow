@@ -4,11 +4,12 @@
 import { app, dialog, shell } from "electron"
 import { ExifImage } from "exif"
 import fs, { type Stats } from "fs"
+import MP4Box from "MP4Box"
 import path, { join, parse } from "path"
 import { uid } from "uid"
 import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
 import { Show } from "../../types/Show"
-import { defaultSettings } from "../data/defaults"
+import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
@@ -246,7 +247,6 @@ export function getTempPaths() {
 }
 
 // READ_FOLDER
-const MEDIA_EXTENSIONS = [...defaultSettings.imageExtensions, ...defaultSettings.videoExtensions]
 export function getFolderContent(data: any) {
     let folderPath: string = data.path
     let fileList: string[] = readFolder(folderPath)
@@ -264,7 +264,7 @@ export function getFolderContent(data: any) {
 
         function isMedia() {
             if (stats.folder) return false
-            return MEDIA_EXTENSIONS.includes(stats.extension)
+            return [...imageExtensions, ...videoExtensions].includes(stats.extension)
         }
     }
 
@@ -402,6 +402,42 @@ export function readExifData({ id }: any, e: any) {
     } catch (err) {
         actionComplete(err, "Error loading EXIF image")
     }
+}
+
+// GET MEDIA CODEC
+export function getMediaCodec(data: any) {
+    extractCodecInfo(data)
+}
+
+async function extractCodecInfo(data: any) {
+    const arrayBuffer: any = toArrayBuffer(await readFileBufferAsync(data.path))
+
+    const mp4boxfile = MP4Box.createFile()
+    mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
+    mp4boxfile.onReady = (info: any) => {
+        const codecs = info.tracks.map((track: any) => track.codec)
+        const mimeType = getMimeType(data.path)
+        const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
+        toApp(MAIN, { channel: "MEDIA_CODEC", data: { ...data, codecs, mimeType, mimeCodec } })
+    }
+
+    arrayBuffer.fileStart = 0
+    mp4boxfile.appendBuffer(arrayBuffer)
+    mp4boxfile.flush()
+}
+
+function getMimeType(path: string) {
+    const ext = path.split(".").pop()?.toLowerCase() || ""
+    return mimeTypes[ext] || ""
+}
+
+function toArrayBuffer(buffer: Buffer) {
+    const arrayBuffer = new ArrayBuffer(buffer.length)
+    const view = new Uint8Array(arrayBuffer)
+    for (let i = 0; i < buffer.length; ++i) {
+        view[i] = buffer[i]
+    }
+    return arrayBuffer
 }
 
 //////

@@ -1,11 +1,11 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
-    import { activeShow, activeTimers, dictionary, outputs, shows, videoExtensions } from "../../stores"
+    import { activeShow, activeTimers, dictionary, outputs, shows } from "../../stores"
     import { send } from "../../utils/request"
     import { getAudioDuration } from "../helpers/audio"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getExtension } from "../helpers/media"
+    import { getExtension, videoExtensions } from "../helpers/media"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
@@ -20,7 +20,7 @@
     export let style: string
 
     $: videoDuration = duration ? joinTime(secondsToTime(duration)) : null
-    $: isVideo = background?.path ? $videoExtensions.includes(getExtension(background.path)) : false
+    $: isVideo = background?.path ? videoExtensions.includes(getExtension(background.path)) : false
     $: muted = background?.muted !== false
     $: looping = background?.loop !== false
 
