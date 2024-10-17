@@ -1,6 +1,6 @@
 import { uid } from "uid"
 import { formatToFileName } from "../components/helpers/show"
-import { scriptures, scripturesCache } from "../stores"
+import { drawerTabsData, scriptures, scripturesCache } from "../stores"
 
 export function importFSB(data: any[]) {
     data.forEach(({ content, name }) => {
@@ -27,7 +27,14 @@ export function importFSB(data: any[]) {
             a[id] = { name, id }
             return a
         })
-    })
 
-    // WIP select imported scripture
+        setActiveScripture(id)
+    })
+}
+
+export function setActiveScripture(tabId: string) {
+    drawerTabsData.update((a) => {
+        a.scripture = { ...a.scripture, activeSubTab: tabId }
+        return a
+    })
 }

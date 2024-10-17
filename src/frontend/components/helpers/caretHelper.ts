@@ -16,7 +16,6 @@ function insertValue(elem: any, text: string) {
     if (!text) return value
 
     let caretPos = getCaretPos(elem)
-    console.log(caretPos)
 
     let newValue = value.slice(0, caretPos.start) + text + value.slice(caretPos.end)
 
@@ -24,6 +23,9 @@ function insertValue(elem: any, text: string) {
     let newCaretPos = caretPos.start + text.length
     setTimeout(() => {
         elem.selectionStart = elem.selectionEnd = newCaretPos
+        // send event so inputs can update values
+        elem.dispatchEvent(new Event("change"))
+        elem.dispatchEvent(new Event("input"))
     }, 10)
 
     return newValue

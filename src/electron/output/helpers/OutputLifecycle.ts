@@ -136,6 +136,8 @@ export class OutputLifecycle {
             window.setTitle(name || "Output")
         })
 
+        // Building the app does not like this for some reason:
+        // Argument of type '"move"' is not assignable to parameter of type '"will-resize"'.
         // @ts-ignore
         window.on("move", (e: any) => {
             if (!OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()

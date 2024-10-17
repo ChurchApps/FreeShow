@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { SHOW } from "../../../types/Channels"
 import type { Show } from "../../../types/Show"
-import { cachedShowsData, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
+import { cachedShowsData, categories, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
 import { getShowCacheId, updateCachedShow } from "./show"
 import { uid } from "uid"
 import { destroy } from "../../utils/request"
@@ -147,7 +147,8 @@ export async function loadShows(s: string[]) {
 let updateTimeout: any = null
 let tempCache: any = {}
 export function saveTextCache(id: string, show: Show) {
-    if (!show?.slides) return
+    // don't cache scripture/calendar shows text or archived categories
+    if (!show?.slides || show.reference?.type || get(categories)[show.category || ""]?.isArchive) return
 
     const txt = Object.values(show.slides)
         .flatMap((slide) => slide.items)

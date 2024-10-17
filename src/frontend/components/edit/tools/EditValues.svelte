@@ -1,11 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { uid } from "uid"
-    import { activePopup, dictionary, imageExtensions, popupData, storedEditMenuState, variables, videoExtensions } from "../../../stores"
+    import { activePopup, dictionary, popupData, storedEditMenuState, variables } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID } from "../../helpers/array"
-    import { getFileName } from "../../helpers/media"
+    import { getFileName, mediaExtensions } from "../../helpers/media"
     import { getFilters } from "../../helpers/style"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -458,13 +458,7 @@
                         </Button>
                     </CombinedInput>
                 {:else if input.input === "media"}
-                    <MediaPicker
-                        id={"item_" + sessionId}
-                        title={input.value}
-                        style="overflow: hidden;margin-bottom: 10px;"
-                        filter={{ name: "Media files", extensions: [...$videoExtensions, ...$imageExtensions] }}
-                        on:picked={(e) => valueChange(e, input)}
-                    >
+                    <MediaPicker id={"item_" + sessionId} title={input.value} style="overflow: hidden;margin-bottom: 10px;" filter={{ name: "Media files", extensions: mediaExtensions }} on:picked={(e) => valueChange(e, input)}>
                         <Icon id="image" right />
                         {#if input.value}
                             <p style="padding: 0;opacity: 1;">{getFileName(input.value)}</p>

@@ -48,6 +48,7 @@ export const activeDrawerOnlineTab: Writable<string> = writable("youtube")
 export const activeStyle: Writable<string> = writable("")
 export const settingsTab: Writable<SettingsTabs> = writable("general")
 export const projectView: Writable<boolean> = writable(false)
+export const showRecentlyUsedProjects: Writable<boolean> = writable(true)
 export const globalGroupViewEnabled: Writable<boolean> = writable(false)
 export const activeRecording: Writable<any> = writable(null)
 export const currentRecordingStream: Writable<any> = writable(null)
@@ -241,7 +242,7 @@ export const autoOutput: Writable<boolean> = writable(false) // false
 export const labelsDisabled: Writable<boolean> = writable(false) // false
 export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(false) // false
-export const formatNewShow: Writable<boolean> = writable(true) // true
+export const formatNewShow: Writable<boolean> = writable(false) // false
 export const splitLines: Writable<number> = writable(0) // 0
 export const showsPath: Writable<null | string> = writable(null) // null
 export const customizedIcons: Writable<any> = writable({ disabled: [], svg: [] }) // {disabled: [], svg: []}
@@ -268,11 +269,6 @@ export const serverData: Writable<any> = writable({}) // {}
 export const maxConnections: Writable<number> = writable(10) // 10
 export const remotePassword: Writable<string> = writable("1234") // generate 4 numbers
 export const companion: Writable<any> = writable({ enabled: false }) // {}
-
-// HIDDEN
-export const videoExtensions: Writable<string[]> = writable(["mp4", "mov", "wmv", "avi", "avchd", "flv", "mkv", "webm", "mpeg", "m4v"]) // [default]
-export const imageExtensions: Writable<string[]> = writable(["tif", "tiff", "bmp", "jpg", "jpeg", "gif", "png", "eps", "jfif", "webp", "avif"]) // [default]
-export const audioExtensions: Writable<string[]> = writable(["mp3", "wav", "m4a", "flac", "wma", "aac", "ogg", "weba", "aiff"])
 
 // CLOUD
 export const driveKeys: Writable<any> = writable({})
@@ -374,9 +370,6 @@ export const $ = {
     ports,
     maxConnections,
     remotePassword,
-    videoExtensions,
-    imageExtensions,
-    audioExtensions,
 }
 
 // DEBUG STORE UPDATES

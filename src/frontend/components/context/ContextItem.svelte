@@ -1,5 +1,25 @@
 <script lang="ts">
-    import { activeProject, activeRecording, activeShow, events, forceClock, media, os, outputs, overlays, redoHistory, scriptures, selected, shows, slidesOptions, stageShows, undoHistory } from "../../stores"
+    import {
+        activeProject,
+        activeRecording,
+        activeShow,
+        categories,
+        events,
+        forceClock,
+        media,
+        os,
+        outputs,
+        overlayCategories,
+        overlays,
+        redoHistory,
+        scriptures,
+        selected,
+        shows,
+        slidesOptions,
+        stageShows,
+        templateCategories,
+        undoHistory,
+    } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -34,6 +54,16 @@
 
             enabled = show.private
             hide = !enabled && show.locked
+        },
+        use_as_archive: () => {
+            const categoryStores: any = {
+                category_shows: () => $categories,
+                category_overlays: () => $overlayCategories,
+                category_templates: () => $templateCategories,
+            }
+
+            const isArchive = !!categoryStores[$selected.id || ""]?.()[$selected.data[0]]?.isArchive
+            enabled = isArchive
         },
         lock_show: () => {
             if (!$shows[$selected.data[0]?.id]?.locked) return

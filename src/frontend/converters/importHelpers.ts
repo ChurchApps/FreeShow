@@ -4,8 +4,9 @@ import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
 import { activeDrawerTab, activePopup, activeProject, activeRename, categories, drawerTabsData, shows } from "../stores"
 import { newToast } from "../utils/common"
+import type { Category } from "../../types/Tabs"
 
-export function createCategory(name: string, icon: string = "song", { isDefault } = { isDefault: false }) {
+export function createCategory(name: string, icon: string = "song", { isDefault, isArchive }: { isDefault?: boolean; isArchive?: boolean } = {}) {
     // return selected category if it is empty
     let selectedCategory = get(drawerTabsData).shows?.activeSubTab || ""
     console.log(selectedCategory)
@@ -18,7 +19,10 @@ export function createCategory(name: string, icon: string = "song", { isDefault 
     if (get(categories)[id]) return id
     if (isDefault) name = "category." + name
 
-    history({ id: "UPDATE", newData: { data: { name, icon, default: isDefault } }, oldData: { id }, location: { page: "drawer", id: "category_shows" } })
+    let data: Category = { name, icon }
+    if (isDefault) data.default = true
+    if (isArchive) data.isArchive = true
+    history({ id: "UPDATE", newData: { data }, oldData: { id }, location: { page: "drawer", id: "category_shows" } })
 
     setTimeout(() => {
         activeRename.set(null)

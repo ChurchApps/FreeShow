@@ -101,6 +101,8 @@
     function changeOutputScreen(e: any) {
         if (!currentScreen) return
 
+        let alreadySelected = $outputs[screenId!]?.screen === e.detail.id.toString()
+
         let bounds = e.detail.bounds
         let keyOutput = currentScreen.keyOutput
         outputs.update((a) => {
@@ -131,7 +133,7 @@
             }
         }, 100)
 
-        if (activateOutput) {
+        if (activateOutput || alreadySelected) {
             activePopup.set(null)
             alertMessage.set("")
         }

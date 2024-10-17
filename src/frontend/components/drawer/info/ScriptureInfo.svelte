@@ -91,10 +91,13 @@
         // add scripture category
         if (!$categories.scripture) {
             categories.update((a) => {
-                a.scripture = { name: "category.scripture", icon: "scripture", default: true }
+                a.scripture = { name: "category.scripture", icon: "scripture", default: true, isArchive: true }
                 return a
             })
         }
+
+        show.meta = bibles[0].metadata || {}
+        if (bibles[0].copyright) show.meta.copyright = bibles[0].copyright
 
         let bibleShowName = `${bibles[0].book} ${bibles[0].chapter},${verseRange}`
         show.name = checkName(bibleShowName)

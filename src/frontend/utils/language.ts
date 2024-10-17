@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
-import { MAIN, REMOTE } from "../../types/Channels"
-import { dictionary, language } from "../stores"
+import { MAIN, OUTPUT } from "../../types/Channels"
+import { currentWindow, dictionary, language } from "../stores"
 import { replace } from "./languageData"
 import { send } from "./request"
 
@@ -50,11 +50,18 @@ function setLanguage(locale: string = "", init: boolean = false) {
         if (init && get(language) !== locale) return
 
         dictionary.set(messages)
-        if (!init) language.set(locale)
+        if (init || get(currentWindow)) return
+
+        language.set(locale)
 
         let msg = { lang: locale, strings: messages }
         send(MAIN, ["LANGUAGE"], msg)
-        send(REMOTE, ["LANGUAGE"], msg)
+        // remoteTalk.ts sends this
+        // send(REMOTE, ["LANGUAGE"], msg)
+        // wait until loaded
+        setTimeout(() => {
+            send(OUTPUT, ["LANGUAGE"], locale)
+        }, 3000)
     }
 }
 

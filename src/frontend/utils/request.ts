@@ -43,6 +43,7 @@ export async function awaitRequest(ID: ValidChannels, channel: string, data: any
                     if (!data.listenerId || data.listenerId !== listenerId) return
 
                     clearTimeout(timeout)
+                    delete data.listenerId
                     resolve(data)
                 },
             },

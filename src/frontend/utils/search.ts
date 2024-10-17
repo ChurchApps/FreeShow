@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { ShowList } from "../../types/Show"
 import { sortObjectNumbers } from "../components/helpers/array"
 import { similarity } from "../converters/txt"
-import { textCache } from "../stores"
+import { categories, drawerTabsData, textCache } from "../stores"
 
 const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_`~()]/g
 
@@ -20,6 +20,10 @@ export function showSearch(searchValue: string, shows: any) {
     let newShows: ShowList[] = []
 
     shows.forEach((s: any) => {
+        // don't search show if archived
+        const isArchived = get(categories)[s.category || ""]?.isArchive
+        if (isArchived && get(drawerTabsData).shows?.activeSubTab !== s.category) return
+
         let match = showSearchFilter(searchValue, s)
         if (match) newShows.push({ ...s, match })
     })

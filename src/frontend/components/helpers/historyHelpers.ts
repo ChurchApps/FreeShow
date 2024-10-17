@@ -91,7 +91,7 @@ export const _updaters = {
         empty: EMPTY_PROJECT,
         cloudCombine: true,
         initialize: (data) => {
-            return replaceEmptyValues(data, { name: getProjectName(), created: Date.now(), modified: Date.now() })
+            return replaceEmptyValues(data, { name: getProjectName(), created: Date.now(), modified: Date.now(), used: Date.now() })
         },
         select: (id: string, { data }: any, initializing: boolean) => {
             activeProject.set(id)

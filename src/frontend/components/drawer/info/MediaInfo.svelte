@@ -5,7 +5,7 @@
     import { activeRecording, activeShow, drawerTabsData } from "../../../stores"
     import { send } from "../../../utils/request"
     import { formatBytes } from "../../helpers/bytes"
-    import { getFileName, removeExtension } from "../../helpers/media"
+    import { getExtension, getFileName, getMediaInfo, removeExtension, videoExtensions } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import Date from "../../system/Date.svelte"
     import LiveInfo from "../live/LiveInfo.svelte"
@@ -14,7 +14,15 @@
     $: name = $activeShow?.name || ""
     $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http")) {
         info = {}
+        codecInfo = {}
         send(MAIN, ["FILE_INFO"], $activeShow?.id)
+        getCodecInfo()
+    }
+
+    let codecInfo: any = {}
+    async function getCodecInfo() {
+        if (!videoExtensions.includes(getExtension($activeShow?.id || ""))) return
+        codecInfo = await getMediaInfo($activeShow?.id || "")
     }
 
     let listenerId = uid()
@@ -80,6 +88,16 @@
                 <span>-</span>
             {/if}
         </p>
+        {#if codecInfo.codecs || codecInfo.mimeType}
+            <p>
+                <span class="title"><T id="info.codecs" /></span>
+                <span>{codecInfo.codecs?.join(", ") || "—"}</span>
+            </p>
+            <p>
+                <span class="title"><T id="info.mimeType" /></span>
+                <span>{codecInfo.mimeType || "—"}</span>
+            </p>
+        {/if}
     </main>
 {/if}
 

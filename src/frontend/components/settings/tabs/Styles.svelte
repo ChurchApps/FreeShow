@@ -1,12 +1,12 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activePopup, activeStyle, dictionary, imageExtensions, outputs, popupData, styles, templates, videoExtensions } from "../../../stores"
+    import { activePopup, activeStyle, dictionary, outputs, popupData, styles, templates } from "../../../stores"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getFileName } from "../../helpers/media"
+    import { getFileName, mediaExtensions } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -148,7 +148,7 @@
     <MediaPicker
         id="styles"
         title={currentStyle.backgroundImage}
-        filter={{ name: "Media files", extensions: [...$imageExtensions, $videoExtensions] }}
+        filter={{ name: "Media files", extensions: mediaExtensions }}
         center={false}
         on:picked={(e) => {
             if (e.detail) updateStyle(e, "backgroundImage")

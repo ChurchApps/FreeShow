@@ -3,6 +3,7 @@
 
     export let ratio: number = 1
     export let active: boolean
+    export let onlyCorners: boolean = false
 
     let corners = ["nw", "n", "ne", "e", "se", "s", "sw", "w"]
     let sides = ["n", "e", "s", "w"]
@@ -13,7 +14,9 @@
         <div class="line {line}l" class:active style="{line === 'n' || line === 's' ? 'height' : 'width'}: {active ? 25 : 50}px;" />
     {/each}
     {#each corners as square}
-        <div on:mousedown={() => openToolsTab.set("item")} class="square {square}" class:active style="width: {10 / ratio}px; cursor: {square}-resize;" />
+        {#if !onlyCorners || square.length > 1}
+            <div on:mousedown={() => openToolsTab.set("item")} class="square {square}" class:active style="width: {10 / ratio}px; cursor: {square}-resize;" />
+        {/if}
     {/each}
 </section>
 

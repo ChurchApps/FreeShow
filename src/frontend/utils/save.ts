@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { MAIN, STORE } from "../../types/Channels"
+import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import {
     activePopup,
@@ -30,7 +31,6 @@ import {
     globalTags,
     groupNumbers,
     groups,
-    imageExtensions,
     labelsDisabled,
     language,
     lockedOverlays,
@@ -78,7 +78,6 @@ import {
     undoHistory,
     usageLog,
     variables,
-    videoExtensions,
     videoMarkers,
     volume,
 } from "../stores"
@@ -86,7 +85,6 @@ import type { SaveList, SaveListSettings, SaveListSyncedSettings } from "./../..
 import { audioStreams, companion } from "./../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
-import { customActionActivation } from "../components/actions/actions"
 import { send } from "./request"
 
 export function save(closeWhenFinished: boolean = false, customTriggers: { backup?: boolean; silent?: boolean; changeUserData?: any } = {}) {
@@ -117,7 +115,6 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         groupNumbers: get(groupNumbers),
         fullColors: get(fullColors),
         formatNewShow: get(formatNewShow),
-        imageExtensions: get(imageExtensions),
         labelsDisabled: get(labelsDisabled),
         language: get(language),
         mediaFolders: get(mediaFolders),
@@ -136,7 +133,6 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         theme: get(theme),
         transitionData: get(transitionData),
         // themes: get(themes),
-        videoExtensions: get(videoExtensions),
         volume: get(volume),
         gain: get(gain),
         driveData: get(driveData),
@@ -323,7 +319,6 @@ const saveList: { [key in SaveList]: any } = {
     fullColors: fullColors,
     formatNewShow: formatNewShow,
     groups: groups,
-    imageExtensions: imageExtensions,
     labelsDisabled: labelsDisabled,
     language: language,
     mediaFolders: mediaFolders,
@@ -352,7 +347,6 @@ const saveList: { [key in SaveList]: any } = {
     theme: theme,
     themes: themes,
     transitionData: transitionData,
-    videoExtensions: null,
     volume: null,
     gain: null,
     midiIn: midiIn,

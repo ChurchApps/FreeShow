@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeProject, dictionary, projects, projectView, version } from "../../stores"
+    import { activePopup, activeProject, dictionary, projects, projectView, showRecentlyUsedProjects, version } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -15,6 +15,8 @@
         }
 
         history({ id: "UPDATE", location: { page: "show", id: "project" } })
+
+        showRecentlyUsedProjects.set(false)
     }
 </script>
 

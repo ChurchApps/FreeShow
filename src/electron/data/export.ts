@@ -19,6 +19,7 @@ const customJSONExtensions: any = {
 }
 
 export function startExport(_e: any, msg: Message) {
+    if (!msg.data) return
     let dataPath: string = msg.data.path
 
     if (!dataPath) {
@@ -120,9 +121,15 @@ export function createPDFWindow(data: any) {
 }
 
 ipcMain.on(EXPORT, (_e, msg: any) => {
-    if (msg.channel === "DONE") return exportMessage("export.exported")
+    if (!msg.data?.path) return
+
+    if (msg.channel === "DONE") {
+        doneWritingFile(false, msg.data.path)
+        return
+    }
     if (msg.channel !== "EXPORT") return
 
+    if (!msg.data?.name) return
     toApp(MAIN, { channel: "ALERT", data: msg.data.name })
     if (msg.data.type === "pdf") generatePDF(join(msg.data.path, msg.data.name))
 })

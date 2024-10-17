@@ -8,6 +8,7 @@
     let ready: boolean = false
     $: if (customCard && columns) initialize()
     function initialize() {
+        if (!customCard) return
         cardHeight = customCard.offsetHeight
         setTimeout(() => (ready = true))
     }

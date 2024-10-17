@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
-    import { encodeFilePath } from "../helpers/media"
+    import { encodeFilePath, getMediaInfo, isVideoSupported } from "../helpers/media"
 
     export let path: any
     export let video: any = null
@@ -51,6 +51,8 @@
 
     // path starting at "/" auto completes to app root, but should be file://
     $: if (path[0] === "/") path = `file://${path}`
+
+    $: isVideoSupported(path)
 </script>
 
 <div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">

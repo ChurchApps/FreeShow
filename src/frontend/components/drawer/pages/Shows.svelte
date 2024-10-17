@@ -21,9 +21,10 @@
     $: formattedSearch = formatSearch(searchValue)
     $: showsSorted = $sortedShowsList
 
-    let filteredShows: ShowList[]
+    let filteredShows: ShowList[] = []
     let filteredStored: any
-    $: filteredStored = filteredShows = active === "all" ? showsSorted : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
+    $: filteredStored = filteredShows =
+        active === "all" ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive) : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
 
     export let firstMatch: null | any = null
     let previousSearchValue: string = ""
@@ -69,7 +70,7 @@
     // }
 
     function keydown(e: any) {
-        if (e.target.closest("input") || e.target.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows.length) return
+        if (e.target.closest("input") || e.target.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows?.length) return
         if ($activeEdit.items.length) return
 
         let id: any = null

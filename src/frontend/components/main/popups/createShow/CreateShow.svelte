@@ -1,7 +1,7 @@
 <script lang="ts">
     import { ShowObj } from "../../../../classes/Show"
     import { convertText, getQuickExample } from "../../../../converters/txt"
-    import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, splitLines } from "../../../../stores"
+    import { activePopup, activeProject, activeShow, categories, dictionary, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
@@ -122,6 +122,16 @@
     function keydown(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
 
+        if (e.key === "f") {
+            e.preventDefault()
+
+            if (document.activeElement?.closest("#name")) {
+                selectOption("web")
+            }
+
+            return
+        }
+
         if (e.key === "Enter") {
             e.preventDefault()
 
@@ -174,6 +184,12 @@
 {#if selectedOption === "text"}
     <div class="create" style="margin-top: 10px;">
         {#if showMore}
+            <CombinedInput>
+                <p><T id="create_show.auto_groups" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={$special.autoGroups !== false} on:change={(e) => special.set({ ...$special, autoGroups: isChecked(e) })} />
+                </div>
+            </CombinedInput>
             <CombinedInput title={$dictionary.create_show?.format_new_show_tip}>
                 <p><T id="create_show.format_new_show" /></p>
                 <div class="alignRight">
@@ -183,7 +199,6 @@
             <CombinedInput title={$dictionary.create_show?.split_lines_tip}>
                 <p><T id="create_show.split_lines" /></p>
                 <NumberInput
-                    disabled={!$formatNewShow}
                     value={$splitLines}
                     max={100}
                     on:change={(e) => {
@@ -194,7 +209,7 @@
         {:else}
             <CombinedInput>
                 <Button on:click={() => (showMore = !showMore)} style="width: 100%;" dark center>
-                    <Icon id="options" right white={!$formatNewShow} />
+                    <Icon id="options" right white={!$formatNewShow && $special.autoGroups === false} />
                     <T id="edit.options" />
                 </Button>
             </CombinedInput>

@@ -22,6 +22,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     copy: { label: "actions.copy", icon: "copy", shortcuts: ["Ctrl+C"] },
     paste: { label: "actions.paste", icon: "paste", shortcuts: ["Ctrl+V"] },
     docs: { label: "main.docs", icon: "document" },
+    quick_start_guide: { label: "guide.start", icon: "guide" },
     focus_mode: { label: "actions.focus_mode", icon: "focus_mode" },
     fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11"] },
     resetZoom: { label: "actions.resetZoom", icon: "reset" },
@@ -43,6 +44,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     newScripture: { label: "new.scripture", icon: "add" },
     createCollection: { label: "new.collection", icon: "collection" },
     changeIcon: { label: "context.changeIcon", icon: "star" },
+    use_as_archive: { label: "context.use_as_archive", icon: "archive" },
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
     force_output: { label: "context.force_outputs", icon: "outputs" },
@@ -141,7 +143,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     file: ["save", "import", "export_more", "SEPERATOR", "quit"],
     edit: ["undo", "redo", "history", "SEPERATOR", "cut", "copy", "paste", "delete", "SEPERATOR", "selectAll"], // , "cut"
     view: ["focus_mode", "fullscreen"], // , "resetZoom", "zoomIn", "zoomOut"
-    help: ["shortcuts", "docs", "about"],
+    help: ["shortcuts", "docs", "quick_start_guide", "about"],
     // MAIN
     default: ["save", "settings", "history", "SEPERATOR", "about", "quit"],
     rename: ["rename"],
@@ -164,9 +166,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_media: ["newFolder"],
     category_audio: ["newFolder"],
     category_scripture: ["newScripture"],
-    category_shows_button: ["rename", "changeIcon", "delete"],
-    category_overlays_button: ["rename", "changeIcon", "delete"],
-    category_templates_button: ["rename", "changeIcon", "delete"],
+    category_shows_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
+    category_overlays_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
+    category_templates_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
     category_media_button: ["rename", "delete", "SEPERATOR", "system_open"],
     category_audio_button: ["rename", "delete", "SEPERATOR", "system_open"],
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],

@@ -2,6 +2,7 @@ import { uid } from "uid"
 import type { Bible } from "../../types/Bible"
 import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "./../stores"
+import { setActiveScripture } from "./bible"
 import { xml2json } from "./xml"
 
 export function convertZefaniaBible(data: any[]) {
@@ -21,6 +22,8 @@ export function convertZefaniaBible(data: any[]) {
             a[id] = { name: obj.name, id }
             return a
         })
+
+        setActiveScripture(id)
     })
 }
 
@@ -34,30 +37,28 @@ function XMLtoObject(xml: string): Bible {
         let chapters: any[] = []
 
         if (!Array.isArray(book.CHAPTER)) book.CHAPTER = [book.CHAPTER]
-        book.CHAPTER.forEach((chapter: any, i) => {
+        book.CHAPTER.forEach((chapter: any) => {
             let number = chapter["@cnumber"]
             let verses: any[] = []
 
             if (!Array.isArray(chapter.VERS)) chapter.VERS = [chapter.VERS]
             chapter.VERS.forEach((verse: any) => {
-                if (name === "Luke" && i === 9) console.log(verse)
-
-                let value = verse["#text"] || ""
+                let text = verse["#text"] || ""
 
                 // remove <NOTE></NOTE>
-                while (value.indexOf("<NOTE") > -1) {
-                    value = value.slice(0, value.indexOf("<NOTE")) + value.slice(value.indexOf("</NOTE") + 7)
+                while (text.indexOf("<NOTE") > -1) {
+                    text = text.slice(0, text.indexOf("<NOTE")) + text.slice(text.indexOf("</NOTE") + 7)
                 }
 
                 // add styled verses
                 let styledVerses = verse.STYLE || []
                 if (!Array.isArray(styledVerses)) styledVerses = [styledVerses]
-                value += styledVerses.map((a) => a["#text"] || "").join(" ")
+                text += styledVerses.map((a) => a["#text"] || "").join(" ")
 
                 // remove extra styling
-                value = value.replaceAll("\n", "").replaceAll('<BR art="x-p"/>', "")
+                text = text.replaceAll("\n", "").replaceAll('<BR art="x-p"/>', "")
 
-                verses.push({ number: verse["@vnumber"], value })
+                verses.push({ number: verse["@vnumber"], text })
             })
 
             chapters.push({ number, verses })
@@ -69,5 +70,5 @@ function XMLtoObject(xml: string): Bible {
     // INFORMATION: contributors, coverage, creator, date, description, format, identifier, language, publisher, rights, source, subject, title, type
     let info = bible.INFORMATION || {}
 
-    return { name: info.title || bible["@biblename"] || "", copyright: info.publisher || "", books }
+    return { name: info.title || bible["@biblename"] || "", metadata: { ...info, copyright: info.publisher || "" }, books }
 }

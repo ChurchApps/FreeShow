@@ -531,7 +531,7 @@ function convertProToSlides(song: any) {
     const tempSlides: any[] = getSlides(song.cues || [])
     // console.log(tempArrangements, tempGroups, tempSlides)
 
-    if (!tempArrangements?.length) {
+    if (!tempArrangements.length) {
         tempArrangements.push({ groups: Object.keys(tempGroups), name: "" })
     }
 
@@ -639,7 +639,7 @@ function getArrangements(arrangements: any) {
         })
     })
 
-    return newArrangements
+    return newArrangements.filter((a) => a.groups.length)
 }
 
 function getGroups(groups) {

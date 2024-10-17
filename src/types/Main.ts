@@ -105,6 +105,7 @@ export interface MediaStyle {
     loop?: boolean // audio
     volume?: number // audio
     rendering?: string // image rendering
+    info?: any // cached codec/mime data
 }
 
 export type Popups =

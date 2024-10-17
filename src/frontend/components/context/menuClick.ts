@@ -16,6 +16,7 @@ import {
     activeShow,
     activeTagFilter,
     audioFolders,
+    categories,
     currentOutputSettings,
     currentWindow,
     dataPath,
@@ -25,10 +26,12 @@ import {
     events,
     focusMode,
     forceClock,
+    guideActive,
     media,
     mediaFolders,
     outLocked,
     outputs,
+    overlayCategories,
     overlays,
     popupData,
     previousShow,
@@ -38,12 +41,14 @@ import {
     scriptures,
     selected,
     settingsTab,
+    showRecentlyUsedProjects,
     shows,
     showsCache,
     slidesOptions,
     sorted,
     stageShows,
     styles,
+    templateCategories,
     templates,
     themes,
     toggleOutputEnabled,
@@ -102,6 +107,7 @@ const actions: any = {
 
         previousShow.set(null)
         activeShow.set(null)
+        showRecentlyUsedProjects.set(false)
 
         let firstItem = project.shows[0].id
         activeFocus.set({ id: firstItem, index: 0 })
@@ -122,6 +128,7 @@ const actions: any = {
     docs: () => window.api.send(MAIN, { channel: "URL", data: "https://freeshow.app/docs" }),
     shortcuts: () => activePopup.set("shortcuts"),
     about: () => activePopup.set("about"),
+    quick_start_guide: () => guideActive.set(true),
 
     // main
     rename: (obj: any) => {
@@ -226,7 +233,7 @@ const actions: any = {
         if (currentIndex < 0) activeTags.push(tagId)
         else activeTags.splice(currentIndex, 1)
 
-        activeTagFilter.set(activeTags)
+        activeTagFilter.set(activeTags || [])
     },
     addToProject: (obj: any) => {
         if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return
@@ -280,6 +287,23 @@ const actions: any = {
             })
             return a
         })
+    },
+    use_as_archive: (obj: any) => {
+        const categoryStores: any = {
+            category_shows: () => categories.update(toggleArchive),
+            category_overlays: () => overlayCategories.update(toggleArchive),
+            category_templates: () => templateCategories.update(toggleArchive),
+        }
+
+        if (!categoryStores[obj.sel.id]) return
+        categoryStores[obj.sel.id]()
+
+        function toggleArchive(a) {
+            obj.sel.data.forEach((id) => {
+                a[id].isArchive = !a[id].isArchive
+            })
+            return a
+        }
     },
     toggle_clock: () => {
         forceClock.set(!get(forceClock))
@@ -962,6 +986,7 @@ const actions: any = {
         if (obj.sel.id === "slide") {
             let selectedSlides = obj.sel.data // .sort((a, b) => a.index - b.index) [merge based on selected order]
             if (selectedSlides.length > 1) mergeSlides(selectedSlides)
+            else if (selectedSlides[0]?.index) mergeTextboxes(selectedSlides[0].index)
         } else if (!obj.sel.id) {
             // textbox
             mergeTextboxes()

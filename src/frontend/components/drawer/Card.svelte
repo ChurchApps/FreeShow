@@ -122,7 +122,7 @@
     outline-offset: -5px; */
     }
 
-    .main.changed {
+    .main.changed :global(.label) {
         font-style: italic;
         color: var(--secondary);
     }

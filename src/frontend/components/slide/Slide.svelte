@@ -149,12 +149,12 @@
     let thumbnailPath: string = ""
     async function loadBackground() {
         if (ghostBackground) {
+            await wait(100)
             if (index === 1) {
                 // create image (if not created) when it's on slide 2 (slide 1 is the original)
                 thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
             } else {
                 // load ghost thumbnails (wait a bit to reduce loading lag)
-                await wait(100)
                 thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
             }
             return

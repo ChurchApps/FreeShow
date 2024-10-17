@@ -345,7 +345,12 @@
     <p><T id="settings.output_screen" /></p>
     <Button disabled={currentOutput.invisible} on:click={() => activePopup.set("choose_screen")}>
         <Icon id="screen" style="margin-left: 0.5em;" right />
-        <p><T id="popup.choose_screen" /></p>
+        <p>
+            <T id="popup.choose_screen" />
+            {#if currentOutput.bounds?.width}
+                <span style="display: flex;align-items: center;padding: 0 8px;opacity: 0.5;">({currentOutput.bounds.width}x{currentOutput.bounds.height})</span>
+            {/if}
+        </p>
     </Button>
     <!-- centered? -->
     <!-- <Button disabled={currentOutput.invisible} on:click={() => activePopup.set("choose_screen")} center>

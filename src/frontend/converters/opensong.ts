@@ -5,6 +5,7 @@ import type { Bible } from "./../../types/Bible"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, scriptures, scripturesCache } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
+import { setActiveScripture } from "./bible"
 
 interface Song {
     title: string
@@ -73,19 +74,31 @@ function createSlides({ lyrics, presentation }: Song) {
     // fix incorrect formatting
     lyrics = lyrics.replaceAll("[", "\n\n[").trim()
     lyrics = lyrics.replaceAll("\n\n\n\n", "\n\n")
+    lyrics = lyrics.replaceAll("||", "__CHILD_SLIDE__")
 
     let slideRef: any = {}
     let slideOrder: string[] = []
 
     lyrics.split("\n\n").forEach((slide) => {
-        let lines = slide.trim().split("\n")
-        let group = lines.splice(0, 1)[0]?.replace(/[\[\]]/g, "")
-        let chords = lines.filter((_v: string) => _v.startsWith("."))
-        let text = lines.filter((_v: string) => !_v.startsWith("."))
-        if (text) {
-            let id: string = uid()
-            slideRef[group] = id
-            slideOrder.push(group)
+        let groupText = slide.trim()
+        let group = groupText
+            .split("\n")
+            .splice(0, 1)[0]
+            ?.replace(/[\[\]]/g, "")
+        if (!groupText) return
+
+        slideOrder.push(group)
+        let parentId = uid()
+        let children: string[] = []
+        groupText.split("__CHILD_SLIDE__").forEach((slideText, i) => {
+            let lines = slideText.trim().split("\n")
+            if (i === 0 && lines[0].includes("[")) lines.shift()
+            let chords = lines.filter((_v: string) => _v.startsWith("."))
+            let text = lines.filter((_v: string) => !_v.startsWith("."))
+
+            let id: string = i === 0 ? parentId : uid()
+            if (i === 0) slideRef[group] = id
+            else children.push(id)
 
             let items = [
                 {
@@ -97,14 +110,22 @@ function createSlides({ lyrics, presentation }: Song) {
             // TODO: chords
             console.log(chords)
             slides[id] = {
-                group: "",
+                group: i === 0 ? "" : null,
                 color: null,
                 settings: {},
                 notes: "",
                 items,
             }
+
+            if (i > 0) return
+
             let globalGroup = OSgroups[group.replace(/[0-9]/g, "")]
             if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
+            else slides[id].group = group
+        })
+
+        if (children.length) {
+            slides[parentId].children = children
         }
     })
 
@@ -167,6 +188,8 @@ export function convertOpenSongBible(data: any[]) {
             a[id] = { name: obj.name, id }
             return a
         })
+
+        setActiveScripture(id)
     })
 }
 
@@ -188,19 +211,19 @@ function XMLtoBible(xml: string): Bible {
             let number = chapter.getAttribute("n")
             let verses: any[] = []
             ;[...getChildren(chapter, "v")].forEach((verse: any) => {
-                let value = verse.innerHTML
+                let text = verse.innerHTML
                     .toString()
                     .replace(/\[\d+\] /g, "") // remove [1], not [text]
                     .trim()
-                length += value.length
-                if (value.length) verses.push({ number: verse.getAttribute("n"), value })
+                length += text.length
+                if (text.length) verses.push({ number: verse.getAttribute("n"), text })
             })
             chapters.push({ number, verses })
         })
         if (length) books.push({ name, number, chapters })
     })
 
-    return { name: "", copyright: "", books }
+    return { name: "", metadata: { copyright: "" }, books }
 }
 
 const getChildren = (parent: any, name: string) => parent.getElementsByTagName(name)

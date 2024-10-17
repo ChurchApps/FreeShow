@@ -1,6 +1,6 @@
 <script lang="ts">
     import { SelectIds } from "../../../types/Main"
-    import { audioPlaylists, overlays, shows, templates } from "../../stores"
+    import { audioPlaylists, categories, overlayCategories, overlays, shows, templateCategories, templates } from "../../stores"
     import T from "../helpers/T.svelte"
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -9,6 +9,12 @@
     export let buttons
     export let id: string
     export let selectId: SelectIds
+
+    const categoryStores: any = {
+        shows: () => $categories,
+        overlays: () => $overlayCategories,
+        templates: () => $templateCategories,
+    }
 
     let length: any = {}
     if (id) length = {}
@@ -23,7 +29,7 @@
             length[button.id] = 0
 
             if (button.id === "all") {
-                length[button.id] = list.length
+                length[button.id] = list.filter((a) => !categoryStores[id]?.()[a?.category]?.isArchive).length
                 return
             }
 

@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles, videoExtensions } from "../../stores"
+    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles } from "../../stores"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { encodeFilePath, getExtension } from "../helpers/media"
+    import { encodeFilePath, getExtension, videoExtensions } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getCachedShow } from "../helpers/show"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
@@ -307,7 +307,7 @@
     }
 
     function checkImage(src: string) {
-        let isVideo = $videoExtensions.includes(getExtension(src))
+        let isVideo = videoExtensions.includes(getExtension(src))
         let media: any = new Image()
         if (isVideo) media = document.createElement("video")
 

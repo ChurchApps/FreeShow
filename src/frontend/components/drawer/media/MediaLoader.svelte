@@ -4,8 +4,8 @@
     import type { Resolution } from "../../../../types/Settings"
     import type { MediaType, ShowType } from "../../../../types/Show"
 
-    import { outputs, styles, videoExtensions } from "../../../stores"
-    import { encodeFilePath, getExtension } from "../../helpers/media"
+    import { outputs, styles } from "../../../stores"
+    import { encodeFilePath, getExtension, videoExtensions } from "../../helpers/media"
     import { getResolution } from "../../helpers/output"
     import Camera from "../../output/Camera.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
@@ -34,7 +34,7 @@
     // type
     $: if (!type && path) {
         const extension = getExtension(path)
-        if ($videoExtensions.includes(extension)) type = "video"
+        if (videoExtensions.includes(extension)) type = "video"
     }
 
     $: customResolution = resolution || getResolution(null, { $outputs, $styles })

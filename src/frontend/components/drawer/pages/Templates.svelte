@@ -22,10 +22,12 @@
     $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id]?.settings?.template : null
 
     let fullFilteredTemplates: any[] = []
-    $: if ($templates || active) updateTemplates()
+    $: if ($templates || active || $templateCategories) updateTemplates()
 
     function updateTemplates() {
-        filteredTemplates = sortByName(keysToID(clone($templates)).filter((s: any) => active === "all" || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category]))))
+        filteredTemplates = sortByName(
+            keysToID(clone($templates)).filter((s: any) => (active === "all" && !$templateCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category])))
+        )
 
         filterSearch()
     }

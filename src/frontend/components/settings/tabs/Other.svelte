@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { EXPORT, MAIN } from "../../../../types/Channels"
-    import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, guideActive, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
+    import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
@@ -10,8 +10,8 @@
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import FolderPicker from "../../inputs/FolderPicker.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import FolderPicker from "../../inputs/FolderPicker.svelte"
 
     onMount(() => {
         // getCacheSize()
@@ -360,13 +360,6 @@
         </p>
     </Button>
 </CombinedInput> -->
-
-<CombinedInput title={$dictionary.guide?.start}>
-    <Button style="width: 100%;" on:click={() => guideActive.set(true)}>
-        <Icon id="guide" style="margin-left: 0.5em;" right />
-        <p><T id="guide.start" /></p>
-    </Button>
-</CombinedInput>
 
 <CombinedInput title={$dictionary.media?.bundle_media_files_tip}>
     <Button style="width: 100%;" on:click={bundleMediaFiles}>

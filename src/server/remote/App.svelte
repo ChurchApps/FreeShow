@@ -8,11 +8,11 @@
     import Icon from "./components/Icon.svelte"
     import ProjectButton from "./components/ProjectButton.svelte"
     import ShowButton from "./components/ShowButton.svelte"
-    import TabletMode from "./components/tablet/TabletMode.svelte"
-    import Tabs from "./components/Tabs.svelte"
     import Clear from "./components/slide/Clear.svelte"
     import Slide from "./components/slide/Slide.svelte"
     import Slides from "./components/slide/Slides.svelte"
+    import TabletMode from "./components/tablet/TabletMode.svelte"
+    import Tabs from "./components/Tabs.svelte"
     import { GetLayout, getNextSlide, nextSlide } from "./helpers/get"
     import { dateToString } from "./helpers/time"
 
@@ -127,8 +127,8 @@
                 break
             case "LANGUAGE":
                 Object.keys(dictionary).forEach((a) => {
-                    Object.keys(dictionary).forEach((b) => {
-                        if (msg.data.strings[a][b]) dictionary[a][b] = msg.data.strings[a][b]
+                    Object.keys(dictionary[a]).forEach((b) => {
+                        if (msg.data.strings[a]?.[b]) dictionary[a][b] = msg.data.strings[a][b]
                     })
                 })
                 break

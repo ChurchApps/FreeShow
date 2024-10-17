@@ -3,6 +3,7 @@ import type { Bible } from "../../types/Bible"
 import { uid } from "uid"
 import { xml2json } from "./xml"
 import { formatToFileName } from "../components/helpers/show"
+import { setActiveScripture } from "./bible"
 
 export function convertBebliaBible(data: any[]) {
     data.forEach((bible) => {
@@ -21,13 +22,15 @@ export function convertBebliaBible(data: any[]) {
             a[id] = { name: obj.name, id }
             return a
         })
+
+        setActiveScripture(id)
     })
 }
 
 function convertToBible(content: any): Bible {
     let bible: Bible = {
         name: content.bible["@name"] || content.bible["@translation"] || "",
-        copyright: content.bible["@info"] || "",
+        metadata: { copyright: content.bible["@info"] || "" },
         books: [],
     }
 
@@ -85,7 +88,7 @@ function getVerses(oldVerses: any[]) {
     oldVerses.forEach((verse) => {
         let currentVerse = {
             number: verse["@number"],
-            value: verse["#text"],
+            text: verse["#text"],
         }
 
         verses.push(currentVerse)

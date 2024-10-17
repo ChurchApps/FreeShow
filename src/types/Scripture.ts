@@ -1,7 +1,8 @@
 export interface Bible {
     api?: boolean
     version: null | string
-    copyright?: string
+    metadata?: { [key: string]: string }
+    copyright?: string // displayed in the drawer
     id?: string
     book: null | string
     bookId?: string
@@ -72,7 +73,8 @@ export interface VerseText {
     bookId: string // "GEN"
     chapterId: string // "GEN.1"
     content: string | string[][] // "<p class=\"p\"><span data-number=\"1\" data-sid=\"GEN 1:1\" class=\"v\">1</span>In the beginning God created the heaven and the earth. </p>"
-    copyright: string // "\n          \n            PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent\n        "
+    metadata?: { [key: string]: string } // {}
+    copyright?: string // "\n          \n            PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent\n        "
     id: string // "GEN.1.1"
     next: {
         id: string

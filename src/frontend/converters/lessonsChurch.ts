@@ -5,11 +5,11 @@ import { ShowObj } from "../classes/Show"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { checkName, formatToFileName, getLabelId } from "../components/helpers/show"
-import { activeProject, activeRename, dataPath, projectView, projects, refreshSlideThumbnails, videoExtensions } from "../stores"
+import { activeProject, activeRename, dataPath, projectView, projects, refreshSlideThumbnails } from "../stores"
 import { newToast } from "../utils/common"
 import { destroy, receive, send } from "../utils/request"
 import { createCategory, setTempShows } from "./importHelpers"
-import { getExtension } from "../components/helpers/media"
+import { getExtension, videoExtensions } from "../components/helpers/media"
 
 type File = {
     name: string
@@ -230,7 +230,7 @@ function convertToSlides(groups) {
             if (extension.includes("/") || extension.includes("\\")) extension = ""
             if (!extension && file.fileType) extension = file.fileType.slice(file.fileType.indexOf("/") + 1)
             if (!extension && file.streamUrl) extension = "mp4"
-            let nextAfterMedia = !loop && get(videoExtensions).includes(extension)
+            let nextAfterMedia = !loop && videoExtensions.includes(extension)
             if (groupIndex >= groups.length - 1 && fileIndex >= group.files.length - 1) nextAfterMedia = false
 
             let slideId = uid()
