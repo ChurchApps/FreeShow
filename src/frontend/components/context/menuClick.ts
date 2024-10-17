@@ -16,6 +16,7 @@ import {
     activeShow,
     activeTagFilter,
     audioFolders,
+    categories,
     currentOutputSettings,
     currentWindow,
     dataPath,
@@ -30,6 +31,7 @@ import {
     mediaFolders,
     outLocked,
     outputs,
+    overlayCategories,
     overlays,
     popupData,
     previousShow,
@@ -46,6 +48,7 @@ import {
     sorted,
     stageShows,
     styles,
+    templateCategories,
     templates,
     themes,
     toggleOutputEnabled,
@@ -284,6 +287,23 @@ const actions: any = {
             })
             return a
         })
+    },
+    use_as_archive: (obj: any) => {
+        const categoryStores: any = {
+            category_shows: () => categories.update(toggleArchive),
+            category_overlays: () => overlayCategories.update(toggleArchive),
+            category_templates: () => templateCategories.update(toggleArchive),
+        }
+
+        if (!categoryStores[obj.sel.id]) return
+        categoryStores[obj.sel.id]()
+
+        function toggleArchive(a) {
+            obj.sel.data.forEach((id) => {
+                a[id].isArchive = !a[id].isArchive
+            })
+            return a
+        }
     },
     toggle_clock: () => {
         forceClock.set(!get(forceClock))

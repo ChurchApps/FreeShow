@@ -161,10 +161,10 @@ export async function createSlides(currentEvents: any[], showId: string = "") {
         lastParent.children[lastChild].end = true
     }
 
-    createCategory("events", "event", { isDefault: true })
+    createCategory("events", "event", { isDefault: true, isArchive: true })
 
     let layoutId = _show(showId).get("settings.activeLayout") || "default"
-    let show: Show = clone(_show(showId).get() || new ShowObj(true, "events", layoutId, new Date().getTime(), false))
+    let show: Show = clone(_show(showId).get() || new ShowObj(false, "events", layoutId, new Date().getTime(), false))
 
     show.slides = slides
     show.layouts = { [layoutId]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }

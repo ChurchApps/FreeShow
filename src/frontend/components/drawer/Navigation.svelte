@@ -21,12 +21,18 @@
     let buttons: Button[] = []
     $: {
         if (id === "shows" && $dictionary) {
+            let categoriesList = keysToID($categories).filter((a) => !a.isArchive)
+            let archivedCategories = keysToID($categories).filter((a) => a.isArchive)
+
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(keysToID($categories), "name") as Button[]),
+                ...(sortObject(categoriesList, "name") as Button[]),
             ]
+            if (archivedCategories.length) {
+                buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
+            }
         } else if (id === "media") {
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
@@ -39,19 +45,31 @@
                 ...(sortObject(keysToID($mediaFolders), "name") as Button[]),
             ]
         } else if (id === "overlays") {
+            let categoriesList = keysToID($overlayCategories).filter((a) => !a.isArchive)
+            let archivedCategories = keysToID($overlayCategories).filter((a) => a.isArchive)
+
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(keysToID($overlayCategories), "name") as Button[]),
+                ...(sortObject(categoriesList, "name") as Button[]),
             ]
+            if (archivedCategories.length) {
+                buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
+            }
         } else if (id === "templates") {
+            let categoriesList = keysToID($templateCategories).filter((a) => !a.isArchive)
+            let archivedCategories = keysToID($templateCategories).filter((a) => a.isArchive)
+
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
                 { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
                 { id: "SEPERATOR", name: "" },
-                ...(sortObject(keysToID($templateCategories), "name") as Button[]),
+                ...(sortObject(categoriesList, "name") as Button[]),
             ]
+            if (archivedCategories.length) {
+                buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
+            }
         } else if (id === "audio") {
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },

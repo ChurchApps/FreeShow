@@ -104,7 +104,7 @@
         <T id="create_show.search_results" />
     </div>
 
-    <div style="max-height: 250px;overflow-y: auto;">
+    <div style="max-height: 250px;overflow-y: auto;display: flex;">
         <table class="searchResultTable">
             <thead>
                 <tr>
@@ -147,7 +147,7 @@
     }
 
     .searchResultTable {
-        /* width: 100%; */
+        flex: 1;
         table-layout: fixed;
         border-spacing: 0;
 

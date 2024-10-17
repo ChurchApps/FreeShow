@@ -5,6 +5,7 @@ import type { Bible } from "./../../types/Bible"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, scriptures, scripturesCache } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
+import { setActiveScripture } from "./bible"
 
 interface Song {
     title: string
@@ -187,6 +188,8 @@ export function convertOpenSongBible(data: any[]) {
             a[id] = { name: obj.name, id }
             return a
         })
+
+        setActiveScripture(id)
     })
 }
 

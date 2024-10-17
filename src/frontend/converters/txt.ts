@@ -8,7 +8,7 @@ import { history } from "../components/helpers/history"
 import { checkName, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { linesToTextboxes } from "../components/show/formatTextEditor"
-import { activeProject, dictionary, formatNewShow, groups, splitLines } from "../stores"
+import { activeProject, dictionary, formatNewShow, groups, special, splitLines } from "../stores"
 
 export function getQuickExample() {
     let tip = get(dictionary).create_show?.quick_lyrics_example_tip || ""
@@ -50,7 +50,10 @@ export function convertText({ name = "", category = null, text, noFormatting = f
         let firstSlideText = labeled[0].text.split("\n")
         name = firstSlideText[0]
         if (firstSlideText.length > 1 && (name.includes("[") || name.includes(":"))) name = firstSlideText[1]
-        name = name.replace(/[,.!]/g, "").trim()
+        name = name
+            .replace(/[,.!]/g, "")
+            .replace(/<[^>]*>/g, "")
+            .trim()
         if (name.length > 30) name = name.slice(0, name.indexOf(" ", 30))
         if (name.length > 38) name = name.slice(0, 30)
     }
@@ -117,6 +120,7 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
     function convertLabeledSlides(a: any): void {
         let id: any
         let formatText: boolean = noFormatting ? false : get(formatNewShow)
+        let autoGroups: boolean = get(special).autoGroups !== false
 
         let text: string = fixText(a.text, formatText)
         // this only accounted for the parent slide, so if the same group was placed multiple times with different children that would be replaced & all "duplicate" children would be removed!
@@ -140,14 +144,14 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
         // stored[a.type].push({ id, text })
 
         let group: string = activeGroup && !hasTextGroup ? null : a.type
-        if (!formatText && !hasTextGroup && group) group = "verse"
+        if (!autoGroups && !hasTextGroup && group) group = "verse"
         let color: any = null
 
         let allLines: string[] = [text]
         let lines: string[] = removeEmpty(text.split("\n"))
 
         // split lines into a set amount of lines
-        if (formatText && Number(get(splitLines)) && lines.length > get(splitLines)) {
+        if (Number(get(splitLines)) && lines.length > get(splitLines)) {
             allLines = []
             while (lines.length) allLines.push(lines.splice(0, get(splitLines)).join("\n"))
         }

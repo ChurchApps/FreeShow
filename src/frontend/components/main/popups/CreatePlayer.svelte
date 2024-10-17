@@ -58,13 +58,12 @@
     <CombinedInput textWidth={40}>
         <p><T id="inputs.name" /></p>
         <!-- placeholder={$dictionary.inputs?.name} -->
-        <TextInput value={data.name} on:input={(e) => setValue(e, "name")} on:paste={(e) => setValue(e, "name")} />
+        <TextInput value={data.name} on:change={(e) => setValue(e, "name")} />
     </CombinedInput>
     <CombinedInput textWidth={40}>
         <p><T id="inputs.video_id" /></p>
         <!-- placeholder="X-AJdKty74M" -->
-        <!-- on:change did not trigger when pasting a value on mac -->
-        <TextInput value={data.id} on:input={(e) => setValue(e, "id")} on:paste={(e) => setValue(e, "id")} />
+        <TextInput value={data.id} on:change={(e) => setValue(e, "id")} />
     </CombinedInput>
 
     <br />

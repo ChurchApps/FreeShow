@@ -3,6 +3,7 @@ import type { Bible } from "../../types/Bible"
 import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "../stores"
 import { xml2json } from "./xml"
+import { setActiveScripture } from "./bible"
 
 export function convertOSISBible(data: any[]) {
     data.forEach((bible) => {
@@ -21,6 +22,8 @@ export function convertOSISBible(data: any[]) {
             a[id] = { name: obj.name, id }
             return a
         })
+
+        setActiveScripture(id)
     })
 }
 

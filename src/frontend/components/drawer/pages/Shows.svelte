@@ -23,7 +23,8 @@
 
     let filteredShows: ShowList[] = []
     let filteredStored: any
-    $: filteredStored = filteredShows = active === "all" ? showsSorted : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
+    $: filteredStored = filteredShows =
+        active === "all" ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive) : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
 
     export let firstMatch: null | any = null
     let previousSearchValue: string = ""

@@ -10,6 +10,7 @@ export interface Category {
     url?: string
     default?: boolean
     description?: string
+    isArchive?: boolean
 }
 
 export interface BibleCategories extends Category {

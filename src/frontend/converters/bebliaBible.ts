@@ -3,6 +3,7 @@ import type { Bible } from "../../types/Bible"
 import { uid } from "uid"
 import { xml2json } from "./xml"
 import { formatToFileName } from "../components/helpers/show"
+import { setActiveScripture } from "./bible"
 
 export function convertBebliaBible(data: any[]) {
     data.forEach((bible) => {
@@ -21,6 +22,8 @@ export function convertBebliaBible(data: any[]) {
             a[id] = { name: obj.name, id }
             return a
         })
+
+        setActiveScripture(id)
     })
 }
 

@@ -328,6 +328,8 @@ function stageHasOutput(outputId: string) {
 
         if (!outputItem?.enabled) return false
         return (stageLayout.settings?.output || outputId) === outputId
+
+        // WIP check that this stage layout is not disabled & used in a output or (web enabled (disabledServers) + has connection)!
     })
 }
 
@@ -516,6 +518,11 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     let sortedTemplateItems = sortItemsByType(templateItems)
 
+    // remove slide items if no text
+    if (addOverflowTemplateItems && templateItems.length < slideItems.length) {
+        slideItems = slideItems.filter((a) => (a.type || "text") !== "text" || getItemText(a).length)
+    }
+
     let newSlideItems: Item[] = []
     slideItems.forEach((item: Item) => {
         let type = item.type || "text"
@@ -571,13 +578,16 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         }
     })
 
+    // let remainingTextTemplateItems: any[] = []
     if (addOverflowTemplateItems) {
-        templateItems = removeTextValue(templateItems)
+        sortedTemplateItems.text = removeTextValue(sortedTemplateItems.text)
+        // remainingTextTemplateItems = templateItems.filter((a) => (a.type || "text") === "text")
     } else {
         delete sortedTemplateItems.text
-        templateItems = templateItems.filter((a) => (a.type || "text") !== "text")
     }
 
+    // remove textbox items
+    templateItems = templateItems.filter((a) => (a.type || "text") !== "text")
     // remove any duplicate values
     templateItems = templateItems.filter((item) => !newSlideItems.find((a) => JSON.stringify(item) === JSON.stringify(a)))
 
@@ -585,7 +595,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     let remainingCount = Object.values(sortedTemplateItems).reduce((value, items) => (value += items.length), 0)
     let remainingTemplateItems = remainingCount ? templateItems.slice(remainingCount * -1) : []
     // add behind existing items (any textboxes previously on top not in use will not be replaced by any underneath)
-    newSlideItems = [...remainingTemplateItems, ...newSlideItems]
+    newSlideItems = [...remainingTemplateItems, ...newSlideItems, ...(sortedTemplateItems.text || [])]
 
     return newSlideItems
 }

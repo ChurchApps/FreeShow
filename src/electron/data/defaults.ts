@@ -61,7 +61,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     labelsDisabled: false,
     groupNumbers: true,
     fullColors: false,
-    formatNewShow: true,
+    formatNewShow: false,
     showsPath: null,
     dataPath: "",
     lockedOverlays: [],

@@ -17,7 +17,7 @@
 </script>
 
 <!-- svelte-ignore a11y-autofocus -->
-<input {id} {type} class="edit" {value} {placeholder} {style} class:center class:light {disabled} {autofocus} use:select on:input on:change on:keydown on:paste />
+<input {id} {type} class="edit" {value} {placeholder} {style} class:center class:light {disabled} {autofocus} use:select on:input on:change on:keydown />
 
 <style>
     input {

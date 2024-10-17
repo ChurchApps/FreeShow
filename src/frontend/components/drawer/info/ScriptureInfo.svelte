@@ -91,7 +91,7 @@
         // add scripture category
         if (!$categories.scripture) {
             categories.update((a) => {
-                a.scripture = { name: "category.scripture", icon: "scripture", default: true }
+                a.scripture = { name: "category.scripture", icon: "scripture", default: true, isArchive: true }
                 return a
             })
         }

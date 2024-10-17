@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Bible } from "../../../types/Scripture"
-    import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, dictionary, drawer, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, dictionary, drawer, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, MENU_BAR_HEIGHT } from "../../utils/common"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
@@ -104,6 +104,7 @@
     let searchElem: any
     function keydown(e: any) {
         if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+            if ($activePopup === "show") return
             searchActive = false
             searchActive = true
 

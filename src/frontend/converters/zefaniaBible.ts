@@ -2,6 +2,7 @@ import { uid } from "uid"
 import type { Bible } from "../../types/Bible"
 import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "./../stores"
+import { setActiveScripture } from "./bible"
 import { xml2json } from "./xml"
 
 export function convertZefaniaBible(data: any[]) {
@@ -21,6 +22,8 @@ export function convertZefaniaBible(data: any[]) {
             a[id] = { name: obj.name, id }
             return a
         })
+
+        setActiveScripture(id)
     })
 }
 
