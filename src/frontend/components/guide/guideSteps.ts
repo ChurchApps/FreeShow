@@ -10,7 +10,7 @@ import { keysToID, removeDeleted } from "../helpers/array"
 export const guideSteps = [
     {
         title: "$guide.start",
-        description: "This is a short walkthrough of some basic features (in English), you can skip in the bottom right corner.",
+        description: "guide_description.start",
         query: ".column",
         pre: () => {
             activePage.set("show")
@@ -22,7 +22,7 @@ export const guideSteps = [
     // projects
     {
         title: "Projects",
-        description: "Manage all of your projects in one place.",
+        description: "guide_description.project_manage",
         query: "#projectsArea",
         pre: () => {
             activeProject.set(null)
@@ -32,7 +32,7 @@ export const guideSteps = [
     },
     {
         title: "Projects",
-        description: "Create folders to keep it organized, and create new projects.",
+        description: "guide_description.project_create",
         query: "#projectsButtons",
         pre: () => {
             activeProject.set(null)
@@ -42,7 +42,7 @@ export const guideSteps = [
     // project
     {
         title: "Project",
-        description: "After opening a project you get a list of all the items here on the left side, drag & drop from the drawer to add more.",
+        description: "guide_description.project_list",
         query: "#projectArea",
         pre: () => {
             let projectId = "default"
@@ -69,7 +69,7 @@ export const guideSteps = [
     // drawer
     {
         title: "The Drawer",
-        description: "Find all of your shows, media, overlays, etc. in one place.",
+        description: "guide_description.drawer",
         query: ".drawer",
         pre: () => {
             openDrawer()
@@ -79,13 +79,13 @@ export const guideSteps = [
     // shows
     {
         title: "Categories",
-        description: "Manage all of your different shows by organizing them in different categories. Drag & drop any selected show to move them.",
+        description: "guide_description.drawer_shows",
         query: ".categories",
     },
     // show
     {
         title: "Creating a Show",
-        description: "Click this to create a new show (song, presentation, etc.)",
+        description: "guide_description.create_show_button",
         query: "#newShowBtn",
         pre: () => {
             activePopup.set(null)
@@ -94,7 +94,7 @@ export const guideSteps = [
     },
     {
         title: "Creating a Show",
-        description: "Fill in the main details of the show, you can also auto find lyrics on the web from the name, or paste the lyrics manually.",
+        description: "guide_description.create_show_popup",
         query: ".card",
         pre: () => {
             activePopup.set("show")
@@ -103,7 +103,7 @@ export const guideSteps = [
     },
     {
         title: "Show",
-        description: "A show is the main presentation, click on any slide to present, and use the arrow keys to navigate. You can also drag & drop media files on a slide to set as background.",
+        description: "guide_description.show",
         query: "#showArea",
         pre: () => {
             activePopup.set(null)
@@ -116,7 +116,7 @@ export const guideSteps = [
     // output
     {
         title: "Output",
-        description: "After a slide is clicked, it will show in the output and you will see a preview on the right, here you'll also find some extra actions like pausing a video.",
+        description: "guide_description.show_slide",
         query: "#previewArea",
         pre: () => {
             activePage.set("show")
@@ -125,7 +125,7 @@ export const guideSteps = [
     },
     {
         title: "Output",
-        description: "Clear individual output layers, or clear all layers in the output.",
+        description: "guide_description.output_clear",
         query: ".clear",
         pre: () => {
             activePage.set("show")
@@ -137,7 +137,7 @@ export const guideSteps = [
     // editing
     {
         title: "Editing",
-        description: "Open slide editing with one click at the top.",
+        description: "guide_description.edit",
         query: ".row",
         pre: () => {
             activePage.set("edit")
@@ -146,7 +146,7 @@ export const guideSteps = [
     // done
     {
         title: "That's the basics!",
-        description: "You can always look on the web if you need help with other features.",
+        description: "guide_description.end",
         query: ".column",
         pre: () => {
             activePage.set("show")

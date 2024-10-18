@@ -49,6 +49,7 @@ export function convertOpenSong(data: any) {
                 title: show.name,
                 author: song.author,
                 copyright: song.copyright,
+                key: song.key,
                 CCLI: song.ccli,
             }
             show.message = { text: song.hymn_number }
