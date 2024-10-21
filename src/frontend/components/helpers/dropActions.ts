@@ -277,14 +277,14 @@ export const dropActions: any = {
         h.oldData = { id: playlistId }
 
         let songs = clone(get(audioPlaylists)[playlistId]?.songs || [])
+        let dropIndex = drop.index
+        if (dropIndex === undefined) dropIndex = songs.length
 
         if (drag.id === "files") {
-            let dropIndex = drop.index
-            if (dropIndex === undefined) dropIndex = songs.length
             let audioFiles = drag.data.map((a) => window.api.showFilePath(a))
             songs = addToPos(songs, audioFiles, dropIndex)
         } else {
-            songs = mover(songs, getIndexes(drag.data), drop.index)
+            songs = mover(songs, getIndexes(drag.data), dropIndex)
         }
 
         h.newData = { key: "songs", data: songs }

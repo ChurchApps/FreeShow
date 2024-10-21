@@ -1,8 +1,9 @@
 <script type="ts">
+    import { slide } from "svelte/transition"
     import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, paintCache, saved, shows } from "../../stores"
-    import { newToast } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import { displayOutputs } from "../helpers/output"
+    import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
 
@@ -11,18 +12,24 @@
     $: editDisabled = (!$activeShow && !$activeEdit.type && ($activeEdit.slide === undefined || $activeEdit.slide === null)) || $shows[$activeShow?.id || ""]?.locked || $activeShow?.type === "pdf"
 
     let confirm: boolean = false
+    let disableClick: boolean = false
     let cancelConfirmTimeout: any = null
     function toggleOutput(e: any) {
         if (cancelConfirmTimeout) clearTimeout(cancelConfirmTimeout)
 
         if (!$outputDisplay || confirm) {
+            if (confirm) {
+                // prevent displaying just after close
+                disableClick = true
+                setTimeout(() => (disableClick = false), 1000)
+            }
+
             confirm = false
             displayOutputs(e)
             return
         }
 
         confirm = true
-        newToast("$menu.again_confirm")
         cancelConfirmTimeout = setTimeout(() => {
             confirm = false
         }, 1800)
@@ -59,6 +66,7 @@
             on:click={toggleOutput}
             class="context #output display {$outputDisplay ? 'on' : 'off'}"
             red={$outputDisplay}
+            disabled={disableClick}
         >
             {#if $outputDisplay}
                 {#if confirm}
@@ -68,6 +76,12 @@
                 {/if}
             {:else}
                 <Icon id="outputs" size={1.6} white />
+            {/if}
+
+            {#if confirm}
+                <div class="click_again" transition:slide>
+                    <T id="menu.again_confirm" />
+                </div>
             {/if}
         </Button>
     </span>
@@ -137,5 +151,21 @@
         .top span:first-child {
             display: none;
         }
+    }
+
+    .click_again {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        transform: translateY(100%);
+
+        font-size: 1.1em;
+        padding: 4px 10px;
+        background-color: var(--primary-darker);
+        color: var(--text);
+
+        border: 2px solid var(--secondary);
+        border-top: none;
+        border-right: none;
     }
 </style>

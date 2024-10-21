@@ -185,7 +185,8 @@ export const previewShortcuts: any = {
         if (!get(outLocked)) clearBackground()
     },
     F2: () => {
-        if (get(outLocked) || get(selected).id) return false
+        // return if "rename" is selected
+        if (get(outLocked) || (get(selected).id && get(selected).id !== "scripture")) return false
         if (get(special).disablePresenterControllerKeys) return false
 
         clearSlide()
