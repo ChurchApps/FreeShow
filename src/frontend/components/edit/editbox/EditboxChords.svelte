@@ -56,7 +56,7 @@
     }
 
     let chordLines: string[] = []
-    $: if (chordsMode && item?.lines) createChordLines()
+    $: if (chordsMode && (item?.lines || (item?.auto && autoSize))) createChordLines()
     function createChordLines() {
         chordLines = []
         chordButtons = []

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { activeEdit } from "../../../stores"
     import Cam from "../../drawer/live/Cam.svelte"
@@ -17,9 +16,10 @@
     import Visualizer from "../../slide/views/Visualizer.svelte"
     import Website from "../../slide/views/Website.svelte"
     import Clock from "../../system/Clock.svelte"
-    import { getAutoSize } from "../scripts/autoSize"
+    import autosize from "../scripts/autosize"
 
     export let item: Item
+    export let itemElem: HTMLElement
 
     export let ratio: number
     export let ref: {
@@ -32,13 +32,20 @@
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
 
-    onMount(() => {
+    $: if (item && itemElem) calculateAutosize()
+    let loopStop: any = null
+    function calculateAutosize() {
+        if (loopStop) return
+        loopStop = setTimeout(() => {
+            loopStop = null
+        }, 200)
+
+        let textQuery = item?.type === "slide_tracker" ? ".groups" : ""
+        // timeout to update size after content change (e.g. Clock seconds)
         setTimeout(() => {
-            autoSize = item?.autoFontSize || 0
-            if (autoSize) return
-            else autoSize = getAutoSize(item)
+            autoSize = autosize(itemElem, { type: "growToFit", textQuery })
         }, 50)
-    })
+    }
 
     let thumbnailPath: string = ""
     $: mediaPath = item.src || ""

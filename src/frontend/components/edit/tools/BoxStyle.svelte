@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import { uid } from "uid"
     import type { Item, ItemType } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, selected, showsCache, templates, theme, themes } from "../../../stores"
     import { newToast } from "../../../utils/common"
@@ -9,11 +10,10 @@
     import { getListOfShows, getStageList } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
+    import { MAX_FONT_SIZE } from "../scripts/autosize"
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret, setCaretPosition } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
-    import { uid } from "uid"
-    import { MAX_FONT_SIZE } from "../scripts/autoSize"
 
     export let id: ItemType
     export let allSlideItems: Item[] = []

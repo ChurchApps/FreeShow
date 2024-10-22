@@ -143,7 +143,7 @@ bind:offsetWidth={width} -->
     {#if item?.lines}
         <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} />
     {:else}
-        <EditboxOther {item} {ratio} {ref} />
+        <EditboxOther {item} {ratio} {ref} {itemElem} />
     {/if}
 </div>
 

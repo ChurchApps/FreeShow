@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
-    import { getAutoSize } from "../edit/scripts/autoSize"
+    import autosize from "../edit/scripts/autosize"
     import { keysToID, sortByName } from "../helpers/array"
     import { getActiveOutputs } from "../helpers/output"
     import { getStyles } from "../helpers/style"
@@ -85,12 +85,11 @@
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
 
-    let height: number = 0
-    let width: number = 0
     $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100 // item.autoFontSize ||
 
-    $: size = getAutoSize(item, { width, height })
-    // $: size = Math.min(height, width) / 2
+    let alignElem
+    let size = 100
+    $: if (alignElem && item) size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
@@ -137,8 +136,6 @@
 
 <div
     {id}
-    bind:offsetHeight={height}
-    bind:offsetWidth={width}
     class="stage_item item"
     class:border={currentShow?.settings?.labels}
     class:outline={edit}
@@ -164,7 +161,7 @@
             {/if}
         </span>
     {:else}
-        <div class="align" style="--align: {item.align};--text-align: {item.alignX};">
+        <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};">
             <div>
                 {#if id.includes("slide_tracker")}
                     <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />

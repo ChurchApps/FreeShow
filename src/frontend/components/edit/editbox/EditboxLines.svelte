@@ -5,7 +5,6 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
-    import { getAutoSize, getMaxBoxTextSize } from "../scripts/autoSize"
     import { chordMove } from "../scripts/chords"
     import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import { EditboxHelper } from "./EditboxHelper"
@@ -13,8 +12,9 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import { addToPos } from "../../helpers/mover"
-    import EditboxChords from "./EditboxChords.svelte"
     import { getStyles } from "../../helpers/style"
+    import autosize, { AutosizeTypes } from "../scripts/autosize"
+    import EditboxChords from "./EditboxChords.svelte"
 
     export let item: Item
     export let ref: {
@@ -44,8 +44,7 @@
             autoSize = item?.autoFontSize || 0
             if (autoSize) return
 
-            if (isTextbox) getCustomAutoSize()
-            else autoSize = getAutoSize(item)
+            getCustomAutoSize()
         }, 50)
     })
 
@@ -241,11 +240,13 @@
     // text change
     let textChanged = false
     let previousText: string = ""
+    let changedTimeout: any = null
     $: if (html && textElem?.innerText !== previousText) checkText()
     function checkText() {
         textChanged = true
         previousText = textElem?.innerText
-        setTimeout(() => (textChanged = false))
+        if (changedTimeout) clearTimeout(changedTimeout)
+        changedTimeout = setTimeout(() => (textChanged = false), 500)
     }
 
     // typing
@@ -259,50 +260,36 @@
         if (typingTimeout) clearTimeout(typingTimeout)
         typingTimeout = setTimeout(() => {
             isTyping = false
-            if (isTextbox && isAuto) getCustomAutoSize()
-        }, 1000)
+            if (isAuto) getCustomAutoSize()
+        }, 800)
     }
 
     // update auto size
     let loaded = false
-    $: isTextbox = !!item?.lines
     $: isAuto = item?.auto
     $: textFit = item?.textFit
     $: itemFontSize = Number(getStyles(item?.lines?.[0]?.text?.[0]?.style, true)?.["font-size"] || "")
-    $: if (isTextbox && (isAuto || textFit || itemFontSize || textChanged)) getCustomAutoSize()
-    $: if (!isTextbox && item) autoSize = getAutoSize(item)
+    $: if (isAuto || textFit || itemFontSize || textChanged) getCustomAutoSize()
 
     let autoSize: number = 0
     let alignElem: any
-    let updateTimeout: any = null
+    let loopStop: any = null
     function getCustomAutoSize() {
-        if (isTyping || !loaded || !textElem || !alignElem || !item.auto) return
+        if (isTyping || !loaded || !alignElem || !item.auto) return
 
-        autoSize = getMaxBoxTextSize(textElem, alignElem, item)
+        if (loopStop) return
+        loopStop = setTimeout(() => (loopStop = null), 200)
 
-        // reduce text stuttering on quick changes
-        if (updateTimeout) clearTimeout(updateTimeout)
-        updateTimeout = setTimeout(() => {
-            // update item with new style
-            if (ref.type === "overlay") {
-                overlays.update((a) => {
-                    a[ref.id].items[index].autoFontSize = autoSize
-                    return a
-                })
-            } else if (ref.type === "template") {
-                templates.update((a) => {
-                    a[ref.id].items[index].autoFontSize = autoSize
-                    return a
-                })
-            } else if (ref.showId) {
-                showsCache.update((a) => {
-                    if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[index]) return a
+        let type = (item?.textFit || "shrinkToFit") as AutosizeTypes
+        let defaultFontSize = itemFontSize
+        let maxFontSize
 
-                    a[ref.showId!].slides[ref.id].items[index].autoFontSize = autoSize
-                    return a
-                })
-            }
-        }, 200)
+        if (type === "growToFit") {
+            defaultFontSize = 100
+            maxFontSize = itemFontSize
+        }
+
+        autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })
     }
 
     // UPDATE STYLE FROM LINES
@@ -565,13 +552,6 @@
             }, 10)
         }, 10)
     }
-
-    // let height: number = 0
-    // let width: number = 0
-    // $: autoSize = item.lines ? height / (item.lines.length + 3) : height / 2
-    // $: autoSize = height < width ? height / 1.5 : width / 4
-    // $: autoSize = Math.min(height, width) / 2
-    // $: autoSize = getAutoSize(item)
 
     // SHOW IS LOCKED FOR EDITING
     $: isLocked = $showsCache[$activeShow?.id || ""]?.locked

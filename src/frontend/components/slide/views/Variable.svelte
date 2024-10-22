@@ -30,7 +30,7 @@
     }, 1000)
 </script>
 
-<div class="align" style="{style}{item?.align || ''}" on:dblclick={openInDrawer}>
+<div class="align autoFontSize" style="{style}{item?.align || ''}" on:dblclick={openInDrawer}>
     <div class="line">
         {#if variable.type === "number"}
             {Number(variable.number || 0)}

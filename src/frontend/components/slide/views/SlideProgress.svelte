@@ -40,14 +40,13 @@
 
 <div class="progress" bind:this={progressElem} class:barBG={type === "bar"} style={accent ? "--accent: " + accent : ""}>
     {#if type === "number"}
-        <p style={autoSize ? "font-size: " + autoSize + "px" : ""}><span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}</p>
+        <p class="autoFontSize" style={autoSize ? "font-size: " + autoSize + "px" : ""}><span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}</p>
     {:else if type === "bar"}
         <!-- progress bar -->
         <div class="bar" style="width: {slidesLength ? ((currentShowSlide + 1) / slidesLength) * 100 : 0}%;"></div>
     {:else if type === "group"}
         <!-- group sequence -->
-        <!-- WIP new auto size here -->
-        <div class="groups" class:column style={autoSize ? "font-size: " + autoSize / (column ? 1.2 : 2.8) + "px" : ""}>
+        <div class="groups autoFontSize" class:column style={autoSize ? "font-size: " + autoSize + "px" : ""}>
             {#each layoutGroups as group}
                 {#if !group.child}
                     {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
@@ -86,7 +85,7 @@
 
     .groups {
         display: flex;
-        gap: 15px;
+        gap: 25px;
         flex-wrap: wrap;
     }
     .groups.column {

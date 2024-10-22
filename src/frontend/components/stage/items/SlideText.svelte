@@ -28,8 +28,6 @@
     $: slideId = index !== null && showRef ? showRef[index!]?.id || null : null
     $: slide = currentSlide?.id === "temp" && !next ? { items: currentSlide.tempItems } : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null
 
-    // $: stageAutoSize = autoSize ? (items[0] ? getAutoSize(items[0], parent) : 0) : fontSize
-
     $: reversedItems = stageItem?.invertItems ? clone(slide?.items || []) : clone(slide?.items || []).reverse()
     $: items = style ? clone(slide?.items || []) : combineSlideItems(reversedItems)
 
@@ -56,7 +54,7 @@
     let items1: any[] = []
     let items2: any[] = []
 
-    const waitDuration = 380 // approximate auto size time
+    const waitDuration = 200 // approximate auto size time
     let timeout: any = null
     $: if (items) preloadItems()
     function preloadItems() {
