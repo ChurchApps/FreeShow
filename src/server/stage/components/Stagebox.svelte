@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { keysToID, sortByName } from "../helpers/array"
     import autosize from "../helpers/autosize"
     import { getStyles } from "../helpers/style"
@@ -7,7 +8,7 @@
     import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
-    import { activeTimers, timers, variables } from "../store"
+    import { activeTimers, progressData, timers, variables } from "../store"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Timer from "./Timer.svelte"
@@ -50,7 +51,7 @@
 
     let alignElem: any
     let size = 100
-    $: if (alignElem && item) size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
+    $: if (alignElem && (item || $progressData)) size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     $: next = id.includes("next")
@@ -74,6 +75,10 @@
             if (reverse) videoTime = (msg.data.data?.duration || 0) - videoTime
         })
     }
+
+    onDestroy(() => {
+        if (interval) clearInterval(interval)
+    })
 
     let firstTimerId: string = ""
     $: if (id.includes("first_active_timer")) {

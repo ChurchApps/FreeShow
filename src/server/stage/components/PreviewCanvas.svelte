@@ -37,6 +37,7 @@
         const pixels = new ImageData(arr, capture.size.width, capture.size.height)
         const bitmap = await createImageBitmap(pixels)
 
+        if (!canvas) return
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
     }

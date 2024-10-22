@@ -20,19 +20,21 @@
     $: slidesLength = currentLayoutRef.length || 0
 
     // get custom group names
-    $: layoutGroups = currentLayoutRef.map((a) => {
-        let ref = a.parent || a
-        let slide = currentShowSlides[ref.id]
-        if (!slide) return { name: "—" }
+    $: layoutGroups = currentLayoutRef
+        .filter((a) => !a.data.disabled)
+        .map((a) => {
+            let ref = a.parent || a
+            let slide = currentShowSlides[ref.id]
+            if (!slide) return { name: "—" }
 
-        let group = slide.group
-        if (slide.globalGroup && $groups[slide.globalGroup]) {
-            group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
-        }
+            let group = slide.group
+            if (slide.globalGroup && $groups[slide.globalGroup]) {
+                group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
+            }
 
-        let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)
-        return { name: name || "—", index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
-    })
+            let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)
+            return { name: name || "—", index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
+        })
 
     let progressElem: any = null
     $: column = progressElem?.offsetWidth < progressElem?.offsetHeight
@@ -50,9 +52,11 @@
             {#each layoutGroups as group}
                 {#if !group.child}
                     {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
-                    <div class="group" class:active={group.index === layoutGroups.find((_, i) => i === currentShowSlide).index}>
+                    {@const nextSlide = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide + 1)}
+
+                    <div class="group" class:active={group.index === layoutGroups.find((_, i) => i === currentShowSlide)?.index}>
                         {group.name}
-                        {#if activeGroup?.child}
+                        {#if activeGroup?.child || nextSlide?.child}
                             <span style="opacity: 0.6;color: white;">{activeGroup.child + 1}</span>
                         {/if}
                     </div>

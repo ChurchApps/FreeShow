@@ -3,7 +3,7 @@
     export let autoSize: number = 100
 </script>
 
-<div style="font-size: {autoSize}px;">
+<div class="autoFontSize" style="font-size: {autoSize}px;">
     {notes}
 </div>
 

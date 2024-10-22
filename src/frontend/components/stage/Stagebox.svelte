@@ -97,11 +97,14 @@
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
 
-    $: if (stageOutputId || $allOutputs || $outputs) getCurrentBackground()
-    let currentBackground: any = {}
+    $: if (stageOutputId && ($allOutputs || $outputs)) setTimeout(getCurrentBackground, 100)
+    let currentBackground: any
     async function getCurrentBackground() {
+        if (!id.includes("slide")) return
+
         let currentOutputs = $currentWindow ? $allOutputs : $outputs
         let bg = await sendBackgroundToStage(stageOutputId, currentOutputs, true)
+
         currentBackground = bg
     }
 
@@ -183,7 +186,10 @@
                             {/if}
                         {/if}
 
-                        <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} style />
+                        <!-- refresh to update auto sizes -->
+                        {#key currentSlide}
+                            <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} style />
+                        {/key}
                     </span>
                 {:else if id.includes("clock")}
                     <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} />

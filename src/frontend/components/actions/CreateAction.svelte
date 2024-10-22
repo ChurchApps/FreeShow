@@ -45,6 +45,7 @@
         "id_start_timer",
         "playlist_next",
         "id_select_output_style",
+        "id_select_stage_layout",
         "change_stage_output_layout",
         "change_transition",
         "start_camera",

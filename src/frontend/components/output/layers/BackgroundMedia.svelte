@@ -63,16 +63,21 @@
 
     $: if (mirror && !styleBackground && $videosTime[outputId] !== undefined) setPreviewVideoTime()
     function setPreviewVideoTime() {
-        const diff = Math.abs($videosTime[outputId] - videoTime)
-        if (diff > 0.5) {
-            videoTime = $videosTime[outputId]
+        // timeout in case video is going to fade out
+        setTimeout(() => {
+            if (fadingOut) return
 
-            if (videoTime < 0.6) {
-                videoData.paused = true // quick fix for preview stutter when video loops (should be a better fix)
-            } else {
-                videoData.paused = $videosData[outputId]?.paused
+            const diff = Math.abs($videosTime[outputId] - videoTime)
+            if (diff > 0.5) {
+                videoTime = $videosTime[outputId]
+
+                if (videoTime < 0.6) {
+                    videoData.paused = true // quick fix for preview stutter when video loops (should be a better fix)
+                } else {
+                    videoData.paused = $videosData[outputId]?.paused
+                }
             }
-        }
+        }, 50)
     }
 
     $: if (!mirror && !fadingOut) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
@@ -85,6 +90,8 @@
 
         send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
         sendingTimeout = setTimeout(() => {
+            if (fadingOut) return
+
             send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
             sendingTimeout = null
         }, timeUpdateTimeout)
