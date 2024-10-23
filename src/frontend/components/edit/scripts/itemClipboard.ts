@@ -133,8 +133,8 @@ export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) 
             let itemType = item.type || "text"
             if (itemType !== type) return
 
-            // only apply to selected items if not apply to all
-            if (slides.length === 1 && get(activeEdit).items.length && !get(activeEdit).items.includes(i)) return
+            // only apply to selected items with matching index
+            if (get(activeEdit).items.length && !get(activeEdit).items.includes(i)) return
 
             items.push(i)
 

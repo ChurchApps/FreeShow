@@ -170,6 +170,7 @@ export function checkShowsFolder(path: string): string {
 }
 
 export const dataFolderNames = {
+    shows: "Shows",
     backups: "Backups",
     scriptures: "Bibles",
     media_bundle: "Media",
@@ -358,7 +359,7 @@ export function selectFolder(msg: { channel: string; title: string | undefined; 
     // only when initializing
     if (msg.channel === "DATA_SHOWS") {
         let dataPath = folder
-        let showsPath = checkShowsFolder(path.join(folder, "Shows"))
+        let showsPath = checkShowsFolder(path.join(folder, dataFolderNames.shows))
         e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: dataPath, showsPath } })
         return
     }

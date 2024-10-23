@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { OPEN_FILE, OPEN_FOLDER, type ValidChannels } from "../../types/Channels"
 import { activePopup, alertMessage } from "../stores"
+import { uid } from "uid"
 
 export function send(ID: ValidChannels, channels: string[], data: any = null) {
     channels.forEach((channel: string) => window.api.send(ID, { channel, data }))
@@ -25,7 +26,11 @@ export function receive(ID: ValidChannels, channels: any, id: string = "") {
 let currentlyAwaiting: string[] = []
 export async function awaitRequest(ID: ValidChannels, channel: string, data: any = null) {
     let listenerId = ID + "_" + channel
-    if (channel === "GET_SYSTEM_FONTS" && currentlyAwaiting.includes(listenerId)) return
+    if (channel === "GET_SYSTEM_FONTS") {
+        if (currentlyAwaiting.includes(listenerId)) return
+    } else {
+        listenerId += uid(5)
+    }
     currentlyAwaiting.push(listenerId)
 
     send(ID, [channel], { ...data, listenerId })

@@ -3,8 +3,8 @@
     import type { Item, Transition } from "../../../../types/Show"
     import { currentWindow, scriptureSettings, templates } from "../../../stores"
     import { clone } from "../../helpers/array"
-    import OutputTransition from "./OutputTransition.svelte"
     import { getStyleTemplate, slideHasAutoSizeItem } from "../../helpers/output"
+    import OutputTransition from "./OutputTransition.svelte"
     // import { onMount } from "svelte"
 
     export let globalTransition: Transition
@@ -56,13 +56,13 @@
             if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template]
 
             // wait output style/scripture template auto size
-            if (Object.keys(customTemplate).length && slideHasAutoSizeItem(customTemplate)) outDelay = 200
+            if (Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate) : item.auto) outDelay = 200
 
             if (!inDelay) inDelay = outDelay * 0.98
         }
 
         // add some time in case an identical item is "fading" in
-        if (!outDelay && itemTransition?.duration === 0) outDelay = 100
+        if (!outDelay && itemTransition?.duration === 0 && item.type === "media") outDelay = 100
 
         // SET DELAY
 

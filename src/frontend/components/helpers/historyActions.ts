@@ -574,7 +574,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (isParent) {
                         // get layout slides index (without children)
                         let refAtIndex = ref[slideIndex - 1]?.parent || ref[slideIndex - 1]
-                        let slideLayoutIndex = refAtIndex ? refAtIndex.index + 1 : ref.length
+                        let slideLayoutIndex = refAtIndex ? refAtIndex.index + 1 : slideIndex ?? ref.length
 
                         // add to layout at index
                         // _show(showId).layouts([layout]).slides().add([layoutValue], null, slideIndex)

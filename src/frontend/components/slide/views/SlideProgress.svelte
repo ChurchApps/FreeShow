@@ -20,21 +20,21 @@
     $: slidesLength = currentLayoutRef.length || 0
 
     // get custom group names
-    $: layoutGroups = currentLayoutRef
-        .filter((a) => !a.data.disabled)
-        .map((a) => {
-            let ref = a.parent || a
-            let slide = currentShowSlides[ref.id]
-            if (!slide) return { name: "—" }
+    $: layoutGroups = currentLayoutRef.map((a) => {
+        let ref = a.parent || a
+        let slide = currentShowSlides[ref.id]
+        if (!slide) return { name: "—" }
 
-            let group = slide.group
-            if (slide.globalGroup && $groups[slide.globalGroup]) {
-                group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
-            }
+        if (a.data.disabled || slide.group?.includes("~")) return { hide: true }
 
-            let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)
-            return { name: name || "—", index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
-        })
+        let group = slide.group
+        if (slide.globalGroup && $groups[slide.globalGroup]) {
+            group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
+        }
+
+        let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)
+        return { name: name || "—", index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
+    })
 
     let progressElem: any = null
     $: column = progressElem?.offsetWidth < progressElem?.offsetHeight
@@ -50,7 +50,7 @@
         <!-- group sequence -->
         <div class="groups autoFontSize" class:column style={autoSize ? "font-size: " + autoSize + "px" : ""}>
             {#each layoutGroups as group}
-                {#if !group.child}
+                {#if !group.child && !group.hide}
                     {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
                     {@const nextSlide = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide + 1)}
 

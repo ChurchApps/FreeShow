@@ -45,7 +45,7 @@
 </script>
 
 <div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;align-items: flex-start;">
-    <div class="main" style={showGroups.length ? "" : "height: 100%;"}>
+    <div class="main" style="{showGroups.length ? '' : 'height: 100%;'}{$globalGroupViewEnabled ? 'width: 50%;' : ''}">
         {#if $globalGroupViewEnabled}
             <h4><T id="groups.current" /></h4>
         {/if}
@@ -82,7 +82,7 @@
     {#if $globalGroupViewEnabled}
         <div class="seperator" />
 
-        <div class="main">
+        <div class="main" style={$globalGroupViewEnabled ? "width: 50%;" : ""}>
             <h4><T id="groups.global" /></h4>
             {#if sortedGroups.length}
                 {#each sortedGroups as slide}

@@ -1,16 +1,18 @@
+import { MAIN } from "../../../types/Channels"
 import type { TransitionType } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
 import { changeStageOutputLayout, displayOutputs, startCamera } from "../helpers/output"
-import { activateTrigger, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShow } from "../helpers/showActions"
+import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShowSync } from "../helpers/showActions"
 import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { runActionId, toggleAction } from "./actions"
+import { getProject, getProjects, getShow, getShows } from "./apiGet"
 import { changeVariable, gotoGroup, moveStageConnection, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
-import { sendRestCommand } from "./rest"
+import { sendRestCommandSync } from "./rest"
 
 /// STEPS TO CREATE A CUSTOM API ACTION ///
 
@@ -33,6 +35,7 @@ interface API {
     action: string
     id?: number
     index?: number
+    returnId?: string
 }
 type API_id = { id: string }
 type API_index = { index: number }
@@ -95,7 +98,7 @@ export const API_ACTIONS = {
 
     // SHOWS
     name_select_show: (data: API_strval) => selectShowByName(data.value), // BC
-    start_show: (data: API_id) => startShow(data.id),
+    start_show: (data: API_id) => startShowSync(data.id),
 
     // PRESENTATION
     next_slide: () => nextSlideIndividual({ key: "ArrowRight" }), // BC
@@ -164,23 +167,35 @@ export const API_ACTIONS = {
 
     // OTHER
     change_variable: (data: API_variable) => changeVariable(data), // BC
-    start_trigger: (data: API_id) => activateTrigger(data.id),
+    start_trigger: (data: API_id) => activateTriggerSync(data.id),
     send_midi: (data: API_midi) => sendMidi(data),
     run_action: (data: API_id) => runActionId(data.id),
     toggle_action: (data: API_toggle) => toggleAction(data),
-    send_rest_command: (data: API_rest_command) => sendRestCommand(data),
+    send_rest_command: (data: API_rest_command) => sendRestCommandSync(data),
+
+    // GET
+    get_shows: () => getShows(),
+    get_show: (data: API_id) => getShow(data),
+    get_projects: () => getProjects(),
+    get_project: (data: API_id) => getProject(data),
 }
 
 /// RECEIVER / SENDER ///
 
-export function triggerAction(data: API) {
+export async function triggerAction(data: API) {
     let id = data.action
 
     // API start at 1, code start at 0
     if (data.index !== undefined) data.index--
 
-    if (API_ACTIONS[id]) API_ACTIONS[id](data)
-    else console.log("Missing API ACTION:", id)
+    if (!API_ACTIONS[id]) return console.log("Missing API ACTION:", id)
+
+    let returnId = data.returnId
+    delete data.returnId
+    const returnData = await API_ACTIONS[id](data)
+    if (!returnId || !returnData) return
+
+    send(MAIN, ["API_TRIGGER"], { ...data, returnId, data: returnData })
 }
 
 export function sendDataAPI(data: any) {

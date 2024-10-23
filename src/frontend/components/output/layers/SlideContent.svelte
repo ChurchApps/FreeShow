@@ -23,6 +23,7 @@
     export let isKeyOutput: boolean = false
 
     let currentItems: Item[] = []
+    let current: any = {}
     let show: boolean = false
 
     $: if (currentSlide.items !== undefined || outSlide) updateItems()
@@ -61,6 +62,13 @@
             // wait for previous items to start fading out (svelte will keep them until the transition is done!)
             timeout = setTimeout(() => {
                 currentItems = clone(currentSlide.items || [])
+                current = {
+                    outSlide: clone(outSlide),
+                    slideData: clone(slideData),
+                    currentSlide: clone(currentSlide),
+                    lines: clone(lines),
+                    currentStyle: clone(currentStyle),
+                }
 
                 // wait until half transition duration of previous items have passed as it looks better visually
                 timeout = setTimeout(() => {
@@ -80,11 +88,25 @@
 {#key show}
     {#each currentItems as item}
         {#if show}
-            <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} {currentSlide} {item} {outSlide} {lines} {currentStyle} let:customSlide let:customItem let:customLines let:customOut>
+            <SlideItemTransition
+                {preview}
+                {transitionEnabled}
+                {transitioningBetween}
+                globalTransition={transition}
+                currentSlide={current.currentSlide}
+                {item}
+                outSlide={current.outSlide}
+                lines={current.lines}
+                currentStyle={current.currentStyle}
+                let:customSlide
+                let:customItem
+                let:customLines
+                let:customOut
+            >
                 {#if !customItem.bindings?.length || customItem.bindings.includes(outputId)}
                     <Textbox
-                        filter={slideData?.filterEnabled?.includes("foreground") ? slideData?.filter : ""}
-                        backdropFilter={slideData?.filterEnabled?.includes("foreground") ? slideData?.["backdrop-filter"] : ""}
+                        filter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.filter : ""}
+                        backdropFilter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.["backdrop-filter"] : ""}
                         key={isKeyOutput}
                         disableListTransition={mirror}
                         chords={customItem.chords?.enabled}
@@ -94,7 +116,7 @@
                         ref={{ showId: customOut.id, slideId: customSlide.id, id: customSlide.id || "", layoutId: customOut.layout }}
                         linesStart={customLines?.[currentLineId]?.start}
                         linesEnd={customLines?.[currentLineId]?.end}
-                        outputStyle={currentStyle}
+                        outputStyle={current.currentStyle}
                         {mirror}
                         {preview}
                         slideIndex={customOut.index}

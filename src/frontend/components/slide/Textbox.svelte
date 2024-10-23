@@ -132,11 +132,14 @@
 
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = _show(ref.showId).get("settings.template")
-    let outputTemplateAutoSize = false
+    // let outputTemplateAutoSize = false
     $: if ($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
-    else outputTemplateAutoSize = false
+    // else outputTemplateAutoSize = false
 
-    let customTypeRatio = 0
+    // $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
+
+    let customTypeRatio = 1
+    $: console.log(fontSize, customTypeRatio, item)
 
     let loopStop: any = null
     let newCall: boolean = false
@@ -160,13 +163,18 @@
         if (isStage) {
             type = "growToFit"
         } else {
+            if ((item.type || "text") === "text" && !item.auto) {
+                fontSize = 0
+                return
+            }
+
             const itemText = item?.lines?.[0]?.text?.filter((a) => a.customType !== "disableTemplate") || []
             let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
             const verseItemText = item?.lines?.[0]?.text?.filter((a) => a.customType === "disableTemplate") || []
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
-            customTypeRatio = verseItemSize / 100
+            customTypeRatio = verseItemSize / 100 || 1
 
             defaultFontSize = itemFontSize
             if (type === "growToFit") maxFontSize = itemFontSize
@@ -242,8 +250,8 @@
                         chords.splice(chordIndex, 1)
                     }
 
-                    let size = fontSizeValue
-                    if (fontSize) size = fontSize
+                    // let size = fontSizeValue
+                    let size = fontSize || 0
                     html += `<span class="invisible" style="${style ? getAlphaStyle(text.style) : ""}${size ? `font-size: ${size}px;` : ""}">${letter}</span>`
 
                     index++
@@ -274,8 +282,6 @@
         setTimeout(calculateAutosize, 150)
         return result
     }
-
-    $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
 
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
     let paddingCorrection = ""
@@ -345,8 +351,8 @@
                             {#each line.text || [] as text}
                                 {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                 <span
-                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{fontSizeValue ? `font-size: ${fontSizeValue}px;` : ''}{text.customType === 'disableTemplate'
-                                        ? text.style + (customTypeRatio && fontSize ? `;font-size: ${fontSize * customTypeRatio}px;` : '')
+                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{text.customType === 'disableTemplate' ? text.style : ''}{fontSize
+                                        ? `;font-size: ${fontSize * (text.customType === 'disableTemplate' ? customTypeRatio : 1)}px;`
                                         : ''}"
                                 >
                                     {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { ...ref, slideIndex }, updateDynamic) : value}

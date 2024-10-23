@@ -141,21 +141,21 @@ export const receiveSTAGE: any = {
         let slidesLength = currentLayoutRef.length || 0
 
         // get custom group names
-        let layoutGroups = currentLayoutRef
-            .filter((a) => !a.data.disabled)
-            .map((a) => {
-                let ref = a.parent || a
-                let slide = currentShowSlides[ref.id]
-                if (!slide) return { name: "—" }
+        let layoutGroups = currentLayoutRef.map((a) => {
+            let ref = a.parent || a
+            let slide = currentShowSlides[ref.id]
+            if (!slide) return { name: "—" }
 
-                let group = slide.group
-                if (slide.globalGroup && get(groups)[slide.globalGroup]) {
-                    group = get(groups)[slide.globalGroup].default ? get(dictionary).groups?.[get(groups)[slide.globalGroup].name] : get(groups)[slide.globalGroup].name
-                }
+            if (a.data.disabled || slide.group?.includes("~")) return { hide: true }
 
-                let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)
-                return { name: name || "—", index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
-            })
+            let group = slide.group
+            if (slide.globalGroup && get(groups)[slide.globalGroup]) {
+                group = get(groups)[slide.globalGroup].default ? get(dictionary).groups?.[get(groups)[slide.globalGroup].name] : get(groups)[slide.globalGroup].name
+            }
+
+            let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)
+            return { name: name || "—", index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
+        })
 
         msg.data.progress = { currentShowSlide, slidesLength, layoutGroups }
 

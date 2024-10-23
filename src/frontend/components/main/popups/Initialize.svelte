@@ -19,6 +19,7 @@
     function create(e: any) {
         if (e.target.closest(".main") && !e.target.closest(".start")) return
 
+        if (!$showsPath) send(MAIN, ["SHOWS_PATH"])
         send(MAIN, ["GET_PATHS"])
         send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
 

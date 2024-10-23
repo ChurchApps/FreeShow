@@ -103,6 +103,9 @@ export function receivedMidi(msg) {
     const diff_channel = msg.values.channel !== action.midi?.values.channel
     if (!msg.bypass && (diff_type || diff_note || diff_channel) && index !== 0) return
 
+    // some programs send note off with velocity 0 upon release/stop, these should not be detected
+    if (diff_type && index === 0) return
+
     let hasindex = action.triggers?.[0]?.includes("index_") ?? false
     if (hasindex && index < 0) {
         newToast("$toast.midi_no_velocity")
@@ -110,6 +113,7 @@ export function receivedMidi(msg) {
     }
 
     // decrease index by one, to make velocity 1 select slide 0 (Labeled 1)
+    // 0 & 1 = 0
     if (index > 0) index--
 
     runAction(action, { midiIndex: index })
