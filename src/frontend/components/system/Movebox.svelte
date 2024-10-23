@@ -9,7 +9,7 @@
     let sides = ["n", "e", "s", "w"]
 </script>
 
-<section>
+<section class="hideFromAutosize">
     {#each sides as line}
         <div class="line {line}l" class:active style="{line === 'n' || line === 's' ? 'height' : 'width'}: {active ? 25 : 50}px;" />
     {/each}

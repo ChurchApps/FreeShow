@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
+    import autosize, { AutosizeTypes } from "../helpers/autosize"
     import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
     import Button from "./Button.svelte"
@@ -42,50 +43,24 @@
     })
 
     let alignElem: any
-    let loopStop = false
-    const MAX_FONT_SIZE = 800 // TODO: stage custom text fit size
-    const MIN_FONT_SIZE = 10
 
-    $: if (autoSize && loaded) getCustomAutoSize()
-    function getCustomAutoSize() {
-        if (loopStop || !loaded || !alignElem || !autoSize) return
-        loopStop = true
+    $: if (autoSize && loaded) calculateAutosize()
+    let loopStop: any = null
+    function calculateAutosize() {
+        if (loopStop) return
+        loopStop = setTimeout(() => (loopStop = null), 200)
 
-        fontSize = MAX_FONT_SIZE
-        addStyleToElemText(fontSize)
-
-        // quick search (double divide)
-        let lowestValue = MIN_FONT_SIZE
-        let highestValue = MAX_FONT_SIZE
-        let biggerThanSize = true
-        while (highestValue - lowestValue > 3) {
-            let difference = (highestValue - lowestValue) / 2
-            if (biggerThanSize) {
-                highestValue = fontSize
-                fontSize -= difference
-            } else {
-                lowestValue = fontSize
-                fontSize += difference
-            }
-
-            addStyleToElemText(fontSize)
-            biggerThanSize = alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth
-        }
-        fontSize = lowestValue // prefer lowest value
-
-        function addStyleToElemText(fontSize: number) {
-            for (let linesElem of alignElem.children) {
-                for (let breakElem of linesElem.children) {
-                    for (let txt of breakElem.children) {
-                        txt.style.fontSize = fontSize + "px"
-                    }
-                }
-            }
+        let type: AutosizeTypes = "growToFit"
+        let textQuery = ""
+        if ((item.type || "text") === "text") {
+            // elem = elem.querySelector(".align")
+            textQuery = ".lines .break span"
+        } else {
+            // type = "growToFit"
+            if (item.type === "slide_tracker") textQuery = ".groups"
         }
 
-        setTimeout(() => {
-            loopStop = false
-        }, 500)
+        fontSize = autosize(alignElem, { type, textQuery })
     }
 
     // CHORDS

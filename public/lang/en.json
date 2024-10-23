@@ -1281,6 +1281,21 @@
         "artist": "Artist",
         "artistUrl": "Artist page"
     },
+    "guide_description": {
+        "start": "This is a short walkthrough of some basic features! (You can skip in the bottom right corner.)",
+        "project_manage": "Manage all of your projects in one place.",
+        "project_create": "Create folders to keep it organized, and create new projects.",
+        "project_list": "After opening a project you get a list of all the items here on the left side, drag & drop from the drawer to add more.",
+        "drawer": "Find all of your shows, media, overlays, etc. in one place.",
+        "drawer_shows": "Manage all of your different shows by organizing them in different categories. Drag & drop any selected show to move them.",
+        "create_show_button": "Click this to create a new show (song, presentation, etc.)",
+        "create_show_popup": "Fill in the main details of the show, you can also auto find lyrics on the web from the name, or paste the lyrics manually.",
+        "show": "A show is the main presentation, click on any slide to present, and use the arrow keys to navigate. You can also drag & drop media files on a slide to set as background.",
+        "show_slide": "After a slide is clicked, it will show in the output and you will see a preview on the right, here you'll also find some extra actions like pausing a video.",
+        "output_clear": "Clear individual output layers, or clear all layers in the output.",
+        "edit": "Open slide editing with one click at the top.",
+        "end": "You can always look on the web if you need help with other features."
+    },
     "songbeamer_import": {
         "options": "Options",
         "encoding": "Encoding",

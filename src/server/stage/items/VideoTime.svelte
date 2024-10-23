@@ -7,7 +7,7 @@
     $: timeString = joinTime(secondsToTime(videoTime))
 </script>
 
-<div style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;` : ""}>{timeString}</div>
+<div class="autoFontSize" style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;` : ""}>{timeString}</div>
 
 <style>
     div {

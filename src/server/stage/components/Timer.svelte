@@ -58,7 +58,7 @@
     }
 </script>
 
-<div class="align" style="{style}{item?.align || ''}">
+<div class="align autoFontSize" style="{style}{item?.align || ''}">
     <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">
         {#if overflow && negative}
             <span>-</span>

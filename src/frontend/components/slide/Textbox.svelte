@@ -4,7 +4,7 @@
     import { currentWindow, overlays, showsCache, slidesOptions, templates, variables, volume } from "../../stores"
     import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
-    import { getAutoSize, MAX_FONT_SIZE, MIN_FONT_SIZE } from "../edit/scripts/autoSize"
+    import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
     import Icon from "../helpers/Icon.svelte"
     import { clone } from "../helpers/array"
     import { encodeFilePath, getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
@@ -56,15 +56,6 @@
     export let stageAutoSize: boolean = false
     export let fontSize: number = 0
     export let maxLines: number = 0 // stage next item preview
-
-    // let height: number = 0
-    // let width: number = 0
-    // $: autoSize = item.lines ? Math.min(height, width) / (item.lines.length + 3) : Math.min(height, width) / 2
-    // TODO: get template auto size
-    // $: autoTextSize = autoSize ? autoSize * 0.8 : getAutoSize(item)
-    // $: autoSize = autoSize || getAutoSize(item)
-
-    $: autoSize = item.autoFontSize || ((item?.type || "text") === "text" || isStage ? 0 : getAutoSize(item))
 
     $: lines = clone(item?.lines)
     $: if (linesStart !== null && linesEnd !== null && lines?.length) {
@@ -133,149 +124,86 @@
 
     // AUTO SIZE
 
-    let alignElem: any
-    let loopStop = false
+    let itemElem: any
 
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
-    $: itemAutoSize = item.auto
-    $: itemAutoFontSize = item.autoFontSize
-    $: if (alignElem && loaded && (stageAutoSize || newItem !== previousItem || chordLines)) {
-        // set to default
-        if ((itemAutoSize && !itemAutoFontSize) || stageAutoSize) fontSize = 0
-        // set smaller text for easier reading while calculating new size
-        else if (outputTemplateAutoSize) fontSize = 70
-        setTimeout(getCustomAutoSize, 150)
-    }
+    $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || chordLines || stageItem)) calculateAutosize()
 
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = _show(ref.showId).get("settings.template")
-    let outputTemplateAutoSize = false
-    $: if ($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) getCustomAutoSize(true)
-    else outputTemplateAutoSize = false
+    // let outputTemplateAutoSize = false
+    $: if ($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
+    // else outputTemplateAutoSize = false
 
-    let customTypeRatio = 0
+    // $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
 
-    function getCustomAutoSize(force: boolean = false) {
-        if (!item) return
+    let customTypeRatio = 1
+    $: console.log(fontSize, customTypeRatio, item)
 
-        if (force === true) {
-            let template = $templates[outputStyle.template || ""] || {}
-            let firstTextItem = template.items?.find((a) => a.lines)
-            let textStyle = firstTextItem?.lines?.[0]?.text?.[0]?.style || ""
-            let styleObj = getStyles(textStyle, true)
-
-            if (!firstTextItem?.auto && !item?.auto) return
-
-            item.autoFontSize = firstTextItem?.auto || item.auto ? 0 : Number(styleObj["font-size"]) || 80
-            autoSize = item.autoFontSize
-            outputTemplateAutoSize = true
-        }
-
-        previousItem = JSON.stringify(item)
-
-        if (loopStop || !loaded || !alignElem || (!stageAutoSize && !outputTemplateAutoSize && (!item.auto || item.autoFontSize))) {
-            if (item.auto && item.autoFontSize && !stageAutoSize) fontSize = item.autoFontSize
+    let loopStop: any = null
+    let newCall: boolean = false
+    function calculateAutosize() {
+        if (loopStop) {
+            newCall = true
             return
         }
+        loopStop = setTimeout(() => {
+            loopStop = null
+            if (newCall) calculateAutosize()
+            newCall = false
+        }, 200)
+        previousItem = newItem
 
-        loopStop = true
-        setTimeout(() => {
-            loopStop = false
-        }, 100)
+        let type = (item?.textFit || "shrinkToFit") as AutosizeTypes
 
-        let maxFontSize = MAX_FONT_SIZE
-        let minFontSize = MIN_FONT_SIZE
+        let defaultFontSize
+        let maxFontSize
 
-        // !mirror && !$currentWindow
-        if (!isStage) {
-            // see autoSize.ts
-            let type = item?.textFit || "shrinkToFit"
+        if (isStage) {
+            type = "growToFit"
+        } else {
+            if ((item.type || "text") === "text" && !item.auto) {
+                fontSize = 0
+                return
+            }
+
             const itemText = item?.lines?.[0]?.text?.filter((a) => a.customType !== "disableTemplate") || []
             let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
             const verseItemText = item?.lines?.[0]?.text?.filter((a) => a.customType === "disableTemplate") || []
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
-            customTypeRatio = verseItemSize / 100
+            customTypeRatio = verseItemSize / 100 || 1
 
-            if (type === "shrinkToFit") {
-                let textIsBiggerThanBox = alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth
-                if (textIsBiggerThanBox) {
-                    // change type if text is bigger than box
-                    type = "growToFit"
-                } else {
-                    // don't change the font size
-                    // fontSize = itemFontSize
-                    if (ref.id === "scripture" || ref.showId === "temp") maxFontSize = itemFontSize
-                    else {
-                        fontSize = itemFontSize
-                        setItemAutoFontSize(fontSize)
-                        return
-                    }
-                }
-            }
-            if (type === "growToFit") {
-                // set max font size to the current set text font size
-                maxFontSize = itemFontSize
-            }
+            defaultFontSize = itemFontSize
+            if (type === "growToFit") maxFontSize = itemFontSize
         }
 
-        fontSize = maxFontSize
-        addStyleToElemText(fontSize)
+        let elem = itemElem
+        if (!elem) return
 
-        // syncronus don't work
-        // await calculateFontSize()
-        // function calculateFontSize() {
-        //     return new Promise((resolve) => {
-        //         checkFontSize()
-        //         function checkFontSize() {
-        //             fontSize--
-        //             addStyleToElemText(fontSize)
-
-        //             if (fontSize > minFontSize && (alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth)) setTimeout(checkFontSize)
-        //             else resolve(true)
-        //         }
-        //     })
+        let textQuery = ""
+        if ((item.type || "text") === "text") {
+            elem = elem.querySelector(".align")
+            textQuery = ".lines .break span"
+        } else {
+            type = "growToFit"
+            if (item.type === "slide_tracker") textQuery = ".groups"
+        }
+        // not working due to stage SlideText "loading" elem?
+        // if (isStage) {
+        //     elem = itemElem?.closest(".stage_item")
+        //     textQuery = ".align .item .align " + textQuery
         // }
 
-        // quick search (double divide)
-        // WIP duplicate of autoSize.ts
-        let lowestValue = minFontSize
-        let highestValue = maxFontSize
-        let biggerThanSize = true
-        while (highestValue - lowestValue > 3) {
-            let difference = (highestValue - lowestValue) / 2
-            if (biggerThanSize) {
-                highestValue = fontSize
-                fontSize -= difference
-            } else {
-                lowestValue = fontSize
-                fontSize += difference
-            }
+        fontSize = autosize(elem, { type, textQuery, defaultFontSize, maxFontSize })
 
-            addStyleToElemText(fontSize)
-            biggerThanSize = alignElem.scrollHeight > alignElem.offsetHeight || alignElem.scrollWidth > alignElem.offsetWidth
-        }
-        if (chords && lines?.length) lowestValue -= lines.length * 10
-        fontSize = lowestValue // prefer lowest value
-        if (fontSize > maxFontSize) fontSize = maxFontSize
-
-        function addStyleToElemText(fontSize: number) {
-            for (let linesElem of alignElem.children) {
-                for (let breakElem of linesElem.children) {
-                    for (let txt of breakElem.children) {
-                        txt.style.fontSize = fontSize + "px"
-                    }
-                }
-            }
-        }
-
-        setItemAutoFontSize(fontSize)
+        if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
     }
 
     function setItemAutoFontSize(fontSize) {
-        if (isStage || itemIndex < 0 || $currentWindow) return
+        if (isStage || itemIndex < 0 || $currentWindow || ref.id === "scripture") return
 
         if (ref.type === "overlay") {
             overlays.update((a) => {
@@ -300,7 +228,7 @@
     // CHORDS
 
     let chordLines: string[] = []
-    $: if (chords && item.lines) createChordLines()
+    $: if (chords && (item.lines || fontSize)) createChordLines()
     function createChordLines() {
         chordLines = []
 
@@ -322,7 +250,9 @@
                         chords.splice(chordIndex, 1)
                     }
 
-                    html += `<span class="invisible" style="${style ? getAlphaStyle(text.style) : ""}${fontSizeValue ? `font-size: ${fontSizeValue}px;` : ""}">${letter}</span>`
+                    // let size = fontSizeValue
+                    let size = fontSize || 0
+                    html += `<span class="invisible" style="${style ? getAlphaStyle(text.style) : ""}${size ? `font-size: ${size}px;` : ""}">${letter}</span>`
 
                     index++
                 })
@@ -337,6 +267,7 @@
         })
     }
 
+    // WIP padding can be checked by auto size if style is added to parent
     function getPaddingCorrection(stageItem: any) {
         let result = ""
         if (stageItem.style?.indexOf("padding") > -1) {
@@ -348,15 +279,12 @@
                 }
             })
         }
-        setTimeout(getCustomAutoSize, 150)
+        setTimeout(calculateAutosize, 150)
         return result
     }
 
-    $: if (chords && !stageItem && item?.auto && fontSize) fontSize *= 0.7
-    $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize || autoSize : fontSize
-
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
-    let paddingCorrection = {}
+    let paddingCorrection = ""
     $: paddingCorrection = getPaddingCorrection(stageItem)
 
     let mediaItemPath = ""
@@ -383,13 +311,14 @@
 
 <div
     class="item"
-    style="{style ? getAlphaStyle(item?.style) : null};transition: filter 500ms, backdrop-filter 500ms;{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter
+    style="{style ? getAlphaStyle(item?.style) : null};{paddingCorrection}transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter
         ? 'backdrop-filter: ' + backdropFilter + ';'
         : ''}{animationStyle.item || ''}"
     class:white={key && !lines?.length}
     class:key
     class:addDefaultItemStyle
     class:isDisabledVariable
+    bind:this={itemElem}
 >
     {#if lines}
         <div
@@ -399,7 +328,6 @@
             class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"}
             class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"}
             style="--scrollSpeed: {item?.scrolling?.speed ?? 15}s;{style ? item?.align : null}"
-            bind:this={alignElem}
         >
             <div
                 class="lines"
@@ -423,8 +351,8 @@
                             {#each line.text || [] as text}
                                 {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                 <span
-                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{fontSizeValue ? `font-size: ${fontSizeValue}px;` : ''}{text.customType === 'disableTemplate'
-                                        ? text.style + (customTypeRatio && autoSize ? `;font-size: ${fontSize * customTypeRatio}px;` : '')
+                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{text.customType === 'disableTemplate' ? text.style : ''}{fontSize
+                                        ? `;font-size: ${fontSize * (text.customType === 'disableTemplate' ? customTypeRatio : 1)}px;`
                                         : ''}"
                                 >
                                     {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { ...ref, slideIndex }, updateDynamic) : value}
@@ -461,13 +389,13 @@
             <Cam cam={item.device} item style="object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
         {/if}
     {:else if item?.type === "timer"}
-        <Timer {item} id={item.timerId || ""} {today} style={item.auto === false ? "" : `font-size: ${autoSize}px;`} />
+        <Timer {item} id={item.timerId || ""} {today} style={item.auto === false ? "" : `font-size: ${fontSize}px;`} />
     {:else if item?.type === "clock"}
-        <Clock {autoSize} style={false} {...item.clock} />
+        <Clock autoSize={fontSize} style={false} {...item.clock} />
     {:else if item?.type === "events"}
         <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 12) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "variable"}
-        <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ ...ref, slideIndex }} />
+        <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${fontSize}px;`} ref={{ ...ref, slideIndex }} />
     {:else if item?.type === "web"}
         <Website src={item?.web?.src || ""} navigation={!item?.web?.noNavigation} clickable={$currentWindow === "output"} {ratio} />
     {:else if item?.type === "mirror"}
@@ -476,7 +404,7 @@
             <Mirror {item} {ref} {ratio} index={slideIndex} />
         {/if}
     {:else if item?.type === "slide_tracker"}
-        <SlideProgress tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : autoSize} />
+        <SlideProgress tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : fontSize} />
     {:else if item?.type === "visualizer"}
         <Visualizer {item} {preview} />
     {:else if item?.type === "captions"}

@@ -134,7 +134,7 @@ export function checkMedia(src: string) {
 
 export async function getMediaInfo(path: string) {
     const cachedInfo = get(media)[path]?.info
-    if (cachedInfo) return cachedInfo
+    if (cachedInfo?.codecs?.length) return cachedInfo
 
     let info
     try {
@@ -146,7 +146,6 @@ export async function getMediaInfo(path: string) {
     if (!info) return {}
 
     delete info.path
-    console.log(info)
     media.update((a) => {
         if (!a[path]) a[path] = {}
         a[path].info = info
@@ -162,7 +161,7 @@ export async function isVideoSupported(path: string) {
 
     // HEVC (H.265) / Timecode
     const unsupportedCodecs = /(hevc|hvc1|ap4h|tmcd)/i
-    const isUnsupported = info.codecs.every((codec) => unsupportedCodecs.test(codec))
+    const isUnsupported = info.codecs.length && info.codecs.every((codec) => unsupportedCodecs.test(codec))
 
     // not reliable:
     // const isSupported = MediaSource.isTypeSupported(info.mimeCodec)
@@ -274,6 +273,8 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     if (path.includes("http")) return path
 
     let thumbnailPath = await loadThumbnail(path, size)
+    if (!thumbnailPath) return ""
+
     // wait if thumnail is not generated yet
     await wait(200)
     let base64Path = await toDataURL(thumbnailPath)

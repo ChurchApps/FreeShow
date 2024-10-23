@@ -227,6 +227,13 @@
     }
 
     $: containsJesusWords = Object.values(bibles?.[0]?.verses || {})?.find((text: any) => text?.includes('<span class="wj"') || text?.includes("<red"))
+
+    $: previousSlides = "{}"
+    let currentOutputSlides: any[] = []
+    $: if (JSON.stringify(slides[0]) !== previousSlides) {
+        currentOutputSlides = slides[0]
+        previousSlides = JSON.stringify(slides[0])
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -238,9 +245,11 @@
                 <Media path={templateBackground} videoData={{ paused: false, muted: true, loop: true }} mirror />
             {/if}
 
-            {#each slides[0] as item}
-                <Textbox {item} ref={{ id: "scripture" }} />
-            {/each}
+            {#key currentOutputSlides}
+                {#each currentOutputSlides as item}
+                    <Textbox {item} ref={{ id: "scripture" }} />
+                {/each}
+            {/key}
         {/if}
     </Zoomed>
 

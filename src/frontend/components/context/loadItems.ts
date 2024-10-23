@@ -74,11 +74,15 @@ const loadActions = {
         return itemActions
     },
     remove_layers: () => {
-        let layoutSlide: any = _show().layouts("active").ref()[0]?.[get(selected).data[0]?.index] || {}
+        let layoutSlides = _show().layouts("active").ref()[0] || {}
+        let layoutSlide: any = layoutSlides[get(selected).data[0]?.index] || {}
 
         // text content
-        let hasTextContent = getSlideText(_show().slides([layoutSlide.id]).get()[0])
-        setContextData("textContent", hasTextContent)
+        let textContent = ""
+        get(selected).data.forEach(({ index }) => {
+            textContent += getSlideText(_show().slides([layoutSlides[index]?.id]).get()[0])
+        })
+        setContextData("textContent", textContent)
 
         let data: any = layoutSlide.data
         if (!data) return []

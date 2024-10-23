@@ -1,13 +1,14 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { keysToID, sortByName } from "../helpers/array"
-    import { getAutoSize } from "../helpers/autoSize"
+    import autosize from "../helpers/autosize"
     import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
     import SlideNotes from "../items/SlideNotes.svelte"
     import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
-    import { activeTimers, timers, variables } from "../store"
+    import { activeTimers, progressData, timers, variables } from "../store"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Timer from "./Timer.svelte"
@@ -26,8 +27,6 @@
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
 
-    let height: number = 0
-    let width: number = 0
     let itemStyles: any = getStyles(item.style, true)
     $: fontSize = Number(itemStyles?.["font-size"] || 0) || 100 // item.autoFontSize ||
 
@@ -50,7 +49,9 @@
         height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
     `
 
-    $: size = getAutoSize(item, { width, height })
+    let alignElem: any
+    let size = 100
+    $: if (alignElem && (item || $progressData)) size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     $: next = id.includes("next")
@@ -74,6 +75,10 @@
             if (reverse) videoTime = (msg.data.data?.duration || 0) - videoTime
         })
     }
+
+    onDestroy(() => {
+        if (interval) clearInterval(interval)
+    })
 
     let firstTimerId: string = ""
     $: if (id.includes("first_active_timer")) {
@@ -104,8 +109,6 @@
     class:border={show?.settings.labels}
     class:isDisabledVariable
     style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{show.settings.autoStretch === false ? '' : newSizes}--labelColor: {show?.settings?.labelColor || '#d0a853'};"
-    bind:offsetHeight={height}
-    bind:offsetWidth={width}
 >
     {#if show?.settings.labels}
         <div class="label">{item.label || ""}</div>
@@ -116,7 +119,7 @@
             <PreviewCanvas alpha={id.includes("_alpha")} id={show?.settings?.output} {socket} capture={stream[id.includes("_alpha") ? "alpha" : "default"]} />
         </span>
     {:else}
-        <div class="align" style={item.align}>
+        <div bind:this={alignElem} class="align" style={item.align}>
             <div>
                 {#if id.includes("slide_tracker")}
                     <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />

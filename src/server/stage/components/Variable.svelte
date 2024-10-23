@@ -7,7 +7,7 @@
     $: variable = $variables[id] || {}
 </script>
 
-<div class="align" {style}>
+<div class="align autoFontSize" {style}>
     <div class="line">
         {#if variable.type === "number"}
             {Number(variable.number || 0)}

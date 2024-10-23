@@ -3,7 +3,6 @@
     import Textbox from "../components/Textbox.svelte"
     import Zoomed from "../components/Zoomed.svelte"
     import { getStyleResolution } from "../helpers/getStyleResolution"
-    // import { getAutoSize } from "../helpers/autoSize"
 
     export let slide: any
     export let stageItem: any
@@ -20,9 +19,6 @@
 
     export let style: boolean = false
     export let textStyle: string = ""
-
-    // $: stageAutoSize = autoSize ? (slide ? getAutoSize(slide.items[0], parent) : 1) : fontSize
-    // $: stageAutoSize = autoSize ? (getCustomAutoSize()) : fontSize
 
     $: reversedItems = stageItem?.invertItems ? JSON.parse(JSON.stringify(slide?.items || [])) : JSON.parse(JSON.stringify(slide?.items || [])).reverse()
     $: items = style ? slide?.items || [] : combineSlideItems()

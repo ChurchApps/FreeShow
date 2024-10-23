@@ -126,7 +126,8 @@
 
     // last used
     let recentlyUsedList: any[] = []
-    $: if ($showRecentlyUsedProjects) lastUsed()
+    // listen for $projects updates in case it has been updated from sync
+    $: if ($showRecentlyUsedProjects && $projects) lastUsed()
     else recentlyUsedList = []
 
     function lastUsed() {

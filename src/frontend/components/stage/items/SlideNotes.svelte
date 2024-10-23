@@ -13,7 +13,7 @@
 </script>
 
 {#if slide}
-    <div style="font-size: {autoSize}px;">
+    <div class="autoFontSize" style="font-size: {autoSize}px;">
         {@html notes}
     </div>
 {/if}

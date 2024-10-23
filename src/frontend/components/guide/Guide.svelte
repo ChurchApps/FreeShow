@@ -76,7 +76,9 @@
                         {/if}
                     </p>
                     <!-- style="white-space: normal;" -->
-                    <p>{currentStep.description || ""}</p>
+                    {#if currentStep.description}
+                        <p><T id={currentStep.description} /></p>
+                    {/if}
                 </div>
             </div>
 

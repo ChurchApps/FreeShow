@@ -700,6 +700,10 @@ function playOutputStyleTemplateActions(outputIds: string[]) {
     })
 }
 
+export function startShowSync(showId: string) {
+    startShow(showId)
+}
+
 export async function startShow(showId: string) {
     if (!showId) return
 
@@ -846,6 +850,10 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
 
 export function sendMidi(data: any) {
     send(MAIN, ["SEND_MIDI"], data)
+}
+
+export function activateTriggerSync(triggerId: string) {
+    activateTrigger(triggerId)
 }
 
 export async function activateTrigger(triggerId: string): Promise<string> {

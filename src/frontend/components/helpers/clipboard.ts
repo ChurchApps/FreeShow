@@ -377,8 +377,13 @@ const copyActions: any = {
 
         if (fullGroup) {
             // select all children of group
-            ids = ref.filter((a) => ids.includes(a.parent?.id || a.id)).map((a) => a.id)
-            ids = removeDuplicates(ids)
+            let allSlides = _show().get("slides")
+            let newIds: string[] = []
+            ids.forEach((id: string) => {
+                let children = allSlides[id]?.children || []
+                newIds.push(id, ...children)
+            })
+            ids = removeDuplicates(newIds)
         }
 
         let slides = clone(_show().slides(ids).get())
@@ -471,7 +476,7 @@ const pasteActions: any = {
 
         // TODO: duplicate each individual slide as their own
 
-        let slides: any = clone(_show().get().slides)
+        // let slides: any = clone(_show().get().slides)
         // let ref: any[] = _show().layouts("active").ref()[0]
         let newSlides: any[] = []
 
@@ -499,10 +504,10 @@ const pasteActions: any = {
                     // !slides[childId]
                     if (!copiedIds.includes(childId)) return
                     let childSlide: any = clone(data.slides.find((a) => a.id === childId))
+                    if (!childSlide) return
+
                     addedChildren.push(childId)
 
-                    // let childSlide: any = clone(slides[childId])
-                    console.log(childSlide, clone(slides[childId]))
                     childSlide.id = uid()
                     delete childSlide.oldChild
                     clonedChildren.push(childSlide.id)

@@ -1,9 +1,11 @@
+import { ipcMain } from "electron"
 import express from "express"
 import http from "http"
+import { Server } from "socket.io"
+import { uid } from "uid"
 import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
-import { Server } from "socket.io"
-import { ipcMain } from "electron"
+import { waitUntilValueIsDefined } from "./helpers"
 
 const app = express()
 let servers: any = {}
@@ -39,7 +41,7 @@ function connected(socket: any) {
 
     socket.on("disconnect", () => log("Client disconnected."))
 
-    socket.on("data", (data: any) => {
+    socket.on("data", async (data: any) => {
         let parsedData
         try {
             parsedData = JSON.parse(data || "{}")
@@ -48,7 +50,10 @@ function connected(socket: any) {
             return
         }
 
-        receivedData(parsedData, log)
+        const returnData = await receivedData(parsedData, log)
+        if (!returnData) return
+
+        socket.emit("data", returnData)
     })
 
     ipcMain.on("API_DATA", (_e, msg) => {
@@ -75,23 +80,45 @@ export function startRestListener(PORT: number | undefined) {
 
     app.use(express.json())
     // app.use(cors()) // if a browser should send body data (https://stackoverflow.com/a/63547498/10803046)
-    app.post("/", (req) => {
+    app.post("/", async (req) => {
         // {action: ACTION_ID, ...{}}
         let data = req.body
         // ?action=ACTION_ID&data={}
         if (!data.action && req.query.action) data = { action: req.query.action, ...JSON.parse((req.query.data || "{}") as string) }
 
-        receivedData(data, (msg: string) => console.log(`REST: ${msg}`))
+        const returnData = await receivedData(data, (msg: string) => console.log(`REST: ${msg}`))
+        if (!returnData) return
+
+        req.emit("data", returnData)
     })
 }
 
 // DATA
 
-function receivedData(data: any = {}, log: any) {
+async function receivedData(data: any = {}, log: any) {
     if (!data?.action) return log("Received message from client, but missing 'action' key.", true)
-
     log(`Received action ${data.action}`)
+
+    const get = data.action.startsWith("get_")
+    if (get) data.returnId = uid(5)
+
     toApp(MAIN, { channel: "API_TRIGGER", data })
+
+    if (!data.returnId) return
+
+    const returnData = await waitUntilValueIsDefined(() => returnDataObj[data.returnId], 50, 1000)
+    delete returnDataObj[data.returnId]
+    log(`Sending data ${data.action}`)
+    return returnData
+}
+
+let returnDataObj: any = {}
+export function apiReturnData(data: any) {
+    let id = data.returnId
+    if (!id) return
+
+    delete data.returnId
+    returnDataObj[id] = data
 }
 
 // CLOSE

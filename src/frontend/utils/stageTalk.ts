@@ -14,16 +14,18 @@ import { getGroupName } from "../components/helpers/show"
 
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
     let currentOutput = updater[outputId]?.out
+    let next = await getNextBackground(currentOutput?.slide)
+
     let path = currentOutput?.background?.path || ""
-    if (!path) {
+    if (!path && !next.path?.length) {
         if (!returnPath) send(STAGE, ["BACKGROUND"], { path: "" })
         return
     }
 
     let base64path = await getBase64Path(path)
-    if (!base64path) return
+    if (!base64path && !next.path?.length) return
 
-    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next: await getNextBackground(currentOutput?.slide) })
+    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next })
 
     if (returnPath) return bg
 
@@ -143,6 +145,8 @@ export const receiveSTAGE: any = {
             let ref = a.parent || a
             let slide = currentShowSlides[ref.id]
             if (!slide) return { name: "—" }
+
+            if (a.data.disabled || slide.group?.includes("~")) return { hide: true }
 
             let group = slide.group
             if (slide.globalGroup && get(groups)[slide.globalGroup]) {

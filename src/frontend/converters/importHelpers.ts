@@ -64,6 +64,7 @@ export function importShow(files: any[]) {
             }
         }
 
+        if (!show) return
         show = fixShowIssues(show)
 
         tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })

@@ -84,6 +84,7 @@ export function loadBible(active: string, index: number = 0, bible: any) {
 
         if (get(scripturesCache)[id]) {
             bible.version = customName
+            bible.metadata = get(scripturesCache)[id].metadata || {}
             bible.copyright = get(scripturesCache)[id].copyright
             bible.id = id
             return
@@ -257,7 +258,6 @@ export function getSlides({ bibles, sorted }) {
             slide.forEach((_item, j) => {
                 if (!templateTextItems[j]?.auto || !slides[i][j].lines?.[0]?.text) return
 
-                // let autoSize: number = getAutoSize(item)
                 // WIP historyActions - TEMPLATE...
                 slides[i][j].auto = true
                 if (templateTextItems[j]?.textFit) slides[i][j].textFit = templateTextItems[j]?.textFit
