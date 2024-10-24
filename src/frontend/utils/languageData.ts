@@ -19,7 +19,7 @@ export const languages: any = {
     ru: "Русский", // Russian
     ko: "한국인", // Korean
     nl: "Nederlands", // Dutch
-    zh_CN: "中国人", // Chinese
+    zh_CN: "简体中文", // Chinese (Simplified)
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes

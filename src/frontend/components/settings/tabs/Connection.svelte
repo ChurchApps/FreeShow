@@ -117,7 +117,8 @@
         { id: "stage", name: "StageShow", defaultPort: 5511, icon: "stage", enabledByDefault: true },
         { id: "controller", name: "ControlShow", defaultPort: 5512, icon: "connection", enabledByDefault: false },
         { id: "output_stream", name: "OutputShow", defaultPort: 5513, icon: "stage", enabledByDefault: false },
-        { id: "companion", name: "Bitfocus Companion (WebSocket/REST)", defaultPort: 5505, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" },
+        // Bitfocus Companion (WebSocket/REST)
+        { id: "companion", name: "WebSocket/REST (Companion)", defaultPort: 5505, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" },
         // { id: "rest", name: "REST Listener", defaultPort: 5506, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },
     ]
     // Camera
@@ -138,6 +139,7 @@
 
 {#each servers as server}
     {@const disabled = server.id === "companion" ? $companion.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
+    {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
     <CombinedInput>
         <span style="flex: 1;">
             <Button
@@ -155,10 +157,10 @@
             >
                 <div style="margin: 0;">
                     <Icon id={server.icon} size={1.1} right />
-                    <p>
+                    <p style="min-width: fit-content;padding-right: 0;">
                         {server.name}
-                        <span class="connections">{Object.keys($connections[server.id.toUpperCase()] || {})?.length || ""}</span>
-                        {#if server.url}<Icon id="launch" white />{/if}
+                        {#if connections}<span style="border: none;" class="connections">{connections}</span>{/if}
+                        {#if server.url}<span style="margin-left: 5px;border: none;display: inline-flex;align-items: center;"><Icon id="launch" white /></span>{/if}
                     </p>
                 </div>
             </Button>
@@ -174,7 +176,7 @@
                 </span>
             </span>
             <span style="display: flex;flex: 1;">
-                <span style="display: flex;align-items: center;padding: 0 10px;"><T id="settings.port" />:</span>
+                <span style="display: flex;align-items: center;padding: 0 10px;white-space:nowrap;"><T id="settings.port" />:</span>
                 <NumberInput value={$ports[server.id] || server.defaultPort} on:change={(e) => updatePort(e, server.id)} min={1025} max={65535} buttons={false} />
             </span>
         </span>

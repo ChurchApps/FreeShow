@@ -531,6 +531,7 @@ const receiveCLOUD = {
             popupData.set(changes)
             activePopup.set("cloud_update")
 
+            // timeout so user can see the sync has finished before it closes!
             setTimeout(closeApp, 800)
             return
         }

@@ -139,7 +139,6 @@
     // $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
 
     let customTypeRatio = 1
-    $: console.log(fontSize, customTypeRatio, item)
 
     let loopStop: any = null
     let newCall: boolean = false

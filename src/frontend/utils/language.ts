@@ -91,3 +91,8 @@ const translate = (id: string, { parts = false } = {}) => {
 }
 
 export { setLanguage, translate }
+
+// Chinese, Japanese, and Korean should use full width brackets: "（" / "）"
+const fullWidth = ["zh", "ja", "ko"]
+export const getLeftParenthesis = () => (fullWidth.find((id) => get(language).includes(id)) ? "（" : "(")
+export const getRightParenthesis = () => (fullWidth.find((id) => get(language).includes(id)) ? "）" : ")")
