@@ -143,6 +143,8 @@
     let loopStop: any = null
     let newCall: boolean = false
     function calculateAutosize() {
+        if (isStage && !stageAutoSize) return
+
         if (loopStop) {
             newCall = true
             return

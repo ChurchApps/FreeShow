@@ -41,6 +41,7 @@ import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
 import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
+import { importFromClipboard } from "../converters/importHelpers"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -52,7 +53,7 @@ const ctrlKeys: any = {
     d: () => setTimeout(() => duplicate(get(selected))),
     x: () => cut(),
     e: () => activePopup.set("export"),
-    i: () => activePopup.set("import"),
+    i: (e: any) => (e.altKey ? importFromClipboard() : activePopup.set("import")),
     n: () => createNew(),
     h: () => activePopup.set("history"),
     m: () => volume.set(get(volume) ? 0 : 1),

@@ -269,7 +269,7 @@ function getSpecialBoxValues(item: Item) {
         if (!id || id === "style") return
 
         if (id.includes(".")) id = id.slice(0, id.indexOf("."))
-        if (item[id]) keyValues[id] = item[id]
+        if (item[id] !== undefined) keyValues[id] = item[id]
     })
 
     return keyValues

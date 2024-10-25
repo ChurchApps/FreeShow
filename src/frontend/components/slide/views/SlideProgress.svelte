@@ -25,7 +25,7 @@
         let slide = currentShowSlides[ref.id]
         if (!slide) return { name: "—" }
 
-        if (a.data.disabled || slide.group?.includes("~")) return { hide: true }
+        if (a.data.disabled || slide.group?.startsWith("~")) return { hide: true }
 
         let group = slide.group
         if (slide.globalGroup && $groups[slide.globalGroup]) {

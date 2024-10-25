@@ -27,12 +27,17 @@
         active === "all" ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive) : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
 
     export let firstMatch: null | any = null
+    export let resetSearchList: boolean = false
     let previousSearchValue: string = ""
     $: {
         if (searchValue.length > 1) {
             let currentShowsList = filterByTags(filteredShows, $activeTagFilter)
             // reset if search value changed
-            if (!formattedSearch.includes(previousSearchValue)) currentShowsList = filterByTags(clone(filteredStored), $activeTagFilter)
+            let reset = resetSearchList || !formattedSearch.includes(previousSearchValue) // || formattedSearch.split(" ").filter(Boolean).length !== previousSearchValue.split(" ").filter(Boolean).length
+            if (reset) {
+                currentShowsList = filterByTags(clone(filteredStored), $activeTagFilter)
+                resetSearchList = false
+            }
 
             filteredShows = showSearch(formattedSearch, currentShowsList)
             if (searchValue.length > 15 && filteredShows.length > 50) filteredShows = filteredShows.slice(0, 50)
@@ -46,7 +51,16 @@
         } else {
             filteredShows = filterByTags(clone(filteredStored), $activeTagFilter)
             firstMatch = null
+            previousSearchValue = ""
         }
+    }
+
+    // reduce lag by only refreshing full list when not typing for 200 ms
+    let isTyping: any = null
+    $: if (searchValue) typing()
+    function typing() {
+        if (isTyping) clearTimeout(isTyping)
+        isTyping = setTimeout(() => (resetSearchList = true), 200)
     }
 
     function filterByTags(shows, tags: string[]) {

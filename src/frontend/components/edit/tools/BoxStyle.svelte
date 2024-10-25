@@ -11,7 +11,7 @@
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import { MAX_FONT_SIZE } from "../scripts/autosize"
-    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret, setCaretPosition } from "../scripts/textStyle"
+    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
 
@@ -35,10 +35,7 @@
         if (allSlideItems.length === 1 && item && !getItemText(item).length && !$activeEdit.items.length) {
             activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
             const elem: any = document.querySelector(".editItem")?.querySelector(".edit")
-            if (elem) {
-                elem.addEventListener("focus", () => setCaretPosition(elem))
-                elem.focus()
-            }
+            if (elem) elem.focus()
         }
     })
 

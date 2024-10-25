@@ -443,3 +443,15 @@ export function setCaretPosition(elem: any, pos: number = 0) {
         if (elem.selectionStart) elem.setSelectionRange(pos, pos)
     }
 }
+
+export function setCaretAtEnd(elem: any) {
+    const range = document.createRange()
+    range.selectNodeContents(elem)
+    range.collapse(false)
+
+    const sel = window.getSelection()
+    if (!sel) return
+
+    sel.removeAllRanges()
+    sel.addRange(range)
+}

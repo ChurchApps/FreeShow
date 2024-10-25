@@ -1,20 +1,16 @@
 import { get } from "svelte/store"
 import type { ShowList } from "../../types/Show"
 import { sortObjectNumbers } from "../components/helpers/array"
-import { similarity } from "../converters/txt"
 import { categories, drawerTabsData, textCache } from "../stores"
+import { similarity } from "../converters/txt"
 
-const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_`~()]/g
-
+const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
 export function formatSearch(value: string, removeSpaces: boolean = false) {
     let newValue = value.toLowerCase().replace(specialChars, "")
-    if (removeSpaces) newValue = newValue.replaceAll(" ", "")
+    if (removeSpaces) newValue = newValue.replace(/\s+/g, "")
 
     return newValue
 }
-
-const searchIncludes = (text: string, search: string): boolean => formatSearch(text, true).includes(search)
-// const searchEquals = (text: string, search: string): boolean => formatSearch(text, true) === search
 
 export function showSearch(searchValue: string, shows: any) {
     let newShows: ShowList[] = []
@@ -37,55 +33,76 @@ export function showSearch(searchValue: string, shows: any) {
 }
 
 export function showSearchFilter(searchValue: string, show: any) {
-    let match: any[] = []
+    const showName = formatSearch(show.name, true)
 
-    let showName = formatSearch(show.name, true)
-    if (searchValue.replaceAll(" ", "") === showName) return 100
+    // Priority 1: Title Exact Match
+    const formattedSearchValue = formatSearch(searchValue, true)
+    if (formattedSearchValue === showName) return 100
 
-    let titleWordMatch = matchWords(showName, searchValue)
-    let titleLetterMatch = similarity(showName, searchValue.replaceAll(" ", "")) || 0
-    let titleMatch = titleWordMatch + titleLetterMatch * 0.4
-    if (titleMatch > 0.4 || searchValue.length < 5) return titleMatch * 100
+    const cache = get(textCache)[show.id] || ""
 
-    // content search
-    const MAX_CONTENT = 100
-    let splittedValue = searchValue.split(" ").filter((a) => a)
-    splittedValue.forEach((search, i) => {
-        if (!search.length) return
+    // Priority 2: Content Includes Percentage Match
+    const contentIncludesMatchScore = calculateContentIncludesScore(cache, searchValue) // + calculateContentIncludesScore(cache, searchValue, true)
 
-        let cache = get(textCache)[show.id]
-        if (!cache) return
+    // Priority 3: Title Word-for-Word Match
+    const titleWordMatch = matchWords(showName, searchValue)
+    const titleIncludesMatchScore = titleWordMatch * 0.5 * 100 // max 50%
 
-        match[i] = 0
-        cache.split(".").forEach((text: string) => {
-            // if (searchEquals(text, search)) match[i] += 5
-            if (searchIncludes(text, search)) match[i] += MAX_CONTENT / splittedValue.length / cache.split(".").length
-        })
-    })
+    // Priority 4: Title Letter-for-Letter Match
+    const titleSimilarity = similarity(showName, removeShortWords(formatSearch(searchValue, true)))
+    const titleSimilarityMatchScore = titleSimilarity * 0.3 * 100 // max 30%
 
-    let sum = match.reduce((count, num) => (count += num), 0)
-    if (sum < 11) return titleMatch * 100
+    // Priority 5: Content Word-for-Word Match
+    let contentWordMatchScore = 0
+    if (cache) {
+        const formattedCache = formatSearch(cache, true)
+        const wordMatchCount = matchWords(formattedCache, searchValue)
+        const wordMatchCountExtra = matchWords(formattedCache, removeShortWords(searchValue))
+        contentWordMatchScore = Math.min(wordMatchCount, 100) * 0.03 + Math.min(wordMatchCountExtra, 100) * 0.07 // max 10%
+    }
 
-    sum = Math.min(sum, 100)
+    // Priority 6: Content Letter-for-Letter Match
+    // let contentSimilarityMatchScore = 0
+    // if (cache) {
+    //     const contentSimilarity = similarity(removeShortWords(formatSearch(cache, true)), removeShortWords(formatSearch(searchValue, true)))
+    //     contentSimilarityMatchScore = contentSimilarity * 0.05 * 100 // max 5%
+    // }
 
-    // 40% is content
-    sum = sum * 0.4 + titleMatch * 100
-
-    // only exact show name is 100
-    if (sum >= 100) sum = 99
-
-    if (sum < 3) sum = 0
-    return sum
+    const combinedScore = contentIncludesMatchScore + titleIncludesMatchScore + titleSimilarityMatchScore + contentWordMatchScore
+    return combinedScore >= 100 ? 99 : combinedScore < 3 ? 0 : combinedScore
 }
 
-function matchWords(text: string, value: string) {
-    let match = 0
-    value
-        .split(" ")
-        .filter((a) => a)
-        .forEach((s) => {
-            if (text.includes(s)) match += s.length / text.length
-        })
+function calculateContentIncludesScore(cache: string, search: string, noShortWords: boolean = false): number {
+    if (!cache) return 0
 
-    return Math.min(1, match)
+    // remove short words
+    cache = formatSearch(noShortWords ? removeShortWords(cache) : cache, true)
+    search = formatSearch(noShortWords ? removeShortWords(search) : search, true)
+
+    const occurrences = (cache.match(new RegExp(search, "g")) || []).length
+    const cacheLength = cache.length
+
+    // content includes match score, based on occurrences relative to cache length
+    if (cacheLength > 0) {
+        const percentageMatch = Math.min(((occurrences * search.length) / cacheLength) * 40, 1)
+        // return percentageMatch * (noShortWords ? 20 : 50) // max 70%
+        return percentageMatch * 70 // max 70%
+    }
+
+    return 0
+}
+
+function removeShortWords(value: string) {
+    return value
+        .split(" ")
+        .filter((a) => a.length > 2)
+        .join(" ")
+}
+
+function matchWords(text: string, value: string): number {
+    const words = value.split(" ").filter(Boolean)
+    const matchCount = words.filter((word) => text.includes(word)).length
+
+    // value between 0 and 1
+    return matchCount / words.length
 }
