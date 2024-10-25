@@ -272,15 +272,28 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     // online media (e.g. Pixabay/Unsplash)
     if (path.includes("http")) return path
 
+    // let exists = !!get(loadedMediaThumbnails)[getThumbnailId({ input: path, size })]
     let thumbnailPath = await loadThumbnail(path, size)
     if (!thumbnailPath) return ""
 
     // wait if thumnail is not generated yet
-    await wait(200)
+    await checkThatMediaExists(thumbnailPath)
+
     let base64Path = await toDataURL(thumbnailPath)
 
     // "data:image/png;base64," +
     return base64Path
+}
+
+export async function checkThatMediaExists(path: string, iteration: number = 1) {
+    if (iteration > 8) return false
+    let exists = (await checkMedia(path)) === "true"
+    if (!exists) {
+        await wait(500 * iteration)
+        exists = await checkThatMediaExists(path, iteration + 1)
+    }
+
+    return exists
 }
 
 // CACHE

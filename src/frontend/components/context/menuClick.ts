@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { EXPORT, MAIN, OUTPUT } from "../../../types/Channels"
 import type { MediaStyle } from "../../../types/Main"
-import type { Slide } from "../../../types/Show"
+import type { Item, Slide } from "../../../types/Show"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
 import {
     $,
@@ -63,7 +63,7 @@ import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { rearrangeItems } from "../edit/scripts/itemHelpers"
-import { getSelectionRange } from "../edit/scripts/textStyle"
+import { getItemText, getSelectionRange } from "../edit/scripts/textStyle"
 import { exportProject } from "../export/project"
 import { clone, removeDuplicates } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
@@ -962,9 +962,11 @@ const actions: any = {
                 if (!slideRef || previousSpiltIds.includes(slideRef.id)) return
                 previousSpiltIds.push(slideRef.id)
 
-                let slideItems = _show().slides([slideRef.id]).get("items")[0]
+                let slideItems: Item[] = _show().slides([slideRef.id]).get("items")[0]
 
-                let firstTextItemIndex = slideItems.findIndex((a) => a.lines) ?? -1
+                // check lines array & text array first, then text value
+                let firstTextItemIndex = slideItems.findIndex((a) => getItemText(a).length && ((a.lines?.length || 0) > 1 || (a.lines?.[0]?.text?.length || 0) > 1))
+                if (firstTextItemIndex < 0) firstTextItemIndex = slideItems.findIndex((a) => getItemText(a).length > 18)
                 if (firstTextItemIndex < 0) return
 
                 splitItemInTwo(slideRef, firstTextItemIndex)

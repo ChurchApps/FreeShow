@@ -67,7 +67,7 @@
 <!-- TODO: effects?: https://alemangui.github.io/pizzicato/ -->
 
 {#if openedPage === "settings"}
-    <main style="flex: 1;overflow-x: hidden;">
+    <main style="flex: 1;overflow-x: hidden;padding: 10px;">
         <CombinedInput>
             <p title={$dictionary.settings?.audio_fade_duration}><T id="settings.audio_fade_duration" /></p>
             <NumberInput value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
@@ -93,7 +93,7 @@
         </CombinedInput>
 
         {#if isPlaylist}
-            <h5 style="color: var(--secondary);"><T id="audio.playlist_settings" /></h5>
+            <h5 style="color: var(--secondary);margin-top: 10px;"><T id="audio.playlist_settings" /></h5>
             <CombinedInput>
                 <p><T id="settings.audio_crossfade" /></p>
                 <NumberInput value={activePlaylist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updatePlaylist(active, "crossfade", e.detail)} />

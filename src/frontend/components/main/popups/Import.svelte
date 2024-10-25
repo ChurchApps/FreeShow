@@ -2,12 +2,12 @@
     import { tick } from "svelte"
     import { IMPORT } from "../../../../types/Channels"
     import { Popups } from "../../../../types/Main"
-    import { convertText } from "../../../converters/txt"
+    import { importFromClipboard } from "../../../converters/importHelpers"
     import { activePopup, alertMessage, dataPath, os } from "../../../stores"
     import { send } from "../../../utils/request"
+    import { presentationExtensions } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-    import { presentationExtensions } from "../../helpers/media"
 
     const freeshow_formats = [
         { name: "Show", extensions: ["show", "json"], id: "freeshow" },
@@ -65,17 +65,6 @@
 
         alertMessage.set(format.tutorial)
         activePopup.set("alert")
-    }
-
-    function importFromClipboard() {
-        navigator.clipboard
-            .readText()
-            .then((text) => {
-                convertText({ text, noFormatting: true })
-            })
-            .catch((err) => {
-                console.error("Failed to read clipboard contents: ", err)
-            })
     }
 </script>
 

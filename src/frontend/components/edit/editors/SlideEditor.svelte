@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { slide } from "svelte/transition"
     import type { MediaStyle } from "../../../../types/Main"
     import { activeEdit, activePopup, activeShow, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, refreshEditSlide, showsCache, styles } from "../../../stores"
+    import { slideHasAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -17,8 +19,8 @@
     import DropArea from "../../system/DropArea.svelte"
     import Snaplines from "../../system/Snaplines.svelte"
     import Editbox from "../editbox/Editbox.svelte"
-    import { slideHasAction } from "../../actions/actions"
     import { getUsedChords } from "../scripts/chords"
+    import { setCaretAtEnd } from "../scripts/textStyle"
 
     $: currentShow = $activeShow?.id || $activeEdit.showId || ""
     $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show(currentShow).slides().get().length) activeEdit.set({ slide: 0, items: [], showId: currentShow })
@@ -202,6 +204,21 @@
         if (layoutSlide.filter) slideFilter += "filter: " + layoutSlide.filter + ";"
         if (layoutSlide["backdrop-filter"]) slideFilter += "backdrop-filter: " + layoutSlide["backdrop-filter"] + ";"
     }
+
+    onMount(() =>
+        // timeout to prevent number 2 from getting typed if changing with shortcuts
+        setTimeout(() => {
+            // set focus to textbox if only one
+            if (Slide?.items.length === 1 && !$activeEdit.items.length) {
+                activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
+                const elem: any = document.querySelector(".editItem")?.querySelector(".edit")
+                if (elem) {
+                    elem.addEventListener("focus", () => setCaretAtEnd(elem))
+                    elem.focus()
+                }
+            }
+        })
+    )
 
     // remove overflow if scrollbars are flickering over 25 times per second
     let hideOverflow: boolean = false

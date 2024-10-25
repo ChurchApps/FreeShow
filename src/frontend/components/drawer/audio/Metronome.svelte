@@ -31,13 +31,15 @@
         </Button>
     </SelectElem>
 
-    <MetronomeInputs
-        {values}
-        on:change={(e) => {
-            values = e.detail
-            updateMetronome(values)
-        }}
-    />
+    <div class="inputs">
+        <MetronomeInputs
+            {values}
+            on:change={(e) => {
+                values = e.detail
+                updateMetronome(values)
+            }}
+        />
+    </div>
 </div>
 
 <style>
@@ -47,5 +49,12 @@
         flex: 1;
         overflow-y: auto;
         overflow-x: hidden;
+    }
+
+    .inputs {
+        display: flex;
+        flex-direction: column;
+
+        padding: 10px;
     }
 </style>

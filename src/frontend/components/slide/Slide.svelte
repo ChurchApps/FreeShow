@@ -181,7 +181,7 @@
         // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
     }
 
-    $: name = getGroupName({ show, showId }, layoutSlide.id, group, index)
+    $: name = getGroupName({ show, showId }, layoutSlide.id, group, index, true)
 
     // quick edit
     let html: string = ""
@@ -395,7 +395,7 @@
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->
                         <span style="position: absolute;display: contents;">{index + 1}</span>
-                        <span class="text">{name === null ? "" : name || "—"}</span>
+                        <span class="text">{@html name === null ? "" : name || "—"}</span>
                     </div>
                 {/if}
             </SelectElem>
@@ -519,6 +519,20 @@
         font-weight: bold;
         align-items: center;
         /* opacity: 0.8; */
+    }
+
+    .label .text {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .label .text :global(.group_count) {
+        color: var(--text);
+        opacity: 0.3;
+        /* opacity: 0.8; */
+        font-size: 0.8em;
     }
 
     .childLink {

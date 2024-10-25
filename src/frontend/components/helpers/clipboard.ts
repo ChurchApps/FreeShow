@@ -5,7 +5,6 @@ import type { Item } from "../../../types/Show"
 import {
     activeDays,
     activeDrawerTab,
-    activeEdit,
     activePage,
     activePopup,
     activeProject,
@@ -47,6 +46,7 @@ import { newToast, triggerFunction } from "../../utils/common"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { setCaret } from "../edit/scripts/textStyle"
+import { activeEdit } from "./../../stores"
 import { clone, keysToID, removeDeleted, removeDuplicates } from "./array"
 import { pasteText } from "./caretHelper"
 import { history } from "./history"
@@ -584,8 +584,7 @@ const deleteActions = {
                 location: { page: "edit", id: get(activeEdit).type + "_items", override },
             })
 
-            refreshEditSlide.set(true)
-            return
+            return finish()
         }
 
         let layout = data.layout || _show().get("settings.activeLayout")
@@ -601,7 +600,11 @@ const deleteActions = {
             },
         })
 
-        refreshEditSlide.set(true)
+        finish()
+        function finish() {
+            refreshEditSlide.set(true)
+            activeEdit.set({ ...get(activeEdit), items: [] })
+        }
     },
     slide: (data, type: "delete" | "remove" = "delete") => {
         removeSlide(data, type)

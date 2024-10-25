@@ -518,7 +518,7 @@ const slideDrop: any = {
         let media: any = clone(get(showsCache)[get(activeShow)!.id].media || {})
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
-        if (drop.index === undefined) drop.index = layout.length
+        if (drop.index === undefined) drop.index = layout.length + 1
         let newIndex: number = drop.index
 
         let newMedia: any = media

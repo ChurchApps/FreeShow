@@ -97,7 +97,11 @@
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide
 
-    $: if (stageOutputId && ($allOutputs || $outputs)) setTimeout(getCurrentBackground, 100)
+    let timeout: any = null
+    $: if (stageOutputId && ($allOutputs || $outputs)) {
+        if (timeout) clearTimeout(timeout)
+        timeout = setTimeout(getCurrentBackground, 100)
+    }
     let currentBackground: any
     async function getCurrentBackground() {
         if (!id.includes("slide")) return

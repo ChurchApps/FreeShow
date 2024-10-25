@@ -4,6 +4,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import type { API_metronome } from "../../actions/api"
+    import { getLeftParenthesis, getRightParenthesis } from "../../../utils/language"
 
     export let values: API_metronome = {}
     export let volume: boolean = true
@@ -21,7 +22,7 @@
 </script>
 
 <CombinedInput>
-    <p><T id="audio.tempo" /> (<T id="audio.bpm" />)</p>
+    <p><T id="audio.tempo" /> {getLeftParenthesis()}<T id="audio.bpm" />{getRightParenthesis()}</p>
     <NumberInput value={values.tempo || 120} min={1} decimals={1} fixed={Math.floor(values.tempo || 0) === (values.tempo || 0) ? 0 : 1} max={320} on:change={(e) => updateValue("tempo", e)} />
 </CombinedInput>
 <CombinedInput>

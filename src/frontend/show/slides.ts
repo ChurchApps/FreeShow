@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Line, Show, Slide } from "../../types/Show"
-import { getSlideText } from "../components/edit/scripts/textStyle"
+import { getItemText, getSlideText } from "../components/edit/scripts/textStyle"
 import { changeValues, clone, keysToID, removeDuplicates, sortObjectNumbers } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/layout"
@@ -483,6 +483,7 @@ export function mergeDuplicateSlides({ slides, layout }) {
 // WIP simular to Editbox.svelte
 export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) {
     let lines: Line[] = _show().slides([slideRef.id]).items([itemIndex]).get("lines")[0][0]
+    lines = lines.filter((a) => a.text?.[0]?.value?.length)
 
     // if only one line (like scriptures, split by text)
     if (lines.length === 1 && lines[0].text?.length > 1) {
@@ -492,6 +493,18 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
         newLines.push({ ...lines[0], text: lines[0].text.slice(centerTextIndex) })
         lines = newLines
     }
+
+    // split text content directly in half
+    if (lines.length === 1 && lines[0].text?.[0]?.value?.length) {
+        let text = getItemText({ lines } as Item)
+        const [firstHalf, secondHalf] = splitTextContentInHalf(text)
+        let newLines: Line[] = []
+        newLines.push({ ...lines[0], text: [{ ...lines[0].text[0], value: firstHalf }] })
+        newLines.push({ ...lines[0], text: [{ ...lines[0].text[0], value: secondHalf }] })
+        lines = newLines
+    }
+
+    if (lines.length <= 1) return
 
     // auto find center line
     if (!sel.length) {
@@ -542,7 +555,7 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
             }
             secondLines[secondLines.length - 1].text.push({
                 style: text.style,
-                value: text.value.slice(pos, text.value.length),
+                value: text.value.slice(0, text.value.length),
             })
 
             textPos += text.value.length
@@ -557,8 +570,6 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     ]
     if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
     if (!secondLines.length) secondLines = defaultLine
-
-    console.log(firstLines, secondLines)
 
     // add chords
     let chordLines = clone(lines.map((a) => a.chords || []))
@@ -593,6 +604,50 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     history({ id: "UPDATE", newData: { key: "slides", data: clone(slides) }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "show_slides_" + showId } })
 
     refreshEditSlide.set(true)
+}
+
+function splitTextContentInHalf(text: string) {
+    const center = Math.floor(text.length / 2)
+
+    // find split index based on input "./,/!/?" closest to center
+    function findSplitIndex(chars) {
+        const MARGIN = center / 2
+        let index = -1
+        for (let i = center - MARGIN; i <= center + MARGIN; i++) {
+            if (chars.includes(text[i])) index = i + 1
+        }
+        return index
+    }
+
+    function checkForSpaces(left: boolean = true) {
+        let index = -1
+        for (let i = center; left ? i >= 0 : i < text.length; i += left ? -1 : 1) {
+            if (text[i] === " ") {
+                index = i
+                break
+            }
+        }
+        return index
+    }
+
+    const splitChars = [".", ",", "!", "?"]
+    let splitIndex = findSplitIndex(splitChars)
+
+    // split by the closest space if no punctuations matched
+    if (splitIndex === -1) {
+        let leftIndex = checkForSpaces(true)
+        let rightIndex = checkForSpaces(false)
+
+        // get the closest space
+        if (leftIndex !== -1 && (rightIndex === -1 || center - leftIndex <= rightIndex - center)) splitIndex = leftIndex
+        else splitIndex = rightIndex
+    }
+
+    if (splitIndex === -1) return [text]
+
+    const firstHalf = text.slice(0, splitIndex).trim()
+    const secondHalf = text.slice(splitIndex).trim()
+    return [firstHalf, secondHalf]
 }
 
 export function mergeSlides(indexes: { index: number }[]) {

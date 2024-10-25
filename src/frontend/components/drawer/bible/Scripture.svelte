@@ -30,9 +30,12 @@
     let chapterId: any = cachedRef?.chapterId ?? "GEN.1"
     let activeVerses: string[] = cachedRef?.activeVerses || ["1"]
 
+    $: console.trace("BOOK", bookId, chapterId)
+
     $: if (bookId || chapterId || verses || activeVerses) updateActive()
     function updateActive() {
         if (!loaded) return
+
         activeScripture.set({ ...$activeScripture, [bibles[0]?.api ? "api" : "bible"]: { bookId, chapterId, activeVerses } })
         cachedRef = $activeScripture[bibles[0]?.api ? "api" : "bible"] || {}
     }
@@ -241,6 +244,7 @@
             else if ($scripturesCache[id]) {
                 books[id] = ($scripturesCache[id].books as any) || []
                 bookId = cachedRef?.bookId || 0
+                if (typeof bookId === "string") bookId = bookIds.findIndex((a) => a === bookId)
                 if (!books[id][bookId]) bookId = 0
             }
         })
@@ -263,6 +267,7 @@
                 chapters[id] = (books[id][bookId] as any).chapters
 
                 chapterId = cachedRef?.chapterId || 0
+                if (typeof chapterId === "string") chapterId = Number(chapterId.split(".")[1]) - 1
                 if (!chapters[id][chapterId]) chapterId = 0
             }
         })
@@ -947,6 +952,7 @@
                         {#each books[firstBibleId] as book, i}
                             {@const id = bibles[0].api ? book.id : i}
                             {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
+                            {#if i < 2}<span style="font-size: 0;position: absolute;">{console.log(id, bookId)}</span>{/if}
 
                             <span
                                 id={id.toString()}

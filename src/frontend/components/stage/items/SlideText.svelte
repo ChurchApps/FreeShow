@@ -83,12 +83,36 @@
             <Zoomed background="transparent" style={getStyleResolution(resolution, width, height, "fit")} center>
                 <div class:loading={items1 && !firstActive}>
                     {#each items1 as item}
-                        <Textbox {item} {style} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(next && stageItem.lineCount)} stageAutoSize={item.auto && autoSize} {fontSize} addDefaultItemStyle={style} isStage />
+                        <Textbox
+                            {item}
+                            {style}
+                            customStyle={textStyle}
+                            {stageItem}
+                            {chords}
+                            {ref}
+                            maxLines={Number(next && stageItem.lineCount)}
+                            stageAutoSize={(style ? item.auto && item.textFit === "growToFit" : item.auto) && autoSize}
+                            {fontSize}
+                            addDefaultItemStyle={style}
+                            isStage
+                        />
                     {/each}
                 </div>
                 <div class:loading={items2 && firstActive}>
                     {#each items2 as item}
-                        <Textbox {item} {style} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(next && stageItem.lineCount)} stageAutoSize={item.auto && autoSize} {fontSize} addDefaultItemStyle={style} isStage />
+                        <Textbox
+                            {item}
+                            {style}
+                            customStyle={textStyle}
+                            {stageItem}
+                            {chords}
+                            {ref}
+                            maxLines={Number(next && stageItem.lineCount)}
+                            stageAutoSize={(style ? item.auto && item.textFit === "growToFit" : item.auto) && autoSize}
+                            {fontSize}
+                            addDefaultItemStyle={style}
+                            isStage
+                        />
                     {/each}
                 </div>
             </Zoomed>

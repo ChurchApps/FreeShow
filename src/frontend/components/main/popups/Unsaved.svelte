@@ -1,6 +1,6 @@
 <script lang="ts">
     import { activePopup, saved } from "../../../stores"
-    import { closeApp, save } from "../../../utils/save"
+    import { closeApp, save, saveComplete } from "../../../utils/save"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -8,7 +8,7 @@
     const actions = {
         n: () => activePopup.set(null),
         q: () => closeApp(),
-        y: () => ($saved ? closeApp() : save(true)),
+        y: () => ($saved ? saveComplete({ closeWhenFinished: true }) : save(true)),
     }
 
     function keydown(e: any) {

@@ -5,6 +5,7 @@ import { checkName } from "../components/helpers/show"
 import { activeDrawerTab, activePopup, activeProject, activeRename, categories, drawerTabsData, shows } from "../stores"
 import { newToast } from "../utils/common"
 import type { Category } from "../../types/Tabs"
+import { convertText } from "./txt"
 
 export function createCategory(name: string, icon: string = "song", { isDefault, isArchive }: { isDefault?: boolean; isArchive?: boolean } = {}) {
     // return selected category if it is empty
@@ -71,6 +72,19 @@ export function importShow(files: any[]) {
     })
 
     setTempShows(tempShows)
+}
+
+/////
+
+export function importFromClipboard() {
+    navigator.clipboard
+        .readText()
+        .then((text) => {
+            convertText({ text, noFormatting: true })
+        })
+        .catch((err) => {
+            console.error("Failed to read clipboard contents: ", err)
+        })
 }
 
 // SPECIFIC FORMATS
