@@ -5,7 +5,7 @@
     import { keysToID, sortByName } from "../helpers/array"
     import { getActiveOutputs } from "../helpers/output"
     import { getStyles } from "../helpers/style"
-    import Image from "../media/Image.svelte"
+    import Media from "../output/layers/Media.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
     import SlideProgress from "../slide/views/SlideProgress.svelte"
     import Timer from "../slide/views/Timer.svelte"
@@ -98,7 +98,8 @@
     $: currentSlide = currentOutput.out?.slide
 
     let timeout: any = null
-    $: if (stageOutputId && ($allOutputs || $outputs)) {
+    $: if (stageOutputId && ($allOutputs || $outputs)) startTimeout()
+    function startTimeout() {
         if (timeout) clearTimeout(timeout)
         timeout = setTimeout(getCurrentBackground, 100)
     }
@@ -185,7 +186,7 @@
                             {@const slideBackground = next ? currentBackground.next : currentBackground}
                             {#if slideBackground?.path}
                                 <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
-                                    <Image path={slideBackground.path} mediaStyle={slideBackground.mediaStyle || {}} />
+                                    <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror />
                                 </div>
                             {/if}
                         {/if}

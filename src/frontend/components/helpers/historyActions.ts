@@ -738,6 +738,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             let createItems: boolean = !!data.data?.createItems
             let shiftItems: boolean = !!data.data?.shiftItems
+            let previousTemplateId = show.settings?.template
 
             if (deleting) {
                 let previousData = data.previousData
@@ -746,10 +747,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 _show(data.remember.showId).set({ key: "slides", value: previousData.slides || {} })
                 _show(data.remember.showId).set({ key: "settings.template", value: previousData.template })
             } else {
-                data.previousData = clone({ template: show.settings?.template, slides: slides })
+                data.previousData = clone({ template: previousTemplateId, slides: slides })
                 let templateId: string = data.id
 
-                if (templateId && !slideId && show.settings?.template !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
+                if (templateId && !slideId && previousTemplateId !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
 
                 let template = clone(get(templates)[templateId])
                 updateSlidesWithTemplate(template)
@@ -825,7 +826,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // set custom values
                     let isFirst = !!Object.values(show.layouts || {}).find((layout) => layout.slides[0]?.id === id)
                     show.slides[id] = updateSlideFromTemplate(show.slides[id], slideTemplate, isFirst, changeOverflowItems)
-                    let newLayoutData = updateLayoutsFromTemplate(show.layouts, show.media, slideTemplate, changeOverflowItems)
+                    let oldTemplate = get(templates)[previousTemplateId || ""] || {}
+                    let newLayoutData = updateLayoutsFromTemplate(show.layouts, show.media, slideTemplate, oldTemplate, changeOverflowItems)
+
                     show.layouts = newLayoutData.layouts
                     show.media = newLayoutData.media
                 })

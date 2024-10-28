@@ -23,9 +23,9 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
     }
 
     let base64path = await getBase64Path(path)
-    if (!base64path && !next.path?.length) return
+    if (!base64path) base64path = path
 
-    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next })
+    let bg = clone({ path: base64path, filePath: path, mediaStyle: get(media)[path] || {}, next })
 
     if (returnPath) return bg
 
@@ -46,9 +46,9 @@ async function getNextBackground(currentOutputSlide: any) {
     let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path
 
     let base64path = await getBase64Path(path)
-    if (!base64path) return {}
+    if (!base64path) base64path = path
 
-    return { path: base64path, mediaStyle: get(media)[path] || {} }
+    return { path: base64path, filePath: path, mediaStyle: get(media)[path] || {} }
 }
 
 export const receiveSTAGE: any = {

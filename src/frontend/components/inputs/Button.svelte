@@ -45,12 +45,15 @@
     let mouse: any = { x: 0, y: 0 }
     function mousemove(e: any) {
         if (!title?.length) return
+
         startTimer()
         mouse = { x: e.clientX, y: e.clientY }
-
         tooltipStyle = ""
-        if (mouse.x + 250 > window.innerWidth) tooltipStyle += "transform: translateX(-100%);" + (title.length > 30 ? "width: 250px;" : "white-space: nowrap;")
-        if (mouse.y + 80 > window.innerHeight) tooltipStyle += "transform: translateY(-100%);"
+
+        const RIGHT_CLIP = mouse.x + 250 > window.innerWidth
+        const BOTTOM_CLIP = mouse.y + 80 > window.innerHeight
+        if (RIGHT_CLIP) tooltipStyle += `transform: translate(-100%, ${BOTTOM_CLIP ? "-100%" : "0"});` + (title.length > 30 ? "width: 250px;" : "white-space: nowrap;")
+        else if (BOTTOM_CLIP) tooltipStyle += "transform: translateY(-100%);"
     }
 </script>
 

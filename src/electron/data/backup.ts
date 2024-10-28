@@ -5,8 +5,8 @@ import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePoi
 import { stores, updateDataPath } from "./store"
 
 // "SYNCED_SETTINGS" and "STAGE_SHOWS" has to be before "SETTINGS" and "SHOWS"
-const storesToSave = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA", "DRIVE_API_KEY"]
-// don't upload: config.json, cache.json, history.json
+const storesToSave = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA"]
+// don't upload: config.json, cache.json, history.json, DRIVE_API_KEY.json
 
 export async function startBackup({ showsPath, dataPath, scripturePath, customTriggers }: any) {
     let shows: any = null
@@ -73,6 +73,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
 export function restoreFiles({ showsPath }: any) {
     let files: any = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] })
     if (!files?.length) return toApp(MAIN, { channel: "RESTORE", data: { finished: false } })
+    toApp(MAIN, { channel: "RESTORE", data: { starting: true } })
 
     // don't replace certain settings
     let settings = stores.SETTINGS.store

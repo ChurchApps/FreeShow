@@ -6,6 +6,7 @@
     import Video from "../../media/Video.svelte"
 
     export let path: string
+    export let path2: string = ""
     export let data: OutBackground = {}
 
     export let animationStyle: string = ""
@@ -23,7 +24,9 @@
     let retryCount = 0
     $: if (path) retryCount = 0
     let timeout: any = null
+    let useAlternative: boolean = false
     function reload() {
+        if (retryCount > 3) useAlternative = true
         if (retryCount > 3 || timeout) return
 
         timeout = setTimeout(() => {
@@ -41,7 +44,7 @@
         </div>
     {:else if type === "image"}
         <div class="image" style="height: 100%;{animationStyle}">
-            <Image {path} {mediaStyle} on:error={reload} on:loaded />
+            <Image path={useAlternative ? path2 : path} {mediaStyle} on:error={reload} on:loaded />
         </div>
     {/if}
 {/key}

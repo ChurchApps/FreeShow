@@ -1,7 +1,8 @@
 import path from "path"
 import { toApp } from ".."
+import { MAIN } from "../../types/Channels"
 import { Show } from "../../types/Show"
-import { deleteFile, doesPathExist, parseShow, readFile, readFolder, renameFile } from "./files"
+import { deleteFile, doesPathExist, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFile } from "./files"
 
 export function getAllShows(data: any) {
     if (!doesPathExist(data.path)) return []
@@ -124,20 +125,24 @@ export function refreshAllShows(data: any) {
 }
 
 export function getEmptyShows(data: any) {
-    if (!doesPathExist(data.path)) return []
+    getEmptyShowsAsync(data)
+}
+
+export async function getEmptyShowsAsync(data: any) {
+    if (!doesPathExist(data.path)) return
 
     // list all shows in folder
-    let filesInFolder: string[] = readFolder(data.path)
-    if (!filesInFolder.length) return []
+    let filesInFolder: string[] = await readFolderAsync(data.path)
+    if (!filesInFolder.length || filesInFolder.length > 1000) return
 
     let emptyShows: { id: string; name: string }[] = []
 
-    for (const name of filesInFolder) loadFile(name)
-    function loadFile(name: string) {
+    for (const name of filesInFolder) await loadFile(name)
+    async function loadFile(name: string) {
         if (!name.includes(".show")) return
 
         let p: string = path.join(data.path, name)
-        let show = parseShow(readFile(p))
+        let show = parseShow(await readFileAsync(p))
         if (!show || !show[1]) return
 
         // replace stored data with new unsaved cached data
@@ -148,5 +153,5 @@ export function getEmptyShows(data: any) {
         emptyShows.push({ id: show[0], name: name.replace(".show", "") })
     }
 
-    return emptyShows
+    toApp(MAIN, { channel: "GET_EMPTY_SHOWS", data: emptyShows })
 }

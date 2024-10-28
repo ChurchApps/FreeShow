@@ -616,18 +616,22 @@ export function updateSlideFromTemplate(slide: Slide, template: Template, isFirs
     return slide
 }
 
-export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, media: { [key: string]: Media }, template: Template, removeOverflow: boolean = false) {
+export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, media: { [key: string]: Media }, template: Template, oldTemplate: Template, removeOverflow: boolean = false) {
     // only alter layout slides if clicking on the template
     if (!removeOverflow) return { layouts, media }
 
     let settings = template.settings || {}
+    let oldSettings = oldTemplate.settings || {}
 
     let bgId = ""
     if (settings.backgroundPath) {
         // find existing
-        let existingId = Object.keys(media).find((id) => (media[id].path || media[id].id) === id)
+        let existingId = Object.keys(media).find((id) => (media[id].path || media[id].id) === settings.backgroundPath)
         bgId = existingId || uid()
         if (!existingId) media[bgId] = { path: settings.backgroundPath, name: removeExtension(getFileName(settings.backgroundPath)) }
+    } else if (oldSettings.backgroundPath && oldSettings.backgroundPath === media[layouts[Object.keys(layouts)[0]]?.slides?.[0]?.background || ""]?.path) {
+        // remove background if previous template has current background
+        layouts[Object.keys(layouts)[0]].slides[0].background = ""
     }
 
     Object.keys(layouts).forEach((layoutId) => {

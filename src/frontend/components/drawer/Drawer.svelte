@@ -161,7 +161,7 @@
         </span>
         <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit" type="text" placeholder={$dictionary.main?.search} bind:value={searchValue} on:input={search} use:selectTextOnFocus />
         {#if !searchActive && !searchValue.length}
-            <Button on:click={() => (searchActive = true)} title="{$dictionary.main?.search} [Ctrl+F]" bold={false}>
+            <Button class="search" on:click={() => (searchActive = true)} title="{$dictionary.tabs?.search_tip} [Ctrl+F]" bold={false}>
                 <Icon id="search" size={1.3} white right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<p style="opacity: 0.8;"><T id="main.search" /></p>{/if}
             </Button>

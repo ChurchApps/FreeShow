@@ -38,8 +38,8 @@ export async function awaitRequest(ID: ValidChannels, channel: string, data: any
     // LISTENER
     const waitingTimeout = 8000
     let timeout: any = null
-    const returnData: any = await new Promise((resolve, reject) => {
-        timeout = setTimeout(() => reject("error"), waitingTimeout)
+    const returnData: any = await new Promise((resolve) => {
+        timeout = setTimeout(() => resolve(null), waitingTimeout)
 
         receive(
             ID,
@@ -56,10 +56,10 @@ export async function awaitRequest(ID: ValidChannels, channel: string, data: any
         )
     })
 
-    currentlyAwaiting.splice(currentlyAwaiting.indexOf(listenerId), 1)
+    let waitIndex = currentlyAwaiting.indexOf(listenerId)
+    if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
     destroy(ID, listenerId)
 
-    if (returnData === "error") return null
     return returnData
 }
 
