@@ -382,7 +382,12 @@
             {:else}
                 <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
                 <!-- TODO: use custom transition... -->
-                <Image src={mediaItemPath} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
+                <Image
+                    src={mediaItemPath}
+                    alt=""
+                    style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
+                    transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"}
+                />
             {/if}
         {/if}
     {:else if item?.type === "camera"}
