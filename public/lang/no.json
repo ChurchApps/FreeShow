@@ -13,6 +13,14 @@
         "open": "Åpne",
         "system_open": "Vis i systemet"
     },
+    "formats": {
+        "show": "Show",
+        "project": "Prosjekt",
+        "template": "Mal",
+        "theme": "Tema",
+        "clipboard": "Utklippstavle",
+        "text": "Tekst-fil"
+    },
     "guide": {
         "start": "Hurtigstart-guide",
         "skip": "Hopp over"
@@ -257,7 +265,8 @@
         "keep_one_layout": "Du må ha minst ett oppsett",
         "video_unavailable": "Er videoen utilgjengelig? Skaperen har slått av innebygging av videoen.",
         "folder_exists": "Denne mappen eksisterer allerede",
-        "uri": "Kunne ikke lese navnet til lydfilen. Prøv å endre navnet"
+        "uri": "Kunne ikke lese navnet til lydfilen. Prøv å endre navnet",
+        "ip": "Kunne ikke hente IP-adressen din, gå til WiFi-innstillingene for å finne din lokale IPv4 adresse."
     },
     "meta": {
         "title": "Tittel",
@@ -336,7 +345,8 @@
         "variables": "Variabler",
         "triggers": "Utløsere",
         "templates": "Maler",
-        "web": "Nett"
+        "web": "Nett",
+        "search_tip": "Innholdssøk i skuffen"
     },
     "category": {
         "all": "Alt",
@@ -1281,12 +1291,24 @@
         "artist": "Fotograf",
         "artistUrl": "Skaperside"
     },
+    "guide_title": {
+        "projects": "Prosjekter",
+        "project": "Prosjekt",
+        "drawer": "Skuffen",
+        "categories": "Kategorier",
+        "show_create": "Opprett et show",
+        "show": "Show",
+        "output": "Utgang",
+        "editing": "Redigering",
+        "end": "Det var det grunnleggende!"
+    },
     "guide_description": {
         "start": "Dette er en kort gjennomgang av noen grunnleggende funksjoner! (Du kan hoppe over nederst i høyre hjørne.)",
         "project_manage": "Administrer alle prosjektene dine på ett sted.",
         "project_create": "Opprett mapper for å holde det ryddig, og lag nye prosjekter.",
         "project_list": "Etter å ha åpnet et prosjekt får du en liste over alle elementene her på venstre side, dra og slipp fra skuffen for å legge til flere.",
         "drawer": "Finn alle dine show, medier, overlegg osv. på ett sted.",
+        "drawer_search": "Søk etter innhold i det aktive skuffen (sanger, osv.). Bruk hurtigtasten CTRL/CMD+F for raskere tilgang.",
         "drawer_shows": "Administrer alle dine forskjellige show ved å organisere dem i forskjellige kategorier. Dra og slipp valgte show for å flytte dem.",
         "create_show_button": "Klikk her for å lage et nytt show (sang, presentasjon, osv.)",
         "create_show_popup": "Fyll inn hoveddetaljene for showet, du kan også automatisk finne tekster på nettet ut i fra navnet, eller lime inn tekster manuelt.",

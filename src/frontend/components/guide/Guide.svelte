@@ -69,11 +69,9 @@
             <div class="focus" style={currentStyle}>
                 <div class="text" class:flip>
                     <p style="font-size: 1.5em;font-weight: 600;">
-                        {#if currentStep.title[0] === "$"}
-                            <T id={currentStep.title.slice(1)} />
-                        {:else}
-                            {currentStep.title}
-                        {/if}
+                        {#key currentStep.title}
+                            <T id={currentStep.title} />
+                        {/key}
                     </p>
                     <!-- style="white-space: normal;" -->
                     {#if currentStep.description}

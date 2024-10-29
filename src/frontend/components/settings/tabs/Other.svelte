@@ -2,7 +2,6 @@
     import { onDestroy, onMount } from "svelte"
     import { EXPORT, MAIN } from "../../../../types/Channels"
     import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
-    import { newToast } from "../../../utils/common"
     import { destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
@@ -176,7 +175,6 @@
 
     function restore() {
         showsCache.set({})
-        newToast("$settings.restore_started")
         send(MAIN, ["RESTORE"], { showsPath: $showsPath })
     }
 

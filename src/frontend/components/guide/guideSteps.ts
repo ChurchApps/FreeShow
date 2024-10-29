@@ -9,7 +9,7 @@ import { keysToID, removeDeleted } from "../helpers/array"
 
 export const guideSteps = [
     {
-        title: "$guide.start",
+        title: "guide.start",
         description: "guide_description.start",
         query: ".column",
         pre: () => {
@@ -21,7 +21,7 @@ export const guideSteps = [
     },
     // projects
     {
-        title: "Projects",
+        title: "guide_title.projects",
         description: "guide_description.project_manage",
         query: "#projectsArea",
         pre: () => {
@@ -31,7 +31,7 @@ export const guideSteps = [
         },
     },
     {
-        title: "Projects",
+        title: "guide_title.projects",
         description: "guide_description.project_create",
         query: "#projectsButtons",
         pre: () => {
@@ -41,7 +41,7 @@ export const guideSteps = [
     },
     // project
     {
-        title: "Project",
+        title: "guide_title.project",
         description: "guide_description.project_list",
         query: "#projectArea",
         pre: () => {
@@ -68,7 +68,7 @@ export const guideSteps = [
     },
     // drawer
     {
-        title: "The Drawer",
+        title: "guide_title.drawer",
         description: "guide_description.drawer",
         query: ".drawer",
         pre: () => {
@@ -76,15 +76,20 @@ export const guideSteps = [
             activeDrawerTab.set("shows")
         },
     },
+    {
+        title: "guide_title.drawer",
+        description: "guide_description.drawer_search",
+        query: ".drawer button.search",
+    },
     // shows
     {
-        title: "Categories",
+        title: "guide_title.categories",
         description: "guide_description.drawer_shows",
         query: ".categories",
     },
     // show
     {
-        title: "Creating a Show",
+        title: "guide_title.show_create",
         description: "guide_description.create_show_button",
         query: "#newShowBtn",
         pre: () => {
@@ -93,7 +98,7 @@ export const guideSteps = [
         },
     },
     {
-        title: "Creating a Show",
+        title: "guide_title.show_create",
         description: "guide_description.create_show_popup",
         query: ".card",
         pre: () => {
@@ -102,7 +107,7 @@ export const guideSteps = [
         timeout: 320,
     },
     {
-        title: "Show",
+        title: "guide_title.show",
         description: "guide_description.show",
         query: "#showArea",
         pre: () => {
@@ -115,7 +120,7 @@ export const guideSteps = [
     },
     // output
     {
-        title: "Output",
+        title: "guide_title.output",
         description: "guide_description.show_slide",
         query: "#previewArea",
         pre: () => {
@@ -124,7 +129,7 @@ export const guideSteps = [
         },
     },
     {
-        title: "Output",
+        title: "guide_title.output",
         description: "guide_description.output_clear",
         query: ".clear",
         pre: () => {
@@ -136,7 +141,7 @@ export const guideSteps = [
     // WIP media / overlays etc.
     // editing
     {
-        title: "Editing",
+        title: "guide_title.editing",
         description: "guide_description.edit",
         query: ".row",
         pre: () => {
@@ -145,7 +150,7 @@ export const guideSteps = [
     },
     // done
     {
-        title: "That's the basics!",
+        title: "guide_title.end",
         description: "guide_description.end",
         query: ".column",
         pre: () => {

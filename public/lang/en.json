@@ -13,6 +13,14 @@
         "open": "Open",
         "system_open": "Open in system"
     },
+    "formats": {
+        "show": "Show",
+        "project": "Project",
+        "template": "Template",
+        "theme": "Theme",
+        "clipboard": "Clipboard",
+        "text": "Text file"
+    },
     "guide": {
         "start": "Quick start guide",
         "skip": "Skip"
@@ -257,7 +265,8 @@
         "keep_one_layout": "You have to have at least one layout",
         "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
         "folder_exists": "This folder does already exist",
-        "uri": "Could not parse the audio name, please rename the file"
+        "uri": "Could not parse the audio name, please rename the file",
+        "ip": "Could not get the IP-address of your device, go to the computer Wi-Fi settings to find your local IPv4 address."
     },
     "meta": {
         "title": "Title",
@@ -336,7 +345,8 @@
         "variables": "Variables",
         "triggers": "Triggers",
         "templates": "Templates",
-        "web": "Web"
+        "web": "Web",
+        "search_tip": "Drawer content search"
     },
     "category": {
         "all": "All",
@@ -1281,12 +1291,24 @@
         "artist": "Artist",
         "artistUrl": "Artist page"
     },
+    "guide_title": {
+        "projects": "Projects",
+        "project": "Project",
+        "drawer": "The Drawer",
+        "categories": "Categories",
+        "show_create": "Creating a Show",
+        "show": "Show",
+        "output": "Output",
+        "editing": "Editing",
+        "end": "That's the basics!"
+    },
     "guide_description": {
         "start": "This is a short walkthrough of some basic features! (You can skip in the bottom right corner.)",
         "project_manage": "Manage all of your projects in one place.",
         "project_create": "Create folders to keep it organized, and create new projects.",
         "project_list": "After opening a project you get a list of all the items here on the left side, drag & drop from the drawer to add more.",
         "drawer": "Find all of your shows, media, overlays, etc. in one place.",
+        "drawer_search": "Search for content in the active drawer tab (songs, etc.). Use the shortcut CTRL/CMD+F for quicker access.",
         "drawer_shows": "Manage all of your different shows by organizing them in different categories. Drag & drop any selected show to move them.",
         "create_show_button": "Click this to create a new show (song, presentation, etc.)",
         "create_show_popup": "Fill in the main details of the show, you can also auto find lyrics on the web from the name, or paste the lyrics manually.",

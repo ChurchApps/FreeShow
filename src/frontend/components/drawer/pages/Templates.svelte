@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, dictionary, labelsDisabled, mediaOptions, outputs, showsCache, styles, templateCategories, templates } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, dictionary, labelsDisabled, mediaOptions, outputs, showsCache, styles, templateCategories, templates } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -70,7 +70,11 @@
                         on:click={(e) => {
                             if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
                             if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
-                            if ($showsCache[$activeShow.id]?.locked) return
+                            if ($showsCache[$activeShow.id]?.locked) {
+                                alertMessage.set("show.locked_info")
+                                activePopup.set("alert")
+                                return
+                            }
 
                             history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true, shiftItems: e.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
                         }}

@@ -12,20 +12,24 @@ import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendData } from "./sendData"
 import { getGroupName } from "../components/helpers/show"
 
+// WIP loading different paths, might cause returned base64 to be different than it should if previous thumbnail finishes after
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
     let currentOutput = updater[outputId]?.out
-    let next = await getNextBackground(currentOutput?.slide)
-
+    let next = await getNextBackground(currentOutput?.slide, returnPath)
     let path = currentOutput?.background?.path || ""
+
+    if (returnPath) {
+        return clone({ path, mediaStyle: get(media)[path] || {}, next })
+    }
+
     if (!path && !next.path?.length) {
         if (!returnPath) send(STAGE, ["BACKGROUND"], { path: "" })
         return
     }
 
     let base64path = await getBase64Path(path)
-    if (!base64path && !next.path?.length) return
 
-    let bg = clone({ path: base64path, mediaStyle: get(media)[path] || {}, next })
+    let bg = clone({ path: base64path, filePath: path, mediaStyle: get(media)[path] || {}, next })
 
     if (returnPath) return bg
 
@@ -33,7 +37,7 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
     return
 }
 
-async function getNextBackground(currentOutputSlide: any) {
+async function getNextBackground(currentOutputSlide: any, returnPath = false) {
     if (!currentOutputSlide?.id) return {}
 
     let layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
@@ -45,10 +49,11 @@ async function getNextBackground(currentOutputSlide: any) {
     let bgId = nextLayout.data.background || ""
     let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path
 
-    let base64path = await getBase64Path(path)
-    if (!base64path) return {}
+    if (returnPath) return { path, mediaStyle: get(media)[path] || {} }
 
-    return { path: base64path, mediaStyle: get(media)[path] || {} }
+    let base64path = await getBase64Path(path)
+
+    return { path: base64path, filePath: path, mediaStyle: get(media)[path] || {} }
 }
 
 export const receiveSTAGE: any = {
@@ -102,7 +107,11 @@ export const receiveSTAGE: any = {
         let out: any = currentOutput?.out?.slide || null
         msg.data = []
 
-        if (!out) return msg
+        if (!out) {
+            // next slide image thumbnail will remain if not cleared here
+            setTimeout(() => send(STAGE, ["BACKGROUND"], { path: "" }), 500)
+            return msg
+        }
 
         // scripture
         if (out.id === "temp") {

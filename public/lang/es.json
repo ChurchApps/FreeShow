@@ -13,6 +13,14 @@
         "open": "Abrir",
         "system_open": "Abrir en sistema"
     },
+    "formats": {
+        "show": "Programa",
+        "project": "Proyecto",
+        "template": "Plantilla",
+        "theme": "Tema",
+        "clipboard": "Portapapeles",
+        "text": "Archivo de texto"
+    },
     "guide": {
         "start": "Guía de inicio rápido",
         "skip": "Omitir"
@@ -257,7 +265,8 @@
         "keep_one_layout": "Usted debe tener al menos un diseño",
         "video_unavailable": "¿El video no está disponible? El creador ha deshabilitado las incrustaciones en el video.",
         "folder_exists": "Esta carpeta ya existe",
-        "uri": "No se pudo analizar el nombre del audio, Por favor cambie el nombre del archivo"
+        "uri": "No se pudo analizar el nombre del audio, Por favor cambie el nombre del archivo",
+        "ip": "No se pudo obtener la dirección IP de tu dispositivo, vaya a la configuración Wi-Fi de la computadora para encontrar tu dirección IPv4 local."
     },
     "meta": {
         "title": "Título",
@@ -336,7 +345,8 @@
         "variables": "Variables",
         "triggers": "Disparadores",
         "templates": "Plantillas",
-        "web": "Navegador"
+        "web": "Navegador",
+        "search_tip": "Búsqueda de contenido del cajón"
     },
     "category": {
         "all": "Todo",
@@ -1281,12 +1291,24 @@
         "artist": "Artista",
         "artistUrl": "Página del artista"
     },
+    "guide_title": {
+        "projects": "Proyectos",
+        "project": "Proyecto",
+        "drawer": "El Cajón",
+        "categories": "Categorías",
+        "show_create": "Creando un Programa",
+        "show": "Programa",
+        "output": "Salida",
+        "editing": "Edición",
+        "end": "¡Esto es lo básico!"
+    },
     "guide_description": {
         "start": "¡Éste es un breve recorrido por algunas funciones básicas! (Puedes omitirlo en la esquina inferior derecha)",
         "project_manage": "Gestiona todos tus proyectos en un solo lugar",
         "project_create": "Crea carpetas para mantenerlo organizado y crea nuevos proyectos.",
         "project_list": "Después de abrir un proyecto, obtendrás una lista de todos los elementos aquí en el lado izquierdo, arrastra y suelta desde el cajón para añadir más.",
         "drawer": "Encuentra todos tus programas, medios, capas, etc. En un solo lugar.",
+        "drawer_search": "Busca contenido en la pestaña activa del cajón (canciones, etc.). Usa el atajo CTRL/CMD+F para acceder más rápidamente.",
         "drawer_shows": "Gestiona todos tus diferentes programas organizándolos en diferentes categorías. Arrastra y suelta cualquier programa seleccionado para moverlo.",
         "create_show_button": "Haga clic aquí para crear un nuevo programa (canción, presentación, etc.)",
         "create_show_popup": "Completa los detalles principales del programa, también puedes encontrar letras en la web a partir del nombre, o pega las letras manualmente.",

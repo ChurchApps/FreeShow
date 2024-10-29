@@ -55,10 +55,7 @@
                     {@const nextSlide = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide + 1)}
 
                     <div class="group" class:active={group.index === layoutGroups.find((_, i) => i === currentShowSlide)?.index}>
-                        {group.name}
-                        {#if activeGroup?.child || nextSlide?.child}
-                            <span style="opacity: 0.6;color: white;">{activeGroup.child + 1}</span>
-                        {/if}
+                        {group.name}{#if activeGroup?.child || nextSlide?.child}<span style="opacity: 0.8;font-size: 0.7em;">.{activeGroup.child + 1}</span>{/if}
                     </div>
                 {/if}
             {/each}

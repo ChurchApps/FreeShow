@@ -62,15 +62,22 @@
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
 
     let ghostBackground: Media | null = null
+    let bgIndex: number = -1
+    let isFirstGhost: boolean = false
     // don't show ghost backgrounds if more than 25 slides (because of loading!)
     $: if (!background && layoutSlides.length < 25) {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
-            if (i <= index) {
-                if (slideHasAction(a.actions, "clear_background") && (!a.disabled || i === index)) ghostBackground = null
-                else if (a.background && !a.disabled) ghostBackground = show.media[a.background]
-                if (a.background && show.media[a.background]?.loop === false) ghostBackground = null
+            if (i > index) return
+
+            if (slideHasAction(a.actions, "clear_background") && (!a.disabled || i === index)) ghostBackground = null
+            else if (a.background && !a.disabled) {
+                ghostBackground = show.media[a.background]
+                bgIndex = i
             }
+            if (a.background && show.media[a.background]?.loop === false) ghostBackground = null
+
+            if (ghostBackground && i === index && bgIndex === i - 1) isFirstGhost = true
         })
     }
 
@@ -115,7 +122,7 @@
         if ($checkedFiles.includes(id)) return
 
         checkedFiles.set([...$checkedFiles, id])
-        let exists = (await checkMedia(path)) === "true"
+        let exists = await checkMedia(path)
 
         // check for other potentially mathing mediaFolders
         if (!exists) {
@@ -149,11 +156,12 @@
     let thumbnailPath: string = ""
     async function loadBackground() {
         if (ghostBackground) {
-            await wait(100)
-            if (index === 1) {
-                // create image (if not created) when it's on slide 2 (slide 1 is the original)
+            if (isFirstGhost) {
+                // create image (if not created) when it's first slide after actual background
                 thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
             } else {
+                await wait(100)
+
                 // load ghost thumbnails (wait a bit to reduce loading lag)
                 thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
             }
@@ -321,7 +329,7 @@
                     </div>
                 {/if}
                 <Zoomed
-                    background={slide.items?.length && (viewMode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentStyle.background || "black" : "transparent"}
+                    background={slide.items?.length && (viewMode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentStyle.background || "black" : (viewMode !== "lyrics" || noQuickEdit ? color : "") || "transparent"}
                     let:ratio
                     {resolution}
                     zoom={viewMode !== "lyrics" || noQuickEdit}

@@ -13,6 +13,14 @@
         "open": "Megnyitás",
         "system_open": "Megnyitás a rendszerben"
     },
+    "formats": {
+        "show": "Bemutató",
+        "project": "Projekt",
+        "template": "Sablon",
+        "theme": "Téma",
+        "clipboard": "Vágólap",
+        "text": "Szövegfájl"
+    },
     "guide": {
         "start": "Gyors indulási útmutató",
         "skip": "Átugrás"
@@ -257,7 +265,8 @@
         "keep_one_layout": "Legalább egy elrendezést meg kell tartani",
         "video_unavailable": "Nem érhető el a videó? A készítő letiltotta a videó beágyazását.",
         "folder_exists": "Ez a mappa már létezik",
-        "uri": "Nem sikerült feldolgozni a hangfájl nevét, kérjük, nevezze át a fájlt"
+        "uri": "Nem sikerült feldolgozni a hangfájl nevét, kérjük, nevezze át a fájlt",
+        "ip": "Nem sikerül a készülék IP-címét lekérni, keresse meg a számítógép Wi-Fi beállításaiban a helyi IPv4-címet."
     },
     "meta": {
         "title": "Cím",
@@ -336,7 +345,8 @@
         "variables": "Változók",
         "triggers": "Kiváltók",
         "templates": "Sablonok",
-        "web": "Web"
+        "web": "Web",
+        "search_tip": "Tartalmak keresése a szerkesztőben"
     },
     "category": {
         "all": "Minden",
@@ -485,7 +495,7 @@
         "text": "Szövegszerkesztés",
         "update": "Bemutató frissítése",
         "locked": "Ez a bemutató zárolva van!",
-        "locked_info": "Ez a bemutató zárolva lett és nem lehet szerkeszteni. Oldja fel a bemutató rajzolóban. ",
+        "locked_info": "Ez a bemutató zárolva lett és nem lehet szerkeszteni. Oldja fel a bemutató szerkesztőben. ",
         "slide_template": "Diasablon",
         "source": "Forrás",
         "artist": "Művész",
@@ -580,12 +590,12 @@
         "toggle_output": "Kimeneti képernyő átváltása",
         "toggle_panels": "Panel átváltása",
         "change_tab": "Fül módosítása",
-        "change_drawer_tab": "Rajzoló fül módosítása",
+        "change_drawer_tab": "Szerkesztő fül módosítása",
         "change_slide": "Dia módosítása",
         "change_project_item": "Projektelem módosítása",
-        "change_drawer_item": "Rajzoló elem módosítása",
-        "change_drawer_category": "Rajzoló kategória módosítása",
-        "toggle_drawer": "Rajzoló átváltása",
+        "change_drawer_item": "Szerkesztő elem módosítása",
+        "change_drawer_category": "Szerkesztő kategória módosítása",
+        "toggle_drawer": "Szerkesztő átváltása",
         "slide_actions": "Diaműveletek",
         "item_actions": "Elemművelet",
         "clear_history": "Előzmények törlése",
@@ -1281,12 +1291,24 @@
         "artist": "Művész",
         "artistUrl": "Művész oldala"
     },
+    "guide_title": {
+        "projects": "Projektek",
+        "project": "Projekt",
+        "drawer": "A szerkesztő",
+        "categories": "Ketgóriák",
+        "show_create": "Bemutató készítése",
+        "show": "Bemutató",
+        "output": "Kimenet",
+        "editing": "Szerkesztés",
+        "end": "Ezek az alapok!"
+    },
     "guide_description": {
         "start": "Ez egy rövid ismertető néhány alapvető funkcióról! (Kihagyás a jobb alsó sarokban.)",
         "project_manage": "Kezelje az összes projektjét egy helyen.",
         "project_create": "Hozzon létre mappákat a rendszerezéshez, és hozzon létre új projekteket.",
-        "project_list": "Miután megnyitott egy projektet, a bal oldalon megjelenik az összes elem listája, a rajzolóból húzással és ejtéssel adhat hozzá további elemeket.",
+        "project_list": "Miután megnyitott egy projektet, a bal oldalon megjelenik az összes elem listája, a szerkesztőből húzással és ejtéssel adhat hozzá további elemeket.",
         "drawer": "Az összes bemutató, médiaelem, átfedés stb. egy helyen található.",
+        "drawer_search": "Tartalom keresése a szerkesztő aktív lapján (dalok stb.). A gyorsabb eléréshez használja a CTRL/CMD+F billentyűkombinációt.",
         "drawer_shows": "Kezelje a különböző bemutatóit különböző kategóriákba rendezve őket. Bármely kiválasztott bemutató áthelyezéséhez húzza és ejtse el őket.",
         "create_show_button": "Kattintson erre egy új bemutató (dal, prezentáció stb.) létrehozásához.",
         "create_show_popup": "Töltse ki a bemutató főbb adatait, a név alapján automatikusan megkeresheti a dalszövegeket az interneten, vagy kézzel is beillesztheti a dalszövegeket.",

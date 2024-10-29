@@ -21,6 +21,7 @@ import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, saveRecording, startImport } from "./utils/responses"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { renameShows } from "./utils/shows"
+import { defaultSettings, defaultSyncedSettings } from "./data/defaults"
 
 // ----- STARTUP -----
 
@@ -337,10 +338,16 @@ ipcMain.on(STORE, (e, msg) => {
 })
 
 function save(data: any) {
+    if (data.reset === true) {
+        data.SETTINGS = JSON.parse(JSON.stringify(defaultSettings))
+        data.SYNCED_SETTINGS = JSON.parse(JSON.stringify(defaultSyncedSettings))
+    }
+
     // save to files
     Object.entries(stores).forEach(storeData)
     function storeData([key, store]: any) {
         if (!data[key] || JSON.stringify(store.store) === JSON.stringify(data[key])) return
+
         store.clear()
         store.set(data[key])
 

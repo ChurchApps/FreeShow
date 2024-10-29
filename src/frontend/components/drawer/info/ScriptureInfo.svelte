@@ -96,7 +96,10 @@
             })
         }
 
-        show.meta = bibles[0].metadata || {}
+        Object.keys(bibles[0].metadata || {}).forEach((key) => {
+            if (key.startsWith("@")) return
+            if (typeof bibles[0].metadata?.[key] === "string") show.meta[key] = bibles[0].metadata[key]
+        })
         if (bibles[0].copyright) show.meta.copyright = bibles[0].copyright
 
         let bibleShowName = `${bibles[0].book} ${bibles[0].chapter},${verseRange}`

@@ -16,7 +16,7 @@
 
     const setRemotePassword = (e: any) => remotePassword.set(e.target.value)
 
-    let ip = "IP"
+    let ip = "localhost"
     let listenerId = "IP_ADDRESS"
     onMount(() => send(MAIN, ["IP"]))
     receive(MAIN, { IP: (a: any) => getIP(a) }, listenerId)
@@ -37,7 +37,7 @@
             }
         }
 
-        ip = results["en0"]?.[0] || results["eth0"]?.[0] || results["Wi-Fi"]?.[0] || Object.values(results)[0]?.[0] || "IP"
+        ip = results["en0"]?.[0] || results["eth0"]?.[0] || results["Wi-Fi"]?.[0] || Object.values(results)[0]?.[0] || "localhost"
     }
 
     function reset() {

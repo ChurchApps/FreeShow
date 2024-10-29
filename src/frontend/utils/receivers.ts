@@ -182,8 +182,9 @@ const receiveMAIN: any = {
         newToast(get(dictionary).settings?.backup_finished) // + ": " + path)
         // if (changeUserData) send(STORE, ["UPDATE_PATH"], changeUserData)
     },
-    RESTORE: ({ finished }) => {
+    RESTORE: ({ finished, starting }) => {
         if (!finished) return activePopup.set(null)
+        if (starting) return newToast("$settings.restore_started")
 
         activePage.set("show")
         newToast("$settings.restore_finished")

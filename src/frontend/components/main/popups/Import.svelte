@@ -10,17 +10,17 @@
     import Button from "../../inputs/Button.svelte"
 
     const freeshow_formats = [
-        { name: "Show", extensions: ["show", "json"], id: "freeshow" },
-        { name: "Project", extensions: ["project", "shows", "json"], id: "freeshow_project" }, // , "fsproject", "fsp"
-        { name: "Template", extensions: ["fstemplate", "fst", "template", "json"], id: "freeshow_template" },
-        { name: "Theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" },
+        { name: "$formats.show", extensions: ["show", "json"], id: "freeshow" },
+        { name: "$formats.project", extensions: ["project", "shows", "json"], id: "freeshow_project" }, // , "fsproject", "fsp"
+        { name: "$formats.template", extensions: ["fstemplate", "fst", "template", "json"], id: "freeshow_template" },
+        { name: "$formats.theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" },
         // { name: "Calendar", extensions: ["ics"], id: "calendar" }, // calendar drawer tab
         // { name: "Scripture", id: "scripture" }, // scripture drawer tab
     ]
 
     const text_formats: { popup?: Popups; [key: string]: any }[] = [
-        { name: "Clipboard", id: "clipboard" },
-        { name: "Text file", extensions: ["txt"], id: "txt" },
+        { name: "$formats.clipboard", id: "clipboard" },
+        { name: "$formats.text", extensions: ["txt"], id: "txt" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
         {
             name: "PowerPoint",
@@ -80,7 +80,13 @@
             center
         >
             <img style="height: 60px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
-            <p style="margin-left: 5px;">{format.name}</p>
+            <p style="margin-left: 5px;">
+                {#if format.name.startsWith("$")}
+                    <T id={format.name.slice(1)} />
+                {:else}
+                    {format.name}
+                {/if}
+            </p>
         </Button>
     {/each}
 </div>
@@ -109,7 +115,13 @@
             center
         >
             <img src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
-            <p>{format.name}</p>
+            <p>
+                {#if format.name.startsWith("$")}
+                    <T id={format.name.slice(1)} />
+                {:else}
+                    {format.name}
+                {/if}
+            </p>
         </Button>
     {/each}
 </div>

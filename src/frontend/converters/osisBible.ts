@@ -45,6 +45,8 @@ function XMLtoObject(xml: string): Bible {
             if (!Array.isArray(chapter.verse)) chapter.verse = [chapter.verse]
             chapter.verse.forEach((verse: any, i: number) => {
                 let text = verse["#text"] || ""
+                text = text.replace(/<q(?:\s+xmlns="[^"]*")?\s+who="Jesus"\s+marker="">(.*?)<\/q>/g, '<span class="wj">$1</span>')
+
                 let number = verse["@osisID"].split(".")?.[2] ?? i + 1
 
                 verses.push({ number, text })

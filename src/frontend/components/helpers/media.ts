@@ -88,11 +88,14 @@ export function encodeFilePath(path: string): string {
 async function toDataURL(url: string): Promise<string> {
     return new Promise((resolve: any) => {
         var xhr = new XMLHttpRequest()
+
         xhr.onload = () => {
             var reader = new FileReader()
             reader.onloadend = () => resolve(reader.result?.toString())
             reader.readAsDataURL(xhr.response)
         }
+        xhr.onerror = () => resolve("")
+
         xhr.open("GET", url)
         xhr.responseType = "blob"
         xhr.send()
@@ -100,7 +103,7 @@ async function toDataURL(url: string): Promise<string> {
 }
 
 // check if media file exists in plain js
-export function checkMedia(src: string) {
+export function checkMedia(src: string): Promise<boolean> {
     let extension = getExtension(src)
     let isVideo = videoExtensions.includes(extension)
     let isAudio = !isVideo && audioExtensions.includes(extension)
@@ -118,14 +121,14 @@ export function checkMedia(src: string) {
             elem.onload = () => finish()
         }
 
-        elem.onerror = () => finish("false")
+        elem.onerror = () => finish(false)
         elem.src = encodeFilePath(src)
 
         let timedout = setTimeout(() => {
-            finish("false")
+            finish(false)
         }, 3000)
 
-        function finish(response: string = "true") {
+        function finish(response: boolean = true) {
             clearTimeout(timedout)
             resolve(response)
         }
@@ -272,7 +275,6 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     // online media (e.g. Pixabay/Unsplash)
     if (path.includes("http")) return path
 
-    // let exists = !!get(loadedMediaThumbnails)[getThumbnailId({ input: path, size })]
     let thumbnailPath = await loadThumbnail(path, size)
     if (!thumbnailPath) return ""
 
@@ -282,15 +284,16 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     let base64Path = await toDataURL(thumbnailPath)
 
     // "data:image/png;base64," +
-    return base64Path
+    return base64Path || thumbnailPath
 }
 
-export async function checkThatMediaExists(path: string, iteration: number = 1) {
+export async function checkThatMediaExists(path: string, iteration: number = 1): Promise<boolean> {
     if (iteration > 8) return false
-    let exists = (await checkMedia(path)) === "true"
+
+    let exists = await checkMedia(path)
     if (!exists) {
         await wait(500 * iteration)
-        exists = await checkThatMediaExists(path, iteration + 1)
+        return checkThatMediaExists(path, iteration + 1)
     }
 
     return exists

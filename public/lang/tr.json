@@ -13,6 +13,14 @@
         "open": "Açık",
         "system_open": "Sistemde aç"
     },
+    "formats": {
+        "show": "Gösteri",
+        "project": " Proje",
+        "template": " Şablon",
+        "theme": " Tema",
+        "clipboard": " Pano",
+        "text": " Metin dosyası"
+    },
     "guide": {
         "start": "Hızlı başlangıç ​​kılavuzu",
         "skip": "Atla"
@@ -49,7 +57,7 @@
     },
     "tooltip": {
         "project": "Gösteri ekleyebileceğiniz ve düzenleyebileceğiniz yeni bir proje oluşturun.",
-        "show": "Şarkı sözleri, sunumlar ve medya ekleyebileceğiniz yeni bir gösteri oluşturun. Boş oluşturmak için Ctrl/Cmd'yi basılı tutun.",
+        "show": "Şarkı sözleri, sunumlar ve medya ekleyebileceğiniz yeni bir gösteri oluşturun.",
         "groups": "Geçerli şovdaki tüm gruplar ve tüm küresel gruplar. Geçerli düzene eklemek için tıklayın veya sürükleyin.",
         "layout": "Geçerli düzende slaytlara geçişler ve sonraki zamanlayıcılar ekleyin.",
         "media": "Mevcut şovdaki tüm medya. Onları gösterin veya geçerli düzene sürükleyin.",
@@ -90,13 +98,21 @@
         "bold": "Bold"
     },
     "create_show": {
+        "web": "Web'de ara",
         "search_web": "Web'de şarkı arayın",
+        "search_results": "Arama Sonuçları",
         "more_options": "Daha fazla seçenek",
+        "auto_groups": "Grupları otomatik ata",
         "format_new_show": "Metni biçimlendir",
-        "format_new_show_tip": "Otomatik büyük harf yapma, metni bölme, grup atama ve daha fazlasıyla metin biçimini iyileştirin.",
-        "split_lines": "Satır sayısı",
+        "format_new_show_tip": "Otomatik büyük harf yapma, metni kırpma/bölme ve daha fazlasıyla metin biçimini iyileştirin.",
+        "split_lines": "Slayt başına maksimum satır sayısı",
         "split_lines_tip": "Otomatik bölmeden önce slayt başına izin verilen satır sayısı",
-        "quick_lyrics_example_text": "Çizgi"
+        "quick_lyrics": "Hızlı şarkı sözleri",
+        "quick_lyrics_tip": "Metni yapıştırın veya elle girin",
+        "quick_lyrics_example_tip": "Şarkı sözlerini veya herhangi bir metni buraya girin",
+        "quick_lyrics_example_text": "Çizgi",
+        "empty": "Boş gösteri",
+        "exists": "Aynı adı taşıyan mevcut bir gösteri bulundu"
     },
     "preview": {
         "_previous_show": "Önceki gösteri",
@@ -199,7 +215,8 @@
         "settings": "Ayarlar",
         "_title_settings": "Ayarlar",
         "_title_display": "Sunum",
-        "_title_display_stop": "Sunumu durdur"
+        "_title_display_stop": "Sunumu durdur",
+        "again_confirm": "Onaylamak için tekrar tıklayın"
     },
     "empty": {
         "general": "Burada hiçbir şey",
@@ -248,7 +265,8 @@
         "keep_one_layout": "En az bir düzeniniz olmalıdır",
         "video_unavailable": "Video kullanılamıyor mu? İçerik oluşturucu, videodaki yerleştirmeleri devre dışı bıraktı.",
         "folder_exists": "Bu klasör zaten var",
-        "uri": "Ses adı ayrıştırılamadı, lütfen dosyayı yeniden adlandırın"
+        "uri": "Ses adı ayrıştırılamadı, lütfen dosyayı yeniden adlandırın",
+        "ip": "Cihazınızın IP adresine ulaşılamıyor, yerel IPv4 adresinizi bulmak için bilgisayarınızın Wi-Fi ayarlarına gidin."
     },
     "meta": {
         "title": "Başlık",
@@ -263,7 +281,7 @@
         "message": "Mesaj",
         "message_tip": "Tüm slaytlarda bir şey göster",
         "auto_media": "Medya içeriğinden meta alın",
-        "override_output": "Çıktıda stili geçersiz kıl",
+        "override_output": "Çıkış stilini geçersiz kıl",
         "display_metadata": "Meta verileri göster",
         "meta_template": "Meta veri şablonu",
         "text_divider": "Metin ayırıcı",
@@ -327,7 +345,8 @@
         "variables": "Değişkenler",
         "triggers": "Tetikleyiciler",
         "templates": "Şablonlar",
-        "web": "Web"
+        "web": "Web",
+        "search_tip": "Çekmece içerik araması"
     },
     "category": {
         "all": "Tümü",
@@ -374,6 +393,7 @@
         "transition": "Geçiş",
         "delete_show": "Gösteriyi sil",
         "delete_show_confirmation": "Silmek istediğine emin misin",
+        "delete_duplicated_shows": "Yinelenen gösterileri sil",
         "change_name": "Adını değiştir",
         "choose_screen": "Ekran seç",
         "choose_output": "Çıktı türünü seçin",
@@ -424,6 +444,7 @@
         "less_than_minute": "bir dakikadan daha kısa sürede.",
         "less_than_seconds": "{} saniyeden daha kısa sürede.",
         "now": "Şimdi!",
+        "unsupported_video": "Desteklenmeyen video!",
         "no_video_id": "Video kimliği yok",
         "no_name": "İsimsiz",
         "reverting_setting": "Bu değişikliği {} saniye içinde geri alarak, değişikliğin kalıcı olması için tekrar etkinleştirin!",
@@ -466,7 +487,6 @@
     "show": {
         "name": "İsim",
         "category": "Kategori",
-        "quick_lyrics": "Hızlı şarkı sözleri",
         "new_layout": "Yeni düzen",
         "grid": "Izgara görünümü",
         "simple": "Basit görünüm",
@@ -477,10 +497,13 @@
         "locked": "Bu gösteri kilitlendi!",
         "locked_info": "Bu gösteri düzenleme için kilitlendi. Gösteriler çekmecesinde tekrar kilidini açın.",
         "slide_template": "Slayt şablonu",
-        "search_results": "Arama Sonuçları",
         "source": "Kaynak",
         "artist": "Sanatçı",
-        "song": "Şarkı"
+        "song": "Şarkı",
+        "delete_manual": "Manuel kontrol",
+        "delete_match": "Tam eşleşme varsa sil",
+        "delete_keep_last_modified": "Son değiştirilen hariç hepsini sil",
+        "delete_keep_first_created": "İlk oluşturulan hariç hepsini sil"
     },
     "actions": {
         "rename": "Yeniden adlandır",
@@ -589,7 +612,10 @@
         "play_on_midi_tip": "Seçilen MIDI sinyalini alırken bu özel slaydı etkinleştirin",
         "send_midi": "MIDI sinyali gönderme",
         "delete_shows_not_indexed": "Dizine eklenmemiş 'Şovlar' klasöründeki şovları silin",
+        "delete_empty_shows": "Boş gösterileri sil",
         "delete_thumbnail_cache": "Küçük resim önbelleğini sil",
+        "export_usage_log": "Kullanım günlüğünü dışa aktar",
+        "reset_usage_log": "Kullanım günlüğünü sıfırla",
         "open_log_file": "Günlük dosyasını aç",
         "open_cache_folder": "Önbellek klasörünü açın",
         "refresh_all_shows": "Tüm şovları 'Şovlar' klasörüne alın",
@@ -639,12 +665,21 @@
         "activate_slide_clicked": "Slayt tıklandığında etkinleştir",
         "activate_video_starting": "Video başladığında etkinleştir",
         "activate_video_ending": "Video sona erdiğinde etkinleştir",
+        "activate_audio_starting": "Ses başladığında etkinleştir",
+        "activate_audio_ending": "Ses sona erdiğinde etkinleştir",
         "activate_timer_ending": "Zamanlayıcı sona erdiğinde etkinleştir",
         "activate_scripture_start": "Kutsal kitap başlatıldığında etkinleştirin",
         "activate_slide_cleared": "Slayt temizlendiğinde etkinleştir",
         "activate_background_cleared": "Arka plan temizlendiğinde etkinleştir",
         "activate_show_created": "Gösteri oluşturulduğunda etkinleştir",
         "activate_audio_playlist_ended": "Ses çalma listesi sona erdiğinde etkinleştir"
+    },
+    "recording": {
+        "remove": "Kaydı kaldır",
+        "tip": "Slaytların zamanlamalarını kaydedin ve tekrar oynatın. İlk slayttaki bir ses parçasıyla senkronize edin.",
+        "layout_changed": "Son kayıttan bu yana düzen değişti!",
+        "audio_synced": "Sesle senkronize!",
+        "start": "Slayt kaydını başlat"
     },
     "animate": {
         "change": "Değiştir",
@@ -688,7 +723,6 @@
         "all_shows": "Tüm gösteriler",
         "all_projects": "Tüm projeler",
         "project": "Proje",
-        "options": "Seçenekler",
         "preview": "Ön izleme",
         "title": "Başlık",
         "metadata": "Meta veri",
@@ -708,6 +742,7 @@
         "addToProject": "Projeye ekle",
         "add_to_show": "Gösteriye ekle",
         "lockForChanges": "Düzenlemek için kilitle",
+        "use_as_archive": "Arşiv olarak işaretle",
         "newCategory": "Yeni kategori",
         "changeIcon": "Simgeyi değiştir",
         "changeGroup": "Grubu değiştir",
@@ -763,6 +798,7 @@
         "media_fit": "Medya sığdır",
         "size": "Boyut",
         "max_lines": "Maksimum çizgiler",
+        "invert_items": "Öğeleri ters çevir",
         "chords": "Akorlar",
         "transpose": "Transpoze",
         "auto_size": "Otomatik boyut",
@@ -974,7 +1010,8 @@
         "overrun": "Renk Taşması",
         "source_output": "Kaynak çıkışı",
         "auto_stretch": "İçeriği otomatik genişlet",
-        "labels": "Etiketleri göster"
+        "labels": "Etiketleri göster",
+        "label_color": "Etiket rengi"
     },
     "settings": {
         "general": "Genel",
@@ -1002,7 +1039,7 @@
         "select_display": "Çıktı penceresini görüntülemek istemediğiniz ekrana tıklayın.",
         "manual_input_hint": "Ekranı bulamıyor musunuz? Konumu manuel olarak değiştirmek için buraya tıklayın.",
         "manual_drag_hint": "Etkin bir çıktı penceresi üzerinde elle sürüklemek için ctrl/cmd'yi de basılı tutabilirsiniz.",
-        "allow_main_screen": "Ana ekranda çıktıya izin ver",
+        "allow_main_screen": "Özel çıktı pozisyonuna ve boyutuna izin ver",
         "identify_screens": "Ekranları tanımlayın",
         "new_output": "Yeni çıkış",
         "normal": "Normal",
@@ -1051,7 +1088,7 @@
         "show_location": "Konumu göster",
         "data_location": "Veri konumu",
         "user_data_location": "Kullanıcı ayarlarını 'Veri konumu'na kaydedin",
-        "popup_before_close": "Kapatmadan önce her zaman açılır pencereyi görüntüle",
+        "popup_before_close": "Kapatma onayı açılır penceresini etkinleştir",
         "disable_hardware_acceleration": "Donanım hızlandırmayı devre dışı bırak",
         "restart_for_change": "Değişikliğin etkili olması için programı yeniden başlatmanız gerekiyor!",
         "font": "Yazı tipi",
@@ -1082,6 +1119,7 @@
         "restore_started": "Geri yükleniyor...",
         "backup_finished": "Yedekleme tamamlandı!",
         "restore_finished": "Geri yükleme tamamlandı!",
+        "auto_backup": "Otomatik yedekleme",
         "preview_frame_rate": "Kare hızını önizleyin",
         "auto": "Otomatik",
         "optimized": "Optimize et",
@@ -1229,21 +1267,56 @@
         "6": "Cumartesi",
         "7": "Pazar"
     },
+    "interval": {
+        "daily": "Günlük",
+        "weekly": "Haftalık",
+        "mothly": "Aylık"
+    },
     "info": {
         "created": "Oluşturuldu",
         "modified": "Değiştirilmiş",
         "used": "Kullanılmış",
         "changed": "Değişti",
+        "recently_used": "Son kullanılanlar",
         "extension": "Dosya uzantısı",
         "size": "Boyut",
         "slides": "Slaytlar",
         "words": "Kelimeler",
         "template": "Şablon",
         "category": "Kategori",
+        "codecs": "Kodekler",
+        "mimeType": "MIME türü",
         "photoUrl": "Fotoğraf URL'si",
         "likes": "Beğeniler",
         "artist": "Sanatçı",
         "artistUrl": "Sanatçı sayfası"
+    },
+    "guide_title": {
+        "projects": "Projeler",
+        "project": "Proje",
+        "drawer": " Çekmece",
+        "categories": "Kategoriler",
+        "show_create": " Gösteri Oluşturma",
+        "show": "Gösteri",
+        "output": "Çıkış",
+        "editing": "Düzenleme",
+        "end": "İşte temel bilgiler!"
+    },
+    "guide_description": {
+        "start": "Bu, bazı temel özelliklerin kısa bir incelemesidir! (Sağ alt köşeden geçebilirsiniz.)",
+        "project_manage": "Tüm projelerinizi tek bir yerden yönetin.",
+        "project_create": "Düzenli tutmak için klasörler oluşturun ve yeni projeler oluşturun.",
+        "project_list": "Bir projeyi açtığınızda sol tarafta tüm öğelerin bir listesini göreceksiniz, daha fazlasını eklemek için çekmeceden sürükleyip bırakabilirsiniz.",
+        "drawer": "Tüm şovlarınızı, medyanızı, katmanlarınızı vb. tek bir yerde bulun.",
+        "drawer_search": "Etkin çekmece sekmesinde içerik arayın (şarkılar, vb.). Daha hızlı erişim için CTRL/CMD+F kısayolunu kullanın.",
+        "drawer_shows": "Tüm farklı şovlarınızı farklı kategorilerde düzenleyerek yönetin. Taşımak için seçili şovlardan herhangi birini sürükleyip bırakın.",
+        "create_show_button": "Yeni bir gösteri (şarkı, sunum vb.) oluşturmak için buraya tıklayın",
+        "create_show_popup": "Gösterinin ana ayrıntılarını doldurun, ayrıca web üzerinden şarkı sözlerini isimden otomatik olarak bulabilir veya sözleri elle yapıştırabilirsiniz.",
+        "show": "Bir gösteri ana sunumdur, sunmak için herhangi bir slayda tıklayın ve gezinmek için ok tuşlarını kullanın. Ayrıca arka plan olarak ayarlamak için medya dosyalarını bir slayda sürükleyip bırakabilirsiniz.",
+        "show_slide": "Bir slayta tıklandığında çıktıda gösterilecek ve sağ tarafta bir önizleme göreceksiniz, burada ayrıca bir videoyu duraklatmak gibi bazı ekstra eylemler de bulacaksınız.",
+        "output_clear": "Tek tek çıktı katmanlarını temizleyin veya çıktıdaki tüm katmanları temizleyin.",
+        "edit": "Üst kısımdan tek tıklamayla slayt düzenlemeyi açın.",
+        "end": "Diğer özelliklerle ilgili yardıma ihtiyacınız olursa her zaman web'e bakabilirsiniz."
     },
     "songbeamer_import": {
         "options": "Seçenekler",

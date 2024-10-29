@@ -489,8 +489,9 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     if (lines.length === 1 && lines[0].text?.length > 1) {
         let newLines: any[] = []
         let centerTextIndex = Math.ceil(lines[0].text.length / 2)
+        if (lines[0].text[centerTextIndex - 1]?.customType) centerTextIndex++
         newLines.push({ ...lines[0], text: lines[0].text.slice(0, centerTextIndex) })
-        newLines.push({ ...lines[0], text: lines[0].text.slice(centerTextIndex) })
+        if (centerTextIndex < lines[0].text.length) newLines.push({ ...lines[0], text: lines[0].text.slice(centerTextIndex) })
         lines = newLines
     }
 
@@ -499,8 +500,10 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
         let text = getItemText({ lines } as Item)
         const [firstHalf, secondHalf] = splitTextContentInHalf(text)
         let newLines: Line[] = []
-        newLines.push({ ...lines[0], text: [{ ...lines[0].text[0], value: firstHalf }] })
-        newLines.push({ ...lines[0], text: [{ ...lines[0].text[0], value: secondHalf }] })
+        // try getting second text first (if customType is first)
+        let styling = lines[0].text[1] || lines[0].text[0]
+        newLines.push({ ...lines[0], text: [{ ...styling, value: firstHalf }] })
+        newLines.push({ ...lines[0], text: [{ ...styling, value: secondHalf }] })
         lines = newLines
     }
 

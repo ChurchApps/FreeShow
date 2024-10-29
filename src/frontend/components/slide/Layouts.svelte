@@ -121,7 +121,7 @@
             <p>
                 <!-- currentStyle.metadataDivider -->
                 {@html Object.values(currentShow.meta)
-                    .filter((a) => a.length)
+                    .filter((a) => a?.length)
                     .join("; ")
                     .replaceAll("<br>", " ")}
             </p>
