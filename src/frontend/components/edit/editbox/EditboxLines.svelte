@@ -268,7 +268,8 @@
     let loaded = false
     $: isAuto = item?.auto
     $: textFit = item?.textFit
-    $: itemFontSize = Number(getStyles(item?.lines?.[0]?.text?.[0]?.style, true)?.["font-size"] || "")
+    $: itemText = item?.lines?.[0]?.text?.filter((a) => a.customType !== "disableTemplate") || []
+    $: itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "")
     $: if (isAuto || textFit || itemFontSize || textChanged) getCustomAutoSize()
 
     let autoSize: number = 0
@@ -290,6 +291,7 @@
         }
 
         autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })
+        console.log(type, autoSize, maxFontSize, defaultFontSize, alignElem)
     }
 
     // UPDATE STYLE FROM LINES

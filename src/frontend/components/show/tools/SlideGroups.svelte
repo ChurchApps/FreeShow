@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activeShow, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, labelsDisabled, selected, showsCache } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, labelsDisabled, selected, showsCache } from "../../../stores"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
     import T from "../../helpers/T.svelte"
@@ -58,7 +58,13 @@
                         class="slide {isLocked ? '' : 'context #group'}"
                         style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                         on:click={(e) => {
-                            if (!e.ctrlKey && !e.metaKey && !isLocked) {
+                            if (isLocked) {
+                                alertMessage.set("show.locked_info")
+                                activePopup.set("alert")
+                                return
+                            }
+
+                            if (!e.ctrlKey && !e.metaKey) {
                                 selected.set({ id: "group", data: [{ id: slide.id }] })
                                 ondrop(null, "slide")
                                 selected.set({ id: null, data: [] })
@@ -92,7 +98,13 @@
                             class="slide context #global_group"
                             style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
                             on:click={(e) => {
-                                if (!e.ctrlKey && !e.metaKey && $activeShow && !$showsCache[$activeShow.id]?.locked) {
+                                if (isLocked) {
+                                    alertMessage.set("show.locked_info")
+                                    activePopup.set("alert")
+                                    return
+                                }
+
+                                if (!e.ctrlKey && !e.metaKey && $activeShow) {
                                     // , unique: true
                                     history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
                                 }

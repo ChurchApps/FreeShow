@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { currentWindow, overlays, showsCache, slidesOptions, templates, variables, volume } from "../../stores"
+    import { currentWindow, outputs, overlays, showsCache, slidesOptions, templates, variables, volume } from "../../stores"
     import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
     import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
@@ -21,6 +21,7 @@
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
+    import { getActiveOutputs } from "../helpers/output"
 
     export let item: Item
     export let itemIndex: number = -1
@@ -133,7 +134,8 @@
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = _show(ref.showId).get("settings.template")
     // let outputTemplateAutoSize = false
-    $: if ($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
+    $: outputSlide = $outputs[getActiveOutputs()[0]]?.out?.slide
+    $: if (($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) || (item?.type === "slide_tracker" && outputSlide)) setTimeout(calculateAutosize)
     // else outputTemplateAutoSize = false
 
     // $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
@@ -312,9 +314,7 @@
 
 <div
     class="item"
-    style="{style ? getAlphaStyle(item?.style) : null};{paddingCorrection}transition: filter 500ms, backdrop-filter 500ms;{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter
-        ? 'backdrop-filter: ' + backdropFilter + ';'
-        : ''}{animationStyle.item || ''}"
+    style="{style ? getAlphaStyle(item?.style) : null};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
     class:white={key && !lines?.length}
     class:key
     class:addDefaultItemStyle
@@ -425,6 +425,11 @@
     .item {
         /* WIP this is for scrolling, but hides overflow text even on scroll */
         overflow: hidden;
+
+        /* WIP custom time based on transition duration */
+        transition:
+            filter 500ms,
+            backdrop-filter 500ms;
     }
 
     /* .align .lines:nth-child(1) {

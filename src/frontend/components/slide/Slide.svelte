@@ -329,7 +329,7 @@
                     </div>
                 {/if}
                 <Zoomed
-                    background={slide.items?.length && (viewMode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentStyle.background || "black" : color || "transparent"}
+                    background={slide.items?.length && (viewMode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentStyle.background || "black" : (viewMode !== "lyrics" || noQuickEdit ? color : "") || "transparent"}
                     let:ratio
                     {resolution}
                     zoom={viewMode !== "lyrics" || noQuickEdit}

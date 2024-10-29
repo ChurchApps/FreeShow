@@ -26,14 +26,17 @@
     let timeout: any = null
     let useAlternative: boolean = false
     function reload() {
-        if (retryCount > 3) useAlternative = true
-        if (retryCount > 3 || timeout) return
+        if (retryCount > 4) useAlternative = true
+        if (retryCount > 4 || timeout) return
 
-        timeout = setTimeout(() => {
-            if (!path || !type) return
-            retryCount++
-            timeout = null
-        }, 100)
+        timeout = setTimeout(
+            () => {
+                if (!path || !type) return
+                retryCount++
+                timeout = null
+            },
+            (retryCount + 1) * 200
+        )
     }
 </script>
 

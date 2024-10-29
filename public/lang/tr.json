@@ -13,6 +13,14 @@
         "open": "Açık",
         "system_open": "Sistemde aç"
     },
+    "formats": {
+        "show": "Gösteri",
+        "project": " Proje",
+        "template": " Şablon",
+        "theme": " Tema",
+        "clipboard": " Pano",
+        "text": " Metin dosyası"
+    },
     "guide": {
         "start": "Hızlı başlangıç ​​kılavuzu",
         "skip": "Atla"
@@ -257,7 +265,8 @@
         "keep_one_layout": "En az bir düzeniniz olmalıdır",
         "video_unavailable": "Video kullanılamıyor mu? İçerik oluşturucu, videodaki yerleştirmeleri devre dışı bıraktı.",
         "folder_exists": "Bu klasör zaten var",
-        "uri": "Ses adı ayrıştırılamadı, lütfen dosyayı yeniden adlandırın"
+        "uri": "Ses adı ayrıştırılamadı, lütfen dosyayı yeniden adlandırın",
+        "ip": "Cihazınızın IP adresine ulaşılamıyor, yerel IPv4 adresinizi bulmak için bilgisayarınızın Wi-Fi ayarlarına gidin."
     },
     "meta": {
         "title": "Başlık",
@@ -336,7 +345,8 @@
         "variables": "Değişkenler",
         "triggers": "Tetikleyiciler",
         "templates": "Şablonlar",
-        "web": "Web"
+        "web": "Web",
+        "search_tip": "Çekmece içerik araması"
     },
     "category": {
         "all": "Tümü",
@@ -1281,12 +1291,24 @@
         "artist": "Sanatçı",
         "artistUrl": "Sanatçı sayfası"
     },
+    "guide_title": {
+        "projects": "Projeler",
+        "project": "Proje",
+        "drawer": " Çekmece",
+        "categories": "Kategoriler",
+        "show_create": " Gösteri Oluşturma",
+        "show": "Gösteri",
+        "output": "Çıkış",
+        "editing": "Düzenleme",
+        "end": "İşte temel bilgiler!"
+    },
     "guide_description": {
         "start": "Bu, bazı temel özelliklerin kısa bir incelemesidir! (Sağ alt köşeden geçebilirsiniz.)",
         "project_manage": "Tüm projelerinizi tek bir yerden yönetin.",
         "project_create": "Düzenli tutmak için klasörler oluşturun ve yeni projeler oluşturun.",
         "project_list": "Bir projeyi açtığınızda sol tarafta tüm öğelerin bir listesini göreceksiniz, daha fazlasını eklemek için çekmeceden sürükleyip bırakabilirsiniz.",
         "drawer": "Tüm şovlarınızı, medyanızı, katmanlarınızı vb. tek bir yerde bulun.",
+        "drawer_search": "Etkin çekmece sekmesinde içerik arayın (şarkılar, vb.). Daha hızlı erişim için CTRL/CMD+F kısayolunu kullanın.",
         "drawer_shows": "Tüm farklı şovlarınızı farklı kategorilerde düzenleyerek yönetin. Taşımak için seçili şovlardan herhangi birini sürükleyip bırakın.",
         "create_show_button": "Yeni bir gösteri (şarkı, sunum vb.) oluşturmak için buraya tıklayın",
         "create_show_popup": "Gösterinin ana ayrıntılarını doldurun, ayrıca web üzerinden şarkı sözlerini isimden otomatik olarak bulabilir veya sözleri elle yapıştırabilirsiniz.",

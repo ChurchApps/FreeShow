@@ -95,7 +95,11 @@
         <div class="gap">
             {#each Object.entries(values) as [key, value]}
                 <CombinedInput textWidth={40}>
-                    <p title={$dictionary.meta?.[key]}><T id="meta.{key}" /></p>
+                    {#if $dictionary.meta?.[key]}
+                        <p title={$dictionary.meta?.[key]}><T id="meta.{key}" /></p>
+                    {:else}
+                        <p style="text-transform: capitalize;">{key}</p>
+                    {/if}
                     <TextInput {value} on:change={(e) => changeValue(e, key)} />
                 </CombinedInput>
             {/each}

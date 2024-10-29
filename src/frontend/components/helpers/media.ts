@@ -284,7 +284,7 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     let base64Path = await toDataURL(thumbnailPath)
 
     // "data:image/png;base64," +
-    return base64Path
+    return base64Path || thumbnailPath
 }
 
 export async function checkThatMediaExists(path: string, iteration: number = 1): Promise<boolean> {
