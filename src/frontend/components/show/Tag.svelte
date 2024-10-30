@@ -13,11 +13,16 @@
         let value = e.detail?.value
 
         if ($globalTags[tagId]?.name) {
+            if (!value) {
+                tag.name = $globalTags[tagId].name
+                return
+            }
+
             history({ id: "UPDATE", newData: { data: value, key: "name" }, oldData: { id: tagId }, location: { page: "show", id: "tag_key" } })
         } else {
             // set initial name!
             globalTags.update((a) => {
-                a[tagId].name = value
+                a[tagId].name = value // || "—"
                 return a
             })
         }

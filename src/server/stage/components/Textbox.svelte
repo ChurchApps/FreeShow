@@ -57,7 +57,7 @@
             textQuery = ".lines .break span"
         } else {
             // type = "growToFit"
-            if (item.type === "slide_tracker") textQuery = ".groups"
+            if (item.type === "slide_tracker") textQuery = ".progress div"
         }
 
         fontSize = autosize(alignElem, { type, textQuery })

@@ -37,6 +37,7 @@
         colors: (e: any) => fullColors.set(e.target.checked),
         groupNumber: (e: any) => groupNumbers.set(e.target.checked),
         numberKeys: (e: any) => updateSpecial(e.target.checked, "numberKeys"),
+        autoLetterShortcut: (e: any) => updateSpecial(e.target.checked, "autoLetterShortcut"),
         capitalizeWords: (e: any) => updateSpecial(e.target.value || "", "capitalize_words"),
     }
 
@@ -109,10 +110,17 @@
         <Checkbox checked={$fullColors} on:change={inputs.colors} />
     </div>
 </CombinedInput>
+
 <CombinedInput>
     <p><T id="settings.slide_number_keys" /></p>
     <div class="alignRight">
         <Checkbox checked={$special.numberKeys} on:change={inputs.numberKeys} />
+    </div>
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.auto_shortcut_first_letter" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.autoLetterShortcut} on:change={inputs.autoLetterShortcut} />
     </div>
 </CombinedInput>
 

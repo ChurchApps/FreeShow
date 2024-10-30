@@ -105,6 +105,7 @@ import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { convertQuela } from "../converters/quela"
 import { convertEasyslides } from "../converters/easyslides"
+import { loadShows, saveTextCache } from "../components/helpers/setShow"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -228,7 +229,17 @@ const receiveSTORE: any = {
     SAVE: (a: any) => saveComplete(a),
     SETTINGS: (a: any) => updateSettings(a),
     SYNCED_SETTINGS: (a: any) => updateSyncedSettings(a),
-    SHOWS: (a: any) => shows.set(a),
+    SHOWS: async (a: any) => {
+        let difference = Object.keys(a).length - Object.keys(get(shows)).length
+        if (difference < 15 && Object.keys(get(shows)).length && difference > 0) {
+            // get new shows & cache their content
+            let newShowIds = Object.keys(a).filter((id) => !get(shows)[id])
+            await loadShows(newShowIds)
+            newShowIds.forEach((id) => saveTextCache(id, get(showsCache)[id]))
+        }
+
+        shows.set(a)
+    },
     STAGE_SHOWS: (a: any) => stageShows.set(a),
     PROJECTS: (a: any) => {
         projects.set(a.projects || {})

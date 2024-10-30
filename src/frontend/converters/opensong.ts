@@ -46,13 +46,13 @@ export function convertOpenSong(data: any) {
             let show = new ShowObj(false, categoryId, layoutID)
             show.name = checkName(song.title)
             show.meta = {
-                title: show.name,
-                author: song.author,
-                copyright: song.copyright,
-                key: song.key,
-                CCLI: song.ccli,
+                number: song.hymn_number || "",
+                title: song.title || "",
+                author: song.author || "",
+                copyright: song.copyright || "",
+                key: song.key || "",
+                CCLI: song.ccli || "",
             }
-            show.message = { text: song.hymn_number }
 
             let { slides, layout }: any = createSlides(song)
 

@@ -71,7 +71,7 @@ export function getFilterStyle(): StyleClipboard {
 
     let keys: any = {}
     filterKeys.forEach((key) => {
-        if (slideData[key]) keys[key] = slideData[key]
+        keys[key] = slideData[key] || ""
     })
 
     return { keys, style: {} }

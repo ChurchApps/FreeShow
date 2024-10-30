@@ -37,6 +37,7 @@ export interface Show {
         tags?: string[]
     }
     meta: {
+        number?: string
         title?: string
         artist?: string
         author?: string

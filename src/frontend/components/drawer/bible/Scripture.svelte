@@ -416,6 +416,7 @@
         let searchEnd = searchValue.slice(bookLength)
         let splitChar = searchEnd.includes(":") ? ":" : searchEnd.includes(",") ? "," : searchEnd.includes(".") ? "." : ""
         let splittedEnd = splitChar ? searchEnd.split(splitChar) : [searchEnd]
+        splittedEnd = splittedEnd.filter((a) => a.trim())
 
         searchValues.chapter = findChapter({ splittedEnd })
         if (searchValues.chapter === "") return
@@ -423,6 +424,8 @@
             chapterId = searchValues.chapter
             getChapter()
         }
+        if (splittedEnd.length === 1 && splittedEnd[0].endsWith(" ")) updateSearchValue(searchValue.trim() + ":")
+        if (splittedEnd.length === 1 && searchValue.endsWith(" ")) updateSearchValue(searchValue.trim())
 
         searchValues.verses = findVerse({ splittedEnd })
         if (!searchValues.verses.length) return selectAllVerses()
@@ -430,7 +433,17 @@
             activeVerses = removeDuplicates(searchValues.verses)
             activeVerses = activeVerses.map((a) => a.toString())
             bibles[0].activeVerses = activeVerses
+
+            let trimmed = splittedEnd[1].trim()
+            if (trimmed.length && !trimmed.endsWith("-") && !trimmed.endsWith("+")) {
+                const minus = (searchValue.match(/-/g) || []).length
+                const plus = (searchValue.match(/\+/g) || []).length
+                if (splittedEnd[1].endsWith(" ")) updateSearchValue(searchValue.trim() + (minus === plus ? "-" : "+"))
+            } else {
+                updateSearchValue(searchValue.trim())
+            }
         }
+        if (splittedEnd[1]?.endsWith(" ")) updateSearchValue(searchValue.trim())
     }
 
     let searchBibleActive: boolean = false
@@ -598,7 +611,7 @@
     }
 
     function findChapter({ splittedEnd }) {
-        let chapter: string = splittedEnd[0] || ""
+        let chapter: string = splittedEnd[0]?.trim() || ""
 
         if (!chapter.length) return ""
 
@@ -633,17 +646,24 @@
         // select range (GEN.1.1 || "1")
         let currentVerses: number[] = []
         verse.split("+").forEach((a) => {
-            let split = a.split("-")
+            let split = a.split("-").filter((a) => a.trim())
 
             if (split.length > 1 && split[1].length) {
                 let number: any = Number(split[0])
                 let end: any = Number(split[1])
 
+                // inverted order
+                if (end < number) {
+                    let tempStart = number
+                    number = end
+                    end = tempStart
+                }
+
                 while (number <= end) {
                     currentVerses.push(number.toString())
                     number++
                 }
-            } else if (split[0].length) currentVerses.push(Number(split[0]))
+            } else if (split[0]?.length) currentVerses.push(Number(split[0]))
         })
 
         if (!currentVerses.length) {

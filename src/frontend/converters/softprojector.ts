@@ -56,6 +56,11 @@ export function convertSoftProjector(data: any) {
         let show = new ShowObj(false, categoryId, layoutID)
         show.name = checkName(song.title)
 
+        show.meta = {
+            number: song.number || "",
+            title: song.title || "",
+        }
+
         let { slides, layout }: any = createSlides(song)
 
         show.slides = slides

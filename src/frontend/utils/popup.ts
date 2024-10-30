@@ -1,6 +1,6 @@
 import type { ComponentType } from "svelte"
+import { get } from "svelte/store"
 import type { Popups } from "../../types/Main"
-import { activePopup, popupData } from "../stores"
 import About from "../components/main/popups/About.svelte"
 import Action from "../components/main/popups/Action.svelte"
 import AdvancedScreen from "../components/main/popups/AdvancedScreen.svelte"
@@ -10,6 +10,8 @@ import AudioStream from "../components/main/popups/AudioStream.svelte"
 import ChangeIcon from "../components/main/popups/ChangeIcon.svelte"
 import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.svelte"
 import ChooseCamera from "../components/main/popups/ChooseCamera.svelte"
+import ChooseChord from "../components/main/popups/ChooseChord.svelte"
+import ChooseOutput from "../components/main/popups/ChooseOutput.svelte"
 import ChooseScreen from "../components/main/popups/ChooseScreen.svelte"
 import CloudMethod from "../components/main/popups/CloudMethod.svelte"
 import CloudUpdate from "../components/main/popups/CloudUpdate.svelte"
@@ -17,6 +19,7 @@ import Color from "../components/main/popups/Color.svelte"
 import Connect from "../components/main/popups/Connect.svelte"
 import CreatePlayer from "../components/main/popups/CreatePlayer.svelte"
 import CreateShow from "../components/main/popups/createShow/CreateShow.svelte"
+import DeleteDuplicatedShows from "../components/main/popups/DeleteDuplicatedShows.svelte"
 import DeleteShow from "../components/main/popups/DeleteShow.svelte"
 import EditEvent from "../components/main/popups/EditEvent.svelte"
 import EditList from "../components/main/popups/EditList.svelte"
@@ -26,6 +29,7 @@ import History from "../components/main/popups/History.svelte"
 import Import from "../components/main/popups/Import.svelte"
 import ImportScripture from "../components/main/popups/ImportScripture.svelte"
 import Initialize from "../components/main/popups/Initialize.svelte"
+import Translate from "../components/main/popups/localization/Translate.svelte"
 import ManageColors from "../components/main/popups/ManageColors.svelte"
 import ManageIcons from "../components/main/popups/ManageIcons.svelte"
 import NextTimer from "../components/main/popups/NextTimer.svelte"
@@ -34,17 +38,14 @@ import ResetAll from "../components/main/popups/ResetAll.svelte"
 import SelectShow from "../components/main/popups/SelectShow.svelte"
 import SetTime from "../components/main/popups/SetTime.svelte"
 import Shortcuts from "../components/main/popups/Shortcuts.svelte"
+import SlideShortcut from "../components/main/popups/SlideShortcut.svelte"
 import SongbeamerImport from "../components/main/popups/SongbeamerImport.svelte"
 import Timer from "../components/main/popups/Timer.svelte"
 import Transition from "../components/main/popups/Transition.svelte"
 import Trigger from "../components/main/popups/Trigger.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
-import ChooseChord from "../components/main/popups/ChooseChord.svelte"
-import { get } from "svelte/store"
-import ChooseOutput from "../components/main/popups/ChooseOutput.svelte"
-import Translate from "../components/main/popups/localization/Translate.svelte"
-import DeleteDuplicatedShows from "../components/main/popups/DeleteDuplicatedShows.svelte"
+import { activePopup, popupData } from "../stores"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -76,6 +77,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     choose_output: ChooseOutput,
     change_output_values: ChangeOutputValues,
     set_time: SetTime,
+    slide_shortcut: SlideShortcut,
     animate: Animate,
     translate: Translate,
     next_timer: NextTimer,

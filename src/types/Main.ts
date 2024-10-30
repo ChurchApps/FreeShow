@@ -138,6 +138,7 @@ export type Popups =
     | "choose_output"
     | "change_output_values"
     | "set_time"
+    | "slide_shortcut"
     | "animate"
     | "translate"
     | "next_timer"

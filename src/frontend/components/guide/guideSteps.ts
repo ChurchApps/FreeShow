@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, dictionary, drawer, outputCache, projects, projectView, shows, showsCache } from "../../stores"
+import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, dictionary, drawer, outputCache, projects, projectView, showRecentlyUsedProjects, shows, showsCache } from "../../stores"
 import { DEFAULT_DRAWER_HEIGHT } from "../../utils/common"
 import { createDefaultShow } from "../../utils/createData"
 import { loadShows } from "../helpers/setShow"
@@ -15,6 +15,7 @@ export const guideSteps = [
         pre: () => {
             activePage.set("show")
             activePopup.set(null)
+            showRecentlyUsedProjects.set(false)
             if (get(shows).default) loadShows(["default"])
         },
         timeout: 200,
@@ -46,7 +47,7 @@ export const guideSteps = [
         query: "#projectArea",
         pre: () => {
             let projectId = "default"
-            if (!get(projects)[projectId] || get(projects)[projectId].deleted) {
+            if (!get(projects)[projectId] || get(projects)[projectId]?.deleted) {
                 if (removeDeleted(keysToID(get(projects))).length) projectId = Object.keys(get(projects))[0]
                 else {
                     projects.update((a) => {

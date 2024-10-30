@@ -1071,6 +1071,14 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
+    if (id === "slide_shortcut") {
+        let data: any = { index: layoutSlide, mode: "slide_shortcut" }
+
+        popupData.set(data)
+        activePopup.set("slide_shortcut")
+        return
+    }
+
     if (id === "receiveMidi") {
         let midiId: string = uid()
 
@@ -1079,7 +1087,7 @@ function changeSlideAction(obj: any, id: string) {
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
 
-        let data: any = { id: midiId, index: layoutSlide, mode: "slide_midi" } // , index: layoutSlide
+        let data: any = { id: midiId, index: layoutSlide, mode: "slide_midi" }
 
         popupData.set(data)
         activePopup.set("action")

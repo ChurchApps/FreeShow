@@ -80,8 +80,8 @@ export function sortObjectNumbers(object: {}[], key: string, reverse: boolean = 
 // sort any object.name by numbers in the front of the string
 export function sortByNameAndNumber(array: any[]) {
     return array.sort((a, b) => {
-        let aName = a.name || ""
-        let bName = b.name || ""
+        let aName = ((a.quickAccess?.number || "") + " " + a.name || "").trim()
+        let bName = ((b.quickAccess?.number || "") + " " + b.name || "").trim()
 
         // get numbers in front of name
         const matchA = aName.match(/^\d+/)

@@ -131,10 +131,9 @@ export function convertVideopsalm(data: any) {
             let show = new ShowObj(false, categoryId, layoutID)
             let showId = song.Guid || uid()
             let name = title || get(dictionary).main?.unnamed || "Unnamed"
-            let songId = song.ID || ""
-            if (songId && categoryId !== "videopsalm") name = `${songId} - ${name}`
             show.name = checkName(name, showId) || ""
             show.meta = {
+                number: song.ID || "",
                 title: show.name,
                 artist: album || "",
                 author: song.Author || "",

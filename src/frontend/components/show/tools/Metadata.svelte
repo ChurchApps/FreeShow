@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeShow, dictionary, outputs, showsCache, styles, templates } from "../../../stores"
+    import { activeShow, dictionary, outputs, shows, showsCache, styles, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -13,6 +13,8 @@
     import { sortByName } from "../../helpers/array"
     import { initializeMetadata } from "../../helpers/show"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Button from "../../inputs/Button.svelte"
+    import Icon from "../../helpers/Icon.svelte"
 
     // WIP duplicate of Outputs.svelte
     const metaDisplay: any[] = [
@@ -54,8 +56,20 @@
     }
 
     const changeValue = (e: any, key: string) => {
-        values[key] = e.target.value
+        values[key] = e.target?.value || e.value || ""
         updateData(values, "meta")
+
+        if (key === "number") {
+            const quickAccess = { ...($showsCache[$activeShow!.id].quickAccess || {}), number: values[key] }
+            showsCache.update((a) => {
+                a[$activeShow!.id].quickAccess = quickAccess
+                return a
+            })
+            shows.update((a) => {
+                a[$activeShow!.id].quickAccess = quickAccess
+                return a
+            })
+        }
     }
 
     function toggleAutoMedia(e: any) {
@@ -88,6 +102,23 @@
         // scroll to bottom
         setTimeout(() => document.querySelector(".content")?.scrollTo(0, 999), 20)
     }
+
+    // AUTOFILL
+
+    const autofillValues = {
+        // get only numbers at the start or end
+        number: () => values.number || currentShow.name.match(/^\d+/)?.[0] || currentShow.name.match(/\d+$/)?.[0],
+        // remove numbers
+        title: () => currentShow.name.replace(/[0-9\-.,!:;]/g, "").trim(),
+    }
+    function autofill(key: string) {
+        if (!autofillValues[key]) return
+
+        const value = autofillValues[key]()
+        if (!value) return
+
+        changeValue({ value }, key)
+    }
 </script>
 
 <Panel flex column={!tempHide}>
@@ -100,7 +131,13 @@
                     {:else}
                         <p style="text-transform: capitalize;">{key}</p>
                     {/if}
-                    <TextInput {value} on:change={(e) => changeValue(e, key)} />
+                    <TextInput {value} style={key === "number" && currentShow?.quickAccess?.number ? "border-bottom: 1px solid var(--secondary);" : ""} on:change={(e) => changeValue(e, key)} />
+
+                    {#if (!value || (key === "number" && !currentShow?.quickAccess?.number)) && (autofillValues[key]?.() || (key === "number" && value))}
+                        <Button title={$dictionary.meta?.autofill} on:click={() => autofill(key)}>
+                            <Icon id="autofill" white />
+                        </Button>
+                    {/if}
                 </CombinedInput>
             {/each}
         </div>

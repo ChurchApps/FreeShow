@@ -50,7 +50,16 @@ export function readFolder(path: string): string[] {
     }
 }
 
-export async function readFileAsync(path: string, encoding: BufferEncoding = "utf8"): Promise<string> {
+export function doesPathExistAsync(path: string): Promise<boolean> {
+    return new Promise((resolve) => {
+        fs.access(path, (err) => {
+            if (err) resolve(false)
+            resolve(true)
+        })
+    })
+}
+
+export function readFileAsync(path: string, encoding: BufferEncoding = "utf8"): Promise<string> {
     return new Promise((resolve) =>
         fs.readFile(path, (err, buffer) => {
             if (err) console.error(err)
@@ -59,7 +68,7 @@ export async function readFileAsync(path: string, encoding: BufferEncoding = "ut
     )
 }
 
-export async function readFileBufferAsync(path: string): Promise<Buffer> {
+export function readFileBufferAsync(path: string): Promise<Buffer> {
     return new Promise((resolve) =>
         fs.readFile(path, (err, buffer) => {
             if (err) console.error(err)
@@ -68,7 +77,7 @@ export async function readFileBufferAsync(path: string): Promise<Buffer> {
     )
 }
 
-export async function readFolderAsync(path: string): Promise<string[]> {
+export function readFolderAsync(path: string): Promise<string[]> {
     return new Promise((resolve) =>
         fs.readdir(path, (err, files) => {
             if (err) console.error(err)
@@ -264,7 +273,7 @@ export function getFolderContent(data: any) {
 
         function isMedia() {
             if (stats.folder) return false
-            return [...imageExtensions, ...videoExtensions].includes(stats.extension)
+            return [...imageExtensions, ...videoExtensions].includes(stats.extension.toLowerCase())
         }
     }
 

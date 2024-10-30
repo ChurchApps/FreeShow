@@ -120,7 +120,9 @@
     }
 
     function rename(e: any) {
-        historyAwait([id], { id: "SHOWS", newData: { data: [{ id, show: { name: checkName(e.detail.value, id) } }], replace: true }, location: { page: "drawer" } })
+        const name = checkName(e.detail.value, id)
+        historyAwait([id], { id: "SHOWS", newData: { data: [{ id, show: { name } }], replace: true }, location: { page: "drawer" } })
+        // WIP this does not update in the shows drawer before refresh (if checkName updates the name)
     }
 
     let activeOutput: any = null
@@ -133,7 +135,13 @@
             {#if icon}
                 <Icon id={iconID || "noIcon"} {custom} box={iconID === "ppt" ? 50 : 24} right />
             {/if}
+
+            {#if show.quickAccess?.number}
+                <span style="color: var(--secondary);font-weight: bold;margin: 3px 5px;padding-right: 3px;white-space: nowrap;">{show.quickAccess.number}</span>
+            {/if}
+
             <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
+
             {#if show.layoutInfo?.name}
                 <span class="layout">{show.layoutInfo.name}</span>
             {/if}
