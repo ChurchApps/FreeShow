@@ -589,6 +589,7 @@ export function setExampleTemplates() {
         }
         return a
     })
+    createDoubleTemplate()
 }
 
 export function createDefaultShow() {
@@ -629,5 +630,29 @@ export function createDefaultShow() {
             },
         },
         media: {},
+    })
+}
+
+export function createDoubleTemplate() {
+    templates.update((a) => {
+        a.double = {
+            name: "Double",
+            color: null, // "#FF6543",
+            category: "song",
+            items: [
+                {
+                    style: "top: 550px;left: 30px;width: 1860px;height: 500px;",
+                    align: "",
+                    lines: [{ align: "", text: [{ value: "2", style: "font-size: 80px;color: #dddddd;" }] }],
+                },
+                {
+                    style: "top: 30px;left: 30px;width: 1860px;height: 500px;",
+                    align: "",
+                    lines: [{ align: "", text: [{ value: "1", style: "font-size: 80px;" }] }],
+                },
+            ],
+        }
+
+        return a
     })
 }

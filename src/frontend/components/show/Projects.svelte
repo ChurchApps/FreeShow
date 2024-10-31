@@ -68,9 +68,11 @@
     // close if not existing
     $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null) // projectView.set(true)
     // get pos if clicked in drawer
-    $: if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject]?.shows[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
+    $: if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject]?.shows?.[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
 
     function findShowInProject() {
+        if (!$projects[$activeProject!]?.shows) return
+
         let i = $projects[$activeProject!].shows.findIndex((p) => p.id === $activeShow?.id)
         let pos: number = i > -1 ? i : $activeShow?.index || -1
 

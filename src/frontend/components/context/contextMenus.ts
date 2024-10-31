@@ -203,6 +203,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // actions
     action: ["duplicate"],
     scripture_verse: ["create_show", "SEPERATOR", "selectAll"],
+    scripture_chapter: ["create_show"],
 
     // PROJECT
     projects: ["newProject", "newFolder", "sort_projects_by"],

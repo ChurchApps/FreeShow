@@ -525,6 +525,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     let newSlideItems: Item[] = []
     slideItems.forEach((item: Item) => {
+        if (!item) return
+
         let type = item.type || "text"
 
         let templateItem = sortedTemplateItems[type]?.shift()

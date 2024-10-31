@@ -279,7 +279,7 @@ export function history(obj: History, undo: null | boolean = null) {
 
     // deselect selected
     // not when changing multiple selected slides OR changing slide transition
-    if (obj.location?.page !== "edit" && obj.id !== "SHOW_LAYOUT") {
+    if (obj.location?.page !== "edit" && obj.id !== "SHOW_LAYOUT" && obj.id !== "setItems") {
         deselect()
     }
 

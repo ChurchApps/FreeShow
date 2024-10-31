@@ -412,7 +412,10 @@ const actions: any = {
         })
     },
     create_show: (obj: any) => {
-        if (obj.sel.id === "scripture") {
+        if (obj.contextElem?.classList.contains("chapters")) {
+            triggerFunction("scripture_selectAll")
+            setTimeout(() => triggerFunction("scripture_newShow"))
+        } else if (obj.sel.id === "scripture") {
             triggerFunction("scripture_newShow")
         }
     },
@@ -1278,8 +1281,8 @@ export function format(id: string, obj: any, data: any = null) {
     } else {
         slides = [
             _show()
-                .slides([ref[get(activeEdit).slide!].id])
-                .get()[0].id,
+                .slides([ref[get(activeEdit).slide!]?.id])
+                .get()[0]?.id,
         ]
     }
 

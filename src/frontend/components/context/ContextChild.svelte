@@ -6,7 +6,7 @@
     import { loadItems } from "./loadItems"
 
     export let contextElem: any = null
-    export let contextActive: boolean
+    export let topBar: boolean = false
     export let id: string
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let translate: number = 0
@@ -88,11 +88,11 @@
                             {#if id === "SEPERATOR"}
                                 <hr />
                             {:else}
-                                <ContextItem {id} {contextElem} {menu} disabled={menu.disabled === true} bind:contextActive />
+                                <ContextItem {id} {contextElem} {menu} disabled={menu.disabled === true} {topBar} />
                             {/if}
                         {/each}
                     {:else}
-                        <ContextItem id={itemId} {contextElem} bind:contextActive />
+                        <ContextItem id={itemId} {contextElem} {topBar} />
                     {/if}
                 {/each}
             {/if}

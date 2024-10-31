@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activePopup, contextData } from "../../stores"
+    import { activePage, activePopup, contextActive, contextData } from "../../stores"
     import { getEditItems } from "../edit/scripts/itemHelpers"
     import ContextChild from "./ContextChild.svelte"
     import ContextItem from "./ContextItem.svelte"
@@ -7,8 +7,7 @@
     import { quickLoadItems } from "./loadItems"
 
     let contextElem: any = null
-    let contextActive: boolean = false
-    let activeMenu: string[]
+    let activeMenu: string[] = []
     let x: number = 0
     let y: number = 0
     let side: "right" | "left" = "right"
@@ -16,7 +15,7 @@
 
     function onContextMenu(e: MouseEvent) {
         if (e.target?.closest(".contextMenu") || e.target?.closest(".nocontext") || $activePopup) {
-            contextActive = false
+            contextActive.set(false)
             return
         }
 
@@ -34,7 +33,7 @@
         if (y + contextHeight > window.innerHeight) translate = 100
         if (x + (250 + 150) > window.innerWidth) side = "left"
 
-        contextActive = true
+        contextActive.set(true)
     }
 
     function getContextMenu(id: string | null) {
@@ -60,7 +59,7 @@
     }
 
     const click = (e: MouseEvent) => {
-        if (!e.target?.closest(".contextMenu")) contextActive = false
+        if (!e.target?.closest(".contextMenu")) contextActive.set(false)
     }
 
     // preload data (to check if some of the buttons can be hidden)
@@ -88,7 +87,7 @@
     }
 
     let top = false
-    $: if (contextActive && contextElem) updateTop()
+    $: if ($contextActive && contextElem) updateTop()
     function updateTop() {
         top = false
         // timeout to allow contextMenu to render/update
@@ -101,7 +100,7 @@
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} />
 
-{#if contextActive}
+{#if $contextActive}
     <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);" class:top>
         {#key activeMenu}
             {#each activeMenu as id}
@@ -110,10 +109,10 @@
                 {:else if contextMenuItems[id]?.items}
                     <!-- conditional menus -->
                     {#if shouldShowMenuWithItems(id)}
-                        <ContextChild {id} {contextElem} bind:contextActive {side} translate={activeMenu.length > 2 ? 0 : translate} />
+                        <ContextChild {id} {contextElem} {side} translate={activeMenu.length > 2 ? 0 : translate} />
                     {/if}
                 {:else}
-                    <ContextItem {id} {contextElem} bind:contextActive />
+                    <ContextItem {id} {contextElem} />
                 {/if}
             {/each}
         {/key}

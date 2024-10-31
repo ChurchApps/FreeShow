@@ -30,8 +30,6 @@
     let chapterId: any = cachedRef?.chapterId ?? "GEN.1"
     let activeVerses: string[] = cachedRef?.activeVerses || ["1"]
 
-    $: console.trace("BOOK", bookId, chapterId)
-
     $: if (bookId || chapterId || verses || activeVerses) updateActive()
     function updateActive() {
         if (!loaded) return
@@ -915,13 +913,13 @@
                     {/if}
                 </div>
                 <div class="content">
-                    <div class="chapters" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
+                    <div class="chapters context #scripture_chapter" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
                         {#if chapters[firstBibleId]?.length}
                             {#each chapters[firstBibleId] as chapter, i}
                                 {@const id = bibles[0].api ? chapter.id : i}
                                 <span
                                     id={id.toString()}
-                                    on:click={() => {
+                                    on:mousedown={() => {
                                         chapterId = id
                                         autoComplete = false
                                     }}
@@ -972,7 +970,6 @@
                         {#each books[firstBibleId] as book, i}
                             {@const id = bibles[0].api ? book.id : i}
                             {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
-                            {#if i < 2}<span style="font-size: 0;position: absolute;">{console.log(id, bookId)}</span>{/if}
 
                             <span
                                 id={id.toString()}
@@ -991,13 +988,13 @@
                     <Loader />
                 {/if}
             </div>
-            <div class="chapters" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
+            <div class="chapters context #scripture_chapter" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
                 {#if chapters[firstBibleId]?.length}
                     {#each chapters[firstBibleId] as chapter, i}
                         {@const id = bibles[0].api ? chapter.id : i}
                         <span
                             id={id.toString()}
-                            on:click={() => {
+                            on:mousedown={() => {
                                 chapterId = id
                                 autoComplete = false
                             }}

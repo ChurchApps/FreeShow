@@ -257,6 +257,8 @@ export function updateCachedShow(id: string, show: Show, layoutId: string = "") 
 }
 
 export function removeTemplatesFromShow(showId: string, enableHistory: boolean = false) {
+    if (!get(showsCache)[showId]) return
+
     // remove show template
     if (enableHistory) {
         let settings = { ...clone(_show(showId).get("settings") || {}), template: null }

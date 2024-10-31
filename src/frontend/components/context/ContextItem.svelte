@@ -4,6 +4,7 @@
         activeRecording,
         activeShow,
         categories,
+        contextActive,
         events,
         forceClock,
         media,
@@ -18,6 +19,7 @@
         slidesOptions,
         stageShows,
         templateCategories,
+        topContextActive,
         undoHistory,
     } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
@@ -27,7 +29,7 @@
     import { menuClick } from "./menuClick"
 
     export let contextElem: any = null
-    export let contextActive: boolean
+    export let topBar: boolean = false
     export let id: string
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let disabled: boolean = false
@@ -168,17 +170,19 @@
         let actionItem: null | HTMLElement = contextElem?.classList.contains("_" + id) ? contextElem : contextElem?.querySelector("._" + id)
         let sel: any = $selected
 
-        let m: any = menuClick(id, enabled, menu, contextElem, actionItem, sel)
-        if (m?.enabled !== undefined) enabled = m.enabled
+        menuClick(id, enabled, menu, contextElem, actionItem, sel)
 
         // don't hide context menu
+        const format = ["uppercase", "lowercase", "capitalize", "trim"]
+        if (format.includes(id)) return
         const keepOpen = ["enabled_drawer_tabs", "tags", "bind_to", "item_bind_to"]
         if (keepOpen.includes(id)) {
             enabled = !enabled
             return
         }
 
-        if (!m || m.hide) contextActive = false
+        if (topBar) topContextActive.set(false)
+        else contextActive.set(false)
     }
 
     function keydown(e: any) {

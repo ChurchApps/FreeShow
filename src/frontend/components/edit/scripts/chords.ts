@@ -147,6 +147,7 @@ export async function getChordPosition(chord: any, { textElem, item, line }) {
 // get all chords in a textbox
 export function loadChords(item: Item) {
     let chordsList: string[] = []
+    if (!item) return chordsList
 
     item.lines?.forEach((item) => {
         item.chords?.forEach((chord) => {

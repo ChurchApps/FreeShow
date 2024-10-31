@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, activePopup, customMessageCredits, lockedOverlays, outLocked, outputCache, outputs, overlays, playingAudio, playingMetronome, selected, slideTimers, videosData, videosTime } from "../../stores"
+import { activeEdit, activePopup, contextActive, customMessageCredits, lockedOverlays, outLocked, outputCache, outputs, overlays, playingAudio, playingMetronome, selected, slideTimers, topContextActive, videosData, videosTime } from "../../stores"
 import { clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { clearAudio } from "../helpers/audio"
 import { clone } from "../helpers/array"
@@ -8,7 +8,7 @@ import { stopSlideRecording } from "../helpers/slideRecording"
 
 export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
-    if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length)) return
+    if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length || get(contextActive) || get(topContextActive))) return
 
     let audioCleared = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
     let allCleared = isOutCleared(null) && audioCleared

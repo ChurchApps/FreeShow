@@ -20,6 +20,7 @@ export const languages: any = {
     ko: "한국인", // Korean
     nl: "Nederlands", // Dutch
     zh_CN: "简体中文", // Chinese (Simplified)
+    ro: "Română", // Romanian
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -47,6 +48,7 @@ export const replace: any = {
     ko: ["ko"],
     nl: ["nl"],
     zh_CN: ["zh"],
+    ro: ["ro"],
 }
 
 export const languageFlags: any = {
@@ -70,4 +72,5 @@ export const languageFlags: any = {
     ko: "🇰🇷",
     nl: "🇳🇱",
     zh_CN: "🇨🇳",
+    ro: "🇷🇴",
 }
