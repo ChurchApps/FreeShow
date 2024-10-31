@@ -56,7 +56,7 @@
             if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template]
 
             // wait output style/scripture template auto size
-            if (Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate) : item.auto) outDelay = 200
+            if (Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate) : item.auto) outDelay = 400
 
             if (!inDelay) inDelay = outDelay * 0.98
         }
