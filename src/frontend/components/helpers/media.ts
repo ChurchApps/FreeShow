@@ -305,6 +305,7 @@ export async function checkThatMediaExists(path: string, iteration: number = 1):
 let capturing: string[] = []
 let retries: any = {}
 export function captureCanvas(data: any) {
+    let completed: boolean = false
     if (capturing.includes(data.input)) return exit()
     capturing.push(data.input)
 
@@ -329,12 +330,12 @@ export function captureCanvas(data: any) {
         let hasLoaded = await waitUntilValueIsDefined(() => (isImage ? mediaElem.complete : mediaElem.readyState === 4), 20)
         if (!hasLoaded) return exit()
 
-        captureCanvas(mediaElem, mediaSize)
+        captureCanvasData(mediaElem, mediaSize)
     })
 
     // this should not get called becaues the file is checked existing, but here in case
     mediaElem.addEventListener("error", (err) => {
-        if (!mediaElem.src) return
+        if (!mediaElem.src || completed) return
 
         console.error("Could not load media:", err)
         if (!retries[data.input]) retries[data.input] = 0
@@ -347,9 +348,9 @@ export function captureCanvas(data: any) {
     mediaElem.src = encodeFilePath(data.input)
     // document.body.appendChild(mediaElem) // DEBUG
 
-    async function captureCanvas(media, mediaSize) {
+    async function captureCanvasData(media, mediaSize) {
         let ctx = canvas.getContext("2d")
-        if (!ctx) return exit()
+        if (!ctx || completed) return exit()
 
         // ensure lessons are downloaded and loaded before capturing
         let isLessons = data.input.includes("Lessons")
@@ -361,6 +362,7 @@ export function captureCanvas(data: any) {
         let dataURL = canvas.toDataURL("image/png") // , jpegQuality
 
         send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })
+        completed = true
 
         // unload
         capturing.splice(capturing.indexOf(data.input), 1)
@@ -368,6 +370,9 @@ export function captureCanvas(data: any) {
     }
 
     function exit() {
+        if (completed) return
+
+        completed = true
         send(MAIN, ["SAVE_IMAGE"], { path: data.output })
     }
 }

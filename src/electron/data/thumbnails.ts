@@ -117,20 +117,25 @@ async function generate(input: string, output: string, size: string, config: Con
 }
 
 let mediaBeingCaptured: number = 0
-const maxAmount = 30
+const maxAmount = 20
 const refillMargin = maxAmount * 0.6
 async function captureWithCanvas(data: any) {
     mediaBeingCaptured++
     toApp(MAIN, { channel: "CAPTURE_CANVAS", data })
 
+    // let captureIndex = mediaBeingCaptured
+    // console.time("CAPTURING: " + captureIndex + " - " + data.input)
+
     // generate a max amount at the same time
     if (mediaBeingCaptured > maxAmount) await waitUntilValueIsDefined(() => mediaBeingCaptured < refillMargin)
 
+    // console.timeEnd("CAPTURING: " + captureIndex + " - " + data.input)
     generationFinished()
 }
 
 export function saveImage(data: any) {
-    mediaBeingCaptured--
+    mediaBeingCaptured = Math.max(0, mediaBeingCaptured - 1)
+    // console.log("SAVE: ", data.path, data.base64?.length)
     if (!data.base64) return
 
     let dataURL = data.base64
