@@ -33,7 +33,13 @@ export function showSearch(searchValue: string, shows: any) {
 }
 
 export function showSearchFilter(searchValue: string, show: any) {
-    const showName = formatSearch(show.name, true)
+    // WIP tag search?
+
+    // Priority 0: Number Exact Match
+    const songNumber = show.quickAccess?.number || ""
+    if (songNumber && Number(songNumber) === Number(searchValue)) return 100
+
+    const showName = songNumber + formatSearch(show.name, true)
 
     // Priority 1: Title Exact Match
     const formattedSearchValue = formatSearch(searchValue, true)

@@ -40,7 +40,7 @@
             loopStop = null
         }, 200)
 
-        let textQuery = item?.type === "slide_tracker" ? ".groups" : ""
+        let textQuery = item?.type === "slide_tracker" ? ".progress div" : ""
         // timeout to update size after content change (e.g. Clock seconds)
         setTimeout(() => {
             autoSize = autosize(itemElem, { type: "growToFit", textQuery })

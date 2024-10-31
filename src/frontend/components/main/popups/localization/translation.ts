@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
 import type { Item, Line } from "../../../../../types/Show"
-import { showsCache } from "../../../../stores"
+import { showsCache, templates } from "../../../../stores"
+import { newToast } from "../../../../utils/common"
+import { createDoubleTemplate } from "../../../../utils/createData"
 import { getItemTextArray } from "../../../edit/scripts/textStyle"
 import { clone, sortByName } from "../../../helpers/array"
 import { history } from "../../../helpers/history"
 import { isoLanguages } from "./isoLanguages"
-import { newToast } from "../../../../utils/common"
 
 // https://www.npmjs.com/package/translate
 // https://github.com/ssut/py-googletrans/issues/268
@@ -34,10 +35,14 @@ export async function translateShow(showId: string, languageCode: string) {
     let show = get(showsCache)[showId]
     let slides = clone(show.slides)
     let changed = false
+    let onlyOneTextbox = true
 
     await Promise.all(
         Object.keys(slides).map(async (slideId) => {
             let newItems: Item[] = []
+
+            let items = slides[slideId].items.filter((a) => !a.language)
+            if (onlyOneTextbox && (items.length > 1 || (items[0]?.type || "text") !== "text")) onlyOneTextbox = false
 
             await Promise.all(
                 slides[slideId].items.map(async (item, i) => {
@@ -75,13 +80,20 @@ export async function translateShow(showId: string, languageCode: string) {
                 })
             )
 
-            if (newItems.length) slides[slideId].items.push(...newItems)
+            if (newItems.length) slides[slideId].items = [...newItems, ...slides[slideId].items]
         })
     )
 
     if (!changed) return
 
     history({ id: "UPDATE", newData: { key: "slides", data: slides }, oldData: { id: showId }, location: { id: "show_key", page: "show" } })
+
+    // set custom template
+    if (onlyOneTextbox) {
+        // show.settings?.template
+        if (!get(templates).double) createDoubleTemplate()
+        history({ id: "TEMPLATE", save: false, newData: { id: "double", location: { page: "none", override: "show#" + showId } } })
+    }
 }
 
 export function removeAllTranslationsFromShow(showId: string) {

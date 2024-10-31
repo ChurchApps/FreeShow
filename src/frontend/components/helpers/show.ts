@@ -108,8 +108,8 @@ export function getStageList() {
 }
 
 // meta
-export function initializeMetadata({ title = "", artist = "", author = "", composer = "", publisher = "", copyright = "", CCLI = "", year = "", key = "" }) {
-    return { title, artist, author, composer, publisher, copyright, CCLI, year, key }
+export function initializeMetadata({ number = "", title = "", artist = "", author = "", composer = "", publisher = "", copyright = "", CCLI = "", year = "", key = "" }) {
+    return { number, title, artist, author, composer, publisher, copyright, CCLI, year, key }
 }
 
 // create new slides
@@ -257,6 +257,8 @@ export function updateCachedShow(id: string, show: Show, layoutId: string = "") 
 }
 
 export function removeTemplatesFromShow(showId: string, enableHistory: boolean = false) {
+    if (!get(showsCache)[showId]) return
+
     // remove show template
     if (enableHistory) {
         let settings = { ...clone(_show(showId).get("settings") || {}), template: null }

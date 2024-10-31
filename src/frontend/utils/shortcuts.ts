@@ -9,7 +9,9 @@ import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../compone
 import { history, redo, undo } from "../components/helpers/history"
 import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
+import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
+import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import {
     activeDrawerTab,
@@ -19,6 +21,7 @@ import {
     activePopup,
     activeProject,
     activeSlideRecording,
+    contextActive,
     currentWindow,
     drawer,
     focusedArea,
@@ -33,6 +36,7 @@ import {
     selected,
     showsCache,
     special,
+    topContextActive,
     volume,
 } from "../stores"
 import { drawerTabs } from "../values/tabs"
@@ -40,8 +44,6 @@ import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
-import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
-import { importFromClipboard } from "../converters/importHelpers"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -69,8 +71,19 @@ const ctrlKeys: any = {
 export const disablePopupClose = ["initialize", "cloud_method"]
 const keys: any = {
     Escape: () => {
+        // hide quick search
         if (get(quickSearchActive)) {
             quickSearchActive.set(false)
+            return
+        }
+
+        // hide context menu
+        if (get(contextActive) || get(topContextActive)) {
+            // timeout so output does not clear
+            setTimeout(() => {
+                contextActive.set(false)
+                topContextActive.set(false)
+            }, 20)
             return
         }
 
@@ -90,7 +103,7 @@ const keys: any = {
         setTimeout(() => {
             if (popupId) activePopup.set(null)
             else if (get(selected).id) selected.set({ id: null, data: [] })
-        })
+        }, 20)
     },
     Delete: () => deleteAction(get(selected), "remove"),
     Backspace: () => keys.Delete(),

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN } from "../../../types/Channels"
-    import { saved, windowState } from "../../stores"
+    import { saved, topContextActive, windowState } from "../../stores"
     import { initializeClosing } from "../../utils/save"
     import ContextChild from "../context/ContextChild.svelte"
     import ContextItem from "../context/ContextItem.svelte"
@@ -11,7 +11,6 @@
 
     const menus: string[] = ["file", "edit", "view", "help"]
 
-    let active: boolean = false
     let activeID: null | string = null
     let activeMenu: string[] = []
     let x: number = 0
@@ -21,7 +20,7 @@
 
     function menu(e: any) {
         let id: string = e.target.id
-        active = activeID !== id
+        topContextActive.set(activeID !== id)
         activeID = activeID === id ? null : id
 
         if (activeID === null) return
@@ -33,11 +32,11 @@
         if (e.target?.closest(".menu") || e.target?.closest(".menus")) return
 
         activeID = null
-        active = false
+        topContextActive.set(false)
     }
 
     const move = (e: any) => {
-        if (!active || activeID === e.target.id) return
+        if (!$topContextActive || activeID === e.target.id) return
         ;(document.activeElement as any)?.blur()
         menu(e)
     }
@@ -46,16 +45,16 @@
 <svelte:window on:click={click} on:contextmenu={click} />
 
 <main bind:clientHeight={y}>
-    {#if active}
+    {#if $topContextActive}
         <div class="contextMenu menu" style="left: {x}px; top: {y}px;">
             {#key activeMenu}
                 {#each activeMenu as id}
                     {#if id === "SEPERATOR"}
                         <hr />
                     {:else if contextMenuItems[id]?.items}
-                        <ContextChild {id} bind:contextActive={active} />
+                        <ContextChild {id} topBar />
                     {:else}
-                        <ContextItem {id} bind:contextActive={active} />
+                        <ContextItem {id} topBar />
                     {/if}
                 {/each}
             {/key}

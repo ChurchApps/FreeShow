@@ -135,7 +135,8 @@
     $: currentShowTemplateId = _show(ref.showId).get("settings.template")
     // let outputTemplateAutoSize = false
     $: outputSlide = $outputs[getActiveOutputs()[0]]?.out?.slide
-    $: if (($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) || (item?.type === "slide_tracker" && outputSlide)) setTimeout(calculateAutosize)
+    $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
+    $: if ($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
     // else outputTemplateAutoSize = false
 
     // $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
@@ -192,7 +193,7 @@
             textQuery = ".lines .break span"
         } else {
             type = "growToFit"
-            if (item.type === "slide_tracker") textQuery = ".groups"
+            if (item.type === "slide_tracker") textQuery = ".progress div"
         }
         // not working due to stage SlideText "loading" elem?
         // if (isStage) {
@@ -202,6 +203,7 @@
 
         fontSize = autosize(elem, { type, textQuery, defaultFontSize, maxFontSize })
 
+        if (item.type === "slide_tracker") return
         if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
     }
 
@@ -382,7 +384,12 @@
             {:else}
                 <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
                 <!-- TODO: use custom transition... -->
-                <Image src={mediaItemPath} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
+                <Image
+                    src={mediaItemPath}
+                    alt=""
+                    style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
+                    transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"}
+                />
             {/if}
         {/if}
     {:else if item?.type === "camera"}

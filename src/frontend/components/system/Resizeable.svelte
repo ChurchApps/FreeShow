@@ -24,7 +24,7 @@
     let move: boolean = false
     let mouse: null | { x: number; y: number; offset: number; target: any } = null
 
-    $: handleWidth = width <= 8 ? 8 : 4
+    $: handleWidth = width <= 8 ? 6 : 4
 
     const conditions = {
         left: (e: any) => e.target.closest(".panel")?.offsetWidth - e.offsetX <= handleWidth,

@@ -62,7 +62,7 @@
         }
 
         // add some time in case an identical item is "fading" in
-        if (!outDelay && itemTransition?.duration === 0 && item.type === "media") outDelay = 300
+        if (!outDelay && itemTransition?.duration === 0 && item.type === "media") outDelay = 250
         // WIP having outDelay on just 1 image item will cause all other items to not clear until that is finished!
 
         // SET DELAY

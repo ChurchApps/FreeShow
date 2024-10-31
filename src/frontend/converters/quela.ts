@@ -4,48 +4,49 @@ import { ShowObj } from "../classes/Show"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary } from "../stores"
 import { createCategory, setTempShows } from "./importHelpers"
+import { xml2json } from "./xml"
 
-// interface Songbook {
-//     title: string
-//     info: string
-// }
-interface Song {
-    alignment_h: null
-    alignment_v: null
-    background: null
-    background_name: string
-    category: number
-    color: null
-    count: number
-    date: null
-    ending_color: null
-    ending_font: null
-    font: string
-    info_color: null
-    info_font: null
-    music: string
-    notes: string
-    number: number
-    song_text: string
+type Song = {
     title: string
-    tune: string
-    use_background: null
-    use_private: null
-    words: string
+
+    author?: string
+    capo?: string
+    ccli?: string
+    copyright?: string
+    key?: string
+    publisher?: string
+    translation?: string
+    translationoptions?: string
+    updateInDB?: "true" | "false"
+    year?: string
+    notes?: string
+
+    lyrics: Lyrics
+    sequence?: string
 }
 
-export function convertSoftProjector(data: any) {
+type Lyrics = {
+    section: {
+        "@capitalise": "true" | "false"
+        "@title": string
+        lyrics: string
+        smalllines: string
+        theme: string
+    }[]
+}
+
+export function convertQuela(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("SoftProjector")
+    let categoryId = createCategory("Quela")
 
     let tempShows: any[] = []
 
     // set timeout to allow popup to open
     setTimeout(() => {
         data?.forEach(({ content }: any) => {
-            if (content.Songs) content.Songs.map(convertSong)
+            convertSong(xml2json(content).song)
         })
 
         setTempShows(tempShows)
@@ -56,32 +57,35 @@ export function convertSoftProjector(data: any) {
         let show = new ShowObj(false, categoryId, layoutID)
         show.name = checkName(song.title)
 
-        show.meta = {
-            number: song.number || "",
-            title: song.title || "",
-        }
-
         let { slides, layout }: any = createSlides(song)
 
+        show.meta = {
+            ccli: song.ccli || "",
+            copyright: song.copyright || "",
+            author: song.author || "",
+            key: song.key || "",
+            publisher: song.publisher || "",
+            year: song.year || "",
+        }
+
         show.slides = slides
-        show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
+        show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song.notes || "", slides: layout } }
 
         tempShows.push({ id: uid(), show })
     }
 }
 
 function createSlides(song: Song) {
-    let lyrics = song.song_text || ""
+    let lyrics = song.lyrics?.section || []
 
     let slides: any = {}
     let layout: any[] = []
 
     if (!lyrics) return { slides, layout }
 
-    let slideLines = lyrics.split("\n\n")
-    slideLines.forEach((slideLine) => {
-        let lines = slideLine.split("\n")
-        let groupName = lines.shift() || ""
+    lyrics.forEach((slideLine) => {
+        let lines = slideLine.lyrics.split("\n").filter(Boolean)
+        let groupName = slideLine["@title"] || ""
 
         let id: string = uid()
         layout.push({ id })
@@ -101,7 +105,7 @@ function createSlides(song: Song) {
             items,
         }
 
-        let globalGroup = getGlobalGroup(groupName)
+        let globalGroup = getGlobalGroup(groupName) || "verse"
         if (globalGroup) slides[id].globalGroup = globalGroup
         else slides[id].group = groupName.replace(/[\s\d]/g, "")
     })

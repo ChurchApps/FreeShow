@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
-    import { encodeFilePath, getMediaInfo, isVideoSupported } from "../helpers/media"
+    import { encodeFilePath, isVideoSupported } from "../helpers/media"
 
     export let path: any
     export let video: any = null

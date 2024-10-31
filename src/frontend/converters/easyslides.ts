@@ -1,51 +1,32 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { ShowObj } from "../classes/Show"
-import { checkName, getGlobalGroup } from "../components/helpers/show"
+import { checkName } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary } from "../stores"
 import { createCategory, setTempShows } from "./importHelpers"
+import { xml2json } from "./xml"
 
-// interface Songbook {
-//     title: string
-//     info: string
-// }
-interface Song {
-    alignment_h: null
-    alignment_v: null
-    background: null
-    background_name: string
-    category: number
-    color: null
-    count: number
-    date: null
-    ending_color: null
-    ending_font: null
-    font: string
-    info_color: null
-    info_font: null
-    music: string
-    notes: string
-    number: number
-    song_text: string
-    title: string
-    tune: string
-    use_background: null
-    use_private: null
-    words: string
+type Song = {
+    Contents: string
+    CurItemNo: string // "0"
+    Folder: string
+    SongNumber: string
+    Title1: string
 }
 
-export function convertSoftProjector(data: any) {
+export function convertEasyslides(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("SoftProjector")
+    let categoryId = createCategory("Easyslides")
 
     let tempShows: any[] = []
 
     // set timeout to allow popup to open
     setTimeout(() => {
         data?.forEach(({ content }: any) => {
-            if (content.Songs) content.Songs.map(convertSong)
+            const songs = xml2json(content).EasiSlides?.Item || []
+            songs.forEach(convertSong)
         })
 
         setTempShows(tempShows)
@@ -54,15 +35,11 @@ export function convertSoftProjector(data: any) {
     function convertSong(song: Song) {
         let layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
-        show.name = checkName(song.title)
-
-        show.meta = {
-            number: song.number || "",
-            title: song.title || "",
-        }
+        show.name = checkName(song.Title1)
 
         let { slides, layout }: any = createSlides(song)
 
+        show.meta = { number: song.SongNumber }
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
 
@@ -71,17 +48,17 @@ export function convertSoftProjector(data: any) {
 }
 
 function createSlides(song: Song) {
-    let lyrics = song.song_text || ""
+    let lyrics = song.Contents || ""
 
     let slides: any = {}
     let layout: any[] = []
 
     if (!lyrics) return { slides, layout }
 
-    let slideLines = lyrics.split("\n\n")
+    lyrics = lyrics.replace(/\[\d+\]/g, "\n\n").replaceAll("\n\n\n", "\n\n")
+    const slideLines = lyrics.split("\n\n").filter(Boolean)
     slideLines.forEach((slideLine) => {
-        let lines = slideLine.split("\n")
-        let groupName = lines.shift() || ""
+        let lines = slideLine.split("\n").filter(Boolean)
 
         let id: string = uid()
         layout.push({ id })
@@ -89,7 +66,7 @@ function createSlides(song: Song) {
         let items = [
             {
                 style: "left:50px;top:120px;width:1820px;height:840px;",
-                lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text }] })),
+                lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text.trim() }] })),
             },
         ]
 
@@ -101,9 +78,7 @@ function createSlides(song: Song) {
             items,
         }
 
-        let globalGroup = getGlobalGroup(groupName)
-        if (globalGroup) slides[id].globalGroup = globalGroup
-        else slides[id].group = groupName.replace(/[\s\d]/g, "")
+        slides[id].globalGroup = "verse"
     })
 
     return { slides, layout }

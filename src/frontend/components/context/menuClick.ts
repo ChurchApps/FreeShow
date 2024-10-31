@@ -412,7 +412,10 @@ const actions: any = {
         })
     },
     create_show: (obj: any) => {
-        if (obj.sel.id === "scripture") {
+        if (obj.contextElem?.classList.contains("chapters")) {
+            triggerFunction("scripture_selectAll")
+            setTimeout(() => triggerFunction("scripture_newShow"))
+        } else if (obj.sel.id === "scripture") {
             triggerFunction("scripture_newShow")
         }
     },
@@ -1071,6 +1074,14 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
+    if (id === "slide_shortcut") {
+        let data: any = { index: layoutSlide, mode: "slide_shortcut" }
+
+        popupData.set(data)
+        activePopup.set("slide_shortcut")
+        return
+    }
+
     if (id === "receiveMidi") {
         let midiId: string = uid()
 
@@ -1079,7 +1090,7 @@ function changeSlideAction(obj: any, id: string) {
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
 
-        let data: any = { id: midiId, index: layoutSlide, mode: "slide_midi" } // , index: layoutSlide
+        let data: any = { id: midiId, index: layoutSlide, mode: "slide_midi" }
 
         popupData.set(data)
         activePopup.set("action")
@@ -1270,8 +1281,8 @@ export function format(id: string, obj: any, data: any = null) {
     } else {
         slides = [
             _show()
-                .slides([ref[get(activeEdit).slide!].id])
-                .get()[0].id,
+                .slides([ref[get(activeEdit).slide!]?.id])
+                .get()[0]?.id,
         ]
     }
 

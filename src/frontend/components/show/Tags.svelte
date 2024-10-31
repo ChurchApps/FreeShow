@@ -8,6 +8,7 @@
     import Button from "../inputs/Button.svelte"
     import Center from "../system/Center.svelte"
     import Tag from "./Tag.svelte"
+    import { _show } from "../helpers/shows"
 
     export let list: boolean = false
 
@@ -18,7 +19,17 @@
     $: tags = sortObject(sortByName(keysToID($globalTags)), "color")
 
     function createNewTag() {
-        history({ id: "UPDATE", oldData: { id: uid(5) }, location: { page: "show", id: "tag" } })
+        const tagId = uid(5)
+        history({ id: "UPDATE", oldData: { id: tagId }, location: { page: "show", id: "tag" } })
+        enableTag(tagId)
+    }
+
+    function enableTag(tagId: string) {
+        let quickAccess = _show().get("quickAccess") || {}
+        quickAccess.tags = [...(quickAccess.tags || []), tagId]
+
+        let showId: string = $activeShow!.id
+        history({ id: "UPDATE", newData: { data: quickAccess, key: "quickAccess" }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "toggle_tag" } })
     }
 </script>
 

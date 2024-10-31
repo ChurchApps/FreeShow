@@ -83,14 +83,18 @@
                 {/if}
             </span>
         </p>
-        <p>
-            <span class="title"><T id={"meta.tags"} /></span>
-            <span style="overflow: hidden;text-overflow: ellipsis;">
-                {sortByName(keysToID($globalTags).filter((a) => show?.quickAccess?.tags?.includes(a.id)))
-                    .map(({ name }) => name)
-                    .join(", ") || "—"}
-            </span>
-        </p>
+
+        {#if Object.keys($globalTags).length}
+            <p>
+                <span class="title"><T id={"meta.tags"} /></span>
+                <span style="overflow: hidden;text-overflow: ellipsis;">
+                    {sortByName(keysToID($globalTags).filter((a) => show?.quickAccess?.tags?.includes(a.id)))
+                        .map(({ name }) => name)
+                        .join(", ") || "—"}
+                </span>
+            </p>
+        {/if}
+
         <p>
             <span class="title"><T id={"info.slides"} /></span>
             <span>{Object.keys(fullShow?.slides || {}).length}</span>

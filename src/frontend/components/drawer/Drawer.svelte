@@ -125,6 +125,8 @@
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id: firstMatch.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...firstMatch, index: newIndex })
             searchValue = ""
+        } else if (e.key === "Escape") {
+            if (!searchValue.length && searchActive) searchActive = false
         }
     }
 
@@ -159,11 +161,11 @@
                 {/if}
             {/each}
         </span>
-        <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit" type="text" placeholder={$dictionary.main?.search} bind:value={searchValue} on:input={search} use:selectTextOnFocus />
+        <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit" type="text" placeholder="{$dictionary.main?.search}..." bind:value={searchValue} on:input={search} use:selectTextOnFocus />
         {#if !searchActive && !searchValue.length}
-            <Button class="search" on:click={() => (searchActive = true)} title="{$dictionary.tabs?.search_tip} [Ctrl+F]" bold={false}>
-                <Icon id="search" size={1.3} white right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<p style="opacity: 0.8;"><T id="main.search" /></p>{/if}
+            <Button class="search" style="border-bottom: 2px solid var(--secondary);" on:click={() => (searchActive = true)} title="{$dictionary.tabs?.search_tip} [Ctrl+F]" bold={false}>
+                <Icon id="search" size={1.4} white right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<p style="opacity: 0.8;font-size: 1.1em;"><T id="main.search" /></p>{/if}
             </Button>
         {/if}
     </div>
@@ -218,7 +220,8 @@
     .search {
         background-color: rgb(0 0 0 / 0.2);
         color: var(--text);
-        /* font-family: inherit; */
+        font-size: inherit;
+        font-family: inherit;
         width: var(--navigation-width);
         min-width: var(--navigation-width);
         /* width: 50%; */
@@ -229,6 +232,7 @@
     .search:active,
     .search:focus {
         outline: 2px solid var(--secondary);
+        outline-offset: -2px;
     }
     .search::placeholder {
         color: inherit;

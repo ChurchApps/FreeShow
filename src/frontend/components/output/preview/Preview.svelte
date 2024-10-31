@@ -1,7 +1,9 @@
 <script lang="ts">
     import { activePage, activeShow, dictionary, groups, guideActive, midiIn, outLocked, outputs, playingAudio, slideTimers, special, styles } from "../../../stores"
+    import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
+    import { getSlideText } from "../../edit/scripts/textStyle"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getActiveOutputs, isOutCleared, outputSlideHasContent, setOutput } from "../../helpers/output"
@@ -47,6 +49,15 @@
 
         // group shortcuts
         if ($activeShow && !e.ctrlKey && !e.metaKey && !$outLocked) {
+            // play slide with custom shortcut key
+            let layoutRef: any[] = _show().layouts("active").ref()[0] || []
+            let slideShortcutMatch = layoutRef.findIndex((ref) => ref.data?.actions?.slide_shortcut?.key === e.key)
+            if (slideShortcutMatch > -1 && !e.altKey && !e.shiftKey) {
+                playSlideAtIndex(slideShortcutMatch)
+                e.preventDefault()
+                return
+            }
+
             // play group with custom shortcut keys (A-Z)
             if (/^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
                 e.preventDefault()
@@ -67,6 +78,24 @@
                 }, 300)
 
                 return
+            }
+
+            // play slide based on first text letter
+            if ($special.autoLetterShortcut) {
+                const isSpecial = [".", ",", "-", "+", "/", "*", "<", ">", "|", "\\", "¨", "'"].includes(e.key)
+                if (e.key.trim().length === 1 && isNaN(e.key) && !isSpecial) {
+                    const firstLetterMatch = layoutRef.findIndex((ref) => {
+                        const slide = _show().get("slides")?.[ref.id]
+                        const slideText = formatSearch(getSlideText(slide)).replace(/\d+/g, "").trim()
+                        return slideText[0]?.toLowerCase() === e.key.toLowerCase()
+                    })
+
+                    if (firstLetterMatch > -1 && !e.altKey && !e.shiftKey) {
+                        playSlideAtIndex(firstLetterMatch)
+                        e.preventDefault()
+                        return
+                    }
+                }
             }
         }
 

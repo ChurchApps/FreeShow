@@ -3,8 +3,9 @@ import fs from "fs"
 import path from "path"
 import { isProd, toApp } from ".."
 import { MAIN } from "../../types/Channels"
-import { doesPathExist, makeDir } from "../utils/files"
+import { doesPathExist, doesPathExistAsync, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
+import { imageExtensions, videoExtensions } from "./media"
 
 export function getThumbnail(data: any) {
     let output = createThumbnail(data.input, data.size || 500)
@@ -45,8 +46,9 @@ function generationFinished() {
 
 let exists: string[] = []
 async function generateThumbnail(data: Thumbnail) {
+    if (![...imageExtensions, ...videoExtensions].includes(getExtension(data.input))) return generationFinished()
     if (isProd && exists.includes(data.output)) return generationFinished()
-    if (doesPathExist(data.output)) {
+    if (await doesPathExistAsync(data.output)) {
         exists.push(data.output)
         generationFinished()
         return
@@ -115,20 +117,25 @@ async function generate(input: string, output: string, size: string, config: Con
 }
 
 let mediaBeingCaptured: number = 0
-const maxAmount = 30
+const maxAmount = 20
 const refillMargin = maxAmount * 0.6
 async function captureWithCanvas(data: any) {
     mediaBeingCaptured++
     toApp(MAIN, { channel: "CAPTURE_CANVAS", data })
 
+    // let captureIndex = mediaBeingCaptured
+    // console.time("CAPTURING: " + captureIndex + " - " + data.input)
+
     // generate a max amount at the same time
     if (mediaBeingCaptured > maxAmount) await waitUntilValueIsDefined(() => mediaBeingCaptured < refillMargin)
 
+    // console.timeEnd("CAPTURING: " + captureIndex + " - " + data.input)
     generationFinished()
 }
 
 export function saveImage(data: any) {
-    mediaBeingCaptured--
+    mediaBeingCaptured = Math.max(0, mediaBeingCaptured - 1)
+    // console.log("SAVE: ", data.path, data.base64?.length)
     if (!data.base64) return
 
     let dataURL = data.base64
@@ -171,8 +178,8 @@ function parseSize(sizeStr: string): ResizeOptions {
 function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolean = true) {
     // let jpgImage = image.toJPEG(jpegQuality)
     let img = image.toPNG() // higher file size, but supports transparent images
-    fs.writeFile(savePath, img, () => {
-        exists.push(savePath)
+    fs.writeFile(savePath, img, (err) => {
+        if (!err) exists.push(savePath)
         if (nextOnFinished) generationFinished()
     })
 }

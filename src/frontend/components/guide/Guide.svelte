@@ -21,6 +21,7 @@
     $: if (active && currentStep) findElementPos(currentStep)
 
     let currentStyle = ""
+    let currentTextStyle = ""
     let flip: boolean = false
     async function findElementPos({ pre, query, timeout = 10 }: { pre?: Function; query: string; timeout?: number }) {
         if (pre) pre()
@@ -35,9 +36,14 @@
             return
         }
 
-        let bounds = elem.getBoundingClientRect()
+        const bounds = elem.getBoundingClientRect()
+        const width = window.innerWidth
+        flip = bounds.x > width * 0.7
+
+        console.log(elem, bounds)
         currentStyle = `left: ${bounds.x}px;top: ${Math.max(70, bounds.y)}px;width: ${bounds.width}px;height: ${bounds.height}px;`
-        flip = bounds.x > 1000
+        if (flip) currentTextStyle = `max-width: ${bounds.right}px;`
+        else currentTextStyle = `max-width: ${width - bounds.left}px;`
     }
 
     function mousedown(e: any) {
@@ -67,7 +73,7 @@
     {#if currentStep && currentStyle}
         <div class="guide" transition:fade>
             <div class="focus" style={currentStyle}>
-                <div class="text" class:flip>
+                <div class="text" style={currentTextStyle} class:flip>
                     <p style="font-size: 1.5em;font-weight: 600;">
                         {#key currentStep.title}
                             <T id={currentStep.title} />
@@ -137,6 +143,7 @@
 
         /* max-width: 900px; */
         max-width: 100vw;
+        width: max-content;
 
         background-color: rgb(0 0 0 / 70%);
         padding: 8px 12px;
@@ -144,6 +151,9 @@
     .text.flip {
         left: initial;
         right: 0;
+    }
+    .text p {
+        white-space: normal;
     }
 
     #guideButtons {

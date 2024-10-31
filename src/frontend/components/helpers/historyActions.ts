@@ -145,7 +145,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function updateElement(a) {
                 // TODO: check for duplicates!!???
                 if (key) {
-                    data.previousData = clone(filterIndexes(a[id][key] ?? {}, subkey, { indexes, keys }))
+                    data.previousData = clone(filterIndexes(a[id]?.[key] ?? {}, subkey, { indexes, keys }))
                     a = updateKeyData(a, data.data)
                 } else if (keys) {
                     // if just keys, but no "key"

@@ -40,7 +40,7 @@
                 .slides([a.id])
                 .get("items")
                 .flat()
-                .find((a) => a.language)
+                .find((a) => a?.language)
         )
     }
 

@@ -28,7 +28,7 @@ export function formatText(e: any) {
 
     let groupedOldSlides = groupSlides(oldSlides)
     let groupedNewSlides = groupSlides(slides)
-    console.log(groupedOldSlides, groupedNewSlides)
+    // console.log(groupedOldSlides, groupedNewSlides)
 
     // TODO: renaming existing groups!
 
@@ -97,8 +97,8 @@ export function formatText(e: any) {
         let slide = show.slides[slideId]
         if (!slide) return
 
-        let textItem = slide.items.find((a) => (a.type || "text") === "text")
-        if (textItem) return
+        let textboxes = getTextboxesIndexes(slide.items)
+        if (textboxes.length) return
 
         newLayoutSlides.push({ id: slideId })
     })
@@ -181,8 +181,9 @@ export function formatText(e: any) {
         if (newItems.length) {
             // let textboxItemIndex = getFirstNormalTextboxIndex(oldItems)
             let textboxItemIndexes = getTextboxesIndexes(oldItems)
-            if (!textboxItemIndexes.length) items.push(...newItems)
-            else {
+            if (!textboxItemIndexes.length) {
+                items = [...removeEmptyTextboxes(oldItems), ...newItems]
+            } else {
                 textboxItemIndexes.forEach((index) => {
                     // set to default if text has been removed
                     items[index] = newItems.splice(index, 1)[0] || clone(defaultItem)
@@ -265,7 +266,7 @@ export function linesToTextboxes(slideLines: string[]) {
         items[currentItemIndex].lines!.push(getLine(lineData.text, lineData.chords))
     })
 
-    return items
+    return items.filter(Boolean)
 }
 
 function getChords(line: string) {
@@ -346,6 +347,13 @@ export function getTextboxesIndexes(items: Item[]): number[] {
     })
 
     return indexes
+}
+
+function removeEmptyTextboxes(items: Item[]) {
+    return items.filter((item) => {
+        if ((item.type || "text") !== "text") return true
+        return getItemText(item).length
+    })
 }
 
 export function getTextboxes(items: Item[]) {

@@ -325,7 +325,7 @@
                     <!-- border-bottom: 1px dashed {color}; -->
                     <div class="label" title={name || ""} style="color: {color};margin-bottom: 5px;">
                         <span style="position: absolute;display: contents;">{index + 1}</span>
-                        <span class="text">{name === null ? "" : name || "—"}</span>
+                        <span class="text">{@html name === null ? "" : name || "—"}</span>
                     </div>
                 {/if}
                 <Zoomed
