@@ -35,11 +35,11 @@ type Lyrics = {
     }[]
 }
 
-export function convertQuela(data: any) {
+export function convertQuelea(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("Quela")
+    let categoryId = createCategory("Quelea")
 
     let tempShows: any[] = []
 
@@ -60,6 +60,7 @@ export function convertQuela(data: any) {
         let { slides, layout }: any = createSlides(song)
 
         show.meta = {
+            title: song.title || "",
             ccli: song.ccli || "",
             copyright: song.copyright || "",
             author: song.author || "",

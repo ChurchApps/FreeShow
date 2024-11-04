@@ -47,7 +47,7 @@
         },
         { name: "OpenLP/OpenLyrics", extensions: ["xml", "sqlite"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
-        { name: "Quela", extensions: ["xml"], id: "quela" },
+        { name: "Quelea", extensions: ["xml"], id: "quelea" },
         { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
         { name: "Songbeamer", id: "songbeamer", popup: "songbeamer_import" },
         { name: "Easyslides", extensions: ["xml"], id: "easyslides" },

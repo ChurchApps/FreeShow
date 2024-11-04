@@ -166,7 +166,8 @@ function parseContent(content: string): VideoPsalm | null {
         newContent = JSON.parse(content || "{}")
     } catch (e: any) {
         console.error(e)
-        let pos = Number(e.toString().replace(/\D+/g, "") || 100)
+        let posError = e.toString().replace(/ *\([^)]*\) */g, "")
+        let pos = Number(posError.replace(/\D+/g, "") || 100)
         console.log(pos, content.slice(pos - 10, pos) + "[HERE>]" + content.slice(pos, pos + 10), content.slice(pos - 100, pos + 100))
 
         if (pos === previousIndex) return newContent

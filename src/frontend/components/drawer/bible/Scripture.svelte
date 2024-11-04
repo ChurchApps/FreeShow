@@ -197,7 +197,7 @@
             return
         }
 
-        if (!msg.content) return
+        if (!msg.content?.[1]) return
 
         scripturesCache.update((a) => {
             a[msg.content[0]] = msg.content[1]
