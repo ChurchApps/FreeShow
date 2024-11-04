@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Help up improve the stability of FreeShow
-title: "[Bug Report] {Add a short & descriptive title}"
+title: ""
 labels: bug
 assignees: ''
 

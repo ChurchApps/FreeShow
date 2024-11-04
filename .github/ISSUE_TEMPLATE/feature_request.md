@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest a new feature/improvement for FreeShow
-title: "[Feature Request] {Add a descriptive title here}"
+title: ""
 labels: enhancement
 assignees: ''
 
