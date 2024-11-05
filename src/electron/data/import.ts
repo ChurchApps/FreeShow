@@ -6,7 +6,8 @@ import sqlite3 from "sqlite3"
 import WordExtractor from "word-extractor"
 import { toApp } from ".."
 import { IMPORT } from "../../types/Channels"
-import { readFileAsync, readFileBufferAsync } from "../utils/files"
+import { getExtension, readFileAsync, readFileBufferAsync } from "../utils/files"
+import { decompress } from "./zip"
 
 const specialImports: any = {
     powerpoint: async (files: string[]) => {
@@ -77,11 +78,26 @@ export async function importShow(id: any, files: string[] | null, importSettings
     if (!files?.length) return
 
     let importId = id
-    let sqliteFile = id === "openlp" && files.find((a) => a.includes(".sqlite"))
-    if (sqliteFile) files = files.filter((a) => a.includes(".sqlite"))
+    let data: any[] = []
+
+    let sqliteFile = id === "openlp" && files.find((a) => a.endsWith(".sqlite"))
+    if (sqliteFile) files = files.filter((a) => a.endsWith(".sqlite"))
     if (id === "easyworship" || id === "softprojector" || sqliteFile) importId = "sqlite"
 
-    let data: any[] = []
+    const zip = ["zip", "probundle", "vpc", "qsp"]
+    let zipFiles = files.filter((a) => zip.includes(a.slice(a.lastIndexOf(".") + 1).toLowerCase()))
+    if (zipFiles.length) {
+        data = decompress(zipFiles)
+        if (data.length) {
+            for (let i = 0; i < data.length; i++) {
+                const customContent = await checkSpecial(data[i])
+                if (customContent) data[i].content = customContent
+            }
+            toApp(IMPORT, { channel: id, data })
+        }
+        return
+    }
+
     if (specialImports[importId]) data = await specialImports[importId](files, importSettings)
     else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
@@ -97,7 +113,7 @@ async function readFile(filePath: string, encoding: BufferEncoding = "utf8") {
     let content: string = ""
 
     let name: string = getFileName(filePath) || ""
-    let extension: string = path.extname(filePath).substring(1).toLowerCase()
+    let extension: string = getExtension(filePath)
 
     try {
         if (extension === "pro") content = await decodeProto(filePath)
@@ -116,14 +132,19 @@ const getFileName = (filePath: string) => path.basename(filePath).slice(0, path.
 // https://github.com/greyshirtguy/ProPresenter7-Proto
 // https://www.npmjs.com/package/protobufjs
 
-async function decodeProto(filePath: string) {
+async function decodeProto(filePath: string, fileContent: Buffer | null = null) {
     const dir = join(__dirname, "..", "..", "..", "public", "proto", "presentation.proto")
     const root = await protobufjs.load(dir)
 
     const Presentation = root.lookupType("Presentation")
 
-    const buffer = await readFileBufferAsync(filePath)
+    const buffer = fileContent || (await readFileBufferAsync(filePath))
     const message = Presentation.decode(buffer)
 
     return JSON.stringify(message)
+}
+
+async function checkSpecial(file: any) {
+    if (file.extension === "pro") return await decodeProto("", file.content)
+    return
 }

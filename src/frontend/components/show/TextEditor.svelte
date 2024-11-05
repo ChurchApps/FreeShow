@@ -52,13 +52,14 @@
         let text = ""
         let plainText = ""
         // let selectedItem: Item = getFirstNormalTextbox(items)
-        let selectedItems: Item[] = getTextboxes(items)
+        let selectedItems: Item[] = getTextboxes(items).reverse()
 
         if (!selectedItems.length) return { text, plainText, hasTextboxItem: false }
 
         selectedItems.forEach((item, i) => {
             if (selectedItems.length > 1) {
-                let textboxId = "[#" + (i + 1) + "]"
+                let translation = item?.language ? `:${item.language}` : ""
+                let textboxId = `[#${i + 1}${translation}]`
                 text += textboxId + "\n"
                 plainText += textboxId + "\n"
             }

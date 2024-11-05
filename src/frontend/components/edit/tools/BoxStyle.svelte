@@ -146,6 +146,9 @@
         box.edit.chords[1].hidden = !item?.chords?.enabled
         box.edit.chords[2].hidden = !item?.chords?.enabled
     }
+    $: if (id === "slide_tracker" && box?.edit?.default?.[2]) {
+        box.edit.default[2].hidden = item?.tracker?.type !== "group"
+    }
 
     $: if (id === "timer" && box?.edit?.font) box.edit.font[3].value = item?.auto ?? true
 
@@ -522,6 +525,7 @@
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
 
 {#if loaded}
+    <!-- WIP edit checkbox does not animate because of this refresh -->
     {#key box}
         <EditValues edits={box?.edit} defaultEdits={clone(boxes[id])?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} {sessionId} />
     {/key}

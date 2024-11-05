@@ -55,6 +55,8 @@ export let trackerEdits = [
         id: "tracker.accent",
         value: "#F0008C",
     },
+    { name: "edit.sub_indexes", input: "checkbox", id: "tracker.childProgress", value: false },
+    { name: "edit.one_letter", input: "checkbox", id: "tracker.oneLetter", value: false },
 ]
 
 export const boxes: Box = {

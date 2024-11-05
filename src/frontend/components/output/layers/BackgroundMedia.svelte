@@ -6,15 +6,15 @@
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { allOutputs, audioChannels, outputs, playingVideos, special, videosData, videosTime } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
+    import BmdStream from "../../drawer/live/BMDStream.svelte"
+    import NdiStream from "../../drawer/live/NDIStream.svelte"
     import { analyseAudio, getAnalyser } from "../../helpers/audio"
     import { getMediaStyle } from "../../helpers/media"
     import Player from "../../system/Player.svelte"
     import Camera from "../Camera.svelte"
+    import OutputTransition from "../transitions/OutputTransition.svelte"
     import Window from "../Window.svelte"
     import Media from "./Media.svelte"
-    import OutputTransition from "../transitions/OutputTransition.svelte"
-    import NdiStream from "../../drawer/live/NDIStream.svelte"
-    import BmdStream from "../../drawer/live/BMDStream.svelte"
 
     export let outputId: string = ""
 
@@ -221,7 +221,7 @@
     }
 </script>
 
-<OutputTransition {transition} inTransition={transition.in} outTransition={transition.out}>
+<OutputTransition {transition} inTransition={transition.in} outTransition={transition.out} on:outrostart={() => (fadingOut = true)}>
     {#if type === "media"}
         <Media path={id} {data} {animationStyle} bind:video bind:videoData bind:videoTime {mirror} {mediaStyle} on:loaded on:ended={videoEnded} />
     {:else if type === "screen"}

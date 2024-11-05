@@ -17,6 +17,8 @@
     onMount(() => {
         setTimeout(() => {
             width = $resized[id] ?? DEFAULT_WIDTH
+            // reset to default if closed on startup
+            if ((id === "leftPanel" || id === "rightPanel") && width <= handleWidth) width = DEFAULT_WIDTH
             loaded = true
         }, 2000)
     })

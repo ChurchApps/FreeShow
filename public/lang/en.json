@@ -801,6 +801,8 @@
         "overlay_content": "Add overlay content",
         "different_first_template": "Custom template on first slide",
         "media_fit": "Media fit",
+        "one_letter": "One letter mode",
+        "sub_indexes": "Sub indexes",
         "size": "Size",
         "max_lines": "Max lines",
         "invert_items": "Invert items",

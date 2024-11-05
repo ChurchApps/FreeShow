@@ -66,6 +66,7 @@
         bgs = []
         layoutBackgrounds.forEach((a: any) => {
             if (!show.media?.[a]) return
+
             let path: string = show.media[a].path || show.media[a].id || ""
             let cloudId = $driveData.mediaId
             if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
@@ -73,8 +74,9 @@
             const extension = getExtension(path)
             let type = getMediaType(extension)
 
-            if (backgrounds[path]) backgrounds[path].count++
-            else backgrounds[path] = { id: a, ...show.media[a], path, type, count: 1 }
+            let pathId = path.slice(0, 150)
+            if (backgrounds[pathId]) backgrounds[pathId].count++
+            else backgrounds[pathId] = { id: a, name: "—", ...show.media[a], path, type, count: 1 }
         })
         Object.values(backgrounds).forEach((a) => bgs.push(a))
         bgs = sortByName(bgs)
@@ -134,6 +136,8 @@
     let simularBgs: any[] = []
     $: if (bgs.length) getSimularPaths()
     function getSimularPaths() {
+        if (!bgs.filter((a) => !a.path.includes("http") && !a.path.includes("data:")).length) return
+
         send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
 
         let listenerId = "media_simular"

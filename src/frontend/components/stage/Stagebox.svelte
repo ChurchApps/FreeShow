@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, previewBuffers, stageShows, timers, variables } from "../../stores"
+    import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import autosize from "../edit/scripts/autosize"
     import { keysToID, sortByName } from "../helpers/array"
@@ -95,7 +95,7 @@
     // SLIDE
     $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($currentWindow === "output" ? $allOutputs : $outputs, false, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
-    $: currentSlide = currentOutput.out?.slide
+    $: currentSlide = currentOutput.out?.slide || (next ? $outputSlideCache[stageOutputId] : null)
 
     let timeout: any = null
     $: if (stageOutputId && ($allOutputs || $outputs)) startTimeout()

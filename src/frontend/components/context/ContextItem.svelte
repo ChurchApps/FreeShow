@@ -22,6 +22,7 @@
         topContextActive,
         undoHistory,
     } from "../../stores"
+    import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -135,6 +136,19 @@
         lock_to_output: () => {
             let id = $selected.data[0]
             if ($overlays[id]?.locked) enabled = true
+        },
+        move_to_front: () => {
+            let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput)
+            // WIP check currently selected against the other outputs...
+            if (previewOutputs.length !== 2) {
+                disabled = false
+                return
+            }
+
+            const alwaysOnTopState = [...new Set(previewOutputs.map((out) => out?.alwaysOnTop ?? true))]
+
+            // disable if all outputs have different states!
+            disabled = alwaysOnTopState.length === previewOutputs.length
         },
         hide_from_preview: () => {
             let outputId = contextElem.id

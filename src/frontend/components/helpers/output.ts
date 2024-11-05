@@ -13,6 +13,7 @@ import {
     lockedOverlays,
     outputDisplay,
     outputs,
+    outputSlideCache,
     overlays,
     playingVideos,
     serverData,
@@ -63,6 +64,8 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         let firstOutputWithBackground = allOutputs.findIndex((id) => (get(styles)[get(outputs)[id]?.style || ""]?.layers || ["background"]).includes("background"))
         firstOutputWithBackground = Math.max(0, firstOutputWithBackground)
 
+        // reset slide cache (after update)
+        if (key === "slide" && data) setTimeout(() => outputSlideCache.set({}), 50)
         // append show usage if not already outputted
         if (key === "slide" && data?.id && get(outputs)[outs[0]]?.out?.slide?.id !== data?.id) appendShowUsage(data.id)
 

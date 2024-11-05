@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles } from "../../stores"
+    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, styles } from "../../stores"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -181,7 +181,7 @@
             if (!currentOutput || currentOutput.stageOutput) return
 
             let currentStyle = $styles[currentOutput?.style || ""] || {}
-            let outSlide: any = currentOutput.out?.slide || {}
+            let outSlide: any = currentOutput.out?.slide || $outputSlideCache[a] || {}
 
             if (activeSlides[outSlide.index] || outSlide.id !== showId || outSlide.layout !== activeLayout) return
 
@@ -200,6 +200,7 @@
                 color: $outputs[a].color,
                 line: lineIndex,
                 maxLines,
+                cached: !currentOutput.out?.slide,
             }
         })
     }

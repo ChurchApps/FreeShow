@@ -54,9 +54,11 @@ export function convertOpenSong(data: any) {
                 CCLI: song.ccli || "",
             }
 
-            let { slides, layout }: any = createSlides(song)
+            console.log(song)
+            let { slides, layout, media }: any = createSlides(song)
 
             show.slides = slides
+            show.media = media
             show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song.aka || "", slides: layout } }
 
             tempShows.push({ id: uid(), show })
@@ -67,8 +69,9 @@ export function convertOpenSong(data: any) {
 }
 
 const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }
-function createSlides({ lyrics, presentation }: Song) {
+function createSlides({ lyrics, presentation, backgrounds }: Song) {
     let slides: any = {}
+    let media: any = {}
     let layout: any[] = []
     if (!lyrics) return { slides, layout }
 
@@ -140,7 +143,14 @@ function createSlides({ lyrics, presentation }: Song) {
         })
     }
 
-    return { slides, layout }
+    // add backgrounds
+    if (backgrounds.length) {
+        let bgId = uid(5)
+        layout[0].background = bgId
+        media[bgId] = { path: "data:image/jpeg;base64," + backgrounds } // base64:
+    }
+
+    return { slides, layout, media }
 }
 
 function XMLtoObject(xml: string) {

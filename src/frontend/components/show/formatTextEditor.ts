@@ -242,18 +242,20 @@ function getSlide(slideText): Slide {
 }
 
 export const defaultItem: Item = { type: "text", lines: [], style: "top:120px;left:50px;height:840px;width:1820px;" }
-const textboxRegex = /\[#\d*]/
+const textboxRegex = /\[#(\d+)(?::([^\]]+))?\]/
 export function linesToTextboxes(slideLines: string[]) {
     let items: Item[] = []
     let currentItemIndex: number = 0
 
     slideLines.forEach((line) => {
-        let textboxKey = line.match(textboxRegex)?.[0]
+        let textboxKey = line.match(textboxRegex)
         if (textboxKey) {
-            let keyIndex = textboxKey.slice(textboxKey.indexOf("#") + 1, textboxKey.indexOf("]"))
-            currentItemIndex = Number(keyIndex)
-            // if (textboxKey === "[#1]") currentItemIndex = 0
-            // else currentItemIndex++
+            currentItemIndex = Number(textboxKey[1])
+            let language = textboxKey[2]
+            if (language) {
+                if (!items[currentItemIndex]) items[currentItemIndex] = clone(defaultItem)
+                items[currentItemIndex].language = language
+            }
 
             // add content on current line
             line = line.slice(line.indexOf("]") + 1).trim()
@@ -266,7 +268,7 @@ export function linesToTextboxes(slideLines: string[]) {
         items[currentItemIndex].lines!.push(getLine(lineData.text, lineData.chords))
     })
 
-    return items.filter(Boolean)
+    return items.filter(Boolean).reverse()
 }
 
 function getChords(line: string) {

@@ -72,7 +72,7 @@
 <div class="actions">
     <!-- localization -->
     {#if item.language}
-        <div title={isoLanguages.find((a) => a.code === item.language)?.name} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+        <div title={isoLanguages.find((a) => a.code === item.language)?.name || item.language} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="translate" white />
             </span>

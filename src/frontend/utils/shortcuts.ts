@@ -30,6 +30,7 @@ import {
     os,
     outLocked,
     outputs,
+    outputSlideCache,
     projects,
     quickSearchActive,
     refreshEditSlide,
@@ -264,9 +265,10 @@ export const previewShortcuts: any = {
         let allActiveOutputs = getActiveOutputs(get(outputs), true, true, true)
         let outputId = allActiveOutputs[0]
         let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
+        let outSlide = currentOutput.out?.slide || get(outputSlideCache)[outputId] || {}
 
         e.preventDefault()
-        if (currentOutput.out?.slide?.id !== currentShow?.id || (currentShow && currentOutput.out?.slide?.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) {
+        if (outSlide.id !== currentShow?.id || (currentShow && outSlide.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) {
             if (get(activeSlideRecording)) stopSlideRecording()
             nextSlideIndividual(e, true)
         } else {
