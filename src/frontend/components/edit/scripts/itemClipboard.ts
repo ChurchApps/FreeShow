@@ -27,7 +27,7 @@ export function getBoxStyle(item: Item): StyleClipboard {
 
     const extraKeyValues: string[] = getSpecialBoxValues(item)
 
-    let itemKeys = getItemKeys()
+    let itemKeys = getItemKeys(true)
     let newStyles: any = getStyles(style)
 
     // remove any item keys (used for other items than textbox)
@@ -80,7 +80,7 @@ export function getFilterStyle(): StyleClipboard {
 // PASTE //
 
 export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) {
-    const itemKeys = getItemKeys()
+    const itemKeys = getItemKeys(true)
 
     slides.forEach(updateSlideStyle)
 
@@ -247,7 +247,8 @@ export function setFilterStyle(style: StyleClipboard, indexes: number[]) {
 
 /////
 
-export function getItemKeys() {
+const itemAndBoxKeys = ["background-color"]
+export function getItemKeys(isBox: boolean = false) {
     // replace just item style or just box style if not textbox
     let itemKeys: string[] = []
 
@@ -256,6 +257,7 @@ export function getItemKeys() {
         // WIP transform not working with this
     })
 
+    if (isBox) itemKeys = itemKeys.filter((a) => !itemAndBoxKeys.includes(a))
     return itemKeys
 }
 

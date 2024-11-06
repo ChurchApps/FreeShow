@@ -148,5 +148,8 @@
     }
     .table p span:not(.title) {
         opacity: 0.8;
+
+        overflow: hidden;
+        direction: rtl;
     }
 </style>

@@ -1,13 +1,39 @@
 <script lang="ts">
     import { io } from "socket.io-client"
     import Icon from "./helpers/Icon.svelte"
+
     let socket = io()
 
     console.log(socket)
 
-    // socket.on("connect", () => {
-    //   id = socket.id
-    // })
+    let outputId: string = ""
+
+    socket.on("connect", () => {
+        // id = socket.id
+        socket.emit("CONTROLLER", { channel: "GET_OUTPUT_ID" })
+    })
+
+    let thumbnailBackground: string = ""
+
+    socket.on("CONTROLLER", (msg) => {
+        if (msg.channel !== "OUTPUT_FRAME") console.log("MESSAGE:", msg)
+        switch (msg.channel) {
+            case "OUTPUT_FRAME":
+                thumbnailBackground = msg.data.frame || ""
+                break
+            case "GET_OUTPUT_ID":
+                outputId = msg.data
+                break
+        }
+    })
+
+    let thumbnailInterval: any = null
+    $: if (draw) thumbnailInterval = setInterval(requestThumbnail, 800)
+    else if (thumbnailInterval) clearInterval(thumbnailInterval)
+    function requestThumbnail() {
+        if (!outputId) return
+        socket.emit("CONTROLLER", { channel: "OUTPUT_FRAME", data: { outputId } })
+    }
 
     function sendAction(id: string) {
         socket.emit("CONTROLLER", { channel: "ACTION", data: { id } })
@@ -74,7 +100,14 @@
             {/each}
         </select>
 
-        <div bind:this={padElem} class="pad" on:mousedown={mousedown} on:touchstart={mousedown} />
+        <div bind:this={padElem} class="pad" on:mousedown={mousedown} on:touchstart={mousedown}>
+            {#if thumbnailBackground}
+                <div class="thumbnail">
+                    <!-- object-fit: {thumbnailBackground.mediaStyle?.fit || 'contain'}; -->
+                    <img src={thumbnailBackground} alt="" style="width: 100%;height: 100%;object-fit: fill;opacity: 0.5;" />
+                </div>
+            {/if}
+        </div>
 
         {#if tool === "Paint"}
             <button on:click={() => sendAction("clear_painting")} title="Clear painting">
@@ -201,6 +234,18 @@
         border-radius: 5px;
         background-color: var(--primary-darkest);
         touch-action: none;
+        align-self: center;
+
+        position: relative;
+    }
+
+    .thumbnail {
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
     }
 
     /* controller */
@@ -216,10 +261,16 @@
         border-radius: 50%;
         overflow: hidden;
     }
-    @media only screen and (min-width: 600px) {
+    @media only screen and (min-width: 800px) {
         .controller {
-            height: 80vh;
-            width: 80vh;
+            height: 70vh;
+            width: 70vh;
+        }
+    }
+    @media only screen and (min-width: 620px) {
+        .pad {
+            height: 55vh;
+            width: 55vh;
         }
     }
 

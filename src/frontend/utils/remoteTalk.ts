@@ -151,11 +151,11 @@ export const receiveREMOTE: any = {
 let oldOutSlide = ""
 export function initializeRemote(id: string) {
     console.log(id)
-    window.api.send(REMOTE, { channel: "ACCESS" })
+    send(REMOTE, ["ACCESS"])
 
     sendData(REMOTE, { channel: "PROJECTS", data: removeDeleted(keysToID(get(projects))) })
-    window.api.send(REMOTE, { channel: "FOLDERS", data: { folders: get(folders), opened: get(openedFolders) } })
-    window.api.send(REMOTE, { channel: "PROJECT", data: get(activeProject) })
+    send(REMOTE, ["FOLDERS"], { folders: get(folders), opened: get(openedFolders) })
+    send(REMOTE, ["PROJECT"], get(activeProject))
 
     let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
     let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
@@ -164,7 +164,7 @@ export function initializeRemote(id: string) {
         oldOutSlide = out.slide.id
         out.show = get(showsCache)[oldOutSlide]
     }
-    window.api.send(REMOTE, { channel: "OUT", data: out })
+    send(REMOTE, ["OUT"], out)
 }
 
 export async function convertBackgrounds(show) {

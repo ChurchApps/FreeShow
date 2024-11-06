@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
-    import { send } from "../../../utils/request"
+    import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { getThumbnailPath, isMediaExtension, mediaSize } from "../../helpers/media"
     import Card from "../Card.svelte"
@@ -17,10 +17,9 @@
     let fileCount: number = 0
 
     let listenerId = uid()
+    // WIP this creates one listener per individual folder...
     $: if (folderPreview && mode === "grid" && path) send(MAIN, ["READ_FOLDER"], { path, disableThumbnails: true })
-    onDestroy(() => {
-        window.api.removeListener(READ_FOLDER, listenerId)
-    })
+    onDestroy(() => destroy(READ_FOLDER, listenerId))
 
     window.api.receive(READ_FOLDER, receiveContent, listenerId)
     function receiveContent(msg) {

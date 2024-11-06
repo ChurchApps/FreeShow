@@ -67,7 +67,7 @@ export function getGroupName({ show, showId }: { show: Show; showId: string }, s
     let name = groupName
     if (name === null) return name // child slide
 
-    if (!name.length) name = "—"
+    if (!name?.length) name = "—"
     if (!get(groupNumbers)) return name
 
     // sort by order when just one layout

@@ -65,6 +65,10 @@ export class CaptureHelper {
         })
     }
 
+    static async captureBase64Frame(window: BrowserWindow) {
+        return (await window.capturePage()).toDataURL({ scaleFactor: 0.5 })
+    }
+
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
         if (initialSize.width / initialSize.height >= newSize.width / newSize.height) image = image.resize({ width: newSize.width })
         else image = image.resize({ height: newSize.height })

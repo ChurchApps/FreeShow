@@ -258,7 +258,7 @@
                             show.password ? (input = show) : (showRef = { id: show.id })
                         }}
                     >
-                        {show.name}
+                        {show.name || "—"}
                         {#if show.password}
                             <Icon id="locked" style="padding-left: 10px;" />
                         {/if}
@@ -280,7 +280,7 @@
     <Slide {show} {slides} socketId={id} {socket} {stream} {background} />
     {#if clicked}
         <div class="clicked">
-            <h5 style="text-align: center;">{show.name}</h5>
+            <h5 style="text-align: center;">{show.name || "—"}</h5>
             <div style="display: flex;gap: 10px;">
                 <Button
                     on:click={() => {

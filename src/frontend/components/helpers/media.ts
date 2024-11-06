@@ -270,7 +270,7 @@ function getThumbnailId(data: any) {
 
 // convert path to base64
 export async function getBase64Path(path: string, size: number = mediaSize.big) {
-    if (!path || !mediaExtensions.includes(path)) return ""
+    if (!path || !mediaExtensions.includes(getExtension(path))) return ""
 
     // online media (e.g. Pixabay/Unsplash)
     if (path.includes("http") || path.includes("data:")) return path

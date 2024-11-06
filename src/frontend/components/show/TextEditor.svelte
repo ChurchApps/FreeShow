@@ -2,6 +2,7 @@
     import type { Item } from "../../../types/Show"
     import { getQuickExample } from "../../converters/txt"
     import { slidesOptions } from "../../stores"
+    import { clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import { formatText, getTextboxes } from "./formatTextEditor"
     import Notes from "./tools/Notes.svelte"
@@ -52,7 +53,7 @@
         let text = ""
         let plainText = ""
         // let selectedItem: Item = getFirstNormalTextbox(items)
-        let selectedItems: Item[] = getTextboxes(items).reverse()
+        let selectedItems: Item[] = getTextboxes(clone(items)).reverse()
 
         if (!selectedItems.length) return { text, plainText, hasTextboxItem: false }
 

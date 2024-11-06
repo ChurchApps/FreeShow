@@ -131,6 +131,8 @@ function changeOutputBackground(data, { output, id, mute }) {
         setTimeout(() => {
             // update stage background if any
             sendBackgroundToStage(id)
+            // send thumbnail to controller
+            // sendBackgroundToController(id)
         }, 100)
     }
 

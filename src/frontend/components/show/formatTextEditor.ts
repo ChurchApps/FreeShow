@@ -15,6 +15,7 @@ export function formatText(e: any) {
 
     let show: Show = clone(_show().get())
     let slides: Slide[] = newSlidesText.map(getSlide)
+    console.log(clone(slides))
 
     // sort oldSlides by their children
     let oldSlideParents: Slide[] = keysToID(show.slides).filter((a) => a.group)
@@ -184,10 +185,12 @@ export function formatText(e: any) {
             if (!textboxItemIndexes.length) {
                 items = [...removeEmptyTextboxes(oldItems), ...newItems]
             } else {
-                textboxItemIndexes.forEach((index) => {
-                    // set to default if text has been removed
-                    items[index] = newItems.splice(index, 1)[0] || clone(defaultItem)
-                })
+                textboxItemIndexes
+                    .sort((a, b) => b - a)
+                    .forEach((index) => {
+                        // set to default if text has been removed
+                        items[index] = newItems.splice(index, 1)[0] || clone(defaultItem)
+                    })
 
                 // new items added
                 if (newItems.length) {

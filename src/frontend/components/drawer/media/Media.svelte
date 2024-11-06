@@ -5,7 +5,7 @@
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
     import { activeDrawerOnlineTab, activeEdit, activeFocus, activePopup, activeShow, dictionary, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
-    import { send } from "../../../utils/request"
+    import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName, sortFilenames } from "../../helpers/array"
@@ -104,7 +104,7 @@
     let filesInFolders: string[] = []
 
     let listenerId = uid()
-    onDestroy(() => window.api.removeListener(READ_FOLDER, listenerId))
+    onDestroy(() => destroy(READ_FOLDER, listenerId))
 
     // receive files
     window.api.receive(READ_FOLDER, receiveContent, listenerId)

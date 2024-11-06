@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { FILE_INFO, MAIN } from "../../../../types/Channels"
     import { activeRecording, activeShow, drawerTabsData } from "../../../stores"
-    import { send } from "../../../utils/request"
+    import { destroy, send } from "../../../utils/request"
     import { formatBytes } from "../../helpers/bytes"
     import { getExtension, getFileName, getMediaInfo, removeExtension, videoExtensions } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
@@ -26,7 +26,7 @@
     }
 
     let listenerId = uid()
-    onDestroy(() => window.api.removeListener(FILE_INFO, listenerId))
+    onDestroy(() => destroy(FILE_INFO, listenerId))
 
     let info: any = {}
     window.api.receive(FILE_INFO, receiveContent, listenerId)

@@ -53,7 +53,7 @@
         // dB = max + min - dB
         let percentage = (dB - min) / (max - min)
         percentage = 1 - percentage
-        console.log(dB, percentage, transformRange(percentage))
+        // console.log(dB, percentage, transformRange(percentage))
         return transformRange(percentage) * 100
 
         // const percentage = 1 - transformRange(percentage)

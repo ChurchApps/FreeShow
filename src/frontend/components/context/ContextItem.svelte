@@ -187,10 +187,10 @@
         menuClick(id, enabled, menu, contextElem, actionItem, sel)
 
         // don't hide context menu
-        const format = ["uppercase", "lowercase", "capitalize", "trim"]
-        if (format.includes(id)) return
-        const keepOpen = ["enabled_drawer_tabs", "tags", "bind_to", "item_bind_to"]
-        if (keepOpen.includes(id)) {
+        const keepOpen = ["uppercase", "lowercase", "capitalize", "trim"] // "dynamic_values" (caret position is lost)
+        if (keepOpen.includes(id)) return
+        const keepOpenToggle = ["enabled_drawer_tabs", "tags", "bind_slide", "bind_item"]
+        if (keepOpenToggle.includes(id)) {
             enabled = !enabled
             return
         }

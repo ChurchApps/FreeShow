@@ -1,7 +1,8 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Item } from "../../types/Show"
+import type { Item, Line } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
+import { isChordLine, parseChordLine } from "../components/edit/scripts/chords"
 import { clone } from "../components/helpers/array"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary } from "../stores"
@@ -59,7 +60,6 @@ export function convertQuelea(data: any) {
         let show = new ShowObj(false, categoryId, layoutID)
         show.name = checkName(song.title)
 
-        console.log(song.title, song)
         let { slides, layout }: any = createSlides(song)
 
         show.meta = {
@@ -103,7 +103,7 @@ function createSlides(song: Song) {
         let items: Item[] = [
             {
                 style: "left:50px;top:120px;width:1820px;height:840px;",
-                lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text }] })),
+                lines: parseLines(lines),
             },
         ]
 
@@ -113,7 +113,7 @@ function createSlides(song: Song) {
             let lines = (lyrics[slideIndex] || "").split("\n").filter(Boolean)
             tItems.push(clone(items[0]))
             tItems[tItems.length - 1].language = name
-            tItems[tItems.length - 1].lines = lines.map((text: any) => ({ align: "", text: [{ style: "", value: text }] }))
+            tItems[tItems.length - 1].lines = parseLines(lines)
         })
 
         items = [...tItems, ...items]
@@ -132,4 +132,29 @@ function createSlides(song: Song) {
     })
 
     return { slides, layout }
+}
+
+// CHORDS
+
+function parseLines(lines: string[]) {
+    let newLines: any[] = []
+    let chords: string = ""
+
+    lines.forEach((text: any) => {
+        if (isChordLine(text)) {
+            chords = text
+            return
+        }
+
+        let line: Line = { align: "", text: [{ style: "", value: text }] }
+
+        if (chords) {
+            line.chords = parseChordLine(chords)
+            chords = ""
+        }
+
+        newLines.push(line)
+    })
+
+    return newLines
 }

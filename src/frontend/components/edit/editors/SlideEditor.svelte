@@ -299,7 +299,7 @@
         {/if}
     </div>
 
-    {#if !$focusMode}
+    {#if !$focusMode && Slide}
         <div class="actions" style="width: 100%;gap: 10px;">
             <div class="leftActions">
                 {#if chordsMode}
