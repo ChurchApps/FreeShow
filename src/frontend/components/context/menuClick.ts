@@ -152,6 +152,16 @@ const actions: any = {
     remove: (obj: any) => {
         if (deleteAction(obj.sel)) return
 
+        if (obj.contextElem.classList.contains("#slide_recorder_item")) {
+            const index = obj.contextElem.id.slice(1)
+            const activeLayout = _show().get("settings.activeLayout")
+            let layout = clone(_show().get("layouts")[activeLayout] || {})
+            layout.recording?.[0].sequence.splice(index, 1)
+
+            history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: get(activeShow)!.id }, location: { page: "show", id: "show_layout" } })
+            return
+        }
+
         console.error("COULD NOT REMOVE", obj)
     },
     recolor: () => {

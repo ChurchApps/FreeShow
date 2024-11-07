@@ -7,7 +7,7 @@
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { removeDuplicates, sortByName } from "../../helpers/array"
+    import { clone, removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getMediaStyle } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -69,6 +69,20 @@
 
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
+        // create first slide reference
+        if ($scriptureSettings.firstSlideReference) {
+            const slideClone = clone(slides[0])
+            slides.forEach((a) => a.splice(a.length - 1, 1))
+            // get verse text for correct styling
+            const metaStyle = slideClone.at(-2)
+            if (metaStyle) slides = [[metaStyle], ...slides]
+            // only keep one line/text item (not verse number)
+            slides[0][0].lines = [slides[0][0].lines![0]]
+            slides[0][0].lines![0].text = [slides[0][0].lines![0].text[1] || slides[0][0].lines![0].text[0]]
+            // set verse text to reference
+            slides[0][0].lines![0].text[0].value = slideClone.at(-1)?.lines?.[0].text?.[0].value || ""
+        }
+
         let slides2: any = {}
         let layouts: any[] = []
         const referenceDivider = $scriptureSettings.referenceDivider || ":"
@@ -77,8 +91,10 @@
 
             // get verse reference
             let v = $scriptureSettings.versesPerSlide
+            if ($scriptureSettings.firstSlideReference) i--
             let range: any[] = sorted.slice((i + 1) * v - v, (i + 1) * v)
             let scriptureRef = books + " " + bibles[0].chapter + referenceDivider + joinRange(range)
+            if (i === -1) scriptureRef = "—"
 
             slides2[id] = { group: scriptureRef || "", color: null, settings: {}, notes: "", items }
             let l: any = { id }
@@ -318,7 +334,7 @@
                 <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
             </div>
         </CombinedInput>
-        {#if $scriptureSettings.showVerse && sorted.length > 1}
+        {#if $scriptureSettings.showVerse && !$scriptureSettings.firstSlideReference && sorted.length > 1}
             <CombinedInput textWidth={70}>
                 <p><T id="scripture.split_reference" /></p>
                 <div class="alignRight">
@@ -340,17 +356,28 @@
         {/if}
 
         {#if $scriptureSettings.showVersion || $scriptureSettings.showVerse}
-            <CombinedInput textWidth={70}>
-                <p><T id="scripture.combine_with_text" /></p>
-                <div class="alignRight">
-                    <Checkbox id="combineWithText" checked={$scriptureSettings.combineWithText} on:change={checked} />
-                </div>
-            </CombinedInput>
-            {#if $scriptureSettings.combineWithText}
+            {#if !$scriptureSettings.firstSlideReference}
                 <CombinedInput textWidth={70}>
-                    <p><T id="scripture.reference_at_bottom" /></p>
+                    <p><T id="scripture.combine_with_text" /></p>
                     <div class="alignRight">
-                        <Checkbox id="referenceAtBottom" checked={$scriptureSettings.referenceAtBottom} on:change={checked} />
+                        <Checkbox id="combineWithText" checked={$scriptureSettings.combineWithText} on:change={checked} />
+                    </div>
+                </CombinedInput>
+                {#if $scriptureSettings.combineWithText}
+                    <CombinedInput textWidth={70}>
+                        <p><T id="scripture.reference_at_bottom" /></p>
+                        <div class="alignRight">
+                            <Checkbox id="referenceAtBottom" checked={$scriptureSettings.referenceAtBottom} on:change={checked} />
+                        </div>
+                    </CombinedInput>
+                {/if}
+            {/if}
+
+            {#if !$scriptureSettings.combineWithText}
+                <CombinedInput textWidth={70}>
+                    <p><T id="scripture.first_slide_reference" /></p>
+                    <div class="alignRight">
+                        <Checkbox id="firstSlideReference" checked={$scriptureSettings.firstSlideReference} on:change={checked} />
                     </div>
                 </CombinedInput>
             {/if}

@@ -187,6 +187,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "delete_all"
     show_media: ["preview", "play_no_filters", "SEPERATOR", "edit", "SEPERATOR", "system_open"],
     show_audio: ["preview", "SEPERATOR", "system_open"],
+    slide_recorder_item: ["remove"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!

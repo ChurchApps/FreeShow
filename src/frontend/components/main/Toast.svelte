@@ -9,7 +9,19 @@
     const toastDuration = 4000 // ms
     let currentTimer: any = null
 
+    const clearEarly = [
+        { if: "$toast.saving", when: "$toast.saved" },
+        { if: "$toast.recording_started", when: "$toast.recording_stopped" },
+    ]
+
     function startTimer() {
+        // clear some early
+        if (clearEarly.find((c) => messages[0] === c.if && messages.find((a) => a === c.when))) {
+            clearTimeout(currentTimer)
+            currentTimer = null
+            removeCurrent()
+        }
+
         if (currentTimer) return
         currentTimer = setTimeout(() => {
             currentTimer = null

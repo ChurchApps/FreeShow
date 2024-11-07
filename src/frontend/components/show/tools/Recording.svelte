@@ -177,7 +177,7 @@
 
         <div class="sequence">
             {#each recordingData.sequence as action, i}
-                <div class="row">
+                <div id={"#" + i} class="row context #slide_recorder_item">
                     <p>
                         <span style="opacity: 0.5;padding-right: 3px;min-width: 22px;display: inline-block;">{i + 1}</span>
                         <span style={action.time || i === recordingData.sequence.length - 1 ? "" : "opacity: 0.4;"}>{groupName(action.slideRef)}</span>
@@ -225,10 +225,14 @@
 
 {#if recordingData}
     <div class="bottom">
-        <Button style="width: 100%;" on:click={deleteRecording} dark center>
-            <Icon id="delete" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="recording.remove" />{/if}
-        </Button>
+        {#if recordingPlaying}
+            <!-- WIP continue recording... -->
+        {:else}
+            <Button style="width: 100%;" on:click={deleteRecording} dark center>
+                <Icon id="delete" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="recording.remove" />{/if}
+            </Button>
+        {/if}
     </div>
 {/if}
 

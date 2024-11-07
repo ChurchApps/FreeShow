@@ -139,17 +139,19 @@ export function keydown(e: any) {
             return
         }
 
+        const key = e.key === "Z" ? e.key : e.key.toLowerCase()
+
         // use default input shortcuts on supported devices
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
         const macShortcutDebug = false
-        if ((e.key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && get(os).platform !== "darwin" && !macShortcutDebug)) {
+        if ((key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(key) && get(os).platform !== "darwin" && !macShortcutDebug)) {
             return
         }
 
         const preventDefaults = ["z", "Z", "y"]
-        if (ctrlKeys[e.key]) {
-            ctrlKeys[e.key](e)
-            if (preventDefaults.includes(e.key) || macShortcutDebug) {
+        if (ctrlKeys[key]) {
+            ctrlKeys[key](e)
+            if (preventDefaults.includes(key) || macShortcutDebug) {
                 e.preventDefault()
                 if (get(activePage) === "edit") refreshEditSlide.set(true)
             }
