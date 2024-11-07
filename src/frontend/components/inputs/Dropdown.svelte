@@ -65,7 +65,7 @@
 />
 
 <div class:disabled class:center class:flags bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
-    <button {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
+    <button style={arrow ? "justify-content: center;" : ""} {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
         {#if arrow}
             <Icon id="expand" size={1.2} white />
         {:else}

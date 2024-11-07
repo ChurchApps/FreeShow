@@ -2,10 +2,11 @@
     import { createEventDispatcher, onMount } from "svelte"
     import { slide } from "svelte/transition"
     import { MAIN } from "../../../types/Channels"
-    import { systemFonts } from "../../stores"
-    import { awaitRequest } from "../../utils/request"
+    import { dictionary, fontData, systemFonts } from "../../stores"
+    import { awaitRequest, send } from "../../utils/request"
     import { formatSearch } from "../../utils/search"
     import { removeDuplicates } from "../helpers/array"
+    import Dropdown from "./Dropdown.svelte"
 
     export let system: boolean = false
 
@@ -20,16 +21,18 @@
         // "sans-serif",
     ]
 
-    onMount(async () => {
+    onMount(() => {
         if ($systemFonts.length) addFonts($systemFonts)
-        else {
-            let fonts: string[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
-            if (!fonts) return
-
-            systemFonts.set(fonts)
-            addFonts(fonts)
-        }
+        else loadSystemFonts()
     })
+    $: if (active && !$systemFonts.length) loadSystemFonts()
+    async function loadSystemFonts() {
+        let fonts: string[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
+        if (!fonts) return
+
+        systemFonts.set(fonts)
+        addFonts(fonts)
+    }
 
     function addFonts(newFonts: string[]) {
         // join and remove duplicates
@@ -41,6 +44,8 @@
     }
 
     export let value: string
+    export let style: string = ""
+
     let active: boolean = false
     let self: HTMLDivElement
 
@@ -94,6 +99,18 @@
             if (firstMatch) scrollToActive(firstMatch)
         }
     }
+
+    // FONT STYLE
+
+    // WIP load into CSS
+    // WIP get all different font variants
+
+    $: if (value && !$fontData[value]) send(MAIN, ["GET_FONT_DATA"], { font: value })
+
+    // const commonStyles = ["regular", "bold", "italic", "boldItalic"]
+    $: fontMetadata = $fontData[value] || [] // .filter((a) => !commonStyles.includes(a.style))
+
+    $: fontDataOptions = ($fontData[value] || []).map((a) => ({ name: a.style, id: a.style }))
 </script>
 
 <svelte:window
@@ -109,6 +126,22 @@
     <button style="font-family: {value};" on:click={() => (active = !active)} on:wheel={wheel}>
         <p>{value || "—"}</p>
     </button>
+
+    <!-- FONT STYLE -->
+    <!-- WIP custom font-family preview -->
+    {#if fontMetadata.length > 1}
+        <Dropdown
+            arrow
+            style="min-width: 40px !important;"
+            value={style || "regular"}
+            options={fontDataOptions}
+            title={$dictionary.settings?.font_style}
+            on:click={(e) => {
+                dispatch("style", e.detail?.id)
+            }}
+        />
+    {/if}
+
     {#if active}
         <div class="dropdown" transition:slide={{ duration: 200 }}>
             {#each fonts as font}
@@ -135,6 +168,13 @@
     .dropdownElem {
         position: relative;
         /* display: grid; */
+
+        display: flex;
+    }
+
+    .dropdownElem :global(.arrow) {
+        width: 130px !important;
+        text-transform: capitalize;
     }
 
     div {

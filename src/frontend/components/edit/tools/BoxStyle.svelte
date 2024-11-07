@@ -124,6 +124,7 @@
 
     // WIP shouldn't have fixed values
     $: if (id === "text" && box?.edit?.default) {
+        box.edit.default[0].styleValue = styles["font-variant"] || ""
         box.edit.default[4].hidden = !item?.auto
     }
     $: if (id === "text" && box?.edit?.style) {
@@ -167,6 +168,8 @@
             box.edit.default[5].hidden = !item?.events?.enableStartDate
         }
     }
+
+    // $: fontMetadata = $fontData[styles["font-family"]] || []
 
     function getMirrorValues() {
         if (!item?.mirror || !box) return

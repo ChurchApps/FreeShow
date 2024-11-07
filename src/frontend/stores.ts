@@ -111,6 +111,7 @@ export const quickTextCache: Writable<string> = writable("")
 export const loadedMediaThumbnails: Writable<{ [key: string]: string }> = writable({})
 export const tempPath: Writable<string> = writable("")
 export const scriptureHistory: Writable<any[]> = writable([])
+export const fontData: Writable<any> = writable({})
 
 // EDIT
 export const editHistory: Writable<any[]> = writable([])
