@@ -1029,7 +1029,7 @@
         "language": "语言",
         "autosave": "自动保存",
         "never": "从不",
-        "minutes": "分组",
+        "minutes": "分钟",
         "use24hClock": "显示24小时制时间",
         "styles_hint": "创建不同的样式，应用于输出以改变外观。",
         "hide_output_hint": "双击输出窗口可隐藏。按住 Ctrl 键可拖动。",
