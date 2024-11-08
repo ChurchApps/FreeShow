@@ -923,6 +923,7 @@
         "to_event": "Time until event",
         "counter": "Countdown",
         "time": "Time",
+        "minutes": "Minutes",
         "seconds": "Seconds",
         "from": "From",
         "to": "To",

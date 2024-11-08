@@ -17,8 +17,8 @@ export const receiveCONTROLLER = {
     },
     FOCUS: ({ data }) => {
         if (!data.offset) {
-            console.log(data)
             draw.set(null)
+            if (data.tool !== undefined) drawTool.set(data.tool || "focus")
             return
         }
 

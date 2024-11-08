@@ -5,6 +5,7 @@
     export let timeout: number = 0
     export let smoothTimeout: number = 800
     export let offset: number = -1
+    export let disabled: boolean = false
 
     let behaviour: string = ""
     setTimeout(() => (behaviour = "scroll-behavior: smooth;"), smoothTimeout)
@@ -13,7 +14,7 @@
     let st: any = null
     $: if (offset >= 0) scroll(0)
     function scroll(index) {
-        if (t !== null) return
+        if (t !== null || disabled) return
 
         let elem = scrollElem
         if (!elem) return

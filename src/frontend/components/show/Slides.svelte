@@ -68,6 +68,7 @@
         }, 500)
     }
 
+    let disableAutoScroll: boolean = false
     function slideClick(e: any, index: number) {
         // TODO: duplicate function of "preview:126 - updateOut"
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
@@ -83,6 +84,14 @@
 
         // force update output if index is the same as previous
         if (activeSlides[index]) refreshOut()
+
+        // don't auto scroll if clicking with mouse!
+        disableAutoScroll = true
+        if (nextScrollTimeout) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+            disableAutoScroll = false
+        }, 500)
     }
 
     // disable slides that is after end (only visual)
@@ -341,7 +350,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
-<Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}

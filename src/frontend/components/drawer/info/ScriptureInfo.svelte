@@ -274,9 +274,9 @@
 
     <!-- settings -->
     <div class="settings">
-        <CombinedInput textWidth={70}>
+        <CombinedInput>
             <p><T id="info.template" /></p>
-            <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} style="width: 30%;" />
+            <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} />
         </CombinedInput>
 
         {#if $scriptureSettings.versesPerSlide != 3 || sorted.length > 1}
@@ -413,8 +413,8 @@
     }
 
     .settings :global(.dropdown) {
-        position: absolute;
-        width: 250% !important;
-        transform: translateX(-60%);
+        /* position: absolute; */
+        width: 160%;
+        right: 0;
     }
 </style>

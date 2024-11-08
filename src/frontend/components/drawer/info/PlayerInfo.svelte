@@ -72,7 +72,7 @@
         gap: 5px;
     }
     main p:nth-child(even) {
-        background-color: var(--primary-darker);
+        background-color: rgb(0 0 20 / 0.15);
     }
 
     .scroll {

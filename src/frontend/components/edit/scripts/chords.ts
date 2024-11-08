@@ -160,6 +160,7 @@ export function loadChords(item: Item) {
 
 // get a list of unique chords used in a slide
 export function getUsedChords(slide: Slide) {
+    if (!slide?.items?.length) return []
     let itemChords = slide.items.reduce((value: string[], item) => (value = [...value, ...loadChords(item)]), [])
     return [...new Set(itemChords)].sort((a, b) => a?.localeCompare(b))
 }

@@ -588,6 +588,11 @@
         min-width: 50% !important;
     }
 
+    div :global(.dropdown) {
+        width: 160%;
+        right: 0;
+    }
+
     p {
         width: 100%;
         /* width: 75%; */

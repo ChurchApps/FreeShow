@@ -48,9 +48,12 @@
         if (!mouseDown) return
         mouseDown = false
 
+        let data: any = { offset: null }
+        if (tool === "Zoom") data.tool = null
+
         socket.emit("CONTROLLER", {
             channel: "FOCUS",
-            data: { offset: null },
+            data,
         })
     }
 
@@ -74,7 +77,7 @@
         })
     }
 
-    const tools: string[] = ["Focus", "Pointer", "Particles", "Paint"]
+    const tools: string[] = ["Focus", "Pointer", "Zoom", "Particles", "Paint"]
     let tool = "Focus"
     function changeTool(e: any) {
         tool = e.target.value
