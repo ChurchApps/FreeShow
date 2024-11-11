@@ -25,7 +25,7 @@
 <div class="tabs">
     {#each Object.entries(tabs) as [id, tab]}
         {#if tab.remove !== true && (!tab.overflow || !overflowHidden)}
-            <Button on:click={() => (active = id)} active={active === id} disabled={tab.disabled} title={$dictionary.tooltip?.[id]} style="padding: 0.3em 0.5em;" dark center>
+            <Button on:click={() => (active = id)} active={active === id} disabled={tab.disabled} title={$dictionary.tooltip?.[id]} style="padding: 0.3em 0.5em;{$$props.style || ''}" dark center>
                 <Icon id={tab.icon} />
                 {#if labels}
                     {#key tab.name}

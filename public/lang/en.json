@@ -195,6 +195,7 @@
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
         "pre_fader_volume_meter": "Pre fader volume meter",
+        "mixer": "Mixer",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "tempo": "Tempo",
@@ -684,7 +685,9 @@
         "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",
         "layout_changed": "Layout has changed since last recording!",
         "audio_synced": "Synced with audio!",
-        "start": "Start slide recording"
+        "start": "Start slide recording",
+        "use_duration": "Use duration time",
+        "use_duration_tip": "Use duration time instead of timestamp time"
     },
     "animate": {
         "change": "Change",

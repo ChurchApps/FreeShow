@@ -15,6 +15,9 @@ export function formatSearch(value: string, removeSpaces: boolean = false) {
 export function showSearch(searchValue: string, shows: any) {
     let newShows: ShowList[] = []
 
+    // fix invalid regular expression
+    searchValue = searchValue.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1")
+
     shows.forEach((s: any) => {
         // don't search show if archived
         const isArchived = get(categories)[s.category || ""]?.isArchive
@@ -85,7 +88,15 @@ function calculateContentIncludesScore(cache: string, search: string, noShortWor
     cache = formatSearch(noShortWords ? removeShortWords(cache) : cache, true)
     search = formatSearch(noShortWords ? removeShortWords(search) : search, true)
 
-    const occurrences = (cache.match(new RegExp(search, "g")) || []).length
+    let re
+    try {
+        re = new RegExp(search, "g")
+    } catch (err) {
+        console.error(err)
+        return 0
+    }
+
+    const occurrences = (cache.match(re) || []).length
     const cacheLength = cache.length
 
     // content includes match score, based on occurrences relative to cache length

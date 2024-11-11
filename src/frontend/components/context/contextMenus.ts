@@ -150,6 +150,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     rename: ["rename"],
     close: ["close"],
     output_window: ["close"],
+    input: ["paste"],
 
     // TOP
     output: ["force_output", "SEPERATOR", "align_with_screen", "choose_screen"], // , "SEPERATOR", "edit"

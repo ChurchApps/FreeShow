@@ -122,7 +122,7 @@ const actions: any = {
     history: () => activePopup.set("history"),
     cut: () => cut(),
     copy: () => copy(),
-    paste: () => paste(),
+    paste: (obj: any) => paste(null, {}, obj.contextElem),
     // view
     // help
     docs: () => send(MAIN, ["URL"], "https://freeshow.app/docs"),
