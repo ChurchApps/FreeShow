@@ -117,7 +117,7 @@
     $: if (showId && $special.capitalize_words) capitalizeWords()
     function capitalizeWords() {
         // keep letters and spaces
-        const regEx = /[^a-zA-Z\s]+/
+        // const regEx = /[^a-zA-Z\s]+/
 
         let capitalized = false
         let slides = _show(showId).get("slides") || {}
@@ -149,20 +149,10 @@
                 newWord = newWord.trim().toLowerCase()
                 if (!newWord.length) return
 
-                value = value
-                    .split(" ")
-                    .map((word) => {
-                        if (word.replace(regEx, "").toLowerCase() !== newWord) return word
-
-                        let matching = word.toLowerCase().indexOf(newWord)
-                        if (matching >= 0) {
-                            let capitalized = newWord[0]?.toUpperCase() + word.slice(1)
-                            word = word.slice(0, matching) + capitalized + word.slice(matching + capitalized.length)
-                        }
-
-                        return word
-                    })
-                    .join(" ")
+                const regEx = new RegExp(`\\b${newWord}\\b`, "gi")
+                value = value.replace(regEx, (match) => {
+                    return match === match.toUpperCase() ? match : newWord.charAt(0).toUpperCase() + newWord.slice(1)
+                })
             })
 
             return value

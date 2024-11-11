@@ -65,6 +65,7 @@
         if (prevActive === "online") activeView = "all"
 
         if (active === "online") {
+            // WIP this resets on zoom
             activeView = "image"
 
             prevActive = active

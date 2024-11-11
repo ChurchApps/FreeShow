@@ -136,6 +136,8 @@ export function checkMedia(src: string): Promise<boolean> {
 }
 
 export async function getMediaInfo(path: string) {
+    if (path.includes("http") || path.includes("data:")) return {}
+
     const cachedInfo = get(media)[path]?.info
     if (cachedInfo?.codecs?.length) return cachedInfo
 

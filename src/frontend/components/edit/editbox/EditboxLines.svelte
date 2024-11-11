@@ -681,6 +681,11 @@
         /* line-height: normal; */
     }
 
+    .edit :global(.break span) {
+        /* text transform changes actual text on edit if set to e.g. Uppercase */
+        text-transform: none !important;
+    }
+
     .edit:not(.plain .edit) :global(span) {
         font-size: 100px;
         /* min-height: 100px;

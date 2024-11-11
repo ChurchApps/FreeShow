@@ -22,7 +22,7 @@ export async function loadFromPixabay(query: string = "", video: boolean = false
                 hits = data.hits.map((media) => {
                     let path = media.largeImageURL
                     if (video) path = media.videos.medium.url
-                    return { path, previewUrl: media.previewURL, name: media.tags, extension: getExtension(path), credits: getPixabayCredits(media) }
+                    return { path, previewUrl: video ? media.videos.small.thumbnail : media.previewURL, name: media.tags, extension: getExtension(path), credits: getPixabayCredits(media) }
                 })
 
                 cache[query + video] = hits
