@@ -42,7 +42,6 @@
         "lint": "npm-run-all -s lint:electron lint:svelte",
         "prepublishOnly": "npm-run-all -s test lint",
         "preversion": "npm-run-all -s",
-        "snap": "electron-builder --linux snap"
     },
     "prettier": {
         "trailingComma": "es5",
