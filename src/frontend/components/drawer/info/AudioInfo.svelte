@@ -124,6 +124,8 @@
 <Button style="width: 100%;" on:click={() => (settingsOpened = !settingsOpened)} center dark>
     <Icon id="settings" white={settingsOpened} right />
     <T id="audio.settings" />
+    <!-- <Icon id="options" white={settingsOpened} right />
+    <T id="edit.options" /> -->
 </Button>
 
 <style>
