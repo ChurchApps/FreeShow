@@ -20,7 +20,7 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os, shows } from "./stores"
+    import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
 
     $: page = $activePage
@@ -78,7 +78,7 @@
                         <MediaTools />
                     {:else if $activeEdit.type === "effect"}
                         <EffectTools />
-                    {:else if !$shows[$activeShow?.id || ""]?.locked && !$focusMode}
+                    {:else if !$focusMode}
                         <EditTools />
                     {/if}
                 {:else if page === "draw"}
@@ -140,5 +140,10 @@
         border: none;
         border-right: 2px solid var(--primary-lighter);
         min-width: 50%;
+    }
+
+    .right.row :global(.color .picker) {
+        right: -1px;
+        left: unset;
     }
 </style>

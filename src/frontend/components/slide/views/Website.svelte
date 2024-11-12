@@ -37,6 +37,9 @@
 
     $: if (webview && ratio) setWebpageRatio()
     function setWebpageRatio() {
+        // custom scale does often not work on embeds (Presentations)
+        if (src.includes("embed")) return
+
         // if preview is fullscreen, don't set ratio
         let isFullscreen = (webview.closest(".previewOutput")?.offsetWidth || 0) > 450
         const inverse = isFullscreen ? 100 : Math.round(100 / ratio)

@@ -90,7 +90,7 @@
     let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
-        if (nextScrollTimeout) return
+        if (!edit || nextScrollTimeout) return
         if (!e.target.closest(".stageArea")) return
 
         zoom = Number(Math.max(0.2, Math.min(4, zoom + (e.deltaY < 0 ? -0.1 : 0.1))).toFixed(2))
@@ -105,7 +105,7 @@
     // menu
     let zoomOpened: boolean = false
     function mousedown(e: any) {
-        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
+        if (!edit || e.target.closest(".zoom_container") || e.target.closest("button")) return
 
         zoomOpened = false
     }
@@ -143,7 +143,7 @@
         <T id="settings.connections" />: {Object.keys($connections.STAGE || {}).length}
     </div> -->
 
-    {#if stageShowId}
+    {#if edit && stageShowId}
         <div class="actions" style="width: 100%;gap: 10px;">
             <div class="leftActions"></div>
 
