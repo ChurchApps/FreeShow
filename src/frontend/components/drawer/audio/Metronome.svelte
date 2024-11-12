@@ -26,7 +26,8 @@
 
 <div class="scroll">
     <SelectElem id="metronome" data={{ tempo: values.tempo || 120, beats: values.beats || 4 }} draggable>
-        <Button style="width: 100%;" disabled={$outLocked} center title={paused ? $dictionary.media?.play : $dictionary.media?.pause} on:click={playPause}>
+        <!-- title={paused ? $dictionary.media?.play : $dictionary.media?.pause} -->
+        <Button style="width: 100%;" disabled={$outLocked} center title={$dictionary.audio?.toggle_metronome} on:click={playPause}>
             <Icon id={paused ? "play" : "pause"} white={paused} size={5} />
         </Button>
     </SelectElem>

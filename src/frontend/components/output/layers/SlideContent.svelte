@@ -26,6 +26,8 @@
     let current: any = {}
     let show: boolean = false
 
+    $: filteredItems = currentItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
+
     $: if (currentSlide.items !== undefined || outSlide) updateItems()
     let timeout: any = null
 
@@ -86,7 +88,7 @@
 
 <!-- Updating this with another "store" causes svelte transition bug! -->
 {#key show}
-    {#each currentItems as item}
+    {#each filteredItems as item}
         {#if show}
             <SlideItemTransition
                 {preview}
@@ -103,25 +105,23 @@
                 let:customLines
                 let:customOut
             >
-                {#if !customItem.bindings?.length || customItem.bindings.includes(outputId)}
-                    <Textbox
-                        filter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.filter : ""}
-                        backdropFilter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.["backdrop-filter"] : ""}
-                        key={isKeyOutput}
-                        disableListTransition={mirror}
-                        chords={customItem.chords?.enabled}
-                        animationStyle={animationData.style || {}}
-                        item={customItem}
-                        {ratio}
-                        ref={{ showId: customOut.id, slideId: customSlide.id, id: customSlide.id || "", layoutId: customOut.layout }}
-                        linesStart={customLines?.[currentLineId]?.start}
-                        linesEnd={customLines?.[currentLineId]?.end}
-                        outputStyle={current.currentStyle}
-                        {mirror}
-                        {preview}
-                        slideIndex={customOut.index}
-                    />
-                {/if}
+                <Textbox
+                    filter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.filter : ""}
+                    backdropFilter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.["backdrop-filter"] : ""}
+                    key={isKeyOutput}
+                    disableListTransition={mirror}
+                    chords={customItem.chords?.enabled}
+                    animationStyle={animationData.style || {}}
+                    item={customItem}
+                    {ratio}
+                    ref={{ showId: customOut.id, slideId: customSlide.id, id: customSlide.id || "", layoutId: customOut.layout }}
+                    linesStart={customLines?.[currentLineId]?.start}
+                    linesEnd={customLines?.[currentLineId]?.end}
+                    outputStyle={current.currentStyle}
+                    {mirror}
+                    {preview}
+                    slideIndex={customOut.index}
+                />
             </SlideItemTransition>
         {/if}
     {/each}

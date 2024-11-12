@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, showsCache, slidesOptions, special, styles } from "../../stores"
+    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, styles } from "../../stores"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -68,6 +68,7 @@
         }, 500)
     }
 
+    let disableAutoScroll: boolean = false
     function slideClick(e: any, index: number) {
         // TODO: duplicate function of "preview:126 - updateOut"
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
@@ -83,6 +84,14 @@
 
         // force update output if index is the same as previous
         if (activeSlides[index]) refreshOut()
+
+        // don't auto scroll if clicking with mouse!
+        disableAutoScroll = true
+        if (nextScrollTimeout) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+            disableAutoScroll = false
+        }, 500)
     }
 
     // disable slides that is after end (only visual)
@@ -108,7 +117,7 @@
     $: if (showId && $special.capitalize_words) capitalizeWords()
     function capitalizeWords() {
         // keep letters and spaces
-        const regEx = /[^a-zA-Z\s]+/
+        // const regEx = /[^a-zA-Z\s]+/
 
         let capitalized = false
         let slides = _show(showId).get("slides") || {}
@@ -140,20 +149,10 @@
                 newWord = newWord.trim().toLowerCase()
                 if (!newWord.length) return
 
-                value = value
-                    .split(" ")
-                    .map((word) => {
-                        if (word.replace(regEx, "").toLowerCase() !== newWord) return word
-
-                        let matching = word.toLowerCase().indexOf(newWord)
-                        if (matching >= 0) {
-                            let capitalized = newWord[0]?.toUpperCase() + word.slice(1)
-                            word = word.slice(0, matching) + capitalized + word.slice(matching + capitalized.length)
-                        }
-
-                        return word
-                    })
-                    .join(" ")
+                const regEx = new RegExp(`\\b${newWord}\\b`, "gi")
+                value = value.replace(regEx, (match) => {
+                    return match === match.toUpperCase() ? match : newWord.charAt(0).toUpperCase() + newWord.slice(1)
+                })
             })
 
             return value
@@ -181,7 +180,7 @@
             if (!currentOutput || currentOutput.stageOutput) return
 
             let currentStyle = $styles[currentOutput?.style || ""] || {}
-            let outSlide: any = currentOutput.out?.slide || {}
+            let outSlide: any = currentOutput.out?.slide || $outputSlideCache[a] || {}
 
             if (activeSlides[outSlide.index] || outSlide.id !== showId || outSlide.layout !== activeLayout) return
 
@@ -200,6 +199,7 @@
                 color: $outputs[a].color,
                 line: lineIndex,
                 maxLines,
+                cached: !currentOutput.out?.slide,
             }
         })
     }
@@ -340,7 +340,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
-<Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}

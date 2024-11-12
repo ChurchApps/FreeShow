@@ -11,12 +11,17 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import AudioMix from "../audio/AudioMix.svelte"
     import Metronome from "../audio/Metronome.svelte"
+    import Tabs from "../../main/Tabs.svelte"
+    import type { TabsObj } from "../../../../types/Tabs"
 
-    let openedPage: "default" | "settings" | "metronome" = "default"
-    function togglePage(pageId) {
-        if (openedPage === pageId) openedPage = "default"
-        else openedPage = pageId
+    let tabs: TabsObj = {
+        mixer: { name: "audio.mixer", icon: "options" },
+        metronome: { name: "audio.metronome", icon: "metronome" },
+        // effects: { name: "items.effect", icon: "image" },
     }
+    let active = Object.keys(tabs)[0]
+
+    let settingsOpened: boolean = false
 
     const isChecked = (e: any) => e.target.checked
 
@@ -40,13 +45,13 @@
     // }
 
     // playlist
-    $: active = $drawerTabsData.audio?.activeSubTab || ""
-    $: activePlaylist = $audioPlaylists[active] || null
+    $: activeTab = $drawerTabsData.audio?.activeSubTab || ""
+    $: activePlaylist = $audioPlaylists[activeTab] || null
     $: isPlaylist = !!activePlaylist
 
     // metronome
     $: metronomeActive = !!$playingMetronome
-    $: if (metronomeActive) openedPage = "metronome"
+    $: if (metronomeActive) active = "metronome"
 
     // audio outputs
     let audioOutputs: any[] = []
@@ -66,21 +71,21 @@
 
 <!-- TODO: effects?: https://alemangui.github.io/pizzicato/ -->
 
-{#if openedPage === "settings"}
+{#if settingsOpened}
     <main style="flex: 1;overflow-x: hidden;padding: 10px;">
         <CombinedInput>
             <p title={$dictionary.settings?.audio_fade_duration}><T id="settings.audio_fade_duration" /></p>
             <NumberInput value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
         </CombinedInput>
 
-        <CombinedInput>
+        <CombinedInput textWidth={70}>
             <p title={$dictionary.audio?.mute_when_video_plays}><T id="audio.mute_when_video_plays" /></p>
             <div class="alignRight">
                 <Checkbox checked={$special.muteAudioWhenVideoPlays || false} on:change={(e) => updateSpecial(isChecked(e), "muteAudioWhenVideoPlays")} />
             </div>
         </CombinedInput>
 
-        <CombinedInput>
+        <CombinedInput textWidth={70}>
             <p title={$dictionary.audio?.pre_fader_volume_meter}><T id="audio.pre_fader_volume_meter" /></p>
             <div class="alignRight">
                 <Checkbox checked={$special.preFaderVolumeMeter || false} on:change={(e) => updateSpecial(isChecked(e), "preFaderVolumeMeter")} />
@@ -93,10 +98,11 @@
         </CombinedInput>
 
         {#if isPlaylist}
-            <h5 style="color: var(--secondary);margin-top: 10px;"><T id="audio.playlist_settings" /></h5>
+            <h5 style="border-bottom: 1px solid var(--secondary);margin-top: 10px;"><T id="audio.playlist_settings" /></h5>
+            <!-- <h6><T id="audio.playlist_settings" /></h6> -->
             <CombinedInput>
                 <p><T id="settings.audio_crossfade" /></p>
-                <NumberInput value={activePlaylist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updatePlaylist(active, "crossfade", e.detail)} />
+                <NumberInput value={activePlaylist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updatePlaylist(activeTab, "crossfade", e.detail)} />
             </CombinedInput>
 
             <!-- <CombinedInput>
@@ -105,22 +111,21 @@
             </CombinedInput> -->
         {/if}
     </main>
-{:else if openedPage === "metronome"}
-    <Metronome />
 {:else}
-    <AudioMix />
+    <Tabs {tabs} bind:active style="flex: 1;" />
+
+    {#if active === "metronome"}
+        <Metronome />
+    {:else}
+        <AudioMix />
+    {/if}
 {/if}
 
-<!-- {#if !isPlaylist} -->
-<Button style="width: 100%;" on:click={() => togglePage("metronome")} center dark>
-    <Icon id="metronome" white={openedPage === "metronome"} right />
-    <T id="audio.toggle_metronome" />
-</Button>
-<!-- {/if} -->
-
-<Button style="width: 100%;" on:click={() => togglePage("settings")} center dark>
-    <Icon id="options" white={openedPage === "settings"} right />
+<Button style="width: 100%;" on:click={() => (settingsOpened = !settingsOpened)} center dark>
+    <Icon id="settings" white={settingsOpened} right />
     <T id="audio.settings" />
+    <!-- <Icon id="options" white={settingsOpened} right />
+    <T id="edit.options" /> -->
 </Button>
 
 <style>
@@ -133,4 +138,12 @@
         font-size: 0.8em;
         text-transform: uppercase;
     }
+
+    /* h6 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
+    } */
 </style>

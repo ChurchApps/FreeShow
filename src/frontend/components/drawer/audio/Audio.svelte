@@ -333,6 +333,6 @@
         justify-content: space-between;
     }
     .grid :global(.selectElem:not(.isSelected):nth-child(even)) {
-        background-color: var(--primary-darkest);
+        background-color: rgb(0 0 20 / 0.08);
     }
 </style>

@@ -93,7 +93,7 @@
 
     .label .text {
         width: 100%;
-        margin: 0 20px;
+        margin: 0 15px;
         text-align: center;
         overflow-x: hidden;
         text-overflow: ellipsis;

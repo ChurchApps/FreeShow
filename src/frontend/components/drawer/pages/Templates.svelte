@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { activePopup, activeShow, alertMessage, dictionary, labelsDisabled, mediaOptions, outputs, showsCache, styles, templateCategories, templates } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -12,6 +13,7 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import TemplateSlide from "./TemplateSlide.svelte"
+    import Loader from "../../main/Loader.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -53,11 +55,19 @@
             nextScrollTimeout = null
         }, 500)
     }
+
+    // open drawer tab instantly before content has loaded
+    let preloader: boolean = true
+    onMount(() => setTimeout(() => (preloader = false), 20))
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
     <DropArea id="templates">
-        {#if fullFilteredTemplates.length}
+        {#if preloader && fullFilteredTemplates.length > 10}
+            <Center>
+                <Loader />
+            </Center>
+        {:else if fullFilteredTemplates.length}
             <div class="grid">
                 {#each fullFilteredTemplates as template}
                     <Card

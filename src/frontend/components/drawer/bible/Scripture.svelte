@@ -14,7 +14,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { bookIds, fetchBible, getColorCode, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
+    import { bookIds, fetchBible, formatBibleText, getColorCode, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
 
     export let active: any
     export let bibles: Bible[]
@@ -197,7 +197,7 @@
             return
         }
 
-        if (!msg.content) return
+        if (!msg.content?.[1]) return
 
         scripturesCache.update((a) => {
             a[msg.content[0]] = msg.content[1]
@@ -458,7 +458,8 @@
     }
 
     function mouseup(e: any) {
-        if (e.target.closest(".drawer") || contentSearch.length) return
+        // || contentSearch.length
+        if (e.target.closest(".drawer")) return
         resetContentSearch()
     }
 
@@ -509,9 +510,9 @@
             allBooks.forEach((book, bookIndex) => {
                 book.chapters.forEach((chapter, chapterIndex) => {
                     chapter.verses.forEach((verse) => {
-                        let verseValue = formatText(verse.value || "")
+                        let verseValue = formatText(verse.text || verse.value || "")
                         if (verseValue.includes(searchValue)) {
-                            matches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.value })
+                            matches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value })
                         } else {
                             let wordInSearch = searchValue.split(" ")
                             let matchingWords = wordInSearch.reduce((count, word) => (count += verseValue.includes(word) ? 1 : 0), 0)
@@ -539,10 +540,19 @@
     }
 
     function findBook() {
-        let booksList = books[firstBibleId]?.map((b: any, i: number) => ({ ...b, id: b.id || i })) || []
+        let booksList = books[firstBibleId]?.map((b: any, i: number) => ({ ...b, id: b.id || i, abbr: b.id })) || []
 
         let lowerSearch = searchValue.toLowerCase()
         let splittedSearch = lowerSearch.split(" ")
+
+        // search by abbreviation (id)
+        if (searchValue.endsWith(" ") && splittedSearch.length === 2) {
+            const book = booksList.find((a) => a.abbr && a.abbr.toLowerCase() === splittedSearch[0])
+            if (book) {
+                updateSearchValue(book.name + " ")
+                return book.id
+            }
+        }
 
         // make an array with different combinations of words, starting from first word and adding more words
         splittedSearch.forEach((_, i) => {
@@ -581,7 +591,17 @@
         }
 
         let exactMatch = findMatches.find((a: any) => a.name === searchValues.bookName)
-        if (!exactMatch && findMatches.length !== 1) return ""
+        if (!exactMatch && findMatches.length !== 1) {
+            // autocomplete e.g. "First ..."
+            const firstWordMatch = [...new Set(findMatches.map((a) => a.name.split(" ")[0]))]
+            if (firstWordMatch.length === 1) {
+                updateSearchValue(firstWordMatch[0] + " ")
+                storedSearch = firstWordMatch[0] + " "
+                tempDisableInputs = true
+                setTimeout(() => (tempDisableInputs = false), 400)
+            }
+            return ""
+        }
 
         let matchingBook = exactMatch || findMatches[0]
         searchValues.bookName = matchingBook.name
@@ -681,6 +701,11 @@
     }
 
     function keydown(e: any) {
+        if (e.key === "Escape") {
+            resetContentSearch()
+            return
+        }
+
         if (e.key === "ArrowRight" && document.activeElement?.classList?.contains("search")) {
             if (searchValue.includes(" ") && searchValue.length > 3 && /\d/.test(searchValue) && !searchValue.includes(":")) {
                 searchValue += ":"
@@ -848,11 +873,17 @@
                                 bookId = match.book
                                 chapterId = match.chapter
                                 selectVerse({}, match.verse)
-                                setTimeout(() => playOrClearScripture(true), match.api ? 500 : 10)
+                                setTimeout(
+                                    () => {
+                                        playOrClearScripture(true)
+                                        resetContentSearch()
+                                    },
+                                    match.api ? 500 : 10
+                                )
                             }}
-                            title={match.text.replaceAll("/ ", " ")}
+                            title={formatBibleText(match.text)}
                         >
-                            <span style="width: 250px;text-align: left;color: var(--text);" class="v">{match.reference}</span>{@html match.text.replaceAll("/ ", " ")}
+                            <span style="width: 250px;text-align: left;color: var(--text);" class="v">{match.reference}</span>{@html formatBibleText(match.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
                     {/each}
                 </div>
@@ -872,9 +903,9 @@
                                 selectVerse({}, verse.verse)
                                 setTimeout(() => playOrClearScripture(true), verse.api ? 500 : 10)
                             }}
-                            title={verse.text.replaceAll("/ ", " ")}
+                            title={formatBibleText(verse.text)}
                         >
-                            <span style="width: 250px;text-align: left;color: var(--text);" class="v">{verse.reference}</span>{@html verse.text.replaceAll("/ ", " ")}
+                            <span style="width: 250px;text-align: left;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
                     {/each}
                 </div>
@@ -946,7 +977,8 @@
                                         if (!activeVerses.includes(id)) activeVerses = [id]
                                         updateActiveVerses()
                                     }}
-                                    on:dblclick={() => playOrClearScripture(true)}
+                                    on:dblclick={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? false : playOrClearScripture(true))}
+                                    on:click={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? playOrClearScripture(true) : false)}
                                     class:active={activeVerses.includes(id)}
                                     title={$dictionary.tooltip?.scripture}
                                 >
@@ -1021,11 +1053,12 @@
                                 if (!activeVerses.includes(id)) activeVerses = [id]
                                 updateActiveVerses()
                             }}
-                            on:dblclick={() => playOrClearScripture(true)}
+                            on:dblclick={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? false : playOrClearScripture(true))}
+                            on:click={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? playOrClearScripture(true) : false)}
                             class:active={activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}
                         >
-                            <span class="v">{id}</span>{@html content?.replaceAll("/ ", " ") || ""}
+                            <span class="v">{id}</span>{@html formatBibleText(content.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
                     {/each}
                     {#if bibles[0].copyright || bibles[0].metadata?.copyright}
@@ -1136,12 +1169,12 @@
         background-color: var(--focus);
         outline: none;
     }
-    .main span:hover:not(.active),
+    .main span:hover:not(.active):not(.v),
     .main :global(p):hover:not(.active) {
         background-color: var(--hover);
     }
     .main span:focus,
-    .main span:active:not(.active),
+    .main span:active:not(.active):not(.v),
     .main :global(p):focus,
     .main :global(p):active:not(.active) {
         background-color: var(--focus);

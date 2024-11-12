@@ -122,10 +122,10 @@ const actions: any = {
     history: () => activePopup.set("history"),
     cut: () => cut(),
     copy: () => copy(),
-    paste: () => paste(),
+    paste: (obj: any) => paste(null, {}, obj.contextElem),
     // view
     // help
-    docs: () => window.api.send(MAIN, { channel: "URL", data: "https://freeshow.app/docs" }),
+    docs: () => send(MAIN, ["URL"], "https://freeshow.app/docs"),
     shortcuts: () => activePopup.set("shortcuts"),
     about: () => activePopup.set("about"),
     quick_start_guide: () => guideActive.set(true),
@@ -151,6 +151,16 @@ const actions: any = {
     sort_projects: (obj: any) => sort(obj, "projects"),
     remove: (obj: any) => {
         if (deleteAction(obj.sel)) return
+
+        if (obj.contextElem.classList.contains("#slide_recorder_item")) {
+            const index = obj.contextElem.id.slice(1)
+            const activeLayout = _show().get("settings.activeLayout")
+            let layout = clone(_show().get("layouts")[activeLayout] || {})
+            layout.recording?.[0].sequence.splice(index, 1)
+
+            history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: get(activeShow)!.id }, location: { page: "show", id: "show_layout" } })
+            return
+        }
 
         console.error("COULD NOT REMOVE", obj)
     },
@@ -710,6 +720,7 @@ const actions: any = {
         activeShow.set(showRef)
 
         activePage.set("show")
+        if (get(focusMode)) focusMode.set(false)
     },
     play: (obj: any) => {
         if (obj.sel.id === "midi") {
@@ -882,13 +893,14 @@ const actions: any = {
             return
         }
 
+        if (!obj.contextElem.classList.contains("editItem")) return
+
         let sel = getSelectionRange()
         let lineIndex = sel.findIndex((a) => a?.start !== undefined)
-        console.log(sel, lineIndex)
-        if (lineIndex < 0) return
+        if (lineIndex < 0) lineIndex = 0
 
         let edit = get(activeEdit)
-        let caret = { line: lineIndex || 0, pos: sel[lineIndex].start || 0 }
+        let caret = { line: lineIndex || 0, pos: sel[lineIndex]?.start || 0 }
 
         if (edit.id) {
             if (edit.type === "overlay") {

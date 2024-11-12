@@ -15,6 +15,7 @@ export function formatText(e: any) {
 
     let show: Show = clone(_show().get())
     let slides: Slide[] = newSlidesText.map(getSlide)
+    console.log(clone(slides))
 
     // sort oldSlides by their children
     let oldSlideParents: Slide[] = keysToID(show.slides).filter((a) => a.group)
@@ -184,10 +185,12 @@ export function formatText(e: any) {
             if (!textboxItemIndexes.length) {
                 items = [...removeEmptyTextboxes(oldItems), ...newItems]
             } else {
-                textboxItemIndexes.forEach((index) => {
-                    // set to default if text has been removed
-                    items[index] = newItems.splice(index, 1)[0] || clone(defaultItem)
-                })
+                textboxItemIndexes
+                    .sort((a, b) => b - a)
+                    .forEach((index) => {
+                        // set to default if text has been removed
+                        items[index] = newItems.splice(index, 1)[0] || clone(defaultItem)
+                    })
 
                 // new items added
                 if (newItems.length) {
@@ -242,18 +245,20 @@ function getSlide(slideText): Slide {
 }
 
 export const defaultItem: Item = { type: "text", lines: [], style: "top:120px;left:50px;height:840px;width:1820px;" }
-const textboxRegex = /\[#\d*]/
+const textboxRegex = /\[#(\d+)(?::([^\]]+))?\]/
 export function linesToTextboxes(slideLines: string[]) {
     let items: Item[] = []
     let currentItemIndex: number = 0
 
     slideLines.forEach((line) => {
-        let textboxKey = line.match(textboxRegex)?.[0]
+        let textboxKey = line.match(textboxRegex)
         if (textboxKey) {
-            let keyIndex = textboxKey.slice(textboxKey.indexOf("#") + 1, textboxKey.indexOf("]"))
-            currentItemIndex = Number(keyIndex)
-            // if (textboxKey === "[#1]") currentItemIndex = 0
-            // else currentItemIndex++
+            currentItemIndex = Number(textboxKey[1])
+            let language = textboxKey[2]
+            if (language) {
+                if (!items[currentItemIndex]) items[currentItemIndex] = clone(defaultItem)
+                items[currentItemIndex].language = language
+            }
 
             // add content on current line
             line = line.slice(line.indexOf("]") + 1).trim()
@@ -266,7 +271,7 @@ export function linesToTextboxes(slideLines: string[]) {
         items[currentItemIndex].lines!.push(getLine(lineData.text, lineData.chords))
     })
 
-    return items.filter(Boolean)
+    return items.filter(Boolean).reverse()
 }
 
 function getChords(line: string) {

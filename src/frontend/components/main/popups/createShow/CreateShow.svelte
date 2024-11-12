@@ -209,6 +209,7 @@
         {:else}
             <CombinedInput>
                 <Button on:click={() => (showMore = !showMore)} style="width: 100%;" dark center>
+                    <!-- settings -->
                     <Icon id="options" right white={!$formatNewShow && $special.autoGroups === false} />
                     <T id="edit.options" />
                 </Button>

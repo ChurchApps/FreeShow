@@ -1,13 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeShow, showsCache, special } from "../../../../stores"
+    import { activePopup, activeShow, dictionary, showsCache, special } from "../../../../stores"
     import Icon from "../../../helpers/Icon.svelte"
     import { _show } from "../../../helpers/shows"
     import T from "../../../helpers/T.svelte"
     import Button from "../../../inputs/Button.svelte"
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
     import Dropdown from "../../../inputs/Dropdown.svelte"
-    import { getIsoLanguages, removeAllTranslationsFromShow, translateShow } from "./translation"
+    import { getIsoLanguages, removeTranslationFromShow, translateShow } from "./translation"
+    import { isoLanguages } from "./isoLanguages"
 
     let languageList = getIsoLanguages()
 
@@ -27,9 +28,16 @@
         translatedLangs = translatedLangs
     }
 
-    function remove() {
-        removeAllTranslationsFromShow(showId)
-        translatedLangs = []
+    function remove(id: string = "") {
+        removeTranslationFromShow(showId, id)
+
+        if (id) {
+            translatedLangs.splice(translatedLangs.indexOf(id), 1)
+            translatedLangs = translatedLangs
+        } else {
+            translatedLangs = []
+            setTimeout(() => activePopup.set(null), 50)
+        }
     }
 
     let showId = $activeShow?.id || ""
@@ -40,7 +48,7 @@
         let activeLayout = currentShow.settings?.activeLayout
         let layoutSlides = currentShow.layouts?.[activeLayout]?.slides
 
-        layoutSlides.find((a) => {
+        layoutSlides.forEach((a) => {
             _show()
                 .slides([a.id])
                 .get("items")
@@ -48,15 +56,14 @@
                 .forEach((a) => {
                     if (a.language) translatedLangs.push(a.language)
                 })
-
-            return translatedLangs.length
         })
 
-        translatedLangs = translatedLangs
+        translatedLangs = [...new Set(translatedLangs)]
+        console.log(translatedLangs)
     })
 </script>
 
-<div>
+<div class="main">
     <CombinedInput textWidth={25}>
         <p><T id="settings.language" /></p>
         <Dropdown flags options={languageList} value={languageList.find((a) => a.id === $special.translationLanguage)?.name || "—"} on:click={updateLanguage} />
@@ -76,8 +83,19 @@
     </CombinedInput>
 
     {#if translatedLangs.length}
+        <div class="list">
+            {#each translatedLangs as lang}
+                <CombinedInput textWidth={85}>
+                    <p>{isoLanguages.find((a) => a.code === lang)?.name || lang}</p>
+                    <Button on:click={() => remove(lang)} title={$dictionary.settings?.remove} center>
+                        <Icon id="close" size={1.3} white />
+                    </Button>
+                </CombinedInput>
+            {/each}
+        </div>
+
         <CombinedInput>
-            <Button style="width: 100%;" on:click={remove} center>
+            <Button style="width: 100%;" on:click={() => remove()} center>
                 <Icon size={1.1} id="close" right />
                 <T id="localization.remove" />
             </Button>
@@ -86,13 +104,20 @@
 </div>
 
 <style>
-    div {
+    .main {
         min-height: 330px;
     }
 
-    div :global(.dropdown span) {
+    .main :global(.dropdown span) {
         line-height: 0;
         display: flex;
         align-items: center;
+    }
+
+    .list {
+        display: flex;
+        flex-direction: column;
+
+        padding-top: 20px;
     }
 </style>

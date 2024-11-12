@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { SettingsTabs } from "../../../types/Tabs"
-    import { settingsTab } from "../../stores"
+    import { activePage, focusMode, settingsTab } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -26,6 +26,13 @@
 
 <svelte:window on:keydown={keydown} />
 
+{#if $focusMode}
+    <Button on:click={() => activePage.set("show")} center dark>
+        <Icon id="back" right />
+        <T id="actions.back" />
+    </Button>
+{/if}
+
 <div class="main">
     {#each tabs as tab}
         <Button id="button" on:click={() => settingsTab.set(tab)} active={$settingsTab === tab} bold={false}>
@@ -36,6 +43,13 @@
 </div>
 
 <style>
+    .main {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: auto;
+    }
+
     .main :global(#button) {
         padding: 0.3em 0.8em;
         width: 100%;

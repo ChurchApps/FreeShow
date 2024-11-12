@@ -30,7 +30,7 @@
     import Editbox from "../edit/editbox/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
-    import { getContrast } from "../helpers/color"
+    import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import { checkMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
@@ -64,8 +64,8 @@
     let ghostBackground: Media | null = null
     let bgIndex: number = -1
     let isFirstGhost: boolean = false
-    // don't show ghost backgrounds if more than 25 slides (because of loading!)
-    $: if (!background && layoutSlides.length < 25) {
+    // don't show ghost backgrounds if more than 50 slides (because of loading!)
+    $: if (!background && layoutSlides.length < 50) {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i > index) return
@@ -285,6 +285,15 @@
         if (layoutSlide["backdrop-filter"]) slideFilter += "backdrop-filter: " + layoutSlide["backdrop-filter"] + ";"
     }
 
+    function getOutputColor(color: string) {
+        if (output?.cached) {
+            let rgb = color.includes("rgb") ? splitRgb(color) : hexToRgb(color)
+            return "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / 0.5);"
+        }
+
+        return color
+    }
+
     $: if ($refreshListBoxes >= 0) {
         setTimeout(() => {
             refreshListBoxes.set(-1)
@@ -295,7 +304,7 @@
     $: itemsList = clone(slide.items) || []
 </script>
 
-<div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || noQuickEdit ? 100 / columns : 100}%;">
+<div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || noQuickEdit ? 100 / columns : 100}%;">
     <!-- group box -->
     {#if $fullColors}
         <div class="group_box" style="background-color: {color};" />
@@ -337,6 +346,7 @@
                     disableStyle={viewMode === "lyrics" && !noQuickEdit}
                     relative={viewMode === "lyrics" && !noQuickEdit}
                 >
+                    <!-- backgrounds -->
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
@@ -345,6 +355,19 @@
                             </div>
                         {/key}
                     {/if}
+
+                    <!-- "underlays" -->
+                    {#if !altKeyPressed && layoutSlide.overlays?.length && (viewMode !== "lyrics" || noQuickEdit)}
+                        {#each layoutSlide.overlays as id}
+                            {#if $overlays[id]?.placeUnderSlide === true}
+                                {#each $overlays[id].items as item}
+                                    <Textbox {item} ref={{ type: "overlay", id }} />
+                                {/each}
+                            {/if}
+                        {/each}
+                    {/if}
+
+                    <!-- text content -->
                     {#if slide.items}
                         {#each itemsList as item, i}
                             {#if item && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
@@ -367,9 +390,11 @@
                             {/if}
                         {/each}
                     {/if}
+
+                    <!-- overlays -->
                     {#if !altKeyPressed && layoutSlide.overlays?.length && (viewMode !== "lyrics" || noQuickEdit)}
                         {#each layoutSlide.overlays as id}
-                            {#if $overlays[id]}
+                            {#if $overlays[id] && !$overlays[id]?.placeUnderSlide}
                                 {#each $overlays[id].items as item}
                                     <Textbox {item} ref={{ type: "overlay", id }} />
                                 {/each}
@@ -382,7 +407,8 @@
                     <!-- Object.values($outputs).find((a) => $styles[a.style || ""]?.lines) -->
                     {#if output?.maxLines}
                         <div class="lineProgress">
-                            <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {output.color};" />
+                            <!-- WIP line custom cleared slide cache color does not work -->
+                            <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {getOutputColor(output.color)};" />
                         </div>
                     {/if}
 
@@ -396,7 +422,7 @@
                         {/if}
                         {#if output?.maxLines}
                             <div class="lineProgress">
-                                <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {output.color};" />
+                                <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {getOutputColor(output.color)};" />
                             </div>
                         {/if}
                         {#if slide.notes && icons}<p class="notes" title={slide.notes}>{slide.notes}</p>{/if}
@@ -586,7 +612,7 @@
 
     .label .text {
         width: 100%;
-        margin: 0 20px;
+        margin: 0 15px;
         text-align: center;
         overflow-x: hidden;
         text-overflow: ellipsis;

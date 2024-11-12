@@ -299,7 +299,7 @@
         {/if}
     </div>
 
-    {#if !$focusMode}
+    {#if !$focusMode && Slide}
         <div class="actions" style="width: 100%;gap: 10px;">
             <div class="leftActions">
                 {#if chordsMode}
@@ -331,7 +331,7 @@
                     <Icon size={1.3} id="zoomIn" white />
                 </Button>
                 {#if zoomOpened}
-                    <div class="zoom_container" transition:slide>
+                    <div class="zoom_container" transition:slide={{ duration: 150 }}>
                         <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
                             <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
                         </Button>

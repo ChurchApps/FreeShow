@@ -12,6 +12,19 @@
     $: projectId = $activeProject || ""
     $: project = $projects[projectId]
 
+    let projectUpdating: any = null
+    $: if (project) initScroll()
+    function initScroll() {
+        if (projectUpdating) clearTimeout(projectUpdating)
+        projectUpdating = setTimeout(() => {
+            if (isScrolling) clearTimeout(isScrolling)
+            isScrolling = null
+            projectUpdating = null
+            // scrollToActive()
+            if ($activeFocus.id) activeFocus.set({ ...active, index: project.shows.findIndex((a) => a.id === active.id) })
+        }, 100)
+    }
+
     let listElem: any = null
     let fromTop: number = 0 // 25px on Windows
 
@@ -19,7 +32,7 @@
     let scrollingToActive: any = null
     $: if (active) scrollToActive()
     function scrollToActive() {
-        if (!listElem || isScrolling) return
+        if (!listElem || isScrolling || projectUpdating) return
 
         let index = active.index
         if (index === undefined) index = project.shows.findIndex((a) => a.id === active.id)
@@ -50,7 +63,7 @@
 
     let isScrolling: any = null
     function scrolling(e: any) {
-        if (scrollingToActive || !listElem) return
+        if (scrollingToActive || !listElem || !project || projectUpdating) return
 
         if (isScrolling) clearTimeout(isScrolling)
         isScrolling = setTimeout(() => {
@@ -95,6 +108,10 @@
                 <FocusItem show={item} />
             {/each}
         </div>
+
+        <!-- scroll to active if list updates -->
+        <!-- <span style="font-size: 0;position: absolute;">{setTimeout(scrollToActive, 100)}</span> -->
+        <span style="font-size: 0;position: absolute;">{console.log("LOADED")}</span>
     {:else}
         <Center faded>
             <T id="empty.general" />

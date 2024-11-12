@@ -15,7 +15,7 @@
         <slot />
     </div>
 {:else}
-    <div class="transitioner" in:custom={inTransition || transition || {}} out:custom={outTransition || transition || {}}>
+    <div class="transitioner" in:custom={inTransition || transition || {}} out:custom={outTransition || transition || {}} on:outrostart>
         <slot />
     </div>
 {/if}

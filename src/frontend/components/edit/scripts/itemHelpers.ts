@@ -77,7 +77,7 @@ export function getEditItems(onlyActive: boolean = false) {
     let selectedItems: number[] = active.items
 
     let editSlide = clone(getEditSlide())
-    if (!editSlide?.items) return []
+    if (!Array.isArray(editSlide?.items)) return []
 
     let editItems = editSlide.items
     if (onlyActive) editItems = editItems.filter((_, i) => selectedItems.includes(i))
@@ -88,6 +88,8 @@ export function getEditItems(onlyActive: boolean = false) {
 // rearrange
 export function rearrangeItems(type: string, startIndex: number = get(activeEdit).items[0]) {
     let items = getEditItems()
+    if (!items?.length) return
+
     let currentItem = items.splice(startIndex, 1)[0]
 
     if (type === "forward") startIndex = Math.min(startIndex + 1, items.length)
@@ -96,6 +98,7 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     else if (type === "to_back") startIndex = 0
 
     items = [...items.slice(0, startIndex), currentItem, ...items.slice(startIndex)]
+    if (!items?.length) return
 
     if (!get(activeEdit).id) {
         let ref = _show().layouts("active").ref()[0]

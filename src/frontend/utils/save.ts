@@ -233,7 +233,7 @@ export function initializeClosing() {
 }
 
 export function closeApp() {
-    window.api.send(MAIN, { channel: "CLOSE" })
+    send(MAIN, ["CLOSE"])
 }
 
 // GET SAVED STATE

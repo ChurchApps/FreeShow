@@ -8,6 +8,7 @@ export interface ContextMenuItem {
     shortcuts?: string[]
     enabled?: boolean
     disabled?: boolean
+    external?: boolean
 }
 
 export const contextMenuItems: { [key: string]: ContextMenuItem } = {
@@ -21,7 +22,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     cut: { label: "actions.cut", icon: "cut", shortcuts: ["Ctrl+X"] },
     copy: { label: "actions.copy", icon: "copy", shortcuts: ["Ctrl+C"] },
     paste: { label: "actions.paste", icon: "paste", shortcuts: ["Ctrl+V"] },
-    docs: { label: "main.docs", icon: "document" },
+    docs: { label: "main.docs", icon: "document", external: true },
     quick_start_guide: { label: "guide.start", icon: "guide" },
     focus_mode: { label: "actions.focus_mode", icon: "focus_mode" },
     fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11"] },
@@ -149,6 +150,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     rename: ["rename"],
     close: ["close"],
     output_window: ["close"],
+    input: ["paste"],
 
     // TOP
     output: ["force_output", "SEPERATOR", "align_with_screen", "choose_screen"], // , "SEPERATOR", "edit"
@@ -186,6 +188,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "delete_all"
     show_media: ["preview", "play_no_filters", "SEPERATOR", "edit", "SEPERATOR", "system_open"],
     show_audio: ["preview", "SEPERATOR", "system_open"],
+    slide_recorder_item: ["remove"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!

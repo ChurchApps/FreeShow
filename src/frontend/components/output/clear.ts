@@ -1,14 +1,36 @@
 import { get } from "svelte/store"
-import { activeEdit, activePopup, contextActive, customMessageCredits, lockedOverlays, outLocked, outputCache, outputs, overlays, playingAudio, playingMetronome, selected, slideTimers, topContextActive, videosData, videosTime } from "../../stores"
+import {
+    activeEdit,
+    activePopup,
+    contextActive,
+    customMessageCredits,
+    lockedOverlays,
+    outLocked,
+    outputCache,
+    outputs,
+    outputSlideCache,
+    overlays,
+    playingAudio,
+    playingMetronome,
+    selected,
+    slideTimers,
+    topContextActive,
+    videosData,
+    videosTime,
+} from "../../stores"
 import { clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { clearAudio } from "../helpers/audio"
 import { clone } from "../helpers/array"
 import { customActionActivation } from "../actions/actions"
 import { stopSlideRecording } from "../helpers/slideRecording"
+import { _show } from "../helpers/shows"
 
 export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
     if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length || get(contextActive) || get(topContextActive))) return
+
+    // reset slide cache on Escape
+    outputSlideCache.set({})
 
     let audioCleared = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
     let allCleared = isOutCleared(null) && audioCleared
@@ -17,7 +39,7 @@ export function clearAll(button: boolean = false) {
     storeCache()
 
     clearBackground()
-    clearSlide()
+    clearSlide(true)
     clearOverlays()
     clearAudio()
     clearTimers()
@@ -79,7 +101,29 @@ export function clearBackground(outputId: string = "") {
     customActionActivation("background_cleared")
 }
 
-export function clearSlide() {
+export function clearSlide(clearAll: boolean = false) {
+    if (!clearAll) {
+        // store position
+        let slideCache: any = {}
+        let outputIds: string[] = getActiveOutputs()
+        outputIds.forEach((outputId) => {
+            let slide: any = get(outputs)[outputId]?.out?.slide || {}
+            if (!slide.id) return
+
+            // only store if not last slide
+            let layoutRef = _show(slide.id).layouts([slide.layout]).ref()[0] || []
+            if (slide.index >= layoutRef.length - 1) return
+
+            slideCache[outputId] = slide
+        })
+        if (Object.keys(slideCache).length) {
+            outputSlideCache.set(clone(slideCache))
+        }
+
+        // slide gets outlined if not blurred
+        ;(document.activeElement as any)?.blur()
+    }
+
     setOutput("slide", null)
     stopSlideRecording()
     customActionActivation("slide_cleared")

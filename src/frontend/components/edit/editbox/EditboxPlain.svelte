@@ -10,6 +10,7 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { isoLanguages } from "../../main/popups/localization/isoLanguages"
+    import { getStyles } from "../../helpers/style"
 
     export let item: Item
     export let index: number
@@ -64,6 +65,9 @@
             location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: [index], override: "deleteitemaction_" + slideRef.id + "_items_" + index },
         })
     }
+
+    $: styles = getStyles(item.lines?.[0]?.text?.[0]?.style)
+    $: textTransform = !!(styles["text-transform"] && styles["text-transform"] !== "none")
 </script>
 
 <!-- all icons are square, so only corner resizers need to be active -->
@@ -72,9 +76,18 @@
 <div class="actions">
     <!-- localization -->
     {#if item.language}
-        <div title={isoLanguages.find((a) => a.code === item.language)?.name} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+        <div title={isoLanguages.find((a) => a.code === item.language)?.name || item.language} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="translate" white />
+            </span>
+        </div>
+    {/if}
+
+    <!-- text transform -->
+    {#if textTransform}
+        <div title={$dictionary.edit?.text_transform} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+            <span style="padding: 5px;z-index: 3;font-size: 0;">
+                <Icon id="capitalize" white />
             </span>
         </div>
     {/if}

@@ -22,6 +22,7 @@
         topContextActive,
         undoHistory,
     } from "../../stores"
+    import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -136,6 +137,19 @@
             let id = $selected.data[0]
             if ($overlays[id]?.locked) enabled = true
         },
+        move_to_front: () => {
+            let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput)
+            // WIP check currently selected against the other outputs...
+            if (previewOutputs.length !== 2) {
+                disabled = false
+                return
+            }
+
+            const alwaysOnTopState = [...new Set(previewOutputs.map((out) => out?.alwaysOnTop ?? true))]
+
+            // disable if all outputs have different states!
+            disabled = alwaysOnTopState.length === previewOutputs.length
+        },
         hide_from_preview: () => {
             let outputId = contextElem.id
             if ($outputs[outputId]?.hideFromPreview) enabled = true
@@ -173,10 +187,10 @@
         menuClick(id, enabled, menu, contextElem, actionItem, sel)
 
         // don't hide context menu
-        const format = ["uppercase", "lowercase", "capitalize", "trim"]
-        if (format.includes(id)) return
-        const keepOpen = ["enabled_drawer_tabs", "tags", "bind_to", "item_bind_to"]
-        if (keepOpen.includes(id)) {
+        const keepOpen = ["uppercase", "lowercase", "capitalize", "trim"] // "dynamic_values" (caret position is lost)
+        if (keepOpen.includes(id)) return
+        const keepOpenToggle = ["enabled_drawer_tabs", "tags", "bind_slide", "bind_item"]
+        if (keepOpenToggle.includes(id)) {
             enabled = !enabled
             return
         }
@@ -202,13 +216,18 @@
 <div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
-        {#if menu?.translate === false}
-            <p>{menu?.label}</p>
-        {:else}
-            {#key menu}
-                <p><T id={menu?.label || id} /></p>
-            {/key}
-        {/if}
+        <p style="display: flex;align-items: center;gap: 5px;">
+            {#if menu?.translate === false}
+                {menu?.label}
+            {:else}
+                {#key menu}
+                    <T id={menu?.label || id} />
+                {/key}
+            {/if}
+            {#if menu.external}
+                <Icon id="launch" style="opacity: 0.8;" white />
+            {/if}
+        </p>
     </span>
 
     {#if shortcut}

@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { FILE_INFO, MAIN } from "../../../../types/Channels"
     import { activeRecording, activeShow, drawerTabsData } from "../../../stores"
-    import { send } from "../../../utils/request"
+    import { destroy, send } from "../../../utils/request"
     import { formatBytes } from "../../helpers/bytes"
     import { getExtension, getFileName, getMediaInfo, removeExtension, videoExtensions } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
@@ -12,7 +12,7 @@
     import PlayerInfo from "./PlayerInfo.svelte"
 
     $: name = $activeShow?.name || ""
-    $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http")) {
+    $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http") && !$activeShow?.id.includes("data:")) {
         info = {}
         codecInfo = {}
         send(MAIN, ["FILE_INFO"], $activeShow?.id)
@@ -26,7 +26,7 @@
     }
 
     let listenerId = uid()
-    onDestroy(() => window.api.removeListener(FILE_INFO, listenerId))
+    onDestroy(() => destroy(FILE_INFO, listenerId))
 
     let info: any = {}
     window.api.receive(FILE_INFO, receiveContent, listenerId)
@@ -113,7 +113,7 @@
         gap: 5px;
     }
     main p:nth-child(even) {
-        background-color: var(--primary-darker);
+        background-color: rgb(0 0 20 / 0.15);
     }
 
     .title {
@@ -121,5 +121,8 @@
     }
     main p span:not(.title) {
         opacity: 0.8;
+
+        overflow: hidden;
+        direction: rtl;
     }
 </style>

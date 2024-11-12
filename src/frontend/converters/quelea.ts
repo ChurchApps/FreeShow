@@ -1,6 +1,9 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import type { Item, Line } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
+import { isChordLine, parseChordLine } from "../components/edit/scripts/chords"
+import { clone } from "../components/helpers/array"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary } from "../stores"
 import { createCategory, setTempShows } from "./importHelpers"
@@ -15,8 +18,8 @@ type Song = {
     copyright?: string
     key?: string
     publisher?: string
-    translation?: string
-    translationoptions?: string
+    translation?: any
+    translationoptions?: any
     updateInDB?: "true" | "false"
     year?: string
     notes?: string
@@ -35,11 +38,11 @@ type Lyrics = {
     }[]
 }
 
-export function convertQuela(data: any) {
+export function convertQuelea(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("Quela")
+    let categoryId = createCategory("Quelea")
 
     let tempShows: any[] = []
 
@@ -50,7 +53,7 @@ export function convertQuela(data: any) {
         })
 
         setTempShows(tempShows)
-    })
+    }, 50)
 
     function convertSong(song: Song) {
         let layoutID = uid()
@@ -60,6 +63,7 @@ export function convertQuela(data: any) {
         let { slides, layout }: any = createSlides(song)
 
         show.meta = {
+            title: song.title || "",
             ccli: song.ccli || "",
             copyright: song.copyright || "",
             author: song.author || "",
@@ -83,19 +87,36 @@ function createSlides(song: Song) {
 
     if (!lyrics) return { slides, layout }
 
-    lyrics.forEach((slideLine) => {
-        let lines = slideLine.lyrics.split("\n").filter(Boolean)
+    // translations
+    let translations: any[] = song.translation || []
+    if (!Array.isArray(translations)) translations = [translations]
+    let translationItems: any[] = translations.map(({ name, tlyrics }) => ({ name, lyrics: (tlyrics || "").split("\n\n") }))
+
+    if (!Array.isArray(lyrics)) lyrics = [lyrics]
+    lyrics.forEach((slideLine, slideIndex) => {
+        let lines = (slideLine.lyrics || "").split("\n").filter(Boolean)
         let groupName = slideLine["@title"] || ""
 
         let id: string = uid()
         layout.push({ id })
 
-        let items = [
+        let items: Item[] = [
             {
                 style: "left:50px;top:120px;width:1820px;height:840px;",
-                lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text }] })),
+                lines: parseLines(lines),
             },
         ]
+
+        // custom translations
+        let tItems: Item[] = []
+        translationItems.forEach(({ name, lyrics }) => {
+            let lines = (lyrics[slideIndex] || "").split("\n").filter(Boolean)
+            tItems.push(clone(items[0]))
+            tItems[tItems.length - 1].language = name
+            tItems[tItems.length - 1].lines = parseLines(lines)
+        })
+
+        items = [...tItems, ...items]
 
         slides[id] = {
             group: "",
@@ -111,4 +132,29 @@ function createSlides(song: Song) {
     })
 
     return { slides, layout }
+}
+
+// CHORDS
+
+function parseLines(lines: string[]) {
+    let newLines: any[] = []
+    let chords: string = ""
+
+    lines.forEach((text: any) => {
+        if (isChordLine(text)) {
+            chords = text
+            return
+        }
+
+        let line: Line = { align: "", text: [{ style: "", value: text }] }
+
+        if (chords) {
+            line.chords = parseChordLine(chords)
+            chords = ""
+        }
+
+        newLines.push(line)
+    })
+
+    return newLines
 }

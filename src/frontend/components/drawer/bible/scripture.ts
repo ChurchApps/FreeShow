@@ -166,36 +166,34 @@ export function getSlides({ bibles, sorted }) {
 
             let text: string = bible.verses[s] || ""
 
-            // remove unwanted characters
-            text = text.replaceAll("/ ", " ").replaceAll("*", "")
+            // custom Jesus red to JSON format: !{}!
+            text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
+            text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
 
             // highlight Jesus text
             let textArray: any[] = []
             if (get(scriptureSettings).redJesus) {
                 let jesusWords: any[] = []
-                let jesusStart = text.indexOf('<span class="wj"')
-                if (jesusStart < 0) jesusStart = text.indexOf("<red")
+                let jesusStart = text.indexOf("!{")
 
                 while (jesusStart > -1) {
                     let jesusEnd = 0
-                    let indent = 1
-                    let previousChar = ""
 
-                    text.split("").forEach((letter, i) => {
-                        if (i < jesusStart + 1 || jesusEnd) return
+                    let splitted = text.split("")
+                    splitted.find((letter, i) => {
+                        if (i < jesusStart + 1 || jesusEnd) return false
 
-                        if (letter === "<") indent++
-                        else if (letter === "/" && previousChar === "<") indent -= 2
+                        if (letter === "}" && splitted[i + 1] === "!") {
+                            jesusEnd = i + 2
+                            return true
+                        }
 
-                        if (indent === 0) jesusEnd = i - 1
-
-                        previousChar = letter
+                        return false
                     })
 
                     if (jesusEnd) {
                         jesusWords.push([jesusStart, jesusEnd])
-                        jesusStart = text.indexOf('<span class="wj"', jesusEnd)
-                        if (jesusStart < 0) jesusStart = text.indexOf("<red", jesusEnd)
+                        jesusStart = text.indexOf("!{", jesusEnd)
                     } else {
                         jesusWords.push([jesusStart, text.length])
                         jesusStart = -1
@@ -203,23 +201,23 @@ export function getSlides({ bibles, sorted }) {
                 }
 
                 if (!jesusWords[0]) {
-                    textArray.push({ value: removeTags(text), style: textStyle })
+                    textArray.push({ value: formatBibleText(text), style: textStyle })
                 } else if (jesusWords[0]?.[0] > 0) {
-                    textArray.push({ value: removeTags(text.slice(0, jesusWords[0][0])), style: textStyle })
+                    textArray.push({ value: formatBibleText(text.slice(0, jesusWords[0][0])), style: textStyle })
                 }
 
                 let redText = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
                 jesusWords.forEach(([start, end], i) => {
-                    textArray.push({ value: removeTags(text.slice(start, end)), style: textStyle + redText })
+                    textArray.push({ value: formatBibleText(text.slice(start + 2, end - 2)), style: textStyle + redText, customType: "disableTemplate" })
 
-                    if (i === jesusWords.length - 1) {
-                        let remainingText = removeTags(text.slice(end))
+                    if (!jesusWords[i + 1] || end < jesusWords[i + 1][0]) {
+                        let remainingText = formatBibleText(text.slice(end, jesusWords[i + 1]?.[0] ?? -1))
                         if (remainingText.length) textArray.push({ value: remainingText, style: textStyle })
                     }
                 })
             } else {
                 // WIP bibles with custom html tags?
-                text = removeTags(text)
+                text = formatBibleText(text)
 
                 if (text.charAt(text.length - 1) !== " ") text += " "
 
@@ -233,7 +231,7 @@ export function getSlides({ bibles, sorted }) {
 
             if (bibleIndex + 1 >= bibles.length) {
                 let range: any[] = sorted.slice(i - get(scriptureSettings).versesPerSlide + 1, i + 1)
-                if (get(scriptureSettings).splitReference === false) range = sorted
+                if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
                 addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: bibles.length })
             }
 
@@ -249,7 +247,7 @@ export function getSlides({ bibles, sorted }) {
         if (bibleIndex + 1 >= bibles.length) {
             let remainder = sorted.length % get(scriptureSettings).versesPerSlide
             let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
-            if (get(scriptureSettings).splitReference === false) range = sorted
+            if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
             if (remainder) addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: bibles.length })
         }
 
@@ -275,10 +273,6 @@ export function getSlides({ bibles, sorted }) {
     })
 
     return slides
-
-    function removeTags(text) {
-        return text.replace(/(<([^>]+)>)/gi, "")
-    }
 
     function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
         if (!bibles[0]) return
@@ -319,6 +313,31 @@ export function getSlides({ bibles, sorted }) {
             }
         }
     }
+}
+
+export function formatBibleText(text: string | undefined) {
+    if (!text) return ""
+    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "")
+
+    // function removeTags(text) {
+    //     return text.replace(/(<([^>]+)>)/gi, "")
+    // }
+}
+
+function stripMarkdown(input: string) {
+    input = input.replace(/#\s*(.*?)\s*#/g, "")
+    input = input.replace(/\*\{(.*?)\}\*/g, "$1")
+    input = input.replace(/!\{(.*?)\}!/g, "$1")
+    // input = input.replace(/\[(.*?)\]/g, "[$1]")
+    input = input.replace(/(\*\*|__)(.*?)\1/g, "$2")
+    input = input.replace(/(\*|_)(.*?)\1/g, "$2")
+    input = input.replace(/\+\+(.*?)\+\+/g, "$1")
+    input = input.replace(/~~(.*?)~~/g, "$1")
+    input = input.replace(/"([^"]*?)"/g, "$1")
+    input = input.replace(/\n/g, "")
+    input = input.replace(/¶/g, "")
+
+    return input
 }
 
 // HELPERS

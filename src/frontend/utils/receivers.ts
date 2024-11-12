@@ -103,7 +103,7 @@ import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { convertQuela } from "../converters/quela"
+import { convertQuelea } from "../converters/quelea"
 import { convertEasyslides } from "../converters/easyslides"
 import { loadShows, saveTextCache } from "../components/helpers/setShow"
 
@@ -604,7 +604,7 @@ const receiveIMPORT: any = {
     videopsalm: (a: any) => convertVideopsalm(a),
     openlp: (a: any) => convertOpenLP(a),
     opensong: (a: any) => convertOpenSong(a),
-    quela: (a: any) => convertQuela(a),
+    quelea: (a: any) => convertQuelea(a),
     softprojector: (a: any) => convertSoftProjector(a),
     songbeamer: (a: any) => convertSongbeamerFiles(a),
     easyslides: (a: any) => convertEasyslides(a),

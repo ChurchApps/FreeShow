@@ -1,20 +1,22 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { Recording } from "../../../../types/Show"
-    import { activeSlideRecording, labelsDisabled, outputs, showsCache } from "../../../stores"
+    import { activeSlideRecording, dictionary, labelsDisabled, outputs, showsCache } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs } from "../../helpers/output"
-    import { _show } from "../../helpers/shows"
-    import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
     import { getGroupName } from "../../helpers/show"
-    import { joinTime, secondsToTime } from "../../helpers/time"
+    import { _show } from "../../helpers/shows"
     import { playRecording, stopSlideRecording } from "../../helpers/slideRecording"
-    import { onDestroy } from "svelte"
+    import T from "../../helpers/T.svelte"
+    import { joinTime, secondsToTime } from "../../helpers/time"
+    import Button from "../../inputs/Button.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import NumberInput from "../../inputs/NumberInput.svelte"
 
     export let showId: string
 
@@ -28,6 +30,9 @@
     let recordingData: Recording | null = null
     $: recordingData = showLayout.recording?.[0] || null
 
+    let settingsOpened: boolean = false
+
+    $: useDurationTime = recordingData?.useDurationTime || false
     // check if layout slides has changed
     $: hasChanged = recordingData?.layoutAtRecording !== layoutSequence
 
@@ -96,7 +101,45 @@
 
     function updateTime(e: any, index: number) {
         let layout = clone(showLayout)
-        layout.recording![0].sequence[index].time = Number(e.detail)
+        let s = layout.recording![0].sequence
+
+        let reduced = useDurationTime ? 0 : s.reduce((time, value, i) => (time += i > index - 2 ? 0 : value.time), 0)
+        let newTime = Number(e.detail)
+        let newValue = newTime - reduced
+
+        index = useDurationTime || index === 0 ? index : index - 1
+
+        let difference = newValue - s[index].time
+        s[index].time = newValue
+
+        if (!useDurationTime) {
+            if (s[index + 1]) s[index + 1].time -= difference
+
+            let timestampValues = clone(s).map((a, ii) => {
+                let time = s.reduce((time, value, i) => (time += i > ii - 1 ? 0 : value.time), 0)
+                return { ...a, time }
+            })
+
+            // sort
+            timestampValues = timestampValues.sort((a, b) => a.time - b.time)
+
+            // back to duration
+            let timeValue = 0
+            const durationTimes = timestampValues.map((a, i) => {
+                let time = timestampValues[i + 1]?.time || 0
+                if (!time) {
+                    a.time = time
+                    return a
+                }
+
+                a.time = time - timeValue
+                timeValue += a.time
+                return a
+            })
+
+            layout.recording![0].sequence = durationTimes
+        }
+
         let override = showId + activeLayout + "_recordtime"
         history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: showId }, location: { page: "show", id: "show_layout", override: override } })
     }
@@ -104,6 +147,17 @@
     function deleteRecording() {
         let layout = clone(showLayout)
         delete layout.recording
+        history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
+
+        settingsOpened = false
+    }
+
+    const isChecked = (e: any) => e.target.checked
+    function setRecordingKey(key: string, value: any) {
+        let layout = clone(showLayout)
+        if (!layout.recording) return
+
+        layout.recording[0][key] = value
         history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
     }
 
@@ -147,10 +201,28 @@
         let layoutData = layout[ref.index]?.data || {}
         return layoutData.audio?.[0]
     }
+
+    function getTime(index: number) {
+        if (!recordingData) return 0
+        const s = recordingData.sequence
+        if (useDurationTime) return s[index].time
+
+        let reduced = s.reduce((time, value, i) => (time += i > index - 1 ? 0 : value.time), 0)
+        return reduced
+    }
 </script>
 
 <div class="padding">
-    {#if recordingData}
+    {#if settingsOpened && recordingData}
+        <div class="settings">
+            <CombinedInput textWidth={70}>
+                <p title={$dictionary.recording?.use_duration_tip}><T id="recording.use_duration" /></p>
+                <div class="alignRight">
+                    <Checkbox checked={useDurationTime} on:change={(e) => setRecordingKey("useDurationTime", isChecked(e))} />
+                </div>
+            </CombinedInput>
+        </div>
+    {:else if recordingData}
         {#if recordingPlaying}
             <Button on:click={stopSlideRecording} dark red center>
                 <Icon id="clear" size={3} right />
@@ -177,14 +249,17 @@
 
         <div class="sequence">
             {#each recordingData.sequence as action, i}
-                <div class="row">
+                <div id={"#" + i} class="row context #slide_recorder_item">
                     <p>
                         <span style="opacity: 0.5;padding-right: 3px;min-width: 22px;display: inline-block;">{i + 1}</span>
-                        <span style={action.time || i === recordingData.sequence.length - 1 ? "" : "opacity: 0.4;"}>{groupName(action.slideRef)}</span>
+                        <!-- || (useDurationTime ? i === recordingData.sequence.length - 1 : i === 0) -->
+                        <span style={!action.time && i < recordingData.sequence.length - 1 ? "opacity: 0.4;" : ""}>{groupName(action.slideRef)}</span>
                     </p>
 
-                    {#if i < recordingData.sequence.length - 1}
-                        <NumberInput style="width: 100px;" buttons={false} value={action.time} inputMultiplier={0.001} fixed={2} step={500} max={10000000} on:change={(e) => updateTime(e, i)} />
+                    {#if useDurationTime ? i < recordingData.sequence.length - 1 : i > 0}
+                        {#key recordingData}
+                            <NumberInput style="width: 100px;" buttons={false} value={getTime(i)} inputMultiplier={0.001} fixed={2} step={500} max={10000000} on:change={(e) => updateTime(e, i)} />
+                        {/key}
                     {:else}
                         <NumberInput disabled style="width: 100px;" buttons={false} fixed={2} value={0} />
                     {/if}
@@ -225,10 +300,22 @@
 
 {#if recordingData}
     <div class="bottom">
-        <Button style="width: 100%;" on:click={deleteRecording} dark center>
-            <Icon id="delete" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="recording.remove" />{/if}
-        </Button>
+        {#if recordingPlaying}
+            <!-- WIP continue recording... -->
+        {:else}
+            {#if settingsOpened}
+                <Button style="width: 100%;" on:click={deleteRecording} dark center>
+                    <Icon id="delete" right={!$labelsDisabled} />
+                    {#if !$labelsDisabled}<T id="recording.remove" />{/if}
+                </Button>
+            {/if}
+
+            <Button style="width: 100%;" on:click={() => (settingsOpened = !settingsOpened)} center dark>
+                <!-- settings -->
+                <Icon id="options" white={settingsOpened} right />
+                <T id="edit.options" />
+            </Button>
+        {/if}
     </div>
 {/if}
 

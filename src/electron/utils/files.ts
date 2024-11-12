@@ -198,6 +198,10 @@ export function getDataFolder(dataPath: string, name: string) {
 
 // HELPERS
 
+export function getExtension(name: string) {
+    return path.extname(name).substring(1).toLowerCase()
+}
+
 export function createFolder(path: string) {
     if (doesPathExist(path)) return path
     return makeDir(path)

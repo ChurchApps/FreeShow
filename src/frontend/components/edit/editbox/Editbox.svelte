@@ -122,6 +122,8 @@
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
 <svelte:window on:mousedown={deselect} on:keydown={keydown} />
 
+<!-- WIP item with opacity 0 is completely hidden! Even the align elements! -->
+
 <!-- bind:offsetHeight={height}
 bind:offsetWidth={width} -->
 <div
