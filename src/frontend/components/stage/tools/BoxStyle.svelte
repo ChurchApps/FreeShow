@@ -57,6 +57,9 @@
     $: if (item && items[0].includes("slide_text") && edits.default[6]) {
         edits.default[6].value = !!item.invertItems
     }
+    $: if (items[0].includes("slide_tracker") && edits?.default?.[2]) {
+        edits.default[2].hidden = item?.tracker?.type !== "group"
+    }
 
     // CSS
     // WIP get only text related item styles (& combine again)?

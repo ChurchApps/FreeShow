@@ -150,7 +150,7 @@
         display: flex;
     }
     .main:nth-child(even) {
-        background-color: var(--primary-darkest);
+        background-color: rgb(0 0 20 / 0.08);
     }
 
     .meter {

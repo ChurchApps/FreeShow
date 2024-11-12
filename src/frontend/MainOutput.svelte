@@ -8,6 +8,7 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import { currentWindow, outputs, special, styles } from "./stores"
     import { hideDisplay } from "./utils/common"
+    import { send } from "./utils/request"
 
     $: outputId = Object.keys($outputs)[0]
 
@@ -23,7 +24,7 @@
         if (e.ctrlKey || e.metaKey || e.target.closest(".dragger")) enableOutputMove = true
         else enableOutputMove = false
     }
-    $: if ($currentWindow === "output") window.api.send(OUTPUT, { channel: "MOVE", data: { enabled: enableOutputMove } })
+    $: if ($currentWindow === "output") send(OUTPUT, ["MOVE"], { enabled: enableOutputMove })
 
     // make sure it's loaded to prevent output not changing to stage output because of Svelte transition bug
     let loaded: boolean = false

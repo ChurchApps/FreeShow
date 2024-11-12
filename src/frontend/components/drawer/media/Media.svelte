@@ -5,7 +5,7 @@
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
     import { activeDrawerOnlineTab, activeEdit, activeFocus, activePopup, activeShow, dictionary, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
-    import { send } from "../../../utils/request"
+    import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName, sortFilenames } from "../../helpers/array"
@@ -65,6 +65,7 @@
         if (prevActive === "online") activeView = "all"
 
         if (active === "online") {
+            // WIP this resets on zoom
             activeView = "image"
 
             prevActive = active
@@ -104,7 +105,7 @@
     let filesInFolders: string[] = []
 
     let listenerId = uid()
-    onDestroy(() => window.api.removeListener(READ_FOLDER, listenerId))
+    onDestroy(() => destroy(READ_FOLDER, listenerId))
 
     // receive files
     window.api.receive(READ_FOLDER, receiveContent, listenerId)
@@ -469,7 +470,7 @@
                     <Icon size={1.3} id="zoomIn" white />
                 </Button>
                 {#if zoomOpened}
-                    <div class="zoom_container" transition:slide>
+                    <div class="zoom_container" transition:slide={{ duration: 150 }}>
                         <Button style="padding: 0 !important;width: 100%;" on:click={() => mediaOptions.set({ ...$mediaOptions, columns: 5 })} bold={false} center>
                             <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / $mediaOptions.columns).toFixed()}%</p>
                         </Button>

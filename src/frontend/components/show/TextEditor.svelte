@@ -2,6 +2,7 @@
     import type { Item } from "../../../types/Show"
     import { getQuickExample } from "../../converters/txt"
     import { slidesOptions } from "../../stores"
+    import { clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import { formatText, getTextboxes } from "./formatTextEditor"
     import Notes from "./tools/Notes.svelte"
@@ -52,13 +53,14 @@
         let text = ""
         let plainText = ""
         // let selectedItem: Item = getFirstNormalTextbox(items)
-        let selectedItems: Item[] = getTextboxes(items)
+        let selectedItems: Item[] = getTextboxes(clone(items)).reverse()
 
         if (!selectedItems.length) return { text, plainText, hasTextboxItem: false }
 
         selectedItems.forEach((item, i) => {
             if (selectedItems.length > 1) {
-                let textboxId = "[#" + (i + 1) + "]"
+                let translation = item?.language ? `:${item.language}` : ""
+                let textboxId = `[#${i + 1}${translation}]`
                 text += textboxId + "\n"
                 plainText += textboxId + "\n"
             }

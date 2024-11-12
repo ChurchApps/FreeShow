@@ -7,29 +7,34 @@ import { wait } from "./common"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
-import { receive, send } from "./request"
+import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
 import { getTimeFromInterval } from "../components/helpers/time"
 
 let initialized: boolean = false
 export function startup() {
-    window.api.receive(STARTUP, (msg) => {
-        if (initialized || msg.channel !== "TYPE") return
-        initialized = true // only call this once per window
+    window.api.receive(
+        STARTUP,
+        (msg) => {
+            if (initialized || msg.channel !== "TYPE") return
+            initialized = true // only call this once per window
+            destroy(STARTUP, "startup")
 
-        let type = msg.data
-        currentWindow.set(type)
+            let type = msg.data
+            currentWindow.set(type)
 
-        if (type) loaded.set(true)
+            if (type) loaded.set(true)
 
-        if (type === "pdf") return
-        if (type === "output") {
-            startupOutput()
-            return
-        }
+            if (type === "pdf") return
+            if (type === "output") {
+                startupOutput()
+                return
+            }
 
-        startupMain()
-    })
+            startupMain()
+        },
+        "startup"
+    )
 }
 
 async function startupMain() {

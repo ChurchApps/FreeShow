@@ -30,11 +30,11 @@
         <div class="groups autoFontSize" class:column style={autoSize ? "font-size: " + autoSize + "px" : ""}>
             {#each layoutGroups as group}
                 {#if !group.child && !group.hide}
-                    <!-- {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
-                    {@const nextSlide = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide + 1)} -->
+                    {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
+                    {@const nextSlide = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide + 1)}
 
                     <div class="group" class:active={group.index === layoutGroups.find((_, i) => i === currentShowSlide)?.index}>
-                        {group.name}<!-- {#if activeGroup?.child || nextSlide?.child}<span style="opacity: 0.8;font-size: 0.7em;">.{activeGroup.child + 1}</span>{/if} -->
+                        {tracker.oneLetter ? group.oneLetterName : group.name}{#if tracker.childProgress && (activeGroup?.child || nextSlide?.child)}<span style="opacity: 0.8;font-size: 0.7em;">.{activeGroup.child + 1}</span>{/if}
                     </div>
                 {/if}
             {/each}

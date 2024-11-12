@@ -14,6 +14,7 @@
     import { clone } from "../../helpers/array"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import { onMount } from "svelte"
+    import { send } from "../../../utils/request"
 
     // VALUES
 
@@ -91,7 +92,7 @@
             history({ id: "SHOW_LAYOUT", newData: { key: type, data: value, indexes }, location: { page: "show", override } })
 
             setTimeout(() => {
-                window.api.send(OUTPUT, { channel: "SHOWS", data: get(showsCache) })
+                send(OUTPUT, ["SHOWS"], get(showsCache))
             }, 500)
         } else if (isStyle) {
             value = { ...styleTransition, [selectedType]: updateSpecific(styleTransition[selectedType] || {}, key, value, reset) }

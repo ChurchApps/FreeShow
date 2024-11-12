@@ -126,6 +126,6 @@
     }
 
     li:nth-child(odd) {
-        background-color: var(--primary-darker);
+        background-color: rgb(0 0 20 / 0.15);
     }
 </style>

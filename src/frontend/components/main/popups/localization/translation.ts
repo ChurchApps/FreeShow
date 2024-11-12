@@ -96,14 +96,14 @@ export async function translateShow(showId: string, languageCode: string) {
     }
 }
 
-export function removeAllTranslationsFromShow(showId: string) {
+export function removeTranslationFromShow(showId: string, langId: string = "") {
     let show = get(showsCache)[showId]
     let slides = clone(show.slides)
     let changed = false
 
     Object.keys(slides).forEach((slideId) => {
         let previousSize = slides[slideId].items.length
-        slides[slideId].items = slides[slideId].items.filter((item) => !item.language)
+        slides[slideId].items = slides[slideId].items.filter((item) => !item.language || (langId ? item.language !== langId : false))
         if (slides[slideId].items.length < previousSize) changed = true
     })
 

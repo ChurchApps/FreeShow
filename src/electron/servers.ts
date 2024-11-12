@@ -3,7 +3,9 @@ import express, { Response } from "express"
 import http from "http"
 import { join } from "path"
 import { Server } from "socket.io"
+import { CaptureHelper } from "./capture/CaptureHelper"
 import { toApp } from "./index"
+import { OutputHelper } from "./output/OutputHelper"
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 let servers: { [key in ServerName]: any } = {
@@ -97,7 +99,15 @@ function initialize(id: ServerName, socket: any) {
     servers[id].connections[socket.id] = { name }
 
     // SEND DATA FROM CLIENT TO APP
-    socket.on(id, (msg: any) => toApp(id, msg))
+    socket.on(id, async (msg: any) => {
+        if (msg.channel === "OUTPUT_FRAME") {
+            const window = OutputHelper.getOutput(msg.data.outputId).window
+            const frame = await CaptureHelper.captureBase64Frame(window)
+            toServer(id, { channel: "OUTPUT_FRAME", data: { frame } })
+        } else {
+            toApp(id, msg)
+        }
+    })
 
     // DISCONNECT
     socket.on("disconnect", () => disconnect(id, socket))

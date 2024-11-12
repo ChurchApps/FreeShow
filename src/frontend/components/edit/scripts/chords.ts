@@ -160,6 +160,33 @@ export function loadChords(item: Item) {
 
 // get a list of unique chords used in a slide
 export function getUsedChords(slide: Slide) {
+    if (!slide?.items?.length) return []
     let itemChords = slide.items.reduce((value: string[], item) => (value = [...value, ...loadChords(item)]), [])
     return [...new Set(itemChords)].sort((a, b) => a?.localeCompare(b))
+}
+
+// IMPORT CHORD TEXT LINES
+
+export function isChordLine(text: string) {
+    const words = text.trim().split(/\s+/)
+    return words.every((word) => /^[A-G][#b]?m?\d?(7|9|13)?$/.test(word))
+    // text.trim().match(/^[A-G][#b]?m?\d?7?\s+.*$/)
+}
+
+export function parseChordLine(text: string) {
+    const chords: Chords[] = []
+    let chordStart = -1
+
+    for (let i = 0; i <= text.length; i++) {
+        const char = text[i]
+
+        if (char !== " " && chordStart === -1) {
+            chordStart = i
+        } else if ((char === " " || i === text.length) && chordStart !== -1) {
+            chords.push({ id: uid(5), key: text.slice(chordStart, i), pos: chordStart })
+            chordStart = -1
+        }
+    }
+
+    return chords
 }

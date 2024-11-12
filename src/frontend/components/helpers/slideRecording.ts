@@ -1,9 +1,9 @@
 import { get } from "svelte/store"
-import { activeShow, activeSlideRecording, outLocked, outputs, playingAudio } from "../../stores"
 import type { Recording } from "../../../types/Show"
-import { _show } from "./shows"
-import { updateOut } from "./showActions"
+import { activeShow, activeSlideRecording, outLocked, outputs, playingAudio } from "../../stores"
 import { getActiveOutputs, setOutput } from "./output"
+import { updateOut } from "./showActions"
+import { _show } from "./shows"
 
 ///// SLIDE RECORDING /////
 
@@ -20,6 +20,21 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
     if (audio || audioListener) {
         let showMedia = _show(showId).get("media")
         audio = showMedia[audio]?.path
+
+        // WIP pause / change audio duration!!
+
+        // reset playing audio
+        if (startIndex === 0) {
+            let playing = get(playingAudio)[audio]?.audio
+            if (playing) {
+                playingAudio.update((a) => {
+                    a[audio].audio.currentTime = 0
+                    a[audio].paused = false
+                    return a
+                })
+            }
+        }
+
         startAudioListener(audio)
     }
 

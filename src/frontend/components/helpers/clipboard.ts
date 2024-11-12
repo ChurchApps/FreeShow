@@ -79,7 +79,7 @@ export function copy({ id, data }: any = {}, getData: boolean = true) {
 }
 
 // pasting text in editbox is it's own function
-export function paste(clip: any = null, extraData: any = {}) {
+export function paste(clip: any = null, extraData: any = {}, customElem: any = null) {
     if (!clip) clip = get(clipboard)
     let activeElem: any = document.activeElement
 
@@ -89,6 +89,7 @@ export function paste(clip: any = null, extraData: any = {}) {
     // edit item has its own paste function
     if (activeElem?.closest(".editItem")) return
 
+    if (customElem?.closest(".edit")) activeElem = customElem
     if (activeElem?.closest(".edit")) {
         pasteText(activeElem)
         return

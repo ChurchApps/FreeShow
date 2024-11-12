@@ -195,6 +195,7 @@ export interface Layout {
 export interface Recording {
     id: string
     // name: string
+    useDurationTime?: boolean
     layoutAtRecording: string // store layout ids to detect changes
     sequence: {
         time: number

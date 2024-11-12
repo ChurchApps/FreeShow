@@ -66,7 +66,7 @@ export function joinPath(path: string[]): string {
 // fix for media files with special characters in file name not playing
 export function encodeFilePath(path: string): string {
     // already encoded
-    if (path.match(/%\d+/g) || path.includes("http")) return path
+    if (path.match(/%\d+/g) || path.includes("http") || path.includes("data:")) return path
 
     let splittedPath = splitPath(path)
     let fileName = splittedPath.pop() || ""
@@ -136,6 +136,8 @@ export function checkMedia(src: string): Promise<boolean> {
 }
 
 export async function getMediaInfo(path: string) {
+    if (path.includes("http") || path.includes("data:")) return {}
+
     const cachedInfo = get(media)[path]?.info
     if (cachedInfo?.codecs?.length) return cachedInfo
 
@@ -207,7 +209,7 @@ export async function loadThumbnail(input: string, size: number) {
     if (!input) return ""
 
     // online media (e.g. Pixabay/Unsplash)
-    if (input.includes("http")) return input
+    if (input.includes("http") || input.includes("data:")) return input
 
     // already encoded (this could cause an infinite loop)
     if (input.includes("freeshow-cache")) return input
@@ -226,7 +228,7 @@ export function getThumbnailPath(input: string, size: number) {
     if (!input) return ""
 
     // online media (e.g. Pixabay/Unsplash)
-    if (input.includes("http")) return input
+    if (input.includes("http") || input.includes("data:")) return input
 
     // already encoded
     if (input.includes("freeshow-cache")) return input
@@ -270,10 +272,10 @@ function getThumbnailId(data: any) {
 
 // convert path to base64
 export async function getBase64Path(path: string, size: number = mediaSize.big) {
-    if (!path) return ""
+    if (!path || !mediaExtensions.includes(getExtension(path))) return ""
 
     // online media (e.g. Pixabay/Unsplash)
-    if (path.includes("http")) return path
+    if (path.includes("http") || path.includes("data:")) return path
 
     let thumbnailPath = await loadThumbnail(path, size)
     if (!thumbnailPath) return ""

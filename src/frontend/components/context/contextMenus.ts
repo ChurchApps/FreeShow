@@ -150,6 +150,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     rename: ["rename"],
     close: ["close"],
     output_window: ["close"],
+    input: ["paste"],
 
     // TOP
     output: ["force_output", "SEPERATOR", "align_with_screen", "choose_screen"], // , "SEPERATOR", "edit"
@@ -187,6 +188,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "delete_all"
     show_media: ["preview", "play_no_filters", "SEPERATOR", "edit", "SEPERATOR", "system_open"],
     show_audio: ["preview", "SEPERATOR", "system_open"],
+    slide_recorder_item: ["remove"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!

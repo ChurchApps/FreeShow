@@ -32,7 +32,9 @@
             group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
         }
 
+        if (tracker.oneLetter) group = group[0].toUpperCase()
         let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
+        if (tracker.oneLetter) name = name?.replace(" ", "")
         return { name: name || "—", index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
     })
 
@@ -51,12 +53,11 @@
         <div class="groups autoFontSize" class:column style={autoSize ? "font-size: " + autoSize + "px" : ""}>
             {#each layoutGroups as group}
                 {#if !group.child && !group.hide}
-                    <!-- WIP slide child number should be optional... -->
-                    <!-- {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
-                    {@const nextSlide = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide + 1)} -->
+                    {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
+                    {@const nextSlide = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide + 1)}
 
                     <div class="group" class:active={group.index === layoutGroups.find((_, i) => i === currentShowSlide)?.index}>
-                        {group.name}<!-- {#if activeGroup?.child || nextSlide?.child}<span style="opacity: 0.8;font-size: 0.7em;">.{activeGroup.child + 1}</span>{/if} -->
+                        {group.name}{#if tracker.childProgress && (activeGroup?.child || nextSlide?.child)}<span style="opacity: 0.8;font-size: 0.7em;">.{activeGroup.child + 1}</span>{/if}
                     </div>
                 {/if}
             {/each}

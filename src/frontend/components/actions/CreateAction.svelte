@@ -67,6 +67,9 @@
             .filter(({ id }) => {
                 // show if it is the currently selected
                 if (id === actionId) return true
+                // don't display GET actions
+                if (id.includes("get_")) return false
+
                 // WIP MIDI multiple of the same (needs a new way of setting the id)
                 // show if it has an input (because you probably want to have multiple)
                 // if (actionData[actionId]?.input) return true

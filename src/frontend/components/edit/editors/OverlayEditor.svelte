@@ -15,6 +15,7 @@
     import Editbox from "../editbox/Editbox.svelte"
     import { clone } from "../../helpers/array"
     import { onDestroy } from "svelte"
+    import { send } from "../../../utils/request"
 
     const update = () => (Slide = clone($overlays[currentId]))
     $: currentId = $activeEdit.id!
@@ -58,7 +59,7 @@
 
         let override = "overlay_items#" + $activeEdit.id + "indexes#" + active.join(",")
         history({ id: "UPDATE", newData: { key: "items", indexes: active, subkey: "style", data: values }, oldData: { id: $activeEdit.id }, location: { page: "edit", id: "overlay_items", override } })
-        window.api.send(OUTPUT, { channel: "OVERLAY", data: $overlays })
+        send(OUTPUT, ["OVERLAY"], $overlays)
     }
 
     // ZOOM
@@ -113,7 +114,7 @@
                 <Icon size={1.3} id="zoomIn" white />
             </Button>
             {#if zoomOpened}
-                <div class="zoom_container" transition:slide>
+                <div class="zoom_container" transition:slide={{ duration: 150 }}>
                     <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
                         <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
                     </Button>

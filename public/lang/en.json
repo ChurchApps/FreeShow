@@ -195,6 +195,7 @@
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
         "pre_fader_volume_meter": "Pre fader volume meter",
+        "mixer": "Mixer",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "tempo": "Tempo",
@@ -684,7 +685,9 @@
         "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",
         "layout_changed": "Layout has changed since last recording!",
         "audio_synced": "Synced with audio!",
-        "start": "Start slide recording"
+        "start": "Start slide recording",
+        "use_duration": "Use duration time",
+        "use_duration_tip": "Use duration time instead of timestamp time"
     },
     "animate": {
         "change": "Change",
@@ -801,6 +804,8 @@
         "overlay_content": "Add overlay content",
         "different_first_template": "Custom template on first slide",
         "media_fit": "Media fit",
+        "one_letter": "One letter mode",
+        "sub_indexes": "Sub indexes",
         "size": "Size",
         "max_lines": "Max lines",
         "invert_items": "Invert items",
@@ -921,6 +926,7 @@
         "to_event": "Time until event",
         "counter": "Countdown",
         "time": "Time",
+        "minutes": "Minutes",
         "seconds": "Seconds",
         "from": "From",
         "to": "To",
@@ -1178,6 +1184,7 @@
         "reference": "Show reference",
         "split_reference": "Split reference",
         "combine_with_text": "Combine with text",
+        "first_slide_reference": "Reference on first slide",
         "reference_at_bottom": "Move to bottom",
         "red_jesus": "Jesus words in red",
         "search": "Search in the Bible"

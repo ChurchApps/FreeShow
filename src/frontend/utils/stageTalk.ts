@@ -4,13 +4,13 @@ import type { ClientMessage } from "../../types/Socket"
 import { clone } from "../components/helpers/array"
 import { getBase64Path } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
+import { getGroupName } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { dictionary, events, groups, media, outputs, previewBuffers, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
+import { dictionary, events, groups, media, outputs, outputSlideCache, previewBuffers, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendData } from "./sendData"
-import { getGroupName } from "../components/helpers/show"
 
 // WIP loading different paths, might cause returned base64 to be different than it should if previous thumbnail finishes after
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
@@ -104,7 +104,9 @@ export const receiveSTAGE: any = {
         let show = get(stageShows)[stageId] || {}
         let outputId = show.settings?.output || getActiveOutputs()[0]
         let currentOutput: any = get(outputs)[outputId]
-        let out: any = currentOutput?.out?.slide || null
+        let outSlide: any = currentOutput?.out?.slide || null
+        let outCached: any = get(outputSlideCache)[outputId]
+        let out: any = outSlide || outCached
         msg.data = []
 
         if (!out) {
@@ -132,6 +134,9 @@ export const receiveSTAGE: any = {
             if (nextIndex < ref.length && !ref[nextIndex].data.disabled) msg.data.push(slides[ref[nextIndex].id])
             else msg.data.push(null)
         } else msg.data.push(null)
+
+        // don't show current slide if just in cache
+        if (!outSlide) msg.data[0] = null
 
         sendBackgroundToStage(outputId)
 
@@ -163,7 +168,8 @@ export const receiveSTAGE: any = {
             }
 
             let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
-            return { name: name || "—", index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
+            let oneLetterName = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group[0].toUpperCase(), ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
+            return { name: name || "—", oneLetterName: (oneLetterName || "—").replace(" ", ""), index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
         })
 
         msg.data.progress = { currentShowSlide, slidesLength, layoutGroups }

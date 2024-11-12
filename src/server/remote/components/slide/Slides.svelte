@@ -39,21 +39,29 @@
 
     // pinch zoom
     let scaling: boolean = false
+    let initialDistance: number = 0
+    let initialColumns: number = columns
     const touchstart = (e: any) => {
         if (e.touches.length === 2) {
+            initialDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY)
+            initialColumns = columns
             scaling = true
         }
     }
 
-    let prevDist = 0
+    const margin = 150
+    let scaled = 0
     const touchmove = (e: any) => {
         if (scaling) {
             e.preventDefault()
-            // TODO: pinch zoom
-            var dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY)
-            if (dist < prevDist) columns = Math.min(4, columns + Math.floor(dist / 200))
-            else columns = Math.max(1, columns - Math.floor(dist / 200))
-            prevDist = dist
+            let dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY)
+
+            let newColumns = 1
+            scaled = initialDistance / margin - dist / margin
+            if (scaled < 0) newColumns = initialColumns + scaled
+            else newColumns = initialColumns + scaled
+
+            columns = Math.min(4, Math.max(1, Math.floor(newColumns)))
         }
     }
     const touchend = () => (scaling = false)

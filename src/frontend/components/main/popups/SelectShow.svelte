@@ -99,6 +99,6 @@
         height: 100vh !important;
     }
     .list :global(svelte-virtual-list-row:nth-child(odd)) {
-        background-color: var(--primary-darker);
+        background-color: rgb(0 0 20 / 0.12);
     }
 </style>

@@ -64,7 +64,7 @@
     }
 
     function mouseup(e: any) {
-        if (!e.target.closest("input") && !searchValue.length) searchActive = false
+        if (!e.target.closest("input") && !e.target.closest(".contextMenu") && !searchValue.length) searchActive = false
 
         mouse = null
         if (!e.target.closest(".top")) move = false

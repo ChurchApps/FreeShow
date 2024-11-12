@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { dictionary, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -6,6 +7,7 @@
     import { findMatchingOut, getResolution, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import Loader from "../../main/Loader.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import Center from "../../system/Center.svelte"
@@ -45,11 +47,19 @@
             nextScrollTimeout = null
         }, 500)
     }
+
+    // open drawer tab instantly before content has loaded
+    let preloader: boolean = true
+    onMount(() => setTimeout(() => (preloader = false), 20))
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" on:wheel={wheel}>
     <DropArea id="overlays">
-        {#if fullFilteredOverlays.length}
+        {#if preloader && fullFilteredOverlays.length > 10}
+            <Center>
+                <Loader />
+            </Center>
+        {:else if fullFilteredOverlays.length}
             <div class="grid">
                 {#each fullFilteredOverlays as overlay}
                     <Card

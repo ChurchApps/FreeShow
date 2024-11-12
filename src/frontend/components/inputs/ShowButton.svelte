@@ -71,8 +71,13 @@
         let newShow: any = { id, type }
 
         if ($focusMode) {
-            activeFocus.set({ id, index: pos ?? undefined })
-            return
+            let inProject = $projects[$activeProject || ""]?.shows.find((p) => p.id === id)
+            if (inProject) {
+                activeFocus.set({ id, index: pos ?? undefined })
+                return
+            } else {
+                focusMode.set(false)
+            }
         }
 
         if (pos !== null) {

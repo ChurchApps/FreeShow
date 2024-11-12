@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, dictionary, drawer, outputCache, projects, projectView, showRecentlyUsedProjects, shows, showsCache } from "../../stores"
+import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, dictionary, drawer, focusMode, outputCache, projects, projectView, showRecentlyUsedProjects, shows, showsCache } from "../../stores"
 import { DEFAULT_DRAWER_HEIGHT } from "../../utils/common"
 import { createDefaultShow } from "../../utils/createData"
 import { loadShows } from "../helpers/setShow"
@@ -15,6 +15,7 @@ export const guideSteps = [
         pre: () => {
             activePage.set("show")
             activePopup.set(null)
+            focusMode.set(false)
             showRecentlyUsedProjects.set(false)
             if (get(shows).default) loadShows(["default"])
         },

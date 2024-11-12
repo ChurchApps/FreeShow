@@ -20,6 +20,7 @@ import {
     media,
     outLocked,
     outputs,
+    outputSlideCache,
     overlays,
     projects,
     showsCache,
@@ -157,6 +158,10 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let outputId = customOutputId || getActiveOutputs()[0]
     let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
+    if (!slide) {
+        let cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
+        if (cachedSlide && cachedSlide?.id === get(activeShow)?.id && cachedSlide?.layout === get(showsCache)[get(activeShow)?.id || ""]?.settings?.activeLayout) slide = cachedSlide
+    }
 
     // PPT
     if (slide?.type === "ppt") {
@@ -336,6 +341,10 @@ export function previousSlide(e: any, customOutputId?: string) {
     let outputId = customOutputId || getActiveOutputs()[0]
     let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
+    if (!slide) {
+        let cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
+        if (cachedSlide && cachedSlide?.id === get(activeShow)?.id && cachedSlide?.layout === get(showsCache)[get(activeShow)?.id || ""]?.settings?.activeLayout) slide = cachedSlide
+    }
 
     // PPT
     if (slide?.type === "ppt") {
