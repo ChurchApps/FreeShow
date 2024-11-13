@@ -137,7 +137,7 @@
     "devDependencies": {
         "@electron/notarize": "^2.4.0",
         "@playwright/test": "^1.40.1",
-        "@rollup/plugin-commonjs": "^25.0.7",
+        "@rollup/plugin-commonjs": "^28.0.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^11.1.5",
