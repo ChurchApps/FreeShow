@@ -6,7 +6,6 @@ import { NdiSender } from "./NdiSender"
 // const ebml             = require("ebml")
 // const Opus             = require("@discordjs/opus")
 
-
 // if (audio) captureAudio()
 
 const audioChannelCount = 2

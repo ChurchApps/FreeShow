@@ -303,7 +303,8 @@ function getChords(line: string) {
 
         if (char === "]") {
             currentlyInChord = false
-            if (currentChord.length > 12) text += `[${currentChord}]` // probably not a chord
+            if (currentChord.length > 12)
+                text += `[${currentChord}]` // probably not a chord
             else chords.push(createChord(text.length, currentChord))
             return
         }

@@ -106,9 +106,12 @@ function scheduleNextNote(time = 0, beat = 1) {
     if (beat > (metronomeValues.beats || defaultMetronomeValues.beats)) beat = 1
 
     playingMetronome.set(
-        setTimeout(() => {
-            scheduleNote(beat)
-        }, (time + timeBetweenEachBeat - preScheduleTime) * 1000)
+        setTimeout(
+            () => {
+                scheduleNote(beat)
+            },
+            (time + timeBetweenEachBeat - preScheduleTime) * 1000
+        )
     )
 }
 

@@ -301,8 +301,10 @@ export const previewShortcuts: any = {
 function createNew() {
     let selectId = get(selected)?.id || get(focusedArea)
 
-    if (selectId === "slide") history({ id: "SLIDES" }) // show
-    else if (selectId === "show") addSection() // project
+    if (selectId === "slide")
+        history({ id: "SLIDES" }) // show
+    else if (selectId === "show")
+        addSection() // project
     else if (selectId.includes("category_")) {
         // if (selectId.includes("media") || selectId.includes("audio")) send(MAIN, ["OPEN_FOLDER"], { channel: id, title, path })
         if (selectId.includes("scripture")) activePopup.set("import_scripture")
