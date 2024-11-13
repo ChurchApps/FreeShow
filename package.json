@@ -178,7 +178,7 @@
         "express": "^4.17.2",
         "follow-redirects": "^1.15.2",
         "font-list": "^1.4.5",
-        "genius-lyrics": "4.4.6",
+        "genius-lyrics": "^4.4.7",
         "grandiose": "vassbo/grandiose#9857c8e",
         "jzz": "^1.5.9",
         "mp4box": "^0.5.2",
