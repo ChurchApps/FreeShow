@@ -14,7 +14,7 @@ export function runActionId(id: string) {
 }
 
 export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}) {
-    console.log(action)
+    // console.log(action)
     if (!action) return
     action = convertOldMidiToNewAction(action)
 
@@ -44,6 +44,9 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         let triggerData = data[actionId] || {}
         if (midiIndex > -1) triggerData = { ...triggerData, index: midiIndex }
 
+        let multiple = actionId.indexOf(":")
+        if (multiple > -1) actionId = actionId.slice(0, multiple)
+
         if (actionId === "wait") {
             await wait(triggerData.number * 1000)
             return
@@ -65,6 +68,11 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
                 triggerData = { overlayIds }
             }
         } else if (actionId === "send_midi" && triggerData.midi) triggerData = triggerData.midi
+
+        if (actionId === "clear_slide") {
+            // without this slide content might get "stuck", if cleared when transitioning
+            await wait(10)
+        }
 
         API_ACTIONS[actionId](triggerData)
     }

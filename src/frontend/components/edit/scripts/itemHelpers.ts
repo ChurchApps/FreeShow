@@ -98,12 +98,12 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     else if (type === "to_back") startIndex = 0
 
     items = [...items.slice(0, startIndex), currentItem, ...items.slice(startIndex)]
-    if (!items?.length) return
+    if (!items?.length || items.length < 2) return
 
     if (!get(activeEdit).id) {
         let ref = _show().layouts("active").ref()[0]
         let slideId = ref[get(activeEdit).slide!]?.id
-        history({ id: "UPDATE", newData: { data: items, key: "slides", keys: [slideId], subkey: "items" }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key", override: "rearrange_items" } })
+        history({ id: "UPDATE", newData: { data: items, key: "slides", dataIsArray: true, keys: [slideId], subkey: "items" }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key", override: "rearrange_items" } })
     } else {
         // overlay, template
         history({ id: "UPDATE", newData: { data: items, key: "items" }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type, override: "rearrange_items" } })

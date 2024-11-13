@@ -108,6 +108,10 @@
         let actionId = e.detail.id || ""
         if (!actionId) return
 
+        const canAddMultiple = ["wait"]
+        const multiple = canAddMultiple.includes(actionId)
+        if (multiple) actionId += ":" + uid(5)
+
         if (e.detail.index !== undefined) index = e.detail.index
 
         // update action value instead of action id
@@ -128,7 +132,7 @@
 
         if (!action.triggers) action.triggers = []
         // can't set if it exists already
-        if (action.triggers.find((id) => id === actionId)) return
+        if (!multiple && action.triggers.find((id) => id === actionId)) return
 
         if (index > -1) action.triggers[index] = actionId
         else action.triggers.push(actionId)
@@ -140,7 +144,7 @@
 
         // auto name (if empty or not changed by user)
         if ((action.name || "") === autoActionName && action.triggers.length === 1) {
-            autoActionName = translate(actionData[actionId]?.name || "") || actionId
+            autoActionName = translate(actionData[e.detail.id]?.name || "") || e.detail.id
             if (autoActionName) action.name = autoActionName
         }
 

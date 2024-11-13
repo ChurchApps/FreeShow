@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Chords, Item, Line, Show, Slide, SlideData } from "../../../types/Show"
 import { activeShow } from "../../stores"
-import { getItemChords, getItemText } from "../edit/scripts/textStyle"
+import { getItemChords, getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates } from "../helpers/array"
 import { history } from "../helpers/history"
 import { isEmptyOrSpecial } from "../helpers/output"
@@ -15,16 +15,25 @@ export function formatText(e: any) {
 
     let show: Show = clone(_show().get())
     let slides: Slide[] = newSlidesText.map(getSlide)
-    console.log(clone(slides))
+    let newSlides: { [key: string]: Slide } = clone(show.slides)
+    // console.log(clone(slides))
 
     // sort oldSlides by their children
     let oldSlideParents: Slide[] = keysToID(show.slides).filter((a) => a.group)
     let oldSlides: Slide[] = []
     oldSlideParents.forEach((slide) => {
         oldSlides.push(slide)
-        slide.children?.forEach((childId) => {
-            oldSlides.push(show.slides[childId])
-        })
+        if (slide.children) {
+            // add "missing" text content to parent slide with children text content
+            if (!getSlideText(oldSlides[oldSlides.length - 1]).length && slide.children.find((id) => getSlideText(show.slides[id]))) {
+                oldSlides[oldSlides.length - 1].items.push({ ...clone(defaultItem), lines: [getLine(" ", [])] })
+                newSlides[slide.id!] = clone(oldSlides[oldSlides.length - 1])
+            }
+
+            slide.children.forEach((childId) => {
+                oldSlides.push(show.slides[childId])
+            })
+        }
     })
 
     let groupedOldSlides = groupSlides(oldSlides)
@@ -33,7 +42,6 @@ export function formatText(e: any) {
 
     // TODO: renaming existing groups!
 
-    let newSlides: { [key: string]: Slide } = clone(show.slides)
     let newLayoutSlides: SlideData[] = []
 
     let doneGroupedSlides: any[] = []

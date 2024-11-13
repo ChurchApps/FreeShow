@@ -11,6 +11,7 @@ import { sendData } from "./sendData"
 import { uid } from "uid"
 import { clearAll } from "../components/output/clear"
 import { send } from "./request"
+import type { Show } from "../../types/Show"
 
 // REMOTE
 
@@ -167,14 +168,15 @@ export function initializeRemote(id: string) {
     send(REMOTE, ["OUT"], out)
 }
 
-export async function convertBackgrounds(show) {
+export async function convertBackgrounds(show: Show) {
     if (!show) return {}
 
     show = clone(show)
-    // let media = {}
+    let mediaIds = show.layouts[show.settings.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
+
     await Promise.all(
-        Object.keys(show.media || {}).map(async (id) => {
-            let path = show.media[id].path
+        mediaIds.map(async (id) => {
+            let path = show.media[id].path || show.media[id].id || ""
             let cloudId = get(driveData).mediaId
             if (cloudId && cloudId !== "default") path = show.media[id].cloud?.[cloudId] || path
 

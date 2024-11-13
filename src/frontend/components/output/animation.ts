@@ -45,11 +45,12 @@ const animations = {
             } else {
                 // zoom
                 key = "transform"
-                initialValue = "transform: scale(1.3);"
-                let randomNumber = Math.max(1, Math.random() * 1.3 + 0.6)
-                let randomTranslate1 = randomNumBetween(0, 50)
-                let randomTranslate2 = randomNumBetween(0, 50)
-                value = `scale(${randomNumber}) translate(calc(-50% + ${randomTranslate1}px), calc(-50% + ${randomTranslate2}px));`
+                initialValue = "transform: scale(1.3) translate(-50%, -50%);"
+                // WIP not properly centered due to -50%
+                let randomNumber = Math.max(1, Math.random() * 1.1 + 0.6) // * 1.3 + 0.6
+                let randomTranslate1 = randomNumBetween(-8, 8) / 2
+                let randomTranslate2 = randomNumBetween(-8, 8) / 2
+                value = `scale(${randomNumber}) translate(calc(-50% + ${randomTranslate1}% + ${randomNumber * 4}%), calc(-50% + ${randomTranslate2}% + ${randomNumber * 4}%));`
             }
         }
 

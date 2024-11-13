@@ -45,7 +45,8 @@
         if (!id) return
 
         setTimeout(() => {
-            if (!self) return
+            // dropdown does not have a scroll bar if not much content, return so parent is not scrolled!
+            if (!self || options.length < 10) return
             let activeElem = self.querySelector("#" + id)
             activeElem?.scrollIntoView()
         }, 10)
