@@ -153,7 +153,7 @@
         "electron-builder": "^24.13.3",
         "playwright": "^1.40.1",
         "prettier": "^3.3.3",
-        "rollup": "^4.6.1",
+        "rollup": "^4.26.0",
         "rollup-plugin-copy": "^3.5.0",
         "rollup-plugin-css-only": "^4.5.2",
         "rollup-plugin-livereload": "^2.0.5",
