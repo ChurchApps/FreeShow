@@ -196,7 +196,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (keys?.length) {
                     keys.forEach((currentKey) => {
-                        let replacerValue = typeof newValue === "string" || newValue?.[currentKey] === undefined ? newValue : newValue[currentKey]
+                        let replacerValue = typeof newValue === "string" || newValue?.[currentKey] === undefined || data.dataIsArray ? newValue : newValue[currentKey]
                         if (index === -1 && !Array.isArray(replacerValue)) replacerValue = [replacerValue]
 
                         if (subkey) {

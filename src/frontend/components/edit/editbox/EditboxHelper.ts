@@ -140,8 +140,10 @@ export class EditboxHelper {
                 textIndex = textEnd
 
                 let style = a.style ? 'style="' + a.style + '"' : ""
+                let value = a.value.replaceAll("\n", "<br>") || "<br>"
+                if (value === " ") value = "&nbsp;"
 
-                html += `<span class="${a.customType ? "custom" : ""}" ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
+                html += `<span class="${a.customType ? "custom" : ""}" ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
             })
             html += "</div>"
         })

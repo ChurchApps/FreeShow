@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ID } from "../../../types/Show"
-    import { activeProject, activeShow, projects, projectView, showRecentlyUsedProjects } from "../../stores"
+    import { activeProject, activeShow, projects, projectView, saved, showRecentlyUsedProjects } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import HiddenInput from "./HiddenInput.svelte"
@@ -17,6 +17,9 @@
 
     function open(e: any) {
         if (e.ctrlKey || e.metaKey || e.target.closest(".edit") || e.target.querySelector(".edit") || editActive) return
+
+        // set back to saved if opening, as project used time is changed
+        if ($saved) setTimeout(() => saved.set(true), 10)
 
         // set last used
         showRecentlyUsedProjects.set(false)

@@ -181,12 +181,13 @@
     }
 
     /* cover grey areas with black */
+    /* WIP better border fill (pdf2img-electron render.ts:windowLoaded()) */
     .center {
-        height: calc(100% - 5px);
+        height: calc(100% - 12px);
 
         position: absolute;
         left: 50%;
-        top: 2px;
+        top: 3px;
         transform: translateX(-50%);
 
         outline-offset: 0;
@@ -194,7 +195,7 @@
     }
     .center.wide {
         height: initial;
-        width: calc(100% - 5px);
+        width: calc(100% - 12px);
     }
 
     /* action bar */

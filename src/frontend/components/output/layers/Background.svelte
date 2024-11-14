@@ -122,17 +122,31 @@
 
     let transition1 = transition
     let transition2 = transition
+
+    // don't "refresh" animation when chaning slide
+    let animation1 = ""
+    let animation2 = ""
+    $: updateAnimation(animationStyle)
+    function updateAnimation(animation) {
+        setTimeout(
+            () => {
+                if (background1 && !(loading && !firstActive)) animation1 = animation
+                else animation2 = animation
+            },
+            duration / 4 + 60
+        )
+    }
 </script>
 
 <div class="media" {style} class:key={isKeyOutput}>
     {#if background1}
         <div class="media" class:hidden={loading && !firstActive}>
-            <BackgroundMedia data={background1Data} fadingOut={firstFadingOut} {outputId} transition={transition1} {currentStyle} {animationStyle} {duration} {mirror} {styleBackground} on:loaded={() => loaded(true)} />
+            <BackgroundMedia data={background1Data} fadingOut={firstFadingOut} {outputId} transition={transition1} {currentStyle} animationStyle={animation1} {duration} {mirror} {styleBackground} on:loaded={() => loaded(true)} />
         </div>
     {/if}
     {#if background2}
         <div class="media" class:hidden={loading && firstActive}>
-            <BackgroundMedia data={background2Data} fadingOut={!firstFadingOut} {outputId} transition={transition2} {currentStyle} {animationStyle} {duration} {mirror} {styleBackground} on:loaded={() => loaded(false)} />
+            <BackgroundMedia data={background2Data} fadingOut={!firstFadingOut} {outputId} transition={transition2} {currentStyle} animationStyle={animation2} {duration} {mirror} {styleBackground} on:loaded={() => loaded(false)} />
         </div>
     {/if}
 </div>

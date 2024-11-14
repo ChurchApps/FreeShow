@@ -45,6 +45,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     newScripture: { label: "new.scripture", icon: "add" },
     createCollection: { label: "new.collection", icon: "collection" },
     changeIcon: { label: "context.changeIcon", icon: "star" },
+    category_action: { label: "popup.category_action", icon: "actions" },
     use_as_archive: { label: "context.use_as_archive", icon: "archive" },
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
@@ -168,7 +169,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_media: ["newFolder"],
     category_audio: ["newFolder"],
     category_scripture: ["newScripture"],
-    category_shows_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
+    category_shows_button: ["rename", "changeIcon", "delete", "SEPERATOR", "category_action", "use_as_archive"],
     category_overlays_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
     category_templates_button: ["rename", "changeIcon", "delete", "SEPERATOR", "use_as_archive"],
     category_media_button: ["rename", "delete", "SEPERATOR", "system_open"],
@@ -217,7 +218,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_media: ["play", "play_no_filters", "remove"],
     project_audio: ["remove"],
     project_player: ["remove"],
-    project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename", "delete"],
+    project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename"], // "delete" removed as too many users thought it just removed the show from the project
     project_section: ["remove"],
     project_pdf: ["remove"], // "rename",
     project_ppt: ["remove"], // "rename",

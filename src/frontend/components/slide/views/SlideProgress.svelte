@@ -27,7 +27,7 @@
 
         if (a.data.disabled || slide.group?.startsWith("~")) return { hide: true }
 
-        let group = slide.group
+        let group = slide.group || "—"
         if (slide.globalGroup && $groups[slide.globalGroup]) {
             group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
         }

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item, Line } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
+    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -27,6 +27,7 @@
     export let plain: boolean = false
     export let chordsMode: boolean = false
     export let chordsAction: string = ""
+    export let isLocked: boolean = false
 
     let textElem: any
     let html: string = ""
@@ -554,9 +555,6 @@
             }, 10)
         }, 10)
     }
-
-    // SHOW IS LOCKED FOR EDITING
-    $: isLocked = $showsCache[$activeShow?.id || ""]?.locked
 </script>
 
 <svelte:window on:keydown={keydown} />

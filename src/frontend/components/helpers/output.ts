@@ -6,11 +6,13 @@ import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
 import {
     activeRename,
+    categories,
     currentOutputSettings,
     currentWindow,
     dictionary,
     disabledServers,
     lockedOverlays,
+    midiIn,
     outputDisplay,
     outputs,
     outputSlideCache,
@@ -29,7 +31,7 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
-import { customActionActivation } from "../actions/actions"
+import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clearSlide } from "../output/clear"
@@ -66,8 +68,12 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 
         // reset slide cache (after update)
         if (key === "slide" && data) setTimeout(() => outputSlideCache.set({}), 50)
-        // append show usage if not already outputted
-        if (key === "slide" && data?.id && get(outputs)[outs[0]]?.out?.slide?.id !== data?.id) appendShowUsage(data.id)
+        // trigger if show is not currently outputted
+        if (key === "slide" && data?.id && get(outputs)[outs[0]]?.out?.slide?.id !== data?.id) {
+            let category = get(showsCache)[data.id]?.category || ""
+            if (get(categories)[category]?.action) runAction(get(midiIn)[get(categories)[category].action!])
+            appendShowUsage(data.id)
+        }
 
         outs.forEach((id: string) => {
             let output: any = a[id]

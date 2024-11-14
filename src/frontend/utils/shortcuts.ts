@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { IMPORT, OUTPUT } from "../../types/Channels"
+import { IMPORT, MAIN, OUTPUT } from "../../types/Channels"
 import type { ShowType } from "../../types/Show"
 import type { TopViews } from "../../types/Tabs"
 import { menuClick } from "../components/context/menuClick"
@@ -110,6 +110,8 @@ const keys: any = {
     Backspace: () => keys.Delete(),
     // give time so it don't clear slide
     F2: () => setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
+    // default menu "togglefullscreen" role not working in production on Windows
+    F11: () => (get(os).platform === "win32" ? send(MAIN, ["FULLSCREEN"]) : null),
 }
 
 export function keydown(e: any) {

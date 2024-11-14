@@ -2,6 +2,7 @@
     import type { Item } from "../../../types/Show"
     import { getQuickExample } from "../../converters/txt"
     import { slidesOptions } from "../../stores"
+    import { getSlideText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import { formatText, getTextboxes } from "./formatTextEditor"
@@ -32,10 +33,14 @@
             let slideData: any = { id, items: slide.items, text: "", ref: refSlide }
             let data = getItems(slide.items)
 
-            if (slide.group !== null && data.hasTextboxItem) {
+            if (slide.group !== null && (data.hasTextboxItem || slide.children?.find((childId) => getSlideText(slides[childId]).length))) {
                 let groupId = "[" + (replaceValues(slide.group, true) || "—") + "]"
                 text += groupId + "\n"
                 slideData.text += groupId + "\n"
+                // children has content
+                if (!data.hasTextboxItem) {
+                    data = { plainText: " ", text: " \n\n", hasTextboxItem: true }
+                }
             }
 
             text += data.text

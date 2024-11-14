@@ -70,6 +70,8 @@ export function storeSubscriber() {
 
             // sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
 
+            // WIP convertBackgrounds is triggered many times...
+
             // TODO: ?
             // send(REMOTE, ["SHOW"], data )
             timedout(REMOTE, { channel: "SHOW", data }, () =>

@@ -146,8 +146,9 @@
         box.edit.chords[1].hidden = !item?.chords?.enabled
         box.edit.chords[2].hidden = !item?.chords?.enabled
     }
-    $: if (id === "slide_tracker" && box?.edit?.default?.[2]) {
+    $: if (id === "slide_tracker" && box?.edit?.default?.[3]) {
         box.edit.default[2].hidden = item?.tracker?.type !== "group"
+        box.edit.default[3].hidden = item?.tracker?.type !== "group"
     }
 
     $: if (id === "timer" && box?.edit?.font) box.edit.font[3].value = item?.auto ?? true

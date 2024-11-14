@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, projects, projectView, showRecentlyUsedProjects, sorted } from "../../stores"
+    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, midiIn, projects, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import { getActionIcon } from "../actions/actions"
     import { keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -216,10 +217,18 @@
                                         center
                                         bold={false}
                                     >
-                                        {#if show.name?.length}
-                                            {show.name}
-                                        {:else}
-                                            <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
+                                        <p>
+                                            {#if show.name?.length}
+                                                {show.name}
+                                            {:else}
+                                                <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
+                                            {/if}
+                                        </p>
+
+                                        {#if $special.sectionTriggerAction}
+                                            <span style="display: flex;position: absolute;right: 5px;" title={$midiIn[$special.sectionTriggerAction]?.name}>
+                                                <Icon id={getActionIcon($special.sectionTriggerAction)} size={0.8} white />
+                                            </span>
                                         {/if}
                                     </Button>
                                 {:else}

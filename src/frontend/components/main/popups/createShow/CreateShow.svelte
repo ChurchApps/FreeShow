@@ -74,7 +74,7 @@
 
             // look for existing shows with the same title
             if (values.name) {
-                const exists = Object.values($shows).find((a: any) => a.name.toLowerCase() === values.name.toLowerCase())
+                const exists = Object.values($shows).find((a: any) => a.name?.toLowerCase() === values.name.toLowerCase())
                 if (exists) newToast("$create_show.exists")
             }
         }
@@ -102,7 +102,7 @@
 
         // let metaData: string = ""
         // if (sections[1] && sections[0]?.split("\n").length < 3) metaData = sections.splice(0, 1)[0]
-        let category = selectedCategory.id.length ? selectedCategory.id : null
+        let category = selectedCategory?.id?.length ? selectedCategory.id : null
 
         if (sections.length) {
             convertText({ name: values.name, category, text: values.text })

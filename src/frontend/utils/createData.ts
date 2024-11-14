@@ -608,7 +608,7 @@ export function createDefaultShow() {
         quickAccess: {},
         meta: {},
         slides: {
-            1: {
+            one: {
                 group: "",
                 color: null,
                 settings: {},

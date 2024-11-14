@@ -11,6 +11,7 @@ export interface Category {
     default?: boolean
     description?: string
     isArchive?: boolean
+    action?: string // trigger custom action on content presentation
 }
 
 export interface BibleCategories extends Category {
