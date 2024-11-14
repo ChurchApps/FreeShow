@@ -8,7 +8,7 @@ export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "
 
 const areas: { [key in DropAreas | string]: string[] } = {
     all_slides: ["template"],
-    slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "midi", "action"], // group
+    slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "global_timer", "midi", "action"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
     project: ["show_drawer", "media", "audio", "player", "scripture"],

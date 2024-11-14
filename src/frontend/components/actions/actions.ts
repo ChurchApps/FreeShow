@@ -8,6 +8,7 @@ import { API_ACTIONS, API_toggle } from "./api"
 import { convertOldMidiToNewAction } from "./midi"
 import { getActiveOutputs } from "../helpers/output"
 import { wait } from "../../utils/common"
+import { actionData } from "./actionData"
 
 export function runActionId(id: string) {
     runAction(get(midiIn)[id])
@@ -138,6 +139,12 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
 
 export function slideHasAction(actions: any, key: string) {
     return actions?.slideActions?.find((a) => a.triggers?.includes(key))
+}
+
+export function getActionIcon(id: string) {
+    let actions = get(midiIn)[id]?.triggers
+    if (actions.length > 1) return "actions"
+    return actionData[actions[0]]?.icon || "actions"
 }
 
 // extra names

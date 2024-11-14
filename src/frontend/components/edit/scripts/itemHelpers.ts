@@ -8,12 +8,14 @@ import { getStyles, removeText } from "../../helpers/style"
 import { addSlideAction } from "../../actions/actions"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 
+export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
+
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
     let template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
     let newData: Item = {
-        style: template?.[0]?.style || "top:121px;left:50.5px;height:840px;width:1820px;",
+        style: template?.[0]?.style || DEFAULT_ITEM_STYLE,
         type,
     }
     if (id) newData.id = id

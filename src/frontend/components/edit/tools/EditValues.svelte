@@ -528,6 +528,7 @@
                             </p>
                             <svelte:component
                                 this={inputs[input.input]}
+                                class="customInput"
                                 {...input.values || {}}
                                 {value}
                                 disabled={input.disabled && (item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value)}
@@ -588,7 +589,7 @@
         min-width: 50% !important;
     }
 
-    div :global(.dropdown) {
+    div :global(.customInput .dropdown) {
         width: 160%;
         right: 0;
     }

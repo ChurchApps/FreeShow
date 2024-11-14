@@ -365,7 +365,8 @@
         "music": "Music",
         "offers": "Offers",
         "notice": "Notice",
-        "visuals": "Visuals"
+        "visuals": "Visuals",
+        "action_tip": "An action that triggers each time a show with this category is presented."
     },
     "groups": {
         "current": "Current",
@@ -417,6 +418,7 @@
         "about": "About",
         "history": "History",
         "action": "Action",
+        "category_action": "Category action",
         "connect": "Connect",
         "cloud_update": "Syncing with cloud",
         "cloud_method": "Data location",
@@ -1136,7 +1138,8 @@
         "auto": "Auto",
         "optimized": "Optimized",
         "reduced": "Reduced",
-        "full": "Full"
+        "full": "Full",
+        "section_trigger_action": "Trigger action when navigating presentation to a section"
     },
     "sort": {
         "sort_by": "Sort by",

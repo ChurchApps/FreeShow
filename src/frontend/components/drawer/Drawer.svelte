@@ -61,6 +61,14 @@
 
         // open drawer
         drawer.set({ height: storeHeight === null || storeHeight < DEFAULT_DRAWER_HEIGHT ? DEFAULT_DRAWER_HEIGHT : storeHeight, stored: null })
+
+        // if drawer is closed when searching, set category to "all"
+        if (e === null && ["shows", "overlays", "templates", "media", "audio"].includes($activeDrawerTab)) {
+            drawerTabsData.update((a) => {
+                a[$activeDrawerTab].activeSubTab = "all"
+                return a
+            })
+        }
     }
 
     function mouseup(e: any) {

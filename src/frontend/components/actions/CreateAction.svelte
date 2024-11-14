@@ -31,6 +31,7 @@
         "name_select_show",
         "next_slide",
         "previous_slide",
+        "random_slide",
         "index_select_slide",
         "name_select_slide",
         "id_select_group",
