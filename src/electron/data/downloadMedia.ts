@@ -192,9 +192,12 @@ async function startDownload(downloading: any) {
         next()
     }
 
-    let timeout = setTimeout(() => {
-        fileStream.close()
-        console.error(`File timed out: ${file.name}`)
-        next()
-    }, 60 * 8 * 1000) // 8 minutes timeout
+    let timeout = setTimeout(
+        () => {
+            fileStream.close()
+            console.error(`File timed out: ${file.name}`)
+            next()
+        },
+        60 * 8 * 1000
+    ) // 8 minutes timeout
 }

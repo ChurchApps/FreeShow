@@ -703,7 +703,7 @@ export function mergeSlides(indexes: { index: number }[]) {
     // add textbox
     newSlide.items = [...getTextItems(), ...newSlide.items]
     function getTextItems() {
-        return newLines.map((lines, i) => ({ type: "text", lines, style: previousTextboxStyles[i] } as Item))
+        return newLines.map((lines, i) => ({ type: "text", lines, style: previousTextboxStyles[i] }) as Item)
     }
 
     let newShow: Show = clone(_show().get())
@@ -773,7 +773,7 @@ export function mergeSlides(indexes: { index: number }[]) {
 }
 
 export function mergeTextboxes(customSlideIndex: number = -1) {
-    let editSlideIndex: number = customSlideIndex < 0 ? get(activeEdit).slide ?? -1 : customSlideIndex
+    let editSlideIndex: number = customSlideIndex < 0 ? (get(activeEdit).slide ?? -1) : customSlideIndex
     if (editSlideIndex < 0) return
 
     let slideRef = _show().layouts("active").ref()[0][editSlideIndex] || {}
