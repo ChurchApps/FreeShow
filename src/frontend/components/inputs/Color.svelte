@@ -168,8 +168,11 @@
     .colors {
         display: flex;
         flex-wrap: wrap;
+        /* justify-content: space-between; */
+        /* justify-content: center; */
         gap: 5px;
         border: none;
+        border-right: none !important;
     }
 
     .picker .color p {

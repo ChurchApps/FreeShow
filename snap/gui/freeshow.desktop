@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=FreeShow
+Exec=freeshow %U
+Terminal=false
+Type=Application
+Icon=${SNAP}/meta/gui/icon.png
+StartupWMClass=FreeShow
+Comment=Show song lyrics and more for free!
+Categories=AudioVideo;

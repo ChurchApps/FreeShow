@@ -45,7 +45,8 @@
         if (!id) return
 
         setTimeout(() => {
-            if (!self) return
+            // dropdown does not have a scroll bar if not much content, return so parent is not scrolled!
+            if (!self || options.length < 10) return
             let activeElem = self.querySelector("#" + id)
             activeElem?.scrollIntoView()
         }, 10)
@@ -64,7 +65,7 @@
     }}
 />
 
-<div class:disabled class:center class:flags bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
+<div class:disabled class:center class:flags bind:this={self} class="dropdownElem {$$props.class || ''}" style="position: relative;{$$props.style || ''}">
     <button {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
         {#if arrow}
             <Icon id="expand" size={1.2} white />

@@ -162,7 +162,7 @@ export const receiveSTAGE: any = {
 
             if (a.data.disabled || slide.group?.startsWith("~")) return { hide: true }
 
-            let group = slide.group
+            let group = slide.group || "—"
             if (slide.globalGroup && get(groups)[slide.globalGroup]) {
                 group = get(groups)[slide.globalGroup].default ? get(dictionary).groups?.[get(groups)[slide.globalGroup].name] : get(groups)[slide.globalGroup].name
             }

@@ -120,6 +120,11 @@ let mediaBeingCaptured: number = 0
 const maxAmount = 20
 const refillMargin = maxAmount * 0.6
 async function captureWithCanvas(data: any) {
+    if (!(await doesPathExistAsync(data.input))) {
+        generationFinished()
+        return
+    }
+
     mediaBeingCaptured++
     toApp(MAIN, { channel: "CAPTURE_CANVAS", data })
 

@@ -1,12 +1,12 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Show, Slide } from "../../../types/Show"
+import type { Item, Show, Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
 import { activeDrawerTab, activePage, activeProject, activeShow, audioFolders, audioPlaylists, audioStreams, categories, drawerTabsData, media, mediaFolders, overlays, projects, scriptureSettings, shows, showsCache, templates } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
-import { addItem } from "../edit/scripts/itemHelpers"
+import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
 import { audioExtensions, getExtension, getFileName, getMediaType, imageExtensions, mediaExtensions, presentationExtensions, removeExtension, videoExtensions } from "./media"
@@ -638,6 +638,29 @@ const slideDrop: any = {
         if (!actions) return
 
         history.newData = { key: "actions", data: actions, indexes: [drop.index] }
+        return history
+    },
+    global_timer: ({ drag, drop }: any, history: any) => {
+        // let data: any[] = drag.data
+        // let center = drop.center
+
+        // center drop to add to existing slide?
+
+        history.id = "SLIDES"
+        let slides: any[] = drag.data.map((a: any) => ({ id: uid(), group: removeExtension(a.name || ""), color: null, settings: {}, notes: "", items: getTimerItem(a) }))
+        function getTimerItem(timer): Item[] {
+            return [{ type: "timer", style: DEFAULT_ITEM_STYLE, timerId: timer.id }]
+        }
+
+        // start timer layout
+        const layout = { actions: { slideActions: [{ triggers: ["start_slide_timers"] }] } }
+        const layouts = slides.map(({ id }) => ({ id, ...layout }))
+
+        let index = drop.index
+        if (drop.trigger?.includes("end")) index++
+
+        history.newData = { index, data: slides, layouts }
+
         return history
     },
     midi: ({ drag, drop }: any, history: any) => {

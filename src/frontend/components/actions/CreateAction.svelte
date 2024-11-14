@@ -31,6 +31,7 @@
         "name_select_show",
         "next_slide",
         "previous_slide",
+        "random_slide",
         "index_select_slide",
         "name_select_slide",
         "id_select_group",
@@ -87,7 +88,7 @@
     let input = ""
     $: if (actionId && !pickAction) loadInputs()
     function loadInputs() {
-        input = actionData[actionId]?.input || ""
+        input = actionData[getId(actionId)]?.input || ""
 
         if (!list) return
 
@@ -98,7 +99,14 @@
         }
     }
 
+    function getId(actionId: string) {
+        let multiple = actionId.indexOf(":")
+        if (multiple > -1) actionId = actionId.slice(0, multiple)
+        return actionId
+    }
+
     function findName(actionId: string): string {
+        actionId = getId(actionId)
         return ACTIONS.find((a) => a.id === actionId)?.name || actionId || ""
     }
 </script>
@@ -135,7 +143,7 @@
 {/if}
 
 {#if input && actionId && !pickAction}
-    <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} {actionId} on:change={(e) => changeAction({ id: actionId, actionValue: e.detail })} list />
+    <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} actionId={getId(actionId)} on:change={(e) => changeAction({ id: actionId, actionValue: e.detail })} list />
 {/if}
 
 <style>

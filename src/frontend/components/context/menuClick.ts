@@ -298,6 +298,13 @@ const actions: any = {
             return a
         })
     },
+    category_action: (obj: any) => {
+        let id = obj.sel.data[0]
+        if (!id) return
+
+        popupData.set({ id })
+        activePopup.set("category_action")
+    },
     use_as_archive: (obj: any) => {
         const categoryStores: any = {
             category_shows: () => categories.update(toggleArchive),

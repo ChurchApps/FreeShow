@@ -236,7 +236,7 @@
 </CombinedInput>
 <CombinedInput>
     <p><T id="transition.easing" /></p>
-    <Dropdown options={easings} value={getOptionName(animation.easing || "linear", easings)} on:click={(e) => (animation.easing = e.detail.id)} />
+    <Dropdown options={easings} value={getOptionName(animation.easing || "ease", easings)} on:click={(e) => (animation.easing = e.detail.id)} />
 </CombinedInput>
 
 <!-- <br />

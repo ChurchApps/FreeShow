@@ -594,7 +594,7 @@
         if (!exactMatch && findMatches.length !== 1) {
             // autocomplete e.g. "First ..."
             const firstWordMatch = [...new Set(findMatches.map((a) => a.name.split(" ")[0]))]
-            if (firstWordMatch.length === 1) {
+            if (firstWordMatch.length === 1 && !hasNumber(lowerSearch.slice(0, 3))) {
                 updateSearchValue(firstWordMatch[0] + " ")
                 storedSearch = firstWordMatch[0] + " "
                 tempDisableInputs = true
@@ -637,7 +637,7 @@
         let formattedChapter: string | number | null = null
         chapters[firstBibleId]?.forEach((c, i) => {
             if (c.id?.replace(/\D+/g, "") === chapter) formattedChapter = c.id
-            else if (c.number === chapter) formattedChapter = i
+            else if (c.number.toString() === chapter) formattedChapter = i
         })
 
         if (formattedChapter === null) {

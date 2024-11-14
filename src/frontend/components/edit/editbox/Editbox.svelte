@@ -117,6 +117,8 @@
     }
 
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
+    // SHOW IS LOCKED FOR EDITING
+    $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
@@ -128,7 +130,7 @@
 bind:offsetWidth={width} -->
 <div
     bind:this={itemElem}
-    class={plain ? "editItem" : `editItem item ${$showsCache[active || ""]?.locked ? "" : "context #edit_box"}`}
+    class={plain ? "editItem" : `editItem item ${isLocked ? "" : "context #edit_box"}`}
     class:selected={$activeEdit.items.includes(index)}
     class:isDisabledVariable
     style={plain
@@ -143,7 +145,7 @@ bind:offsetWidth={width} -->
         <EditboxPlain {item} {index} {ratio} />
     {/if}
     {#if item?.lines}
-        <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} />
+        <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} {isLocked} />
     {:else}
         <EditboxOther {item} {ratio} {ref} {itemElem} />
     {/if}

@@ -70,9 +70,12 @@
 
     $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
 
-    $: allSlideItems = editSlideSelected && activeIsShow && ref.length > $activeEdit.slide! ? clone(_show().slides([ref[$activeEdit.slide!]?.id]).get("items")[0] || []) : []
-    $: if ($activeEdit.type === "overlay") allSlideItems = clone($overlays[$activeEdit.id!]?.items || [])
-    $: if ($activeEdit.type === "template") allSlideItems = clone($templates[$activeEdit.id!]?.items || [])
+    let allSlideItems: Item[] = []
+    $: {
+        if ($activeEdit.type === "overlay") allSlideItems = clone($overlays[$activeEdit.id!]?.items || [])
+        else if ($activeEdit.type === "template") allSlideItems = clone($templates[$activeEdit.id!]?.items || [])
+        else allSlideItems = editSlideSelected && activeIsShow && ref.length > $activeEdit.slide! ? clone(_show().slides([ref[$activeEdit.slide!]?.id]).get("items")[0] || []) : []
+    }
     const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
     // select active items or all items
@@ -129,7 +132,7 @@
 
         setNewStyle()
         function setNewStyle() {
-            if (active === "text") return setBoxStyle(style, slides, itemType)
+            if (active === "text") return setBoxStyle(style, slides, itemType as any)
             if (active === "item") return setItemStyle(style, slides)
             if (active === "slide") return setSlideStyle(style, slides)
             if (active === "filters") {
@@ -221,7 +224,7 @@
 
         let deleteKeys = ["auto", "textFit", "specialStyle", "scrolling"]
         // reset timer/icon/media/mirror etc. style
-        if (item[item.type]) deleteKeys = [item.type]
+        if (item && item[item.type || ""]) deleteKeys = [item.type!]
 
         deleteKeys.forEach((key) => {
             history({
@@ -280,6 +283,7 @@
     }
 
     $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)
+    $: isLocked = $activeEdit.id ? false : $showsCache[$activeShow?.id || ""]?.locked === true
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 
     $: currentCopied = $copyPasteEdit[type]
@@ -289,7 +293,7 @@
 <svelte:window on:keydown={keydown} />
 
 <div class="main border editTools">
-    {#if slideActive}
+    {#if slideActive && !isLocked}
         <Tabs {tabs} bind:active {overflowHidden} />
 
         {#if active === "text"}
@@ -363,7 +367,7 @@
                 </Button>
             {/if}
         </span>
-    {:else}
+    {:else if !isLocked}
         <Center faded>
             <T id="empty.slides" />
         </Center>
