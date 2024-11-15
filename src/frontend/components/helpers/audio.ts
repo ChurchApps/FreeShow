@@ -278,6 +278,7 @@ export function startMicrophone(mic) {
 
             let audio = new Audio()
             audio.srcObject = stream
+            audio.volume = 0
 
             playAudio({ path: mic.id, name: mic.name, audio, stream }, false)
         })
@@ -784,7 +785,9 @@ export async function getAudioDuration(path: string): Promise<number> {
     return new Promise((resolve) => {
         let audio: any = new Audio(encodeFilePath(path))
         audio.addEventListener("canplaythrough", (_: any) => {
-            resolve(audio.duration)
+            // audio streams does not end
+            if (audio.duration === Infinity) resolve(0)
+            else resolve(audio.duration || 0)
         })
     })
 }

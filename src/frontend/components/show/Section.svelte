@@ -75,7 +75,7 @@
 
 <div class="settingsButton">
     <Button title={$dictionary.menu?.settings} on:click={() => (settingsOpened = !settingsOpened)} style="padding: 10px;" dark>
-        <Icon id="settings" white={settingsOpened} />
+        <Icon id="settings" white={settingsOpened} size={1.1} />
     </Button>
 </div>
 
@@ -92,7 +92,7 @@
 
     .settings {
         flex: 1;
-        background-color: var(--primary);
+        /* background-color: var(--primary); */
     }
 
     .settingsButton {

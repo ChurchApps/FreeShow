@@ -565,7 +565,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             line.align = templateLine?.align || ""
             line.text?.forEach((text: any, k: number) => {
                 let templateText = templateLine?.text[k] || templateLine?.text[0]
-                if (text.customType !== "disableTemplate") text.style = templateText?.style || ""
+                if (!text.customType?.includes("disableTemplate")) text.style = templateText?.style || ""
 
                 let firstChar = templateText?.value?.[0] || ""
 

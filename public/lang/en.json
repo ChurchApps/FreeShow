@@ -194,6 +194,8 @@
         "playlist_settings": "Playlist settings",
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
+        "allow_gaining": "Allow gaining",
+        "allow_gaining_tip": "Allow setting volume above 100% (May cause distortion)",
         "pre_fader_volume_meter": "Pre fader volume meter",
         "mixer": "Mixer",
         "metronome": "Metronome",

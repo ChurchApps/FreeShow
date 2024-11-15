@@ -245,7 +245,7 @@
         update("customText", customText)
     }
 
-    $: containsJesusWords = Object.values(bibles?.[0]?.verses || {})?.find((text: any) => text?.includes('<span class="wj"') || text?.includes("<red"))
+    $: containsJesusWords = Object.values(bibles?.[0]?.verses || {})?.find((text: any) => text?.includes('<span class="wj"') || text?.includes("<red") || text?.includes("!{"))
 
     $: previousSlides = "{}"
     let currentOutputSlides: any[] = []

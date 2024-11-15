@@ -172,11 +172,11 @@
                 return
             }
 
-            const itemText = item?.lines?.[0]?.text?.filter((a) => a.customType !== "disableTemplate") || []
+            const itemText = item?.lines?.[0]?.text?.filter((a) => !a.customType?.includes("disableTemplate")) || []
             let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
-            const verseItemText = item?.lines?.[0]?.text?.filter((a) => a.customType === "disableTemplate") || []
+            const verseItemText = item?.lines?.[0]?.text?.filter((a) => a.customType?.includes("disableTemplate")) || []
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             customTypeRatio = verseItemSize / 100 || 1
 
@@ -354,8 +354,8 @@
                             {#each line.text || [] as text}
                                 {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                 <span
-                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{text.customType === 'disableTemplate' ? text.style : ''}{fontSize
-                                        ? `;font-size: ${fontSize * (text.customType === 'disableTemplate' ? customTypeRatio : 1)}px;`
+                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
+                                        ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;`
                                         : ''}"
                                 >
                                     {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { ...ref, slideIndex }, updateDynamic) : value}
