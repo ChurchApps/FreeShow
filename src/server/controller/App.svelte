@@ -1,6 +1,6 @@
 <script lang="ts">
     import { io } from "socket.io-client"
-    import Icon from "./helpers/Icon.svelte"
+    import Icon from "../common/components/Icon.svelte"
 
     let socket = io()
 
@@ -189,6 +189,10 @@
 
         /* --navigation-width: 18vw; */
         --navigation-width: 300px;
+    }
+
+    :global(svg.white) {
+        fill: var(--text) !important;
     }
 
     /* toggle */

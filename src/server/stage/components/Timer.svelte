@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../types/Show"
-    import { secondsToTime } from "../../remote/helpers/time"
+    import { secondsToTime } from "../../common/util/time"
     import { activeTimers, events } from "../store"
 
     export let item: null | Item = null

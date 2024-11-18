@@ -114,7 +114,7 @@ export function convertVideopsalm(data: any) {
         }
 
         let i: number = 0
-        let importingText = get(dictionary)?.popup.importing || "Importing"
+        let importingText = get(dictionary).popup?.importing || "Importing"
 
         let album: string = content?.Text
         if (content.Songs?.length) asyncLoop()

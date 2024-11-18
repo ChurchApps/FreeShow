@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import Button from "./Button.svelte"
+    import Button from "../../common/components/Button.svelte"
 
     export let activeShow: any
     export let show: any

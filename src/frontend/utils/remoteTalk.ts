@@ -98,13 +98,8 @@ export const receiveREMOTE: any = {
 
             let layout = _show(id).layouts("active").ref()[0]
             if (msg.data.index < layout.length && msg.data.index >= 0) {
-                updateOut(
-                    msg.data.id,
-                    msg.data.index,
-                    _show(msg.data.id)
-                        .layouts(msg.data.layout ? [msg.data.layout] : "active")
-                        .ref()[0]
-                )
+                if (!msg.data.layout) msg.data.layout = _show(id).get("settings.activeLayout")
+                updateOut(msg.data.id, msg.data.index, _show(msg.data.id).layouts([msg.data.layout]).ref()[0])
                 setOutput("slide", msg.data)
             }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { customIcons } from "../helpers/customIcons"
-    import icons from "../helpers/icons"
+    import { customIcons } from "../util/customIcons"
+    import icons from "../util/icons"
 
     export let id: string
     export let size: number = 1

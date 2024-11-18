@@ -1,28 +1,25 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
     import type { Resolution } from "../../../../types/Settings"
-    import type { Transition } from "../../../../types/Show"
-    import { GetLayout } from "../../helpers/get"
-    import { getStyleResolution } from "../../helpers/getStyleResolution"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { GetLayout } from "../../util/output"
+    import { getStyleResolution } from "../../../common/util/getStyleResolution"
+    import { outLayout, outShow, styleRes } from "../../util/stores"
 
-    export let outShow: any
-    export let outSlide: any
-    export let outLayout: any
-    export let styleRes: any
+    export let outSlide: number
     export let preview: boolean = false
 
     let width: number = 0
     let height: number = 0
-    let resolution: Resolution = styleRes || { width: 1920, height: 1080 }
+    let resolution: Resolution = $styleRes || { width: 1920, height: 1080 }
 
-    export let transition: Transition = { type: "fade", duration: 500, easing: "linear" } // text (not background)
+    export let transition = { type: "fade", duration: 500 } // text (not background)
     export let ratio = 0
 
-    $: layout = GetLayout(outShow, outLayout)[outSlide]
+    $: layout = GetLayout($outShow, $outLayout)[outSlide]
 
-    $: showSlide = outShow?.slides?.[layout?.id] || null
+    $: showSlide = $outShow?.slides?.[layout?.id] || null
 
     $: isCustomRes = resolution.width !== 1920 || resolution.height !== 1080
     $: slideResolution = showSlide?.settings?.resolution
@@ -35,11 +32,11 @@
     <MediaOutput {...$outBackground} {transition} bind:video bind:videoData />
   {/if} -->
         <div class="background" style="zoom: {1 / ratio}">
-            {#if outShow.media?.[layout?.background]}
-                <img src={outShow.media[layout.background].path} />
+            {#if $outShow.media?.[layout?.background || ""]}
+                <img src={$outShow.media[layout.background || ""].path} />
             {/if}
         </div>
-        {#if outShow}
+        {#if $outShow}
             {#key outSlide}
                 <span transition:fade|local={transition} style="pointer-events: none;">
                     {#if showSlide}

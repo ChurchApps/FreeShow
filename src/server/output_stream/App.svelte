@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import Icon from "./helpers/Icon.svelte"
     import { io } from "socket.io-client"
+    import Icon from "../common/components/Icon.svelte"
 
     let socket = io()
 
