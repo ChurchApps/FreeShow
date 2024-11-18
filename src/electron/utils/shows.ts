@@ -48,7 +48,7 @@ function showHasLayoutContent(show: Show) {
 
 export function getShowTextContent(show: Show) {
     let textContent = ""
-    Object.values(show.slides).forEach((slide) => {
+    Object.values(show.slides || {}).forEach((slide) => {
         slide.items.forEach((item) => {
             item.lines?.forEach((line) => {
                 line.text?.forEach((text) => {

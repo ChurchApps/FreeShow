@@ -963,6 +963,8 @@ async function duplicateShows(selected: any) {
     await loadShows(selected.map(({ id }: any) => id))
     selected.forEach(({ id }: any) => {
         let show = clone(get(showsCache)[id])
+        if (!show) return
+
         show.name += " 2"
         show.timestamps.modified = new Date().getTime()
         history({ id: "UPDATE", newData: { data: show, remember: { project: id === "show" ? get(activeProject) : null } }, location: { page: "show", id: "show" } })

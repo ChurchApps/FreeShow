@@ -750,6 +750,7 @@
     },
     "context": {
         "enabledTabs": "Toggle tabs",
+        "setTag": "Set tag",
         "filterByTags": "Filter by tags",
         "addToProject": "Add to project",
         "add_to_show": "Add to show",

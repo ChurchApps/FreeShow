@@ -40,7 +40,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     export: { label: "actions.export", icon: "export" },
     // DRAWER
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
-    tags: { label: "context.filterByTags", icon: "tag", items: ["LOAD_tags"] },
+    tag_set: { label: "context.setTag", icon: "tag", items: ["LOAD_tag_set"] },
+    tag_filter: { label: "context.filterByTags", icon: "tag", items: ["LOAD_tag_filter"] },
     newCategory: { label: "context.newCategory", icon: "add" },
     newScripture: { label: "new.scripture", icon: "add" },
     createCollection: { label: "new.collection", icon: "collection" },
@@ -177,11 +178,11 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
     playlist: ["rename", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "newShow", "SEPERATOR", "tags", "sort_shows_by"],
+    drawer_show: ["newShowPopup", "newShow", "SEPERATOR", "tag_filter", "sort_shows_by"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
-    drawer_show_button: ["addToProject", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "SEPERATOR", "tags", "sort_shows_by", "selectAll"],
+    drawer_show_button: ["addToProject", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "tag_set", "SEPERATOR", "tag_filter", "sort_shows_by", "selectAll"],
     drawer_new_show: ["newShowPopup", "newShow"],
     // media / audio
     // "play", "play_no_filters", "SEPERATOR", "edit",

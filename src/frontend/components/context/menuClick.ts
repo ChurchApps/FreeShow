@@ -235,7 +235,40 @@ const actions: any = {
         })
         return m
     },
-    tags: (obj: any) => {
+    tag_set: (obj: any) => {
+        let tagId = obj.menu.id
+
+        let disable = get(shows)[obj.sel.data?.[0].id]?.quickAccess?.tags?.includes(tagId)
+
+        obj.sel.data?.forEach(({ id }) => {
+            // WIP similar to Tag.svelte - toggleTag()
+            let quickAccess = get(shows)[id]?.quickAccess || {}
+
+            let tags = quickAccess.tags || []
+            let existingIndex = tags.indexOf(tagId)
+            if (disable) {
+                if (existingIndex > -1) tags.splice(existingIndex, 1)
+            } else {
+                if (existingIndex < 0) tags.push(tagId)
+            }
+
+            quickAccess.tags = tags
+
+            shows.update((a) => {
+                a[id].quickAccess = quickAccess
+                return a
+            })
+            if (get(showsCache)[id]) {
+                showsCache.update((a) => {
+                    a[id].quickAccess = quickAccess
+                    return a
+                })
+            }
+
+            // history({ id: "UPDATE", newData: { data: quickAccess, key: "quickAccess" }, oldData: { id }, location: { page: "show", id: "show_key", override: "toggle_tag" } })
+        })
+    },
+    tag_filter: (obj: any) => {
         let tagId = obj.menu.id
 
         let activeTags = get(activeTagFilter)
