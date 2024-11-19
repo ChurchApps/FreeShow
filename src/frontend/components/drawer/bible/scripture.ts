@@ -131,7 +131,7 @@ export function getSlides({ bibles, sorted }) {
     bibles.forEach((bible, bibleIndex) => {
         let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
         let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
-        let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
+        let alignStyle = currentTemplate?.lines?.[1]?.align || currentTemplate?.lines?.[0]?.align || "text-align: left;"
         let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
         let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings

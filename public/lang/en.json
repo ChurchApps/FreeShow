@@ -634,6 +634,7 @@
         "next_after_media": "Next on media finished",
         "remove_media": "Remove media",
         "remove_layers": "Remove layers",
+        "toggle_checkbox_tip": "Action will toggle if checkbox is unchanged",
         "start_recording": "Start recording",
         "stop_recording": "Stop recording",
         "export_recording": "Stop recording and export",

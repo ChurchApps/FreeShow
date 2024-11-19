@@ -49,10 +49,14 @@
         "id_select_stage_layout",
         "change_stage_output_layout",
         "change_transition",
+        "change_variable",
         "start_camera",
+        "run_action",
+        "toggle_action",
+        "send_rest_command",
     ]
     // remove actions that are not fully implemented to CustomInput yet
-    const removeActions = ["change_transition", "change_variable"]
+    const removeActions = ["change_transition"]
     if (list) removeActions.push(...removeFromSlideAction)
 
     $: ACTIONS = [

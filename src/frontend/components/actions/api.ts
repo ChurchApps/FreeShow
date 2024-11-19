@@ -54,6 +54,7 @@ export type API_transition = {
     easing?: string // default: "sine"
 }
 export type API_variable = {
+    id?: string
     name?: string
     index?: number
     // no values will toggle on/off:

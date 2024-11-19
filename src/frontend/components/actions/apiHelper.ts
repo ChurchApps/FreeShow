@@ -142,7 +142,8 @@ export function moveStageConnection(id: string) {
 
 export function changeVariable(data: API_variable) {
     let variable: any
-    if (data.name) variable = sortByClosestMatch(getVariables(), data.name)[0]
+    if (data.id) variable = get(variables)[data.id]
+    else if (data.name) variable = sortByClosestMatch(getVariables(), data.name)[0]
     else if (data.index !== undefined) variable = sortByName(getVariables())[data.index - 1]
     if (!variable) return
 
@@ -154,13 +155,13 @@ export function changeVariable(data: API_variable) {
         key = "number"
     } else if (data.value !== undefined) {
         value = data.value
-        key = variable.type === "number" ? "number" : "text"
+        if (typeof value !== "boolean") key = variable.type === "number" ? "number" : "text"
     } else if (key === "enabled") {
         value = !variable.enabled
     }
     if (value === undefined) return
 
-    updateVariable(value, variable.id, key)
+    updateVariable(value, data.id || variable.id, key)
 }
 function getVariables() {
     return keysToID(get(variables))

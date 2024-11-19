@@ -404,11 +404,13 @@ const actions: any = {
     newPrivateShow: () => history({ id: "UPDATE", newData: { replace: { private: true }, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } }),
     newProject: (obj: any) => {
         let parent: string = obj.sel.data[0]?.id || obj.contextElem.id || "/" // obj.contextElem.getAttribute("data-parent")
+        if (parent === "projectsArea") parent = "/"
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project" } })
     },
     newFolder: (obj: any) => {
         if (obj.contextElem.classList.contains("#folder__projects") || obj.contextElem.classList.contains("#projects")) {
             let parent = obj.sel.data[0]?.id || obj.contextElem.id || "/"
+            if (parent === "projectsArea") parent = "/"
             history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project_folder" } })
             return
         }
