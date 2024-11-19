@@ -9,6 +9,7 @@ import type { ShowType } from "../../../types/Show"
 import { loadedMediaThumbnails, media, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { awaitRequest, send } from "../../utils/request"
+import type { API_media } from "../actions/api"
 
 // electron/data/media.ts
 export const videoExtensions = ["mp4", "webm", "ogv", "mov", "m4v", "3gp", "3g2", "avi", "mkv", "flv", "ts", "dvr-ms", "mpeg", "mpg"]
@@ -83,6 +84,15 @@ export function encodeFilePath(path: string): string {
 
 //     return joinPath([...splittedPath, decodedName])
 // }
+
+export async function getThumbnail(data: API_media) {
+    let path = data.path
+    if (videoExtensions.includes(getExtension(path))) {
+        path = getThumbnailPath(path, mediaSize.drawerSize)
+    }
+
+    return await toDataURL(path)
+}
 
 // convert to base64
 async function toDataURL(url: string): Promise<string> {

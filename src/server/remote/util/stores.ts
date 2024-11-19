@@ -1,3 +1,4 @@
+import type { ProjectShowRef } from "./../../../types/Projects"
 import { get, Writable, writable } from "svelte/store"
 import type { Dictionary } from "../../../types/Settings"
 import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
@@ -18,6 +19,7 @@ export let isConnected = writable(false)
 export let quickPlay = writable(false)
 export let activeTab = writable("shows")
 
+export let active: Writable<ProjectShowRef> = writable({ id: "", type: "show" })
 export let activeShow: Writable<any> = writable(null)
 export let shows: Writable<any[]> = writable([])
 export let outSlide: Writable<any> = writable(null)
@@ -32,6 +34,8 @@ export let openedFolders: Writable<any[]> = writable([])
 export let projects: Writable<any[]> = writable([])
 export let project: Writable<string> = writable("")
 
+export let mediaCache: Writable<any> = writable({})
+
 /////
 
 export const _ = {
@@ -41,6 +45,7 @@ export const _ = {
     isConnected,
     quickPlay,
     activeTab,
+    active,
     activeShow,
     shows,
     outSlide,
@@ -53,6 +58,7 @@ export const _ = {
     openedFolders,
     projects,
     project,
+    mediaCache,
 }
 
 /////

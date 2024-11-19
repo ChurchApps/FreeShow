@@ -3,19 +3,20 @@
     import icons from "../util/icons"
 
     export let id: string
-    export let size: number = 1
-    export let fill: boolean = false
+    export let size: number = 1.2
     export let white: boolean = false
+    export let right: boolean = false
+    export let fill: boolean = false
     export let custom: boolean = false
+    export let box: number = 24
 
     $: icon = custom ? customIcons[id] : icons[id]
 
     $: width = size + "rem"
     $: height = size + "rem"
-    let box: number = 24
 </script>
 
-<svg class={$$props.class} class:white class:fill style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
+<svg class={$$props.class} class:white class:right class:fill style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
     {@html icon ? icon : icons.noIcon}
 </svg>
 

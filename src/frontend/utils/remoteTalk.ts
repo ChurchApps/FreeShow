@@ -12,6 +12,8 @@ import { uid } from "uid"
 import { clearAll } from "../components/output/clear"
 import { send } from "./request"
 import type { Show } from "../../types/Show"
+import { API_ACTIONS } from "../components/actions/api"
+import type { ClientMessage } from "../../types/Socket"
 
 // REMOTE
 
@@ -140,6 +142,11 @@ export const receiveREMOTE: any = {
     },
     PROJECTS: (msg: any) => {
         msg.data = removeDeleted(keysToID(get(projects)))
+        return msg
+    },
+    API: async (msg: ClientMessage) => {
+        const id = msg.api || ""
+        msg.data.thumbnail = await API_ACTIONS[id]?.(msg.data)
         return msg
     },
 }

@@ -47,6 +47,8 @@
                 </span>
             {/key}
         {/if}
+
+        <!-- WIP show overlays / layers... -->
         <!-- {#if $outOverlays.length}
     {#each $outOverlays as id}
       <div style={$overlays[id].style} transition:fade={transition}>

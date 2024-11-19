@@ -2,9 +2,9 @@ import { get } from "svelte/store"
 import { CONTROLLER, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage, Clients } from "../../types/Socket"
 import { connections, currentWindow } from "../stores"
+import { receiveCONTROLLER } from "./controllerTalk"
 import { receiveREMOTE } from "./remoteTalk"
 import { receiveSTAGE } from "./stageTalk"
-import { receiveCONTROLLER } from "./controllerTalk"
 
 export function filterObjectArray(object: any, keys: string[], filter: null | string = null) {
     return Object.entries(object)
@@ -39,15 +39,21 @@ export function client(id: Clients, msg: ClientMessage) {
 export async function sendData(id: Clients, msg: ClientMessage, check: boolean = false) {
     if (get(currentWindow) !== null) return
 
+    let channel = msg.channel
+    if (channel.includes("API:")) {
+        msg.api = channel.split(":")[1]
+        channel = "API"
+    }
+
     if (id === REMOTE) {
-        if (!receiveREMOTE[msg.channel]) return console.log("UNKNOWN CHANNEL:", msg.channel)
-        msg = await receiveREMOTE[msg.channel](msg)
+        if (!receiveREMOTE[channel]) return console.log("UNKNOWN CHANNEL:", channel)
+        msg = await receiveREMOTE[channel](msg)
     } else if (id === STAGE) {
-        if (!receiveSTAGE[msg.channel]) return console.log("UNKNOWN CHANNEL:", msg.channel)
-        msg = receiveSTAGE[msg.channel](msg)
+        if (!receiveSTAGE[channel]) return console.log("UNKNOWN CHANNEL:", channel)
+        msg = receiveSTAGE[channel](msg)
     } else if (id === CONTROLLER) {
-        if (!receiveCONTROLLER[msg.channel]) return console.log("UNKNOWN CHANNEL:", msg.channel)
-        msg = receiveCONTROLLER[msg.channel](msg)
+        if (!receiveCONTROLLER[channel]) return console.log("UNKNOWN CHANNEL:", channel)
+        msg = receiveCONTROLLER[channel](msg)
     }
 
     // let ids: string[] = []

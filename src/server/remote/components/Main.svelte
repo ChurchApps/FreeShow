@@ -4,8 +4,9 @@
     import { translate } from "../util/helpers"
     import { next, previous } from "../util/output"
     import { send } from "../util/socket"
-    import { _set, activeProject, activeShow, activeTab, dictionary, outShow, projects, shows } from "../util/stores"
+    import { _set, active, activeProject, activeShow, activeTab, dictionary, outShow, projects, shows } from "../util/stores"
     import Lyrics from "./pages/Lyrics.svelte"
+    import Media from "./pages/Media.svelte"
     import Project from "./pages/Project.svelte"
     import Show from "./pages/Show.svelte"
     import Shows from "./pages/Shows.svelte"
@@ -26,7 +27,7 @@
     $: tabsDisabled = {
         shows: $shows.length,
         project: $projects.length || $activeProject,
-        show: $activeShow,
+        show: $activeShow || ($active?.type || "show") !== "show",
         slide: $outShow,
         lyrics: $outShow,
     }
@@ -54,7 +55,13 @@
         {:else if tab === "shows"}
             <Shows />
         {:else if tab === "show"}
-            <Show />
+            {#if ($active.type || "show") === "show"}
+                <Show />
+            {:else if $active.type === "image" || $active.type === "video"}
+                <Media />
+            {:else}
+                <p style="text-transform: capitalize;">{$active.type}</p>
+            {/if}
         {:else if tab === "slide"}
             <Slide />
         {:else if tab === "lyrics"}

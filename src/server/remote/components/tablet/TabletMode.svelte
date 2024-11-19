@@ -7,7 +7,8 @@
     import { translate } from "../../util/helpers"
     import { GetLayout, getNextSlide, next, nextSlide, previous } from "../../util/output"
     import { send } from "../../util/socket"
-    import { _set, activeProject, activeShow, dictionary, outLayout, outShow, outSlide, projects, shows } from "../../util/stores"
+    import { _set, active, activeProject, activeShow, dictionary, outLayout, outShow, outSlide, projects, shows } from "../../util/stores"
+    import Media from "../pages/Media.svelte"
     import Project from "../pages/Project.svelte"
     import Shows from "../pages/Shows.svelte"
     import Clear from "../show/Clear.svelte"
@@ -61,69 +62,75 @@
 </div>
 
 <div class="center">
-    {#if $activeShow}
-        <!-- <h2>{activeShow.name}</h2> -->
+    {#if ($active.type || "show") === "show"}
+        {#if $activeShow}
+            <!-- <h2>{activeShow.name}</h2> -->
 
-        <div bind:this={scrollElem} class="scroll" style="height: 100%;overflow-y: auto;background-color: var(--primary-darker);scroll-behavior: smooth;display: flex;flex-direction: column;">
-            {#if slideView === "lyrics"}
-                {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
-                    {#if !layoutSlide.disabled}
-                        <span
-                            style="padding: 5px;{$outShow?.id === $activeShow.id && $outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}"
-                            on:click={() => {
-                                send("OUT", { id: $activeShow.id, index: i, layout: $activeShow.settings.activeLayout })
-                                _set("outShow", $activeShow)
-                            }}
-                        >
-                            <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
-                                <span style="left: 0;position: absolute;">{i + 1}</span>
-                                <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : $activeShow.slides[layoutSlide.id].group || "—"}</span>
+            <div bind:this={scrollElem} class="scroll" style="height: 100%;overflow-y: auto;background-color: var(--primary-darker);scroll-behavior: smooth;display: flex;flex-direction: column;">
+                {#if slideView === "lyrics"}
+                    {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
+                        {#if !layoutSlide.disabled}
+                            <span
+                                style="padding: 5px;{$outShow?.id === $activeShow.id && $outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}"
+                                on:click={() => {
+                                    send("OUT", { id: $activeShow.id, index: i, layout: $activeShow.settings.activeLayout })
+                                    _set("outShow", $activeShow)
+                                }}
+                            >
+                                <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
+                                    <span style="left: 0;position: absolute;">{i + 1}</span>
+                                    <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : $activeShow.slides[layoutSlide.id].group || "—"}</span>
+                                </span>
+                                {#each $activeShow.slides[layoutSlide.id].items as item}
+                                    {#if item.lines}
+                                        <div class="lyric" style="font-size: 1.1em;text-align: center;">
+                                            {#each item.lines as line}
+                                                <div class="break">
+                                                    {#each line.text || [] as text}
+                                                        <span>{@html text.value}</span>
+                                                    {/each}
+                                                </div>
+                                            {/each}
+                                        </div>
+                                    {:else}
+                                        <span style="opacity: 0.5;">—</span>
+                                    {/if}
+                                {/each}
                             </span>
-                            {#each $activeShow.slides[layoutSlide.id].items as item}
-                                {#if item.lines}
-                                    <div class="lyric" style="font-size: 1.1em;text-align: center;">
-                                        {#each item.lines as line}
-                                            <div class="break">
-                                                {#each line.text || [] as text}
-                                                    <span>{@html text.value}</span>
-                                                {/each}
-                                            </div>
-                                        {/each}
-                                    </div>
-                                {:else}
-                                    <span style="opacity: 0.5;">—</span>
-                                {/if}
-                            {/each}
-                        </span>
-                    {/if}
-                {/each}
-            {:else}
-                <Slides
-                    {dictionary}
-                    {scrollElem}
-                    on:click={(e) => {
-                        // TODO: fix...
-                        send("OUT", { id: $activeShow.id, index: e.detail, layout: $activeShow.settings.activeLayout })
-                        _set("outShow", $activeShow)
-                    }}
-                    outSlide={$outSlide}
-                    columns={3}
-                />
-            {/if}
-        </div>
-
-        <!-- TODO: change layout -->
-        <div class="layouts">
-            <div></div>
-
-            <div class="buttons">
-                <Button class="context #slideViews" on:click={() => (slideView = slidesViews[slideView])}>
-                    <Icon size={1.3} id={slideView} white />
-                </Button>
+                        {/if}
+                    {/each}
+                {:else}
+                    <Slides
+                        {dictionary}
+                        {scrollElem}
+                        on:click={(e) => {
+                            // TODO: fix...
+                            send("OUT", { id: $activeShow.id, index: e.detail, layout: $activeShow.settings.activeLayout })
+                            _set("outShow", $activeShow)
+                        }}
+                        outSlide={$outSlide}
+                        columns={3}
+                    />
+                {/if}
             </div>
-        </div>
+
+            <!-- TODO: change layout -->
+            <div class="layouts">
+                <div></div>
+
+                <div class="buttons">
+                    <Button class="context #slideViews" on:click={() => (slideView = slidesViews[slideView])}>
+                        <Icon size={1.3} id={slideView} white />
+                    </Button>
+                </div>
+            </div>
+        {:else}
+            <Center faded>{translate("empty.show", $dictionary)}</Center>
+        {/if}
+    {:else if $active.type === "image" || $active.type === "video"}
+        <Media />
     {:else}
-        <Center faded>{translate("empty.show", $dictionary)}</Center>
+        <p style="text-transform: capitalize;">{$active.type}</p>
     {/if}
 </div>
 

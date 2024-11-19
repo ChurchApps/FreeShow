@@ -2,9 +2,10 @@
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
+    import { getFileName, removeExtension } from "../../../common/util/media"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { _set, activeProject, activeShow, dictionary, shows } from "../../util/stores"
+    import { _set, active, activeProject, activeShow, dictionary, mediaCache, shows } from "../../util/stores"
     import ShowButton from "../ShowButton.svelte"
     import Projects from "./Projects.svelte"
 
@@ -24,15 +25,36 @@
             {#each $activeProject.shows as show}
                 {#if show.type === "section"}
                     <div class="section">{show.name}</div>
-                {:else if show.type && show.type !== "show"}
-                    <div class="media" style="opacity: 0.5;padding: 5px 22px;text-transform: capitalize;font-size: 0.8em;">{show.type || show.name || show.id}</div>
+                {:else if ["image", "video"].includes(show.type)}
+                    <Button
+                        on:click={() => {
+                            _set("active", show)
+                            _set("activeTab", "show")
+                            if (!$mediaCache[show.path]) send("API:get_thumbnail", { path: show.id })
+                        }}
+                        active={$active.id === show.id}
+                        bold={false}
+                        border
+                    >
+                        <Icon id={show.type} right />
+                        <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
+                            <p style="margin: 3px 5px;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">{show.name || getFileName(removeExtension(show.path || show.id))}</p>
+                        </span>
+                    </Button>
+                {:else if (show.type || "show") !== "show"}
+                    <!-- WIP audio / player / PDF / PPT -->
+                    <div class="item" style="display: flex;align-items: center;padding: 0.2em 0.8em;">
+                        <Icon id={show.type} box={show.type === "ppt" ? 50 : 24} right />
+                        <p style="opacity: 0.5;margin: 3px 5px;text-transform: uppercase;font-size: 0.8em;">{show.type}</p>
+                    </div>
                 {:else if $shows.find((s) => s.id === show.id)}
                     <ShowButton
                         on:click={(e) => {
-                            send("SHOW", e.detail)
+                            _set("active", show)
                             _set("activeTab", "show")
+                            send("SHOW", e.detail)
                         }}
-                        activeShow={$activeShow}
+                        activeShow={($active.type || "show") === "show" && $activeShow}
                         show={$shows.find((s) => s.id === show.id)}
                         icon={$shows.find((s) => s.id === show.id).private ? "private" : $shows.find((s) => s.id === show.id).type ? $shows.find((s) => s.id === show.id).type : "noIcon"}
                     />

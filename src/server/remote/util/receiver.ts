@@ -1,5 +1,5 @@
 import { setError, translate } from "./helpers"
-import { _, _get, _set, _update } from "./stores"
+import { _, _get, _set, _update, mediaCache } from "./stores"
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
@@ -97,5 +97,16 @@ export const receiver = {
 
             if (!_get("activeShow") && !_get("quickPlay")) _set("activeTab", "project")
         }
+    },
+
+    /////
+
+    "API:get_thumbnail": (data: any) => {
+        if (!data.path || !data.thumbnail) return
+
+        mediaCache.update((a) => {
+            a[data.path] = data.thumbnail
+            return a
+        })
     },
 }

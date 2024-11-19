@@ -1,14 +1,15 @@
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
-import { getActiveOutputs, setOutput } from "../helpers/output"
+import { getActiveOutputs, getCurrentStyle, setOutput } from "../helpers/output"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
-import { activeEdit, activePage, activeProject, activeShow, dictionary, groupNumbers, groups, outLocked, outputs, overlays, projects, refreshEditSlide, sortedShowsList, variables } from "../../stores"
-import type { API_variable } from "./api"
+import { activeEdit, activePage, activeProject, activeShow, dictionary, groupNumbers, groups, media, outLocked, outputs, overlays, projects, refreshEditSlide, sortedShowsList, styles, variables } from "../../stores"
+import type { API_media, API_variable } from "./api"
 import { send } from "../../utils/request"
 import { getLabelId } from "../helpers/show"
 import { newToast } from "../../utils/common"
+import { getMediaStyle } from "../helpers/media"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -170,6 +171,20 @@ function updateVariable(value: any, id: string, key: string) {
         a[id][key] = value
         return a
     })
+}
+
+// MEDIA
+
+export function playMedia(data: API_media) {
+    if (get(outLocked)) return
+
+    let outputId = getActiveOutputs(get(outputs))[0]
+    let currentOutput = get(outputs)[outputId] || {}
+    let currentStyle = getCurrentStyle(get(styles), currentOutput.style)
+
+    const mediaStyle = getMediaStyle(get(media)[data.path], currentStyle)
+
+    setOutput("background", { path: data.path, ...mediaStyle })
 }
 
 // SPECIAL
