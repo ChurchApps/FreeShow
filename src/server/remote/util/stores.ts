@@ -18,6 +18,7 @@ export let password = writable({
 export let isConnected = writable(false)
 export let quickPlay = writable(false)
 export let activeTab = writable("shows")
+export let outputMode: Writable<"slide" | "lyrics"> = writable("slide")
 
 export let active: Writable<ProjectShowRef> = writable({ id: "", type: "show" })
 export let activeShow: Writable<any> = writable(null)
@@ -27,6 +28,7 @@ export let outLayout: Writable<any> = writable(null)
 export let styleRes: Writable<any> = writable(null)
 export let outShow: Writable<any> = writable(null)
 export let layout: Writable<any[] | null> = writable(null)
+export let isCleared = writable({ all: true, background: true, slide: true, overlays: true, audio: true, slideTimers: true })
 
 export let activeProject: Writable<any> = writable(null)
 export let folders: Writable<any> = writable(null)
@@ -35,6 +37,7 @@ export let projects: Writable<any[]> = writable([])
 export let project: Writable<string> = writable("")
 
 export let mediaCache: Writable<any> = writable({})
+export let textCache: Writable<any> = writable({})
 
 /////
 
@@ -45,6 +48,7 @@ export const _ = {
     isConnected,
     quickPlay,
     activeTab,
+    outputMode,
     active,
     activeShow,
     shows,
@@ -53,12 +57,14 @@ export const _ = {
     styleRes,
     outShow,
     layout,
+    isCleared,
     activeProject,
     folders,
     openedFolders,
     projects,
     project,
     mediaCache,
+    textCache,
 }
 
 /////

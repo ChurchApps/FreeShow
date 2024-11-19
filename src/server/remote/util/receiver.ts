@@ -1,5 +1,5 @@
 import { setError, translate } from "./helpers"
-import { _, _get, _set, _update, mediaCache } from "./stores"
+import { _, _get, _set, _update } from "./stores"
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
@@ -104,9 +104,12 @@ export const receiver = {
     "API:get_thumbnail": (data: any) => {
         if (!data.path || !data.thumbnail) return
 
-        mediaCache.update((a) => {
-            a[data.path] = data.thumbnail
-            return a
-        })
+        _update("mediaCache", data.path, data.thumbnail)
+    },
+    "API:get_plain_text": (data: any) => {
+        _update("textCache", data.id, data.value)
+    },
+    "API:get_cleared": (data: any) => {
+        _set("isCleared", data)
     },
 }

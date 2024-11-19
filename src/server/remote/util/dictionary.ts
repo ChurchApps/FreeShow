@@ -1,4 +1,7 @@
 export const DEFAULT_DICTIONARY = {
+    main: {
+        unnamed: "Unnamed",
+    },
     empty: {
         project_select: "Select a project",
         show: "No show selected",
@@ -8,6 +11,12 @@ export const DEFAULT_DICTIONARY = {
         backgrounds: "No backgrounds in show",
         groups: "No groups",
         events: "No events",
+    },
+    titlebar: {
+        edit: "Edit",
+    },
+    actions: {
+        done: "Done",
     },
     remote: {
         projects: "Projects",

@@ -3,16 +3,27 @@
     import Icon from "./Icon.svelte"
     // import T from "../helpers/T.svelte"
     import Button from "./Button.svelte"
+    import { createEventDispatcher } from "svelte"
 
     export let tabs: TabsObj
     export let active: string
     export let disabled: any
     export let icons: boolean = false
+
+    let dispatch = createEventDispatcher()
+    function setActive(id: string) {
+        if (active === id) {
+            dispatch("double", id)
+            return
+        }
+
+        active = id
+    }
 </script>
 
 <div class="tabs">
     {#each Object.entries(tabs) as [id, tab]}
-        <Button on:click={() => (active = id)} title={tab.name} active={active === id} center disabled={!disabled[id]}>
+        <Button on:click={() => setActive(id)} title={tab.name} active={active === id} center disabled={!disabled[id]}>
             <Icon id={tab.icon} size={2} />
             <!-- {#if labels}
         <T id={tab.name} />

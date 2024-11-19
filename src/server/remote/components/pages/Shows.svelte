@@ -117,7 +117,7 @@
 </script>
 
 {#if $shows.length}
-    <input type="text" class="input" placeholder="Search..." bind:value={searchValue} on:keydown={showSearchKeydown} bind:this={searchElem} autofocus />
+    <input id="showSearch" type="text" class="input" placeholder="Search..." bind:value={searchValue} on:keydown={showSearchKeydown} bind:this={searchElem} />
     <!-- {#each shows as showObj}
 <Button on:click={() => (show = showObj.id)}>{showObj.name}</Button>
 {/each} -->

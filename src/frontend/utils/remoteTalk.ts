@@ -98,7 +98,7 @@ export const receiveREMOTE: any = {
             id = msg.data.id
             await loadShows([id])
 
-            let layout = _show(id).layouts("active").ref()[0]
+            let layout = _show(id).layouts("active").ref()[0] || []
             if (msg.data.index < layout.length && msg.data.index >= 0) {
                 if (!msg.data.layout) msg.data.layout = _show(id).get("settings.activeLayout")
                 updateOut(msg.data.id, msg.data.index, _show(msg.data.id).layouts([msg.data.layout]).ref()[0])
@@ -145,9 +145,17 @@ export const receiveREMOTE: any = {
         return msg
     },
     API: async (msg: ClientMessage) => {
+        if (!msg.data) msg.data = {}
         const id = msg.api || ""
-        msg.data.thumbnail = await API_ACTIONS[id]?.(msg.data)
-        return msg
+        const data = await API_ACTIONS[id]?.(msg.data)
+
+        if (id === "get_thumbnail") {
+            msg.data.thumbnail = data
+        } else {
+            msg.data = data
+        }
+
+        return data ? msg : null
     },
 }
 
@@ -174,7 +182,7 @@ export async function convertBackgrounds(show: Show) {
     if (!show) return {}
 
     show = clone(show)
-    let mediaIds = show.layouts[show.settings.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
+    let mediaIds = show.layouts[show.settings?.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
 
     await Promise.all(
         mediaIds.map(async (id) => {

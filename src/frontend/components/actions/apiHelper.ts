@@ -1,15 +1,37 @@
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
+import {
+    activeEdit,
+    activePage,
+    activeProject,
+    activeShow,
+    dictionary,
+    groupNumbers,
+    groups,
+    media,
+    outLocked,
+    outputs,
+    overlays,
+    playingAudio,
+    playingMetronome,
+    projects,
+    refreshEditSlide,
+    showsCache,
+    sortedShowsList,
+    styles,
+    variables,
+} from "../../stores"
+import { newToast } from "../../utils/common"
+import { send } from "../../utils/request"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
-import { getActiveOutputs, getCurrentStyle, setOutput } from "../helpers/output"
+import { getMediaStyle } from "../helpers/media"
+import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
+import { loadShows } from "../helpers/setShow"
+import { getLabelId } from "../helpers/show"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
-import { activeEdit, activePage, activeProject, activeShow, dictionary, groupNumbers, groups, media, outLocked, outputs, overlays, projects, refreshEditSlide, sortedShowsList, styles, variables } from "../../stores"
-import type { API_media, API_variable } from "./api"
-import { send } from "../../utils/request"
-import { getLabelId } from "../helpers/show"
-import { newToast } from "../../utils/common"
-import { getMediaStyle } from "../helpers/media"
+import { getPlainEditorText } from "../show/getTextEditor"
+import type { API_id_value, API_layout, API_media, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -171,6 +193,38 @@ function updateVariable(value: any, id: string, key: string) {
         a[id][key] = value
         return a
     })
+}
+
+// SHOW
+
+export function changeShowLayout(data: API_layout) {
+    showsCache.update((a) => {
+        if (!a[data.showId]?.layouts[data.layoutId]) return a
+
+        a[data.showId].settings.activeLayout = data.layoutId
+        return a
+    })
+}
+
+export async function getPlainText(id: string) {
+    await loadShows([id])
+    return { id, value: getPlainEditorText(id) } as API_id_value
+}
+
+// PRESENTATION
+
+export function getClearedState() {
+    let o = get(outputs)
+
+    const audio = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
+    const background = isOutCleared("background", o)
+    const slide = isOutCleared("slide", o)
+    const overlays = isOutCleared("overlays", o, true)
+    const slideTimers = isOutCleared("transition", o)
+
+    const all = isOutCleared(null, o) && audio
+
+    return { all, background, slide, overlays, audio, slideTimers }
 }
 
 // MEDIA

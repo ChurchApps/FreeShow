@@ -10,9 +10,25 @@ import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideT
 import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
+import { formatText } from "../show/formatTextEditor"
 import { runActionId, toggleAction } from "./actions"
 import { getProject, getProjects, getShow, getShows } from "./apiGet"
-import { changeVariable, gotoGroup, moveStageConnection, playMedia, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
+import {
+    changeShowLayout,
+    changeVariable,
+    getClearedState,
+    getPlainText,
+    gotoGroup,
+    moveStageConnection,
+    playMedia,
+    selectOverlayByIndex,
+    selectOverlayByName,
+    selectProjectByIndex,
+    selectShowByName,
+    selectSlideByIndex,
+    selectSlideByName,
+    toggleLock,
+} from "./apiHelper"
 import { sendRestCommandSync } from "./rest"
 
 /// STEPS TO CREATE A CUSTOM API ACTION ///
@@ -44,6 +60,8 @@ type API_boolval = { value?: boolean }
 type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
 type API_slide = { showId?: string | "active"; slideId?: string }
+export type API_id_value = { id: string; value: string }
+export type API_layout = { showId: string; layoutId: string }
 export type API_media = { path: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
@@ -101,6 +119,8 @@ export const API_ACTIONS = {
     // SHOWS
     name_select_show: (data: API_strval) => selectShowByName(data.value), // BC
     start_show: (data: API_id) => startShowSync(data.id),
+    change_layout: (data: API_layout) => changeShowLayout(data),
+    set_plain_text: (data: API_id_value) => formatText(data.value, data.id),
 
     // PRESENTATION
     next_slide: () => nextSlideIndividual({ key: "ArrowRight" }), // BC
@@ -181,8 +201,10 @@ export const API_ACTIONS = {
     get_show: (data: API_id) => getShow(data),
     get_projects: () => getProjects(),
     get_project: (data: API_id) => getProject(data),
+    get_plain_text: (data: API_id) => getPlainText(data.id),
 
     get_thumbnail: (data: API_media) => getThumbnail(data),
+    get_cleared: () => getClearedState(),
 }
 
 /// RECEIVER / SENDER ///

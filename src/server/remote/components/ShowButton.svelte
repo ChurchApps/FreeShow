@@ -2,6 +2,8 @@
     import { createEventDispatcher } from "svelte"
     import Button from "../../common/components/Button.svelte"
     import Icon from "../../common/components/Icon.svelte"
+    import { translate } from "../util/helpers"
+    import { dictionary } from "../util/stores"
 
     export let activeShow: any
     export let show: any
@@ -18,13 +20,19 @@
 </script>
 
 <div id={show.id} class="main">
-    <Button on:click={click} active={activeShow?.id === show.id} class="context {$$props.class}" {style} bold={false} border>
+    <Button on:click={click} active={show.id && activeShow?.id === show.id} class="context {$$props.class}" {style} bold={false} border>
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
             {#if icon}
-                <Icon id={icon || "noIcon"} box={icon === "ppt" ? 50 : 24} right />
+                <Icon id={icon || "noIcon"} box={icon === "ppt" ? 50 : 24} custom={!!(icon && icon !== "private")} right />
             {/if}
 
-            <p style="margin: 3px 5px;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">{show.name}</p>
+            <p style="margin: 3px 5px;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">
+                {#if show.name}
+                    {show.name}
+                {:else}
+                    <span style="font-size: 0.8em;opacity: 0.5;pointer-events: none;">{translate("main.unnamed", $dictionary)}</span>
+                {/if}
+            </p>
         </span>
 
         {#if match}

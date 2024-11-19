@@ -1,81 +1,92 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, onMount } from "svelte"
+    import { slide } from "svelte/transition"
     import Button from "../../../common/components/Button.svelte"
     import Icon from "../../../common/components/Icon.svelte"
     import { translate } from "../../util/helpers"
+    import { send } from "../../util/socket"
+    import { dictionary, isCleared } from "../../util/stores"
 
-    export let dictionary: any
+    export let tablet: boolean = false
     export let locked: boolean = false
-    export let outBackground: null | string = null
-    export let outSlide: null | number
-    export let outOverlays: string[] = []
-    export let outAudio: string[] = []
+    export let outSlide: null | number = null
 
-    let out: boolean = outBackground !== null || outSlide !== null || outOverlays.length || outAudio.length ? true : false
+    let moreOptions: boolean = false
 
-    let dispatcher = createEventDispatcher()
-    function click(id: string, value: any) {
-        dispatcher("click", { id, value })
-    }
+    onMount(() => send("API:get_cleared"))
+    $: if (moreOptions) send("API:get_cleared")
 
-    const clearAll = () => {
-        click("OUT", "clear")
-        // outSlide = null
+    let dispatch = createEventDispatcher()
+    function clear(id: string, value?: any) {
+        send(id, value)
+        send("API:get_cleared")
+        dispatch("clear")
     }
 </script>
 
-<div class="clear">
-    <span>
-        <!-- <button on:click={() => output.set(new OutputObject())}>Clear All</button> -->
-        <Button class="clearAll" disabled={locked || !out} on:click={clearAll} red dark center>
-            <!-- <T id={"clear.all"} /> -->
+<div class="clear" class:tablet>
+    {#if moreOptions || tablet}
+        <div class="more" style="display: flex;" in:slide={{ duration: tablet ? 0 : 300 }}>
+            <!-- WIP get state -->
+            <Button
+                disabled={locked || $isCleared.background}
+                on:click={() => {
+                    if (locked) return
+
+                    clear("API:clear_background")
+                    // outBackground = null
+                }}
+                red
+                dark
+                center
+            >
+                <Icon id="background" size={1.2} />
+            </Button>
+
+            <Button
+                disabled={locked || !(outSlide || !$isCleared.slide)}
+                on:click={() => {
+                    if (locked) return
+
+                    clear("API:clear_slide")
+                    // outSlide = null
+                }}
+                red
+                dark
+                center
+            >
+                <Icon id="slide" size={1.2} />
+            </Button>
+
+            <Button
+                disabled={locked || $isCleared.overlays}
+                on:click={() => {
+                    if (locked) return
+
+                    clear("API:clear_overlays")
+                    // outOverlays = []
+                }}
+                red
+                dark
+                center
+            >
+                <Icon id="overlays" size={1.2} />
+            </Button>
+        </div>
+    {/if}
+
+    <span style="display: flex;">
+        <Button class="clearAll" disabled={locked || !(outSlide || !$isCleared.all)} on:click={() => clear("OUT", "clear")} red dark center>
             <Icon id="clear" size={1.2} />
             <span style="padding-left: 10px;">{translate("clear.all", $dictionary)}</span>
         </Button>
+
+        {#if !tablet}
+            <Button on:click={() => (moreOptions = !moreOptions)} style="flex: 0;">
+                <Icon id="expand" style="transition: transform .2s;{moreOptions ? 'transform: rotate(180deg);' : ''}" size={1.1} />
+            </Button>
+        {/if}
     </span>
-    <!-- <span class="group">
-    <Button
-      disabled={locked || !outBackground}
-      on:click={() => {
-        if (!locked) {
-          outBackground = null
-          // clearVideo()
-        }
-      }}
-      red
-      dark
-      center
-    >
-      <Icon id="background" size={1.2} />
-    </Button>
-    <Button
-      disabled={locked || outSlide === null}
-      on:click={() => {
-        if (!locked) {
-          click("OUT", "clear")
-          // outSlide = null
-        }
-      }}
-      red
-      dark
-      center
-    >
-      <Icon id="slide" size={1.2} />
-    </Button>
-    <Button
-      disabled={locked || !outOverlays.length}
-      on:click={() => {
-        if (!locked) {
-          outOverlays = []
-        }
-      }}
-      red
-      dark
-      center
-    >
-      <Icon id="overlays" size={1.2} />
-    </Button>
-  </span> -->
 </div>
 
 <style>
@@ -88,8 +99,10 @@
     .clear :global(button) {
         width: 100%;
         flex: 1;
+        padding: 0.5em 0.8em;
     }
-    /* .group {
-    display: flex;
-  } */
+
+    .clear.tablet {
+        flex-direction: column-reverse;
+    }
 </style>

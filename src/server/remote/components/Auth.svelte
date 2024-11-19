@@ -28,7 +28,7 @@
             value={$password.stored}
         />
 
-        <Button on:click={submit} style="color: var(--secondary);" bold dark center>{translate("remote.submit", $dictionary)}</Button>
+        <Button on:click={submit} bold dark center>{translate("remote.submit", $dictionary)}</Button>
 
         <span style="text-align: center;">
             <input type="checkbox" checked={$password.remember} on:change={(e) => _update("password", "remember", isChecked(e))} />

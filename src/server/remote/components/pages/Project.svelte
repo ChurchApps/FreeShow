@@ -23,6 +23,8 @@
 
         <div class="scroll">
             {#each $activeProject.shows as show}
+                {@const s = $shows.find((a) => a.id === show.id) || {}}
+
                 {#if show.type === "section"}
                     <div class="section">{show.name}</div>
                 {:else if ["image", "video"].includes(show.type)}
@@ -47,7 +49,7 @@
                         <Icon id={show.type} box={show.type === "ppt" ? 50 : 24} right />
                         <p style="opacity: 0.5;margin: 3px 5px;text-transform: uppercase;font-size: 0.8em;">{show.type}</p>
                     </div>
-                {:else if $shows.find((s) => s.id === show.id)}
+                {:else if s}
                     <ShowButton
                         on:click={(e) => {
                             _set("active", show)
@@ -55,8 +57,8 @@
                             send("SHOW", e.detail)
                         }}
                         activeShow={($active.type || "show") === "show" && $activeShow}
-                        show={$shows.find((s) => s.id === show.id)}
-                        icon={$shows.find((s) => s.id === show.id).private ? "private" : $shows.find((s) => s.id === show.id).type ? $shows.find((s) => s.id === show.id).type : "noIcon"}
+                        show={s}
+                        icon={s.private ? "private" : s.type || "song"}
                     />
                 {/if}
             {/each}

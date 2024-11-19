@@ -21,8 +21,8 @@
         shows: { name: translate("remote.shows", $dictionary), icon: "search" }, // shows
         project: { name: translate("remote.project", $dictionary), icon: "project" },
         show: { name: translate("remote.show", $dictionary), icon: "show" },
-        slide: { name: translate("remote.slide", $dictionary), icon: "slide" },
-        lyrics: { name: translate("remote.lyrics", $dictionary), icon: "lyrics" },
+        slide: { name: translate("remote.slide", $dictionary), icon: "display_settings" }, // slide
+        // lyrics: { name: translate("remote.lyrics", $dictionary), icon: "lyrics" },
     }
     $: tabsDisabled = {
         shows: $shows.length,
@@ -34,11 +34,21 @@
 
     // keyboard shortcuts
     function keydown(e: any) {
+        if (e.target?.closest("textarea")) return
+
         if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
 
         if ([" ", "ArrowRight", "PageDown"].includes(e.key)) next()
         else if (["ArrowLeft", "PageUp"].includes(e.key)) previous()
         else if (e.key === "Escape") send("OUT", "clear")
+    }
+
+    // click when focused
+    function double(e: any) {
+        let id = e.detail
+        if (id === "shows") {
+            ;(document.querySelector("#showSearch") as any)?.focus()
+        }
     }
 </script>
 
@@ -69,7 +79,7 @@
         {/if}
     </div>
 
-    <Tabs {tabs} bind:active={tab} disabled={tabsDisabled} />
+    <Tabs {tabs} bind:active={tab} disabled={tabsDisabled} on:double={double} />
 </section>
 
 <style>

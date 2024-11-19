@@ -3,6 +3,7 @@
     import Icon from "../../../common/components/Icon.svelte"
     import { send } from "../../util/socket"
     import { active, mediaCache } from "../../util/stores"
+    import Clear from "../show/Clear.svelte"
 
     $: path = $active?.id
     $: thumbnailPath = $mediaCache[path]
@@ -14,6 +15,7 @@
             <Button
                 on:click={() => {
                     send("API:play_media", { path })
+                    send("API:get_cleared")
                 }}
                 center
             >
@@ -25,7 +27,7 @@
     {/if}
 </div>
 
-<!-- WIP get output & clear -->
+<Clear />
 
 <style>
     .media {

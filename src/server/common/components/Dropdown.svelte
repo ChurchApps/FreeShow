@@ -1,10 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import { createEventDispatcher } from "svelte"
-    import { translate } from "../../utils/language"
-    import { language } from "../../stores"
     import type { Option } from "../../../types/Main"
-    import Icon from "../helpers/Icon.svelte"
 
     const dispatch = createEventDispatcher()
     export let options: Option[]
@@ -17,27 +14,11 @@
     export let activeId: string = ""
     export let title: string = ""
     export let flags: boolean = false
+    export let up: boolean = false
     let normalizedValue: any = value
-    $: (normalizedValue = value || options[0]?.name || "—"), $language
+    $: normalizedValue = value || options[0]?.name || "—"
 
     let self: HTMLDivElement
-
-    let nextScrollTimeout: any = null
-    function wheel(e: any) {
-        if (disabled || nextScrollTimeout) return
-        e.preventDefault()
-
-        let index = options.findIndex((a) => (activeId ? a.id === activeId : a.name === value))
-        if (e.deltaY > 0) index = Math.min(options.length - 1, index + 1)
-        else index = Math.max(0, index - 1)
-        dispatch("click", options[index])
-
-        // don't start timeout if scrolling with mouse
-        if (e.deltaY >= 100 || e.deltaY <= -100) return
-        nextScrollTimeout = setTimeout(() => {
-            nextScrollTimeout = null
-        }, 500)
-    }
 
     $: if (active) scrollToActive()
     function scrollToActive() {
@@ -65,16 +46,12 @@
 
 <svelte:window on:mousedown={mousedown} />
 
-<div class:disabled class:center class:flags bind:this={self} class="dropdownElem {$$props.class || ''}" style="position: relative;{$$props.style || ''}">
-    <button {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
-        {#if arrow}
-            <Icon id="expand" size={1.2} white />
-        {:else}
-            {translate(normalizedValue, { parts: true }) || value}
-        {/if}
+<div class:disabled class:center class:flags bind:this={self} class="dropdownElem {$$props.class || ''}" style={$$props.style || ""}>
+    <button {id} {title} on:click={() => (disabled ? null : (active = !active))}>
+        {normalizedValue}
     </button>
     {#if active}
-        <div class="dropdown" class:arrow style={$$props.style || ""} transition:slide={{ duration: 200 }}>
+        <div class="dropdown" class:up class:arrow style={$$props.style || ""} transition:slide={{ duration: 200 }}>
             {#each options as option}
                 <span
                     id={formatId(option.name)}
@@ -88,7 +65,7 @@
                     }}
                     class:active={activeId && option?.id ? option.id === activeId : option.name === value}
                 >
-                    {translate(option.name, { parts: true }) || option.name}
+                    {option.name}
                     {#if option.extra}
                         ({option.extra})
                     {/if}
@@ -99,6 +76,10 @@
 </div>
 
 <style>
+    .dropdownElem {
+        position: relative;
+    }
+
     .dropdownElem.flags {
         font-family:
             "NotoColorEmojiLimited",
@@ -138,6 +119,13 @@
         transform: translateY(-1px);
         /* transform: translateX(-25%); */
         z-index: 10;
+    }
+
+    .dropdown.up {
+        top: 0;
+        left: 0;
+        position: absolute;
+        transform: translateY(-100%);
     }
 
     .dropdown.arrow {
