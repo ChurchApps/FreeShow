@@ -113,32 +113,41 @@
         } catch (err) {
             console.log("Unable to use LocalStorage!")
         }
+
+        setTimeout(() => (loadingStarted = true), 10)
     })
+
+    // open tab instantly before loading content
+    let loadingStarted: boolean = false
 </script>
 
 {#if $shows.length}
-    <input id="showSearch" type="text" class="input" placeholder="Search..." bind:value={searchValue} on:keydown={showSearchKeydown} bind:this={searchElem} />
-    <!-- {#each shows as showObj}
+    {#if $shows.length < 10 || loadingStarted}
+        <input id="showSearch" type="text" class="input" placeholder="Search..." bind:value={searchValue} on:keydown={showSearchKeydown} bind:this={searchElem} />
+        <!-- {#each shows as showObj}
 <Button on:click={() => (show = showObj.id)}>{showObj.name}</Button>
 {/each} -->
-    <div class="scroll">
-        {#each filteredShows as show}
-            {#if searchValue.length <= 1 || show.match}
-                <ShowButton on:click={(e) => openShow(e.detail)} {activeShow} show={$shows.find((s) => s.id === show.id)} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
-            {/if}
-        {/each}
-    </div>
-    {#if searchValue.length > 1 && totalMatch === 0}
-        <Center faded>{translate("empty.search", $dictionary)}</Center>
-    {/if}
-
-    {#if !tablet}
-        <div class="buttons">
-            <div class="check">
-                <p style="font-size: 0.8em;">{translate("remote.quick_play", $dictionary)}</p>
-                <Checkbox checked={$quickPlay} on:change={toggleQuickPlay} />
-            </div>
+        <div class="scroll">
+            {#each filteredShows as show}
+                {#if searchValue.length <= 1 || show.match}
+                    <ShowButton on:click={(e) => openShow(e.detail)} {activeShow} show={$shows.find((s) => s.id === show.id)} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
+                {/if}
+            {/each}
         </div>
+        {#if searchValue.length > 1 && totalMatch === 0}
+            <Center faded>{translate("empty.search", $dictionary)}</Center>
+        {/if}
+
+        {#if !tablet}
+            <div class="buttons">
+                <div class="check">
+                    <p style="font-size: 0.8em;">{translate("remote.quick_play", $dictionary)}</p>
+                    <Checkbox checked={$quickPlay} on:change={toggleQuickPlay} />
+                </div>
+            </div>
+        {/if}
+    {:else}
+        <Center faded>{translate("remote.loading", $dictionary)}</Center>
     {/if}
 {:else}
     <Center faded>{translate("empty.shows", $dictionary)}</Center>

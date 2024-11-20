@@ -55,7 +55,7 @@
         flex-direction: column;
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 0 10px;
+        padding: 10px;
         /* gap: 10px; */
         scroll-behavior: smooth;
     }

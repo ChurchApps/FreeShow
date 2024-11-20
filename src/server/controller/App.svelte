@@ -37,7 +37,16 @@
 
     function sendAction(id: string) {
         socket.emit("CONTROLLER", { channel: "ACTION", data: { id } })
+
+        if (justCleared) {
+            clearTimeout(justCleared)
+            justCleared = null
+        } else if (id === "clear") {
+            justCleared = setTimeout(() => (justCleared = null), 2000)
+        }
     }
+
+    let justCleared: any = null
 
     let draw = false
     let mouseDown = false
@@ -128,17 +137,18 @@
         </button>
         <!-- <button class="quart" />
   <button class="quart" /> -->
-        <button class="center" on:click={() => sendAction("clear")}>
+        <button class="center" class:red={justCleared} on:click={() => sendAction("clear")}>
             <Icon id="clear" size={4} white />
+            <!-- <Icon id={justCleared ? "clear" : "slide"} size={4} white /> -->
         </button>
     </div>
 {/if}
 
 <div class="toggles">
-    <button on:click={() => (draw = false)} style={draw ? "background-color: var(--primary-darker);" : ""}>
+    <button on:click={() => (draw = false)} class="noright" style={draw ? "background-color: var(--primary-darker);" : ""}>
         <Icon id="pad" size={2.5} white={draw === true} />
     </button>
-    <button on:click={() => (draw = true)} style={draw ? "" : "background-color: var(--primary-darker);"}>
+    <button on:click={() => (draw = true)} class="noleft" style={draw ? "" : "background-color: var(--primary-darker);"}>
         <Icon id="draw" size={2.5} white={draw === false} />
     </button>
 </div>
@@ -224,6 +234,15 @@
         font-weight: bold;
     }
 
+    .toggles .noleft {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    .toggles .noright {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
     /* pad */
     .draw {
         position: absolute;
@@ -236,7 +255,7 @@
     }
 
     .pad {
-        height: 80vw;
+        height: 55vw;
         width: 80vw;
         border-radius: 5px;
         background-color: var(--primary-darkest);
@@ -268,6 +287,7 @@
         border-radius: 50%;
         overflow: hidden;
     }
+
     @media only screen and (min-width: 800px) {
         .controller {
             height: 70vh;
@@ -278,6 +298,29 @@
         .pad {
             height: 55vh;
             width: 55vh;
+        }
+    }
+    /* (orientation: landscape) */
+    @media (min-width: 600px) and (max-height: 700px) {
+        .controller {
+            top: 45%;
+            height: 70vh;
+            width: 70vh;
+        }
+        .draw {
+            top: 45%;
+        }
+        .pad {
+            height: 45vh;
+            width: 65vh;
+        }
+        .toggles {
+            bottom: 20px;
+            height: 30px;
+            width: 60vw;
+        }
+        .toggles :global(svg) {
+            height: 1.5rem;
         }
     }
 
@@ -333,8 +376,14 @@
         padding: 5px;
         border-radius: 5px;
         background-color: var(--primary-darkest);
+
+        transition: background-color 0.1s;
     }
     button:active {
         background: var(--primary-lighter);
+    }
+
+    button.red {
+        background-color: #4d0d15;
     }
 </style>

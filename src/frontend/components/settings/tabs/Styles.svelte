@@ -6,7 +6,7 @@
     import T from "../../helpers/T.svelte"
     import { clone, removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getFileName, mediaExtensions } from "../../helpers/media"
+    import { getFileName } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -18,6 +18,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
+    import { mediaExtensions } from "../../../values/extensions"
 
     function updateStyle(e: any, key: string, currentId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e

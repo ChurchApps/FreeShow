@@ -109,6 +109,9 @@ export const receiver = {
     "API:get_plain_text": (data: any) => {
         _update("textCache", data.id, data.value)
     },
+    "API:get_groups": (data: any) => {
+        _update("groupsCache", data.id, data.value)
+    },
     "API:get_cleared": (data: any) => {
         _set("isCleared", data)
     },

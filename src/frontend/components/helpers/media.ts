@@ -10,12 +10,7 @@ import { loadedMediaThumbnails, media, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { awaitRequest, send } from "../../utils/request"
 import type { API_media } from "../actions/api"
-
-// electron/data/media.ts
-export const videoExtensions = ["mp4", "webm", "ogv", "mov", "m4v", "3gp", "3g2", "avi", "mkv", "flv", "ts", "dvr-ms", "mpeg", "mpg"]
-export const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "svg", "webp", "tiff", "tif", "jfif", "avif"]
-export const audioExtensions = ["mp3", "wav", "ogg", "aac", "m4a", "flac", "wma", "opus", "aiff", "aif", "weba"]
-export const mediaExtensions = [...videoExtensions, ...imageExtensions]
+import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 
 export function getExtension(path: string): string {
     if (!path) return ""
@@ -35,7 +30,6 @@ export function isMediaExtension(extension: string, audio: boolean = false): boo
     return extensions.includes(extension.toLowerCase())
 }
 
-export const presentationExtensions = ["ppt", "pptx", "key"]
 export function getMediaType(extension: string): ShowType {
     if (extension.toLowerCase() === "pdf") return "pdf"
     if (presentationExtensions.includes(extension.toLowerCase())) return "ppt"

@@ -9,6 +9,8 @@
     import { _set, activeShow, activeTab, dictionary, outLayout, outShow, outSlide, textCache } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import Slides from "../show/Slides.svelte"
+    import AddGroups from "./AddGroups.svelte"
+    import GroupsEdit from "./GroupsEdit.svelte"
     import TextEdit from "./TextEdit.svelte"
 
     $: layout = $outShow ? GetLayout($outShow, $outLayout) : null
@@ -33,6 +35,11 @@
         send("API:change_layout", { showId: $activeShow.id, layoutId })
     }
 
+    // GROUPS EDIT
+
+    let groupsOpened: boolean = false
+    let addGroups: boolean = false
+
     // TEXT EDIT
 
     let editOpened: boolean = false
@@ -42,6 +49,17 @@
         textValue = $textCache[$activeShow?.id]
     }
     function done() {
+        if (addGroups) {
+            addGroups = false
+            return
+        }
+
+        if (groupsOpened) {
+            groupsOpened = false
+            addGroups = false
+            return
+        }
+
         editOpened = false
         if ($textCache[$activeShow?.id] === textValue) return
 
@@ -49,16 +67,32 @@
     }
 </script>
 
-{#if $activeShow && GetLayout($activeShow, $activeShow?.settings?.activeLayout).length}
+<!-- GetLayout($activeShow, $activeShow?.settings?.activeLayout).length -->
+{#if $activeShow?.layouts}
     <h2 class="header">{$activeShow.name || ""}</h2>
 
-    {#if editOpened && !($activeShow.id === $outShow?.id)}
-        <TextEdit bind:value={textValue} />
+    {#if (groupsOpened || editOpened) && !($activeShow.id === $outShow?.id)}
+        {#if groupsOpened}
+            {#if addGroups}
+                <AddGroups show={$activeShow} on:added={() => (addGroups = false)} />
+            {:else}
+                <GroupsEdit show={$activeShow} />
+            {/if}
+        {:else}
+            <TextEdit bind:value={textValue} />
+        {/if}
 
         <div class="buttons">
+            {#if groupsOpened && !addGroups}
+                <Button on:click={() => (addGroups = true)} style="width: 100%;" center dark>
+                    <Icon id="add" right />
+                    {translate("settings.add", $dictionary)}
+                </Button>
+            {/if}
+
             <Button on:click={done} style="width: 100%;" center dark>
-                <Icon id="check" right />
-                {translate("actions.done", $dictionary)}
+                <Icon id={addGroups ? "back" : "check"} right />
+                {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
             </Button>
         </div>
     {:else}
@@ -95,6 +129,11 @@
                     <Dropdown value={layouts.find((a) => a.id == $activeShow.settings?.activeLayout)?.name || "—"} options={layouts} on:click={changeLayout} style="width: 100%;" up />
                 {/if}
 
+                <Button on:click={() => (groupsOpened = true)} style="width: 100%;" center dark>
+                    <Icon id="groups" right />
+                    {translate("tools.groups", $dictionary)}
+                </Button>
+
                 <Button on:click={() => (editOpened = true)} style="width: 100%;" center dark>
                     <Icon id="edit" right />
                     {translate("titlebar.edit", $dictionary)}
@@ -103,7 +142,7 @@
         {/if}
     {/if}
 {:else}
-    <Center faded>{translate("empty.show", $dictionary)}</Center>
+    <Center faded>{translate("empty.slides", $dictionary)}</Center>
 {/if}
 
 <style>

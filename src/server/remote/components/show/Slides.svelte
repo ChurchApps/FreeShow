@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, onMount } from "svelte"
     import type { Resolution } from "../../../../types/Settings"
     import Center from "../../../common/components/Center.svelte"
     import { translate } from "../../util/helpers"
@@ -64,28 +64,36 @@
         }
     }
     const touchend = () => (scaling = false)
+
+    // open tab instantly before loading content
+    let loadingStarted: boolean = false
+    onMount(() => setTimeout(() => (loadingStarted = true), 10))
 </script>
 
 <div class="grid" on:touchstart={touchstart} on:touchmove={touchmove} on:touchend={touchend}>
     {#if layoutSlides.length}
-        {#each layoutSlides as slide, i}
-            <Slide
-                {resolution}
-                media={$activeShow.media}
-                layoutSlide={slide}
-                slide={$activeShow.slides[slide.id]}
-                index={i}
-                color={slide.color}
-                active={outSlide === i && $outShow?.id === $activeShow.id}
-                {columns}
-                on:click={() => {
-                    // if (!$outLocked && !e.ctrlKey) {
-                    //   outSlide.set({ id, index: i })
-                    // }
-                    click(i)
-                }}
-            />
-        {/each}
+        {#if layoutSlides.length < 10 || loadingStarted}
+            {#each layoutSlides as slide, i}
+                <Slide
+                    {resolution}
+                    media={$activeShow.media}
+                    layoutSlide={slide}
+                    slide={$activeShow.slides[slide.id]}
+                    index={i}
+                    color={slide.color}
+                    active={outSlide === i && $outShow?.id === $activeShow.id}
+                    {columns}
+                    on:click={() => {
+                        // if (!$outLocked && !e.ctrlKey) {
+                        //   outSlide.set({ id, index: i })
+                        // }
+                        click(i)
+                    }}
+                />
+            {/each}
+        {:else}
+            <Center faded>{translate("remote.loading", $dictionary)}</Center>
+        {/if}
     {:else}
         <Center faded>{translate("empty.slides", $dictionary)}</Center>
     {/if}

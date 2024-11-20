@@ -14,13 +14,16 @@ import { formatText } from "../show/formatTextEditor"
 import { runActionId, toggleAction } from "./actions"
 import { getProject, getProjects, getShow, getShows } from "./apiGet"
 import {
+    addGroup,
     changeShowLayout,
     changeVariable,
     getClearedState,
     getPlainText,
+    getShowGroups,
     gotoGroup,
     moveStageConnection,
     playMedia,
+    rearrangeGroups,
     selectOverlayByIndex,
     selectOverlayByName,
     selectProjectByIndex,
@@ -61,6 +64,8 @@ type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
 type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_id_value = { id: string; value: string }
+export type API_rearrange = { showId: string; from: number; to: number }
+export type API_group = { showId: string; groupId: string }
 export type API_layout = { showId: string; layoutId: string }
 export type API_media = { path: string }
 export type API_toggle = { id: string; value?: boolean }
@@ -121,6 +126,8 @@ export const API_ACTIONS = {
     start_show: (data: API_id) => startShowSync(data.id),
     change_layout: (data: API_layout) => changeShowLayout(data),
     set_plain_text: (data: API_id_value) => formatText(data.value, data.id),
+    rearrange_groups: (data: API_rearrange) => rearrangeGroups(data),
+    add_group: (data: API_group) => addGroup(data),
 
     // PRESENTATION
     next_slide: () => nextSlideIndividual({ key: "ArrowRight" }), // BC
@@ -202,6 +209,7 @@ export const API_ACTIONS = {
     get_projects: () => getProjects(),
     get_project: (data: API_id) => getProject(data),
     get_plain_text: (data: API_id) => getPlainText(data.id),
+    get_groups: (data: API_id) => getShowGroups(data.id),
 
     get_thumbnail: (data: API_media) => getThumbnail(data),
     get_cleared: () => getClearedState(),

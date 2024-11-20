@@ -16,6 +16,7 @@ import {
     playingMetronome,
     projects,
     refreshEditSlide,
+    selected,
     showsCache,
     sortedShowsList,
     styles,
@@ -24,6 +25,7 @@ import {
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
+import { dropActions } from "../helpers/dropActions"
 import { getMediaStyle } from "../helpers/media"
 import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
@@ -31,7 +33,10 @@ import { getLabelId } from "../helpers/show"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { getPlainEditorText } from "../show/getTextEditor"
-import type { API_id_value, API_layout, API_media, API_variable } from "./api"
+import { getSlideGroups } from "../show/tools/groups"
+import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_variable } from "./api"
+import { history } from "../helpers/history"
+import { ondrop } from "../helpers/drop"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -209,6 +214,37 @@ export function changeShowLayout(data: API_layout) {
 export async function getPlainText(id: string) {
     await loadShows([id])
     return { id, value: getPlainEditorText(id) } as API_id_value
+}
+
+export function getShowGroups(id: string) {
+    return { id, value: getSlideGroups(id) }
+}
+
+export async function rearrangeGroups(data: API_rearrange) {
+    await loadShows([data.showId])
+
+    let trigger = data.to > data.from ? "end" : ""
+    let pos = trigger === "end" ? 1 : 0
+
+    let ref = _show(data.showId).layouts("active").ref()[0]
+    let dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
+    let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex - pos
+    if (isNaN(dropIndex)) dropIndex = ref.length
+
+    const drag = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
+    const drop = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos } // , trigger, center: false
+
+    let h: any = { id: null, location: { page: get(activePage) } }
+    dropActions.slide({ drag, drop }, h)
+    if (h && h.id) history(h)
+}
+
+export async function addGroup(data: API_group) {
+    await loadShows([data.showId])
+
+    selected.set({ id: "group", data: [{ id: data.groupId, showId: data.showId }] })
+    ondrop(null, "slide")
+    selected.set({ id: null, data: [] })
 }
 
 // PRESENTATION

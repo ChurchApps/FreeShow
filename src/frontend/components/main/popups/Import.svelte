@@ -5,9 +5,9 @@
     import { importFromClipboard } from "../../../converters/importHelpers"
     import { activePopup, alertMessage, dataPath, os } from "../../../stores"
     import { send } from "../../../utils/request"
-    import { presentationExtensions } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import { presentationExtensions } from "../../../values/extensions"
 
     const freeshow_formats = [
         { name: "$formats.show", extensions: ["show", "json"], id: "freeshow" },

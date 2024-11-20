@@ -82,7 +82,7 @@
         </Button>
 
         {#if !tablet}
-            <Button on:click={() => (moreOptions = !moreOptions)} style="flex: 0;">
+            <Button disabled={locked || !(outSlide || !$isCleared.all)} on:click={() => (moreOptions = !moreOptions)} style="flex: 0;" dark center>
                 <Icon id="expand" style="transition: transform .2s;{moreOptions ? 'transform: rotate(180deg);' : ''}" size={1.1} />
             </Button>
         {/if}

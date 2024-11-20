@@ -19,12 +19,12 @@
     // click on content
     function click(e: any) {
         if (e.clientX < window.innerWidth / 3) previous()
-        else next()
+        else if (!($outSlide + 1 >= totalSlides)) next()
     }
 </script>
 
 {#if $outShow}
-    <h2>{$outShow.name || ""}</h2>
+    <h2 class="header">{$outShow.name || ""}</h2>
 
     {#if $outputMode === "lyrics"}
         <Lyrics />

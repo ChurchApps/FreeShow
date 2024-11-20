@@ -23,14 +23,14 @@
     <Button on:click={click} active={show.id && activeShow?.id === show.id} class="context {$$props.class}" {style} bold={false} border>
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
             {#if icon}
-                <Icon id={icon || "noIcon"} box={icon === "ppt" ? 50 : 24} custom={!!(icon && icon !== "private")} right />
+                <Icon id={icon || "noIcon"} box={icon === "ppt" ? 50 : 24} custom={!!(icon && icon !== "private" && icon !== "slide")} right />
             {/if}
 
             <p style="margin: 3px 5px;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">
                 {#if show.name}
                     {show.name}
                 {:else}
-                    <span style="font-size: 0.8em;opacity: 0.5;pointer-events: none;">{translate("main.unnamed", $dictionary)}</span>
+                    <span style="opacity: 0.5;pointer-events: none;">{translate("main.unnamed", $dictionary)}</span>
                 {/if}
             </p>
         </span>

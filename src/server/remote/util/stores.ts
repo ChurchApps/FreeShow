@@ -30,6 +30,7 @@ export let outShow: Writable<any> = writable(null)
 export let layout: Writable<any[] | null> = writable(null)
 export let isCleared = writable({ all: true, background: true, slide: true, overlays: true, audio: true, slideTimers: true })
 
+export let projectsOpened: Writable<boolean> = writable(false)
 export let activeProject: Writable<any> = writable(null)
 export let folders: Writable<any> = writable(null)
 export let openedFolders: Writable<any[]> = writable([])
@@ -38,6 +39,7 @@ export let project: Writable<string> = writable("")
 
 export let mediaCache: Writable<any> = writable({})
 export let textCache: Writable<any> = writable({})
+export let groupsCache: Writable<any> = writable({})
 
 /////
 
@@ -58,6 +60,7 @@ export const _ = {
     outShow,
     layout,
     isCleared,
+    projectsOpened,
     activeProject,
     folders,
     openedFolders,
@@ -65,6 +68,7 @@ export const _ = {
     project,
     mediaCache,
     textCache,
+    groupsCache,
 }
 
 /////

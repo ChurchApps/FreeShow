@@ -4,7 +4,7 @@
     import { translate } from "../util/helpers"
     import { next, previous } from "../util/output"
     import { send } from "../util/socket"
-    import { _set, active, activeProject, activeShow, activeTab, dictionary, outShow, projects, shows } from "../util/stores"
+    import { _set, active, activeProject, activeShow, activeTab, dictionary, outShow, projects, projectsOpened, shows } from "../util/stores"
     import Lyrics from "./pages/Lyrics.svelte"
     import Media from "./pages/Media.svelte"
     import Project from "./pages/Project.svelte"
@@ -48,6 +48,8 @@
         let id = e.detail
         if (id === "shows") {
             ;(document.querySelector("#showSearch") as any)?.focus()
+        } else if (id === "project") {
+            _set("projectsOpened", !$projectsOpened)
         }
     }
 </script>

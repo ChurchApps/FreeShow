@@ -191,9 +191,18 @@ export function formatText(text: string, showId: string = "") {
                 ;(a.lines || []).forEach((line, j) => {
                     let c = b.lines?.[j] || b.lines?.[0]
                     if (c?.align) line.align = c?.align
-                    if (c?.text?.[0] && line.text?.[0]) {
-                        if (c.text[0].style) line.text[0].style = c?.text[0]?.style
+
+                    // remove customType
+                    let text = (c?.text || []).filter((a) => !a.customType)
+                    if (text[0] && line.text?.[0]) {
+                        if (text[0].style) line.text[0].style = text[0]?.style
                     }
+                })
+
+                // add auto size etc.
+                const textboxKeys = ["auto", "actions", "autoFontSize", "bindings", "chords", "textFit"]
+                textboxKeys.forEach((key) => {
+                    if (b[key]) a[key] = b[key]
                 })
             })
             // newSlides[slideId].items = slide.items

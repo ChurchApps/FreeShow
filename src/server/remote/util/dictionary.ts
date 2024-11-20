@@ -15,8 +15,15 @@ export const DEFAULT_DICTIONARY = {
     titlebar: {
         edit: "Edit",
     },
+    settings: {
+        add: "Add",
+    },
     actions: {
         done: "Done",
+        back: "Back",
+    },
+    tools: {
+        groups: "Groups",
     },
     remote: {
         projects: "Projects",

@@ -4,12 +4,13 @@ import { MAIN } from "../../types/Channels"
 import { ShowObj } from "../classes/Show"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
+import { getExtension } from "../components/helpers/media"
 import { checkName, formatToFileName, getLabelId } from "../components/helpers/show"
 import { activeProject, activeRename, dataPath, projectView, projects, refreshSlideThumbnails } from "../stores"
 import { newToast } from "../utils/common"
 import { destroy, receive, send } from "../utils/request"
 import { createCategory, setTempShows } from "./importHelpers"
-import { getExtension, videoExtensions } from "../components/helpers/media"
+import { videoExtensions } from "../values/extensions"
 
 type File = {
     name: string
