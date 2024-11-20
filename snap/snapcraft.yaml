@@ -1,11 +1,13 @@
+name: freeshow
+version: 1.3.1
+title: FreeShow
+summary: FreeShow
+description: Show song lyrics and more for free!
+architectures:
+  - amd64
 base: core22
 grade: stable
 confinement: strict
-plugs:
-  usr-share-alsa:
-    interface: system-files
-    read:
-      - /usr/share/alsa/alsa.conf
   gnome-42-2204:
     interface: content
     target: $SNAP/gnome-platform
@@ -22,19 +24,20 @@ plugs:
     interface: content
     target: $SNAP/data-dir/sounds
     default-provider: gtk-common-themes
-name: freeshow
-version: 1.3.1-beta.1
-title: FreeShow
-summary: FreeShow
-description: Show song lyrics and more for free!
-architectures:
-  - amd64
+layout:
+  /usr/share/alsa/alsa.conf:
+    bind-file: $SNAP_DATA/usr/share/alsa/alsa.conf
+parts:
+  freeshow:
+    source: ./dist/linux-unpacked/
+    plugin: dump
+    stage-packages:
+      - libasound2
 apps:
   freeshow:
     command: command.sh
     plugs:
       - alsa
-      - usr-share-alsa
       - desktop
       - desktop-legacy
       - home
@@ -52,9 +55,3 @@ apps:
       PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
       SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
       LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu
-parts:
-  freeshow:
-    source: ./dist/linux-unpacked/
-    plugin: dump
-    stage-packages:
-      - libasound2
