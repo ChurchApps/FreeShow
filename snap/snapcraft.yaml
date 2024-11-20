@@ -3,15 +3,22 @@ version: 1.3.1
 title: FreeShow
 summary: FreeShow
 description: Show song lyrics and more for free!
-architectures:
-  - amd64
-base: core22
+platforms:
+  amd64:
+    build-on: amd64
+    build-for: amd64
+base: core24
 grade: stable
 confinement: strict
-  gnome-42-2204:
+plugs:
+  gnome-46-2404:
     interface: content
     target: $SNAP/gnome-platform
-    default-provider: gnome-42-2204
+    default-provider: gnome-46-2404
+  mesa-2404:
+    interface: content
+    target: $SNAP/gnome-platform
+    default-provider: mesa-2404
   gtk-3-themes:
     interface: content
     target: $SNAP/data-dir/themes
@@ -32,10 +39,11 @@ parts:
     source: ./dist/linux-unpacked/
     plugin: dump
     stage-packages:
-      - libasound2
+      - libasound2t64
 apps:
   freeshow:
     command: command.sh
+    extensions: [gnome]
     plugs:
       - alsa
       - desktop
@@ -51,7 +59,6 @@ apps:
       - pulseaudio
       - opengl
     environment:
-      DISABLE_WAYLAND: '1'
       PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
       SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
       LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu
