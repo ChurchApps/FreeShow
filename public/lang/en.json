@@ -163,6 +163,7 @@
         "toggle_shuffle": "Toggle shuffle",
         "next": "Next",
         "previous": "Previous",
+        "play_no_audio": "Play without audio",
         "play_no_filters": "Play without filters",
         "favourite": "Favorite",
         "pause": "Pause",

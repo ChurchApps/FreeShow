@@ -70,7 +70,7 @@ import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers
 import { GetLayoutRef } from "../helpers/get"
 import { history, HistoryPages, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
-import { defaultOutput, getActiveOutputs, setOutput } from "../helpers/output"
+import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { dynamicValueText, sendMidi } from "../helpers/showActions"
@@ -783,6 +783,18 @@ const actions: any = {
 
         let mediaStyle: MediaStyle = getMediaStyle(get(media)[path], { name: "" })
         if (!get(outLocked)) setOutput("background", { path, ...mediaStyle })
+    },
+    play_no_audio: (obj: any) => {
+        let path = obj.sel.data[0].path || obj.sel.data[0].id
+        if (!path) return
+
+        let outputId = getActiveOutputs(get(outputs))[0]
+        let currentOutput = get(outputs)[outputId] || {}
+        let currentStyle = getCurrentStyle(get(styles), currentOutput.style)
+
+        const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], currentStyle)
+
+        if (!get(outLocked)) setOutput("background", { path, ...mediaStyle, type: getMediaType(getExtension(path)), muted: true })
     },
     play_no_filters: (obj: any) => {
         let path = obj.sel.data[0].path || obj.sel.data[0].id

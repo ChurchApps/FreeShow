@@ -58,8 +58,8 @@ export type API_variable = {
     name?: string
     index?: number
     // no values will toggle on/off:
-    key?: "text" | "number" | "enabled" | "step" | "name" | "type" // default: "enabled"
-    value?: string | number
+    key?: "text" | "number" | "value" | "enabled" | "step" | "name" | "type" // default: "enabled"
+    value?: string | number | boolean
     variableAction?: "increment" | "decrement"
 }
 export type API_midi = {

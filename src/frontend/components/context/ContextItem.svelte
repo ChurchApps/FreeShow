@@ -24,6 +24,7 @@
     } from "../../stores"
     import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
+    import { getExtension, getMediaType } from "../helpers/media"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { ContextMenuItem, contextMenuItems } from "./contextMenus"
@@ -112,6 +113,11 @@
             } else {
                 if (!$activeProject) disabled = true
             }
+        },
+        play_no_audio: () => {
+            let path = $selected.data[0]?.path || $selected.data[0]?.id
+            const type = getMediaType(getExtension(path))
+            if (type !== "video") hide = true
         },
         play_no_filters: () => {
             let path = $selected.data[0]?.path || $selected.data[0]?.id

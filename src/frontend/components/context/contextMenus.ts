@@ -124,6 +124,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // MEDIA
     preview: { label: "preview.show_preview", icon: "eye" },
     play: { label: "media.play", icon: "play" },
+    play_no_audio: { label: "media.play_no_audio", icon: "play" },
     play_no_filters: { label: "media.play_no_filters", icon: "play" },
     favourite: { label: "media.favourite", icon: "star" },
     system_open: { label: "main.system_open", icon: "launch" },
@@ -185,16 +186,16 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     drawer_show_button: ["addToProject", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "tag_set", "SEPERATOR", "tag_filter", "sort_shows_by", "selectAll"],
     drawer_new_show: ["newShowPopup", "newShow"],
     // media / audio
-    // "play", "play_no_filters", "SEPERATOR", "edit",
+    // "play", "play_no_audio", "play_no_filters", "SEPERATOR", "edit",
     media_preview: ["close"],
     // , "delete_all"
-    show_media: ["preview", "play_no_filters", "SEPERATOR", "edit", "SEPERATOR", "system_open"],
+    show_media: ["preview", "play_no_filters", "SEPERATOR", "edit", "SEPERATOR", "system_open"], // "play_no_audio"
     show_audio: ["preview", "SEPERATOR", "system_open"],
     slide_recorder_item: ["remove"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
-    media_card: ["addToProject", "SEPERATOR", "preview", "play_no_filters", "SEPERATOR", "edit", "favourite", "SEPERATOR", "system_open"],
+    media_card: ["addToProject", "SEPERATOR", "preview", "play_no_audio", "play_no_filters", "SEPERATOR", "edit", "favourite", "SEPERATOR", "system_open"],
     // "addToFirstSlide",
     overlay_card: ["edit", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
@@ -216,7 +217,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
     project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export"], // "open",
     folder: ["rename", "duplicate", "delete"],
-    project_media: ["play", "play_no_filters", "remove"],
+    project_media: ["play", "play_no_audio", "play_no_filters", "remove"],
     project_audio: ["remove"],
     project_player: ["remove"],
     project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename"], // "delete" removed as too many users thought it just removed the show from the project

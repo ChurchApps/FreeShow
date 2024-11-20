@@ -33,6 +33,7 @@
         // globalTransition also has style & slide transition
         // priority: item > slide > style > global
         let transition = itemTransition || globalTransition
+        if (transition?.type === "none") transition.duration = 0
 
         let inTransition = clone(transition.in || transition)
         let outTransition = clone(transition.out || transition)
@@ -63,7 +64,9 @@
 
         // add some time in case an identical item is "fading" in
         if (!outDelay && itemTransition?.duration === 0 && item.type === "media") outDelay = 250
-        // WIP having outDelay on just 1 image item will cause all other items to not clear until that is finished!
+        // don't "go to black" in between text
+        else if (!outDelay && transition?.duration === 0) outDelay = 50
+        // WIP having outDelay on just 1 item will cause all other items to not clear until that is finished!
 
         // SET DELAY
 

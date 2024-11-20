@@ -155,7 +155,7 @@ export function changeVariable(data: API_variable) {
         key = "number"
     } else if (data.value !== undefined) {
         value = data.value
-        if (typeof value !== "boolean") key = variable.type === "number" ? "number" : "text"
+        if (key === "value" && typeof value !== "boolean") key = variable.type === "number" ? "number" : "text"
     } else if (key === "enabled") {
         value = !variable.enabled
     }
