@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
 import {
+    activeDrawerTab,
     activeEdit,
     activePage,
     activeProject,
@@ -9,11 +10,13 @@ import {
     groupNumbers,
     groups,
     media,
+    openScripture,
     outLocked,
     outputs,
     overlays,
     playingAudio,
     playingMetronome,
+    playScripture,
     projects,
     refreshEditSlide,
     selected,
@@ -25,7 +28,10 @@ import {
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
+import { ondrop } from "../helpers/drop"
 import { dropActions } from "../helpers/dropActions"
+import { history } from "../helpers/history"
+import { setDrawerTabData } from "../helpers/historyHelpers"
 import { getMediaStyle } from "../helpers/media"
 import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
@@ -34,9 +40,7 @@ import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
-import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_variable } from "./api"
-import { history } from "../helpers/history"
-import { ondrop } from "../helpers/drop"
+import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -234,8 +238,7 @@ export async function rearrangeGroups(data: API_rearrange) {
     const drag = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
     const drop = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos } // , trigger, center: false
 
-    let h: any = { id: null, location: { page: get(activePage) } }
-    dropActions.slide({ drag, drop }, h)
+    let h = dropActions.slide({ drag, drop }, {})
     if (h && h.id) history(h)
 }
 
@@ -261,6 +264,18 @@ export function getClearedState() {
     const all = isOutCleared(null, o) && audio
 
     return { all, background, slide, overlays, audio, slideTimers }
+}
+
+// "1.1.1" = "Gen 1:1"
+export function startScripture(data: API_scripture) {
+    const split = data.reference.split(".")
+    const ref = { book: Number(split[0]) - 1, chapter: Number(split[1]) - 1, verses: [split[2]] }
+
+    setDrawerTabData("scripture", data.id)
+    activeDrawerTab.set("scripture")
+
+    openScripture.set({ ...ref })
+    setTimeout(() => playScripture.set(true), 500)
 }
 
 // MEDIA

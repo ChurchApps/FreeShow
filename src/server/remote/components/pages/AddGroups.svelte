@@ -9,7 +9,6 @@
     send("API:get_groups", { id: show.id })
 
     $: groups = $groupsCache[show.id!] || []
-    $: console.log(groups)
 
     let dispatch = createEventDispatcher()
     function addGroup(group: any) {

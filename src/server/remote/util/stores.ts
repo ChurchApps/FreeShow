@@ -4,6 +4,7 @@ import type { Dictionary } from "../../../types/Settings"
 import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
 import { clone } from "../../common/util/helpers"
 import { DEFAULT_DICTIONARY } from "./dictionary"
+import type { BibleCategories } from "../../../types/Tabs"
 
 export let dictionary: Writable<Dictionary> = writable(clone(DEFAULT_DICTIONARY))
 
@@ -37,9 +38,12 @@ export let openedFolders: Writable<any[]> = writable([])
 export let projects: Writable<any[]> = writable([])
 export let project: Writable<string> = writable("")
 
+export let scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
+
 export let mediaCache: Writable<any> = writable({})
 export let textCache: Writable<any> = writable({})
 export let groupsCache: Writable<any> = writable({})
+export let scriptureCache: Writable<any> = writable({})
 
 /////
 
@@ -66,9 +70,11 @@ export const _ = {
     openedFolders,
     projects,
     project,
+    scriptures,
     mediaCache,
     textCache,
     groupsCache,
+    scriptureCache,
 }
 
 /////

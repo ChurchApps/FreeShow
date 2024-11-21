@@ -7,9 +7,12 @@
     import { translate } from "../../util/helpers"
     import { GetLayout, getNextSlide, next, nextSlide, previous } from "../../util/output"
     import { send } from "../../util/socket"
-    import { _set, active, activeProject, activeShow, dictionary, outLayout, outShow, outSlide, projects, shows, textCache } from "../../util/stores"
+    import { _set, active, activeProject, activeShow, dictionary, outLayout, outShow, outSlide, projects, projectsOpened, scriptures, shows, textCache } from "../../util/stores"
+    import AddGroups from "../pages/AddGroups.svelte"
+    import GroupsEdit from "../pages/GroupsEdit.svelte"
     import Media from "../pages/Media.svelte"
     import Project from "../pages/Project.svelte"
+    import Scripture from "../pages/Scripture.svelte"
     import Shows from "../pages/Shows.svelte"
     import TextEdit from "../pages/TextEdit.svelte"
     import Clear from "../show/Clear.svelte"
@@ -32,7 +35,13 @@
     let tabs: TabsObj = {}
     $: tabs = {
         shows: { name: translate("remote.shows", $dictionary), icon: "search" },
+        scripture: { name: translate("tabs.scripture", $dictionary), icon: "scripture" },
         project: { name: translate("remote.project", $dictionary), icon: "project" },
+    }
+    $: tabsDisabled = {
+        shows: $shows.length,
+        scripture: Object.keys($scriptures).length,
+        project: $projects.length || $activeProject,
     }
 
     // SHOW
@@ -54,6 +63,11 @@
         let id = e.detail
         if (id === "shows") {
             ;(document.querySelector("#showSearch") as any)?.focus()
+        } else if (id === "project") {
+            _set("projectsOpened", !$projectsOpened)
+        } else if (id === "scripture") {
+            activeTab = ""
+            setTimeout(() => (activeTab = "scripture"))
         }
     }
 
@@ -61,15 +75,39 @@
         send("API:change_layout", { showId: $activeShow.id, layoutId })
     }
 
+    $: previousId = ""
+    $: if ($activeShow?.id !== previousId) {
+        groupsOpened = false
+        addGroups = false
+        previousId = $activeShow?.id || ""
+    }
+
+    // GROUPS EDIT
+
+    let groupsOpened: boolean = false
+    let addGroups: boolean = false
+
     // TEXT EDIT
 
     let editOpened: boolean = false
     let textValue = ""
     $: if (editOpened && $textCache[$activeShow?.id]) setText()
+    else textValue = ""
     function setText() {
         textValue = $textCache[$activeShow?.id]
     }
     function done() {
+        if (addGroups) {
+            addGroups = false
+            return
+        }
+
+        if (groupsOpened) {
+            groupsOpened = false
+            addGroups = false
+            return
+        }
+
         editOpened = false
         if ($textCache[$activeShow?.id] === textValue) return
 
@@ -79,14 +117,17 @@
 
 <div class="left">
     <div class="flex">
-        {#if activeTab === "project"}
-            <Project />
-        {:else if activeTab === "shows"}
+        {#if activeTab === "shows"}
             <Shows tablet />
+        {:else if activeTab === "scripture"}
+            <!-- tablet -->
+            <Scripture />
+        {:else if activeTab === "project"}
+            <Project />
         {/if}
     </div>
 
-    <Tabs {tabs} bind:active={activeTab} disabled={{ projects: $projects.length, project: $activeProject, shows: $shows.length }} on:double={double} icons />
+    <Tabs {tabs} bind:active={activeTab} disabled={tabsDisabled} on:double={double} icons />
 </div>
 
 <div class="center">
@@ -94,13 +135,28 @@
         {#if $activeShow}
             <!-- <h2>{activeShow.name}</h2> -->
 
-            {#if editOpened}
-                <TextEdit bind:value={textValue} />
+            {#if groupsOpened || editOpened}
+                {#if groupsOpened}
+                    {#if addGroups}
+                        <AddGroups show={$activeShow} on:added={() => (addGroups = false)} />
+                    {:else}
+                        <GroupsEdit show={$activeShow} />
+                    {/if}
+                {:else}
+                    <TextEdit bind:value={textValue} />
+                {/if}
 
                 <div class="buttons">
+                    {#if groupsOpened && !addGroups}
+                        <Button on:click={() => (addGroups = true)} style="width: 100%;" center dark>
+                            <Icon id="add" right />
+                            {translate("settings.add", $dictionary)}
+                        </Button>
+                    {/if}
+
                     <Button on:click={done} style="width: 100%;" center dark>
-                        <Icon id="check" right />
-                        {translate("actions.done", $dictionary)}
+                        <Icon id={addGroups ? "back" : "check"} right />
+                        {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
                     </Button>
                 </div>
             {:else}
@@ -168,7 +224,12 @@
                             <Icon size={1.3} id={slideView} white />
                         </Button>
 
-                        <Button on:click={() => (editOpened = true)} style="width: 100%;" center dark>
+                        <Button on:click={() => (groupsOpened = true)} center dark>
+                            <Icon id="groups" right />
+                            {translate("tools.groups", $dictionary)}
+                        </Button>
+
+                        <Button on:click={() => (editOpened = true)} center dark>
                             <Icon id="edit" right />
                             {translate("titlebar.edit", $dictionary)}
                         </Button>
@@ -247,6 +308,8 @@
     /* ///// */
 
     .flex {
+        position: relative;
+
         display: flex;
         flex-direction: column;
         flex: 1;

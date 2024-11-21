@@ -154,7 +154,7 @@
     }
 
     function showVerse() {
-        if ($outLocked) return
+        if ($outLocked || !bibles[0]) return
 
         // add to scripture history
         scriptureHistory.update((a) => {

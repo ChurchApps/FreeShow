@@ -31,10 +31,11 @@ function getId(drag: any): string {
 export const dropActions: any = {
     slides: ({ drag, drop }: any, history: any) => dropActions.slide({ drag, drop }, history),
     slide: ({ drag, drop }: any, history: any) => {
-        let showId = drag.showId || drag.data[0]?.showId || get(activeShow)?.id || ""
+        let customId = drag.showId || drag.data[0]?.showId
+        let showId = customId || get(activeShow)?.id || ""
         if (!showId || get(shows)[showId]?.locked) return
 
-        history.location = { page: get(activePage), show: get(activeShow) ? get(activeShow) : { id: showId }, layout: get(showsCache)[showId]?.settings?.activeLayout }
+        history.location = { page: get(activePage), show: customId ? { id: customId } : get(activeShow), layout: get(showsCache)[showId]?.settings?.activeLayout }
 
         let id: string = getId(drag)
         if (slideDrop[id]) {

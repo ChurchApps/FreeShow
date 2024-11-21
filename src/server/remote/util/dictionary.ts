@@ -12,6 +12,9 @@ export const DEFAULT_DICTIONARY = {
         groups: "No groups",
         events: "No events",
     },
+    tabs: {
+        scripture: "Scriptures",
+    },
     titlebar: {
         edit: "Edit",
     },

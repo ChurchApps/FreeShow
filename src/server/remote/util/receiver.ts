@@ -1,5 +1,5 @@
 import { setError, translate } from "./helpers"
-import { _, _get, _set, _update } from "./stores"
+import { _, _get, _set, _update, scriptures } from "./stores"
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
@@ -97,6 +97,13 @@ export const receiver = {
 
             if (!_get("activeShow") && !_get("quickPlay")) _set("activeTab", "project")
         }
+    },
+    SCRIPTURE: (data: any) => {
+        scriptures.set(data)
+    },
+    GET_SCRIPTURE: (data: any) => {
+        if (!data) return
+        _update("scriptureCache", data.id, data.bible)
     },
 
     /////

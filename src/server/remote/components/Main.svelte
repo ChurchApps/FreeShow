@@ -4,10 +4,11 @@
     import { translate } from "../util/helpers"
     import { next, previous } from "../util/output"
     import { send } from "../util/socket"
-    import { _set, active, activeProject, activeShow, activeTab, dictionary, outShow, projects, projectsOpened, shows } from "../util/stores"
+    import { _set, active, activeProject, activeShow, activeTab, dictionary, outShow, projects, projectsOpened, scriptures, shows } from "../util/stores"
     import Lyrics from "./pages/Lyrics.svelte"
     import Media from "./pages/Media.svelte"
     import Project from "./pages/Project.svelte"
+    import Scripture from "./pages/Scripture.svelte"
     import Show from "./pages/Show.svelte"
     import Shows from "./pages/Shows.svelte"
     import Slide from "./pages/Slide.svelte"
@@ -19,6 +20,7 @@
     let tabs: TabsObj = {}
     $: tabs = {
         shows: { name: translate("remote.shows", $dictionary), icon: "search" }, // shows
+        scripture: { name: translate("tabs.scripture", $dictionary), icon: "scripture" },
         project: { name: translate("remote.project", $dictionary), icon: "project" },
         show: { name: translate("remote.show", $dictionary), icon: "show" },
         slide: { name: translate("remote.slide", $dictionary), icon: "display_settings" }, // slide
@@ -26,6 +28,7 @@
     }
     $: tabsDisabled = {
         shows: $shows.length,
+        scripture: Object.keys($scriptures).length,
         project: $projects.length || $activeProject,
         show: $activeShow || ($active?.type || "show") !== "show",
         slide: $outShow,
@@ -50,6 +53,9 @@
             ;(document.querySelector("#showSearch") as any)?.focus()
         } else if (id === "project") {
             _set("projectsOpened", !$projectsOpened)
+        } else if (id === "scripture") {
+            tab = ""
+            setTimeout(() => (tab = "scripture"))
         }
     }
 </script>
@@ -62,10 +68,12 @@
 
 <section class="phoneMode justify">
     <div class="content">
-        {#if tab === "project"}
-            <Project />
-        {:else if tab === "shows"}
+        {#if tab === "shows"}
             <Shows />
+        {:else if tab === "scripture"}
+            <Scripture />
+        {:else if tab === "project"}
+            <Project />
         {:else if tab === "show"}
             {#if ($active.type || "show") === "show"}
                 <Show />

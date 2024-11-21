@@ -30,6 +30,7 @@ import {
     selectShowByName,
     selectSlideByIndex,
     selectSlideByName,
+    startScripture,
     toggleLock,
 } from "./apiHelper"
 import { sendRestCommandSync } from "./rest"
@@ -68,6 +69,7 @@ export type API_rearrange = { showId: string; from: number; to: number }
 export type API_group = { showId: string; groupId: string }
 export type API_layout = { showId: string; layoutId: string }
 export type API_media = { path: string }
+export type API_scripture = { id: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
@@ -141,6 +143,7 @@ export const API_ACTIONS = {
     // WIP disable stage ?
     // WIP disable NDI ?
     // index_select_layout | name_select_layout
+    start_scripture: (data: API_scripture) => startScripture(data),
 
     // STAGE
     id_select_stage_layout: (data: API_id) => moveStageConnection(data.id), // BC

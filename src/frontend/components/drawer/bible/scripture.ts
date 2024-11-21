@@ -96,6 +96,26 @@ export function loadBible(active: string, index: number = 0, bible: any) {
     return bible
 }
 
+export function receiveBibleContent(msg: any) {
+    if (msg.error === "not_found" || !msg.content?.[1]) return
+
+    const content = msg.content[1] || {}
+    scripturesCache.update((a) => {
+        a[msg.content[0]] = content
+        return a
+    })
+
+    let bible: any = content
+    let id = msg.content[0] || msg.id
+
+    bible.version = get(scriptures)[id]?.customName || content.name || get(scriptures)[id]?.name || ""
+    bible.metadata = content.metadata || {}
+    if (content.copyright) bible.copyright = content.copyright
+    bible.id = id
+
+    return bible
+}
+
 export function joinRange(array: string[]) {
     let prev: number = -1
     let range: string = ""

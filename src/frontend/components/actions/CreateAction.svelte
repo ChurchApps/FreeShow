@@ -52,7 +52,7 @@
         "start_camera",
     ]
     // remove actions that are not fully implemented to CustomInput yet
-    const removeActions = ["play_media", "change_transition", "change_variable"]
+    const removeActions = ["change_transition", "change_variable"]
     if (list) removeActions.push(...removeFromSlideAction)
 
     $: ACTIONS = [
@@ -66,6 +66,8 @@
                 return { id, name, icon, common }
             })
             .filter(({ id }) => {
+                // don't show actions with no custom data
+                if (!actionData[id]) return false
                 // show if it is the currently selected
                 if (id === actionId) return true
                 // don't display GET actions

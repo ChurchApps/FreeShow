@@ -86,9 +86,12 @@
     }
 
     #sortable li {
-        cursor: grab;
+        position: relative;
+
         display: flex;
         align-items: center;
         gap: 0.5rem;
+
+        cursor: grab;
     }
 </style>

@@ -14,7 +14,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { bookIds, fetchBible, formatBibleText, getColorCode, joinRange, loadBible, searchBibleAPI, setBooksCache } from "./scripture"
+    import { bookIds, fetchBible, formatBibleText, getColorCode, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache } from "./scripture"
 
     export let active: any
     export let bibles: Bible[]
@@ -197,24 +197,15 @@
             return
         }
 
-        if (!msg.content?.[1]) return
-
-        scripturesCache.update((a) => {
-            a[msg.content[0]] = msg.content[1]
-            return a
-        })
-
         if (!bibles) return console.error("could not find bibles")
         let currentIndex = msg.data?.index || 0
         if (!bibles[currentIndex]) return console.error("could not find bible at index")
 
-        let id = msg.content[0] || msg.id
+        const content = receiveBibleContent(msg)
+        bibles[currentIndex] = content
 
-        bibles[currentIndex].version = $scriptures[id]?.customName || msg.content[1].name || $scriptures[id]?.name || ""
-        bibles[currentIndex].metadata = msg.content[1].metadata || {}
-        if (msg.content[1].copyright) bibles[currentIndex].copyright = msg.content[1].copyright
-        bibles[currentIndex].id = msg.content[0]
-        books[id] = msg.content[1].books as any
+        let id = msg.content[0] || msg.id
+        books[id] = content.books as any
 
         if (typeof bookId === "string") bookId = 0
         if (books[id][cachedRef?.bookId]) bookId = cachedRef?.bookId
