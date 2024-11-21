@@ -4,14 +4,11 @@
 
   export let style: boolean = true
   export let autoSize: number = 0
-  export let type: "digital" | "analog" = "digital"
-  export let seconds: boolean = true
+  export let type: "digital" | "analog" | "custom" = "digital"
+  export let format: string = "HH:mm"
+  export let seconds: boolean = false
 
   $: twelwe = $timeFormat === "12"
-  // TODO: auto detect
-  // don't know if this works properly
-  // $: twelwe = (new Date(2022, 0, 1, 13, 0)).getHours() === 1
-  // $: twelwe = (new Date(2022, 0, 1, 15, 0)).toLocaleString().includes("3")
 
   let d: Date = new Date()
   setInterval(() => (d = new Date()), 250)
@@ -19,6 +16,30 @@
   let m: number = 0
   let s: number = 0
   let pm: boolean = false
+
+  function formatDate(date: Date, formatStr: string): string {
+    const tokens = {
+      'HH': ('0' + date.getHours()).slice(-2),
+      'H': date.getHours().toString(),
+      'h': ((date.getHours() % 12) || 12).toString(),
+      'hh': ('0' + ((date.getHours() % 12) || 12)).slice(-2),
+      'mm': ('0' + date.getMinutes()).slice(-2),
+      'm': date.getMinutes().toString(),
+      'ss': ('0' + date.getSeconds()).slice(-2),
+      's': date.getSeconds().toString(),
+      'A': date.getHours() >= 12 ? 'PM' : 'AM',
+      'a': date.getHours() >= 12 ? 'pm' : 'am',
+      'dddd': date.toLocaleString('en-US', { weekday: 'long' }),
+      'ddd': date.toLocaleString('en-US', { weekday: 'short' }),
+      'YYYY': date.getFullYear().toString(),
+      'MM': ('0' + (date.getMonth() + 1)).slice(-2),
+      'M': (date.getMonth() + 1).toString(),
+      'DD': ('0' + date.getDate()).slice(-2),
+      'D': date.getDate().toString()
+    }
+    
+    return formatStr.replace(/HH|hh|H|h|mm|m|ss|s|A|a|dddd|ddd|YYYY|MM|M|DD|D/g, match => tokens[match])
+  }
 
   $: if (d) {
     h = d.getHours()
@@ -33,8 +54,13 @@
   }
 </script>
 
-{#if type === "digital"}
-  <!-- autoSize = slide clock -->
+{#if type === "analog"}
+  <AnalogClock date={d} {...{ h, m, s }} />
+{:else if type === "custom"}
+  <div style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;` : ""}>
+    {formatDate(d, format)}
+  </div>
+{:else}
   <div style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;` : ""}>
     {#if style}
       <span class="colored">{("0" + h).slice(-2)}</span>:
@@ -46,8 +72,6 @@
       {#if twelwe}{pm ? "PM" : "AM"}{/if}
     {/if}
   </div>
-{:else}
-  <AnalogClock date={d} {...{ h, m, s }} {seconds} />
 {/if}
 
 <style>

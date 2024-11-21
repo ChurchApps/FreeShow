@@ -333,10 +333,18 @@ export const boxes: Box = {
                         options: [
                             { id: "digital", name: "$:clock.digital:$" },
                             { id: "analog", name: "$:clock.analog:$" },
+                            { id: "custom", name: "$:clock.custom:$" }
                         ],
                     },
                 },
-                { name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: false },
+                { name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: false, hidden: false },
+                {
+                    name: "clock.format",
+                    input: "text",
+                    id: "clock.format",
+                    value: "HH:mm",
+                    hidden: false
+                },
             ],
             font: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },

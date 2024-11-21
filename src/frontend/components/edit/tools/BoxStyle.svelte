@@ -20,6 +20,7 @@
     export let item: Item | null = null
 
     // -----
+    
 
     // selection
     let selection: null | { start: number; end: number }[] = null
