@@ -67,6 +67,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     private: { label: "actions.toggle_private", icon: "private" },
     duplicate: { label: "actions.duplicate", icon: "duplicate", shortcuts: ["Ctrl+D"] },
     section: { label: "new.section", icon: "section" },
+    copy_to_template: { label: "actions.create_template", icon: "templates" },
     // SORT
     sort_shows_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_shows"] },
     sort_projects_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_projects"] },
@@ -188,18 +189,19 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPERATOR", "edit",
     media_preview: ["close"],
+    overlay_preview: ["close"],
     // , "delete_all"
-    show_media: ["preview", "play_no_filters", "SEPERATOR", "edit", "SEPERATOR", "system_open"], // "play_no_audio"
+    show_media: ["edit", "preview", "SEPERATOR", "play_no_filters", "SEPERATOR", "system_open"], // "play_no_audio"
     show_audio: ["preview", "SEPERATOR", "system_open"],
     slide_recorder_item: ["remove"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
-    media_card: ["addToProject", "SEPERATOR", "preview", "play_no_audio", "play_no_filters", "SEPERATOR", "edit", "favourite", "SEPERATOR", "system_open"],
+    media_card: ["addToProject", "SEPERATOR", "edit", "preview", "favourite", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "system_open"],
     // "addToFirstSlide",
-    overlay_card: ["edit", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    overlay_card: ["edit", "preview", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
-    template_card: ["edit", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
+    template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
     audio_button: ["addToProject", "SEPERATOR", "preview", "favourite", "SEPERATOR", "system_open"],
@@ -215,7 +217,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     projects: ["newProject", "newFolder", "sort_projects_by"],
     projectTab: ["export", "SEPERATOR", "close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export"], // "open",
+    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template"], // "open",
+    project_template: ["rename", "delete"],
     folder: ["rename", "duplicate", "delete"],
     project_media: ["play", "play_no_audio", "play_no_filters", "remove"],
     project_audio: ["remove"],

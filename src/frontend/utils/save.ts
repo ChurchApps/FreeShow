@@ -47,6 +47,7 @@ import {
     overlays,
     playerVideos,
     ports,
+    projectTemplates,
     projects,
     redoHistory,
     remotePassword,
@@ -173,7 +174,7 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         SHOWS: get(shows),
         STAGE_SHOWS: get(stageShows),
         // STORES
-        PROJECTS: { projects: get(projects), folders: get(folders) },
+        PROJECTS: { projects: get(projects), folders: get(folders), projectTemplates: get(projectTemplates) },
         OVERLAYS: get(overlays),
         TEMPLATES: get(templates),
         EVENTS: get(events),

@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show } from "../../types/Show"
 import { _show } from "../components/helpers/shows"
-import { dictionary, templates } from "../stores"
+import { activeShow, dictionary, templates } from "../stores"
 
 export class ShowObj implements Show {
     name: string
@@ -30,7 +30,8 @@ export class ShowObj implements Show {
 
     constructor(isPrivate: boolean = false, category: null | string = null, layoutId: string = uid(), created: number = new Date().getTime(), template: string | boolean = true) {
         if (template !== false) {
-            if (typeof template !== "string") template = _show().get("settings.template") || null
+            // get template from active show (if it's not default with the "Header" template)
+            if (typeof template !== "string" && get(activeShow)?.id !== "default") template = _show().get("settings.template") || null
             if (!template && get(templates).default) template = "default"
         }
 

@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, midiIn, projects, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, midiIn, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
     import { getActionIcon } from "../actions/actions"
     import { keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -188,6 +188,14 @@
             </Autoscroll>
         </div>
 
+        {#if Object.keys($projectTemplates).length}
+            <div class="projectTemplates">
+                {#each sortByName(keysToID($projectTemplates)) as project}
+                    <ProjectButton name={project.name} parent={project.parent} id={project.id} template />
+                {/each}
+            </div>
+        {/if}
+
         <div id="projectsButtons" class="tabs">
             <Button on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $projects[$activeProject || ""]?.parent || "/" } }, location: { page: "show", id: "project_folder" } })} center title={$dictionary.new?.folder}>
                 <Icon id="folder" right={!$labelsDisabled} />
@@ -294,7 +302,8 @@
         /* overflow-y: auto;
     overflow-x: hidden; */
         overflow: hidden;
-        height: 100%;
+        /* height: 100%; */
+        flex: 1;
     }
 
     .list.projects :global(.droparea) {
@@ -311,5 +320,15 @@
     .list :global(.section.active) {
         outline-offset: -2px;
         outline: 2px solid var(--primary-lighter);
+    }
+
+    .projectTemplates {
+        display: flex;
+        flex-direction: column;
+
+        max-height: calc(30px * 5);
+        overflow-y: auto;
+
+        border-top: 2px solid var(--primary-lighter);
     }
 </style>

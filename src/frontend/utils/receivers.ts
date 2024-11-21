@@ -68,6 +68,7 @@ import {
     presentationApps,
     presentationData,
     previewBuffers,
+    projectTemplates,
     projects,
     shows,
     showsCache,
@@ -244,6 +245,7 @@ const receiveSTORE: any = {
     PROJECTS: (a: any) => {
         projects.set(a.projects || {})
         folders.set(a.folders || {})
+        projectTemplates.set(a.projectTemplates || {})
     },
     OVERLAYS: (a: any) => overlays.set(a),
     TEMPLATES: (a: any) => templates.set(a),

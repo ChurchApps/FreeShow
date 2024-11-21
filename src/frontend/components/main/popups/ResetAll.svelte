@@ -18,7 +18,7 @@
                 SHOWS: {},
                 STAGE_SHOWS: {},
                 // STORES
-                PROJECTS: { projects: {}, folders: {} },
+                PROJECTS: { projects: {}, folders: {}, projectTemplates: {} },
                 OVERLAYS: {},
                 TEMPLATES: {},
                 EVENTS: {},

@@ -36,6 +36,7 @@ import {
     popupData,
     previousShow,
     projects,
+    projectTemplates,
     projectView,
     refreshEditSlide,
     scriptures,
@@ -132,9 +133,9 @@ const actions: any = {
 
     // main
     rename: (obj: any) => {
-        let id = obj.sel.id
+        let id = obj.sel.id || obj.contextElem.id
         if (!id) return
-        let data = obj.sel.data[0]
+        let data = obj.sel.data?.[0] || {}
 
         const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag"]
         const renameByIdDirect = ["overlay", "template", "player", "layout"]
@@ -143,7 +144,8 @@ const actions: any = {
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
         else if (id === "slide" || id === "group") activePopup.set("rename")
         else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
-        else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + obj.contextElem.id)
+        else if (obj.contextElem?.classList?.contains("#project_template")) activeRename.set("project_" + id)
+        else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
     },
@@ -188,6 +190,10 @@ const actions: any = {
 
         if (deleteAction(obj.sel)) return
 
+        if (obj.contextElem?.classList.value.includes("#project_template")) {
+            deleteAction({ id: "project_template", data: [{ id: obj.contextElem.id }] })
+            return
+        }
         if (obj.contextElem?.classList.value.includes("#video_marker")) {
             deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
             return
@@ -504,7 +510,7 @@ const actions: any = {
             return
         }
 
-        if (obj.contextElem.classList.contains("media")) {
+        if (obj.contextElem.classList.contains("media") || obj.contextElem.classList.contains("overlayPreview")) {
             if (get(previousShow)) {
                 activeShow.set(JSON.parse(get(previousShow)))
                 previousShow.set(null)
@@ -545,6 +551,20 @@ const actions: any = {
     section: (obj) => {
         let index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
+    },
+    copy_to_template: (obj: any) => {
+        let project = clone(get(projects)[obj.sel.data?.[0]?.id])
+        if (!project) return
+
+        project = { name: project.name, parent: "/", shows: project.shows, created: 0 }
+
+        let id = uid()
+
+        // find existing with the same name
+        const existing = Object.entries(get(projectTemplates)).find(([_id, a]) => a.name === project.name)
+        if (existing) id = existing[0]
+
+        history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
     },
 
     // slide views

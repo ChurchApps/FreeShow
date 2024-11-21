@@ -107,6 +107,8 @@ export const dropActions: any = {
                 .filter((a: any) => a)
         } else if (drag.id === "audio") {
             data = data.map((a: any) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
+        } else if (drag.id === "overlay") {
+            data = data.map((a: any) => ({ id: a, type: "overlay" }))
         } else if (drag.id === "player") {
             data = data.map((a: any) => ({ id: a, type: "player" }))
         } else if (drag.id === "scripture") {
