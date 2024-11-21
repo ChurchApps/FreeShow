@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
     import type { Option } from "../../../types/Main"
-    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, outputs, popupData, shows, stageShows, styles, timers, triggers } from "../../stores"
+    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, outputs, popupData, shows, stageShows, styles, timers, triggers, variables } from "../../stores"
     import T from "../helpers/T.svelte"
     import { keysToID, sortByName } from "../helpers/array"
     import { _show } from "../helpers/shows"
@@ -15,6 +15,7 @@
     import RestValues from "./RestValues.svelte"
     import ChooseStyle from "./specific/ChooseStyle.svelte"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
+    import VariableInputs from "./specific/VariableInputs.svelte"
 
     export let inputId: string
     export let value
@@ -72,6 +73,7 @@
         start_playlist: () => convertToOptions($audioPlaylists),
         id_select_output_style: () => [{ id: null, name: "—" }, ...convertToOptions($styles)],
         id_start_timer: () => convertToOptions($timers),
+        variable: () => convertToOptions($variables), // .map((a) => ({...a, type: $variables[a.id]?.type}))
         start_trigger: () => convertToOptions($triggers),
         run_action: () => convertToOptions($midiIn).filter((a) => a.name && a.id !== mainId),
     }
@@ -104,18 +106,20 @@
     <div class="column">
         <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={(e) => updateValue("", e)} volume={false} />
     </div>
+{:else if inputId === "variable"}
+    <VariableInputs {value} on:update={(e) => updateValue(e.detail?.key, e.detail?.value)} />
 {:else if inputId === "toggle_action"}
     <CombinedInput>
         <Dropdown style="width: 100%;" activeId={value?.id} value={getOptions.run_action().find((a) => a.id === value?.id)?.name || value?.id || "—"} options={getOptions.run_action()} on:click={(e) => updateValue("id", e.detail?.id)} />
     </CombinedInput>
     <CombinedInput>
-        {#if value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;">Action will toggle if checkbox is unchanged</p>{/if}
+        {#if value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;"><T id="actions.toggle_checkbox_tip" /></p>{/if}
         <div class="alignRight" style="width: 100%;">
             <Checkbox checked={value?.value} on:change={checkboxChanged} />
         </div>
     </CombinedInput>
 {:else if inputId === "rest"}
-    <RestValues rest={value} on:change={(e) => updateValue("", e)} />
+    <RestValues rest={value || {}} on:change={(e) => updateValue("", e)} />
 {:else}
     <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
         {#if inputId === "index"}
@@ -125,7 +129,7 @@
         {:else if inputId === "strval"}
             <TextInput value={value?.value || ""} placeholder={$dictionary.inputs?.name} on:change={(e) => updateValue("value", e)} />
         {:else if inputId === "bolval"}
-            {#if actionId === "lock_output" && value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;">Action will toggle if checkbox is unchanged</p>{/if}
+            {#if actionId === "lock_output" && value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;"><T id="actions.toggle_checkbox_tip" /></p>{/if}
             <div class="alignRight" style="width: 100%;">
                 <Checkbox checked={value?.value} on:change={checkboxChanged} />
             </div>

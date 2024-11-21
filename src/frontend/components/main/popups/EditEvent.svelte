@@ -349,6 +349,7 @@
     {:else if selectedType === "action"}
         <br />
         {#key actionData}
+            <!-- TODO: only choose actual "Actions" -->
             <CreateAction actionId={actionData?.id || ""} actionValue={actionData?.data || {}} on:change={changeAction} />
         {/key}
     {/if}
@@ -356,14 +357,14 @@
     <br />
 
     <CombinedInput>
-        <Button style="width: 100%;" on:click={save} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData : true} dark center>
+        <Button style="width: 100%;" on:click={save} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData?.id : true} dark center>
             <Icon id="save" right />
             <T id="actions.save" />
         </Button>
     </CombinedInput>
     {#if editEvent.group}
         <CombinedInput>
-            <Button style="width: 100%;" on:click={saveAll} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData : true} dark center>
+            <Button style="width: 100%;" on:click={saveAll} disabled={selectedType === "event" ? !editEvent.name?.length || stored === JSON.stringify(editEvent) : selectedType === "action" ? !actionData?.id : true} dark center>
                 <Icon id="save" right />
                 <T id="calendar.save_all" />
             </Button>

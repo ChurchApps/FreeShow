@@ -21,6 +21,7 @@ import {
     overlays,
     playerVideos,
     projects,
+    projectTemplates,
     projectView,
     shows,
     showsCache,
@@ -116,7 +117,8 @@ export const _updaters = {
                 return a
             })
 
-            if (!initializing) return
+            if (!initializing || data.shows?.length) return
+
             activeRename.set("project_" + id)
         },
         deselect: (id: string) => {
@@ -196,6 +198,10 @@ export const _updaters = {
                 return items
             }
         },
+    },
+    project_template: {
+        store: projectTemplates,
+        empty: EMPTY_PROJECT,
     },
 
     project_key: {

@@ -40,7 +40,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     export: { label: "actions.export", icon: "export" },
     // DRAWER
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
-    tags: { label: "context.filterByTags", icon: "tag", items: ["LOAD_tags"] },
+    tag_set: { label: "context.setTag", icon: "tag", items: ["LOAD_tag_set"] },
+    tag_filter: { label: "context.filterByTags", icon: "tag", items: ["LOAD_tag_filter"] },
     newCategory: { label: "context.newCategory", icon: "add" },
     newScripture: { label: "new.scripture", icon: "add" },
     createCollection: { label: "new.collection", icon: "collection" },
@@ -66,6 +67,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     private: { label: "actions.toggle_private", icon: "private" },
     duplicate: { label: "actions.duplicate", icon: "duplicate", shortcuts: ["Ctrl+D"] },
     section: { label: "new.section", icon: "section" },
+    copy_to_template: { label: "actions.create_template", icon: "templates" },
     // SORT
     sort_shows_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_shows"] },
     sort_projects_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_projects"] },
@@ -123,6 +125,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // MEDIA
     preview: { label: "preview.show_preview", icon: "eye" },
     play: { label: "media.play", icon: "play" },
+    play_no_audio: { label: "media.play_no_audio", icon: "play" },
     play_no_filters: { label: "media.play_no_filters", icon: "play" },
     favourite: { label: "media.favourite", icon: "star" },
     system_open: { label: "main.system_open", icon: "launch" },
@@ -177,27 +180,28 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
     playlist: ["rename", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "newShow", "SEPERATOR", "tags", "sort_shows_by"],
+    drawer_show: ["newShowPopup", "newShow", "SEPERATOR", "tag_filter", "sort_shows_by"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
-    drawer_show_button: ["addToProject", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "SEPERATOR", "tags", "sort_shows_by", "selectAll"],
+    drawer_show_button: ["addToProject", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "tag_set", "SEPERATOR", "tag_filter", "sort_shows_by", "selectAll"],
     drawer_new_show: ["newShowPopup", "newShow"],
     // media / audio
-    // "play", "play_no_filters", "SEPERATOR", "edit",
+    // "play", "play_no_audio", "play_no_filters", "SEPERATOR", "edit",
     media_preview: ["close"],
+    overlay_preview: ["close"],
     // , "delete_all"
-    show_media: ["preview", "play_no_filters", "SEPERATOR", "edit", "SEPERATOR", "system_open"],
+    show_media: ["edit", "preview", "SEPERATOR", "play_no_filters", "SEPERATOR", "system_open"], // "play_no_audio"
     show_audio: ["preview", "SEPERATOR", "system_open"],
     slide_recorder_item: ["remove"],
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
-    media_card: ["addToProject", "SEPERATOR", "preview", "play_no_filters", "SEPERATOR", "edit", "favourite", "SEPERATOR", "system_open"],
+    media_card: ["addToProject", "SEPERATOR", "edit", "preview", "favourite", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "system_open"],
     // "addToFirstSlide",
-    overlay_card: ["edit", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    overlay_card: ["edit", "preview", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
-    template_card: ["edit", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
+    template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
     audio_button: ["addToProject", "SEPERATOR", "preview", "favourite", "SEPERATOR", "system_open"],
@@ -213,9 +217,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     projects: ["newProject", "newFolder", "sort_projects_by"],
     projectTab: ["export", "SEPERATOR", "close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export"], // "open",
+    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template"], // "open",
+    project_template: ["rename", "delete"],
     folder: ["rename", "duplicate", "delete"],
-    project_media: ["play", "play_no_filters", "remove"],
+    project_media: ["play", "play_no_audio", "play_no_filters", "remove"],
     project_audio: ["remove"],
     project_player: ["remove"],
     project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename"], // "delete" removed as too many users thought it just removed the show from the project

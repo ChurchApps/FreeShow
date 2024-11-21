@@ -8,7 +8,6 @@
 *.env
 
 .DS_Store
-package-lock.json
 
 test-output/
 test-results/

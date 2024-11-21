@@ -60,7 +60,7 @@ export async function translateShow(showId: string, languageCode: string) {
                         translatedText = await translate(text.join("[-] "), languageCode)
                     } catch (err) {
                         console.warn("Error when translating:", err)
-                        let tip = err.message.includes("Failed to fetch") ? ". Check your network and try again." : ""
+                        let tip = err.message?.includes("Failed to fetch") ? ". Check your network and try again." : ""
                         newToast("Error when translating: " + err + tip)
                     }
                     if (!translatedText.length) return
@@ -110,4 +110,6 @@ export function removeTranslationFromShow(showId: string, langId: string = "") {
     if (!changed) return
 
     history({ id: "UPDATE", newData: { key: "slides", data: slides }, oldData: { id: showId }, location: { id: "show_key", page: "show" } })
+
+    if (!langId) history({ id: "TEMPLATE", save: false, newData: { id: "default", location: { page: "none", override: "show#" + showId } } })
 }

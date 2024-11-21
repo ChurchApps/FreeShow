@@ -27,6 +27,7 @@ import {
     playerVideos,
     projects,
     refreshSlideThumbnails,
+    scriptures,
     shows,
     showsCache,
     special,
@@ -117,6 +118,9 @@ export function storeSubscriber() {
         // STAGE
         // WIP all stage listeners should not send to all stages, just the connected ids
         send(STAGE, ["EVENTS"], data)
+    })
+    scriptures.subscribe((data) => {
+        send(REMOTE, ["SCRIPTURE"], data)
     })
 
     outputs.subscribe((data) => {

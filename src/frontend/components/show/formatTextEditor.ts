@@ -2,18 +2,21 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Chords, Item, Line, Show, Slide, SlideData } from "../../../types/Show"
 import { activeShow } from "../../stores"
+import { createChord } from "../edit/scripts/chords"
 import { getItemChords, getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates } from "../helpers/array"
 import { history } from "../helpers/history"
 import { isEmptyOrSpecial } from "../helpers/output"
 import { getGlobalGroup } from "../helpers/show"
 import { _show } from "../helpers/shows"
-import { createChord } from "../edit/scripts/chords"
 
-export function formatText(e: any) {
-    let newSlidesText = e.detail.split("\n\n")
+export function formatText(text: string, showId: string = "") {
+    if (!showId) showId = get(activeShow)?.id || ""
+    let show: Show = clone(_show(showId).get())
+    if (!show) return
 
-    let show: Show = clone(_show().get())
+    let newSlidesText = text.split("\n\n")
+
     let slides: Slide[] = newSlidesText.map(getSlide)
     let newSlides: { [key: string]: Slide } = clone(show.slides)
     // console.log(clone(slides))
@@ -96,7 +99,7 @@ export function formatText(e: any) {
         newLayoutSlides.push({ id: slides[0].id })
     })
 
-    let oldLayoutSlides = show.layouts[_show().get("settings.activeLayout")].slides
+    let oldLayoutSlides = show.layouts[_show(showId).get("settings.activeLayout")].slides
     let oldLayoutSlideIds: string[] = oldLayoutSlides.map(({ id }) => id)
 
     // add back all slides without text
@@ -150,7 +153,7 @@ export function formatText(e: any) {
         oldLayoutSlides.splice(0, matchingLayoutIndex + 1)
     })
 
-    show.layouts[_show().get("settings.activeLayout")].slides = newLayoutSlides
+    show.layouts[_show(showId).get("settings.activeLayout")].slides = newLayoutSlides
 
     // remove replaced slides
     let allOldSlideIds = Object.keys(show.slides)
@@ -176,12 +179,39 @@ export function formatText(e: any) {
 
     Object.keys(newSlides).forEach((slideId) => {
         let slide = newSlides[slideId]
+        let oldSlideId = replacedIds[slideId] || slideId
+
+        // add back previous textbox styles
+        const oldSlide = clone(show.slides[oldSlideId] || {})
+        const oldTextboxes = getTextboxes(oldSlide.items || [])
+        if (oldTextboxes.length && oldSlideId !== slideId) {
+            slide.items.forEach((a, i) => {
+                let b = oldTextboxes[i]
+                if (b.style) a.style = b.style
+                ;(a.lines || []).forEach((line, j) => {
+                    let c = b.lines?.[j] || b.lines?.[0]
+                    if (c?.align) line.align = c?.align
+
+                    // remove customType
+                    let text = (c?.text || []).filter((a) => !a.customType)
+                    if (text[0] && line.text?.[0]) {
+                        if (text[0].style) line.text[0].style = text[0]?.style
+                    }
+                })
+
+                // add auto size etc.
+                const textboxKeys = ["auto", "actions", "autoFontSize", "bindings", "chords", "textFit"]
+                textboxKeys.forEach((key) => {
+                    if (b[key]) a[key] = b[key]
+                })
+            })
+            // newSlides[slideId].items = slide.items
+        }
 
         // remove "id" key
         delete slide.id
 
         // add back old items
-        let oldSlideId = replacedIds[slideId] || slideId
         let oldItems = show.slides[oldSlideId]?.items || []
         if (!oldItems.length) return
 
@@ -214,21 +244,21 @@ export function formatText(e: any) {
     })
 
     // remove first slide if no content
-    if (!e.detail && Object.keys(newSlides).length === 1) {
+    if (!text && Object.keys(newSlides).length === 1) {
         let textItem = Object.values(newSlides)[0].items.find((a) => (a.type || "text") === "text")
         if (textItem) {
             let fullOldSlideText = getItemText(textItem)
             if (!fullOldSlideText) {
                 newSlides = {}
-                show.layouts[_show().get("settings.activeLayout")].slides = []
+                show.layouts[_show(showId).get("settings.activeLayout")].slides = []
             }
         }
     }
 
     show.slides = newSlides
-    if (!show.settings.template) show.settings.template = "default"
+    // if (!show.settings.template) show.settings.template = "default"
 
-    history({ id: "UPDATE", newData: { data: show }, oldData: { id: get(activeShow)!.id }, location: { page: "show", id: "show_key" } })
+    history({ id: "UPDATE", newData: { data: show }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
 }
 
 function getSlide(slideText): Slide {
@@ -236,7 +266,8 @@ function getSlide(slideText): Slide {
     let group: any = null
 
     let firstLine = slideLines[0]
-    if (firstLine.indexOf("[") === 0 && firstLine.indexOf("]") >= 0) {
+    let textboxKey = firstLine.match(textboxRegex)
+    if (!textboxKey && firstLine.indexOf("[") === 0 && firstLine.indexOf("]") >= 0) {
         group = firstLine.slice(firstLine.indexOf("[") + 1, firstLine.indexOf("]"))
         slideLines.splice(0, 1)
     }
@@ -303,7 +334,8 @@ function getChords(line: string) {
 
         if (char === "]") {
             currentlyInChord = false
-            if (currentChord.length > 12) text += `[${currentChord}]` // probably not a chord
+            if (currentChord.length > 12)
+                text += `[${currentChord}]` // probably not a chord
             else chords.push(createChord(text.length, currentChord))
             return
         }

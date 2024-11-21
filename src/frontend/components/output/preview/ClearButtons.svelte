@@ -55,6 +55,12 @@
     }
 
     $: outputContent = getOutputContent("", $outputs)
+
+    $: backgroundCleared = $outLocked || isOutCleared("background", $outputs)
+    $: slideCleared = $outLocked || isOutCleared("slide", $outputs)
+    $: overlayCleared = $outLocked || isOutCleared("overlays", $outputs, true)
+    $: lockedOverlay = !overlayCleared && isOutCleared("overlays", $outputs, false)
+    $: slideTimerCleared = $outLocked || isOutCleared("transition", $outputs)
 </script>
 
 <div class="clear" style="border-top: 2px solid var(--primary-lighter);">
@@ -71,35 +77,36 @@
             </Button>
         {/if}
     </span>
+
     <span class="group">
         {#if outputContent?.type !== "pdf" && outputContent?.type !== "ppt"}
             <div class="combinedButton">
-                <Button disabled={$outLocked || isOutCleared("background", $outputs)} on:click={() => clear("background")} title={$dictionary.clear?.background + " [F1]"} dark red center>
+                <Button disabled={backgroundCleared} on:click={() => clear("background")} title={$dictionary.clear?.background + " [F1]"} dark red center>
                     <Icon id="background" size={1.2} />
                 </Button>
                 {#if !allCleared}
-                    <Button disabled={$outLocked || isOutCleared("background", $outputs)} on:click={() => openPreview("background")} title={$dictionary.preview?.background} dark={activeClear !== "background"} />
+                    <Button disabled={backgroundCleared} on:click={() => openPreview("background")} title={$dictionary.preview?.background} dark={activeClear !== "background"} />
                 {/if}
             </div>
         {/if}
 
         <div class="combinedButton">
-            <Button disabled={$outLocked || isOutCleared("slide", $outputs)} on:click={() => clear("slide")} title={$dictionary.clear?.slide + " [F2]"} dark red center>
+            <Button disabled={slideCleared} on:click={() => clear("slide")} title={$dictionary.clear?.slide + " [F2]"} dark red center>
                 <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
                 <!-- display recording icon here if a slide recoring is playing -->
                 <Icon id={outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} />
             </Button>
             {#if !allCleared}
-                <Button disabled={$outLocked || isOutCleared("slide", $outputs)} on:click={() => openPreview("slide")} title={$dictionary.preview?.slide} dark={activeClear !== "slide"} />
+                <Button disabled={slideCleared} on:click={() => openPreview("slide")} title={$dictionary.preview?.slide} dark={activeClear !== "slide"} />
             {/if}
         </div>
 
         <div class="combinedButton">
-            <Button disabled={$outLocked || isOutCleared("overlays", $outputs, true)} on:click={() => clear("overlays")} title={$dictionary.clear?.overlays + " [F3]"} dark red center>
+            <Button style={lockedOverlay ? "opacity: 0.7;cursor: default;" : ""} disabled={overlayCleared} on:click={() => clear("overlays")} title={lockedOverlay ? "" : $dictionary.clear?.overlays + " [F3]"} dark red center>
                 <Icon id="overlays" size={1.2} />
             </Button>
             {#if !allCleared}
-                <Button disabled={$outLocked || isOutCleared("overlays", $outputs, true)} on:click={() => openPreview("overlays")} title={$dictionary.preview?.overlays} dark={activeClear !== "overlays"} />
+                <Button disabled={overlayCleared} on:click={() => openPreview("overlays")} title={$dictionary.preview?.overlays} dark={activeClear !== "overlays"} />
             {/if}
         </div>
 
@@ -114,11 +121,11 @@
 
         {#if outputContent?.type !== "pdf"}
             <div class="combinedButton">
-                <Button disabled={$outLocked || isOutCleared("transition", $outputs)} on:click={() => clear("nextTimer")} title={$dictionary.clear?.nextTimer + ($special.disablePresenterControllerKeys ? " [F5]" : "")} dark red center>
+                <Button disabled={slideTimerCleared} on:click={() => clear("nextTimer")} title={$dictionary.clear?.nextTimer + ($special.disablePresenterControllerKeys ? " [F5]" : "")} dark red center>
                     <Icon id="clock" size={1.2} />
                 </Button>
                 {#if !allCleared}
-                    <Button disabled={$outLocked || isOutCleared("transition", $outputs)} on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
+                    <Button disabled={slideTimerCleared} on:click={() => openPreview("nextTimer")} title={$dictionary.preview?.nextTimer} dark={activeClear !== "nextTimer"} />
                 {/if}
             </div>
         {/if}

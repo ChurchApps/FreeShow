@@ -148,6 +148,9 @@ function getOutputWithLines() {
     return Number(currentLines)
 }
 
+const PRESENTATION_KEYS_NEXT = [" ", "ArrowRight", "PageDown"]
+const PRESENTATION_KEYS_PREV = ["ArrowLeft", "PageUp"]
+
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function nextSlideIndividual(e: any, start: boolean = false, end: boolean = false) {
     getActiveOutputs().forEach((id) => nextSlide(e, start, end, false, false, id))
@@ -241,7 +244,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
     // go to next show if end
     if (index === null && currentShow?.id === slide?.id && get(showsCache)[currentShow?.id || ""]?.settings.activeLayout === slide.layout) {
-        if ([" ", "ArrowRight", "PageDown"].includes(e?.key)) goToNextProjectItem(e.key)
+        if (PRESENTATION_KEYS_NEXT.includes(e?.key)) goToNextProjectItem(e.key)
         return
     }
 
@@ -302,7 +305,7 @@ export function goToNextProjectItem(key: string = "") {
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
             else activeShow.set({ ...newShow, index })
 
-            if (newShow.type === "section" && key === "ArrowRight" && get(special).sectionTriggerAction) {
+            if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && get(special).sectionTriggerAction) {
                 runAction(get(midiIn)[get(special).sectionTriggerAction])
                 return
             }
@@ -328,7 +331,7 @@ export function goToPreviousProjectItem(key: string = "") {
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
             else activeShow.set({ ...newShow, index })
 
-            if (newShow.type === "section" && key === "ArrowLeft" && get(special).sectionTriggerAction) {
+            if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && get(special).sectionTriggerAction) {
                 runAction(get(midiIn)[get(special).sectionTriggerAction])
                 return
             }
@@ -410,7 +413,7 @@ export function previousSlide(e: any, customOutputId?: string) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
             if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""]) {
-                if (["ArrowLeft", "PageUp"].includes(e?.key)) goToPreviousProjectItem(e.key)
+                if (PRESENTATION_KEYS_PREV.includes(e?.key)) goToPreviousProjectItem(e.key)
             }
             return
         }

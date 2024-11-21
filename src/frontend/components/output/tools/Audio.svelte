@@ -24,7 +24,7 @@
     else duration = 0
     async function getDuration() {
         duration = 0
-        duration = await getAudioDuration(Object.keys($playingAudio)[0])
+        duration = playing.mic ? 0 : await getAudioDuration(Object.keys($playingAudio)[0])
         currentTime = playing.audio?.currentTime || 0
     }
 
@@ -54,7 +54,7 @@
 
         playingAudio.update((a) => {
             if (a[id]?.audio?.currentTime === undefined) return a
-            a[id].audio.currentTime = e.target.value
+            a[id].audio.currentTime = e.target.value || 0
             // something (in audio.ts I guess) plays the audio when updating the time, so this will pause it again
             if (paused) setTimeout(() => a[id].audio.pause(), 20)
 

@@ -1,36 +1,23 @@
 <script lang="ts">
     import { uid } from "uid"
     import { activePopup, activeShow, alertMessage, cachedShowsData, dictionary, fullColors, globalGroupViewEnabled, groups, labelsDisabled, selected, showsCache } from "../../../stores"
+    import { sortByName } from "../../helpers/array"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
-    import T from "../../helpers/T.svelte"
-    import Center from "../../system/Center.svelte"
-    import SelectElem from "../../system/SelectElem.svelte"
-    import Button from "../../inputs/Button.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
-    import { sortByName } from "../../helpers/array"
-    import { getShowCacheId } from "../../helpers/show"
+    import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
+    import Center from "../../system/Center.svelte"
+    import SelectElem from "../../system/SelectElem.svelte"
+    import { getSlideGroups } from "./groups"
 
-    $: showGroups = $cachedShowsData[getShowCacheId($activeShow!.id, $showsCache[$activeShow!.id])]?.groups.sort(orderGroups) || []
+    $: showGroups = getSlideGroups($activeShow!.id, $showsCache, $cachedShowsData)
 
     $: layoutSlides = $showsCache[$activeShow!.id]?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
     function countGroupsInLayout(slideId) {
         let count = layoutSlides.reduce((count: number, slide: any) => (slide.id === slideId ? count + 1 : count), 0)
         return count
-    }
-
-    function orderGroups(a: any, b: any) {
-        const aGroupType = a.group.split(" ")[0]
-        const bGroupType = b.group.split(" ")[0]
-
-        if (aGroupType !== bGroupType) {
-            return aGroupType.localeCompare(bGroupType)
-        }
-
-        const groupA = parseInt(a.group.split(" ")[1]) || 0
-        const groupB = parseInt(b.group.split(" ")[1]) || 0
-        return groupA - groupB
     }
 
     $: globalGroups = Object.entries($groups).map(([id, group]: any) => {

@@ -19,7 +19,7 @@
     $: if (path) getDuration()
     async function getDuration() {
         duration = 0
-        duration = await getAudioDuration(path)
+        duration = playing.mic ? 0 : await getAudioDuration(path)
         currentTime = playing.audio?.currentTime || 0
     }
 

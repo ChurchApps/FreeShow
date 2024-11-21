@@ -143,7 +143,7 @@ export class EditboxHelper {
                 let value = a.value.replaceAll("\n", "<br>") || "<br>"
                 if (value === " ") value = "&nbsp;"
 
-                html += `<span class="${a.customType ? "custom" : ""}" ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
+                html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
             })
             html += "</div>"
         })

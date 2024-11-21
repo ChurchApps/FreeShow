@@ -3,13 +3,13 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { Resolution } from "../../../../types/Settings"
     import type { MediaType, ShowType } from "../../../../types/Show"
-
     import { outputs, styles } from "../../../stores"
-    import { encodeFilePath, getExtension, videoExtensions } from "../../helpers/media"
+    import { encodeFilePath, getExtension } from "../../helpers/media"
     import { getResolution } from "../../helpers/output"
     import Camera from "../../output/Camera.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Capture from "../live/Capture.svelte"
+    import { videoExtensions } from "../../../values/extensions"
 
     export let name: any = ""
     export let path: string

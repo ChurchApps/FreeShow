@@ -199,7 +199,7 @@ function XMLtoObject(xml: string) {
         let currentSongTitle = properties.titles?.title || []
         if (Array.isArray(currentSongTitle)) currentSongTitle = currentSongTitle[0]
 
-        let title = (typeof currentSongTitle["#text"] != "undefined") ? currentSongTitle["#text"] : currentSongTitle
+        let title = typeof currentSongTitle["#text"] != "undefined" ? currentSongTitle["#text"] : currentSongTitle
 
         return title
     }

@@ -43,12 +43,12 @@ export function trimShow(showCache: Show) {
 // let hasContent = !!Object.values(show.slides).find((slide) => slide.items.find((item) => item.lines?.find((line) => line.text?.find((text) => text.value?.length))))
 
 function showHasLayoutContent(show: Show) {
-    return !!Object.values(show.layouts).find((layout) => layout.slides.length)
+    return !!Object.values(show.layouts || {}).find((layout) => layout.slides.length)
 }
 
 export function getShowTextContent(show: Show) {
     let textContent = ""
-    Object.values(show.slides).forEach((slide) => {
+    Object.values(show.slides || {}).forEach((slide) => {
         slide.items.forEach((item) => {
             item.lines?.forEach((line) => {
                 line.text?.forEach((text) => {

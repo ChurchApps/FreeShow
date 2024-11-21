@@ -42,7 +42,5 @@ export interface Cropping {
 }
 
 export interface Dictionary {
-    [key: string]: {
-        [key: string]: string
-    }
+    [key: string]: { [key: string]: string } | undefined
 }

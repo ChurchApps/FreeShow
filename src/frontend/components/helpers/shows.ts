@@ -430,6 +430,7 @@ export function _show(id: any = "active") {
                     if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
                     else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
                     layoutIds.forEach((layoutId: any) => {
+                        if (!a[id].layouts[layoutId]) return
                         prev.push({ key, value: a[id].layouts[layoutId][key] })
                         a[id].layouts[layoutId][key] = value
                     })

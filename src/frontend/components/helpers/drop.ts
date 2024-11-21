@@ -11,7 +11,7 @@ const areas: { [key in DropAreas | string]: string[] } = {
     slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "global_timer", "midi", "action"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
-    project: ["show_drawer", "media", "audio", "player", "scripture"],
+    project: ["show_drawer", "media", "audio", "overlay", "player", "scripture"],
     overlays: ["slide"],
     templates: ["slide"],
     edit: ["media"],
