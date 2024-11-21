@@ -17,135 +17,99 @@ export class ImageBufferConverter {
         }
     }
 
-    /*  convert from BGRA to YUV  */
-    // static BGRAtoYUV(data: Buffer) {
-    //     const newData = Buffer.alloc((data.length / 4) * 3)
-    //     for (let i = 0, j = 0; i < data.length; i += 4, j += 3) {
-    //         const B = data[i]
-    //         const G = data[i + 1]
-    //         const R = data[i + 2]
+   static BGRAtoYUV(data: Buffer, { width: srcWidth, height: srcHeight }: Size, targetDims?: { width: number, height: number }) {
+        // Use target dimensions if provided, otherwise use source dimensions
+        const targetWidth = targetDims?.width || srcWidth;
+        const targetHeight = targetDims?.height || srcHeight;
 
-    //         // YUV conversion formulas
-    //         const Y = 0.299 * R + 0.587 * G + 0.114 * B
-    //         const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-    //         const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
+        
+        // Output buffer size for UYVY format (2 bytes per pixel)
+        const yuvSize = targetWidth * targetHeight * 2;
+        const newData = Buffer.alloc(yuvSize);
+        
+        // Calculate scaling ratios
+        const xRatio = srcWidth / targetWidth;
+        const yRatio = srcHeight / targetHeight;
 
-    //         // Clamp Y, U, V to 0-255
-    //         newData[j] = Math.min(255, Math.max(0, Math.round(Y)))
-    //         newData[j + 1] = Math.min(255, Math.max(0, Math.round(U)))
-    //         newData[j + 2] = Math.min(255, Math.max(0, Math.round(V)))
-    //         // Alpha channel is removed
-    //     }
-    //     return newData
-    // }
-    /*  convert from BGRA to YUV 420  */
-    static BGRAtoYUV(data: Buffer, { width, height }: Size) {
-        const ySize = width * height // Size of Y plane
-        const uSize = (width / 2) * (height / 2) // Size of U plane (half width, half height)
-        const vSize = uSize // Size of V plane (same as U)
-        const newData = Buffer.alloc(ySize + uSize + vSize)
+        for (let y = 0; y < targetHeight; y++) {
+            for (let x = 0; x < targetWidth; x += 2) {
+                const srcX1 = Math.min(Math.floor(x * xRatio), srcWidth - 1);
+		const srcX2 = Math.min(Math.floor((x + 1) * xRatio), srcWidth - 1);
+		const srcY = Math.min(Math.floor(y * yRatio), srcHeight - 1);
+                
+                const i1 = (srcY * srcWidth + srcX1) * 4;
+                const i2 = Math.min((srcY * srcWidth + srcX2) * 4, data.length - 4);
+                
+                const B1 = data[i1];
+                const G1 = data[i1 + 1];
+                const R1 = data[i1 + 2];
+                
+                const B2 = data[i2];
+                const G2 = data[i2 + 1];
+                const R2 = data[i2 + 2];
 
-        let yIndex = 0 // Index for Y plane
-        let uIndex = ySize // Index for U plane
-        let vIndex = ySize + uSize // Index for V plane
+                const Y1 = 0.299 * R1 + 0.587 * G1 + 0.114 * B1;
+                const Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2;
+                
+		const U = (-0.14713 * (R1 + R2) / 2 - 0.28886 * (G1 + G2) / 2 + 0.436 * (B1 + B2) / 2) + 128;
+		const V = (0.5 * (R1 + R2) / 2 - 0.4542 * (G1 + G2) / 2 - 0.0458 * (B1 + B2) / 2) + 128;
 
-        // Loop through each pixel
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                const i = (y * width + x) * 4 // BGRA index
-                const B = data[i]
-                const G = data[i + 1]
-                const R = data[i + 2]
-
-                // YUV conversion formulas
-                const Y = 0.299 * R + 0.587 * G + 0.114 * B
-                const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-                const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
-
-                // Clamp Y, U, V to 0-255
-                const clampedY = Math.min(255, Math.max(0, Math.round(Y)))
-                newData[yIndex++] = clampedY // Store Y value
-
-                // Store U and V values at the appropriate indices for YUV420
-                if (x % 2 === 0 && y % 2 === 0) {
-                    // Only store U and V for the top-left pixel of each 2x2 block
-                    newData[uIndex++] = Math.min(255, Math.max(0, Math.round(U))) // Store U
-                    newData[vIndex++] = Math.min(255, Math.max(0, Math.round(V))) // Store V
-                }
+                const j = (y * targetWidth + x) * 2;
+                
+                newData[j] = Math.min(255, Math.max(0, Math.round(U)));
+                newData[j + 1] = Math.min(255, Math.max(0, Math.round(Y1)));
+                newData[j + 2] = Math.min(255, Math.max(0, Math.round(V)));
+                newData[j + 3] = Math.min(255, Math.max(0, Math.round(Y2)));
             }
         }
 
-        return newData
+        return newData;
     }
 
-    /*  convert from ARGB to YUV  */
-    // static ARGBtoYUV(data: Buffer) {
-    //     const newData = Buffer.alloc((data.length / 4) * 3)
-    //     for (let i = 0, j = 0; i < data.length; i += 4, j += 3) {
-    //         const R = data[i + 1]
-    //         const G = data[i + 2]
-    //         const B = data[i + 3]
+    static ARGBtoYUV(data: Buffer, { width: srcWidth, height: srcHeight }: Size, targetDims?: { width: number, height: number }) {
+        // Similar implementation as BGRAtoYUV but with ARGB pixel format
+        const targetWidth = targetDims?.width || srcWidth;
+        const targetHeight = targetDims?.height || srcHeight;
+        
+        const yuvSize = targetWidth * targetHeight * 2;
+        const newData = Buffer.alloc(yuvSize);
+        
+        const xRatio = srcWidth / targetWidth;
+        const yRatio = srcHeight / targetHeight;
 
-    //         // YUV conversion formulas
-    //         const Y = 0.299 * R + 0.587 * G + 0.114 * B
-    //         const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-    //         const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
+        for (let y = 0; y < targetHeight; y++) {
+            for (let x = 0; x < targetWidth; x += 2) {
+                const srcX1 = Math.min(Math.floor(x * xRatio), srcWidth - 1);
+		const srcX2 = Math.min(Math.floor((x + 1) * xRatio), srcWidth - 1);
+		const srcY = Math.min(Math.floor(y * yRatio), srcHeight - 1);
+                
+                const i1 = (srcY * srcWidth + srcX1) * 4;
+                const i2 = Math.min((srcY * srcWidth + srcX2) * 4, data.length - 4);
+                
+                const R1 = data[i1 + 1];
+                const G1 = data[i1 + 2];
+                const B1 = data[i1 + 3];
+                
+                const R2 = data[i2 + 1];
+                const G2 = data[i2 + 2];
+                const B2 = data[i2 + 3];
 
-    //         // Clamp Y, U, V to 0-255
-    //         newData[j] = Math.min(255, Math.max(0, Math.round(Y)))
-    //         newData[j + 1] = Math.min(255, Math.max(0, Math.round(U)))
-    //         newData[j + 2] = Math.min(255, Math.max(0, Math.round(V)))
-    //         // Alpha channel is removed
-    //     }
-    //     return newData
-    // }
-    /*  convert from ARGB to YUV 420  */
-    static ARGBtoYUV(data: Buffer, { width, height }: Size) {
-        const numPixels = width * height
+                const Y1 = 0.299 * R1 + 0.587 * G1 + 0.114 * B1;
+                const Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2;
+                
+                const U = (-0.14713 * (R1 + R2) / 2 - 0.28886 * (G1 + G2) / 2 + 0.436 * (B1 + B2) / 2) + 128;
+                const V = (0.615 * (R1 + R2) / 2 - 0.51499 * (G1 + G2) / 2 - 0.10001 * (B1 + B2) / 2) + 128;
 
-        // Create output buffers
-        const yPlane = Buffer.alloc(numPixels) // Y plane
-        const uPlane = Buffer.alloc(numPixels / 4) // U plane (subsampled)
-        const vPlane = Buffer.alloc(numPixels / 4) // V plane (subsampled)
-
-        let yIndex = 0
-        let uvIndex = 0
-
-        for (let i = 0; i < data.length; i += 4) {
-            const R = data[i + 1] // Red channel
-            const G = data[i + 2] // Green channel
-            const B = data[i + 3] // Blue channel
-
-            // YUV conversion formulas
-            const Y = 0.299 * R + 0.587 * G + 0.114 * B
-            const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-            const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
-
-            // Clamp Y, U, V to 0-255
-            const YClamped = Math.min(255, Math.max(0, Math.round(Y)))
-            const UClamped = Math.min(255, Math.max(0, Math.round(U)))
-            const VClamped = Math.min(255, Math.max(0, Math.round(V)))
-
-            // Store Y value
-            yPlane[yIndex++] = YClamped
-
-            // Store U and V values using 2x2 subsampling
-            if ((i / 4) % 2 === 0 && (yIndex - 1) % 2 === 0) {
-                // Average the U and V values for subsampling
-                const uAvg = (UClamped + (i + 4 < data.length ? Math.min(255, Math.max(0, Math.round(-0.14713 * data[i + 5] - 0.28886 * data[i + 6] + 0.436 * data[i + 7] + 128))) : 128)) / 2
-                const vAvg = (VClamped + (i + 4 < data.length ? Math.min(255, Math.max(0, Math.round(0.615 * data[i + 5] - 0.51499 * data[i + 6] - 0.10001 * data[i + 7] + 128))) : 128)) / 2
-
-                uPlane[uvIndex] = Math.round(uAvg)
-                vPlane[uvIndex] = Math.round(vAvg)
-                uvIndex++
+                const j = (y * targetWidth + x) * 2;
+                
+                newData[j] = Math.min(255, Math.max(0, Math.round(U)));
+                newData[j + 1] = Math.min(255, Math.max(0, Math.round(Y1)));
+                newData[j + 2] = Math.min(255, Math.max(0, Math.round(V)));
+                newData[j + 3] = Math.min(255, Math.max(0, Math.round(Y2)));
             }
         }
 
-        // Combine Y, U, V planes into a single buffer (optional)
-        // You can choose to return separate planes or a combined one based on your requirements.
-
-        const newData = Buffer.concat([yPlane, uPlane, vPlane])
-        return newData
+        return newData;
     }
 
     /*  convert from BGRA to RGBXLE  */
@@ -247,107 +211,150 @@ export class ImageBufferConverter {
 
 // 10 Bit
 export class ImageBufferConverter10Bit {
-    static BGRAtoYUV(data: Buffer, { width, height }: Size) {
-        const ySize = width * height // Size of Y plane
-        const uSize = (width / 2) * (height / 2) // Size of U plane (half width, half height)
-        const vSize = uSize // Size of V plane (same as U)
-        const newData = Buffer.alloc(ySize * 2 + uSize * 2 + vSize * 2) // Allocate 2 bytes for each channel
+    static BGRAtoYUV(data: Buffer, { width: srcWidth, height: srcHeight }: Size, targetDims?: { width: number, height: number }) {
+        // Use target dimensions if provided, otherwise use source dimensions
+        const targetWidth = targetDims?.width || srcWidth;
+        const targetHeight = targetDims?.height || srcHeight;
+        
+        // For 10-bit, each component needs 2 bytes
+        const yuvSize = targetWidth * targetHeight * 4; // 4 bytes per pixel for v210 format
+        const newData = Buffer.alloc(yuvSize);
+        
+        // Calculate scaling ratios
+        const xRatio = srcWidth / targetWidth;
+        const yRatio = srcHeight / targetHeight;
 
-        let yIndex = 0 // Index for Y plane
-        let uIndex = ySize * 2 // Index for U plane (shifted for 10 bits)
-        let vIndex = ySize * 2 + uSize * 2 // Index for V plane
+        for (let y = 0; y < targetHeight; y++) {
+            for (let x = 0; x < targetWidth; x += 2) { // Process 2 pixels at a time
+                const srcX1 = Math.min(Math.floor(x * xRatio), srcWidth - 1);
+		const srcX2 = Math.min(Math.floor((x + 1) * xRatio), srcWidth - 1);
+		const srcY = Math.min(Math.floor(y * yRatio), srcHeight - 1);
+                
+                // Calculate source indices
+                const i1 = (srcY * srcWidth + srcX1) * 4;  // BGRA index for first pixel
+                const i2 = Math.min((srcY * srcWidth + srcX2) * 4, data.length - 4);  // BGRA index for second pixel
+                
+                // Get source colors for first pixel
+                const B1 = data[i1];
+                const G1 = data[i1 + 1];
+                const R1 = data[i1 + 2];
+                
+                // Get source colors for second pixel
+                const B2 = data[i2];
+                const G2 = data[i2 + 1];
+                const R2 = data[i2 + 2];
 
-        // Loop through each pixel
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                const i = (y * width + x) * 4 // BGRA index
-                const B = data[i] // Blue
-                const G = data[i + 1] // Green
-                const R = data[i + 2] // Red
+                // Convert to YUV using BT.709 coefficients for HD
+                const Y1 = 0.2126 * R1 + 0.7152 * G1 + 0.0722 * B1;
+                const Y2 = 0.2126 * R2 + 0.7152 * G2 + 0.0722 * B2;
+                
+                // Calculate U and V by averaging the two pixels
+                const U = (-0.1146 * (R1 + R2) / 2 - 0.3854 * (G1 + G2) / 2 + 0.5 * (B1 + B2) / 2);
+                const V = (0.5 * (R1 + R2) / 2 - 0.4542 * (G1 + G2) / 2 - 0.0458 * (B1 + B2) / 2);
 
-                // YUV conversion formulas
-                const Y = 0.299 * R + 0.587 * G + 0.114 * B
-                const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-                const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
+                // Scale to 10-bit range (0-1023)
+                const Y1_10bit = Math.min(1023, Math.max(0, Math.round(Y1 * 4)));
+                const Y2_10bit = Math.min(1023, Math.max(0, Math.round(Y2 * 4)));
+                const U_10bit = Math.min(1023, Math.max(0, Math.round((U + 0.5) * 1023)));
+                const V_10bit = Math.min(1023, Math.max(0, Math.round((V + 0.5) * 1023)));
 
-                // Scale Y, U, V to 10 bits (0-1023)
-                const scaledY = Math.round(Y * 4) // Scale Y from 0-255 to 0-1020 (approx)
-                const scaledU = Math.min(1023, Math.max(0, Math.round(U * 4))) // Scale U
-                const scaledV = Math.min(1023, Math.max(0, Math.round(V * 4))) // Scale V
+                // Calculate destination index
+                const j = (y * targetWidth + x) * 4;
 
-                // Store Y value
-                newData[yIndex++] = (scaledY >> 2) & 0xff // Store high byte
-                newData[yIndex++] = (scaledY & 0x03) << 6 // Store low bits
+		// Pack as v210 format (each component is 10 bits)
+		const word0 = (U_10bit << 20) | (Y1_10bit << 10) | V_10bit;
+		const word1 = Y2_10bit << 20;  // Rest of word1 will be used by next pair
 
-                // Store U and V values at the appropriate indices for YUV420
-                if (x % 2 === 0 && y % 2 === 0) {
-                    // Only store U and V for the top-left pixel of each 2x2 block
-                    newData[uIndex++] = (scaledU >> 2) & 0xff // Store high byte
-                    newData[uIndex++] = (scaledU & 0x03) << 6 // Store low bits
+		// Write the 32-bit words in little-endian format
+		newData[j] = word0 & 0xFF;
+		newData[j + 1] = (word0 >> 8) & 0xFF;
+		newData[j + 2] = (word0 >> 16) & 0xFF;
+		newData[j + 3] = (word0 >> 24) & 0xFF;
 
-                    newData[vIndex++] = (scaledV >> 2) & 0xff // Store high byte
-                    newData[vIndex++] = (scaledV & 0x03) << 6 // Store low bits
-                }
+		if (x + 1 < targetWidth) {
+ 		   newData[j + 4] = word1 & 0xFF;
+ 		   newData[j + 5] = (word1 >> 8) & 0xFF;
+ 		   newData[j + 6] = (word1 >> 16) & 0xFF;
+ 		   newData[j + 7] = (word1 >> 24) & 0xFF;
+		}
             }
         }
 
-        return newData
+        console.log(`Converted 10-bit: ${srcWidth}x${srcHeight} to ${targetWidth}x${targetHeight}`);
+        return newData;
     }
 
-    static ARGBtoYUV(data: Buffer, { width, height }: Size) {
-        const numPixels = width * height
+    static ARGBtoYUV(data: Buffer, { width: srcWidth, height: srcHeight }: Size, targetDims?: { width: number, height: number }) {
+        // Use target dimensions if provided, otherwise use source dimensions
+        const targetWidth = targetDims?.width || srcWidth;
+        const targetHeight = targetDims?.height || srcHeight;
+        
+        // For 10-bit, each component needs 2 bytes
+        const yuvSize = targetWidth * targetHeight * 4; // 4 bytes per pixel for v210 format
+        const newData = Buffer.alloc(yuvSize);
+        
+        // Calculate scaling ratios
+        const xRatio = srcWidth / targetWidth;
+        const yRatio = srcHeight / targetHeight;
 
-        // Create output buffers
-        const yPlane = Buffer.alloc(numPixels * 2) // Y plane (10 bits = 2 bytes per pixel)
-        const uPlane = Buffer.alloc((numPixels / 4) * 2) // U plane (10 bits = 2 bytes per pixel, subsampled)
-        const vPlane = Buffer.alloc((numPixels / 4) * 2) // V plane (10 bits = 2 bytes per pixel, subsampled)
+        for (let y = 0; y < targetHeight; y++) {
+            for (let x = 0; x < targetWidth; x += 2) { // Process 2 pixels at a time
+                const srcX1 = Math.min(Math.floor(x * xRatio), srcWidth - 1);
+		const srcX2 = Math.min(Math.floor((x + 1) * xRatio), srcWidth - 1);
+		const srcY = Math.min(Math.floor(y * yRatio), srcHeight - 1);
+                
+                // Calculate source indices
+                const i1 = (srcY * srcWidth + srcX1) * 4;  // ARGB index for first pixel
+                const i2 = Math.min((srcY * srcWidth + srcX2) * 4, data.length - 4);  // ARGB index for second pixel
+                
+                // Get source colors for first pixel (ARGB format)
+                const R1 = data[i1 + 1];
+                const G1 = data[i1 + 2];
+                const B1 = data[i1 + 3];
+                
+                // Get source colors for second pixel (ARGB format)
+                const R2 = data[i2 + 1];
+                const G2 = data[i2 + 2];
+                const B2 = data[i2 + 3];
 
-        let yIndex = 0
-        let uvIndex = 0
+                // Convert to YUV using BT.709 coefficients for HD
+                const Y1 = 0.2126 * R1 + 0.7152 * G1 + 0.0722 * B1;
+                const Y2 = 0.2126 * R2 + 0.7152 * G2 + 0.0722 * B2;
+                
+                // Calculate U and V by averaging the two pixels
+                const U = (-0.1146 * (R1 + R2) / 2 - 0.3854 * (G1 + G2) / 2 + 0.5 * (B1 + B2) / 2);
+                const V = (0.5 * (R1 + R2) / 2 - 0.4542 * (G1 + G2) / 2 - 0.0458 * (B1 + B2) / 2);
 
-        for (let i = 0; i < data.length; i += 4) {
-            const R = data[i + 1] // Red channel
-            const G = data[i + 2] // Green channel
-            const B = data[i + 3] // Blue channel
+                // Scale to 10-bit range (0-1023)
+                const Y1_10bit = Math.min(1023, Math.max(0, Math.round(Y1 * 4)));
+                const Y2_10bit = Math.min(1023, Math.max(0, Math.round(Y2 * 4)));
+                const U_10bit = Math.min(1023, Math.max(0, Math.round((U + 0.5) * 1023)));
+                const V_10bit = Math.min(1023, Math.max(0, Math.round((V + 0.5) * 1023)));
 
-            // YUV conversion formulas
-            const Y = 0.299 * R + 0.587 * G + 0.114 * B
-            const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-            const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
+                // Calculate destination index
+                const j = (y * targetWidth + x) * 4;
 
-            // Scale Y, U, V to 10 bits (0-1023)
-            const Y10Bit = Math.min(1023, Math.max(0, Math.round(Y * 4))) // Scale Y to 0-1020
-            const U10Bit = Math.min(1023, Math.max(0, Math.round(U * 4))) // Scale U
-            const V10Bit = Math.min(1023, Math.max(0, Math.round(V * 4))) // Scale V
+		// Pack as v210 format (each component is 10 bits)
+		const word0 = (U_10bit << 20) | (Y1_10bit << 10) | V_10bit;
+		const word1 = Y2_10bit << 20;  // Rest of word1 will be used by next pair
 
-            // Store Y value in 10-bit format
-            yPlane[yIndex++] = (Y10Bit >> 2) & 0xff // Store high byte
-            yPlane[yIndex++] = (Y10Bit & 0x03) << 6 // Store low bits
+		// Write the 32-bit words in little-endian format
+		newData[j] = word0 & 0xFF;
+		newData[j + 1] = (word0 >> 8) & 0xFF;
+		newData[j + 2] = (word0 >> 16) & 0xFF;
+		newData[j + 3] = (word0 >> 24) & 0xFF;
 
-            // Store U and V values using 2x2 subsampling
-            if ((i / 4) % 2 === 0 && (yIndex - 1) % 2 === 0) {
-                // Average the U and V values for subsampling
-                const nextIndex = i + 4
-                const nextU = nextIndex < data.length ? -0.14713 * data[nextIndex + 1] - 0.28886 * data[nextIndex + 2] + 0.436 * data[nextIndex + 3] + 128 : 128
-                const nextV = nextIndex < data.length ? 0.615 * data[nextIndex + 1] - 0.51499 * data[nextIndex + 2] - 0.10001 * data[nextIndex + 3] + 128 : 128
-
-                const uAvg = (U10Bit + Math.min(1023, Math.max(0, Math.round(nextU * 4)))) / 2
-                const vAvg = (V10Bit + Math.min(1023, Math.max(0, Math.round(nextV * 4)))) / 2
-
-                const u10Bit = Math.round(uAvg)
-                const v10Bit = Math.round(vAvg)
-
-                uPlane[uvIndex++] = (u10Bit >> 2) & 0xff // Store high byte for U
-                uPlane[uvIndex++] = (u10Bit & 0x03) << 6 // Store low bits for U
-
-                vPlane[uvIndex++] = (v10Bit >> 2) & 0xff // Store high byte for V
-                vPlane[uvIndex++] = (v10Bit & 0x03) << 6 // Store low bits for V
+		if (x + 1 < targetWidth) {
+		    newData[j + 4] = word1 & 0xFF;
+		    newData[j + 5] = (word1 >> 8) & 0xFF;
+		    newData[j + 6] = (word1 >> 16) & 0xFF;
+		    newData[j + 7] = (word1 >> 24) & 0xFF;
+		}
             }
         }
 
-        // Combine Y, U, V planes into a single buffer (optional)
-        const newData = Buffer.concat([yPlane, uPlane, vPlane])
-        return newData
+        console.log(`Converted 10-bit: ${srcWidth}x${srcHeight} to ${targetWidth}x${targetHeight}`);
+        return newData;
     }
 }
 

@@ -142,15 +142,15 @@ export class OutputLifecycle {
             window.setTitle(name || "Output")
         })
 
-        window.on("move", (e: any) => {
-            if (!OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()
+        window.on("move", () => {
+            if (!OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return
 
             let bounds = window.getBounds()
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
         })
 
-        window.on("resize", (e: any) => {
-            if (OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()
+        window.on("resize", () => {
+            if (OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return
 
             let bounds = window.getBounds()
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
