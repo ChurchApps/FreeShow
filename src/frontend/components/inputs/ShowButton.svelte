@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../types/Main"
-    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache } from "../../stores"
     import { playAudio } from "../helpers/audio"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -18,7 +18,7 @@
     export let data: null | string = null
     export let index: null | number = null
     $: type = show.type || "show"
-    $: name = type === "show" ? $shows[show.id]?.name : type === "player" ? ($playerVideos[id] ? $playerVideos[id].name : setNotFound(id)) : show.name
+    $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "player" ? ($playerVideos[id] ? $playerVideos[id].name : setNotFound(id)) : show.name
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
 
@@ -49,6 +49,7 @@
                     iconID = $categories[$shows[show.id].category || ""].icon || null
                 } else iconID = "noIcon"
             } else if (type === "audio") iconID = "music"
+            else if (type === "overlay") iconID = "overlays"
             // else if (type === "player") iconID = "live"
             else iconID = type
         }
@@ -121,6 +122,7 @@
 
             setOutput("background", out)
         } else if (type === "audio") playAudio({ path: id, name: show.name })
+        else if (type === "overlay") setOutput("overlays", show.id, false, "", true)
         else if (type === "player") setOutput("background", { id, type: "player" })
     }
 

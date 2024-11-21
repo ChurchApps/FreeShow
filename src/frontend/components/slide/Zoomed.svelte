@@ -24,6 +24,9 @@
     export let resolution: Resolution = getResolution(null, { $outputs, $styles }, false, id)
     $: resolution = getResolution(resolution, { $outputs, $styles }, false, id)
 
+    let elemWidth: number = 0
+    let elemHeight: number = 0
+
     let slideWidth: number = 0
     export let ratio: number = 1
     $: ratio = Math.max(0.01, slideWidth / resolution.width) / customZoom
@@ -57,10 +60,11 @@
     // $: zoomTransform = 50 * (drawZoom - 1) * -1
 </script>
 
-<div {id} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}">
+<div {id} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
     <div
         bind:offsetWidth={slideWidth}
         class="slide"
+        class:landscape={resolution.width / resolution.height > elemWidth / elemHeight}
         class:hideOverflow
         class:disableStyle
         class:showMirror

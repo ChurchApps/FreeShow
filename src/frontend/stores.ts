@@ -172,6 +172,7 @@ export const globalTags: Writable<{ [key: string]: { name: string; color: string
 export const openedFolders: Writable<ID[]> = writable([]) // []
 export const activeProject: Writable<null | ID> = writable(null) // null
 export const projects: Writable<Projects> = writable({}) // {default}
+export const projectTemplates: Writable<Projects> = writable({}) // {}
 export const folders: Writable<Folders> = writable({}) // {default}
 
 // TIMERS

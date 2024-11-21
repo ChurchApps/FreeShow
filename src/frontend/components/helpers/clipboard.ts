@@ -668,6 +668,7 @@ const deleteActions = {
     },
     folder: (data: any) => historyDelete("UPDATE", data, { updater: "project_folder" }),
     project: (data: any) => historyDelete("UPDATE", data, { updater: "project" }),
+    project_template: (data: any) => historyDelete("UPDATE", data, { updater: "project_template" }),
     stage: (data: any) => historyDelete("UPDATE", data, { updater: "stage" }),
     category_shows: (data: any) => historyDelete("UPDATE", data, { updater: "category_shows" }),
     category_media: (data: any) => historyDelete("UPDATE", data, { updater: "category_media" }),
@@ -963,6 +964,8 @@ async function duplicateShows(selected: any) {
     await loadShows(selected.map(({ id }: any) => id))
     selected.forEach(({ id }: any) => {
         let show = clone(get(showsCache)[id])
+        if (!show) return
+
         show.name += " 2"
         show.timestamps.modified = new Date().getTime()
         history({ id: "UPDATE", newData: { data: show, remember: { project: id === "show" ? get(activeProject) : null } }, location: { page: "show", id: "show" } })

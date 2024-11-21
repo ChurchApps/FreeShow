@@ -193,7 +193,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
 export function getLastLineAlign(item: Item, selection: any): string {
     let last: string = ""
     item?.lines!.forEach((line: any, i: number) => {
-        if (!selection || selection[i]?.start) last = line.align
+        if (!selection || selection[i]?.start !== undefined) last = line.align
     })
     return last
 }

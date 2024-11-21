@@ -1,10 +1,10 @@
 <script lang="ts">
     import { io } from "socket.io-client"
-    import Center from "../remote/components/Center.svelte"
-    import Button from "./components/Button.svelte"
-    import Icon from "./components/Icon.svelte"
     import Slide from "./components/Slide.svelte"
     import { activeTimers, events, progressData, timeFormat, timers, variables } from "./store"
+    import Center from "../common/components/Center.svelte"
+    import Button from "../common/components/Button.svelte"
+    import Icon from "../common/components/Icon.svelte"
 
     // TODO: translate
     const lang: any = {
@@ -25,7 +25,7 @@
     let socket = io()
 
     socket.on("connect", () => {
-        id = socket.id
+        id = socket.id || ""
         console.log(id)
         socket.emit("STAGE", { id, channel: "SHOWS" })
     })
@@ -35,7 +35,7 @@
     const nameQuery = urlParams.get("name")
     const idQuery = urlParams.get("id")
 
-    let id: null | string = null
+    let id: string = ""
     let shows: any = null
     let showRef: any = null
     let show: any = null

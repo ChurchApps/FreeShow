@@ -269,7 +269,7 @@
     let loaded = false
     $: isAuto = item?.auto
     $: textFit = item?.textFit
-    $: itemText = item?.lines?.[0]?.text?.filter((a) => a.customType !== "disableTemplate") || []
+    $: itemText = item?.lines?.[0]?.text?.filter((a) => !a.customType?.includes("disableTemplate")) || []
     $: itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "")
     $: if (isAuto || textFit || itemFontSize || textChanged) getCustomAutoSize()
 

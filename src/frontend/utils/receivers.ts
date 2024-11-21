@@ -68,6 +68,7 @@ import {
     presentationApps,
     presentationData,
     previewBuffers,
+    projectTemplates,
     projects,
     shows,
     showsCache,
@@ -182,7 +183,7 @@ const receiveMAIN: any = {
         if (!finished) return activePopup.set(null)
 
         console.log("Backed up to:", path)
-        newToast(get(dictionary).settings?.backup_finished) // + ": " + path)
+        newToast(get(dictionary).settings?.backup_finished || "") // + ": " + path)
         // if (changeUserData) send(STORE, ["UPDATE_PATH"], changeUserData)
     },
     RESTORE: ({ finished, starting }) => {
@@ -244,6 +245,7 @@ const receiveSTORE: any = {
     PROJECTS: (a: any) => {
         projects.set(a.projects || {})
         folders.set(a.folders || {})
+        projectTemplates.set(a.projectTemplates || {})
     },
     OVERLAYS: (a: any) => overlays.set(a),
     TEMPLATES: (a: any) => templates.set(a),

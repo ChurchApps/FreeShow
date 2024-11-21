@@ -135,7 +135,7 @@
         let playlistName = ""
         if (!isDefault) {
             playlistName = name
-            if (name.includes(".")) playlistName = $dictionary.category?.[name.slice(name.indexOf(".") + 1)]
+            if (name.includes(".")) playlistName = $dictionary.category?.[name.slice(name.indexOf(".") + 1)] || ""
         }
 
         let playlistId = uid()

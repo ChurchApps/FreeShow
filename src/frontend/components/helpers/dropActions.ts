@@ -5,11 +5,12 @@ import { ShowObj } from "../../classes/Show"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
 import { activeDrawerTab, activePage, activeProject, activeShow, audioFolders, audioPlaylists, audioStreams, categories, drawerTabsData, media, mediaFolders, overlays, projects, scriptureSettings, shows, showsCache, templates } from "../../stores"
 import { newToast } from "../../utils/common"
+import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
-import { audioExtensions, getExtension, getFileName, getMediaType, imageExtensions, mediaExtensions, presentationExtensions, removeExtension, videoExtensions } from "./media"
+import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
 import { checkName } from "./show"
 import { _show } from "./shows"
@@ -30,8 +31,11 @@ function getId(drag: any): string {
 export const dropActions: any = {
     slides: ({ drag, drop }: any, history: any) => dropActions.slide({ drag, drop }, history),
     slide: ({ drag, drop }: any, history: any) => {
-        if (!get(activeShow)?.id || get(shows)[get(activeShow)?.id || ""]?.locked) return
-        history.location = { page: get(activePage), show: get(activeShow), layout: get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout }
+        let customId = drag.showId || drag.data[0]?.showId
+        let showId = customId || get(activeShow)?.id || ""
+        if (!showId || get(shows)[showId]?.locked) return
+
+        history.location = { page: get(activePage), show: customId ? { id: customId } : get(activeShow), layout: get(showsCache)[showId]?.settings?.activeLayout }
 
         let id: string = getId(drag)
         if (slideDrop[id]) {
@@ -107,6 +111,8 @@ export const dropActions: any = {
                 .filter((a: any) => a)
         } else if (drag.id === "audio") {
             data = data.map((a: any) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
+        } else if (drag.id === "overlay") {
+            data = data.map((a: any) => ({ id: a, type: "overlay" }))
         } else if (drag.id === "player") {
             data = data.map((a: any) => ({ id: a, type: "player" }))
         } else if (drag.id === "scripture") {
@@ -432,11 +438,12 @@ const slideDrop: any = {
         history(h)
     },
     slide: ({ drag, drop }: any, history: any) => {
+        let showId = drag.showId || drag.data[0]?.showId || get(activeShow)?.id || ""
         history.id = "slide"
-        let ref: any[] = _show().layouts("active").ref()[0] || []
+        let ref: any[] = _show(showId).layouts("active").ref()[0] || []
 
-        let slides = _show().get().slides
-        let oldLayout = _show().layouts("active").get()[0].slides
+        let slides = _show(showId).get().slides
+        let oldLayout = _show(showId).layouts("active").get()[0].slides
         history.oldData = clone({ layout: oldLayout, slides })
 
         // end of layout

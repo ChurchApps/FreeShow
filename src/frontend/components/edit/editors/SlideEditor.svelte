@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { slide } from "svelte/transition"
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activePopup, activeShow, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, refreshEditSlide, showsCache, styles } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, styles } from "../../../stores"
     import { slideHasAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
@@ -21,6 +21,7 @@
     import Editbox from "../editbox/Editbox.svelte"
     import { getUsedChords } from "../scripts/chords"
     import { setCaretAtEnd } from "../scripts/textStyle"
+    import Textbox from "../../slide/Textbox.svelte"
 
     $: currentShow = $activeShow?.id || $activeEdit.showId || ""
     $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show(currentShow).slides().get().length) activeEdit.set({ slide: 0, items: [], showId: currentShow })
@@ -253,16 +254,32 @@
                             <Icon id="chords" white={!chordsMode} />
                         </Button>
                     </div> -->
+
                     <!-- background -->
                     {#if !altKeyPressed && background}
                         <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter};height: 100%;width: 100%;">
                             <MediaLoader path={bgPath} {thumbnailPath} {loadFullImage} type={background.type !== "player" ? background.type : null} {mediaStyle} />
                         </div>
                     {/if}
+
+                    <!-- overlays -->
+                    <div class="overlays preview" style="opacity: 0.5;">
+                        {#if !altKeyPressed && layoutSlide.overlays?.length}
+                            {#each layoutSlide.overlays as id}
+                                {#if $overlays[id]}
+                                    {#each $overlays[id].items as item}
+                                        <Textbox {item} ref={{ type: "overlay", id }} />
+                                    {/each}
+                                {/if}
+                            {/each}
+                        {/if}
+                    </div>
+
                     <!-- edit -->
                     {#if !$showsCache[currentShow || ""]?.locked}
                         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                     {/if}
+
                     {#key $activeEdit.slide || $activeEdit.id}
                         {#each Slide.items as item, index}
                             <Editbox
@@ -278,18 +295,6 @@
                             />
                         {/each}
                     {/key}
-                    <!-- overlays -->
-                    <!-- {#if !altKeyPressed && slideOverlays?.length}
-            <div style="opacity: 0.5;pointer-events: none;">
-              {#each slideOverlays as id}
-                {#if $overlays[id]}
-                  {#each $overlays[id].items as item}
-                    <Textbox {item} ref={{ type: "overlay", id }} />
-                  {/each}
-                {/if}
-              {/each}
-            </div>
-          {/if} -->
                 </Zoomed>
             </DropArea>
         {:else}

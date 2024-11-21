@@ -36,6 +36,7 @@ import {
     popupData,
     previousShow,
     projects,
+    projectTemplates,
     projectView,
     refreshEditSlide,
     scriptures,
@@ -70,7 +71,7 @@ import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers
 import { GetLayoutRef } from "../helpers/get"
 import { history, HistoryPages, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
-import { defaultOutput, getActiveOutputs, setOutput } from "../helpers/output"
+import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { dynamicValueText, sendMidi } from "../helpers/showActions"
@@ -132,9 +133,9 @@ const actions: any = {
 
     // main
     rename: (obj: any) => {
-        let id = obj.sel.id
+        let id = obj.sel.id || obj.contextElem.id
         if (!id) return
-        let data = obj.sel.data[0]
+        let data = obj.sel.data?.[0] || {}
 
         const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag"]
         const renameByIdDirect = ["overlay", "template", "player", "layout"]
@@ -143,7 +144,8 @@ const actions: any = {
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
         else if (id === "slide" || id === "group") activePopup.set("rename")
         else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
-        else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + obj.contextElem.id)
+        else if (obj.contextElem?.classList?.contains("#project_template")) activeRename.set("project_" + id)
+        else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
     },
@@ -188,6 +190,10 @@ const actions: any = {
 
         if (deleteAction(obj.sel)) return
 
+        if (obj.contextElem?.classList.value.includes("#project_template")) {
+            deleteAction({ id: "project_template", data: [{ id: obj.contextElem.id }] })
+            return
+        }
         if (obj.contextElem?.classList.value.includes("#video_marker")) {
             deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
             return
@@ -235,7 +241,40 @@ const actions: any = {
         })
         return m
     },
-    tags: (obj: any) => {
+    tag_set: (obj: any) => {
+        let tagId = obj.menu.id
+
+        let disable = get(shows)[obj.sel.data?.[0].id]?.quickAccess?.tags?.includes(tagId)
+
+        obj.sel.data?.forEach(({ id }) => {
+            // WIP similar to Tag.svelte - toggleTag()
+            let quickAccess = get(shows)[id]?.quickAccess || {}
+
+            let tags = quickAccess.tags || []
+            let existingIndex = tags.indexOf(tagId)
+            if (disable) {
+                if (existingIndex > -1) tags.splice(existingIndex, 1)
+            } else {
+                if (existingIndex < 0) tags.push(tagId)
+            }
+
+            quickAccess.tags = tags
+
+            shows.update((a) => {
+                a[id].quickAccess = quickAccess
+                return a
+            })
+            if (get(showsCache)[id]) {
+                showsCache.update((a) => {
+                    a[id].quickAccess = quickAccess
+                    return a
+                })
+            }
+
+            // history({ id: "UPDATE", newData: { data: quickAccess, key: "quickAccess" }, oldData: { id }, location: { page: "show", id: "show_key", override: "toggle_tag" } })
+        })
+    },
+    tag_filter: (obj: any) => {
         let tagId = obj.menu.id
 
         let activeTags = get(activeTagFilter)
@@ -371,11 +410,13 @@ const actions: any = {
     newPrivateShow: () => history({ id: "UPDATE", newData: { replace: { private: true }, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } }),
     newProject: (obj: any) => {
         let parent: string = obj.sel.data[0]?.id || obj.contextElem.id || "/" // obj.contextElem.getAttribute("data-parent")
+        if (parent === "projectsArea") parent = "/"
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project" } })
     },
     newFolder: (obj: any) => {
         if (obj.contextElem.classList.contains("#folder__projects") || obj.contextElem.classList.contains("#projects")) {
             let parent = obj.sel.data[0]?.id || obj.contextElem.id || "/"
+            if (parent === "projectsArea") parent = "/"
             history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project_folder" } })
             return
         }
@@ -469,7 +510,7 @@ const actions: any = {
             return
         }
 
-        if (obj.contextElem.classList.contains("media")) {
+        if (obj.contextElem.classList.contains("media") || obj.contextElem.classList.contains("overlayPreview")) {
             if (get(previousShow)) {
                 activeShow.set(JSON.parse(get(previousShow)))
                 previousShow.set(null)
@@ -510,6 +551,20 @@ const actions: any = {
     section: (obj) => {
         let index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
+    },
+    copy_to_template: (obj: any) => {
+        let project = clone(get(projects)[obj.sel.data?.[0]?.id])
+        if (!project) return
+
+        project = { name: project.name, parent: "/", shows: project.shows, created: 0 }
+
+        let id = uid()
+
+        // find existing with the same name
+        const existing = Object.entries(get(projectTemplates)).find(([_id, a]) => a.name === project.name)
+        if (existing) id = existing[0]
+
+        history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
     },
 
     // slide views
@@ -748,6 +803,18 @@ const actions: any = {
 
         let mediaStyle: MediaStyle = getMediaStyle(get(media)[path], { name: "" })
         if (!get(outLocked)) setOutput("background", { path, ...mediaStyle })
+    },
+    play_no_audio: (obj: any) => {
+        let path = obj.sel.data[0].path || obj.sel.data[0].id
+        if (!path) return
+
+        let outputId = getActiveOutputs(get(outputs))[0]
+        let currentOutput = get(outputs)[outputId] || {}
+        let currentStyle = getCurrentStyle(get(styles), currentOutput.style)
+
+        const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], currentStyle)
+
+        if (!get(outLocked)) setOutput("background", { path, ...mediaStyle, type: getMediaType(getExtension(path)), muted: true })
     },
     play_no_filters: (obj: any) => {
         let path = obj.sel.data[0].path || obj.sel.data[0].id

@@ -55,15 +55,15 @@
     function formatId(value: string) {
         return "id_" + value?.replace(/[\W_]+/g, "")
     }
-</script>
 
-<svelte:window
-    on:mousedown={(e) => {
+    function mousedown(e: any) {
         if (e.target?.closest(".dropdownElem") !== self && active) {
             active = false
         }
-    }}
-/>
+    }
+</script>
+
+<svelte:window on:mousedown={mousedown} />
 
 <div class:disabled class:center class:flags bind:this={self} class="dropdownElem {$$props.class || ''}" style="position: relative;{$$props.style || ''}">
     <button {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>

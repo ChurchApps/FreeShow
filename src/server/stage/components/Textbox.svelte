@@ -4,9 +4,9 @@
     import autosize, { AutosizeTypes } from "../helpers/autosize"
     import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
-    import Button from "./Button.svelte"
-    import Icon from "./Icon.svelte"
     import ListView from "./ListView.svelte"
+    import Button from "../../common/components/Button.svelte"
+    import Icon from "../../common/components/Icon.svelte"
 
     export let item: Item
     export let stageItem: any = {}

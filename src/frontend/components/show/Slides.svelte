@@ -1,9 +1,10 @@
 <script lang="ts">
     import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, styles } from "../../stores"
+    import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { encodeFilePath, getExtension, videoExtensions } from "../helpers/media"
+    import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getCachedShow } from "../helpers/show"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"

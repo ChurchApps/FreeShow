@@ -1,18 +1,18 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import type { TabsObj } from "../../../../types/Tabs"
     import { audioPlaylists, dictionary, drawerTabsData, playingMetronome, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { updatePlaylist } from "../../helpers/audio"
+    import { updatePlaylist, updateVolume } from "../../helpers/audio"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import Tabs from "../../main/Tabs.svelte"
     import AudioMix from "../audio/AudioMix.svelte"
     import Metronome from "../audio/Metronome.svelte"
-    import Tabs from "../../main/Tabs.svelte"
-    import type { TabsObj } from "../../../../types/Tabs"
 
     let tabs: TabsObj = {
         mixer: { name: "audio.mixer", icon: "options" },
@@ -30,6 +30,8 @@
             a[key] = value
             return a
         })
+
+        if (!value && key === "allowGaining") updateVolume(1, true)
     }
 
     // WIP add once electron is updated to >24
@@ -82,6 +84,13 @@
             <p title={$dictionary.audio?.mute_when_video_plays}><T id="audio.mute_when_video_plays" /></p>
             <div class="alignRight">
                 <Checkbox checked={$special.muteAudioWhenVideoPlays || false} on:change={(e) => updateSpecial(isChecked(e), "muteAudioWhenVideoPlays")} />
+            </div>
+        </CombinedInput>
+
+        <CombinedInput textWidth={70}>
+            <p title={$dictionary.audio?.allow_gaining_tip}><T id="audio.allow_gaining" /></p>
+            <div class="alignRight">
+                <Checkbox checked={$special.allowGaining || false} on:change={(e) => updateSpecial(isChecked(e), "allowGaining")} />
             </div>
         </CombinedInput>
 

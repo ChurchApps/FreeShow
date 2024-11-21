@@ -24,6 +24,7 @@
     } from "../../stores"
     import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
+    import { getExtension, getMediaType } from "../helpers/media"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { ContextMenuItem, contextMenuItems } from "./contextMenus"
@@ -113,6 +114,11 @@
                 if (!$activeProject) disabled = true
             }
         },
+        play_no_audio: () => {
+            let path = $selected.data[0]?.path || $selected.data[0]?.id
+            const type = getMediaType(getExtension(path))
+            if (type !== "video") hide = true
+        },
         play_no_filters: () => {
             let path = $selected.data[0]?.path || $selected.data[0]?.id
             if (!path || !$media[path]?.filter) disabled = true
@@ -189,7 +195,7 @@
         // don't hide context menu
         const keepOpen = ["uppercase", "lowercase", "capitalize", "trim"] // "dynamic_values" (caret position is lost)
         if (keepOpen.includes(id)) return
-        const keepOpenToggle = ["enabled_drawer_tabs", "tags", "bind_slide", "bind_item"]
+        const keepOpenToggle = ["enabled_drawer_tabs", "tag_set", "tag_filter", "bind_slide", "bind_item"]
         if (keepOpenToggle.includes(id)) {
             enabled = !enabled
             return

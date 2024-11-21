@@ -94,7 +94,7 @@
         if (id === "bind_to") return $contextData.outputList
         if (id === "format") return $contextData.textContent || $activePage !== "show"
         if (id === "remove_layers") return $contextData.layers
-        if (id === "tags") return $contextData.tags
+        if (id === "tag_set" || id === "tag_filter") return $contextData.tags
 
         return true
     }

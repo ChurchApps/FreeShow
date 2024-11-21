@@ -31,13 +31,14 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
+import { videoExtensions } from "../../values/extensions"
 import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
-import { getExtension, getFileName, removeExtension, videoExtensions } from "./media"
+import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 
@@ -565,7 +566,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             line.align = templateLine?.align || ""
             line.text?.forEach((text: any, k: number) => {
                 let templateText = templateLine?.text[k] || templateLine?.text[0]
-                if (text.customType !== "disableTemplate") text.style = templateText?.style || ""
+                if (!text.customType?.includes("disableTemplate")) text.style = templateText?.style || ""
 
                 let firstChar = templateText?.value?.[0] || ""
 

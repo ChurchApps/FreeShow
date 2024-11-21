@@ -96,6 +96,26 @@ export function loadBible(active: string, index: number = 0, bible: any) {
     return bible
 }
 
+export function receiveBibleContent(msg: any) {
+    if (msg.error === "not_found" || !msg.content?.[1]) return
+
+    const content = msg.content[1] || {}
+    scripturesCache.update((a) => {
+        a[msg.content[0]] = content
+        return a
+    })
+
+    let bible: any = content
+    let id = msg.content[0] || msg.id
+
+    bible.version = get(scriptures)[id]?.customName || content.name || get(scriptures)[id]?.name || ""
+    bible.metadata = content.metadata || {}
+    if (content.copyright) bible.copyright = content.copyright
+    bible.id = id
+
+    return bible
+}
+
 export function joinRange(array: string[]) {
     let prev: number = -1
     let range: string = ""
@@ -131,7 +151,7 @@ export function getSlides({ bibles, sorted }) {
     bibles.forEach((bible, bibleIndex) => {
         let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
         let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
-        let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
+        let alignStyle = currentTemplate?.lines?.[1]?.align || currentTemplate?.lines?.[0]?.align || "text-align: left;"
         let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
         let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings
@@ -208,7 +228,7 @@ export function getSlides({ bibles, sorted }) {
 
                 let redText = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
                 jesusWords.forEach(([start, end], i) => {
-                    textArray.push({ value: formatBibleText(text.slice(start + 2, end - 2)), style: textStyle + redText, customType: "disableTemplate" })
+                    textArray.push({ value: formatBibleText(text.slice(start + 2, end - 2)), style: textStyle + redText, customType: "disableTemplate_jw" })
 
                     if (!jesusWords[i + 1] || end < jesusWords[i + 1][0]) {
                         let remainingText = formatBibleText(text.slice(end, jesusWords[i + 1]?.[0] ?? -1))
@@ -252,7 +272,7 @@ export function getSlides({ bibles, sorted }) {
             if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
             let indexes = [bibles.length]
             if (get(scriptureSettings).combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
-            indexes.forEach((i) => addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: i }))
+            if (remainder) indexes.forEach((i) => addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: i }))
         }
 
         // auto size
@@ -263,10 +283,10 @@ export function getSlides({ bibles, sorted }) {
                 // WIP historyActions - TEMPLATE...
                 slides[i][j].auto = true
                 if (templateTextItems[j]?.textFit) slides[i][j].textFit = templateTextItems[j]?.textFit
-                slides[i][j].lines![0].text.forEach((_, k) => {
-                    if (slides[i][j].lines![0].text[k].customType === "disableTemplate") return
-                    // slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
-                })
+                // slides[i][j].lines![0].text.forEach((_, k) => {
+                //     if (slides[i][j].lines![0].text[k].customType === "disableTemplate") return
+                //     // slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
+                // })
             })
         })
     })
@@ -332,7 +352,7 @@ export function formatBibleText(text: string | undefined) {
 
 function stripMarkdown(input: string) {
     input = input.replace(/#\s*(.*?)\s*#/g, "")
-    input = input.replace(/\*\{(.*?)\}\*/g, "$1")
+    input = input.replace(/\*\{(.*?)\}\*/g, "")
     input = input.replace(/!\{(.*?)\}!/g, "$1")
     // input = input.replace(/\[(.*?)\]/g, "[$1]")
     input = input.replace(/(\*\*|__)(.*?)\1/g, "$2")
