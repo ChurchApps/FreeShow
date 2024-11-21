@@ -5,13 +5,17 @@ import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
-import { REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, projects, remotePassword, shows, showsCache, styles } from "./../stores"
+import { BIBLE, REMOTE } from "./../../types/Channels"
+import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
 import { sendData } from "./sendData"
 import { uid } from "uid"
 import { clearAll } from "../components/output/clear"
-import { send } from "./request"
+import { destroy, send } from "./request"
 import type { Show } from "../../types/Show"
+import { API_ACTIONS } from "../components/actions/api"
+import type { ClientMessage } from "../../types/Socket"
+import { loadBible, receiveBibleContent } from "../components/drawer/bible/scripture"
+import { waitUntilValueIsDefined } from "./common"
 
 // REMOTE
 
@@ -96,15 +100,10 @@ export const receiveREMOTE: any = {
             id = msg.data.id
             await loadShows([id])
 
-            let layout = _show(id).layouts("active").ref()[0]
+            let layout = _show(id).layouts("active").ref()[0] || []
             if (msg.data.index < layout.length && msg.data.index >= 0) {
-                updateOut(
-                    msg.data.id,
-                    msg.data.index,
-                    _show(msg.data.id)
-                        .layouts(msg.data.layout ? [msg.data.layout] : "active")
-                        .ref()[0]
-                )
+                if (!msg.data.layout) msg.data.layout = _show(id).get("settings.activeLayout")
+                updateOut(msg.data.id, msg.data.index, _show(msg.data.id).layouts([msg.data.layout]).ref()[0])
                 setOutput("slide", msg.data)
             }
 
@@ -147,6 +146,33 @@ export const receiveREMOTE: any = {
         msg.data = removeDeleted(keysToID(get(projects)))
         return msg
     },
+    GET_SCRIPTURE: async (msg: ClientMessage) => {
+        let id = msg.data?.id
+        if (!id) return
+
+        let listenerId = uid()
+        window.api.receive(BIBLE, receiveBibleContent, listenerId)
+        receiveBibleContent(msg)
+        loadBible(id, 0, clone(get(scriptures)[id] || {}))
+        const bible = await waitUntilValueIsDefined(() => get(scripturesCache)[id])
+        destroy(BIBLE, listenerId)
+
+        msg.data.bible = bible
+        return msg
+    },
+    API: async (msg: ClientMessage) => {
+        if (!msg.data) msg.data = {}
+        const id = msg.api || ""
+        const data = await API_ACTIONS[id]?.(msg.data)
+
+        if (id === "get_thumbnail") {
+            msg.data.thumbnail = data
+        } else {
+            msg.data = data
+        }
+
+        return data ? msg : null
+    },
 }
 
 let oldOutSlide = ""
@@ -161,18 +187,20 @@ export function initializeRemote(id: string) {
     let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
     let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
     let out: any = { slide: currentOutput?.out?.slide ? currentOutput.out.slide.index : null, layout: currentOutput.out?.slide?.layout || null, styleRes }
-    if (out.slide !== null) {
+    if (out.slide !== null && out.slide?.id) {
         oldOutSlide = out.slide.id
         out.show = get(showsCache)[oldOutSlide]
     }
     send(REMOTE, ["OUT"], out)
+
+    send(REMOTE, ["SCRIPTURE"], get(scriptures))
 }
 
 export async function convertBackgrounds(show: Show) {
     if (!show) return {}
 
     show = clone(show)
-    let mediaIds = show.layouts[show.settings.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
+    let mediaIds = show.layouts[show.settings?.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
 
     await Promise.all(
         mediaIds.map(async (id) => {

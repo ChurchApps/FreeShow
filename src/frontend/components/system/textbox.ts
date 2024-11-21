@@ -25,7 +25,7 @@ export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: a
         let yItems = [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
 
         // get other items pos
-        itemElem.closest(".slide").querySelectorAll(".item").forEach(getItemLines)
+        ;[...itemElem.closest(".slide").querySelectorAll(".item")].filter((a) => !a.closest(".preview")).forEach(getItemLines)
 
         function getItemLines(item: any, i: number) {
             let id = i

@@ -72,7 +72,7 @@ const translate = (id: string, { parts = false } = {}) => {
 
     if (!parts) {
         let key = id.split(".")
-        return d[key[0]]?.[key[1]]
+        return d[key[0]]?.[key[1]] || ""
     }
 
     if (!id.includes("$:")) return id

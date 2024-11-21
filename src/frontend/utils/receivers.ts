@@ -183,7 +183,7 @@ const receiveMAIN: any = {
         if (!finished) return activePopup.set(null)
 
         console.log("Backed up to:", path)
-        newToast(get(dictionary).settings?.backup_finished) // + ": " + path)
+        newToast(get(dictionary).settings?.backup_finished || "") // + ": " + path)
         // if (changeUserData) send(STORE, ["UPDATE_PATH"], changeUserData)
     },
     RESTORE: ({ finished, starting }) => {

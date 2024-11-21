@@ -4,14 +4,35 @@ import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
+import { getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, displayOutputs, startCamera } from "../helpers/output"
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShowSync } from "../helpers/showActions"
 import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
+import { formatText } from "../show/formatTextEditor"
 import { runActionId, toggleAction } from "./actions"
 import { getProject, getProjects, getShow, getShows } from "./apiGet"
-import { changeVariable, gotoGroup, moveStageConnection, selectOverlayByIndex, selectOverlayByName, selectProjectByIndex, selectShowByName, selectSlideByIndex, selectSlideByName, toggleLock } from "./apiHelper"
+import {
+    addGroup,
+    changeShowLayout,
+    changeVariable,
+    getClearedState,
+    getPlainText,
+    getShowGroups,
+    gotoGroup,
+    moveStageConnection,
+    playMedia,
+    rearrangeGroups,
+    selectOverlayByIndex,
+    selectOverlayByName,
+    selectProjectByIndex,
+    selectShowByName,
+    selectSlideByIndex,
+    selectSlideByName,
+    startScripture,
+    toggleLock,
+} from "./apiHelper"
 import { sendRestCommandSync } from "./rest"
 
 /// STEPS TO CREATE A CUSTOM API ACTION ///
@@ -43,6 +64,12 @@ type API_boolval = { value?: boolean }
 type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
 type API_slide = { showId?: string | "active"; slideId?: string }
+export type API_id_value = { id: string; value: string }
+export type API_rearrange = { showId: string; from: number; to: number }
+export type API_group = { showId: string; groupId: string }
+export type API_layout = { showId: string; layoutId: string }
+export type API_media = { path: string }
+export type API_scripture = { id: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
@@ -100,6 +127,10 @@ export const API_ACTIONS = {
     // SHOWS
     name_select_show: (data: API_strval) => selectShowByName(data.value), // BC
     start_show: (data: API_id) => startShowSync(data.id),
+    change_layout: (data: API_layout) => changeShowLayout(data),
+    set_plain_text: (data: API_id_value) => formatText(data.value, data.id),
+    rearrange_groups: (data: API_rearrange) => rearrangeGroups(data),
+    add_group: (data: API_group) => addGroup(data),
 
     // PRESENTATION
     next_slide: () => nextSlideIndividual({ key: "ArrowRight" }), // BC
@@ -113,6 +144,7 @@ export const API_ACTIONS = {
     // WIP disable stage ?
     // WIP disable NDI ?
     // index_select_layout | name_select_layout
+    start_scripture: (data: API_scripture) => startScripture(data),
 
     // STAGE
     id_select_stage_layout: (data: API_id) => moveStageConnection(data.id), // BC
@@ -128,6 +160,7 @@ export const API_ACTIONS = {
 
     // MEDIA (Backgrounds)
     start_camera: (data: API_camera) => startCamera(data),
+    play_media: (data: API_media) => playMedia(data),
     // play / pause playing
     // control time
     // folder_select_media
@@ -179,6 +212,11 @@ export const API_ACTIONS = {
     get_show: (data: API_id) => getShow(data),
     get_projects: () => getProjects(),
     get_project: (data: API_id) => getProject(data),
+    get_plain_text: (data: API_id) => getPlainText(data.id),
+    get_groups: (data: API_id) => getShowGroups(data.id),
+
+    get_thumbnail: (data: API_media) => getThumbnail(data),
+    get_cleared: () => getClearedState(),
 }
 
 /// RECEIVER / SENDER ///

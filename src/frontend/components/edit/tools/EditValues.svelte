@@ -5,7 +5,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID } from "../../helpers/array"
-    import { getFileName, mediaExtensions } from "../../helpers/media"
+    import { getFileName } from "../../helpers/media"
     import { getFilters } from "../../helpers/style"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -22,6 +22,7 @@
     import Notes from "../../show/tools/Notes.svelte"
     import { getOriginalValue, removeExtension } from "../scripts/edit"
     import EditTimer from "./EditTimer.svelte"
+    import { mediaExtensions } from "../../../values/extensions"
 
     export let edits: any
     export let defaultEdits: any = {}

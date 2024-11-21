@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { joinTime, secondsToTime } from "../../remote/helpers/time"
+    import { joinTime, secondsToTime } from "../../common/util/time"
 
     export let videoTime: number = 0
     export let autoSize: number = 0

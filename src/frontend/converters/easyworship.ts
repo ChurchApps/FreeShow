@@ -44,7 +44,7 @@ export function convertEasyWorship(data: any) {
     }
 
     let i = 0
-    let importingText = get(dictionary)?.popup.importing || "Importing"
+    let importingText = get(dictionary).popup?.importing || "Importing"
 
     let tempShows: any[] = []
 
@@ -185,7 +185,7 @@ function createSlides({ words }: Words) {
                     if (
                         g.default &&
                         get(dictionary)
-                            .groups[key].replace(/[0-9:]/g, "")
+                            .groups?.[key].replace(/[0-9:]/g, "")
                             .toLowerCase() === group &&
                         !found
                     ) {

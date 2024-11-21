@@ -70,6 +70,8 @@
                 return { id, name, icon, common }
             })
             .filter(({ id }) => {
+                // don't show actions with no custom data
+                if (!actionData[id]) return false
                 // show if it is the currently selected
                 if (id === actionId) return true
                 // don't display GET actions
