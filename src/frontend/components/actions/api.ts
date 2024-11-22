@@ -30,6 +30,7 @@ import {
     selectShowByName,
     selectSlideByIndex,
     selectSlideByName,
+    setTemplate,
     startScripture,
     toggleLock,
 } from "./apiHelper"
@@ -131,6 +132,7 @@ export const API_ACTIONS = {
     set_plain_text: (data: API_id_value) => formatText(data.value, data.id),
     rearrange_groups: (data: API_rearrange) => rearrangeGroups(data),
     add_group: (data: API_group) => addGroup(data),
+    set_template: (data: API_id) => setTemplate(data.id),
 
     // PRESENTATION
     next_slide: () => nextSlideIndividual({ key: "ArrowRight" }), // BC

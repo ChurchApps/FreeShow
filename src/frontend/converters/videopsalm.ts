@@ -141,6 +141,7 @@ export function convertVideopsalm(data: any) {
                 copyright: song.Copyright || "",
                 CCLI: song.CCLI || "",
             }
+            if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
             let { slides, layout, notes }: any = createSlides(song)
             show.slides = slides

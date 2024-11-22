@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
     import type { Option } from "../../../types/Main"
-    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, outputs, popupData, shows, stageShows, styles, timers, triggers, variables } from "../../stores"
+    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, outputs, popupData, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
     import T from "../helpers/T.svelte"
     import { keysToID, sortByName } from "../helpers/array"
     import { _show } from "../helpers/shows"
@@ -76,6 +76,7 @@
         variable: () => convertToOptions($variables), // .map((a) => ({...a, type: $variables[a.id]?.type}))
         start_trigger: () => convertToOptions($triggers),
         run_action: () => convertToOptions($midiIn).filter((a) => a.name && a.id !== mainId),
+        set_template: () => convertToOptions($templates),
     }
 
     $: options = getOptions[actionId]?.() || []

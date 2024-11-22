@@ -5,7 +5,6 @@ import {
     activeEdit,
     activePage,
     activeProject,
-    activeShow,
     dictionary,
     groupNumbers,
     groups,
@@ -40,6 +39,7 @@ import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
+import { activeShow } from "./../../stores"
 import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
@@ -251,6 +251,20 @@ export async function addGroup(data: API_group) {
     selected.set({ id: null, data: [] })
 }
 
+export function setTemplate(templateId: string) {
+    let showId = get(activeShow)?.id
+    if (!showId) {
+        // newToast("$empty.show")
+        return
+    }
+    if (_show(showId).get("locked")) {
+        newToast("$show.locked")
+        return
+    }
+
+    history({ id: "TEMPLATE", newData: { id: templateId, data: { createItems: true } }, location: { page: "none", override: "show#" + showId } })
+}
+
 // PRESENTATION
 
 export function getClearedState() {
@@ -270,7 +284,7 @@ export function getClearedState() {
 // "1.1.1" = "Gen 1:1"
 export function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
-    const ref = { book: Number(split[0]) - 1, chapter: Number(split[1]) - 1, verses: [split[2]] }
+    const ref = { book: Number(split[0]) - 1, chapter: Number(split[1]), verses: [split[2]] }
 
     setDrawerTabData("scripture", data.id)
     activeDrawerTab.set("scripture")

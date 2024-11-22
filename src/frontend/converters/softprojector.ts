@@ -60,6 +60,7 @@ export function convertSoftProjector(data: any) {
             number: song.number || "",
             title: song.title || "",
         }
+        if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
         let { slides, layout }: any = createSlides(song)
 

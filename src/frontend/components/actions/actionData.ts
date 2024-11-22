@@ -8,6 +8,7 @@ export const actionData = {
     // SHOWS
     name_select_show: { name: "actions.name_select_show", icon: "showIcon", input: "strval" },
     start_show: { slideId: "startShow", name: "preview._start", icon: "showIcon", input: "id" },
+    set_template: { name: "actions.set_template_active", icon: "templates", input: "id" },
 
     // PRESENTATION
     next_slide: { name: "preview._next_slide", icon: "slide" },

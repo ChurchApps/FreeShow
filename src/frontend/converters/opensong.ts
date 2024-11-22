@@ -53,6 +53,7 @@ export function convertOpenSong(data: any) {
                 key: song.key || "",
                 CCLI: song.ccli || "",
             }
+            if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
             console.log(song)
             let { slides, layout, media }: any = createSlides(song)
