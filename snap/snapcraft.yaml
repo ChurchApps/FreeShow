@@ -32,8 +32,8 @@ plugs:
     target: $SNAP/data-dir/sounds
     default-provider: gtk-common-themes
 layout:
-  /usr/share/alsa/alsa.conf:
-    bind-file: $SNAP_DATA/usr/share/alsa/alsa.conf
+  /usr/share/alsa:
+    bind: $SNAP/usr/share/alsa
 parts:
   freeshow:
     source: ./dist/linux-unpacked/
