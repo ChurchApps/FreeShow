@@ -163,6 +163,7 @@
         "toggle_shuffle": "Veksle tilfeldig avspilling",
         "next": "Neste",
         "previous": "Forrige",
+        "play_no_audio": "Spill av uten lyd",
         "play_no_filters": "Spill av uten filtre",
         "favourite": "Favoritt",
         "pause": "Sett på pause",
@@ -194,7 +195,10 @@
         "playlist_settings": "Innstillinger for spilleliste",
         "custom_output": "Egendefinert lydutgang",
         "mute_when_video_plays": "Demp når video spilles",
+        "allow_gaining": "Tillat forsterking",
+        "allow_gaining_tip": "Lar deg sette volumet over 100% (Kan føre til forvrengning)",
         "pre_fader_volume_meter": "Vis volumnivå før fadere",
+        "mixer": "Mikser",
         "metronome": "Metronom",
         "toggle_metronome": "Veksle metronom",
         "tempo": "Tempo",
@@ -269,15 +273,17 @@
         "ip": "Kunne ikke hente IP-adressen din, gå til WiFi-innstillingene for å finne din lokale IPv4 adresse."
     },
     "meta": {
+        "number": "Nummer",
         "title": "Tittel",
         "artist": "Artist",
         "author": "Låtskriver",
         "composer": "Komponist",
         "publisher": "Utgiver",
         "copyright": "Opphavsrett",
-        "CCLI": "Lisens (CCLI)",
+        "CCLI": "Sang ID (CCLI)",
         "year": "År",
         "key": "Toneart",
+        "autofill": "Autofyll",
         "message": "Melding",
         "message_tip": "Vis noe på alle lysbildene",
         "auto_media": "Hent meta fra medier",
@@ -362,7 +368,8 @@
         "music": "Musikk",
         "offers": "Kollekt",
         "notice": "Merk",
-        "visuals": "Visuelt"
+        "visuals": "Visuelt",
+        "action_tip": "En handling som utføres hver gang et show med denne kategorien blir presentert."
     },
     "groups": {
         "current": "Gjeldende",
@@ -400,6 +407,7 @@
         "change_output_values": "Endre verdier for utgangsskjerm",
         "choose_chord": "Velg akkord",
         "set_time": "Sett tid",
+        "slide_shortcut": "Hurtigknapp for lysbilde",
         "animate": "Animer",
         "translate": "Oversetting",
         "next_timer": "Tid til neste lysbilde",
@@ -413,6 +421,7 @@
         "about": "Om",
         "history": "Historie",
         "action": "Handling",
+        "category_action": "Handling for kategori",
         "connect": "Koble til",
         "cloud_update": "Synkroniserer med sky",
         "cloud_method": "Dataplassering",
@@ -547,6 +556,8 @@
         "zoomIn": "Zoom inn",
         "zoomOut": "Zoom ut",
         "reset": "Tilbakestill",
+        "create_template": "Opprett mal",
+        "project_template_tip": "Lag et nytt prosjekt fra denne malen",
         "convert_to_images": "Konverter til bilder",
         "converting": "Konverterer...",
         "remove_template_from_show": "Fjern mal fra show",
@@ -608,6 +619,8 @@
         "set_key": "Sett toneart",
         "custom_key": "Skriv inn verdi",
         "select_chord": "Velg denne akkorden",
+        "play_with_shortcut": "Aktiver med hurtigknapp",
+        "press_to_assign": "Trykk på en tast for å tildele",
         "play_on_midi": "Aktiver ved MIDI signal",
         "play_on_midi_tip": "Aktiver dette spesifikke lysbildet ved mottak av valgt MIDI signal",
         "send_midi": "Send MIDI signal",
@@ -624,6 +637,7 @@
         "next_after_media": "Neste når medier er slutt",
         "remove_media": "Fjern media",
         "remove_layers": "Fjern lag",
+        "toggle_checkbox_tip": "Handling vil veksle av/på dersom du ikke endrer på avkrysningsboksen",
         "start_recording": "Start opptak",
         "stop_recording": "Stopp opptak",
         "export_recording": "Stopp opptak og eksporter",
@@ -632,6 +646,7 @@
         "previous_project_item": "Forrige element i prosjekt",
         "index_select_project_item": "Velg element i prosjekt fra indeks",
         "name_select_show": "Velg show fra navn",
+        "set_template_active": "Sett mal på aktivt show",
         "random_slide": "Spill av tilfeldig lysbilde",
         "index_select_slide": "Velg lysbilde fra indeks",
         "name_select_slide": "Velg lysbilde fra navn",
@@ -672,6 +687,7 @@
         "activate_slide_cleared": "Aktiver når lysbilde fjernes",
         "activate_background_cleared": "Aktiver når bakgrunn fjernes",
         "activate_show_created": "Aktiver når show blir laget",
+        "activate_show_opened": "Aktiver når show blir åpnet",
         "activate_audio_playlist_ended": "Aktiver når spilleliste er ferdig"
     },
     "recording": {
@@ -679,7 +695,9 @@
         "tip": "Ta opp og spill av en fast rekkefølge for lysbildene. Synkroniser med en lydfil på første lysbilde.",
         "layout_changed": "Oppsett har blitt endret siden sist opptak",
         "audio_synced": "Synkronisert med lyd!",
-        "start": "Start lysbildeopptak"
+        "start": "Start lysbildeopptak",
+        "use_duration": "Bruk varighet for tid",
+        "use_duration_tip": "Bruk varighet for tid i stedet for tidsstempel"
     },
     "animate": {
         "change": "Endre",
@@ -738,6 +756,7 @@
     },
     "context": {
         "enabledTabs": "Veksle faner",
+        "setTag": "Sett etikett",
         "filterByTags": "Filtrer etter etikett",
         "addToProject": "Legg til i prosjekt",
         "add_to_show": "Legg til show",
@@ -796,6 +815,8 @@
         "overlay_content": "Legg til innhold fra overlegg",
         "different_first_template": "Egen mal på første lysbilde",
         "media_fit": "Tilpass medier",
+        "one_letter": "Én bokstav-modus",
+        "sub_indexes": "Underindekser",
         "size": "Størrelse",
         "max_lines": "Maks linjer",
         "invert_items": "Inverter elementer",
@@ -916,6 +937,7 @@
         "to_event": "Tid til arrangement",
         "counter": "Nedtelling",
         "time": "Tid",
+        "minutes": "Minutter",
         "seconds": "Sekunder",
         "from": "Fra",
         "to": "Til",
@@ -1063,6 +1085,7 @@
         "group_numbers": "Gruppenummer",
         "full_colors": "Gruppefarger med høy kontrast",
         "slide_number_keys": "Spill av lysbilder med nummer-taster",
+        "auto_shortcut_first_letter": "Automatisk hurtigtast til første bokstav i tekst",
         "auto_output": "Aktiver utgangsskjerm ved oppstart",
         "hide_cursor_in_output": "Skjul peker i utgangsskjerm",
         "clear_media_when_finished": "Fjern media ved slutt",
@@ -1124,7 +1147,8 @@
         "auto": "Auto",
         "optimized": "Optimalisert",
         "reduced": "Redusert",
-        "full": "Full"
+        "full": "Full",
+        "section_trigger_action": "Utfør en handling når presentasjonen navigeres til en seksjon"
     },
     "sort": {
         "sort_by": "Sorter etter",
@@ -1172,6 +1196,7 @@
         "reference": "Vis referanse",
         "split_reference": "Del opp referanse",
         "combine_with_text": "Kombiner med tekst",
+        "first_slide_reference": "Referanse på første lysbilde",
         "reference_at_bottom": "Flytt til bunn",
         "red_jesus": "Jesus ord i rødt",
         "search": "Søk i Bibelen"
