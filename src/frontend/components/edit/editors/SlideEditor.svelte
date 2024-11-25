@@ -13,6 +13,7 @@
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import Button from "../../inputs/Button.svelte"
+    import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
@@ -21,7 +22,6 @@
     import Editbox from "../editbox/Editbox.svelte"
     import { getUsedChords } from "../scripts/chords"
     import { setCaretAtEnd } from "../scripts/textStyle"
-    import Textbox from "../../slide/Textbox.svelte"
 
     $: currentShow = $activeShow?.id || $activeEdit.showId || ""
     $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show(currentShow).slides().get().length) activeEdit.set({ slide: 0, items: [], showId: currentShow })
@@ -180,7 +180,12 @@
 
     // CHORDS
     let usedChords: string[] = []
-    $: usedChords = Slide ? getUsedChords(Slide) : []
+    $: slideChords = Slide ? getUsedChords(Slide) : []
+    $: allChords = Object.values($showsCache[currentShow]?.slides || {})
+        .map(getUsedChords)
+        .flat()
+    // combine and remove duplicates
+    $: usedChords = slideChords.length + allChords.length ? [...new Set([...slideChords, ...allChords])] : []
 
     let chordsAction: string = ""
     function setDefaultChordsAction() {
@@ -311,6 +316,7 @@
                     <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
                         <p><T id="popup.choose_chord" /></p>
                     </Button>
+
                     {#each usedChords as chord}
                         <Button outline={chordsAction === chord} on:click={() => (chordsAction = chord)}>
                             {chord}

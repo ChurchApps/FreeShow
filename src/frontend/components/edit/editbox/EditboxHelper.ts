@@ -143,6 +143,7 @@ export class EditboxHelper {
                 let value = a.value.replaceAll("\n", "<br>") || "<br>"
                 if (value === " ") value = "&nbsp;"
 
+                // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)
                 html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
             })
             html += "</div>"

@@ -336,6 +336,12 @@
             return
         }
 
+        // don't "reset" if just closing (if different styles on multiple textboxes!)
+        if (checkIsClosed(id)) {
+            closeEdit(id)
+            return
+        }
+
         let closedVal = closed[id]
         let defaultEdit = clone(defaultEdits?.[id])
         let currentEdit = clone(edits[id])
