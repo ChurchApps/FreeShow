@@ -485,6 +485,8 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     let lines: Line[] = _show().slides([slideRef.id]).items([itemIndex]).get("lines")[0][0]
     lines = lines.filter((a) => a.text?.[0]?.value?.length)
 
+    console.log(lines)
+
     // if only one line (like scriptures, split by text)
     if (lines.length === 1 && lines[0].text?.length > 1) {
         let newLines: any[] = []
@@ -497,13 +499,17 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
 
     // split text content directly in half
     if (lines.length === 1 && lines[0].text?.[0]?.value?.length) {
+        // verse number style
+        const custom = lines[0].text[0].customType ? lines[0].text.shift() : null
+
         let text = getItemText({ lines } as Item)
         const [firstHalf, secondHalf] = splitTextContentInHalf(text)
         let newLines: Line[] = []
         // try getting second text first (if customType is first)
         let styling = lines[0].text[1] || lines[0].text[0]
-        newLines.push({ ...lines[0], text: [{ ...styling, value: firstHalf }] })
+        newLines.push({ ...lines[0], text: [...(custom ? [custom] : []), { ...styling, value: firstHalf }] })
         newLines.push({ ...lines[0], text: [{ ...styling, value: secondHalf }] })
+
         lines = newLines
     }
 

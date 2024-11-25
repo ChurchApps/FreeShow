@@ -28,6 +28,7 @@ class SongbeamerMetadata {
     format: string = ""
     title_format: string = ""
     background_image: string = ""
+    number: string = ""
     ccli: string = ""
     tempo: number = 0
     key: string = ""
@@ -103,12 +104,14 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
 
     show.name = checkName(metadata.title)
     show.meta = {
+        number: metadata.number,
         title: metadata.title,
         author: metadata.author,
         composer: metadata.melody,
         copyright: metadata.copyright,
         CCLI: metadata.ccli,
     }
+    if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
     let songbeamerSlides = parseSongbeamerSlides(sections, metadata)
     let { slides, layouts } = createSlides(songbeamerSlides, metadata, settings)
@@ -180,6 +183,9 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): Songbea
                 break
             case "BackgroundImage":
                 metadata.background_image = parts[1].trim()
+                break
+            case "QuickFind":
+                metadata.number = parts[1].trim() || ""
                 break
             case "Key":
                 metadata.key = parts[1].trim()
@@ -711,6 +717,14 @@ function createSlides(songbeamerSlides: SongbeamerSlide[], metadata: SongbeamerM
             }
             break
     }
+
+    // add layout slide groups
+    layouts[0]?.slides?.forEach(({ id }) => {
+        if (slides[id]) {
+            slides[id].group = "—"
+            slides[id].globalGroup = "verse"
+        }
+    })
 
     return { slides, layouts }
 }

@@ -41,6 +41,7 @@ import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
 import { addZero, getMonthName, getWeekday } from "./time"
+import { addToPos } from "./mover"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -348,7 +349,12 @@ export const _updaters = {
             let showRef: any = { id, type: "show" }
             if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
                 projects.update((p) => {
-                    p[data.remember.project].shows.push({ id })
+                    if (data.remember.index !== undefined && p[data.remember.project].shows.length > data.remember.index) {
+                        p[data.remember.project].shows = addToPos(p[data.remember.project].shows, [{ id }], data.remember.index)
+                    } else {
+                        p[data.remember.project].shows.push({ id })
+                    }
+
                     return p
                 })
                 // TODO: remember index

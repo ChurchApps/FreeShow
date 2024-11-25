@@ -320,10 +320,12 @@ const actions: any = {
         history({ id: "SLIDES", newData, location: { page: get(activePage) as HistoryPages, show: get(activeShow)!, layout: activeLayout } })
     },
     lock_show: (obj: any) => {
+        let shouldBeLocked = !get(shows)[obj.sel.data[0]?.id]?.locked
+
         showsCache.update((a: any) => {
             obj.sel.data.forEach((b: any) => {
                 if (!a[b.id]) return
-                a[b.id].locked = !a[b.id].locked
+                a[b.id].locked = shouldBeLocked
 
                 removeTemplatesFromShow(b.id)
             })
@@ -331,8 +333,8 @@ const actions: any = {
         })
         shows.update((a: any) => {
             obj.sel.data.forEach((b: any) => {
-                if (a[b.id].locked) delete a[b.id].locked
-                else a[b.id].locked = true
+                if (shouldBeLocked) a[b.id].locked = true
+                else delete a[b.id].locked
             })
             return a
         })

@@ -206,6 +206,8 @@
     }
 
     function createSlide() {
+        if (currentShow?.locked) return
+
         history({ id: "SLIDES" })
         activePage.set("edit")
     }
@@ -383,7 +385,7 @@
                         <Center absolute size={2}>
                             <span style="opacity: 0.5;"><T id="empty.slides" /></span>
                             <!-- Add slides button -->
-                            <Button on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
+                            <Button disabled={currentShow?.locked} on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
                                 <Icon id="add" right />
                                 <T id="new.slide" />
                             </Button>
