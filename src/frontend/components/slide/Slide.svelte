@@ -39,6 +39,7 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { removeTagsAndContent } from "../drawer/bible/scripture"
 
     export let showId: string
     export let slide: Slide
@@ -332,7 +333,7 @@
                 <!-- TODO: tab select on enter -->
                 {#if viewMode === "lyrics" && !noQuickEdit}
                     <!-- border-bottom: 1px dashed {color}; -->
-                    <div class="label" title={name || ""} style="color: {color};margin-bottom: 5px;">
+                    <div class="label" title={removeTagsAndContent(name || "")} style="color: {color};margin-bottom: 5px;">
                         <span style="position: absolute;display: contents;">{index + 1}</span>
                         <span class="text">{@html name === null ? "" : name || "—"}</span>
                     </div>
@@ -415,7 +416,7 @@
                     <div title={name || ""} style="height: 2px;" />
                 {:else if viewMode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->
-                    <div class="label" title={name || ""} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
+                    <div class="label" title={removeTagsAndContent(name || "")} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
                         {#if name === null && $fullColors && $activePage === "show"}
                             <!-- WIP this works fine without full colors, but is it neccesary? (UI vs UX) -->
                             <div class="childLink" style="background-color: {color};" class:full={$fullColors} />

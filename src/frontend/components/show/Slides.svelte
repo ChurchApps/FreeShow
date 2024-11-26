@@ -146,13 +146,16 @@
         })
 
         function capitalize(value: string) {
-            $special.capitalize_words.split(",").forEach((newWord) => {
-                newWord = newWord.trim().toLowerCase()
+            $special.capitalize_words.split(",").forEach((word) => {
+                let newWord = word.trim().toLowerCase()
                 if (!newWord.length) return
 
                 const regEx = new RegExp(`\\b${newWord}\\b`, "gi")
                 value = value.replace(regEx, (match) => {
-                    return match === match.toUpperCase() ? match : newWord.charAt(0).toUpperCase() + newWord.slice(1)
+                    // always capitalize: newWord.charAt(0).toUpperCase() + newWord.slice(1)
+                    // use the input case styling (meaning all uppercase/lowercase also works)
+                    // but don't change anything if the text is already fully uppercase
+                    return match === match.toUpperCase() ? match : word.trim()
                 })
             })
 

@@ -3,9 +3,10 @@ import { uid } from "uid"
 import type { ID, Slide, Item, Layout, SlideData, Line, Chords } from "../../types/Show"
 import { TranslationMethod } from "../../types/Songbeamer"
 import { ShowObj } from "../classes/Show"
-import { categories, groups } from "../stores"
+import { categories, globalTags, groups } from "../stores"
 import { checkName } from "../components/helpers/show"
 import { createCategory, setTempShows } from "./importHelpers"
+import { history } from "../components/helpers/history"
 
 interface ImportSettings {
     category: string
@@ -23,8 +24,10 @@ class SongbeamerMetadata {
     title: string = ""
     author: string = ""
     copyright: string = ""
-    melody: string = ""
-    comments: string = ""
+    composer: string = ""
+    publisher: string = ""
+    comments: string = "" // notes
+    keywords: string = "" // tags
     format: string = ""
     title_format: string = ""
     background_image: string = ""
@@ -107,11 +110,19 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
         number: metadata.number,
         title: metadata.title,
         author: metadata.author,
-        composer: metadata.melody,
+        composer: metadata.composer,
+        publisher: metadata.publisher,
         copyright: metadata.copyright,
         CCLI: metadata.ccli,
     }
     if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
+
+    // add tags
+    const tags = getTags(metadata.keywords.split(","))
+    if (tags.length) {
+        if (!show.quickAccess) show.quickAccess = {}
+        show.quickAccess.tags = tags
+    }
 
     let songbeamerSlides = parseSongbeamerSlides(sections, metadata)
     let { slides, layouts } = createSlides(songbeamerSlides, metadata, settings)
@@ -130,6 +141,19 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
     }
 
     return show
+}
+
+function getTags(tags: string[]) {
+    return tags.map((tag) => getOrCreateTag(tag.trim()))
+}
+function getOrCreateTag(name: string) {
+    // get existing with same name
+    const existing = Object.entries(get(globalTags)).find(([_id, tag]) => tag.name.toLowerCase() === name.toLowerCase())
+    if (existing) return existing[0]
+
+    const tagId = uid(5)
+    history({ id: "UPDATE", newData: { data: { name } }, oldData: { id: tagId }, location: { page: "show", id: "tag" } })
+    return tagId
 }
 
 function base64Utf8Decode(text: string, encoding: BufferEncoding = "utf8"): string {
@@ -166,14 +190,21 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): Songbea
             case "Author":
                 metadata.author = parts[1].trim()
                 break
+            // case "AddCopyrightInfo":
             case "(c)":
                 metadata.copyright = parts[1].trim()
                 break
             case "Melody":
-                metadata.melody = parts[1].trim()
+                metadata.composer = parts[1].trim()
+                break
+            case "NatCopyright":
+                metadata.publisher = parts[1].trim()
                 break
             case "Comments":
                 metadata.comments = base64Utf8Decode(parts[1].trim(), encoding)
+                break
+            case "Keywords":
+                metadata.keywords = parts[1].trim() || ""
                 break
             case "Format":
                 metadata.format = parts[1].trim()
@@ -184,7 +215,7 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): Songbea
             case "BackgroundImage":
                 metadata.background_image = parts[1].trim()
                 break
-            case "QuickFind":
+            case "ChurchSongID":
                 metadata.number = parts[1].trim() || ""
                 break
             case "Key":

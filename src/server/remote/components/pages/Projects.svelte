@@ -6,13 +6,16 @@
     import ProjectButton from "../ProjectButton.svelte"
 
     let dispatch = createEventDispatcher()
+
+    // sort by newest first
+    $: sortedProjects = $projects.sort((a, b) => b.used - a.used)
 </script>
 
 <h2 class="header">{translate("remote.projects", $dictionary)}</h2>
 
-{#if $projects.length}
+{#if sortedProjects.length}
     <!-- <Projects {folders} {projects} activeProject={project} bind:activeShow {openedFolders} /> -->
-    {#each $projects as project}
+    {#each sortedProjects as project}
         <ProjectButton
             active={$activeProject?.id === project.id}
             name={project.name}

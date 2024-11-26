@@ -350,6 +350,11 @@ function removeTags(text) {
     return text.replace(/(<([^>]+)>)/gi, "")
 }
 
+export function removeTagsAndContent(input) {
+    const regex = /<[^>]*>[^<]*<\/[^>]*>/g
+    return input.replace(regex, "")
+}
+
 function stripMarkdown(input: string) {
     input = input.replace(/#\s*(.*?)\s*#/g, "")
     input = input.replace(/\*\{(.*?)\}\*/g, "")

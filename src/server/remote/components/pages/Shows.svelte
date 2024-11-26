@@ -178,10 +178,13 @@
         padding: 10px 18px;
         border: none;
         font-size: inherit;
+
+        border-bottom: 2px solid var(--secondary);
     }
     .input:active,
     .input:focus {
         outline: 2px solid var(--secondary);
+        outline-offset: -2px;
         /* background-color: var(--secondary-opacity); */
     }
     .input::placeholder {

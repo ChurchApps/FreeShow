@@ -129,15 +129,16 @@
                     <Dropdown value={layouts.find((a) => a.id == $activeShow.settings?.activeLayout)?.name || "—"} options={layouts} on:click={changeLayout} style="width: 100%;" up />
                 {/if}
 
-                <Button on:click={() => (groupsOpened = true)} style="width: 100%;" center dark>
-                    <Icon id="groups" right />
-                    {translate("tools.groups", $dictionary)}
-                </Button>
-
-                <Button on:click={() => (editOpened = true)} style="width: 100%;" center dark>
-                    <Icon id="edit" right />
-                    {translate("titlebar.edit", $dictionary)}
-                </Button>
+                <div class="edit" style="display: flex;">
+                    <Button on:click={() => (groupsOpened = true)} style="width: 100%;" center dark>
+                        <Icon id="groups" right />
+                        {translate("tools.groups", $dictionary)}
+                    </Button>
+                    <Button on:click={() => (editOpened = true)} style="width: 100%;" center dark>
+                        <Icon id="edit" right />
+                        {translate("titlebar.edit", $dictionary)}
+                    </Button>
+                </div>
             </div>
         {/if}
     {/if}
