@@ -11,10 +11,10 @@ export class CaptureHelper {
     static Transmitter = CaptureTransmitter
 
     private static framerates: any = {
-        stage: 20,
-        server: 30,
+        stage: 20, // StageShow
+        server: 10, // 30 // OutputShow
         unconnected: 1,
-        connected: 30,
+        connected: 30, // NDI
     }
     static customFramerates: any = {}
 

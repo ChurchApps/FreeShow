@@ -72,7 +72,8 @@
         // create first slide reference
         if ($scriptureSettings.firstSlideReference && slides[0][0]?.lines) {
             const slideClone = clone(slides[0])
-            slides.forEach((a) => a.splice(a.length - 1, 1))
+            // remove reference item
+            // slides.forEach((a) => a.splice(a.length - 1, 1))
             // get verse text for correct styling
             const metaStyle = slideClone.at(-2)
             if (metaStyle) slides = [[metaStyle], ...slides]

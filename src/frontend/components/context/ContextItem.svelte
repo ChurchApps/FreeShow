@@ -159,6 +159,7 @@
         hide_from_preview: () => {
             let outputId = contextElem.id
             if ($outputs[outputId]?.hideFromPreview) enabled = true
+            menu.label = enabled ? "context.enable_preview" : "context.hide_from_preview"
         },
         place_under_slide: () => {
             let id = $selected.data[0]

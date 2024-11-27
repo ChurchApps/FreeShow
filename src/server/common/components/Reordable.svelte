@@ -72,7 +72,7 @@
 
 <ul id="sortable" bind:this={sortableList}>
     {#each items as item, i}
-        <li id={i.toString()} draggable="true">
+        <li id={i.toString()} draggable="true" style="-webkit-user-drag: element;">
             <!-- <Icon id="dragHandle" white /> -->
             <slot {item} />
         </li>

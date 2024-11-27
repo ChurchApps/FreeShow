@@ -18,7 +18,7 @@
         on:click={() => {
             if (!$outLocked) setOutput("overlays", show.id, true)
         }}
-        title={$dictionary.media?.show}
+        title={$dictionary.media?.play}
     >
         <Zoomed center mirror>
             <Overlay id={show.id} outputId="" overlays={$overlays} mirror transition={{ type: "none", duration: 0, easing: "" }} />
