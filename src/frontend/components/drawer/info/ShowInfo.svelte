@@ -150,6 +150,6 @@
         opacity: 0.8;
 
         overflow: hidden;
-        direction: rtl;
+        /* direction: rtl; */
     }
 </style>

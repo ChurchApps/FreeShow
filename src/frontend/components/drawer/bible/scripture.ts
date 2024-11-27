@@ -221,23 +221,23 @@ export function getSlides({ bibles, sorted }) {
                 }
 
                 if (!jesusWords[0]) {
-                    textArray.push({ value: formatBibleText(text), style: textStyle })
+                    textArray.push({ value: removeTags(formatBibleText(text)), style: textStyle })
                 } else if (jesusWords[0]?.[0] > 0) {
-                    textArray.push({ value: formatBibleText(text.slice(0, jesusWords[0][0])), style: textStyle })
+                    textArray.push({ value: removeTags(formatBibleText(text.slice(0, jesusWords[0][0]))), style: textStyle })
                 }
 
                 let redText = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
                 jesusWords.forEach(([start, end], i) => {
-                    textArray.push({ value: formatBibleText(text.slice(start + 2, end - 2)), style: textStyle + redText, customType: "disableTemplate_jw" })
+                    textArray.push({ value: removeTags(formatBibleText(text.slice(start + 2, end - 2))), style: textStyle + redText, customType: "disableTemplate_jw" })
 
                     if (!jesusWords[i + 1] || end < jesusWords[i + 1][0]) {
-                        let remainingText = formatBibleText(text.slice(end, jesusWords[i + 1]?.[0] ?? -1))
+                        let remainingText = removeTags(formatBibleText(text.slice(end, jesusWords[i + 1]?.[0] ?? -1)))
                         if (remainingText.length) textArray.push({ value: remainingText, style: textStyle })
                     }
                 })
             } else {
                 // WIP bibles with custom html tags?
-                text = formatBibleText(text)
+                text = removeTags(formatBibleText(text))
 
                 if (text.charAt(text.length - 1) !== " ") text += " "
 
@@ -310,7 +310,7 @@ export function getSlides({ bibles, sorted }) {
         // remove text in () on scripture names
         let bibleVersions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
         let versions = get(scriptureSettings).combineWithText ? bibleVersions[itemIndex] : bibleVersions.join(" + ")
-        let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
+        let books = get(scriptureSettings).combineWithText ? bibles[itemIndex]?.book : removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         const referenceDivider = get(scriptureSettings).referenceDivider || ":"
         let text = customText
@@ -344,10 +344,15 @@ export function getSlides({ bibles, sorted }) {
 export function formatBibleText(text: string | undefined) {
     if (!text) return ""
     return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "")
+}
 
-    // function removeTags(text) {
-    //     return text.replace(/(<([^>]+)>)/gi, "")
-    // }
+function removeTags(text) {
+    return text.replace(/(<([^>]+)>)/gi, "")
+}
+
+export function removeTagsAndContent(input) {
+    const regex = /<[^>]*>[^<]*<\/[^>]*>/g
+    return input.replace(regex, "")
 }
 
 function stripMarkdown(input: string) {

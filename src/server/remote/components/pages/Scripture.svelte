@@ -57,7 +57,7 @@
     {/if}
 {:else}
     {#each sortedBibles as scripture}
-        <Button on:click={() => openScripture(scripture.id)}>
+        <Button on:click={() => openScripture(scripture.id)} title={scripture.customName || scripture.name} style="padding: 0.5em 0.8em;" bold={false}>
             <Icon id={scripture.icon} right />
             <p>{scripture.customName || scripture.name}</p>
         </Button>

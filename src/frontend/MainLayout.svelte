@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { customActionActivation } from "./components/actions/actions"
     import DrawSettings from "./components/draw/DrawSettings.svelte"
     import DrawTools from "./components/draw/DrawTools.svelte"
     import Slide from "./components/draw/Slide.svelte"
@@ -25,6 +26,16 @@
 
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
+
+    let previousId = ""
+    $: if ($activeShow?.id !== previousId) showOpened()
+    function showOpened() {
+        if (!$activeShow?.id || $activeShow?.type !== "show") return
+
+        // allow show to actually open before triggering
+        setTimeout(() => customActionActivation("show_opened"), 50)
+        previousId = $activeShow?.id
+    }
 </script>
 
 <div class="column">

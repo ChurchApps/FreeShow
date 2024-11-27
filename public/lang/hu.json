@@ -163,6 +163,7 @@
         "toggle_shuffle": "Keverés átváltása",
         "next": "Következő",
         "previous": "Előző",
+        "play_no_audio": "Lejátszás hang nélkül",
         "play_no_filters": "Lejátszás szűrők nélkül",
         "favourite": "Kedvenc",
         "pause": "Szüneteltetés",
@@ -194,7 +195,10 @@
         "playlist_settings": "Lejátszási lista beállítások",
         "custom_output": "Egyedi hangkimenet",
         "mute_when_video_plays": "Némítás videó lejátszása alatt",
+        "allow_gaining": "Túlerősítés engedélyezése",
+        "allow_gaining_tip": "Hangerő beállításának engedélyezése 100% felett (torzítást okozhat)",
         "pre_fader_volume_meter": "Hangerő-szabályozó előszabolyozó",
+        "mixer": "Keverő",
         "metronome": "Metronóm",
         "toggle_metronome": "Metronóm átváltása",
         "tempo": "Tempó",
@@ -269,15 +273,17 @@
         "ip": "Nem sikerül a készülék IP-címét lekérni, keresse meg a számítógép Wi-Fi beállításaiban a helyi IPv4-címet."
     },
     "meta": {
+        "number": "Szám",
         "title": "Cím",
         "artist": "Előadó",
         "author": "Szerző",
         "composer": "Zeneszerző",
         "publisher": "Kiadó",
         "copyright": "Szerzői jog",
-        "CCLI": "Licenc (CCLI)",
+        "CCLI": "Dal azonosító (CCLI)",
         "year": "Év",
         "key": "Hangnem",
+        "autofill": "Automatikus kitöltés",
         "message": "Üzenet",
         "message_tip": "Valamit jelenítsen meg az összes dián",
         "auto_media": "Metaadatok lekérése a média tartalmából",
@@ -362,7 +368,8 @@
         "music": "Zene",
         "offers": "Adakozás",
         "notice": "Figyelem",
-        "visuals": "Látványok"
+        "visuals": "Látványok",
+        "action_tip": "Egy művelet, mely kiváltódik minden olyan esetben, amikor ilyen kategóriájú bemutató vetítésre kerül."
     },
     "groups": {
         "current": "Jelenlegi",
@@ -400,6 +407,7 @@
         "change_output_values": "Kimeneti értékek módosítása",
         "choose_chord": "Akkord kiválasztása",
         "set_time": "Idő beállítása",
+        "slide_shortcut": "Dia gyorsbillentyű",
         "animate": "Animálás",
         "translate": "Honosítás",
         "next_timer": "Következő dia időzítője",
@@ -413,6 +421,7 @@
         "about": "Névjegy",
         "history": "Előzmények",
         "action": "Művelet",
+        "category_action": "Kategória művelet",
         "connect": "Csatlakozás",
         "cloud_update": "Szinkronizálás a felhővel",
         "cloud_method": "Adatok helye",
@@ -547,6 +556,8 @@
         "zoomIn": "Nagyítás",
         "zoomOut": "Kicsinyítés",
         "reset": "Visszaállítás",
+        "create_template": "Sablon létrehozása",
+        "project_template_tip": "Új projekt létrehozása e sablon alapján",
         "convert_to_images": "Konvertálás képpé",
         "converting": "Konvertálás…",
         "remove_template_from_show": "Sablon eltávolítása a műsorból",
@@ -608,6 +619,8 @@
         "set_key": "Billentyű beállítása",
         "custom_key": "Egyéni érték beállítása",
         "select_chord": "Akkord kijelölése",
+        "play_with_shortcut": "Aktiválás gyorsbillentyűvel",
+        "press_to_assign": "Nyomjon meg bármely betűt a hozzárendeléshez",
         "play_on_midi": "Aktiválás MIDI jelre",
         "play_on_midi_tip": "A kiválasztott MIDI jel fogadásakor aktiválja ezt a speciális diát.",
         "send_midi": "MIDI jel küldése",
@@ -624,6 +637,7 @@
         "next_after_media": "Ugrás a következőre a média befejezésekor",
         "remove_media": "Média eltávolítása",
         "remove_layers": "Rétegek eltávolítása",
+        "toggle_checkbox_tip": "A művelet akkor vált át, ha a jelölőnégyzet változatlan marad",
         "start_recording": "Felvétel indítása",
         "stop_recording": "Felvétel leállítása",
         "export_recording": "Felvétel és exportálás leállítása ",
@@ -632,6 +646,7 @@
         "previous_project_item": "Előző projektelem",
         "index_select_project_item": "Projektelem kijelölése index alapján",
         "name_select_show": "Bemutató kijelölése név alapján",
+        "set_template_active": "Sablon beállítása az aktív bemutatón",
         "random_slide": "Véletlenszerű dia vetítése",
         "index_select_slide": "Dia kijelölése index alapján",
         "name_select_slide": "Dia kijelölése név alapján",
@@ -672,6 +687,7 @@
         "activate_slide_cleared": "Aktiválás dia törlésekor",
         "activate_background_cleared": "Aktiválás háttér törlésekor",
         "activate_show_created": "Aktiválás bemutató létrehozásakor",
+        "activate_show_opened": "Aktiválás bemutató megnyitásakor",
         "activate_audio_playlist_ended": "Aktiválás hanglejátszási lista végén"
     },
     "recording": {
@@ -679,7 +695,9 @@
         "tip": "Diák időzítésének rögzítése és lejátszása . Szinkronizálás az első dia hangsávjával.",
         "layout_changed": "Az elrendezés módosult az utolsó rögzítés óta!",
         "audio_synced": "Hanggal szinkronizálva!",
-        "start": "Diarögzítés indítása"
+        "start": "Diarögzítés indítása",
+        "use_duration": "Időtartam alkalmazása",
+        "use_duration_tip": "Időtartam alkalmazása az időbélyeg helyett"
     },
     "animate": {
         "change": "Módosítás",
@@ -738,6 +756,7 @@
     },
     "context": {
         "enabledTabs": "Fülek átváltása",
+        "setTag": "Címke beállíása",
         "filterByTags": "Szűrés címkékre",
         "addToProject": "Hozzáadás a projekthez",
         "add_to_show": "Hozzáadás a bemutatóhoz",
@@ -796,6 +815,8 @@
         "overlay_content": "Átfedéses tartalom hozzáadása",
         "different_first_template": "Egyedi sablon az első dián",
         "media_fit": "Média méretezése",
+        "one_letter": "Egyetlen betű mód",
+        "sub_indexes": "Alindex",
         "size": "Méret",
         "max_lines": "Maximum sor",
         "invert_items": "Elemek megfordítása",
@@ -916,6 +937,7 @@
         "to_event": "Idő az eseményig",
         "counter": "Visszaszámláló",
         "time": "Idő",
+        "minutes": "Perc",
         "seconds": "Másodperc",
         "from": "Kezdet",
         "to": "Vége",
@@ -1063,6 +1085,7 @@
         "group_numbers": "Csoportszámok",
         "full_colors": "Nagy kontrasztú csoportszínek",
         "slide_number_keys": "Diák lejátszása számbillentyűkkel",
+        "auto_shortcut_first_letter": "Automatikus gyorsbillentyű a szöveg első betűjéből",
         "auto_output": "Kimeneti képernyő aktiválása indításkor",
         "hide_cursor_in_output": "Kurzor elrejtése a kimeneten",
         "clear_media_when_finished": "Média törlése befejezéskor",
@@ -1124,7 +1147,8 @@
         "auto": "Automatikus",
         "optimized": "Optimalizált",
         "reduced": "Csökkentett",
-        "full": "Teljes"
+        "full": "Teljes",
+        "section_trigger_action": "Művelet kiváltása a prezentáció egy szakaszra történő navigálásakor"
     },
     "sort": {
         "sort_by": "Sorbarendezés",
@@ -1172,6 +1196,7 @@
         "reference": "Hivatkozás megjelenítése",
         "split_reference": "Hivatkozás szétválasztása",
         "combine_with_text": "Kombinálás a szöveggel",
+        "first_slide_reference": "Hivatkozás az első dián",
         "reference_at_bottom": "Mozgatás alulra",
         "red_jesus": "Jézus szavai pirossal",
         "search": "Keresés a Bibliában"

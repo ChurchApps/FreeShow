@@ -40,6 +40,8 @@ export function convertEasyslides(data: any) {
         let { slides, layout }: any = createSlides(song)
 
         show.meta = { number: song.SongNumber }
+        if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
+
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
 

@@ -173,7 +173,6 @@
         "volume": "Volume",
         "gain": "Gain",
         "speed": "Speed",
-        "show": "Show",
         "flip": "Flip",
         "flip_horizontally": "Flip horizontally",
         "flip_vertically": "Flip vertically",
@@ -646,6 +645,7 @@
         "previous_project_item": "Previous project item",
         "index_select_project_item": "Select project item by index",
         "name_select_show": "Select show by name",
+        "set_template_active": "Set template on active show",
         "random_slide": "Play random slide",
         "index_select_slide": "Select slide by index",
         "name_select_slide": "Select slide by name",
@@ -686,6 +686,7 @@
         "activate_slide_cleared": "Activate when slide is cleared",
         "activate_background_cleared": "Activate when background is cleared",
         "activate_show_created": "Activate when show is created",
+        "activate_show_opened": "Activate when show is opened",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended"
     },
     "recording": {
@@ -770,6 +771,7 @@
         "toggle_output": "Toggle output",
         "move_to_front": "Move to front",
         "hide_from_preview": "Hide from preview",
+        "enable_preview": "Enable preview",
         "lock_to_output": "Lock to output",
         "place_under_slide": "Place under slide",
         "toggle_clock": "Toggle clock",

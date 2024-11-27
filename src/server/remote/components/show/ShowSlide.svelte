@@ -43,9 +43,9 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {newResolution.width * zoom}px;" -->
 
-        <div class="label" title={slide.group || ""} style={`color: ${color};border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
+        <div class="label" title={slide.group === null ? "" : slide.group || "—"} style={`color: ${color};border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
             <span style="position: absolute;display: contents;">{index + 1}</span>
-            <span class="text">{slide.group || ""}</span>
+            <span class="text">{slide.group === null ? "" : slide.group || "—"}</span>
         </div>
     </div>
 </div>

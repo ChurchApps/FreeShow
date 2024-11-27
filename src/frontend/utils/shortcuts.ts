@@ -141,7 +141,9 @@ export function keydown(e: any) {
             return
         }
 
-        const key = e.key === "Z" ? e.key : e.key.toLowerCase()
+        let key = e.key === "Z" ? e.key : e.key.toLowerCase()
+        // include other special letter symbols (í=i)
+        if (e.keyCode === 73) key = "i"
 
         // use default input shortcuts on supported devices
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
