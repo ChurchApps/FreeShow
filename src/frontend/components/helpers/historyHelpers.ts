@@ -41,6 +41,7 @@ import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
 import { addZero, getMonthName, getWeekday } from "./time"
+import { addToPos } from "./mover"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -348,7 +349,12 @@ export const _updaters = {
             let showRef: any = { id, type: "show" }
             if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
                 projects.update((p) => {
-                    p[data.remember.project].shows.push({ id })
+                    if (data.remember.index !== undefined && p[data.remember.project].shows.length > data.remember.index) {
+                        p[data.remember.project].shows = addToPos(p[data.remember.project].shows, [{ id }], data.remember.index)
+                    } else {
+                        p[data.remember.project].shows.push({ id })
+                    }
+
                     return p
                 })
                 // TODO: remember index
@@ -364,7 +370,7 @@ export const _updaters = {
 
             // update shows list (same as showsCache, but with less data)
             shows.update((a) => {
-                a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps }
+                a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps, quickAccess: data.data.quickAccess || {} }
                 if (data.data.private) a[id].private = true
                 if (data.data.locked) a[id].locked = true
 

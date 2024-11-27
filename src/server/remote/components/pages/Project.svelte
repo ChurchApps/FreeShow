@@ -11,14 +11,14 @@
 </script>
 
 {#if $activeProject && !$projectsOpened}
-    {#if $activeProject.shows.length}
-        <div class="header" style="padding: 0;">
-            <Button on:click={() => _set("projectsOpened", true)}>
-                <Icon id="back" size={1.5} />
-            </Button>
-            <p style="flex: 1;text-align: center;padding: 0.2em 0.8em;">{$activeProject.name}</p>
-        </div>
+    <div class="header" style="padding: 0;">
+        <Button on:click={() => _set("projectsOpened", true)}>
+            <Icon id="back" size={1.5} />
+        </Button>
+        <p style="flex: 1;text-align: center;padding: 0.2em 0.8em;">{$activeProject.name}</p>
+    </div>
 
+    {#if $activeProject.shows.length}
         <div class="scroll">
             {#each $activeProject.shows as show}
                 {@const s = $shows.find((a) => a.id === show.id) || {}}
@@ -81,7 +81,7 @@
     /* project */
     .section {
         text-align: center;
-        font-size: 0.9em;
+        font-size: 0.75em;
         background-color: var(--primary-darker);
         padding: 2px;
     }

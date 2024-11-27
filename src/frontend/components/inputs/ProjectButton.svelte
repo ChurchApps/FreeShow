@@ -18,7 +18,10 @@
     $: active = $activeProject === id
 
     function open(e: any) {
-        if (e.ctrlKey || e.metaKey || e.target.closest(".edit") || e.target.querySelector(".edit") || editActive) return
+        // prevent extra single click on (template) double click
+        let doubleClick = e.detail === 2
+
+        if (e.ctrlKey || e.metaKey || e.target.closest(".edit") || e.target.querySelector(".edit") || editActive || doubleClick) return
 
         if (template) {
             let project = clone($projectTemplates[id])
@@ -52,6 +55,13 @@
         activeShow.set({ ...$projects[id].shows[0], index: 0 })
     }
 
+    function dblclick() {
+        if (!template) return
+
+        // open selected project
+        projectView.set(false)
+    }
+
     function edit(e: any) {
         if (editActive) return
 
@@ -62,7 +72,7 @@
     let editActive: boolean = false
 </script>
 
-<button {id} on:click={open} data-parent={parent} class={recentlyUsed ? "" : `context #project_${template ? "template" : "button__projects"}`} title={template ? $dictionary.actions?.project_template_tip : ""} class:active>
+<button {id} on:click={open} on:dblclick={dblclick} data-parent={parent} class={recentlyUsed ? "" : `context #project_${template ? "template" : "button__projects"}`} title={template ? $dictionary.actions?.project_template_tip : ""} class:active>
     <Icon id={template ? "templates" : "project"} right />
     <HiddenInput value={name} id={"project_" + id} on:edit={edit} bind:edit={editActive} allowEdit={!recentlyUsed} />
 </button>

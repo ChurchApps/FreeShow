@@ -425,6 +425,11 @@
             lastCaretPos = caret
         } else {
             storeCurrentCaretPos()
+
+            // line added (prevent template/overlay caret reset)
+            if (ref.type !== "show" && (item.lines || []).length < newLines.length) {
+                setTimeout(() => setCaret(textElem, lastCaretPos), 20)
+            }
         }
 
         return newLines

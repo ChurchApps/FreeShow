@@ -74,7 +74,7 @@
                     return
                 }
 
-                let value = text.value.trim().replaceAll("\n", "").replaceAll("&nbsp;", " ") || ""
+                let value = text.value.replaceAll("\n", "").replaceAll("&nbsp;", " ") || ""
 
                 let letters = value.split("")
                 letters.forEach((letter) => {
@@ -89,6 +89,8 @@
 
                     let style = text.style
                     if (item.auto && autoSize) style += `font-size: ${autoSize}px;`
+
+                    // in some cases spaces will get width 0 and change text layout if at line breaks (this is not an issue)
                     html += `<span id="${i}_${currentIndex}" class="invisible add" style="${style}">${letter}</span>`
 
                     currentIndex++

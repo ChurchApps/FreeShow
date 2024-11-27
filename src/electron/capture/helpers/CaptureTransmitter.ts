@@ -116,7 +116,8 @@ export class CaptureTransmitter {
                 break
             case "server":
                 // const options = OutputHelper.getOutput(captureId)?.captureOptions
-                this.sendBufferToServer(captureId, image)
+                // phone screen size
+                this.sendBufferToServer(captureId, image.resize({ width: size.width / 5, height: size.height / 5, quality: "good" }))
                 break
             case "stage":
                 this.sendBufferToMain(captureId, image)
@@ -187,9 +188,10 @@ export class CaptureTransmitter {
         if (!image) return
 
         // send output image size
-        // image = resizeImage(image, options.size, outputServerSize)
+        // image = image.resize({ width: size.width / 3, height: size.height / 3, quality: "good" })
+        // image = this.resizeImage(image, size, { width: size.width / 3, height: size.height / 3 })
 
-        const buffer = image.getBitmap()
+        const buffer = image.getBitmap() // {scaleFactor: 0.5}
         const size = image.getSize()
 
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */

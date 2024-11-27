@@ -102,6 +102,7 @@
                 // get actual api id from the abbr
                 let apiId = $scriptures[bibleId]?.id || bibleId
                 data = await fetchBible(load, apiId, { versesList: versesList[bibleId] || [], bookId, chapterId })
+                // WIP will always not work if previous local selected Bible has unknown chapter index..
 
                 if (load === "books" && data?.length) setBooksCache(objectId, data)
             } catch (err) {

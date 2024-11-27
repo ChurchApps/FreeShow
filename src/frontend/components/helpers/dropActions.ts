@@ -116,7 +116,7 @@ export const dropActions: any = {
         } else if (drag.id === "player") {
             data = data.map((a: any) => ({ id: a, type: "player" }))
         } else if (drag.id === "scripture") {
-            return createScriptureShow(drag)
+            return createScriptureShow(drag, drop)
         }
 
         history.newData = { key: "shows", data: [] }
@@ -729,7 +729,7 @@ function createSlideAction(triggerId: string, slideIndex: number, data: any, rem
 }
 
 // WIP duplicate of ScriptureInfo.svelte createSlides()
-function createScriptureShow(drag) {
+function createScriptureShow(drag, drop) {
     let bibles = drag.data[0]?.bibles
     if (!bibles) return
 
@@ -767,5 +767,8 @@ function createScriptureShow(drag) {
         data: { collection: get(drawerTabsData).scripture?.activeSubTab || bibles[0].id || "", version: versions, api: bibles[0].api, book: bibles[0].bookId ?? bibles[0].book, chapter: bibles[0].chapter, verses: bibles[0].activeVerses },
     }
 
-    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
+    let index = drop.index
+    if (drop.trigger?.includes("end")) index++
+
+    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject), index } }, location: { page: "show", id: "show" } })
 }

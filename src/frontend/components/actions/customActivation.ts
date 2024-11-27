@@ -19,5 +19,6 @@ export const customActionActivations = [
     { id: "slide_cleared", name: "$:actions.activate_slide_cleared:$" },
     { id: "background_cleared", name: "$:actions.activate_background_cleared:$" },
     { id: "show_created", name: "$:actions.activate_show_created:$" },
+    { id: "show_opened", name: "$:actions.activate_show_opened:$" },
     { id: "audio_playlist_ended", name: "$:actions.activate_audio_playlist_ended:$" },
 ]

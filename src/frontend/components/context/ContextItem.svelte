@@ -159,6 +159,7 @@
         hide_from_preview: () => {
             let outputId = contextElem.id
             if ($outputs[outputId]?.hideFromPreview) enabled = true
+            menu.label = enabled ? "context.enable_preview" : "context.hide_from_preview"
         },
         place_under_slide: () => {
             let id = $selected.data[0]
@@ -217,12 +218,14 @@
         if ($os.platform === "darwin") s.replaceAll("Ctrl", "Cmd")
         shortcut = s
     }
+
+    $: customStyle = id === "uppercase" ? "text-transform: uppercase;" : id === "lowercase" ? "text-transform: lowercase;" : ""
 </script>
 
 <div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
-        <p style="display: flex;align-items: center;gap: 5px;">
+        <p style="display: flex;align-items: center;gap: 5px;{customStyle}">
             {#if menu?.translate === false}
                 {menu?.label}
             {:else}

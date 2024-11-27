@@ -146,13 +146,16 @@
         })
 
         function capitalize(value: string) {
-            $special.capitalize_words.split(",").forEach((newWord) => {
-                newWord = newWord.trim().toLowerCase()
+            $special.capitalize_words.split(",").forEach((word) => {
+                let newWord = word.trim().toLowerCase()
                 if (!newWord.length) return
 
                 const regEx = new RegExp(`\\b${newWord}\\b`, "gi")
                 value = value.replace(regEx, (match) => {
-                    return match === match.toUpperCase() ? match : newWord.charAt(0).toUpperCase() + newWord.slice(1)
+                    // always capitalize: newWord.charAt(0).toUpperCase() + newWord.slice(1)
+                    // use the input case styling (meaning all uppercase/lowercase also works)
+                    // but don't change anything if the text is already fully uppercase
+                    return match === match.toUpperCase() ? match : word.trim()
                 })
             })
 
@@ -206,6 +209,8 @@
     }
 
     function createSlide() {
+        if (currentShow?.locked) return
+
         history({ id: "SLIDES" })
         activePage.set("edit")
     }
@@ -383,7 +388,7 @@
                         <Center absolute size={2}>
                             <span style="opacity: 0.5;"><T id="empty.slides" /></span>
                             <!-- Add slides button -->
-                            <Button on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
+                            <Button disabled={currentShow?.locked} on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
                                 <Icon id="add" right />
                                 <T id="new.slide" />
                             </Button>
