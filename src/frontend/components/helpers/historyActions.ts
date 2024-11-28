@@ -135,7 +135,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (previousData) a[id] = previousData
                 else {
-                    if (updater.cloudCombine) a[id] = { id, deleted: true }
+                    if (updater.cloudCombine) a[id] = { id, deleted: true, modified: Date.now() }
                     else delete a[id]
                 }
 
