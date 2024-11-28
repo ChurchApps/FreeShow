@@ -1,10 +1,9 @@
 name: Playwright Tests
 on:
-    # turning off temporarily as it does not work properly!
-    # push:
-    #     branches: [dev]
-    # pull_request:
-    #     branches: [dev]
+    push:
+        branches: [dev]
+    pull_request:
+        branches: [dev]
     workflow_dispatch:
 
 jobs:
