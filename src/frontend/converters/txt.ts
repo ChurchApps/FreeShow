@@ -175,6 +175,7 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
 
         function createSlide(lines: string, slideIndex: number) {
             let items: Item[] = linesToItems(lines)
+            if (!items.length) return
 
             // get active show
             if (_show().get()) {
@@ -276,6 +277,10 @@ function removeSlideDuplicates(slides, layouts) {
 
 function linesToItems(lines: string) {
     let slideLines: string[] = lines.split("\n")
+
+    // remove custom ChordPro styling
+    slideLines = slideLines.filter((a) => !a.startsWith("{") && !a.endsWith("}"))
+
     let items: Item[] = linesToTextboxes(slideLines)
 
     return items

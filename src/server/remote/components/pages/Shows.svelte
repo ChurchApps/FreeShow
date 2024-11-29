@@ -39,7 +39,7 @@
             if (match) filteredShows.push({ ...s, match })
         })
         // filteredShows = sortObjectNumbers(filteredShows, "match", true) as ShowId[]
-        filteredShows = filteredShows.sort((a: any, b: any) => (a.match < b.match ? -1 : a.match > b.match ? 1 : 0))
+        filteredShows = filteredShows.sort((a: any, b: any) => (a.match < b.match ? 1 : a.match > b.match ? -1 : 0))
         firstMatch = filteredShows[0]?.id || null
     }
 
