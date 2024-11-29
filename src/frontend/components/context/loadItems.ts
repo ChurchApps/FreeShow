@@ -73,7 +73,7 @@ const loadActions = {
         let currentItemActions: any = slide.items?.[selectedItems[0]]?.actions || {}
 
         let itemActions: any = [
-            { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
+            // { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
             { id: "showTimer", label: "actions.show_timer", icon: "time_in", enabled: Number(currentItemActions.showTimer || 0) || false },
             { id: "hideTimer", label: "actions.hide_timer", icon: "time_out", enabled: Number(currentItemActions.hideTimer || 0) || false },
         ]

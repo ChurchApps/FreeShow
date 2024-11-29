@@ -11,7 +11,7 @@ export function checkName(name: string = "", showId: string = "") {
     name = formatToFileName(name)
 
     let number = 1
-    while (Object.entries(get(shows)).find(([id, a]: any) => (!showId || showId !== id) && a.name.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
+    while (Object.entries(get(shows)).find(([id, a]: any) => (!showId || showId !== id) && a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
 
     return number > 1 ? name + " " + number : name
 }

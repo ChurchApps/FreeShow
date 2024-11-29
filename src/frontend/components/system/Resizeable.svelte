@@ -2,6 +2,7 @@
     import { onMount } from "svelte"
     import { resized } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
+    import Icon from "../helpers/Icon.svelte"
 
     export let id: string
     export let side: "left" | "right" | "top" | "bottom" = "left"
@@ -75,8 +76,9 @@
         }
 
         if (width > minWidth) {
-            storeWidth = width
-            width = minWidth
+            // don't click to close, only to open (to prevent accidentally closing without knowing)
+            // storeWidth = width
+            // width = minWidth
             return
         }
 
@@ -103,6 +105,10 @@
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} />
 
 <div {id} style="{side === 'left' || side === 'right' ? 'width' : 'height'}: {width}px; --handle-width: {handleWidth}px" class="panel bar_{side}" class:zero={width <= handleWidth} on:mousedown={mousedown} on:click={click}>
+    {#if width <= handleWidth}
+        <Icon id="arrow_right" size={1.3} white />
+    {/if}
+
     <slot {width} />
 </div>
 
@@ -139,7 +145,28 @@
         height: 100%;
     }
     .zero::after {
-        background-color: var(--secondary);
+        /* background-color: var(--secondary); */
+        background-color: var(--primary-lighter);
+    }
+    .zero :global(svg) {
+        pointer-events: none;
+
+        z-index: 1;
+        position: absolute;
+        top: 50%;
+
+        left: 50%;
+        transform: translate(-50%, -50%);
+
+        /* right: 0;
+        transform: translate(62%, -50%); */
+    }
+    .bar_right.zero :global(svg) {
+        transform: translate(-50%, -50%) rotate(180deg);
+
+        /* right: unset;
+        left: 0;
+        transform: translate(-62%, -50%) rotate(180deg); */
     }
 
     div:global(.bar_left)::after {

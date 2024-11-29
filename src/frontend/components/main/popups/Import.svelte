@@ -8,6 +8,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import { presentationExtensions } from "../../../values/extensions"
+    import { translate } from "../../../utils/language"
 
     const freeshow_formats = [
         { name: "$formats.show", extensions: ["show", "json"], id: "freeshow" },
@@ -76,7 +77,8 @@
         <Button
             style="flex: 1;min-height: 50px;"
             on:click={() => {
-                send(IMPORT, [format.id], { path: $dataPath, format })
+                let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
+                send(IMPORT, [format.id], { path: $dataPath, format: { ...format, name } })
                 displayTutorial(format)
             }}
             center
@@ -106,7 +108,8 @@
                         }
                     })
                 } else if (format.extensions) {
-                    send(IMPORT, [format.id], { path: $dataPath, format })
+                    let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
+                    send(IMPORT, [format.id], { path: $dataPath, format: { ...format, name } })
                     displayTutorial(format)
                 } else if (format.id === "clipboard") {
                     importFromClipboard()
