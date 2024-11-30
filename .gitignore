@@ -11,3 +11,9 @@
 
 test-output/
 test-results/
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
