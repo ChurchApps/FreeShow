@@ -225,7 +225,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_audio: ["remove"],
     project_player: ["remove"],
     project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename"], // "delete" removed as too many users thought it just removed the show from the project
-    project_section: ["remove"],
+    project_section: ["recolor", "SEPERATOR", "remove"],
     project_pdf: ["remove"], // "rename",
     project_ppt: ["remove"], // "rename",
     shows: ["newSlide", "selectAll"],

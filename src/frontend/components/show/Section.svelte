@@ -56,10 +56,16 @@
     }
 
     let settingsOpened: boolean = false
+
+    $: sectionUpdated = $projects[$activeProject || ""]?.shows[section.index] || {}
 </script>
 
 {#if settingsOpened}
     <div class="settings">
+        <!-- WIP change color? -->
+
+        <!-- GLOBAL -->
+
         <CombinedInput>
             <p><T id="settings.section_trigger_action" /></p>
             <Dropdown options={actionOptions} value={actionOptions.find((a) => a.id === $special.sectionTriggerAction || "")?.name || "—"} on:click={updateTrigger} />
@@ -67,7 +73,10 @@
     </div>
 {:else}
     {#key section}
-        <h4 id="sectionTitle"><TextInput value={section?.name || ""} on:change={updateName} on:keydown={keydown} /></h4>
+        <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="border-bottom: 2px solid {sectionUpdated.color || 'var(--primary-darker);'}">
+            <TextInput value={section?.name || ""} placeholder={$dictionary.main?.unnamed} on:input={updateName} on:keydown={keydown} />
+        </h4>
+        <!-- WIP suggest titles based on previous titles? (maybe not needed as we have project templates) -->
 
         <Notes value={note} on:edit={edit} />
     {/key}
@@ -85,9 +94,12 @@
     }
 
     h4 :global(input) {
-        /* text-align: center; */
-        /* color: var(--secondary); */
         background-color: var(--primary-darkest);
+    }
+    /* ::placeholder does not work here for some reason */
+    h4.empty :global(input) {
+        opacity: 0.4;
+        /* font-size: 0.9em; */
     }
 
     .settings {

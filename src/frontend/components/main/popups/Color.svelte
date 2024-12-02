@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeShow, globalTags, outputs, overlays, selected, showsCache, templates } from "../../../stores"
+    import { activePopup, activeProject, activeShow, globalTags, outputs, overlays, projects, selected, showsCache, templates } from "../../../stores"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
@@ -22,6 +22,7 @@
         else if ($selected.id === "template") value = $templates[$selected.data[0]].color
         else if ($selected.id === "output") value = $outputs[$selected.data[0].id].color
         else if ($selected.id === "tag") value = $globalTags[$selected.data[0].id].color
+        else if ($selected.id === "show") value = $projects[$activeProject || ""]?.shows[$selected.data[0].index].color
     })
 
     const actions: any = {
@@ -63,6 +64,14 @@
                 let id = $selected.data[0]?.id || ""
                 if (a[id]) a[id].color = value
 
+                return a
+            })
+        },
+        show: () => {
+            projects.update((a) => {
+                if (!a[$activeProject || ""]?.shows) return a
+
+                a[$activeProject || ""].shows[$selected.data[0].index].color = value
                 return a
             })
         },

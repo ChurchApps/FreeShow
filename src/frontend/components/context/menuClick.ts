@@ -133,7 +133,7 @@ const actions: any = {
 
     // main
     rename: (obj: any) => {
-        let id = obj.sel.id || obj.contextElem.id
+        let id = obj.sel?.id || obj.contextElem?.id
         if (!id) return
         let data = obj.sel.data?.[0] || {}
 

@@ -557,6 +557,7 @@
         "reset": "Reset",
         "create_template": "Create template",
         "project_template_tip": "Create a new project from this template",
+        "pdf_single_page": "Render as one document",
         "convert_to_images": "Convert to images",
         "converting": "Converting...",
         "remove_template_from_show": "Remove template from show",
