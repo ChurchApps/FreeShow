@@ -52,6 +52,7 @@
         { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
         { name: "Songbeamer", id: "songbeamer", popup: "songbeamer_import" },
         { name: "Easyslides", extensions: ["xml"], id: "easyslides" },
+        { name: "VerseVIEW", extensions: ["xml"], id: "verseview" },
     ]
 
     const media_formats = [

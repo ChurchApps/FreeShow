@@ -31,6 +31,7 @@ import { convertSongbeamerFiles } from "../converters/songbeamer"
 import { convertTexts } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
+import { convertVerseVIEW } from "../converters/verseview"
 import {
     activePage,
     activePopup,
@@ -610,6 +611,7 @@ const receiveIMPORT: any = {
     softprojector: (a: any) => convertSoftProjector(a),
     songbeamer: (a: any) => convertSongbeamerFiles(a),
     easyslides: (a: any) => convertEasyslides(a),
+    verseview: (a: any) => convertVerseVIEW(a),
     // Media
     pdf: (a: any) => addToProject("pdf", a),
     powerkey: (a: any) => addToProject("ppt", a),
