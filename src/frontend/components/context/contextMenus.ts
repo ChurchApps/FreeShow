@@ -226,6 +226,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_player: ["remove"],
     project_show: ["private", "duplicate", "remove", "SEPERATOR", "rename"], // "delete" removed as too many users thought it just removed the show from the project
     project_section: ["recolor", "SEPERATOR", "remove"],
+    project_overlay: ["remove"],
     project_pdf: ["remove"], // "rename",
     project_ppt: ["remove"], // "rename",
     shows: ["newSlide", "selectAll"],

@@ -133,7 +133,7 @@ export function convertVideopsalm(data: any) {
             let name = title || get(dictionary).main?.unnamed || "Unnamed"
             show.name = checkName(name, showId) || ""
             show.meta = {
-                number: song.ID || "",
+                number: (song.ID || "").toString(),
                 title: show.name,
                 artist: album || "",
                 author: song.Author || "",
