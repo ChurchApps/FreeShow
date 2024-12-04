@@ -1,5 +1,5 @@
-const { readdirSync, statSync, readFileSync, writeFileSync, existsSync, lstatSync, unlinkSync, rmdirSync, mkdirSync } = require("fs")
-const { join } = require("path")
+const { readdirSync, statSync, readFileSync, writeFileSync, existsSync, lstatSync, unlinkSync, rmdirSync, mkdirSync } = require("node:fs")
+const { join } = require("node:path")
 
 const Terser = require("terser")
 // const HTMLMinifier = require("html-minifier")

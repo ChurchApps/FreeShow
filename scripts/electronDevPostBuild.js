@@ -1,5 +1,5 @@
-const { readFileSync, writeFileSync, copyFile } = require("fs")
-const { join } = require("path")
+const { readFileSync, writeFileSync, copyFile } = require("node:fs")
+const { join } = require("node:path")
 
 function movePreload() {
     const rootPath = join(__dirname, "..")

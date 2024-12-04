@@ -1,5 +1,5 @@
-const { existsSync, readdirSync, lstatSync, unlinkSync, rmdirSync } = require("fs")
-const { join } = require("path")
+const { existsSync, readdirSync, lstatSync, unlinkSync, rmdirSync } = require("node:fs")
+const { join } = require("node:path")
 
 // app build file paths
 const buildSveltePath = join(__dirname, "..", "public", "build")
