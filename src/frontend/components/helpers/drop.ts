@@ -26,14 +26,14 @@ const areaChildren: { [key in DropAreas | string]: string[] } = {
     audio_playlist: ["audio"],
 }
 
-export function validateDrop(id: string, selected: any, children: boolean = false): boolean {
+export function validateDrop(id: string, selected: any, children = false): boolean {
     return areas[id]?.includes(selected) || (children && areaChildren[id]?.includes(selected))
 }
 
 export function ondrop(e: any, id: string) {
     // let data: string = e.dataTransfer.getData("text")
     let h: any = { id: null, location: { page: get(activePage) } }
-    let sel = get(selected)
+    const sel = get(selected)
 
     let elem: any = null
     if (e !== null) {
@@ -42,10 +42,10 @@ export function ondrop(e: any, id: string) {
         else if (id === "slide") elem = e.target.querySelector(".selectElem")
     }
 
-    let trigger: undefined | string = e?.target.closest(".TriggerBlock")?.id
-    let data: any = JSON.parse(elem?.getAttribute("data") || "{}")
+    const trigger: undefined | string = e?.target.closest(".TriggerBlock")?.id
+    const data: any = JSON.parse(elem?.getAttribute("data") || "{}")
     let index: undefined | number = data.index
-    let center: boolean = false
+    let center = false
     if (trigger?.includes("center")) center = true
     if (index !== undefined && trigger?.includes("end") && areaChildren[id]?.includes(sel.id || "")) index++
 
@@ -53,7 +53,10 @@ export function ondrop(e: any, id: string) {
     console.log("DROP: ", id, data, trigger, center, index)
 
     if (dropActions[id]) {
-        let dropData: any = { drag: sel, drop: { id, data, trigger, center, index } }
+        const dropData: any = {
+            drag: sel,
+            drop: { id, data, trigger, center, index },
+        }
 
         h = dropActions[id](dropData, h)
         if (h && h.id) history(h)

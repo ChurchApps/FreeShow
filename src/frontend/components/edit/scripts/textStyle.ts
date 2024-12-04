@@ -3,8 +3,8 @@ import type { Item, Line, Slide } from "../../../../types/Show"
 // add new style to text by selection
 export function addStyle(selection: { start: number; end: number }[], item: Item, style: string | any[]): Item {
     item.lines?.forEach((line, i) => {
-        let newText: any[] = []
-        let pos: number = 0
+        const newText: any[] = []
+        let pos = 0
         if (selection[i]?.start !== undefined) {
             line.text?.forEach((text: any) => {
                 const length: number = text.value.length
@@ -14,14 +14,25 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
                 if (pos < selection[i].end && pos + length > selection[i].end) to = selection[i].end - pos
 
                 if ((pos < selection[i].start && pos + length > selection[i].start) || (pos < selection[i].end && pos + length > selection[i].end) || (pos >= selection[i].start && pos + length <= selection[i].end)) {
-                    if (from > 0) newText.push({ value: text.value.slice(0, from), style: text.style })
+                    if (from > 0)
+                        newText.push({
+                            value: text.value.slice(0, from),
+                            style: text.style,
+                        })
                     if (to - from > 0 && to - from <= length) {
-                        let newStyle: string = ""
+                        let newStyle = ""
                         if (Array.isArray(style)) newStyle = addStyleString(text.style, style)
                         else newStyle = style
-                        newText.push({ value: text.value.slice(from, to), style: newStyle })
+                        newText.push({
+                            value: text.value.slice(from, to),
+                            style: newStyle,
+                        })
                     }
-                    if (to < length) newText.push({ value: text.value.slice(to, length), style: text.style })
+                    if (to < length)
+                        newText.push({
+                            value: text.value.slice(to, length),
+                            style: text.style,
+                        })
                 } else newText.push(text)
 
                 pos += length
@@ -37,12 +48,12 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
 // combine duplicate styles
 function combine(item: Item): Item {
     item.lines?.forEach((line) => {
-        let a = [...(line.text || [])]
+        const a = [...(line.text || [])]
         for (let i = 0; i < a.length; i++) {
             if (a[i + 1]) {
-                let d1: any[] = [],
+                const d1: any[] = [],
                     d2: any[] = []
-                let sameStyles: boolean = false
+                let sameStyles = false
                 if (a[i].style) d1.push(a[i].style)
                 if (a[i + 1].style) d2.push(a[i + 1].style)
                 if (d1.length === d2.length) {
@@ -66,7 +77,7 @@ function combine(item: Item): Item {
 
 // add new style to string and remove old
 export function addStyleString(oldStyle: string, style: any[]): string {
-    let array: string[] = oldStyle.split(";")
+    const array: string[] = oldStyle.split(";")
     // remove last if empty
     if (!array[array.length - 1].length) array.pop()
     // remove old styles
@@ -85,7 +96,7 @@ export function addStyleString(oldStyle: string, style: any[]): string {
         array.unshift(style.join(":"))
 
         // place any font-family at the start (before font, just so the dropdown knows the font)
-        let fontFamilyIndex = array.findIndex((a) => a.includes("font-family"))
+        const fontFamilyIndex = array.findIndex((a) => a.includes("font-family"))
         array.unshift(array.splice(fontFamilyIndex, 1)[0])
     } else if (style[1] !== null) array.push(style.join(":"))
 
@@ -108,29 +119,29 @@ export function addFilterString(oldFilter: string, filter: any[]): string {
     if (filter[1] !== null) array.push(filter.join("(") + ")")
 
     // transform perspective has to be first
-    let perspectiveIndex = array.findIndex((a) => a.includes("perspective"))
+    const perspectiveIndex = array.findIndex((a) => a.includes("perspective"))
     if (perspectiveIndex >= 0) {
-        let value = array.splice(perspectiveIndex, 1)[0]
+        const value = array.splice(perspectiveIndex, 1)[0]
         if (!value.includes("(0px)")) array = [value, ...array]
     }
 
-    let newFilter: string = array.join(" ")
+    const newFilter: string = array.join(" ")
     return newFilter
 }
 
 // get selection range start to end or cursor pos
 export function getSelectionRange(): { start: number; end: number }[] {
-    let selection: null | Selection = window.getSelection()
-    let sel: any[] = []
+    const selection: null | Selection = window.getSelection()
+    const sel: any[] = []
     let start: null | number = null
     let end: null | number = null
 
     if (!selection?.anchorNode) return sel
 
-    let parent: Element = selection.anchorNode.parentElement!.closest(".edit")!
+    const parent: Element = selection.anchorNode.parentElement!.closest(".edit")!
     let startNode = selection.anchorNode.parentNode
     let endNode = selection.focusNode?.parentNode
-    let startOffset = selection.anchorOffset
+    const startOffset = selection.anchorOffset
     let endOffset = selection.focusOffset
 
     // selecting empty lines
@@ -141,7 +152,7 @@ export function getSelectionRange(): { start: number; end: number }[] {
 
     new Array(...parent.childNodes).forEach((br: any, line: number) => {
         if (!sel[line]) sel[line] = {}
-        let count: number = 0
+        let count = 0
 
         new Array(...br.childNodes).forEach((child: any) => {
             if (selection!.containsNode(child, true)) {
@@ -181,9 +192,9 @@ export function getSelectionRange(): { start: number; end: number }[] {
 
 // return item style at text length pos
 export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; end: number }[]) {
-    let style: string = ""
+    let style = ""
     ;(pos || lines).forEach((_a: any, i: number) => {
-        let currentPos: number = 0
+        let currentPos = 0
         lines[i]?.text?.some((text): any => {
             // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
             if (pos && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
@@ -204,7 +215,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
 
 // get item align at selected pos
 export function getLastLineAlign(item: Item, selection: any): string {
-    let last: string = ""
+    let last = ""
     item?.lines!.forEach((line: any, i: number) => {
         if (!selection || selection[i]?.start !== undefined) last = line.align
     })
@@ -224,7 +235,7 @@ export function getSlideText(slide: Slide) {
 
 // get text of item.text...
 export function getItemText(item: Item): string {
-    let text: string = ""
+    let text = ""
     if (!item?.lines) return ""
 
     item.lines.forEach((line) => {
@@ -239,7 +250,7 @@ export function getItemText(item: Item): string {
 }
 
 export function getItemTextArray(item: Item): string[] {
-    let text: string[] = []
+    const text: string[] = []
     if (!item?.lines) return []
 
     item.lines.forEach((line) => {
@@ -255,7 +266,7 @@ export function getItemTextArray(item: Item): string[] {
 
 // get chords map
 export function getItemChords(item: Item): string {
-    let text: string = ""
+    let text = ""
     if (!item?.lines) return ""
 
     item.lines.forEach((line) => {
@@ -270,7 +281,7 @@ export function getItemChords(item: Item): string {
 }
 
 export function getLineText(line: any): string {
-    let text: string = ""
+    let text = ""
     line?.text?.forEach((content: any) => {
         text += content.value
     })
@@ -279,7 +290,7 @@ export function getLineText(line: any): string {
 
 // seperate text with breaks
 export function getItemLines(item: Item): string[] {
-    let lines: string[] = []
+    const lines: string[] = []
     item.lines?.forEach((line) => {
         let text = ""
         line.text?.forEach((content) => (text += content.value))
@@ -308,12 +319,12 @@ export function getCaretCharacterOffsetWithin(element: any) {
     return caretOffset
 }
 
-export function setCaret(element: any, { line = 0, pos = 0 }, toEnd: boolean = false) {
+export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
     if (!element) return
     var range = document.createRange()
     var sel = window.getSelection()
 
-    let lineElem = element.childNodes[line]
+    const lineElem = element.childNodes[line]
     if (!lineElem) return
 
     // get child elem
@@ -344,14 +355,14 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd: boolean = f
     }
 
     // get end child elem
-    let lastEndChild = lastLineElem.childNodes[lastLineElem.childNodes.length - 1]
-    let currentEndTextLength = lastEndChild.innerText.length
+    const lastEndChild = lastLineElem.childNodes[lastLineElem.childNodes.length - 1]
+    const currentEndTextLength = lastEndChild.innerText.length
 
-    let breakElem = lastEndChild.childNodes[0]?.nodeName === "BR"
+    const breakElem = lastEndChild.childNodes[0]?.nodeName === "BR"
     if (line === 0 && breakElem) return
 
-    let startElem = lineElem.childNodes[childElem].childNodes[0]
-    let endElem = lastEndChild.childNodes[0]
+    const startElem = lineElem.childNodes[childElem].childNodes[0]
+    const endElem = lastEndChild.childNodes[0]
 
     range.setStart(startElem, pos - currentTextLength)
     if (toEnd) range.setEnd(endElem, currentEndTextLength)
@@ -406,7 +417,7 @@ export function createRange2(node: any, selection: { start: number; end: number 
 
     selection.forEach((a, i) => {
         if (a.start !== undefined && (!started || !ended)) {
-            let br = node.children[i]
+            const br = node.children[i]
             let pos: null | number = 0
             if (br.childNodes.length) {
                 new Array(...br.childNodes).forEach((text: any) => {
@@ -434,7 +445,7 @@ export function setCurrentCursorPosition(element: any, pos: number) {
 
         // pos = 90
         // pos = 142
-        let range: any = createRange(element, pos)
+        const range: any = createRange(element, pos)
 
         // let range: any = createRange(element.childNodes[0], 5)
 
@@ -446,7 +457,7 @@ export function setCurrentCursorPosition(element: any, pos: number) {
     }
 }
 
-export function setCaretPosition(elem: any, pos: number = 0) {
+export function setCaretPosition(elem: any, pos = 0) {
     if (elem.createTextRange) {
         var range = elem.createTextRange()
         range.move("character", pos)

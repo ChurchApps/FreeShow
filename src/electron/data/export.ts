@@ -2,16 +2,16 @@
 // Export as TXT or PDF
 // When exporting as PDF we create a new window and capture its content
 
-import { BrowserWindow, ipcMain } from "electron"
 import fs from "fs"
 import { join } from "path"
+import AdmZip from "adm-zip"
+import { BrowserWindow, ipcMain } from "electron"
 import { EXPORT, MAIN, STARTUP } from "../../types/Channels"
+import type { Message } from "../../types/Socket"
 import { isProd, toApp } from "../index"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, getTimePointString, makeDir, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
-import { exportOptions } from "../utils/windowOptions"
-import { Message } from "../../types/Socket"
 import { getAllShows } from "../utils/shows"
-import AdmZip from "adm-zip"
+import { exportOptions } from "../utils/windowOptions"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions: any = {
@@ -32,14 +32,14 @@ export function startExport(_e: any, msg: Message) {
 
     msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
 
-    let customExt = customJSONExtensions[msg.channel]
+    const customExt = customJSONExtensions[msg.channel]
     if (customExt) {
         exportJSON(msg.data.content, customExt, msg.data.path)
         return
     }
 
     if (msg.channel === "USAGE") {
-        let path = createFolder(join(msg.data.path, "Usage"))
+        const path = createFolder(join(msg.data.path, "Usage"))
         exportJSONFile(msg.data.content, path, getTimePointString())
         return
     }
@@ -63,9 +63,9 @@ export function startExport(_e: any, msg: Message) {
 }
 
 // only open once per session
-let systemOpened: boolean = false
-function doneWritingFile(err: any, exportFolder: string, toMain: boolean = true) {
-    let msg: string = "export.exported"
+let systemOpened = false
+function doneWritingFile(err: any, exportFolder: string, toMain = true) {
+    let msg = "export.exported"
 
     // open export location in system when completed
     if (!err && !systemOpened) {
@@ -99,7 +99,7 @@ export function generatePDF(path: string) {
     }
 }
 
-function exportMessage(message: string = "") {
+function exportMessage(message = "") {
     toApp(MAIN, { channel: "ALERT", data: message })
 
     exportWindow?.on("closed", () => (exportWindow = null))
@@ -149,7 +149,7 @@ export function exportJSONFile(content: any, path: string, name: string) {
 
 export function exportShow(data: any) {
     data.shows.forEach((show: any, i: number) => {
-        let id = show.id
+        const id = show.id
         delete show.id
 
         writeFile(join(data.path, show.name || id), ".show", JSON.stringify([id, show]), "utf-8", (err: any) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
@@ -166,18 +166,18 @@ export function exportTXT(data: any) {
 
 // WIP do this in frontend
 function getSlidesText(show: any) {
-    let text: string = ""
+    let text = ""
 
-    let slides: any[] = []
+    const slides: any[] = []
     show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide: any) => {
-        let slide = show.slides[layoutSlide.id]
+        const slide = show.slides[layoutSlide.id]
         if (!slide) return
 
         slides.push(slide)
         if (!slide.children) return
 
         slide.children.forEach((childId: string) => {
-            let slide = show.slides[childId]
+            const slide = show.slides[childId]
             slides.push(slide)
         })
     })
@@ -212,13 +212,13 @@ function getSlidesText(show: any) {
 // ----- ALL SHOWS -----
 
 function exportAllShows(data: any) {
-    let type = data.type
+    const type = data.type
 
     const supportedTypes = ["txt", "show"]
     if (!supportedTypes.includes(type)) return
 
-    let allShows: string[] = getAllShows({ path: data.showsPath })
-    let shows: any[] = []
+    const allShows: string[] = getAllShows({ path: data.showsPath })
+    const shows: any[] = []
     for (let i = 0; i < allShows.length; i++) {
         const showName: string = allShows[i]
         const showFilePath = join(data.showsPath, showName)
@@ -243,7 +243,7 @@ function exportAllShows(data: any) {
 // ----- PROJECT -----
 
 export function exportProject(data: any) {
-    toApp(MAIN, {channel: "ALERT", data: "export.exporting"})
+    toApp(MAIN, { channel: "ALERT", data: "export.exporting" })
 
     // create archive
     const zip = new AdmZip()
@@ -252,13 +252,13 @@ export function exportProject(data: any) {
     const files = data.file.files || []
     files.forEach((path: string) => {
         zip.addLocalFile(path)
-    });
+    })
 
     // add project file
     zip.addFile("data.json", Buffer.from(JSON.stringify(data.file)))
-    
+
     const outputPath = join(data.path, data.name + ".project")
-    zip.writeZip(outputPath, (err: any) => doneWritingFile(err, data.path));
+    zip.writeZip(outputPath, (err: any) => doneWritingFile(err, data.path))
 
     // plain JSON
     // writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", (err: any) => doneWritingFile(err, data.path))

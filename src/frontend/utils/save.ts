@@ -3,6 +3,8 @@ import { MAIN, STORE } from "../../types/Channels"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import {
+    events,
+    timers,
     activePopup,
     activeProject,
     alertUpdates,
@@ -23,7 +25,6 @@ import {
     driveData,
     driveKeys,
     errorHasOccured,
-    events,
     folders,
     formatNewShow,
     fullColors,
@@ -73,7 +74,6 @@ import {
     theme,
     themes,
     timeFormat,
-    timers,
     transitionData,
     triggers,
     undoHistory,
@@ -88,14 +88,21 @@ import { newToast } from "./common"
 import { syncDrive } from "./drive"
 import { send } from "./request"
 
-export function save(closeWhenFinished: boolean = false, customTriggers: { backup?: boolean; silent?: boolean; changeUserData?: any } = {}) {
+export function save(
+    closeWhenFinished = false,
+    customTriggers: {
+        backup?: boolean
+        silent?: boolean
+        changeUserData?: any
+    } = {}
+) {
     console.log("SAVING...")
     if (!customTriggers.backup) {
         newToast("$toast.saving")
         customActionActivation("save")
     }
 
-    let settings: { [key in SaveListSettings]: any } = {
+    const settings: { [key in SaveListSettings]: any } = {
         initialized: true,
         activeProject: get(activeProject),
         alertUpdates: get(alertUpdates),
@@ -144,7 +151,7 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
     }
 
     // settings exclusive to the local mashine (path names that shouldn't be synced with cloud)
-    let syncedSettings: { [key in SaveListSyncedSettings]: any } = {
+    const syncedSettings: { [key in SaveListSyncedSettings]: any } = {
         categories: get(categories),
         drawSettings: get(drawSettings),
         groups: get(groups),
@@ -174,7 +181,11 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         SHOWS: get(shows),
         STAGE_SHOWS: get(stageShows),
         // STORES
-        PROJECTS: { projects: get(projects), folders: get(folders), projectTemplates: get(projectTemplates) },
+        PROJECTS: {
+            projects: get(projects),
+            folders: get(folders),
+            projectTemplates: get(projectTemplates),
+        },
         OVERLAYS: get(overlays),
         TEMPLATES: get(templates),
         EVENTS: get(events),
@@ -216,7 +227,7 @@ export function saveComplete({ closeWhenFinished, customTriggers }: any) {
 
     if (customTriggers?.backup || customTriggers?.changeUserData) return
 
-    let mainFolderId = get(driveData)?.mainFolderId
+    const mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId || get(driveData)?.disabled === true) {
         if (closeWhenFinished) closeApp()
 
@@ -239,10 +250,10 @@ export function closeApp() {
 
 // GET SAVED STATE
 
-let initialized: boolean = false
+let initialized = false
 export function unsavedUpdater() {
-    let cachedValues: any = {}
-    let s = { ...saveList, folders, projects, showsCache, stageShows }
+    const cachedValues: any = {}
+    const s = { ...saveList, folders, projects, showsCache, stageShows }
 
     Object.keys(s).forEach((id) => {
         if (!s[id]) return
@@ -250,7 +261,7 @@ export function unsavedUpdater() {
         s[id].subscribe((a: any) => {
             if (customSavedListener[id] && a) {
                 a = customSavedListener[id](clone(a))
-                let stringObj = JSON.stringify(a)
+                const stringObj = JSON.stringify(a)
                 if (cachedValues[id] === stringObj) return
 
                 cachedValues[id] = stringObj

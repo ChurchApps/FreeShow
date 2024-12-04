@@ -2,7 +2,7 @@ import { translate } from "../../utils/language"
 
 // move data in array at given indexes to new pos
 export function groupToPos(array: any[], group: number[], pos: number): any[] {
-    let temp: any[] = []
+    const temp: any[] = []
     group.forEach((i) => {
         temp.push(array.splice(i, 1)[0])
     })
@@ -16,7 +16,7 @@ export function groupToPos(array: any[], group: number[], pos: number): any[] {
 
 // remove the given value from array
 export function removeData(array: any[], data: any): any[] {
-    let temp: any[] = []
+    const temp: any[] = []
     array.forEach((a) => {
         if (a !== data) temp.push(a)
     })
@@ -46,7 +46,7 @@ export function sortByTime(a, b) {
     return new Date(a).getTime() - new Date(b).getTime()
 }
 
-export function sortByTimeNew<T>(array: T, key: string = "time") {
+export function sortByTimeNew<T>(array: T, key = "time") {
     if (!Array.isArray(array)) return array
     return array.sort((a, b) => new Date(a[key]).getTime() - new Date(b[key]).getTime())
 }
@@ -54,7 +54,7 @@ export function sortByTimeNew<T>(array: T, key: string = "time") {
 // OBJETS
 
 // sort objects in array by name
-export function sortByName(arr: any[], key: string = "name") {
+export function sortByName(arr: any[], key = "name") {
     return arr.filter((a) => typeof a[key] === "string").sort((a, b) => a[key].localeCompare(b[key]))
 }
 
@@ -71,22 +71,22 @@ export function sortObject(object: any[], key: string): any[] {
 }
 
 // sort objects in array numerically
-export function sortObjectNumbers(object: {}[], key: string, reverse: boolean = false): {}[] {
+export function sortObjectNumbers(object: {}[], key: string, reverse = false): {}[] {
     return object.sort((a: any, b: any) => {
         return reverse ? b[key] - a[key] : a[key] - b[key]
     })
 }
 
 // sort any object.name by numbers in the front of the string
-export function sortByNameAndNumber(array: any[]) {    
+export function sortByNameAndNumber(array: any[]) {
     return array.sort((a, b) => {
-        let aName = ((a.quickAccess?.number || "") + " " + a.name || "").trim()
-        let bName = ((b.quickAccess?.number || "") + " " + b.name || "").trim()
+        const aName = ((a.quickAccess?.number || "") + " " + a.name || "").trim()
+        const bName = ((b.quickAccess?.number || "") + " " + b.name || "").trim()
 
         // get only number part if available
         const extractNumber = (str) => {
             const match = str.toString().match(/\d+/)
-            return match ? parseInt(match[0], 10) : Infinity
+            return match ? Number.parseInt(match[0], 10) : Number.POSITIVE_INFINITY
         }
         const quickAccessNumberA = extractNumber(a.quickAccess?.number || "")
         const quickAccessNumberB = extractNumber(b.quickAccess?.number || "")
@@ -97,8 +97,8 @@ export function sortByNameAndNumber(array: any[]) {
         // get numbers in front of name
         const matchA = aName.match(/^\d+/)
         const matchB = bName.match(/^\d+/)
-        const numA = matchA ? parseInt(matchA[0], 10) : Infinity
-        const numB = matchB ? parseInt(matchB[0], 10) : Infinity
+        const numA = matchA ? Number.parseInt(matchA[0], 10) : Number.POSITIVE_INFINITY
+        const numB = matchB ? Number.parseInt(matchB[0], 10) : Number.POSITIVE_INFINITY
 
         if (numA !== numB) return numA - numB
 
@@ -121,7 +121,7 @@ export function sortFilenames(filenames) {
         if (nameComparison !== 0) return nameComparison
 
         // compare any numbers
-        const numComparison = (parseInt(numA) || 0) - (parseInt(numB) || 0)
+        const numComparison = (Number.parseInt(numA) || 0) - (Number.parseInt(numB) || 0)
         if (numComparison !== 0) return numComparison
 
         // compare extensions at last
@@ -134,7 +134,10 @@ export function sortFilenames(filenames) {
 // move keys to IDs in object and return array
 export function keysToID(object: { [key: string]: any }): any[] {
     if (!object) return []
-    let newObjects: any[] = Object.entries(object).map(([id, a]) => ({ ...a, id }))
+    const newObjects: any[] = Object.entries(object).map(([id, a]) => ({
+        ...a,
+        id,
+    }))
     return newObjects
 }
 
@@ -153,7 +156,7 @@ export function removeDeleted<T>(object: T): T {
 export function removeDuplicateValues<T>(obj: T): T {
     if (typeof obj !== "object") return obj
 
-    let uniqueObj: T = {} as T
+    const uniqueObj: T = {} as T
     const valueSet = new Set()
 
     for (const [key, value] of Object.entries(obj!)) {

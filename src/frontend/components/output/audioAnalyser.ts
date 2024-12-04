@@ -105,7 +105,7 @@ export function audioAnalyser(analyser: any) {
 
 function channels(analyser: any) {
     // let audioChannels: { left: number; right: number } = { left: 0, right: 0 }
-    let channel: number = 0
+    let channel = 0
 
     // TODO: no interval?
     var array = new Uint8Array(analyser.fftSize)
@@ -117,7 +117,7 @@ function channels(analyser: any) {
     var average = 0
     var max = 0
     for (let i = 0; i < array.length; i++) {
-        let a = Math.abs(array[i] - 128)
+        const a = Math.abs(array[i] - 128)
         average += a
         max = Math.max(max, a)
     }
@@ -139,9 +139,12 @@ function channels(analyser: any) {
     analyser.getByteFrequencyData(array)
     analyser.maxDecibels = -10
     // analyser.maxDecibels = 0
-    let value = array[0]
-    let percent = value / 255
-    let dB = analyser.minDecibels + (analyser.maxDecibels - analyser.minDecibels) * percent
+    const value = array[0]
+    const percent = value / 255
+    const dB = analyser.minDecibels + (analyser.maxDecibels - analyser.minDecibels) * percent
 
-    return { volume: channel, dB: { value: dB, min: analyser.minDecibels, max: analyser.maxDecibels } }
+    return {
+        volume: channel,
+        dB: { value: dB, min: analyser.minDecibels, max: analyser.maxDecibels },
+    }
 }

@@ -34,26 +34,26 @@ interface Words {
 }
 
 export function convertEasyWorship(data: any) {
-    let categoryId = createCategory("EasyWorship")
+    const categoryId = createCategory("EasyWorship")
 
-    let songs = data.find((a: any) => a.content.song)?.content.song
-    let songsWords = data.find((a: any) => a.content.word)?.content.word
+    const songs = data.find((a: any) => a.content.song)?.content.song
+    const songsWords = data.find((a: any) => a.content.word)?.content.word
     if (!songsWords) {
         newToast("$toast.no_songswords_easyworship")
         return
     }
 
     let i = 0
-    let importingText = get(dictionary).popup?.importing || "Importing"
+    const importingText = get(dictionary).popup?.importing || "Importing"
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     asyncLoop()
     function asyncLoop() {
-        let words: Words = songsWords[i]
-        let song: Song | null = songs?.find((a: Song) => a.rowid === words.song_id) || null
+        const words: Words = songsWords[i]
+        const song: Song | null = songs?.find((a: Song) => a.rowid === words.song_id) || null
 
-        let percentage: string = ((i / songsWords.length) * 100).toFixed()
+        const percentage: string = ((i / songsWords.length) * 100).toFixed()
         activePopup.set("alert")
         alertMessage.set(importingText + " " + i + "/" + songsWords.length + " (" + percentage + "%)" + "<br>" + (song?.title || ""))
 
@@ -63,8 +63,8 @@ export function convertEasyWorship(data: any) {
             return
         }
 
-        let layoutID = uid()
-        let show = new ShowObj(false, categoryId, layoutID)
+        const layoutID = uid()
+        const show = new ShowObj(false, categoryId, layoutID)
         if (song) {
             show.meta = {
                 title: song?.title || "",
@@ -74,17 +74,23 @@ export function convertEasyWorship(data: any) {
             }
         }
 
-        let { slides, layout }: any = createSlides(words)
+        const { slides, layout }: any = createSlides(words)
 
         // if (!Object.keys(slides).length || !layout.length) {
         //   console.log("ERROR " + i + ", " + song?.title, songsWords, words, slides)
         // }
 
-        let showId = song?.song_uid || uid()
+        const showId = song?.song_uid || uid()
 
         show.slides = slides
-        show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song?.description || "", slides: layout } }
-        let allText = getSlidesText(slides).slice(0, 20)
+        show.layouts = {
+            [layoutID]: {
+                name: get(dictionary).example?.default || "",
+                notes: song?.description || "",
+                slides: layout,
+            },
+        }
+        const allText = getSlidesText(slides).slice(0, 20)
         show.name = checkName(song?.title || allText || showId, showId)
         show.settings.template = "default"
 
@@ -105,9 +111,9 @@ const replaceCodes: any = {
 }
 
 function decodeString(input) {
-    let regex = /u(\d+)\?/g
+    const regex = /u(\d+)\?/g
 
-    let decodedString = input.replace(regex, (_match, number) => {
+    const decodedString = input.replace(regex, (_match, number) => {
         return String.fromCharCode(Number(number))
     })
 
@@ -115,11 +121,11 @@ function decodeString(input) {
 }
 
 function createSlides({ words }: Words) {
-    let slides: any = {}
-    let layout: any[] = []
+    const slides: any = {}
+    const layout: any[] = []
 
     // format
-    let newSlides: any[] = []
+    const newSlides: any[] = []
     let lines: any[] = []
 
     // .replaceAll('"', '\\"')
@@ -138,14 +144,14 @@ function createSlides({ words }: Words) {
 
     let splitString = "li0fi0ri0sb0slsa0 "
     if (words.indexOf(splitString) < 0) splitString = "sdfsauto"
-    let splitted = words?.split(splitString)
+    const splitted = words?.split(splitString)
     // console.log(splitted)
     splitted.forEach((text: any) => {
         // if (text.includes("plainf1fntnamaut")) {
         // let sliced: string = text.slice(text.indexOf("t ") + 2, text.lastIndexOf("par"))
         // <SIDESKIFT>
         // sdewtemplatestyle101
-        let sliced: string = text.slice(text.indexOf(" "), text.indexOf("par")).replaceAll("plainf1fntnamaut ", "").trim()
+        const sliced: string = text.slice(text.indexOf(" "), text.indexOf("par")).replaceAll("plainf1fntnamaut ", "").trim()
 
         // console.log(text.includes("plainf") && sliced.length, sliced)
         if (sliced.length) {
@@ -170,7 +176,7 @@ function createSlides({ words }: Words) {
     newSlides?.forEach((lines: any) => {
         if (!lines.length) lines = [""]
         if (lines.length) {
-            let id: string = uid()
+            const id: string = uid()
             let group = lines[0]
                 .replace(/[0-9:]/g, "")
                 .toLowerCase()
@@ -179,9 +185,9 @@ function createSlides({ words }: Words) {
                 // console.log("REMOVE FIRST", lines)
                 lines.shift()
             } else {
-                let found: boolean = false
+                let found = false
                 Object.keys(get(groups)).forEach((key) => {
-                    let g = get(groups)[key]
+                    const g = get(groups)[key]
                     if (
                         g.default &&
                         get(dictionary)
@@ -197,10 +203,13 @@ function createSlides({ words }: Words) {
             }
 
             layout.push({ id })
-            let items = [
+            const items = [
                 {
                     style: "left:50px;top:120px;width:1820px;height:840px;",
-                    lines: lines.map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
+                    lines: lines.map((a: any) => ({
+                        align: "",
+                        text: [{ style: "", value: a }],
+                    })),
                 },
             ]
             slides[id] = {
@@ -211,7 +220,7 @@ function createSlides({ words }: Words) {
                 items,
             }
 
-            let globalGroup = getGlobalGroup(group)
+            const globalGroup = getGlobalGroup(group)
             slides[id].globalGroup = globalGroup || "verse"
         }
     })

@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { ShowObj } from "../../classes/Show"
 import {
+    events,
     activeDrawerTab,
     activeProject,
     activeRename,
@@ -11,7 +12,6 @@ import {
     currentOutputSettings,
     dictionary,
     drawerTabsData,
-    events,
     focusMode,
     folders,
     globalTags,
@@ -20,9 +20,9 @@ import {
     openedFolders,
     overlays,
     playerVideos,
-    projects,
     projectTemplates,
     projectView,
+    projects,
     shows,
     showsCache,
     special,
@@ -36,12 +36,12 @@ import { EMPTY_CATEGORY, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PR
 import { getWeekNumber } from "../drawer/calendar/calendar"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
+import { addToPos } from "./mover"
 import { isOutCleared } from "./output"
 import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
 import { addZero, getMonthName, getWeekday } from "./time"
-import { addToPos } from "./mover"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -73,11 +73,11 @@ export const _updaters = {
             }
 
             // find any stage output window linked to this stage layout
-            let outputId = Object.entries(get(outputs)).find(([_id, output]) => output.stageOutput === id)?.[0] || ""
+            const outputId = Object.entries(get(outputs)).find(([_id, output]) => output.stageOutput === id)?.[0] || ""
             if (!outputId) return
 
             // get first stage layout
-            let stageOutput = sortByName(keysToID(get(stageShows))).filter((a) => a.id !== id)[0] || null
+            const stageOutput = sortByName(keysToID(get(stageShows))).filter((a) => a.id !== id)[0] || null
             if (!stageOutput) return
 
             // set to new stage output
@@ -93,7 +93,12 @@ export const _updaters = {
         empty: EMPTY_PROJECT,
         cloudCombine: true,
         initialize: (data) => {
-            return replaceEmptyValues(data, { name: getProjectName(), created: Date.now(), modified: Date.now(), used: Date.now() })
+            return replaceEmptyValues(data, {
+                name: getProjectName(),
+                created: Date.now(),
+                modified: Date.now(),
+                used: Date.now(),
+            })
         },
         select: (id: string, { data }: any, initializing: boolean) => {
             activeProject.set(id)
@@ -134,7 +139,10 @@ export const _updaters = {
         empty: EMPTY_PROJECT_FOLDER,
         cloudCombine: true,
         initialize: (data) => {
-            return replaceEmptyValues(data, { created: Date.now(), modified: Date.now() })
+            return replaceEmptyValues(data, {
+                created: Date.now(),
+                modified: Date.now(),
+            })
         },
         select: (id: string, { data, changed }: any, initializing: boolean) => {
             // open parent folders if closed
@@ -176,20 +184,20 @@ export const _updaters = {
             }
 
             // remove projects & folders inside
-            let parentId = get(folders)[id]?.parent
+            const parentId = get(folders)[id]?.parent
             if (!parentId) return
 
-            let parents: any = { project: [], folder: [] }
+            const parents: any = { project: [], folder: [] }
             projects.update((a) => findAllParents(a, "project"))
             folders.update((a) => findAllParents(a, "folder"))
 
             return parents
 
             function findAllParents(items: any, type: "project" | "folder") {
-                let found: number = -1
+                let found = -1
                 do {
                     if (found > -1) {
-                        let key = Object.keys(items)[found]
+                        const key = Object.keys(items)[found]
                         parents[type].push({ id: key, parent: items[key].parent })
                         items[key].parent = parentId
                     }
@@ -261,9 +269,19 @@ export const _updaters = {
             activeRename.set("category_" + get(activeDrawerTab) + "_" + id)
         },
     },
-    category_media: { store: mediaFolders, ...getDefaultCategoryUpdater("media") },
-    category_audio: { store: audioFolders, ...getDefaultCategoryUpdater("audio") },
-    audio_playlists: { store: audioPlaylists, ...getDefaultCategoryUpdater("audio"), empty: { name: "", songs: [] } },
+    category_media: {
+        store: mediaFolders,
+        ...getDefaultCategoryUpdater("media"),
+    },
+    category_audio: {
+        store: audioFolders,
+        ...getDefaultCategoryUpdater("audio"),
+    },
+    audio_playlists: {
+        store: audioPlaylists,
+        ...getDefaultCategoryUpdater("audio"),
+        empty: { name: "", songs: [] },
+    },
     audio_playlist_key: { store: audioPlaylists },
 
     overlay: {
@@ -312,7 +330,7 @@ export const _updaters = {
         store: events,
         empty: EMPTY_EVENT,
         deselect: (id: string, data: any) => {
-            let event = get(events)[id]
+            const event = get(events)[id]
             if (!event) return
             if (data.data?.repeat === true && data.previousData?.repeat === false) {
                 // TODO: delete repeated...
@@ -328,7 +346,7 @@ export const _updaters = {
         store: showsCache,
         empty: new ShowObj(),
         initialize: (data: any) => {
-            let replacer: any = {}
+            const replacer: any = {}
 
             // template
             let template = _show().get("settings.template") || null
@@ -346,7 +364,7 @@ export const _updaters = {
         },
         select: (id: string, data: any) => {
             // add to current(stored) project
-            let showRef: any = { id, type: "show" }
+            const showRef: any = { id, type: "show" }
             if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
                 projects.update((p) => {
                     if (data.remember.index !== undefined && p[data.remember.project].shows.length > data.remember.index) {
@@ -370,7 +388,12 @@ export const _updaters = {
 
             // update shows list (same as showsCache, but with less data)
             shows.update((a) => {
-                a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps, quickAccess: data.data.quickAccess || {} }
+                a[id] = {
+                    name: data.data.name,
+                    category: data.data.category,
+                    timestamps: data.data.timestamps,
+                    quickAccess: data.data.quickAccess || {},
+                }
                 if (data.data.private) a[id].private = true
                 if (data.data.locked) a[id].locked = true
 
@@ -424,7 +447,7 @@ export const _updaters = {
         deselect: (id: string, { subkey }: any) => {
             if (_show(id).get("settings.activeLayout") !== subkey) return
 
-            let firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((id) => id !== subkey)[0]
+            const firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((id) => id !== subkey)[0]
             if (firstLayoutId) _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
         },
     },
@@ -495,14 +518,14 @@ export const _updaters = {
         },
         deselect: () => {
             setTimeout(() => {
-                let allNormalOutputs = Object.keys(get(outputs)).filter((outputId) => {
-                    let output = get(outputs)[outputId]
+                const allNormalOutputs = Object.keys(get(outputs)).filter((outputId) => {
+                    const output = get(outputs)[outputId]
                     return !output.isKeyOutput && !output.stageOutput
                 })
 
                 if (allNormalOutputs.length > 0) {
                     // enable if no enabled
-                    let allEnabled = allNormalOutputs.filter((id) => get(outputs)[id].enabled)
+                    const allEnabled = allNormalOutputs.filter((id) => get(outputs)[id].enabled)
                     if (!allEnabled.length) {
                         outputs.update((a) => {
                             a[allNormalOutputs[0]].enabled = true
@@ -514,7 +537,16 @@ export const _updaters = {
 
                 // create output if no normal outputs (in case stage outputs are still active)
                 outputs.update((a) => {
-                    a.default = { enabled: true, active: true, name: get(dictionary).theme?.primary || "Primary", color: "#F0008C", bounds: { x: 0, y: 0, width: 1920, height: 1080 }, screen: null, style: "default", show: {} }
+                    a.default = {
+                        enabled: true,
+                        active: true,
+                        name: get(dictionary).theme?.primary || "Primary",
+                        color: "#F0008C",
+                        bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+                        screen: null,
+                        style: "default",
+                        show: {},
+                    }
                     return a
                 })
             }, 100)
@@ -526,10 +558,10 @@ function updateTransparentColors(id: string) {
     themes.update((a) => {
         Object.entries(a[id].colors).forEach(([subId, color]: any) => {
             if (!converts[subId]) return
-            let transparentColors: any[] = converts[subId]
+            const transparentColors: any[] = converts[subId]
 
             transparentColors.forEach(({ id: colorId, opacity }: any) => {
-                let rgba: string | null = makeTransparent(color, opacity)
+                const rgba: string | null = makeTransparent(color, opacity)
 
                 a[id].colors[colorId] = rgba
             })
@@ -545,19 +577,19 @@ const converts: any = {
         { id: "focus", opacity: 0.1 },
     ],
 }
-function makeTransparent(value: string, amount: number = 0.5) {
-    let rgb = hexToRgb(value)
+function makeTransparent(value: string, amount = 0.5) {
+    const rgb = hexToRgb(value)
     if (!rgb) return null
-    let newValue: string = `rgb(${rgb.r} ${rgb.g} ${rgb.b} / ${amount})`
+    const newValue = `rgb(${rgb.r} ${rgb.g} ${rgb.b} / ${amount})`
     return newValue
 }
 function hexToRgb(hex: string) {
-    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
     return result
         ? {
-              r: parseInt(result[1], 16),
-              g: parseInt(result[2], 16),
-              b: parseInt(result[3], 16),
+              r: Number.parseInt(result[1], 16),
+              g: Number.parseInt(result[2], 16),
+              b: Number.parseInt(result[3], 16),
           }
         : null
 }
@@ -571,21 +603,41 @@ function replaceEmptyValues(object: any, replacer: any) {
 }
 
 export const projectReplacers = [
-    { id: "DD", title: get(dictionary).calendar?.day || "Day", value: (date) => addZero(date.getDate()) },
-    { id: "MM", title: get(dictionary).calendar?.month || "Month", value: (date) => addZero(date.getMonth() + 1) },
-    { id: "YY", title: get(dictionary).calendar?.year || "Year", value: (date) => date.getFullYear().toString().slice(-2) },
+    {
+        id: "DD",
+        title: get(dictionary).calendar?.day || "Day",
+        value: (date) => addZero(date.getDate()),
+    },
+    {
+        id: "MM",
+        title: get(dictionary).calendar?.month || "Month",
+        value: (date) => addZero(date.getMonth() + 1),
+    },
+    {
+        id: "YY",
+        title: get(dictionary).calendar?.year || "Year",
+        value: (date) => date.getFullYear().toString().slice(-2),
+    },
     { id: "YYYY", title: "Full year", value: (date) => date.getFullYear() },
     { id: "hh", title: "Hours", value: (date) => date.getHours() },
     { id: "mm", title: "Minutes", value: (date) => date.getMinutes() },
     { id: "weeknum", title: "Week number", value: (date) => getWeekNumber(date) },
-    { id: "weekday", title: "Weekday", value: (date) => getWeekday(date.getDay(), get(dictionary), true) },
-    { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) },
+    {
+        id: "weekday",
+        title: "Weekday",
+        value: (date) => getWeekday(date.getDay(), get(dictionary), true),
+    },
+    {
+        id: "monthname",
+        title: "Name of month",
+        value: (date) => getMonthName(date.getMonth(), get(dictionary), true),
+    },
 ]
 export const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
 function getProjectName() {
     let name = get(special).default_project_name ?? DEFAULT_PROJECT_NAME
 
-    let date = new Date()
+    const date = new Date()
     projectReplacers.forEach((a) => {
         name = name.replaceAll(`{${a.id}}`, a.value(date))
     })

@@ -1,17 +1,17 @@
 import { BrowserWindow } from "electron"
 import { OUTPUT_CONSOLE, isMac, loadWindowContent, mainWindow, toApp } from "../.."
-import { Output } from "../../../types/Output"
+import { OUTPUT } from "../../../types/Channels"
+import type { Output } from "../../../types/Output"
+import { CaptureHelper } from "../../capture/CaptureHelper"
 import { NdiSender } from "../../ndi/NdiSender"
 import { setDataNDI } from "../../ndi/talk"
+import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
-import { OUTPUT } from "../../../types/Channels"
-import { CaptureHelper } from "../../capture/CaptureHelper"
-import { wait } from "../../utils/helpers"
 
 export class OutputLifecycle {
     static async createOutput(output: Output) {
-        let id: string = output.id || ""
+        const id: string = output.id || ""
 
         if (OutputHelper.getOutput(id)) {
             CaptureHelper.Lifecycle.stopCapture(id)
@@ -19,10 +19,22 @@ export class OutputLifecycle {
             return
         }
 
-        const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
+        const outputWindow = this.createOutputWindow(
+            {
+                ...output.bounds,
+                alwaysOnTop: output.alwaysOnTop !== false,
+                kiosk: output.kioskMode === true,
+                backgroundColor: output.transparent ? "#00000000" : "#000000",
+            },
+            id,
+            output.name
+        )
         //const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow, invisible: output.invisible })
+        OutputHelper.setOutput(id, {
+            window: outputWindow,
+            invisible: output.invisible,
+        })
         //OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds(output)
 
@@ -75,7 +87,7 @@ export class OutputLifecycle {
         }
 
         if (OUTPUT_CONSOLE) options.webPreferences.devTools = true
-        let window: BrowserWindow | null = new BrowserWindow(options)
+        const window: BrowserWindow | null = new BrowserWindow(options)
 
         // only win & linux
         // window.removeMenu() // hide menubar
@@ -142,7 +154,7 @@ export class OutputLifecycle {
         window.on("move", (e: any) => {
             if (!OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()
 
-            let bounds = window.getBounds()
+            const bounds = window.getBounds()
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
         })
 
@@ -150,7 +162,7 @@ export class OutputLifecycle {
         window.on("resize", (e: any) => {
             if (OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()
 
-            let bounds = window.getBounds()
+            const bounds = window.getBounds()
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
         })
     }

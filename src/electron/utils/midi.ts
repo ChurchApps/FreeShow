@@ -67,7 +67,7 @@ export async function receiveMidi(data: any) {
 
     try {
         // connect to the input and listen for notes!
-        let port = await JZZ().openMidiIn(data.input).or("Error opening MIDI listener: Device not found or not supported!")
+        const port = await JZZ().openMidiIn(data.input).or("Error opening MIDI listener: Device not found or not supported!")
         console.info("LISTENING FOR MIDI SIGNAL:", data)
 
         if (port.name()) openedPorts[data.id] = port
@@ -76,9 +76,16 @@ export async function receiveMidi(data: any) {
             if (!msg.toString().includes("Note")) return
 
             // console.log("CHECK IF NOTE ON/OFF", msg.toString()) // 00 00 00 -- Note Off
-            let type = msg.toString().includes("Off") ? "noteoff" : "noteon"
-            let values = { note: msg["1"], velocity: msg["2"], channel: (msg["0"] & 0x0f) + 1 }
-            toApp("MAIN", { channel: "RECEIVE_MIDI", data: { id: data.id, values, type } })
+            const type = msg.toString().includes("Off") ? "noteoff" : "noteon"
+            const values = {
+                note: msg["1"],
+                velocity: msg["2"],
+                channel: (msg["0"] & 0x0f) + 1,
+            }
+            toApp("MAIN", {
+                channel: "RECEIVE_MIDI",
+                data: { id: data.id, values, type },
+            })
         })
     } catch (err) {
         console.error(err)
@@ -99,7 +106,7 @@ function closeMidiOutPorts() {
     openedOutputPorts = {}
 }
 
-export function closeMidiInPorts(id: string = "") {
+export function closeMidiInPorts(id = "") {
     if (id && openedPorts[id]) {
         openedPorts[id].close()
         delete openedPorts[id]

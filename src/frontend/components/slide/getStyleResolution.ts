@@ -29,13 +29,13 @@ export function getStyleResolution(resolution: Resolution, width: any, height: a
     // zoom
     if (zoom) {
         if (style.width) {
-            let end = style.width.replace(/[0-9]/g, "")
-            let width = style.width.replace(/\D+/g, "")
+            const end = style.width.replace(/[0-9]/g, "")
+            const width = style.width.replace(/\D+/g, "")
             style.width = width / zoom + end
         }
         if (style.height) {
-            let end = style.height.replace(/[0-9]/g, "")
-            let height = style.height.replace(/\D+/g, "")
+            const end = style.height.replace(/[0-9]/g, "")
+            const height = style.height.replace(/\D+/g, "")
             style.height = height / zoom + end
         }
     }

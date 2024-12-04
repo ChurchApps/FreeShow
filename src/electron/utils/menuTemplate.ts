@@ -1,7 +1,7 @@
-import { MAIN } from "../../types/Channels"
-import { isMac, isProd, toApp } from ".."
-import { openURL } from "./responses"
 import { app } from "electron"
+import { isMac, isProd, toApp } from ".."
+import { MAIN } from "../../types/Channels"
+import { openURL } from "./responses"
 
 const mc = (id: string) => toApp(MAIN, { channel: "MENU", data: id })
 
@@ -26,7 +26,10 @@ export function template(strings: any): any {
         submenu: [
             { label: strings.actions?.save || "Save", click: () => mc("save") }, // , accelerator: "CmdOrCtrl+S"
             { label: strings.actions?.import || "Import", click: () => mc("import") },
-            { label: strings.actions?.export || "Export", click: () => mc("export_more") },
+            {
+                label: strings.actions?.export || "Export",
+                click: () => mc("export_more"),
+            },
             { type: "separator" },
             { label: strings.main?.quit || "Quit", click: () => mc("quit") }, // , accelerator: isMac ? "CmdOrCtrl+Q" : ""
         ],
@@ -37,7 +40,10 @@ export function template(strings: any): any {
         submenu: [
             { label: strings.actions?.undo || "Undo", click: () => mc("undo") }, // , accelerator: "CmdOrCtrl+Z"
             { label: strings.actions?.redo || "Redo", click: () => mc("redo") }, // CommandOrControl+Shift+Z // , accelerator: "CmdOrCtrl+Y"
-            { label: strings.popup?.history || "History", click: () => mc("history") },
+            {
+                label: strings.popup?.history || "History",
+                click: () => mc("history"),
+            },
             { type: "separator" },
             { label: strings.actions?.cut || "Cut", click: () => mc("cut") },
             { label: strings.actions?.copy || "Copy", click: () => mc("copy") }, // , accelerator: "CmdOrCtrl+C"
@@ -45,14 +51,26 @@ export function template(strings: any): any {
             ...(isMac
                 ? [
                       // { label: lang.actions?.pasteAndMatchStyle || "Paste And Match Style", role: "pasteAndMatchStyle", click: () => mc("paste") },
-                      { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
+                      {
+                          label: strings.actions?.delete || "Delete",
+                          click: () => mc("delete"),
+                      },
                       // WIP: these shortcuts (CMD+A) not working in the MAC file selector modal
-                      { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") }, //   , accelerator: "CmdOrCtrl+A"
+                      {
+                          label: strings.actions?.selectAll || "Select All",
+                          click: () => mc("selectAll"),
+                      }, //   , accelerator: "CmdOrCtrl+A"
                   ]
                 : [
-                      { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
+                      {
+                          label: strings.actions?.delete || "Delete",
+                          click: () => mc("delete"),
+                      },
                       { type: "separator" },
-                      { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") }, //   , accelerator: "CmdOrCtrl+A"
+                      {
+                          label: strings.actions?.selectAll || "Select All",
+                          click: () => mc("selectAll"),
+                      }, //   , accelerator: "CmdOrCtrl+A"
                   ]),
         ],
     }
@@ -61,8 +79,14 @@ export function template(strings: any): any {
         label: strings.titlebar?.view || "View",
         submenu: [
             ...(isProd ? [] : [{ role: "reload" }, { role: "toggleDevTools" }, { type: "separator" }]),
-            { label: strings.actions?.focus_mode || "Toggle Focus mode", click: () => mc("focus_mode") },
-            { label: strings.actions?.fullscreen || "Toggle Fullscreen", role: "togglefullscreen" },
+            {
+                label: strings.actions?.focus_mode || "Toggle Focus mode",
+                click: () => mc("focus_mode"),
+            },
+            {
+                label: strings.actions?.fullscreen || "Toggle Fullscreen",
+                role: "togglefullscreen",
+            },
             // { label: lang.actions?.resetZoom || "Reset Zoom", role: "resetZoom" },
             // { label: lang.actions?.zoomIn || "Zoom In", role: "zoomIn" },
             // { label: lang.actions?.zoomOut || "Zoom Out", role: "zoomOut" },
@@ -72,9 +96,18 @@ export function template(strings: any): any {
     const helpMenu = {
         label: strings.titlebar?.help || "Help",
         submenu: [
-            { label: strings.popup?.shortcuts || "Shortcuts", click: () => mc("shortcuts") },
-            { label: strings.main?.docs || "Docs", click: () => openURL("https://freeshow.app/docs") },
-            { label: strings.guide?.start || "Quick start guide", click: () => mc("quick_start_guide") },
+            {
+                label: strings.popup?.shortcuts || "Shortcuts",
+                click: () => mc("shortcuts"),
+            },
+            {
+                label: strings.main?.docs || "Docs",
+                click: () => openURL("https://freeshow.app/docs"),
+            },
+            {
+                label: strings.guide?.start || "Quick start guide",
+                click: () => mc("quick_start_guide"),
+            },
             { label: strings.main?.about || "About", click: () => mc("about") },
         ],
     }

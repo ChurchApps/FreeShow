@@ -13,10 +13,13 @@ const audioSamleRate = 48000
 
 export const captureAudio = () => {
     try {
-        let ac = new AudioContext({ latencyHint: "interactive", sampleRate: audioSamleRate })
+        const ac = new AudioContext({
+            latencyHint: "interactive",
+            sampleRate: audioSamleRate,
+        })
 
         /*  create a stereo audio destination  */
-        let dest = ac.createMediaStreamDestination()
+        const dest = ac.createMediaStreamDestination()
         dest.channelCount = audioChannelCount
         dest.channelCountMode = "explicit"
         dest.channelInterpretation = "speakers"
@@ -30,7 +33,9 @@ export const captureAudio = () => {
             standard OPUS encoding it does not. So, we intentionally have to stay with OPUS here,
             even if it causes extra decoding performance and theoretically (but not noticable)
             is also a lossy intermediate step.  */
-        let recorder = new MediaRecorder(dest.stream, { mimeType: 'audio/webm; codecs="opus"' })
+        const recorder = new MediaRecorder(dest.stream, {
+            mimeType: 'audio/webm; codecs="opus"',
+        })
         recorder.addEventListener("dataavailable", async (ev) => {
             const ab = await ev.data.arrayBuffer()
             const u8 = new Uint8Array(ab, 0, ab.byteLength)
@@ -231,6 +236,10 @@ function processAudio(buffer: Buffer) {
     if (!opusEncoder) opusEncoder = new Opus.OpusEncoder(sampleRate, noChannels)
     buffer = opusEncoder.decode(buffer)
 
-    let id = "WIP: get_id"
-    NdiSender.sendAudioBufferNDI(id, buffer, { sampleRate, noChannels, bytesForFloat32 })
+    const id = "WIP: get_id"
+    NdiSender.sendAudioBufferNDI(id, buffer, {
+        sampleRate,
+        noChannels,
+        bytesForFloat32,
+    })
 }

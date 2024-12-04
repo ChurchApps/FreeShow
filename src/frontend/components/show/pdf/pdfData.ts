@@ -1,8 +1,8 @@
 import { newToast } from "../../../utils/common"
 
 export async function getPages(pdfPath: string): Promise<number> {
-    let response = await fetch(pdfPath)
-    let data = await response.blob()
+    const response = await fetch(pdfPath)
+    const data = await response.blob()
 
     const reader = new FileReader()
 
@@ -22,7 +22,7 @@ export async function getViewportSizes(pdfPath: string): Promise<{ width: number
 
     let data: Blob
     try {
-        let response = await fetch(pdfPath)
+        const response = await fetch(pdfPath)
         data = await response.blob()
     } catch (err) {
         newToast(err + ": " + pdfPath)
@@ -40,7 +40,7 @@ export async function getViewportSizes(pdfPath: string): Promise<{ width: number
 
                 let viewports: { width: number; height: number }[] = []
                 for (let i = 0; i < boxMatch.length; i++) {
-                    let dimensions = getMediaBoxDimensions(boxMatch[i])
+                    const dimensions = getMediaBoxDimensions(boxMatch[i])
                     if (dimensions) viewports.push(dimensions)
                 }
 
@@ -55,9 +55,12 @@ export async function getViewportSizes(pdfPath: string): Promise<{ width: number
 
                 // some large PDFs have multiple portrait pages combined to one landscape
                 if (pageCount && pageCount < viewports.length) {
-                    let newViewports: any[] = []
+                    const newViewports: any[] = []
                     for (let i = 0; i < pageCount; i += 2) {
-                        newViewports.push({ width: viewports[i].width + (viewports[i + 1]?.width || 0), height: viewports[i].height })
+                        newViewports.push({
+                            width: viewports[i].width + (viewports[i + 1]?.width || 0),
+                            height: viewports[i].height,
+                        })
                     }
                     viewports = newViewports
                 }
@@ -74,7 +77,7 @@ export async function getViewportSizes(pdfPath: string): Promise<{ width: number
 
 function getPagesCount(dataURL: string) {
     const countMatch = dataURL.match(/\/Count\s+(\d+)/)
-    return countMatch ? parseInt(countMatch[1], 10) : 0
+    return countMatch ? Number.parseInt(countMatch[1], 10) : 0
 }
 
 // /MediaBox\n[\n0\n0\n960\n540\n] OR /MediaBox[ 0 0 960 540]
@@ -83,7 +86,7 @@ function getBoxes(dataURL: string) {
 
     for (const type of boxTypes) {
         const regex = new RegExp(`/${type}\\s*\\[([^\\]]+)\\]`, "g")
-        let boxes: string[] = []
+        const boxes: string[] = []
         let match
         while ((match = regex.exec(dataURL)) !== null) {
             boxes.push(match[0].replace(/\n/g, " "))

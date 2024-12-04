@@ -1,12 +1,12 @@
-import type { NativeImage, Size } from "electron"
 import os from "os"
+import type { NativeImage, Size } from "electron"
+import { toApp } from "../.."
 import { OUTPUT, OUTPUT_STREAM } from "../../../types/Channels"
 import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
 import { OutputHelper } from "../../output/OutputHelper"
 import { toServer } from "../../servers"
 import { CaptureHelper } from "../CaptureHelper"
-import { toApp } from "../.."
 
 export type Channel = {
     key: string
@@ -86,7 +86,7 @@ export class CaptureTransmitter {
         // check if image is the same as last once in a while
         // if it's the same don't send a frame until it has changed
         channel.lastCheck++
-        let compareImageCount = channel.imageIsSame ? 10 : this.checkImageCount
+        const compareImageCount = channel.imageIsSame ? 10 : this.checkImageCount
         if (channel.lastCheck > compareImageCount) {
             channel.lastCheck = 0
 
@@ -117,7 +117,14 @@ export class CaptureTransmitter {
             case "server":
                 // const options = OutputHelper.getOutput(captureId)?.captureOptions
                 // phone screen size
-                this.sendBufferToServer(captureId, image.resize({ width: size.width / 5, height: size.height / 5, quality: "good" }))
+                this.sendBufferToServer(
+                    captureId,
+                    image.resize({
+                        width: size.width / 5,
+                        height: size.height / 5,
+                        quality: "good",
+                    })
+                )
                 break
             case "stage":
                 this.sendBufferToMain(captureId, image)
@@ -131,7 +138,11 @@ export class CaptureTransmitter {
         const ratio = image.getAspectRatio()
         //this.ndiFrameCount++
         // WIP refresh on enable?
-        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.ndi || 10 })
+        NdiSender.sendVideoBufferNDI(captureId, buffer, {
+            size,
+            ratio,
+            framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.ndi || 10,
+        })
     }
 
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {
@@ -141,13 +152,12 @@ export class CaptureTransmitter {
         return image
     }
 
-    static sendToStageOutputs(msg: any, excludeId: string = "") {
+    static sendToStageOutputs(msg: any, excludeId = "") {
         ;[...new Set(this.stageWindows)].forEach((id) => id !== excludeId && OutputHelper.Send.sendToWindow(id, msg))
     }
 
     static sendToRequested(msg: any) {
-        let newList: any[] = []
-
+        const newList: any[] = []
         ;[...new Set(this.requestList)].forEach((data: any) => {
             data = JSON.parse(data)
 
@@ -174,7 +184,10 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        let msg = { channel: "BUFFER", data: { id: captureId, time: Date.now(), buffer, size } }
+        const msg = {
+            channel: "BUFFER",
+            data: { id: captureId, time: Date.now(), buffer, size },
+        }
         toApp(OUTPUT, msg)
         this.sendToStageOutputs(msg, captureId) // don't send to itself
         this.sendToRequested(msg)
@@ -198,7 +211,10 @@ export class CaptureTransmitter {
         if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
-        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, time: Date.now(), buffer, size } })
+        toServer(OUTPUT_STREAM, {
+            channel: "STREAM",
+            data: { id: outputId, time: Date.now(), buffer, size },
+        })
     }
 
     static requestPreview(data: any) {

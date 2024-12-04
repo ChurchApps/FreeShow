@@ -3,9 +3,9 @@ import { getExtension } from "../../helpers/media"
 
 // https://pixabay.com/api/docs/
 
-let cache: any = {}
+const cache: any = {}
 
-export async function loadFromPixabay(query: string = "", video: boolean = false): Promise<any[]> {
+export async function loadFromPixabay(query = "", video = false): Promise<any[]> {
     return new Promise((resolve) => {
         if (cache[query + video]) return resolve(cache[query + video])
 
@@ -22,7 +22,13 @@ export async function loadFromPixabay(query: string = "", video: boolean = false
                 hits = data.hits.map((media) => {
                     let path = media.largeImageURL
                     if (video) path = media.videos.medium.url
-                    return { path, previewUrl: video ? media.videos.small.thumbnail : media.previewURL, name: media.tags, extension: getExtension(path), credits: getPixabayCredits(media) }
+                    return {
+                        path,
+                        previewUrl: video ? media.videos.small.thumbnail : media.previewURL,
+                        name: media.tags,
+                        extension: getExtension(path),
+                        credits: getPixabayCredits(media),
+                    }
                 })
 
                 cache[query + video] = hits

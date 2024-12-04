@@ -13,7 +13,7 @@ export function importFSB(data: any[]) {
 
         if (!bible) return
 
-        let id: string = bible[0] || uid()
+        const id: string = bible[0] || uid()
         bible = bible[1] || bible
 
         scripturesCache.update((a) => {

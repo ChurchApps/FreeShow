@@ -36,7 +36,7 @@ export class Cursor {
         if (chars >= 0) {
             var selection = window.getSelection()
 
-            let range = Cursor._createRange(element, { count: chars })
+            const range = Cursor._createRange(element, { count: chars })
 
             if (range) {
                 range.collapse(false)

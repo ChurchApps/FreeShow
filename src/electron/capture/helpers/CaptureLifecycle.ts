@@ -1,6 +1,6 @@
-import { NativeImage } from "electron"
-import { CaptureHelper } from "../CaptureHelper"
+import type { NativeImage } from "electron"
 import { OutputHelper } from "../../output/OutputHelper"
+import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 
 export class CaptureLifecycle {
@@ -39,7 +39,7 @@ export class CaptureLifecycle {
         async function captureFrame() {
             if (!output?.captureOptions?.window || output.captureOptions.window.isDestroyed()) return
 
-            let image = await output.captureOptions.window.webContents.capturePage()
+            const image = await output.captureOptions.window.webContents.capturePage()
             processFrame(image)
 
             if (!output.captureOptions) return

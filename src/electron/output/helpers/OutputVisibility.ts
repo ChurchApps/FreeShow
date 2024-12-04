@@ -1,4 +1,4 @@
-import { BrowserWindow, Rectangle, screen } from "electron"
+import { type BrowserWindow, type Rectangle, screen } from "electron"
 import { mainWindow, toApp } from "../.."
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import { OutputHelper } from "../OutputHelper"
@@ -29,8 +29,8 @@ export class OutputVisibility {
 
         // don't auto position on mac (because of virtual)
         if (data.autoPosition && !data.force && !data.output?.forcedResolution?.width && process.platform !== "darwin") data.output.bounds = this.getSecondDisplay(data.output.bounds)
-        let bounds: Rectangle = data.output.bounds
-        let windowNotCoveringMain: boolean = this.amountCovered(bounds, mainWindow!.getBounds()) < 0.5
+        const bounds: Rectangle = data.output.bounds
+        const windowNotCoveringMain: boolean = this.amountCovered(bounds, mainWindow!.getBounds()) < 0.5
 
         if (data.enabled && bounds && (data.force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
             this.showWindow(window)
@@ -47,20 +47,20 @@ export class OutputVisibility {
     }
 
     static getSecondDisplay(bounds: Rectangle) {
-        let displays = screen.getAllDisplays()
+        const displays = screen.getAllDisplays()
         if (displays.length !== 2) return bounds
 
-        let mainWindowBounds = mainWindow!.getBounds()
-        let amountCoveredByWindow = this.amountCovered(displays[1].bounds, mainWindowBounds)
+        const mainWindowBounds = mainWindow!.getBounds()
+        const amountCoveredByWindow = this.amountCovered(displays[1].bounds, mainWindowBounds)
 
         let secondDisplay = displays[1]
         if (amountCoveredByWindow > 0.5) secondDisplay = displays[0]
 
-        let newBounds = secondDisplay.bounds
+        const newBounds = secondDisplay.bounds
 
         // window zoomed (sometimes it's correct even with custom scaling, but not always)
         // if windows overlap then something is wrong with the scaling
-        let scale = secondDisplay.scaleFactor || 1
+        const scale = secondDisplay.scaleFactor || 1
         if (scale !== 1 && this.amountCovered(displays[0].bounds, displays[1].bounds) > 0) {
             newBounds.width /= scale
             newBounds.height /= scale
@@ -104,7 +104,7 @@ export class OutputVisibility {
         if (!data) return
 
         // this is only needed if the output is being captured!! (has to reset for capture to work when window is hidden)
-        let captureEnabled = Object.values(OutputHelper.getOutput(data.id)?.captureOptions?.options || {}).find((a) => a === true)
+        const captureEnabled = Object.values(OutputHelper.getOutput(data.id)?.captureOptions?.options || {}).find((a) => a === true)
         if (!captureEnabled) return
 
         console.log("RESTARTING OUTPUT:", data.id)

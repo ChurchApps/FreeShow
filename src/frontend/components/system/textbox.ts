@@ -2,7 +2,7 @@ import { getStyles } from "./../helpers/style"
 
 const snapDistance: number = 8
 export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: any, styles: any = {}) {
-    let itemElem = mouse.e.target.closest(".item")
+    const itemElem = mouse.e.target.closest(".item")
     if (!itemElem.closest(".slide")) return
 
     if (e) {
@@ -14,15 +14,15 @@ export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: a
     else snapBox()
 
     function snapBox() {
-        let slideWidth = Math.round(itemElem.closest(".slide").offsetWidth / ratio)
-        let slideHeight = Math.round(itemElem.closest(".slide").offsetHeight / ratio)
+        const slideWidth = Math.round(itemElem.closest(".slide").offsetWidth / ratio)
+        const slideHeight = Math.round(itemElem.closest(".slide").offsetHeight / ratio)
 
         // slide snap
-        let xLines = [0, slideWidth / 2, slideWidth]
-        let yLines = [0, slideHeight / 2, slideHeight]
+        const xLines = [0, slideWidth / 2, slideWidth]
+        const yLines = [0, slideHeight / 2, slideHeight]
         // item snap
-        let xItems = [0, itemElem.offsetWidth / 2, itemElem.offsetWidth]
-        let yItems = [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
+        const xItems = [0, itemElem.offsetWidth / 2, itemElem.offsetWidth]
+        const yItems = [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
 
         // get other items pos
         ;[...itemElem.closest(".slide").querySelectorAll(".item")].filter((a) => !a.closest(".preview")).forEach(getItemLines)
@@ -32,7 +32,7 @@ export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: a
             if (item.id) id = item.id
             if (active.includes(id)) return
 
-            let style: any = getStyles(item.getAttribute("style"))
+            const style: any = getStyles(item.getAttribute("style"))
             Object.entries(style).map((s: any) => (style[s[0]] = Number(s[1].replace(/[^-0-9\.]+/g, ""))))
             xLines.push(style.left, style.left + style.width / 2, style.left + style.width)
             yLines.push(style.top, style.top + style.height / 2, style.top + style.height)
@@ -50,11 +50,11 @@ export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: a
         const side = id.includes("x") ? "left" : "top"
 
         allLines.forEach((l: number) => {
-            let style = Number(styles[side]?.toString().replace(/[^-0-9\.]+/g, ""))
-            let match: undefined | number = items.find((i: any) => style > l - i - margin && style < l - i + margin)
+            const style = Number(styles[side]?.toString().replace(/[^-0-9\.]+/g, ""))
+            const match: undefined | number = items.find((i: any) => style > l - i - margin && style < l - i + margin)
             if (match !== undefined) styles[side] = l - match
 
-            let linesInclude = lines
+            const linesInclude = lines
                 .join(".")
                 .replaceAll(",", "")
                 .includes(id + l)
@@ -79,10 +79,10 @@ export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: a
 }
 
 export function resizeBox(e: any, mouse: any, square: boolean, ratio: number, lines: any) {
-    let itemElem = mouse.e.target.closest(".item")
-    let styles: any = {}
+    const itemElem = mouse.e.target.closest(".item")
+    const styles: any = {}
     let store: null | number = null
-    let squareElem = mouse.e.target.closest(".square")
+    const squareElem = mouse.e.target.closest(".square")
 
     if (squareElem.classList[1].includes("w")) resizeLeft()
     if (squareElem.classList[1].includes("n")) resizeTop()
@@ -90,7 +90,7 @@ export function resizeBox(e: any, mouse: any, square: boolean, ratio: number, li
     if (squareElem.classList[1].includes("s")) resizeBottom()
 
     function resizeLeft() {
-        let newLeft: number = (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio - mouse.offset.x
+        const newLeft: number = (e.clientX - itemElem.closest(".slide").offsetLeft) / ratio - mouse.offset.x
         styles.left = newLeft
         store = styles.width = mouse.width - newLeft + mouse.left
     }
@@ -101,7 +101,7 @@ export function resizeBox(e: any, mouse: any, square: boolean, ratio: number, li
             return
         }
 
-        let newTop: number = (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y
+        const newTop: number = (e.clientY - itemElem.closest(".slide").offsetTop) / ratio - mouse.offset.y
         styles.top = newTop
         store = styles.height = mouse.height - newTop + mouse.top
     }

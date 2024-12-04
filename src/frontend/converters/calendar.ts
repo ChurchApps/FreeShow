@@ -1,9 +1,9 @@
 import { uid } from "uid"
 import type { Event } from "../../types/Calendar"
-import { splitDate } from "../components/helpers/time"
-import { events } from "../stores"
 import { createRepeatedEvents } from "../components/drawer/calendar/event"
 import { clone } from "../components/helpers/array"
+import { splitDate } from "../components/helpers/time"
+import { events } from "../stores"
 
 // https://github.com/adrianlee44/ical2json/blob/main/src/ical2json.ts
 const NEW_LINE = /\r\n|\n|\r/
@@ -37,17 +37,17 @@ interface VEvent {
 
 export function convertCalendar(data: any) {
     data.forEach(({ content }: any) => {
-        let object: any = convertToJSON(content)
+        const object: any = convertToJSON(content)
         // TODO: convert timezone
 
-        let icaEvents: VEvent[] = object.VCALENDAR?.[0]?.VEVENT || []
+        const icaEvents: VEvent[] = object.VCALENDAR?.[0]?.VEVENT || []
         if (!icaEvents.length) return
         console.log(icaEvents)
 
-        let newEvents: Event[] = icaEvents.map((event) => {
-            let fullDay: boolean = false
-            let startKey: string = Object.keys(event).find((a) => a.includes("DTSTART")) || ""
-            let endKey: string = Object.keys(event).find((a) => a.includes("DTEND")) || ""
+        const newEvents: Event[] = icaEvents.map((event) => {
+            let fullDay = false
+            const startKey: string = Object.keys(event).find((a) => a.includes("DTSTART")) || ""
+            const endKey: string = Object.keys(event).find((a) => a.includes("DTEND")) || ""
 
             let startDate: string = event[startKey] || ""
             let endDate: string = event[endKey] || ""
@@ -67,10 +67,10 @@ export function convertCalendar(data: any) {
                 endDate = addCharAtPos(endDate, "-", 4)
             }
 
-            let from = splitDate(new Date(startDate))
-            let to = splitDate(new Date(endDate))
+            const from = splitDate(new Date(startDate))
+            const to = splitDate(new Date(endDate))
 
-            let newEvent: Event = {
+            const newEvent: Event = {
                 type: "event",
                 name: event.SUMMARY,
                 color: "#FF5733",
@@ -89,9 +89,16 @@ export function convertCalendar(data: any) {
 
             // get repeats
             if (event.RRULE) {
-                let repeatData: { FREQ?: string; WKST?: "MO" | "SU"; UNTIL?: string; INTERVAL?: number; BYDAY?: string; COUNT?: string } = {}
+                const repeatData: {
+                    FREQ?: string
+                    WKST?: "MO" | "SU"
+                    UNTIL?: string
+                    INTERVAL?: number
+                    BYDAY?: string
+                    COUNT?: string
+                } = {}
                 event.RRULE.split(";").forEach((rule) => {
-                    let data = rule.split("=")
+                    const data = rule.split("=")
                     repeatData[data[0]] = data[1]
                 })
 
@@ -103,7 +110,12 @@ export function convertCalendar(data: any) {
                     date = new Date(date).toISOString().substring(0, 10)
                 }
 
-                const types = { DAILY: "day", WEEKLY: "week", MONTHLY: "month", YEARLY: "year" }
+                const types = {
+                    DAILY: "day",
+                    WEEKLY: "week",
+                    MONTHLY: "month",
+                    YEARLY: "year",
+                }
                 if (types[repeatData.FREQ || ""]) {
                     newEvent.repeat = true
                     newEvent.repeatData = {
@@ -131,7 +143,7 @@ export function convertCalendar(data: any) {
         // TODO: history ?
         events.update((a) => {
             newEvents.forEach((event) => {
-                let id: string = event.id || uid()
+                const id: string = event.id || uid()
                 delete event.id
                 a[id] = event
             })

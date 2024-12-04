@@ -51,7 +51,7 @@ export async function sendRestCommand(data: API_rest_command) {
         }
 
         //let result : String = await response.json();
-        let result: String = await response.text()
+        const result: string = await response.text()
         console.log(result)
 
         //return result;

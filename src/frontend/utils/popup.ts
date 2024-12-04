@@ -7,6 +7,7 @@ import AdvancedScreen from "../components/main/popups/AdvancedScreen.svelte"
 import Alert from "../components/main/popups/Alert.svelte"
 import Animate from "../components/main/popups/Animate.svelte"
 import AudioStream from "../components/main/popups/AudioStream.svelte"
+import CategoryAction from "../components/main/popups/CategoryAction.svelte"
 import ChangeIcon from "../components/main/popups/ChangeIcon.svelte"
 import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.svelte"
 import ChooseCamera from "../components/main/popups/ChooseCamera.svelte"
@@ -18,18 +19,15 @@ import CloudUpdate from "../components/main/popups/CloudUpdate.svelte"
 import Color from "../components/main/popups/Color.svelte"
 import Connect from "../components/main/popups/Connect.svelte"
 import CreatePlayer from "../components/main/popups/CreatePlayer.svelte"
-import CreateShow from "../components/main/popups/createShow/CreateShow.svelte"
 import DeleteDuplicatedShows from "../components/main/popups/DeleteDuplicatedShows.svelte"
 import DeleteShow from "../components/main/popups/DeleteShow.svelte"
 import EditEvent from "../components/main/popups/EditEvent.svelte"
 import EditList from "../components/main/popups/EditList.svelte"
-import Export from "../components/main/popups/export/Export.svelte"
 import FindReplace from "../components/main/popups/FindReplace.svelte"
 import History from "../components/main/popups/History.svelte"
 import Import from "../components/main/popups/Import.svelte"
 import ImportScripture from "../components/main/popups/ImportScripture.svelte"
 import Initialize from "../components/main/popups/Initialize.svelte"
-import Translate from "../components/main/popups/localization/Translate.svelte"
 import ManageColors from "../components/main/popups/ManageColors.svelte"
 import ManageIcons from "../components/main/popups/ManageIcons.svelte"
 import NextTimer from "../components/main/popups/NextTimer.svelte"
@@ -45,8 +43,10 @@ import Transition from "../components/main/popups/Transition.svelte"
 import Trigger from "../components/main/popups/Trigger.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
+import CreateShow from "../components/main/popups/createShow/CreateShow.svelte"
+import Export from "../components/main/popups/export/Export.svelte"
+import Translate from "../components/main/popups/localization/Translate.svelte"
 import { activePopup, popupData } from "../stores"
-import CategoryAction from "../components/main/popups/CategoryAction.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -102,7 +102,7 @@ export function waitForPopupData(popupId: Popups): Promise<any> {
 
     return new Promise((resolve) => {
         // check that popup is still active
-        let interval = setInterval(() => {
+        const interval = setInterval(() => {
             if (get(activePopup) !== popupId) finish(undefined)
         }, 1000)
 

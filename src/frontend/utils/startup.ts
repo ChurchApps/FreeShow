@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STARTUP, STORE } from "../../types/Channels"
 import { checkStartupActions } from "../components/actions/actions"
+import { getTimeFromInterval } from "../components/helpers/time"
 import { currentWindow, loaded, loadedState, special } from "../stores"
 import { startTracking } from "./analytics"
 import { wait } from "./common"
@@ -9,9 +10,8 @@ import { storeSubscriber } from "./listeners"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
-import { getTimeFromInterval } from "../components/helpers/time"
 
-let initialized: boolean = false
+let initialized = false
 export function startup() {
     window.api.receive(
         STARTUP,
@@ -20,7 +20,7 @@ export function startup() {
             initialized = true // only call this once per window
             destroy(STARTUP, "startup")
 
-            let type = msg.data
+            const type = msg.data
             currentWindow.set(type)
 
             if (type) loaded.set(true)
@@ -57,12 +57,12 @@ async function startupMain() {
 }
 
 function autoBackup() {
-    let interval = get(special).autoBackup || "never"
+    const interval = get(special).autoBackup || "never"
     if (interval === "never") return
 
-    let now = Date.now()
-    let lastBackup = get(special).autoBackupPrevious || 0
-    let minTimeToBackup = getTimeFromInterval(interval)
+    const now = Date.now()
+    const lastBackup = get(special).autoBackupPrevious || 0
+    const minTimeToBackup = getTimeFromInterval(interval)
 
     if (now - lastBackup > minTimeToBackup) {
         save(false, { backup: true, silent: true })

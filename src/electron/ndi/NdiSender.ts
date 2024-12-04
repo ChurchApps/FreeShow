@@ -33,7 +33,7 @@ export class NdiSender {
         delete this.NDI[id]
     }
 
-    static async createSenderNDI(id: string, title: string = "") {
+    static async createSenderNDI(id: string, title = "") {
         if (this.ndiDisabled || this.NDI[id]) return
         const grandiose = require("grandiose")
 
@@ -57,9 +57,12 @@ export class NdiSender {
             const conns = this.NDI[id].sender?.connections() || 0
             this.NDI[id].status = conns > 0 ? "connected" : "unconnected"
 
-            let newStatus = this.NDI[id].status + conns
+            const newStatus = this.NDI[id].status + conns
             if (newStatus !== this.NDI[id].previousStatus) {
-                toApp("NDI", { channel: "SEND_DATA", data: { id, status: this.NDI[id].status, connections: conns } })
+                toApp("NDI", {
+                    channel: "SEND_DATA",
+                    data: { id, status: this.NDI[id].status, connections: conns },
+                })
                 CaptureHelper.updateFramerate(id)
 
                 this.NDI[id].previousStatus = newStatus
@@ -79,7 +82,7 @@ export class NdiSender {
         }
 
         /*  optionally convert from BGRA to BGRX (no alpha channel)  */
-        let fourCC = (grandiose as any).FOURCC_BGRA
+        const fourCC = (grandiose as any).FOURCC_BGRA
         // if (!this.cfg.v) {
         //     util.ImageBufferAdjustment.BGRAtoBGRX(buffer)
         //     fourCC = grandiose.FOURCC_BGRX

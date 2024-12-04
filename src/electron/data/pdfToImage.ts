@@ -25,10 +25,10 @@ async function PDFtoIMG(data: { dataPath: string; path: string }) {
         }
     }
 
-    let outputPath = path.join(data.dataPath, dataFolderNames.imports, PDF.name)
+    const outputPath = path.join(data.dataPath, dataFolderNames.imports, PDF.name)
     makeDir(outputPath)
 
-    let images: string[] = []
+    const images: string[] = []
 
     for (let i = 0; i < imageBuffers.length; i++) {
         const image = imageBuffers[i]
@@ -37,5 +37,9 @@ async function PDFtoIMG(data: { dataPath: string; path: string }) {
         writeFileSync(p, image)
     }
 
-    if (images.length) toApp(MAIN, { channel: "IMAGES_TO_SHOW", data: { images, name: PDF.name } })
+    if (images.length)
+        toApp(MAIN, {
+            channel: "IMAGES_TO_SHOW",
+            data: { images, name: PDF.name },
+        })
 }

@@ -13,9 +13,9 @@ import {
     outLocked,
     outputs,
     overlays,
+    playScripture,
     playingAudio,
     playingMetronome,
-    playScripture,
     projects,
     refreshEditSlide,
     selected,
@@ -44,9 +44,9 @@ import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
-    let shows = get(sortedShowsList)
-    let sortedShows = sortByClosestMatch(shows, name)
-    let showId = sortedShows[0]?.id
+    const shows = get(sortedShowsList)
+    const sortedShows = sortByClosestMatch(shows, name)
+    const showId = sortedShows[0]?.id
     if (!showId) return
 
     activeShow.set({ id: showId, type: "show" })
@@ -58,18 +58,18 @@ export function selectShowByName(name: string) {
 export function gotoGroup(dataGroupId: string) {
     if (get(outLocked)) return
 
-    let outputId = getActiveOutputs(get(outputs))[0]
-    let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
-    let outSlide = currentOutput.out?.slide
-    let currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
+    const outputId = getActiveOutputs(get(outputs))[0]
+    const currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
+    const outSlide = currentOutput.out?.slide
+    const currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
     if (!currentShowId) return
 
-    let showRef = _show(currentShowId).layouts("active").ref()[0] || []
-    let groupIds = showRef.map((a) => a.id)
-    let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
+    const showRef = _show(currentShowId).layouts("active").ref()[0] || []
+    const groupIds = showRef.map((a) => a.id)
+    const showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
     if (!showGroups.length) return
 
-    let globalGroupIds: string[] = []
+    const globalGroupIds: string[] = []
     Object.keys(get(groups)).forEach((groupId: string) => {
         if (groupId !== dataGroupId) return
 
@@ -85,7 +85,7 @@ export function selectProjectByIndex(index: number) {
     if (index < 0) return
 
     // select project
-    let selectedProject = sortByName(removeDeleted(keysToID(get(projects))))[index]
+    const selectedProject = sortByName(removeDeleted(keysToID(get(projects))))[index]
     if (!selectedProject) {
         newToast(get(dictionary).toast?.midi_no_project + " " + index)
         return
@@ -95,10 +95,10 @@ export function selectProjectByIndex(index: number) {
 }
 
 export function selectSlideByIndex(index: number) {
-    let showRef = _show().layouts("active").ref()[0]
+    const showRef = _show().layouts("active").ref()[0]
     if (!showRef) return newToast("$toast.midi_no_show")
 
-    let slideRef = showRef[index]
+    const slideRef = showRef[index]
     if (!slideRef) return newToast(get(dictionary).toast?.midi_no_slide + " " + index)
 
     outputSlide(showRef, index)
@@ -106,7 +106,7 @@ export function selectSlideByIndex(index: number) {
 export function selectSlideByName(name: string) {
     let slides = _show().slides().get()
     // group numbers
-    let groupNums: any = {}
+    const groupNums: any = {}
     slides = slides
         .filter((a) => a.group)
         .map((a) => {
@@ -119,14 +119,14 @@ export function selectSlideByName(name: string) {
             return { ...a, group }
         })
 
-    let sortedSlides = sortByClosestMatch(slides, getLabelId(name, false), "group")
+    const sortedSlides = sortByClosestMatch(slides, getLabelId(name, false), "group")
     if (!sortedSlides[0]) return
 
-    let showRef = _show().layouts("active").ref()[0]
+    const showRef = _show().layouts("active").ref()[0]
     if (!showRef) return newToast("$toast.midi_no_show")
 
-    let index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
-    let slideRef = showRef[index]
+    const index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
+    const slideRef = showRef[index]
     if (!slideRef) return
 
     outputSlide(showRef, index)
@@ -136,8 +136,8 @@ function outputSlide(showRef, index) {
     if (get(outLocked)) return
 
     updateOut("active", index, showRef)
-    let showId = get(activeShow)!.id
-    let activeLayout = _show().get("settings.activeLayout")
+    const showId = get(activeShow)!.id
+    const activeLayout = _show().get("settings.activeLayout")
     setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
 }
 
@@ -147,8 +147,8 @@ function getSortedOverlays() {
 export function selectOverlayByIndex(index: number) {
     if (get(outLocked)) return
 
-    let sortedOverlays = getSortedOverlays()
-    let overlayId = sortedOverlays[index]?.id
+    const sortedOverlays = getSortedOverlays()
+    const overlayId = sortedOverlays[index]?.id
     if (!overlayId) return // newToast("$toast.action_no_id": action_id)
 
     setOutput("overlays", overlayId, true)
@@ -156,8 +156,8 @@ export function selectOverlayByIndex(index: number) {
 export function selectOverlayByName(name: string) {
     if (get(outLocked)) return
 
-    let sortedOverlays = sortByClosestMatch(getSortedOverlays(), name)
-    let overlayId = sortedOverlays[0]?.id
+    const sortedOverlays = sortByClosestMatch(getSortedOverlays(), name)
+    const overlayId = sortedOverlays[0]?.id
     if (!overlayId) return
 
     setOutput("overlays", overlayId, true)
@@ -228,31 +228,41 @@ export function getShowGroups(id: string) {
 export async function rearrangeGroups(data: API_rearrange) {
     await loadShows([data.showId])
 
-    let trigger = data.to > data.from ? "end" : ""
-    let pos = trigger === "end" ? 1 : 0
+    const trigger = data.to > data.from ? "end" : ""
+    const pos = trigger === "end" ? 1 : 0
 
-    let ref = _show(data.showId).layouts("active").ref()[0]
-    let dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
+    const ref = _show(data.showId).layouts("active").ref()[0]
+    const dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
     let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex - pos
     if (isNaN(dropIndex)) dropIndex = ref.length
 
-    const drag = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
-    const drop = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos } // , trigger, center: false
+    const drag = {
+        id: "slide",
+        data: [{ index: dragIndex, showId: data.showId }],
+    }
+    const drop = {
+        id: "slides",
+        data: { index: dropIndex },
+        index: dropIndex + pos,
+    } // , trigger, center: false
 
-    let h = dropActions.slide({ drag, drop }, {})
+    const h = dropActions.slide({ drag, drop }, {})
     if (h && h.id) history(h)
 }
 
 export async function addGroup(data: API_group) {
     await loadShows([data.showId])
 
-    selected.set({ id: "group", data: [{ id: data.groupId, showId: data.showId }] })
+    selected.set({
+        id: "group",
+        data: [{ id: data.groupId, showId: data.showId }],
+    })
     ondrop(null, "slide")
     selected.set({ id: null, data: [] })
 }
 
 export function setTemplate(templateId: string) {
-    let showId = get(activeShow)?.id
+    const showId = get(activeShow)?.id
     if (!showId) {
         // newToast("$empty.show")
         return
@@ -262,13 +272,17 @@ export function setTemplate(templateId: string) {
         return
     }
 
-    history({ id: "TEMPLATE", newData: { id: templateId, data: { createItems: true } }, location: { page: "none", override: "show#" + showId } })
+    history({
+        id: "TEMPLATE",
+        newData: { id: templateId, data: { createItems: true } },
+        location: { page: "none", override: "show#" + showId },
+    })
 }
 
 // PRESENTATION
 
 export function getClearedState() {
-    let o = get(outputs)
+    const o = get(outputs)
 
     const audio = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
     const background = isOutCleared("background", o)
@@ -284,7 +298,11 @@ export function getClearedState() {
 // "1.1.1" = "Gen 1:1"
 export function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
-    const ref = { book: Number(split[0]) - 1, chapter: Number(split[1]), verses: [split[2]] }
+    const ref = {
+        book: Number(split[0]) - 1,
+        chapter: Number(split[1]),
+        verses: [split[2]],
+    }
 
     setDrawerTabData("scripture", data.id)
     activeDrawerTab.set("scripture")
@@ -298,9 +316,9 @@ export function startScripture(data: API_scripture) {
 export function playMedia(data: API_media) {
     if (get(outLocked)) return
 
-    let outputId = getActiveOutputs(get(outputs))[0]
-    let currentOutput = get(outputs)[outputId] || {}
-    let currentStyle = getCurrentStyle(get(styles), currentOutput.style)
+    const outputId = getActiveOutputs(get(outputs))[0]
+    const currentOutput = get(outputs)[outputId] || {}
+    const currentStyle = getCurrentStyle(get(styles), currentOutput.style)
 
     const mediaStyle = getMediaStyle(get(media)[data.path], currentStyle)
 
@@ -309,7 +327,7 @@ export function playMedia(data: API_media) {
 
 // SPECIAL
 
-export function sortByClosestMatch(array: any[], value: string, key: string = "name") {
+export function sortByClosestMatch(array: any[], value: string, key = "name") {
     // the object key must contain the input string
     array = array.filter((a) => a[key] && a[key].toLowerCase().includes(value.toLowerCase()))
 

@@ -16,22 +16,28 @@ export function splitPath(path: string) {
 export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null): SlideData[] => {
     if (!showID) showID = get(activeShow)?.id || null
     if (!showID) return []
-    let currentShow: Show = get(showsCache)[showID]
+    const currentShow: Show = get(showsCache)[showID]
     if (!layoutID) layoutID = currentShow?.settings?.activeLayout
-    let layoutSlides: SlideData[] = []
+    const layoutSlides: SlideData[] = []
     if (currentShow?.layouts) {
         currentShow.layouts[layoutID]?.slides?.forEach((ls) => {
             if (ls && currentShow.slides[ls.id]) {
-                let slide: Slide = currentShow.slides[ls.id]
-                let newLS = { ...ls }
+                const slide: Slide = currentShow.slides[ls.id]
+                const newLS = { ...ls }
                 delete newLS.children
                 layoutSlides.push({ ...newLS, color: slide.color })
 
                 if (slide.children) {
                     slide.children.forEach((id: string) => {
                         if (ls.children?.[id]) {
-                            let slideData: any = ls.children[id]
-                            if (slideData) layoutSlides.push({ id, ...slideData, color: slide.color, parent: ls.id })
+                            const slideData: any = ls.children[id]
+                            if (slideData)
+                                layoutSlides.push({
+                                    id,
+                                    ...slideData,
+                                    color: slide.color,
+                                    parent: ls.id,
+                                })
                         } else layoutSlides.push({ id, color: slide.color, parent: ls.id })
                     })
                 }
@@ -43,17 +49,23 @@ export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null):
 
 export const GetLayoutRef = (showID: null | ID = null, layoutID: null | ID = null): any[] => {
     if (!showID) showID = get(activeShow)!.id
-    let currentShow: Show = get(showsCache)[showID]
+    const currentShow: Show = get(showsCache)[showID]
     if (!layoutID) layoutID = currentShow.settings.activeLayout
-    let layoutSlides: any[] = []
+    const layoutSlides: any[] = []
     if (currentShow) {
         currentShow.layouts[layoutID].slides.forEach((ls, i) => {
-            let slide: Slide = currentShow.slides[ls.id]
+            const slide: Slide = currentShow.slides[ls.id]
             if (slide) {
                 layoutSlides.push({ type: "parent", id: ls.id, index: i })
                 if (slide.children) {
                     slide.children.forEach((id: string, j) => {
-                        layoutSlides.push({ type: "child", id, parent: ls.id, layoutIndex: i, slideIndex: j })
+                        layoutSlides.push({
+                            type: "child",
+                            id,
+                            parent: ls.id,
+                            layoutIndex: i,
+                            slideIndex: j,
+                        })
                     })
                 }
             }

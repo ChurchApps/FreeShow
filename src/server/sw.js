@@ -15,7 +15,7 @@ var urlsToPrefetch = ["/", "styles.css", "client.js", "icon.png", "index.html"]
 
 var version = "1.0.0"
 
-self.addEventListener("install", function (event) {
+self.addEventListener("install", (event) => {
     console.log("WORKER: install event in progress.")
     event.waitUntil(
         /* The caches built-in is a promise-based API that helps you cache responses,
@@ -27,20 +27,20 @@ self.addEventListener("install", function (event) {
          one fell swoop later, when phasing out an older service worker.
       */
             .open(version + "fundamentals")
-            .then(function (cache) {
+            .then((cache) => {
                 /* After the cache is opened, we can fill it with the offline fundamentals.
            The method below will add all resources we've indicated to the cache,
            after making HTTP requests for each of them.
         */
                 return cache.addAll(urlsToPrefetch)
             })
-            .then(function () {
+            .then(() => {
                 console.log("WORKER: install completed")
             })
     )
 })
 
-self.addEventListener("fetch", function (event) {
+self.addEventListener("fetch", (event) => {
     console.log("WORKER: fetch event in progress.")
 
     /* We should only cache GET requests, and deal with the rest of method in the
@@ -64,7 +64,7 @@ self.addEventListener("fetch", function (event) {
          to the fetch request.
       */
             .match(event.request)
-            .then(function (cached) {
+            .then((cached) => {
                 /* Even if the response is in our cache, we go to the network as well.
            This pattern is known for producing "eventually fresh" responses,
            where we return cached responses immediately, and meanwhile pull
@@ -102,7 +102,7 @@ self.addEventListener("fetch", function (event) {
               */
                             cache.put(event.request, cacheCopy)
                         })
-                        .then(function () {
+                        .then(() => {
                             console.log("WORKER: fetch response stored in cache.", event.request.url)
                         })
 
@@ -143,7 +143,7 @@ self.addEventListener("fetch", function (event) {
     )
 })
 
-self.addEventListener("activate", function (event) {
+self.addEventListener("activate", (event) => {
     /* Just like with the install event, event.waitUntil blocks activate on a promise.
      Activation will fail unless the promise is fulfilled.
   */
@@ -155,15 +155,15 @@ self.addEventListener("activate", function (event) {
          cache keys.
       */
             .keys()
-            .then(function (keys) {
+            .then((keys) => {
                 // We return a promise that settles when all outdated caches are deleted.
                 return Promise.all(
                     keys
-                        .filter(function (key) {
+                        .filter((key) => {
                             // Filter by keys that don't start with the latest version prefix.
                             return !key.startsWith(version)
                         })
-                        .map(function (key) {
+                        .map((key) => {
                             /* Return a promise that's fulfilled
                  when each outdated cache is deleted.
               */
@@ -171,7 +171,7 @@ self.addEventListener("activate", function (event) {
                         })
                 )
             })
-            .then(function () {
+            .then(() => {
                 console.log("WORKER: activate completed.")
             })
     )

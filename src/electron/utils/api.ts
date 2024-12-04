@@ -1,6 +1,6 @@
+import http from "http"
 import { ipcMain } from "electron"
 import express from "express"
-import http from "http"
 import { Server } from "socket.io"
 import { uid } from "uid"
 import { toApp } from ".."
@@ -8,7 +8,7 @@ import { MAIN } from "../../types/Channels"
 import { waitUntilValueIsDefined } from "./helpers"
 
 const app = express()
-let servers: any = {}
+const servers: any = {}
 const DEFAULT_PORTS = { WebSocket: 5505, REST: 5506 }
 
 // WebSocket on 5506, REST on +1 (5506), but works with 5505 as well!
@@ -20,7 +20,7 @@ export function startWebSocketAndRest(port: number | undefined) {
 // WEBSOCKET
 
 export function startWebSocket(PORT: number | undefined) {
-    let server = (servers.WebSocket = http.createServer(app))
+    const server = (servers.WebSocket = http.createServer(app))
 
     if (!PORT) PORT = DEFAULT_PORTS.WebSocket
     server.listen(PORT, () => {
@@ -60,7 +60,7 @@ function connected(socket: any) {
         socket.emit("data", msg)
     })
 
-    function log(msg: string, isError: boolean = false) {
+    function log(msg: string, isError = false) {
         console.log(`WebSocket: ${msg}`)
         if (isError) socket.emit("error", msg)
     }
@@ -70,7 +70,7 @@ function connected(socket: any) {
 
 export function startRestListener(PORT: number | undefined) {
     if (!PORT) PORT = DEFAULT_PORTS.REST
-    let server = (servers.REST = app.listen(PORT, () => {
+    const server = (servers.REST = app.listen(PORT, () => {
         console.log(`REST: Listening for data at port ${PORT}`)
     }))
 
@@ -84,7 +84,11 @@ export function startRestListener(PORT: number | undefined) {
         // {action: ACTION_ID, ...{}}
         let data = req.body
         // ?action=ACTION_ID&data={}
-        if (!data.action && req.query.action) data = { action: req.query.action, ...JSON.parse((req.query.data || "{}") as string) }
+        if (!data.action && req.query.action)
+            data = {
+                action: req.query.action,
+                ...JSON.parse((req.query.data || "{}") as string),
+            }
 
         const returnData = await receivedData(data, (msg: string) => console.log(`REST: ${msg}`))
         if (!returnData) return
@@ -112,9 +116,9 @@ async function receivedData(data: any = {}, log: any) {
     return returnData
 }
 
-let returnDataObj: any = {}
+const returnDataObj: any = {}
 export function apiReturnData(data: any) {
-    let id = data.returnId
+    const id = data.returnId
     if (!id) return
 
     delete data.returnId
@@ -123,7 +127,7 @@ export function apiReturnData(data: any) {
 
 // CLOSE
 
-export function stopApiListener(id: string = "") {
+export function stopApiListener(id = "") {
     if (id) stop(id)
     else Object.keys(servers).forEach(stop)
 

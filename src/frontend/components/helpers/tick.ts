@@ -30,7 +30,14 @@ export function newSlideTimer(id: string, duration: number) {
     // , currentLine, lines
 
     slideTimers.update((a) => {
-        a[id] = { time: 0, paused: true, sliderTimer: null, autoPlay: true, max: duration, timer: new Timer(timerEnded, duration * 1000, id) }
+        a[id] = {
+            time: 0,
+            paused: true,
+            sliderTimer: null,
+            autoPlay: true,
+            max: duration,
+            timer: new Timer(timerEnded, duration * 1000, id),
+        }
         return a
     })
 
@@ -48,7 +55,7 @@ export function newSlideTimer(id: string, duration: number) {
         // outTransition.set(null)
 
         // get and reset active element
-        let activeElem: any = document.activeElement
+        const activeElem: any = document.activeElement
         if (activeElem) {
             setTimeout(() => {
                 activeElem.focus()
@@ -152,7 +159,7 @@ function sliderTime(id: any) {
         if (!options || !options.sliderTimer || !options.timer || options.paused) return
 
         slideTimers.update((a) => {
-            let remaining = options.remaining - (Date.now() - options.start)
+            const remaining = options.remaining - (Date.now() - options.start)
             a[id].time = options.max - remaining / 1000
             a[id].time = Math.min(a[id].time, options.max)
 

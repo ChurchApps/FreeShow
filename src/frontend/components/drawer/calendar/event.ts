@@ -7,30 +7,40 @@ import { actionData } from "../../actions/actionData"
 import { clone } from "../../helpers/array"
 import { history } from "../../helpers/history"
 
-export function createRepeatedEvents(event: Event, onlyMissing: boolean = false) {
+export function createRepeatedEvents(event: Event, onlyMissing = false) {
     // <!-- REPEAT EVERY: {1-10000}, {day, week, month, year} -->
     // <!-- REPEAT ON: {MO,TH,WE,TH,FR,SA,SU} (if "week") -->
     // <!-- ENDING: {date, after {10} times, never} -->
 
-    let data = event.repeatData!
-    let dates: string[][] = []
+    const data = event.repeatData!
+    const dates: string[][] = []
 
     let currentFromDate = new Date(event.from)
     let currentToDate = new Date(event.to)
     let endingDate = new Date(data.endingDate || "")
-    endingDate = setDate(currentFromDate, { date: endingDate.getDate(), month: endingDate.getMonth(), year: endingDate.getFullYear() })
+    endingDate = setDate(currentFromDate, {
+        date: endingDate.getDate(),
+        month: endingDate.getMonth(),
+        year: endingDate.getFullYear(),
+    })
 
     const increment = {
         day: () => [currentFromDate.getDate() + Number(data.count), currentToDate.getDate() + Number(data.count)],
         week: () => [currentFromDate.getDate() + 7 * Number(data.count), currentToDate.getDate() + 7 * Number(data.count)],
         month: () => {
-            let newMonth: number[] = [currentFromDate.getMonth() + Number(data.count), currentToDate.getMonth() + Number(data.count)]
+            const newMonth: number[] = [currentFromDate.getMonth() + Number(data.count), currentToDate.getMonth() + Number(data.count)]
             if (newMonth[0] > 11) {
-                currentFromDate = setDate(currentFromDate, { month: 0, year: currentFromDate.getFullYear() + 1 })
+                currentFromDate = setDate(currentFromDate, {
+                    month: 0,
+                    year: currentFromDate.getFullYear() + 1,
+                })
                 newMonth[0] = newMonth[0] - 12
             }
             if (newMonth[1] > 11) {
-                currentToDate = setDate(currentToDate, { month: 0, year: currentToDate.getFullYear() + 1 })
+                currentToDate = setDate(currentToDate, {
+                    month: 0,
+                    year: currentToDate.getFullYear() + 1,
+                })
                 newMonth[1] = newMonth[1] - 12
             }
             return newMonth
@@ -42,13 +52,15 @@ export function createRepeatedEvents(event: Event, onlyMissing: boolean = false)
     // WIP repeat on weekdays...
     if (data.ending === "date") {
         while (currentFromDate.getTime() <= endingDate.getTime()) {
-            let incremented = increment[data.type]()
+            const incremented = increment[data.type]()
 
             if (data.type === "day" || data.type === "week") {
                 currentFromDate.setDate(incremented[0])
                 currentToDate.setDate(incremented[1])
             } else {
-                currentFromDate = setDate(currentFromDate, { [data.type]: incremented[0] })
+                currentFromDate = setDate(currentFromDate, {
+                    [data.type]: incremented[0],
+                })
                 currentToDate = setDate(currentToDate, { [data.type]: incremented[1] })
             }
 
@@ -60,13 +72,15 @@ export function createRepeatedEvents(event: Event, onlyMissing: boolean = false)
         let count = 0
         while (count < data.afterRepeats!) {
             count++
-            let incremented = increment[data.type]()
+            const incremented = increment[data.type]()
 
             if (data.type === "day" || data.type === "week") {
                 currentFromDate.setDate(incremented[0])
                 currentToDate.setDate(incremented[1])
             } else {
-                currentFromDate = setDate(currentFromDate, { [data.type]: incremented[0] })
+                currentFromDate = setDate(currentFromDate, {
+                    [data.type]: incremented[0],
+                })
                 currentToDate = setDate(currentToDate, { [data.type]: incremented[1] })
             }
 
@@ -81,7 +95,7 @@ export function createRepeatedEvents(event: Event, onlyMissing: boolean = false)
     if (!onlyMissing) newEvents = { [event.id || event.group || ""]: event }
 
     dates.forEach((date: string[]) => {
-        let newEvent = clone(event)
+        const newEvent = clone(event)
 
         newEvent.from = date[0]
         newEvent.to = date[1]
@@ -106,19 +120,23 @@ export function createRepeatedEvents(event: Event, onlyMissing: boolean = false)
     // TODO: remove existing events after last newEvent.from
 
     if (!Object.keys(newEvents).length) return
-    history({ id: "UPDATE", newData: { data: newEvents, keys: Object.keys(newEvents) }, location: { page: "drawer", id: "event" } })
+    history({
+        id: "UPDATE",
+        newData: { data: newEvents, keys: Object.keys(newEvents) },
+        location: { page: "drawer", id: "event" },
+    })
 }
 
 const setDate = (date: Date, options: any): Date => {
-    let newDate = [options.year ?? date.getFullYear(), (options.month ?? date.getMonth()) + 1, options.date ?? date.getDate()]
-    let time = date.getHours() + ":" + date.getMinutes()
+    const newDate = [options.year ?? date.getFullYear(), (options.month ?? date.getMonth()) + 1, options.date ?? date.getDate()]
+    const time = date.getHours() + ":" + date.getMinutes()
     return new Date([...newDate, time].join(" "))
 }
 
 export function updateEventData(editEvent: any, stored: any, { type, action }: any): any {
     let data = clone(editEvent)
-    let oldData = JSON.parse(stored)
-    let id = editEvent.id
+    const oldData = JSON.parse(stored)
+    const id = editEvent.id
 
     data.from = new Date(editEvent.isoFrom + " " + (editEvent.time ? editEvent.fromTime : ""))
     oldData.from = new Date(oldData.isoFrom + " " + (oldData.time ? oldData.fromTime : ""))
@@ -143,7 +161,7 @@ export function updateEventData(editEvent: any, stored: any, { type, action }: a
 
 // action
 export function getActionEventData(event: any, action: any) {
-    let actionName = translate(actionData[action.id]?.name)
+    const actionName = translate(actionData[action.id]?.name)
 
     event.action = action
     event.name = actionName

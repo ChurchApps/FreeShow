@@ -3,7 +3,7 @@ import { clone } from "../../common/util/helpers"
 import { _get, _set } from "./stores"
 
 export function translate(key: string, d: Dictionary = _get("dictionary")) {
-    let keys = key.split(".")
+    const keys = key.split(".")
     return d[keys[0]]?.[keys[1]] || ""
 }
 

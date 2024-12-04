@@ -15,7 +15,11 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // MENU
     save: { label: "actions.save", icon: "save", shortcuts: ["Ctrl+S"] },
     import: { label: "actions.import", icon: "import", shortcuts: ["Ctrl+I"] },
-    export_more: { label: "actions.export", icon: "export", shortcuts: ["Ctrl+E"] },
+    export_more: {
+        label: "actions.export",
+        icon: "export",
+        shortcuts: ["Ctrl+E"],
+    },
     undo: { label: "actions.undo", icon: "undo", shortcuts: ["Ctrl+Z"] },
     redo: { label: "actions.redo", icon: "redo", shortcuts: ["Ctrl+Y"] },
     history: { label: "popup.history", icon: "history", shortcuts: ["Ctrl+H"] },
@@ -25,7 +29,11 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     docs: { label: "main.docs", icon: "document", external: true },
     quick_start_guide: { label: "guide.start", icon: "guide" },
     focus_mode: { label: "actions.focus_mode", icon: "focus_mode" },
-    fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11"] },
+    fullscreen: {
+        label: "actions.fullscreen",
+        icon: "fullscreen",
+        shortcuts: ["F11"],
+    },
     resetZoom: { label: "actions.resetZoom", icon: "reset" },
     zoomIn: { label: "actions.zoomIn", icon: "zoomIn" },
     zoomOut: { label: "actions.zoomOut", icon: "zoomOut" },
@@ -33,15 +41,26 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     quit: { label: "main.quit", icon: "close" },
     settings: { label: "menu.settings", icon: "settings" },
     about: { label: "main.about", icon: "info" },
-    shortcuts: { label: "popup.shortcuts", icon: "shortcut", shortcuts: ["Ctrl+?"] },
+    shortcuts: {
+        label: "popup.shortcuts",
+        icon: "shortcut",
+        shortcuts: ["Ctrl+?"],
+    },
     rename: { label: "actions.rename", icon: "rename", shortcuts: ["F2"] },
     delete: { label: "actions.delete", icon: "delete", shortcuts: ["Del"] },
     delete_all: { label: "actions.delete_all", icon: "delete" },
     export: { label: "actions.export", icon: "export" },
     // DRAWER
-    enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
+    enabledTabs: {
+        label: "context.enabledTabs",
+        items: ["LOAD_enabled_drawer_tabs"],
+    },
     tag_set: { label: "context.setTag", icon: "tag", items: ["LOAD_tag_set"] },
-    tag_filter: { label: "context.filterByTags", icon: "tag", items: ["LOAD_tag_filter"] },
+    tag_filter: {
+        label: "context.filterByTags",
+        icon: "tag",
+        items: ["LOAD_tag_filter"],
+    },
     newCategory: { label: "context.newCategory", icon: "add" },
     newScripture: { label: "new.scripture", icon: "add" },
     createCollection: { label: "new.collection", icon: "collection" },
@@ -65,23 +84,51 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     create_show: { label: "new.show", icon: "slide" },
     // newPrivateShow: { label: "new.private", icon: "private" },
     private: { label: "actions.toggle_private", icon: "private" },
-    duplicate: { label: "actions.duplicate", icon: "duplicate", shortcuts: ["Ctrl+D"] },
+    duplicate: {
+        label: "actions.duplicate",
+        icon: "duplicate",
+        shortcuts: ["Ctrl+D"],
+    },
     section: { label: "new.section", icon: "section" },
     copy_to_template: { label: "actions.create_template", icon: "templates" },
     // SORT
-    sort_shows_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_shows"] },
-    sort_projects_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_projects"] },
+    sort_shows_by: {
+        label: "sort.sort_by",
+        icon: "sort",
+        items: ["LOAD_sort_shows"],
+    },
+    sort_projects_by: {
+        label: "sort.sort_by",
+        icon: "sort",
+        items: ["LOAD_sort_projects"],
+    },
     // SHOWS
     addToProject: { label: "context.addToProject", icon: "project" },
     lock_show: { label: "context.lockForChanges", icon: "lock" },
     remove: { label: "actions.remove", icon: "remove" },
     remove_group: { label: "actions.remove", icon: "remove" },
-    remove_slide: { label: "actions.remove_group", icon: "remove", shortcuts: ["Del"] },
+    remove_slide: {
+        label: "actions.remove_group",
+        icon: "remove",
+        shortcuts: ["Del"],
+    },
     delete_slide: { label: "actions.delete_slide", icon: "delete" },
-    delete_group: { label: "actions.delete_group", icon: "delete", shortcuts: ["Del"] },
-    slideGroups: { label: "context.changeGroup", icon: "groups", items: ["rename", "recolor", "SEPERATOR", "LOAD_slide_groups"] }, // "remove_group" (currently broken & probably not needed)
+    delete_group: {
+        label: "actions.delete_group",
+        icon: "delete",
+        shortcuts: ["Del"],
+    },
+    slideGroups: {
+        label: "context.changeGroup",
+        icon: "groups",
+        items: ["rename", "recolor", "SEPERATOR", "LOAD_slide_groups"],
+    }, // "remove_group" (currently broken & probably not needed)
     editSlideText: { label: "menu.edit", icon: "edit" }, // actions.edit_slide_text
-    selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
+    selectAll: {
+        label: "context.selectAll",
+        icon: "select",
+        shortcuts: ["Ctrl+A"],
+    },
     newSlide: { label: "new.slide", icon: "add" },
     // newGroup: { label: "context.createNew", icon: "add" },
     // SLIDE VIEWS
@@ -95,19 +142,55 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     disable: { label: "actions.disable", icon: "disable" },
     edit: { label: "menu.edit", icon: "edit" },
     recolor: { label: "actions.recolor", icon: "color" },
-    actions: { label: "actions.slide_actions", icon: "actions", items: ["LOAD_actions"] },
-    bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_slide"] },
-    remove_layers: { label: "actions.remove_layers", icon: "remove_layers", items: ["LOAD_remove_layers"] },
+    actions: {
+        label: "actions.slide_actions",
+        icon: "actions",
+        items: ["LOAD_actions"],
+    },
+    bind_to: {
+        label: "actions.bind_to",
+        icon: "bind",
+        items: ["LOAD_bind_slide"],
+    },
+    remove_layers: {
+        label: "actions.remove_layers",
+        icon: "remove_layers",
+        items: ["LOAD_remove_layers"],
+    },
     set_key: { label: "actions.set_key", icon: "chords", items: ["LOAD_keys"] },
-    chord_list: { label: "edit.chords", icon: "chords", items: ["LOAD_chord_list"] },
+    chord_list: {
+        label: "edit.chords",
+        icon: "chords",
+        items: ["LOAD_chord_list"],
+    },
     custom_key: { label: "actions.custom_key", icon: "edit" },
     // ITEM
-    item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
+    item_actions: {
+        label: "actions.item_actions",
+        icon: "actions",
+        items: ["LOAD_item_actions"],
+    },
     transition: { label: "popup.transition", icon: "transition" },
-    dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
-    item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
-    format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
-    rearrange: { label: "actions.rearrange", icon: "rearrange", items: ["to_front", "forward", "backward", "to_back"] },
+    dynamic_values: {
+        label: "actions.dynamic_values",
+        icon: "star",
+        items: ["LOAD_dynamic_values"],
+    },
+    item_bind_to: {
+        label: "actions.bind_to",
+        icon: "bind",
+        items: ["LOAD_bind_item"],
+    },
+    format: {
+        label: "actions.format",
+        icon: "format",
+        items: ["find_replace", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"],
+    },
+    rearrange: {
+        label: "actions.rearrange",
+        icon: "rearrange",
+        items: ["to_front", "forward", "backward", "to_back"],
+    },
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting

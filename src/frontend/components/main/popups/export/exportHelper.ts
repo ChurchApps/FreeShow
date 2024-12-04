@@ -22,12 +22,12 @@ export const getShowIdsFromType = {
     project: () => {
         if (!get(activeProject)) return
 
-        let projectShows = get(projects)[get(activeProject)!].shows.filter((a) => (a?.type || "show") === "show")
+        const projectShows = get(projects)[get(activeProject)!].shows.filter((a) => (a?.type || "show") === "show")
         return projectShows.map(({ id }) => id)
     },
     selected_shows: () => {
         if (!get(selected).id?.includes("show")) {
-            let showId = getActiveShowId()
+            const showId = getActiveShowId()
             return showId ? [showId] : []
         }
 

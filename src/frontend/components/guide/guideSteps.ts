@@ -1,11 +1,11 @@
 import { get } from "svelte/store"
-import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, dictionary, drawer, focusMode, outputCache, projects, projectView, showRecentlyUsedProjects, shows, showsCache } from "../../stores"
+import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, dictionary, drawer, focusMode, outputCache, projectView, projects, showRecentlyUsedProjects, shows, showsCache } from "../../stores"
 import { DEFAULT_DRAWER_HEIGHT } from "../../utils/common"
 import { createDefaultShow } from "../../utils/createData"
+import { keysToID, removeDeleted } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
 import { nextSlide } from "../helpers/showActions"
 import { clearAll } from "../output/clear"
-import { keysToID, removeDeleted } from "../helpers/array"
 
 export const guideSteps = [
     {
@@ -172,5 +172,9 @@ function closeDrawer() {
     if (get(drawer).height > minHeight) drawer.set({ height: minHeight, stored: get(drawer).height })
 }
 function openDrawer() {
-    if (get(drawer).height <= minHeight) drawer.set({ height: get(drawer).stored || DEFAULT_DRAWER_HEIGHT, stored: null })
+    if (get(drawer).height <= minHeight)
+        drawer.set({
+            height: get(drawer).stored || DEFAULT_DRAWER_HEIGHT,
+            stored: null,
+        })
 }

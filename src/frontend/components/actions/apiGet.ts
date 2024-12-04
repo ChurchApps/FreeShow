@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
+import type { Shows } from "../../../types/Show"
 import { projects, shows, showsCache } from "../../stores"
 import { loadShows } from "../helpers/setShow"
-import type { Shows } from "../../../types/Show"
 
 export function getShows() {
     return get(shows) as Shows

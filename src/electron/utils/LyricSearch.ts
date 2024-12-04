@@ -99,7 +99,7 @@ export class LyricSearch {
             const newLines: any[] = []
             lines.pop() // remove source
             lines.forEach((line) => {
-                let contents = line.replace(/^\d+\s+/gm, "").trim() //remove leading numbers
+                const contents = line.replace(/^\d+\s+/gm, "").trim() //remove leading numbers
                 newLines.push(contents)
             })
             result = newLines.join("\n").trim()
@@ -135,7 +135,7 @@ export class LyricSearch {
                 arrData.push([])
             }
             var strMatchedValue
-            if (arrMatches[2]) strMatchedValue = arrMatches[2].replace(new RegExp('""', "g"), '"')
+            if (arrMatches[2]) strMatchedValue = arrMatches[2].replace(/""/g, '"')
             else strMatchedValue = arrMatches[3]
             arrData[arrData.length - 1].push(strMatchedValue)
         }

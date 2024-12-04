@@ -7,8 +7,8 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
     return combine(item)
 
     function lineStyle(line: any, i: number) {
-        let newText: any[] = []
-        let pos: number = 0
+        const newText: any[] = []
+        let pos = 0
 
         if (selection[i].start === undefined) {
             newText.push(...(line.text || []))
@@ -29,10 +29,14 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
             if ((pos < selection[i].start && pos + length > selection[i].start) || (pos < selection[i].end && pos + length > selection[i].end) || (pos >= selection[i].start && pos + length <= selection[i].end)) {
                 if (from > 0) newText.push({ value: text.value.slice(0, from), style: text.style })
                 if (to - from > 0 && to - from <= length) {
-                    let newStyle: string = addStyleString(text.style, style)
+                    const newStyle: string = addStyleString(text.style, style)
                     newText.push({ value: text.value.slice(from, to), style: newStyle })
                 }
-                if (to < length) newText.push({ value: text.value.slice(to, length), style: text.style })
+                if (to < length)
+                    newText.push({
+                        value: text.value.slice(to, length),
+                        style: text.style,
+                    })
             } else newText.push(text)
 
             pos += length
@@ -47,15 +51,15 @@ function combine(item: Item): Item {
     return item
 
     function setLineStyle(line: any) {
-        let text = [...(line.text || [])]
+        const text = [...(line.text || [])]
         text.forEach(checkText)
 
         function checkText(_: any, i: number) {
             if (!text[i + 1]) return
 
-            let d1: any[] = []
-            let d2: any[] = []
-            let sameStyles: boolean = false
+            const d1: any[] = []
+            const d2: any[] = []
+            let sameStyles = false
             if (text[i].style) d1.push(text[i].style)
             if (text[i + 1].style) d2.push(text[i + 1].style)
 
@@ -78,7 +82,7 @@ function combine(item: Item): Item {
 
 // add new style to string and remove old
 export function addStyleString(oldStyle: string, style: any[]): string {
-    let array: string[] = oldStyle.split(";")
+    const array: string[] = oldStyle.split(";")
     // remove last if empty
     if (!array[array.length - 1].length) array.pop()
     // remove old styles
@@ -95,7 +99,7 @@ export function addStyleString(oldStyle: string, style: any[]): string {
 
 // add new filter to string and remove old if existing
 export function addFilterString(oldFilter: string, filter: any[]): string {
-    let array: string[] = oldFilter.split(" ")
+    const array: string[] = oldFilter.split(" ")
     // remove last if empty
     if (!array[array.length - 1].length) array.pop()
     // remove old styles
@@ -105,30 +109,30 @@ export function addFilterString(oldFilter: string, filter: any[]): string {
     // add new filter
     if (filter[1] !== null) array.push(filter.join("(") + ")")
 
-    let newFilter: string = array.join(" ")
+    const newFilter: string = array.join(" ")
     return newFilter
 }
 
 // get selection range start to end or cursor pos
 export function getSelectionRange(): { start: number; end: number }[] {
-    let selection: null | Selection = window.getSelection()
-    let sel: any[] = []
+    const selection: null | Selection = window.getSelection()
+    const sel: any[] = []
     let start: null | number = null
     let end: null | number = null
 
     if (!selection?.anchorNode) return sel
 
-    let parent: Element = selection.anchorNode.parentElement!.closest(".edit")!
+    const parent: Element = selection.anchorNode.parentElement!.closest(".edit")!
     let startNode = selection.anchorNode.parentNode
     let endNode = selection.focusNode?.parentNode
-    let startOffset = selection.anchorOffset
+    const startOffset = selection.anchorOffset
     let endOffset = selection.focusOffset
 
     if (!parent) return sel
 
     new Array(...parent.childNodes).forEach((br: any, line: number) => {
         if (!sel[line]) sel[line] = {}
-        let count: number = 0
+        let count = 0
         new Array(...br.childNodes).forEach((child: any) => {
             if (selection!.containsNode(child, true)) {
                 // if start not set & child is start & (child is not end or end is bigger than start)
@@ -166,9 +170,9 @@ export function getSelectionRange(): { start: number; end: number }[] {
 
 // return item style at text length pos
 export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; end: number }[]) {
-    let style: string = ""
+    let style = ""
     ;(pos || lines).forEach((_a: any, i: number) => {
-        let currentPos: number = 0
+        let currentPos = 0
         lines[i]?.text.some((text: any): any => {
             // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
             if (pos && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
@@ -190,7 +194,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
 
 // get item align at selected pos
 export function getLastLineAlign(item: Item, selection: any): string {
-    let last: string = ""
+    let last = ""
     item?.lines!.forEach((line: any, i: number) => {
         if (!selection || selection[i]?.start) last = line.align
     })
@@ -201,7 +205,7 @@ export function getLastLineAlign(item: Item, selection: any): string {
 export function getItemText(item: Item): string {
     if (!item) return ""
 
-    let text: string = ""
+    let text = ""
     if (item.lines)
         item.lines.forEach((line: any) => {
             line.text?.forEach((content: any) => {
@@ -212,7 +216,7 @@ export function getItemText(item: Item): string {
 }
 
 export function getLineText(line: any): string {
-    let text: string = ""
+    let text = ""
     line.text?.forEach((content: any) => {
         text += content.value
     })
@@ -223,7 +227,7 @@ export function getLineText(line: any): string {
 export function getItemLines(item: Item): string[] {
     if (!item) return []
 
-    let lines: string[] = []
+    const lines: string[] = []
     item.lines?.forEach((line: any) => {
         let text = ""
         line.text?.forEach((content: any) => (text += content.value))
@@ -259,7 +263,7 @@ export function setCaret(element: any, { line = 0, pos = 0 }) {
     var range = document.createRange()
     var sel = window.getSelection()
 
-    let lineElem = element.childNodes[line]
+    const lineElem = element.childNodes[line]
     // get child elem
     let childElem = -1
     let currentTextLength = 0
@@ -320,7 +324,7 @@ export function createRange2(node: any, selection: { start: number; end: number 
 
     selection.forEach((a, i) => {
         if (a.start !== undefined && (!started || !ended)) {
-            let br = node.children[i]
+            const br = node.children[i]
             let pos: null | number = 0
             if (br.childNodes.length) {
                 new Array(...br.childNodes).forEach((text: any) => {
@@ -348,7 +352,7 @@ export function setCurrentCursorPosition(element: any, pos: number) {
 
         // pos = 90
         // pos = 142
-        let range: any = createRange(element, pos)
+        const range: any = createRange(element, pos)
 
         // let range: any = createRange(element.childNodes[0], 5)
 

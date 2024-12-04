@@ -1,13 +1,13 @@
 // ----- FreeShow -----
 // Functions to interact with local files
 
-import { app, dialog, shell } from "electron"
-import { ExifImage } from "exif"
 import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
+import { app, dialog, shell } from "electron"
+import { ExifImage } from "exif"
 import { uid } from "uid"
 import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
-import { Show } from "../../types/Show"
+import type { Show } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
@@ -32,7 +32,7 @@ export function doesPathExist(path: string): boolean {
     return false
 }
 
-export function readFile(path: string, encoding: BufferEncoding = "utf8", disableLog: boolean = false): string {
+export function readFile(path: string, encoding: BufferEncoding = "utf8", disableLog = false): string {
     try {
         return fs.readFileSync(path, encoding)
     } catch (err: any) {
@@ -86,7 +86,7 @@ export function readFolderAsync(path: string): Promise<string[]> {
     )
 }
 
-export function writeFile(path: string, content: string | NodeJS.ArrayBufferView, id: string = "") {
+export function writeFile(path: string, content: string | NodeJS.ArrayBufferView, id = "") {
     // don't know if it's necessary to check the file
     if (fileContentMatches(content, path)) return
 
@@ -101,16 +101,21 @@ export function deleteFile(path: string) {
 }
 
 export function renameFile(p: string, oldName: string, newName: string) {
-    let oldPath = path.join(p, oldName)
-    let newPath = path.join(p, newName)
+    const oldPath = path.join(p, oldName)
+    const newPath = path.join(p, newName)
 
     fs.rename(oldPath, newPath, (err) => actionComplete(err, "Could not rename file"))
 }
 
-export function getFileStats(p: string, disableLog: boolean = false) {
+export function getFileStats(p: string, disableLog = false) {
     try {
         const stat: Stats = fs.statSync(p)
-        return { path: p, stat, extension: path.extname(p).substring(1).toLowerCase(), folder: stat.isDirectory() }
+        return {
+            path: p,
+            stat,
+            extension: path.extname(p).substring(1).toLowerCase(),
+            folder: stat.isDirectory(),
+        }
     } catch (err) {
         if (!disableLog) actionComplete(err, "Error when getting file stats")
         return null
@@ -122,7 +127,10 @@ export function makeDir(path: string) {
         path = fs.mkdirSync(path, { recursive: true }) || path
     } catch (err) {
         console.error("Could not create a directory to path: " + path + "! " + err)
-        toApp(MAIN, { channel: "ALERT", data: "Error: Could not create folder at: " + path + "!" })
+        toApp(MAIN, {
+            channel: "ALERT",
+            data: "Error: Could not create folder at: " + path + "!",
+        })
     }
 
     return path
@@ -130,21 +138,24 @@ export function makeDir(path: string) {
 
 // SELECT DIALOGS
 
-export function selectFilesDialog(title: string = "", filters: any, multiple: boolean = true): string[] {
-    let options: any = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
+export function selectFilesDialog(title = "", filters: any, multiple = true): string[] {
+    const options: any = {
+        properties: ["openFile"],
+        filters: [{ name: filters.name, extensions: filters.extensions }],
+    }
     if (title) options.title = title
     if (multiple) options.properties.push("multiSelections")
 
-    let files: string[] = dialog.showOpenDialogSync(mainWindow!, options) || []
+    const files: string[] = dialog.showOpenDialogSync(mainWindow!, options) || []
     return files
 }
 
-export function selectFolderDialog(title: string = "", defaultPath: string = ""): string {
-    let options: any = { properties: ["openDirectory"] }
+export function selectFolderDialog(title = "", defaultPath = ""): string {
+    const options: any = { properties: ["openDirectory"] }
     if (title) options.title = title
     if (defaultPath) options.defaultPath = defaultPath
 
-    let path: string[] = dialog.showOpenDialogSync(mainWindow!, options) || [""]
+    const path: string[] = dialog.showOpenDialogSync(mainWindow!, options) || [""]
     return path[0]
 }
 
@@ -157,8 +168,8 @@ export function openSystemFolder(path: string) {
 }
 
 const appFolderName = "FreeShow"
-export function getDocumentsFolder(p: any = null, folderName: string = "Shows", createFolder: boolean = true): string {
-    let folderPath = [app.getPath("documents"), appFolderName]
+export function getDocumentsFolder(p: any = null, folderName = "Shows", createFolder = true): string {
+    const folderPath = [app.getPath("documents"), appFolderName]
     if (folderName) folderPath.push(folderName)
     if (!p) p = path.join(...folderPath)
     if (!doesPathExist(p) && createFolder) p = makeDir(p)
@@ -221,13 +232,13 @@ export function fileContentMatches(content: string | NodeJS.ArrayBufferView, pat
     return false
 }
 
-export function loadFile(p: string, contentId: string = ""): any {
+export function loadFile(p: string, contentId = ""): any {
     if (!doesPathExist(p)) return { error: "not_found", id: contentId }
 
-    let content: string = readFile(p)
+    const content: string = readFile(p)
     if (!content) return { error: "not_found", id: contentId }
 
-    let show = parseShow(content)
+    const show = parseShow(content)
     if (!show) return { error: "not_found", id: contentId }
 
     if (contentId && show[0] !== contentId) show[0] = contentId
@@ -236,7 +247,7 @@ export function loadFile(p: string, contentId: string = ""): any {
 }
 
 export function getPaths(): any {
-    let paths: any = {
+    const paths: any = {
         // documents: app.getPath("documents"),
         pictures: app.getPath("pictures"),
         videos: app.getPath("videos"),
@@ -251,7 +262,7 @@ export function getPaths(): any {
 
 const tempPaths = ["temp"]
 export function getTempPaths() {
-    let paths: any = {}
+    const paths: any = {}
     tempPaths.forEach((pathId: any) => {
         paths[pathId] = app.getPath(pathId)
     })
@@ -261,19 +272,24 @@ export function getTempPaths() {
 
 // READ_FOLDER
 export function getFolderContent(data: any) {
-    let folderPath: string = data.path
-    let fileList: string[] = readFolder(folderPath)
+    const folderPath: string = data.path
+    const fileList: string[] = readFolder(folderPath)
 
     if (!fileList.length) {
         toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [] })
         return
     }
 
-    let files: any[] = []
+    const files: any[] = []
     for (const name of fileList) {
-        let p: string = path.join(folderPath, name)
-        let stats: any = getFileStats(p)
-        if (stats) files.push({ ...stats, name, thumbnailPath: !data.disableThumbnails && isMedia() ? createThumbnail(p) : "" })
+        const p: string = path.join(folderPath, name)
+        const stats: any = getFileStats(p)
+        if (stats)
+            files.push({
+                ...stats,
+                name,
+                thumbnailPath: !data.disableThumbnails && isMedia() ? createThumbnail(p) : "",
+            })
 
         function isMedia() {
             if (stats.folder) return false
@@ -287,19 +303,19 @@ export function getFolderContent(data: any) {
     }
 
     // get first "layer" of files inside folder for searching
-    let filesInFolders: string[] = []
+    const filesInFolders: string[] = []
     if (data.listFilesInFolders) {
-        let folders: any[] = files.filter((a) => a.folder)
+        const folders: any[] = files.filter((a) => a.folder)
         folders.forEach(getFilesInFolder)
     }
 
     function getFilesInFolder(folder: any) {
-        let fileList: string[] = readFolder(folder.path)
+        const fileList: string[] = readFolder(folder.path)
         if (!fileList.length) return
 
         for (const name of fileList) {
-            let p: string = path.join(folder.path, name)
-            let stats: any = getFileStats(p)
+            const p: string = path.join(folder.path, name)
+            const stats: any = getFileStats(p)
             if (stats && !stats.folder) filesInFolders.push({ ...stats, name })
         }
     }
@@ -308,19 +324,19 @@ export function getFolderContent(data: any) {
 }
 
 export function getSimularPaths(data: any) {
-    let parentFolderPathNames = data.paths.map(getParentFolderName)
+    const parentFolderPathNames = data.paths.map(getParentFolderName)
     let allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
     allFilePaths = [...new Set(allFilePaths.flat())]
 
     let simularArray: any[] = []
     data.paths.forEach((path: string) => {
-        let originalFileName = parse(path).name
+        const originalFileName = parse(path).name
 
         allFilePaths.forEach((filePath: string) => {
-            let name = parse(filePath).name
+            const name = parse(filePath).name
             if (data.paths.includes(filePath) || simularArray.find((a) => a[0].name.includes(name))) return
 
-            let match = similarity(originalFileName, name)
+            const match = similarity(originalFileName, name)
             if (match < 0.5) return
 
             simularArray.push([{ path: filePath, name }, match])
@@ -365,43 +381,62 @@ function similarity(str1: string, str2: string) {
 
 // OPEN_FOLDER
 export function selectFolder(msg: { channel: string; title: string | undefined; path: string | undefined }, e: any) {
-    let folder: any = selectFolderDialog(msg.title, msg.path)
+    const folder: any = selectFolderDialog(msg.title, msg.path)
 
     if (!folder) return
 
     // only when initializing
     if (msg.channel === "DATA_SHOWS") {
-        let dataPath = folder
-        let showsPath = checkShowsFolder(path.join(folder, dataFolderNames.shows))
-        e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: dataPath, showsPath } })
+        const dataPath = folder
+        const showsPath = checkShowsFolder(path.join(folder, dataFolderNames.shows))
+        e.reply(OPEN_FOLDER, {
+            channel: msg.channel,
+            data: { path: dataPath, showsPath },
+        })
         return
     }
 
     if (msg.channel === "SHOWS") {
         loadShows({ showsPath: folder })
-        toApp(MAIN, { channel: "FULL_SHOWS_LIST", data: getAllShows({ path: folder }) })
+        toApp(MAIN, {
+            channel: "FULL_SHOWS_LIST",
+            data: getAllShows({ path: folder }),
+        })
     }
 
     e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder } })
 }
 
 // OPEN_FILE
-export function selectFiles(msg: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }, e: any) {
-    let files: any = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
+export function selectFiles(
+    msg: {
+        id: string
+        channel: string
+        title?: string
+        filter: any
+        multiple: boolean
+        read?: boolean
+    },
+    e: any
+) {
+    const files: any = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
     if (!files) return
 
-    let content: any = {}
+    const content: any = {}
     if (msg.read) files.forEach(getContent)
     function getContent(path: string) {
         content[path] = readFile(path)
     }
 
-    e.reply(OPEN_FILE, { channel: msg.channel || "", data: { id: msg.id, files, content } })
+    e.reply(OPEN_FILE, {
+        channel: msg.channel || "",
+        data: { id: msg.id, files, content },
+    })
 }
 
 // FILE_INFO
 export function getFileInfo(filePath: string, e: any) {
-    let stats: any = getFileStats(filePath)
+    const stats: any = getFileStats(filePath)
     if (stats) e.reply(FILE_INFO, stats)
 }
 
@@ -430,7 +465,15 @@ async function extractCodecInfo(data: any) {
         arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
     } catch (err) {
         console.error(err)
-        toApp(MAIN, { channel: "MEDIA_CODEC", data: { ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" } })
+        toApp(MAIN, {
+            channel: "MEDIA_CODEC",
+            data: {
+                ...data,
+                codecs: [],
+                mimeType: getMimeType(data.path),
+                mimeCodec: "",
+            },
+        })
         return
     }
 
@@ -440,7 +483,10 @@ async function extractCodecInfo(data: any) {
         const codecs = info.tracks.map((track: any) => track.codec)
         const mimeType = getMimeType(data.path)
         const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
-        toApp(MAIN, { channel: "MEDIA_CODEC", data: { ...data, codecs, mimeType, mimeCodec } })
+        toApp(MAIN, {
+            channel: "MEDIA_CODEC",
+            data: { ...data, codecs, mimeType, mimeCodec },
+        })
     }
 
     arrayBuffer.fileStart = 0
@@ -462,12 +508,15 @@ export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
 }
 
 async function locateMediaFileAsync({ fileName, splittedPath, folders, ref }: any) {
-    let matches: string[] = []
+    const matches: string[] = []
 
     await findMatches()
     if (!matches.length) return
 
-    toApp(MAIN, { channel: "LOCATE_MEDIA_FILE", data: { path: matches[0], ref } })
+    toApp(MAIN, {
+        channel: "LOCATE_MEDIA_FILE",
+        data: { path: matches[0], ref },
+    })
 
     async function findMatches() {
         for (const folderPath of folders) {
@@ -477,16 +526,16 @@ async function locateMediaFileAsync({ fileName, splittedPath, folders, ref }: an
         }
     }
 
-    async function searchInFolder(folderPath: string, level: number = 1) {
+    async function searchInFolder(folderPath: string, level = 1) {
         if (level > NESTED_SEARCH || matches.length) return
 
-        let currentFolderFolders: string[] = []
-        let files = await readFolderAsync(folderPath)
+        const currentFolderFolders: string[] = []
+        const files = await readFolderAsync(folderPath)
 
         await Promise.all(
             files.map(async (name) => {
-                let currentFilePath: string = path.join(folderPath, name)
-                let isFolder = await checkIsFolder(currentFilePath)
+                const currentFilePath: string = path.join(folderPath, name)
+                const isFolder = await checkIsFolder(currentFilePath)
 
                 if (isFolder) {
                     // search all files in current folder before searching in any nested folders
@@ -511,11 +560,11 @@ async function locateMediaFileAsync({ fileName, splittedPath, folders, ref }: an
     function checkFileForMatch(currentFileName: string, folderPath: string) {
         // include original parent folder name in search first (to limit it a bit if two files with same name are in two different folders!)
         if (splittedPath?.length > 1) {
-            let currentParentFolder = path.basename(folderPath)
-            let pathName = path.join(currentParentFolder, currentFileName)
-            let searchName = path.join(splittedPath[splittedPath.length - 2], fileName)
+            const currentParentFolder = path.basename(folderPath)
+            const pathName = path.join(currentParentFolder, currentFileName)
+            const searchName = path.join(splittedPath[splittedPath.length - 2], fileName)
             if (pathName === searchName) {
-                let p: string = path.join(folderPath, currentFileName)
+                const p: string = path.join(folderPath, currentFileName)
                 matches.push(p)
             }
         }
@@ -524,7 +573,7 @@ async function locateMediaFileAsync({ fileName, splittedPath, folders, ref }: an
 
         // check for file name exact match
         if (currentFileName === fileName) {
-            let p: string = path.join(folderPath, currentFileName)
+            const p: string = path.join(folderPath, currentFileName)
             matches.push(p)
         }
     }
@@ -541,7 +590,7 @@ async function checkIsFolder(path: string): Promise<boolean> {
 //////
 
 // BUNDLE MEDIA FILES FROM ALL SHOWS (IMAGE/VIDEO/AUDIO)
-let currentlyBundling: boolean = false
+let currentlyBundling = false
 export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; dataPath: string }) {
     if (currentlyBundling) return
     currentlyBundling = true
@@ -555,15 +604,15 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
 
     for (const name of showsList) readShow(name)
     function readShow(fileName: string) {
-        let p: string = path.join(showsPath, fileName)
-        let jsonData = readFile(p) || "{}"
-        let show: Show | undefined = parseShow(jsonData)?.[1]
+        const p: string = path.join(showsPath, fileName)
+        const jsonData = readFile(p) || "{}"
+        const show: Show | undefined = parseShow(jsonData)?.[1]
 
         if (!show) return
 
         // media backgrounds & audio
         Object.values(show.media).forEach((media) => {
-            let path = media.path || media.id
+            const path = media.path || media.id
             if (path) allMediaFiles.push(path)
         })
 
@@ -578,12 +627,12 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
     }
 
     // get/create new folder
-    let outputPath = getDataFolder(dataPath, dataFolderNames.media_bundle)
+    const outputPath = getDataFolder(dataPath, dataFolderNames.media_bundle)
 
     // copy media files
     allMediaFiles.forEach((mediaPath) => {
-        let fileName = path.basename(mediaPath)
-        let newPath = path.join(outputPath, fileName)
+        const fileName = path.basename(mediaPath)
+        const newPath = path.join(outputPath, fileName)
 
         // don't copy if it's already copied
         if (doesPathExist(newPath)) return
@@ -600,7 +649,7 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
 
 // LOAD SHOWS
 
-export function loadShows({ showsPath }: any, returnShows: boolean = false) {
+export function loadShows({ showsPath }: any, returnShows = false) {
     if (!showsPath) {
         console.log("Invalid shows path, does the program have proper read/write permission?")
         return {}
@@ -615,11 +664,11 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 
-    let cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
-    let newCachedShows: any = {}
+    const cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
+    const newCachedShows: any = {}
 
     // create a map for quick lookup of cached shows by name
-    let cachedShowNames = new Map<string, string>()
+    const cachedShowNames = new Map<string, string>()
     for (const [id, show] of Object.entries(cachedShows)) {
         if (show?.name) cachedShowNames.set(show.name, id)
     }
@@ -631,15 +680,15 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
 
     for (const name of filesInFolder) checkShow(name)
     function checkShow(name: string) {
-        let matchingShowId = cachedShowNames.get(name)
+        const matchingShowId = cachedShowNames.get(name)
         if (matchingShowId && !newCachedShows[matchingShowId]) {
             newCachedShows[matchingShowId] = cachedShows[matchingShowId]
             return
         }
 
-        let p: string = path.join(showsPath, `${name}.show`)
-        let jsonData = readFile(p) || "{}"
-        let show = parseShow(jsonData)
+        const p: string = path.join(showsPath, `${name}.show`)
+        const jsonData = readFile(p) || "{}"
+        const show = parseShow(jsonData)
 
         if (!show || !show[1]) return
 
@@ -681,16 +730,16 @@ export function parseShow(jsonData: string) {
 
 // load shows by id (used for show export)
 export function getShowsFromIds(showIds: string[], showsPath: string) {
-    let shows: Show[] = []
-    let cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
+    const shows: Show[] = []
+    const cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
 
     showIds.forEach((id) => {
-        let cachedShow = cachedShows[id]
-        let fileName = cachedShow.name || id
+        const cachedShow = cachedShows[id]
+        const fileName = cachedShow.name || id
 
-        let p: string = path.join(showsPath, `${fileName}.show`)
-        let jsonData = readFile(p) || "{}"
-        let show = parseShow(jsonData)
+        const p: string = path.join(showsPath, `${fileName}.show`)
+        const jsonData = readFile(p) || "{}"
+        const show = parseShow(jsonData)
 
         if (show?.[1]) shows.push({ ...show[1], id })
     })
@@ -705,7 +754,10 @@ const FIXES: any = {
     DISABLE_KIOSK_MODE: () => {
         // wait to ensure output settings have loaded in the app!
         setTimeout(() => {
-            toApp(OUTPUT, { channel: "UPDATE_OUTPUTS_DATA", data: { key: "kioskMode", value: false, autoSave: true } })
+            toApp(OUTPUT, {
+                channel: "UPDATE_OUTPUTS_DATA",
+                data: { key: "kioskMode", value: false, autoSave: true },
+            })
             OutputHelper.getAllOutputs().forEach(([_id, output]) => output.window.setKiosk(false))
         }, 1000)
     },
@@ -715,12 +767,12 @@ const FIXES: any = {
     },
 }
 function specialCaseFixer() {
-    let defaultDataFolder = getDocumentsFolder(null, "", false)
+    const defaultDataFolder = getDocumentsFolder(null, "", false)
     if (!doesPathExist(defaultDataFolder)) return
 
-    let files: string[] = readFolder(defaultDataFolder)
+    const files: string[] = readFolder(defaultDataFolder)
     files.forEach((fileName) => {
-        let matchFound = Object.keys(FIXES).find((key) => fileName.includes(key))
+        const matchFound = Object.keys(FIXES).find((key) => fileName.includes(key))
         if (matchFound) FIXES[matchFound]()
     })
 }

@@ -1,12 +1,12 @@
-import { STAGE } from "./../../../types/Channels"
-import { connections, stageShows, timers, variables } from "./../../stores"
 import { get } from "svelte/store"
-import { arrayToObject, filterObjectArray } from "../../utils/sendData"
 import { translate } from "../../utils/language"
+import { arrayToObject, filterObjectArray } from "../../utils/sendData"
+import { STAGE } from "./../../../types/Channels"
+import { timers, connections, stageShows, variables } from "./../../stores"
 
 export function updateStageShow() {
     Object.entries(get(connections).STAGE || {}).forEach(([id, stage]: any) => {
-        let show = arrayToObject(filterObjectArray([get(stageShows)[stage.active]], ["disabled", "name", "settings", "items"]))[0]
+        const show = arrayToObject(filterObjectArray([get(stageShows)[stage.active]], ["disabled", "name", "settings", "items"]))[0]
         if (!show.disabled) window.api.send(STAGE, { channel: "SHOW", id, data: show })
     })
 }

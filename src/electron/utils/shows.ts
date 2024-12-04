@@ -1,21 +1,21 @@
 import path from "path"
 import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
-import { Show } from "../../types/Show"
+import type { Show } from "../../types/Show"
 import { deleteFile, doesPathExist, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFile } from "./files"
 
 export function getAllShows(data: any) {
     if (!doesPathExist(data.path)) return []
 
-    let filesInFolder: string[] = readFolder(data.path).filter((a) => a.includes(".show") && a.length > 5)
+    const filesInFolder: string[] = readFolder(data.path).filter((a) => a.includes(".show") && a.length > 5)
     return filesInFolder
 }
 
 export function renameShows(shows: any, path: string) {
     for (const show of shows) checkFile(show)
     function checkFile(show: any) {
-        let oldName = show.oldName + ".show"
-        let newName = (show.name || show.id) + ".show"
+        const oldName = show.oldName + ".show"
+        const newName = (show.name || show.id) + ".show"
 
         renameFile(path, oldName, newName)
     }
@@ -63,11 +63,11 @@ export function getShowTextContent(show: Show) {
 /////
 
 export function deleteShows(data: any) {
-    let deleted: string[] = []
+    const deleted: string[] = []
 
     data.shows.forEach(({ id, name }: any) => {
         name = (name || id) + ".show"
-        let p: string = path.join(data.path, name)
+        const p: string = path.join(data.path, name)
 
         deleteFile(p)
         deleted.push(name)
@@ -79,19 +79,19 @@ export function deleteShows(data: any) {
 
 export function deleteShowsNotIndexed(data: any) {
     // get all names
-    let names: string[] = Object.entries(data.shows).map(([id, { name }]: any) => (name || id) + ".show")
+    const names: string[] = Object.entries(data.shows).map(([id, { name }]: any) => (name || id) + ".show")
 
     // list all shows in folder
-    let filesInFolder: string[] = readFolder(data.path)
+    const filesInFolder: string[] = readFolder(data.path)
     if (!filesInFolder.length) return
 
-    let deleted: string[] = []
+    const deleted: string[] = []
 
     for (const name of filesInFolder) checkFile(name)
     function checkFile(name: string) {
         if (names.includes(name) || !name.includes(".show")) return
 
-        let p: string = path.join(data.path, name)
+        const p: string = path.join(data.path, name)
         deleteFile(p)
         deleted.push(name)
     }
@@ -103,21 +103,24 @@ export function refreshAllShows(data: any) {
     if (!doesPathExist(data.path)) return
 
     // list all shows in folder
-    let filesInFolder: string[] = readFolder(data.path)
+    const filesInFolder: string[] = readFolder(data.path)
     if (!filesInFolder.length) return
 
-    let newShows: any = {}
+    const newShows: any = {}
 
     for (const name of filesInFolder) loadFile(name)
     function loadFile(name: string) {
         if (!name.includes(".show")) return
 
-        let p: string = path.join(data.path, name)
-        let show = parseShow(readFile(p))
+        const p: string = path.join(data.path, name)
+        const show = parseShow(readFile(p))
 
         if (!show || !show[1]) return
 
-        newShows[show[0]] = trimShow({ ...show[1], name: name.replace(".show", "") })
+        newShows[show[0]] = trimShow({
+            ...show[1],
+            name: name.replace(".show", ""),
+        })
     }
 
     if (!Object.keys(newShows).length) return
@@ -132,17 +135,17 @@ export async function getEmptyShowsAsync(data: any) {
     if (!doesPathExist(data.path)) return
 
     // list all shows in folder
-    let filesInFolder: string[] = await readFolderAsync(data.path)
+    const filesInFolder: string[] = await readFolderAsync(data.path)
     if (!filesInFolder.length || filesInFolder.length > 1000) return
 
-    let emptyShows: { id: string; name: string }[] = []
+    const emptyShows: { id: string; name: string }[] = []
 
     for (const name of filesInFolder) await loadFile(name)
     async function loadFile(name: string) {
         if (!name.includes(".show")) return
 
-        let p: string = path.join(data.path, name)
-        let show = parseShow(await readFileAsync(p))
+        const p: string = path.join(data.path, name)
+        const show = parseShow(await readFileAsync(p))
         if (!show || !show[1]) return
 
         // replace stored data with new unsaved cached data

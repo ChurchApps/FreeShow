@@ -1,45 +1,56 @@
-const { readdirSync, existsSync, lstatSync, unlinkSync, rmdirSync, readFileSync, writeFileSync } = require("node:fs")
-const { join } = require("node:path")
+const {
+	readdirSync,
+	existsSync,
+	lstatSync,
+	unlinkSync,
+	rmdirSync,
+	readFileSync,
+	writeFileSync,
+} = require("node:fs");
+const { join } = require("node:path");
 
 // app build file paths
-const buildSveltePath = join(__dirname, "..", "public", "build")
-const buildElectronPath = join(__dirname, "..", "build") // this includes server files
+const buildSveltePath = join(__dirname, "..", "public", "build");
+const buildElectronPath = join(__dirname, "..", "build"); // this includes server files
 
 // delete folders and all of it's content
-deleteFolderRecursive(buildSveltePath)
-deleteFolderRecursive(buildElectronPath)
+deleteFolderRecursive(buildSveltePath);
+deleteFolderRecursive(buildElectronPath);
 
 function deleteFolderRecursive(folderPath) {
-    if (!existsSync(folderPath)) return
+	if (!existsSync(folderPath)) return;
 
-    readdirSync(folderPath).forEach((file) => {
-        const path = join(folderPath, file)
-        const isFolder = lstatSync(path).isDirectory()
-        if (isFolder) return deleteFolderRecursive(path)
+	readdirSync(folderPath).forEach((file) => {
+		const path = join(folderPath, file);
+		const isFolder = lstatSync(path).isDirectory();
+		if (isFolder) return deleteFolderRecursive(path);
 
-        // delete file
-        unlinkSync(path)
-    })
+		// delete file
+		unlinkSync(path);
+	});
 
-    rmdirSync(folderPath)
+	rmdirSync(folderPath);
 }
 
 // create production configs with no source map
 function generateProdConfigs() {
-    const configs = ["svelte", "electron", "server"]
-    configs.forEach(createProdConfig)
+	const configs = ["svelte", "electron", "server"];
+	configs.forEach(createProdConfig);
 
-    function createProdConfig(id) {
-        const baseConfigPath = join(__dirname, "..", `tsconfig.${id}.json`)
-        const rawConfig = readFileSync(baseConfigPath, "utf8")
-        const parsedConfig = JSON.parse(rawConfig || "{}")
+	function createProdConfig(id) {
+		const baseConfigPath = join(__dirname, "..", `tsconfig.${id}.json`);
+		const rawConfig = readFileSync(baseConfigPath, "utf8");
+		const parsedConfig = JSON.parse(rawConfig || "{}");
 
-        if (!parsedConfig.compilerOptions) parsedConfig.compilerOptions = {}
-        parsedConfig.compilerOptions.sourceMap = false
+		if (!parsedConfig.compilerOptions) parsedConfig.compilerOptions = {};
+		parsedConfig.compilerOptions.sourceMap = false;
 
-        const newConfigPath = baseConfigPath.replace(`tsconfig.${id}.json`, `tsconfig.${id}.prod.json`)
-        writeFileSync(newConfigPath, JSON.stringify(parsedConfig))
-    }
+		const newConfigPath = baseConfigPath.replace(
+			`tsconfig.${id}.json`,
+			`tsconfig.${id}.prod.json`,
+		);
+		writeFileSync(newConfigPath, JSON.stringify(parsedConfig));
+	}
 }
 
-if (process.env.NODE_ENV === "production") generateProdConfigs()
+if (process.env.NODE_ENV === "production") generateProdConfigs();

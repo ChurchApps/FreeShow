@@ -28,9 +28,9 @@ export class EditboxHelper {
     }
 
     static splitAllCrlf(lines: Line[]) {
-        let result: Line[] = []
+        const result: Line[] = []
         lines.forEach((line) => {
-            let splitLines = this.splitCrlf(line)
+            const splitLines = this.splitCrlf(line)
             result.push(...splitLines)
         })
         return result
@@ -42,8 +42,8 @@ export class EditboxHelper {
         newLine.text = []
 
         line.text.forEach((text) => {
-            let value = text.value
-            let parts = value.replace("\r", "").split("\n")
+            const value = text.value
+            const parts = value.replace("\r", "").split("\n")
             newLine.text.push({ style: text.style, value: parts[0] })
             if (parts.length > 1) {
                 for (let i = 1; i < parts.length; i++) {
@@ -72,7 +72,7 @@ export class EditboxHelper {
 
                 if (start > -1 && currentIndex >= start) {
                     if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
-                    let pos = sel[i].start - textPos
+                    const pos = sel[i].start - textPos
                     if (pos > 0)
                         firstLines[firstLines.length - 1].text.push({
                             style: text.style,
@@ -94,7 +94,7 @@ export class EditboxHelper {
             if (!firstLines.at(-1)?.text.length) firstLines.pop()
         })
 
-        let defaultLine = [
+        const defaultLine = [
             {
                 align: lines[0].align || "",
                 text: [{ style: lines[0].text[0]?.style || "", value: "" }],
@@ -104,9 +104,9 @@ export class EditboxHelper {
         if (!secondLines.length) secondLines = defaultLine
 
         // add chords (currently only adding full line chords, so splitting in the middle of a line might shift chords)
-        let chordLines = clone(lines.map((a) => a.chords || []))
+        const chordLines = clone(lines.map((a) => a.chords || []))
         ;[...firstLines, ...secondLines].forEach((line) => {
-            let oldLineChords = chordLines.shift()
+            const oldLineChords = chordLines.shift()
             if (oldLineChords?.length) line.chords = oldLineChords
         })
 
@@ -116,30 +116,30 @@ export class EditboxHelper {
     static getSyleHtml(item: Item, plain: boolean, currentStyle: string) {
         currentStyle = ""
         let html = ""
-        let firstTextStyleArchive: string = ""
-        let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
+        let firstTextStyleArchive = ""
+        const lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
         item?.lines?.forEach((line, i) => {
-            let align = line.align.replaceAll(lineBg, "")
+            const align = line.align.replaceAll(lineBg, "")
             currentStyle += align + lineBg // + line.chords?.map((a) => a.key)
-            let style = align || lineBg ? 'style="' + align + ";" + lineBg + '"' : ""
+            const style = align || lineBg ? 'style="' + align + ";" + lineBg + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
 
             // fix removing all text in a line
             if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""
             if (!line.text?.length) line.text = [{ style: firstTextStyleArchive || "", value: "" }]
 
-            let currentChords = line.chords || []
+            const currentChords = line.chords || []
             let textIndex = 0
 
             line.text?.forEach((a, tIndex) => {
                 currentStyle += this.getTextStyle(a)
 
                 // SAVE CHORDS (WIP does not work well with more "text" per line)
-                let textEnd = textIndex + a.value.length
-                let textChords = currentChords.filter((a) => a.pos >= textIndex && (a.pos <= textEnd || line.text.length - 1 >= tIndex))
+                const textEnd = textIndex + a.value.length
+                const textChords = currentChords.filter((a) => a.pos >= textIndex && (a.pos <= textEnd || line.text.length - 1 >= tIndex))
                 textIndex = textEnd
 
-                let style = a.style ? 'style="' + a.style + '"' : ""
+                const style = a.style ? 'style="' + a.style + '"' : ""
                 let value = a.value.replaceAll("\n", "<br>") || "<br>"
                 if (value === " ") value = "&nbsp;"
 
@@ -152,7 +152,7 @@ export class EditboxHelper {
     }
 
     static getTextStyle(lineText: any) {
-        let style = lineText.style || ""
+        const style = lineText.style || ""
         return style
     }
 }

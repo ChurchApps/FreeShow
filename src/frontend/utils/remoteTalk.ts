@@ -1,25 +1,25 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
+import type { Show } from "../../types/Show"
+import type { ClientMessage } from "../../types/Socket"
+import { API_ACTIONS } from "../components/actions/api"
+import { loadBible, receiveBibleContent } from "../components/drawer/bible/scripture"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { getBase64Path, mediaSize } from "../components/helpers/media"
 import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
+import { clearAll } from "../components/output/clear"
 import { BIBLE, REMOTE } from "./../../types/Channels"
 import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
-import { sendData } from "./sendData"
-import { uid } from "uid"
-import { clearAll } from "../components/output/clear"
-import { destroy, send } from "./request"
-import type { Show } from "../../types/Show"
-import { API_ACTIONS } from "../components/actions/api"
-import type { ClientMessage } from "../../types/Socket"
-import { loadBible, receiveBibleContent } from "../components/drawer/bible/scripture"
 import { waitUntilValueIsDefined } from "./common"
+import { destroy, send } from "./request"
+import { sendData } from "./sendData"
 
 // REMOTE
 
-let currentOut: string = ""
+let currentOut = ""
 export const receiveREMOTE: any = {
     PASSWORD: (msg: any) => {
         msg.data = {
@@ -44,7 +44,10 @@ export const receiveREMOTE: any = {
     ACCESS: (msg: any) => {
         if (get(remotePassword).length && msg.data !== get(remotePassword)) return { id: msg.id, channel: "ERROR", data: "wrongPass" }
 
-        send(REMOTE, ["LANGUAGE"], { lang: get(language), strings: get(dictionary) })
+        send(REMOTE, ["LANGUAGE"], {
+            lang: get(language),
+            strings: get(dictionary),
+        })
 
         connections.update((a: any) => {
             if (!a.REMOTE) a.REMOTE = {}
@@ -65,11 +68,14 @@ export const receiveREMOTE: any = {
     // },
     SHOW: async (msg: any) => {
         // msg.data = filterObjectArray(get(shows)[msg.data], [""])
-        let showID: string = msg.data
+        const showID: string = msg.data
         console.log(msg)
 
         await loadShows([showID])
-        msg.data = clone({ ...(await convertBackgrounds(get(showsCache)[showID])), id: showID })
+        msg.data = clone({
+            ...(await convertBackgrounds(get(showsCache)[showID])),
+            id: showID,
+        })
         // send(REMOTE, ["MEDIA"], { media: msg.data.media })
 
         if (msg.id) {
@@ -86,12 +92,12 @@ export const receiveREMOTE: any = {
     OUT: async (msg: any) => {
         if (get(outLocked)) return
         // set id because convertBackgrounds might use a long time
-        let currentId = uid(5)
+        const currentId = uid(5)
         currentOut = currentId
 
-        let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
-        let out: any = currentOutput?.out?.slide || null
-        let id: string = ""
+        const currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+        const out: any = currentOutput?.out?.slide || null
+        let id = ""
 
         if (msg.data === "clear") {
             clearAll()
@@ -100,7 +106,7 @@ export const receiveREMOTE: any = {
             id = msg.data.id
             await loadShows([id])
 
-            let layout = _show(id).layouts("active").ref()[0] || []
+            const layout = _show(id).layouts("active").ref()[0] || []
             if (msg.data.index < layout.length && msg.data.index >= 0) {
                 if (!msg.data.layout) msg.data.layout = _show(id).get("settings.activeLayout")
                 updateOut(msg.data.id, msg.data.index, _show(msg.data.id).layouts([msg.data.layout]).ref()[0])
@@ -112,15 +118,19 @@ export const receiveREMOTE: any = {
             id = out.id
             console.log(msg.data)
 
-            let layout = _show(id).layouts("active").ref()[0]
+            const layout = _show(id).layouts("active").ref()[0]
             if (msg.data < layout.length && msg.data >= 0) {
-                let newOutSlide: any = { ...out, index: msg.data }
+                const newOutSlide: any = { ...out, index: msg.data }
                 setOutput("slide", newOutSlide)
             }
             msg.data = null
         } else {
-            let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
-            msg.data = { slide: out ? out.index : null, layout: out?.layout || null, styleRes }
+            const styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+            msg.data = {
+                slide: out ? out.index : null,
+                layout: out?.layout || null,
+                styleRes,
+            }
             // && out.id !== oldOutSlide
             if (out && out.id !== "temp") {
                 id = out.id
@@ -147,10 +157,10 @@ export const receiveREMOTE: any = {
         return msg
     },
     GET_SCRIPTURE: async (msg: ClientMessage) => {
-        let id = msg.data?.id
+        const id = msg.data?.id
         if (!id) return
 
-        let listenerId = uid()
+        const listenerId = uid()
         window.api.receive(BIBLE, receiveBibleContent, listenerId)
         receiveBibleContent(msg)
         loadBible(id, 0, clone(get(scriptures)[id] || {}))
@@ -180,13 +190,23 @@ export function initializeRemote(id: string) {
     console.log(id)
     send(REMOTE, ["ACCESS"])
 
-    sendData(REMOTE, { channel: "PROJECTS", data: removeDeleted(keysToID(get(projects))) })
-    send(REMOTE, ["FOLDERS"], { folders: get(folders), opened: get(openedFolders) })
+    sendData(REMOTE, {
+        channel: "PROJECTS",
+        data: removeDeleted(keysToID(get(projects))),
+    })
+    send(REMOTE, ["FOLDERS"], {
+        folders: get(folders),
+        opened: get(openedFolders),
+    })
     send(REMOTE, ["PROJECT"], get(activeProject))
 
-    let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
-    let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
-    let out: any = { slide: currentOutput?.out?.slide ? currentOutput.out.slide.index : null, layout: currentOutput.out?.slide?.layout || null, styleRes }
+    const currentOutput: any = get(outputs)[getActiveOutputs()[0]]
+    const styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+    const out: any = {
+        slide: currentOutput?.out?.slide ? currentOutput.out.slide.index : null,
+        layout: currentOutput.out?.slide?.layout || null,
+        styleRes,
+    }
     if (out.slide !== null && out.slide?.id) {
         oldOutSlide = out.slide.id
         out.show = get(showsCache)[oldOutSlide]
@@ -200,15 +220,15 @@ export async function convertBackgrounds(show: Show) {
     if (!show) return {}
 
     show = clone(show)
-    let mediaIds = show.layouts[show.settings?.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
+    const mediaIds = show.layouts[show.settings?.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
 
     await Promise.all(
         mediaIds.map(async (id) => {
             let path = show.media[id].path || show.media[id].id || ""
-            let cloudId = get(driveData).mediaId
+            const cloudId = get(driveData).mediaId
             if (cloudId && cloudId !== "default") path = show.media[id].cloud?.[cloudId] || path
 
-            let base64Path: string = await getBase64Path(path, mediaSize.slideSize)
+            const base64Path: string = await getBase64Path(path, mediaSize.slideSize)
             if (base64Path) show.media[id].path = base64Path
         })
     )

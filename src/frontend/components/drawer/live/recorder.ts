@@ -44,7 +44,7 @@ async function handleStop() {
     const blob = new Blob(recordedChunks, options)
     const arraybuffer = await blob.arrayBuffer()
 
-    let name = `FreeShow_${formatTime()}.webm`
+    const name = `FreeShow_${formatTime()}.webm`
     window.api.send(RECORDER, { blob: arraybuffer, path: get(dataPath), name })
 
     currentRecordingStream.set(null)

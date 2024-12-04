@@ -1,37 +1,42 @@
-import { activePopup, alertMessage, dictionary } from "../stores"
-import { xml2json } from "./xml"
+import { get } from "svelte/store"
 import { uid } from "uid"
 import { ShowObj } from "../classes/Show"
-import { createCategory, setTempShows } from "./importHelpers"
 import { checkName, initializeMetadata } from "../components/helpers/show"
-import { get } from "svelte/store"
+import { activePopup, alertMessage, dictionary } from "../stores"
+import { createCategory, setTempShows } from "./importHelpers"
+import { xml2json } from "./xml"
 
 function createSlides({ slide }: any) {
     const slides: any = {}
     const layout: any[] = []
 
     if (typeof slide !== "string") {
-        slide = slide['#cdata']
+        slide = slide["#cdata"]
     }
 
     if (!slide) return { slides, layout }
 
     slide
-        .split('<slide>')
-        .filter(slide => Boolean(slide.trim()))
-        .map(lines => lines.replace(/<BR>/gi, '<br>')
-            .split('<br>')
-            .map(line => line.trim())
-            .filter(slide => Boolean(slide.trim()))
+        .split("<slide>")
+        .filter((slide) => Boolean(slide.trim()))
+        .map((lines) =>
+            lines
+                .replace(/<BR>/gi, "<br>")
+                .split("<br>")
+                .map((line) => line.trim())
+                .filter((slide) => Boolean(slide.trim()))
         )
         .forEach((lines: string[]) => {
-            let id: string = uid()
+            const id: string = uid()
             layout.push({ id })
 
-            let items = [
+            const items = [
                 {
                     style: "left:50px;top:120px;width:1820px;height:840px;",
-                    lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text.trim() }] })),
+                    lines: lines.map((text: any) => ({
+                        align: "",
+                        text: [{ style: "", value: text.trim() }],
+                    })),
                 },
             ]
 
@@ -42,7 +47,7 @@ function createSlides({ slide }: any) {
                 notes: "",
                 items,
             }
-    });
+        })
 
     return { slides, layout }
 }
@@ -66,10 +71,10 @@ export function convertVerseVIEW(data: any) {
 
             if (!root) return
 
-            const { songDB } = root;
-            const { song: songs } = songDB;
+            const { songDB } = root
+            const { song: songs } = songDB
 
-            console.log(songs);
+            console.log(songs)
 
             for (const song of songs) {
                 const layoutID = uid()
@@ -89,12 +94,18 @@ export function convertVerseVIEW(data: any) {
                     // year: song.year,
                 })
                 show.slides = slides
-                show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
+                show.layouts = {
+                    [layoutID]: {
+                        name: get(dictionary).example?.default || "",
+                        notes: "",
+                        slides: layout,
+                    },
+                }
 
                 tempShows.push({ id: uid(), show })
             }
-        });
+        })
 
         setTempShows(tempShows)
-    }, 10);
+    }, 10)
 }

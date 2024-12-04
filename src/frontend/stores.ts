@@ -2,7 +2,7 @@
 // Here are all the global app variables
 
 import type { Family } from "css-fonts"
-import { Writable, writable } from "svelte/store"
+import { type Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
@@ -40,10 +40,15 @@ export const contextActive: Writable<boolean> = writable(false)
 export const topContextActive: Writable<boolean> = writable(false)
 export const quickSearchActive: Writable<boolean> = writable(false)
 export const focusMode: Writable<boolean> = writable(false)
-export const activeFocus: Writable<{ id: string; index?: number }> = writable({ id: "" })
+export const activeFocus: Writable<{ id: string; index?: number }> = writable({
+    id: "",
+})
 export const activeShow: Writable<null | ShowRef> = writable(null)
 export const activeEdit: Writable<ActiveEdit> = writable({ items: [] })
-export const activeStage: Writable<ActiveStage> = writable({ id: null, items: [] })
+export const activeStage: Writable<ActiveStage> = writable({
+    id: null,
+    items: [],
+})
 export const activeTimers: Writable<any[]> = writable([])
 export const activeRename: Writable<any> = writable(null)
 export const activeDrawerTab: Writable<DrawerTabIds> = writable("shows")
@@ -103,7 +108,9 @@ export const presentationApps: Writable<null | string[]> = writable(null)
 export const colorbars: Writable<string> = writable("")
 
 // EXPORT
-export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })
+export const exportOptions: Writable<any> = writable({
+    pdf: { rows: 5, columns: 2, slide: true, text: true },
+})
 
 // CACHE
 export const sortedShowsList: Writable<ShowList[]> = writable([])
@@ -166,8 +173,13 @@ export const transitionData: Writable<{ text: Transition; media: Transition }> =
     text: { type: "fade", duration: 500, easing: "sine" },
     media: { type: "fade", duration: 800, easing: "sine" },
 }) // {default}
-export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
-export const globalTags: Writable<{ [key: string]: { name: string; color: string } }> = writable({}) // {}
+export const slidesOptions: Writable<SlidesOptions> = writable({
+    columns: 4,
+    mode: "grid",
+}) // {default}
+export const globalTags: Writable<{
+    [key: string]: { name: string; color: string }
+}> = writable({}) // {}
 
 // PROJECT
 export const openedFolders: Writable<ID[]> = writable([]) // []
@@ -188,7 +200,9 @@ export const triggers: Writable<{ [key: string]: any }> = writable({}) // {}
 // MEDIA
 export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
-export const videoMarkers: Writable<{ [key: string]: { name: string; time: number }[] }> = writable({}) // {}
+export const videoMarkers: Writable<{
+    [key: string]: { name: string; time: number }[]
+}> = writable({}) // {}
 export const checkedFiles: Writable<any[]> = writable([])
 
 // OVERLAYS
@@ -223,16 +237,31 @@ export const stageShows: Writable<StageLayouts> = writable({}) // {default}
 // SCRIPTURE
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}
-export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true, referenceDivider: ":" }) // {default}
+export const scriptureSettings: Writable<any> = writable({
+    template: "scripture",
+    versesPerSlide: 3,
+    verseNumbers: false,
+    showVersion: false,
+    showVerse: true,
+    referenceDivider: ":",
+}) // {default}
 export const bibleApiKey: Writable<string> = writable("") // ""
 
 // DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}
 export const drawer: Writable<{ height: number; stored: null | number }> = writable({ height: 300, stored: null }) // {default}
-export const mediaOptions: Writable<MediaOptions> = writable({ columns: 5, mode: "grid" }) // {default}
+export const mediaOptions: Writable<MediaOptions> = writable({
+    columns: 5,
+    mode: "grid",
+}) // {default}
 
 // OTHER
-export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
+export const resized: Writable<NumberObject> = writable({
+    leftPanel: 290,
+    rightPanel: 290,
+    leftPanelDrawer: 290,
+    rightPanelDrawer: 290,
+}) // {default}
 export const sorted: Writable<any> = writable({}) // {}
 export const dataPath: Writable<string> = writable("") // ""
 export const lockedOverlays: Writable<string[]> = writable([]) // []
@@ -250,7 +279,10 @@ export const fullColors: Writable<boolean> = writable(false) // false
 export const formatNewShow: Writable<boolean> = writable(false) // false
 export const splitLines: Writable<number> = writable(0) // 0
 export const showsPath: Writable<null | string> = writable(null) // null
-export const customizedIcons: Writable<any> = writable({ disabled: [], svg: [] }) // {disabled: [], svg: []}
+export const customizedIcons: Writable<any> = writable({
+    disabled: [],
+    svg: [],
+}) // {disabled: [], svg: []}
 
 // THEME
 export const theme: Writable<string> = writable("default") // "default"
@@ -268,8 +300,18 @@ export const outLocked: Writable<boolean> = writable(false) // false
 export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({}) // {}
 
 // CONNECTIONS
-export const ports: Writable<any> = writable({ remote: 5510, stage: 5511, controller: 5512, output_stream: 5513 }) // {default}
-export const disabledServers: Writable<any> = writable({ remote: false, stage: false, controller: true, output_stream: true }) // {}
+export const ports: Writable<any> = writable({
+    remote: 5510,
+    stage: 5511,
+    controller: 5512,
+    output_stream: 5513,
+}) // {default}
+export const disabledServers: Writable<any> = writable({
+    remote: false,
+    stage: false,
+    controller: true,
+    output_stream: true,
+}) // {}
 export const serverData: Writable<any> = writable({}) // {}
 export const maxConnections: Writable<number> = writable(10) // 10
 export const remotePassword: Writable<string> = writable("1234") // generate 4 numbers
@@ -277,7 +319,12 @@ export const companion: Writable<any> = writable({ enabled: false }) // {}
 
 // CLOUD
 export const driveKeys: Writable<any> = writable({})
-export const driveData: Writable<any> = writable({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
+export const driveData: Writable<any> = writable({
+    mainFolderId: null,
+    disabled: false,
+    initializeMethod: null,
+    disableUpload: false,
+})
 
 // ----- STORES LIST -----
 
@@ -379,7 +426,7 @@ export const $ = {
 
 // DEBUG STORE UPDATES
 const debugStores = false
-let updates: any = {}
+const updates: any = {}
 if (debugStores) startSubscriptions()
 function startSubscriptions() {
     Object.entries($).forEach(([key, store]) => {

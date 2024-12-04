@@ -4,14 +4,14 @@ import { categories, dictionary, playerVideos, showsCache } from "../../../store
 import { loadShows } from "../../helpers/setShow"
 
 export async function getAllProjectItems(projectShows: ProjectShowRef[]) {
-    let showIds: string[] = projectShows.filter((a) => (a.type || "show") === "show").map((a) => a.id)
+    const showIds: string[] = projectShows.filter((a) => (a.type || "show") === "show").map((a) => a.id)
     await loadShows(showIds)
 
     // get names & icons
     projectShows = projectShows.map((a) => {
         // same icon as ShowButton.svelte
         if ((a.type || "show") === "show") {
-            let show = get(showsCache)[a.id] || {}
+            const show = get(showsCache)[a.id] || {}
             a.name = show.name
             a.icon = get(categories)[show.category || ""]?.icon || ""
         } else if (a.type === "audio") {

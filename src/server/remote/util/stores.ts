@@ -1,49 +1,59 @@
-import type { ProjectShowRef } from "./../../../types/Projects"
-import { get, Writable, writable } from "svelte/store"
+import { type Writable, get, writable } from "svelte/store"
 import type { Dictionary } from "../../../types/Settings"
-import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
-import { clone } from "../../common/util/helpers"
-import { DEFAULT_DICTIONARY } from "./dictionary"
 import type { BibleCategories } from "../../../types/Tabs"
+import { clone } from "../../common/util/helpers"
+import { type DeepKey, type DeepNested, type Inferred, type Nested, __update } from "../../common/util/stores"
+import type { ProjectShowRef } from "./../../../types/Projects"
+import { DEFAULT_DICTIONARY } from "./dictionary"
 
-export let dictionary: Writable<Dictionary> = writable(clone(DEFAULT_DICTIONARY))
+export const dictionary: Writable<Dictionary> = writable(clone(DEFAULT_DICTIONARY))
 
-export let errors: Writable<string[]> = writable([])
+export const errors: Writable<string[]> = writable([])
 
-export let password = writable({
+export const password = writable({
     required: true,
     remember: false,
     stored: "",
 })
 
-export let isConnected = writable(false)
-export let quickPlay = writable(false)
-export let activeTab = writable("shows")
-export let outputMode: Writable<"slide" | "lyrics"> = writable("slide")
+export const isConnected = writable(false)
+export const quickPlay = writable(false)
+export const activeTab = writable("shows")
+export const outputMode: Writable<"slide" | "lyrics"> = writable("slide")
 
-export let active: Writable<ProjectShowRef> = writable({ id: "", type: "show" })
-export let activeShow: Writable<any> = writable(null)
-export let shows: Writable<any[]> = writable([])
-export let outSlide: Writable<any> = writable(null)
-export let outLayout: Writable<any> = writable(null)
-export let styleRes: Writable<any> = writable(null)
-export let outShow: Writable<any> = writable(null)
-export let layout: Writable<any[] | null> = writable(null)
-export let isCleared = writable({ all: true, background: true, slide: true, overlays: true, audio: true, slideTimers: true })
+export const active: Writable<ProjectShowRef> = writable({
+    id: "",
+    type: "show",
+})
+export const activeShow: Writable<any> = writable(null)
+export const shows: Writable<any[]> = writable([])
+export const outSlide: Writable<any> = writable(null)
+export const outLayout: Writable<any> = writable(null)
+export const styleRes: Writable<any> = writable(null)
+export const outShow: Writable<any> = writable(null)
+export const layout: Writable<any[] | null> = writable(null)
+export const isCleared = writable({
+    all: true,
+    background: true,
+    slide: true,
+    overlays: true,
+    audio: true,
+    slideTimers: true,
+})
 
-export let projectsOpened: Writable<boolean> = writable(false)
-export let activeProject: Writable<any> = writable(null)
-export let folders: Writable<any> = writable(null)
-export let openedFolders: Writable<any[]> = writable([])
-export let projects: Writable<any[]> = writable([])
-export let project: Writable<string> = writable("")
+export const projectsOpened: Writable<boolean> = writable(false)
+export const activeProject: Writable<any> = writable(null)
+export const folders: Writable<any> = writable(null)
+export const openedFolders: Writable<any[]> = writable([])
+export const projects: Writable<any[]> = writable([])
+export const project: Writable<string> = writable("")
 
-export let scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
+export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
 
-export let mediaCache: Writable<any> = writable({})
-export let textCache: Writable<any> = writable({})
-export let groupsCache: Writable<any> = writable({})
-export let scriptureCache: Writable<any> = writable({})
+export const mediaCache: Writable<any> = writable({})
+export const textCache: Writable<any> = writable({})
+export const groupsCache: Writable<any> = writable({})
+export const scriptureCache: Writable<any> = writable({})
 
 /////
 

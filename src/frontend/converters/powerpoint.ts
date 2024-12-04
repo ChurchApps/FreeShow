@@ -10,9 +10,11 @@ export function convertPowerpoint(files: any[]) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("Presentation", "presentation", { isDefault: true })
+    const categoryId = createCategory("Presentation", "presentation", {
+        isDefault: true,
+    })
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     setTimeout(() => {
         files.forEach(({ name, content }: any) => {
@@ -21,18 +23,18 @@ export function convertPowerpoint(files: any[]) {
                 .filter((a) => a.includes("ppt/slides/slide"))
                 .sort((a, b) => a.localeCompare(b))
 
-            let slides: string[][][] = slideKeys.map((key) => convertPPTX(content[key]))
+            const slides: string[][][] = slideKeys.map((key) => convertPPTX(content[key]))
             if (!slides.length) {
                 alertMessage.set('This format is unsupported, try using an online "PPT to TXT converter".')
                 return
             }
 
             // create show
-            let layoutID = uid()
-            let show: Show = new ShowObj(false, categoryId, layoutID)
+            const layoutID = uid()
+            const show: Show = new ShowObj(false, categoryId, layoutID)
             show.name = checkName(name)
 
-            let meta: any = content["docProps/core.xml"]?.["cp:coreProperties"]
+            const meta: any = content["docProps/core.xml"]?.["cp:coreProperties"]
             if (meta) {
                 show.meta = {
                     title: meta["dc:title"]?.[0] || show.name,
@@ -45,9 +47,15 @@ export function convertPowerpoint(files: any[]) {
                 }
             }
 
-            let { slidesObj, layouts } = createSlides(slides)
+            const { slidesObj, layouts } = createSlides(slides)
             show.slides = slidesObj
-            show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layouts } }
+            show.layouts = {
+                [layoutID]: {
+                    name: get(dictionary).example?.default || "",
+                    notes: "",
+                    slides: layouts,
+                },
+            }
 
             tempShows.push({ id: uid(), show })
         })
@@ -57,19 +65,19 @@ export function convertPowerpoint(files: any[]) {
 }
 
 function convertPPTX(content: any) {
-    let slide: string[][] = []
+    const slide: string[][] = []
 
     // textboxes
     // WIP extract images etc.
-    let lists = content?.["p:sld"]?.["p:cSld"]?.[0]?.["p:spTree"]?.[0]?.["p:sp"] || []
+    const lists = content?.["p:sld"]?.["p:cSld"]?.[0]?.["p:spTree"]?.[0]?.["p:sp"] || []
     lists.forEach((list: any) => {
         if (!list?.["p:txBody"]?.length) return
 
-        let lines: string[] = []
+        const lines: string[] = []
         list["p:txBody"][0]?.["a:p"]?.forEach((line: any) => {
             if (!line?.["a:r"]) return
 
-            let value: string = ""
+            let value = ""
             line["a:r"].forEach((list: any) => {
                 value += list["a:t"]?.[0] || ""
             })
@@ -83,21 +91,27 @@ function convertPPTX(content: any) {
 }
 
 function createSlides(slides: string[][][]) {
-    let slidesObj: { [key: string]: Slide } = {}
-    let layouts: any[] = []
+    const slidesObj: { [key: string]: Slide } = {}
+    const layouts: any[] = []
 
     slides.forEach((slide: any, i: number) => {
-        let id: string = uid()
+        const id: string = uid()
         layouts.push({ id })
 
-        let items: Item[] = []
+        const items: Item[] = []
         slide.forEach((textbox) => {
-            let lines: any[] = []
+            const lines: any[] = []
             textbox.forEach((line) => {
-                lines.push({ align: "text-align: left;", text: [{ style: "", value: line }] })
+                lines.push({
+                    align: "text-align: left;",
+                    text: [{ style: "", value: line }],
+                })
             })
 
-            items.push({ style: "left:50px;top:120px;width:1820px;height:840px;", lines })
+            items.push({
+                style: "left:50px;top:120px;width:1820px;height:840px;",
+                lines,
+            })
         })
 
         slidesObj[id] = {

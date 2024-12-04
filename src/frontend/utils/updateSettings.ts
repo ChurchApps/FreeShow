@@ -5,6 +5,7 @@ import { clone, keysToID } from "../components/helpers/array"
 import { checkWindowCapture, displayOutputs, setOutput } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import {
+    timers,
     activePopup,
     activeProject,
     alertUpdates,
@@ -58,7 +59,6 @@ import {
     theme,
     themes,
     timeFormat,
-    timers,
     triggers,
     variables,
     version,
@@ -96,19 +96,19 @@ export function updateSettings(data: any) {
 
     // output
     if (data.outputs) {
-        let outputsList: Output[] = keysToID(data.outputs)
+        const outputsList: Output[] = keysToID(data.outputs)
 
         // get active "ghost" key outputs
-        let activeKeyOutputs: string[] = []
+        const activeKeyOutputs: string[] = []
         outputsList.forEach((output) => {
             if (output.keyOutput && !output.isKeyOutput) activeKeyOutputs.push(output.id!)
         })
 
         // remove "ghost" key outputs (they were not removed in versions pre 0.9.6)
-        let allOutputs = get(outputs)
-        let outputsUpdated: boolean = false
+        const allOutputs = get(outputs)
+        let outputsUpdated = false
         Object.keys(allOutputs).forEach((outputId) => {
-            let output = allOutputs[outputId]
+            const output = allOutputs[outputId]
             if (!output.isKeyOutput || activeKeyOutputs.includes(output.id!)) return
 
             delete allOutputs[outputId][output.id!]
@@ -125,13 +125,17 @@ export function updateSettings(data: any) {
     }
 
     // remote
-    let disabled = data.disabledServers || {}
+    const disabled = data.disabledServers || {}
     if (disabled.remote === undefined) disabled.remote = false
     if (disabled.stage === undefined) disabled.stage = false
-    send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled })
+    send(MAIN, ["START"], {
+        ports: data.ports || { remote: 5510, stage: 5511 },
+        max: data.maxConnections === undefined ? 10 : data.maxConnections,
+        disabled,
+    })
 
     // theme
-    let currentTheme = get(themes)[data.theme]
+    const currentTheme = get(themes)[data.theme]
     if (currentTheme) {
         // update colors (upgrading from < v0.9.2)
         if (data.theme === "default" && currentTheme.colors.secondary?.toLowerCase() === "#e6349c") {
@@ -153,16 +157,16 @@ export function updateSettings(data: any) {
 }
 
 export function restartOutputs() {
-    let data = clone(videosData)
-    let time = clone(videosTime)
+    const data = clone(videosData)
+    const time = clone(videosTime)
 
-    let allOutputs = keysToID(get(outputs))
+    const allOutputs = keysToID(get(outputs))
     allOutputs
         .filter((a) => a.enabled)
         .forEach((output: Output) => {
             // key output styling
             if (output.isKeyOutput) {
-                let parentOutput = allOutputs.find((a) => a.keyOutput === output.id)
+                const parentOutput = allOutputs.find((a) => a.keyOutput === output.id)
                 if (parentOutput) output = { ...parentOutput, ...output }
             }
 

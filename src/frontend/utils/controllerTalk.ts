@@ -39,12 +39,12 @@ export const receiveCONTROLLER = {
             return
         }
 
-        let resolution = getResolution()
+        const resolution = getResolution()
         data.offset.x *= resolution.width
         data.offset.y *= resolution.height
 
-        let tool = data.tool || "focus"
-        let settings = get(drawSettings)[tool]
+        const tool = data.tool || "focus"
+        const settings = get(drawSettings)[tool]
         if (settings) {
             data.offset.x -= settings.size / 2
             data.offset.y -= settings.size / 2
@@ -56,7 +56,10 @@ export const receiveCONTROLLER = {
         if (tool === "paint") paintCache.set([{ x: 0, y: 0, size: 0, color: "white" }])
     },
     GET_OUTPUT_ID: () => {
-        return { channel: "GET_OUTPUT_ID", data: get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0] }
+        return {
+            channel: "GET_OUTPUT_ID",
+            data: get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0],
+        }
     },
 }
 
@@ -64,7 +67,14 @@ function clearPainting() {
     paintCache.set([])
 
     drawSettings.update((a: any) => {
-        if (!a.paint) a.paint = { color: "#ffffff", size: 10, threed: false, dots: false, hold: true }
+        if (!a.paint)
+            a.paint = {
+                color: "#ffffff",
+                size: 10,
+                threed: false,
+                dots: false,
+                hold: true,
+            }
         a.paint.clear = true
         return a
     })

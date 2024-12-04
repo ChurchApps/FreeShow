@@ -9,6 +9,7 @@ import { analyseAudio } from "../components/helpers/audio"
 import { addDrawerFolder } from "../components/helpers/dropActions"
 import { captureCanvas } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
+import { loadShows, saveTextCache } from "../components/helpers/setShow"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -16,6 +17,7 @@ import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
+import { convertEasyslides } from "../converters/easyslides"
 import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
 import { importShow, importSpecific } from "../converters/importHelpers"
@@ -26,13 +28,17 @@ import { convertOSISBible } from "../converters/osisBible"
 import { convertPowerpoint } from "../converters/powerpoint"
 import { addToProject, importProject } from "../converters/project"
 import { convertProPresenter } from "../converters/propresenter"
+import { convertQuelea } from "../converters/quelea"
 import { convertSoftProjector } from "../converters/softprojector"
 import { convertSongbeamerFiles } from "../converters/songbeamer"
 import { convertTexts } from "../converters/txt"
+import { convertVerseVIEW } from "../converters/verseview"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
-import { convertVerseVIEW } from "../converters/verseview"
 import {
+    events,
+    os,
+    timers,
     activePage,
     activePopup,
     activeShow,
@@ -52,14 +58,12 @@ import {
     drawTool,
     driveData,
     driveKeys,
-    events,
     folders,
     gain,
     isDev,
     lessonsLoaded,
     media,
     ndiData,
-    os,
     outputDisplay,
     outputs,
     overlays,
@@ -83,7 +87,6 @@ import {
     theme,
     themes,
     timeFormat,
-    timers,
     transitionData,
     usageLog,
     variables,
@@ -105,9 +108,6 @@ import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { convertQuelea } from "../converters/quelea"
-import { convertEasyslides } from "../converters/easyslides"
-import { loadShows, saveTextCache } from "../components/helpers/setShow"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -150,7 +150,7 @@ const receiveMAIN: any = {
         alertMessage.set(a || "")
 
         if (a === "error.display") {
-            let outputIds = getActiveOutputs(get(outputs), false, true)
+            const outputIds = getActiveOutputs(get(outputs), false, true)
             currentOutputSettings.set(outputIds[0])
             popupData.set({ activateOutput: true })
             activePopup.set("choose_screen")
@@ -171,8 +171,8 @@ const receiveMAIN: any = {
         activePopup.set("alert")
     },
     REFRESH_SHOWS: (a) => {
-        let oldCount = Object.keys(get(shows)).length
-        let newCount = Object.keys(a).length
+        const oldCount = Object.keys(get(shows)).length
+        const newCount = Object.keys(a).length
 
         shows.set(a)
 
@@ -195,10 +195,10 @@ const receiveMAIN: any = {
         newToast("$settings.restore_finished")
     },
     LOCATE_MEDIA_FILE: ({ path, ref }) => {
-        let prevPath: string = ""
+        let prevPath = ""
 
         showsCache.update((a) => {
-            let media = a[ref.showId].media[ref.mediaId]
+            const media = a[ref.showId].media[ref.mediaId]
             if (ref.cloudId) {
                 if (!media.cloud) a[ref.showId].media[ref.mediaId].cloud = {}
                 prevPath = a[ref.showId].media[ref.mediaId].cloud![ref.cloudId]
@@ -232,10 +232,10 @@ const receiveSTORE: any = {
     SETTINGS: (a: any) => updateSettings(a),
     SYNCED_SETTINGS: (a: any) => updateSyncedSettings(a),
     SHOWS: async (a: any) => {
-        let difference = Object.keys(a).length - Object.keys(get(shows)).length
+        const difference = Object.keys(a).length - Object.keys(get(shows)).length
         if (difference < 15 && Object.keys(get(shows)).length && difference > 0) {
             // get new shows & cache their content
-            let newShowIds = Object.keys(a).filter((id) => !get(shows)[id])
+            const newShowIds = Object.keys(a).filter((id) => !get(shows)[id])
             await loadShows(newShowIds)
             newShowIds.forEach((id) => saveTextCache(id, get(showsCache)[id]))
         }
@@ -282,19 +282,19 @@ const receiveFOLDER: any = {
 
 const receiveFILE = {
     GOOGLE_KEYS: ({ files, content }) => {
-        let path = files[0]
-        let file = content[path]
+        const path = files[0]
+        const file = content[path]
         if (file) validateKeys(file)
     },
 }
 
 // OUTPUT
 
-let clearing: boolean = false
+let clearing = false
 const receiveOUTPUTasMAIN: any = {
     BUFFER: ({ id, time, buffer, size }) => {
         // this will infinitely increace if this is not in place
-        let timeSinceSent = Date.now() - time
+        const timeSinceSent = Date.now() - time
         if (timeSinceSent > 100) return // skip frames if overloaded
 
         previewBuffers.update((a) => {
@@ -313,10 +313,10 @@ const receiveOUTPUTasMAIN: any = {
         }
 
         playingVideos.update((a) => {
-            let existing = a.findIndex((a) => a.id === data.id && a.location === "output")
+            const existing = a.findIndex((a) => a.id === data.id && a.location === "output")
 
             if (existing > -1) {
-                let wasPaused = a[existing].paused
+                const wasPaused = a[existing].paused
                 a[existing] = { ...data, location: "output" }
                 if (wasPaused === true && !data.paused) analyseAudio()
             } else if (get(outputs)[data.id]?.out?.background) {
@@ -337,7 +337,7 @@ const receiveOUTPUTasMAIN: any = {
     },
     UPDATE_OUTPUTS_DATA: ({ key, value, id, autoSave }) => {
         outputs.update((a) => {
-            let ids = id ? [id] : Object.keys(get(outputs))
+            const ids = id ? [id] : Object.keys(get(outputs))
             ids.forEach((outputId) => {
                 if (a[outputId]) a[outputId][key] = value
             })
@@ -354,7 +354,7 @@ const receiveOUTPUTasMAIN: any = {
         clearing = true
         setTimeout(() => (clearing = false), msg.duration || 1000)
 
-        let videoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
+        const videoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
         if (!videoPath) return
 
         // check and execute next after media regardless of loop
@@ -364,7 +364,7 @@ const receiveOUTPUTasMAIN: any = {
 
         setTimeout(() => {
             // double check that output is still the same
-            let newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
+            const newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
             if (newVideoPath !== videoPath) return
 
             clearBackground(msg.id)
@@ -373,7 +373,11 @@ const receiveOUTPUTasMAIN: any = {
     // stage
     MAIN_REQUEST_VIDEO_DATA: (data: any) => {
         if (!data.id) return
-        send(OUTPUT, ["VIDEO_DATA"], { id: data.id, data: get(videosData), time: get(videosTime) })
+        send(OUTPUT, ["VIDEO_DATA"], {
+            id: data.id,
+            data: get(videosData),
+            time: get(videosTime),
+        })
     },
     ALERT_MAIN: (data: string) => {
         if (!data) return
@@ -388,21 +392,21 @@ const receiveOUTPUTasMAIN: any = {
     },
 }
 
-let previousOutputs: string = ""
+let previousOutputs = ""
 export const receiveOUTPUTasOUTPUT: any = {
     OUTPUTS: (a: any) => {
         // output.ts - only current output data is sent
-        let id = Object.keys(a)[0]
+        const id = Object.keys(a)[0]
         if (!id) {
             outputs.set(a)
             return
         }
 
-        let active: boolean = a[id].active
+        const active: boolean = a[id].active
         delete a[id].active
 
         // only update if there are any changes in this output
-        let newOutputs = JSON.stringify(a)
+        const newOutputs = JSON.stringify(a)
         if (previousOutputs === newOutputs) return
 
         a[id].active = active
@@ -415,7 +419,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     },
     // only received by stage screen outputs
     BUFFER: ({ id, time, buffer, size }) => {
-        let timeSinceSent = Date.now() - time
+        const timeSinceSent = Date.now() - time
         if (timeSinceSent > 100) return // skip frames if overloaded
 
         // WIP only receive the "output capture" from this outputs "stageOutput id"
@@ -507,7 +511,9 @@ const receiveCLOUD = {
             return
         }
 
-        send(CLOUD, ["GET_MAIN_FOLDER"], { method: get(driveData).initializeMethod })
+        send(CLOUD, ["GET_MAIN_FOLDER"], {
+            method: get(driveData).initializeMethod,
+        })
     },
     GET_MAIN_FOLDER: ({ id, error, existingData }: any) => {
         if (error) {

@@ -1,10 +1,10 @@
 import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
 import { NdiSender } from "../ndi/NdiSender"
-import { CaptureTransmitter } from "./helpers/CaptureTransmitter"
-import { CaptureOptions } from "./CaptureOptions"
-import { CaptureLifecycle } from "./helpers/CaptureLifecycle"
 import { OutputHelper } from "../output/OutputHelper"
+import type { CaptureOptions } from "./CaptureOptions"
+import { CaptureLifecycle } from "./helpers/CaptureLifecycle"
+import { CaptureTransmitter } from "./helpers/CaptureTransmitter"
 
 export class CaptureHelper {
     static Lifecycle = CaptureLifecycle
@@ -19,9 +19,9 @@ export class CaptureHelper {
     static customFramerates: any = {}
 
     static getDefaultCapture(window: BrowserWindow, id: string): CaptureOptions {
-        let screen: Display = this.getWindowScreen(window)
+        const screen: Display = this.getWindowScreen(window)
 
-        let defaultFramerates = {
+        const defaultFramerates = {
             ndi: this.framerates.connected,
             server: this.framerates.server,
             stage: this.framerates.stage,
@@ -49,8 +49,8 @@ export class CaptureHelper {
             let ndiFramerate = this.framerates.unconnected
             if (NdiSender.NDI[id].status === "connected") ndiFramerate = this.customFramerates[id]?.ndi || this.framerates.connected
 
-            if (captureOptions.framerates.ndi !== parseInt(ndiFramerate)) {
-                captureOptions.framerates.ndi = parseInt(ndiFramerate)
+            if (captureOptions.framerates.ndi !== Number.parseInt(ndiFramerate)) {
+                captureOptions.framerates.ndi = Number.parseInt(ndiFramerate)
                 CaptureTransmitter.startChannel(id, "ndi")
             }
         }

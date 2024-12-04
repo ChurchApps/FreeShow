@@ -11,10 +11,10 @@ import { linesToTextboxes } from "../components/show/formatTextEditor"
 import { activeProject, dictionary, formatNewShow, groups, special, splitLines } from "../stores"
 
 export function getQuickExample() {
-    let tip = get(dictionary).create_show?.quick_lyrics_example_tip || ""
-    let line = get(dictionary).create_show?.quick_lyrics_example_text || "Line"
-    let verse = get(dictionary).groups?.verse || "Verse"
-    let chorus = get(dictionary).groups?.chorus || "Chorus"
+    const tip = get(dictionary).create_show?.quick_lyrics_example_tip || ""
+    const line = get(dictionary).create_show?.quick_lyrics_example_text || "Line"
+    const verse = get(dictionary).groups?.verse || "Verse"
+    const chorus = get(dictionary).groups?.chorus || "Chorus"
 
     // [Verse]\nLine 1\nLine 2\n\nLine 3\nLine 4\n\n[Chorus]\nLine 1\nLine 2\nx2
     return `${tip}...\n\n[${verse}]\n${line} 1\n${line} 2\n\n${line} 3\n${line} 4\n\n[${chorus}]\n${line} 1\n${line} 2\nx2`
@@ -28,7 +28,7 @@ export function convertTexts(files: any[]) {
 }
 
 // convert a plain text input into a show
-export function convertText({ name = "", category = null, text, noFormatting = false }: any, onlySlides: boolean = false, { existingSlides } = { existingSlides: {} }) {
+export function convertText({ name = "", category = null, text, noFormatting = false }: any, onlySlides = false, { existingSlides } = { existingSlides: {} }) {
     // remove empty spaces (as groups [] should be used for empty slides)
     // in "Text edit" spaces can be used to create empty "child" slides
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
@@ -36,7 +36,7 @@ export function convertText({ name = "", category = null, text, noFormatting = f
     let sections: string[] = removeEmpty(text.split("\n\n"))
 
     // get ccli
-    let ccli: string = ""
+    let ccli = ""
     if (sections[sections.length - 1].includes("www.ccli.com")) {
         ccli = sections.pop()!
     }
@@ -44,13 +44,13 @@ export function convertText({ name = "", category = null, text, noFormatting = f
     let labeled: any[] = []
 
     // find chorus phrase
-    let patterns = findPatterns(sections)
+    const patterns = findPatterns(sections)
     sections = patterns.sections
     labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] }))
     labeled = checkRepeats(labeled)
 
     if (!name) {
-        let firstSlideText = labeled[0].text.split("\n")
+        const firstSlideText = labeled[0].text.split("\n")
         name = firstSlideText[0]
         if (firstSlideText.length > 1 && (name.includes("[") || name.includes(":"))) name = firstSlideText[1]
         name = name
@@ -61,9 +61,9 @@ export function convertText({ name = "", category = null, text, noFormatting = f
         if (name.length > 38) name = name.slice(0, 30)
     }
 
-    let layoutID: string = uid()
-    let show: Show = new ShowObj(false, category, layoutID)
-    let { slides, layouts } = createSlides(labeled, existingSlides, noFormatting)
+    const layoutID: string = uid()
+    const show: Show = new ShowObj(false, category, layoutID)
+    const { slides, layouts } = createSlides(labeled, existingSlides, noFormatting)
 
     if (onlySlides) return { slides, layouts }
 
@@ -72,7 +72,7 @@ export function convertText({ name = "", category = null, text, noFormatting = f
     show.layouts[layoutID].slides = layouts
 
     if (ccli) {
-        let meta: string[] = ccli.split("\n")
+        const meta: string[] = ccli.split("\n")
         // songselect order
         if (meta[4]?.includes("CCLI")) {
             show.meta = {
@@ -98,19 +98,23 @@ export function convertText({ name = "", category = null, text, noFormatting = f
         }
     }
 
-    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
+    history({
+        id: "UPDATE",
+        newData: { data: show, remember: { project: get(activeProject) } },
+        location: { page: "show", id: "show" },
+    })
 
     return show
 }
 
 // TODO: this sometimes splits all slides up with no children (when adding [group])
 function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
-    let slides: any = existingSlides
-    let layouts: any[] = []
+    const slides: any = existingSlides
+    const layouts: any[] = []
     // let stored: any = {}
 
     let activeGroup: any = null
-    let addedChildren: any = {}
+    const addedChildren: any = {}
     labeled.forEach(convertLabeledSlides)
 
     // add children
@@ -122,14 +126,14 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
 
     function convertLabeledSlides(a: any): void {
         let id: any
-        let formatText: boolean = noFormatting ? false : get(formatNewShow)
-        let autoGroups: boolean = get(special).autoGroups !== false
+        const formatText: boolean = noFormatting ? false : get(formatNewShow)
+        const autoGroups: boolean = get(special).autoGroups !== false
 
-        let text: string = fixText(a.text, formatText)
+        const text: string = fixText(a.text, formatText)
         // this only accounted for the parent slide, so if the same group was placed multiple times with different children that would be replaced & all "duplicate" children would be removed!
         // if (stored[a.type]) id = stored[a.type].find((b: any) => b.text === text)?.id
 
-        let hasTextGroup: boolean = (a.text.trim()[0] === "[" && a.text.includes("]")) || a.text.trim()[a.text.length - 1] === ":"
+        const hasTextGroup: boolean = (a.text.trim()[0] === "[" && a.text.includes("]")) || a.text.trim()[a.text.length - 1] === ":"
 
         if (id) {
             if (activeGroup && !hasTextGroup) return
@@ -148,10 +152,10 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
 
         let group: string = activeGroup && !hasTextGroup ? null : a.type
         if (!autoGroups && !hasTextGroup && group) group = "verse"
-        let color: any = null
+        const color: any = null
 
         let allLines: string[] = [text]
-        let lines: string[] = removeEmpty(text.split("\n"))
+        const lines: string[] = removeEmpty(text.split("\n"))
 
         // split lines into a set amount of lines
         if (Number(get(splitLines)) && lines.length > get(splitLines)) {
@@ -159,7 +163,7 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
             while (lines.length) allLines.push(lines.splice(0, get(splitLines)).join("\n"))
         }
 
-        let children: string[] = []
+        const children: string[] = []
 
         allLines.forEach(createSlide)
 
@@ -179,7 +183,7 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
 
             // get active show
             if (_show().get()) {
-                let activeItems = clone(_show().slides().items().get()[0])
+                const activeItems = clone(_show().slides().items().get()[0])
 
                 // replace values
                 items = items
@@ -193,15 +197,15 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
             }
 
             // remove empty items
-            let textLength = items.reduce((value, item) => (value += getItemText(item).length), 0)
+            const textLength = items.reduce((value, item) => (value += getItemText(item).length), 0)
             if (!textLength) items = []
 
             // extract chords (chordpro)
             items = items.map((item) => {
                 item.lines?.forEach((line) => {
-                    let chords: any[] = []
-                    let letterIndex: number = 0
-                    let isChord: boolean = false
+                    const chords: any[] = []
+                    let letterIndex = 0
+                    let isChord = false
 
                     line?.text?.forEach((text) => {
                         let newValue = ""
@@ -234,21 +238,34 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
                 // don't add empty slides as children (but allow e.g. "Break")
                 if (!getSlideText({ items } as any).length) return
 
-                let childId: string = uid()
+                const childId: string = uid()
                 children.push(childId)
-                slides[childId] = { group: null, color: null, settings: {}, notes: "", items }
+                slides[childId] = {
+                    group: null,
+                    color: null,
+                    settings: {},
+                    notes: "",
+                    items,
+                }
                 return
             }
 
             // a.text.split("\n").forEach((text: string) => {})
-            slides[id] = { group, color, globalGroup: group, settings: {}, notes: "", items }
+            slides[id] = {
+                group,
+                color,
+                globalGroup: group,
+                settings: {},
+                notes: "",
+                items,
+            }
         }
     }
 }
 
 function removeSlideDuplicates(slides, layouts) {
-    let slideTextCache: any = {}
-    let replaceSlides: any = {}
+    const slideTextCache: any = {}
+    const replaceSlides: any = {}
 
     Object.entries(slides).forEach(([slideId, slide]: any) => {
         if (slide.group === null) return
@@ -256,7 +273,7 @@ function removeSlideDuplicates(slides, layouts) {
         let text = getSlideText(slide)
         text += slide.children?.reduce((value, childId) => (value += getSlideText(slides[childId])), "") || ""
 
-        let exists = Object.keys(slideTextCache).find((id) => slideTextCache[id] === text)
+        const exists = Object.keys(slideTextCache).find((id) => slideTextCache[id] === text)
         if (exists) replaceSlides[slideId] = exists
         else slideTextCache[slideId] = text
     })
@@ -281,17 +298,17 @@ function linesToItems(lines: string) {
     // remove custom ChordPro styling
     slideLines = slideLines.filter((a) => !a.startsWith("{") && !a.endsWith("}"))
 
-    let items: Item[] = linesToTextboxes(slideLines)
+    const items: Item[] = linesToTextboxes(slideLines)
 
     return items
 }
 
 function checkRepeats(labeled: any[]) {
-    let newLabels: any[] = []
+    const newLabels: any[] = []
     labeled.forEach((a: any) => {
-        let match = a.text.match(/\nx[0-9]/)
+        const match = a.text.match(/\nx[0-9]/)
         if (match !== null) {
-            let repeatNumber = a.text.slice(match.index + 2, match.index + 4).replace(/[A-Z]/gi, "")
+            const repeatNumber = a.text.slice(match.index + 2, match.index + 4).replace(/[A-Z]/gi, "")
             // remove
             a.text = a.text.slice(0, match.index + 1) + a.text.slice(match.index + match[0].length + 1, a.text.length)
             ;[...Array(Number(repeatNumber))].map(() => {
@@ -317,20 +334,20 @@ function fixText(text: string, formatText: boolean): string {
         let firstRepeater = text.indexOf(":/:")
         let secondRepeater = text.indexOf(":/:", firstRepeater + 1)
         while (firstRepeater >= 0 && secondRepeater >= 0) {
-            let repeated = text.slice(firstRepeater + 3, secondRepeater)
+            const repeated = text.slice(firstRepeater + 3, secondRepeater)
             text = text.slice(0, firstRepeater) + repeated + repeated + text.slice(secondRepeater + 3)
 
             firstRepeater = text.indexOf(":/:")
             secondRepeater = text.indexOf(":/:", firstRepeater + 1)
         }
 
-        let newText: string = ""
+        let newText = ""
         const commaDividerMinLength = 22 // shouldn't be much less
         text.split("\n").forEach((t: any) => {
-            let newLineText: string = ""
+            let newLineText = ""
 
             // commas inside line
-            let commas: string[] = removeEmpty(t.split(","))
+            const commas: string[] = removeEmpty(t.split(","))
             commas.forEach((a: any, i: number) => {
                 newLineText += a
 
@@ -360,7 +377,7 @@ function fixText(text: string, formatText: boolean): string {
         })
     }
 
-    let label: string = getLabelId(lines[0])
+    const label: string = getLabelId(lines[0])
 
     // remove first line if it's a label
     if (findGroupMatch(label)) lines = lines.slice(1, lines.length)
@@ -372,25 +389,25 @@ function fixText(text: string, formatText: boolean): string {
 
 //
 
-let similarityNum: number = 0.7
+const similarityNum = 0.7
 
 function findPatterns(sections: string[]) {
-    let similarCount: any[] = []
+    const similarCount: any[] = []
     // total count of totally different slides
-    let totalMatches: number = 0
+    let totalMatches = 0
     sections.forEach(countMatchingSections)
 
     // let totalMatches = similarCount.filter((a) => a > 0).length
-    let matches: number = 0
-    let stored: any[] = []
-    let indexes = similarCount.map(getIndexes)
+    let matches = 0
+    const stored: any[] = []
+    const indexes = similarCount.map(getIndexes)
 
     return { sections, indexes }
 
     function countMatchingSections(a: string, i: number) {
         similarCount[i] = { matches: [], count: 0 }
 
-        let alreadyCounted = similarCount.find((a) => a.matches.includes(i))
+        const alreadyCounted = similarCount.find((a) => a.matches.includes(i))
         if (alreadyCounted) {
             similarCount[i] = alreadyCounted
             return
@@ -408,9 +425,9 @@ function findPatterns(sections: string[]) {
 
     function getIndexes(a: any, i: number) {
         // let lines = sections[i].split("\n")
-        let splitted: string[] = sections[i].split("\n").filter((a) => a.length)
-        let length: number = sections[i].replaceAll("\n", "").length
-        let find = stored.find((a) => similarity(a.text, sections[i]) > similarityNum)
+        const splitted: string[] = sections[i].split("\n").filter((a) => a.length)
+        const length: number = sections[i].replaceAll("\n", "").length
+        const find = stored.find((a) => similarity(a.text, sections[i]) > similarityNum)
 
         // TODO: repeat x6
         // TODO: labels in text
@@ -422,7 +439,7 @@ function findPatterns(sections: string[]) {
         if (!length) return "break"
 
         // TODO: group....
-        let name = getLabelId(splitted[0])
+        const name = getLabelId(splitted[0])
         if (findGroupMatch(name)) return findGroupMatch(name) || name
 
         // let textGroup: string = splitted[0].trim()[0] === "[" && splitted[0].includes("]") ? splitted[0].slice(splitted[0].indexOf("[") + 1, splitted[0].indexOf("]")) : ""
@@ -440,11 +457,11 @@ function findPatterns(sections: string[]) {
         if (length < 30 || linesSimilarity(sections[i])) return "tag"
         if (splitted[0].length < 8 && splitted[1].length > 20) {
             sections[i] = splitted.slice(1, splitted.length).join("\n")
-            let group = splitted[0].replace(/\d+/g, "").trim()
+            const group = splitted[0].replace(/\d+/g, "").trim()
             return get(groups)[group.toLowerCase()] ? group.toLowerCase() : splitted[0]
         }
         if (a.count > 0) {
-            let groups = ["pre_chorus", "chorus", "bridge", "bridge", "bridge"]
+            const groups = ["pre_chorus", "chorus", "bridge", "bridge", "bridge"]
             matches++
             let group = groups[matches]
             if (totalMatches > 2) group = groups[matches - 1] || "other"
@@ -457,7 +474,7 @@ function findPatterns(sections: string[]) {
 }
 
 function linesSimilarity(text: string): boolean {
-    let lines = text.split("\n")
+    const lines = text.split("\n")
     if (lines.length < 3) return false
     let isSimilar = false
     lines.reduce((a: string, b: string) => {
@@ -479,7 +496,7 @@ export function similarity(s1: string, s2: string) {
     if (longerLength == 0) {
         return 1.0
     }
-    return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength)
+    return (longerLength - editDistance(longer, shorter)) / Number.parseFloat(longerLength)
 }
 
 function editDistance(s1: string, s2: string) {
@@ -508,7 +525,7 @@ function editDistance(s1: string, s2: string) {
 export function findGroupMatch(group: string): string {
     if (get(groups)[group]) return group
 
-    let groupMatch: string = ""
+    let groupMatch = ""
     Object.entries(get(dictionary).groups || {}).forEach(([id, value]: any) => {
         if (value.toLowerCase() === group) groupMatch = id
     })

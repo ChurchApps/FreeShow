@@ -72,7 +72,10 @@ export type API_layout = { showId: string; layoutId: string }
 export type API_media = { path: string }
 export type API_scripture = { id: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
-export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
+export type API_stage_output_layout = {
+    outputId?: string
+    stageLayoutId: string
+}
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
 export type API_camera = { name?: string; id: string; groupId?: any }
 export type API_transition = {
@@ -224,14 +227,14 @@ export const API_ACTIONS = {
 /// RECEIVER / SENDER ///
 
 export async function triggerAction(data: API) {
-    let id = data.action
+    const id = data.action
 
     // API start at 1, code start at 0
     if (data.index !== undefined) data.index--
 
     if (!API_ACTIONS[id]) return console.log("Missing API ACTION:", id)
 
-    let returnId = data.returnId
+    const returnId = data.returnId
     delete data.returnId
     const returnData = await API_ACTIONS[id](data)
     if (!returnId || !returnData) return

@@ -9,8 +9,8 @@ import { checkName, formatToFileName, getLabelId } from "../components/helpers/s
 import { activeProject, activeRename, dataPath, projectView, projects, refreshSlideThumbnails } from "../stores"
 import { newToast } from "../utils/common"
 import { destroy, receive, send } from "../utils/request"
-import { createCategory, setTempShows } from "./importHelpers"
 import { videoExtensions } from "../values/extensions"
+import { createCategory, setTempShows } from "./importHelpers"
 
 type File = {
     name: string
@@ -53,7 +53,7 @@ export async function convertLessonsPresentation(data: any) {
     if (!data?.length) return
 
     let lesson: any = null
-    let replacer: any = {}
+    const replacer: any = {}
 
     try {
         // WIP this only converts one file at a time
@@ -69,12 +69,23 @@ export async function convertLessonsPresentation(data: any) {
     createProject()
 
     if (lesson.sections) lesson = convertOlfLessonToOlpType(lesson)
-    let { mediaToDownload, lessonShow } = convertOpenLessonPlaylist(lesson)
+    const { mediaToDownload, lessonShow } = convertOpenLessonPlaylist(lesson)
 
     // download videos/images
-    send(MAIN, ["DOWNLOAD_MEDIA"], [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
+    send(
+        MAIN,
+        ["DOWNLOAD_MEDIA"],
+        [
+            {
+                path: get(dataPath),
+                name: lesson.lessonName,
+                files: mediaToDownload,
+                showId: lessonShow.id,
+            },
+        ]
+    )
 
-    let replace: any = await receiveMessage()
+    const replace: any = await receiveMessage()
     replace.forEach((r) => {
         replacer[r.from] = r.to
     })
@@ -101,8 +112,18 @@ function createProject() {
         return
     }
 
-    let project = { parent: "/", created: Date.now(), name: "Lessons.church", shows: [] }
-    history({ id: "UPDATE", newData: { data: project }, oldData: { id: "lessons" }, location: { id: "project", page: "show" } })
+    const project = {
+        parent: "/",
+        created: Date.now(),
+        name: "Lessons.church",
+        shows: [],
+    }
+    history({
+        id: "UPDATE",
+        newData: { data: project },
+        oldData: { id: "lessons" },
+        location: { id: "project", page: "show" },
+    })
 
     setTimeout(() => {
         activeRename.set(null)
@@ -111,7 +132,13 @@ function createProject() {
 }
 
 function convertOpenLessonPlaylist(lesson: OlpLesson) {
-    let slideGroups = [{ files: [{ name: "Lesson Image", url: lesson.lessonImage }], name: "Lesson Image" }, ...lesson.messages]
+    const slideGroups = [
+        {
+            files: [{ name: "Lesson Image", url: lesson.lessonImage }],
+            name: "Lesson Image",
+        },
+        ...lesson.messages,
+    ]
 
     // fix file names (might have spaces or :)
     slideGroups.forEach((group, i) => {
@@ -121,23 +148,23 @@ function convertOpenLessonPlaylist(lesson: OlpLesson) {
         })
     })
 
-    let { slides, layout, media }: any = convertToSlides(slideGroups)
-    let lessonShow = createShow()
+    const { slides, layout, media }: any = convertToSlides(slideGroups)
+    const lessonShow = createShow()
 
-    let mediaToDownload: any[] = slideGroups.map((a) => a.files).flat()
+    const mediaToDownload: any[] = slideGroups.flatMap((a) => a.files)
 
     return { mediaToDownload, lessonShow }
 
     function createShow() {
-        let layoutId = uid()
-        let show = new ShowObj(false, "lessons", layoutId)
-        let showId = getLabelId(lesson.lessonTitle, false) || uid()
+        const layoutId = uid()
+        const show = new ShowObj(false, "lessons", layoutId)
+        const showId = getLabelId(lesson.lessonTitle, false) || uid()
 
         let name = lesson.lessonTitle
         if (lesson.lessonName !== name) name = `${name} - ${lesson.lessonName}`
         show.name = checkName(name, showId)
-        let studyName = (lesson as any).studyName || ""
-        let about = (lesson as any).programAbout || ""
+        const studyName = (lesson as any).studyName || ""
+        const about = (lesson as any).programAbout || ""
         show.reference = { type: "lessons", data: { about, studyName } }
 
         show.slides = slides
@@ -157,7 +184,7 @@ function convertOpenLessonPlaylist(lesson: OlpLesson) {
 }
 
 function convertOlfLessonToOlpType(lesson: OlfLesson) {
-    let newLesson: OlpLesson = clone({
+    const newLesson: OlpLesson = clone({
         ...lesson,
         lessonTitle: lesson.lessonName,
         messages: getMessages(lesson.sections),
@@ -166,7 +193,7 @@ function convertOlfLessonToOlpType(lesson: OlfLesson) {
     return newLesson
 
     function getMessages(sections: any[]) {
-        let messages: any[] = []
+        const messages: any[] = []
 
         sections.forEach((section) => {
             let actions = section.actions?.filter((a) => a.actionType === "play")
@@ -180,7 +207,7 @@ function convertOlfLessonToOlpType(lesson: OlfLesson) {
 
 async function receiveMessage() {
     return new Promise((resolve, reject) => {
-        let listenerId = uid()
+        const listenerId = uid()
 
         // 5 seconds
         setTimeout(() => {
@@ -206,26 +233,32 @@ async function receiveMessage() {
 }
 
 function convertToSlides(groups) {
-    let slides: any = {}
-    let layout: any[] = []
-    let media: any = {}
+    const slides: any = {}
+    const layout: any[] = []
+    const media: any = {}
 
     groups.forEach((group, groupIndex: number) => {
         if (!group.files?.length) return
 
-        let children: string[] = []
-        let layoutData: any = {}
-        let parentId: string = ""
+        const children: string[] = []
+        const layoutData: any = {}
+        let parentId = ""
 
         group.files.forEach((file, fileIndex: number) => {
             if (!file.url) return
 
-            let loop = !!(file.loopVideo || file.loop || file.name.includes("Title"))
+            const loop = !!(file.loopVideo || file.loop || file.name.includes("Title"))
             let mediaId = uid()
             // find existing
-            let existingId = Object.keys(media).find((id) => media[id].path === file.url)
+            const existingId = Object.keys(media).find((id) => media[id].path === file.url)
             if (existingId) mediaId = existingId
-            else media[mediaId] = { name: file.name, path: file.url, muted: false, loop }
+            else
+                media[mediaId] = {
+                    name: file.name,
+                    path: file.url,
+                    muted: false,
+                    loop,
+                }
 
             let extension = getExtension(file.url)
             if (extension.includes("/") || extension.includes("\\")) extension = ""
@@ -234,7 +267,7 @@ function convertToSlides(groups) {
             let nextAfterMedia = !loop && videoExtensions.includes(extension)
             if (groupIndex >= groups.length - 1 && fileIndex >= group.files.length - 1) nextAfterMedia = false
 
-            let slideId = uid()
+            const slideId = uid()
             slides[slideId] = {
                 group: parentId ? null : file.name,
                 color: "",
@@ -243,7 +276,7 @@ function convertToSlides(groups) {
                 items: [],
             }
 
-            let currentLayoutData: any = { background: mediaId }
+            const currentLayoutData: any = { background: mediaId }
             if (nextAfterMedia) currentLayoutData.actions = { nextAfterMedia: true }
             layoutData[slideId] = currentLayoutData
 
@@ -255,9 +288,13 @@ function convertToSlides(groups) {
 
         slides[parentId].children = children
 
-        let parentData = clone(layoutData[parentId])
+        const parentData = clone(layoutData[parentId])
         delete layoutData[parentId]
-        let currentLayout: any = { id: parentId, ...parentData, children: layoutData }
+        const currentLayout: any = {
+            id: parentId,
+            ...parentData,
+            children: layoutData,
+        }
 
         layout.push(currentLayout)
     })

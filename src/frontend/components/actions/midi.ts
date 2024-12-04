@@ -2,14 +2,14 @@ import { get } from "svelte/store"
 import { MAIN } from "../../../types/Channels"
 import type { Midi } from "../../../types/Show"
 import { midiIn, shows } from "../../stores"
+import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { setOutput } from "../helpers/output"
+import { loadShows } from "../helpers/setShow"
 import { updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { runAction } from "./actions"
-import { newToast } from "../../utils/common"
-import { loadShows } from "../helpers/setShow"
 
 export function midiInListen() {
     Object.entries(get(midiIn)).forEach(([id, action]: any) => {
@@ -29,8 +29,8 @@ export function midiInListen() {
             await loadShows([show.id])
 
             // check that current show actually has this MIDI receive action
-            let layouts: any[] = _show(show.id).layouts().get()
-            let found: boolean = false
+            const layouts: any[] = _show(show.id).layouts().get()
+            let found = false
             layouts.forEach((layout) => {
                 layout.slides.forEach((slide) => {
                     if (slide.actions?.receiveMidi === id) found = true
@@ -63,33 +63,69 @@ export function midiInListen() {
 export const defaultMidiActionChannels = {
     // presentation
     next_slide: { type: "noteon", values: { note: 0, velocity: -1, channel: 1 } },
-    previous_slide: { type: "noteon", values: { note: 1, velocity: -1, channel: 1 } },
-    next_project_show: { type: "noteon", values: { note: 2, velocity: -1, channel: 1 } },
-    previous_project_show: { type: "noteon", values: { note: 3, velocity: -1, channel: 1 } },
+    previous_slide: {
+        type: "noteon",
+        values: { note: 1, velocity: -1, channel: 1 },
+    },
+    next_project_show: {
+        type: "noteon",
+        values: { note: 2, velocity: -1, channel: 1 },
+    },
+    previous_project_show: {
+        type: "noteon",
+        values: { note: 3, velocity: -1, channel: 1 },
+    },
     goto_group: { type: "noteon", values: { note: 4, velocity: -1, channel: 1 } },
 
     // clear
     clear_all: { type: "noteon", values: { note: 0, velocity: -1, channel: 3 } },
-    clear_background: { type: "noteon", values: { note: 1, velocity: -1, channel: 3 } },
-    clear_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 3 } },
-    clear_overlays: { type: "noteon", values: { note: 3, velocity: -1, channel: 3 } },
-    clear_audio: { type: "noteon", values: { note: 4, velocity: -1, channel: 3 } },
-    clear_next_timer: { type: "noteon", values: { note: 5, velocity: -1, channel: 3 } },
+    clear_background: {
+        type: "noteon",
+        values: { note: 1, velocity: -1, channel: 3 },
+    },
+    clear_slide: {
+        type: "noteon",
+        values: { note: 2, velocity: -1, channel: 3 },
+    },
+    clear_overlays: {
+        type: "noteon",
+        values: { note: 3, velocity: -1, channel: 3 },
+    },
+    clear_audio: {
+        type: "noteon",
+        values: { note: 4, velocity: -1, channel: 3 },
+    },
+    clear_next_timer: {
+        type: "noteon",
+        values: { note: 5, velocity: -1, channel: 3 },
+    },
 
     // change looks
-    change_output_style: { type: "noteon", values: { note: 0, velocity: -1, channel: 4 } },
+    change_output_style: {
+        type: "noteon",
+        values: { note: 0, velocity: -1, channel: 4 },
+    },
 
     // select by index (use velocity to set index, starting at 0)
-    index_select_project: { type: "noteon", values: { note: 0, velocity: -1, channel: 5 } },
-    index_select_project_show: { type: "noteon", values: { note: 1, velocity: -1, channel: 5 } },
-    index_select_slide: { type: "noteon", values: { note: 2, velocity: -1, channel: 5 } },
+    index_select_project: {
+        type: "noteon",
+        values: { note: 0, velocity: -1, channel: 5 },
+    },
+    index_select_project_show: {
+        type: "noteon",
+        values: { note: 1, velocity: -1, channel: 5 },
+    },
+    index_select_slide: {
+        type: "noteon",
+        values: { note: 2, velocity: -1, channel: 5 },
+    },
 }
 
 export function receivedMidi(msg) {
-    let msgAction = get(midiIn)[msg.id]
+    const msgAction = get(midiIn)[msg.id]
     if (!msgAction) return
 
-    let action: Midi = convertOldMidiToNewAction(msgAction)
+    const action: Midi = convertOldMidiToNewAction(msgAction)
 
     // get index
     if (!msg.values) msg.values = {}
@@ -106,7 +142,7 @@ export function receivedMidi(msg) {
     // some programs send note off with velocity 0 upon release/stop, these should not be detected
     if (diff_type && index === 0) return
 
-    let hasindex = action.triggers?.[0]?.includes("index_") ?? false
+    const hasindex = action.triggers?.[0]?.includes("index_") ?? false
     if (hasindex && index < 0) {
         newToast("$toast.midi_no_velocity")
         index = 0
@@ -118,25 +154,30 @@ export function receivedMidi(msg) {
 
     runAction(action, { midiIndex: index })
 
-    let shows: any[] = action?.shows || []
+    const shows: any[] = action?.shows || []
     if (!shows?.length) return
 
-    let slidePlayed: boolean = false
+    let slidePlayed = false
     shows.forEach(async ({ id }) => {
         await loadShows([id])
-        let refs = _show(id).layouts().ref()
+        const refs = _show(id).layouts().ref()
 
         refs.forEach((ref) => {
             ref.forEach((slideRef) => {
                 if (slidePlayed) return
 
-                let receiveMidi = slideRef.data.actions?.receiveMidi
+                const receiveMidi = slideRef.data.actions?.receiveMidi
                 if (!receiveMidi || receiveMidi !== msg.id) return
 
                 // start slide
                 slidePlayed = true
                 updateOut(id, slideRef.layoutIndex, ref)
-                setOutput("slide", { id, layout: slideRef.layoutId, index: slideRef.layoutIndex, line: 0 })
+                setOutput("slide", {
+                    id,
+                    layout: slideRef.layoutId,
+                    index: slideRef.layoutIndex,
+                    line: 0,
+                })
             })
         })
     })

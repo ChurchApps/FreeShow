@@ -4,8 +4,8 @@ import { checkName, formatToFileName } from "../components/helpers/show"
 import type { Bible } from "./../../types/Bible"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, scriptures, scripturesCache } from "./../stores"
-import { createCategory, setTempShows } from "./importHelpers"
 import { setActiveScripture } from "./bible"
+import { createCategory, setTempShows } from "./importHelpers"
 
 interface Song {
     title: string
@@ -33,17 +33,17 @@ export function convertOpenSong(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("OpenSong")
+    const categoryId = createCategory("OpenSong")
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     setTimeout(() => {
         data?.forEach(({ content }: any) => {
-            let song = XMLtoObject(content)
+            const song = XMLtoObject(content)
             console.log(song)
 
-            let layoutID = uid()
-            let show = new ShowObj(false, categoryId, layoutID)
+            const layoutID = uid()
+            const show = new ShowObj(false, categoryId, layoutID)
             show.name = checkName(song.title)
             show.meta = {
                 number: song.hymn_number || "",
@@ -56,11 +56,17 @@ export function convertOpenSong(data: any) {
             if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
             console.log(song)
-            let { slides, layout, media }: any = createSlides(song)
+            const { slides, layout, media }: any = createSlides(song)
 
             show.slides = slides
             show.media = media
-            show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song.aka || "", slides: layout } }
+            show.layouts = {
+                [layoutID]: {
+                    name: get(dictionary).example?.default || "",
+                    notes: song.aka || "",
+                    slides: layout,
+                },
+            }
 
             tempShows.push({ id: uid(), show })
         })
@@ -69,10 +75,16 @@ export function convertOpenSong(data: any) {
     }, 10)
 }
 
-const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }
+const OSgroups: any = {
+    V: "verse",
+    C: "chorus",
+    B: "bridge",
+    T: "tag",
+    O: "outro",
+}
 function createSlides({ lyrics, presentation, backgrounds }: Song) {
-    let slides: any = {}
-    let media: any = {}
+    const slides: any = {}
+    const media: any = {}
     let layout: any[] = []
     if (!lyrics) return { slides, layout }
 
@@ -81,34 +93,37 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     lyrics = lyrics.replaceAll("\n\n\n\n", "\n\n")
     lyrics = lyrics.replaceAll("||", "__CHILD_SLIDE__")
 
-    let slideRef: any = {}
+    const slideRef: any = {}
     let slideOrder: string[] = []
 
     lyrics.split("\n\n").forEach((slide) => {
-        let groupText = slide.trim()
-        let group = groupText
+        const groupText = slide.trim()
+        const group = groupText
             .split("\n")
             .splice(0, 1)[0]
             ?.replace(/[\[\]]/g, "")
         if (!groupText) return
 
         slideOrder.push(group)
-        let parentId = uid()
-        let children: string[] = []
+        const parentId = uid()
+        const children: string[] = []
         groupText.split("__CHILD_SLIDE__").forEach((slideText, i) => {
-            let lines = slideText.trim().split("\n")
+            const lines = slideText.trim().split("\n")
             if (i === 0 && lines[0].includes("[")) lines.shift()
-            let chords = lines.filter((_v: string) => _v.startsWith("."))
-            let text = lines.filter((_v: string) => !_v.startsWith("."))
+            const chords = lines.filter((_v: string) => _v.startsWith("."))
+            const text = lines.filter((_v: string) => !_v.startsWith("."))
 
-            let id: string = i === 0 ? parentId : uid()
+            const id: string = i === 0 ? parentId : uid()
             if (i === 0) slideRef[group] = id
             else children.push(id)
 
-            let items = [
+            const items = [
                 {
                     style: "left:50px;top:120px;width:1820px;height:840px;",
-                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;") }] })),
+                    lines: text.map((a: any) => ({
+                        align: "",
+                        text: [{ style: "", value: a.replace("|", "&nbsp;") }],
+                    })),
                 },
             ]
 
@@ -124,7 +139,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
 
             if (i > 0) return
 
-            let globalGroup = OSgroups[group.replace(/[0-9]/g, "")]
+            const globalGroup = OSgroups[group.replace(/[0-9]/g, "")]
             if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
             else slides[id].group = group
         })
@@ -139,14 +154,14 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     if (slideOrder.length) {
         layout = []
         slideOrder.forEach((group) => {
-            let id = slideRef[group]
+            const id = slideRef[group]
             layout.push({ id })
         })
     }
 
     // add backgrounds
     if (backgrounds.length) {
-        let bgId = uid(5)
+        const bgId = uid(5)
         layout[0].background = bgId
         media[bgId] = { path: "data:image/jpeg;base64," + backgrounds } // base64:
     }
@@ -155,10 +170,10 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
 }
 
 function XMLtoObject(xml: string) {
-    let parser = new DOMParser()
-    let song = parser.parseFromString(xml, "text/xml").children[0]
+    const parser = new DOMParser()
+    const song = parser.parseFromString(xml, "text/xml").children[0]
 
-    let object: Song = {
+    const object: Song = {
         title: song.getElementsByTagName("title")[0]?.textContent!,
         author: song.getElementsByTagName("author")[0]?.textContent!,
         copyright: song.getElementsByTagName("copyright")[0]?.textContent!,
@@ -185,11 +200,11 @@ function XMLtoObject(xml: string) {
 
 export function convertOpenSongBible(data: any[]) {
     data.forEach((bible) => {
-        let obj: Bible = XMLtoBible(bible.content)
+        const obj: Bible = XMLtoBible(bible.content)
         obj.name = bible.name || ""
         obj.name = formatToFileName(obj.name)
 
-        let id = uid()
+        const id = uid()
         // create folder & file
         scripturesCache.update((a) => {
             a[id] = obj
@@ -206,24 +221,23 @@ export function convertOpenSongBible(data: any[]) {
 }
 
 function XMLtoBible(xml: string): Bible {
-    let parser = new DOMParser()
+    const parser = new DOMParser()
     // remove first line (standalone attribute): <?xml version="1.0"?>
     xml = xml.split("\n").slice(1, xml.split("\n").length).join("\n")
-    let xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
+    const xmlDoc = parser.parseFromString(xml, "text/xml").children[0]
 
-    let booksObj = getChildren(xmlDoc, "b")
-    let books: any[] = []
-
+    const booksObj = getChildren(xmlDoc, "b")
+    const books: any[] = []
     ;[...booksObj].forEach((book: any, i: number) => {
         let length = 0
-        let name = book.getAttribute("n")
-        let number = i + 1
-        let chapters: any[] = []
+        const name = book.getAttribute("n")
+        const number = i + 1
+        const chapters: any[] = []
         ;[...getChildren(book, "c")].forEach((chapter: any) => {
-            let number = chapter.getAttribute("n")
-            let verses: any[] = []
+            const number = chapter.getAttribute("n")
+            const verses: any[] = []
             ;[...getChildren(chapter, "v")].forEach((verse: any) => {
-                let text = verse.innerHTML
+                const text = verse.innerHTML
                     .toString()
                     .replace(/\[\d+\] /g, "") // remove [1], not [text]
                     .trim()

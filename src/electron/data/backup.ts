@@ -13,8 +13,8 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
     // let bibles: any = null
     console.log(scripturePath)
 
-    let backupPath: string = getDataFolder(dataPath, dataFolderNames.backups)
-    let backupFolder = createFolder(path.join(backupPath, getTimePointString()))
+    const backupPath: string = getDataFolder(dataPath, dataFolderNames.backups)
+    const backupFolder = createFolder(path.join(backupPath, getTimePointString()))
 
     // CONFIGS
     await Promise.all(storesToSave.map(syncStores))
@@ -26,7 +26,10 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
     // SHOWS
     await syncAllShows()
 
-    toApp(MAIN, { channel: "BACKUP", data: { finished: true, path: backupFolder } })
+    toApp(MAIN, {
+        channel: "BACKUP",
+        data: { finished: true, path: backupFolder },
+    })
 
     if (customTriggers?.changeUserData) updateDataPath(customTriggers.changeUserData)
     else if (!customTriggers?.silent) openSystemFolder(backupFolder)
@@ -36,34 +39,34 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
     /////
 
     async function syncStores(id: string) {
-        let store = stores[id]
-        let name = id + ".json"
+        const store = stores[id]
+        const name = id + ".json"
 
         if (id === "SHOWS") shows = store.store
         // else if (id === "SYNCED_SETTINGS") bibles = store.store?.scriptures
 
-        let content: string = JSON.stringify(store.store)
-        let p: string = path.resolve(backupFolder, name)
+        const content: string = JSON.stringify(store.store)
+        const p: string = path.resolve(backupFolder, name)
         writeFile(p, content)
     }
 
     async function syncAllShows() {
         if (!shows || !showsPath) return
 
-        let name: string = "SHOWS_CONTENT.json"
-        let allShows: any = {}
+        const name = "SHOWS_CONTENT.json"
+        const allShows: any = {}
 
         await Promise.all(Object.entries(shows).map(checkShow))
         async function checkShow([id, show]: any) {
-            let name = (show.name || id) + ".show"
-            let localShowPath = path.join(showsPath, name)
+            const name = (show.name || id) + ".show"
+            const localShowPath = path.join(showsPath, name)
 
-            let localContent = readFile(localShowPath)
+            const localContent = readFile(localShowPath)
             if (localContent) allShows[id] = JSON.parse(localContent)[1]
         }
 
-        let content: string = JSON.stringify(allShows)
-        let p: string = path.resolve(backupFolder, name)
+        const content: string = JSON.stringify(allShows)
+        const p: string = path.resolve(backupFolder, name)
         writeFile(p, content)
     }
 }
@@ -71,13 +74,16 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
 // RESTORE
 
 export function restoreFiles({ showsPath }: any) {
-    let files: any = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] })
+    const files: any = selectFilesDialog("", {
+        name: "FreeShow Backup Files",
+        extensions: ["json"],
+    })
     if (!files?.length) return toApp(MAIN, { channel: "RESTORE", data: { finished: false } })
     toApp(MAIN, { channel: "RESTORE", data: { starting: true } })
 
     // don't replace certain settings
-    let settings = stores.SETTINGS.store
-    let dataPath: string = settings.dataPath
+    const settings = stores.SETTINGS.store
+    const dataPath: string = settings.dataPath
 
     files.forEach((path: string) => {
         if (path.includes("SHOWS_CONTENT")) {
@@ -85,7 +91,7 @@ export function restoreFiles({ showsPath }: any) {
             return
         }
 
-        let storeId = storesToSave.find((a) => path.includes(a))
+        const storeId = storesToSave.find((a) => path.includes(a))
 
         if (!storeId) return
         restoreStore(path, storeId)
@@ -97,10 +103,10 @@ export function restoreFiles({ showsPath }: any) {
     /////
 
     function restoreStore(filePath: string, storeId: string) {
-        let file = readFile(filePath)
+        const file = readFile(filePath)
         if (!stores[storeId] || !file || !isValidJSON(file)) return
 
-        let data = JSON.parse(file)
+        const data = JSON.parse(file)
 
         // don't replace certain settings
         if (storeId === "SETTINGS") {
@@ -115,10 +121,10 @@ export function restoreFiles({ showsPath }: any) {
     }
 
     function restoreShows(filePath: string) {
-        let file = readFile(filePath)
+        const file = readFile(filePath)
         if (!file || !isValidJSON(file)) return
 
-        let shows = JSON.parse(file)
+        const shows = JSON.parse(file)
 
         // create Shows folder if it does not exist
         if (!doesPathExist(showsPath)) makeDir(showsPath)
@@ -126,7 +132,7 @@ export function restoreFiles({ showsPath }: any) {
         Object.entries(shows).forEach(saveShow)
         function saveShow([id, value]: any) {
             if (!value) return
-            let p: string = path.resolve(showsPath, (value.name || id) + ".show")
+            const p: string = path.resolve(showsPath, (value.name || id) + ".show")
             writeFile(p, JSON.stringify([id, value]), id)
         }
     }

@@ -1,18 +1,18 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import { SHOW } from "../../../types/Channels"
 import type { Show } from "../../../types/Show"
-import { cachedShowsData, categories, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
-import { getShowCacheId, updateCachedShow } from "./show"
-import { uid } from "uid"
-import { destroy } from "../../utils/request"
 import { fixShowIssues } from "../../converters/importHelpers"
+import { cachedShowsData, categories, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
+import { destroy } from "../../utils/request"
+import { getShowCacheId, updateCachedShow } from "./show"
 
 export function setShow(id: string, value: "delete" | Show): Show {
     let previousValue: Show
 
     // update cache data if loading from shows list
     if (value !== "delete" && !get(showsCache)[id]) {
-        let showRef = get(shows)[id]
+        const showRef = get(shows)[id]
         if (showRef && value) {
             value.name = showRef.name
             value.category = showRef.category || null
@@ -63,7 +63,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
 
     if (value && value !== "delete") {
         cachedShowsData.update((a) => {
-            let customId = getShowCacheId(id, get(showsCache)[id])
+            const customId = getShowCacheId(id, get(showsCache)[id])
             a[customId] = updateCachedShow(id, value)
             return a
         })
@@ -79,7 +79,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
 }
 
 export async function loadShows(s: string[]) {
-    let savedWhenLoading: boolean = get(saved)
+    const savedWhenLoading: boolean = get(saved)
 
     return new Promise((resolve) => {
         let count = 0
@@ -93,14 +93,18 @@ export async function loadShows(s: string[]) {
                 })
                 // resolve("not_found")
             } else if (!get(showsCache)[id]) {
-                window.api.send(SHOW, { path: get(showsPath), name: get(shows)[id].name, id })
+                window.api.send(SHOW, {
+                    path: get(showsPath),
+                    name: get(shows)[id].name,
+                    id,
+                })
             } else count++
             // } else resolve("already_loaded")
         })
         if (s.length - count) console.info(`LOADING ${s.length - count} SHOW(S)`)
 
         // RECEIVE
-        let listenerId = uid()
+        const listenerId = uid()
         window.api.receive(SHOW, receiveShow, listenerId)
         function receiveShow(msg: any) {
             if (!s.includes(msg.id)) return
@@ -123,7 +127,7 @@ export async function loadShows(s: string[]) {
                     })
                 }
 
-                let show = fixShowIssues(msg.content[1])
+                const show = fixShowIssues(msg.content[1])
                 setShow(msg.id || msg.content[0], show)
             }
 

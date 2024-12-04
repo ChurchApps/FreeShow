@@ -1,26 +1,37 @@
 import { get } from "svelte/store"
 import type { Item, ItemType } from "../../../../types/Show"
-import { activeEdit, activeShow, overlays, refreshEditSlide, showsCache, templates, timers } from "../../../stores"
+import { timers, activeEdit, activeShow, overlays, refreshEditSlide, showsCache, templates } from "../../../stores"
+import { addSlideAction } from "../../actions/actions"
 import { createNewTimer } from "../../drawer/timers/timers"
+import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
-import { addSlideAction } from "../../actions/actions"
-import { clone, keysToID, sortByName } from "../../helpers/array"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
 
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
-    let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
-    let template = activeTemplate ? get(templates)[activeTemplate]?.items : null
+    const activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
+    const template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
-    let newData: Item = {
+    const newData: Item = {
         style: template?.[0]?.style || DEFAULT_ITEM_STYLE,
         type,
     }
     if (id) newData.id = id
 
-    if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value: "", style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
+    if (type === "text")
+        newData.lines = [
+            {
+                align: template?.[0]?.lines?.[0]?.align || "",
+                text: [
+                    {
+                        value: "",
+                        style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "",
+                    },
+                ],
+            },
+        ]
     if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
     else if (type === "timer") {
@@ -35,12 +46,19 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     else if (type === "captions") newData.captions = {}
     else if (type === "icon" && options.color) {
         // make square and center
-        let size: number = 300
+        const size = 300
         let style: any = getStyles(newData.style)
-        let top: string = Number(removeText(style.top)) + Number(removeText(style.height)) / 2 - size / 2 + "px"
-        let left: string = Number(removeText(style.left)) + Number(removeText(style.width)) / 2 - size / 2 + "px"
-        style = { ...style, top, left, width: size + "px", height: size + "px", color: options.color }
-        let styleString: string = ""
+        const top: string = Number(removeText(style.top)) + Number(removeText(style.height)) / 2 - size / 2 + "px"
+        const left: string = Number(removeText(style.left)) + Number(removeText(style.width)) / 2 - size / 2 + "px"
+        style = {
+            ...style,
+            top,
+            left,
+            width: size + "px",
+            height: size + "px",
+            color: options.color,
+        }
+        let styleString = ""
         Object.entries(style).forEach(([key, value]: any) => {
             styleString += `${key}: ${value};`
         })
@@ -52,17 +70,33 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     console.log(newData)
 
     if (!get(activeEdit).id) {
-        let ref = _show().layouts("active").ref()[0]
-        let slideId = ref[get(activeEdit).slide!]?.id
-        history({ id: "UPDATE", newData: { data: newData, key: "slides", keys: [slideId], subkey: "items", index: -1 }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key" } })
+        const ref = _show().layouts("active").ref()[0]
+        const slideId = ref[get(activeEdit).slide!]?.id
+        history({
+            id: "UPDATE",
+            newData: {
+                data: newData,
+                key: "slides",
+                keys: [slideId],
+                subkey: "items",
+                index: -1,
+            },
+            oldData: { id: get(activeShow)?.id },
+            location: { page: "edit", id: "show_key" },
+        })
     } else {
         // overlay, template
-        history({ id: "UPDATE", newData: { data: newData, key: "items", index: -1 }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type } })
+        history({
+            id: "UPDATE",
+            newData: { data: newData, key: "items", index: -1 },
+            oldData: { id: get(activeEdit).id },
+            location: { page: "edit", id: get(activeEdit).type },
+        })
     }
 }
 
 export function getEditSlide() {
-    let active = get(activeEdit)
+    const active = get(activeEdit)
 
     if (active.id) {
         if (active.type === "overlay") return get(overlays)[active.id]
@@ -70,15 +104,15 @@ export function getEditSlide() {
         return {}
     }
 
-    let editSlideRef: any = _show().layouts("active").ref()[0]?.[active.slide ?? ""] || {}
+    const editSlideRef: any = _show().layouts("active").ref()[0]?.[active.slide ?? ""] || {}
     return _show().get("slides")?.[editSlideRef.id]
 }
 
-export function getEditItems(onlyActive: boolean = false) {
-    let active = get(activeEdit)
-    let selectedItems: number[] = active.items
+export function getEditItems(onlyActive = false) {
+    const active = get(activeEdit)
+    const selectedItems: number[] = active.items
 
-    let editSlide = clone(getEditSlide())
+    const editSlide = clone(getEditSlide())
     if (!Array.isArray(editSlide?.items)) return []
 
     let editItems = editSlide.items
@@ -92,7 +126,7 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     let items = getEditItems()
     if (!items?.length) return
 
-    let currentItem = items.splice(startIndex, 1)[0]
+    const currentItem = items.splice(startIndex, 1)[0]
 
     if (type === "forward") startIndex = Math.min(startIndex + 1, items.length)
     else if (type === "backward") startIndex = Math.max(startIndex - 1, 0)
@@ -103,12 +137,32 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     if (!items?.length || items.length < 2) return
 
     if (!get(activeEdit).id) {
-        let ref = _show().layouts("active").ref()[0]
-        let slideId = ref[get(activeEdit).slide!]?.id
-        history({ id: "UPDATE", newData: { data: items, key: "slides", dataIsArray: true, keys: [slideId], subkey: "items" }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key", override: "rearrange_items" } })
+        const ref = _show().layouts("active").ref()[0]
+        const slideId = ref[get(activeEdit).slide!]?.id
+        history({
+            id: "UPDATE",
+            newData: {
+                data: items,
+                key: "slides",
+                dataIsArray: true,
+                keys: [slideId],
+                subkey: "items",
+            },
+            oldData: { id: get(activeShow)?.id },
+            location: { page: "edit", id: "show_key", override: "rearrange_items" },
+        })
     } else {
         // overlay, template
-        history({ id: "UPDATE", newData: { data: items, key: "items" }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type, override: "rearrange_items" } })
+        history({
+            id: "UPDATE",
+            newData: { data: items, key: "items" },
+            oldData: { id: get(activeEdit).id },
+            location: {
+                page: "edit",
+                id: get(activeEdit).type,
+                override: "rearrange_items",
+            },
+        })
     }
 
     activeEdit.update((a) => {

@@ -1,4 +1,4 @@
-export let rays = new Object({
+export const rays = new Object({
     canvas: false,
     context: false,
     offset: 0,
@@ -28,7 +28,7 @@ export let rays = new Object({
         this.draw()
         window.addEventListener("resize", this.resetCanvas)
     },
-    animate: function () {
+    animate: () => {
         if (!rays.animating) {
             // prevent calling too frequently if  animating
             rays.animating = true
@@ -37,10 +37,10 @@ export let rays = new Object({
             window.requestAnimationFrame(rays.animate)
         }
     },
-    update: function () {
+    update: () => {
         rays.offset += rays.speed
     },
-    resetCanvas: function () {
+    resetCanvas: () => {
         // Resize the canvas and reset context options
         rays.canvas.width = rays.canvas.offsetWidth
         rays.canvas.height = rays.canvas.offsetHeight

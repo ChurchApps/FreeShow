@@ -8,10 +8,13 @@ import { receiveSTAGE } from "./stageTalk"
 
 export function filterObjectArray(object: any, keys: string[], filter: null | string = null) {
     return Object.entries(object)
-        .map(([id, a]: any) => ({ id, ...keys.reduce((o, key) => ({ ...o, [key]: a[key] }), {}) }))
+        .map(([id, a]: any) => ({
+            id,
+            ...keys.reduce((o, key) => ({ ...o, [key]: a[key] }), {}),
+        }))
         .filter((a: any) => (filter ? a[filter] : true))
 }
-export function arrayToObject(array: any[], key: string = "id") {
+export function arrayToObject(array: any[], key = "id") {
     return array.reduce((o, a) => ({ ...o, [a[key]]: a }), {})
 }
 
@@ -36,7 +39,7 @@ export function client(id: Clients, msg: ClientMessage) {
 }
 
 // send data to client
-export async function sendData(id: Clients, msg: ClientMessage, check: boolean = false) {
+export async function sendData(id: Clients, msg: ClientMessage, check = false) {
     if (get(currentWindow) !== null) return
 
     let channel = msg.channel
@@ -68,13 +71,13 @@ export async function sendData(id: Clients, msg: ClientMessage, check: boolean =
 }
 
 // limit data sent per second
-let timeouts: any = {}
-let time: number = 1000
+const timeouts: any = {}
+const time = 1000
 export function timedout(id: Clients, msg: ClientMessage, run: Function) {
-    let timeID = id + msg.id || "" + msg.channel
+    const timeID = id + msg.id || "" + msg.channel
     if (!timeouts[timeID]) {
         timeouts[timeID] = true
-        let first: string = JSON.stringify(msg.data)
+        const first: string = JSON.stringify(msg.data)
         run()
         // TODO: msg does not change!!!
         setTimeout(() => {
@@ -87,7 +90,7 @@ export function timedout(id: Clients, msg: ClientMessage, run: Function) {
 // check previous
 var sent: any = { REMOTE: {}, STAGE: {} }
 function checkSent(id: Clients, msg: any): boolean {
-    let match: boolean = true
+    let match = true
     if (sent[id][msg.channel] !== JSON.stringify(msg.data)) {
         sent[id][msg.channel] = JSON.stringify(msg.data)
         match = false
@@ -98,7 +101,7 @@ function checkSent(id: Clients, msg: any): boolean {
 // send data per connection to all
 export function eachConnection(id: Clients, channel: any, callback: any) {
     Object.entries(get(connections)[id] || {}).forEach(async ([clientID, value]: any) => {
-        let data = await callback(value)
+        const data = await callback(value)
         if (data) window.api.send(id, { id: clientID, channel, data })
     })
 }

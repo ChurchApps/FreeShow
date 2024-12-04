@@ -1,11 +1,14 @@
 // ----- FreeShow -----
 // Respond to messages from the frontend
 
-import getFonts from "css-fonts"
-import { app, BrowserWindow, desktopCapturer, DesktopCapturerSource, Display, screen, shell, systemPreferences } from "electron"
-import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
+import getFonts from "css-fonts"
+import { BrowserWindow, DesktopCapturerSource, Display, app, desktopCapturer, screen, shell, systemPreferences } from "electron"
+import { type BrowserWindow, type DesktopCapturerSource, type Display, app, desktopCapturer, screen, shell, systemPreferences } from "electron"
+import { getFonts } from "font-list"
+import { machineIdSync } from "node-machine-id"
+import { machineIdSync } from "node-machine-id"
 import { closeMain, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
 import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { restoreFiles } from "../data/backup"
@@ -17,7 +20,8 @@ import { getThumbnail, getThumbnailFolderPath, saveImage } from "../data/thumbna
 import { OutputHelper } from "../output/OutputHelper"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers } from "../servers"
-import { Message } from "./../../types/Socket"
+import type { Message } from "./../../types/Socket"
+import { LyricSearch } from "./LyricSearch"
 import { apiReturnData, startWebSocketAndRest, stopApiListener } from "./api"
 import {
     bundleMediaFiles,
@@ -41,16 +45,15 @@ import {
     selectFolder,
     writeFile,
 } from "./files"
-import { LyricSearch } from "./LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "./shows"
 import checkForUpdates from "./updater"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
-    let files: string[] = selectFilesDialog("", msg.data.format)
+    const files: string[] = selectFilesDialog("", msg.data.format)
 
-    let needsFileAndNoFileSelected = msg.data.format.extensions && !files.length
+    const needsFileAndNoFileSelected = msg.data.format.extensions && !files.length
     if (needsFileAndNoFileSelected) return
 
     importShow(msg.channel, files || null, msg.data)
@@ -58,7 +61,7 @@ export function startImport(_e: any, msg: Message) {
 
 // BIBLE
 export function loadScripture(e: any, msg: Message) {
-    let bibleFolder: string = getDataFolder(msg.path || "", dataFolderNames.scriptures)
+    const bibleFolder: string = getDataFolder(msg.path || "", dataFolderNames.scriptures)
     let p: string = path.join(bibleFolder, msg.name + ".fsb")
 
     let bible: any = loadFile(p, msg.id)
@@ -75,7 +78,7 @@ export function loadScripture(e: any, msg: Message) {
 export function loadShow(e: any, msg: Message) {
     let p: string = checkShowsFolder(msg.path || "")
     p = path.join(p, (msg.name || msg.id) + ".show")
-    let show: any = loadFile(p, msg.id)
+    const show: any = loadFile(p, msg.id)
 
     e.reply(SHOW, show)
 }
@@ -86,7 +89,11 @@ const mainResponses: any = {
     LOG: (data: string): void => console.log(data),
     VERSION: (): string => app.getVersion(),
     IS_DEV: (): boolean => !isProd,
-    GET_OS: (): any => ({ platform: os.platform(), name: os.hostname(), arch: os.arch() }),
+    GET_OS: (): any => ({
+        platform: os.platform(),
+        name: os.hostname(),
+        arch: os.arch(),
+    }),
     DEVICE_ID: (): string => machineIdSync(),
     IP: (): any => os.networkInterfaces(),
     // APP
@@ -204,7 +211,10 @@ async function searchLyrics({ artist, title }: any) {
 // GET_LYRICS
 async function getLyrics({ song }: any) {
     const lyrics = await LyricSearch.get(song)
-    toApp("MAIN", { channel: "GET_LYRICS", data: { lyrics, source: song.source } })
+    toApp("MAIN", {
+        channel: "GET_LYRICS",
+        data: { lyrics, source: song.source },
+    })
 }
 
 // GET DEVICE MEDIA PERMISSION
@@ -222,7 +232,10 @@ function getScreens(type: "window" | "screen" = "screen") {
         sources.map((source) => screens.push({ name: source.name, id: source.id }))
         if (type === "window") screens = addFreeShowWindows(screens, sources)
 
-        toApp(MAIN, { channel: type === "window" ? "GET_WINDOWS" : "GET_SCREENS", data: screens })
+        toApp(MAIN, {
+            channel: type === "window" ? "GET_WINDOWS" : "GET_SCREENS",
+            data: screens,
+        })
     })
 
     function addFreeShowWindows(screens: any[], sources: DesktopCapturerSource[]) {
@@ -231,8 +244,8 @@ function getScreens(type: "window" | "screen" = "screen") {
             output.window && windows.push(output.window)
         })
         Object.values({ main: mainWindow, ...windows }).forEach((window: any) => {
-            let mediaId = window?.getMediaSourceId()
-            let windowsAlreadyExists = sources.find((a: any) => a.id === mediaId)
+            const mediaId = window?.getMediaSourceId()
+            const windowsAlreadyExists = sources.find((a: any) => a.id === mediaId)
             if (windowsAlreadyExists) return
 
             screens.push({ name: window?.getTitle(), id: mediaId })
@@ -244,10 +257,10 @@ function getScreens(type: "window" | "screen" = "screen") {
 
 // RECORDER
 // only open once per session
-let systemOpened: boolean = false
+let systemOpened = false
 export function saveRecording(_: any, msg: any) {
-    let folder: string = getDataFolder(msg.path || "", dataFolderNames.recordings)
-    let p: string = path.join(folder, msg.name)
+    const folder: string = getDataFolder(msg.path || "", dataFolderNames.recordings)
+    const p: string = path.join(folder, msg.name)
 
     const buffer = Buffer.from(msg.blob)
     writeFile(p, buffer)
@@ -260,11 +273,11 @@ export function saveRecording(_: any, msg: any) {
 
 // ERROR LOGGER
 const maxLogLength = 250
-export function logError(log: any, electron: boolean = false) {
+export function logError(log: any, electron = false) {
     if (!isProd) return
 
-    let storedLog: any = error_log.store
-    let key = electron ? "main" : "renderer"
+    const storedLog: any = error_log.store
+    const key = electron ? "main" : "renderer"
 
     let previousLog: any[] = storedLog[key] || []
     previousLog.push(log)
@@ -294,9 +307,9 @@ function createLog(err: Error) {
 
 // STORE MEDIA AS BASE64
 function storeMedia(files: any[]) {
-    let encodedFiles: any[] = []
+    const encodedFiles: any[] = []
     files.forEach(({ id, path }) => {
-        let content = readFile(path, "base64")
+        const content = readFile(path, "base64")
         encodedFiles.push({ id, content })
     })
 
@@ -305,12 +318,12 @@ function storeMedia(files: any[]) {
 
 // GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
 function getStoreValue(data: { file: string; key: string }) {
-    let store = data.file === "config" ? config : stores[data.file]
+    const store = data.file === "config" ? config : stores[data.file]
     return { ...data, value: store.get(data.key) }
 }
 
 // GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
 function setStoreValue(data: { file: string; key: string; value: any }) {
-    let store = data.file === "config" ? config : stores[data.file]
+    const store = data.file === "config" ? config : stores[data.file]
     store.set(data.key, data.value)
 }

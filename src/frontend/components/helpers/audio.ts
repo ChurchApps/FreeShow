@@ -13,8 +13,8 @@ import { checkNextAfterMedia } from "./showActions"
 
 // WIP use get(special).audio_fade_duration ?? 1.5 to fade in when starting song ?? (currently just when fading out)
 
-export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0) {
-    let existing: any = get(playingAudio)[path]
+export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying = true, startAt = 0, playMultiple = false, crossfade = 0) {
+    const existing: any = get(playingAudio)[path]
     if (existing) {
         if (!pauseIfPlaying) {
             get(playingAudio)[path].audio.currentTime = 0
@@ -22,7 +22,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
         }
 
         playingAudio.update((a) => {
-            let isPaused: boolean = a[path].paused
+            const isPaused: boolean = a[path].paused
             a[path].paused = !isPaused
             if (isPaused) {
                 a[path].audio.play()
@@ -34,11 +34,11 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
         return
     }
 
-    let audioPlaying = Object.keys(get(playingAudio)).length
+    const audioPlaying = Object.keys(get(playingAudio)).length
     if (crossfade) crossfadeAudio(crossfade)
     else if (!playMultiple) clearAudio("", false)
 
-    let encodedPath = encodeFilePath(path)
+    const encodedPath = encodeFilePath(path)
     audio = audio || new Audio(encodedPath)
 
     // LISTENERS
@@ -52,7 +52,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
         })
     })
 
-    let readyToPlay: boolean = false
+    let readyToPlay = false
     audio.addEventListener("canplay", () => {
         readyToPlay = true
         if (get(playingAudio)[path]?.audio) initAudio()
@@ -60,7 +60,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
 
     /////
 
-    let analyser: any = await getAnalyser(audio, stream)
+    const analyser: any = await getAnalyser(audio, stream)
 
     // another audio might have been started while awaiting (if played rapidly)
     if (get(playingAudio)[path]) return
@@ -79,7 +79,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
         return a
     })
 
-    let localVolume: number = get(volume) * (get(media)[path]?.volume || 1)
+    const localVolume: number = get(volume) * (get(media)[path]?.volume || 1)
     if (analyser.gainNode) analyser.gainNode.gain.value = localVolume * (get(gain) || 1)
     else audio.volume = localVolume
 
@@ -105,15 +105,15 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     }
 }
 
-let currentlyCrossfading: string[] = []
+const currentlyCrossfading: string[] = []
 // if no "path" is provided it will fade out/clear all audio
-async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPlay: boolean = false) {
+async function crossfadeAudio(crossfade = 0, path = "", waitToPlay = false) {
     if (currentlyCrossfading[path]) return
     if (path) currentlyCrossfading.push(path)
 
     // fade in
     if (path) {
-        let playing = get(playingAudio)[path]?.audio
+        const playing = get(playingAudio)[path]?.audio
         if (!playing) return
 
         setTimeout(() => fadeAudio(playing, waitToPlay ? crossfade * 0.4 : crossfade, true), waitToPlay ? crossfade * 0.6 * 1000 : 0)
@@ -127,7 +127,7 @@ async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPl
     })
 
     async function fadeoutAudio(audio, path) {
-        let faded = await fadeAudio(audio, crossfade)
+        const faded = await fadeAudio(audio, crossfade)
         if (faded) deleteAudio(path)
     }
 
@@ -145,7 +145,7 @@ async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPl
 }
 
 let unmutedValue = 1
-export function updateVolume(value: number | undefined | "local", changeGain: boolean = false) {
+export function updateVolume(value: number | undefined | "local", changeGain = false) {
     if (value !== "local") {
         // api mute(unmute)
         if (value === undefined) {
@@ -160,10 +160,10 @@ export function updateVolume(value: number | undefined | "local", changeGain: bo
     // update volume on playing audio
     playingAudio.update((a) => {
         Object.keys(a).forEach((id) => {
-            let localVolume: number = get(volume) * (get(media)[id]?.volume || 1)
+            const localVolume: number = get(volume) * (get(media)[id]?.volume || 1)
 
             if (a[id].analyser.gainNode) {
-                let gainedValue = localVolume * (get(gain) || 1)
+                const gainedValue = localVolume * (get(gain) || 1)
                 a[id].analyser.gainNode.gain.value = gainedValue
             } else a[id].audio.volume = localVolume
         })
@@ -176,7 +176,7 @@ export function updateVolume(value: number | undefined | "local", changeGain: bo
 
 // PLAYLIST
 
-export function startPlaylist(id, specificSong: string = "", pauseIfPlaying: boolean = false) {
+export function startPlaylist(id, specificSong = "", pauseIfPlaying = false) {
     if (!id) return
 
     // pause if already playing
@@ -187,15 +187,15 @@ export function startPlaylist(id, specificSong: string = "", pauseIfPlaying: boo
 
     activePlaylist.set({ id })
 
-    let playlist = get(audioPlaylists)[id] || {}
-    let crossfade = Number(playlist.crossfade) || 0
+    const playlist = get(audioPlaylists)[id] || {}
+    const crossfade = Number(playlist.crossfade) || 0
 
     // if (crossfade) isCrossfading = true
     playlistNext("", specificSong, crossfade)
 }
 
 export function stopPlaylist() {
-    let activeAudio = get(activePlaylist).active
+    const activeAudio = get(activePlaylist).active
     clearAudio(activeAudio)
 }
 
@@ -211,23 +211,23 @@ export function updatePlaylist(id: string, key: string, value: any) {
 export function audioPlaylistNext() {
     if (get(outLocked) || !get(activePlaylist)?.id) return
 
-    let playlistId = get(activePlaylist).id || ""
-    let playlist = get(audioPlaylists)[playlistId] || {}
-    let crossfade = Number(playlist.crossfade) || 0
+    const playlistId = get(activePlaylist).id || ""
+    const playlist = get(audioPlaylists)[playlistId] || {}
+    const crossfade = Number(playlist.crossfade) || 0
 
-    let activePath = get(activePlaylist).active
+    const activePath = get(activePlaylist).active
     playlistNext(activePath, "", crossfade, playlist.loop !== false)
 }
 
-export function playlistNext(previous: string = "", specificSong: string = "", crossfade: number = 0, loop: boolean = true) {
-    let id = get(activePlaylist)?.id
+export function playlistNext(previous = "", specificSong = "", crossfade = 0, loop = true) {
+    const id = get(activePlaylist)?.id
 
     if (!id) return
 
-    let songs = getSongs()
+    const songs = getSongs()
     if (!songs.length) return
 
-    let currentSongIndex = songs.findIndex((a) => a === (specificSong || previous))
+    const currentSongIndex = songs.findIndex((a) => a === (specificSong || previous))
     let nextSong = songs[currentSongIndex + (specificSong ? 0 : 1)]
 
     if (!nextSong && loop) nextSong = songs[0]
@@ -258,11 +258,11 @@ export function playlistNext(previous: string = "", specificSong: string = "", c
         if (previous && get(activePlaylist)?.songs) return get(activePlaylist).songs
 
         // generate list
-        let playlist = clone(get(audioPlaylists)[id])
+        const playlist = clone(get(audioPlaylists)[id])
         if (!playlist) return []
         let songs = playlist.songs
 
-        let mode = playlist.mode
+        const mode = playlist.mode
         if (mode === "shuffle") songs = shuffleArray(songs)
 
         activePlaylist.update((a) => {
@@ -274,7 +274,7 @@ export function playlistNext(previous: string = "", specificSong: string = "", c
     }
 }
 
-let audioStreams: any = {}
+const audioStreams: any = {}
 export function startMicrophone(mic) {
     navigator.mediaDevices
         .getUserMedia({
@@ -285,7 +285,7 @@ export function startMicrophone(mic) {
         .then((stream: any) => {
             audioStreams[mic.id] = stream
 
-            let audio = new Audio()
+            const audio = new Audio()
             audio.srcObject = stream
             audio.volume = 0
 
@@ -299,11 +299,11 @@ export function startMicrophone(mic) {
         })
 }
 
-export function clearAudioStreams(id: string = "") {
-    let ids = id ? [id] : Object.keys(audioStreams)
+export function clearAudioStreams(id = "") {
+    const ids = id ? [id] : Object.keys(audioStreams)
 
     ids.forEach((streamId) => {
-        let stream = audioStreams[streamId]
+        const stream = audioStreams[streamId]
         stream?.getAudioTracks().forEach((track: any) => track.stop())
     })
 }
@@ -311,7 +311,7 @@ export function clearAudioStreams(id: string = "") {
 // const audioUpdateInterval: number = 100 // ms
 const audioUpdateInterval: number = 50 // ms
 let analyseTimeout: any = null
-let isCrossfading: boolean = false
+let isCrossfading = false
 export function analyseAudio() {
     if (analyseTimeout) return
 
@@ -320,12 +320,12 @@ export function analyseAudio() {
     // let allAudio: any[] = Object.values(get(playingAudio)).filter((a) => a.paused === false && a.audio.volume)
     // if (get(volume) && get(playingVideos).length) get(playingVideos).map((a) => allAudio.push({ ...a }))
 
-    let updateAudio: number = 10
-    let previousUpdate = 0
+    let updateAudio = 10
+    const previousUpdate = 0
     timeoutRun()
     function timeoutRun() {
         analyseTimeout = setTimeout(() => {
-            let timeSinceLast = Date.now() - previousUpdate
+            const timeSinceLast = Date.now() - previousUpdate
             if (timeSinceLast > 100 && timeSinceLast < 200) {
                 // skip if overloaded
                 analyseTimeout = setTimeout(timeoutRun, audioUpdateInterval)
@@ -334,14 +334,14 @@ export function analyseAudio() {
 
             // get new audio
 
-            let playlistPath: string = get(activePlaylist)?.active || ""
+            const playlistPath: string = get(activePlaylist)?.active || ""
             if (!isfading && playlistPath && !get(media)[playlistPath]?.loop) {
                 if (isCrossfading) {
                     // analyseTimeout = setTimeout(timeoutRun, audioUpdateInterval)
                     return
                 }
 
-                let crossfadeDuration = checkCrossfade()
+                const crossfadeDuration = checkCrossfade()
                 if (crossfadeDuration) {
                     isCrossfading = true
                     setTimeout(() => {
@@ -380,23 +380,35 @@ export function analyseAudio() {
 
 let previousMerge = 0
 function mergeAudio(allAudio) {
-    let timeSinceLast = Date.now() - previousMerge
+    const timeSinceLast = Date.now() - previousMerge
     if (timeSinceLast > 100 && timeSinceLast < 200) return // skip if overloaded
 
-    let allLefts: number[] = []
-    let allRights: number[] = []
-    let allLeftsDB: number[] = []
-    let allRightsDB: number[] = []
-    let min: number = -100
-    let max: number = -30 // -10
+    const allLefts: number[] = []
+    const allRights: number[] = []
+    const allLeftsDB: number[] = []
+    const allRightsDB: number[] = []
+    let min = -100
+    let max = -30 // -10
 
     allAudio.forEach((a: any) => {
         let channels: any
 
         if (a.channels?.volume?.left !== undefined) {
-            channels = { left: { volume: a.channels.volume.left, dB: { ...a.channels.dB, value: a.channels.dB.value.left } }, right: { volume: a.channels.volume.right, dB: { ...a.channels.dB, value: a.channels.dB.value.right } } }
+            channels = {
+                left: {
+                    volume: a.channels.volume.left,
+                    dB: { ...a.channels.dB, value: a.channels.dB.value.left },
+                },
+                right: {
+                    volume: a.channels.volume.right,
+                    dB: { ...a.channels.dB, value: a.channels.dB.value.right },
+                },
+            }
         } else if (a.analyser) {
-            channels = { left: audioAnalyser(a.analyser.left), right: audioAnalyser(a.analyser.right) }
+            channels = {
+                left: audioAnalyser(a.analyser.left),
+                right: audioAnalyser(a.analyser.right),
+            }
         } else return
 
         if (channels.left.volume > 0 || channels.right.volume > 0) {
@@ -414,7 +426,11 @@ function mergeAudio(allAudio) {
     })
 
     let merged = { left: 0, right: 0 }
-    if (allLefts.length || allRights.length) merged = { left: getHighestNumber(allLefts), right: getHighestNumber(allRights) }
+    if (allLefts.length || allRights.length)
+        merged = {
+            left: getHighestNumber(allLefts),
+            right: getHighestNumber(allRights),
+        }
 
     let mergedDB = { left: min, right: min }
     if (allLeftsDB.length || allRightsDB.length) mergedDB = { left: mergeDB(allLeftsDB), right: mergeDB(allRightsDB) }
@@ -437,17 +453,17 @@ function mergeDB(array: number[]) {
 
 const extraMargin = 0.1 // s
 function checkCrossfade(): number {
-    let playlistId = get(activePlaylist)?.id || ""
-    let playlist = get(audioPlaylists)[playlistId] || {}
-    let crossfade = Number(playlist.crossfade) || 0
-    let activePath = get(activePlaylist)?.active || ""
+    const playlistId = get(activePlaylist)?.id || ""
+    const playlist = get(audioPlaylists)[playlistId] || {}
+    const crossfade = Number(playlist.crossfade) || 0
+    const activePath = get(activePlaylist)?.active || ""
     if (!crossfade || !activePath) return 0
 
-    let playing = get(playingAudio)[activePath]?.audio
+    const playing = get(playingAudio)[activePath]?.audio
     if (!playing) return 0
 
-    let customCrossfade = crossfade > 3 ? crossfade * 0.6 : crossfade
-    let reachedEnding = playing.currentTime + customCrossfade + extraMargin >= playing.duration
+    const customCrossfade = crossfade > 3 ? crossfade * 0.6 : crossfade
+    const reachedEnding = playing.currentTime + customCrossfade + extraMargin >= playing.duration
     if (!reachedEnding) return 0
 
     playlistNext(activePath, "", customCrossfade, playlist.loop !== false)
@@ -458,7 +474,7 @@ function getPlayingAudio() {
     return Object.entries(get(playingAudio))
         .map(([id, a]: any) => ({ id, ...a }))
         .filter((audio) => {
-            let audioPath = audio.id
+            const audioPath = audio.id
             if (!audio.audio) return false
 
             // check if finished
@@ -467,7 +483,7 @@ function getPlayingAudio() {
                     get(playingAudio)[audioPath].audio.currentTime = 0
                     get(playingAudio)[audioPath].audio.play()
                 } else if (get(activePlaylist)?.active === audioPath) {
-                    let playlist = get(audioPlaylists)[audioPath] || {}
+                    const playlist = get(audioPlaylists)[audioPath] || {}
 
                     playingAudio.update((a: any) => {
                         a[audioPath]?.audio?.pause()
@@ -490,7 +506,7 @@ function getPlayingAudio() {
                         return a
                     })
 
-                    let stillPlaying = Object.values(get(playingAudio)).filter((a) => !a.audio?.paused)
+                    const stillPlaying = Object.values(get(playingAudio)).filter((a) => !a.audio?.paused)
                     if (!stillPlaying.length) checkNextAfterMedia(audioPath, "audio")
                     return false
                 }
@@ -502,16 +518,16 @@ function getPlayingAudio() {
 
 function getPlayingVideos() {
     // remove cleared videos
-    let videos: any[] = get(playingVideos).filter((a) => document.contains(a.video))
+    const videos: any[] = get(playingVideos).filter((a) => document.contains(a.video))
     if (!videos.length) return []
 
-    let allAudio: any[] = []
+    const allAudio: any[] = []
 
     videos.map((a) => {
         // set volume (video in output window)
-        let newVolume = get(volume)
+        const newVolume = get(volume)
         if (a.analyser.gainNode) {
-            let gainedValue = newVolume * (get(gain) || 1)
+            const gainedValue = newVolume * (get(gain) || 1)
             a.analyser.gainNode.gain.value = gainedValue
         } else a.video.volume = newVolume
 
@@ -524,11 +540,11 @@ function getPlayingVideos() {
 }
 
 function getPlayingOutputVideos(allAudio) {
-    let outputVideos: any[] = get(playingVideos).filter((a) => a.location === "output")
+    const outputVideos: any[] = get(playingVideos).filter((a) => a.location === "output")
     if (!outputVideos.length) return allAudio
 
     outputVideos.map((v) => {
-        let existing = allAudio.findIndex((a) => a.id === v.id && a.location === "output")
+        const existing = allAudio.findIndex((a) => a.id === v.id && a.location === "output")
         if (existing > -1) {
             if (v.paused || v.muted) {
                 allAudio.splice(existing, 1)
@@ -568,8 +584,8 @@ function getHighestNumber(numbers: number[]): number {
 }
 
 let clearing = false
-let forceClear: boolean = false
-export function clearAudio(path: string = "", clearPlaylist: boolean = true, playlistCrossfade: boolean = false) {
+let forceClear = false
+export function clearAudio(path = "", clearPlaylist = true, playlistCrossfade = false) {
     // turn off any playlist
     if (clearPlaylist && (!path || get(activePlaylist)?.active === path)) activePlaylist.set(null)
 
@@ -597,7 +613,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         async function clearAudio(path) {
             if (!a[path]?.audio) return deleteAudio(path)
 
-            let faded = await fadeAudio(a[path].audio, clearTime)
+            const faded = await fadeAudio(a[path].audio, clearTime)
             if (faded) removeAudio(path)
         }
 
@@ -641,7 +657,7 @@ export function fadeoutAllPlayingAudio() {
     })
 
     async function fadeoutAudio(audio) {
-        let faded = await fadeAudio(audio, get(special).audio_fade_duration ?? 1.5)
+        const faded = await fadeAudio(audio, get(special).audio_fade_duration ?? 1.5)
         if (faded) {
             audio.pause()
             // analyseAudio()
@@ -673,18 +689,18 @@ function stopFading() {
 }
 
 const speed = 0.01
-let currentlyFading: any = {}
-async function fadeAudio(audio, duration = 1, increment: boolean = false): Promise<boolean> {
+const currentlyFading: any = {}
+async function fadeAudio(audio, duration = 1, increment = false): Promise<boolean> {
     duration = Number(duration)
     if (!audio || !duration) return true
 
     let currentSpeed = speed
     if (duration < 1) currentSpeed *= 10
-    let time = duration * 1000 * currentSpeed
+    const time = duration * 1000 * currentSpeed
 
     // WIP non linear easing
 
-    let fadeId = uid()
+    const fadeId = uid()
     return new Promise((resolve) => {
         currentlyFading[fadeId] = setInterval(() => {
             if (forceClear) return finished()
@@ -698,7 +714,7 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
             }
         }, time)
 
-        let timedout = setTimeout(() => {
+        const timedout = setTimeout(() => {
             clearInterval(currentlyFading[fadeId])
             delete currentlyFading[fadeId]
             resolve(true)
@@ -715,7 +731,7 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
 
 // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
 export async function getAnalyser(elem: any, stream: any = null) {
-    let ac = new AudioContext()
+    const ac = new AudioContext()
     let source
 
     try {
@@ -753,12 +769,12 @@ export async function getAnalyser(elem: any, stream: any = null) {
 
     // split channels
     // https://stackoverflow.com/questions/48930799/connecting-nodes-with-each-other-with-the-web-audio-api
-    let splitter = ac.createChannelSplitter(2)
-    let merger = ac.createChannelMerger(2)
+    const splitter = ac.createChannelSplitter(2)
+    const merger = ac.createChannelMerger(2)
     source.connect(splitter)
 
-    let leftAnalyser = ac.createAnalyser()
-    let rightAnalyser = ac.createAnalyser()
+    const leftAnalyser = ac.createAnalyser()
+    const rightAnalyser = ac.createAnalyser()
     leftAnalyser.smoothingTimeConstant = 0.9
     rightAnalyser.smoothingTimeConstant = 0.9
     leftAnalyser.fftSize = 256
@@ -771,7 +787,7 @@ export async function getAnalyser(elem: any, stream: any = null) {
 
     // gain (volume)
     // https://stackoverflow.com/questions/43698961/how-to-set-volumes-in-webrtc
-    let gainNode = ac.createGain()
+    const gainNode = ac.createGain()
     source.connect(gainNode)
     gainNode.connect(ac.destination)
 
@@ -781,9 +797,9 @@ export async function getAnalyser(elem: any, stream: any = null) {
     // https://developer.chrome.com/blog/audiocontext-setsinkid/
     // this applies to both audio & video
     if (get(special).audioOutput) {
-        let audioDest = ac.createMediaStreamDestination()
+        const audioDest = ac.createMediaStreamDestination()
         source.connect(audioDest)
-        let newAudio: any = new Audio()
+        const newAudio: any = new Audio()
         newAudio.srcObject = audioDest.stream
 
         try {
@@ -798,10 +814,10 @@ export async function getAnalyser(elem: any, stream: any = null) {
 
 export async function getAudioDuration(path: string): Promise<number> {
     return new Promise((resolve) => {
-        let audio: any = new Audio(encodeFilePath(path))
+        const audio: any = new Audio(encodeFilePath(path))
         audio.addEventListener("canplaythrough", (_: any) => {
             // audio streams does not end
-            if (audio.duration === Infinity) resolve(0)
+            if (audio.duration === Number.POSITIVE_INFINITY) resolve(0)
             else resolve(audio.duration || 0)
         })
     })

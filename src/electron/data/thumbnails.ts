@@ -1,6 +1,6 @@
-import { NativeImage, ResizeOptions, app, nativeImage } from "electron"
 import fs from "fs"
 import path from "path"
+import { type NativeImage, type ResizeOptions, app, nativeImage } from "electron"
 import { isProd, toApp } from ".."
 import { MAIN } from "../../types/Channels"
 import { doesPathExist, doesPathExistAsync, makeDir } from "../utils/files"
@@ -8,15 +8,15 @@ import { waitUntilValueIsDefined } from "../utils/helpers"
 import { imageExtensions, videoExtensions } from "./media"
 
 export function getThumbnail(data: any) {
-    let output = createThumbnail(data.input, data.size || 500)
+    const output = createThumbnail(data.input, data.size || 500)
 
     return { ...data, output }
 }
 
-export function createThumbnail(filePath: string, size: number = 250) {
+export function createThumbnail(filePath: string, size = 250) {
     if (!filePath) return ""
 
-    let outputPath = getThumbnailPath(filePath, size)
+    const outputPath = getThumbnailPath(filePath, size)
 
     addToGenerateQueue({ input: filePath, output: outputPath, size })
 
@@ -24,7 +24,7 @@ export function createThumbnail(filePath: string, size: number = 250) {
 }
 
 type Thumbnail = { input: string; output: string; size: number }
-let thumbnailQueue: Thumbnail[] = []
+const thumbnailQueue: Thumbnail[] = []
 function addToGenerateQueue(data: Thumbnail) {
     thumbnailQueue.push(data)
     nextInQueue()
@@ -44,7 +44,7 @@ function generationFinished() {
     nextInQueue()
 }
 
-let exists: string[] = []
+const exists: string[] = []
 async function generateThumbnail(data: Thumbnail) {
     if (![...imageExtensions, ...videoExtensions].includes(getExtension(data.input))) return generationFinished()
     if (isProd && exists.includes(data.output)) return generationFinished()
@@ -62,19 +62,19 @@ async function generateThumbnail(data: Thumbnail) {
     }
 }
 
-let thumbnailFolderPath: string = ""
+let thumbnailFolderPath = ""
 export function getThumbnailFolderPath() {
     if (thumbnailFolderPath) return thumbnailFolderPath
 
-    let p: string = path.join(app.getPath("temp"), "freeshow-cache")
+    const p: string = path.join(app.getPath("temp"), "freeshow-cache")
     if (!doesPathExist(p)) makeDir(p)
     thumbnailFolderPath = p
 
     return p
 }
 
-function getThumbnailPath(filePath: string, size: number = 250) {
-    let folderPath = thumbnailFolderPath || getThumbnailFolderPath()
+function getThumbnailPath(filePath: string, size = 250) {
+    const folderPath = thumbnailFolderPath || getThumbnailFolderPath()
     return path.join(folderPath, `${hashCode(filePath)}-${size}.png`)
 }
 
@@ -82,7 +82,7 @@ function hashCode(str: string) {
     let hash = 0
 
     for (let i = 0; i < str.length; i++) {
-        let chr = str.charCodeAt(i)
+        const chr = str.charCodeAt(i)
         hash = (hash << 5) - hash + chr // bit shift
         hash |= 0 // convert to 32bit integer
     }
@@ -113,10 +113,16 @@ async function generate(input: string, output: string, size: string, config: Con
     // if (!customImageCapture.includes(extension) && defaultSettings.imageExtensions.includes(extension)) return captureImage(input, output, parsedSize)
 
     // capture other media with canvas in main window
-    await captureWithCanvas({ input, output, size: parsedSize, extension: getExtension(input), config })
+    await captureWithCanvas({
+        input,
+        output,
+        size: parsedSize,
+        extension: getExtension(input),
+        config,
+    })
 }
 
-let mediaBeingCaptured: number = 0
+let mediaBeingCaptured = 0
 const maxAmount = 20
 const refillMargin = maxAmount * 0.6
 async function captureWithCanvas(data: any) {
@@ -143,8 +149,8 @@ export function saveImage(data: any) {
     // console.log("SAVE: ", data.path, data.base64?.length)
     if (!data.base64) return
 
-    let dataURL = data.base64
-    let image = nativeImage.createFromDataURL(dataURL)
+    const dataURL = data.base64
+    const image = nativeImage.createFromDataURL(dataURL)
     saveToDisk(data.path, image, false)
 }
 
@@ -180,9 +186,9 @@ function parseSize(sizeStr: string): ResizeOptions {
 ///// SAVE /////
 
 // const jpegQuality = 90 // 0-100
-function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolean = true) {
+function saveToDisk(savePath: string, image: NativeImage, nextOnFinished = true) {
     // let jpgImage = image.toJPEG(jpegQuality)
-    let img = image.toPNG() // higher file size, but supports transparent images
+    const img = image.toPNG() // higher file size, but supports transparent images
     fs.writeFile(savePath, img, (err) => {
         if (!err) exists.push(savePath)
         if (nextOnFinished) generationFinished()

@@ -4,22 +4,22 @@
 import { get } from "svelte/store"
 import { EXPORT } from "../../../types/Channels"
 import type { Project, ProjectShowRef } from "../../../types/Projects"
+import type { SlideData } from "../../../types/Show"
 import { dataPath, folders, overlays as overlayStores, showsCache } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
 import { formatToFileName } from "../helpers/show"
 import { _show } from "../helpers/shows"
-import type { SlideData } from "../../../types/Show"
 
 export async function exportProject(project: Project) {
-    let shows: any = {}
+    const shows: any = {}
     let files: string[] = []
-    let overlays: {[key: string]: any} = {}
+    const overlays: { [key: string]: any } = {}
 
     // get project
     project = clone(project)
-    let parentFolder = get(folders)[project.parent]?.name || ""
+    const parentFolder = get(folders)[project.parent]?.name || ""
     project.parent = "/" // place on root
 
     // project items
@@ -27,28 +27,28 @@ export async function exportProject(project: Project) {
         show: (showRef: ProjectShowRef) => {
             shows[showRef.id] = clone(get(showsCache)[showRef.id])
 
-            let refs = _show(showRef.id).layouts().ref()
-            let mediaIds: string[] = []
+            const refs = _show(showRef.id).layouts().ref()
+            const mediaIds: string[] = []
 
-            refs.forEach(ref => {
-                ref.forEach(({data}: {data: SlideData}) => {
+            refs.forEach((ref) => {
+                ref.forEach(({ data }: { data: SlideData }) => {
                     // background
-                    let background = data.background
+                    const background = data.background
                     if (background) mediaIds.push(background)
 
                     // audio
-                    let audio = data.audio || []
+                    const audio = data.audio || []
                     mediaIds.push(...audio)
 
                     // overlays
-                    let overlays = data.overlays || []
+                    const overlays = data.overlays || []
                     overlays.forEach(getOverlay)
-                });
+                })
             })
 
             // get media file paths
-            let media = _show(showRef.id).get("media")
-            mediaIds.forEach(id => {
+            const media = _show(showRef.id).get("media")
+            mediaIds.forEach((id) => {
                 getFile(media[id].path || media[id].id)
             })
 
@@ -68,10 +68,10 @@ export async function exportProject(project: Project) {
         },
     }
 
-    let projectItems = project.shows
-    
+    const projectItems = project.shows
+
     // load shows
-    let showIds = projectItems.filter((a) => (a.type || "show") === "show").map((a) => a.id)
+    const showIds = projectItems.filter((a) => (a.type || "show") === "show").map((a) => a.id)
     await loadShows(showIds)
 
     projectItems.map(getItem)
@@ -80,13 +80,18 @@ export async function exportProject(project: Project) {
     files = [...new Set(files)]
 
     // export to file
-    send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: formatToFileName(project.name), file: { project, parentFolder, shows, files, overlays } })
+    send(EXPORT, ["GENERATE"], {
+        type: "project",
+        path: get(dataPath),
+        name: formatToFileName(project.name),
+        file: { project, parentFolder, shows, files, overlays },
+    })
 
     function getItem(showRef: ProjectShowRef) {
-        let type = showRef.type || "show"
+        const type = showRef.type || "show"
 
         if (!getProjectItems[type]) {
-            console.log("Missing project type:", type);
+            console.log("Missing project type:", type)
             return
         }
 
@@ -102,7 +107,7 @@ export async function exportProject(project: Project) {
 
         overlays[id] = clone(get(overlayStores)[id])
     }
-    
+
     // store as base64 ?
     // let base64: any = await toDataURL(showRef.id)
     // media[showRef.id] = base64

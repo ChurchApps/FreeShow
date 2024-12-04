@@ -9,8 +9,8 @@ import type { ShowType } from "../../../types/Show"
 import { loadedMediaThumbnails, media, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { awaitRequest, send } from "../../utils/request"
-import type { API_media } from "../actions/api"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
+import type { API_media } from "../actions/api"
 
 export function getExtension(path: string): string {
     if (!path) return ""
@@ -24,7 +24,7 @@ export function removeExtension(name: string): string {
     return name.slice(0, name.lastIndexOf("."))
 }
 
-export function isMediaExtension(extension: string, audio: boolean = false): boolean {
+export function isMediaExtension(extension: string, audio = false): boolean {
     let extensions: string[] = [...imageExtensions, ...videoExtensions]
     if (audio) extensions = audioExtensions
     return extensions.includes(extension.toLowerCase())
@@ -63,9 +63,9 @@ export function encodeFilePath(path: string): string {
     // already encoded
     if (path.match(/%\d+/g) || path.includes("http") || path.includes("data:")) return path
 
-    let splittedPath = splitPath(path)
-    let fileName = splittedPath.pop() || ""
-    let encodedName = encodeURIComponent(fileName)
+    const splittedPath = splitPath(path)
+    const fileName = splittedPath.pop() || ""
+    const encodedName = encodeURIComponent(fileName)
 
     return joinPath([...splittedPath, encodedName])
 }
@@ -108,9 +108,9 @@ async function toDataURL(url: string): Promise<string> {
 
 // check if media file exists in plain js
 export function checkMedia(src: string): Promise<boolean> {
-    let extension = getExtension(src)
-    let isVideo = videoExtensions.includes(extension)
-    let isAudio = !isVideo && audioExtensions.includes(extension)
+    const extension = getExtension(src)
+    const isVideo = videoExtensions.includes(extension)
+    const isAudio = !isVideo && audioExtensions.includes(extension)
 
     return new Promise((resolve) => {
         let elem
@@ -128,11 +128,11 @@ export function checkMedia(src: string): Promise<boolean> {
         elem.onerror = () => finish(false)
         elem.src = encodeFilePath(src)
 
-        let timedout = setTimeout(() => {
+        const timedout = setTimeout(() => {
             finish(false)
         }, 3000)
 
-        function finish(response: boolean = true) {
+        function finish(response = true) {
             clearTimeout(timedout)
             resolve(response)
         }
@@ -182,7 +182,7 @@ export async function isVideoSupported(path: string) {
 export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
     if (!mediaObj && !currentStyle) return {}
 
-    let mediaStyle: MediaStyle = {
+    const mediaStyle: MediaStyle = {
         filter: "",
         flipped: false,
         flippedY: false,
@@ -218,10 +218,10 @@ export async function loadThumbnail(input: string, size: number) {
     // already encoded (this could cause an infinite loop)
     if (input.includes("freeshow-cache")) return input
 
-    let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
+    const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
-    let data = await awaitRequest(MAIN, "GET_THUMBNAIL", { input, size })
+    const data = await awaitRequest(MAIN, "GET_THUMBNAIL", { input, size })
     if (!data) return ""
 
     thumbnailLoaded(data)
@@ -237,10 +237,10 @@ export function getThumbnailPath(input: string, size: number) {
     // already encoded
     if (input.includes("freeshow-cache")) return input
 
-    let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
+    const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
-    let encodedPath: string = joinPath([get(tempPath), "freeshow-cache", getFileName(hashCode(input), size)])
+    const encodedPath: string = joinPath([get(tempPath), "freeshow-cache", getFileName(hashCode(input), size)])
     return encodedPath
 
     function getFileName(path, size) {
@@ -254,7 +254,7 @@ function hashCode(str: string) {
     let hash = 0
 
     for (let i = 0; i < str.length; i++) {
-        let chr = str.charCodeAt(i)
+        const chr = str.charCodeAt(i)
         hash = (hash << 5) - hash + chr // bit shift
         hash |= 0 // convert to 32bit integer
     }
@@ -281,22 +281,22 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     // online media (e.g. Pixabay/Unsplash)
     if (path.includes("http") || path.includes("data:")) return path
 
-    let thumbnailPath = await loadThumbnail(path, size)
+    const thumbnailPath = await loadThumbnail(path, size)
     if (!thumbnailPath) return ""
 
     // wait if thumnail is not generated yet
     await checkThatMediaExists(thumbnailPath)
 
-    let base64Path = await toDataURL(thumbnailPath)
+    const base64Path = await toDataURL(thumbnailPath)
 
     // "data:image/png;base64," +
     return base64Path || thumbnailPath
 }
 
-export async function checkThatMediaExists(path: string, iteration: number = 1): Promise<boolean> {
+export async function checkThatMediaExists(path: string, iteration = 1): Promise<boolean> {
     if (iteration > 8) return false
 
-    let exists = await checkMedia(path)
+    const exists = await checkMedia(path)
     if (!exists) {
         await wait(500 * iteration)
         return checkThatMediaExists(path, iteration + 1)
@@ -308,21 +308,21 @@ export async function checkThatMediaExists(path: string, iteration: number = 1):
 // CACHE
 
 // const jpegQuality = 90 // 0-100
-let capturing: string[] = []
-let retries: any = {}
+const capturing: string[] = []
+const retries: any = {}
 export function captureCanvas(data: any) {
-    let completed: boolean = false
+    let completed = false
     if (capturing.includes(data.input)) return exit()
     capturing.push(data.input)
 
-    let canvas = document.createElement("canvas")
+    const canvas = document.createElement("canvas")
 
-    let isImage: boolean = imageExtensions.includes(data.extension)
-    let mediaElem: any = document.createElement(isImage ? "img" : "video")
+    const isImage: boolean = imageExtensions.includes(data.extension)
+    const mediaElem: any = document.createElement(isImage ? "img" : "video")
 
     mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {
-        let mediaSize = isImage ? { width: mediaElem.naturalWidth, height: mediaElem.naturalHeight } : { width: mediaElem.videoWidth, height: mediaElem.videoHeight }
-        let newSize = getNewSize(mediaSize, data.size || {})
+        const mediaSize = isImage ? { width: mediaElem.naturalWidth, height: mediaElem.naturalHeight } : { width: mediaElem.videoWidth, height: mediaElem.videoHeight }
+        const newSize = getNewSize(mediaSize, data.size || {})
         canvas.width = newSize.width
         canvas.height = newSize.height
 
@@ -333,7 +333,7 @@ export function captureCanvas(data: any) {
         }
 
         // wait until loaded
-        let hasLoaded = await waitUntilValueIsDefined(() => (isImage ? mediaElem.complete : mediaElem.readyState === 4), 20)
+        const hasLoaded = await waitUntilValueIsDefined(() => (isImage ? mediaElem.complete : mediaElem.readyState === 4), 20)
         if (!hasLoaded) return exit()
 
         captureCanvasData(mediaElem, mediaSize)
@@ -355,17 +355,17 @@ export function captureCanvas(data: any) {
     // document.body.appendChild(mediaElem) // DEBUG
 
     async function captureCanvasData(media, mediaSize) {
-        let ctx = canvas.getContext("2d")
+        const ctx = canvas.getContext("2d")
         if (!ctx || completed) return exit()
 
         // ensure lessons are downloaded and loaded before capturing
-        let isLessons = data.input.includes("Lessons")
-        let loading = isLessons ? 3000 : 200
+        const isLessons = data.input.includes("Lessons")
+        const loading = isLessons ? 3000 : 200
         await wait(loading)
         ctx.drawImage(media, 0, 0, mediaSize.width, mediaSize.height, 0, 0, canvas.width, canvas.height)
 
         await wait(200)
-        let dataURL = canvas.toDataURL("image/png") // , jpegQuality
+        const dataURL = canvas.toDataURL("image/png") // , jpegQuality
 
         send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })
         completed = true

@@ -3,9 +3,9 @@ import { getExtension } from "../../helpers/media"
 
 // https://unsplash.com/documentation
 
-let cache: any = {}
+const cache: any = {}
 
-export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
+export async function loadFromUnsplash(query = ""): Promise<any[]> {
     return new Promise((resolve) => {
         if (cache[query]) return resolve(cache[query])
 
@@ -17,8 +17,14 @@ export async function loadFromUnsplash(query: string = ""): Promise<any[]> {
             .then((response) => response.json())
             .then((data) => {
                 results = data.results.map((media) => {
-                    let path = media.urls.full || media.urls.regular
-                    return { path, previewUrl: media.urls.thumb, name: media.alt_description, extension: getExtension(path), credits: getUnsplashCredits(media) }
+                    const path = media.urls.full || media.urls.regular
+                    return {
+                        path,
+                        previewUrl: media.urls.thumb,
+                        name: media.alt_description,
+                        extension: getExtension(path),
+                        credits: getUnsplashCredits(media),
+                    }
                 })
 
                 cache[query] = results

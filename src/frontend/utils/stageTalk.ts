@@ -7,16 +7,16 @@ import { getActiveOutputs } from "../components/helpers/output"
 import { getGroupName } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { dictionary, events, groups, media, outputs, outputSlideCache, previewBuffers, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
+import { events, timers, dictionary, groups, media, outputSlideCache, outputs, previewBuffers, stageShows, timeFormat, variables, videosData, videosTime } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendData } from "./sendData"
 
 // WIP loading different paths, might cause returned base64 to be different than it should if previous thumbnail finishes after
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
-    let currentOutput = updater[outputId]?.out
-    let next = await getNextBackground(currentOutput?.slide, returnPath)
-    let path = currentOutput?.background?.path || ""
+    const currentOutput = updater[outputId]?.out
+    const next = await getNextBackground(currentOutput?.slide, returnPath)
+    const path = currentOutput?.background?.path || ""
 
     if (returnPath) {
         return clone({ path, mediaStyle: get(media)[path] || {}, next })
@@ -27,9 +27,14 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
         return
     }
 
-    let base64path = await getBase64Path(path)
+    const base64path = await getBase64Path(path)
 
-    let bg = clone({ path: base64path, filePath: path, mediaStyle: get(media)[path] || {}, next })
+    const bg = clone({
+        path: base64path,
+        filePath: path,
+        mediaStyle: get(media)[path] || {},
+        next,
+    })
 
     if (returnPath) return bg
 
@@ -40,20 +45,24 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
 async function getNextBackground(currentOutputSlide: any, returnPath = false) {
     if (!currentOutputSlide?.id) return {}
 
-    let layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
+    const layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
     if (!layout) return {}
 
-    let nextLayout = layout[(currentOutputSlide.index || 0) + 1]
+    const nextLayout = layout[(currentOutputSlide.index || 0) + 1]
     if (!nextLayout) return {}
 
-    let bgId = nextLayout.data.background || ""
-    let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path
+    const bgId = nextLayout.data.background || ""
+    const path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path
 
     if (returnPath) return { path, mediaStyle: get(media)[path] || {} }
 
-    let base64path = await getBase64Path(path)
+    const base64path = await getBase64Path(path)
 
-    return { path: base64path, filePath: path, mediaStyle: get(media)[path] || {} }
+    return {
+        path: base64path,
+        filePath: path,
+        mediaStyle: get(media)[path] || {},
+    }
 }
 
 export const receiveSTAGE: any = {
@@ -91,9 +100,21 @@ export const receiveSTAGE: any = {
         sendData(STAGE, { channel: "SLIDES", data: [] })
 
         // initial
-        window.api.send(STAGE, { id: msg.id, channel: "TIMERS", data: get(timers) })
-        window.api.send(STAGE, { id: msg.id, channel: "EVENTS", data: get(events) })
-        window.api.send(STAGE, { id: msg.id, channel: "VARIABLES", data: get(variables) })
+        window.api.send(STAGE, {
+            id: msg.id,
+            channel: "TIMERS",
+            data: get(timers),
+        })
+        window.api.send(STAGE, {
+            id: msg.id,
+            channel: "EVENTS",
+            data: get(events),
+        })
+        window.api.send(STAGE, {
+            id: msg.id,
+            channel: "VARIABLES",
+            data: get(variables),
+        })
         send(STAGE, ["DATA"], { timeFormat: get(timeFormat) })
         return msg
     },
@@ -101,12 +122,12 @@ export const receiveSTAGE: any = {
         // TODO: rework how stage talk works!! (I should send to to each individual connected stage with it's id!)
         let stageId = msg.data?.id
         if (!stageId && Object.keys(get(connections).STAGE || {}).length === 1) stageId = (Object.values(get(connections).STAGE)[0] as any).active
-        let show = get(stageShows)[stageId] || {}
-        let outputId = show.settings?.output || getActiveOutputs()[0]
-        let currentOutput: any = get(outputs)[outputId]
-        let outSlide: any = currentOutput?.out?.slide || null
-        let outCached: any = get(outputSlideCache)[outputId]
-        let out: any = outSlide || outCached
+        const show = get(stageShows)[stageId] || {}
+        const outputId = show.settings?.output || getActiveOutputs()[0]
+        const currentOutput: any = get(outputs)[outputId]
+        const outSlide: any = currentOutput?.out?.slide || null
+        const outCached: any = get(outputSlideCache)[outputId]
+        const out: any = outSlide || outCached
         msg.data = []
 
         if (!out) {
@@ -121,8 +142,8 @@ export const receiveSTAGE: any = {
             return msg
         }
 
-        let ref: any[] = _show(out.id).layouts([out.layout]).ref()[0]
-        let slides: any = _show(out.id).get()?.slides
+        const ref: any[] = _show(out.id).layouts([out.layout]).ref()[0]
+        const slides: any = _show(out.id).get()?.slides
 
         if (!ref?.[out.index!]) return
         msg.data = [slides[ref[out.index!].id]]
@@ -147,17 +168,17 @@ export const receiveSTAGE: any = {
         if (!outputId) outputId = getActiveOutputs(get(outputs), false, true, true)[0]
         if (!outputId) return
 
-        let currentSlideOut = get(outputs)[outputId]?.out?.slide || null
-        let currentShowId = currentSlideOut?.id || ""
-        let currentShowSlide = currentSlideOut?.index ?? -1
-        let currentLayoutRef = _show(currentShowId).layouts("active").ref()[0] || []
-        let currentShowSlides = _show(currentShowId).get("slides") || {}
-        let slidesLength = currentLayoutRef.length || 0
+        const currentSlideOut = get(outputs)[outputId]?.out?.slide || null
+        const currentShowId = currentSlideOut?.id || ""
+        const currentShowSlide = currentSlideOut?.index ?? -1
+        const currentLayoutRef = _show(currentShowId).layouts("active").ref()[0] || []
+        const currentShowSlides = _show(currentShowId).get("slides") || {}
+        const slidesLength = currentLayoutRef.length || 0
 
         // get custom group names
-        let layoutGroups = currentLayoutRef.map((a) => {
-            let ref = a.parent || a
-            let slide = currentShowSlides[ref.id]
+        const layoutGroups = currentLayoutRef.map((a) => {
+            const ref = a.parent || a
+            const slide = currentShowSlides[ref.id]
             if (!slide) return { name: "—" }
 
             if (a.data.disabled || slide.group?.startsWith("~")) return { hide: true }
@@ -167,9 +188,14 @@ export const receiveSTAGE: any = {
                 group = get(groups)[slide.globalGroup].default ? get(dictionary).groups?.[get(groups)[slide.globalGroup].name] : get(groups)[slide.globalGroup].name
             }
 
-            let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
-            let oneLetterName = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group[0].toUpperCase(), ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
-            return { name: name || "—", oneLetterName: (oneLetterName || "—").replace(" ", ""), index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
+            const name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
+            const oneLetterName = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group[0].toUpperCase(), ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
+            return {
+                name: name || "—",
+                oneLetterName: (oneLetterName || "—").replace(" ", ""),
+                index: ref.layoutIndex,
+                child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0,
+            }
         })
 
         msg.data.progress = { currentShowSlide, slidesLength, layoutGroups }
@@ -192,7 +218,7 @@ export const receiveSTAGE: any = {
 
         // WIP don't know the outputId
         // let id = msg.data.outputId
-        let outputId = getActiveOutputs(get(outputs), false, true, true)[0]
+        const outputId = getActiveOutputs(get(outputs), false, true, true)[0]
         if (!outputId) return
 
         msg.data.data = get(videosData)[outputId]

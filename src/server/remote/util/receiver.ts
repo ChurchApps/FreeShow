@@ -5,7 +5,7 @@ export type ReceiverKey = keyof typeof receiver
 export const receiver = {
     PASSWORD: (data: any) => {
         if (data.dictionary) _set("dictionary", data.dictionary)
-        let password: boolean = data.password
+        const password: boolean = data.password
         _update("password", "required", password)
     },
     ERROR: (data: any) => {

@@ -1,13 +1,13 @@
-import { https } from "follow-redirects"
 import fs from "fs"
 import path from "path"
+import { https } from "follow-redirects"
 import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
 import { dataFolderNames, doesPathExist, getDataFolder, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 
 export function downloadMedia(lessons: any[]) {
-    let replace = lessons.map(checkLesson)
+    const replace = lessons.map(checkLesson)
 
     toApp(MAIN, { channel: "REPLACE_MEDIA_PATHS", data: replace.flat() })
 }
@@ -15,7 +15,10 @@ export function downloadMedia(lessons: any[]) {
 function checkLesson(lesson: any) {
     downloadCount = 0
     failedDownloads = 0
-    toApp(MAIN, { channel: "LESSONS_DONE", data: { showId: lesson.showId, status: { finished: 0, failed: 0 } } })
+    toApp(MAIN, {
+        channel: "LESSONS_DONE",
+        data: { showId: lesson.showId, status: { finished: 0, failed: 0 } },
+    })
 
     const lessonsFolder = getDataFolder(lesson.path, dataFolderNames.lessons)
     const lessonFolder = path.join(lessonsFolder, lesson.name)
@@ -23,7 +26,7 @@ function checkLesson(lesson: any) {
 
     return lesson.files
         .map((file: any) => {
-            let filePath = getFilePath(file)
+            const filePath = getFilePath(file)
             if (!filePath) return
 
             return downloadFile(filePath, file, lesson.showId)
@@ -32,7 +35,7 @@ function checkLesson(lesson: any) {
 
     function getFilePath(file: any) {
         if (file.streamUrl) file.fileType = "video/mp4"
-        let extension = getFileExtension(file.url, file.fileType)
+        const extension = getFileExtension(file.url, file.fileType)
         if (!extension) return
 
         let fileName = file.name
@@ -42,7 +45,7 @@ function checkLesson(lesson: any) {
     }
 }
 
-function getFileExtension(url: string, fileType: string = "") {
+function getFileExtension(url: string, fileType = "") {
     if (fileType.includes("mp4") || url.includes(".mp4")) return "mp4"
     if (fileType.includes("jpg") || fileType.includes("jpeg") || url.includes(".jpg") || url.includes(".jpeg")) return "jpg"
     if (fileType.includes("png") || url.includes(".png")) return "png"
@@ -51,12 +54,18 @@ function getFileExtension(url: string, fileType: string = "") {
 }
 
 function downloadFile(filePath: string, file: any, showId: string) {
-    let fileRef = { from: file.url, to: filePath, type: file.type }
+    const fileRef = { from: file.url, to: filePath, type: file.type }
 
     if (doesPathExist(filePath)) {
         // console.log(filePath + " exists!")
         downloadCount++
-        toApp(MAIN, { channel: "LESSONS_DONE", data: { showId, status: { finished: downloadCount, failed: failedDownloads } } })
+        toApp(MAIN, {
+            channel: "LESSONS_DONE",
+            data: {
+                showId,
+                status: { finished: downloadCount, failed: failedDownloads },
+            },
+        })
         return fileRef
     }
 
@@ -65,9 +74,9 @@ function downloadFile(filePath: string, file: any, showId: string) {
     return fileRef
 }
 
-let downloadQueue: any[] = []
+const downloadQueue: any[] = []
 function addToDownloadQueue(file: any) {
-    let alreadyInQueue = downloadQueue.find((a) => a.path === file.path)
+    const alreadyInQueue = downloadQueue.find((a) => a.path === file.path)
     if (alreadyInQueue) {
         downloadCount++
         return
@@ -77,10 +86,10 @@ function addToDownloadQueue(file: any) {
     initDownload()
 }
 
-let currentlyDownloading: number = 0
+let currentlyDownloading = 0
 const maxAmount = 5
 const refillMargin = maxAmount * 0.6
-let waiting: boolean = false
+let waiting = false
 async function initDownload() {
     if (waiting) return
 
@@ -114,13 +123,13 @@ async function initDownload() {
     startDownload(downloadQueue.shift())
 }
 
-let downloadCount: number = 0
-let failedDownloads: number = 0
-let errorCount: number = 0
+let downloadCount = 0
+let failedDownloads = 0
+let errorCount = 0
 async function startDownload(downloading: any) {
     // download the media
     const file = downloading.file
-    let url = file.url
+    const url = file.url
 
     if (!url) return next()
 
@@ -134,7 +143,13 @@ async function startDownload(downloading: any) {
 
                 console.error(`Failed to download file, status code: ${res.statusCode}`)
                 failedDownloads++
-                toApp(MAIN, { channel: "LESSONS_DONE", data: { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } } })
+                toApp(MAIN, {
+                    channel: "LESSONS_DONE",
+                    data: {
+                        showId: downloading.showId,
+                        status: { finished: downloadCount, failed: failedDownloads },
+                    },
+                })
 
                 next()
                 return
@@ -160,7 +175,13 @@ async function startDownload(downloading: any) {
                 fileStream.close()
                 downloadCount++
                 console.error(`Finished downloading file: ${file.name}`)
-                toApp(MAIN, { channel: "LESSONS_DONE", data: { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } } })
+                toApp(MAIN, {
+                    channel: "LESSONS_DONE",
+                    data: {
+                        showId: downloading.showId,
+                        status: { finished: downloadCount, failed: failedDownloads },
+                    },
+                })
 
                 next()
             })
@@ -181,7 +202,13 @@ async function startDownload(downloading: any) {
     function retry() {
         if (errorCount > 5) {
             failedDownloads++
-            toApp(MAIN, { channel: "LESSONS_DONE", data: { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } } })
+            toApp(MAIN, {
+                channel: "LESSONS_DONE",
+                data: {
+                    showId: downloading.showId,
+                    status: { finished: downloadCount, failed: failedDownloads },
+                },
+            })
 
             next()
             return
@@ -192,7 +219,7 @@ async function startDownload(downloading: any) {
         next()
     }
 
-    let timeout = setTimeout(
+    const timeout = setTimeout(
         () => {
             fileStream.close()
             console.error(`File timed out: ${file.name}`)

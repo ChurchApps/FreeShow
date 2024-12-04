@@ -7,25 +7,25 @@ import { _show } from "./shows"
 
 ///// SLIDE RECORDING /////
 
-export function playRecording(recording: Recording, { showId, layoutId }, startIndex: number = 0, subtractTime: number = 0) {
+export function playRecording(recording: Recording, { showId, layoutId }, startIndex = 0, subtractTime = 0) {
     if (get(outLocked)) return
 
     // WIP play multiple recordings at the same time in different outputs...
     if (get(activeSlideRecording)) clearTimeout(get(activeSlideRecording).timeout)
 
-    let layoutRef = _show(showId).layouts([layoutId]).ref()[0]
+    const layoutRef = _show(showId).layouts([layoutId]).ref()[0]
 
-    let layoutData = layoutRef[recording.sequence?.[0]?.slideRef?.index]?.data || {}
+    const layoutData = layoutRef[recording.sequence?.[0]?.slideRef?.index]?.data || {}
     let audio = layoutData.audio?.[0]
     if (audio || audioListener) {
-        let showMedia = _show(showId).get("media")
+        const showMedia = _show(showId).get("media")
         audio = showMedia[audio]?.path
 
         // WIP pause / change audio duration!!
 
         // reset playing audio
         if (startIndex === 0) {
-            let playing = get(playingAudio)[audio]?.audio
+            const playing = get(playingAudio)[audio]?.audio
             if (playing) {
                 playingAudio.update((a) => {
                     a[audio].audio.currentTime = 0
@@ -44,17 +44,22 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
 
     playSequence(startIndex)
     function playSequence(index: number) {
-        let sequence = recording.sequence[index]
+        const sequence = recording.sequence[index]
 
         if (audio && get(playingAudio)[audio]?.audio?.paused) return
 
-        let outputId = getActiveOutputs()[0]
-        let outSlide = get(outputs)[outputId]?.out?.slide
+        const outputId = getActiveOutputs()[0]
+        const outSlide = get(outputs)[outputId]?.out?.slide
         if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== index) {
             updateOut("active", index, layoutRef)
-            let slideIndex = sequence.slideRef.index
+            const slideIndex = sequence.slideRef.index
             // WIP check that slide is the correct ID ??
-            setOutput("slide", { id: showId, layout: layoutId, index: slideIndex, line: 0 })
+            setOutput("slide", {
+                id: showId,
+                layout: layoutId,
+                index: slideIndex,
+                line: 0,
+            })
         }
 
         // next
@@ -68,41 +73,48 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
         let timeToNext = recording.sequence[index].time - (index === startIndex ? subtractTime : 0)
         // calculate precise time
         totalTime += timeToNext
-        let newTime = totalTime - (Date.now() - rootTime)
+        const newTime = totalTime - (Date.now() - rootTime)
         timeToNext = Math.max(0, newTime)
 
-        activeSlideRecording.set({ ref: { showId, layoutId }, index, timeToNext, audio, sequence: recording.sequence, timeout: setTimeout(() => playSequence(nextIndex), timeToNext) })
+        activeSlideRecording.set({
+            ref: { showId, layoutId },
+            index,
+            timeToNext,
+            audio,
+            sequence: recording.sequence,
+            timeout: setTimeout(() => playSequence(nextIndex), timeToNext),
+        })
     }
 }
 
 let audioListener: any = null
-let audioPathListener: string = ""
+let audioPathListener = ""
 function startAudioListener(path: string) {
     audioPathListener = path
     if (audioListener) return
 
     audioListener = playingAudio.subscribe((a) => {
-        let audio = a[audioPathListener]?.audio
+        const audio = a[audioPathListener]?.audio
         if (!audio || !get(activeSlideRecording)) return
 
-        let currentTime = audio.currentTime * 1000
+        const currentTime = audio.currentTime * 1000
 
         // find closest sequence
-        let addedTime: number = 0
-        let sequenceIndex = get(activeSlideRecording).sequence.findIndex((sequence) => {
+        let addedTime = 0
+        const sequenceIndex = get(activeSlideRecording).sequence.findIndex((sequence) => {
             addedTime += sequence.time
             return addedTime > currentTime
         })
         if (sequenceIndex < 0) return
 
-        let sequenceStartTime = addedTime - get(activeSlideRecording).sequence[sequenceIndex].time
-        let difference = currentTime - sequenceStartTime
+        const sequenceStartTime = addedTime - get(activeSlideRecording).sequence[sequenceIndex].time
+        const difference = currentTime - sequenceStartTime
 
-        let margin = 500
+        const margin = 500
         if (difference < margin) return
 
-        let ref = get(activeSlideRecording).ref
-        let recording: Recording = _show(ref.showId).layouts([ref.layoutId]).get("recording")[0]?.[0]
+        const ref = get(activeSlideRecording).ref
+        const recording: Recording = _show(ref.showId).layouts([ref.layoutId]).get("recording")[0]?.[0]
 
         // change recording time if audio time changes!
         playRecording(recording, ref, sequenceIndex, difference)
@@ -121,22 +133,22 @@ export function stopSlideRecording() {
 
 // slide click update recording to closest same slide
 export function getClosestRecordingSlide(ref, slideIndex: number) {
-    let activeRec = get(activeSlideRecording)
+    const activeRec = get(activeSlideRecording)
     if (!activeRec || activeRec.ref.showId !== ref.showId || activeRec.ref.layoutId !== ref.layoutId) return
 
-    let closest = getClosestIndexes(activeRec.index, activeRec.sequence.length)
+    const closest = getClosestIndexes(activeRec.index, activeRec.sequence.length)
 
-    let findFirstWithSameSlideIndex = closest.find((index) => activeRec.sequence[index].slideRef.index === slideIndex)
+    const findFirstWithSameSlideIndex = closest.find((index) => activeRec.sequence[index].slideRef.index === slideIndex)
     if (!findFirstWithSameSlideIndex) return
 
-    let recording: Recording = _show(ref.showId).layouts([ref.layoutId]).get("recording")[0]?.[0]
+    const recording: Recording = _show(ref.showId).layouts([ref.layoutId]).get("recording")[0]?.[0]
     if (!recording) return
 
-    let index = findFirstWithSameSlideIndex
+    const index = findFirstWithSameSlideIndex
     playRecording(recording, activeRec.ref, index)
 
     // change time of playing audio
-    let audioPath = get(activeSlideRecording).audio
+    const audioPath = get(activeSlideRecording).audio
     if (audioPath) playAudioTrack(audioPath, index, recording)
 
     // e.g: index=2, [0, 1, 2, 3, 4, 5, 6] = [2, 1, 3, 0, 4, 5, 6]
@@ -155,8 +167,8 @@ export function getClosestRecordingSlide(ref, slideIndex: number) {
 export function updateSlideRecording(state: "next" | "previous") {
     if (get(outLocked)) return
 
-    let ref = get(activeSlideRecording).ref
-    let recording: Recording = _show(ref.showId).layouts([ref.layoutId]).get("recording")[0]?.[0]
+    const ref = get(activeSlideRecording).ref
+    const recording: Recording = _show(ref.showId).layouts([ref.layoutId]).get("recording")[0]?.[0]
     if (!recording) return
 
     let index = get(activeSlideRecording).index
@@ -170,17 +182,17 @@ export function updateSlideRecording(state: "next" | "previous") {
     playRecording(recording, ref, Math.min(recording.sequence.length - 1, Math.max(0, index)))
 
     // change time of playing audio
-    let audioPath = get(activeSlideRecording).audio
+    const audioPath = get(activeSlideRecording).audio
     if (audioPath) playAudioTrack(audioPath, index, recording)
 }
 
 function playAudioTrack(path: string, index: number, recording: Recording) {
-    let playing = get(playingAudio)[path]?.audio
+    const playing = get(playingAudio)[path]?.audio
     if (!playing) return
 
-    let recordingTime: number = recording.sequence.slice(0, index).reduce((time, value) => (time += value.time), 0)
+    const recordingTime: number = recording.sequence.slice(0, index).reduce((time, value) => (time += value.time), 0)
     playingAudio.update((a) => {
-        let newTime = recordingTime / 1000
+        const newTime = recordingTime / 1000
         if (newTime > a[path].audio.duration) return a
 
         a[path].audio.currentTime = newTime
@@ -189,9 +201,9 @@ function playAudioTrack(path: string, index: number, recording: Recording) {
 }
 
 export function playSlideRecording() {
-    let showId = get(activeShow)?.id
-    let activeLayout = _show(showId).get("settings.activeLayout")
-    let recording: Recording | null = _show(showId).layouts([activeLayout]).get("recording")[0]?.[0]
+    const showId = get(activeShow)?.id
+    const activeLayout = _show(showId).get("settings.activeLayout")
+    const recording: Recording | null = _show(showId).layouts([activeLayout]).get("recording")[0]?.[0]
     if (!recording) return
 
     playRecording(recording, { showId, layoutId: activeLayout })

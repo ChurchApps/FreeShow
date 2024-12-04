@@ -27,9 +27,9 @@ export class NdiReceiver {
             // without the interval it only finds one source
             // https://github.com/emanspeaks/grandiose/commit/271cd73b5269ab827155a1a944c15d3b5fe4d564
             let previousLength = 0
-            let findSourcesInterval = setInterval(() => {
+            const findSourcesInterval = setInterval(() => {
                 const sources = finder.sources()
-                let currentLength = sources.length
+                const currentLength = sources.length
                 if (previousLength === currentLength) {
                     clearInterval(findSourcesInterval)
                     resolve(sources)
@@ -48,12 +48,18 @@ export class NdiReceiver {
 
         // https://github.com/Streampunk/grandiose/issues/12
         if (!this.allActiveReceivers[source.id]) {
-            this.allActiveReceivers[source.id] = await grandiose.receive({ source: { name: source.name, urlAddress: source.urlAddress || source.id }, colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA })
+            this.allActiveReceivers[source.id] = await grandiose.receive({
+                source: {
+                    name: source.name,
+                    urlAddress: source.urlAddress || source.id,
+                },
+                colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA,
+            })
         }
         // , allowVideoFields: false
 
         try {
-            let videoFrame = await this.allActiveReceivers[source.id].video(this.receiverTimeout)
+            const videoFrame = await this.allActiveReceivers[source.id].video(this.receiverTimeout)
             this.sendBuffer(source.id, videoFrame)
         } catch (err) {
             console.error(err)
@@ -63,7 +69,10 @@ export class NdiReceiver {
     static sendBuffer(id: string, frame: any) {
         if (!frame) return
 
-        let msg = { channel: "RECEIVE_STREAM", data: { id, frame, time: Date.now() } }
+        const msg = {
+            channel: "RECEIVE_STREAM",
+            data: { id, frame, time: Date.now() },
+        }
         toApp(NDI, msg)
 
         this.sendToOutputs.forEach((outputId) => {
@@ -83,13 +92,19 @@ export class NdiReceiver {
         // this.NDI_RECEIVERS[source.id] = { frameRate: frameRate || 0.1 }
         let receiver = this.allActiveReceivers[source.id]
         if (!receiver) {
-            this.allActiveReceivers[source.id] = receiver = await grandiose.receive({ source: { name: source.name, urlAddress: source.urlAddress || source.id }, colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA })
+            this.allActiveReceivers[source.id] = receiver = await grandiose.receive({
+                source: {
+                    name: source.name,
+                    urlAddress: source.urlAddress || source.id,
+                },
+                colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA,
+            })
         }
 
-        let frameRate = (receiver.frameRateN || 30000) / (receiver.frameRateD || 1001)
+        const frameRate = (receiver.frameRateN || 30000) / (receiver.frameRateD || 1001)
         this.NDI_RECEIVERS[source.id].frameRate = Math.round(1000 / frameRate)
 
-        let gettingFrame: boolean = false
+        let gettingFrame = false
         if (this.NDI_RECEIVERS[source.id].interval) clearInterval(this.NDI_RECEIVERS[source.id].interval)
         this.NDI_RECEIVERS[source.id].interval = setInterval(async () => {
             if (gettingFrame) return
@@ -97,7 +112,7 @@ export class NdiReceiver {
 
             try {
                 // WIP app crashes if the ndi source stops sending data! (problem in grandiose package)
-                let videoFrame = await receiver.video(this.receiverTimeout)
+                const videoFrame = await receiver.video(this.receiverTimeout)
                 this.sendBuffer(source.id, videoFrame)
             } catch (err) {
                 console.error(err)

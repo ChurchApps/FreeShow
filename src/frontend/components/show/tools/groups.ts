@@ -14,7 +14,7 @@ function orderGroups(a: any, b: any) {
         return aGroupType.localeCompare(bGroupType)
     }
 
-    const groupA = parseInt(a.group.split(" ")[1]) || 0
-    const groupB = parseInt(b.group.split(" ")[1]) || 0
+    const groupA = Number.parseInt(a.group.split(" ")[1]) || 0
+    const groupB = Number.parseInt(b.group.split(" ")[1]) || 0
     return groupA - groupB
 }

@@ -1,12 +1,12 @@
+import fs from "fs"
 import AdmZip from "adm-zip"
-import fs from 'fs'
 import { toApp } from ".."
 import { getExtension } from "../utils/files"
 
 // https://www.npmjs.com/package/adm-zip
 
-export function decompress(files: string[], asBuffer: boolean = false) {
-    let data: any[] = []
+export function decompress(files: string[], asBuffer = false) {
+    const data: any[] = []
 
     files.forEach((file) => {
         const zip = new AdmZip(file)
@@ -19,7 +19,10 @@ export function decompress(files: string[], asBuffer: boolean = false) {
             } catch (err) {
                 console.error(err)
                 if (err.message.includes("Incompatible password parameter")) {
-                    toApp("MAIN", { channel: "ALERT", data: "Can't decompress, this file is password protected!" })
+                    toApp("MAIN", {
+                        channel: "ALERT",
+                        data: "Can't decompress, this file is password protected!",
+                    })
                 }
                 return
             }
@@ -37,10 +40,10 @@ export function decompress(files: string[], asBuffer: boolean = false) {
 }
 
 export function isZip(path: string): Promise<boolean> {
-    const buffer = Buffer.alloc(4);
+    const buffer = Buffer.alloc(4)
 
     return new Promise((resolve) => {
-        fs.open(path, 'r', (err, fd) => {
+        fs.open(path, "r", (err, fd) => {
             if (err) {
                 console.error(err)
                 resolve(false)
@@ -49,18 +52,18 @@ export function isZip(path: string): Promise<boolean> {
             fs.read(fd, buffer, 0, 4, 0, (err, _bytesRead, buffer) => {
                 if (err) {
                     fs.close(fd, (err1) => {
-                        console.error(err1 || err);
-                        resolve(false);
-                    });
+                        console.error(err1 || err)
+                        resolve(false)
+                    })
                     return
                 }
 
                 if (buffer && buffer.length === 4) {
-                    resolve((buffer[0] === 0x50 && buffer[1] === 0x4b && (buffer[2] === 0x03 || buffer[2] === 0x05 || buffer[2] === 0x07) && (buffer[3] === 0x04 || buffer[3] === 0x06 || buffer[3] === 0x08)));
+                    resolve(buffer[0] === 0x50 && buffer[1] === 0x4b && (buffer[2] === 0x03 || buffer[2] === 0x05 || buffer[2] === 0x07) && (buffer[3] === 0x04 || buffer[3] === 0x06 || buffer[3] === 0x08))
                 } else {
-                    resolve(false);
+                    resolve(false)
                 }
-            });
-        });
+            })
+        })
     })
 }

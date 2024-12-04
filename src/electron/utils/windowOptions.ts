@@ -3,8 +3,8 @@
 // https://www.electronjs.org/docs/latest/api/browser-window
 
 import { join } from "path"
+import type { BrowserWindowConstructorOptions } from "electron"
 import { isMac, isProd } from ".."
-import { BrowserWindowConstructorOptions } from "electron"
 
 export const loadingOptions: BrowserWindowConstructorOptions = {
     width: 500,

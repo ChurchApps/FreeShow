@@ -2,7 +2,7 @@ import { hexToRgb, splitRgb } from "../../helpers/color"
 import type { EditInput } from "../values/boxes"
 
 export function getOriginalValue(boxEdit: { [key: string]: EditInput[] }, key: string): string {
-    let values: any[] = []
+    const values: any[] = []
     Object.values(boxEdit).forEach((inputs: any[]) => {
         inputs.forEach((input: any) => {
             if (input.key === key) values.push(input)
@@ -29,10 +29,10 @@ export function removeExtension(value: string | number | boolean, extension: str
 // BACKGROUND COLOR (with opacity)
 
 export function setBackgroundColor(input: any, data: any) {
-    let backgroundColor = input.key === "background-color" ? input.value || "" : data["background-color"] || "rgb(0 0 0);"
-    let rgb = backgroundColor.includes("rgb") ? splitRgb(backgroundColor) : hexToRgb(backgroundColor)
-    let opacity = input.id === "background-opacity" ? input.value : getOldOpacity(data)
-    let newColor = "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / " + opacity + ");"
+    const backgroundColor = input.key === "background-color" ? input.value || "" : data["background-color"] || "rgb(0 0 0);"
+    const rgb = backgroundColor.includes("rgb") ? splitRgb(backgroundColor) : hexToRgb(backgroundColor)
+    const opacity = input.id === "background-opacity" ? input.value : getOldOpacity(data)
+    const newColor = "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / " + opacity + ");"
 
     input.key = "background-color"
     input.value = newColor
@@ -41,16 +41,16 @@ export function setBackgroundColor(input: any, data: any) {
 }
 
 function getOldOpacity(data) {
-    let backgroundValue = data["background-color"] || ""
+    const backgroundValue = data["background-color"] || ""
     if (!backgroundValue.includes("rgb")) return 1
 
-    let rgb = splitRgb(backgroundValue)
+    const rgb = splitRgb(backgroundValue)
     return rgb.a
 }
 
 export function getBackgroundOpacity(itemEditValues, data) {
-    let backgroundValue = data["background-color"] || ""
-    let boIndex = itemEditValues.style.findIndex((a) => a.id === "background-opacity")
+    const backgroundValue = data["background-color"] || ""
+    const boIndex = itemEditValues.style.findIndex((a) => a.id === "background-opacity")
     if (boIndex < 0) return itemEditValues
 
     if (!backgroundValue.includes("rgb")) {
@@ -58,7 +58,7 @@ export function getBackgroundOpacity(itemEditValues, data) {
         return itemEditValues
     }
 
-    let rgb = splitRgb(backgroundValue)
+    const rgb = splitRgb(backgroundValue)
     itemEditValues.style[boIndex].value = rgb.a
 
     return itemEditValues

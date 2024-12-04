@@ -3,22 +3,22 @@ import { clone } from "./array"
 import { _show } from "./shows"
 
 export function getCurrentLayout() {
-    let slides: any = clone(_show("active").get().slides)
-    let layout: any[] = _show("active").layouts("active").get()[0].slides
+    const slides: any = clone(_show("active").get().slides)
+    const layout: any[] = _show("active").layouts("active").get()[0].slides
     return clone({ slides, layout })
 }
 
-export function cloneSlide(currentLayout: any, oldSlideId: string, newSlideId: string, keepChildren: boolean = true) {
-    let newSlide: any = clone(currentLayout.slides[oldSlideId])
+export function cloneSlide(currentLayout: any, oldSlideId: string, newSlideId: string, keepChildren = true) {
+    const newSlide: any = clone(currentLayout.slides[oldSlideId])
 
     // cloning a parent means that all its children must be cloned too
     if (newSlide.children) {
         if (keepChildren) {
             // clone children
-            let clonedChildren: any[] = []
+            const clonedChildren: any[] = []
             newSlide.children.forEach((childId: string) => {
-                let newChild: any = clone(currentLayout.slides[childId])
-                let newChildId: string = uid()
+                const newChild: any = clone(currentLayout.slides[childId])
+                const newChildId: string = uid()
                 currentLayout.slides[newChildId] = newChild
                 clonedChildren.push(newChildId)
             })

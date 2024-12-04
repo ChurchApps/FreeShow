@@ -12,12 +12,12 @@ const connectors: any = {
 }
 
 export function getPresentationApplications() {
-    let list = connectors[os.platform()] || []
+    const list = connectors[os.platform()] || []
     return list
 }
 
 let alwaysOnTopDisabled: string[] = []
-let starting: boolean = false
+let starting = false
 export function startSlideshow(data: { path: string; program: string }) {
     if (closing || starting) return
     starting = true
@@ -74,8 +74,8 @@ function stopSlideshow() {
 }
 
 let currentSlideshow: Slideshow | null = null
-let openedPresentation: string = ""
-async function initPresentation(path: string, program: string = "powerpoint") {
+let openedPresentation = ""
+async function initPresentation(path: string, program = "powerpoint") {
     if (currentSlideshow) {
         try {
             await currentSlideshow.stop()
@@ -95,7 +95,10 @@ async function initPresentation(path: string, program: string = "powerpoint") {
         currentSlideshow = new Slideshow(program, isProd)
     } catch (err) {
         if (err.includes("unsupported platform")) {
-            toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
+            toApp(MAIN, {
+                channel: "ALERT",
+                data: "Presentation app could not start, try opening it manually!",
+            })
         } else {
             console.error("INIT", err)
             toApp(MAIN, { channel: "ALERT", data: err })
@@ -110,7 +113,10 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     } catch (err) {
         console.error("BOOT", err)
         if (err === "application still not running") {
-            toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
+            toApp(MAIN, {
+                channel: "ALERT",
+                data: "Presentation app could not start, try opening it manually!",
+            })
         } else {
             toApp(MAIN, { channel: "ALERT", data: err })
         }
@@ -122,7 +128,10 @@ async function initPresentation(path: string, program: string = "powerpoint") {
         } catch (err) {
             console.error("OPEN", err)
             if (err === "Something went wrong with the presentation controller") {
-                toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
+                toApp(MAIN, {
+                    channel: "ALERT",
+                    data: "Presentation app could not start, try opening it manually!",
+                })
             } else {
                 toApp(MAIN, { channel: "ALERT", data: err })
             }
@@ -136,7 +145,10 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     } catch (err) {
         console.error("START", err)
         if (err === "still no active presentation") {
-            toApp(MAIN, { channel: "ALERT", data: "Could not start presentation, please open it manually and try again!" })
+            toApp(MAIN, {
+                channel: "ALERT",
+                data: "Could not start presentation, please open it manually and try again!",
+            })
         } else {
             toApp(MAIN, { channel: "ALERT", data: err })
         }
@@ -154,7 +166,7 @@ async function initPresentation(path: string, program: string = "powerpoint") {
 
 // prevent rapid changes
 let navigationTimeout: any = null
-let navigationWait = 100
+const navigationWait = 100
 const presentationActions: any = {
     next: () => {
         if (navigationTimeout) return
@@ -206,7 +218,7 @@ let stat: any = {}
 async function updateState() {
     if (!currentSlideshow) return
     if (stateUpdater) clearTimeout(stateUpdater)
-    let state: any = { id: openedPresentation }
+    const state: any = { id: openedPresentation }
 
     try {
         state.stat = await currentSlideshow?.stat()

@@ -3,6 +3,7 @@ import { MAIN, OUTPUT } from "../../types/Channels"
 import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
 import { getActiveOutputs } from "../components/helpers/output"
 import {
+    os,
     activeDrawerTab,
     activeEdit,
     activePage,
@@ -15,7 +16,6 @@ import {
     drawer,
     errorHasOccured,
     focusedArea,
-    os,
     outputDisplay,
     outputs,
     quickSearchActive,
@@ -48,7 +48,7 @@ export function wait(ms: number) {
 }
 
 // wait until input value is true
-export async function waitUntilValueIsDefined(value: Function, intervalTime: number = 50, timeoutValue: number = 5000) {
+export async function waitUntilValueIsDefined(value: Function, intervalTime = 50, timeoutValue = 5000) {
     return new Promise(async (resolve) => {
         let currentValue = await value()
         if (currentValue) resolve(currentValue)
@@ -74,13 +74,13 @@ export async function waitUntilValueIsDefined(value: Function, intervalTime: num
 }
 
 // hide output window
-export function hideDisplay(ctrlKey: boolean = true) {
+export function hideDisplay(ctrlKey = true) {
     if (!ctrlKey) return
     outputDisplay.set(false)
 
-    let outputsList: any[] = getActiveOutputs(get(allOutputs), false)
+    const outputsList: any[] = getActiveOutputs(get(allOutputs), false)
     outputsList.forEach((id) => {
-        let output: any = { id, ...get(allOutputs)[id] }
+        const output: any = { id, ...get(allOutputs)[id] }
         send(OUTPUT, ["DISPLAY"], { enabled: false, output })
     })
 }
@@ -99,7 +99,7 @@ export function startAutosave() {
     if (get(currentWindow)) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
 
-    let saveInterval = convertAutosave[get(autosave)]
+    const saveInterval = convertAutosave[get(autosave)]
     if (!saveInterval) {
         autosaveTimeout = null
         return
@@ -112,7 +112,7 @@ export function startAutosave() {
 }
 
 // get dropdown list
-export function getList(object: any, addEmptyValue: boolean = false) {
+export function getList(object: any, addEmptyValue = false) {
     let list = sortByName(keysToID(object))
     if (addEmptyValue) list = [{ id: null, name: "—" }, ...list]
 
@@ -133,15 +133,22 @@ const ERROR_FILTER = [
     " is not defined\n    at eval", // inputting text into number input
 ]
 export function logerror(err) {
-    let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
+    const msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
     if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
 
-    let log = {
+    const log = {
         time: new Date(),
         os: get(os).platform || "Unknown",
         version: get(version),
-        active: { window: get(currentWindow) || "main", page: get(activePage), show: get(activeShow), edit: get(activeEdit) },
-        drawer: { active: get(drawer)?.height > 40 ? get(activeDrawerTab) : "CLOSED" },
+        active: {
+            window: get(currentWindow) || "main",
+            page: get(activePage),
+            show: get(activeShow),
+            edit: get(activeEdit),
+        },
+        drawer: {
+            active: get(drawer)?.height > 40 ? get(activeDrawerTab) : "CLOSED",
+        },
         // lastUndo: get(undoHistory)[get(undoHistory).length - 1],
         type: err.type,
         source: err.type === "unhandledrejection" ? "See stack" : `${err.filename} - ${err.lineno}:${err.colno}`,
@@ -157,7 +164,7 @@ export function logerror(err) {
 export function toggleRemoteStream() {
     if (get(currentWindow)) return
 
-    let value = { key: "server", value: false }
+    const value = { key: "server", value: false }
     let captureOutputId = get(serverData)?.output_stream?.outputId
     if (!captureOutputId || !get(outputs)[captureOutputId]) captureOutputId = getActiveOutputs(get(outputs), true, true)[0]
     if (get(disabledServers).output_stream === false) value.value = true
@@ -179,27 +186,40 @@ export function startDevMode() {
 // toggle drawer & left/right panels
 const minDrawerHeight = 40
 const minPanelWidth = 4
-let panelsManuallyClosed: boolean = false
+let panelsManuallyClosed = false
 export function togglePanels() {
-    let drawerIsOpened = get(drawer).height > minDrawerHeight
-    let leftPanelIsOpened = get(resized).leftPanel > minPanelWidth
-    let rightPanelIsOpened = get(resized).rightPanel > minPanelWidth
+    const drawerIsOpened = get(drawer).height > minDrawerHeight
+    const leftPanelIsOpened = get(resized).leftPanel > minPanelWidth
+    const rightPanelIsOpened = get(resized).rightPanel > minPanelWidth
 
     // close all
     if (drawerIsOpened || leftPanelIsOpened || rightPanelIsOpened) {
         drawer.set({ height: minDrawerHeight, stored: get(drawer).height })
-        resized.set({ ...get(resized), leftPanel: minPanelWidth, rightPanel: minPanelWidth })
+        resized.set({
+            ...get(resized),
+            leftPanel: minPanelWidth,
+            rightPanel: minPanelWidth,
+        })
         panelsManuallyClosed = !leftPanelIsOpened && !rightPanelIsOpened
         return
     }
 
     // open all
-    if (!drawerIsOpened) drawer.set({ height: get(drawer).stored || DEFAULT_DRAWER_HEIGHT, stored: null })
-    if (!panelsManuallyClosed) resized.set({ ...get(resized), leftPanel: leftPanelIsOpened ? get(resized).leftPanel : DEFAULT_WIDTH, rightPanel: rightPanelIsOpened ? get(resized).rightPanel : DEFAULT_WIDTH })
+    if (!drawerIsOpened)
+        drawer.set({
+            height: get(drawer).stored || DEFAULT_DRAWER_HEIGHT,
+            stored: null,
+        })
+    if (!panelsManuallyClosed)
+        resized.set({
+            ...get(resized),
+            leftPanel: leftPanelIsOpened ? get(resized).leftPanel : DEFAULT_WIDTH,
+            rightPanel: rightPanelIsOpened ? get(resized).rightPanel : DEFAULT_WIDTH,
+        })
 }
 
 // trigger functions in .svelte files (used to trigger big and old functions still in .svelte files)
-let triggerTimeout: any = null
+const triggerTimeout: any = null
 export function triggerFunction(id: string) {
     activeTriggerFunction.set(id)
 

@@ -12,6 +12,9 @@ export function sortByName(arr: any[]) {
 
 export function keysToID(object: { [key: string]: any }): any[] {
     if (!object) return []
-    let newObjects: any[] = Object.entries(object).map(([id, a]) => ({ ...a, id }))
+    const newObjects: any[] = Object.entries(object).map(([id, a]) => ({
+        ...a,
+        id,
+    }))
     return newObjects
 }

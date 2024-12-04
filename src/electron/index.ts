@@ -1,13 +1,14 @@
 // ----- FreeShow -----
 // This is the electron entry point
 
-import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
+import { BrowserWindow, Menu, type Rectangle, app, ipcMain, screen } from "electron"
 import { CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
 import { currentlyDeletedShows } from "./cloud/drive"
 import { startBackup } from "./data/backup"
+import { defaultSettings, defaultSyncedSettings } from "./data/defaults"
 import { startExport } from "./data/export"
 import { config, getStore, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
@@ -19,9 +20,8 @@ import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, loadShows
 import { template } from "./utils/menuTemplate"
 import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, saveRecording, startImport } from "./utils/responses"
-import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { renameShows } from "./utils/shows"
-import { defaultSettings, defaultSyncedSettings } from "./data/defaults"
+import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
 
@@ -91,7 +91,7 @@ function initialize() {
 }
 
 // get LOADED message from frontend
-let isLoaded: boolean = false
+let isLoaded = false
 ipcMain.once("LOADED", mainWindowLoaded)
 function mainWindowLoaded() {
     if (RECORD_STARTUP_TIME) console.timeEnd("Main window content")
@@ -118,14 +118,14 @@ function createLoading() {
 // ----- MAIN WINDOW -----
 
 export let mainWindow: BrowserWindow | null = null
-export let dialogClose: boolean = false // is unsaved
+export let dialogClose = false // is unsaved
 const MIN_WINDOW_SIZE = 200
 function createMain() {
     if (RECORD_STARTUP_TIME) console.time("Main window")
-    let bounds: Rectangle = config.get("bounds")
-    let screenBounds: Rectangle = screen.getPrimaryDisplay().bounds
+    const bounds: Rectangle = config.get("bounds")
+    const screenBounds: Rectangle = screen.getPrimaryDisplay().bounds
 
-    let options: any = {
+    const options: any = {
         width: !bounds.width || bounds.width === 800 ? screenBounds.width || 800 : bounds.width,
         height: !bounds.height || bounds.height === 600 ? screenBounds.height || 600 : bounds.height,
         frame: !isProd || !isWindows,
@@ -158,7 +158,7 @@ function createMain() {
     if (RECORD_STARTUP_TIME) console.timeEnd("Main window")
 }
 
-export function loadWindowContent(window: BrowserWindow, isOutput: boolean = false) {
+export function loadWindowContent(window: BrowserWindow, isOutput = false) {
     if (!isOutput && RECORD_STARTUP_TIME) console.time("Main window content")
     if (!isOutput) console.log("Loading main window content")
     if (isProd) window.loadFile("public/index.html").catch(error)
@@ -166,7 +166,10 @@ export function loadWindowContent(window: BrowserWindow, isOutput: boolean = fal
 
     window.webContents.on("did-finish-load", () => {
         if (window === mainWindow) isOutput = false // make sure window is not output
-        window.webContents.send(STARTUP, { channel: "TYPE", data: isOutput ? "output" : null })
+        window.webContents.send(STARTUP, {
+            channel: "TYPE",
+            data: isOutput ? "output" : null,
+        })
         if (!isOutput) retryLoadingContent()
     })
 
@@ -281,7 +284,7 @@ export function closeMain() {
 }
 
 export function maximizeMain() {
-    let isMaximized: boolean = !!mainWindow?.isMaximized()
+    const isMaximized = !!mainWindow?.isMaximized()
     toApp(MAIN, { channel: "MAXIMIZED", data: !isMaximized })
 
     if (isMaximized) return mainWindow?.unmaximize()
@@ -355,18 +358,18 @@ function save(data: any) {
     }
 
     // scriptures
-    let scripturePath = getDataFolder(data.dataPath, dataFolderNames.scriptures)
+    const scripturePath = getDataFolder(data.dataPath, dataFolderNames.scriptures)
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: any) {
         if (!value) return
-        let p: string = path.join(scripturePath, value.name + ".fsb")
+        const p: string = path.join(scripturePath, value.name + ".fsb")
         writeFile(p, JSON.stringify([id, value]), id)
     }
 
     data.path = checkShowsFolder(data.path)
     // rename shows
     if (data.renamedShows) {
-        let renamedShows = data.renamedShows.filter(({ id }: any) => !data.deletedShows[id])
+        const renamedShows = data.renamedShows.filter(({ id }: any) => !data.deletedShows[id])
         renameShows(renamedShows, data.path)
     }
 
@@ -376,7 +379,7 @@ function save(data: any) {
         if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
         function saveShow([id, value]: any) {
             if (!value) return
-            let p: string = path.join(data.path, (value.name || id) + ".show")
+            const p: string = path.join(data.path, (value.name || id) + ".show")
             // WIP will overwrite a file with JSON data from another show 0,007% of the time (7 shows get broken when saving 1000 at the same time)
             writeFile(p, JSON.stringify([id, value]), id)
         }
@@ -386,7 +389,7 @@ function save(data: any) {
         function deleteShow({ name, id }: any) {
             if (!name || data.showsCache[id]) return
 
-            let p: string = path.join(data.path, (name || id) + ".show")
+            const p: string = path.join(data.path, (name || id) + ".show")
             deleteFile(p)
 
             // update cloud
@@ -396,11 +399,23 @@ function save(data: any) {
         // SAVED
         if (!data.reset) {
             setTimeout(() => {
-                toApp(STORE, { channel: "SAVE", data: { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers } })
+                toApp(STORE, {
+                    channel: "SAVE",
+                    data: {
+                        closeWhenFinished: data.closeWhenFinished,
+                        customTriggers: data.customTriggers,
+                    },
+                })
             }, 300)
         }
 
-        if (data.customTriggers?.backup || data.customTriggers?.changeUserData) startBackup({ showsPath: data.path, dataPath: data.dataPath, scripturePath, customTriggers: data.customTriggers })
+        if (data.customTriggers?.backup || data.customTriggers?.changeUserData)
+            startBackup({
+                showsPath: data.path,
+                dataPath: data.dataPath,
+                scripturePath,
+                customTriggers: data.customTriggers,
+            })
     }, 700)
 }
 

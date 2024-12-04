@@ -2,10 +2,10 @@
 // Get all user configs
 // https://www.npmjs.com/package/electron-store
 
-import { app } from "electron"
-import Store from "electron-store"
 import { statSync } from "fs"
 import path from "path"
+import { app } from "electron"
+import Store from "electron-store"
 import { STORE } from "../../types/Channels"
 import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
@@ -36,21 +36,24 @@ if (process.env.FS_MOCK_STORE_PATH != undefined) {
 }
 
 // MAIN WINDOW
-export const config = new Store<any>({ defaults: defaultConfig, ...storeExtraConfig })
+export const config = new Store<any>({
+    defaults: defaultConfig,
+    ...storeExtraConfig,
+})
 
-let dataPath = config.path
+const dataPath = config.path
 checkStores(dataPath)
 
 // Check that files are parsed properly!
 function checkStores(dataPath: string) {
     Object.values(fileNames).forEach((fileName) => {
-        let p = path.join(path.dirname(dataPath), fileName + ".json")
+        const p = path.join(path.dirname(dataPath), fileName + ".json")
         if (!doesPathExist(p)) return
 
         // delete if too large
         if (fileName === "history") {
             const MAX_BYTES = 30 * 1024 * 1024 // 30 MB
-            let stats = statSync(p)
+            const stats = statSync(p)
             if (stats.size > MAX_BYTES) {
                 deleteFile(p)
                 console.log(`DELETED ${fileName + ".json"} file as it exceeded 30 MB!`)
@@ -58,7 +61,7 @@ function checkStores(dataPath: string) {
             }
         }
 
-        let jsonData = readFile(p)
+        const jsonData = readFile(p)
 
         try {
             JSON.parse(jsonData)
@@ -71,35 +74,101 @@ function checkStores(dataPath: string) {
 }
 
 // ERROR LOG
-export const error_log = new Store({ name: fileNames.error_log, defaults: {}, ...storeExtraConfig })
+export const error_log = new Store({
+    name: fileNames.error_log,
+    defaults: {},
+    ...storeExtraConfig,
+})
 
 // SETTINGS
-const settings = new Store({ name: fileNames.settings, defaults: defaultSettings, ...storeExtraConfig })
-let synced_settings = new Store({ name: fileNames.synced_settings, defaults: defaultSyncedSettings, ...storeExtraConfig })
-let themes = new Store({ name: fileNames.themes, defaults: {}, ...storeExtraConfig })
+const settings = new Store({
+    name: fileNames.settings,
+    defaults: defaultSettings,
+    ...storeExtraConfig,
+})
+const synced_settings = new Store({
+    name: fileNames.synced_settings,
+    defaults: defaultSyncedSettings,
+    ...storeExtraConfig,
+})
+const themes = new Store({
+    name: fileNames.themes,
+    defaults: {},
+    ...storeExtraConfig,
+})
 
 // PROJECTS
-let projects = new Store({ name: fileNames.projects, defaults: { projects: {}, folders: {} }, ...storeExtraConfig })
+const projects = new Store({
+    name: fileNames.projects,
+    defaults: { projects: {}, folders: {} },
+    ...storeExtraConfig,
+})
 
 // SLIDES
-let shows = new Store({ name: fileNames.shows, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let stageShows = new Store({ name: fileNames.stageShows, defaults: {}, ...storeExtraConfig })
-let overlays = new Store({ name: fileNames.overlays, defaults: {}, ...storeExtraConfig })
-let templates = new Store({ name: fileNames.templates, defaults: {}, ...storeExtraConfig })
+const shows = new Store({
+    name: fileNames.shows,
+    defaults: {},
+    serialize: (v) => JSON.stringify(v),
+    ...storeExtraConfig,
+})
+const stageShows = new Store({
+    name: fileNames.stageShows,
+    defaults: {},
+    ...storeExtraConfig,
+})
+const overlays = new Store({
+    name: fileNames.overlays,
+    defaults: {},
+    ...storeExtraConfig,
+})
+const templates = new Store({
+    name: fileNames.templates,
+    defaults: {},
+    ...storeExtraConfig,
+})
 
 // CALENDAR
-let events = new Store({ name: fileNames.events, defaults: {}, ...storeExtraConfig })
+const events = new Store({
+    name: fileNames.events,
+    defaults: {},
+    ...storeExtraConfig,
+})
 
 // CLOUD
-let driveKeys = new Store({ name: fileNames.driveKeys, defaults: {}, ...storeExtraConfig })
+const driveKeys = new Store({
+    name: fileNames.driveKeys,
+    defaults: {},
+    ...storeExtraConfig,
+})
 
 // CACHE
-const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesByDotNotation: false, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-const cache = new Store({ name: fileNames.cache, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let history = new Store({ name: fileNames.history, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let usage = new Store({ name: fileNames.usage, defaults: { all: [] }, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+const media = new Store({
+    name: fileNames.media,
+    defaults: {},
+    accessPropertiesByDotNotation: false,
+    serialize: (v) => JSON.stringify(v),
+    ...storeExtraConfig,
+})
+const cache = new Store({
+    name: fileNames.cache,
+    defaults: {},
+    serialize: (v) => JSON.stringify(v),
+    ...storeExtraConfig,
+})
+const history = new Store({
+    name: fileNames.history,
+    defaults: {},
+    serialize: (v) => JSON.stringify(v),
+    ...storeExtraConfig,
+})
+const usage = new Store({
+    name: fileNames.usage,
+    defaults: { all: [] },
+    serialize: (v) => JSON.stringify(v),
+    ...storeExtraConfig,
+})
 
-export let stores: { [key: string]: Store<any> } = {
+export const stores: { [key: string]: Store<any> } = {
     SETTINGS: settings,
     SYNCED_SETTINGS: synced_settings,
     THEMES: themes,
@@ -121,7 +190,7 @@ export let stores: { [key: string]: Store<any> } = {
 export function getStore(id: string, e: any = null) {
     if (!stores[id]) return null
 
-    let store = stores[id].store
+    const store = stores[id].store
     if (e) e.reply(STORE, { channel: id, data: store })
 
     return store
@@ -132,7 +201,10 @@ export function getStore(id: string, e: any = null) {
 const portableData: any = {
     synced_settings: { key: "SYNCED_SETTINGS", defaults: defaultSyncedSettings },
     themes: { key: "THEMES", defaults: {} },
-    projects: { key: "PROJECTS", defaults: { projects: {}, folders: {}, projectTemplates: {} } },
+    projects: {
+        key: "PROJECTS",
+        defaults: { projects: {}, folders: {}, projectTemplates: {} },
+    },
     shows: { key: "SHOWS", defaults: {} },
     stageShows: { key: "STAGE_SHOWS", defaults: {} },
     overlays: { key: "OVERLAYS", defaults: {} },
@@ -146,9 +218,9 @@ export let userDataPath: string | null = null
 export function updateDataPath({ reset, dataPath, load }: any = {}) {
     if (reset) return resetStoresPath()
 
-    let settingsStore = settings.store || {}
+    const settingsStore = settings.store || {}
 
-    let useDataPath = !!settingsStore.special?.customUserDataLocation
+    const useDataPath = !!settingsStore.special?.customUserDataLocation
     if (!useDataPath) return
 
     userDataPath = dataPath || settingsStore.dataPath || ""
@@ -164,13 +236,13 @@ function resetStoresPath() {
     updateStoresPath()
 }
 
-function updateStoresPath(load: boolean = false) {
+function updateStoresPath(load = false) {
     if (!userDataPath) return
     Object.keys(portableData).forEach((id) => createStoreAtNewLocation(id, load))
 }
 
-function createStoreAtNewLocation(id: string, load: boolean = false) {
-    let key = portableData[id].key
+function createStoreAtNewLocation(id: string, load = false) {
+    const key = portableData[id].key
     let tempData: any = {}
     if (!load) {
         try {
@@ -181,7 +253,11 @@ function createStoreAtNewLocation(id: string, load: boolean = false) {
     }
 
     // set new stores to export
-    stores[key] = new Store({ name: fileNames[id], defaults: portableData[id].defaults || {}, cwd: userDataPath! })
+    stores[key] = new Store({
+        name: fileNames[id],
+        defaults: portableData[id].defaults || {},
+        cwd: userDataPath!,
+    })
 
     if (load || !Object.keys(tempData).length) return
 

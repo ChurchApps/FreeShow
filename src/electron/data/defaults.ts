@@ -1,6 +1,11 @@
 import type { SaveListSettings, SaveListSyncedSettings } from "../../types/Save"
 
-export const defaultConfig: any = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 }, disableHardwareAcceleration: true }
+export const defaultConfig: any = {
+    loaded: false,
+    maximized: true,
+    bounds: { width: 800, height: 600, x: 0, y: 0 },
+    disableHardwareAcceleration: true,
+}
 
 export const defaultGroups: any = {
     break: { name: "break", default: true, color: "#f5255e" },
@@ -73,7 +78,12 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     },
     volume: 1,
     gain: 1,
-    driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },
+    driveData: {
+        mainFolderId: null,
+        disabled: false,
+        initializeMethod: null,
+        disableUpload: false,
+    },
     calendarAddShow: "",
     metronome: {},
     bibleApiKey: "",
@@ -83,7 +93,11 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     categories: {
         song: { name: "category.song", icon: "song", default: true },
-        presentation: { name: "category.presentation", icon: "presentation", default: true },
+        presentation: {
+            name: "category.presentation",
+            icon: "presentation",
+            default: true,
+        },
     },
     drawSettings: {},
     overlayCategories: {
@@ -93,7 +107,11 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     },
     templateCategories: {
         song: { name: "category.song", icon: "song", default: true },
-        presentation: { name: "category.presentation", icon: "presentation", default: true },
+        presentation: {
+            name: "category.presentation",
+            icon: "presentation",
+            default: true,
+        },
         scripture: { name: "category.scripture", icon: "scripture", default: true },
     },
     timers: {
@@ -106,10 +124,22 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     audioStreams: {},
     audioPlaylists: {},
     scriptures: {
-        kjv: { name: "King James (Authorised) Version", api: true, id: "de4e12af7f28f599-02" },
-        asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01" },
+        kjv: {
+            name: "King James (Authorised) Version",
+            api: true,
+            id: "de4e12af7f28f599-02",
+        },
+        asv: {
+            name: "The Holy Bible, American Standard Version",
+            api: true,
+            id: "06125adad2d5898a-01",
+        },
         web: { name: "World English Bible", api: true, id: "9879dbb7cfe39e4d-04" },
-        wmb: { name: "World Messianic Bible", api: true, id: "f72b840c855f362c-04" },
+        wmb: {
+            name: "World Messianic Bible",
+            api: true,
+            id: "f72b840c855f362c-04",
+        },
         bsb: { name: "Berean Study Bible", api: true, id: "bba9f40183526463-01" },
     },
     scriptureSettings: {

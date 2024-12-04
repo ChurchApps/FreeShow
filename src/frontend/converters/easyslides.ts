@@ -18,9 +18,9 @@ export function convertEasyslides(data: any) {
     activePopup.set("alert")
     alertMessage.set("popup.importing")
 
-    let categoryId = createCategory("Easyslides")
+    const categoryId = createCategory("Easyslides")
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     // set timeout to allow popup to open
     setTimeout(() => {
@@ -33,17 +33,23 @@ export function convertEasyslides(data: any) {
     })
 
     function convertSong(song: Song) {
-        let layoutID = uid()
-        let show = new ShowObj(false, categoryId, layoutID)
+        const layoutID = uid()
+        const show = new ShowObj(false, categoryId, layoutID)
         show.name = checkName(song.Title1)
 
-        let { slides, layout }: any = createSlides(song)
+        const { slides, layout }: any = createSlides(song)
 
         show.meta = { number: song.SongNumber }
         if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
         show.slides = slides
-        show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
+        show.layouts = {
+            [layoutID]: {
+                name: get(dictionary).example?.default || "",
+                notes: "",
+                slides: layout,
+            },
+        }
 
         tempShows.push({ id: uid(), show })
     }
@@ -52,8 +58,8 @@ export function convertEasyslides(data: any) {
 function createSlides(song: Song) {
     let lyrics = song.Contents || ""
 
-    let slides: any = {}
-    let layout: any[] = []
+    const slides: any = {}
+    const layout: any[] = []
 
     if (!lyrics) return { slides, layout }
 
@@ -64,20 +70,23 @@ function createSlides(song: Song) {
     lyrics = lyrics.replace(/\[\d+\]/g, "\n\n").replaceAll("\n\n\n", "\n\n")
     const slideLines = lyrics.split("\n\n").filter(Boolean)
     slideLines.forEach((slideLine) => {
-        let lines = slideLine.split("\n").filter(Boolean)
+        const lines = slideLine.split("\n").filter(Boolean)
         let group = "verse"
         if (lines[0].includes("[") && lines[0].includes("]")) {
             group = lines[0].replace(/[\s\d]/g, "")
             lines.shift()
         }
 
-        let id: string = uid()
+        const id: string = uid()
         layout.push({ id })
 
-        let items = [
+        const items = [
             {
                 style: "left:50px;top:120px;width:1820px;height:840px;",
-                lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text.trim() }] })),
+                lines: lines.map((text: any) => ({
+                    align: "",
+                    text: [{ style: "", value: text.trim() }],
+                })),
             },
         ]
 

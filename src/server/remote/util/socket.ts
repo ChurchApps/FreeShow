@@ -1,9 +1,9 @@
 import { io } from "socket.io-client"
+import { type ReceiverKey, receiver } from "./receiver"
 import { _get, _update } from "./stores"
-import { receiver, ReceiverKey } from "./receiver"
 
 const socket = io()
-let id: string = ""
+let id = ""
 
 export function initSocket() {
     socket.on("connect", () => {
@@ -24,7 +24,7 @@ export function initSocket() {
     })
 
     socket.on("REMOTE", (msg) => {
-        let key = msg.channel as ReceiverKey
+        const key = msg.channel as ReceiverKey
         if (!receiver[key]) {
             console.log("Unhandled message:", msg)
             return

@@ -5,6 +5,8 @@ import { getActiveOutputs } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { getShowCacheId, updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
 import {
+    events,
+    timers,
     $,
     activeProject,
     activeShow,
@@ -15,7 +17,6 @@ import {
     drawSettings,
     drawTool,
     driveKeys,
-    events,
     folders,
     gain,
     groups,
@@ -35,7 +36,6 @@ import {
     styles,
     templates,
     timeFormat,
-    timers,
     transitionData,
     variables,
     volume,
@@ -77,7 +77,12 @@ export function storeSubscriber() {
             // send(REMOTE, ["SHOW"], data )
             timedout(REMOTE, { channel: "SHOW", data }, () =>
                 eachConnection(REMOTE, "SHOW", async (connection) => {
-                    return connection.active ? await convertBackgrounds({ ...data[connection.active], id: connection.active }) : null
+                    return connection.active
+                        ? await convertBackgrounds({
+                              ...data[connection.active],
+                              id: connection.active,
+                          })
+                        : null
                 })
             )
             // TODO: this, timedout +++
@@ -97,7 +102,7 @@ export function storeSubscriber() {
         // set all loaded shows to false, so show style can be updated from template again
         cachedShowsData.update((a) => {
             Object.keys(a).forEach((id) => {
-                let customId = getShowCacheId(id, get(showsCache)[id])
+                const customId = getShowCacheId(id, get(showsCache)[id])
                 if (!a[customId]?.template) return
                 a[customId].template.slidesUpdated = false
             })
@@ -153,7 +158,7 @@ export function storeSubscriber() {
             eachConnection(STAGE, "SHOW", (connection) => {
                 if (!connection.active) return
 
-                let currentData = data[connection.active]
+                const currentData = data[connection.active]
                 if (!currentData.settings.resolution?.width) currentData.settings.resolution = { width: 1920, height: 1080 }
                 return currentData
             })
@@ -161,13 +166,13 @@ export function storeSubscriber() {
     })
 
     draw.subscribe((data) => {
-        let activeOutputs = getActiveOutputs()
+        const activeOutputs = getActiveOutputs()
         activeOutputs.forEach((id) => {
             send(OUTPUT, ["DRAW"], { id, data })
         })
     })
     drawTool.subscribe((data) => {
-        let activeOutputs = getActiveOutputs()
+        const activeOutputs = getActiveOutputs()
         activeOutputs.forEach((id) => {
             send(OUTPUT, ["DRAW_TOOL"], { id, data })
         })
@@ -244,12 +249,12 @@ export function storeSubscriber() {
 
     activeShow.subscribe((data) => {
         if (!data?.id) return
-        let type = data?.type || "show"
+        const type = data?.type || "show"
         if (type !== "show") return
 
-        let show = get(showsCache)[data.id]
+        const show = get(showsCache)[data.id]
         cachedShowsData.update((a) => {
-            let customId = getShowCacheId(data.id, show)
+            const customId = getShowCacheId(data.id, show)
             a[customId] = updateCachedShow(data.id, show)
             return a
         })
@@ -299,7 +304,7 @@ const initalOutputData = {
 
 export function sendInitialOutputData() {
     Object.keys(initalOutputData).forEach((KEY) => {
-        let storeKey = initalOutputData[KEY]
+        const storeKey = initalOutputData[KEY]
 
         let storeData: any
         if (storeKey.data) storeData = { data: get($[storeKey.data]) }

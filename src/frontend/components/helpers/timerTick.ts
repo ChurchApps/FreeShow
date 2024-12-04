@@ -1,17 +1,17 @@
 import { get } from "svelte/store"
 import type { Event } from "../../../types/Calendar"
 import { OUTPUT, STAGE } from "../../../types/Channels"
-import { activeTimers, currentWindow, dictionary, events, nextActionEventPaused, nextActionEventStart, timers } from "../../stores"
+import { events, timers, activeTimers, currentWindow, dictionary, nextActionEventPaused, nextActionEventStart } from "../../stores"
 import { newToast } from "../../utils/common"
 import { translate } from "../../utils/language"
 import { send } from "../../utils/request"
 import { actionData } from "../actions/actionData"
 import { customActionActivation, runAction } from "../actions/actions"
+import { sortByClosestMatch } from "../actions/apiHelper"
+import { playPauseGlobal } from "../drawer/timers/timers"
 import { clone, keysToID, sortByTime } from "./array"
 import { loadShows } from "./setShow"
 import { checkNextAfterMedia } from "./showActions"
-import { sortByClosestMatch } from "../actions/apiHelper"
-import { playPauseGlobal } from "../drawer/timers/timers"
 
 const INTERVAL = 1000
 const TEN_SECONDS = 1000 * 10
@@ -25,7 +25,7 @@ export function startTimer() {
 
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(() => {
-        let newActiveTimers = clone(get(activeTimers)).map(increment)
+        const newActiveTimers = clone(get(activeTimers)).map(increment)
 
         send(OUTPUT, ["ACTIVE_TIMERS"], newActiveTimers)
         send(STAGE, ["ACTIVE_TIMERS"], newActiveTimers)
@@ -37,15 +37,15 @@ export function startTimer() {
 }
 
 export function startTimerByName(name: string) {
-    let timersList = sortByClosestMatch(keysToID(get(timers)), name)
-    let timerId = timersList[0]?.id
+    const timersList = sortByClosestMatch(keysToID(get(timers)), name)
+    const timerId = timersList[0]?.id
     if (!timerId) return
 
     startTimerById(timerId)
 }
 
 export function startTimerById(id: string) {
-    let timer = get(timers)[id]
+    const timer = get(timers)[id]
     if (!timer) return
 
     playPauseGlobal(id, timer)
@@ -53,7 +53,7 @@ export function startTimerById(id: string) {
 
 export function stopTimers() {
     // timeout so timer_end action don't clear at the same time as next timer tick starts
-    setTimeout(() => {    
+    setTimeout(() => {
         // if (timeout) clearTimeout(timeout) // clear timeout (timer does not start again then...)
         activeTimers.set([])
         customInterval = INTERVAL
@@ -69,22 +69,22 @@ function increment(timer: any, i: number) {
 
     if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer
 
-    let currentTime = Date.now()
+    const currentTime = Date.now()
     // store timer start time (for accuracy)
     if (!timer.startTime) {
-        let timerIs = timer.currentTime - timer.start
-        let timerShouldBe = timerIs * 1000 // - 1
+        const timerIs = timer.currentTime - timer.start
+        const timerShouldBe = timerIs * 1000 // - 1
         if (timer.start < timer.end) timer.startTime = currentTime - timerShouldBe
         else timer.startTime = currentTime + timerShouldBe
     }
 
-    let difference = currentTime - timer.startTime
-    let timerShouldBe = Math.floor(difference / 1000) + 1
+    const difference = currentTime - timer.startTime
+    const timerShouldBe = Math.floor(difference / 1000) + 1
 
     // prevent interval time increasing more and more
     if (i === 0) {
-        let preciseTime = (timerShouldBe - 1) * 1000
-        let differenceMs = difference - preciseTime
+        const preciseTime = (timerShouldBe - 1) * 1000
+        const differenceMs = difference - preciseTime
         customInterval = Math.max(500, INTERVAL - differenceMs)
     }
 
@@ -95,15 +95,15 @@ function increment(timer: any, i: number) {
 }
 
 // convert "show" to "action" <= 1.1.7
-let initialized: boolean = false
+let initialized = false
 function convertShowToAction() {
     if (initialized) return
     initialized = true
 
-    let updated: boolean = false
-    let allEvents = get(events)
+    let updated = false
+    const allEvents = get(events)
     Object.keys(allEvents).forEach((eventId) => {
-        let newEvent = allEvents[eventId]
+        const newEvent = allEvents[eventId]
         if (newEvent.type !== "show") return
 
         updated = true
@@ -123,9 +123,9 @@ export function startEventTimer() {
 
     convertShowToAction()
 
-    let currentTime: Date = new Date()
+    const currentTime: Date = new Date()
     let actionEvents: Event[] = Object.values(get(events)).filter((a) => {
-        let eventTime: Date = new Date(a.from)
+        const eventTime: Date = new Date(a.from)
         return a.type === "action" && currentTime.getTime() - INTERVAL < eventTime.getTime()
     })
 
@@ -137,14 +137,14 @@ export function startEventTimer() {
         actionEvents.forEach((event, i) => {
             if (!event.action) return
 
-            let eventTime: Date = new Date(event.from)
-            let toast = get(dictionary).toast || {}
+            const eventTime: Date = new Date(event.from)
+            const toast = get(dictionary).toast || {}
             if (get(nextActionEventPaused)) return
 
-            let actionId = event.action.id
-            let actionName = translate(actionData[actionId]?.name)
+            const actionId = event.action.id
+            const actionName = translate(actionData[actionId]?.name)
 
-            let timeLeft: number = eventTime.getTime() - currentTime.getTime()
+            const timeLeft: number = eventTime.getTime() - currentTime.getTime()
             if (i === 0) nextActionEventStart.set({ name: actionName, timeLeft })
 
             // less than 1 minute
@@ -180,5 +180,8 @@ export function startEventTimer() {
 }
 
 function convertEventAction(action) {
-    return { triggers: [action.id], actionValues: { [action.id]: action.data || {} } }
+    return {
+        triggers: [action.id],
+        actionValues: { [action.id]: action.data || {} },
+    }
 }

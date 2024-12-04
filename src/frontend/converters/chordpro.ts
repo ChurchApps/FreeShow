@@ -1,6 +1,7 @@
 // homepage: https://www.chordpro.org/chordpro/
 // docs: https://github.com/martijnversluis/ChordSheetJS
 
+import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show, Slide } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
@@ -8,32 +9,38 @@ import { clone } from "../components/helpers/array"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary, drawerTabsData, groups } from "../stores"
 import { setTempShows } from "./importHelpers"
-import { get } from "svelte/store"
 
 const metaKeys = ["number", "title", "artist", "composer", "lyricist", "copyright", "year", "notes", "ccli"]
 const chorus = ["start_of_chorus", "soc"]
 // const verse = ["start_of_verse", "sov"]
 // const end = ["end_of_chorus", "eoc", "end_of_verse", "eov"]
 
-const defaultSlide = { group: "", color: "", globalGroup: "verse", settings: {}, notes: "", items: [] }
+const defaultSlide = {
+    group: "",
+    color: "",
+    globalGroup: "verse",
+    settings: {},
+    notes: "",
+    items: [],
+}
 
 export function convertChordPro(data: any) {
     alertMessage.set("popup.importing")
     activePopup.set("alert")
 
-    let tempShows: any[] = []
+    const tempShows: any[] = []
 
     setTimeout(() => {
         data.forEach((file) => {
             let name: string = file.name
-            let content = file.content
+            const content = file.content
 
-            let slides: Slide[] = [clone(defaultSlide)]
-            let metadata: any = {}
-            let extraMetadata: string[] = []
-            let notes: string = ""
+            const slides: Slide[] = [clone(defaultSlide)]
+            const metadata: any = {}
+            const extraMetadata: string[] = []
+            let notes = ""
 
-            let newSection: boolean = false
+            let newSection = false
             content.split("\n").forEach(checkLine)
             function checkLine(line: string) {
                 if (line.includes("end_of_")) {
@@ -41,11 +48,11 @@ export function convertChordPro(data: any) {
                     return
                 }
 
-                let sectionStart = line.includes("start_of_")
+                const sectionStart = line.includes("start_of_")
                 if (newSection || sectionStart) {
                     newSection = false
 
-                    let trimmed = line.trim()
+                    const trimmed = line.trim()
                     if (trimmed[trimmed.length - 1] === ":" || sectionStart) {
                         // WIP "Bridge (x2):"
                         let group = trimmed.slice(0, -1).replace(/\d+/g, "").trim()
@@ -99,11 +106,11 @@ export function convertChordPro(data: any) {
 
                     // Environment
                     let group = ""
-                    let isChorus = chorus.find((a) => line.includes(a))
+                    const isChorus = chorus.find((a) => line.includes(a))
                     if (isChorus) group = "chorus"
                     // else slides[slides.length - 1].globalGroup = "verse"
 
-                    let groupId = group || Object.keys(get(dictionary).groups || {}).find((a) => line.toLowerCase().includes(a.replaceAll("_", "-")))
+                    const groupId = group || Object.keys(get(dictionary).groups || {}).find((a) => line.toLowerCase().includes(a.replaceAll("_", "-")))
 
                     if (groupId) {
                         slides[slides.length - 1].globalGroup = groupId
@@ -125,10 +132,10 @@ export function convertChordPro(data: any) {
                 }
 
                 // lines
-                let text: string = ""
-                let chords: any[] = []
-                let isChord: boolean = false
-                let letterIndex: number = 0
+                let text = ""
+                const chords: any[] = []
+                let isChord = false
+                let letterIndex = 0
                 line.split("").forEach((char) => {
                     if ((char === "[" || char === "]") && !line.slice(0, -2).includes(":")) {
                         isChord = char === "["
@@ -147,9 +154,17 @@ export function convertChordPro(data: any) {
 
                 text = text.replaceAll("\r", "")
 
-                let slideItems = slides[slides.length - 1].items
-                if (!slideItems.length) slideItems.push({ lines: [], style: "left:50px;top:120px;width:1820px;height:840px;" })
-                slideItems[slideItems.length - 1].lines!.push({ align: "", text: [{ value: text, style: "" }], chords })
+                const slideItems = slides[slides.length - 1].items
+                if (!slideItems.length)
+                    slideItems.push({
+                        lines: [],
+                        style: "left:50px;top:120px;width:1820px;height:840px;",
+                    })
+                slideItems[slideItems.length - 1].lines!.push({
+                    align: "",
+                    text: [{ value: text, style: "" }],
+                    chords,
+                })
             }
 
             if (extraMetadata.length) {
@@ -157,7 +172,7 @@ export function convertChordPro(data: any) {
                 notes += extraMetadata.join("\n")
             }
 
-            let show = createShow({ slides, metadata, name, notes })
+            const show = createShow({ slides, metadata, name, notes })
             tempShows.push({ id: uid(), show })
         })
 
@@ -166,16 +181,16 @@ export function convertChordPro(data: any) {
 }
 
 function createShow({ slides, metadata, name, notes }) {
-    let layoutID: string = uid()
+    const layoutID: string = uid()
     let category = get(drawerTabsData).shows?.activeSubTab
     if (category === "all" || category === "unlabeled") category = null
-    let show: Show = new ShowObj(false, category, layoutID)
+    const show: Show = new ShowObj(false, category, layoutID)
 
     // remove empty slides
     slides = slides.filter((a) => a.items.length)
 
-    let layouts = getLayout(slides)
-    let newSlides: any = {}
+    const layouts = getLayout(slides)
+    const newSlides: any = {}
     layouts.forEach(({ id }, i) => {
         newSlides[id] = slides[i]
     })
@@ -191,7 +206,7 @@ function createShow({ slides, metadata, name, notes }) {
 }
 
 function getLayout(slides: Slide[]) {
-    let layout: any[] = slides.map((_) => ({ id: uid() }))
+    const layout: any[] = slides.map((_) => ({ id: uid() }))
 
     return layout
 }
