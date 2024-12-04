@@ -20,7 +20,8 @@
         // "sans-serif",
     ]
 
-    onMount(async () => {
+    onMount(loadFonts)
+    async function loadFonts() {
         if ($systemFonts.length) addFonts($systemFonts)
         else {
             let fonts: string[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
@@ -29,7 +30,8 @@
             systemFonts.set(fonts)
             addFonts(fonts)
         }
-    })
+    }
+    $: if (active && !$systemFonts.length) loadFonts()
 
     function addFonts(newFonts: string[]) {
         // join and remove duplicates

@@ -8,6 +8,7 @@ import { history } from "./history"
 
 // check if name exists and add number
 export function checkName(name: string = "", showId: string = "") {
+    if (typeof name !== "string") return ""
     name = formatToFileName(name)
 
     let number = 1
