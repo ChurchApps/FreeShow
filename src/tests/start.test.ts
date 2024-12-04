@@ -1,8 +1,8 @@
-import { _electron as electron } from "playwright"
 import { expect, test } from "@playwright/test"
+import { _electron as electron } from "playwright"
 import tmp from "tmp"
 
-const timeoutMs = 2_000;
+const timeoutMs = 2_000
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 test.beforeEach(async ({ context }) => {
@@ -13,7 +13,11 @@ test("Launch electron app", async () => {
     const tmpSettingFolder = tmp.dirSync({ unsafeCleanup: true })
     const electronApp = await electron.launch({
         args: ["."],
-        env: { ...process.env, NODE_ENV: "production", FS_MOCK_STORE_PATH: tmpSettingFolder.name },
+        env: {
+            ...process.env,
+            NODE_ENV: "production",
+            FS_MOCK_STORE_PATH: tmpSettingFolder.name,
+        },
     })
 
     // Mocking Electron open dialog
@@ -52,7 +56,10 @@ test("Launch electron app", async () => {
 
         // Initial setup
         // Set language to English
-        await window.locator(".main .dropdownElem").getByRole("button").click({ timeout: 5 * timeoutMs })
+        await window
+            .locator(".main .dropdownElem")
+            .getByRole("button")
+            .click({ timeout: 5 * timeoutMs })
         await window.locator(".main .dropdownElem .dropdown #id_English").click({ timeout: timeoutMs })
         // This triggers the Electron open dialog, mocked above
         await window.locator(".main .showElem").getByRole("button").click()
@@ -84,9 +91,9 @@ test("Launch electron app", async () => {
 
         // Put lyrics
         await window.getByText("Quick Lyrics").click({ timeout: timeoutMs })
-        let lyricsBox = window.getByPlaceholder("[Verse]")
+        const lyricsBox = window.getByPlaceholder("[Verse]")
         await lyricsBox.focus()
-        await lyricsBox.fill(`[Verse]\ntest line 1\ntest line 2\n\n[Chorus]\ntest line 3\ntest line 4`, { timeout: timeoutMs })
+        await lyricsBox.fill("[Verse]\ntest line 1\ntest line 2\n\n[Chorus]\ntest line 3\ntest line 4", { timeout: timeoutMs })
 
         // Click new show
         await window.getByTestId("create.show.popup.new.show").click({ timeout: timeoutMs })
@@ -94,10 +101,15 @@ test("Launch electron app", async () => {
         // Try changing group for Chorus
         await window.locator("#group").getByTitle("Chorus").click({ timeout: timeoutMs })
         //await window.getByText("Change group").hover({ timeout: timeoutMs })
-        await window.locator("#group").getByText("Verse").click({ timeout: 5 * timeoutMs })
+        await window
+            .locator("#group")
+            .getByText("Verse")
+            .click({ timeout: 5 * timeoutMs })
 
         // Verify the group changing was successful
-        await expect(window.locator("#group").getByTitle("Verse")).toBeVisible({ timeout: timeoutMs })
+        await expect(window.locator("#group").getByTitle("Verse")).toBeVisible({
+            timeout: timeoutMs,
+        })
 
         // Manual save!
         await window.locator(".top").getByText("FreeShow").click({ button: "right", timeout: timeoutMs })
