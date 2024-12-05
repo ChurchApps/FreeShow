@@ -1157,6 +1157,7 @@
     "sort": {
         "sort_by": "Sort by",
         "name": "Name",
+        "name_des": "Name Descending",
         "date": "Date",
         "size": "Size",
         "type": "Type",

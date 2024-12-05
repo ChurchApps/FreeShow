@@ -142,6 +142,7 @@ export function updateShowsList(shows: Shows) {
     } else {
         // sort by name
         sortedShows = sortByNameAndNumber(showsList)
+        if (sortType === "name_des") sortedShows = sortedShows.reverse()
     }
 
     let filteredShows: ShowList[] = removeValues(sortedShows, "private", true)

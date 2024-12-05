@@ -235,10 +235,11 @@ function sortItems(items: ContextMenuItem[], id: "projects" | "shows") {
 
     items = [
         { id: "name", label: "sort.name", icon: "text", enabled: type === "name" },
+        { id: "name_des", label: "sort.name_des", icon: "text", enabled: type === "name_des" },
         { id: "created", label: "info.created", icon: "calendar", enabled: type === "created" },
+        { id: "modified", label: "info.modified", icon: "calendar", enabled: type === "modified" },
     ]
     if (id === "shows") {
-        items.push({ id: "modified", label: "info.modified", icon: "calendar", enabled: type === "modified" })
         items.push({ id: "used", label: "info.used", icon: "calendar", enabled: type === "used" })
 
         // WIP load used metadata values...
