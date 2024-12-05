@@ -217,6 +217,7 @@
                                     <Button
                                         active={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
                                         class="section context #project_section__project"
+                                        style={show.color ? `border-bottom: 2px solid ${show.color}` : ""}
                                         on:click={() => {
                                             if ($focusMode) activeFocus.set({ id: show.id, index })
                                             else activeShow.set({ ...show, index })

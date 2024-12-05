@@ -8,10 +8,11 @@ import { history } from "./history"
 
 // check if name exists and add number
 export function checkName(name: string = "", showId: string = "") {
+    if (typeof name !== "string") return ""
     name = formatToFileName(name)
 
     let number = 1
-    while (Object.entries(get(shows)).find(([id, a]: any) => (!showId || showId !== id) && a.name.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
+    while (Object.entries(get(shows)).find(([id, a]: any) => (!showId || showId !== id) && a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
 
     return number > 1 ? name + " " + number : name
 }

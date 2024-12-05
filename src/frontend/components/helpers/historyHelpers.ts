@@ -331,7 +331,7 @@ export const _updaters = {
             let replacer: any = {}
 
             // template
-            let template = _show("active").get("settings.template") || null
+            let template = _show().get("settings.template") || null
             // TODO: set default template from settings!
             if (!template) template = get(templates).default ? "default" : null
             if (template) replacer.template = clone(template)
@@ -351,14 +351,14 @@ export const _updaters = {
                 projects.update((p) => {
                     if (data.remember.index !== undefined && p[data.remember.project].shows.length > data.remember.index) {
                         p[data.remember.project].shows = addToPos(p[data.remember.project].shows, [{ id }], data.remember.index)
+                        showRef.index = data.remember.index
                     } else {
                         p[data.remember.project].shows.push({ id })
+                        showRef.index = p[data.remember.project].shows.length - 1
                     }
 
                     return p
                 })
-                // TODO: remember index
-                showRef.index = get(projects)[data.remember.project].shows.length - 1
             }
 
             // don't open when importing lots of songs

@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        activeEdit,
         activeProject,
         activeRecording,
         activeShow,
@@ -16,6 +17,7 @@
         scriptures,
         selected,
         shows,
+        showsCache,
         slidesOptions,
         stageShows,
         templateCategories,
@@ -82,6 +84,26 @@
             }
 
             menu.label = enabled ? "actions.enable" : "actions.disable"
+        },
+        slide_transition: () => {
+            if ($selected.id === "slide" && $activeShow) {
+                let ref = _show().layouts("active").ref()[0]
+                enabled = ref[$selected.data[0].index]?.data?.transition || false
+            }
+        },
+        transition: () => {
+            if ($activeShow && $showsCache[$activeShow.id] && $activeEdit.items.length) {
+                let ref = _show().layouts("active").ref()[0]
+                let slideId = ref[$activeEdit.slide || 0]?.id
+                let item = $showsCache[$activeShow.id].slides?.[slideId]?.items?.[$activeEdit.items[0]] || {}
+                enabled = item.actions?.transition
+                console.log(item)
+                // console.log($activeShow, $activeEdit)
+
+                // $showsCache[$activeShow.id].slides?.[$activeEdit.]?.
+                // let ref = _show().layouts("active").ref()[0]
+                // enabled = ref[$selected.data[0].index]?.data?.transition || false
+            }
         },
         remove_group: () => {
             if ($selected.id !== "slide") return
@@ -233,7 +255,7 @@
                     <T id={menu?.label || id} />
                 {/key}
             {/if}
-            {#if menu.external}
+            {#if menu?.external}
                 <Icon id="launch" style="opacity: 0.8;" white />
             {/if}
         </p>

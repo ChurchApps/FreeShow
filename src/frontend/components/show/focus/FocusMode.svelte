@@ -101,7 +101,7 @@
     {#if list.length}
         <div class="list" bind:this={listElem}>
             {#each list as item, i}
-                <div class="name" id={"id_" + getId(item.id) + "_" + i}>
+                <div class="name" id={"id_" + getId(item.id) + "_" + i} style={item.color ? `border-bottom: 2px solid ${item.color}` : ""}>
                     <Icon id={item.icon || "noIcon"} custom={(item.type || "show") === "show"} white right />
                     <p>{item.name}</p>
                 </div>

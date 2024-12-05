@@ -26,11 +26,7 @@ export function receive(ID: ValidChannels, channels: any, id: string = "") {
 let currentlyAwaiting: string[] = []
 export async function awaitRequest(ID: ValidChannels, channel: string, data: any = null) {
     let listenerId = ID + "_" + channel
-    if (channel === "GET_SYSTEM_FONTS") {
-        if (currentlyAwaiting.includes(listenerId)) return
-    } else {
-        listenerId += uid(5)
-    }
+    listenerId += uid(5)
     currentlyAwaiting.push(listenerId)
 
     send(ID, [channel], { ...data, listenerId })

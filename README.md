@@ -54,9 +54,10 @@ You are welcome to contribute to the code!
 
 1. Clone the code in this repo
 2. Install [Node.js](https://nodejs.org/en/download/)
-3. Install [Python 3.11](https://www.python.org/downloads/release/python-3119/) or install [Python 3.12](https://www.python.org/downloads/) with the `setuptools` package
-4. In the terminal, run: `npm install`
-5. To start the app, run: `npm start`
+3. Install [Python 3.12](https://www.python.org/downloads/), and the [`setuptools`](https://pypi.org/project/setuptools/) package
+4. On Windows, download [Visual Studio](https://visualstudio.microsoft.com/downloads/) and install "Desktop development with C++", also select the "Windows 10 SDK"
+5. In the terminal, run: `npm install`
+6. To start the app, run: `npm start`
 
 ## Join us on Slack
 

@@ -36,14 +36,22 @@ export function convertChordPro(data: any) {
             let newSection: boolean = false
             content.split("\n").forEach(checkLine)
             function checkLine(line: string) {
-                if (newSection) {
+                if (line.includes("end_of_")) {
+                    newSection = true
+                    return
+                }
+
+                let sectionStart = line.includes("start_of_")
+                if (newSection || sectionStart) {
                     newSection = false
 
                     let trimmed = line.trim()
-                    if (trimmed[trimmed.length - 1] === ":") {
+                    if (trimmed[trimmed.length - 1] === ":" || sectionStart) {
                         // WIP "Bridge (x2):"
                         let group = trimmed.slice(0, -1).replace(/\d+/g, "").trim()
                         group = group.replace("(x)", "").trim()
+                        if (sectionStart) group = trimmed.slice(trimmed.lastIndexOf("_") + 1, trimmed.indexOf("}"))
+
                         let globalGroup = getGlobalGroup(group)
 
                         if (globalGroup) slides[slides.length - 1].globalGroup = globalGroup

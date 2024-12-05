@@ -12,10 +12,10 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Install Node.js and NPM
-              uses: actions/setup-node@master
+              uses: actions/setup-node@v4
               with:
                   node-version: 20
 
@@ -36,10 +36,10 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Install Node.js and NPM
-              uses: actions/setup-node@master
+              uses: actions/setup-node@v4
               with:
                   node-version: 20
 
@@ -65,7 +65,7 @@ jobs:
               run: echo "RELEASE_NAME=$(jq -r .version package.json)" >> "$GITHUB_ENV"
 
             - name: Install Node.js and NPM
-              uses: actions/setup-node@master
+              uses: actions/setup-node@v4
               with:
                   node-version: 20
                   architecture: 'arm64'
@@ -125,16 +125,16 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Install Node.js and NPM
-              uses: actions/setup-node@master
+              uses: actions/setup-node@v4
               with:
                   node-version: 20
 
             # Change Python version: https://github.com/nodejs/node-gyp/issues/2869
             - name: Install Python 3.11
-              uses: actions/setup-python@v4
+              uses: actions/setup-python@v5
               with:
                   python-version: "3.11"
 

@@ -534,12 +534,12 @@
     function findBook() {
         let booksList = books[firstBibleId]?.map((b: any, i: number) => ({ ...b, id: b.id || i, abbr: b.id })) || []
 
-        let lowerSearch = searchValue.toLowerCase()
+        let lowerSearch = formatBookSearch(searchValue)
         let splittedSearch = lowerSearch.split(" ")
 
         // search by abbreviation (id)
         if (searchValue.endsWith(" ") && splittedSearch.length === 2) {
-            const book = booksList.find((a) => a.abbr && a.abbr.toLowerCase() === splittedSearch[0])
+            const book = booksList.find((a) => a.abbr && formatBookSearch(a.abbr) === splittedSearch[0])
             if (book) {
                 updateSearchValue(book.name + " ")
                 return book.id
@@ -570,7 +570,7 @@
             let matchingArray: any[] = []
 
             booksList.forEach((book: any) => {
-                let bookName = book.name.toLowerCase()
+                let bookName = formatBookSearch(book.name)
                 if (bookName.includes(value) || bookName.replaceAll(" ", "").includes(value)) matchingArray.push(book)
             })
 
@@ -599,7 +599,7 @@
         searchValues.bookName = matchingBook.name
         if (searchValues.book !== undefined && searchValues.book === matchingBook.id) return matchingBook.id
 
-        let fullMatch = searchValue.toLowerCase().includes(matchingBook.name.toLowerCase() + " ")
+        let fullMatch = formatBookSearch(searchValue).includes(formatBookSearch(matchingBook.name) + " ")
         if (fullMatch || !autoComplete) return matchingBook.id
 
         // auto complete
@@ -615,6 +615,15 @@
         autoComplete = false
 
         return matchingBook.id
+    }
+    function formatBookSearch(value: string) {
+        // replace diacritic values like á -> a & ö -> o
+        // https://stackoverflow.com/a/37511463/10803046
+        return value
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "")
+            .replace(/[!()-,.]/gi, "")
+            .toLowerCase()
     }
     function hasNumber(str) {
         return /\d/.test(str)

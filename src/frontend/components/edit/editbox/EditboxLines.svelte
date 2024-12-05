@@ -315,6 +315,8 @@
 
             newLines.push(newLine)
 
+            // WIP backspace a line into a line with different styling will merge both and apply the first style to both (HTML issue)
+
             new Array(...line.childNodes).forEach((child: any, j: number) => {
                 if (child.nodeName === "#text") {
                     // add "floating" text to previous node (e.g. pressing backspace at the start of a line)

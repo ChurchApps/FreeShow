@@ -5,9 +5,9 @@ import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
 import WordExtractor from "word-extractor"
 import { toApp } from ".."
-import { IMPORT } from "../../types/Channels"
-import { getExtension, readFileAsync, readFileBufferAsync } from "../utils/files"
-import { decompress } from "./zip"
+import { IMPORT, MAIN } from "../../types/Channels"
+import { dataFolderNames, doesPathExist, getDataFolder, getExtension, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
+import { decompress, isZip } from "./zip"
 
 const specialImports: any = {
     powerpoint: async (files: string[]) => {
@@ -84,6 +84,11 @@ export async function importShow(id: any, files: string[] | null, importSettings
     if (sqliteFile) files = files.filter((a) => a.endsWith(".sqlite"))
     if (id === "easyworship" || id === "softprojector" || sqliteFile) importId = "sqlite"
 
+    if (id === "freeshow_project") {
+        importProject(files, importSettings.path)
+        return
+    }
+
     const zip = ["zip", "probundle", "vpc", "qsp"]
     let zipFiles = files.filter((a) => zip.includes(a.slice(a.lastIndexOf(".") + 1).toLowerCase()))
     if (zipFiles.length) {
@@ -126,6 +131,56 @@ async function readFile(filePath: string, encoding: BufferEncoding = "utf8") {
 }
 
 const getFileName = (filePath: string) => path.basename(filePath).slice(0, path.basename(filePath).lastIndexOf("."))
+
+// PROJECT
+
+async function importProject(files: string[], dataPath: string) {
+    toApp(MAIN, {channel: "ALERT", data: "popup.importing"})
+
+    // some .project files are plain JSON and others are zip
+    const zipFiles: string[] = []
+    const jsonFiles: string[] = []
+    await Promise.all(files.map(async file => {
+        const zip = await isZip(file)
+        if (zip) zipFiles.push(file)
+        else jsonFiles.push(file)
+    }))
+
+    const data = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
+
+    const importPath = getDataFolder(dataPath, dataFolderNames.imports)
+    zipFiles.forEach(zipFile => {
+        let zipData = decompress([zipFile], true)
+        const dataFile = zipData.find(a => a.name === "data.json")
+        const dataContent = JSON.parse(dataFile.content)
+
+        // write files
+        let replacedMedia: {[key: string]: string} = {}
+        dataContent.files?.forEach((filePath: string) => {
+            // check if path already exists on the system
+            if (doesPathExist(filePath)) return
+
+            const fileName = path.basename(filePath)
+            const file = zipData.find(a => a.name === fileName)?.content
+            const newMediaPath = path.join(importPath, fileName)
+
+            if (!file) return
+            replacedMedia[filePath] = newMediaPath
+            writeFile(newMediaPath, file)
+        });
+
+        // replace files
+        Object.entries(replacedMedia).forEach(([oldPath, newPath]) => {
+            oldPath = oldPath.replace(/\\/g, '\\\\')
+            newPath = newPath.replace(/\\/g, '\\\\')
+            dataFile.content = dataFile.content.replaceAll(oldPath, newPath)
+        })
+
+        data.push(dataFile)
+    })
+
+    toApp(IMPORT, { channel: "freeshow_project", data })
+}
 
 // PROTO
 // https://greyshirtguy.com/blog/propresenter-7-file-format-part-2/

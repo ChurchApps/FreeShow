@@ -73,8 +73,21 @@ export function addStyleString(oldStyle: string, style: any[]): string {
     array.forEach((s, i) => {
         if (s.split(":")[0].trim() === style[0] || !s.length) array.splice(i, 1)
     })
+
+    // remove font if changing family
+    if (style[0] === "font-family") {
+        array = array.filter((a) => !a.includes("font:"))
+    }
+
     // add new style
-    if (style[1] !== null) array.push(style.join(":"))
+    // add font to start so any font-size will override this
+    if (style[0] === "font") {
+        array.unshift(style.join(":"))
+
+        // place any font-family at the start (before font, just so the dropdown knows the font)
+        let fontFamilyIndex = array.findIndex((a) => a.includes("font-family"))
+        array.unshift(array.splice(fontFamilyIndex, 1)[0])
+    } else if (style[1] !== null) array.push(style.join(":"))
 
     let newStyle: string = array.join(";")
     if (newStyle.slice(-1) !== ";") newStyle += ";"
