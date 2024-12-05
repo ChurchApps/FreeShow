@@ -3,6 +3,7 @@ export interface Option {
     extra?: string
     data?: any
     id?: string
+    style?: string // css style for the item
 }
 
 export interface NumberObject {

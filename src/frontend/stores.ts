@@ -1,6 +1,7 @@
 // ----- FreeShow -----
 // Here are all the global app variables
 
+import type { Family } from "css-fonts"
 import { Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
@@ -111,7 +112,6 @@ export const quickTextCache: Writable<string> = writable("")
 export const loadedMediaThumbnails: Writable<{ [key: string]: string }> = writable({})
 export const tempPath: Writable<string> = writable("")
 export const scriptureHistory: Writable<any[]> = writable([])
-export const fontData: Writable<any> = writable({})
 
 // EDIT
 export const editHistory: Writable<any[]> = writable([])
@@ -126,7 +126,7 @@ export const notFound: Writable<any> = writable({ show: [], bible: [] })
 export const toastMessages: Writable<string[]> = writable([])
 export const alertMessage: Writable<string> = writable("")
 export const popupData: Writable<any> = writable({})
-export const systemFonts: Writable<string[]> = writable([])
+export const systemFonts: Writable<Family[]> = writable([])
 export const previousShow: Writable<any> = writable(null)
 export const projectToolSize: Writable<number> = writable(150)
 export const forceClock: Writable<boolean> = writable(false)

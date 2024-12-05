@@ -124,7 +124,7 @@
 
     // WIP shouldn't have fixed values
     $: if (id === "text" && box?.edit?.default) {
-        box.edit.default[0].styleValue = styles["font-variant"] || ""
+        box.edit.default[0].styleValue = getStyles(style)["font"] || ""
         box.edit.default[4].hidden = !item?.auto
     }
     $: if (id === "text" && box?.edit?.style) {

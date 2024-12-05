@@ -1,50 +1,56 @@
 <script lang="ts">
+    import type { Family } from "css-fonts"
     import { createEventDispatcher, onMount } from "svelte"
     import { slide } from "svelte/transition"
     import { MAIN } from "../../../types/Channels"
-    import { dictionary, fontData, systemFonts } from "../../stores"
-    import { awaitRequest, send } from "../../utils/request"
+    import { dictionary, systemFonts } from "../../stores"
+    import { awaitRequest } from "../../utils/request"
     import { formatSearch } from "../../utils/search"
     import { removeDuplicates } from "../helpers/array"
     import Dropdown from "./Dropdown.svelte"
 
+    export let value: string
+    export let fontStyleValue: string = ""
     export let system: boolean = false
 
-    const dispatch = createEventDispatcher()
+    $: value = value.replaceAll("'", "")
 
-    let fonts: string[] = [
-        "CMGSans",
-        "Fantasy",
-        "Helvetica",
-        // "Monaco",
-        "Monospace",
-        // "sans-serif",
+    let fonts: Family[] = [
+        { family: "CMGSans", default: 0, fonts: [{ name: "CMGSans", path: "", style: "", css: "font: 1em 'CMGSans'" }] },
+        // {family: "Arial"},
+        // "Helvetica",
+        // "Fantasy",
+        // "Monospace",
     ]
+
+    const dispatch = createEventDispatcher()
+    function setFont(family: string) {
+        dispatch("click", family ? "'" + family + "'" : "")
+    }
 
     onMount(() => {
         if ($systemFonts.length) addFonts($systemFonts)
         else loadSystemFonts()
     })
-    $: if (active && !$systemFonts.length) loadSystemFonts()
     async function loadSystemFonts() {
-        let fonts: string[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
+        let fonts: Family[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
         if (!fonts) return
 
         systemFonts.set(fonts)
         addFonts(fonts)
     }
 
-    function addFonts(newFonts: string[]) {
+    function addFonts(newFonts: Family[]) {
         // join and remove duplicates
         fonts = removeDuplicates([...fonts, ...newFonts])
         // sort
-        fonts = fonts.sort((a, b) => a.localeCompare(b))
+        fonts = fonts.sort((a, b) => a.family.localeCompare(b.family))
         // add default app font
-        if (system) fonts = ["", ...fonts]
+        if (system) {
+            const noFont = { family: "", default: 0, fonts: [{ name: "", path: "", style: "", css: "" }] }
+            fonts = [noFont, ...fonts]
+        }
     }
-
-    export let value: string
-    export let style: string = ""
 
     let active: boolean = false
     let self: HTMLDivElement
@@ -54,10 +60,10 @@
         if (nextScrollTimeout) return
 
         e.preventDefault()
-        let index = fonts.findIndex((a) => a === value)
+        let index = fonts.findIndex((a) => a.family === value)
         if (e.deltaY > 0) index = Math.min(fonts.length - 1, index + 1)
         else index = Math.max(0, index - 1)
-        dispatch("click", fonts[index])
+        setFont(fonts[index].family)
 
         // don't start timeout if scrolling with mouse
         if (e.deltaY >= 100 || e.deltaY <= -100) return
@@ -94,23 +100,31 @@
             searchValue = formatSearch(searchValue + e.key, true)
 
             // scroll to first match
-            let firstMatch = fonts.find((a) => formatSearch(a, true).slice(0, searchValue.length).includes(searchValue))
-            if (!firstMatch) firstMatch = fonts.find((a) => formatSearch(a, true).includes(searchValue))
-            if (firstMatch) scrollToActive(firstMatch)
+            let firstMatch = fonts.find((a) => formatSearch(a.family, true).slice(0, searchValue.length).includes(searchValue))
+            if (!firstMatch) firstMatch = fonts.find((a) => formatSearch(a.family, true).includes(searchValue))
+            if (firstMatch) scrollToActive(firstMatch.family)
         }
     }
 
+    let activeFont: Family | null = null
+    $: activeFont = fonts.find((a) => a.family === value) || null
+
     // FONT STYLE
 
-    // WIP load into CSS
-    // WIP get all different font variants
+    // remove styles that can already be changed
+    // "Regular"
+    const commonStyles = ["Bold", "Italic", "Bold Italic"]
 
-    $: if (value && !$fontData[value]) send(MAIN, ["GET_FONT_DATA"], { font: value })
-
-    // const commonStyles = ["regular", "bold", "italic", "boldItalic"]
-    $: fontMetadata = $fontData[value] || [] // .filter((a) => !commonStyles.includes(a.style))
-
-    $: fontDataOptions = ($fontData[value] || []).map((a) => ({ name: a.style, id: a.style }))
+    $: fontStyles = (activeFont?.fonts || []).filter((a) => !commonStyles.includes(a.style))
+    $: fontDataOptions = fontStyles.map((a) => ({
+        name: a.style,
+        // id: a.name,
+        style: a.css,
+        data: a.css
+            ?.replace(/^font:\s*(.*);$/, "$1")
+            .replace("1em", "100px")
+            .trim(),
+    }))
 </script>
 
 <svelte:window
@@ -123,21 +137,20 @@
 />
 
 <div bind:this={self} class="dropdownElem" title={value || ""} style={$$props.style || ""}>
-    <button style="font-family: {value};" on:click={() => (active = !active)} on:wheel={wheel}>
+    <button style={activeFont?.fonts[activeFont.default]?.css || `font-family: ${activeFont};`} on:click={() => (active = !active)} on:wheel={wheel}>
         <p>{value || "—"}</p>
     </button>
 
     <!-- FONT STYLE -->
-    <!-- WIP custom font-family preview -->
-    {#if fontMetadata.length > 1}
+    {#if !system && fontStyles.length > 1}
         <Dropdown
             arrow
+            value={fontDataOptions.find((a, i) => (fontStyleValue ? a.data === fontStyleValue : i === fonts.find((a) => a.family === value)?.default))?.name || ""}
             style="min-width: 40px !important;"
-            value={style || "regular"}
             options={fontDataOptions}
             title={$dictionary.settings?.font_style}
             on:click={(e) => {
-                dispatch("style", e.detail?.id)
+                dispatch("fontStyle", e.detail?.data)
             }}
         />
     {/if}
@@ -146,18 +159,18 @@
         <div class="dropdown" transition:slide={{ duration: 200 }}>
             {#each fonts as font}
                 <span
-                    id={formatId(font)}
+                    id={formatId(font.family)}
                     on:click={() => {
                         active = false
                         // allow dropdown to close before updating, so svelte visual bug don't duplicate inputs on close transition in boxstyle edit etc.
                         setTimeout(() => {
-                            dispatch("click", font)
+                            setFont(font.family)
                         }, 50)
                     }}
-                    class:active={font === value}
-                    style="font-family: {font};"
+                    class:active={font.family === value}
+                    style={font.fonts[font.default]?.css || `font-family: ${font.family};`}
                 >
-                    <p>{font || "—"}</p>
+                    <p>{font.family || "—"}</p>
                 </span>
             {/each}
         </div>

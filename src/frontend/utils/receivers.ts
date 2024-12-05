@@ -53,7 +53,6 @@ import {
     driveKeys,
     events,
     folders,
-    fontData,
     gain,
     isDev,
     lessonsLoaded,
@@ -192,12 +191,6 @@ const receiveMAIN: any = {
 
         activePage.set("show")
         newToast("$settings.restore_finished")
-    },
-    GET_FONT_DATA: (data: any) => {
-        fontData.update((a) => {
-            a[data.font] = data.data
-            return a
-        })
     },
     LOCATE_MEDIA_FILE: ({ path, ref }) => {
         let prevPath: string = ""

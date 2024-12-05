@@ -1,8 +1,8 @@
 // ----- FreeShow -----
 // Respond to messages from the frontend
 
+import getFonts from "css-fonts"
 import { app, BrowserWindow, desktopCapturer, DesktopCapturerSource, Display, screen, shell, systemPreferences } from "electron"
-import { getFonts } from "font-list"
 import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
@@ -98,7 +98,6 @@ const mainResponses: any = {
     // MAIN
     AUTO_UPDATE: (): void => checkForUpdates(),
     GET_SYSTEM_FONTS: (data: any): void => loadFonts(data),
-    GET_FONT_DATA: (data: any): void => getFontData(data),
     URL: (data: string): void => openURL(data),
     LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
     GET_PATHS: (): any => getPaths(),
@@ -189,20 +188,11 @@ export const openURL = (url: string) => {
 
 // GET_SYSTEM_FONTS
 function loadFonts(data: any) {
-    getFonts({ disableQuoting: true })
-        .then((fonts: string[]) => toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: { ...data, fonts } }))
-        .catch((err: any) => console.log(err))
+    loadFontsAsync(data)
 }
-
-// GET_FONT_DATA
-function getFontData(data: any) {
-    getFontDataAsync(data)
-}
-async function getFontDataAsync({ font }: any) {
-    // fontFinder was undefined if imported normally
-    const fontFinder = require("font-finder")
-    const data = await fontFinder.listVariants(font)
-    toApp(MAIN, { channel: "GET_FONT_DATA", data: { font, data } })
+async function loadFontsAsync(data: any) {
+    const fonts = await getFonts()
+    toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: { ...data, fonts } })
 }
 
 // SEARCH_LYRICS

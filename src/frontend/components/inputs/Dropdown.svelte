@@ -24,7 +24,7 @@
 
     let nextScrollTimeout: any = null
     function wheel(e: any) {
-        if (disabled || nextScrollTimeout) return
+        if (disabled || arrow || nextScrollTimeout) return
         e.preventDefault()
 
         let index = options.findIndex((a) => (activeId ? a.id === activeId : a.name === value))
@@ -77,6 +77,7 @@
             {#each options as option}
                 <span
                     id={formatId(option.name)}
+                    style={option.style || ""}
                     on:click={() => {
                         if (disabled) return
                         active = false

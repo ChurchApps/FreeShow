@@ -530,12 +530,12 @@
                                 this={inputs[input.input]}
                                 {...input.values || {}}
                                 {value}
-                                style={input.styleValue || ""}
+                                fontStyleValue={input.styleValue || ""}
                                 disabled={input.disabled && (item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value)}
                                 enableNoColor={input.enableNoColor}
                                 disableHold
                                 on:click={(e) => valueChange(e, input)}
-                                on:style={(e) => valueChange(e, { ...input, key: "font-variant" })}
+                                on:fontStyle={(e) => valueChange(e, { ...input, key: "font" })}
                                 on:input={(e) => valueChange(e, input, true)}
                                 on:change={(e) => valueChange(e, input)}
                             />
