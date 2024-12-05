@@ -26,7 +26,8 @@ export function xml2json(xmlString: string, removeBreaks: boolean = false) {
 
                     for (let n = xml.firstChild; n; n = n.nextSibling) {
                         if (n.nodeType == 1) hasElementChild = true
-                        else if (n.nodeType == 3 && n.nodeValue.match(/[^ \f\n\r\t\v]/)) textChild++ // non-whitespace text
+                        else if (n.nodeType == 3 && n.nodeValue.match(/[^ \f\n\r\t\v]/))
+                            textChild++ // non-whitespace text
                         else if (n.nodeType == 4) cdataChild++ // cdata section node
                     }
 

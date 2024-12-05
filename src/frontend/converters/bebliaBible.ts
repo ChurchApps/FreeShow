@@ -35,9 +35,11 @@ function convertToBible(content: any): Bible {
     }
 
     let testaments = content.bible.testament
-    if (!Array.isArray(testaments)) testaments = [testaments]
+    // some files might be missing <testament>
+    if (testaments === undefined) testaments = [{ book: content.bible.book }]
+    else if (!Array.isArray(testaments)) testaments = [testaments]
     let books: any[] = []
-    console.log(testaments)
+
     testaments.forEach((a) => {
         books.push(...getBooks(a.book))
     })

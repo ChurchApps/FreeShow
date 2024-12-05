@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { IMPORT, OUTPUT } from "../../types/Channels"
+import { IMPORT, MAIN, OUTPUT } from "../../types/Channels"
 import type { ShowType } from "../../types/Show"
 import type { TopViews } from "../../types/Tabs"
 import { menuClick } from "../components/context/menuClick"
@@ -110,6 +110,8 @@ const keys: any = {
     Backspace: () => keys.Delete(),
     // give time so it don't clear slide
     F2: () => setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
+    // default menu "togglefullscreen" role not working in production on Windows/Linux
+    F11: () => (get(os).platform !== "darwin" ? send(MAIN, ["FULLSCREEN"]) : null),
 }
 
 export function keydown(e: any) {
@@ -139,17 +141,21 @@ export function keydown(e: any) {
             return
         }
 
+        let key = e.key === "Z" ? e.key : e.key.toLowerCase()
+        // include other special letter symbols (í=i)
+        if (e.keyCode === 73) key = "i"
+
         // use default input shortcuts on supported devices
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
         const macShortcutDebug = false
-        if ((e.key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(e.key) && get(os).platform !== "darwin" && !macShortcutDebug)) {
+        if ((key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(key) && get(os).platform !== "darwin" && !macShortcutDebug)) {
             return
         }
 
         const preventDefaults = ["z", "Z", "y"]
-        if (ctrlKeys[e.key]) {
-            ctrlKeys[e.key](e)
-            if (preventDefaults.includes(e.key) || macShortcutDebug) {
+        if (ctrlKeys[key]) {
+            ctrlKeys[key](e)
+            if (preventDefaults.includes(key) || macShortcutDebug) {
                 e.preventDefault()
                 if (get(activePage) === "edit") refreshEditSlide.set(true)
             }
@@ -299,8 +305,10 @@ export const previewShortcuts: any = {
 function createNew() {
     let selectId = get(selected)?.id || get(focusedArea)
 
-    if (selectId === "slide") history({ id: "SLIDES" }) // show
-    else if (selectId === "show") addSection() // project
+    if (selectId === "slide")
+        history({ id: "SLIDES" }) // show
+    else if (selectId === "show")
+        addSection() // project
     else if (selectId.includes("category_")) {
         // if (selectId.includes("media") || selectId.includes("audio")) send(MAIN, ["OPEN_FOLDER"], { channel: id, title, path })
         if (selectId.includes("scripture")) activePopup.set("import_scripture")

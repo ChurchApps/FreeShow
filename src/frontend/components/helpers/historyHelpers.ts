@@ -21,6 +21,7 @@ import {
     overlays,
     playerVideos,
     projects,
+    projectTemplates,
     projectView,
     shows,
     showsCache,
@@ -40,6 +41,7 @@ import { saveTextCache } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
 import { addZero, getMonthName, getWeekday } from "./time"
+import { addToPos } from "./mover"
 
 const getDefaultCategoryUpdater = (tabId: string) => ({
     empty: EMPTY_CATEGORY,
@@ -116,7 +118,8 @@ export const _updaters = {
                 return a
             })
 
-            if (!initializing) return
+            if (!initializing || data.shows?.length) return
+
             activeRename.set("project_" + id)
         },
         deselect: (id: string) => {
@@ -196,6 +199,10 @@ export const _updaters = {
                 return items
             }
         },
+    },
+    project_template: {
+        store: projectTemplates,
+        empty: EMPTY_PROJECT,
     },
 
     project_key: {
@@ -324,7 +331,7 @@ export const _updaters = {
             let replacer: any = {}
 
             // template
-            let template = _show("active").get("settings.template") || null
+            let template = _show().get("settings.template") || null
             // TODO: set default template from settings!
             if (!template) template = get(templates).default ? "default" : null
             if (template) replacer.template = clone(template)
@@ -342,11 +349,16 @@ export const _updaters = {
             let showRef: any = { id, type: "show" }
             if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
                 projects.update((p) => {
-                    p[data.remember.project].shows.push({ id })
+                    if (data.remember.index !== undefined && p[data.remember.project].shows.length > data.remember.index) {
+                        p[data.remember.project].shows = addToPos(p[data.remember.project].shows, [{ id }], data.remember.index)
+                        showRef.index = data.remember.index
+                    } else {
+                        p[data.remember.project].shows.push({ id })
+                        showRef.index = p[data.remember.project].shows.length - 1
+                    }
+
                     return p
                 })
-                // TODO: remember index
-                showRef.index = get(projects)[data.remember.project].shows.length - 1
             }
 
             // don't open when importing lots of songs
@@ -358,7 +370,7 @@ export const _updaters = {
 
             // update shows list (same as showsCache, but with less data)
             shows.update((a) => {
-                a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps }
+                a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps, quickAccess: data.data.quickAccess || {} }
                 if (data.data.private) a[id].private = true
                 if (data.data.locked) a[id].locked = true
 

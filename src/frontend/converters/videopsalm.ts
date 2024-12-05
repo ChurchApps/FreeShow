@@ -114,7 +114,7 @@ export function convertVideopsalm(data: any) {
         }
 
         let i: number = 0
-        let importingText = get(dictionary)?.popup.importing || "Importing"
+        let importingText = get(dictionary).popup?.importing || "Importing"
 
         let album: string = content?.Text
         if (content.Songs?.length) asyncLoop()
@@ -133,7 +133,7 @@ export function convertVideopsalm(data: any) {
             let name = title || get(dictionary).main?.unnamed || "Unnamed"
             show.name = checkName(name, showId) || ""
             show.meta = {
-                number: song.ID || "",
+                number: (song.ID || "").toString(),
                 title: show.name,
                 artist: album || "",
                 author: song.Author || "",
@@ -141,6 +141,7 @@ export function convertVideopsalm(data: any) {
                 copyright: song.Copyright || "",
                 CCLI: song.CCLI || "",
             }
+            if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
             let { slides, layout, notes }: any = createSlides(song)
             show.slides = slides

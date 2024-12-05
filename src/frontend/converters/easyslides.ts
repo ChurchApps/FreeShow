@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { ShowObj } from "../classes/Show"
-import { checkName } from "../components/helpers/show"
+import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary } from "../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
@@ -40,6 +40,8 @@ export function convertEasyslides(data: any) {
         let { slides, layout }: any = createSlides(song)
 
         show.meta = { number: song.SongNumber }
+        if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
+
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: "", slides: layout } }
 
@@ -55,10 +57,19 @@ function createSlides(song: Song) {
 
     if (!lyrics) return { slides, layout }
 
+    // fix incorrect formatting
+    lyrics = lyrics.replaceAll("[", "\n\n[").trim()
+    lyrics = lyrics.replaceAll("\n\n\n\n", "\n\n")
+
     lyrics = lyrics.replace(/\[\d+\]/g, "\n\n").replaceAll("\n\n\n", "\n\n")
     const slideLines = lyrics.split("\n\n").filter(Boolean)
     slideLines.forEach((slideLine) => {
         let lines = slideLine.split("\n").filter(Boolean)
+        let group = "verse"
+        if (lines[0].includes("[") && lines[0].includes("]")) {
+            group = lines[0].replace(/[\s\d]/g, "")
+            lines.shift()
+        }
 
         let id: string = uid()
         layout.push({ id })
@@ -78,7 +89,10 @@ function createSlides(song: Song) {
             items,
         }
 
-        slides[id].globalGroup = "verse"
+        let globalGroup = getGlobalGroup(group)
+        if (!group) globalGroup = "verse"
+        if (globalGroup) slides[id].globalGroup = globalGroup
+        else slides[id].group = group
     })
 
     return { slides, layout }

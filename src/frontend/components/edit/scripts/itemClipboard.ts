@@ -163,7 +163,7 @@ export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) 
 
                 return a.text.map((a: any) => {
                     // don't style scripture verses
-                    if (a.customType) return a
+                    if (a.customType && !a.customType.includes("jw")) return a
 
                     a.style = newStyle
 

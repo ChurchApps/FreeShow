@@ -1,15 +1,15 @@
 import { get } from "svelte/store"
-import { activeEdit, activeTagFilter, contextData, drawerTabsData, globalTags, groups, outputs, overlays, selected, sorted } from "../../stores"
+import { activeEdit, activeTagFilter, contextData, drawerTabsData, globalTags, groups, outputs, overlays, selected, shows, sorted } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
+import { actionData } from "../actions/actionData"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
+import { getSlideText } from "../edit/scripts/textStyle"
 import { chordTypes, keys } from "../edit/values/chords"
 import { clone, keysToID, sortByName, sortObject } from "../helpers/array"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
-import { actionData } from "../actions/actionData"
-import { getSlideText } from "../edit/scripts/textStyle"
 
 const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
@@ -22,7 +22,13 @@ const loadActions = {
 
         return items
     },
-    tags: () => {
+    tag_set: () => {
+        let selectedShowTags = get(shows)[get(selected).data[0]?.id]?.quickAccess?.tags || []
+        let sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
+        setContextData("tags", sortedTags.length)
+        return sortedTags
+    },
+    tag_filter: () => {
         let sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeTagFilter).includes(a.id), translate: false }))
         setContextData("tags", sortedTags.length)
         return sortedTags
@@ -67,7 +73,7 @@ const loadActions = {
         let currentItemActions: any = slide.items?.[selectedItems[0]]?.actions || {}
 
         let itemActions: any = [
-            { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
+            // { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
             { id: "showTimer", label: "actions.show_timer", icon: "time_in", enabled: Number(currentItemActions.showTimer || 0) || false },
             { id: "hideTimer", label: "actions.hide_timer", icon: "time_out", enabled: Number(currentItemActions.hideTimer || 0) || false },
         ]
@@ -234,6 +240,8 @@ function sortItems(items: ContextMenuItem[], id: "projects" | "shows") {
     if (id === "shows") {
         items.push({ id: "modified", label: "info.modified", icon: "calendar", enabled: type === "modified" })
         items.push({ id: "used", label: "info.used", icon: "calendar", enabled: type === "used" })
+
+        // WIP load used metadata values...
     }
 
     return items

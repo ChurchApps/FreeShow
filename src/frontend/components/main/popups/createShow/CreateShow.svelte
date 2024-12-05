@@ -20,7 +20,7 @@
 
     const isChecked = (e: any) => e.target.checked
     const changeValue = (e: any, key: string = "text") => {
-        values[key] = e.target.value
+        values[key] = e.target.value || ""
 
         // store text if popup is closed
         if (key === "text") quickTextCache.set(values.text)
@@ -74,7 +74,7 @@
 
             // look for existing shows with the same title
             if (values.name) {
-                const exists = Object.values($shows).find((a: any) => a.name.toLowerCase() === values.name.toLowerCase())
+                const exists = Object.values($shows).find((a: any) => a.name?.toLowerCase() === values.name.toLowerCase())
                 if (exists) newToast("$create_show.exists")
             }
         }
@@ -83,7 +83,7 @@
     // WEB SEARCH
 
     function updateLyrics(e: any) {
-        let lyrics = e.detail
+        let lyrics = e.detail || ""
         if (!lyrics) {
             selectedOption = ""
             return
@@ -98,14 +98,17 @@
     let showMore: boolean = false
 
     function textToShow() {
-        let sections = values.text.split("\n\n").filter((a: any) => a.length)
+        let text = values.text
+        if (typeof text !== "string") text = ""
+
+        let sections = text.split("\n\n").filter((a: any) => a.length)
 
         // let metaData: string = ""
         // if (sections[1] && sections[0]?.split("\n").length < 3) metaData = sections.splice(0, 1)[0]
-        let category = selectedCategory.id.length ? selectedCategory.id : null
+        let category = selectedCategory?.id?.length ? selectedCategory.id : null
 
         if (sections.length) {
-            convertText({ name: values.name, category, text: values.text })
+            convertText({ name: values.name, category, text })
         } else {
             let show = new ShowObj(false, category)
             show.name = checkName(values.name)
@@ -209,6 +212,7 @@
         {:else}
             <CombinedInput>
                 <Button on:click={() => (showMore = !showMore)} style="width: 100%;" dark center>
+                    <!-- settings -->
                     <Icon id="options" right white={!$formatNewShow && $special.autoGroups === false} />
                     <T id="edit.options" />
                 </Button>

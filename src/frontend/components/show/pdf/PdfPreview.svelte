@@ -8,6 +8,7 @@
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import HoverButton from "../../inputs/HoverButton.svelte"
     import { clearBackground } from "../../output/clear"
     import { getViewportSizes } from "./pdfData"
 
@@ -76,6 +77,8 @@
         send(MAIN, ["PDF_TO_IMAGE"], { dataPath: $dataPath, path: path })
     }
 
+    let singlePage = false
+
     // slow loader
     let currentIndex: number = 1
     $: if (path && pages) startLoading(true)
@@ -95,38 +98,51 @@
 <!-- <iframe src="{path}#toolbar=1" frameborder="0"></iframe> -->
 
 <div class="grid" on:wheel={wheel}>
-    {#each [...Array(pages)] as _, page}
-        {#if page < currentIndex}
-            <div class="main" class:active={active === page} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pages > 1 ? $slidesOptions.columns : 1)}%;">
-                <div class="slide" tabindex={0} on:click={(e) => outputPdf(e, page)}>
-                    {#if viewports[page]}
-                        <!-- 16 / 9 < -->
-                        <div
-                            class="center"
-                            class:wide={(viewports[page].width + EXTRA_RATIO) / viewports[page].height < viewports[page].width / viewports[page].height}
-                            style="aspect-ratio: {viewports[page].width / viewports[page].height};--background: {currentStyle.background || 'black'};"
-                        ></div>
-                    {/if}
+    {#if singlePage}
+        <HoverButton icon="play" on:click={() => outputPdf({}, 0)}>
+            <iframe src="{path}#toolbar=0&view=fit" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no" style="height: 100%;width: 100%;aspect-ratio: initial;pointer-events: initial;"></iframe>
+        </HoverButton>
+    {:else}
+        {#each [...Array(pages)] as _, page}
+            {#if page < currentIndex}
+                <div class="main" class:active={active === page} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pages > 1 ? $slidesOptions.columns : 1)}%;">
+                    <div class="slide" tabindex={0} on:click={(e) => outputPdf(e, page)}>
+                        {#if viewports[page]}
+                            <!-- 16 / 9 < -->
+                            <div
+                                class="center"
+                                class:wide={(viewports[page].width + EXTRA_RATIO) / viewports[page].height < viewports[page].width / viewports[page].height}
+                                style="aspect-ratio: {viewports[page].width / viewports[page].height};--background: {currentStyle.background || 'black'};"
+                            ></div>
+                        {/if}
 
-                    {#key $slidesOptions.columns}
-                        <iframe src="{path}#toolbar=0&view=fit&page={page + 1}" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no" style="aspect-ratio: {viewports[page]?.width + EXTRA_RATIO} / {viewports[page]?.height};"></iframe>
-                    {/key}
+                        {#key $slidesOptions.columns}
+                            <iframe src="{path}#toolbar=0&view=fit&page={page + 1}" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no" style="aspect-ratio: {viewports[page]?.width + EXTRA_RATIO} / {viewports[page]?.height};"></iframe>
+                        {/key}
+                    </div>
                 </div>
-            </div>
-        {/if}
-    {/each}
+            {/if}
+        {/each}
+    {/if}
 </div>
 
 <div class="actionbar">
     <div>
         <p>PDF</p>
 
-        <Button on:click={convertToImages} style="white-space: nowrap;">
-            <Icon id="image" right={!$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="actions.convert_to_images" />{/if}
-        </Button>
+        <div class="buttons">
+            <Button on:click={() => (singlePage = !singlePage)} active={singlePage} style="white-space: nowrap;">
+                <Icon id="pdf" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="actions.pdf_single_page" />{/if}
+            </Button>
 
-        <!-- WIP: zoom menu etc. (Layouts.svelte) -->
+            <Button on:click={convertToImages} style="white-space: nowrap;">
+                <Icon id="image" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="actions.convert_to_images" />{/if}
+            </Button>
+
+            <!-- WIP: zoom menu etc. (Layouts.svelte) -->
+        </div>
     </div>
 </div>
 
@@ -156,6 +172,15 @@
         overflow: auto;
     }
 
+    /* one page */
+    .grid :global(.overlay) {
+        width: 100px;
+        height: 100px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
     .main {
         display: flex;
         position: relative;
@@ -181,12 +206,13 @@
     }
 
     /* cover grey areas with black */
+    /* WIP better border fill (pdf2img-electron render.ts:windowLoaded()) */
     .center {
-        height: calc(100% - 5px);
+        height: calc(100% - 12px);
 
         position: absolute;
         left: 50%;
-        top: 2px;
+        top: 3px;
         transform: translateX(-50%);
 
         outline-offset: 0;
@@ -194,7 +220,7 @@
     }
     .center.wide {
         height: initial;
-        width: calc(100% - 5px);
+        width: calc(100% - 12px);
     }
 
     /* action bar */
@@ -228,5 +254,9 @@
     .actionbar p {
         padding: 0 10px;
         opacity: 0.8;
+    }
+
+    .actionbar div.buttons {
+        width: initial;
     }
 </style>

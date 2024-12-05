@@ -485,6 +485,8 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     let lines: Line[] = _show().slides([slideRef.id]).items([itemIndex]).get("lines")[0][0]
     lines = lines.filter((a) => a.text?.[0]?.value?.length)
 
+    console.log(lines)
+
     // if only one line (like scriptures, split by text)
     if (lines.length === 1 && lines[0].text?.length > 1) {
         let newLines: any[] = []
@@ -497,13 +499,17 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
 
     // split text content directly in half
     if (lines.length === 1 && lines[0].text?.[0]?.value?.length) {
+        // verse number style
+        const custom = lines[0].text[0].customType ? lines[0].text.shift() : null
+
         let text = getItemText({ lines } as Item)
         const [firstHalf, secondHalf] = splitTextContentInHalf(text)
         let newLines: Line[] = []
         // try getting second text first (if customType is first)
         let styling = lines[0].text[1] || lines[0].text[0]
-        newLines.push({ ...lines[0], text: [{ ...styling, value: firstHalf }] })
+        newLines.push({ ...lines[0], text: [...(custom ? [custom] : []), { ...styling, value: firstHalf }] })
         newLines.push({ ...lines[0], text: [{ ...styling, value: secondHalf }] })
+
         lines = newLines
     }
 
@@ -703,7 +709,7 @@ export function mergeSlides(indexes: { index: number }[]) {
     // add textbox
     newSlide.items = [...getTextItems(), ...newSlide.items]
     function getTextItems() {
-        return newLines.map((lines, i) => ({ type: "text", lines, style: previousTextboxStyles[i] } as Item))
+        return newLines.map((lines, i) => ({ type: "text", lines, style: previousTextboxStyles[i] }) as Item)
     }
 
     let newShow: Show = clone(_show().get())
@@ -773,7 +779,7 @@ export function mergeSlides(indexes: { index: number }[]) {
 }
 
 export function mergeTextboxes(customSlideIndex: number = -1) {
-    let editSlideIndex: number = customSlideIndex < 0 ? get(activeEdit).slide ?? -1 : customSlideIndex
+    let editSlideIndex: number = customSlideIndex < 0 ? (get(activeEdit).slide ?? -1) : customSlideIndex
     if (editSlideIndex < 0) return
 
     let slideRef = _show().layouts("active").ref()[0][editSlideIndex] || {}

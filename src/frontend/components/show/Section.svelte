@@ -1,5 +1,10 @@
 <script lang="ts">
-    import { activeProject, activeShow, projects } from "../../stores"
+    import { activeProject, activeShow, dictionary, midiIn, projects, special } from "../../stores"
+    import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
+    import Button from "../inputs/Button.svelte"
+    import CombinedInput from "../inputs/CombinedInput.svelte"
+    import Dropdown from "../inputs/Dropdown.svelte"
     import TextInput from "../inputs/TextInput.svelte"
     import Notes from "./tools/Notes.svelte"
 
@@ -34,16 +39,54 @@
 
     function keydown(e: any) {
         if (e.key !== "Enter") return
-
         ;(document.activeElement as any)?.blur()
     }
+
+    $: actionOptions = [
+        { id: "", name: "—" },
+        ...Object.entries($midiIn)
+            .map(([id, a]) => ({ id, name: a.name }))
+            .sort((a, b) => a.name?.localeCompare(b.name)),
+    ]
+    function updateTrigger(e: any) {
+        special.update((a) => {
+            a.sectionTriggerAction = e.detail.id
+            return a
+        })
+    }
+
+    let settingsOpened: boolean = false
+
+    $: sectionUpdated = $projects[$activeProject || ""]?.shows[section.index] || {}
 </script>
 
-{#key section}
-    <h4 id="sectionTitle"><TextInput value={section?.name || ""} on:change={updateName} on:keydown={keydown} /></h4>
+{#if settingsOpened}
+    <div class="settings">
+        <!-- WIP change color? -->
 
-    <Notes value={note} on:edit={edit} />
-{/key}
+        <!-- GLOBAL -->
+
+        <CombinedInput>
+            <p><T id="settings.section_trigger_action" /></p>
+            <Dropdown options={actionOptions} value={actionOptions.find((a) => a.id === $special.sectionTriggerAction || "")?.name || "—"} on:click={updateTrigger} />
+        </CombinedInput>
+    </div>
+{:else}
+    {#key section}
+        <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="border-bottom: 2px solid {sectionUpdated.color || 'var(--primary-darker);'}">
+            <TextInput value={section?.name || ""} placeholder={$dictionary.main?.unnamed} on:input={updateName} on:keydown={keydown} />
+        </h4>
+        <!-- WIP suggest titles based on previous titles? (maybe not needed as we have project templates) -->
+
+        <Notes value={note} on:edit={edit} />
+    {/key}
+{/if}
+
+<div class="settingsButton">
+    <Button title={$dictionary.menu?.settings} on:click={() => (settingsOpened = !settingsOpened)} style="padding: 10px;" dark>
+        <Icon id="settings" white={settingsOpened} size={1.1} />
+    </Button>
+</div>
 
 <style>
     h4 {
@@ -51,8 +94,22 @@
     }
 
     h4 :global(input) {
-        /* text-align: center; */
-        /* color: var(--secondary); */
         background-color: var(--primary-darkest);
+    }
+    /* ::placeholder does not work here for some reason */
+    h4.empty :global(input) {
+        opacity: 0.4;
+        /* font-size: 0.9em; */
+    }
+
+    .settings {
+        flex: 1;
+        /* background-color: var(--primary); */
+    }
+
+    .settingsButton {
+        position: absolute;
+        bottom: 0;
+        right: 0;
     }
 </style>

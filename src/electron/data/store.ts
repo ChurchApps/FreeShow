@@ -132,7 +132,7 @@ export function getStore(id: string, e: any = null) {
 const portableData: any = {
     synced_settings: { key: "SYNCED_SETTINGS", defaults: defaultSyncedSettings },
     themes: { key: "THEMES", defaults: {} },
-    projects: { key: "PROJECTS", defaults: { projects: {}, folders: {} } },
+    projects: { key: "PROJECTS", defaults: { projects: {}, folders: {}, projectTemplates: {} } },
     shows: { key: "SHOWS", defaults: {} },
     stageShows: { key: "STAGE_SHOWS", defaults: {} },
     overlays: { key: "OVERLAYS", defaults: {} },

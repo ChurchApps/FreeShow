@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activePopup, contextActive, contextData } from "../../stores"
+    import { activePage, activePopup, contextActive, contextData, os } from "../../stores"
     import { getEditItems } from "../edit/scripts/itemHelpers"
     import ContextChild from "./ContextChild.svelte"
     import ContextItem from "./ContextItem.svelte"
@@ -14,7 +14,11 @@
     let translate = 0
 
     function onContextMenu(e: MouseEvent) {
-        if (e.target?.closest(".contextMenu") || e.target?.closest(".nocontext") || $activePopup) {
+        let target: any = e.target
+        if (!target) return
+
+        let input = ["text", "textarea"].includes(target.type) && !target.closest(".numberInput")
+        if ((!input && (target.closest(".contextMenu") || $activePopup)) || target.closest(".nocontext")) {
             contextActive.set(false)
             return
         }
@@ -24,8 +28,17 @@
         side = "right"
         translate = 0
 
-        contextElem = e.target!.closest(".context") || document.body
+        contextElem = target.closest(".context") || document.body
         let id: string | null = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) : null
+
+        // don't show drawer context menu in search input
+        if (id === "#drawer_top" && input) id = null
+        // custom input (paste) menu on Windows
+        if (!id && input && $os.platform === "win32") {
+            id = "#input"
+            contextElem = target
+        }
+
         activeMenu = getContextMenu(id) || contextMenuLayouts.default
 
         let contextHeight = Object.keys(activeMenu).length * 30 + 10
@@ -81,7 +94,7 @@
         if (id === "bind_to") return $contextData.outputList
         if (id === "format") return $contextData.textContent || $activePage !== "show"
         if (id === "remove_layers") return $contextData.layers
-        if (id === "tags") return $contextData.tags
+        if (id === "tag_set" || id === "tag_filter") return $contextData.tags
 
         return true
     }
@@ -127,7 +140,7 @@
         border-radius: var(--border-radius);
         box-shadow: 1px 1px 3px 2px rgb(0 0 0 / 0.2);
         padding: 5px 0;
-        z-index: 5000;
+        z-index: 5001;
     }
 
     .top {

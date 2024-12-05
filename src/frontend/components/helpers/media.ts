@@ -9,12 +9,8 @@ import type { ShowType } from "../../../types/Show"
 import { loadedMediaThumbnails, media, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { awaitRequest, send } from "../../utils/request"
-
-// electron/data/media.ts
-export const videoExtensions = ["mp4", "webm", "ogv", "mov", "m4v", "3gp", "3g2", "avi", "mkv", "flv", "ts", "dvr-ms", "mpeg", "mpg"]
-export const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "svg", "webp", "tiff", "tif", "jfif", "avif"]
-export const audioExtensions = ["mp3", "wav", "ogg", "aac", "m4a", "flac", "wma", "opus", "aiff", "aif", "weba"]
-export const mediaExtensions = [...videoExtensions, ...imageExtensions]
+import type { API_media } from "../actions/api"
+import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 
 export function getExtension(path: string): string {
     if (!path) return ""
@@ -34,7 +30,6 @@ export function isMediaExtension(extension: string, audio: boolean = false): boo
     return extensions.includes(extension.toLowerCase())
 }
 
-export const presentationExtensions = ["ppt", "pptx", "key"]
 export function getMediaType(extension: string): ShowType {
     if (extension.toLowerCase() === "pdf") return "pdf"
     if (presentationExtensions.includes(extension.toLowerCase())) return "ppt"
@@ -83,6 +78,15 @@ export function encodeFilePath(path: string): string {
 
 //     return joinPath([...splittedPath, decodedName])
 // }
+
+export async function getThumbnail(data: API_media) {
+    let path = data.path
+    if (videoExtensions.includes(getExtension(path))) {
+        path = getThumbnailPath(path, mediaSize.drawerSize)
+    }
+
+    return await toDataURL(path)
+}
 
 // convert to base64
 async function toDataURL(url: string): Promise<string> {
@@ -136,6 +140,8 @@ export function checkMedia(src: string): Promise<boolean> {
 }
 
 export async function getMediaInfo(path: string) {
+    if (path.includes("http") || path.includes("data:")) return {}
+
     const cachedInfo = get(media)[path]?.info
     if (cachedInfo?.codecs?.length) return cachedInfo
 

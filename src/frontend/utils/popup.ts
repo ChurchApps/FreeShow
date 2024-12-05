@@ -46,6 +46,7 @@ import Trigger from "../components/main/popups/Trigger.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
+import CategoryAction from "../components/main/popups/CategoryAction.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -89,6 +90,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     alert: Alert,
     history: History,
     action: Action,
+    category_action: CategoryAction,
     connect: Connect,
     cloud_update: CloudUpdate,
     cloud_method: CloudMethod,

@@ -8,7 +8,12 @@
 *.env
 
 .DS_Store
-package-lock.json
 
 test-output/
 test-results/
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws

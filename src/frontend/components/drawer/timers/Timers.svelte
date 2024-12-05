@@ -52,7 +52,7 @@
     <div class="timers">
         {#each filteredTimers as timer}
             <!-- {@const playing = $activeTimers.find((a) => a.id === id && a.paused !== true)} -->
-            <SelectElem id="global_timer" data={timer}>
+            <SelectElem id="global_timer" data={timer} draggable>
                 <div class:outline={$activeTimers.find((a) => a.id === timer.id)} class:project={list.includes(timer.id)} class="context #global_timer" style="display: flex;justify-content: space-between;padding: 3px;">
                     <div style="display: flex;width: 50%;">
                         <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={$activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>

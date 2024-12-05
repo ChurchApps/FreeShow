@@ -31,6 +31,7 @@
         "name_select_show",
         "next_slide",
         "previous_slide",
+        "random_slide",
         "index_select_slide",
         "name_select_slide",
         "id_select_group",
@@ -48,10 +49,14 @@
         "id_select_stage_layout",
         "change_stage_output_layout",
         "change_transition",
+        "change_variable",
         "start_camera",
+        "run_action",
+        "toggle_action",
+        "send_rest_command",
     ]
     // remove actions that are not fully implemented to CustomInput yet
-    const removeActions = ["change_transition", "change_variable"]
+    const removeActions = ["change_transition"]
     if (list) removeActions.push(...removeFromSlideAction)
 
     $: ACTIONS = [
@@ -65,6 +70,8 @@
                 return { id, name, icon, common }
             })
             .filter(({ id }) => {
+                // don't show actions with no custom data
+                if (!actionData[id]) return false
                 // show if it is the currently selected
                 if (id === actionId) return true
                 // don't display GET actions
@@ -87,7 +94,7 @@
     let input = ""
     $: if (actionId && !pickAction) loadInputs()
     function loadInputs() {
-        input = actionData[actionId]?.input || ""
+        input = actionData[getId(actionId)]?.input || ""
 
         if (!list) return
 
@@ -98,7 +105,14 @@
         }
     }
 
+    function getId(actionId: string) {
+        let multiple = actionId.indexOf(":")
+        if (multiple > -1) actionId = actionId.slice(0, multiple)
+        return actionId
+    }
+
     function findName(actionId: string): string {
+        actionId = getId(actionId)
         return ACTIONS.find((a) => a.id === actionId)?.name || actionId || ""
     }
 </script>
@@ -135,7 +149,7 @@
 {/if}
 
 {#if input && actionId && !pickAction}
-    <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} {actionId} on:change={(e) => changeAction({ id: actionId, actionValue: e.detail })} list />
+    <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} actionId={getId(actionId)} on:change={(e) => changeAction({ id: actionId, actionValue: e.detail })} list />
 {/if}
 
 <style>

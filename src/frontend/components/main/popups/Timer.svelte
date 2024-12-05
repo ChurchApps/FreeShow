@@ -151,6 +151,13 @@
 
         return newTimer
     }
+
+    function getMinutes(number: number) {
+        return Math.floor(number / 60)
+    }
+    function getSeconds(number: number) {
+        return number - getMinutes(number) * 60
+    }
 </script>
 
 {#if !currentTimer?.id}
@@ -166,18 +173,14 @@
 
 {#if timer.type === "counter"}
     <CombinedInput style="margin-top: 10px;">
-        <p>
-            <T id="timer.from" />
-            <span style="opacity: 0.7;font-size: 0.9em;display: flex;align-items: center;padding: 0 10px;">(<T id="timer.seconds" />)</span>
-        </p>
-        <NumberInput value={timer.start === undefined ? 300 : timer.start} max={60 * 60 * 24 * 365} on:change={(e) => (timer.start = e.detail)} />
+        <p><T id="timer.from" /></p>
+        <NumberInput title={$dictionary.timer?.minutes} value={timer.start === undefined ? 5 : getMinutes(timer.start)} max={60 * 24 * 365} on:change={(e) => (timer.start = getSeconds(timer.start || 0) + Number(e.detail) * 60)} />
+        <NumberInput title={$dictionary.timer?.seconds} value={timer.start === undefined ? 0 : getSeconds(timer.start)} max={59} on:change={(e) => (timer.start = getMinutes(timer.start ?? 300) * 60 + Number(e.detail))} />
     </CombinedInput>
     <CombinedInput>
-        <p>
-            <T id="timer.to" />
-            <span style="opacity: 0.7;font-size: 0.9em;display: flex;align-items: center;padding: 0 10px;">(<T id="timer.seconds" />)</span>
-        </p>
-        <NumberInput value={timer.end === undefined ? 0 : timer.end} max={60 * 60 * 24 * 365} on:change={(e) => (timer.end = e.detail)} />
+        <p><T id="timer.to" /></p>
+        <NumberInput title={$dictionary.timer?.minutes} value={timer.end === undefined ? 5 : getMinutes(timer.end)} max={60 * 24 * 365} on:change={(e) => (timer.end = getSeconds(timer.end || 0) + Number(e.detail) * 60)} />
+        <NumberInput title={$dictionary.timer?.seconds} value={timer.end === undefined ? 0 : getSeconds(timer.end)} max={59} on:change={(e) => (timer.end = getMinutes(timer.end ?? 300) * 60 + Number(e.detail))} />
     </CombinedInput>
 
     <CombinedInput>

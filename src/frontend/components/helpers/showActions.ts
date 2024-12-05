@@ -18,6 +18,7 @@ import {
     driveData,
     focusMode,
     media,
+    midiIn,
     outLocked,
     outputs,
     outputSlideCache,
@@ -25,6 +26,7 @@ import {
     projects,
     showsCache,
     slideTimers,
+    special,
     stageShows,
     styles,
     templates,
@@ -146,6 +148,9 @@ function getOutputWithLines() {
     return Number(currentLines)
 }
 
+const PRESENTATION_KEYS_NEXT = [" ", "ArrowRight", "PageDown"]
+const PRESENTATION_KEYS_PREV = ["ArrowLeft", "PageUp"]
+
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function nextSlideIndividual(e: any, start: boolean = false, end: boolean = false) {
     getActiveOutputs().forEach((id) => nextSlide(e, start, end, false, false, id))
@@ -181,16 +186,15 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let layout: any[] = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
-    if (!layout) return
     let slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex].end : false
+    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex].end : false
 
     let index: null | number = null
 
     // lines
     let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
-    let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout[slideIndex]?.id]).get()[0] : null
+    let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout?.[slideIndex]?.id]).get()[0] : null
     let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
     let currentLineStart: number = slideLines ? slideLines - (amountOfLinesToShow! % slideLines) : 0
     let hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : slideLines <= amountOfLinesToShow || amountOfLinesToShow! * linesIndex >= currentLineStart
@@ -199,7 +203,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     // TODO: active show slide index on delete......
 
     // go to first slide in next project show ("Next after media" feature)
-    let isNotLooping = loop && slide?.index !== undefined && !layout[slideIndex]?.data?.end
+    let isNotLooping = loop && slide?.index !== undefined && !layout?.[slideIndex]?.data?.end
     if ((isNotLooping || nextAfterMedia) && bypassLock && slide && isLastSlide) {
         // check if it is last slide (& that slide does not loop to start)
         goToNextShowInProject(slide, customOutputId)
@@ -216,7 +220,6 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
         // layout = GetLayout()
         layout = _show(id).layouts("active").ref()[0]
-        console.log(layout)
         if (!layout?.filter((a) => !a.data.disabled).length) return
 
         index = 0
@@ -241,7 +244,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
     // go to next show if end
     if (index === null && currentShow?.id === slide?.id && get(showsCache)[currentShow?.id || ""]?.settings.activeLayout === slide.layout) {
-        if ([" ", "ArrowRight", "PageDown"].includes(e?.key)) goToNextProjectItem()
+        if (PRESENTATION_KEYS_NEXT.includes(e?.key)) goToNextProjectItem(e.key)
         return
     }
 
@@ -287,7 +290,7 @@ async function goToNextShowInProject(slide, customOutputId) {
 // only let "first" output change project item if multiple outputs
 let changeProjectItemTimeout: any = null
 
-export function goToNextProjectItem() {
+export function goToNextProjectItem(key: string = "") {
     if (changeProjectItemTimeout) return
     changeProjectItemTimeout = setTimeout(() => {
         changeProjectItemTimeout = null
@@ -302,13 +305,18 @@ export function goToNextProjectItem() {
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
             else activeShow.set({ ...newShow, index })
 
+            if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && get(special).sectionTriggerAction) {
+                runAction(get(midiIn)[get(special).sectionTriggerAction])
+                return
+            }
+
             // skip if section is empty
             if (newShow.type === "section" && !newShow.notes) goToNextProjectItem()
         }
     })
 }
 
-export function goToPreviousProjectItem() {
+export function goToPreviousProjectItem(key: string = "") {
     if (changeProjectItemTimeout) return
     changeProjectItemTimeout = setTimeout(() => {
         changeProjectItemTimeout = null
@@ -322,6 +330,11 @@ export function goToPreviousProjectItem() {
             let newShow = get(projects)[get(activeProject)!].shows[index]
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
             else activeShow.set({ ...newShow, index })
+
+            if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && get(special).sectionTriggerAction) {
+                runAction(get(midiIn)[get(special).sectionTriggerAction])
+                return
+            }
 
             // skip if section is empty
             if (newShow.type === "section" && !newShow.notes) goToPreviousProjectItem()
@@ -400,7 +413,7 @@ export function previousSlide(e: any, customOutputId?: string) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
             if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""]) {
-                if (["ArrowLeft", "PageUp"].includes(e?.key)) goToPreviousProjectItem()
+                if (PRESENTATION_KEYS_PREV.includes(e?.key)) goToPreviousProjectItem(e.key)
             }
             return
         }

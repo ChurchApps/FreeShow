@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { slide } from "svelte/transition"
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activePopup, activeShow, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, refreshEditSlide, showsCache, styles } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, styles } from "../../../stores"
     import { slideHasAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
@@ -13,6 +13,7 @@
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import Button from "../../inputs/Button.svelte"
+    import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
@@ -179,7 +180,12 @@
 
     // CHORDS
     let usedChords: string[] = []
-    $: usedChords = Slide ? getUsedChords(Slide) : []
+    $: slideChords = Slide ? getUsedChords(Slide) : []
+    $: allChords = Object.values($showsCache[currentShow]?.slides || {})
+        .map(getUsedChords)
+        .flat()
+    // combine and remove duplicates
+    $: usedChords = slideChords.length + allChords.length ? [...new Set([...slideChords, ...allChords])] : []
 
     let chordsAction: string = ""
     function setDefaultChordsAction() {
@@ -253,16 +259,32 @@
                             <Icon id="chords" white={!chordsMode} />
                         </Button>
                     </div> -->
+
                     <!-- background -->
                     {#if !altKeyPressed && background}
                         <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter};height: 100%;width: 100%;">
                             <MediaLoader path={bgPath} {thumbnailPath} {loadFullImage} type={background.type !== "player" ? background.type : null} {mediaStyle} />
                         </div>
                     {/if}
+
+                    <!-- overlays -->
+                    <div class="overlays preview" style="opacity: 0.5;">
+                        {#if !altKeyPressed && layoutSlide.overlays?.length}
+                            {#each layoutSlide.overlays as id}
+                                {#if $overlays[id]}
+                                    {#each $overlays[id].items as item}
+                                        <Textbox {item} ref={{ type: "overlay", id }} />
+                                    {/each}
+                                {/if}
+                            {/each}
+                        {/if}
+                    </div>
+
                     <!-- edit -->
                     {#if !$showsCache[currentShow || ""]?.locked}
                         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                     {/if}
+
                     {#key $activeEdit.slide || $activeEdit.id}
                         {#each Slide.items as item, index}
                             <Editbox
@@ -278,18 +300,6 @@
                             />
                         {/each}
                     {/key}
-                    <!-- overlays -->
-                    <!-- {#if !altKeyPressed && slideOverlays?.length}
-            <div style="opacity: 0.5;pointer-events: none;">
-              {#each slideOverlays as id}
-                {#if $overlays[id]}
-                  {#each $overlays[id].items as item}
-                    <Textbox {item} ref={{ type: "overlay", id }} />
-                  {/each}
-                {/if}
-              {/each}
-            </div>
-          {/if} -->
                 </Zoomed>
             </DropArea>
         {:else}
@@ -306,6 +316,7 @@
                     <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
                         <p><T id="popup.choose_chord" /></p>
                     </Button>
+
                     {#each usedChords as chord}
                         <Button outline={chordsAction === chord} on:click={() => (chordsAction = chord)}>
                             {chord}
@@ -331,7 +342,7 @@
                     <Icon size={1.3} id="zoomIn" white />
                 </Button>
                 {#if zoomOpened}
-                    <div class="zoom_container" transition:slide>
+                    <div class="zoom_container" transition:slide={{ duration: 150 }}>
                         <Button style="padding: 0 !important;width: 100%;" on:click={() => (zoom = 1)} bold={false} center>
                             <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / zoom).toFixed()}%</p>
                         </Button>

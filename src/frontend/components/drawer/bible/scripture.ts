@@ -96,6 +96,26 @@ export function loadBible(active: string, index: number = 0, bible: any) {
     return bible
 }
 
+export function receiveBibleContent(msg: any) {
+    if (msg.error === "not_found" || !msg.content?.[1]) return
+
+    const content = msg.content[1] || {}
+    scripturesCache.update((a) => {
+        a[msg.content[0]] = content
+        return a
+    })
+
+    let bible: any = content
+    let id = msg.content[0] || msg.id
+
+    bible.version = get(scriptures)[id]?.customName || content.name || get(scriptures)[id]?.name || ""
+    bible.metadata = content.metadata || {}
+    if (content.copyright) bible.copyright = content.copyright
+    bible.id = id
+
+    return bible
+}
+
 export function joinRange(array: string[]) {
     let prev: number = -1
     let range: string = ""
@@ -131,7 +151,7 @@ export function getSlides({ bibles, sorted }) {
     bibles.forEach((bible, bibleIndex) => {
         let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
         let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
-        let alignStyle = currentTemplate?.lines?.[0]?.align || "text-align: left;"
+        let alignStyle = currentTemplate?.lines?.[1]?.align || currentTemplate?.lines?.[0]?.align || "text-align: left;"
         let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
         let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings
@@ -166,36 +186,34 @@ export function getSlides({ bibles, sorted }) {
 
             let text: string = bible.verses[s] || ""
 
-            // remove unwanted characters
-            text = text.replaceAll("/ ", " ").replaceAll("*", "")
+            // custom Jesus red to JSON format: !{}!
+            text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
+            text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
 
             // highlight Jesus text
             let textArray: any[] = []
             if (get(scriptureSettings).redJesus) {
                 let jesusWords: any[] = []
-                let jesusStart = text.indexOf('<span class="wj"')
-                if (jesusStart < 0) jesusStart = text.indexOf("<red")
+                let jesusStart = text.indexOf("!{")
 
                 while (jesusStart > -1) {
                     let jesusEnd = 0
-                    let indent = 1
-                    let previousChar = ""
 
-                    text.split("").forEach((letter, i) => {
-                        if (i < jesusStart + 1 || jesusEnd) return
+                    let splitted = text.split("")
+                    splitted.find((letter, i) => {
+                        if (i < jesusStart + 1 || jesusEnd) return false
 
-                        if (letter === "<") indent++
-                        else if (letter === "/" && previousChar === "<") indent -= 2
+                        if (letter === "}" && splitted[i + 1] === "!") {
+                            jesusEnd = i + 2
+                            return true
+                        }
 
-                        if (indent === 0) jesusEnd = i - 1
-
-                        previousChar = letter
+                        return false
                     })
 
                     if (jesusEnd) {
                         jesusWords.push([jesusStart, jesusEnd])
-                        jesusStart = text.indexOf('<span class="wj"', jesusEnd)
-                        if (jesusStart < 0) jesusStart = text.indexOf("<red", jesusEnd)
+                        jesusStart = text.indexOf("!{", jesusEnd)
                     } else {
                         jesusWords.push([jesusStart, text.length])
                         jesusStart = -1
@@ -203,23 +221,23 @@ export function getSlides({ bibles, sorted }) {
                 }
 
                 if (!jesusWords[0]) {
-                    textArray.push({ value: removeTags(text), style: textStyle })
+                    textArray.push({ value: removeTags(formatBibleText(text)), style: textStyle })
                 } else if (jesusWords[0]?.[0] > 0) {
-                    textArray.push({ value: removeTags(text.slice(0, jesusWords[0][0])), style: textStyle })
+                    textArray.push({ value: removeTags(formatBibleText(text.slice(0, jesusWords[0][0]))), style: textStyle })
                 }
 
                 let redText = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
                 jesusWords.forEach(([start, end], i) => {
-                    textArray.push({ value: removeTags(text.slice(start, end)), style: textStyle + redText })
+                    textArray.push({ value: removeTags(formatBibleText(text.slice(start + 2, end - 2))), style: textStyle + redText, customType: "disableTemplate_jw" })
 
-                    if (i === jesusWords.length - 1) {
-                        let remainingText = removeTags(text.slice(end))
+                    if (!jesusWords[i + 1] || end < jesusWords[i + 1][0]) {
+                        let remainingText = removeTags(formatBibleText(text.slice(end, jesusWords[i + 1]?.[0] ?? -1)))
                         if (remainingText.length) textArray.push({ value: remainingText, style: textStyle })
                     }
                 })
             } else {
                 // WIP bibles with custom html tags?
-                text = removeTags(text)
+                text = removeTags(formatBibleText(text))
 
                 if (text.charAt(text.length - 1) !== " ") text += " "
 
@@ -233,8 +251,10 @@ export function getSlides({ bibles, sorted }) {
 
             if (bibleIndex + 1 >= bibles.length) {
                 let range: any[] = sorted.slice(i - get(scriptureSettings).versesPerSlide + 1, i + 1)
-                if (get(scriptureSettings).splitReference === false) range = sorted
-                addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: bibles.length })
+                if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
+                let indexes = [bibles.length]
+                if (get(scriptureSettings).combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
+                indexes.forEach((i) => addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: i }))
             }
 
             if (i + 1 >= sorted.length) return
@@ -249,8 +269,10 @@ export function getSlides({ bibles, sorted }) {
         if (bibleIndex + 1 >= bibles.length) {
             let remainder = sorted.length % get(scriptureSettings).versesPerSlide
             let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
-            if (get(scriptureSettings).splitReference === false) range = sorted
-            if (remainder) addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: bibles.length })
+            if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
+            let indexes = [bibles.length]
+            if (get(scriptureSettings).combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
+            if (remainder) indexes.forEach((i) => addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: i }))
         }
 
         // auto size
@@ -261,10 +283,10 @@ export function getSlides({ bibles, sorted }) {
                 // WIP historyActions - TEMPLATE...
                 slides[i][j].auto = true
                 if (templateTextItems[j]?.textFit) slides[i][j].textFit = templateTextItems[j]?.textFit
-                slides[i][j].lines![0].text.forEach((_, k) => {
-                    if (slides[i][j].lines![0].text[k].customType === "disableTemplate") return
-                    // slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
-                })
+                // slides[i][j].lines![0].text.forEach((_, k) => {
+                //     if (slides[i][j].lines![0].text[k].customType === "disableTemplate") return
+                //     // slides[i][j].lines![0].text[k].style += "font-size: " + autoSize + "px;"
+                // })
             })
         })
     })
@@ -276,22 +298,19 @@ export function getSlides({ bibles, sorted }) {
 
     return slides
 
-    function removeTags(text) {
-        return text.replace(/(<([^>]+)>)/gi, "")
-    }
-
     function addMeta({ showVersion, showVerse, customText }, range: string, { slideIndex, itemIndex }) {
         if (!bibles[0]) return
 
         let lines: any[] = []
 
-        if (get(scriptureSettings).combineWithText) itemIndex = 0
+        // if (get(scriptureSettings).combineWithText) itemIndex = 0
         let metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
         let alignStyle = metaTemplate?.lines?.[0]?.align || ""
         let verseStyle = metaTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 50px;"
         // remove text in () on scripture names
-        let versions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim()).join(" + ")
-        let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
+        let bibleVersions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
+        let versions = get(scriptureSettings).combineWithText ? bibleVersions[itemIndex] : bibleVersions.join(" + ")
+        let books = get(scriptureSettings).combineWithText ? bibles[itemIndex]?.book : removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         const referenceDivider = get(scriptureSettings).referenceDivider || ":"
         let text = customText
@@ -307,8 +326,9 @@ export function getSlides({ bibles, sorted }) {
         if (lines.length) {
             // add reference to the main text if just one item or it's enabled!
             if (templateTextItems.length <= 1 || get(scriptureSettings).combineWithText) {
-                if (get(scriptureSettings).referenceAtBottom) slides[slideIndex][0].lines.push(...lines)
-                else slides[slideIndex][0].lines = [...lines, ...(slides[slideIndex][0].lines || [])]
+                if (!slides[slideIndex][itemIndex]) slides[slideIndex][itemIndex] = { lines: [] }
+                if (get(scriptureSettings).referenceAtBottom) slides[slideIndex][itemIndex].lines.push(...lines)
+                else slides[slideIndex][itemIndex].lines = [...lines, ...(slides[slideIndex][itemIndex].lines || [])]
             } else {
                 slides[slideIndex].push({
                     lines,
@@ -319,6 +339,36 @@ export function getSlides({ bibles, sorted }) {
             }
         }
     }
+}
+
+export function formatBibleText(text: string | undefined) {
+    if (!text) return ""
+    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "")
+}
+
+function removeTags(text) {
+    return text.replace(/(<([^>]+)>)/gi, "")
+}
+
+export function removeTagsAndContent(input) {
+    const regex = /<[^>]*>[^<]*<\/[^>]*>/g
+    return input.replace(regex, "")
+}
+
+function stripMarkdown(input: string) {
+    input = input.replace(/#\s*(.*?)\s*#/g, "")
+    input = input.replace(/\*\{(.*?)\}\*/g, "")
+    input = input.replace(/!\{(.*?)\}!/g, "$1")
+    // input = input.replace(/\[(.*?)\]/g, "[$1]")
+    input = input.replace(/(\*\*|__)(.*?)\1/g, "$2")
+    input = input.replace(/(\*|_)(.*?)\1/g, "$2")
+    input = input.replace(/\+\+(.*?)\+\+/g, "$1")
+    input = input.replace(/~~(.*?)~~/g, "$1")
+    input = input.replace(/"([^"]*?)"/g, "$1")
+    input = input.replace(/\n/g, "")
+    input = input.replace(/¶/g, "")
+
+    return input
 }
 
 // HELPERS

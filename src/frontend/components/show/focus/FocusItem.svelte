@@ -30,7 +30,7 @@
                     on:click={() => {
                         if (!$outLocked) setOutput("background", { path: show?.id, ...mediaStyle })
                     }}
-                    title={$dictionary.media?.show}
+                    title={$dictionary.media?.play}
                 >
                     <Image
                         style="width: 100%;height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});"

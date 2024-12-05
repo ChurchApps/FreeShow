@@ -31,6 +31,7 @@ import { convertSongbeamerFiles } from "../converters/songbeamer"
 import { convertTexts } from "../converters/txt"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
+import { convertVerseVIEW } from "../converters/verseview"
 import {
     activePage,
     activePopup,
@@ -68,6 +69,7 @@ import {
     presentationApps,
     presentationData,
     previewBuffers,
+    projectTemplates,
     projects,
     shows,
     showsCache,
@@ -182,7 +184,7 @@ const receiveMAIN: any = {
         if (!finished) return activePopup.set(null)
 
         console.log("Backed up to:", path)
-        newToast(get(dictionary).settings?.backup_finished) // + ": " + path)
+        newToast(get(dictionary).settings?.backup_finished || "") // + ": " + path)
         // if (changeUserData) send(STORE, ["UPDATE_PATH"], changeUserData)
     },
     RESTORE: ({ finished, starting }) => {
@@ -244,6 +246,7 @@ const receiveSTORE: any = {
     PROJECTS: (a: any) => {
         projects.set(a.projects || {})
         folders.set(a.folders || {})
+        projectTemplates.set(a.projectTemplates || {})
     },
     OVERLAYS: (a: any) => overlays.set(a),
     TEMPLATES: (a: any) => templates.set(a),
@@ -608,6 +611,7 @@ const receiveIMPORT: any = {
     softprojector: (a: any) => convertSoftProjector(a),
     songbeamer: (a: any) => convertSongbeamerFiles(a),
     easyslides: (a: any) => convertEasyslides(a),
+    verseview: (a: any) => convertVerseVIEW(a),
     // Media
     pdf: (a: any) => addToProject("pdf", a),
     powerkey: (a: any) => addToProject("ppt", a),

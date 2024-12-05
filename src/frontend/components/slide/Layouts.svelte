@@ -158,7 +158,7 @@
             {/if}
         </span>
     {:else}
-        <Center faded>
+        <Center faded size={0.8}>
             {#if loading}
                 <T id="remote.loading" />
             {:else}
@@ -205,7 +205,7 @@
             <Icon size={1.3} id="zoomIn" white />
         </Button>
         {#if zoomOpened}
-            <div class="zoom_container" transition:slide>
+            <div class="zoom_container" transition:slide={{ duration: 150 }}>
                 <Button style="padding: 0 !important;" on:click={() => slidesOptions.set({ ...$slidesOptions, columns: 4 })} bold={false} center>
                     <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / $slidesOptions.columns).toFixed()}%</p>
                 </Button>

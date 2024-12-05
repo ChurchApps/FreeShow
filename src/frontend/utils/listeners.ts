@@ -27,6 +27,7 @@ import {
     playerVideos,
     projects,
     refreshSlideThumbnails,
+    scriptures,
     shows,
     showsCache,
     special,
@@ -69,6 +70,8 @@ export function storeSubscriber() {
             // REMOTE
 
             // sendData(REMOTE, { channel: "SHOWS", data: get(shows) })
+
+            // WIP convertBackgrounds is triggered many times...
 
             // TODO: ?
             // send(REMOTE, ["SHOW"], data )
@@ -115,6 +118,9 @@ export function storeSubscriber() {
         // STAGE
         // WIP all stage listeners should not send to all stages, just the connected ids
         send(STAGE, ["EVENTS"], data)
+    })
+    scriptures.subscribe((data) => {
+        send(REMOTE, ["SCRIPTURE"], data)
     })
 
     outputs.subscribe((data) => {

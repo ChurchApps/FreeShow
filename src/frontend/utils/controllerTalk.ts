@@ -1,24 +1,41 @@
 import { get } from "svelte/store"
 import { getActiveOutputs, getResolution } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
-import { clearAll } from "../components/output/clear"
+import { clearAll, clearSlide } from "../components/output/clear"
 import { outputs, paintCache, serverData } from "../stores"
 import { draw, drawSettings, drawTool } from "./../stores"
 
+let justCleared: any = null
 export const receiveCONTROLLER = {
     ACTION: ({ data }) => {
         const actions = {
             next: () => nextSlideIndividual({ key: "ArrowRight" }),
             previous: () => previousSlideIndividual({ key: "ArrowLeft" }),
-            clear: () => clearAll(),
+            clear: () => {
+                if (justCleared) {
+                    clearTimeout(justCleared)
+                    justCleared = null
+                    clearAll()
+                    return
+                }
+
+                clearSlide()
+                justCleared = setTimeout(() => (justCleared = null), 2000)
+            },
             clear_painting: () => clearPainting(),
         }
+
         if (actions[data.id]) actions[data.id]()
+
+        if (data.id !== "clear" && justCleared) {
+            clearTimeout(justCleared)
+            justCleared = null
+        }
     },
     FOCUS: ({ data }) => {
         if (!data.offset) {
-            console.log(data)
             draw.set(null)
+            if (data.tool !== undefined) drawTool.set(data.tool || "focus")
             return
         }
 

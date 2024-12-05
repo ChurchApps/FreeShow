@@ -135,7 +135,7 @@
         let playlistName = ""
         if (!isDefault) {
             playlistName = name
-            if (name.includes(".")) playlistName = $dictionary.category?.[name.slice(name.indexOf(".") + 1)]
+            if (name.includes(".")) playlistName = $dictionary.category?.[name.slice(name.indexOf(".") + 1)] || ""
         }
 
         let playlistId = uid()
@@ -333,6 +333,6 @@
         justify-content: space-between;
     }
     .grid :global(.selectElem:not(.isSelected):nth-child(even)) {
-        background-color: var(--primary-darkest);
+        background-color: rgb(0 0 20 / 0.08);
     }
 </style>

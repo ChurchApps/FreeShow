@@ -5,11 +5,12 @@
     import { activeRecording, activeShow, drawerTabsData } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
     import { formatBytes } from "../../helpers/bytes"
-    import { getExtension, getFileName, getMediaInfo, removeExtension, videoExtensions } from "../../helpers/media"
+    import { getExtension, getFileName, getMediaInfo, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import Date from "../../system/Date.svelte"
     import LiveInfo from "../live/LiveInfo.svelte"
     import PlayerInfo from "./PlayerInfo.svelte"
+    import { videoExtensions } from "../../../values/extensions"
 
     $: name = $activeShow?.name || ""
     $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http") && !$activeShow?.id.includes("data:")) {
@@ -113,7 +114,7 @@
         gap: 5px;
     }
     main p:nth-child(even) {
-        background-color: var(--primary-darker);
+        background-color: rgb(0 0 20 / 0.15);
     }
 
     .title {
@@ -121,5 +122,8 @@
     }
     main p span:not(.title) {
         opacity: 0.8;
+
+        overflow: hidden;
+        /* direction: rtl; */
     }
 </style>

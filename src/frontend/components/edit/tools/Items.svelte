@@ -67,7 +67,7 @@
     }
 
     export let allSlideItems: Item[]
-    $: invertedItemList = clone(allSlideItems)?.reverse() || []
+    $: invertedItemList = Array.isArray(allSlideItems) ? clone(allSlideItems).reverse() : []
 
     const getType = (item: any) => (item.type as ItemType) || "text"
 

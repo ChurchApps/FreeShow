@@ -140,8 +140,11 @@ export class EditboxHelper {
                 textIndex = textEnd
 
                 let style = a.style ? 'style="' + a.style + '"' : ""
+                let value = a.value.replaceAll("\n", "<br>") || "<br>"
+                if (value === " ") value = "&nbsp;"
 
-                html += `<span class="${a.customType ? "custom" : ""}" ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + (a.value.replaceAll("\n", "<br>") || "<br>") + "</span>"
+                // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)
+                html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : style} data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
             })
             html += "</div>"
         })

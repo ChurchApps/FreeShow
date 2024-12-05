@@ -11,6 +11,8 @@ import { clone, shuffleArray } from "./array"
 import { encodeFilePath } from "./media"
 import { checkNextAfterMedia } from "./showActions"
 
+// WIP use get(special).audio_fade_duration ?? 1.5 to fade in when starting song ?? (currently just when fading out)
+
 export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0) {
     let existing: any = get(playingAudio)[path]
     if (existing) {
@@ -132,6 +134,7 @@ async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPl
     function deleteAudio(path) {
         playingAudio.update((a) => {
             a[path]?.audio?.pause()
+            customActionActivation("audio_end")
             delete a[path]
 
             return a
@@ -173,8 +176,14 @@ export function updateVolume(value: number | undefined | "local", changeGain: bo
 
 // PLAYLIST
 
-export function startPlaylist(id, specificSong: string = "") {
+export function startPlaylist(id, specificSong: string = "", pauseIfPlaying: boolean = false) {
     if (!id) return
+
+    // pause if already playing
+    if (pauseIfPlaying && specificSong && get(activePlaylist)?.id === id && get(playingAudio)[specificSong]) {
+        playAudio({ path: specificSong }, true)
+        return
+    }
 
     activePlaylist.set({ id })
 
@@ -225,7 +234,7 @@ export function playlistNext(previous: string = "", specificSong: string = "", c
     if (!nextSong) {
         if (!loop && !Object.keys(currentlyFading).length) {
             if (crossfade) crossfadeAudio(crossfade)
-            else clearAudio("", false)
+            else clearAudio("", false, true)
 
             setTimeout(() => {
                 if (!get(playingAudio)[previous]) customActionActivation("audio_playlist_ended")
@@ -278,6 +287,7 @@ export function startMicrophone(mic) {
 
             let audio = new Audio()
             audio.srcObject = stream
+            audio.volume = 0
 
             playAudio({ path: mic.id, name: mic.name, audio, stream }, false)
         })
@@ -326,12 +336,18 @@ export function analyseAudio() {
 
             let playlistPath: string = get(activePlaylist)?.active || ""
             if (!isfading && playlistPath && !get(media)[playlistPath]?.loop) {
-                if (isCrossfading) return
+                if (isCrossfading) {
+                    // analyseTimeout = setTimeout(timeoutRun, audioUpdateInterval)
+                    return
+                }
 
                 let crossfadeDuration = checkCrossfade()
                 if (crossfadeDuration) {
                     isCrossfading = true
-                    setTimeout(() => (isCrossfading = false), crossfadeDuration)
+                    setTimeout(() => {
+                        isCrossfading = false
+                        timeoutRun()
+                    }, crossfadeDuration)
                     return
                 }
             } else {
@@ -553,14 +569,14 @@ function getHighestNumber(numbers: number[]): number {
 
 let clearing = false
 let forceClear: boolean = false
-export function clearAudio(path: string = "", clearPlaylist: boolean = true) {
+export function clearAudio(path: string = "", clearPlaylist: boolean = true, playlistCrossfade: boolean = false) {
     // turn off any playlist
     if (clearPlaylist && (!path || get(activePlaylist)?.active === path)) activePlaylist.set(null)
 
     // stop playing metronome
     if (clearPlaylist && !path) stopMetronome()
 
-    const clearTime = get(special).audio_fade_duration ?? 1.5
+    const clearTime = playlistCrossfade ? 0 : (get(special).audio_fade_duration ?? 1.5)
 
     if (clearing) {
         // force stop audio files (bypass timeout if already active)
@@ -579,7 +595,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true) {
         return a
 
         async function clearAudio(path) {
-            if (!a[path].audio) return deleteAudio(path)
+            if (!a[path]?.audio) return deleteAudio(path)
 
             let faded = await fadeAudio(a[path].audio, clearTime)
             if (faded) removeAudio(path)
@@ -784,7 +800,9 @@ export async function getAudioDuration(path: string): Promise<number> {
     return new Promise((resolve) => {
         let audio: any = new Audio(encodeFilePath(path))
         audio.addEventListener("canplaythrough", (_: any) => {
-            resolve(audio.duration)
+            // audio streams does not end
+            if (audio.duration === Infinity) resolve(0)
+            else resolve(audio.duration || 0)
         })
     })
 }

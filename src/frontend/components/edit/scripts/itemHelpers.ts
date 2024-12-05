@@ -8,12 +8,14 @@ import { getStyles, removeText } from "../../helpers/style"
 import { addSlideAction } from "../../actions/actions"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 
+export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
+
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
     let template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
     let newData: Item = {
-        style: template?.[0]?.style || "top:121px;left:50.5px;height:840px;width:1820px;",
+        style: template?.[0]?.style || DEFAULT_ITEM_STYLE,
         type,
     }
     if (id) newData.id = id
@@ -77,7 +79,7 @@ export function getEditItems(onlyActive: boolean = false) {
     let selectedItems: number[] = active.items
 
     let editSlide = clone(getEditSlide())
-    if (!editSlide?.items) return []
+    if (!Array.isArray(editSlide?.items)) return []
 
     let editItems = editSlide.items
     if (onlyActive) editItems = editItems.filter((_, i) => selectedItems.includes(i))
@@ -88,6 +90,8 @@ export function getEditItems(onlyActive: boolean = false) {
 // rearrange
 export function rearrangeItems(type: string, startIndex: number = get(activeEdit).items[0]) {
     let items = getEditItems()
+    if (!items?.length) return
+
     let currentItem = items.splice(startIndex, 1)[0]
 
     if (type === "forward") startIndex = Math.min(startIndex + 1, items.length)
@@ -96,11 +100,12 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     else if (type === "to_back") startIndex = 0
 
     items = [...items.slice(0, startIndex), currentItem, ...items.slice(startIndex)]
+    if (!items?.length || items.length < 2) return
 
     if (!get(activeEdit).id) {
         let ref = _show().layouts("active").ref()[0]
         let slideId = ref[get(activeEdit).slide!]?.id
-        history({ id: "UPDATE", newData: { data: items, key: "slides", keys: [slideId], subkey: "items" }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key", override: "rearrange_items" } })
+        history({ id: "UPDATE", newData: { data: items, key: "slides", dataIsArray: true, keys: [slideId], subkey: "items" }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key", override: "rearrange_items" } })
     } else {
         // overlay, template
         history({ id: "UPDATE", newData: { data: items, key: "items" }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type, override: "rearrange_items" } })

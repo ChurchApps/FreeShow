@@ -608,7 +608,7 @@ export function createDefaultShow() {
         quickAccess: {},
         meta: {},
         slides: {
-            1: {
+            one: {
                 group: "",
                 color: null,
                 settings: {},
@@ -626,7 +626,7 @@ export function createDefaultShow() {
             default: {
                 name: get(dictionary).example?.default || "",
                 notes: "",
-                slides: [{ id: "1" }],
+                slides: [{ id: "one" }],
             },
         },
         media: {},

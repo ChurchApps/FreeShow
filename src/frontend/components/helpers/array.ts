@@ -78,10 +78,21 @@ export function sortObjectNumbers(object: {}[], key: string, reverse: boolean = 
 }
 
 // sort any object.name by numbers in the front of the string
-export function sortByNameAndNumber(array: any[]) {
+export function sortByNameAndNumber(array: any[]) {    
     return array.sort((a, b) => {
         let aName = ((a.quickAccess?.number || "") + " " + a.name || "").trim()
         let bName = ((b.quickAccess?.number || "") + " " + b.name || "").trim()
+
+        // get only number part if available
+        const extractNumber = (str) => {
+            const match = str.toString().match(/\d+/)
+            return match ? parseInt(match[0], 10) : Infinity
+        }
+        const quickAccessNumberA = extractNumber(a.quickAccess?.number || "")
+        const quickAccessNumberB = extractNumber(b.quickAccess?.number || "")
+
+        // compare only number values when available
+        if (quickAccessNumberA !== quickAccessNumberB) return quickAccessNumberA - quickAccessNumberB
 
         // get numbers in front of name
         const matchA = aName.match(/^\d+/)

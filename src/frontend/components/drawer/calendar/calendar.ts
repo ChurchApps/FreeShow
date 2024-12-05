@@ -197,8 +197,8 @@ function getDayNameIfCloseToToday(day: Date): string {
     const todayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate())
     const daysUntilEvent = Math.floor((new Date(day).getTime() - todayWithoutTime.getTime()) / MILLISECONDS_IN_A_DAY)
 
-    if (daysUntilEvent === 0) return get(dictionary).calendar?.today
-    if (daysUntilEvent === 1) return get(dictionary).calendar?.tomorrow
+    if (daysUntilEvent === 0) return get(dictionary).calendar?.today || ""
+    if (daysUntilEvent === 1) return get(dictionary).calendar?.tomorrow || ""
     if (daysUntilEvent < 7 && daysUntilEvent > 0) {
         let weekDay = new Date(day).getDay() || 7
         let dayString = get(dictionary).weekday?.[weekDay] || ""

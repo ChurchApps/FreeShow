@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        activeEdit,
         activeProject,
         activeRecording,
         activeShow,
@@ -16,6 +17,7 @@
         scriptures,
         selected,
         shows,
+        showsCache,
         slidesOptions,
         stageShows,
         templateCategories,
@@ -24,6 +26,7 @@
     } from "../../stores"
     import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
+    import { getExtension, getMediaType } from "../helpers/media"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { ContextMenuItem, contextMenuItems } from "./contextMenus"
@@ -82,6 +85,26 @@
 
             menu.label = enabled ? "actions.enable" : "actions.disable"
         },
+        slide_transition: () => {
+            if ($selected.id === "slide" && $activeShow) {
+                let ref = _show().layouts("active").ref()[0]
+                enabled = ref[$selected.data[0].index]?.data?.transition || false
+            }
+        },
+        transition: () => {
+            if ($activeShow && $showsCache[$activeShow.id] && $activeEdit.items.length) {
+                let ref = _show().layouts("active").ref()[0]
+                let slideId = ref[$activeEdit.slide || 0]?.id
+                let item = $showsCache[$activeShow.id].slides?.[slideId]?.items?.[$activeEdit.items[0]] || {}
+                enabled = item.actions?.transition
+                console.log(item)
+                // console.log($activeShow, $activeEdit)
+
+                // $showsCache[$activeShow.id].slides?.[$activeEdit.]?.
+                // let ref = _show().layouts("active").ref()[0]
+                // enabled = ref[$selected.data[0].index]?.data?.transition || false
+            }
+        },
         remove_group: () => {
             if ($selected.id !== "slide") return
 
@@ -112,6 +135,11 @@
             } else {
                 if (!$activeProject) disabled = true
             }
+        },
+        play_no_audio: () => {
+            let path = $selected.data[0]?.path || $selected.data[0]?.id
+            const type = getMediaType(getExtension(path))
+            if (type !== "video") hide = true
         },
         play_no_filters: () => {
             let path = $selected.data[0]?.path || $selected.data[0]?.id
@@ -153,6 +181,7 @@
         hide_from_preview: () => {
             let outputId = contextElem.id
             if ($outputs[outputId]?.hideFromPreview) enabled = true
+            menu.label = enabled ? "context.enable_preview" : "context.hide_from_preview"
         },
         place_under_slide: () => {
             let id = $selected.data[0]
@@ -189,7 +218,7 @@
         // don't hide context menu
         const keepOpen = ["uppercase", "lowercase", "capitalize", "trim"] // "dynamic_values" (caret position is lost)
         if (keepOpen.includes(id)) return
-        const keepOpenToggle = ["enabled_drawer_tabs", "tags", "bind_slide", "bind_item"]
+        const keepOpenToggle = ["enabled_drawer_tabs", "tag_set", "tag_filter", "bind_slide", "bind_item"]
         if (keepOpenToggle.includes(id)) {
             enabled = !enabled
             return
@@ -211,12 +240,14 @@
         if ($os.platform === "darwin") s.replaceAll("Ctrl", "Cmd")
         shortcut = s
     }
+
+    $: customStyle = id === "uppercase" ? "text-transform: uppercase;" : id === "lowercase" ? "text-transform: lowercase;" : ""
 </script>
 
 <div on:click={contextItemClick} class:enabled class:disabled class:hide style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};" tabindex={0} on:keydown={keydown}>
     <span style="display: flex;align-items: center;gap: 10px;">
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
-        <p style="display: flex;align-items: center;gap: 5px;">
+        <p style="display: flex;align-items: center;gap: 5px;{customStyle}">
             {#if menu?.translate === false}
                 {menu?.label}
             {:else}
@@ -224,7 +255,7 @@
                     <T id={menu?.label || id} />
                 {/key}
             {/if}
-            {#if menu.external}
+            {#if menu?.external}
                 <Icon id="launch" style="opacity: 0.8;" white />
             {/if}
         </p>

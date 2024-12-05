@@ -61,10 +61,18 @@
 
         // open drawer
         drawer.set({ height: storeHeight === null || storeHeight < DEFAULT_DRAWER_HEIGHT ? DEFAULT_DRAWER_HEIGHT : storeHeight, stored: null })
+
+        // if drawer is closed when searching, set category to "all"
+        if (e === null && ["shows", "overlays", "templates", "media", "audio"].includes($activeDrawerTab)) {
+            drawerTabsData.update((a) => {
+                a[$activeDrawerTab].activeSubTab = "all"
+                return a
+            })
+        }
     }
 
     function mouseup(e: any) {
-        if (!e.target.closest("input") && !searchValue.length) searchActive = false
+        if (!e.target.closest("input") && !e.target.closest(".contextMenu") && !searchValue.length) searchActive = false
 
         mouse = null
         if (!e.target.closest(".top")) move = false

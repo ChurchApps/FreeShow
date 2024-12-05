@@ -135,7 +135,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (previousData) a[id] = previousData
                 else {
-                    if (updater.cloudCombine) a[id] = { id, deleted: true }
+                    if (updater.cloudCombine) a[id] = { id, deleted: true, modified: Date.now() }
                     else delete a[id]
                 }
 
@@ -196,7 +196,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (keys?.length) {
                     keys.forEach((currentKey) => {
-                        let replacerValue = typeof newValue === "string" || newValue?.[currentKey] === undefined ? newValue : newValue[currentKey]
+                        let replacerValue = typeof newValue === "string" || newValue?.[currentKey] === undefined || data.dataIsArray ? newValue : newValue[currentKey]
                         if (index === -1 && !Array.isArray(replacerValue)) replacerValue = [replacerValue]
 
                         if (subkey) {
@@ -574,7 +574,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (isParent) {
                         // get layout slides index (without children)
                         let refAtIndex = ref[slideIndex - 1]?.parent || ref[slideIndex - 1]
-                        let slideLayoutIndex = refAtIndex ? refAtIndex.index + 1 : slideIndex ?? ref.length
+                        let slideLayoutIndex = refAtIndex ? refAtIndex.index + 1 : (slideIndex ?? ref.length)
 
                         // add to layout at index
                         // _show(showId).layouts([layout]).slides().add([layoutValue], null, slideIndex)

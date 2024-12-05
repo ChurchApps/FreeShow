@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { customActionActivation } from "./components/actions/actions"
     import DrawSettings from "./components/draw/DrawSettings.svelte"
     import DrawTools from "./components/draw/DrawTools.svelte"
     import Slide from "./components/draw/Slide.svelte"
@@ -20,11 +21,21 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os, shows } from "./stores"
+    import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
 
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
+
+    let previousId = ""
+    $: if ($activeShow?.id !== previousId) showOpened()
+    function showOpened() {
+        if (!$activeShow?.id || $activeShow?.type !== "show") return
+
+        // allow show to actually open before triggering
+        setTimeout(() => customActionActivation("show_opened"), 50)
+        previousId = $activeShow?.id
+    }
 </script>
 
 <div class="column">
@@ -78,7 +89,7 @@
                         <MediaTools />
                     {:else if $activeEdit.type === "effect"}
                         <EffectTools />
-                    {:else if !$shows[$activeShow?.id || ""]?.locked && !$focusMode}
+                    {:else if !$focusMode}
                         <EditTools />
                     {/if}
                 {:else if page === "draw"}
@@ -140,5 +151,10 @@
         border: none;
         border-right: 2px solid var(--primary-lighter);
         min-width: 50%;
+    }
+
+    .right.row :global(.color .picker) {
+        right: -1px;
+        left: unset;
     }
 </style>

@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, projects, projectView, showRecentlyUsedProjects, sorted } from "../../stores"
+    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, midiIn, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import { getActionIcon } from "../actions/actions"
     import { keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -187,6 +188,14 @@
             </Autoscroll>
         </div>
 
+        {#if Object.keys($projectTemplates).length}
+            <div class="projectTemplates">
+                {#each sortByName(keysToID($projectTemplates)) as project}
+                    <ProjectButton name={project.name} parent={project.parent} id={project.id} template />
+                {/each}
+            </div>
+        {/if}
+
         <div id="projectsButtons" class="tabs">
             <Button on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $projects[$activeProject || ""]?.parent || "/" } }, location: { page: "show", id: "project_folder" } })} center title={$dictionary.new?.folder}>
                 <Icon id="folder" right={!$labelsDisabled} />
@@ -208,6 +217,7 @@
                                     <Button
                                         active={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
                                         class="section context #project_section__project"
+                                        style={show.color ? `border-bottom: 2px solid ${show.color}` : ""}
                                         on:click={() => {
                                             if ($focusMode) activeFocus.set({ id: show.id, index })
                                             else activeShow.set({ ...show, index })
@@ -216,10 +226,18 @@
                                         center
                                         bold={false}
                                     >
-                                        {#if show.name?.length}
-                                            {show.name}
-                                        {:else}
-                                            <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
+                                        <p>
+                                            {#if show.name?.length}
+                                                {show.name}
+                                            {:else}
+                                                <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
+                                            {/if}
+                                        </p>
+
+                                        {#if $special.sectionTriggerAction}
+                                            <span style="display: flex;position: absolute;right: 5px;" title={$midiIn[$special.sectionTriggerAction]?.name}>
+                                                <Icon id={getActionIcon($special.sectionTriggerAction)} size={0.8} white />
+                                            </span>
                                         {/if}
                                     </Button>
                                 {:else}
@@ -285,7 +303,8 @@
         /* overflow-y: auto;
     overflow-x: hidden; */
         overflow: hidden;
-        height: 100%;
+        /* height: 100%; */
+        flex: 1;
     }
 
     .list.projects :global(.droparea) {
@@ -302,5 +321,15 @@
     .list :global(.section.active) {
         outline-offset: -2px;
         outline: 2px solid var(--primary-lighter);
+    }
+
+    .projectTemplates {
+        display: flex;
+        flex-direction: column;
+
+        max-height: calc(30px * 5);
+        overflow-y: auto;
+
+        border-top: 2px solid var(--primary-lighter);
     }
 </style>

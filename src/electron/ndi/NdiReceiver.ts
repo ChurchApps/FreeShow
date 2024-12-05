@@ -33,6 +33,7 @@ export class NdiReceiver {
                 if (previousLength === currentLength) {
                     clearInterval(findSourcesInterval)
                     resolve(sources)
+                    return
                 }
                 // finder.wait()
                 previousLength = currentLength
@@ -89,6 +90,7 @@ export class NdiReceiver {
         this.NDI_RECEIVERS[source.id].frameRate = Math.round(1000 / frameRate)
 
         let gettingFrame: boolean = false
+        if (this.NDI_RECEIVERS[source.id].interval) clearInterval(this.NDI_RECEIVERS[source.id].interval)
         this.NDI_RECEIVERS[source.id].interval = setInterval(async () => {
             if (gettingFrame) return
             gettingFrame = true
@@ -113,6 +115,7 @@ export class NdiReceiver {
 
             if (!this.sendToOutputs.length) {
                 clearInterval(this.NDI_RECEIVERS[data.id].interval)
+                // delete this.allActiveReceivers[data.id]
                 delete this.NDI_RECEIVERS[data.id]
             }
             return

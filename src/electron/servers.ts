@@ -104,7 +104,7 @@ function initialize(id: ServerName, socket: any) {
             const window = OutputHelper.getOutput(msg.data.outputId).window
             const frame = await CaptureHelper.captureBase64Frame(window)
             toServer(id, { channel: "OUTPUT_FRAME", data: { frame } })
-        } else {
+        } else if (msg) {
             toApp(id, msg)
         }
     })

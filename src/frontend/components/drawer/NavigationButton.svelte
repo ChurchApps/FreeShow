@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, mediaFolders, notFound, overlayCategories, scriptures, templateCategories } from "../../stores"
+    import { audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, mediaFolders, midiIn, notFound, overlayCategories, scriptures, templateCategories } from "../../stores"
+    import { getActionIcon } from "../actions/actions"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -80,8 +81,15 @@
             {/if}
         </span>
     </span>
+
+    {#if category.action}
+        <span style="padding: 0 5px;" title={$midiIn[category.action]?.name}>
+            <Icon id={getActionIcon(category.action)} size={0.8} white />
+        </span>
+    {/if}
+
     {#if length[category.id]}
-        <span style="opacity: 0.5;font-size: 0.9em;">
+        <span style="opacity: 0.5;font-size: 0.9em;min-width: 15px;text-align: right;">
             {length[category.id]}
         </span>
     {/if}

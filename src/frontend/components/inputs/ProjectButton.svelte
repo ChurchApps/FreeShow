@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { ID } from "../../../types/Show"
-    import { activeProject, activeShow, projects, projectView, showRecentlyUsedProjects } from "../../stores"
+    import { activeProject, activeShow, dictionary, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects } from "../../stores"
+    import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import HiddenInput from "./HiddenInput.svelte"
@@ -9,6 +10,7 @@
     export let parent: ID
     export let id: ID
     export let recentlyUsed: boolean = false
+    export let template: boolean = false
     // export let type: ShowType
     // export let created;
     // export let parent; // path
@@ -16,7 +18,22 @@
     $: active = $activeProject === id
 
     function open(e: any) {
-        if (e.ctrlKey || e.metaKey || e.target.closest(".edit") || e.target.querySelector(".edit") || editActive) return
+        // prevent extra single click on (template) double click
+        let doubleClick = e.detail === 2
+
+        if (e.ctrlKey || e.metaKey || e.target.closest(".edit") || e.target.querySelector(".edit") || editActive || doubleClick) return
+
+        if (template) {
+            let project = clone($projectTemplates[id])
+            if (!project) return
+
+            project.parent = $projects[$activeProject || ""]?.parent || "/"
+            history({ id: "UPDATE", newData: { data: project }, location: { page: "show", id: "project" } })
+            return
+        }
+
+        // set back to saved if opening, as project used time is changed
+        if ($saved) setTimeout(() => saved.set(true), 10)
 
         // set last used
         showRecentlyUsedProjects.set(false)
@@ -38,15 +55,25 @@
         activeShow.set({ ...$projects[id].shows[0], index: 0 })
     }
 
+    function dblclick() {
+        if (!template) return
+
+        // open selected project
+        projectView.set(false)
+    }
+
     function edit(e: any) {
-        if (!editActive) history({ id: "UPDATE", newData: { key: "name", data: e.detail.value }, oldData: { id }, location: { page: "show", id: "project_key" } })
+        if (editActive) return
+
+        if (template) history({ id: "UPDATE", newData: { key: "name", data: e.detail.value }, oldData: { id }, location: { page: "show", id: "project_template" } })
+        else history({ id: "UPDATE", newData: { key: "name", data: e.detail.value }, oldData: { id }, location: { page: "show", id: "project_key" } })
     }
 
     let editActive: boolean = false
 </script>
 
-<button on:click={open} data-parent={parent} class={recentlyUsed ? "" : "context #project_button__projects"} class:active>
-    <Icon id="project" right />
+<button {id} on:click={open} on:dblclick={dblclick} data-parent={parent} class={recentlyUsed ? "" : `context #project_${template ? "template" : "button__projects"}`} title={template ? $dictionary.actions?.project_template_tip : ""} class:active>
+    <Icon id={template ? "templates" : "project"} right />
     <HiddenInput value={name} id={"project_" + id} on:edit={edit} bind:edit={editActive} allowEdit={!recentlyUsed} />
 </button>
 

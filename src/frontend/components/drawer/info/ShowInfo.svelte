@@ -140,7 +140,7 @@
         padding: 2px 10px;
     }
     .table p:nth-child(odd) {
-        background-color: var(--primary-darker);
+        background-color: rgb(0 0 20 / 0.15);
     }
 
     .title {
@@ -150,6 +150,6 @@
         opacity: 0.8;
 
         overflow: hidden;
-        direction: rtl;
+        /* direction: rtl; */
     }
 </style>

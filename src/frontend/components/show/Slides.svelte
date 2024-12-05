@@ -1,9 +1,10 @@
 <script lang="ts">
     import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, styles } from "../../stores"
+    import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { encodeFilePath, getExtension, videoExtensions } from "../helpers/media"
+    import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getCachedShow } from "../helpers/show"
     import { getItemWithMostLines, updateOut } from "../helpers/showActions"
@@ -68,6 +69,7 @@
         }, 500)
     }
 
+    let disableAutoScroll: boolean = false
     function slideClick(e: any, index: number) {
         // TODO: duplicate function of "preview:126 - updateOut"
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
@@ -83,6 +85,14 @@
 
         // force update output if index is the same as previous
         if (activeSlides[index]) refreshOut()
+
+        // don't auto scroll if clicking with mouse!
+        disableAutoScroll = true
+        if (nextScrollTimeout) return
+        nextScrollTimeout = setTimeout(() => {
+            nextScrollTimeout = null
+            disableAutoScroll = false
+        }, 500)
     }
 
     // disable slides that is after end (only visual)
@@ -108,7 +118,7 @@
     $: if (showId && $special.capitalize_words) capitalizeWords()
     function capitalizeWords() {
         // keep letters and spaces
-        const regEx = /[^a-zA-Z\s]+/
+        // const regEx = /[^a-zA-Z\s]+/
 
         let capitalized = false
         let slides = _show(showId).get("slides") || {}
@@ -136,24 +146,17 @@
         })
 
         function capitalize(value: string) {
-            $special.capitalize_words.split(",").forEach((newWord) => {
-                newWord = newWord.trim().toLowerCase()
+            $special.capitalize_words.split(",").forEach((word) => {
+                let newWord = word.trim().toLowerCase()
                 if (!newWord.length) return
 
-                value = value
-                    .split(" ")
-                    .map((word) => {
-                        if (word.replace(regEx, "").toLowerCase() !== newWord) return word
-
-                        let matching = word.toLowerCase().indexOf(newWord)
-                        if (matching >= 0) {
-                            let capitalized = newWord[0]?.toUpperCase() + word.slice(1)
-                            word = word.slice(0, matching) + capitalized + word.slice(matching + capitalized.length)
-                        }
-
-                        return word
-                    })
-                    .join(" ")
+                const regEx = new RegExp(`\\b${newWord}\\b`, "gi")
+                value = value.replace(regEx, (match) => {
+                    // always capitalize: newWord.charAt(0).toUpperCase() + newWord.slice(1)
+                    // use the input case styling (meaning all uppercase/lowercase also works)
+                    // but don't change anything if the text is already fully uppercase
+                    return match === match.toUpperCase() ? match : word.trim()
+                })
             })
 
             return value
@@ -206,6 +209,8 @@
     }
 
     function createSlide() {
+        if (currentShow?.locked) return
+
         history({ id: "SLIDES" })
         activePage.set("edit")
     }
@@ -341,7 +346,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} />
 
-<Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode || currentShow?.locked ? "" : "context #shows__close"} on:wheel={wheel} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}
@@ -383,7 +388,7 @@
                         <Center absolute size={2}>
                             <span style="opacity: 0.5;"><T id="empty.slides" /></span>
                             <!-- Add slides button -->
-                            <Button on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
+                            <Button disabled={currentShow?.locked} on:click={createSlide} style="font-size: initial;margin-top: 10px;" dark center>
                                 <Icon id="add" right />
                                 <T id="new.slide" />
                             </Button>

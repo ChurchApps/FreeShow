@@ -29,7 +29,10 @@ export function convertTexts(files: any[]) {
 
 // convert a plain text input into a show
 export function convertText({ name = "", category = null, text, noFormatting = false }: any, onlySlides: boolean = false, { existingSlides } = { existingSlides: {} }) {
+    // remove empty spaces (as groups [] should be used for empty slides)
+    // in "Text edit" spaces can be used to create empty "child" slides
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
+    // text = text.replaceAll("\r", "").replaceAll("\n\n \n\n", "__BREAK__").replaceAll("\n \n", "\n\n").replaceAll("__BREAK__", "\n\n \n\n")
     let sections: string[] = removeEmpty(text.split("\n\n"))
 
     // get ccli
@@ -172,6 +175,7 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
 
         function createSlide(lines: string, slideIndex: number) {
             let items: Item[] = linesToItems(lines)
+            if (!items.length) return
 
             // get active show
             if (_show().get()) {
@@ -273,6 +277,10 @@ function removeSlideDuplicates(slides, layouts) {
 
 function linesToItems(lines: string) {
     let slideLines: string[] = lines.split("\n")
+
+    // remove custom ChordPro styling
+    slideLines = slideLines.filter((a) => !a.startsWith("{") && !a.endsWith("}"))
+
     let items: Item[] = linesToTextboxes(slideLines)
 
     return items

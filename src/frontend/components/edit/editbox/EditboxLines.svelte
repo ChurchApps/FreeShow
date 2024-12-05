@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item, Line } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, showsCache, templates } from "../../../stores"
+    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -27,6 +27,7 @@
     export let plain: boolean = false
     export let chordsMode: boolean = false
     export let chordsAction: string = ""
+    export let isLocked: boolean = false
 
     let textElem: any
     let html: string = ""
@@ -268,7 +269,7 @@
     let loaded = false
     $: isAuto = item?.auto
     $: textFit = item?.textFit
-    $: itemText = item?.lines?.[0]?.text?.filter((a) => a.customType !== "disableTemplate") || []
+    $: itemText = item?.lines?.[0]?.text?.filter((a) => !a.customType?.includes("disableTemplate")) || []
     $: itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "")
     $: if (isAuto || textFit || itemFontSize || textChanged) getCustomAutoSize()
 
@@ -313,6 +314,8 @@
             let lineChords: any[] = []
 
             newLines.push(newLine)
+
+            // WIP backspace a line into a line with different styling will merge both and apply the first style to both (HTML issue)
 
             new Array(...line.childNodes).forEach((child: any, j: number) => {
                 if (child.nodeName === "#text") {
@@ -424,6 +427,11 @@
             lastCaretPos = caret
         } else {
             storeCurrentCaretPos()
+
+            // line added (prevent template/overlay caret reset)
+            if (ref.type !== "show" && (item.lines || []).length < newLines.length) {
+                setTimeout(() => setCaret(textElem, lastCaretPos), 20)
+            }
         }
 
         return newLines
@@ -554,9 +562,6 @@
             }, 10)
         }, 10)
     }
-
-    // SHOW IS LOCKED FOR EDITING
-    $: isLocked = $showsCache[$activeShow?.id || ""]?.locked
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -679,6 +684,11 @@
         /* display: contents; */
         width: 100%;
         /* line-height: normal; */
+    }
+
+    .edit :global(.break span) {
+        /* text transform changes actual text on edit if set to e.g. Uppercase */
+        text-transform: none !important;
     }
 
     .edit:not(.plain .edit) :global(span) {

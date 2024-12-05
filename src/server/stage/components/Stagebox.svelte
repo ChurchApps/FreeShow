@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import { keysToID, sortByName } from "../helpers/array"
     import autosize from "../helpers/autosize"
     import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
@@ -13,6 +12,7 @@
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Timer from "./Timer.svelte"
     import Variable from "./Variable.svelte"
+    import { keysToID, sortByName } from "../../common/util/helpers"
 
     export let show: any
     export let id: string

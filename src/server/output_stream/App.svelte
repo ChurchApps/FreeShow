@@ -1,15 +1,45 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import Icon from "./helpers/Icon.svelte"
     import { io } from "socket.io-client"
+    import Icon from "../common/components/Icon.svelte"
 
     let socket = io()
 
+    // FPS
+    let secondsTimeout: any = null
+    let count = 0
+    let fps = 0
+    let start = 0
+    let timeLoss = 0
+    function startFPS() {
+        start = Date.now()
+        let time = 1000 - timeLoss
+        secondsTimeout = setTimeout(() => {
+            fps = count
+            count = 0
+
+            timeLoss = Date.now() - start - time
+            if (timeLoss < time) setTimeout(() => (count = 0), timeLoss)
+            startFPS()
+        }, time)
+    }
+
+    // let initialDelay = 0
     socket.on("OUTPUT_STREAM", (msg) => {
         switch (msg.channel) {
             case "STREAM":
-                let timeSinceSent = Date.now() - msg.data.time
-                if (timeSinceSent > 100) return // skip frames if overloaded
+                // FPS
+                count++
+                if (!secondsTimeout) startFPS()
+
+                // this did not work well across different devices
+                // if (!initialDelay) {
+                //     // include device time offset / transmission delay
+                //     initialDelay = Date.now() - msg.data.time
+                // } else {
+                //     let timeSinceSent = Date.now() - initialDelay - msg.data.time
+                //     if (timeSinceSent > 5000) return // skip frames if overloaded
+                // }
 
                 capture = msg.data
                 break
@@ -89,13 +119,19 @@
 <svelte:window on:click={click} />
 
 <div class="center" bind:offsetWidth={width} bind:offsetHeight={height}>
-    <canvas class:imgHeight style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class="previewCanvas" bind:this={canvas} />
+    <canvas class:imgHeight style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class:height={width / height < (capture?.size?.width || 16) / (capture?.size?.height || 9)} class="previewCanvas" bind:this={canvas} />
 </div>
 
 {#if clicked}
     <button on:click={toggleFullscreen}>
-        <Icon id={isFullscreen ? "exitFullscreen" : "fullscreen"} size={2.2} />
+        <Icon id={isFullscreen ? "exitFullscreen" : "fullscreen"} size={2.2} white />
     </button>
+{/if}
+
+{#if !isFullscreen && clicked}
+    <div class="count" style="position: absolute;bottom: 4px;left: 4px;font-size: 0.5em;opacity: 0.3;">
+        FPS: {fps} | {capture?.size?.width || 1920}x{capture?.size?.height || 1080}
+    </div>
 {/if}
 
 <style>
@@ -165,6 +201,10 @@
         height: 100%;
         /* object-fit: contain; */
     }
+    canvas.height {
+        height: initial;
+        width: 100%;
+    }
 
     .imgHeight {
         height: initial;
@@ -183,13 +223,16 @@
         justify-content: center;
         align-items: center;
 
-        background-color: white;
+        /* background-color: white; */
+        background-color: var(--primary-lighter);
+        color: var(--text);
+
         padding: 10px;
         border-radius: 50%;
         border: 2px solid black;
     }
     button:hover,
     button:active {
-        background-color: rgb(255 255 255 / 0.8);
+        background-color: rgb(255 255 255 / 0.2);
     }
 </style>

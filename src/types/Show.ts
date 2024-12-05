@@ -195,6 +195,7 @@ export interface Layout {
 export interface Recording {
     id: string
     // name: string
+    useDurationTime?: boolean
     layoutAtRecording: string // store layout ids to detect changes
     sequence: {
         time: number
@@ -367,6 +368,6 @@ export interface OutTransition {
 
 export type ID = string
 export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "events" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
-export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" | "pdf" | "ppt" // "private"
+export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" | "overlay" | "pdf" | "ppt" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "camera" | "player" | "audio"

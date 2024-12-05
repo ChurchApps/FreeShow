@@ -27,8 +27,12 @@
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
-    $: backgroundOutputId = allActiveOutputs.find((id) => ($styles[$outputs[id]?.style || ""]?.layers || ["background"]).includes("background")) || outputId
+    $: backgroundOutputId = allActiveOutputs.find((id) => getLayersFromId(id).includes("background")) || outputId
     $: currentBgOutput = backgroundOutputId ? $outputs[backgroundOutputId] || {} : {}
+
+    function getLayersFromId(id: string) {
+        return $styles[$outputs[id]?.style || ""]?.layers || ["background"]
+    }
 
     let numberKeyTimeout: any = null
     let previousNumberKey: string = ""

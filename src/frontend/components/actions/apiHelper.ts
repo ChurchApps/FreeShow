@@ -1,14 +1,46 @@
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
+import {
+    activeDrawerTab,
+    activeEdit,
+    activePage,
+    activeProject,
+    dictionary,
+    groupNumbers,
+    groups,
+    media,
+    openScripture,
+    outLocked,
+    outputs,
+    overlays,
+    playingAudio,
+    playingMetronome,
+    playScripture,
+    projects,
+    refreshEditSlide,
+    selected,
+    showsCache,
+    sortedShowsList,
+    styles,
+    variables,
+} from "../../stores"
+import { newToast } from "../../utils/common"
+import { send } from "../../utils/request"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
-import { getActiveOutputs, setOutput } from "../helpers/output"
+import { ondrop } from "../helpers/drop"
+import { dropActions } from "../helpers/dropActions"
+import { history } from "../helpers/history"
+import { setDrawerTabData } from "../helpers/historyHelpers"
+import { getMediaStyle } from "../helpers/media"
+import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
+import { loadShows } from "../helpers/setShow"
+import { getLabelId } from "../helpers/show"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
-import { activeEdit, activePage, activeProject, activeShow, dictionary, groupNumbers, groups, outLocked, outputs, overlays, projects, refreshEditSlide, sortedShowsList, variables } from "../../stores"
-import type { API_variable } from "./api"
-import { send } from "../../utils/request"
-import { getLabelId } from "../helpers/show"
-import { newToast } from "../../utils/common"
+import { getPlainEditorText } from "../show/getTextEditor"
+import { getSlideGroups } from "../show/tools/groups"
+import { activeShow } from "./../../stores"
+import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -142,7 +174,8 @@ export function moveStageConnection(id: string) {
 
 export function changeVariable(data: API_variable) {
     let variable: any
-    if (data.name) variable = sortByClosestMatch(getVariables(), data.name)[0]
+    if (data.id) variable = get(variables)[data.id]
+    else if (data.name) variable = sortByClosestMatch(getVariables(), data.name)[0]
     else if (data.index !== undefined) variable = sortByName(getVariables())[data.index - 1]
     if (!variable) return
 
@@ -154,13 +187,13 @@ export function changeVariable(data: API_variable) {
         key = "number"
     } else if (data.value !== undefined) {
         value = data.value
-        key = variable.type === "number" ? "number" : "text"
+        if (key === "value" && typeof value !== "boolean") key = variable.type === "number" ? "number" : "text"
     } else if (key === "enabled") {
         value = !variable.enabled
     }
     if (value === undefined) return
 
-    updateVariable(value, variable.id, key)
+    updateVariable(value, data.id || variable.id, key)
 }
 function getVariables() {
     return keysToID(get(variables))
@@ -170,6 +203,108 @@ function updateVariable(value: any, id: string, key: string) {
         a[id][key] = value
         return a
     })
+}
+
+// SHOW
+
+export function changeShowLayout(data: API_layout) {
+    showsCache.update((a) => {
+        if (!a[data.showId]?.layouts[data.layoutId]) return a
+
+        a[data.showId].settings.activeLayout = data.layoutId
+        return a
+    })
+}
+
+export async function getPlainText(id: string) {
+    await loadShows([id])
+    return { id, value: getPlainEditorText(id) } as API_id_value
+}
+
+export function getShowGroups(id: string) {
+    return { id, value: getSlideGroups(id) }
+}
+
+export async function rearrangeGroups(data: API_rearrange) {
+    await loadShows([data.showId])
+
+    let trigger = data.to > data.from ? "end" : ""
+    let pos = trigger === "end" ? 1 : 0
+
+    let ref = _show(data.showId).layouts("active").ref()[0]
+    let dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
+    let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex - pos
+    if (isNaN(dropIndex)) dropIndex = ref.length
+
+    const drag = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
+    const drop = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos } // , trigger, center: false
+
+    let h = dropActions.slide({ drag, drop }, {})
+    if (h && h.id) history(h)
+}
+
+export async function addGroup(data: API_group) {
+    await loadShows([data.showId])
+
+    selected.set({ id: "group", data: [{ id: data.groupId, showId: data.showId }] })
+    ondrop(null, "slide")
+    selected.set({ id: null, data: [] })
+}
+
+export function setTemplate(templateId: string) {
+    let showId = get(activeShow)?.id
+    if (!showId) {
+        // newToast("$empty.show")
+        return
+    }
+    if (_show(showId).get("locked")) {
+        newToast("$show.locked")
+        return
+    }
+
+    history({ id: "TEMPLATE", newData: { id: templateId, data: { createItems: true } }, location: { page: "none", override: "show#" + showId } })
+}
+
+// PRESENTATION
+
+export function getClearedState() {
+    let o = get(outputs)
+
+    const audio = !Object.keys(get(playingAudio)).length && !get(playingMetronome)
+    const background = isOutCleared("background", o)
+    const slide = isOutCleared("slide", o)
+    const overlays = isOutCleared("overlays", o, true)
+    const slideTimers = isOutCleared("transition", o)
+
+    const all = isOutCleared(null, o) && audio
+
+    return { all, background, slide, overlays, audio, slideTimers }
+}
+
+// "1.1.1" = "Gen 1:1"
+export function startScripture(data: API_scripture) {
+    const split = data.reference.split(".")
+    const ref = { book: Number(split[0]) - 1, chapter: Number(split[1]), verses: [split[2]] }
+
+    setDrawerTabData("scripture", data.id)
+    activeDrawerTab.set("scripture")
+
+    openScripture.set({ ...ref })
+    setTimeout(() => playScripture.set(true), 500)
+}
+
+// MEDIA
+
+export function playMedia(data: API_media) {
+    if (get(outLocked)) return
+
+    let outputId = getActiveOutputs(get(outputs))[0]
+    let currentOutput = get(outputs)[outputId] || {}
+    let currentStyle = getCurrentStyle(get(styles), currentOutput.style)
+
+    const mediaStyle = getMediaStyle(get(media)[data.path], currentStyle)
+
+    setOutput("background", { path: data.path, ...mediaStyle })
 }
 
 // SPECIAL

@@ -19,7 +19,10 @@
                 spliced.splice(spliced.indexOf(project.id), 1)
                 openedFolders.set(spliced)
             }
-        } else openedFolders.set([...$openedFolders, project.id])
+        } else if (!$openedFolders.includes(project.id)) {
+            openedFolders.set([...$openedFolders, project.id])
+        }
+
         opened = !opened
     }
 

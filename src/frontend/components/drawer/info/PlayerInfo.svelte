@@ -11,9 +11,11 @@
 
     // remove part after ? in URL
     function removeExtra(link: string) {
+        link = link.replace("https://", "")
         let extra = link.indexOf("?")
-        if (extra < 0) return link
-        return link.slice(0, extra)
+        if (extra > -1) link = link.slice(0, extra)
+        if (link.endsWith("/")) link = link.slice(0, link.length - 1)
+        return link
     }
 </script>
 
@@ -72,7 +74,14 @@
         gap: 5px;
     }
     main p:nth-child(even) {
-        background-color: var(--primary-darker);
+        background-color: rgb(0 0 20 / 0.15);
+    }
+
+    main p span:not(.title) {
+        opacity: 0.8;
+
+        overflow: hidden;
+        /* direction: rtl; */
     }
 
     .scroll {

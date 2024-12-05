@@ -45,7 +45,8 @@
         if (!id) return
 
         setTimeout(() => {
-            if (!self) return
+            // dropdown does not have a scroll bar if not much content, return so parent is not scrolled!
+            if (!self || options.length < 10) return
             let activeElem = self.querySelector("#" + id)
             activeElem?.scrollIntoView()
         }, 10)
@@ -54,17 +55,17 @@
     function formatId(value: string) {
         return "id_" + value?.replace(/[\W_]+/g, "")
     }
-</script>
 
-<svelte:window
-    on:mousedown={(e) => {
+    function mousedown(e: any) {
         if (e.target?.closest(".dropdownElem") !== self && active) {
             active = false
         }
-    }}
-/>
+    }
+</script>
 
-<div class:disabled class:center class:flags bind:this={self} class="dropdownElem" style="position: relative;{$$props.style || ''}">
+<svelte:window on:mousedown={mousedown} />
+
+<div class:disabled class:center class:flags bind:this={self} class="dropdownElem {$$props.class || ''}" style="position: relative;{$$props.style || ''}">
     <button style={arrow ? "justify-content: center;" : ""} {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
         {#if arrow}
             <Icon id="expand" size={1.2} white />

@@ -5,7 +5,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID } from "../../helpers/array"
-    import { getFileName, mediaExtensions } from "../../helpers/media"
+    import { getFileName } from "../../helpers/media"
     import { getFilters } from "../../helpers/style"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -22,6 +22,7 @@
     import Notes from "../../show/tools/Notes.svelte"
     import { getOriginalValue, removeExtension } from "../scripts/edit"
     import EditTimer from "./EditTimer.svelte"
+    import { mediaExtensions } from "../../../values/extensions"
 
     export let edits: any
     export let defaultEdits: any = {}
@@ -335,6 +336,12 @@
             return
         }
 
+        // don't "reset" if just closing (if different styles on multiple textboxes!)
+        if (checkIsClosed(id)) {
+            closeEdit(id)
+            return
+        }
+
         let closedVal = closed[id]
         let defaultEdit = clone(defaultEdits?.[id])
         let currentEdit = clone(edits[id])
@@ -528,6 +535,7 @@
                             </p>
                             <svelte:component
                                 this={inputs[input.input]}
+                                class="customInput"
                                 {...input.values || {}}
                                 {value}
                                 fontStyleValue={input.styleValue || ""}
@@ -588,6 +596,11 @@
     div :global(.dropdownElem),
     div :global(.color) {
         min-width: 50% !important;
+    }
+
+    div :global(.customInput .dropdown) {
+        width: 160%;
+        right: 0;
     }
 
     p {

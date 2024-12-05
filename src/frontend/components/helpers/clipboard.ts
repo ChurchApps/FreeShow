@@ -79,7 +79,7 @@ export function copy({ id, data }: any = {}, getData: boolean = true) {
 }
 
 // pasting text in editbox is it's own function
-export function paste(clip: any = null, extraData: any = {}) {
+export function paste(clip: any = null, extraData: any = {}, customElem: any = null) {
     if (!clip) clip = get(clipboard)
     let activeElem: any = document.activeElement
 
@@ -89,6 +89,7 @@ export function paste(clip: any = null, extraData: any = {}) {
     // edit item has its own paste function
     if (activeElem?.closest(".editItem")) return
 
+    if (customElem?.closest(".edit")) activeElem = customElem
     if (activeElem?.closest(".edit")) {
         pasteText(activeElem)
         return
@@ -667,6 +668,7 @@ const deleteActions = {
     },
     folder: (data: any) => historyDelete("UPDATE", data, { updater: "project_folder" }),
     project: (data: any) => historyDelete("UPDATE", data, { updater: "project" }),
+    project_template: (data: any) => historyDelete("UPDATE", data, { updater: "project_template" }),
     stage: (data: any) => historyDelete("UPDATE", data, { updater: "stage" }),
     category_shows: (data: any) => historyDelete("UPDATE", data, { updater: "category_shows" }),
     category_media: (data: any) => historyDelete("UPDATE", data, { updater: "category_media" }),
@@ -962,6 +964,8 @@ async function duplicateShows(selected: any) {
     await loadShows(selected.map(({ id }: any) => id))
     selected.forEach(({ id }: any) => {
         let show = clone(get(showsCache)[id])
+        if (!show) return
+
         show.name += " 2"
         show.timestamps.modified = new Date().getTime()
         history({ id: "UPDATE", newData: { data: show, remember: { project: id === "show" ? get(activeProject) : null } }, location: { page: "show", id: "show" } })

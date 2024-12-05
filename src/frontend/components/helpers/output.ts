@@ -6,11 +6,13 @@ import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
 import {
     activeRename,
+    categories,
     currentOutputSettings,
     currentWindow,
     dictionary,
     disabledServers,
     lockedOverlays,
+    midiIn,
     outputDisplay,
     outputs,
     outputSlideCache,
@@ -29,13 +31,14 @@ import {
 } from "../../stores"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
-import { customActionActivation } from "../actions/actions"
+import { videoExtensions } from "../../values/extensions"
+import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
-import { getExtension, getFileName, removeExtension, videoExtensions } from "./media"
+import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 
@@ -66,8 +69,12 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 
         // reset slide cache (after update)
         if (key === "slide" && data) setTimeout(() => outputSlideCache.set({}), 50)
-        // append show usage if not already outputted
-        if (key === "slide" && data?.id && get(outputs)[outs[0]]?.out?.slide?.id !== data?.id) appendShowUsage(data.id)
+        // trigger if show is not currently outputted
+        if (key === "slide" && data?.id && get(outputs)[outs[0]]?.out?.slide?.id !== data?.id) {
+            let category = get(showsCache)[data.id]?.category || ""
+            if (get(categories)[category]?.action) runAction(get(midiIn)[get(categories)[category].action!])
+            appendShowUsage(data.id)
+        }
 
         outs.forEach((id: string) => {
             let output: any = a[id]
@@ -559,7 +566,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             line.align = templateLine?.align || ""
             line.text?.forEach((text: any, k: number) => {
                 let templateText = templateLine?.text[k] || templateLine?.text[0]
-                if (text.customType !== "disableTemplate") text.style = templateText?.style || ""
+                if (!text.customType?.includes("disableTemplate")) text.style = templateText?.style || ""
 
                 let firstChar = templateText?.value?.[0] || ""
 
@@ -692,7 +699,7 @@ function removeTextValue(items: Item[]) {
 
 export function getTemplateText(value) {
     // if text has {} it will not get removed (useful for preset text, and dynamic values)
-    if (value.includes("{")) return value
+    if (value?.includes("{")) return value
     return ""
 }
 

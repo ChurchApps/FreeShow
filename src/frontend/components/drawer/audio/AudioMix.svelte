@@ -1,13 +1,29 @@
 <script lang="ts">
-    import { drawer, gain, volume } from "../../../stores"
+    import { drawer, gain, special, volume } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { updateVolume } from "../../helpers/audio"
     import Slider from "../../inputs/Slider.svelte"
     import AudioMeter from "../../output/preview/AudioMeter.svelte"
 
-    function setVolume(e: any, changeGain: boolean = false) {
-        updateVolume(e.target.value, changeGain)
+    function setVolume(e: any) {
+        let value = e.target.value
+
+        // "snap" to 100%
+        if ($special.allowGaining && value > 0.95 && value < 1.05) value = 1
+
+        let gain = 1
+        let volume = 1
+
+        if (value > 1) gain = (value - 1) / 0.125 + 1
+        else volume = value
+
+        updateVolume(volume)
+        if ($special.allowGaining) updateVolume(gain, true)
     }
+
+    // 25% / 200 = 0.125
+    $: gainValue = ($gain - 1) * 0.125
+    $: volumeValue = $special.allowGaining ? $volume + gainValue : $volume
 
     $: drawerHeight = $drawer.height - 40 - 180
 </script>
@@ -16,19 +32,13 @@
     <div class="meter">
         <AudioMeter advanced />
     </div>
-    <div class="volume">
+
+    <div class="volume" style="left: calc(50% + (48px / 2));">
         <p style="font-size: 0.9em;"><T id="media.volume" /></p>
         <div class="slider">
-            <Slider value={$volume} step={0.01} max={1} on:input={setVolume} />
+            <Slider value={volumeValue} step={0.01} max={$special.allowGaining ? 1.25 : 1} on:input={setVolume} />
         </div>
-        <p style="font-size: 1em;margin: 10px;{$volume === 1 || $volume === 0 ? 'color: var(--secondary);' : ''}">{($volume * 100).toFixed()}</p>
-    </div>
-    <div class="volume" style="left: 75%">
-        <p style="font-size: 0.9em;"><T id="media.gain" /></p>
-        <div class="slider">
-            <Slider value={$gain} step={0.01} min={1} max={3} on:input={(e) => setVolume(e, true)} />
-        </div>
-        <p style="font-size: 1em;margin: 10px;{$gain === 1 ? 'color: var(--secondary);' : ''}">{(($gain - 1) * 100).toFixed()}</p>
+        <p style="font-size: 1em;margin: 10px;{volumeValue === 1 || $volume === 0 ? 'color: var(--secondary);' : ''}">{(volumeValue * 100).toFixed()}<span style="color: var(--text);">%</span></p>
     </div>
 </main>
 
@@ -53,7 +63,7 @@
         position: absolute;
         left: 50%;
         top: 50%;
-        transform: translate(-50%, -58%);
+        transform: translate(-50%, -48%);
         pointer-events: none;
     }
 

@@ -163,6 +163,7 @@
         "toggle_shuffle": "Toggle shuffle",
         "next": "Next",
         "previous": "Previous",
+        "play_no_audio": "Play without audio",
         "play_no_filters": "Play without filters",
         "favourite": "Favorite",
         "pause": "Pause",
@@ -172,7 +173,6 @@
         "volume": "Volume",
         "gain": "Gain",
         "speed": "Speed",
-        "show": "Show",
         "flip": "Flip",
         "flip_horizontally": "Flip horizontally",
         "flip_vertically": "Flip vertically",
@@ -194,7 +194,10 @@
         "playlist_settings": "Playlist settings",
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
+        "allow_gaining": "Allow gaining",
+        "allow_gaining_tip": "Allow setting volume above 100% (May cause distortion)",
         "pre_fader_volume_meter": "Pre fader volume meter",
+        "mixer": "Mixer",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "tempo": "Tempo",
@@ -276,7 +279,7 @@
         "composer": "Composer",
         "publisher": "Publisher",
         "copyright": "Copyright",
-        "CCLI": "License (CCLI)",
+        "CCLI": "Song ID (CCLI)",
         "year": "Year",
         "key": "Key",
         "autofill": "Autofill",
@@ -364,7 +367,8 @@
         "music": "Music",
         "offers": "Offers",
         "notice": "Notice",
-        "visuals": "Visuals"
+        "visuals": "Visuals",
+        "action_tip": "An action that triggers each time a show with this category is presented."
     },
     "groups": {
         "current": "Current",
@@ -416,6 +420,7 @@
         "about": "About",
         "history": "History",
         "action": "Action",
+        "category_action": "Category action",
         "connect": "Connect",
         "cloud_update": "Syncing with cloud",
         "cloud_method": "Data location",
@@ -522,6 +527,7 @@
         "view_private": "Show private",
         "import": "Import",
         "export": "Export",
+        "imported": "Imported!",
         "duplicate": "Duplicate",
         "delete": "Delete",
         "delete_slide": "Delete slide",
@@ -550,6 +556,9 @@
         "zoomIn": "Zoom In",
         "zoomOut": "Zoom Out",
         "reset": "Reset",
+        "create_template": "Create template",
+        "project_template_tip": "Create a new project from this template",
+        "pdf_single_page": "Render as one document",
         "convert_to_images": "Convert to images",
         "converting": "Converting...",
         "remove_template_from_show": "Remove template from show",
@@ -629,6 +638,7 @@
         "next_after_media": "Next on media finished",
         "remove_media": "Remove media",
         "remove_layers": "Remove layers",
+        "toggle_checkbox_tip": "Action will toggle if checkbox is unchanged",
         "start_recording": "Start recording",
         "stop_recording": "Stop recording",
         "export_recording": "Stop recording and export",
@@ -637,6 +647,7 @@
         "previous_project_item": "Previous project item",
         "index_select_project_item": "Select project item by index",
         "name_select_show": "Select show by name",
+        "set_template_active": "Set template on active show",
         "random_slide": "Play random slide",
         "index_select_slide": "Select slide by index",
         "name_select_slide": "Select slide by name",
@@ -677,6 +688,7 @@
         "activate_slide_cleared": "Activate when slide is cleared",
         "activate_background_cleared": "Activate when background is cleared",
         "activate_show_created": "Activate when show is created",
+        "activate_show_opened": "Activate when show is opened",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended"
     },
     "recording": {
@@ -684,7 +696,9 @@
         "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",
         "layout_changed": "Layout has changed since last recording!",
         "audio_synced": "Synced with audio!",
-        "start": "Start slide recording"
+        "start": "Start slide recording",
+        "use_duration": "Use duration time",
+        "use_duration_tip": "Use duration time instead of timestamp time"
     },
     "animate": {
         "change": "Change",
@@ -721,6 +735,7 @@
     "export": {
         "export": "Export",
         "export_as": "Export {} as",
+        "exporting": "Exporting",
         "exported": "Exported!",
         "oneFile": "One file",
         "selected_shows": "Selected shows",
@@ -743,6 +758,7 @@
     },
     "context": {
         "enabledTabs": "Toggle tabs",
+        "setTag": "Set tag",
         "filterByTags": "Filter by tags",
         "addToProject": "Add to project",
         "add_to_show": "Add to show",
@@ -758,6 +774,7 @@
         "toggle_output": "Toggle output",
         "move_to_front": "Move to front",
         "hide_from_preview": "Hide from preview",
+        "enable_preview": "Enable preview",
         "lock_to_output": "Lock to output",
         "place_under_slide": "Place under slide",
         "toggle_clock": "Toggle clock",
@@ -923,6 +940,7 @@
         "to_event": "Time until event",
         "counter": "Countdown",
         "time": "Time",
+        "minutes": "Minutes",
         "seconds": "Seconds",
         "from": "From",
         "to": "To",
@@ -1133,7 +1151,8 @@
         "auto": "Auto",
         "optimized": "Optimized",
         "reduced": "Reduced",
-        "full": "Full"
+        "full": "Full",
+        "section_trigger_action": "Trigger action when navigating presentation to a section"
     },
     "sort": {
         "sort_by": "Sort by",
@@ -1181,6 +1200,7 @@
         "reference": "Show reference",
         "split_reference": "Split reference",
         "combine_with_text": "Combine with text",
+        "first_slide_reference": "Reference on first slide",
         "reference_at_bottom": "Move to bottom",
         "red_jesus": "Jesus words in red",
         "search": "Search in the Bible"
