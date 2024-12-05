@@ -1,8 +1,8 @@
 // ----- FreeShow -----
 // Respond to messages from the frontend
 
+import getFonts from "css-fonts"
 import { app, BrowserWindow, desktopCapturer, DesktopCapturerSource, Display, screen, shell, systemPreferences } from "electron"
-import { getFonts } from "font-list"
 import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
@@ -188,9 +188,11 @@ export const openURL = (url: string) => {
 
 // GET_SYSTEM_FONTS
 function loadFonts(data: any) {
-    getFonts({ disableQuoting: true })
-        .then((fonts: string[]) => toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: { ...data, fonts } }))
-        .catch((err: any) => console.log(err))
+    loadFontsAsync(data)
+}
+async function loadFontsAsync(data: any) {
+    const fonts = await getFonts()
+    toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: { ...data, fonts } })
 }
 
 // SEARCH_LYRICS

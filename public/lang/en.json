@@ -1119,6 +1119,7 @@
         "restart_for_change": "You have to restart the program for the change to take effect!",
         "font": "Font",
         "font_family": "Font family",
+        "font_style": "Font style",
         "font_size": "Font size",
         "border_radius": "Border radius",
         "colors": "Colors",

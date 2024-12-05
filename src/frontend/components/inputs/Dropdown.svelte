@@ -24,7 +24,7 @@
 
     let nextScrollTimeout: any = null
     function wheel(e: any) {
-        if (disabled || nextScrollTimeout) return
+        if (disabled || arrow || nextScrollTimeout) return
         e.preventDefault()
 
         let index = options.findIndex((a) => (activeId ? a.id === activeId : a.name === value))
@@ -66,7 +66,7 @@
 <svelte:window on:mousedown={mousedown} />
 
 <div class:disabled class:center class:flags bind:this={self} class="dropdownElem {$$props.class || ''}" style="position: relative;{$$props.style || ''}">
-    <button {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
+    <button style={arrow ? "justify-content: center;" : ""} {id} {title} on:click={() => (disabled ? null : (active = !active))} on:wheel={wheel}>
         {#if arrow}
             <Icon id="expand" size={1.2} white />
         {:else}
@@ -78,6 +78,7 @@
             {#each options as option}
                 <span
                     id={formatId(option.name)}
+                    style={option.style || ""}
                     on:click={() => {
                         if (disabled) return
                         active = false
