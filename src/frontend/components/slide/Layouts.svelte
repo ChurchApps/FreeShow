@@ -158,7 +158,7 @@
             {/if}
         </span>
     {:else}
-        <Center faded>
+        <Center faded size={0.8}>
             {#if loading}
                 <T id="remote.loading" />
             {:else}

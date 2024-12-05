@@ -699,7 +699,7 @@ function removeTextValue(items: Item[]) {
 
 export function getTemplateText(value) {
     // if text has {} it will not get removed (useful for preset text, and dynamic values)
-    if (value.includes("{")) return value
+    if (value?.includes("{")) return value
     return ""
 }
 

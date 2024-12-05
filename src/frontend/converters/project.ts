@@ -3,12 +3,27 @@ import type { ShowType } from "../../types/Show"
 import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
-import { activeProject, activeShow, projects } from "../stores"
+import { activeProject, activeShow, folders, projects, overlays as overlayStores, alertMessage, activePopup } from "../stores"
 
 export function importProject(files: any) {
     files.forEach(({ content }: any) => {
-        let { project, shows } = JSON.parse(content)
+        let { project, parentFolder, shows, overlays } = JSON.parse(content)
 
+        // find any parent folder with the same name as previous parent, or place at root
+        if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]: any) => folder.name === parentFolder)?.[0] || "/"
+
+        // add overlays
+        if (overlays) {
+            overlayStores.update(a => {
+                Object.entries(overlays).forEach(([id, overlay]: any) => {
+                    // create new or replace existing
+                    a[id] = overlay
+                })
+                return a
+            })
+        }
+
+        // create shows
         let newShows: any[] = []
         Object.entries(shows).forEach(([id, show]: any) => {
             if (!show) return
@@ -17,8 +32,12 @@ export function importProject(files: any) {
 
         history({ id: "SHOWS", newData: { data: newShows } })
 
+        // create project
         history({ id: "UPDATE", newData: { data: project }, location: { page: "show", id: "project" } })
     })
+
+    alertMessage.set("actions.imported")
+    activePopup.set("alert")
 }
 
 export function addToProject(type: ShowType, filePaths: string[]) {

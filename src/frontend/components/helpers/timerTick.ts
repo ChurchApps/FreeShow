@@ -23,6 +23,7 @@ export function startTimer() {
     if (get(currentWindow)) return
     if (!get(activeTimers).filter((a) => a.paused !== true).length || timeout) return
 
+    if (timeout) clearTimeout(timeout)
     timeout = setTimeout(() => {
         let newActiveTimers = clone(get(activeTimers)).map(increment)
 
@@ -51,8 +52,12 @@ export function startTimerById(id: string) {
 }
 
 export function stopTimers() {
-    activeTimers.set([])
-    customInterval = INTERVAL
+    // timeout so timer_end action don't clear at the same time as next timer tick starts
+    setTimeout(() => {    
+        // if (timeout) clearTimeout(timeout) // clear timeout (timer does not start again then...)
+        activeTimers.set([])
+        customInterval = INTERVAL
+    }, 50)
 }
 
 function increment(timer: any, i: number) {

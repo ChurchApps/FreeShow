@@ -11,6 +11,7 @@ import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFr
 import { exportOptions } from "../utils/windowOptions"
 import { Message } from "../../types/Socket"
 import { getAllShows } from "../utils/shows"
+import AdmZip from "adm-zip"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions: any = {
@@ -242,7 +243,25 @@ function exportAllShows(data: any) {
 // ----- PROJECT -----
 
 export function exportProject(data: any) {
-    writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", (err: any) => doneWritingFile(err, data.path))
+    toApp(MAIN, {channel: "ALERT", data: "export.exporting"})
+
+    // create archive
+    const zip = new AdmZip()
+
+    // copy files
+    const files = data.file.files || []
+    files.forEach((path: string) => {
+        zip.addLocalFile(path)
+    });
+
+    // add project file
+    zip.addFile("data.json", Buffer.from(JSON.stringify(data.file)))
+    
+    const outputPath = join(data.path, data.name + ".project")
+    zip.writeZip(outputPath, (err: any) => doneWritingFile(err, data.path));
+
+    // plain JSON
+    // writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", (err: any) => doneWritingFile(err, data.path))
 }
 
 // ----- HELPERS -----

@@ -25,6 +25,7 @@ function setLanguage(locale: string = "", init: boolean = false) {
     }
 
     if (!replace[locale]) locale = "en"
+    language.set(locale)
 
     const url = defaultPath.replace("en", locale)
     fetch(url)
@@ -47,7 +48,7 @@ function setLanguage(locale: string = "", init: boolean = false) {
         }
 
         // a new language might have loaded
-        if (init && get(language) !== locale) return
+        if (init && get(language) !== "en" && get(language) !== locale) return
 
         dictionary.set(messages)
         if (init || get(currentWindow)) return

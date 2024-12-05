@@ -745,8 +745,10 @@ function createScriptureShow(drag, drop) {
     })
 
     let layoutID = uid()
+    // only set template if not combined (because it might be a custom reference style on first line)
+    let template = get(scriptureSettings).combineWithText ? false : get(scriptureSettings).template || false
     // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
-    let show: Show = new ShowObj(false, "scripture", layoutID, new Date().getTime(), get(scriptureSettings).template || false)
+    let show: Show = new ShowObj(false, "scripture", layoutID, new Date().getTime(), template)
     // add scripture category
     if (!get(categories).scripture) {
         categories.update((a) => {

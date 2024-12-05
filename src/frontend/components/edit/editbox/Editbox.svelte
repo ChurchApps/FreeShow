@@ -96,6 +96,7 @@
         if (!$activeEdit.items.includes(index) || document.activeElement?.closest(".item") || document.activeElement?.closest("input")) return
 
         if (e.key === "Backspace" || e.key === "Delete") {
+            // delete slide item using shortcut
             deleteAction({ id: "item", data: { layout, slideId: ref.id } })
         }
     }

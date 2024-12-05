@@ -8,10 +8,11 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import { presentationExtensions } from "../../../values/extensions"
+    import { translate } from "../../../utils/language"
 
     const freeshow_formats = [
         { name: "$formats.show", extensions: ["show", "json"], id: "freeshow" },
-        { name: "$formats.project", extensions: ["project", "shows", "json"], id: "freeshow_project" }, // , "fsproject", "fsp"
+        { name: "$formats.project", extensions: ["project", "shows", "json", "zip"], id: "freeshow_project" }, // , "fsproject", "fsp"
         { name: "$formats.template", extensions: ["fstemplate", "fst", "template", "json"], id: "freeshow_template" },
         { name: "$formats.theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" },
         // { name: "Calendar", extensions: ["ics"], id: "calendar" }, // calendar drawer tab
@@ -51,6 +52,7 @@
         { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
         { name: "Songbeamer", id: "songbeamer", popup: "songbeamer_import" },
         { name: "Easyslides", extensions: ["xml"], id: "easyslides" },
+        { name: "VerseVIEW", extensions: ["xml"], id: "verseview" },
     ]
 
     const media_formats = [
@@ -76,7 +78,8 @@
         <Button
             style="flex: 1;min-height: 50px;"
             on:click={() => {
-                send(IMPORT, [format.id], { path: $dataPath, format })
+                let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
+                send(IMPORT, [format.id], { path: $dataPath, format: { ...format, name } })
                 displayTutorial(format)
             }}
             center
@@ -106,7 +109,8 @@
                         }
                     })
                 } else if (format.extensions) {
-                    send(IMPORT, [format.id], { path: $dataPath, format })
+                    let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
+                    send(IMPORT, [format.id], { path: $dataPath, format: { ...format, name } })
                     displayTutorial(format)
                 } else if (format.id === "clipboard") {
                     importFromClipboard()

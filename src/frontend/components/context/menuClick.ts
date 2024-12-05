@@ -133,7 +133,7 @@ const actions: any = {
 
     // main
     rename: (obj: any) => {
-        let id = obj.sel.id || obj.contextElem.id
+        let id = obj.sel?.id || obj.contextElem?.id
         if (!id) return
         let data = obj.sel.data?.[0] || {}
 
@@ -170,6 +170,7 @@ const actions: any = {
         // "slide" || "group" || "overlay" || "template" || "output"
         activePopup.set("color")
     },
+    // not currently in use:
     remove_group: (obj: any) => removeGroup(obj.sel.data),
     remove_slide: (obj: any) => {
         removeSlide(obj.sel.data, "remove")
@@ -198,7 +199,8 @@ const actions: any = {
             deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
             return
         }
-        if (obj.contextElem?.classList.value.includes("#edit_box")) {
+        // delete slide item using context menu, or menubar action
+        if (obj.contextElem?.classList.value.includes("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
             deleteAction({ id: "item", data: { slide: get(activeEdit).slide } })
             return
         }
@@ -710,13 +712,18 @@ const actions: any = {
     slide_groups: (obj: any) => changeSlideGroups(obj),
 
     actions: (obj: any) => changeSlideAction(obj, obj.menu.id),
+    transition: () => {
+        // item transition
+        popupData.set({ action: "transition" })
+        activePopup.set("transition")
+    },
     item_actions: (obj: any) => {
         let action = obj.menu.id
         popupData.set({ action })
 
-        if (action === "transition") {
-            activePopup.set("transition")
-        } else if (action.includes("Timer")) {
+        // if (action === "transition") {
+        //     activePopup.set("transition")
+        if (action.includes("Timer")) {
             activePopup.set("set_time")
         }
     },

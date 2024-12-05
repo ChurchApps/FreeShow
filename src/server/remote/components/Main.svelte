@@ -37,7 +37,7 @@
 
     // keyboard shortcuts
     function keydown(e: any) {
-        if (e.target?.closest("textarea")) return
+        if (e.target?.closest("textarea") || e.target?.closest("input")) return
 
         if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
 

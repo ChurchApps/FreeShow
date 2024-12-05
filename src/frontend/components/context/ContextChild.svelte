@@ -64,7 +64,7 @@
 
 <svelte:window on:mouseover={onMouseOver} />
 
-<div bind:this={elem} class="item" on:click={click} tabindex={0} on:keydown={keydown}>
+<div bind:this={elem} class="item" class:open on:click={click} tabindex={0} on:keydown={keydown}>
     <span style="display: flex;gap: 10px;justify-content: space-between;width: 100%;">
         <div class="left" style="display: flex;align-items: center;gap: 10px;">
             {#if menu?.icon}<Icon id={menu.icon} />{/if}
@@ -106,7 +106,8 @@
         display: flex;
         justify-content: space-between;
     }
-    .item:hover {
+    .item:hover,
+    .item.open {
         background-color: rgb(0 0 0 / 0.2);
     }
 

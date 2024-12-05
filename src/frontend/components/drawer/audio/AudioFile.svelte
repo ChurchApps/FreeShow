@@ -27,7 +27,7 @@
         on:click={(e) => {
             if ($outLocked || e.ctrlKey || e.metaKey) return
 
-            if (playlist) startPlaylist(active, path)
+            if (playlist) startPlaylist(active, path, true)
             else playAudio({ path, name }, true, 0, e.altKey)
         }}
         on:dblclick={(e) => {

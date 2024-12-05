@@ -110,8 +110,8 @@ const keys: any = {
     Backspace: () => keys.Delete(),
     // give time so it don't clear slide
     F2: () => setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
-    // default menu "togglefullscreen" role not working in production on Windows
-    F11: () => (get(os).platform === "win32" ? send(MAIN, ["FULLSCREEN"]) : null),
+    // default menu "togglefullscreen" role not working in production on Windows/Linux
+    F11: () => (get(os).platform !== "darwin" ? send(MAIN, ["FULLSCREEN"]) : null),
 }
 
 export function keydown(e: any) {
