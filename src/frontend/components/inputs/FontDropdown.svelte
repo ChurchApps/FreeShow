@@ -185,11 +185,6 @@
         display: flex;
     }
 
-    .dropdownElem :global(.arrow) {
-        width: 130px !important;
-        text-transform: capitalize;
-    }
-
     div {
         background-color: var(--primary-darker);
         color: var(--text);
@@ -207,6 +202,13 @@
         border: 2px solid var(--primary-lighter);
         transform: translateY(-1px);
         z-index: 10;
+
+        width: 180%;
+        right: 0;
+    }
+    .dropdownElem :global(.dropdownElem .dropdown.arrow) {
+        /* this is currently relative to 40px anyway */
+        width: 520% !important;
     }
 
     button {
