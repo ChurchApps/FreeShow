@@ -14,7 +14,8 @@ export function checkName(name: string = "", showId: string = "") {
     let number = 1
     while (Object.entries(get(shows)).find(([id, a]: any) => (!showId || showId !== id) && a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
 
-    return number > 1 ? name + " " + number : name
+    // add number if existing name, and trim away spaces from the start/end
+    return (number > 1 ? name + " " + number : name).trim()
 }
 
 export function formatToFileName(name: string = "") {

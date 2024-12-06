@@ -31,7 +31,7 @@
     let sortedTriggers = sortByName(globalList)
 
     function updateValue(e: any, key: string) {
-        let value = e?.target?.value || e
+        let value = e?.target?.value ?? e
         if (!value) return
 
         currentTrigger[key] = value
