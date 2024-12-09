@@ -7,6 +7,7 @@ import {
     activeRename,
     activeShow,
     activeStage,
+    activeTagFilter,
     audioPlaylists,
     currentOutputSettings,
     dictionary,
@@ -440,6 +441,9 @@ export const _updaters = {
             activeRename.set("tag_" + id)
             return data
         },
+        deselect: () => {
+            activeTagFilter.set([])
+        }
     },
     tag_key: { store: globalTags },
 

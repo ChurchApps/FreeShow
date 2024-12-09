@@ -53,7 +53,7 @@ export const receiveCONTROLLER = {
         draw.set(data.offset)
         drawTool.set(tool)
 
-        if (tool === "paint") paintCache.set([{ x: 0, y: 0, size: 0, color: "white" }])
+        if (tool === "paint") paintCache.set([{ x: 0, y: 0, size: 0, color: "#ffffff" }])
     },
     GET_OUTPUT_ID: () => {
         return { channel: "GET_OUTPUT_ID", data: get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0] }

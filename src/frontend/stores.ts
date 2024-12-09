@@ -9,7 +9,7 @@ import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { ID, MidiIn, Overlays, ShowList, Shows, Templates, Timer, Transition } from "../types/Show"
+import type { ID, MidiIn, Overlays, ShowList, Shows, Tag, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { Channels, Playlist } from "./../types/Audio"
@@ -60,6 +60,7 @@ export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
 export const activeScripture: Writable<any> = writable({})
 export const activeTagFilter: Writable<string[]> = writable([])
+export const activeMediaTagFilter: Writable<string[]> = writable([])
 export const activeTriggerFunction: Writable<string> = writable("")
 export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
@@ -167,7 +168,7 @@ export const transitionData: Writable<{ text: Transition; media: Transition }> =
     media: { type: "fade", duration: 800, easing: "sine" },
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
-export const globalTags: Writable<{ [key: string]: { name: string; color: string } }> = writable({}) // {}
+export const globalTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 
 // PROJECT
 export const openedFolders: Writable<ID[]> = writable([]) // []
@@ -189,6 +190,7 @@ export const triggers: Writable<{ [key: string]: any }> = writable({}) // {}
 export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
 export const videoMarkers: Writable<{ [key: string]: { name: string; time: number }[] }> = writable({}) // {}
+export const mediaTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const checkedFiles: Writable<any[]> = writable([])
 
 // OVERLAYS

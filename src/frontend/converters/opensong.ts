@@ -4,8 +4,8 @@ import { checkName, formatToFileName } from "../components/helpers/show"
 import type { Bible } from "./../../types/Bible"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, scriptures, scripturesCache } from "./../stores"
-import { createCategory, setTempShows } from "./importHelpers"
 import { setActiveScripture } from "./bible"
+import { createCategory, setTempShows } from "./importHelpers"
 
 interface Song {
     title: string
@@ -39,7 +39,9 @@ export function convertOpenSong(data: any) {
 
     setTimeout(() => {
         data?.forEach(({ content }: any) => {
-            let song = XMLtoObject(content)
+            let song: any = {}
+            if (content.includes("<html>")) song = HTMLtoObject(content)
+            else song = XMLtoObject(content)
             console.log(song)
 
             let layoutID = uid()
@@ -239,3 +241,50 @@ function XMLtoBible(xml: string): Bible {
 }
 
 const getChildren = (parent: any, name: string) => parent.getElementsByTagName(name)
+
+function HTMLtoObject(content: string) {
+    let parser = new DOMParser()
+    let html = parser.parseFromString(content, "text/html").children[0]?.querySelector("body")
+
+    // WIP chords
+
+    const groups = content.split('<span class="heading">').slice(1)
+    let lyrics: string = ""
+    groups.forEach(group =>{
+        let linesEnd = group.lastIndexOf("<br/>")
+        let g = group.slice(0, linesEnd)
+        const lines = group.indexOf("<table") > -1 ? g.split("<table").slice(1) : g.split('class="lyrics">').slice(1)
+
+        let groupName = group.slice(0, group.indexOf("</span>")).trim()
+        lyrics += `[${groupName}]\n`
+        
+        lines.forEach(line => {
+            const sections = line.indexOf('class="lyrics">') > -1 ? line.split('class="lyrics">').slice(1) : [line]
+            
+            sections.forEach(section => {
+                let text = section.slice(0, section.indexOf("</td>"))
+                lyrics += text
+            })
+
+            lyrics += "\n"
+        })
+
+        lyrics = lyrics.trim() + "\n\n"
+    })
+
+    lyrics = lyrics.trim()
+
+    let object: Song = {
+        title: html?.querySelector("#title")?.textContent || "",
+        author: html?.querySelector("#author")?.textContent || "",
+        ccli: html?.querySelector("#ccli")?.textContent || "",
+        copyright: html?.querySelector("#copyright")?.textContent || "",
+        time_sig: html?.querySelector("#time_sig")?.textContent || "",
+        lyrics,
+        hymn_number: html?.querySelector("#hymn_number")?.textContent || "",
+        key: html?.querySelector("#key")?.textContent || "",
+        backgrounds: html?.querySelector("#backgrounds")?.textContent || "",
+    }
+
+    return object
+}

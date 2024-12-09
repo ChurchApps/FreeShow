@@ -41,6 +41,7 @@ import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
+import { newToast } from "../../utils/common"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     // sort so display order can be changed! (needs app restart)
@@ -318,18 +319,21 @@ export function getOutputResolution(outputId: string, _updater = get(outputs)) {
     return style || { width: 1920, height: 1080 }
 }
 
-export function checkWindowCapture() {
-    getActiveOutputs(get(outputs), false, true, true).forEach(shouldBeCaptured)
+export function checkWindowCapture(startup: boolean = false) {
+    getActiveOutputs(get(outputs), false, true, true).forEach((a) => shouldBeCaptured(a, startup))
 }
 
 // NDI | OutputShow | Stage CurrentOutput
-export function shouldBeCaptured(outputId: string) {
+export function shouldBeCaptured(outputId: string, startup: boolean = false) {
     let output = get(outputs)[outputId]
     let captures: any = {
         ndi: !!output.ndi,
         server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0]) === outputId),
         stage: stageHasOutput(outputId),
     }
+
+    // alert user that screen recording starts
+    if (!startup && Object.values(captures).filter(Boolean).length) newToast("$toast.output_capture_enabled")
 
     send(OUTPUT, ["CAPTURE"], { id: outputId, captures })
 }

@@ -88,6 +88,7 @@
 
         special.update((a) => {
             delete a.numberKeys
+            delete a.autoLetterShortcut
             a.capitalize_words = "Jesus, Lord" // updateSettings.ts
             return a
         })
@@ -159,6 +160,7 @@
             on:click={() => {
                 history({ id: "UPDATE", newData: { id: group.id }, location: { page: "settings", id: "global_group" } })
             }}
+            title={$dictionary.actions?.delete}
         >
             <Icon id="delete" />
             <!-- <T id="actions.delete" /> -->
@@ -166,16 +168,19 @@
     </CombinedInput>
 {/each}
 
+<CombinedInput>
+    <Button style="width: 100%;" on:click={addGroup} center dark>
+        <Icon id="add" right />
+        <T id="settings.add" />
+    </Button>
+</CombinedInput>
+
 <div class="filler" />
 <div class="bottom">
     <div style="display: flex;">
-        <Button style="width: 100%;" on:click={addGroup} center>
-            <Icon id="add" right />
-            <T id="settings.add" />
-        </Button>
         <Button style="width: 100%;" center on:click={reset}>
             <Icon id="reset" right />
-            <T id="actions.reset" />
+            <p><T id="actions.reset" /></p>
         </Button>
     </div>
 </div>

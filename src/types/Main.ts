@@ -107,6 +107,7 @@ export interface MediaStyle {
     volume?: number // audio
     rendering?: string // image rendering
     info?: any // cached codec/mime data
+    tags?: string[] // media tags
 }
 
 export type Popups =
@@ -143,6 +144,7 @@ export type Popups =
     | "animate"
     | "translate"
     | "next_timer"
+    | "manage_tags"
     | "advanced_settings"
     | "about"
     | "shortcuts"

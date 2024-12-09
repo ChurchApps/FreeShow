@@ -11,6 +11,7 @@
     export let enableNoColor: boolean = false
     export let showDisabled: boolean = false
     export let custom: boolean = false
+    export let rightAlign: boolean = false
     export let height: number = 0
     export let width: number = 0
 
@@ -43,7 +44,7 @@
     }
 
     let colorElem
-    let clipRight: boolean = false
+    let clipRight: boolean = rightAlign || false
     $: if (colorElem) {
         let pickerRect = colorElem.getBoundingClientRect()
         let pickerRight = pickerRect.left + 200

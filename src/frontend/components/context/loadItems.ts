@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, activeTagFilter, contextData, drawerTabsData, globalTags, groups, outputs, overlays, selected, shows, sorted } from "../../stores"
+import { activeEdit, activeMediaTagFilter, activeTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, outputs, overlays, selected, shows, sorted } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
@@ -33,6 +33,19 @@ const loadActions = {
         setContextData("tags", sortedTags.length)
         return sortedTags
     },
+    media_tag_set: () => {
+        let selectedTags = get(media)[get(selected).data[0]?.path]?.tags || []
+        let sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const create = {label: "popup.manage_tags", icon: "edit", id: "create"}
+        if (sortedTags.length) sortedTags.push("SEPERATOR")
+        sortedTags.push(create)
+        return sortedTags
+    },
+    media_tag_filter: () => {
+        let sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeMediaTagFilter).includes(a.id), translate: false }))
+        setContextData("media_tags", sortedTags.length)
+        return sortedTags
+    },
     sort_shows: (items: ContextMenuItem[]) => sortItems(items, "shows"),
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
     slide_groups: (items: ContextMenuItem[]) => {
@@ -53,6 +66,7 @@ const loadActions = {
 
         let slideActions = [
             { id: "action", label: "midi.start_action", icon: "actions" },
+            "SEPERATOR",
             { id: "slide_shortcut", label: "actions.play_with_shortcut", icon: "play", enabled: currentActions?.slide_shortcut || false },
             { id: "receiveMidi", label: "actions.play_on_midi", icon: "play", enabled: currentActions?.receiveMidi || false },
             "SEPERATOR",

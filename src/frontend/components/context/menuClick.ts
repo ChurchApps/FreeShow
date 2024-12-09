@@ -9,6 +9,7 @@ import {
     activeDrawerTab,
     activeEdit,
     activeFocus,
+    activeMediaTagFilter,
     activePage,
     activePopup,
     activeRecording,
@@ -17,6 +18,7 @@ import {
     activeTagFilter,
     audioFolders,
     categories,
+    contextActive,
     currentOutputSettings,
     currentWindow,
     dataPath,
@@ -285,6 +287,44 @@ const actions: any = {
         else activeTags.splice(currentIndex, 1)
 
         activeTagFilter.set(activeTags || [])
+    },
+    media_tag_set: (obj: any) => {
+        let tagId = obj.menu.id
+        if (tagId === "create") {
+            contextActive.set(false)
+            popupData.set({type: "media"})
+            activePopup.set("manage_tags")
+            return
+        }
+
+        let disable = get(media)[get(selected).data[0]?.path]?.tags?.includes(tagId)
+
+        obj.sel.data?.forEach(({ path }) => {
+            let tags = get(media)[path]?.tags || []
+
+            let existingIndex = tags.indexOf(tagId)
+            if (disable) {
+                if (existingIndex > -1) tags.splice(existingIndex, 1)
+            } else {
+                if (existingIndex < 0) tags.push(tagId)
+            }
+
+            media.update((a) => {
+                if (!a[path]) a[path] = {}
+                a[path].tags = tags
+                return a
+            })
+        })
+    },
+    media_tag_filter: (obj: any) => {
+        let tagId = obj.menu.id
+
+        let activeTags = get(activeMediaTagFilter)
+        let currentIndex = activeTags.indexOf(tagId)
+        if (currentIndex < 0) activeTags.push(tagId)
+        else activeTags.splice(currentIndex, 1)
+
+        activeMediaTagFilter.set(activeTags || [])
     },
     addToProject: (obj: any) => {
         if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return

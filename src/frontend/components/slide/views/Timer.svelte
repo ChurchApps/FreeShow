@@ -30,7 +30,7 @@
     $: min = Math.min(timer.start || 0, timer.end || 0)
     $: max = Math.max(timer.start || 0, timer.end || 0)
     $: percentage = Math.max(0, Math.min(100, ((currentTime - min) / (max - min)) * 100))
-    $: itemColor = getStyles(item?.style)?.color || "white"
+    $: itemColor = getStyles(item?.style)?.color || "#ffffff"
 
     $: overflow = getTimerOverflow(currentTime)
     $: negative = timer?.start! > timer?.end! || currentTime < 0

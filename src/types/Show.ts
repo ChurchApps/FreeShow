@@ -364,6 +364,11 @@ export interface OutTransition {
     duration: number
 }
 
+export interface Tag {
+    name: string
+    color: string
+}
+
 // types
 
 export type ID = string

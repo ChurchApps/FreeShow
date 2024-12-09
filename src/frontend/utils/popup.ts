@@ -47,6 +47,7 @@ import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
 import CategoryAction from "../components/main/popups/CategoryAction.svelte"
+import ManageTags from "../components/main/popups/ManageTags.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -82,6 +83,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     animate: Animate,
     translate: Translate,
     next_timer: NextTimer,
+    manage_tags: ManageTags,
     advanced_settings: AdvancedScreen,
     about: About,
     shortcuts: Shortcuts,

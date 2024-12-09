@@ -32,7 +32,7 @@
         background: () => clearBackground(),
         slide: () => clearSlide(),
         overlays: () => clearOverlays(),
-        audio: () => clearAudio(),
+        audio: () => clearAudio("", true, false, true),
         nextTimer: () => clearTimers(),
     }
 

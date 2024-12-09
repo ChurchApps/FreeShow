@@ -13,7 +13,7 @@ import { checkNextAfterMedia } from "./showActions"
 
 // WIP use get(special).audio_fade_duration ?? 1.5 to fade in when starting song ?? (currently just when fading out)
 
-export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0) {
+export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0, playlistCrossfade: boolean = false) {
     let existing: any = get(playingAudio)[path]
     if (existing) {
         if (!pauseIfPlaying) {
@@ -36,7 +36,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
 
     let audioPlaying = Object.keys(get(playingAudio)).length
     if (crossfade) crossfadeAudio(crossfade)
-    else if (!playMultiple) clearAudio("", false)
+    else if (!playMultiple) clearAudio("", false, playlistCrossfade)
 
     let encodedPath = encodeFilePath(path)
     audio = audio || new Audio(encodedPath)
@@ -252,7 +252,7 @@ export function playlistNext(previous: string = "", specificSong: string = "", c
     })
 
     // if (crossfade) isCrossfading = true
-    playAudio({ path: nextSong }, false, 0, false, crossfade)
+    playAudio({ path: nextSong }, false, 0, false, crossfade, true)
 
     function getSongs(): string[] {
         if (previous && get(activePlaylist)?.songs) return get(activePlaylist).songs
@@ -569,7 +569,7 @@ function getHighestNumber(numbers: number[]): number {
 
 let clearing = false
 let forceClear: boolean = false
-export function clearAudio(path: string = "", clearPlaylist: boolean = true, playlistCrossfade: boolean = false) {
+export function clearAudio(path: string = "", clearPlaylist: boolean = true, playlistCrossfade: boolean = false, commonClear: boolean = false) {
     // turn off any playlist
     if (clearPlaylist && (!path || get(activePlaylist)?.active === path)) activePlaylist.set(null)
 
@@ -579,6 +579,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
     const clearTime = playlistCrossfade ? 0 : (get(special).audio_fade_duration ?? 1.5)
 
     if (clearing) {
+        if (!commonClear) return
         // force stop audio files (bypass timeout if already active)
         forceClear = true
         setTimeout(() => (forceClear = false), 100)
