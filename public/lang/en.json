@@ -413,7 +413,7 @@
         "import": "Import",
         "songbeamer_import": "Songbeamer Import",
         "export": "Export",
-        "importing": "Importing",
+        "importing": "Importing...",
         "import_scripture": "Import scripture",
         "player": "Player",
         "edit_event": "Edit event",
@@ -737,7 +737,7 @@
     "export": {
         "export": "Export",
         "export_as": "Export {} as",
-        "exporting": "Exporting",
+        "exporting": "Exporting...",
         "exported": "Exported!",
         "oneFile": "One file",
         "selected_shows": "Selected shows",

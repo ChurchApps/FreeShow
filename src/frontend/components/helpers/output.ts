@@ -526,7 +526,7 @@ export function getCurrentMediaTransition() {
 // TEMPLATE
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true) {
-    if (!slideItems) return []
+    if (!slideItems?.length) return []
     slideItems = clone(slideItems)
 
     if (!templateItems.length) return slideItems

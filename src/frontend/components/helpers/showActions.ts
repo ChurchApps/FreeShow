@@ -798,13 +798,13 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
 }
 
 // go to next slide if current output slide has nextAfterMedia action
-let nextActive = false
+let nextActive: string[] = []
 export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "timer" = "media", outputId: string = "") {
-    if (nextActive) return false
+    if (nextActive.includes(outputId)) return false
 
-    nextActive = true
+    nextActive.push(outputId)
     setTimeout(() => {
-        nextActive = false
+        nextActive.splice(nextActive.indexOf(outputId), 1)
     }, 600) // MAKE SURE NEXT SLIDE HAS TRANSITIONED
 
     if (!outputId) outputId = getActiveOutputs(get(outputs), true, true, true)[0]

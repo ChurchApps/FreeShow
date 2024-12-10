@@ -467,7 +467,8 @@ function getPlayingAudio() {
                     get(playingAudio)[audioPath].audio.currentTime = 0
                     get(playingAudio)[audioPath].audio.play()
                 } else if (get(activePlaylist)?.active === audioPath) {
-                    let playlist = get(audioPlaylists)[audioPath] || {}
+                    let playlistId = get(activePlaylist).id || ""
+                    let playlist = get(audioPlaylists)[playlistId] || {}
 
                     playingAudio.update((a: any) => {
                         a[audioPath]?.audio?.pause()

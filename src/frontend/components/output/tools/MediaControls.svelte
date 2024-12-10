@@ -12,6 +12,7 @@
 
     export let currentOutput: any
     export let outputId: string
+    export let big: boolean = false
 
     $: videoData = $videosData[outputId] || {}
 
@@ -26,6 +27,7 @@
 
     // custom time update (for player videos)
     onMount(() => {
+        if ($videosTime[outputId]) videoTime = $videosTime[outputId]
         setInterval(() => {
             if (videoData.paused || timeJustUpdated) return
             videoTime++
@@ -89,21 +91,23 @@
 <svelte:window on:keydown={keydown} />
 
 {#if background}
-    <span class="name" on:click={openPreview}>
-        {#if background?.type === "player"}
-            <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
-        {:else}
-            <p>{mediaName}</p>
-        {/if}
-    </span>
+    {#if !big}
+        <span class="name" on:click={openPreview}>
+            {#if background?.type === "player"}
+                <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
+            {:else}
+                <p>{mediaName}</p>
+            {/if}
+        </span>
+    {/if}
 
     {#if type === "video" || background?.type === "player"}
-        <span class="group">
+        <span class="group" class:big>
             <Button center title={videoData.paused ? $dictionary.media?.play : $dictionary.media?.pause} disabled={$outLocked} on:click={playPause}>
-                <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
+                <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={big ? 1.7 : 1.2} />
             </Button>
 
-            <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput />
+            <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput big />
 
             <Button
                 center
@@ -112,7 +116,7 @@
                     changeValue = Math.max(videoTime - 10, 0.01)
                 }}
             >
-                <Icon id="back_10" white size={1.2} />
+                <Icon id="back_10" white size={big ? 1.4 : 1.2} />
             </Button>
             <Button
                 center
@@ -121,7 +125,7 @@
                     changeValue = Math.min(videoTime + 10, videoData.duration - 0.1)
                 }}
             >
-                <Icon id="forward_10" white size={1.2} />
+                <Icon id="forward_10" white size={big ? 1.4 : 1.2} />
             </Button>
             <Button
                 center
@@ -131,7 +135,7 @@
                     sendToOutput()
                 }}
             >
-                <Icon id="loop" white={!videoData.loop} size={1.2} />
+                <Icon id="loop" white={!videoData.loop} size={big ? 1.4 : 1.2} />
             </Button>
             <Button
                 center
@@ -143,7 +147,7 @@
                     sendToOutput()
                 }}
             >
-                <Icon id={videoData.muted === false ? "volume" : "muted"} white={videoData.muted !== false} size={1.2} />
+                <Icon id={videoData.muted === false ? "volume" : "muted"} white={videoData.muted !== false} size={big ? 1.4 : 1.2} />
             </Button>
         </span>
     {/if}
@@ -157,6 +161,13 @@
     }
     .group :global(button) {
         padding: 0.3em !important;
+    }
+
+    .group.big {
+        background-color: var(--primary-darkest);
+    }
+    .group.big :global(.slider input) {
+        background-color: var(--primary);
     }
 
     .name {
