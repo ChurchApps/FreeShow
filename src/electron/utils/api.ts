@@ -1,6 +1,7 @@
 import { ipcMain } from "electron"
 import express from "express"
 import http from "http"
+import OSC from "osc-js"
 import { Server } from "socket.io"
 import { uid } from "uid"
 import { toApp } from ".."
@@ -15,6 +16,7 @@ const DEFAULT_PORTS = { WebSocket: 5505, REST: 5506 }
 export function startWebSocketAndRest(port: number | undefined) {
     startRestListener(port ? port + 1 : 0)
     startWebSocket(port)
+    startOSC(port)
 }
 
 // WEBSOCKET
@@ -24,7 +26,7 @@ export function startWebSocket(PORT: number | undefined) {
 
     if (!PORT) PORT = DEFAULT_PORTS.WebSocket
     server.listen(PORT, () => {
-        console.log(`WebSocket: Starting server at port ${PORT}.`)
+        console.log(`WebSocket: Starting server at port ${PORT}`)
     })
 
     server.once("error", (err: any) => {
@@ -91,6 +93,41 @@ export function startRestListener(PORT: number | undefined) {
 
         req.emit("data", returnData)
     })
+}
+
+// Open Sound Control
+
+function startOSC(PORT: number | undefined) {
+    if (!PORT) PORT = DEFAULT_PORTS.WebSocket
+
+    // const osc = new OSC({ plugin: new OSC.WebsocketServerPlugin() }) // ws://ip:port
+    const osc = (servers.OSC = new OSC({ plugin: new OSC.DatagramPlugin() })) // UDP
+
+    osc.on("/freeshow/*", async (msg: any) => {
+        // const active = msg.args[1] || 0
+        let args: any = {}
+        try {
+            args = JSON.parse(msg.args[0] || "{}")
+        } catch (err) {
+            console.log("OSC: Could not parse JSON!\n", err)
+        }
+
+        const action = msg.address.replace("/freeshow", "")
+        const returnData = await receivedData({ action, ...args }, (msg: string) => console.log(`OSC: ${msg}`))
+        if (!returnData) return
+
+        var message = new OSC.Message(msg.address, returnData)
+        osc.send(message)
+    })
+
+    osc.on("open", () => {
+        console.log(`OSC: Listening for data at port ${PORT}`)
+    })
+    osc.on("error", (err: any) => {
+        console.log(`OSC: Error. ${JSON.stringify(err)}`)
+    })
+
+    osc.open({ port: PORT })
 }
 
 // DATA
