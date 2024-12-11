@@ -109,15 +109,20 @@ let currentlyCrossfading: string[] = []
 // if no "path" is provided it will fade out/clear all audio
 async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPlay: boolean = false) {
     if (currentlyCrossfading[path]) return
-    if (path) currentlyCrossfading.push(path)
 
     // fade in
     if (path) {
         let playing = get(playingAudio)[path]?.audio
         if (!playing) return
 
-        setTimeout(() => fadeAudio(playing, waitToPlay ? crossfade * 0.4 : crossfade, true), waitToPlay ? crossfade * 0.6 * 1000 : 0)
-        currentlyCrossfading.splice(currentlyCrossfading.indexOf(path), 1)
+        currentlyCrossfading.push(path)
+        setTimeout(
+            async () => {
+                await fadeAudio(playing, waitToPlay ? crossfade * 0.4 : crossfade, true)
+                currentlyCrossfading.splice(currentlyCrossfading.indexOf(path), 1)
+            },
+            waitToPlay ? crossfade * 0.6 * 1000 : 0
+        )
         return
     }
 
@@ -127,6 +132,7 @@ async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPl
     })
 
     async function fadeoutAudio(audio, path) {
+        currentlyCrossfading.push(path)
         let faded = await fadeAudio(audio, crossfade)
         if (faded) deleteAudio(path)
     }
@@ -568,7 +574,7 @@ function getHighestNumber(numbers: number[]): number {
     return Math.max(...numbers)
 }
 
-let clearing = false
+let clearing: string[] = []
 let forceClear: boolean = false
 export function clearAudio(path: string = "", clearPlaylist: boolean = true, playlistCrossfade: boolean = false, commonClear: boolean = false) {
     // turn off any playlist
@@ -579,7 +585,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
 
     const clearTime = playlistCrossfade ? 0 : (get(special).audio_fade_duration ?? 1.5)
 
-    if (clearing) {
+    if (clearing.includes(path)) {
         if (!commonClear) return
         // force stop audio files (bypass timeout if already active)
         forceClear = true
@@ -587,7 +593,6 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         return
     }
     if (!Object.keys(get(playingAudio)).length) return
-    clearing = true
 
     let newPlaying: any = get(playingAudio)
     playingAudio.update((a) => {
@@ -597,6 +602,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         return a
 
         async function clearAudio(path) {
+            clearing.push(path)
             if (!a[path]?.audio) return deleteAudio(path)
 
             let faded = await fadeAudio(a[path].audio, clearTime)
@@ -627,7 +633,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         setTimeout(() => {
             playingAudio.set(newPlaying)
             clearAudioStreams()
-            clearing = false
+            clearing.splice(clearing.indexOf(path), 1)
         }, 200)
     }
 }

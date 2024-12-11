@@ -133,7 +133,6 @@ export type Popups =
     | "transition"
     | "import_scripture"
     | "edit_event"
-    | "edit_list"
     | "choose_chord"
     | "choose_screen"
     | "choose_camera"

@@ -336,12 +336,14 @@
                     {#if !$labelsDisabled}<T id="edit.chords" />{/if}
                 </Button>
 
-                <div class="seperator" />
+                {#if !$focusMode}
+                    <div class="seperator" />
 
-                <Button on:click={() => textEditActive.set(true)}>
-                    <Icon id="text" right />
-                    <p><T id="show.text" /></p>
-                </Button>
+                    <Button on:click={() => textEditActive.set(true)}>
+                        <Icon id="text" right />
+                        <p><T id="show.text" /></p>
+                    </Button>
+                {/if}
 
                 <div class="seperator" />
 

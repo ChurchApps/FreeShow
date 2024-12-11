@@ -233,7 +233,19 @@ const loadActions = {
         let firstShowIndex = values.findIndex((a) => a.id.includes("show_"))
         let firstVideoIndex = values.findIndex((a) => a.id.includes("video_"))
         let firstMetaIndex = values.findIndex((a) => a.id.includes("meta_"))
-        values = [...values.slice(0, firstShowIndex), "SEPERATOR", ...values.slice(firstShowIndex, firstVideoIndex), "SEPERATOR", ...values.slice(firstVideoIndex, firstMetaIndex), "SEPERATOR", ...values.slice(firstMetaIndex)]
+        let firstVarIndex = values.findIndex((a) => a.id.includes("variable_"))
+
+        values = [
+            ...values.slice(0, firstShowIndex),
+            "SEPERATOR",
+            ...values.slice(firstShowIndex, firstVideoIndex),
+            "SEPERATOR",
+            ...values.slice(firstVideoIndex, firstMetaIndex),
+            "SEPERATOR",
+            ...values.slice(firstMetaIndex, firstVarIndex),
+            "SEPERATOR",
+            ...values.slice(firstVarIndex),
+        ]
 
         return values
     },

@@ -53,11 +53,11 @@
             if (edit.name === undefined) return a
 
             if (type === "show") {
-                let active = $activeShow
+                let active = clone($activeShow)
                 // focus mode
                 if (!active && currentShowId) active = { type: "show", id: currentShowId, index: $activeEdit.slide || 0 }
 
-                edit.show = clone($activeShow)
+                edit.show = active
             }
 
             a.push(edit)
@@ -79,7 +79,7 @@
 
     let clonedHistory: any[] = []
     // don't change order when changing edits
-    $: if ($editHistory.length !== clonedHistory.length || !$activeEdit.id) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
+    $: if ($editHistory.length !== clonedHistory.length || (!$activeEdit.id && !$activeShow?.id)) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
 </script>
 
 {#if $focusMode}
@@ -109,7 +109,7 @@
                                 else activeShow.set(edited.show)
                             }
                         }}
-                        active={$activeEdit.id === edited.id}
+                        active={$activeEdit.id ? $activeEdit.id === edited.id : currentShowId === edited.id}
                         bold={false}
                         border
                     >

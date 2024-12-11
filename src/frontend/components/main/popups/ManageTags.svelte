@@ -62,16 +62,18 @@
 
 <div class="tags">
     {#if tags.length}
-        {#each tags as tag}
-            <CombinedInput>
-                <TextInput value={tag.name} on:change={(e) => updateKey(e, tag.id, "name")} />
-                <Color value={tag.color} style="min-width: 100px;" on:input={(e) => updateKey(e, tag.id, "color")} rightAlign />
+        {#key tags}
+            {#each tags as tag}
+                <CombinedInput>
+                    <TextInput value={tag.name} on:change={(e) => updateKey(e, tag.id, "name")} autofocus={!tag.name} />
+                    <Color value={tag.color} style="min-width: 100px;" on:input={(e) => updateKey(e, tag.id, "color")} rightAlign />
 
-                <Button on:click={() => deleteTag(tag.id)} title={$dictionary.actions?.delete}>
-                    <Icon id="delete" />
-                </Button>
-            </CombinedInput>
-        {/each}
+                    <Button on:click={() => deleteTag(tag.id)} title={$dictionary.actions?.delete}>
+                        <Icon id="delete" />
+                    </Button>
+                </CombinedInput>
+            {/each}
+        {/key}
     {:else}
         <Center faded>
             <T id="empty.general" />

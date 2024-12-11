@@ -21,7 +21,7 @@
     import StageShow from "./components/stage/StageShow.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os, textEditActive } from "./stores"
+    import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os, showsCache, textEditActive } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
 
     $: page = $activePage
@@ -87,10 +87,14 @@
                 {:else if page === "edit"}
                     {#if $activeEdit.type === "media"}
                         <MediaTools />
+                    {:else if $activeEdit.type === "audio"}
+                        <!-- Audio tools -->
                     {:else if $activeEdit.type === "effect"}
                         <EffectTools />
-                    {:else if !$focusMode && !$textEditActive}
-                        <EditTools />
+                    {:else if $activeEdit.type === "overlay" || $activeEdit.type === "template" || $showsCache[$activeShow?.id || ""]}
+                        {#if !$focusMode && !$textEditActive}
+                            <EditTools />
+                        {/if}
                     {/if}
                 {:else if page === "draw"}
                     <DrawSettings />

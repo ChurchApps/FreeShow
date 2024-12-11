@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeEdit, activeShow, drawer, refreshEditSlide, showsCache, textEditActive } from "../../stores"
+    import { activeEdit, activeShow, drawer, focusMode, refreshEditSlide, showsCache, textEditActive } from "../../stores"
     import Splash from "../main/Splash.svelte"
     import EffectEditor from "./editors/EffectEditor.svelte"
     import MediaEditor from "./editors/MediaEditor.svelte"
@@ -39,7 +39,7 @@
     {:else if $activeEdit.type === "audio"}
         <!--  -->
     {:else if $activeEdit.slide !== undefined && $activeEdit.slide !== null}
-        {#if $textEditActive}
+        {#if $textEditActive && !$focusMode}
             <TextEditor currentShow={$showsCache[$activeShow?.id || ""]} />
         {:else}
             <SlideEditor />

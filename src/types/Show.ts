@@ -169,6 +169,7 @@ export interface Line {
 }
 
 export interface List {
+    enabled?: boolean
     style?: string
     interval?: number
     items: ListItem[]

@@ -307,8 +307,12 @@
         mediaItemPath = await loadThumbnail(item.src, mediaSize.slideSize)
     }
 
+    // list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};
+    $: listStyle = item.list?.enabled ? `;font-size: inherit;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
+
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
+    $: if ($variables) updateDynamic++
     setInterval(() => {
         updateDynamic++
     }, 1000)
@@ -350,7 +354,7 @@
                         {/if}
 
                         <!-- class:height={!line.text[0]?.value.length} -->
-                        <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
+                        <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}{listStyle}">
                             {#each line.text || [] as text}
                                 {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
                                 <span
@@ -367,6 +371,7 @@
             </div>
         </div>
     {:else if item?.type === "list"}
+        <!-- moved to textbox in 1.3.3 -->
         <ListView list={item.list} disableTransition={disableListTransition} />
     {:else if item?.type === "media"}
         {#if mediaItemPath}
@@ -403,6 +408,7 @@
     {:else if item?.type === "events"}
         <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
     {:else if item?.type === "variable"}
+        <!-- moved to textbox in 1.3.3 -->
         <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${fontSize}px;`} ref={{ ...ref, slideIndex }} />
     {:else if item?.type === "web"}
         <Website src={item?.web?.src || ""} navigation={!item?.web?.noNavigation} clickable={$currentWindow === "output"} {ratio} />
