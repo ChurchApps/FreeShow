@@ -79,6 +79,7 @@ export const playingVideos: Writable<any[]> = writable([])
 export const activePlaylist: Writable<any> = writable(null)
 export const playingMetronome: Writable<any> = writable(null)
 export const visualizerData: Writable<any> = writable(null)
+export const isFadingOut: Writable<any> = writable(false)
 
 // DRAW
 export const drawTool: Writable<DrawTools> = writable("focus")
@@ -121,6 +122,8 @@ export const refreshListBoxes: Writable<number> = writable(-1)
 export const triggerAutoSplit: Writable<boolean> = writable(false)
 export const storedEditMenuState: Writable<any> = writable({})
 export const copyPasteEdit: Writable<any> = writable({})
+export const textEditActive: Writable<boolean> = writable(false)
+export const textEditZoom: Writable<number> = writable(10)
 
 // OTHER
 export const notFound: Writable<any> = writable({ show: [], bible: [] })

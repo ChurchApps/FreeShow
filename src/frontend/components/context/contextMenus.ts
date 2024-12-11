@@ -91,7 +91,6 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     view_simple: { label: "show.simple", icon: "simple" },
     view_list: { label: "show.list", icon: "list" },
     view_lyrics: { label: "show.lyrics", icon: "lyrics" },
-    view_text: { label: "show.text", icon: "text" },
     // SLIDE
     slide_transition: { label: "popup.transition", icon: "transition" },
     disable: { label: "actions.disable", icon: "disable" },
@@ -108,7 +107,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     transition: { label: "popup.transition", icon: "transition" },
     dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
-    format: { label: "actions.format", icon: "format", items: ["find_replace", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
+    format: { label: "actions.format", icon: "format", items: ["find_replace", "SEPERATOR", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     rearrange: { label: "actions.rearrange", icon: "rearrange", items: ["to_front", "forward", "backward", "to_back"] },
     // stage
     stage: { label: "menu.stage", id: "stage" },
@@ -252,7 +251,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     global_group: ["edit"],
     // global_group: ["rename"],
     layout: ["rename", "duplicate", "remove"],
-    slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics", "view_text"],
+    slideViews: ["view_grid", "view_simple", "view_list", "view_lyrics"],
     tag: ["rename", "recolor", "SEPERATOR", "delete"],
     chord: ["set_key", "chord_list", "custom_key", "SEPERATOR", "delete"],
     meta_message: ["dynamic_values"],

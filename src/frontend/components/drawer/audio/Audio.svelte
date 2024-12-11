@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
-    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, media } from "../../../stores"
+    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, media, outLocked } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -259,7 +259,14 @@
         {#if isDefault}
             <span style="padding: 0.2em;opacity: 0;">.</span>
         {:else if playlist}
-            <Button title={$activePlaylist?.id === active ? $dictionary.media?.stop : $dictionary.media?.play} on:click={() => ($activePlaylist?.id === active ? stopPlaylist() : startPlaylist(active))}>
+            <Button
+                disabled={$outLocked}
+                title={$activePlaylist?.id === active ? $dictionary.media?.stop : $dictionary.media?.play}
+                on:click={() => {
+                    if ($outLocked) return
+                    $activePlaylist?.id === active ? stopPlaylist() : startPlaylist(active)
+                }}
+            >
                 <Icon size={1.3} id={$activePlaylist?.id === active ? "stop" : "play"} white={$activePlaylist?.id === active} />
             </Button>
             <Button

@@ -292,7 +292,7 @@ const actions: any = {
         let tagId = obj.menu.id
         if (tagId === "create") {
             contextActive.set(false)
-            popupData.set({type: "media"})
+            popupData.set({ type: "media" })
             activePopup.set("manage_tags")
             return
         }
@@ -623,9 +623,6 @@ const actions: any = {
     },
     view_lyrics: () => {
         slidesOptions.set({ ...get(slidesOptions), mode: "lyrics" })
-    },
-    view_text: () => {
-        slidesOptions.set({ ...get(slidesOptions), mode: "text" })
     },
 
     // show

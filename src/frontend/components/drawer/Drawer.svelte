@@ -169,11 +169,12 @@
                 {/if}
             {/each}
         </span>
+
         <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit" type="text" placeholder="{$dictionary.main?.search}..." bind:value={searchValue} on:input={search} use:selectTextOnFocus />
         {#if !searchActive && !searchValue.length}
             <Button class="search" style="border-bottom: 2px solid var(--secondary);" on:click={() => (searchActive = true)} title="{$dictionary.tabs?.search_tip} [Ctrl+F]" bold={false}>
-                <Icon id="search" size={1.4} white right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<p style="opacity: 0.8;font-size: 1.1em;"><T id="main.search" /></p>{/if}
+                <Icon id="search" size={1.4} white right={!$labelsDisabled && !$focusMode} />
+                {#if !$labelsDisabled && !$focusMode}<p style="opacity: 0.8;font-size: 1.1em;"><T id="main.search" /></p>{/if}
             </Button>
         {/if}
     </div>

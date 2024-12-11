@@ -36,7 +36,7 @@ const loadActions = {
     media_tag_set: () => {
         let selectedTags = get(media)[get(selected).data[0]?.path]?.tags || []
         let sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
-        const create = {label: "popup.manage_tags", icon: "edit", id: "create"}
+        const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
         return sortedTags
@@ -50,14 +50,16 @@ const loadActions = {
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
     slide_groups: (items: ContextMenuItem[]) => {
         let selectedIndex = get(selected).data[0]?.index
-        let currentSlide = _show().layouts("active").ref()[0]?.[selectedIndex]
+        let slideRef = _show().layouts("active").ref()[0]?.[selectedIndex] || {}
+        let currentSlide = _show().get("slides")[slideRef.id]
         if (!currentSlide) return []
 
-        let currentGroup = currentSlide.data?.globalGroup || ""
+        let currentGroup: string = currentSlide.globalGroup || ""
         items = Object.entries(get(groups)).map(([id, a]: any) => {
             return { id, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: !!a.default, enabled: id === currentGroup }
         })
 
+        if (!items.length) return [{ label: "empty.general", disabled: true }]
         return sortItemsByLabel(items)
     },
     actions: () => {

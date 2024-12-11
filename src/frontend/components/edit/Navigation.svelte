@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activePage, activeShow, editHistory, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates } from "../../stores"
+    import { activeEdit, activePage, activeShow, editHistory, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates, textEditActive } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -91,7 +91,7 @@
 
 {#if $focusMode && currentShowId}
     <Slides />
-{:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length)}
+{:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $textEditActive}
     <div class="title">
         <h3><T id="edit.recent" /></h3>
     </div>

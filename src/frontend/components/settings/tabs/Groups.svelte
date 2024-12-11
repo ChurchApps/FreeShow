@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { dictionary, fullColors, groupNumbers, groups, special, templates } from "../../../stores"
+    import { getList } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
-    import { getList } from "../../../utils/common"
     import { history } from "../../helpers/history"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -132,41 +132,47 @@
 
 <h3><T id="groups.global" /></h3>
 
-{#each g as group, i}
-    {#if i === 0}
-        <div class="titles">
-            <p style="width: 35%;"><T id="inputs.name" /></p>
-            <p style="width: 15%;"><T id="edit.color" /></p>
-            <p style="width: 20%;"><T id="groups.group_shortcut" /></p>
-            <p style="width: 25%;"><T id="groups.group_template" /></p>
-            <!-- <p></p> -->
-        </div>
-    {/if}
+{#if g.length}
+    {#each g as group, i}
+        {#if i === 0}
+            <div class="titles">
+                <p style="width: 35%;"><T id="inputs.name" /></p>
+                <p style="width: 15%;"><T id="edit.color" /></p>
+                <p style="width: 20%;"><T id="groups.group_shortcut" /></p>
+                <p style="width: 25%;"><T id="groups.group_template" /></p>
+                <!-- <p></p> -->
+            </div>
+        {/if}
 
-    <CombinedInput>
-        <!-- name -->
-        <TextInput style="width: 35%;" value={group.name} on:change={(e) => changeGroup(e, group.id)} />
-        <!-- color -->
-        <Color style="width: 15%;" value={group.color} on:input={(e) => changeGroup(e.detail, group.id, "color")} />
-        <!-- shortcut -->
-        <span style="width: 20%;">
-            <Dropdown title={$dictionary.settings?.group_shortcut} value={group.shortcut || "—"} options={shortcuts} on:click={(e) => changeGroup(e, group.id, "shortcut")} center />
-        </span>
-        <!-- template -->
-        <span style="width: 25%;">
-            <Dropdown title={$dictionary.groups?.group_template} value={templateList.find((a) => a.id === group.template)?.name || "—"} options={templateList} on:click={(e) => changeGroup(e.detail.id, group.id, "template")} center />
-        </span>
-        <Button
-            on:click={() => {
-                history({ id: "UPDATE", newData: { id: group.id }, location: { page: "settings", id: "global_group" } })
-            }}
-            title={$dictionary.actions?.delete}
-        >
-            <Icon id="delete" />
-            <!-- <T id="actions.delete" /> -->
-        </Button>
-    </CombinedInput>
-{/each}
+        <CombinedInput>
+            <!-- name -->
+            <TextInput style="width: 35%;" value={group.name} on:change={(e) => changeGroup(e, group.id)} />
+            <!-- color -->
+            <Color style="width: 15%;" value={group.color} on:input={(e) => changeGroup(e.detail, group.id, "color")} />
+            <!-- shortcut -->
+            <span style="width: 20%;">
+                <Dropdown title={$dictionary.settings?.group_shortcut} value={group.shortcut || "—"} options={shortcuts} on:click={(e) => changeGroup(e, group.id, "shortcut")} center />
+            </span>
+            <!-- template -->
+            <span style="width: 25%;">
+                <Dropdown title={$dictionary.groups?.group_template} value={templateList.find((a) => a.id === group.template)?.name || "—"} options={templateList} on:click={(e) => changeGroup(e.detail.id, group.id, "template")} center />
+            </span>
+            <Button
+                on:click={() => {
+                    history({ id: "UPDATE", newData: { id: group.id }, location: { page: "settings", id: "global_group" } })
+                }}
+                title={$dictionary.actions?.delete}
+            >
+                <Icon id="delete" />
+                <!-- <T id="actions.delete" /> -->
+            </Button>
+        </CombinedInput>
+    {/each}
+{:else}
+    <div style="width: 100%;text-align: center;padding: 15px;opacity: 0.4;">
+        <T id="empty.general" />
+    </div>
+{/if}
 
 <CombinedInput>
     <Button style="width: 100%;" on:click={addGroup} center dark>

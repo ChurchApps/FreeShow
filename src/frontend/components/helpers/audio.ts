@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN, OUTPUT } from "../../../types/Channels"
-import { activePlaylist, audioChannels, audioPlaylists, gain, media, outLocked, playingAudio, playingVideos, special } from "../../stores"
+import { activePlaylist, audioChannels, audioPlaylists, gain, isFadingOut, media, outLocked, playingAudio, playingVideos, special } from "../../stores"
 import { send } from "../../utils/request"
 import { customActionActivation } from "../actions/actions"
 import { stopMetronome } from "../drawer/audio/metronome"
@@ -686,7 +686,11 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
 
     // WIP non linear easing
 
-    let fadeId = uid()
+    if (!increment) {
+        isFadingOut.set(true)
+    }
+
+    let fadeId = (increment ? "in_" : "out_") + uid()
     return new Promise((resolve) => {
         currentlyFading[fadeId] = setInterval(() => {
             if (forceClear) return finished()
@@ -711,6 +715,10 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
             delete currentlyFading[fadeId]
             clearTimeout(timedout)
             setTimeout(() => resolve(true), 50)
+
+            if (!increment && !Object.keys(currentlyFading).filter((a) => a.includes("out")).length) {
+                isFadingOut.set(false)
+            }
         }
     })
 }

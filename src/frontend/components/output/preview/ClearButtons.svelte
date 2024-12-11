@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeSlideRecording, dictionary, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
+    import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
     import { getOutputContent, isOutCleared } from "../../helpers/output"
@@ -61,6 +61,28 @@
     $: overlayCleared = $outLocked || isOutCleared("overlays", $outputs, true)
     $: lockedOverlay = !overlayCleared && isOutCleared("overlays", $outputs, false)
     $: slideTimerCleared = $outLocked || isOutCleared("transition", $outputs)
+
+    // audio fade out
+    let audioIcon: string = "audio"
+    $: if ($isFadingOut) startAudioIcon()
+    else audioIcon = "audio"
+    function startAudioIcon() {
+        audioIcon = "volume"
+        setTimeout(() => {
+            if (!$isFadingOut) return
+            audioIcon = "volume_down"
+
+            setTimeout(() => {
+                if (!$isFadingOut) return
+                audioIcon = "volume_off"
+
+                setTimeout(() => {
+                    if (!$isFadingOut) return
+                    startAudioIcon()
+                }, 1000)
+            }, 400)
+        }, 400)
+    }
 </script>
 
 <div class="clear" style="border-top: 2px solid var(--primary-lighter);">
@@ -112,7 +134,7 @@
 
         <div class="combinedButton">
             <Button disabled={$outLocked || audioCleared} on:click={() => clear("audio")} title={$dictionary.clear?.audio + " [F4]"} dark red center>
-                <Icon id="audio" size={1.2} />
+                <Icon id={audioIcon} size={1.2} />
             </Button>
             {#if !allCleared}
                 <Button disabled={$outLocked || audioCleared} on:click={() => openPreview("audio")} title={$dictionary.preview?.audio} dark={activeClear !== "audio"} />
