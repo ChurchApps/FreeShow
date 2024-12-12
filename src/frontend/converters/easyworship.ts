@@ -6,6 +6,7 @@ import { newToast } from "../utils/common"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 
 interface Song {
     administrator: string
@@ -73,6 +74,7 @@ export function convertEasyWorship(data: any) {
                 CCLI: song.reference_number || "",
             }
         }
+        if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
         let { slides, layout }: any = createSlides(words)
 

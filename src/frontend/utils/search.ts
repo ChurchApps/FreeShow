@@ -41,6 +41,9 @@ export function showSearchFilter(searchValue: string, show: any) {
     // Priority 0: Number Exact Match
     const songNumber = show.quickAccess?.number || ""
     if (songNumber && Number(songNumber) === Number(searchValue)) return 100
+    // Priority 0.5: CCLI Exact Match
+    const songId = show.quickAccess?.metadata?.CCLI || ""
+    if (songId.toString() === searchValue) return 100
 
     const showName = songNumber + formatSearch(show.name, true)
 

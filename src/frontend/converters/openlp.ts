@@ -5,6 +5,7 @@ import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 
 interface Song {
     title: string
@@ -60,6 +61,7 @@ export function convertOpenLP(data: any) {
             CCLI: song.ccli || "",
             copyright: song.copyright || "",
         }
+        if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
         show.timestamps = {
             created: song.created ? new Date(song.created).getTime() : new Date().getTime(),

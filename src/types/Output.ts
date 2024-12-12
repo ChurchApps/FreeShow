@@ -16,6 +16,7 @@ export interface Output {
     name: string
     color: string
     bounds: { x: number; y: number; width: number; height: number }
+    blending?: { left: number; right: number; rotate: number; opacity: number; centered: boolean; offset: number }
     screen: string | null
     kioskMode?: boolean
     alwaysOnTop?: boolean

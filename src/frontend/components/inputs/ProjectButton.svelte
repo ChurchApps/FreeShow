@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { uid } from "uid"
     import type { ID } from "../../../types/Show"
-    import { activeProject, activeShow, dictionary, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects } from "../../stores"
+    import { activeProject, activeRename, activeShow, dictionary, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects } from "../../stores"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -28,7 +29,9 @@
             if (!project) return
 
             project.parent = $projects[$activeProject || ""]?.parent || "/"
-            history({ id: "UPDATE", newData: { data: project }, location: { page: "show", id: "project" } })
+            let projectId = uid()
+            history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
+            setTimeout(() => activeRename.set("project_" + projectId))
             return
         }
 

@@ -38,7 +38,9 @@
         "top": "Top",
         "right": "Right",
         "bottom": "Bottom",
-        "left": "Left"
+        "left": "Left",
+        "centered": "Centered",
+        "edge_blending_tip": "Blend together multiple outputs/projectors for a more seamless transition"
     },
     "about": {
         "check_updates": "Look for updates",
@@ -849,6 +851,7 @@
         "outline": "Outline",
         "shadow": "Shadow",
         "shadow_inset": "Shadow inset",
+        "offset": "Offset",
         "offsetX": "Offset X",
         "offsetY": "Offset Y",
         "blur": "Blur",
@@ -1067,6 +1070,7 @@
         "manual_input_hint": "Can't find the display? Click here to manually change the position.",
         "manual_drag_hint": "You can also hold ctrl/cmd over an active output window to manually drag it around.",
         "allow_main_screen": "Allow custom output position & size",
+        "edge_blending": "Edge blending",
         "identify_screens": "Identify screens",
         "new_output": "New output",
         "normal": "Normal",

@@ -110,9 +110,9 @@ export function updateSettings(data: any) {
         let outputsUpdated: boolean = false
         Object.keys(allOutputs).forEach((outputId) => {
             let output = allOutputs[outputId]
-            if (!output.isKeyOutput || activeKeyOutputs.includes(output.id!)) return
+            if (!output.isKeyOutput || activeKeyOutputs.includes(outputId)) return
 
-            delete allOutputs[outputId][output.id!]
+            delete allOutputs[outputId]
             outputsUpdated = true
         })
         if (outputsUpdated) outputs.set(allOutputs)

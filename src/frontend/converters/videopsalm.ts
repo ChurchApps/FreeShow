@@ -4,6 +4,7 @@ import { checkName } from "../components/helpers/show"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 
 interface VideoPsalm {
     Guid: string
@@ -142,6 +143,7 @@ export function convertVideopsalm(data: any) {
                 CCLI: song.CCLI || "",
             }
             if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
+            if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
             let { slides, layout, notes }: any = createSlides(song)
             show.slides = slides

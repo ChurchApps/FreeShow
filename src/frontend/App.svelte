@@ -4,6 +4,7 @@
     import ContextMenu from "./components/context/ContextMenu.svelte"
     import Pdf from "./components/export/Pdf.svelte"
     import Guide from "./components/guide/Guide.svelte"
+    import { getBlending } from "./components/helpers/output"
     import { startEventTimer, startTimer } from "./components/helpers/timerTick"
     import Loader from "./components/main/Loader.svelte"
     import MenuBar from "./components/main/MenuBar.svelte"
@@ -12,7 +13,7 @@
     import Toast from "./components/main/Toast.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
-    import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, loaded, os, outputDisplay } from "./stores"
+    import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, loaded, os, outputDisplay, outputs } from "./stores"
     import { focusArea, logerror, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -37,6 +38,10 @@
 
     // close youtube ad
     $: if ($closeAd) setTimeout(() => closeAd.set(false), 10)
+
+    // edge blending
+    let blending = ""
+    $: if ($currentWindow === "output" && Object.values($outputs)[0]?.blending) blending = getBlending()
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={focusArea} on:error={logerror} on:unhandledrejection={logerror} />
@@ -49,7 +54,7 @@
         <MenuBar />
     {/if}
 
-    <main style={isWindows ? "height: calc(100% - 25px);" : ""} class:closeAd={$closeAd} class:background={$currentWindow === "output"}>
+    <main style="{isWindows ? 'height: calc(100% - 25px);' : ''}{blending}" class:closeAd={$closeAd} class:background={$currentWindow === "output"}>
         <ContextMenu />
 
         {#if $currentWindow === "output"}

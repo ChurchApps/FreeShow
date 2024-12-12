@@ -6,6 +6,7 @@ import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, scriptures, scripturesCache } from "./../stores"
 import { setActiveScripture } from "./bible"
 import { createCategory, setTempShows } from "./importHelpers"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 
 interface Song {
     title: string
@@ -56,6 +57,7 @@ export function convertOpenSong(data: any) {
                 CCLI: song.ccli || "",
             }
             if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
+            if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
             console.log(song)
             let { slides, layout, media }: any = createSlides(song)
@@ -250,18 +252,18 @@ function HTMLtoObject(content: string) {
 
     const groups = content.split('<span class="heading">').slice(1)
     let lyrics: string = ""
-    groups.forEach(group =>{
+    groups.forEach((group) => {
         let linesEnd = group.lastIndexOf("<br/>")
         let g = group.slice(0, linesEnd)
         const lines = group.indexOf("<table") > -1 ? g.split("<table").slice(1) : g.split('class="lyrics">').slice(1)
 
         let groupName = group.slice(0, group.indexOf("</span>")).trim()
         lyrics += `[${groupName}]\n`
-        
-        lines.forEach(line => {
+
+        lines.forEach((line) => {
             const sections = line.indexOf('class="lyrics">') > -1 ? line.split('class="lyrics">').slice(1) : [line]
-            
-            sections.forEach(section => {
+
+            sections.forEach((section) => {
                 let text = section.slice(0, section.indexOf("</td>"))
                 lyrics += text
             })
