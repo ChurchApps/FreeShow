@@ -169,6 +169,7 @@ export interface Line {
 }
 
 export interface List {
+    enabled?: boolean
     style?: string
     interval?: number
     items: ListItem[]
@@ -362,6 +363,11 @@ export interface OutTransition {
     // action: string
     // slide?: number
     duration: number
+}
+
+export interface Tag {
+    name: string
+    color: string
 }
 
 // types

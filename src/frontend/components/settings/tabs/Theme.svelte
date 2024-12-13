@@ -22,8 +22,8 @@
         "primary-darker",
         "primary-darkest",
         "secondary",
-        "secondary-text",
         "text",
+        "secondary-text",
         // "textInvert",
         // "secondary-opacity",
         // "hover",
@@ -160,10 +160,12 @@
             <Icon id="add" right />
             <T id="settings.add" />
         </Button>
-        <Button style="width: 100%;" on:click={resetThemes} center>
-            <Icon id="reset" right />
-            <T id="settings.reset_themes" />
-        </Button>
+        {#if Object.values($themes).length < 10}
+            <Button on:click={resetThemes} center>
+                <Icon id="reset" right />
+                <p><T id="settings.reset_themes" /></p>
+            </Button>
+        {/if}
     </div>
 </div>
 

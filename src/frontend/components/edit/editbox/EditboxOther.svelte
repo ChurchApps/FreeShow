@@ -56,6 +56,7 @@
 </script>
 
 {#if item?.type === "list"}
+    <!-- moved to textbox in 1.3.3 -->
     <ListView list={item.list} disableTransition />
 {:else if item?.type === "media"}
     {#if thumbnailPath}
@@ -72,6 +73,7 @@
 {:else if item?.type === "events"}
     <DynamicEvents {...item.events} edit textSize={Number(getStyles(item.style, true)?.["font-size"]) || 80} />
 {:else if item?.type === "variable"}
+    <!-- moved to textbox in 1.3.3 -->
     <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${autoSize}px;`} ref={{ showId: ref.showId, slideIndex: $activeEdit.slide }} hideText={false} edit />
 {:else if item?.type === "web"}
     <Website src={item?.web?.src || ""} {ratio} />

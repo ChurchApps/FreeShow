@@ -40,6 +40,11 @@
         if (sortType === "created") {
             sortedFolders = sortedFolders.sort((a, b) => (b.created || 0) - (a.created || 0))
             sortedProjects = sortedProjects.sort((a, b) => (b.created || 0) - (a.created || 0))
+        } else if (sortType === "modified") {
+            sortedProjects = sortedProjects.sort((a, b) => (b.modified || 0) - (a.modified || 0))
+        } else if (sortType === "name_des") {
+            sortedFolders = sortedFolders.reverse()
+            sortedProjects = sortedProjects.reverse()
         }
 
         tree = [...sortedFolders, ...sortedProjects]

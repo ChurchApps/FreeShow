@@ -290,7 +290,7 @@ const receiveFILE = {
 
 // OUTPUT
 
-let clearing: boolean = false
+let clearing: string[] = []
 const receiveOUTPUTasMAIN: any = {
     BUFFER: ({ id, time, buffer, size }) => {
         // this will infinitely increace if this is not in place
@@ -350,9 +350,9 @@ const receiveOUTPUTasMAIN: any = {
     MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
     MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
     MAIN_VIDEO_ENDED: async (msg) => {
-        if (!msg || clearing) return
-        clearing = true
-        setTimeout(() => (clearing = false), msg.duration || 1000)
+        if (!msg || clearing.includes(msg.id)) return
+        clearing.push(msg.id)
+        setTimeout(() => clearing.splice(clearing.indexOf(msg.id), 1), msg.duration || 1000)
 
         let videoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
         if (!videoPath) return

@@ -38,7 +38,7 @@
 
 <svelte:window on:keydown={keydown} />
 
-<p style="text-align: center;"><T id="actions.press_to_assign" /></p>
+<p style="text-align: center;opacity: 0.7;"><T id="actions.press_to_assign" /></p>
 
 {#if currentShortcut}
     <div class="shortcut">

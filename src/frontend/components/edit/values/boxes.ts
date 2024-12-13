@@ -111,6 +111,42 @@ export const boxes: Box = {
                 { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", enableNoColor: true },
                 { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
             ],
+            list: [
+                { name: "list", id: "list.enabled", input: "checkbox", value: false },
+                {
+                    name: "style",
+                    input: "dropdown",
+                    id: "list.style",
+                    value: "disc",
+                    values: {
+                        options: [
+                            // common
+                            { id: "disc", name: "$:list.disc:$" },
+                            { id: "circle", name: "$:list.circle:$" },
+                            { id: "square", name: "$:list.square:$" },
+                            { id: "disclosure-closed", name: "$:list.disclosure-closed:$" },
+                            { id: "disclosure-open", name: "$:list.disclosure-open:$" },
+                            // numbers
+                            { id: "decimal", name: "$:list.decimal:$" },
+                            { id: "decimal-leading-zero", name: "$:list.decimal-leading-zero:$" },
+                            // alpha
+                            { id: "lower-alpha", name: "$:list.lower-alpha:$" }, // same as latin
+                            { id: "upper-alpha", name: "$:list.upper-alpha:$" }, // same as latin
+                            { id: "lower-roman", name: "$:list.lower-roman:$" },
+                            { id: "upper-roman", name: "$:list.upper-roman:$" },
+                            { id: "lower-greek", name: "$:list.lower-greek:$" },
+                            // special
+                            // {id: "bengali", name: "$:list.bengali:$" },
+                            // {id: "cambodian", name: "$:list.cambodian:$" },
+                            // {id: "devanagari", name: "$:list.devanagari:$" },
+                        ],
+                    },
+                    // disabled: "list.interval", // WIP still disabled when set back to 0
+                    hidden: true,
+                },
+                // { name: "one_at_a_time", id: "one_at_a_time", input: "checkbox", value: false },
+                // { name: "interval", id: "list.interval", input: "number", value: 0, hidden: true }, // slide timers can be user for this
+            ],
             outline: [
                 { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
                 { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" },

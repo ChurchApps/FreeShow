@@ -51,13 +51,13 @@
         "change_transition",
         "change_variable",
         "start_camera",
-        "run_action",
         "toggle_action",
         "send_rest_command",
     ]
     // remove actions that are not fully implemented to CustomInput yet
     const removeActions = ["change_transition"]
     if (list) removeActions.push(...removeFromSlideAction)
+    if ($popupData.mode !== "template") removeActions.push("run_action")
 
     $: ACTIONS = [
         ...Object.keys(API_ACTIONS)
@@ -86,7 +86,7 @@
                 return true
             }),
         // custom special
-        ...(list ? [] : [{ id: "wait", name: $dictionary.animate?.wait, icon: "time_in", common: false }]),
+        ...(list ? [] : [{ id: "wait", name: $dictionary.animate?.wait || "", icon: "time_in", common: false }]),
     ]
 
     let pickAction: boolean = false

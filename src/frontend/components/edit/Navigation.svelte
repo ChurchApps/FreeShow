@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activePage, activeShow, editHistory, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates } from "../../stores"
+    import { activeEdit, activePage, activeShow, editHistory, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates, textEditActive } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
@@ -53,11 +53,11 @@
             if (edit.name === undefined) return a
 
             if (type === "show") {
-                let active = $activeShow
+                let active = clone($activeShow)
                 // focus mode
                 if (!active && currentShowId) active = { type: "show", id: currentShowId, index: $activeEdit.slide || 0 }
 
-                edit.show = clone($activeShow)
+                edit.show = active
             }
 
             a.push(edit)
@@ -79,7 +79,7 @@
 
     let clonedHistory: any[] = []
     // don't change order when changing edits
-    $: if ($editHistory.length !== clonedHistory.length || !$activeEdit.id) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
+    $: if ($editHistory.length !== clonedHistory.length || (!$activeEdit.id && !$activeShow?.id)) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
 </script>
 
 {#if $focusMode}
@@ -91,7 +91,7 @@
 
 {#if $focusMode && currentShowId}
     <Slides />
-{:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length)}
+{:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $textEditActive}
     <div class="title">
         <h3><T id="edit.recent" /></h3>
     </div>
@@ -109,7 +109,7 @@
                                 else activeShow.set(edited.show)
                             }
                         }}
-                        active={$activeEdit.id === edited.id}
+                        active={$activeEdit.id ? $activeEdit.id === edited.id : currentShowId === edited.id}
                         bold={false}
                         border
                     >

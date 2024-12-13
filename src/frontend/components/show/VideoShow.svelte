@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../types/Main"
-    import { activeProject, activeRename, dictionary, focusMode, outLocked, outputs, playingVideos, projects, videoMarkers, volume } from "../../stores"
+    import { activeProject, activeRename, dictionary, focusMode, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { analyseAudio, getAnalyser } from "../helpers/audio"
@@ -10,9 +10,17 @@
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import HoverButton from "../inputs/HoverButton.svelte"
     import VideoSlider from "../output/VideoSlider.svelte"
+    import MediaControls from "../output/tools/MediaControls.svelte"
     import Player from "../system/Player.svelte"
 
     export let show
+
+    $: showId = show?.id
+    $: type = show?.type
+
+    // show updates when videoTime updates for some reason?
+    // $: console.trace(show)
+    // $: console.trace(videoTime)
 
     export let mediaStyle: MediaStyle = {}
 
@@ -24,30 +32,59 @@
         loop: false,
     }
     $: if (!videoData) videoData = { paused: false, muted: true, duration: 0, loop: false }
-
-    let prevId: string | undefined = undefined
-    $: if (show?.id !== prevId) {
+    $: if (playingInOutput && $videosData[outputId]) setVideoData()
+    $: if (playingInOutput && $videosData[outputId]?.paused && !videoData.paused) setPaused()
+    function setPaused() {
+        videoData.paused = true
+        // trigger time update
         videoTime = 0
-        autoPause = true
-        prevId = show?.id
-
-        timeMarkersEnabled = !!$videoMarkers[show.id]?.length || false
+    }
+    function setVideoData() {
+        videoData = { ...$videosData[outputId], muted: true }
     }
 
-    $: currentOutput = $outputs[getActiveOutputs()[0]]
+    let prevId: string | undefined = undefined
+    $: if (showId !== prevId) {
+        videoTime = 0
+        autoPause = true
+        prevId = showId
+
+        timeMarkersEnabled = !!$videoMarkers[showId]?.length || false
+    }
+
+    $: outputId = getActiveOutputs($outputs, false, true, true)[0]
+    $: currentOutput = $outputs[outputId]
 
     // outBackground.subscribe(backgroundChanged)
     $: background = currentOutput?.out?.background || {}
-    $: if (JSON.stringify(background) !== JSON.stringify(currentOutput?.out?.background || {})) backgroundChanged()
+    $: if (background || showId) backgroundChanged()
+    let playingInOutput: boolean = false
     function backgroundChanged() {
-        background = currentOutput?.out?.background || {}
-        if (background === null || background.path !== show?.id || videoData.paused) return
-        if (background.type !== undefined || background.type !== "media") return
+        // background = currentOutput?.out?.background || {}
+        // || videoData.paused
+        if (background === null || (background.path || background.id) !== showId) {
+            playingInOutput = false
+            return
+        }
+        // if (background.type !== "media" && background.type !== "video") return
+
         autoPause = true
-        videoData.paused = true
+        // videoData.paused = true
+        playingInOutput = true
+
+        // trigger time update
+        setTimeout(() => (videoTime = 0), 50)
+    }
+    $: if (playingInOutput && Math.abs(videoTime - $videosTime[outputId]) > 1) updateVideoTime()
+    function updateVideoTime() {
+        // get and set actual time
+        videoTime = $videosTime[outputId]
     }
 
-    $: if (background.path === show?.id && autoPause) videoData.paused = true
+    // WIP toggle between output/preview video...
+    // WIP player video output time
+
+    // $: if (background.path === showId && autoPause) videoData.paused = true
 
     let autoPause: boolean = true
     let hasLoaded: boolean = false
@@ -57,6 +94,7 @@
 
     function onLoad() {
         hasLoaded = true
+        if (videoData.paused) return
 
         if ($focusMode) {
             // set right after loaded
@@ -72,7 +110,7 @@
     }
 
     // player
-    $: if (show.type === "player") playerLoad()
+    $: if (type === "player") playerLoad()
     function playerLoad() {
         if (!$focusMode) return
 
@@ -87,29 +125,29 @@
     async function onPlay() {
         // autoPause = false
         if (hasLoaded) {
-            videoTime = 0
+            if (!playingInOutput) videoTime = 0
             hasLoaded = false
 
             let analyser = await getAnalyser(video)
             if (!analyser) return
 
             playingVideos.update((a) => {
-                a.push({ id: show!.id, location: "preview", analyser })
+                a.push({ id: showId, location: "preview", analyser })
                 return a
             })
             analyseAudio()
         }
     }
-    $: if (videoData) {
-        playingVideos.update((a) => {
-            let existing = a.findIndex((a) => a.id === show?.id && a.location === "preview")
-            if (existing > -1) {
-                a[existing].paused = videoData.muted ? true : videoData.paused
-                if (!a[existing].paused) analyseAudio()
-            }
-            return a
-        })
-    }
+    // $: if (videoData) {
+    //     playingVideos.update((a) => {
+    //         let existing = a.findIndex((a) => a.id === showId && a.location === "preview")
+    //         if (existing > -1) {
+    //             a[existing].paused = videoData.muted ? true : videoData.paused
+    //             if (!a[existing].paused) analyseAudio()
+    //         }
+    //         return a
+    //     })
+    // }
 
     function keydown(e: any) {
         if (e.target.closest("input") || e.target.closest(".edit")) return
@@ -117,23 +155,23 @@
         let output = $outputs[getActiveOutputs()[0]] || {}
         let outputPath = output.out?.background?.path
 
-        if (e.key === " " && !$focusMode && show && (!outputPath || outputPath !== show.id)) {
+        if (e.key === " " && !$focusMode && show && (!outputPath || outputPath !== showId)) {
             e.preventDefault()
-            if ((show!.type === "video" && outputPath !== show.id) || (show!.type === "player" && output.out?.background?.id !== show.id)) playVideo()
-            else if (show!.type === "image" && !$outLocked) setOutput("background", { path: show?.id, ...mediaStyle })
+            if ((type === "video" && outputPath !== showId) || (type === "player" && output.out?.background?.id !== showId)) playVideo()
+            else if (type === "image" && !$outLocked) setOutput("background", { path: showId, ...mediaStyle })
             // TODO: this will play first slide
-            // else if (show.type === "section") goToNextProjectItem()
+            // else if (type === "section") goToNextProjectItem()
         }
     }
 
     function playVideo(startAt: number = 0) {
         if ($outLocked) return
 
-        let bg: any = { type: show!.type, startAt, muted: false, loop: false, ...mediaStyle }
+        let bg: any = { type: type, startAt, muted: false, loop: false, ...mediaStyle }
 
-        if (show!.type === "player") bg.id = show!.id
+        if (type === "player") bg.id = showId
         else {
-            bg.path = show!.id
+            bg.path = showId
             // if (filter) data.filter = filter
         }
 
@@ -155,15 +193,15 @@
         videoMarkers.update((a) => {
             const newMarker = { name: "", time: Math.floor(videoTime || 0) }
 
-            if (a[show.id]?.find((a) => a.time === newMarker.time)) return a
+            if (a[showId]?.find((a) => a.time === newMarker.time)) return a
 
-            if (!a[show.id]) a[show.id] = []
-            a[show.id].push(newMarker)
+            if (!a[showId]) a[showId] = []
+            a[showId].push(newMarker)
 
             // sort by time
-            a[show.id] = a[show.id].sort((a, b) => a.time - b.time)
+            a[showId] = a[showId].sort((a, b) => a.time - b.time)
 
-            let markerIndex = a[show.id].findIndex((a) => a.time === newMarker.time)
+            let markerIndex = a[showId].findIndex((a) => a.time === newMarker.time)
             activeRename.set("marker_" + markerIndex)
 
             return a
@@ -177,7 +215,7 @@
         if (currentMarker === undefined) return
 
         videoMarkers.update((a) => {
-            a[show.id][currentMarker].name = e.detail.value
+            a[showId][currentMarker].name = e.detail.value
 
             return a
         })
@@ -198,17 +236,17 @@
 
 <svelte:window on:keydown={keydown} />
 
-{#key show.id}
+{#key showId}
     <div class="media context #media_preview" style="flex: 1;overflow: hidden;">
         <!-- TODO: info about: CTRL click to play at current pos -->
         <HoverButton icon="play" size={10} on:click={(e) => playVideo(e.ctrlKey || e.metaKey ? videoTime : 0)} title={$dictionary.media?.play}>
-            {#if show.type === "player"}
-                <Player id={show.id} bind:videoData bind:videoTime preview />
+            {#if type === "player"}
+                <Player id={showId} bind:videoData bind:videoTime preview />
             {:else}
                 <!-- TODO: on:error={videoError} - ERR_FILE_NOT_FOUND -->
                 <video
                     style="width: 100%;height: 100%;filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});"
-                    src={show.id}
+                    src={showId}
                     on:loadedmetadata={onLoad}
                     on:playing={onPlay}
                     bind:this={video}
@@ -223,11 +261,12 @@
             {/if}
         </HoverButton>
     </div>
-    {#if timeMarkersEnabled}
+
+    {#if playingInOutput ? $videoMarkers[showId]?.length : timeMarkersEnabled}
         <div class="buttons" style="display: flex;">
             <div class="markers">
-                {#if $videoMarkers[show.id]?.length}
-                    {#each $videoMarkers[show.id] as marker, i}
+                {#if $videoMarkers[showId]?.length}
+                    {#each $videoMarkers[showId] as marker, i}
                         <Button
                             class="context #video_marker"
                             id={i}
@@ -251,7 +290,7 @@
                 {/if}
             </div>
 
-            {#if previewControls}
+            {#if previewControls && !playingInOutput}
                 <Button on:click={addMarker}>
                     <Icon id="add" right />
                     <p><T id="actions.add_time_marker" /></p>
@@ -259,7 +298,10 @@
             {/if}
         </div>
     {/if}
-    {#if previewControls}
+
+    {#if playingInOutput}
+        <MediaControls {currentOutput} {outputId} big />
+    {:else if previewControls}
         <div class="buttons" style="display: flex;">
             <Button
                 style="flex: 0;"
@@ -280,7 +322,7 @@
                 <Icon id="timeMarker" white={!timeMarkersEnabled} size={1.2} />
             </Button>
         </div>
-    {:else if !$focusMode}
+    {:else if !$focusMode && !playingInOutput}
         <Button on:click={() => (previewControls = true)} style="background-color: var(--primary-darkest);" center dark>
             <Icon id="eye" right />
             <T id="preview.enable_controls" />

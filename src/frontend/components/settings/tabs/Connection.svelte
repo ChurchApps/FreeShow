@@ -67,7 +67,16 @@
             return a
         })
 
-        if (id === "output_stream") checkWindowCapture()
+        if (id === "output_stream") {
+            if ($serverData?.output_stream?.outputId && !$outputs[$serverData.output_stream.outputId]) {
+                serverData.update((a) => {
+                    delete a.output_stream.outputId
+                    return a
+                })
+            }
+
+            checkWindowCapture()
+        }
     }
 
     function toggleCompanion(e: any) {
@@ -100,7 +109,7 @@
         })
     }
 
-    $: enableOutputSelector = $serverData?.output_stream?.outputId || (getActiveOutputs($outputs, false, true).length > 1 && $disabledServers.output_stream === false)
+    $: enableOutputSelector = ($serverData?.output_stream?.outputId && $outputs[$serverData.output_stream.outputId]) || (getActiveOutputs($outputs, false, true).length > 1 && $disabledServers.output_stream === false)
 
     function restart() {
         send(MAIN, ["START"], { ports: $ports, max: $maxConnections, disabled: $disabledServers })

@@ -5,6 +5,7 @@ import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 
 interface Song {
     title: string
@@ -60,6 +61,7 @@ export function convertOpenLP(data: any) {
             CCLI: song.ccli || "",
             copyright: song.copyright || "",
         }
+        if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
         show.timestamps = {
             created: song.created ? new Date(song.created).getTime() : new Date().getTime(),
@@ -181,9 +183,20 @@ function XMLtoObject(xml: string) {
     let lyrics = song.lyrics || {}
     let properties = song.properties || {}
 
+    let notes =
+        song["#comment"] ||
+        (Array.isArray(properties.comments)
+            ? properties.comments?.map((comment) => comment["#text"] || "").join("\n")
+            : typeof properties.comments?.comment === "string"
+              ? properties.comments.comment
+              : typeof properties.comments === "string"
+                ? properties.comments
+                : "") ||
+        ""
+
     let newSong: Song = {
         title: getTitle(),
-        notes: song["#comment"] || properties.comments?.map((comment) => comment["#text"] || "").join("\n") || "",
+        notes,
         // created: song["@createDate"],
         modified: song["@modifiedDate"],
         copyright: properties.copyright || "",
@@ -234,7 +247,9 @@ function XMLtoObject(xml: string) {
         return lyrics
     }
 
-    function getLines(lines: string | any[]) {
+    function getLines(lines: string | any) {
+        if (lines.tag) lines = lines.tag.tag?.["#text"]
+
         let newLines: string[] = []
 
         // might be <lines break="optional">

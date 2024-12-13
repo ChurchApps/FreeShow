@@ -245,7 +245,17 @@
             <h5><T id="preview.audio" /></h5>
             {#each audio as file}
                 <SelectElem id="audio" data={{ path: file.path, name: file.name }} draggable>
-                    <Button class="context #show_audio" on:click={() => playAudio(file)} outline={$playingAudio[file.path]} style="padding: 8px;width: 100%;" title={file.path} bold={false}>
+                    <Button
+                        class="context #show_audio"
+                        on:click={() => {
+                            if ($outLocked) return
+                            playAudio(file)
+                        }}
+                        outline={$playingAudio[file.path]}
+                        style="padding: 8px;width: 100%;"
+                        title={file.path}
+                        bold={false}
+                    >
                         <Icon id={$playingAudio[file.path]?.paused === true ? "play" : $playingAudio[file.path]?.paused === false ? "pause" : "music"} size={1.2} right />
                         <p style="width: 100%;text-align: left;">{file.name.slice(0, file.name.lastIndexOf("."))}</p>
 

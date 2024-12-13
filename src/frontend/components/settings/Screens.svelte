@@ -1,12 +1,15 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { MAIN, OUTPUT } from "../../../types/Channels"
-    import { activePopup, alertMessage, currentOutputSettings, outputDisplay, outputs } from "../../stores"
+    import { activePopup, alertMessage, currentOutputSettings, dictionary, outputDisplay, outputs } from "../../stores"
     import { destroy, receive, send } from "../../utils/request"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import { keysToID, sortByName } from "../helpers/array"
+    import CombinedInput from "../inputs/CombinedInput.svelte"
+    import NumberInput from "../inputs/NumberInput.svelte"
+    import Checkbox from "../inputs/Checkbox.svelte"
 
     export let activateOutput: boolean = false
 
@@ -142,48 +145,104 @@
     function identifyScreens() {
         send(OUTPUT, ["IDENTIFY_SCREENS"], screens)
     }
+
+    const isChecked = (e: any) => e.target.checked
+
+    let edgeBlending: boolean = false
+    $: blending = currentScreen.blending || {}
+    function updateBlending(value: number, side: string) {
+        if (!screenId) return
+
+        outputs.update((a) => {
+            if (!a[screenId].blending) a[screenId].blending = { left: 0, right: 0, rotate: 90, opacity: 50, centered: false, offset: 0 }
+            a[screenId].blending![side] = value
+            return a
+        })
+    }
 </script>
 
-<p style="margin-bottom: 10px;"><T id="settings.select_display" /></p>
-<Button on:click={() => activePopup.set("change_output_values")} style="width: 100%;" dark center>
-    <Icon id="screen" right />
-    <p><T id="settings.manual_input_hint" /></p>
-</Button>
+{#if edgeBlending}
+    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (edgeBlending = false)}>
+        <Icon id="back" size={2} white />
+    </Button>
 
-<Button on:click={identifyScreens} style="width: 100%;" dark center>
-    <Icon id="search" right />
-    <p><T id="settings.identify_screens" /></p>
-</Button>
+    <p style="margin-bottom: 10px;"><T id="screen.edge_blending_tip" /></p>
 
-<br />
-
-<div class="content">
-    {#if screens.length}
-        <div class="screens" style="transform: translateX(-{totalScreensWidth}px)">
-            {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)}
-                <div class="screen noClick" style="width: {currentScreen.bounds.width}px;height: {currentScreen.bounds.height}px;left: {currentScreen.bounds.x}px;top: {currentScreen.bounds.y}px;">
-                    <!-- Current screen position -->
-                </div>
-            {/if}
-
-            {#each screens as screen, i}
-                <div
-                    class="screen"
-                    class:disabled={currentScreen?.forcedResolution}
-                    class:active={$outputs[screenId || ""]?.screen === screen.id.toString()}
-                    style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.bounds.x}px;top: {screen.bounds.y}px;"
-                    on:click={() => {
-                        if (!currentScreen?.forcedResolution) changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
-                    }}
-                >
-                    {i + 1}
-                </div>
-            {/each}
+    <CombinedInput>
+        <p><T id="screen.left" /></p>
+        <NumberInput value={blending.left || 0} on:change={(e) => updateBlending(e.detail, "left")} />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="screen.right" /></p>
+        <NumberInput value={blending.right || 0} on:change={(e) => updateBlending(e.detail, "right")} />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="edit.rotation" /></p>
+        <NumberInput value={blending.rotate ?? 90} max={360} on:change={(e) => updateBlending(e.detail, "rotate")} />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="edit.opacity" /></p>
+        <NumberInput value={blending.opacity ?? 50} max={100} step={5} on:change={(e) => updateBlending(e.detail, "opacity")} />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="screen.centered" /></p>
+        <div class="alignRight">
+            <Checkbox checked={blending.centered} on:change={(e) => updateBlending(isChecked(e), "centered")} />
         </div>
-    {:else}
-        <T id="remote.loading" />
+    </CombinedInput>
+    {#if blending.centered}
+        <CombinedInput>
+            <p><T id="edit.offset" /></p>
+            <NumberInput value={blending.offset} min={-50} max={50} on:change={(e) => updateBlending(e.detail, "offset")} />
+        </CombinedInput>
     {/if}
-</div>
+{:else}
+    <p style="margin-bottom: 10px;"><T id="settings.select_display" /></p>
+    <Button on:click={() => activePopup.set("change_output_values")} style="width: 100%;" dark center>
+        <Icon id="screen" right />
+        <p><T id="settings.manual_input_hint" /></p>
+    </Button>
+
+    <Button on:click={() => (edgeBlending = true)} style="width: 100%;" dark center>
+        <Icon id="gradient" right />
+        <p><T id="settings.edge_blending" /></p>
+    </Button>
+
+    <Button on:click={identifyScreens} style="width: 100%;" dark center>
+        <Icon id="search" right />
+        <p><T id="settings.identify_screens" /></p>
+    </Button>
+
+    <br />
+
+    <div class="content">
+        {#if screens.length}
+            <div class="screens" style="transform: translateX(-{totalScreensWidth}px)">
+                {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)}
+                    <div class="screen noClick" style="width: {currentScreen.bounds.width}px;height: {currentScreen.bounds.height}px;left: {currentScreen.bounds.x}px;top: {currentScreen.bounds.y}px;">
+                        <!-- Current screen position -->
+                    </div>
+                {/if}
+
+                {#each screens as screen, i}
+                    <div
+                        class="screen"
+                        class:disabled={currentScreen?.forcedResolution}
+                        class:active={$outputs[screenId || ""]?.screen === screen.id.toString()}
+                        style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.bounds.x}px;top: {screen.bounds.y}px;"
+                        on:click={() => {
+                            if (!currentScreen?.forcedResolution) changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
+                        }}
+                    >
+                        {i + 1}
+                    </div>
+                {/each}
+            </div>
+        {:else}
+            <T id="remote.loading" />
+        {/if}
+    </div>
+{/if}
 
 <style>
     .content {

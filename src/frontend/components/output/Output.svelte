@@ -249,7 +249,7 @@
 
     <!-- colorbars for testing -->
     {#if $colorbars}
-        <Image path="./assets/{$colorbars}" mediaStyle={{ rendering: "pixelated" }} />
+        <Image path="./assets/{$colorbars}" mediaStyle={{ rendering: "pixelated", fit: "fill" }} />
     {/if}
 
     <!-- "underlays" -->

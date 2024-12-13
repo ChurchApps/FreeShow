@@ -118,10 +118,12 @@ export class EditboxHelper {
         let html = ""
         let firstTextStyleArchive: string = ""
         let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
+        let listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : ""
+
         item?.lines?.forEach((line, i) => {
             let align = line.align.replaceAll(lineBg, "")
             currentStyle += align + lineBg // + line.chords?.map((a) => a.key)
-            let style = align || lineBg ? 'style="' + align + ";" + lineBg + '"' : ""
+            let style = align || lineBg || listStyle ? 'style="' + align + ";" + lineBg + listStyle + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
 
             // fix removing all text in a line
@@ -139,7 +141,8 @@ export class EditboxHelper {
                 let textChords = currentChords.filter((a) => a.pos >= textIndex && (a.pos <= textEnd || line.text.length - 1 >= tIndex))
                 textIndex = textEnd
 
-                let style = a.style ? 'style="' + a.style + '"' : ""
+                let listStyle = "" // item.list?.enabled ? ";display: list-item;" : ""
+                let style = a.style || listStyle ? 'style="' + a.style + listStyle + '"' : ""
                 let value = a.value.replaceAll("\n", "<br>") || "<br>"
                 if (value === " ") value = "&nbsp;"
 

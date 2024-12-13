@@ -12,6 +12,7 @@
     import Tabs from "../main/Tabs.svelte"
     import Center from "../system/Center.svelte"
     import { getBoxStyle, getFilterStyle, getItemStyle, getSlideStyle, setBoxStyle, setFilterStyle, setItemStyle, setSlideStyle } from "./scripts/itemClipboard"
+    import { DEFAULT_ITEM_STYLE } from "./scripts/itemHelpers"
     import { addStyleString } from "./scripts/textStyle"
     import BoxStyle from "./tools/BoxStyle.svelte"
     import ItemStyle from "./tools/ItemStyle.svelte"
@@ -168,7 +169,7 @@
         if (active === "item") {
             history({
                 id: "setStyle",
-                newData: { style: { key: "style", values: ["top:120px;left:50px;height:840px;width:1820px;"] } },
+                newData: { style: { key: "style", values: [DEFAULT_ITEM_STYLE] } },
                 location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items },
             })
             return

@@ -1,10 +1,11 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeShow, customMessageCredits, media, mediaOptions, outLocked, outputs, photoApiCredits, selected, styles } from "../../../stores"
+    import { activeShow, customMessageCredits, dictionary, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, selected, styles } from "../../../stores"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
+    import Button from "../../inputs/Button.svelte"
     import { clearBackground } from "../../output/clear"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
@@ -65,7 +66,7 @@
 
     let wait = false
     function click(e: any) {
-        if (e.ctrlKey || e.metaKey || e.shiftKey || $outLocked || wait) return
+        if (e.ctrlKey || e.metaKey || e.shiftKey || $outLocked || wait || iconClicked) return
 
         // don't hide again when double clicking
         wait = true
@@ -88,7 +89,7 @@
     }
 
     function dblclick(e: any) {
-        if (e.ctrlKey || e.metaKey) return
+        if (e.ctrlKey || e.metaKey || iconClicked) return
 
         activeFile = index
     }
@@ -103,6 +104,17 @@
     let resolution = { width: 1920, height: 1080 }
 
     $: icon = active !== "favourites" && $media[path]?.favourite === true ? "star" : type === "video" ? "movie" : "image"
+    $: tags = $media[path]?.tags || []
+
+    let iconClicked: any = null
+    function removeTags() {
+        iconClicked = setTimeout(() => (iconClicked = null), 50)
+
+        media.update((a) => {
+            if (a[path]) a[path].tags = []
+            return a
+        })
+    }
 </script>
 
 <SelectElem id="media" class="context #media_card" data={{ name, path, type }} {shiftRange} draggable fill>
@@ -127,6 +139,22 @@
         on:mouseleave={() => (hover = false)}
         on:mousemove={move}
     >
+        <!-- icons -->
+        <div class="icons">
+            {#if tags.length}
+                <div style="max-width: 100%;">
+                    <div class="button">
+                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={removeTags}>
+                            <Icon id="tag" size={0.9} white />
+                        </Button>
+                    </div>
+                    <span style="max-width: 100%;">
+                        <p>{tags.length === 1 ? $mediaTags[tags[0]]?.name || "—" : tags.length}</p>
+                    </span>
+                </div>
+            {/if}
+        </div>
+
         {#if thumbnail}
             <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} />
         {:else}
@@ -148,5 +176,39 @@
     }
     .icon :global(svg) {
         height: 100%;
+    }
+
+    /* icons */
+
+    .icons {
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        left: 0;
+        z-index: 1;
+        font-size: 0.9em;
+
+        height: 80%;
+        flex-wrap: wrap;
+
+        max-width: calc(100% - 21px);
+    }
+    .icons div {
+        opacity: 0.9;
+        display: flex;
+    }
+    .icons .button {
+        background-color: rgb(0 0 0 / 0.6);
+        pointer-events: all;
+    }
+    .icons span {
+        pointer-events: all;
+        background-color: rgb(0 0 0 / 0.6);
+        padding: 3px;
+        font-size: 0.75em;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
     }
 </style>

@@ -17,7 +17,6 @@
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
-    import TextEditor from "./TextEditor.svelte"
 
     export let showId: string
     export let layout: string = ""
@@ -170,7 +169,8 @@
             altKeyPressed = true
         }
     }
-    function keyup() {
+    function keyup(e) {
+        if (e.altKey) return
         altKeyPressed = false
     }
 
@@ -357,8 +357,6 @@
                         <T id="error.no_show" />
                     {/if}
                 </Center>
-            {:else if $slidesOptions.mode === "text"}
-                <TextEditor {currentShow} />
             {:else}
                 <div class="grid">
                     {#if layoutSlides.length}

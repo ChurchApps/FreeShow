@@ -60,6 +60,8 @@ export function joinPath(path: string[]): string {
 
 // fix for media files with special characters in file name not playing
 export function encodeFilePath(path: string): string {
+    if (!path) return ""
+    
     // already encoded
     if (path.match(/%\d+/g) || path.includes("http") || path.includes("data:")) return path
 

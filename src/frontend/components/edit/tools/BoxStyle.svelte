@@ -139,6 +139,14 @@
         box.edit.text[4].value = !!styles["white-space"]?.includes("nowrap")
         box.edit.special[0].value = item?.scrolling?.type || "none"
     }
+    $: if (id === "text" && box?.edit?.list) {
+        box.edit.list[0].value = item?.list?.enabled || false
+        box.edit.list[1].value = item?.list?.style || "disc"
+        // box.edit.list[2].value = item?.list?.interval || 0
+
+        box.edit.list[1].hidden = !item?.list?.enabled
+        // box.edit.list[2].hidden = !item?.list?.enabled
+    }
     $: if (id === "text" && box?.edit?.chords) {
         box.edit.chords[0].value = item?.chords?.enabled || false
         box.edit.chords[1].value = item?.chords?.color || "#FF851B"
@@ -146,6 +154,9 @@
 
         box.edit.chords[1].hidden = !item?.chords?.enabled
         box.edit.chords[2].hidden = !item?.chords?.enabled
+    }
+    $: if (id === "camera" && box?.edit?.default?.[0] && item?.device?.name) {
+        box.edit.default[0].name = item.device.name
     }
     $: if (id === "slide_tracker" && box?.edit?.default?.[3]) {
         box.edit.default[2].hidden = item?.tracker?.type !== "group"

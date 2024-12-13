@@ -41,7 +41,7 @@ export function clearAll(button: boolean = false) {
     clearBackground()
     clearSlide(true)
     clearOverlays()
-    clearAudio()
+    clearAudio("", true, false, true)
     clearTimers()
 }
 

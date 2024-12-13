@@ -46,7 +46,7 @@
 {:else}
     <CombinedInput>
         <Button style="width: 100%;" on:click={closeApp} dark center>
-            <div style="display: inline;opacity: 0.7;display: flex;align-items: center;"><T id="popup.quit" /></div>
+            <div style="display: inline;opacity: 0.7;display: flex;align-items: center;border: none;"><T id="popup.quit" /></div>
             <span>Q</span>
         </Button>
     </CombinedInput>

@@ -96,7 +96,7 @@
             x: x,
             y: y,
             size: settings.size || 10,
-            color: settings.color || "white",
+            color: settings.color || "#ffffff",
         }
         lines.push(line)
         paintCache.set(lines)
@@ -114,7 +114,7 @@
         // ctx.moveTo(previousPos.x, previousPos.y)
         ctx.lineWidth = settings.size || 10
         ctx.lineCap = "round"
-        ctx.strokeStyle = settings.color || "white"
+        ctx.strokeStyle = settings.color || "#ffffff"
     } else {
         previousPos = null
         if (lines.length && lines[lines.length - 1] !== "mouseup") lines.push("mouseup")

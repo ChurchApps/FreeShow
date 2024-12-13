@@ -38,6 +38,7 @@ import {
     media,
     mediaFolders,
     mediaOptions,
+    mediaTags,
     metronome,
     midiIn,
     openedFolders,
@@ -159,6 +160,7 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         audioPlaylists: get(audioPlaylists),
         midiIn: get(midiIn),
         videoMarkers: get(videoMarkers),
+        mediaTags: get(mediaTags),
         customizedIcons: get(customizedIcons),
         companion: get(companion),
         globalTags: get(globalTags),
@@ -217,7 +219,7 @@ export function saveComplete({ closeWhenFinished, customTriggers }: any) {
     if (customTriggers?.backup || customTriggers?.changeUserData) return
 
     let mainFolderId = get(driveData)?.mainFolderId
-    if (!mainFolderId || get(driveData)?.disabled === true) {
+    if (!mainFolderId || get(driveData)?.disabled === true || !Object.keys(get(driveKeys)).length) {
         if (closeWhenFinished) closeApp()
 
         return
@@ -352,6 +354,7 @@ const saveList: { [key in SaveList]: any } = {
     gain: null,
     midiIn: midiIn,
     videoMarkers: videoMarkers,
+    mediaTags: mediaTags,
     customizedIcons: customizedIcons,
     driveKeys: driveKeys,
     driveData: driveData,

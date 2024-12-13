@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, activeTagFilter, contextData, drawerTabsData, globalTags, groups, outputs, overlays, selected, shows, sorted } from "../../stores"
+import { activeEdit, activeMediaTagFilter, activeTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, outputs, overlays, selected, shows, sorted } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
@@ -33,18 +33,33 @@ const loadActions = {
         setContextData("tags", sortedTags.length)
         return sortedTags
     },
+    media_tag_set: () => {
+        let selectedTags = get(media)[get(selected).data[0]?.path]?.tags || []
+        let sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
+        if (sortedTags.length) sortedTags.push("SEPERATOR")
+        sortedTags.push(create)
+        return sortedTags
+    },
+    media_tag_filter: () => {
+        let sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeMediaTagFilter).includes(a.id), translate: false }))
+        setContextData("media_tags", sortedTags.length)
+        return sortedTags
+    },
     sort_shows: (items: ContextMenuItem[]) => sortItems(items, "shows"),
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
     slide_groups: (items: ContextMenuItem[]) => {
         let selectedIndex = get(selected).data[0]?.index
-        let currentSlide = _show().layouts("active").ref()[0]?.[selectedIndex]
+        let slideRef = _show().layouts("active").ref()[0]?.[selectedIndex] || {}
+        let currentSlide = _show().get("slides")[slideRef.id]
         if (!currentSlide) return []
 
-        let currentGroup = currentSlide.data?.globalGroup || ""
+        let currentGroup: string = currentSlide.globalGroup || ""
         items = Object.entries(get(groups)).map(([id, a]: any) => {
             return { id, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: !!a.default, enabled: id === currentGroup }
         })
 
+        if (!items.length) return [{ label: "empty.general", disabled: true }]
         return sortItemsByLabel(items)
     },
     actions: () => {
@@ -53,6 +68,7 @@ const loadActions = {
 
         let slideActions = [
             { id: "action", label: "midi.start_action", icon: "actions" },
+            "SEPERATOR",
             { id: "slide_shortcut", label: "actions.play_with_shortcut", icon: "play", enabled: currentActions?.slide_shortcut || false },
             { id: "receiveMidi", label: "actions.play_on_midi", icon: "play", enabled: currentActions?.receiveMidi || false },
             "SEPERATOR",
@@ -217,7 +233,19 @@ const loadActions = {
         let firstShowIndex = values.findIndex((a) => a.id.includes("show_"))
         let firstVideoIndex = values.findIndex((a) => a.id.includes("video_"))
         let firstMetaIndex = values.findIndex((a) => a.id.includes("meta_"))
-        values = [...values.slice(0, firstShowIndex), "SEPERATOR", ...values.slice(firstShowIndex, firstVideoIndex), "SEPERATOR", ...values.slice(firstVideoIndex, firstMetaIndex), "SEPERATOR", ...values.slice(firstMetaIndex)]
+        let firstVarIndex = values.findIndex((a) => a.id.includes("variable_"))
+
+        values = [
+            ...values.slice(0, firstShowIndex),
+            "SEPERATOR",
+            ...values.slice(firstShowIndex, firstVideoIndex),
+            "SEPERATOR",
+            ...values.slice(firstVideoIndex, firstMetaIndex),
+            "SEPERATOR",
+            ...values.slice(firstMetaIndex, firstVarIndex),
+            "SEPERATOR",
+            ...values.slice(firstVarIndex),
+        ]
 
         return values
     },
@@ -235,10 +263,11 @@ function sortItems(items: ContextMenuItem[], id: "projects" | "shows") {
 
     items = [
         { id: "name", label: "sort.name", icon: "text", enabled: type === "name" },
+        { id: "name_des", label: "sort.name_des", icon: "text", enabled: type === "name_des" },
         { id: "created", label: "info.created", icon: "calendar", enabled: type === "created" },
+        { id: "modified", label: "info.modified", icon: "calendar", enabled: type === "modified" },
     ]
     if (id === "shows") {
-        items.push({ id: "modified", label: "info.modified", icon: "calendar", enabled: type === "modified" })
         items.push({ id: "used", label: "info.used", icon: "calendar", enabled: type === "used" })
 
         // WIP load used metadata values...

@@ -206,6 +206,9 @@
             "style_box-shadow_2": 8,
             // "style_box-shadow_3": 0,
         },
+        list: {
+            "list.enabled": true,
+        },
         chords: {
             "chords.enabled": true,
             chords: true,
@@ -287,7 +290,7 @@
         return state
     }
 
-    const setDefaults: string[] = ["outline", "shadow", "chords", "border"]
+    const setDefaults: string[] = ["list", "outline", "shadow", "chords", "border"]
     function openEdit(id: string) {
         storedEditMenuState.update((a) => {
             if (!a[sessionId]) a[sessionId] = []
@@ -460,19 +463,29 @@
                         >
                             <Icon id={input.icon || input.id} right />
                             {#key input.name}
-                                <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
+                                <p style="padding: 0;flex: initial;width: fit-content;min-width: unset;{input.name.includes('.') || !input.name.includes(' ') ? '' : 'opacity: 1;'}">
+                                    {#if input.name.includes(" ")}
+                                        {input.name}
+                                    {:else}
+                                        <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
+                                    {/if}
+                                </p>
                             {/key}
                         </Button>
                     </CombinedInput>
                 {:else if input.input === "media"}
-                    <MediaPicker id={"item_" + sessionId} title={input.value} style="overflow: hidden;margin-bottom: 10px;" filter={{ name: "Media files", extensions: mediaExtensions }} on:picked={(e) => valueChange(e, input)}>
-                        <Icon id="image" right />
-                        {#if input.value}
-                            <p style="padding: 0;opacity: 1;">{getFileName(input.value)}</p>
-                        {:else}
-                            <p style="padding: 0;"><T id="edit.choose_media" /></p>
-                        {/if}
-                    </MediaPicker>
+                    <CombinedInput>
+                        <MediaPicker id={"item_" + sessionId} title={input.value} style="width: 100%;" filter={{ name: "Media files", extensions: mediaExtensions }} on:picked={(e) => valueChange(e, input)}>
+                            <span style="display: flex;align-items: center;max-width: 100%;">
+                                <Icon id="image" right />
+                                {#if input.value}
+                                    <p style="padding: 0;opacity: 1;">{getFileName(input.value)}</p>
+                                {:else}
+                                    <p style="padding: 0;"><T id="edit.choose_media" /></p>
+                                {/if}
+                            </span>
+                        </MediaPicker>
+                    </CombinedInput>
                 {:else if input.input === "multiselect"}
                     <div class="line">
                         {#each input.values as option}

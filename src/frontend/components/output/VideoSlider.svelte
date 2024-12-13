@@ -9,6 +9,7 @@
     export let activeOutputIds: string[] = []
     export let unmutedId: string = ""
     export let toOutput: boolean = false
+    export let big: boolean = false
     export let disabled: boolean = false
     export let changeValue: number = 0
 
@@ -103,7 +104,7 @@
     }}
 />
 
-<div class="main">
+<div class="main" class:big>
     {#if hover}
         <span>
             {time}
@@ -146,6 +147,9 @@
         margin: 0 5px;
         font-size: 0.8em;
     }
+    .main.big {
+        font-size: 1em;
+    }
 
     .slider {
         flex: 1;
@@ -153,5 +157,8 @@
         height: 100%;
         display: flex;
         align-items: center;
+    }
+    .main.big .slider {
+        margin: 0 10px;
     }
 </style>
