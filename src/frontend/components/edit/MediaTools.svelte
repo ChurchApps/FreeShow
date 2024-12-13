@@ -47,9 +47,9 @@
             let videoDuration = video?.duration || 0
             if (!videoDuration) return
 
-            edits.video[2].value = currentMedia?.toTime || videoDuration
-            edits.video[1].values = { max: videoDuration }
+            edits.video[3].value = currentMedia?.toTime || videoDuration
             edits.video[2].values = { max: videoDuration }
+            edits.video[3].values = { max: videoDuration }
         }
     }
 
@@ -60,8 +60,9 @@
         edits.default[2].value = currentMedia.flippedY || false
         if (edits.video) {
             edits.video[0].value = currentMedia.speed || "1"
-            edits.video[1].value = currentMedia.fromTime || 0
-            edits.video[2].value = currentMedia.toTime || edits.video[2].value
+            edits.video[1].value = currentMedia.volume ?? 100
+            edits.video[2].value = currentMedia.fromTime || 0
+            edits.video[3].value = currentMedia.toTime || edits.video[3].value
         }
 
         // update filters

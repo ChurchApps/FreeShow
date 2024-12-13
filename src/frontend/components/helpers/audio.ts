@@ -80,8 +80,11 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     })
 
     let localVolume: number = get(volume) * (get(media)[path]?.volume || 1)
-    if (analyser.gainNode) analyser.gainNode.gain.value = localVolume * (get(gain) || 1)
-    else audio.volume = localVolume
+    if (analyser.gainNode) {
+        analyser.gainNode.gain.value = localVolume * (get(gain) || 1)
+        if (get(special).preFaderVolumeMeter) audio.volume = 1
+        else audio.volume = localVolume
+    } else audio.volume = localVolume
 
     let waitToPlay = 0
     if (audioPlaying && crossfade) {
@@ -171,6 +174,9 @@ export function updateVolume(value: number | undefined | "local", changeGain: bo
             if (a[id].analyser.gainNode) {
                 let gainedValue = localVolume * (get(gain) || 1)
                 a[id].analyser.gainNode.gain.value = gainedValue
+
+                if (get(special).preFaderVolumeMeter) a[id].audio.volume = 1
+                else a[id].audio.volume = localVolume
             } else a[id].audio.volume = localVolume
         })
 
@@ -516,7 +522,7 @@ function getPlayingVideos() {
 
     videos.map((a) => {
         // set volume (video in output window)
-        let newVolume = get(volume)
+        let newVolume = get(volume) * ((get(media)[a.id]?.volume ?? 100) / 100)
         if (a.analyser.gainNode) {
             let gainedValue = newVolume * (get(gain) || 1)
             a.analyser.gainNode.gain.value = gainedValue

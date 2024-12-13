@@ -1,3 +1,4 @@
+/* custom CMG Sans */
 @font-face {
     font-family: "CMGSans";
     src: url("./fonts/CMGSans-Regular.ttf");
@@ -39,18 +40,24 @@
 
     --hover: rgb(255 255 255 / 0.05);
     --focus: rgb(255 255 255 / 0.1);
-    /* --active: rgb(230 52 156 / .8); */
 
-    /* --font-family: sans-serif; */
     /* https://css-tricks.com/snippets/css/system-font-stack/ */
-    /* --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; */
     --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     --font-size: 1em;
 
     --border-radius: 0;
 
-    /* --navigation-width: 18vw; */
     --navigation-width: 290px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+
+    outline-offset: -4px;
+    outline-color: var(--secondary);
 }
 
 html,
@@ -63,9 +70,6 @@ body {
 body {
     display: flex;
     flex-direction: column;
-    /* background-color: #292c36;
-  background-color: var(--primary); */
-    color: #f0f0ff;
     color: var(--text);
     box-sizing: border-box;
     transition: background-color 0.5s;
@@ -122,76 +126,3 @@ p {
     overflow: hidden;
     white-space: nowrap;
 }
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    user-select: none;
-
-    outline-offset: -4px;
-    outline-color: var(--secondary);
-}
-
-/* button {
-  font-family: sans-serif;
-	font-family: system-ui;
-} */
-
-/* body {
-	color: #333;
-	margin: 0;
-	padding: 8px;
-	box-sizing: border-box;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-}
-
-a {
-	color: rgb(0,100,200);
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-
-a:visited {
-	color: rgb(0,80,160);
-}
-
-label {
-	display: block;
-}
-
-input, button, select, textarea {
-	font-family: inherit;
-	font-size: inherit;
-	-webkit-padding: 0.4em 0;
-	padding: 0.4em;
-	margin: 0 0 0.5em 0;
-	box-sizing: border-box;
-	border: 1px solid #ccc;
-	border-radius: 2px;
-}
-
-input:disabled {
-	color: #ccc;
-}
-
-button {
-	color: #333;
-	background-color: #f4f4f4;
-	outline: none;
-}
-
-button:disabled {
-	color: #999;
-}
-
-button:not(:disabled):active {
-	background-color: #ddd;
-}
-
-button:focus {
-	border-color: #666;
-} */

@@ -9,6 +9,7 @@ import { history } from "../helpers/history"
 import { isEmptyOrSpecial } from "../helpers/output"
 import { getGlobalGroup } from "../helpers/show"
 import { _show } from "../helpers/shows"
+import { DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 
 export function formatText(text: string, showId: string = "") {
     if (!showId) showId = get(activeShow)?.id || ""
@@ -283,7 +284,7 @@ function getSlide(slideText): Slide {
     return slide
 }
 
-export const defaultItem: Item = { type: "text", lines: [], style: "top:120px;left:50px;height:840px;width:1820px;" }
+export const defaultItem: Item = { type: "text", lines: [], style: DEFAULT_ITEM_STYLE }
 const textboxRegex = /\[#(\d+)(?::([^\]]+))?\]/
 export function linesToTextboxes(slideLines: string[]) {
     let items: Item[] = []

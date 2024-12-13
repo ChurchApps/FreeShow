@@ -47,6 +47,13 @@ export const videoEdit = [
         },
     },
     {
+        name: "media.volume",
+        id: "volume",
+        input: "number",
+        value: 100,
+        values: { max: 100 },
+    },
+    {
         name: "inputs.start",
         id: "fromTime",
         input: "number",

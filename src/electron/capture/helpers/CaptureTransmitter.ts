@@ -48,7 +48,7 @@ export class CaptureTransmitter {
     // WIP one global capture (on the highest frame rate) instead of multiple per frame rate - but using multipe at once is probably an edge case
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
-        const interval = 1000 / OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.[key] || 30
+        const interval = 1000 / (OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.[key] || 30)
         // console.log("START CHANNEL:", key, interval)
 
         if (this.channels[combinedKey]?.timer) {

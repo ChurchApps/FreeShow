@@ -3,8 +3,7 @@ import os from "os"
 import { toApp } from ".."
 import { CaptureHelper } from "../capture/CaptureHelper"
 import util from "./vingester-util"
-
-// WIP - NDI issue on Linux: libndi.so.5: No such file or dialog
+import { CaptureTransmitter } from "../capture/helpers/CaptureTransmitter"
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -63,6 +62,15 @@ export class NdiSender {
                 CaptureHelper.updateFramerate(id)
 
                 this.NDI[id].previousStatus = newStatus
+
+                if (this.NDI[id].status === "connected") {
+                    Object.keys(CaptureTransmitter.channels).forEach((key) => {
+                        if (key.includes("ndi")) {
+                            // force an instant check / output refresh when reconnected
+                            CaptureTransmitter.channels[key].lastCheck = 999
+                        }
+                    })
+                }
             }
         }, 1000)
     }
