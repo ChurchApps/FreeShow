@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { slide } from "svelte/transition"
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activePopup, activeShow, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, styles } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, styles, textEditActive } from "../../../stores"
     import { slideHasAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
@@ -335,6 +335,15 @@
                     <Icon id="chords" white={!usedChords.length} right={!$labelsDisabled} />
                     {#if !$labelsDisabled}<T id="edit.chords" />{/if}
                 </Button>
+
+                {#if !$focusMode}
+                    <div class="seperator" />
+
+                    <Button on:click={() => textEditActive.set(true)}>
+                        <Icon id="text" right />
+                        <p><T id="show.text" /></p>
+                    </Button>
+                {/if}
 
                 <div class="seperator" />
 

@@ -14,7 +14,8 @@ export function checkName(name: string = "", showId: string = "") {
     let number = 1
     while (Object.entries(get(shows)).find(([id, a]: any) => (!showId || showId !== id) && a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
 
-    return number > 1 ? name + " " + number : name
+    // add number if existing name, and trim away spaces from the start/end
+    return (number > 1 ? name + " " + number : name).trim()
 }
 
 export function formatToFileName(name: string = "") {
@@ -142,6 +143,7 @@ export function updateShowsList(shows: Shows) {
     } else {
         // sort by name
         sortedShows = sortByNameAndNumber(showsList)
+        if (sortType === "name_des") sortedShows = sortedShows.reverse()
     }
 
     let filteredShows: ShowList[] = removeValues(sortedShows, "private", true)

@@ -7,6 +7,7 @@ import AdvancedScreen from "../components/main/popups/AdvancedScreen.svelte"
 import Alert from "../components/main/popups/Alert.svelte"
 import Animate from "../components/main/popups/Animate.svelte"
 import AudioStream from "../components/main/popups/AudioStream.svelte"
+import CategoryAction from "../components/main/popups/CategoryAction.svelte"
 import ChangeIcon from "../components/main/popups/ChangeIcon.svelte"
 import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.svelte"
 import ChooseCamera from "../components/main/popups/ChooseCamera.svelte"
@@ -22,7 +23,6 @@ import CreateShow from "../components/main/popups/createShow/CreateShow.svelte"
 import DeleteDuplicatedShows from "../components/main/popups/DeleteDuplicatedShows.svelte"
 import DeleteShow from "../components/main/popups/DeleteShow.svelte"
 import EditEvent from "../components/main/popups/EditEvent.svelte"
-import EditList from "../components/main/popups/EditList.svelte"
 import Export from "../components/main/popups/export/Export.svelte"
 import FindReplace from "../components/main/popups/FindReplace.svelte"
 import History from "../components/main/popups/History.svelte"
@@ -32,6 +32,7 @@ import Initialize from "../components/main/popups/Initialize.svelte"
 import Translate from "../components/main/popups/localization/Translate.svelte"
 import ManageColors from "../components/main/popups/ManageColors.svelte"
 import ManageIcons from "../components/main/popups/ManageIcons.svelte"
+import ManageTags from "../components/main/popups/ManageTags.svelte"
 import NextTimer from "../components/main/popups/NextTimer.svelte"
 import Rename from "../components/main/popups/Rename.svelte"
 import ResetAll from "../components/main/popups/ResetAll.svelte"
@@ -46,7 +47,6 @@ import Trigger from "../components/main/popups/Trigger.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
-import CategoryAction from "../components/main/popups/CategoryAction.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -66,7 +66,6 @@ export const popups: { [key in Popups]: ComponentType } = {
     rename: Rename,
     color: Color,
     find_replace: FindReplace,
-    edit_list: EditList,
     timer: Timer,
     variable: Variable,
     trigger: Trigger,
@@ -82,6 +81,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     animate: Animate,
     translate: Translate,
     next_timer: NextTimer,
+    manage_tags: ManageTags,
     advanced_settings: AdvancedScreen,
     about: About,
     shortcuts: Shortcuts,

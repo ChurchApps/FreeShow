@@ -15,6 +15,7 @@ export type SaveListSyncedSettings =
     | "groups"
     | "midiIn"
     | "videoMarkers"
+    | "mediaTags"
     | "customizedIcons"
     | "companion"
     | "globalTags"

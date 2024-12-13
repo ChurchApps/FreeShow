@@ -7,6 +7,7 @@ import { categories, globalTags, groups } from "../stores"
 import { checkName } from "../components/helpers/show"
 import { createCategory, setTempShows } from "./importHelpers"
 import { history } from "../components/helpers/history"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 
 interface ImportSettings {
     category: string
@@ -116,6 +117,7 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
         CCLI: metadata.ccli,
     }
     if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
+    if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
     // add tags
     const tags = getTags(metadata.keywords.split(","))

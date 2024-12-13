@@ -34,6 +34,7 @@ import {
     startScripture,
     toggleLock,
 } from "./apiHelper"
+import { oscToAPI } from "./apiOSC"
 import { sendRestCommandSync } from "./rest"
 
 /// STEPS TO CREATE A CUSTOM API ACTION ///
@@ -180,7 +181,7 @@ export const API_ACTIONS = {
     // start specific folder (playlist)
     // folder_select_audio: () => ,
     change_volume: (data: API_volume) => updateVolume(data.volume ?? data.gain, data.gain !== undefined), // BC
-    start_audio_stream: (data: API_id) => startAudioStream(data.id),
+    start_audio_stream: (data: API_id) => startAudioStream(data),
     start_playlist: (data: API_id) => startPlaylist(data.id),
     playlist_next: () => audioPlaylistNext(),
     start_metronome: (data: API_metronome) => startMetronome(data),
@@ -224,6 +225,9 @@ export const API_ACTIONS = {
 /// RECEIVER / SENDER ///
 
 export async function triggerAction(data: API) {
+    // Open Sound Control format
+    if (data.action.startsWith("/")) data = oscToAPI(data)
+
     let id = data.action
 
     // API start at 1, code start at 0

@@ -217,7 +217,7 @@ export const previewShortcuts: any = {
         if (!get(outLocked)) setOutput("overlays", [])
     },
     F4: () => {
-        if (!get(outLocked)) clearAudio()
+        if (!get(outLocked)) clearAudio("", true, false, true)
     },
     F5: () => {
         if (!get(special).disablePresenterControllerKeys) nextSlideIndividual(null)

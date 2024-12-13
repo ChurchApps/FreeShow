@@ -4,7 +4,25 @@
     import { slide } from "svelte/transition"
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
-    import { activeDrawerOnlineTab, activeEdit, activeFocus, activePopup, activeShow, dictionary, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, selectAllMedia, selected } from "../../../stores"
+    import {
+        activeDrawerOnlineTab,
+        activeEdit,
+        activeFocus,
+        activeMediaTagFilter,
+        activePopup,
+        activeShow,
+        dictionary,
+        focusMode,
+        labelsDisabled,
+        media,
+        mediaFolders,
+        mediaOptions,
+        outLocked,
+        outputs,
+        popupData,
+        selectAllMedia,
+        selected,
+    } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -33,7 +51,8 @@
 
     let files: any[] = []
 
-    let notFolders = ["all", "favourites", "online", "screens", "cameras"]
+    let specialTabs = ["online", "screens", "cameras"]
+    let notFolders = ["all", ...specialTabs]
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path! || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
 
@@ -137,7 +156,7 @@
     // filter files
     let activeView: "all" | "folder" | "image" | "video" = "all"
     let filteredFiles: any[] = []
-    $: if (activeView) filterFiles()
+    $: if (activeView || $activeMediaTagFilter) filterFiles()
     $: if (searchValue !== undefined) filterSearch()
 
     function filterFiles() {
@@ -146,6 +165,11 @@
         // filter files
         if (activeView === "all") filteredFiles = files.filter((a) => active !== "all" || !a.folder)
         else filteredFiles = files.filter((a) => (activeView === "folder" && active !== "all" && a.folder) || (!a.folder && activeView === getMediaType(a.extension)))
+
+        // filter by tag
+        if ($activeMediaTagFilter.length) {
+            filteredFiles = filteredFiles.filter((a) => !a.folder && $media[a.path]?.tags?.length && !$activeMediaTagFilter.find((tagId) => !$media[a.path].tags!.includes(tagId)))
+        }
 
         // reset arrow selector
         loadAllFiles(filteredFiles)
@@ -311,49 +335,53 @@
                 />
             </div>
         {:else if fullFilteredFiles.length}
-            {#key fullFilteredFiles}
-                {#if $mediaOptions.mode === "grid"}
-                    <MediaGrid items={fullFilteredFiles} columns={$mediaOptions.columns} let:item>
-                        {#if item.folder}
-                            <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={fullFilteredFiles.length < 20} />
-                        {:else}
-                            <Media
-                                credits={item.credits}
-                                name={item.name}
-                                path={item.path}
-                                thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)}
-                                type={getMediaType(item.extension)}
-                                shiftRange={fullFilteredFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
-                                bind:activeFile
-                                {allFiles}
-                                {active}
-                            />
-                        {/if}
-                    </MediaGrid>
-                {:else}
-                    <VirtualList items={fullFilteredFiles} let:item={file}>
-                        {#if file.folder}
-                            <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
-                        {:else}
-                            <Media
-                                credits={file.credits}
-                                thumbnail={$mediaOptions.mode !== "list"}
-                                name={file.name}
-                                path={file.path}
-                                type={getMediaType(file.extension)}
-                                shiftRange={fullFilteredFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
-                                bind:activeFile
-                                {allFiles}
-                                {active}
-                            />
-                        {/if}
-                    </VirtualList>
-                {/if}
-            {/key}
+            <div class="context #media" style="display: contents;">
+                {#key fullFilteredFiles}
+                    {#if $mediaOptions.mode === "grid"}
+                        <MediaGrid items={fullFilteredFiles} columns={$mediaOptions.columns} let:item>
+                            {#if item.folder}
+                                <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={fullFilteredFiles.length < 20} />
+                            {:else}
+                                <Media
+                                    credits={item.credits}
+                                    name={item.name}
+                                    path={item.path}
+                                    thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)}
+                                    type={getMediaType(item.extension)}
+                                    shiftRange={fullFilteredFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
+                                    bind:activeFile
+                                    {allFiles}
+                                    {active}
+                                />
+                            {/if}
+                        </MediaGrid>
+                    {:else}
+                        <VirtualList items={fullFilteredFiles} let:item={file}>
+                            {#if file.folder}
+                                <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
+                            {:else}
+                                <Media
+                                    credits={file.credits}
+                                    thumbnail={$mediaOptions.mode !== "list"}
+                                    name={file.name}
+                                    path={file.path}
+                                    type={getMediaType(file.extension)}
+                                    shiftRange={fullFilteredFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
+                                    bind:activeFile
+                                    {allFiles}
+                                    {active}
+                                />
+                            {/if}
+                        </VirtualList>
+                    {/if}
+                {/key}
+            </div>
         {:else}
-            <Center>
-                <Icon id="noImage" size={5} white />
-            </Center>
+            <div class={specialTabs.includes(active || "") ? "" : "context #media"} style="display: contents;">
+                <Center>
+                    <Icon id="noImage" size={5} white />
+                </Center>
+            </div>
         {/if}
     </div>
 </div>

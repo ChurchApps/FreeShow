@@ -25,6 +25,9 @@
     }
 
     function formatTriggerValue(value: string) {
+        // bug in pre 1.3.3 where trigger value is an event if changed to empty
+        if (typeof value !== "string") return
+
         // value = e.g. http://192.168.10.50/?preset=1&cam=3 -> Preset: 1
         if (!value) return ""
 

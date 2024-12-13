@@ -37,7 +37,7 @@
 
         // auto revert special values
         if (autoRevert.includes(key) && value && !reverted.includes(key)) {
-            newToast($dictionary.toast?.reverting_setting?.replace("{}", revertTime.toString()))
+            newToast($dictionary.toast?.reverting_setting?.replace("{}", revertTime.toString()) || "")
             reverted.push(key)
             setTimeout(() => {
                 updateOutput(key, false, outputId)
@@ -45,7 +45,9 @@
             }, revertTime * 1000)
         }
 
-        if (key === "blackmagic") {
+        if (key === "ndi") {
+            if (value) newToast("$toast.output_capture_enabled")
+        } else if (key === "blackmagic") {
             if (value === true) {
                 // send(BLACKMAGIC, ["GET_DEVICES"])
                 updateOutput("transparent", true)

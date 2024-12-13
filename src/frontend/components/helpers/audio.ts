@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN, OUTPUT } from "../../../types/Channels"
-import { activePlaylist, audioChannels, audioPlaylists, gain, media, outLocked, playingAudio, playingVideos, special } from "../../stores"
+import { activePlaylist, audioChannels, audioPlaylists, gain, isFadingOut, media, outLocked, playingAudio, playingVideos, special } from "../../stores"
 import { send } from "../../utils/request"
 import { customActionActivation } from "../actions/actions"
 import { stopMetronome } from "../drawer/audio/metronome"
@@ -13,7 +13,7 @@ import { checkNextAfterMedia } from "./showActions"
 
 // WIP use get(special).audio_fade_duration ?? 1.5 to fade in when starting song ?? (currently just when fading out)
 
-export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0) {
+export async function playAudio({ path, name = "", audio = null, stream = null }: any, pauseIfPlaying: boolean = true, startAt: number = 0, playMultiple: boolean = false, crossfade: number = 0, playlistCrossfade: boolean = false) {
     let existing: any = get(playingAudio)[path]
     if (existing) {
         if (!pauseIfPlaying) {
@@ -36,7 +36,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
 
     let audioPlaying = Object.keys(get(playingAudio)).length
     if (crossfade) crossfadeAudio(crossfade)
-    else if (!playMultiple) clearAudio("", false)
+    else if (!playMultiple) clearAudio("", false, playlistCrossfade)
 
     let encodedPath = encodeFilePath(path)
     audio = audio || new Audio(encodedPath)
@@ -80,8 +80,11 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
     })
 
     let localVolume: number = get(volume) * (get(media)[path]?.volume || 1)
-    if (analyser.gainNode) analyser.gainNode.gain.value = localVolume * (get(gain) || 1)
-    else audio.volume = localVolume
+    if (analyser.gainNode) {
+        analyser.gainNode.gain.value = localVolume * (get(gain) || 1)
+        if (get(special).preFaderVolumeMeter) audio.volume = 1
+        else audio.volume = localVolume
+    } else audio.volume = localVolume
 
     let waitToPlay = 0
     if (audioPlaying && crossfade) {
@@ -109,15 +112,20 @@ let currentlyCrossfading: string[] = []
 // if no "path" is provided it will fade out/clear all audio
 async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPlay: boolean = false) {
     if (currentlyCrossfading[path]) return
-    if (path) currentlyCrossfading.push(path)
 
     // fade in
     if (path) {
         let playing = get(playingAudio)[path]?.audio
         if (!playing) return
 
-        setTimeout(() => fadeAudio(playing, waitToPlay ? crossfade * 0.4 : crossfade, true), waitToPlay ? crossfade * 0.6 * 1000 : 0)
-        currentlyCrossfading.splice(currentlyCrossfading.indexOf(path), 1)
+        currentlyCrossfading.push(path)
+        setTimeout(
+            async () => {
+                await fadeAudio(playing, waitToPlay ? crossfade * 0.4 : crossfade, true)
+                currentlyCrossfading.splice(currentlyCrossfading.indexOf(path), 1)
+            },
+            waitToPlay ? crossfade * 0.6 * 1000 : 0
+        )
         return
     }
 
@@ -127,6 +135,7 @@ async function crossfadeAudio(crossfade: number = 0, path: string = "", waitToPl
     })
 
     async function fadeoutAudio(audio, path) {
+        currentlyCrossfading.push(path)
         let faded = await fadeAudio(audio, crossfade)
         if (faded) deleteAudio(path)
     }
@@ -165,6 +174,9 @@ export function updateVolume(value: number | undefined | "local", changeGain: bo
             if (a[id].analyser.gainNode) {
                 let gainedValue = localVolume * (get(gain) || 1)
                 a[id].analyser.gainNode.gain.value = gainedValue
+
+                if (get(special).preFaderVolumeMeter) a[id].audio.volume = 1
+                else a[id].audio.volume = localVolume
             } else a[id].audio.volume = localVolume
         })
 
@@ -252,7 +264,7 @@ export function playlistNext(previous: string = "", specificSong: string = "", c
     })
 
     // if (crossfade) isCrossfading = true
-    playAudio({ path: nextSong }, false, 0, false, crossfade)
+    playAudio({ path: nextSong }, false, 0, false, crossfade, true)
 
     function getSongs(): string[] {
         if (previous && get(activePlaylist)?.songs) return get(activePlaylist).songs
@@ -467,7 +479,8 @@ function getPlayingAudio() {
                     get(playingAudio)[audioPath].audio.currentTime = 0
                     get(playingAudio)[audioPath].audio.play()
                 } else if (get(activePlaylist)?.active === audioPath) {
-                    let playlist = get(audioPlaylists)[audioPath] || {}
+                    let playlistId = get(activePlaylist).id || ""
+                    let playlist = get(audioPlaylists)[playlistId] || {}
 
                     playingAudio.update((a: any) => {
                         a[audioPath]?.audio?.pause()
@@ -509,7 +522,7 @@ function getPlayingVideos() {
 
     videos.map((a) => {
         // set volume (video in output window)
-        let newVolume = get(volume)
+        let newVolume = get(volume) * ((get(media)[a.id]?.volume ?? 100) / 100)
         if (a.analyser.gainNode) {
             let gainedValue = newVolume * (get(gain) || 1)
             a.analyser.gainNode.gain.value = gainedValue
@@ -567,9 +580,9 @@ function getHighestNumber(numbers: number[]): number {
     return Math.max(...numbers)
 }
 
-let clearing = false
+let clearing: string[] = []
 let forceClear: boolean = false
-export function clearAudio(path: string = "", clearPlaylist: boolean = true, playlistCrossfade: boolean = false) {
+export function clearAudio(path: string = "", clearPlaylist: boolean = true, playlistCrossfade: boolean = false, commonClear: boolean = false) {
     // turn off any playlist
     if (clearPlaylist && (!path || get(activePlaylist)?.active === path)) activePlaylist.set(null)
 
@@ -578,14 +591,14 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
 
     const clearTime = playlistCrossfade ? 0 : (get(special).audio_fade_duration ?? 1.5)
 
-    if (clearing) {
+    if (clearing.includes(path)) {
+        if (!commonClear) return
         // force stop audio files (bypass timeout if already active)
         forceClear = true
         setTimeout(() => (forceClear = false), 100)
         return
     }
     if (!Object.keys(get(playingAudio)).length) return
-    clearing = true
 
     let newPlaying: any = get(playingAudio)
     playingAudio.update((a) => {
@@ -595,6 +608,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         return a
 
         async function clearAudio(path) {
+            clearing.push(path)
             if (!a[path]?.audio) return deleteAudio(path)
 
             let faded = await fadeAudio(a[path].audio, clearTime)
@@ -625,7 +639,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         setTimeout(() => {
             playingAudio.set(newPlaying)
             clearAudioStreams()
-            clearing = false
+            clearing.splice(clearing.indexOf(path), 1)
         }, 200)
     }
 }
@@ -684,7 +698,11 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
 
     // WIP non linear easing
 
-    let fadeId = uid()
+    if (!increment) {
+        isFadingOut.set(true)
+    }
+
+    let fadeId = (increment ? "in_" : "out_") + uid()
     return new Promise((resolve) => {
         currentlyFading[fadeId] = setInterval(() => {
             if (forceClear) return finished()
@@ -709,6 +727,10 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
             delete currentlyFading[fadeId]
             clearTimeout(timedout)
             setTimeout(() => resolve(true), 50)
+
+            if (!increment && !Object.keys(currentlyFading).filter((a) => a.includes("out")).length) {
+                isFadingOut.set(false)
+            }
         }
     })
 }

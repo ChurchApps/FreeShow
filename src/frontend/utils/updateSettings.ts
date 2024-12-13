@@ -37,6 +37,7 @@ import {
     lockedOverlays,
     mediaFolders,
     mediaOptions,
+    mediaTags,
     metronome,
     midiIn,
     openedFolders,
@@ -109,9 +110,9 @@ export function updateSettings(data: any) {
         let outputsUpdated: boolean = false
         Object.keys(allOutputs).forEach((outputId) => {
             let output = allOutputs[outputId]
-            if (!output.isKeyOutput || activeKeyOutputs.includes(output.id!)) return
+            if (!output.isKeyOutput || activeKeyOutputs.includes(outputId)) return
 
-            delete allOutputs[outputId][output.id!]
+            delete allOutputs[outputId]
             outputsUpdated = true
         })
         if (outputsUpdated) outputs.set(allOutputs)
@@ -120,7 +121,7 @@ export function updateSettings(data: any) {
         setTimeout(() => {
             restartOutputs()
             if (get(autoOutput)) setTimeout(() => displayOutputs({}, true), 500)
-            setTimeout(checkWindowCapture, 1000)
+            setTimeout(() => checkWindowCapture(true), 1000)
         }, 1500)
     }
 
@@ -282,6 +283,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     gain: (v: any) => gain.set(v),
     midiIn: (v: any) => midiIn.set(v),
     videoMarkers: (v: any) => videoMarkers.set(v),
+    mediaTags: (v: any) => mediaTags.set(v),
     customizedIcons: (v: any) => customizedIcons.set(v),
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),

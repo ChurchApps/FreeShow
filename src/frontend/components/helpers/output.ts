@@ -41,6 +41,8 @@ import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
+import { newToast } from "../../utils/common"
+import { getStyles } from "./style"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     // sort so display order can be changed! (needs app restart)
@@ -64,7 +66,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         let outs = outputId ? [outputId] : allOutputs
         let inputData = clone(data)
 
-        let firstOutputWithBackground = allOutputs.findIndex((id) => (get(styles)[get(outputs)[id]?.style || ""]?.layers || ["background"]).includes("background"))
+        let firstOutputWithBackground = allOutputs.findIndex((id) => !a[id]?.isKeyOutput && !a[id]?.stageOutput && (get(styles)[get(outputs)[id]?.style || ""]?.layers || ["background"]).includes("background"))
         firstOutputWithBackground = Math.max(0, firstOutputWithBackground)
 
         // reset slide cache (after update)
@@ -318,18 +320,21 @@ export function getOutputResolution(outputId: string, _updater = get(outputs)) {
     return style || { width: 1920, height: 1080 }
 }
 
-export function checkWindowCapture() {
-    getActiveOutputs(get(outputs), false, true, true).forEach(shouldBeCaptured)
+export function checkWindowCapture(startup: boolean = false) {
+    getActiveOutputs(get(outputs), false, true, true).forEach((a) => shouldBeCaptured(a, startup))
 }
 
 // NDI | OutputShow | Stage CurrentOutput
-export function shouldBeCaptured(outputId: string) {
+export function shouldBeCaptured(outputId: string, startup: boolean = false) {
     let output = get(outputs)[outputId]
     let captures: any = {
         ndi: !!output.ndi,
         server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0]) === outputId),
         stage: stageHasOutput(outputId),
     }
+
+    // alert user that screen recording starts
+    if (!startup && Object.values(captures).filter(Boolean).length) newToast("$toast.output_capture_enabled")
 
     send(OUTPUT, ["CAPTURE"], { id: outputId, captures })
 }
@@ -522,7 +527,7 @@ export function getCurrentMediaTransition() {
 // TEMPLATE
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true) {
-    if (!slideItems) return []
+    if (!slideItems?.length) return []
     slideItems = clone(slideItems)
 
     if (!templateItems.length) return slideItems
@@ -566,7 +571,16 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             line.align = templateLine?.align || ""
             line.text?.forEach((text: any, k: number) => {
                 let templateText = templateLine?.text[k] || templateLine?.text[0]
-                if (!text.customType?.includes("disableTemplate")) text.style = templateText?.style || ""
+                if (!text.customType?.includes("disableTemplate")) {
+                    let style = templateText?.style || ""
+
+                    // add original text color
+                    let textColor = getStyles(text.style)["color"] || "#FFFFFF"
+                    // use template color if text is white (default)
+                    if (textColor !== "#FFFFFF") style += `color: ${textColor};`
+
+                    text.style = style
+                }
 
                 let firstChar = templateText?.value?.[0] || ""
 
@@ -925,4 +939,16 @@ export function getSlideFilter(slideData: any) {
     if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"
 
     return slideFilter
+}
+
+export function getBlending() {
+    let blending = Object.values(get(outputs))[0]?.blending
+    if (!blending) return ""
+
+    if (!blending.left && !blending.right) return ""
+
+    const opacity = (blending.opacity ?? 50) / 100
+    const center = 50 + Number(blending.offset || 0)
+    if (blending.centered) return `-webkit-mask-image: linear-gradient(${blending.rotate ?? 90}deg, rgb(0, 0, 0) ${center - blending.left}%, rgba(0, 0, 0, ${opacity}) ${center}%, rgb(0, 0, 0) ${center + Number(blending.right)}%);`
+    return `-webkit-mask-image: linear-gradient(${blending.rotate ?? 90}deg, rgba(0, 0, 0, ${opacity}) 0%, rgb(0, 0, 0) ${blending.left}%, rgb(0, 0, 0) ${100 - blending.right}%, rgba(0, 0, 0, ${opacity}) 100%);`
 }

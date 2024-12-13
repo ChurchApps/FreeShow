@@ -50,7 +50,7 @@
         history({ id: "UPDATE", newData: { key: "layouts", subkey: uid() }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
     }
 
-    const slidesViews: any = { grid: "simple", simple: "list", list: "lyrics", lyrics: "text", text: "grid" }
+    const slidesViews: any = { grid: "simple", simple: "list", list: "lyrics", lyrics: "grid" }
 
     function changeName(e: any) {
         let currentLayout = e.detail?.id?.slice("layout_".length)
@@ -108,7 +108,9 @@
     {#if layouts?.[activeLayout]?.notes}
         <div class="notes" title={$dictionary.tools?.notes} on:click={() => openTab("notes")}>
             <Icon id="notes" right white />
-            <p>{@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}</p>
+            {#if typeof layouts[activeLayout].notes === "string"}
+                <p>{@html layouts[activeLayout].notes.replaceAll("\n", "&nbsp;")}</p>
+            {/if}
         </div>
     {:else if currentShow.message?.text}
         <div class="notes" title={$dictionary.meta?.message} on:click={() => openTab("metadata")}>

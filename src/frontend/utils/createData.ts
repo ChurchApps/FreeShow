@@ -3,6 +3,7 @@ import { setShow } from "../components/helpers/setShow"
 import { audioFolders, dictionary, folders, mediaFolders, overlays, projects, remotePassword, shows, templates } from "../stores"
 import { stageShows, templateCategories } from "./../stores"
 import { save } from "./save"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
 export function createData(paths: any) {
     if (!get(shows).default) {
@@ -215,7 +216,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:120px;left:50px;height:840px;width:1820px;",
+                    style: DEFAULT_ITEM_STYLE,
                     align: "",
                     lines: [{ align: "", text: [{ value: get(dictionary).example?.big || "Big", style: "font-size: 120px;" }] }],
                 },
@@ -227,7 +228,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:120px;left:50px;height:840px;width:1820px;",
+                    style: DEFAULT_ITEM_STYLE,
                     align: "",
                     lines: [{ align: "", text: [{ value: get(dictionary).example?.default || "Default", style: "font-size: 100px;" }] }],
                 },
@@ -239,7 +240,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:120px;left:50px;height:840px;width:1820px;",
+                    style: DEFAULT_ITEM_STYLE,
                     align: "",
                     lines: [{ align: "", text: [{ value: get(dictionary).example?.small || "Small", style: "font-size: 80px;" }] }],
                 },
@@ -251,7 +252,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:120px;left:50px;height:840px;width:1820px;",
+                    style: DEFAULT_ITEM_STYLE,
                     align: "",
                     lines: [
                         {
@@ -273,7 +274,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:120px;left:50px;height:840px;width:1820px;",
+                    style: DEFAULT_ITEM_STYLE,
                     align: "",
                     lines: [
                         {
@@ -295,7 +296,7 @@ export function setExampleTemplates() {
             category: "song",
             items: [
                 {
-                    style: "top:120px;left:50px;height:840px;width:1820px;",
+                    style: DEFAULT_ITEM_STYLE,
                     align: "",
                     lines: [
                         {
@@ -553,7 +554,7 @@ export function setExampleTemplates() {
             category: "presentation",
             items: [
                 {
-                    style: "top:120px;left:50px;height:840px;width:1820px;",
+                    style: DEFAULT_ITEM_STYLE,
                     align: "",
                     lines: [
                         {

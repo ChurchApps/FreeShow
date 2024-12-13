@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { dictionary, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
+    import { activePage, activeShow, dictionary, focusMode, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -77,6 +77,14 @@
                             if (e.target?.closest(".edit")) return
 
                             setOutput("overlays", overlay.id, true)
+                        }}
+                        on:dblclick={(e) => {
+                            if (e.ctrlKey || e.metaKey) return
+                            if (e.target?.closest(".edit")) return
+
+                            activeShow.set({ id: overlay.id, type: "overlay" })
+                            activePage.set("show")
+                            if ($focusMode) focusMode.set(false)
                         }}
                     >
                         <SelectElem id="overlay" data={overlay.id} fill draggable>

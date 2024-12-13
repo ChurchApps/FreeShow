@@ -8,6 +8,7 @@ import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { activePopup, alertMessage, dictionary } from "../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { xml2json } from "./xml"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 
 type Song = {
     title: string
@@ -64,13 +65,14 @@ export function convertQuelea(data: any) {
 
         show.meta = {
             title: song.title || "",
-            ccli: song.ccli || "",
+            CCLI: song.ccli || "",
             copyright: song.copyright || "",
             author: song.author || "",
             key: song.key || "",
             publisher: song.publisher || "",
             year: song.year || "",
         }
+        if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
 
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song.notes || "", slides: layout } }

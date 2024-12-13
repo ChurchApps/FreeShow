@@ -59,8 +59,16 @@
         values[key] = e.target?.value || e.value || ""
         updateData(values, "meta")
 
-        if (key === "number") {
-            const quickAccess = { ...($showsCache[$activeShow!.id].quickAccess || {}), number: values[key] }
+        const quickAccessKeys = ["number", "CCLI"]
+        if (quickAccessKeys.includes(key)) {
+            let quickAccess = $showsCache[$activeShow!.id].quickAccess || {}
+
+            if (key === "number") quickAccess.number = values.number
+            else {
+                if (!quickAccess.metadata) quickAccess.metadata = {}
+                quickAccess.metadata[key] = values[key]
+            }
+
             showsCache.update((a) => {
                 a[$activeShow!.id].quickAccess = quickAccess
                 return a
@@ -127,9 +135,9 @@
             {#each Object.entries(values) as [key, value]}
                 <CombinedInput textWidth={40}>
                     {#if $dictionary.meta?.[key]}
-                        <p title={$dictionary.meta?.[key]}><T id="meta.{key}" /></p>
+                        <p style="overflow: hidden;display: block;align-content: center;" title={$dictionary.meta?.[key]}><T id="meta.{key}" /></p>
                     {:else}
-                        <p style="text-transform: capitalize;">{key}</p>
+                        <p style="overflow: hidden;display: block;align-content: center;text-transform: capitalize;">{key}</p>
                     {/if}
                     <TextInput {value} style={key === "number" && currentShow?.quickAccess?.number ? "border-bottom: 1px solid var(--secondary);" : ""} on:change={(e) => changeValue(e, key)} />
 

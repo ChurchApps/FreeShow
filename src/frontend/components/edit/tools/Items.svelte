@@ -26,10 +26,8 @@
     ]
 
     const specialItems: ItemRef[] = [
-        { id: "list" },
         // { id: "table" },
         { id: "camera" },
-        { id: "variable" },
         { id: "slide_tracker", icon: "percentage" },
         { id: "events", icon: "calendar" },
         { id: "mirror" },

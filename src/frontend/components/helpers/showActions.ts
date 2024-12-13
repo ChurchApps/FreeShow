@@ -32,6 +32,7 @@ import {
     templates,
     timers,
     triggers,
+    variables,
     videosData,
     videosTime,
 } from "./../../stores"
@@ -798,13 +799,13 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
 }
 
 // go to next slide if current output slide has nextAfterMedia action
-let nextActive = false
+let nextActive: string[] = []
 export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "timer" = "media", outputId: string = "") {
-    if (nextActive) return false
+    if (nextActive.includes(outputId)) return false
 
-    nextActive = true
+    nextActive.push(outputId)
     setTimeout(() => {
-        nextActive = false
+        nextActive.splice(nextActive.indexOf(outputId), 1)
     }, 600) // MAKE SURE NEXT SLIDE HAS TRANSITIONED
 
     if (!outputId) outputId = getActiveOutputs(get(outputs), true, true, true)[0]
@@ -920,8 +921,9 @@ export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds() {
     let mainValues = Object.keys(dynamicValues)
     let metaValues = Object.keys(initializeMetadata({})).map((id) => `meta_` + id)
+    let variableValues = Object.values(get(variables)).map(({ name }) => `variable_` + getNameId(name))
 
-    return [...mainValues, ...metaValues]
+    return [...mainValues, ...metaValues, ...variableValues]
 }
 
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater: number = 0) {
@@ -954,6 +956,18 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (id.includes("meta_")) {
             let key = id.slice(5)
             return show.meta[key] || ""
+        }
+
+        if (id.includes("variable_")) {
+            let nameId = id.slice(9)
+            let variable = Object.values(get(variables)).find((a) => getNameId(a.name) === nameId)
+            if (!variable) return ""
+
+            if (variable.type === "number") return Number(variable.number || 0)
+
+            if (variable.enabled === false) return ""
+            if (variable.text?.includes(id)) return variable.text || ""
+            return replaceDynamicValues(variable.text || "", { showId, layoutId, slideIndex, type, id })
         }
 
         let outputId: string = getActiveOutputs()[0]
@@ -996,4 +1010,8 @@ const dynamicValues = {
     video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),
     video_duration: ({ videoDuration }) => joinTime(secondsToTime(videoDuration)),
     video_countdown: ({ videoTime, videoDuration }) => joinTime(secondsToTime(videoDuration - videoTime)),
+}
+
+function getNameId(name) {
+    return name.toLowerCase().trim().replaceAll(" ", "_")
 }

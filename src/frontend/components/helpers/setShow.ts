@@ -6,6 +6,7 @@ import { getShowCacheId, updateCachedShow } from "./show"
 import { uid } from "uid"
 import { destroy } from "../../utils/request"
 import { fixShowIssues } from "../../converters/importHelpers"
+import type { ShowObj } from "../../classes/Show"
 
 export function setShow(id: string, value: "delete" | Show): Show {
     let previousValue: Show
@@ -27,6 +28,12 @@ export function setShow(id: string, value: "delete" | Show): Show {
             if (!value.slides) value.slides = {}
             if (!value.layouts) value.layouts = {}
             if (!value.media) value.media = {}
+
+            // set metadata (CCLI) in quickAccess
+            if (value.meta.CCLI && !value.quickAccess?.metadata?.CCLI) {
+                if (!value.quickAccess?.metadata) value.quickAccess.metadata = {}
+                value.quickAccess.metadata.CCLI = value.meta.CCLI
+            }
         }
     }
 
@@ -173,4 +180,14 @@ export function saveTextCache(id: string, show: Show) {
         textCache.set({ ...get(textCache), ...tempCache })
         tempCache = {}
     }, 1000)
+}
+
+export function setQuickAccessMetadata(show: ShowObj, key: string, value: string) {
+    if (!value) return show
+
+    if (!show.quickAccess) show.quickAccess = {}
+    if (!show.quickAccess.metadata) show.quickAccess.metadata = {}
+    show.quickAccess.metadata[key] = value
+
+    return show
 }

@@ -163,6 +163,7 @@
         "toggle_shuffle": "Toggle shuffle",
         "next": "Next",
         "previous": "Previous",
+        "play_no_audio": "Play without audio",
         "play_no_filters": "Play without filters",
         "favourite": "Favourite",
         "pause": "Pause",
@@ -194,7 +195,10 @@
         "playlist_settings": "Playlist settings",
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
+        "allow_gaining": "Allow gaining",
+        "allow_gaining_tip": "Allow setting volume above 100% (May cause distortion)",
         "pre_fader_volume_meter": "Pre fader volume meter",
+        "mixer": "Mixer",
         "metronome": "Metronome",
         "toggle_metronome": "Toggle metronome",
         "tempo": "Tempo",
@@ -269,15 +273,17 @@
         "ip": "Could not get the IP-address of your device, go to the computer Wi-Fi settings to find your local IPv4 address."
     },
     "meta": {
+        "number": "Number",
         "title": "Title",
         "artist": "Artist",
         "author": "Author",
         "composer": "Composer",
         "publisher": "Publisher",
         "copyright": "Copyright",
-        "CCLI": "License (CCLI)",
+        "CCLI": "Song ID (CCLI)",
         "year": "Year",
         "key": "Key",
+        "autofill": "Autofill",
         "message": "Message",
         "message_tip": "Display something on all slides",
         "auto_media": "Get meta from media content",
@@ -362,7 +368,8 @@
         "music": "Music",
         "offers": "Offers",
         "notice": "Notice",
-        "visuals": "Visuals"
+        "visuals": "Visuals",
+        "action_tip": "An action that triggers each time a show with this category is presented."
     },
     "groups": {
         "current": "Current",
@@ -400,6 +407,7 @@
         "change_output_values": "Change output values",
         "choose_chord": "Choose chord",
         "set_time": "Set time",
+        "slide_shortcut": "Slide shortcut",
         "animate": "Animate",
         "translate": "Localisation ",
         "next_timer": "Next slide timer",
@@ -413,6 +421,7 @@
         "about": "About",
         "history": "History",
         "action": "Action",
+        "category_action": "Category action",
         "connect": "Connect",
         "cloud_update": "Syncing with cloud",
         "cloud_method": "Data location",
@@ -547,6 +556,8 @@
         "zoomIn": "Zoom In",
         "zoomOut": "Zoom Out",
         "reset": "Reset",
+        "create_template": "Create template",
+        "project_template_tip": "Create a new project from this template",
         "convert_to_images": "Convert to images",
         "converting": "Converting...",
         "remove_template_from_show": "Remove template from show",
@@ -608,6 +619,8 @@
         "set_key": "Set key",
         "custom_key": "Set custom value",
         "select_chord": "Select this chord",
+        "play_with_shortcut": "Activate with shortcut",
+        "press_to_assign": "Press any letter key to assign",
         "play_on_midi": "Activate on MIDI signal",
         "play_on_midi_tip": "Activate this specific slide when receiving chosen MIDI signal",
         "send_midi": "Send MIDI signal",
@@ -624,6 +637,7 @@
         "next_after_media": "Next on media finished",
         "remove_media": "Remove media",
         "remove_layers": "Remove layers",
+        "toggle_checkbox_tip": "Action will toggle if checkbox is unchanged",
         "start_recording": "Start recording",
         "stop_recording": "Stop recording",
         "export_recording": "Stop recording and export",
@@ -632,6 +646,7 @@
         "previous_project_item": "Previous project item",
         "index_select_project_item": "Select project item by index",
         "name_select_show": "Select show by name",
+        "set_template_active": "Set template on active show",
         "random_slide": "Play random slide",
         "index_select_slide": "Select slide by index",
         "name_select_slide": "Select slide by name",
@@ -672,6 +687,7 @@
         "activate_slide_cleared": "Activate when slide is cleared",
         "activate_background_cleared": "Activate when background is cleared",
         "activate_show_created": "Activate when show is created",
+        "activate_show_opened": "Activate when show is opened",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended"
     },
     "recording": {
@@ -679,7 +695,9 @@
         "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",
         "layout_changed": "Layout has changed since last recording!",
         "audio_synced": "Synced with audio!",
-        "start": "Start slide recording"
+        "start": "Start slide recording",
+        "use_duration": "Use duration time",
+        "use_duration_tip": "Use duration time instead of timestamp time"
     },
     "animate": {
         "change": "Change",
@@ -738,6 +756,7 @@
     },
     "context": {
         "enabledTabs": "Toggle tabs",
+        "setTag": "Set tag",
         "filterByTags": "Filter by tags",
         "addToProject": "Add to project",
         "add_to_show": "Add to show",
@@ -796,6 +815,8 @@
         "overlay_content": "Add overlay content",
         "different_first_template": "Custom template on first slide",
         "media_fit": "Media fit",
+        "one_letter": "One letter mode",
+        "sub_indexes": "Sub indexes",
         "size": "Size",
         "max_lines": "Max lines",
         "invert_items": "Invert items",
@@ -916,6 +937,7 @@
         "to_event": "Time until event",
         "counter": "Countdown",
         "time": "Time",
+        "minutes": "Minutes",
         "seconds": "Seconds",
         "from": "From",
         "to": "To",
@@ -1063,6 +1085,7 @@
         "group_numbers": "Group numbers",
         "full_colors": "High contrast group colours",
         "slide_number_keys": "Play slides with number keys",
+        "auto_shortcut_first_letter": "Auto shortcut to first letter in text",
         "auto_output": "Activate output screen on startup",
         "hide_cursor_in_output": "Hide cursor in output",
         "clear_media_when_finished": "Clear media when finished",
@@ -1124,7 +1147,8 @@
         "auto": "Auto",
         "optimized": "Optimised",
         "reduced": "Reduced",
-        "full": "Full"
+        "full": "Full",
+        "section_trigger_action": "Trigger action when navigating presentation to a section"
     },
     "sort": {
         "sort_by": "Sort by",
@@ -1172,6 +1196,7 @@
         "reference": "Show reference",
         "split_reference": "Split reference",
         "combine_with_text": "Combine with text",
+        "first_slide_reference": "Reference on first slide",
         "reference_at_bottom": "Move to bottom",
         "red_jesus": "Jesus words in red",
         "search": "Search in the Bible"

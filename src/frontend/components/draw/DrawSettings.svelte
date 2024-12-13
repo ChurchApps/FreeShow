@@ -78,35 +78,41 @@
     <div class="padding">
         <Panel>
             {#key $drawTool}
-                <h6 style="margin-top: 10px;"><T id="draw.{$drawTool}" /></h6>
-                {#key $drawSettings}
-                    {#if $drawSettings[$drawTool]}
-                        {#each Object.entries($drawSettings[$drawTool]) as [key, value]}
-                            {#if key !== "clear" && (key !== "hold" || $drawTool !== "paint")}
-                                <CombinedInput>
-                                    {#if key !== "clear" && (key !== "hold" || $drawTool !== "paint")}
-                                        <p><T id="draw.{key}" /></p>
-                                    {/if}
-                                    {#if key === "color"}
-                                        <Color {value} on:input={(e) => change(e, key)} style="width: 100%;" />
-                                    {:else if ["glow", "hold", "rainbow", "hollow", "dots", "threed"].includes(key)}
-                                        <div class="alignRight">
-                                            <Checkbox checked={value} on:change={(e) => check(e, key)} />
-                                        </div>
-                                    {:else if key === "opacity"}
-                                        <NumberInput {value} step={0.1} decimals={1} max={1} inputMultiplier={10} on:change={(e) => change(e, key)} />
-                                    {:else if key === "radius"}
-                                        <NumberInput {value} step={0.5} decimals={1} max={50} inputMultiplier={2} on:change={(e) => change(e, key)} />
-                                    {:else if key !== "clear" && key !== "hold"}
-                                        <NumberInput {value} min={1} max={2000} on:change={(e) => change(e, key)} />
-                                    {:else}
-                                        <div class="empty" id={key}></div>
-                                    {/if}
-                                </CombinedInput>
-                            {/if}
-                        {/each}
-                    {/if}
-                {/key}
+                <h6>
+                    <Icon id={$drawTool} white right />
+                    <T id="draw.{$drawTool}" />
+                </h6>
+
+                <div class="options">
+                    {#key $drawSettings}
+                        {#if $drawSettings[$drawTool]}
+                            {#each Object.entries($drawSettings[$drawTool]) as [key, value]}
+                                {#if key !== "clear" && (key !== "hold" || $drawTool !== "paint")}
+                                    <CombinedInput>
+                                        {#if key !== "clear" && (key !== "hold" || $drawTool !== "paint")}
+                                            <p><T id="draw.{key}" /></p>
+                                        {/if}
+                                        {#if key === "color"}
+                                            <Color {value} on:input={(e) => change(e, key)} style="width: 100%;" />
+                                        {:else if ["glow", "hold", "rainbow", "hollow", "dots", "threed"].includes(key)}
+                                            <div class="alignRight">
+                                                <Checkbox checked={value} on:change={(e) => check(e, key)} />
+                                            </div>
+                                        {:else if key === "opacity"}
+                                            <NumberInput {value} step={0.1} decimals={1} max={1} inputMultiplier={10} on:change={(e) => change(e, key)} />
+                                        {:else if key === "radius"}
+                                            <NumberInput {value} step={0.5} decimals={1} max={50} inputMultiplier={2} on:change={(e) => change(e, key)} />
+                                        {:else if key !== "clear" && key !== "hold"}
+                                            <NumberInput {value} min={1} max={2000} on:change={(e) => change(e, key)} />
+                                        {:else}
+                                            <div class="empty" id={key}></div>
+                                        {/if}
+                                    </CombinedInput>
+                                {/if}
+                            {/each}
+                        {/if}
+                    {/key}
+                </div>
             {/key}
         </Panel>
     </div>
@@ -134,13 +140,33 @@
         height: 100%;
     }
 
+    h6 {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-weight: 600;
+        letter-spacing: 0.5px;
+
+        padding: 0.3em 0.5em;
+        background-color: var(--primary-darkest);
+        border-radius: var(--border-radius);
+
+        /* font-size: 0.9em; */
+        text-transform: none !important;
+        margin: 0 !important;
+    }
+
     .padding {
         display: flex;
         flex-direction: column;
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 10px;
         height: 100%;
+    }
+
+    .options {
+        padding: 10px;
     }
 
     .bottom {

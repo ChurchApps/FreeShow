@@ -9,7 +9,8 @@
 
     export let isWindows: boolean = false
 
-    $: editDisabled = (!$activeShow && !$activeEdit.type && ($activeEdit.slide === undefined || $activeEdit.slide === null)) || $shows[$activeShow?.id || ""]?.locked || $activeShow?.type === "pdf"
+    // || (($activeShow?.type === "pdf" || $activeShow?.type === "ppt" || "section" || "audio") && !$editHistory.length)
+    $: editDisabled = (!$activeShow && !$activeEdit.type && ($activeEdit.slide === undefined || $activeEdit.slide === null)) || $shows[$activeShow?.id || ""]?.locked
 
     let confirm: boolean = false
     let disableClick: boolean = false

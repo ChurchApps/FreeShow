@@ -4,7 +4,7 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { MediaStyle } from "../../../../types/Main"
     import type { OutBackground, Transition } from "../../../../types/Show"
-    import { allOutputs, audioChannels, outputs, playingVideos, special, videosData, videosTime } from "../../../stores"
+    import { allOutputs, audioChannels, media, outputs, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
@@ -163,7 +163,7 @@
     // FADE OUT AUDIO
 
     $: if (fadingOut && !videoData.muted) fadeoutVideo()
-    $: if (!fadingOut && !videoData.muted && id) setVolume(1)
+    $: if (!fadingOut && !videoData.muted && id) setVolume($volume * (($media[id]?.volume ?? 100) / 100))
     const speed = 0.01
     const margin = 0.9 // video should fade to 0 before clearing
     function fadeoutVideo() {
