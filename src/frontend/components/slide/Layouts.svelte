@@ -4,6 +4,7 @@
     import { activePopup, activeProject, activeShow, alertMessage, dictionary, labelsDisabled, notFound, openToolsTab, projects, showsCache, slidesOptions } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
+    import { keysToID, sortByName } from "../helpers/array"
     import { duplicate } from "../helpers/clipboard"
     import { history } from "../helpers/history"
     import { _show } from "../helpers/shows"
@@ -13,7 +14,6 @@
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
-    import { keysToID, sortByName } from "../helpers/array"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId] || {}

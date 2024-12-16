@@ -6,11 +6,13 @@ import { MAIN } from "../../../types/Channels"
 import type { MediaStyle } from "../../../types/Main"
 import type { Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
-import { loadedMediaThumbnails, media, tempPath } from "../../stores"
+import { loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { awaitRequest, send } from "../../utils/request"
-import type { API_media } from "../actions/api"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
+import type { API_media, API_slide_thumbnail } from "../actions/api"
+import { getActiveOutputs, getResolution } from "./output"
+import { clone } from "./array"
 
 export function getExtension(path: string): string {
     if (!path) return ""
@@ -61,7 +63,7 @@ export function joinPath(path: string[]): string {
 // fix for media files with special characters in file name not playing
 export function encodeFilePath(path: string): string {
     if (!path) return ""
-    
+
     // already encoded
     if (path.match(/%\d+/g) || path.includes("http") || path.includes("data:")) return path
 
@@ -88,6 +90,27 @@ export async function getThumbnail(data: API_media) {
     }
 
     return await toDataURL(path)
+}
+
+export async function getSlideThumbnail(data: API_slide_thumbnail) {
+    let outputId = getActiveOutputs(get(outputs), false, true, true)[0]
+    let outSlide = get(outputs)[outputId]?.out?.slide
+
+    if (!data.showId) data.showId = outSlide?.id
+    if (!data.layoutId) data.layoutId = outSlide?.layout
+    if (data.index === undefined) data.index = outSlide?.index
+
+    if (!data?.showId) return
+
+    let output = clone(get(outputs)[outputId])
+    if (!output.out) output.out = {}
+    output.out.slide = { id: data.showId, layout: data.layoutId, index: data.index }
+
+    let resolution = getResolution()
+    resolution = { width: resolution.width * 0.5, height: resolution.height * 0.5 }
+
+    const thumbnail = await awaitRequest(MAIN, "CAPTURE_SLIDE", { output: { [outputId]: output }, resolution })
+    return thumbnail.base64
 }
 
 // convert to base64

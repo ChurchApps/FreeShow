@@ -2,7 +2,7 @@
     import { EXPORT } from "../../../../../types/Channels"
     import type { Project } from "../../../../../types/Projects"
     import { Show } from "../../../../../types/Show"
-    import { activePopup, activeProject, dataPath, projects, showsCache, showsPath } from "../../../../stores"
+    import { activePopup, activeProject, dataPath, projects, showsCache, showsPath, special } from "../../../../stores"
     import { send } from "../../../../utils/request"
     import { exportProject } from "../../../export/project"
     import { clone } from "../../../helpers/array"
@@ -10,6 +10,7 @@
     import { loadShows } from "../../../helpers/setShow"
     import T from "../../../helpers/T.svelte"
     import Button from "../../../inputs/Button.svelte"
+    import Checkbox from "../../../inputs/Checkbox.svelte"
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
     import Dropdown from "../../../inputs/Dropdown.svelte"
     import Center from "../../../system/Center.svelte"
@@ -81,6 +82,14 @@
     }
 
     let pdfOptions: any = {}
+
+    function setSpecial(e: any, key: string) {
+        let value = e?.target?.checked
+        special.update((a) => {
+            a[key] = value
+            return a
+        })
+    }
 </script>
 
 <div style="display: flex;align-items: center;align-self: center;">
@@ -94,6 +103,17 @@
 
 {#if format.id === "pdf"}
     <PdfExport bind:pdfOptions {previewShow} />
+
+    <hr />
+{/if}
+
+{#if format.id === "project"}
+    <CombinedInput>
+        <p><T id="export.include_media" /></p>
+        <div class="alignRight">
+            <Checkbox checked={$special.projectIncludeMedia ?? true} on:change={(e) => setSpecial(e, "projectIncludeMedia")} />
+        </div>
+    </CombinedInput>
 
     <hr />
 {/if}

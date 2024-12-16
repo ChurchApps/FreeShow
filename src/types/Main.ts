@@ -153,6 +153,7 @@ export type Popups =
     | "history"
     | "action"
     | "category_action"
+    | "user_data_overwrite"
     | "connect"
     | "cloud_update"
     | "cloud_method"

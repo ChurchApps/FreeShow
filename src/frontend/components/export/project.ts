@@ -4,7 +4,7 @@
 import { get } from "svelte/store"
 import { EXPORT } from "../../../types/Channels"
 import type { Project, ProjectShowRef } from "../../../types/Projects"
-import { dataPath, folders, overlays as overlayStores, showsCache } from "../../stores"
+import { dataPath, folders, media, overlays as overlayStores, showsCache, special } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
@@ -15,7 +15,7 @@ import type { SlideData } from "../../../types/Show"
 export async function exportProject(project: Project) {
     let shows: any = {}
     let files: string[] = []
-    let overlays: {[key: string]: any} = {}
+    let overlays: { [key: string]: any } = {}
 
     // get project
     project = clone(project)
@@ -30,8 +30,8 @@ export async function exportProject(project: Project) {
             let refs = _show(showRef.id).layouts().ref()
             let mediaIds: string[] = []
 
-            refs.forEach(ref => {
-                ref.forEach(({data}: {data: SlideData}) => {
+            refs.forEach((ref) => {
+                ref.forEach(({ data }: { data: SlideData }) => {
                     // background
                     let background = data.background
                     if (background) mediaIds.push(background)
@@ -43,12 +43,12 @@ export async function exportProject(project: Project) {
                     // overlays
                     let overlays = data.overlays || []
                     overlays.forEach(getOverlay)
-                });
+                })
             })
 
             // get media file paths
             let media = _show(showRef.id).get("media")
-            mediaIds.forEach(id => {
+            mediaIds.forEach((id) => {
                 getFile(media[id].path || media[id].id)
             })
 
@@ -69,7 +69,7 @@ export async function exportProject(project: Project) {
     }
 
     let projectItems = project.shows
-    
+
     // load shows
     let showIds = projectItems.filter((a) => (a.type || "show") === "show").map((a) => a.id)
     await loadShows(showIds)
@@ -79,14 +79,31 @@ export async function exportProject(project: Project) {
     // remove duplicates
     files = [...new Set(files)]
 
+    // set data
+    const projectData: any = { project, parentFolder, shows, overlays }
+    let includeMediaFiles = get(special).projectIncludeMedia ?? true
+    if (includeMediaFiles) {
+        projectData.files = files
+
+        let mediaData: any = {}
+        files.forEach((path) => {
+            if (!get(media)[path]) return
+
+            let data = clone(get(media)[path])
+            // delete data.info
+            mediaData[path] = data
+        })
+        if (Object.keys(mediaData).length) projectData.media = mediaData
+    }
+
     // export to file
-    send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: formatToFileName(project.name), file: { project, parentFolder, shows, files, overlays } })
+    send(EXPORT, ["GENERATE"], { type: "project", path: get(dataPath), name: formatToFileName(project.name), file: projectData })
 
     function getItem(showRef: ProjectShowRef) {
         let type = showRef.type || "show"
 
         if (!getProjectItems[type]) {
-            console.log("Missing project type:", type);
+            console.log("Missing project type:", type)
             return
         }
 
@@ -102,7 +119,7 @@ export async function exportProject(project: Project) {
 
         overlays[id] = clone(get(overlayStores)[id])
     }
-    
+
     // store as base64 ?
     // let base64: any = await toDataURL(showRef.id)
     // media[showRef.id] = base64

@@ -140,7 +140,7 @@
                         <SlideText {slide} stageItem={item} {show} {resolution} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} {textStyle} style />
                     </span>
                 {:else if id.includes("clock")}
-                    <Clock autoSize={item.auto !== false ? autoSize : fontSize} />
+                    <Clock autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} />
                 {:else if id.includes("video")}
                     <VideoTime {videoTime} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("first_active_timer")}

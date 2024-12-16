@@ -269,9 +269,17 @@ export const dropActions: any = {
     },
     overlays: ({ drag, drop }: any) => dropActions.templates({ drag, drop }),
     edit: ({ drag }: any) => {
-        if (drag.id !== "media" && drag.id !== "files") return
-
-        drag.data.forEach((file: any) => addItem("media", null, { src: file.path || window.api.showFilePath(file) }))
+        if (drag.id === "media" || drag.id === "files") {
+            drag.data.forEach((file: any) => addItem("media", null, { src: file.path || window.api.showFilePath(file) }))
+        } else if (drag.id === "global_timer") {
+            drag.data.forEach((a: any) => addItem("timer", null, { timer: { id: a.id } }))
+        } else if (drag.id === "variable") {
+            drag.data.forEach((a: any) => {
+                // showActions.ts getNameId()
+                let name = a.name?.toLowerCase().trim().replaceAll(" ", "_") || ""
+                addItem("text", null, {}, `{variable_${name}}`)
+            })
+        }
     },
     audio_playlist: ({ drag, drop }: any, h: any) => {
         h.id = "UPDATE"

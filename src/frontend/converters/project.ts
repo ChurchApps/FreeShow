@@ -3,21 +3,31 @@ import type { ShowType } from "../../types/Show"
 import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
-import { activeProject, activeShow, folders, projects, overlays as overlayStores, alertMessage, activePopup } from "../stores"
+import { activeProject, activeShow, folders, projects, overlays as overlayStores, media as mediaStores, alertMessage, activePopup } from "../stores"
 
 export function importProject(files: any) {
     files.forEach(({ content }: any) => {
-        let { project, parentFolder, shows, overlays } = JSON.parse(content)
+        let { project, parentFolder, shows, overlays, media } = JSON.parse(content)
 
         // find any parent folder with the same name as previous parent, or place at root
         if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]: any) => folder.name === parentFolder)?.[0] || "/"
 
         // add overlays
         if (overlays) {
-            overlayStores.update(a => {
+            overlayStores.update((a) => {
                 Object.entries(overlays).forEach(([id, overlay]: any) => {
                     // create new or replace existing
                     a[id] = overlay
+                })
+                return a
+            })
+        }
+
+        // get media data
+        if (media) {
+            mediaStores.update((a) => {
+                Object.entries(media).forEach(([path, data]: any) => {
+                    a[path] = { ...(a[path] || {}), ...data }
                 })
                 return a
             })

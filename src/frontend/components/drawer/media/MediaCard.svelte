@@ -85,6 +85,8 @@
         if (credits.type === "unsplash" && credits.trigger_download) {
             fetch(credits.trigger_download + "?client_id=" + getKey("unsplash"), { method: "GET" }).catch((err) => console.error("Could not trigger download:", err))
             customMessageCredits.set(`Photo by ${credits.artist} on Unsplash`)
+        } else {
+            customMessageCredits.set("")
         }
     }
 

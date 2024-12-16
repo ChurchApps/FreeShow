@@ -30,7 +30,7 @@
 {#if sortedVariables.length}
     <div class="variables">
         {#each sortedVariables as variable}
-            <SelectElem id="variable" data={variable}>
+            <SelectElem id="variable" data={variable} draggable>
                 <div class="variable context #variable">
                     <span style="padding-left: 5px;">
                         <Icon id={variable.type} right />

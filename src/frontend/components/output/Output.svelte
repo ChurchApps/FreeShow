@@ -296,7 +296,7 @@
     {/if}
 
     <!-- draw -->
-    {#if currentOutput.active || mirror}
+    {#if currentOutput.active || (mirror && !preview)}
         <Draw />
     {/if}
 </Zoomed>

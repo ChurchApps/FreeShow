@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { EXPORT, MAIN } from "../../../../types/Channels"
     import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
+    import { awaitRequest, destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -41,12 +41,21 @@
 
     const isChecked = (e: any) => e.target.checked
 
-    function toggle(e: any, key: string) {
+    async function toggle(e: any, key: string) {
         let checked = e.target.checked
-        updateSpecial(checked, key)
 
         if (key === "customUserDataLocation") {
-            save(false, { backup: true, changeUserData: { reset: !checked, dataPath: $dataPath } })
+            let existingData = false
+            if (checked) {
+                existingData = (await awaitRequest(MAIN, "DOES_PATH_EXIST", { path: "data_config", dataPath: $dataPath }))?.exists
+                if (existingData) activePopup.set("user_data_overwrite")
+            }
+            if (!existingData) {
+                updateSpecial(checked, key)
+                save(false, { backup: true, changeUserData: { reset: !checked, dataPath: $dataPath } })
+            }
+        } else {
+            updateSpecial(checked, key)
         }
     }
 
