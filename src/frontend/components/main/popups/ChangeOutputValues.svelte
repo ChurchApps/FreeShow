@@ -75,7 +75,7 @@
                     send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
                 }, 10)
             }}
-            buttons={false}
+            style="background-color: var(--primary-darker);"
             outline
         />
     </CombinedInput>
@@ -92,7 +92,7 @@
                     send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
                 }, 10)
             }}
-            buttons={false}
+            style="background-color: var(--primary-darker);"
             outline
         />
     </CombinedInput>
@@ -114,7 +114,7 @@
                     send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
                 }, 10)
             }}
-            buttons={false}
+            style="background-color: var(--primary-darker);"
             outline
         />
     </CombinedInput>
@@ -132,7 +132,7 @@
                     send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
                 }, 10)
             }}
-            buttons={false}
+            style="background-color: var(--primary-darker);"
             outline
         />
     </CombinedInput>

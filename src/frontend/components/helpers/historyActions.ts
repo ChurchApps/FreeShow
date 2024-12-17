@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Slide } from "../../../types/Show"
-import { removeItemValues } from "../../show/slides"
+import { removeItemValues, splitItemInTwo } from "../../show/slides"
 import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, projects, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { EMPTY_SHOW_SLIDE } from "../../values/empty"
@@ -460,6 +460,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // sort in descending order so indexes are correct while adding/removing
             slides = slides.sort((a, b) => (a.index < b.index ? 1 : -1))
+            if (data.layouts) data.layouts.reverse()
             if (data.layout?.backgrounds?.[1]) data.layout.backgrounds.reverse()
 
             slides.forEach((slide, i) => {
@@ -753,6 +754,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (templateId && !slideId && previousTemplateId !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
 
                 let template = clone(get(templates)[templateId])
+                if (template?.settings?.maxLinesPerSlide) splitToMaxLines(template.settings.maxLinesPerSlide)
                 updateSlidesWithTemplate(template)
 
                 if (get(activePage) === "edit") refreshEditSlide.set(true)
@@ -769,6 +771,33 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             if (deleting) obj.oldData = clone(data)
             else obj.newData = clone(data)
+
+            function splitToMaxLines(maxLines: number) {
+                let itemIndex = -1
+                // find match
+                let slideMatch = ref.find((slideRef) => {
+                    itemIndex = slides[slideRef.id]?.items?.findIndex((a) => (a.lines?.length || 0) > maxLines)
+                    return itemIndex > -1
+                })
+
+                let breaker = 0
+                while (slideMatch && breaker < 250) {
+                    breaker++
+                    splitItemInTwo(slideMatch, itemIndex, [], maxLines)
+
+                    // update
+                    ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0] || []
+                    slides = get(showsCache)[data.remember.showId]?.slides || {}
+                    // find match
+                    slideMatch = ref.find((slideRef) => {
+                        itemIndex = slides[slideRef.id]?.items?.findIndex((a) => (a.lines?.length || 0) > maxLines)
+                        return itemIndex > -1
+                    })
+                }
+
+                // update
+                show = get(showsCache)[data.remember.showId]
+            }
 
             function updateSlidesWithTemplate(template: any) {
                 Object.entries(slides).forEach(([id, slide]: any) => {

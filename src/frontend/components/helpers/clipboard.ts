@@ -405,13 +405,17 @@ const copyActions: any = {
             return slide
         })
 
-        let backgrounds = layouts.filter((a) => a.background)
+        let layoutMedia = layouts.filter((a) => a.background || a.audio?.length)
         let showMedia = _show().get().media
-        backgrounds.forEach((layoutData) => {
-            let bgId = layoutData.background
-            let bg = showMedia[bgId]
-            if (!bg) return
-            media[bgId] = bg
+        layoutMedia.forEach((layoutData) => {
+            let mediaIds: string[] = []
+            if (layoutData.background) mediaIds.push(layoutData.background)
+            if (layoutData.audio?.length) mediaIds.push(...layoutData.audio)
+
+            mediaIds.forEach((mediaId) => {
+                let m = showMedia[mediaId]
+                if (m) media[mediaId] = m
+            })
         })
 
         return { slides, layouts, media }
@@ -463,6 +467,8 @@ const pasteActions: any = {
 
         // clone slides
         data = clone(data)
+
+        // WIP update media id if already existing
 
         // data.slides.reverse()
         // if (data.layouts) data.layouts.reverse()

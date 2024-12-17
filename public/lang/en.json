@@ -40,7 +40,8 @@
         "bottom": "Bottom",
         "left": "Left",
         "centered": "Centered",
-        "edge_blending_tip": "Blend together multiple outputs/projectors for a more seamless transition"
+        "edge_blending_tip": "Blend together multiple outputs/projectors for a more seamless transition",
+        "cropping_tip": "Fine adjust the window content position by cropping the sides"
     },
     "about": {
         "check_updates": "Look for updates",
@@ -824,6 +825,7 @@
         "background_media": "Background media",
         "overlay_content": "Add overlay content",
         "different_first_template": "Custom template on first slide",
+        "max_lines_per_slide": "Max lines per slide",
         "media_fit": "Media fit",
         "one_letter": "One letter mode",
         "sub_indexes": "Sub indexes",

@@ -34,11 +34,11 @@
 
 <div>
     <Button on:click={() => setMethod("upload")}>
-        <Icon id="upload" size={6} />
+        <Icon id="export" size={6} />
         <p><Icon id="screen" size={1.2} right /><T id="cloud.local" /></p>
     </Button>
     <Button on:click={() => setMethod("download")}>
-        <Icon id="download" size={6} />
+        <Icon id="import" size={6} />
         <p><Icon id="cloud" size={1.2} right /><T id="settings.cloud" /></p>
     </Button>
 </div>

@@ -39,12 +39,6 @@
 
     const isChecked = (e: any) => e.target.checked
 
-    function updateCropping(newValue: number, key: string) {
-        let cropping = currentStyle.cropping || { top: 0, right: 0, bottom: 0, left: 0 }
-        cropping[key] = newValue
-        updateStyle(cropping, "cropping")
-    }
-
     // pre v0.8.4: generate styles from old output "show" formatting
     if (!Object.keys($styles).length) createStylesFromOutputs()
     function createStylesFromOutputs() {
@@ -255,16 +249,6 @@
             title={$dictionary.settings?.resolution}
             on:click={(e) => updateStyle(e.detail?.data, "resolution")}
         />
-    </span>
-</CombinedInput>
-
-<CombinedInput>
-    <p><T id="settings.cropping" /></p>
-    <span class="inputs">
-        <NumberInput title={$dictionary.screen?.top} value={currentStyle.cropping?.top || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "top")} />
-        <NumberInput title={$dictionary.screen?.right} value={currentStyle.cropping?.right || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "right")} />
-        <NumberInput title={$dictionary.screen?.bottom} value={currentStyle.cropping?.bottom || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "bottom")} />
-        <NumberInput title={$dictionary.screen?.left} value={currentStyle.cropping?.left || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "left")} />
     </span>
 </CombinedInput>
 

@@ -22,16 +22,19 @@
     }
 </script>
 
-<p style="max-width: 400px;white-space: normal;"><T id="settings.user_data_exists" /></p>
+<p style="max-width: 600px;white-space: normal;"><T id="settings.user_data_exists" /></p>
+
+<br />
 
 <div>
-    <Button on:click={() => setMethod("overwrite")}>
-        <Icon id="folder" size={6} />
-        <p><T id="settings.user_data_yes" /></p>
+    <Button on:click={() => setMethod("overwrite")} style="border: 2px solid var(--focus);">
+        <!-- <Icon id="folder" size={6} /> -->
+        <Icon id="check" size={6} />
+        <p style="white-space: normal;"><T id="settings.user_data_yes" /></p>
     </Button>
     <Button on:click={() => setMethod("existing")}>
-        <Icon id="upload" size={6} />
-        <p><T id="settings.user_data_no" /></p>
+        <Icon id="import" size={6} />
+        <p style="white-space: normal;"><T id="settings.user_data_no" /></p>
     </Button>
 </div>
 

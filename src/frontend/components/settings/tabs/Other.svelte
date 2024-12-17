@@ -386,7 +386,7 @@
     {:else}
         <CombinedInput title={$dictionary.actions?.export_usage_log}>
             <Button disabled={exportingUsageLog} style="width: 100%;" on:click={exportUsageLog}>
-                <Icon id="download" style="margin-left: 0.5em;" right />
+                <Icon id="export" style="margin-left: 0.5em;" right />
                 <p><T id="actions.export_usage_log" /></p>
             </Button>
         </CombinedInput>
@@ -406,11 +406,11 @@
 
 <CombinedInput>
     <Button style="width: 50%;" on:click={backup}>
-        <Icon id="download" style="margin-left: 0.5em;" right />
+        <Icon id="export" style="margin-left: 0.5em;" right />
         <p><T id="settings.backup_all" /></p>
     </Button>
     <Button on:click={restore}>
-        <Icon id="upload" style="margin-left: 0.5em;" right />
+        <Icon id="import" style="margin-left: 0.5em;" right />
         <p><T id="settings.restore" /></p>
     </Button>
 </CombinedInput>
