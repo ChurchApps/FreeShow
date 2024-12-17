@@ -417,7 +417,7 @@
 
 <CombinedInput>
     <p><T id="settings.auto_backup" /></p>
-    <Dropdown options={autobackupList} value={autobackupList.find((a) => a.id === ($special.autoBackup || "never"))?.name || ""} on:click={(e) => updateSpecial(e.detail.id, "autoBackup")} />
+    <Dropdown options={autobackupList} value={autobackupList.find((a) => a.id === ($special.autoBackup || "never"))?.name || ""} on:click={(e) => updateSpecial(e.detail.id, "autoBackup")} up />
 </CombinedInput>
 
 <CombinedInput>

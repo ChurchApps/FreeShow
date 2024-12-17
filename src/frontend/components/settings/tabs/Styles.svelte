@@ -330,12 +330,12 @@
 <h3><T id="tools.metadata" /></h3>
 <CombinedInput>
     <p><T id="meta.display_metadata" /></p>
-    <Dropdown options={meta} value={meta.find((a) => a.id === (currentStyle.displayMetadata || "never"))?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "displayMetadata")} />
+    <Dropdown options={meta} value={meta.find((a) => a.id === (currentStyle.displayMetadata || "never"))?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "displayMetadata")} up />
 </CombinedInput>
 {#if (currentStyle.displayMetadata || "never") !== "never"}
     <CombinedInput>
         <p><T id="meta.meta_template" /></p>
-        <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} />
+        <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} up />
     </CombinedInput>
     <CombinedInput>
         <p><T id="meta.text_divider" /></p>
@@ -348,7 +348,7 @@
 {/if}
 <CombinedInput>
     <p><T id="meta.message_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} />
+    <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} up />
 </CombinedInput>
 
 <!-- TODO: override transition ? -->

@@ -35,9 +35,13 @@
     }
 
     // total time
+    let appliedToSlides: number = 0
     let totalTime: number = 0
     function getTotalTime() {
         totalTime = allActiveSlides.reduce((value, ref) => (value += Number(ref.data.nextTimer || 0)), 0)
+
+        let allValues = allActiveSlides.map((ref) => Number(ref.data.nextTimer || 0))
+        appliedToSlides = [...new Set(allValues)].length === 1 && allValues[0] === allTime ? allTime : 0
     }
 
     let allTime: number = allActiveSlides[0]?.data?.nextTimer || 10
@@ -48,32 +52,35 @@
 </script>
 
 {#if allSlides}
+    {#if totalTime}
+        <p style="text-align: center;opacity: 0.7;font-size: 0.9em;margin-bottom: 10px;">
+            <T id="transition.duration" />: {getTime(totalTime)}
+        </p>
+    {/if}
+
     <CombinedInput>
         <NumberInput value={allTime} on:change={(e) => (allTime = Number(e.detail))} max={3600} fixed={value?.toString()?.includes(".") ? 1 : 0} decimals={1} />
     </CombinedInput>
-    <CombinedInput>
-        <p style="width: 100%;justify-content: center;opacity: 0.8;">
-            <T id="transition.duration" />: {getTime(totalTime)}
-        </p>
-    </CombinedInput>
-
-    <CombinedInput style="margin-top: 10px;">
-        <Button style="flex: 1;" on:click={() => updateValue(allTime)} dark center>
-            <Icon id="clock" right />
-            <p style="flex: initial;min-width: auto;width: auto;padding: 0;">
-                <T id="actions.to_all" />
-                <span style="opacity: 0.5;min-width: auto;display: flex;align-items: center;padding-left: 6px;">
-                    {#if newTime !== totalTime}({getTime(newTime)}){/if}
-                </span>
-            </p>
-        </Button>
-    </CombinedInput>
 
     <CombinedInput>
-        <Button style="flex: 1;" disabled={!totalTime} on:click={() => updateValue(undefined)} center dark>
-            <Icon id="reset" right />
-            <T id="actions.reset" />
-        </Button>
+        <!-- reset if next timer applied, but not same on all slides ?? (set input to 0) -->
+        {#if totalTime && (appliedToSlides === allTime || allTime === 0)}
+            <Button style="flex: 1;" on:click={() => updateValue(undefined)} center dark>
+                <Icon id="reset" right />
+                <T id="actions.reset" />
+            </Button>
+        {:else}
+            <Button style="flex: 1;" disabled={allTime === 0} on:click={() => updateValue(allTime)} dark center>
+                <Icon id="clock" right />
+                <p style="flex: initial;min-width: auto;width: auto;padding: 0;">
+                    <T id="actions.to_all" />
+
+                    <span style="opacity: 0.5;font-size: 0.9em;min-width: auto;display: flex;align-items: center;padding-left: 6px;">
+                        {#if newTime}({getTime(newTime)}){/if}
+                    </span>
+                </p>
+            </Button>
+        {/if}
     </CombinedInput>
 {:else}
     <CombinedInput>

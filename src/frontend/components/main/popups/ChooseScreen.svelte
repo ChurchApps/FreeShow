@@ -32,9 +32,12 @@
     }
 
     .error {
+        margin-bottom: 2px;
+
         font-size: 0.9em;
-        /* font-style: italic;
-      font-weight: bold; */
-        opacity: 0.7;
+        opacity: 0.9;
+
+        text-decoration-line: underline;
+        text-decoration-color: rgb(255 0 0 / 0.7);
     }
 </style>

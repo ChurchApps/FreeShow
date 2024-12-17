@@ -269,6 +269,9 @@
             >
                 <Icon size={1.3} id={$activePlaylist?.id === active ? "stop" : "play"} white={$activePlaylist?.id === active} />
             </Button>
+
+            <div class="seperator" />
+
             <Button
                 title={$dictionary.media?.toggle_shuffle}
                 on:click={() => {
@@ -309,7 +312,7 @@
         </span>
 
         {#if !playlist}
-            <Button disabled={!fullFilteredFiles.filter((a) => !a.folder)?.length} title={$dictionary.new?.playlist} on:click={createPlaylist}>
+            <Button disabled={!isDefault && !fullFilteredFiles.filter((a) => !a.folder)?.length} title={$dictionary.new?.playlist} on:click={createPlaylist}>
                 <Icon size={1.3} id="playlist_create" />
             </Button>
         {/if}
@@ -341,5 +344,11 @@
     }
     .grid :global(.selectElem:not(.isSelected):nth-child(even)) {
         background-color: rgb(0 0 20 / 0.08);
+    }
+
+    .seperator {
+        width: 1px;
+        height: 100%;
+        background-color: var(--primary);
     }
 </style>

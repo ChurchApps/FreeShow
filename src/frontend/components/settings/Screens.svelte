@@ -149,7 +149,7 @@
     const isChecked = (e: any) => e.target.checked
 
     let editCropping: boolean = false
-    const cropPreviewSize: number = 0.08
+    const previewSize: number = 0.08
     // get any style cropping if not set on window
     $: cropping = clone((currentScreen.cropping === undefined && currentScreen.style ? $styles[currentScreen.style]?.cropping : currentScreen.cropping) || {})
     function updateCropping(value: string | number, side: string) {
@@ -168,7 +168,7 @@
     function getCroppedStyle(cropping) {
         let style = ""
         Object.keys(cropping).forEach((key) => {
-            if (cropping[key]) style += `padding-${key}: ${cropping[key] * cropPreviewSize}px;`
+            if (cropping[key]) style += `padding-${key}: ${cropping[key] * previewSize}px;`
         })
         return style
     }
@@ -184,6 +184,14 @@
             return a
         })
     }
+    function getBlendingStyle(blending) {
+        if (!blending.left && !blending.right) return ""
+
+        const opacity = (blending.opacity ?? 50) / 100
+        const center = 50 + Number(blending.offset || 0)
+        if (blending.centered) return `-webkit-mask-image: linear-gradient(${blending.rotate ?? 90}deg, rgb(0, 0, 0) ${center - blending.left}%, rgba(0, 0, 0, ${opacity}) ${center}%, rgb(0, 0, 0) ${center + Number(blending.right)}%);`
+        return `-webkit-mask-image: linear-gradient(${blending.rotate ?? 90}deg, rgba(0, 0, 0, ${opacity}) 0%, rgb(0, 0, 0) ${blending.left}%, rgb(0, 0, 0) ${100 - blending.right}%, rgba(0, 0, 0, ${opacity}) 100%);`
+    }
 </script>
 
 {#if editCropping}
@@ -191,7 +199,7 @@
         <Icon id="back" size={2} white />
     </Button>
 
-    <p style="margin-bottom: 10px;"><T id="screen.cropping_tip" /></p>
+    <p class="tip"><T id="screen.cropping_tip" /></p>
 
     <CombinedInput>
         <p><T id="screen.top" /></p>
@@ -210,19 +218,16 @@
         <NumberInput value={cropping.left || 0} max={currentScreen.bounds.width * 0.9 - (cropping.right || 0)} on:change={(e) => updateCropping(e.detail, "left")} />
     </CombinedInput>
 
-    <br />
-
     <!-- preview -->
-    <div class="preview">
-        <div class="border" style="width: {currentScreen.bounds.width * cropPreviewSize}px;height: {currentScreen.bounds.height * cropPreviewSize}px;">
+    <div class="preview" style="margin-top: 20px;">
+        <div class="border" style="width: {currentScreen.bounds.width * previewSize}px;height: {currentScreen.bounds.height * previewSize}px;">
             <div class="cropped" style={getCroppedStyle(cropping)}>
                 <div
                     class="previewWindow"
-                    style="aspect-ratio: {currentScreen.bounds.width} / {currentScreen.bounds.height};max-height: {(currentScreen.bounds.height - (cropping.top || 0) - (cropping.bottom || 0)) * cropPreviewSize}px;max-width: {(currentScreen.bounds
-                        .width -
+                    style="aspect-ratio: {currentScreen.bounds.width} / {currentScreen.bounds.height};max-height: {(currentScreen.bounds.height - (cropping.top || 0) - (cropping.bottom || 0)) * previewSize}px;max-width: {(currentScreen.bounds.width -
                         (cropping.left || 0) -
                         (cropping.right || 0)) *
-                        cropPreviewSize}px;"
+                        previewSize}px;"
                 ></div>
             </div>
         </div>
@@ -232,15 +237,15 @@
         <Icon id="back" size={2} white />
     </Button>
 
-    <p style="margin-bottom: 10px;"><T id="screen.edge_blending_tip" /></p>
+    <p class="tip"><T id="screen.edge_blending_tip" /></p>
 
     <CombinedInput>
         <p><T id="screen.left" /></p>
-        <NumberInput value={blending.left || 0} on:change={(e) => updateBlending(e.detail, "left")} />
+        <NumberInput value={blending.left || 0} max={500} on:change={(e) => updateBlending(e.detail, "left")} />
     </CombinedInput>
     <CombinedInput>
         <p><T id="screen.right" /></p>
-        <NumberInput value={blending.right || 0} on:change={(e) => updateBlending(e.detail, "right")} />
+        <NumberInput value={blending.right || 0} max={100} on:change={(e) => updateBlending(e.detail, "right")} />
     </CombinedInput>
     <CombinedInput>
         <p><T id="edit.rotation" /></p>
@@ -262,16 +267,20 @@
             <NumberInput value={blending.offset} min={-50} max={50} on:change={(e) => updateBlending(e.detail, "offset")} />
         </CombinedInput>
     {/if}
-{:else}
-    <p style="margin-bottom: 10px;"><T id="settings.select_display" /></p>
-    <Button on:click={() => activePopup.set("change_output_values")} style="width: 100%;" dark center>
-        <Icon id="screen" right />
-        <p><T id="settings.manual_input_hint" /></p>
-    </Button>
 
-    <Button on:click={identifyScreens} style="width: 100%;" dark center>
-        <Icon id="search" right />
-        <p><T id="settings.identify_screens" /></p>
+    <!-- preview -->
+    <div class="preview" style="margin-top: 20px;">
+        <div class="border" style="background-color: white;width: {currentScreen.bounds.width * previewSize}px;height: {currentScreen.bounds.height * previewSize}px;">
+            <div class="cropped" style={getBlendingStyle(blending)}>
+                <div class="previewWindow" style="aspect-ratio: {currentScreen.bounds.width} / {currentScreen.bounds.height};"></div>
+            </div>
+        </div>
+    </div>
+{:else}
+    <p class="tip"><T id="settings.select_display" /></p>
+    <Button on:click={() => activePopup.set("change_output_values")} title={$dictionary.settings?.manual_input_hint} style="width: 100%;" dark center>
+        <Icon id="options" right />
+        <p><T id="popup.change_output_values" /></p>
     </Button>
 
     <div style="display: flex;">
@@ -317,9 +326,24 @@
             <T id="remote.loading" />
         {/if}
     </div>
+
+    <div class="bottom">
+        <Button on:click={identifyScreens} title={$dictionary.settings?.identify_screens} style="padding: 12px;" dark center>
+            <Icon id="search" size={1.4} white />
+            <!-- <p><T id="settings.identify_screens" /></p> -->
+        </Button>
+    </div>
 {/if}
 
 <style>
+    .tip {
+        margin-bottom: 10px;
+
+        opacity: 0.7;
+        font-size: 0.8em;
+        /* text-align: center; */
+    }
+
     .content {
         width: 100%;
         display: flex;
@@ -343,6 +367,12 @@
     transform: translateX(-50%); */
     }
 
+    .bottom {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+    }
+
     .screen {
         position: absolute;
         /* transform: translateX(-50%); */
@@ -360,6 +390,7 @@
         opacity: 0.5;
         pointer-events: none;
         outline: 40px solid var(--secondary);
+        background-color: var(--primary-darker);
     }
 
     .screen:hover:not(.disabled):not(.noClick) {
@@ -368,9 +399,8 @@
     }
 
     .screen.active {
-        /* background-color: var(--secondary);
-        color: var(--secondary-text); */
         outline: 40px solid var(--secondary);
+        background-color: var(--primary-darker);
         z-index: 1;
     }
 
@@ -401,7 +431,8 @@
     }
 
     .previewWindow {
-        background-color: var(--primary);
+        background-color: var(--primary-darker);
+        /* background-color: #ececec; */
 
         outline: 2px solid var(--secondary);
         outline-offset: 0;
