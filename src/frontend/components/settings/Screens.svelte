@@ -278,13 +278,17 @@
     </div>
 {:else}
     <p class="tip"><T id="settings.select_display" /></p>
-    <Button on:click={() => activePopup.set("change_output_values")} title={$dictionary.settings?.manual_input_hint} style="width: 100%;" dark center>
+    <Button on:click={() => activePopup.set("change_output_values")} title={activateOutput ? $dictionary.popup?.change_output_values : $dictionary.settings?.manual_input_hint} style="width: 100%;" dark center>
         <Icon id="options" right />
-        <p><T id="popup.change_output_values" /></p>
+        {#if activateOutput}
+            <p><T id="settings.manual_input_hint" /></p>
+        {:else}
+            <p><T id="popup.change_output_values" /></p>
+        {/if}
     </Button>
 
-    <div style="display: flex;">
-        {#if !activateOutput}
+    {#if !activateOutput}
+        <div style="display: flex;">
             <Button on:click={() => (editCropping = true)} style="flex: 1;" dark center>
                 <Icon id="resize" right />
                 <p><T id="settings.cropping" /></p>
@@ -294,8 +298,8 @@
                 <Icon id="gradient" right />
                 <p><T id="settings.edge_blending" /></p>
             </Button>
-        {/if}
-    </div>
+        </div>
+    {/if}
 
     <br />
 
@@ -386,19 +390,18 @@
         transition: background-color 0.1s;
     }
 
-    .screen.noClick {
-        opacity: 0.5;
-        pointer-events: none;
-        outline: 40px solid var(--secondary);
-        background-color: var(--primary-darker);
-    }
-
     .screen:hover:not(.disabled):not(.noClick) {
         background-color: var(--primary-lighter);
         cursor: pointer;
     }
 
-    .screen.active {
+    .screen.noClick {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .screen.active,
+    .screen.noClick {
         outline: 40px solid var(--secondary);
         background-color: var(--primary-darker);
         z-index: 1;

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, dictionary, labelsDisabled, variables } from "../../../stores"
+    import { activePopup, dictionary, disableDragging, labelsDisabled, variables } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -25,7 +25,14 @@
             return a
         })
     }
+
+    function mousedown(e: any) {
+        if (!e.target?.closest(".variables")) return
+        if (e.target?.tagName === "INPUT" || e.target?.closest("button")) disableDragging.set(true)
+    }
 </script>
+
+<svelte:window on:mouseup={() => disableDragging.set(false)} on:mousedown={mousedown} />
 
 {#if sortedVariables.length}
     <div class="variables">

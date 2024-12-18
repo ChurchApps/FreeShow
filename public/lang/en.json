@@ -750,6 +750,8 @@
         "all_shows": "All shows",
         "all_projects": "All projects",
         "project": "Project",
+        "option_type": "What would you like to export?",
+        "option_format": "What format would you like?",
         "include_media": "Include media files",
         "preview": "Preview",
         "title": "Title",
@@ -1207,7 +1209,7 @@
     },
     "scripture": {
         "bibles": "Bibles from API.Bible",
-        "custom": "Or import your own",
+        "local": "Import local file",
         "max_verses": "Max verses per slide",
         "verse_numbers": "Verse numbers",
         "verses_on_individual_lines": "Verses on individual lines",

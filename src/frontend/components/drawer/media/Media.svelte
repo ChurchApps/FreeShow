@@ -378,7 +378,7 @@
             </div>
         {:else}
             <div class={specialTabs.includes(active || "") ? "" : "context #media"} style="display: contents;">
-                <Center>
+                <Center style="opacity: 0.2;">
                     <Icon id="noImage" size={5} white />
                 </Center>
             </div>
@@ -481,10 +481,14 @@
                     <Button title={$dictionary.media?.video} on:click={() => (activeView = "video")}>
                         <Icon size={1.2} id="video" white={activeView !== "video"} />
                     </Button>
+
+                    <div class="seperator" />
                 {:else}
                     <Button title={$dictionary.media?.[activeView]} on:click={() => (activeView = nextActiveView[activeView])}>
                         <Icon size={1.2} id={activeView === "all" ? "media" : activeView} white={activeView === "all"} />
                     </Button>
+
+                    <div class="seperator" />
                 {/if}
 
                 <Button

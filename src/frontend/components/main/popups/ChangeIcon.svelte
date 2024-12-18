@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, categories, customizedIcons, mediaFolders, overlayCategories, selected, templateCategories } from "../../../stores"
+    import { activePopup, categories, customizedIcons, mediaFolders, overlayCategories, popupData, selected, templateCategories } from "../../../stores"
     import { addItem } from "../../edit/scripts/itemHelpers"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -53,7 +53,15 @@
         {/each}
     </div>
 
-    <Button style="width: 100%;margin-top: 10px;" on:click={() => activePopup.set("manage_icons")} dark center>
+    <Button
+        style="width: 100%;margin-top: 10px;"
+        on:click={() => {
+            popupData.set({ back: "icon" })
+            activePopup.set("manage_icons")
+        }}
+        dark
+        center
+    >
         <Icon id="edit" style="border: 0;" right />
         <p style="padding: 0;"><T id="popup.manage_icons" /></p>
     </Button>

@@ -75,8 +75,8 @@
     let variablesList: any[] = sortByName(keysToID($variables))
 
     const drawerPages: { [key: string]: DrawerTabIds } = {
-        timer: "calendar",
-        variables: "overlays",
+        timer: "functions",
+        variables: "functions",
     }
     function openDrawer(id: string) {
         activePage.set("show")

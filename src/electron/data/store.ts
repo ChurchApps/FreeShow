@@ -9,6 +9,7 @@ import path from "path"
 import { STORE } from "../../types/Channels"
 import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
+import { forceCloseApp } from "../utils/responses"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",
@@ -169,7 +170,10 @@ function updateStoresPath(load: boolean = false) {
     Object.keys(portableData).forEach((id) => createStoreAtNewLocation(id, load))
 }
 
+let error: boolean = false
 function createStoreAtNewLocation(id: string, load: boolean = false) {
+    if (error) return
+
     let key = portableData[id].key
     let tempData: any = {}
     if (!load) {
@@ -181,7 +185,21 @@ function createStoreAtNewLocation(id: string, load: boolean = false) {
     }
 
     // set new stores to export
-    stores[key] = new Store({ name: fileNames[id], defaults: portableData[id].defaults || {}, cwd: userDataPath! })
+    try {
+        stores[key] = new Store({ name: fileNames[id], defaults: portableData[id].defaults || {}, cwd: userDataPath! })
+    } catch (err) {
+        error = true
+        console.log("Can't create store at set location!", err)
+
+        // revert
+        let special = stores.SETTINGS.get("special")
+        special.customUserDataLocation = false
+        stores.SETTINGS.set("special", special)
+        stores.SETTINGS.set("dataPath", "")
+        stores.SETTINGS.set("showsPath", "")
+
+        forceCloseApp()
+    }
 
     if (load || !Object.keys(tempData).length) return
 

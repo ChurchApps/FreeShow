@@ -1,20 +1,15 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import { alertMessage, popupData } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import Screens from "../../settings/Screens.svelte"
 
-    let error = false
+    let error = $alertMessage === "error.display"
     let activateOutput = $popupData.activateOutput
 
-    onMount(() => {
-        if ($alertMessage === "error.display") error = true
-
-        setTimeout(() => {
-            alertMessage.set("")
-            popupData.set({})
-        }, 100)
-    })
+    $: if ($alertMessage || $popupData.activateOutput) {
+        alertMessage.set("")
+        popupData.set({})
+    }
 </script>
 
 <main>

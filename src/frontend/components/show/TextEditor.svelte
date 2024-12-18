@@ -1,7 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import { getQuickExample } from "../../converters/txt"
-    import { dictionary, textEditActive, textEditZoom } from "../../stores"
+    import { dictionary, labelsDisabled, textEditActive, textEditZoom } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -45,8 +45,8 @@
 
 <div class="actions">
     <Button on:click={() => textEditActive.set(false)} style="cursor: pointer;" active>
-        <Icon id="text" right />
-        <p><T id="show.text" /></p>
+        <Icon id="text" right={!$labelsDisabled} />
+        {#if !$labelsDisabled}<p><T id="show.text" /></p>{/if}
     </Button>
 
     <div class="seperator" />
@@ -91,7 +91,7 @@
     }
 
     .seperator {
-        width: 2px;
+        width: 1px;
         height: 100%;
         background-color: var(--primary);
         /* margin: 0 10px; */

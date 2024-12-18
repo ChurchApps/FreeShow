@@ -247,7 +247,7 @@
                 {/key}
             {/key}
         {:else}
-            <Center>
+            <Center style="opacity: 0.2;">
                 <Icon id="noAudio" size={5} white />
             </Center>
         {/if}

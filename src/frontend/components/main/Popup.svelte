@@ -31,7 +31,8 @@
 {#if popupId !== null}
     {#key popupId}
         <div style={$os.platform === "win32" ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" transition:fade={{ duration: 100 }} on:mousedown={mousedown}>
-            <div class="card" class:fill={popupId === "import_scripture"} transition:scale={{ duration: 200 }}>
+            <!-- class:fill={popupId === "import_scripture"} -->
+            <div class="card" transition:scale={{ duration: 200 }}>
                 <div style="position: relative;">
                     {#if popupId !== "alert"}
                         {#key popupId}

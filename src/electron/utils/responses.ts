@@ -175,9 +175,7 @@ const mainResponses: any = {
         special.customUserDataLocation = true
         stores.SETTINGS.set("special", special)
 
-        toApp(MAIN, { channel: "ALERT", data: "actions.closing" })
-        // let user read message and action finish
-        setTimeout(exitApp, 2000)
+        forceCloseApp()
     },
     LOCATE_MEDIA_FILE: (data: any) => locateMediaFile(data),
     GET_SIMULAR: (data: any) => getSimularPaths(data),
@@ -257,6 +255,12 @@ function getScreens(type: "window" | "screen" = "screen") {
 
         return screens
     }
+}
+
+export function forceCloseApp() {
+    toApp(MAIN, { channel: "ALERT", data: "actions.closing" })
+    // let user read message and action finish
+    setTimeout(exitApp, 2000)
 }
 
 // RECORDER

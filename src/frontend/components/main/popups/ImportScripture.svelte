@@ -1,24 +1,22 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import { uid } from "uid"
     import { IMPORT } from "../../../../types/Channels"
-    import { activePopup, alertMessage, bibleApiKey, dictionary, isDev, language, os, scriptures } from "../../../stores"
+    import { activePopup, alertMessage, bibleApiKey, dictionary, isDev, labelsDisabled, language, os, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
-    import Icon from "../../helpers/Icon.svelte"
     import { getKey } from "../../../values/keys"
+    import { sortByName } from "../../helpers/array"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
-    import { sortByName } from "../../helpers/array"
 
     let error: null | string = null
     let bibles: any[] = []
 
-    onMount(fetchBibles)
-
+    $: if (importType === "api") fetchBibles()
     async function fetchBibles() {
         // read cache
         let cache = $isDev ? {} : JSON.parse(localStorage.getItem("scriptureApiCache") || "{}")
@@ -90,13 +88,13 @@
         })
     }
 
-    const formats: any = [
-        { name: "Zefania", extensions: ["xml"], id: "zefania" },
-        { name: "OSIS", extensions: ["xml"], icon: "zefania", id: "osis" },
+    const xmlFormats: any = [
+        { name: "Zefania", extensions: ["xml"], icon: "xml", id: "zefania" },
+        { name: "OSIS", extensions: ["xml"], icon: "xml", id: "osis" },
         { name: "Beblia", extensions: ["xml"], id: "beblia" },
         { name: "OpenSong", extensions: ["xml", "xmm"], id: "opensong" },
-        { name: "FreeShow", extensions: ["fsb", "json"], id: "freeshow" },
     ]
+    const jsonFormats: any = [{ name: "FreeShow", extensions: ["fsb", "json"], icon: "bible_json", id: "freeshow" }]
 
     $: searchedBibles = sortedBibles
     $: searchedRecommendedBibles = recommended
@@ -112,89 +110,172 @@
         searchedBibles = sortedBibles.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
         searchedRecommendedBibles = recommended.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
     }
+
+    let searchActive: boolean = false
+    $: if (importType === "" && searchActive) searchActive = false
+
+    let importType: string = ""
+    const importTypes = [
+        { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
+        { id: "local", name: "$:cloud.local:$", icon: "scripture" },
+    ]
 </script>
 
-{#if error}
-    <T id="error.bible_api" />
-{:else}
-    <div style="display: flex;justify-content: space-between;">
-        <h2>
-            <T id="scripture.bibles" />
-        </h2>
+{#if importType}
+    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (importType = "")}>
+        <Icon id="back" size={2} white />
+    </Button>
+{/if}
 
-        <TextInput style="width: 50%;" placeholder={$dictionary.main?.search} value="" on:input={search} />
-    </div>
-    <div class="list">
-        <!-- custom key input: -->
-        <!-- <BibleApiKey /> -->
+{#if importType === "api"}
+    {#if error}
+        <T id="error.bible_api" />
+    {:else}
+        <div style="display: flex;justify-content: space-between;">
+            <h2>
+                <T id="scripture.bibles" />
+            </h2>
 
-        {#if searchedRecommendedBibles.length}
-            {#each searchedRecommendedBibles as bible}
-                <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
-                    <Icon id="scripture_alt" right />{bible.nameLocal}
-                    {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
-                        <span class="description" title={bible.description}>({bible.description})</span>
-                    {/if}
+            {#if searchActive}
+                <TextInput style="width: 50%;border-bottom: 2px solid var(--secondary);" placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
+            {:else}
+                <Button class="search" style="border-bottom: 2px solid var(--secondary);" on:click={() => (searchActive = true)} bold={false}>
+                    <Icon id="search" size={1.4} white right={!$labelsDisabled} />
+                    {#if !$labelsDisabled}<p style="opacity: 0.8;font-size: 1.1em;"><T id="main.search" /></p>{/if}
                 </Button>
-            {/each}
-            <hr />
-        {/if}
-        {#if sortedBibles.length}
-            {#if searchedBibles.length}
-                {#each searchedBibles as bible}
+            {/if}
+        </div>
+        <div class="list">
+            <!-- custom key input: -->
+            <!-- <BibleApiKey /> -->
+
+            {#if searchedRecommendedBibles.length}
+                {#each searchedRecommendedBibles as bible}
                     <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
-                        <Icon id="scripture_alt" right />{bible.name}
-                        {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
+                        <Icon id="scripture_alt" right />{bible.nameLocal}
+                        {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
                             <span class="description" title={bible.description}>({bible.description})</span>
                         {/if}
                     </Button>
                 {/each}
+                <hr />
+            {/if}
+            {#if sortedBibles.length}
+                {#if searchedBibles.length}
+                    {#each searchedBibles as bible}
+                        <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
+                            <Icon id="scripture_alt" right />{bible.name}
+                            {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
+                                <span class="description" title={bible.description}>({bible.description})</span>
+                            {/if}
+                        </Button>
+                    {/each}
+                {:else}
+                    <Center faded>
+                        <T id="empty.search" />
+                    </Center>
+                {/if}
             {:else}
-                <Center faded>
-                    <T id="empty.search" />
+                <Center>
+                    <Loader />
                 </Center>
             {/if}
-        {:else}
-            <Center>
-                <Loader />
-            </Center>
-        {/if}
+        </div>
+    {/if}
+{:else if importType === "local"}
+    <h2>
+        <T id="scripture.local" />
+    </h2>
+
+    <p style="font-weight: bold;font-size: 0.7em;opacity: 0.8;margin-top: 10px;">XML</p>
+    <div class="choose" style="margin-top: 2px;">
+        {#each xmlFormats as format}
+            <Button
+                on:click={() => {
+                    send(IMPORT, [format.id + "_bible"], { format })
+
+                    // linux dialog behind window message
+                    if ($os.platform === "linux") {
+                        alertMessage.set("The file select dialog might appear behind the window on Linux!<br>Please check that if you don't see it.")
+                        activePopup.set("alert")
+                    } else {
+                        activePopup.set(null)
+                    }
+                }}
+                bold={false}
+                center
+            >
+                <img src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" draggable={false} />
+                <p>{format.name}</p>
+            </Button>
+        {/each}
+    </div>
+
+    <p style="font-weight: bold;font-size: 0.7em;opacity: 0.8;margin-top: 10px;">JSON</p>
+    <div class="choose" style="margin-top: 2px;">
+        {#each jsonFormats as format}
+            <Button
+                style="max-width: calc(25% - 10px);"
+                on:click={() => {
+                    send(IMPORT, [format.id + "_bible"], { format })
+
+                    // linux dialog behind window message
+                    if ($os.platform === "linux") {
+                        alertMessage.set("The file select dialog might appear behind the window on Linux!<br>Please check that if you don't see it.")
+                        activePopup.set("alert")
+                    } else {
+                        activePopup.set(null)
+                    }
+                }}
+                bold={false}
+                center
+            >
+                <img style={format.id === "freeshow" ? "padding: 5px;" : ""} src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" draggable={false} />
+                <p>{format.name}</p>
+            </Button>
+        {/each}
+    </div>
+{:else}
+    <div class="choose">
+        {#each importTypes as type, i}
+            <Button on:click={() => (importType = type.id)} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
+                <Icon id={type.icon || ""} size={4} white />
+                <p>
+                    {#if type.name.includes("$:")}<T id={type.name} />{:else}{type.name}{/if}
+                </p>
+            </Button>
+        {/each}
     </div>
 {/if}
 
-<h2>
-    <T id="scripture.custom" />
-</h2>
-
-<span style="display: flex;">
-    {#each formats as format}
-        <Button
-            style="width: 20%;flex-direction: column;min-height: 160px;"
-            on:click={() => {
-                send(IMPORT, [format.id + "_bible"], { format })
-
-                // linux dialog behind window message
-                if ($os.platform === "linux") {
-                    alertMessage.set("The file select dialog might appear behind the window on Linux!<br>Please check that if you don't see it.")
-                    activePopup.set("alert")
-                } else {
-                    activePopup.set(null)
-                }
-            }}
-            bold={false}
-            center
-        >
-            <img src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" draggable={false} />
-            <p>{format.name}</p>
-        </Button>
-    {/each}
-</span>
-
 <style>
+    .choose {
+        width: 100%;
+        display: flex;
+        align-self: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .choose :global(button) {
+        width: 180px;
+        height: 180px;
+
+        display: flex;
+        gap: 10px;
+        flex-direction: column;
+        justify-content: center;
+        flex: 1;
+    }
+    .choose p {
+        display: flex;
+        align-items: center;
+    }
+
     .list {
         display: flex;
         flex-direction: column;
-        max-height: 40vh;
+        max-height: 55vh;
         margin: 15px 0;
         overflow: auto;
     }

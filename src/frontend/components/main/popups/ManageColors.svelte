@@ -1,5 +1,6 @@
 <script lang="ts">
     import { special } from "../../../stores"
+    import { getContrast } from "../../helpers/color"
     import T from "../../helpers/T.svelte"
     import Color from "../../inputs/Color.svelte"
 
@@ -11,12 +12,20 @@
 
             let existing = colors.indexOf(color)
             if (existing >= 0) colors.splice(existing, 1)
-            else colors.push(color)
+            else {
+                previewColor = ""
+                colors.push(color)
+            }
 
             a[key] = colors
 
             return a
         })
+    }
+
+    let previewColor = ""
+    function setPreviewColor(e: any) {
+        previewColor = e.target?.value || ""
     }
 </script>
 
@@ -28,9 +37,9 @@
 
 <Color value="" on:input={toggleColor} visible custom />
 
-<div class="color" style="margin-top: 10px;padding: 5px;">
+<div class="color" style="margin-top: 10px;padding: 5px;background-color: {previewColor};color: {getContrast(previewColor)};">
     <p><T id="actions.add_color" /></p>
-    <input class="colorpicker" type="color" on:change={toggleColor} />
+    <input class="colorpicker" type="color" on:change={toggleColor} on:input={setPreviewColor} />
 </div>
 
 <style>
@@ -47,6 +56,10 @@
         border: 2px solid var(--primary-darker);
         transition: background-color 0.2s;
         position: relative;
+    }
+    .color:hover {
+        outline: 2px solid #ddd !important;
+        outline-offset: -2px;
     }
 
     input[type="color"] {

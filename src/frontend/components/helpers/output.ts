@@ -45,12 +45,14 @@ import { newToast } from "../../utils/common"
 import { getStyles } from "./style"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
+    let forceKey = e.ctrlKey || e.metaKey
+
     // sort so display order can be changed! (needs app restart)
     let enabledOutputs: any[] = sortObject(sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id }))), "stageOutput")
 
     enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1
-        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: output.allowMainScreen || e.ctrlKey || e.metaKey, auto, autoPosition })
+        send(OUTPUT, ["DISPLAY"], { enabled: forceKey || !get(outputDisplay), output, force: output.allowMainScreen || forceKey, auto, autoPosition })
     })
 }
 

@@ -252,15 +252,16 @@ export async function exitApp() {
 
     stopMidi()
 
-    if (!isProd) {
-        console.log("Dev mode active - Relaunching...")
-        app.relaunch()
-    } else {
-        // this has to be called to actually remove the process!
-        // https://stackoverflow.com/a/43520274
-        mainWindow?.removeAllListeners("close")
-        ipcMain.removeAllListeners()
-    }
+    // relaunch does not work very well as it launched new processes
+    // if (!isProd) {
+    //     console.log("Dev mode active - Relaunching...")
+    //     app.relaunch()
+    // } else {
+    // this has to be called to actually remove the process!
+    // https://stackoverflow.com/a/43520274
+    mainWindow?.removeAllListeners("close")
+    ipcMain.removeAllListeners()
+    // }
 
     mainWindow = null
 

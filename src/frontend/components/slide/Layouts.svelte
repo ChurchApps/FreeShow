@@ -200,6 +200,8 @@
             </Button>
         {/if}
 
+        <div class="seperator" />
+
         <Button class="context #slideViews" on:click={() => slidesOptions.set({ ...$slidesOptions, mode: slidesViews[$slidesOptions.mode] })} title={$dictionary.show?.[$slidesOptions.mode]}>
             <Icon size={1.3} id={$slidesOptions.mode} white />
         </Button>
@@ -262,7 +264,7 @@
     }
 
     .seperator {
-        width: 2px;
+        width: 1px;
         height: 100%;
         background-color: var(--primary);
         /* margin: 0 10px; */

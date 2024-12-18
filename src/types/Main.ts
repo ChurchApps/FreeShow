@@ -3,6 +3,7 @@ export interface Option {
     extra?: string
     data?: any
     id?: string
+    icon?: string
     style?: string // css style for the item
 }
 

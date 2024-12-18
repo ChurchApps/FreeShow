@@ -26,7 +26,7 @@
         <h1 style="color: var(--text);font-size: 1.7em;">FreeShow</h1>
     </div>
 
-    <p>
+    <p style="font-size: 0.8em;margin-top: 2px;">
         <span style="opacity: 0.8;">v{$version} -</span>
         <Link url={"https://freeshow.app/?v" + $version}>
             <T id="about.check_updates" />
@@ -38,45 +38,42 @@
     </p> -->
 </div>
 
-<br />
+<hr />
 
 <div class="main">
     <div class="text">
         <div>
-            • <T id="about.more" />
+            ● <T id="about.more" />
             <Link url="https://churchapps.org/">ChurchApps</Link>
         </div>
         <div>
-            • <T id="about.report" />
+            ● <T id="about.report" />
             <Link url="https://github.com/ChurchApps/FreeShow/issues">GitHub Issues</Link>
         </div>
         <div>
-            • <T id="about.translate" />
+            ● <T id="about.translate" />
             <Link url="https://app.transifex.com/nettbiter/freeshow/">Transifex</Link>
         </div>
         <!-- <div>
-            • <T id="about.mail" />
+            ● <T id="about.mail" />
             <Link url="mailto:dev@freeshow.app">dev@freeshow.app</Link>
         </div> -->
         <div>
-            • <T id="about.support" />!
+            ● <T id="about.support" />!
             <Link url="https://churchapps.org/partner#give">churchapps.org/partner</Link>
         </div>
     </div>
 
-    <br />
+    <hr />
 
     <div>
         <h5><T id="about.assets" /></h5>
 
-        {#each Object.entries(assets) as [asset, url]}
-            <div style="display: flex;justify-content: space-between;gap: 10px;">
-                <span>● {asset}</span>
-                <span>
-                    <Link {url}>{url}</Link>
-                </span>
-            </div>
-        {/each}
+        <div class="links">
+            {#each Object.entries(assets) as [asset, url]}
+                <span>• <Link {url}>{asset}</Link></span>
+            {/each}
+        </div>
     </div>
 
     <div style="text-align: center;font-size: 0.7em;opacity: 0.5;margin-top: 12px;"><T id="about.made" /> Kristoffer Vassbø (2021)</div>
@@ -103,5 +100,25 @@
         text-transform: uppercase;
         font-size: 0.9em;
         margin-bottom: 5px;
+    }
+
+    hr {
+        border: none;
+        height: 2px;
+        margin: 30px 0;
+        background-color: var(--primary-lighter);
+    }
+
+    .links {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+
+        font-size: 0.9em;
+    }
+
+    .links :global(a) {
+        opacity: 0.9;
+        text-decoration: none;
     }
 </style>
