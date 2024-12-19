@@ -18,7 +18,7 @@ export interface Styles {
     clearStyleBackgroundOnText?: boolean
     fit?: MediaFit | null
     resolution?: Resolution
-    cropping?: Cropping
+    cropping?: Cropping // pre 1.3.3
     lines?: number
     template?: string // slide
     templateScripture?: string

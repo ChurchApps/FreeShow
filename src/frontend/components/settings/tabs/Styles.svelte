@@ -39,12 +39,6 @@
 
     const isChecked = (e: any) => e.target.checked
 
-    function updateCropping(newValue: number, key: string) {
-        let cropping = currentStyle.cropping || { top: 0, right: 0, bottom: 0, left: 0 }
-        cropping[key] = newValue
-        updateStyle(cropping, "cropping")
-    }
-
     // pre v0.8.4: generate styles from old output "show" formatting
     if (!Object.keys($styles).length) createStylesFromOutputs()
     function createStylesFromOutputs() {
@@ -258,16 +252,6 @@
     </span>
 </CombinedInput>
 
-<CombinedInput>
-    <p><T id="settings.cropping" /></p>
-    <span class="inputs">
-        <NumberInput title={$dictionary.screen?.top} value={currentStyle.cropping?.top || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "top")} />
-        <NumberInput title={$dictionary.screen?.right} value={currentStyle.cropping?.right || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "right")} />
-        <NumberInput title={$dictionary.screen?.bottom} value={currentStyle.cropping?.bottom || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "bottom")} />
-        <NumberInput title={$dictionary.screen?.left} value={currentStyle.cropping?.left || 0} min={0} max={10000} buttons={false} on:change={(e) => updateCropping(Number(e.detail), "left")} />
-    </span>
-</CombinedInput>
-
 <h3><T id="preview.slide" /></h3>
 <CombinedInput>
     <p><T id="settings.active_layers" /></p>
@@ -346,12 +330,12 @@
 <h3><T id="tools.metadata" /></h3>
 <CombinedInput>
     <p><T id="meta.display_metadata" /></p>
-    <Dropdown options={meta} value={meta.find((a) => a.id === (currentStyle.displayMetadata || "never"))?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "displayMetadata")} />
+    <Dropdown options={meta} value={meta.find((a) => a.id === (currentStyle.displayMetadata || "never"))?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "displayMetadata")} up />
 </CombinedInput>
 {#if (currentStyle.displayMetadata || "never") !== "never"}
     <CombinedInput>
         <p><T id="meta.meta_template" /></p>
-        <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} />
+        <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} up />
     </CombinedInput>
     <CombinedInput>
         <p><T id="meta.text_divider" /></p>
@@ -364,7 +348,7 @@
 {/if}
 <CombinedInput>
     <p><T id="meta.message_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} />
+    <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} up />
 </CombinedInput>
 
 <!-- TODO: override transition ? -->

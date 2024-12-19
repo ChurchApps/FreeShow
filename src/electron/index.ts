@@ -158,21 +158,22 @@ function createMain() {
     if (RECORD_STARTUP_TIME) console.timeEnd("Main window")
 }
 
-export function loadWindowContent(window: BrowserWindow, isOutput: boolean = false) {
-    if (!isOutput && RECORD_STARTUP_TIME) console.time("Main window content")
-    if (!isOutput) console.log("Loading main window content")
+export function loadWindowContent(window: BrowserWindow, type: null | "output" = null) {
+    let mainOutput = type === null
+    if (mainOutput && RECORD_STARTUP_TIME) console.time("Main window content")
+    if (mainOutput) console.log("Loading main window content")
     if (isProd) window.loadFile("public/index.html").catch(error)
     else window.loadURL("http://localhost:3000").catch(error)
 
     window.webContents.on("did-finish-load", () => {
-        if (window === mainWindow) isOutput = false // make sure window is not output
-        window.webContents.send(STARTUP, { channel: "TYPE", data: isOutput ? "output" : null })
-        if (!isOutput) retryLoadingContent()
+        // if (window === mainWindow) type = null // make sure type is correct
+        window.webContents.send(STARTUP, { channel: "TYPE", data: type })
+        if (mainOutput) retryLoadingContent()
     })
 
     function error(err: any) {
         console.error("Failed to load window:", JSON.stringify(err))
-        if (isLoaded && !isOutput) app.quit()
+        if (isLoaded && mainOutput) app.quit()
     }
 }
 
@@ -251,15 +252,16 @@ export async function exitApp() {
 
     stopMidi()
 
-    if (!isProd) {
-        console.log("Dev mode active - Relaunching...")
-        app.relaunch()
-    } else {
-        // this has to be called to actually remove the process!
-        // https://stackoverflow.com/a/43520274
-        mainWindow?.removeAllListeners("close")
-        ipcMain.removeAllListeners()
-    }
+    // relaunch does not work very well as it launched new processes
+    // if (!isProd) {
+    //     console.log("Dev mode active - Relaunching...")
+    //     app.relaunch()
+    // } else {
+    // this has to be called to actually remove the process!
+    // https://stackoverflow.com/a/43520274
+    mainWindow?.removeAllListeners("close")
+    ipcMain.removeAllListeners()
+    // }
 
     mainWindow = null
 

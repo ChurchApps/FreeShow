@@ -17,6 +17,7 @@
     export let activeId: string = ""
     export let title: string = ""
     export let flags: boolean = false
+    export let up: boolean = false
     let normalizedValue: any = value
     $: (normalizedValue = value || options[0]?.name || "—"), $language
 
@@ -74,7 +75,7 @@
         {/if}
     </button>
     {#if active}
-        <div class="dropdown" class:arrow style={$$props.style || ""} transition:slide={{ duration: 200 }}>
+        <div class="dropdown" class:up class:arrow style={$$props.style || ""} transition:slide={{ duration: 200 }}>
             {#each options as option}
                 <span
                     id={formatId(option.name)}
@@ -139,6 +140,13 @@
         transform: translateY(-1px);
         /* transform: translateX(-25%); */
         z-index: 10;
+    }
+
+    .dropdown.up {
+        top: 0;
+        left: 0;
+        position: absolute;
+        transform: translateY(-100%);
     }
 
     .dropdown.arrow {

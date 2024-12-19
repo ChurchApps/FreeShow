@@ -385,6 +385,23 @@ export function setExampleTemplates() {
                 },
             ],
         }
+        a.fade = {
+            name: "Fade",
+            color: null,
+            category: "song",
+            items: [
+                {
+                    style: "top:200px;left:0px;height:682px;width:1920px;background:linear-gradient(0deg, transparent 0%, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0.5) 80%, transparent 100%);",
+                    align: "",
+                    lines: [
+                        { align: "", text: [{ value: "1", style: "font-size: 100px;" }] },
+                        { align: "", text: [{ value: "2", style: "font-size: 100px;" }] },
+                        { align: "", text: [{ value: "3", style: "font-size: 100px;" }] },
+                        { align: "", text: [{ value: "4", style: "font-size: 100px;" }] },
+                    ],
+                },
+            ],
+        }
 
         // scripture
         a.scripture = {

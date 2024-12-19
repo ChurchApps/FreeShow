@@ -350,7 +350,7 @@
         <p>
             <T id="popup.choose_screen" />
             {#if currentOutput.bounds?.width}
-                <span style="display: flex;align-items: center;padding: 0 8px;opacity: 0.5;">({currentOutput.bounds.width}x{currentOutput.bounds.height})</span>
+                <span style="display: flex;align-items: center;padding: 0 8px;opacity: 0.5;font-size: 0.9em;">({currentOutput.bounds.width}x{currentOutput.bounds.height})</span>
             {/if}
         </p>
     </Button>

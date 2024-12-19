@@ -96,10 +96,9 @@
     h4 :global(input) {
         background-color: var(--primary-darkest);
     }
-    /* ::placeholder does not work here for some reason */
-    h4.empty :global(input) {
-        opacity: 0.4;
-        /* font-size: 0.9em; */
+    /* ::placeholder opacity does not work for some reason */
+    h4.empty :global(input::placeholder) {
+        color: rgb(255 255 255 / 0.4);
     }
 
     .settings {

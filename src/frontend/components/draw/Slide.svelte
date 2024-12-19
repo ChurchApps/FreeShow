@@ -24,8 +24,10 @@
             return
         }
 
-        let x = (e.clientX - slide.offsetLeft - (slide.closest(".parent").offsetLeft || 0)) / ratio
-        let y = (e.clientY - slide.offsetTop - (slide.closest(".parent").offsetTop || 0)) / ratio
+        let centerElem = slide.closest(".parent")?.closest(".center")
+
+        let x = (e.clientX - slide.offsetLeft - (centerElem?.offsetLeft || 0)) / ratio
+        let y = (e.clientY - slide.offsetTop - (centerElem?.offsetTop || 0)) / ratio
 
         if ($drawTool === "pointer" || $drawTool === "focus") {
             let size = $drawSettings[$drawTool]?.size

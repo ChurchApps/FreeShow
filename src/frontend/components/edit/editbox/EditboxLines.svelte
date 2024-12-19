@@ -571,7 +571,11 @@
     <div bind:this={alignElem} class="align" class:plain style={plain ? null : item.align || null}>
         {#if item.lines?.length < 2 && !item.lines?.[0]?.text?.[0]?.value?.length}
             <span class="placeholder">
-                <T id="empty.text" />
+                {#if chordsMode}
+                    <T id="edit.chords" />
+                {:else}
+                    <T id="empty.text" />
+                {/if}
             </span>
         {/if}
         {#if isLocked}
@@ -611,6 +615,8 @@
         width: 100%;
         overflow: hidden;
         padding-top: 0;
+
+        line-height: 1.5em;
     }
 
     .edit:global(.invisible) {

@@ -1,9 +1,11 @@
 name: Playwright Tests
 on:
-    push:
-        branches: [dev]
-    pull_request:
-        branches: [dev]
+    # turning off temporarily as it does not work properly!
+    # Error: electron.launch: Process failed to launch!
+    # push:
+    #     branches: [dev]
+    # pull_request:
+    #     branches: [dev]
     workflow_dispatch:
 
 jobs:
@@ -15,6 +17,8 @@ jobs:
             - uses: actions/setup-node@v4
               with:
                   node-version: 20
+            - name: Install libraries
+              run: sudo apt-get install libfontconfig1-dev
             - name: Install dependencies
               run: npm install
             - name: Install Playwright Browsers

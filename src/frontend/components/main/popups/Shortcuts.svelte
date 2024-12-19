@@ -93,21 +93,31 @@
         justify-content: space-between;
         align-items: center;
         gap: 10px;
+        padding-left: 10px;
+    }
+    main div:nth-child(odd) {
+        background-color: rgb(0 0 20 / 0.08);
     }
 
     hr {
+        background-color: var(--primary-lighter);
+
         height: 3px;
         border: none;
         margin: 10px 0;
-        background-color: var(--primary-lighter);
+
+        opacity: 0.7;
     }
 
     .shortcut {
         background-color: var(--primary-darker);
-        padding: 5px 10px;
-        text-transform: uppercase;
         border: 3px solid var(--primary-lighter);
-        min-width: 150px;
+
+        font-size: 0.9em;
         text-align: center;
+        text-transform: uppercase;
+
+        padding: 4px 10px;
+        min-width: 150px;
     }
 </style>

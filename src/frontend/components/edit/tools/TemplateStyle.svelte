@@ -93,6 +93,11 @@
         <Dropdown options={templateList} value={$templates[settings.firstSlideTemplate || ""]?.name || "—"} on:click={(e) => setValue(e?.detail?.id, "firstSlideTemplate")} />
     </CombinedInput>
 
+    <CombinedInput>
+        <p title={$dictionary.edit?.max_lines_per_slide}><T id="edit.max_lines_per_slide" /></p>
+        <NumberInput value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
+    </CombinedInput>
+
     <h6><T id="settings.resolution" /></h6>
     <CombinedInput>
         <p><T id="edit.width" /></p>

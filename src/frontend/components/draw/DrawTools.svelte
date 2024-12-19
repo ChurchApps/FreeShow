@@ -5,7 +5,7 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    const tools: DrawTools[] = ["focus", "pointer", "zoom", "particles", "fill", "paint"]
+    const tools: DrawTools[] = ["focus", "pointer", "particles", "zoom", "fill", "paint"]
 
     function keydown(e: any) {
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return

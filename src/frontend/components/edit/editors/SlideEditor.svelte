@@ -332,7 +332,7 @@
 
             <div class="actions" style="height: 100%;justify-content: right;">
                 <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
-                    <Icon id="chords" white={!usedChords.length} right={!$labelsDisabled} />
+                    <Icon id="chords" white={!slideChords.length} right={!$labelsDisabled} />
                     {#if !$labelsDisabled}<T id="edit.chords" />{/if}
                 </Button>
 
@@ -340,8 +340,8 @@
                     <div class="seperator" />
 
                     <Button on:click={() => textEditActive.set(true)}>
-                        <Icon id="text" right />
-                        <p><T id="show.text" /></p>
+                        <Icon id="text" right={!$labelsDisabled} />
+                        {#if !$labelsDisabled}<p><T id="show.text" /></p>{/if}
                     </Button>
                 {/if}
 
@@ -440,7 +440,7 @@
     }
 
     .seperator {
-        width: 2px;
+        width: 1px;
         height: 100%;
         background-color: var(--primary);
         /* margin: 0 10px; */

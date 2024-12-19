@@ -55,7 +55,7 @@
     .main {
         display: flex;
         position: relative;
-        padding: 5px;
+        padding: 2px;
     }
     .main.list {
         width: 100%;
@@ -79,8 +79,12 @@
         opacity: 0.2;
     }
 
+    .slide :global(.isSelected) {
+        outline-offset: -2px;
+    }
+
     .label {
-        background-color: var(--primary);
+        background-color: var(--primary-darkest);
 
         display: flex;
         padding: 0 5px;

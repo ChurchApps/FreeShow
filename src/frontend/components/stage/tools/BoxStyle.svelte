@@ -31,7 +31,8 @@
             delete newEdits.align
             delete newEdits.chords
             edits = { default: trackerEdits, font: edits.default, ...newEdits }
-        } else if (items[0].includes("output")) edits = {}
+        } else if (items[0].includes("clock")) edits.default.push({ name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: true })
+        else if (items[0].includes("output")) edits = {}
     }
 
     let data: { [key: string]: any } = {}

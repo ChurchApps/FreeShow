@@ -10,7 +10,7 @@ import { clone, keysToID, sortByName } from "../../helpers/array"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
 
-export function addItem(type: ItemType, id: any = null, options: any = {}) {
+export function addItem(type: ItemType, id: any = null, options: any = {}, value: string = "") {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
     let template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
@@ -20,7 +20,7 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     }
     if (id) newData.id = id
 
-    if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value: "", style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
+    if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value, style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
     if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
     else if (type === "timer") {

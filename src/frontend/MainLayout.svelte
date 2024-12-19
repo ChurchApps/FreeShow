@@ -92,7 +92,7 @@
                     {:else if $activeEdit.type === "effect"}
                         <EffectTools />
                     {:else if $activeEdit.type === "overlay" || $activeEdit.type === "template" || $showsCache[$activeShow?.id || ""]}
-                        {#if !$focusMode && !$textEditActive}
+                        {#if !$focusMode && (($activeEdit.type || "show") !== "show" || !$textEditActive)}
                             <EditTools />
                         {/if}
                     {/if}

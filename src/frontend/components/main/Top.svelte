@@ -30,6 +30,9 @@
             return
         }
 
+        let forceKey = e.ctrlKey || e.metaKey
+        if (forceKey) return
+
         confirm = true
         cancelConfirmTimeout = setTimeout(() => {
             confirm = false

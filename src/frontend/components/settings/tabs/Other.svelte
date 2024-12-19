@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { EXPORT, MAIN } from "../../../../types/Channels"
     import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
+    import { awaitRequest, destroy, receive, send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -41,12 +41,21 @@
 
     const isChecked = (e: any) => e.target.checked
 
-    function toggle(e: any, key: string) {
+    async function toggle(e: any, key: string) {
         let checked = e.target.checked
-        updateSpecial(checked, key)
 
         if (key === "customUserDataLocation") {
-            save(false, { backup: true, changeUserData: { reset: !checked, dataPath: $dataPath } })
+            let existingData = false
+            if (checked) {
+                existingData = (await awaitRequest(MAIN, "DOES_PATH_EXIST", { path: "data_config", dataPath: $dataPath }))?.exists
+                if (existingData) activePopup.set("user_data_overwrite")
+            }
+            if (!existingData) {
+                updateSpecial(checked, key)
+                save(false, { backup: true, changeUserData: { reset: !checked, dataPath: $dataPath } })
+            }
+        } else {
+            updateSpecial(checked, key)
         }
     }
 
@@ -377,7 +386,7 @@
     {:else}
         <CombinedInput title={$dictionary.actions?.export_usage_log}>
             <Button disabled={exportingUsageLog} style="width: 100%;" on:click={exportUsageLog}>
-                <Icon id="download" style="margin-left: 0.5em;" right />
+                <Icon id="export" style="margin-left: 0.5em;" right />
                 <p><T id="actions.export_usage_log" /></p>
             </Button>
         </CombinedInput>
@@ -397,18 +406,18 @@
 
 <CombinedInput>
     <Button style="width: 50%;" on:click={backup}>
-        <Icon id="download" style="margin-left: 0.5em;" right />
+        <Icon id="export" style="margin-left: 0.5em;" right />
         <p><T id="settings.backup_all" /></p>
     </Button>
     <Button on:click={restore}>
-        <Icon id="upload" style="margin-left: 0.5em;" right />
+        <Icon id="import" style="margin-left: 0.5em;" right />
         <p><T id="settings.restore" /></p>
     </Button>
 </CombinedInput>
 
 <CombinedInput>
     <p><T id="settings.auto_backup" /></p>
-    <Dropdown options={autobackupList} value={autobackupList.find((a) => a.id === ($special.autoBackup || "never"))?.name || ""} on:click={(e) => updateSpecial(e.detail.id, "autoBackup")} />
+    <Dropdown options={autobackupList} value={autobackupList.find((a) => a.id === ($special.autoBackup || "never"))?.name || ""} on:click={(e) => updateSpecial(e.detail.id, "autoBackup")} up />
 </CombinedInput>
 
 <CombinedInput>

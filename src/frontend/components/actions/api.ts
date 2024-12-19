@@ -4,7 +4,7 @@ import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
-import { getThumbnail } from "../helpers/media"
+import { getSlideThumbnail, getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, displayOutputs, startCamera } from "../helpers/output"
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShowSync } from "../helpers/showActions"
 import { playSlideRecording } from "../helpers/slideRecording"
@@ -70,6 +70,7 @@ export type API_id_value = { id: string; value: string }
 export type API_rearrange = { showId: string; from: number; to: number }
 export type API_group = { showId: string; groupId: string }
 export type API_layout = { showId: string; layoutId: string }
+export type API_slide_thumbnail = { showId?: string; layoutId?: string; index?: number }
 export type API_media = { path: string }
 export type API_scripture = { id: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
@@ -219,6 +220,7 @@ export const API_ACTIONS = {
     get_groups: (data: API_id) => getShowGroups(data.id),
 
     get_thumbnail: (data: API_media) => getThumbnail(data),
+    get_slide_thumbnail: (data: API_slide_thumbnail) => getSlideThumbnail(data),
     get_cleared: () => getClearedState(),
 }
 

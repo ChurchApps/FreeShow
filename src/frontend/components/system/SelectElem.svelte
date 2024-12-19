@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { SelectIds } from "../../../types/Main"
-    import { activeRename, activeShow, os, selected } from "../../stores"
+    import { activeRename, activeShow, disableDragging, os, selected } from "../../stores"
     import { arrayHasData, clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
 
@@ -99,7 +99,7 @@
 
     function mousedown(e: any, dragged: boolean = false) {
         if (!selectable) return
-        if (dragged && $activeRename !== null) return e.preventDefault()
+        if (dragged && ($activeRename !== null || $disableDragging)) return e.preventDefault()
 
         if ($selected.id !== id) selected.set({ id, data: [] })
 
@@ -203,6 +203,12 @@
     let dragover: null | "start" | "center" | "end" = null
     let dragActive: boolean = false
 
+    function dragstart() {
+        if ($activeRename !== null || $disableDragging) return
+
+        dragActive = true
+    }
+
     function endDrag() {
         dragActive = false
         dragover = null
@@ -225,11 +231,7 @@
 
 <svelte:window
     on:mousedown={deselect}
-    on:dragstart={() => {
-        if ($activeRename !== null) return
-
-        dragActive = true
-    }}
+    on:dragstart={dragstart}
     on:dragend={endDrag}
     on:click={() => {
         dragActive = false

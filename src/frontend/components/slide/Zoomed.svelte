@@ -20,7 +20,7 @@
     export let aspectRatio: boolean = true
     export let hideOverflow: boolean = true
     export let customZoom: number = 1
-    export let cropping: Cropping = { top: 0, right: 0, bottom: 0, left: 0 }
+    export let cropping: Cropping | undefined = { top: 0, right: 0, bottom: 0, left: 0 }
     export let resolution: Resolution = getResolution(null, { $outputs, $styles }, false, id)
     $: resolution = getResolution(resolution, { $outputs, $styles }, false, id)
 
