@@ -204,7 +204,6 @@
     let dragActive: boolean = false
 
     function dragstart() {
-        console.log($disableDragging)
         if ($activeRename !== null || $disableDragging) return
 
         dragActive = true

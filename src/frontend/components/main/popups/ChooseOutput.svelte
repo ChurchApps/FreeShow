@@ -17,7 +17,7 @@
 <div>
     {#each outputTypes as type}
         <Button on:click={() => selectOutput(type.id)} style={type.id === "normal" ? "border: 2px solid var(--focus);" : ""}>
-            <Icon id={type.icon} size={5} />
+            <Icon id={type.icon} size={5} white />
             <p><T id={type.name} /></p>
         </Button>
     {/each}

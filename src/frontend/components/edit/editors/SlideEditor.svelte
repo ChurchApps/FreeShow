@@ -332,7 +332,7 @@
 
             <div class="actions" style="height: 100%;justify-content: right;">
                 <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
-                    <Icon id="chords" white={!usedChords.length} right={!$labelsDisabled} />
+                    <Icon id="chords" white={!slideChords.length} right={!$labelsDisabled} />
                     {#if !$labelsDisabled}<T id="edit.chords" />{/if}
                 </Button>
 

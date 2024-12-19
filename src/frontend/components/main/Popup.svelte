@@ -99,10 +99,10 @@
         max-height: 100%;
     }
 
-    .fill {
+    /* .fill {
         width: 100%;
         height: 100%;
-    }
+    } */
 
     /* WIP dropdown */
     /* .popup :global(.dropdown) {
