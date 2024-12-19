@@ -261,7 +261,7 @@
     </span>
 
     {#if shortcut}
-        <span style="opacity: 0.5;">{shortcut}</span>
+        <span style="opacity: 0.4;font-size: 0.8em;/*text-transform: uppercase;*/">{shortcut}</span>
     {/if}
 </div>
 

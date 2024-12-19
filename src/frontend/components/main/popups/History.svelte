@@ -5,6 +5,7 @@
     import T from "../../helpers/T.svelte"
     import { getDateAndTimeString, timeAgo } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Center from "../../system/Center.svelte"
 
     const INITIAL: any = { id: "initial", time: 0 }
@@ -103,47 +104,60 @@
     }
 </script>
 
-{#if rHistory.length || uHistory.length}
-    {#each rHistory as item, i}
-        {@const itemId = getItemId(item)}
-        <Button on:click={() => callRedo(i)} style="opacity: 0.5;">
-            <p>
-                <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
-                    {historyIdToString[itemId] || itemId}
-                </span>
-                <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
-            </p>
-        </Button>
-    {/each}
-    {#each uHistory as item, i}
-        {@const itemId = getItemId(item)}
-        <Button on:click={() => callUndo(i - 1)} outline={i === 0}>
-            <p>
-                <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
-                    {historyIdToString[itemId] || itemId}
-                </span>
-                <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
-            </p>
-        </Button>
-    {/each}
+<main class="history">
+    {#if rHistory.length || uHistory.length}
+        {#each rHistory as item, i}
+            {@const itemId = getItemId(item)}
+            <Button on:click={() => callRedo(i)} style="opacity: 0.5;">
+                <p>
+                    <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
+                        {historyIdToString[itemId] || itemId}
+                    </span>
+                    <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
+                </p>
+            </Button>
+        {/each}
+        {#each uHistory as item, i}
+            {@const itemId = getItemId(item)}
+            <Button on:click={() => callUndo(i - 1)} outline={i === 0}>
+                <p>
+                    <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
+                        {historyIdToString[itemId] || itemId}
+                    </span>
+                    <span class="time" title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
+                </p>
+            </Button>
+        {/each}
 
-    <br />
+        <br />
 
-    <Button on:click={clearHistory} center dark>
-        <Icon id="delete" right />
-        <T id="actions.clear_history" />
-    </Button>
-    <!-- <div>
+        <CombinedInput>
+            <Button on:click={clearHistory} style="width: 100%;" center dark>
+                <Icon id="delete" right />
+                <T id="actions.clear_history" />
+            </Button>
+        </CombinedInput>
+        <!-- <div>
         <p>Delete oldest automaticly when more than</p>
         <NumberInput value={$historyCacheCount} on:change={(e) => historyCacheCount.set(e.detail)} buttons={false} />
     </div> -->
-{:else}
-    <Center>
-        <T id="empty.general" />
-    </Center>
-{/if}
+    {:else}
+        <Center>
+            <T id="empty.general" />
+        </Center>
+    {/if}
+</main>
 
 <style>
+    main {
+        display: flex;
+        flex-direction: column;
+        /* gap: 5px; */
+    }
+    main :global(button:nth-child(odd)) {
+        background-color: rgb(0 0 20 / 0.08);
+    }
+
     p {
         width: 100%;
         display: flex;
@@ -157,7 +171,7 @@
     }
 
     p .time {
-        opacity: 0.8;
+        opacity: 0.5;
         font-size: 0.8em;
         font-style: italic;
     }

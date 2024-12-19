@@ -245,7 +245,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // SHOWS
     // , "copy", "paste"
     slide: ["edit", "SEPERATOR", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
-    slideChild: ["slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "edit", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
+    slideChild: ["edit", "SEPERATOR", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPERATOR", "duplicate", "delete_slide", "remove_slide"],
     slideFocus: ["editSlideText"],
     group: ["rename", "recolor", "SEPERATOR", "selectAll", "SEPERATOR", "duplicate", "delete_group"],
     global_group: ["edit"],

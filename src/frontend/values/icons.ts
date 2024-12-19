@@ -40,8 +40,6 @@ const icons: { [key: string]: string } = {
     test: '<g><rect fill="none" height="24" width="24"/></g><g><path d="M19.8,18.4L14,10.67V6.5l1.35-1.69C15.61,4.48,15.38,4,14.96,4H9.04C8.62,4,8.39,4.48,8.65,4.81L10,6.5v4.17L4.2,18.4 C3.71,19.06,4.18,20,5,20h14C19.82,20,20.29,19.06,19.8,18.4z"/></g>',
 
     // cloud
-    download: '<path d="M0 0h24v24H0z" fill="none"/><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>',
-    upload: '<path d="M0 0h24v24H0z" fill="none"/><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>',
     download_failed: '<rect fill="none" height="24" width="24"/><path d="M9,6.17V3h6v6h4l-3.59,3.59L9,6.17z M21.19,21.19L2.81,2.81L1.39,4.22L6.17,9H5l7,7l0.59-0.59L15.17,18H5v2h12.17l2.61,2.61 L21.19,21.19z"/>',
     upload_failed:
         '<g><rect fill="none" height="24" width="24"/></g><g><g><polygon points="21.19,21.19 2.81,2.81 1.39,4.22 6.09,8.91 5,10 7.17,10 9,11.83 9,16 13.17,16 15.17,18 5,18 5,20 17.17,20 19.78,22.61"/><polygon points="15,10 19,10 12,3 8.91,6.09 15,12.17"/></g></g>',

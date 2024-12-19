@@ -63,9 +63,9 @@
 
 <div class="icons" style="zoom: {zoom};">
     {#if actions.slide_shortcut?.key}
-        <div class="button white">
+        <div class="button white" style="border: 1px solid var(--secondary);">
             <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {$dictionary.actions?.play_with_shortcut}" {zoom} on:click={() => changeAction("slide_shortcut")}>
-                <p style="font-weight: bold;text-transform: capitalize;padding: 0 4px;font-size: 1.2em;color: var(--secondary);">{actions.slide_shortcut.key}</p>
+                <p style="font-weight: bold;text-transform: capitalize;padding: 0 4px;font-size: 1.2em;">{actions.slide_shortcut.key}</p>
             </Button>
         </div>
     {/if}

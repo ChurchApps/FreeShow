@@ -32,6 +32,7 @@ export class ShowObj implements Show {
         if (template !== false) {
             // get template from active show (if it's not default with the "Header" template)
             if (typeof template !== "string" && get(activeShow)?.id !== "default") template = _show().get("settings.template") || null
+            else if (template === true) template = ""
             if (!template && get(templates).default) template = "default"
         }
 

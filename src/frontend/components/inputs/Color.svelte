@@ -130,11 +130,17 @@
         transition: background-color 0.2s;
         position: relative;
         border-radius: var(--border-radius);
+
+        /* transition: outline-width 0.1s; */
     }
     /* filter: brightness(0.98); */
     /* .color:not(.picker):hover {
         opacity: 0.98;
     } */
+    .color:hover {
+        outline: 2px solid #ddd !important;
+        outline-offset: -2px;
+    }
 
     input[type="color"] {
         opacity: 0;

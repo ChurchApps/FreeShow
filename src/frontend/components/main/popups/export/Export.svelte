@@ -2,7 +2,7 @@
     import { EXPORT } from "../../../../../types/Channels"
     import type { Project } from "../../../../../types/Projects"
     import { Show } from "../../../../../types/Show"
-    import { activePopup, activeProject, dataPath, projects, showsCache, showsPath } from "../../../../stores"
+    import { activePopup, activeProject, dataPath, dictionary, projects, showsCache, showsPath, special } from "../../../../stores"
     import { send } from "../../../../utils/request"
     import { exportProject } from "../../../export/project"
     import { clone } from "../../../helpers/array"
@@ -10,8 +10,8 @@
     import { loadShows } from "../../../helpers/setShow"
     import T from "../../../helpers/T.svelte"
     import Button from "../../../inputs/Button.svelte"
+    import Checkbox from "../../../inputs/Checkbox.svelte"
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../../inputs/Dropdown.svelte"
     import Center from "../../../system/Center.svelte"
     import Loader from "../../Loader.svelte"
     import { exportFormats, exportTypes, getActiveShowId, getShowIdsFromType } from "./exportHelper"
@@ -21,18 +21,33 @@
     let showIds: string[] = []
     let loading: boolean = false
 
-    let type: any = exportTypes[0]
-    let format: any = exportFormats[0]
+    let exportType: string = ""
+    let exportFormat: string = ""
 
-    $: if (type.id) updateActive()
+    const excludedFormats = {
+        project: ["show", "txt"],
+        all_shows: ["project", "pdf"],
+    }
+    function filterFormats(exportFormats) {
+        return clone(exportFormats).filter((a) => !(excludedFormats[exportType] || []).find((id) => id === a.id))
+    }
+
+    const formatIcons = {
+        show: "json",
+        txt: "txt",
+        pdf: "pdf",
+        project: "zip",
+    }
+
+    $: typeName = exportTypes.find((a) => a.id === exportType)?.name || ""
+    $: formatName = exportFormats.find((a) => a.id === exportFormat)?.name || ""
+
+    ///
+
+    $: if (exportType && exportFormat) updateActive()
     async function updateActive() {
-        // type not supported by format
-        if (exportFormats.find((a) => a.id === format.id)?.data?.hide.includes(type.id)) {
-            format = exportFormats[0]
-        }
-
         loading = true
-        showIds = getShowIdsFromType[type.id]?.() || []
+        showIds = getShowIdsFromType[exportType]?.() || []
 
         let showId = showIds[0]
         if (!showId && !previewShow) showId = getActiveShowId()
@@ -43,22 +58,21 @@
         }
 
         loading = false
+
+        // TODO: get & display preview example of first txt!/show? export
     }
 
     async function exportClick() {
-        // type not supported by format
-        if (exportFormats.find((a) => a.id === format.id)?.data?.hide.includes(type.id)) return
-
-        if (type.id === "all_shows") {
+        if (exportType === "all_shows") {
             loading = true
-            send(EXPORT, ["ALL_SHOWS"], { type: format.id, path: $dataPath, showsPath: $showsPath })
+            send(EXPORT, ["ALL_SHOWS"], { type: exportFormat, path: $dataPath, showsPath: $showsPath })
             return
         }
 
-        if (format.id === "project") {
+        if (exportFormat === "project") {
             if (!showIds.length) return
 
-            let project: Project | null = type.id === "project" && $activeProject ? $projects[$activeProject] : null
+            let project: Project | null = exportType === "project" && $activeProject ? $projects[$activeProject] : null
             if (!project) {
                 if (!previewShow) return
 
@@ -74,58 +88,140 @@
             loading = true
             await exportProject(project)
         } else {
-            send(EXPORT, ["GENERATE"], { type: format.id, path: $dataPath, showsPath: $showsPath, showIds, options: format.id === "pdf" ? pdfOptions : {} })
+            send(EXPORT, ["GENERATE"], { type: exportFormat, path: $dataPath, showsPath: $showsPath, showIds, options: exportFormat === "pdf" ? pdfOptions : {} })
         }
 
         activePopup.set(null)
     }
 
     let pdfOptions: any = {}
+
+    function setSpecial(e: any, key: string) {
+        let value = e?.target?.checked
+        special.update((a) => {
+            a[key] = value
+            return a
+        })
+    }
 </script>
 
-<div style="display: flex;align-items: center;align-self: center;">
-    <p style="white-space: break-spaces;"><T id="export.export_as" /></p>
-    <Dropdown style="min-width: 200px;" options={exportTypes} value={type.name} on:click={(e) => (type = e.detail)} />
-    <p style="white-space: break-spaces;"><T id="export.export_as" index={1} />&nbsp;</p>
-    <Dropdown style="min-width: 200px;" options={clone(exportFormats).filter((a) => !a.data?.hide.includes(type.id))} value={format.name} on:click={(e) => (format = e.detail)} />
-</div>
+{#if !exportType}
+    <p><T id="export.option_type" /></p>
 
-<hr />
+    <div class="choose">
+        {#each exportTypes as type, i}
+            <Button disabled={!getShowIdsFromType[type.id || ""]?.()?.length} on:click={() => (exportType = type.id || "")} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
+                <Icon id={type.icon || ""} size={4} white />
+                <p><T id={type.name} /></p>
+            </Button>
+        {/each}
+    </div>
+{:else if !exportFormat}
+    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (exportType = "")}>
+        <Icon id="back" size={2} white />
+    </Button>
 
-{#if format.id === "pdf"}
-    <PdfExport bind:pdfOptions {previewShow} />
+    <p><T id="export.option_format" /></p>
+
+    <div class="choose">
+        {#each filterFormats(exportFormats) as format, i}
+            <Button disabled={false} on:click={() => (exportFormat = format.id || "")} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
+                <!-- {#if format.id === "project"}
+                    <Icon id={format.id} size={4} white />
+                {:else} -->
+                <img src="./import-logos/{formatIcons[format.id || '']}.webp" alt="{format.id}-logo" draggable={false} />
+                <!-- {/if} -->
+
+                <p>
+                    {#if format.name.includes("$:")}<T id={format.name} />{:else}{format.name}{/if}
+                </p>
+            </Button>
+        {/each}
+    </div>
+{:else}
+    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (exportFormat = "")}>
+        <Icon id="back" size={2} white />
+    </Button>
+
+    <!-- margin-bottom: 10px; -->
+    <div style="display: flex;">
+        <p style="white-space: break-spaces;opacity: 0.6;"><T id="export.export_as" /></p>
+        <p><T id={typeName} /></p>
+        <p style="white-space: break-spaces;opacity: 0.6;"><T id="export.export_as" index={1} />&nbsp;</p>
+        <p>
+            {#if formatName.includes("$:")}<T id={formatName} />{:else}{formatName}{/if}
+        </p>
+    </div>
 
     <hr />
-{/if}
 
-{#if loading}
-    <Center padding={10}>
-        <Loader />
-    </Center>
-{/if}
+    {#if exportFormat === "pdf"}
+        <PdfExport bind:pdfOptions {previewShow} />
 
-<!-- <FolderPicker id="DATA">
-    <Icon id="folder" right />
-    {#if $dataPath}
-        {$dataPath} - Exports
-    {:else}
-        <T id="inputs.change_folder" />
+        <hr />
+    {:else if exportFormat === "project"}
+        <CombinedInput>
+            <p><T id="export.include_media" /></p>
+            <div class="alignRight">
+                <Checkbox checked={$special.projectIncludeMedia ?? true} on:change={(e) => setSpecial(e, "projectIncludeMedia")} />
+            </div>
+        </CombinedInput>
+
+        <hr />
     {/if}
-</FolderPicker> -->
 
-<CombinedInput>
-    <Button style="width: 100%;" disabled={!showIds.length && type.id !== "all_shows"} on:click={exportClick} center dark>
-        <div style="display: flex;align-items: center;">
-            <Icon id="export" size={1.2} right />
-            <T id="export.export" />
-            {#if showIds.length > 1 && format.id !== "project"}
-                <span style="opacity: 0.5;padding-left: 10px;align-content: center;">({showIds.length})</span>
-            {/if}
-        </div>
-    </Button>
-</CombinedInput>
+    {#if loading}
+        <Center padding={10}>
+            <Loader />
+        </Center>
+    {/if}
+
+    <CombinedInput>
+        <Button style="width: 100%;" disabled={!showIds.length && exportType !== "all_shows"} on:click={exportClick} center dark>
+            <div style="display: flex;align-items: center;">
+                <Icon id="export" size={1.2} right />
+                <T id="export.export" />
+                {#if showIds.length > 1 && exportFormat !== "project"}
+                    <span style="opacity: 0.5;padding-left: 10px;align-content: center;">({showIds.length})</span>
+                {/if}
+            </div>
+        </Button>
+    </CombinedInput>
+{/if}
 
 <style>
+    .choose {
+        margin-top: 20px;
+
+        width: 100%;
+        display: flex;
+        align-self: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .choose :global(button) {
+        width: 180px;
+        height: 180px;
+
+        display: flex;
+        gap: 10px;
+        flex-direction: column;
+        justify-content: center;
+        flex: 1;
+    }
+    .choose p {
+        display: flex;
+        align-items: center;
+    }
+
+    img {
+        height: 100px;
+        max-width: 100%;
+        object-fit: contain;
+        padding: 10px;
+    }
+
     hr {
         border: none;
         height: 2px;

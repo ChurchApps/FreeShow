@@ -322,6 +322,7 @@ export interface TemplateSettings {
     backgroundPath?: string
     overlayId?: string
     firstSlideTemplate?: string
+    maxLinesPerSlide?: number
     actions?: any[]
 }
 

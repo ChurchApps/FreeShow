@@ -3,6 +3,7 @@ export interface Option {
     extra?: string
     data?: any
     id?: string
+    icon?: string
     style?: string // css style for the item
 }
 
@@ -153,6 +154,7 @@ export type Popups =
     | "history"
     | "action"
     | "category_action"
+    | "user_data_overwrite"
     | "connect"
     | "cloud_update"
     | "cloud_method"

@@ -378,7 +378,7 @@
             </div>
         {:else}
             <div class={specialTabs.includes(active || "") ? "" : "context #media"} style="display: contents;">
-                <Center>
+                <Center style="opacity: 0.2;">
                     <Icon id="noImage" size={5} white />
                 </Center>
             </div>
@@ -431,7 +431,7 @@
             <!-- <Button disabled={rootPath === path} title={$dictionary.actions?.home} on:click={() => (path = rootPath)}>
             <Icon size={1.3} id="home" />
         </Button> -->
-            <span style="flex: 1;text-align: center;">
+            <span style="flex: 1;display: flex;align-items: center;justify-content: center;">
                 {#key folderName}
                     {#if folderName.includes(".")}
                         <T id={folderName} />
@@ -439,9 +439,13 @@
                         {folderName}
                     {/if}
                 {/key}
+
+                {#if content}
+                    <span style="opacity: 0.6;font-size: 0.8em;margin-left: 5px;">({content})</span>
+                {/if}
             </span>
 
-            <div class="seperator" />
+            <!-- <div class="seperator" />
 
             <Button disabled={!allFiles.length || activeFile === 0} on:click={() => (activeFile = activeFile === null ? content - 1 : activeFile - 1)}>
                 <Icon size={1.3} id="previous" />
@@ -449,7 +453,7 @@
             <p style="opacity: 0.8;">{activeFile === null ? "" : activeFile + 1 + "/"}{content}</p>
             <Button disabled={!allFiles.length || activeFile === content - 1} on:click={() => (activeFile = activeFile === null ? 0 : activeFile + 1)}>
                 <Icon size={1.3} id="next" />
-            </Button>
+            </Button> -->
         {/if}
 
         {#if active !== "screens"}
@@ -477,10 +481,14 @@
                     <Button title={$dictionary.media?.video} on:click={() => (activeView = "video")}>
                         <Icon size={1.2} id="video" white={activeView !== "video"} />
                     </Button>
+
+                    <div class="seperator" />
                 {:else}
                     <Button title={$dictionary.media?.[activeView]} on:click={() => (activeView = nextActiveView[activeView])}>
                         <Icon size={1.2} id={activeView === "all" ? "media" : activeView} white={activeView === "all"} />
                     </Button>
+
+                    <div class="seperator" />
                 {/if}
 
                 <Button
@@ -562,7 +570,7 @@
     }
 
     .seperator {
-        width: 2px;
+        width: 1px;
         height: 100%;
         background-color: var(--primary);
     }

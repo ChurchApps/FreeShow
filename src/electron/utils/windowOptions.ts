@@ -97,14 +97,20 @@ export const exportOptions: BrowserWindowConstructorOptions = {
     },
 }
 
-// export const captureOptions: BrowserWindowConstructorOptions = {
-//     show: false,
-//     modal: true,
-//     frame: false,
-//     skipTaskbar: true,
-//     webPreferences: {
-//         webSecurity: isProd,
-//         backgroundThrottling: false,
-//         offscreen: true,
-//     },
-// }
+export const captureOptions: BrowserWindowConstructorOptions = {
+    show: false,
+    backgroundColor: "#000000",
+    frame: false,
+    skipTaskbar: true,
+    webPreferences: {
+        preload: join(__dirname, "..", "preload"),
+        webSecurity: isProd,
+        nodeIntegration: !isProd,
+        contextIsolation: true,
+        allowRunningInsecureContent: false,
+        webviewTag: true,
+        backgroundThrottling: false,
+        autoplayPolicy: "no-user-gesture-required",
+        offscreen: true,
+    },
+}

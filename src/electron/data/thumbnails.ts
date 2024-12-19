@@ -1,11 +1,13 @@
-import { NativeImage, ResizeOptions, app, nativeImage } from "electron"
+import { BrowserWindow, NativeImage, ResizeOptions, app, nativeImage } from "electron"
 import fs from "fs"
 import path from "path"
-import { isProd, toApp } from ".."
-import { MAIN } from "../../types/Channels"
+import { isProd, loadWindowContent, toApp } from ".."
+import { MAIN, OUTPUT } from "../../types/Channels"
 import { doesPathExist, doesPathExistAsync, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { imageExtensions, videoExtensions } from "./media"
+import { captureOptions } from "../utils/windowOptions"
+import { OutputHelper } from "../output/OutputHelper"
 
 export function getThumbnail(data: any) {
     let output = createThumbnail(data.input, data.size || 500)
@@ -186,5 +188,35 @@ function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolea
     fs.writeFile(savePath, img, (err) => {
         if (!err) exists.push(savePath)
         if (nextOnFinished) generationFinished()
+    })
+}
+
+///// CAPTURE SLIDE /////
+
+export function captureSlide(data: any) {
+    const OUTPUT_ID = "capture"
+    if (OutputHelper.getOutput(OUTPUT_ID)) return
+
+    let window = new BrowserWindow({ ...captureOptions, width: data.resolution?.width, height: data.resolution?.height })
+    loadWindowContent(window, "output")
+
+    OutputHelper.setOutput(OUTPUT_ID, { window })
+
+    window.on("ready-to-show", () => {
+        // send correct output data after load
+        setTimeout(() => {
+            window.webContents.send(OUTPUT, { channel: "OUTPUTS", data: data.output })
+            // WIP mute videos
+
+            // wait for content load
+            setTimeout(async () => {
+                const page = await window.capturePage()
+                const base64 = page.toDataURL({ scaleFactor: 1 })
+                toApp(MAIN, { channel: "CAPTURE_SLIDE", data: { listenerId: data.listenerId, base64 } })
+
+                window.destroy()
+                OutputHelper.deleteOutput(OUTPUT_ID)
+            }, 3000)
+        }, 1000)
     })
 }

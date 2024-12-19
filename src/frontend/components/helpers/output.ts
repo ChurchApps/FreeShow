@@ -45,12 +45,14 @@ import { newToast } from "../../utils/common"
 import { getStyles } from "./style"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
+    let forceKey = e.ctrlKey || e.metaKey
+
     // sort so display order can be changed! (needs app restart)
     let enabledOutputs: any[] = sortObject(sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id }))), "stageOutput")
 
     enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1
-        send(OUTPUT, ["DISPLAY"], { enabled: !get(outputDisplay), output, force: output.allowMainScreen || e.ctrlKey || e.metaKey, auto, autoPosition })
+        send(OUTPUT, ["DISPLAY"], { enabled: forceKey || !get(outputDisplay), output, force: output.allowMainScreen || forceKey, auto, autoPosition })
     })
 }
 
@@ -313,9 +315,9 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
     return initial || style || slideRes || { width: 1920, height: 1080 }
 }
 
-export function getOutputResolution(outputId: string, _updater = get(outputs)) {
+export function getOutputResolution(outputId: string, _updater = get(outputs), _styleUpdater = get(styles)) {
     let currentOutput = _updater[outputId]
-    let style = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+    let style = currentOutput?.style ? _styleUpdater[currentOutput?.style]?.resolution : null
 
     return style || { width: 1920, height: 1080 }
 }

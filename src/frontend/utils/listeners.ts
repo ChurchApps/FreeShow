@@ -161,12 +161,13 @@ export function storeSubscriber() {
     })
 
     draw.subscribe((data) => {
-        let activeOutputs = getActiveOutputs()
+        let activeOutputs = getActiveOutputs(get(outputs), true, true, true)
         activeOutputs.forEach((id) => {
             send(OUTPUT, ["DRAW"], { id, data })
         })
     })
     drawTool.subscribe((data) => {
+        // WIP changing tool while output is not active, will not update tool in output if set to active before changing tool again
         let activeOutputs = getActiveOutputs()
         activeOutputs.forEach((id) => {
             send(OUTPUT, ["DRAW_TOOL"], { id, data })

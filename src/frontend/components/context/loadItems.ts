@@ -143,7 +143,7 @@ const loadActions = {
             let audioItems = sortByName(
                 audio.map((id: string) => ({
                     id,
-                    label: showMedia[id].name.indexOf(".") > -1 ? showMedia[id].name.slice(0, showMedia[id].name.lastIndexOf(".")) : showMedia[id].name,
+                    label: showMedia[id]?.name ? (showMedia[id].name.indexOf(".") > -1 ? showMedia[id].name.slice(0, showMedia[id].name.lastIndexOf(".")) : showMedia[id].name) : "",
                     translate: false,
                     icon: "music",
                 })),

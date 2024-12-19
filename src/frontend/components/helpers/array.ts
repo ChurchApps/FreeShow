@@ -78,7 +78,7 @@ export function sortObjectNumbers(object: {}[], key: string, reverse: boolean = 
 }
 
 // sort any object.name by numbers in the front of the string
-export function sortByNameAndNumber(array: any[]) {    
+export function sortByNameAndNumber(array: any[]) {
     return array.sort((a, b) => {
         let aName = ((a.quickAccess?.number || "") + " " + a.name || "").trim()
         let bName = ((b.quickAccess?.number || "") + " " + b.name || "").trim()
@@ -110,7 +110,7 @@ export function sortByNameAndNumber(array: any[]) {
 export function sortFilenames(filenames) {
     return filenames.sort(({ name: a }, { name: b }) => {
         // extract name, number, and extension
-        const regex = /^(.*?)(?:_(\d+))?(\.\w+)?$/
+        const regex = /^(.*?)(\d+)?(\.\w+)?$/
 
         // extract parts
         const [_, nameA, numA, extA] = a.match(regex) || [a, a, null, null]

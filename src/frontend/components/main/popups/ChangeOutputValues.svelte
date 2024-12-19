@@ -39,8 +39,8 @@
     <Icon id="back" size={2} white />
 </Button>
 
-<div>
-    <p style="margin-bottom: 10px;"><T id="settings.manual_drag_hint" /></p>
+<div style="min-width: 650px;">
+    <p class="tip"><T id="settings.manual_drag_hint" /></p>
 
     <CombinedInput>
         <!-- This also makes the output never "auto position" itself if there is just 1 output and 1 extra screen -->
@@ -49,10 +49,6 @@
             <Checkbox checked={currentOutput.allowMainScreen === true} on:change={(e) => updateOutput("allowMainScreen", isChecked(e))} />
         </div>
     </CombinedInput>
-    <Button disabled={currentOutput.allowMainScreen} on:click={() => displayOutputs({ ctrlKey: true })} style="width: 100%;" dark center>
-        <Icon id="outputs" right />
-        <p><T id="context.force_outputs" /></p>
-    </Button>
 
     {#if currentOutput.keyOutput}
         <Button on:click={() => getCurrentOutput(currentOutput.keyOutput)} style="width: 100%;" dark center>
@@ -75,7 +71,7 @@
                     send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
                 }, 10)
             }}
-            buttons={false}
+            style="background-color: var(--primary-darker);"
             outline
         />
     </CombinedInput>
@@ -92,7 +88,7 @@
                     send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
                 }, 10)
             }}
-            buttons={false}
+            style="background-color: var(--primary-darker);"
             outline
         />
     </CombinedInput>
@@ -114,7 +110,7 @@
                     send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
                 }, 10)
             }}
-            buttons={false}
+            style="background-color: var(--primary-darker);"
             outline
         />
     </CombinedInput>
@@ -132,18 +128,36 @@
                     send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
                 }, 10)
             }}
-            buttons={false}
+            style="background-color: var(--primary-darker);"
             outline
         />
     </CombinedInput>
 </div>
 
+<Button disabled={currentOutput.allowMainScreen} on:click={() => displayOutputs({ ctrlKey: true })} style="width: 100%;margin-top: 10px;" dark center>
+    <Icon id="outputs" right />
+    <p><T id="context.force_outputs" /></p>
+</Button>
+
 <style>
+    .tip {
+        margin-bottom: 10px;
+
+        opacity: 0.7;
+        font-size: 0.8em;
+    }
+
     h3 {
+        background-color: var(--primary-darkest);
         color: var(--text);
-        text-transform: uppercase;
+
         text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
+        font-size: 0.8em;
+
+        margin-top: 10px;
+        padding: 3px;
+
+        text-transform: uppercase;
+        /* border-bottom: 1px solid var(--primary-lighter); */
     }
 </style>

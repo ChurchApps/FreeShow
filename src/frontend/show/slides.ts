@@ -481,14 +481,12 @@ export function mergeDuplicateSlides({ slides, layout }) {
 
 // split in half
 // WIP simular to Editbox.svelte
-export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) {
+export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = [], cutIndex: number = -1) {
     let lines: Line[] = _show().slides([slideRef.id]).items([itemIndex]).get("lines")[0][0]
     lines = lines.filter((a) => a.text?.[0]?.value?.length)
 
-    console.log(lines)
-
     // if only one line (like scriptures, split by text)
-    if (lines.length === 1 && lines[0].text?.length > 1) {
+    if (cutIndex === -1 && lines.length === 1 && lines[0].text?.length > 1) {
         let newLines: any[] = []
         let centerTextIndex = Math.ceil(lines[0].text.length / 2)
         if (lines[0].text[centerTextIndex - 1]?.customType) centerTextIndex++
@@ -498,7 +496,7 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
     }
 
     // split text content directly in half
-    if (lines.length === 1 && lines[0].text?.[0]?.value?.length) {
+    if (cutIndex === -1 && lines.length === 1 && lines[0].text?.[0]?.value?.length) {
         // verse number style
         const custom = lines[0].text[0].customType ? lines[0].text.shift() : null
 
@@ -515,8 +513,11 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = []) 
 
     if (lines.length <= 1) return
 
-    // auto find center line
-    if (!sel.length) {
+    if (cutIndex > -1) {
+        sel = []
+        sel[cutIndex] = { start: 0 }
+    } else if (!sel.length) {
+        // auto find center line
         // round up to 5 = 3+2
         let centerLineIndex = Math.ceil(lines.length / 2)
         sel[centerLineIndex] = { start: 0 }

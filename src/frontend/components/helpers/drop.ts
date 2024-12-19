@@ -14,7 +14,7 @@ const areas: { [key in DropAreas | string]: string[] } = {
     project: ["show_drawer", "media", "audio", "overlay", "player", "scripture"],
     overlays: ["slide"],
     templates: ["slide"],
-    edit: ["media"],
+    edit: ["media", "global_timer", "variable"],
     // media_drawer: ["file"],
 }
 const areaChildren: { [key in DropAreas | string]: string[] } = {

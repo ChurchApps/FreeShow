@@ -1,4 +1,4 @@
-import type { Resolution } from "./Settings"
+import type { Cropping, Resolution } from "./Settings"
 import type { OutBackground, OutSlide, OutTransition } from "./Show"
 
 export interface Outputs {
@@ -16,6 +16,7 @@ export interface Output {
     name: string
     color: string
     bounds: { x: number; y: number; width: number; height: number }
+    cropping?: Cropping
     blending?: { left: number; right: number; rotate: number; opacity: number; centered: boolean; offset: number }
     screen: string | null
     kioskMode?: boolean
