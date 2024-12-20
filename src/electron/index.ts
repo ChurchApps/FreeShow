@@ -47,7 +47,6 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 // info
 console.log("Starting FreeShow...")
 if (!isProd) console.log("Building app! This may take 20-90 seconds")
-if (isLinux) console.log("libva error on Linux can be ignored")
 
 // set application menu
 setGlobalMenu()
@@ -147,7 +146,7 @@ function createMain() {
     mainWindow.setMinimumSize(MIN_WINDOW_SIZE, MIN_WINDOW_SIZE)
 
     // this is to debug any weird positioning
-    console.log("Main Window Bounds:", mainWindow.getBounds())
+    // console.log("Main Window Bounds:", mainWindow.getBounds())
 
     loadWindowContent(mainWindow)
     setMainListeners()
