@@ -10,7 +10,8 @@
     export let disableTransitions: boolean = false
 
     // export let resolution: Resolution
-    $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled && !a.hideFromPreview && !a.isKeyOutput)), "stageOutput")
+    $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput)), "stageOutput")
+    $: if (outs.length > 1) outs = outs.filter((a) => !a.hideFromPreview)
 
     let fullscreen: boolean = false
     let fullscreenId = ""

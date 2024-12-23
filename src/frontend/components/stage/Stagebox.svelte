@@ -89,13 +89,14 @@
 
     let alignElem
     let size = 100
-    $: if (alignElem && item) size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
+    // currentSlide & timeout to update auto size properly if slide notes
+    $: if (alignElem && item && currentSlide !== undefined) setTimeout(() => (size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })))
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
     $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($currentWindow === "output" ? $allOutputs : $outputs, false, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
-    $: currentSlide = currentOutput.out?.slide || (next ? $outputSlideCache[stageOutputId] : null)
+    $: currentSlide = currentOutput.out?.slide || (next ? $outputSlideCache[stageOutputId] || null : null)
 
     let timeout: any = null
     $: if (stageOutputId && ($allOutputs || $outputs)) startTimeout()
