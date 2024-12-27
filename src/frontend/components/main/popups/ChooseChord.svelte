@@ -128,7 +128,7 @@
 
 <CombinedInput style="margin-top: 10px;">
     <p><T id="actions.custom_key" /></p>
-    <TextInput value={chordData.custom} on:change={setCustom} />
+    <TextInput value={chordData.custom} on:input={setCustom} />
 </CombinedInput>
 
 <Button style="margin-top: 12px;" on:click={selectChord} dark center><T id="actions.select_chord" />: <span style="color: var(--secondary);font-weight: bold;margin-left: 5px;">{combinedChord}</span></Button>

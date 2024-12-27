@@ -19,7 +19,7 @@ export function next() {
     else {
         // go to next show in project
         let currentProjectShows = _get("projects").find((a) => a.id === _get("project"))?.shows || []
-        let currentProjectShowIndex = currentProjectShows.findIndex((showRef: any) => showRef.id === _get("activeShow").id)
+        let currentProjectShowIndex = currentProjectShows.findIndex((showRef: any) => showRef.id === _get("outShow").id)
 
         let newIndex = currentProjectShowIndex + 1
         let newProjectShow: any = { type: "." }
@@ -34,10 +34,10 @@ export function next() {
         _set("activeTab", "show")
 
         // play slide
-        setTimeout(() => {
-            send("OUT", { id: newProjectShow.id, index: 0, layout: _get("activeShow")?.settings?.activeLayout })
-            _set("outShow", _get("activeShow"))
-        }, 100)
+        // setTimeout(() => {
+        //     send("OUT", { id: newProjectShow.id, index: 0, layout: _get("activeShow")?.settings?.activeLayout })
+        //     _set("outShow", _get("activeShow"))
+        // }, 100)
     }
 }
 
@@ -48,6 +48,23 @@ export function previous() {
 
     let index = nextSlide(_get("layout"), _get("outSlide") ?? _get("layout")?.length, true)
     if (index !== null) send("OUT", { id: _get("outShow").id, index, layout: _get("outShow").settings.activeLayout })
+    else {
+        // go to preview show in project
+        let currentProjectShows = _get("projects").find((a) => a.id === _get("project"))?.shows || []
+        let currentProjectShowIndex = currentProjectShows.findIndex((showRef: any) => showRef.id === _get("outShow").id)
+
+        let newIndex = currentProjectShowIndex - 1
+        let newProjectShow: any = { type: "." }
+        while (newProjectShow && (newProjectShow.type || "show") !== "show") {
+            newProjectShow = currentProjectShows[newIndex]
+            newIndex--
+        }
+
+        if (!newProjectShow) return
+
+        send("SHOW", newProjectShow.id)
+        _set("activeTab", "show")
+    }
 }
 
 export function nextSlide(layout: any, currentSlide: number, previous: boolean = false): null | number {

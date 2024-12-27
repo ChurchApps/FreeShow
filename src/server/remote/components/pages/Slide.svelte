@@ -19,7 +19,8 @@
     // click on content
     function click(e: any) {
         if (e.clientX < window.innerWidth / 3) previous()
-        else if (!($outSlide + 1 >= totalSlides)) next()
+        else next()
+        // if (!($outSlide + 1 >= totalSlides))
     }
 </script>
 

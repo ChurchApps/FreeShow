@@ -32,7 +32,10 @@
                 if (!item.lines || !item.lines.find((a: any) => a?.text?.[0]?.value?.length)) return
 
                 if (!oneItem) oneItem = item
-                else oneItem.lines.push(...item.lines)
+                else {
+                    let EMPTY_LINE = { align: "", text: [{ style: "", value: "" }] }
+                    oneItem.lines.push(EMPTY_LINE, ...item.lines)
+                }
             })
 
         return oneItem ? [oneItem] : []

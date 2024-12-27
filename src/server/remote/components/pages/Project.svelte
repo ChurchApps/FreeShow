@@ -24,7 +24,9 @@
                 {@const s = $shows.find((a) => a.id === show.id) || {}}
 
                 {#if show.type === "section"}
-                    <div class="section">{show.name}</div>
+                    <div class="section">
+                        <p style={show.name ? "" : "opacity: 0.5;"}>{show.name || translate("main.unnamed", $dictionary)}</p>
+                    </div>
                 {:else if ["image", "video"].includes(show.type)}
                     <Button
                         on:click={() => {
