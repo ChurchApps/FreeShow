@@ -1,5 +1,12 @@
 import type { ItemType } from "./../../../../types/Show"
 import { captionLanguages } from "./captionLanguages"
+import dayjs from "dayjs"
+import localizedFormat from "dayjs/plugin/localizedFormat"
+import extendedFormat from "dayjs/plugin/advancedFormat"
+
+// Initialize plugins
+dayjs.extend(localizedFormat)
+dayjs.extend(extendedFormat)
 
 export type Box = {
     [key in ItemType]?: {
@@ -25,7 +32,8 @@ export type EditInput = {
     values?: any
     popup?: string
     enableNoColor?: boolean
-    relative?: boolean // updated values should be relative to each selected item (only for number px values)
+    relative?: boolean,
+    placeholder?: string
 }
 
 export const mediaFitOptions: any[] = [
@@ -55,9 +63,9 @@ export let trackerEdits = [
         id: "tracker.accent",
         value: "#F0008C",
     },
-    { name: "edit.sub_indexes", input: "checkbox", id: "tracker.childProgress", value: false },
-    { name: "edit.one_letter", input: "checkbox", id: "tracker.oneLetter", value: false },
 ]
+
+const now = new Date(2024, 11, 31, 23, 59, 25);
 
 export const boxes: Box = {
     text: {
@@ -325,23 +333,72 @@ export const boxes: Box = {
     clock: {
         icon: "clock",
         edit: {
-            default: [
-                {
-                    name: "clock.type",
-                    input: "dropdown",
-                    id: "clock.type",
-                    value: "digital",
-                    values: {
-                        options: [
-                            { id: "digital", name: "$:clock.digital:$" },
-                            { id: "analog", name: "$:clock.analog:$" },
-                        ],
-                    },
+            default:  [
+            {
+                name: "clock.type",
+                input: "dropdown",
+                id: "clock.type",
+                value: "digital",
+                values: {
+                    options: [
+                        { id: "digital", name: "$:clock.digital:$" },
+                        { id: "analog", name: "$:clock.analog:$" },
+                        { id: "custom", name: "$:clock.custom:$" }
+                    ],
                 },
-                { name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: false },
-            ],
+            },
+            {
+              name: "clock.date_format", 
+              input: "dropdown",
+              id: "clock.dateFormat",
+              value: "none",
+              hidden: true,
+              values: {
+                options: [
+                  { id: "none", name: "$:main.none:$" },
+                  { id: "LL", name: `${dayjs(now).format('LL')}` }, // August 16, 2024
+                  { id: "ll", name: `${dayjs(now).format('ll')}` }, // Aug 16, 2024  
+                  { id: "MM/DD/YYYY", name: `${dayjs(now).format('MM/DD/YYYY')}` }, // 12/16/2024
+                  { id: "DD/MM/YYYY", name: `${dayjs(now).format('DD/MM/YYYY')}` }, // 16/12/2024
+                  { id: "YYYY-MM-DD", name: `${dayjs(now).format('YYYY-MM-DD')}` } // 2024-12-16
+                ],
+              },
+            },
+            {
+              name: "clock.time_format",
+              input: "dropdown",
+              id: "clock.timeFormat", 
+              value: "hh:mm a",
+              hidden: true,
+              values: {
+                options: [
+                  { id: "none", name: "$:main.none:$" },
+                  { id: "LT", name: `${dayjs(now).format('LT')}` }, // 8:30 PM
+                  { id: "LTS", name: `${dayjs(now).format('LTS')}` }, // 8:30:25 PM
+                  { id: "hh:mm a", name: `${dayjs(now).format('hh:mm a')}` }, // 08:30 pm
+                  { id: "HH:mm", name: `${dayjs(now).format('HH:mm')}` }, // 20:30
+                  { id: "h:mm A", name: `${dayjs(now).format('h:mm A')}` }, // 8:30 PM
+                  { id: "H:mm:ss", name: `${dayjs(now).format('H:mm:ss')}` } // 20:30:25
+                ],
+              },
+            },
+            {
+                name: "clock.custom_format",
+                input: "text",
+                id: "clock.customFormat",
+                value: "hh:mm a",
+                hidden: true,
+                placeholder: "Examples: LT, LLLL, MMMM D YYYY h:mm A",
+            },
+            {
+              name: "clock.format_help",
+              input: "tip",
+              values: { subtext: "Custom formats at day.js.org/docs/en/display/format" },
+              hidden: true
+            }
+        ],
             font: [
-                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
+                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "Monospace" },
                 { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
             ],
             style: [{ input: "font-style" }, { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" }],

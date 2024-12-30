@@ -7,15 +7,34 @@ import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
 import { addSlideAction } from "../../actions/actions"
 import { clone, keysToID, sortByName } from "../../helpers/array"
+import { boxes } from "../values/boxes"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
+
+function getDefaultStyles(type: ItemType, template: any = null) {
+    // Get position styles from template or use default from boxes.ts
+    const positionStyle = template?.[0]?.style || "top:121px;left:50.5px;height:840px;width:1820px;"
+    
+    // Get default styles from boxes configuration
+    const boxDefaults = boxes[type]?.edit?.font || []
+    let styleString = positionStyle
+
+    // Add default font styles if they exist
+    boxDefaults.forEach((def: any) => {
+        if (def.key && def.value) {
+            styleString += `${def.key}:${def.value};`
+        }
+    })
+
+    return styleString
+}
 
 export function addItem(type: ItemType, id: any = null, options: any = {}) {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
     let template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
     let newData: Item = {
-        style: template?.[0]?.style || DEFAULT_ITEM_STYLE,
+        style: getDefaultStyles(type, template),
         type,
     }
     if (id) newData.id = id
@@ -26,7 +45,7 @@ export function addItem(type: ItemType, id: any = null, options: any = {}) {
     else if (type === "timer") {
         newData.timerId = sortByName(keysToID(get(timers)))[0]?.id || createNewTimer()
         if (get(timers)[newData.timerId || ""]?.type === "counter") addSlideAction(get(activeEdit).slide ?? -1, "start_slide_timers")
-    } else if (type === "clock") newData.clock = { type: "digital", seconds: false }
+    } else if (type === "clock") newData.clock = { type: "digital", dateFormat: "none", timeFormat: "hh:mm a" }
     else if (type === "mirror") newData.mirror = {}
     else if (type === "media") newData.src = options.src || ""
     else if (type === "variable") newData.variable = { id: "" }

@@ -94,7 +94,7 @@ export function setExampleOverlays() {
             name: get(dictionary).example?.clock || "Clock",
             color: "dodgerblue",
             category: "visuals",
-            items: [{ style: "top:70px;left:1450px;height:150px;width:470px;", type: "clock", clock: { type: "digital", seconds: false } }],
+            items: [{ style: "top:70px;left:1450px;height:150px;width:470px;font-family:'monospace'", type: "clock", clock: { type: "digital", dateFormat: "none", timeFormat: "hh:mm a" } }],
         }
         a.name = {
             name: get(dictionary).inputs?.name || "Name",

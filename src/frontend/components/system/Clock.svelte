@@ -1,64 +1,71 @@
 <script lang="ts">
-    import { timeFormat } from "../../stores"
-    import AnalogClock from "./AnalogClock.svelte"
+  import AnalogClock from "./AnalogClock.svelte"
+  import dayjs from "dayjs"
+  import localizedFormat from "dayjs/plugin/localizedFormat"
 
-    export let style: boolean = true
-    export let autoSize: number = 0
-    export let type: "digital" | "analog" = "digital"
-    export let seconds: boolean = true
+  // Initialize plugins
+  dayjs.extend(localizedFormat)
 
-    $: twelwe = $timeFormat === "12"
-    // TODO: auto detect
-    // don't know if this works properly
-    // $: twelwe = (new Date(2022, 0, 1, 13, 0)).getHours() === 1
-    // $: twelwe = (new Date(2022, 0, 1, 15, 0)).toLocaleString().includes("3")
+  export let style: boolean = true
+  export let autoSize: number = 0
+  export let type: "digital" | "analog" | "custom" = "digital"
+  export let dateFormat: string = "none"
+  export let timeFormat: string = "hh:mm a"
+  export let customFormat: string = "hh:mm a"
 
-    let d: Date = new Date()
-    setInterval(() => (d = new Date()), 250)
-    let h: number = 0
-    let m: number = 0
-    let s: number = 0
-    let pm: boolean = false
+  let d: Date = new Date()
+  setInterval(() => (d = new Date()), 250)
 
-    $: if (d) {
-        h = d.getHours()
-        m = d.getMinutes()
-        s = d.getSeconds()
-
-        if (twelwe) {
-            if (h === 0) h = 12
-            else if (h > 12) h -= 12
-            pm = d.getHours() >= 12
-        }
+  function formatDateTime(date: Date, format: string): string {
+    if (format === "none") return ""
+    
+    // Handle preset formats
+    const presetFormats = ["LT", "LTS", "LL", "ll", "LLL", "lll", "LLLL", "llll"]
+    if (presetFormats.includes(format)) {
+      return dayjs(date).format(format)
     }
+
+    // Handle custom formats
+    return dayjs(date).format(format)
+  }
+
+  $: formattedDate = dateFormat !== "none" ? formatDateTime(d, dateFormat) : ""
+  $: formattedTime = timeFormat !== "none" ? formatDateTime(d, timeFormat) : ""
+  $: formattedCustom = type === "custom" ? formatDateTime(d, customFormat) : ""
 </script>
 
-{#if type === "digital"}
-    <!-- autoSize = slide clock -->
-    <div class="autoFontSize" style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;` : ""}>
-        {#if style}
-            <span class="colored">{("0" + h).slice(-2)}</span>:
-            <span class="colored">{("0" + m).slice(-2)}</span>
-            {#if seconds}<span style="font-size: 0.5em;">:{("0" + s).slice(-2)}</span>{/if}
-            {#if twelwe}<span style="font-size: 0.3em;font-weight: bold;" class:colored={pm}>&nbsp;{pm ? "PM" : "AM"}</span>{/if}
-        {:else}
-            {("0" + h).slice(-2)}:{("0" + m).slice(-2)}{#if seconds}:{("0" + s).slice(-2)}{/if}
-            {#if twelwe}{pm ? "PM" : "AM"}{/if}
-        {/if}
-    </div>
+{#if type === "analog"}
+  <AnalogClock date={d} />
+{:else if type === "custom"}
+  <div class="clock" style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
+    {#if style}
+      <span class="colored">{formattedCustom}</span>
+    {:else}
+      {formattedCustom}
+    {/if}
+  </div>
 {:else}
-    <AnalogClock date={d} {...{ h, m, s }} {seconds} />
+  <div class="clock" style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
+    {#if style}
+      {#if formattedDate}<span class="colored">{formattedDate}</span>{/if}
+      {#if formattedDate && formattedTime}&nbsp;{/if}
+      {#if formattedTime}<span class="colored">{formattedTime}</span>{/if}
+    {:else}
+      {#if formattedDate}{formattedDate}{/if}
+      {#if formattedDate && formattedTime}&nbsp;{/if}
+      {#if formattedTime}{formattedTime}{/if}
+    {/if}
+  </div>
 {/if}
 
 <style>
-    div {
-        display: flex;
-        justify-content: center;
-        align-items: baseline;
-        font-size: 4em;
-    }
-
-    .colored {
-        color: var(--secondary);
-    }
+  .clock {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    font-size: 4em;
+  }
+  .colored {
+    color: var(--secondary);
+  }
 </style>

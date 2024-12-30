@@ -132,7 +132,8 @@ export interface Timer {
 
 export interface Clock {
     type: "digital" | "analog"
-    seconds: boolean
+    dateFormat: "none"
+    timeFormat: "hh:mm a"
 }
 
 export interface DynamicEvent {

@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { uid } from "uid"
     import type { Item, ItemType } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, selected, showsCache, templates, theme, themes } from "../../../stores"
     import { newToast } from "../../../utils/common"
@@ -10,10 +9,11 @@
     import { getListOfShows, getStageList } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
-    import { MAX_FONT_SIZE } from "../scripts/autosize"
-    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
+    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret, setCaretPosition } from "../scripts/textStyle"
     import { boxes } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
+    import { uid } from "uid"
+    import { MAX_FONT_SIZE } from "../scripts/autosize"
 
     export let id: ItemType
     export let allSlideItems: Item[] = []
@@ -35,7 +35,10 @@
         if (allSlideItems.length === 1 && item && !getItemText(item).length && !$activeEdit.items.length) {
             activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
             const elem: any = document.querySelector(".editItem")?.querySelector(".edit")
-            if (elem) elem.focus()
+            if (elem) {
+                elem.addEventListener("focus", () => setCaretPosition(elem))
+                elem.focus()
+            }
         }
     })
 
@@ -146,12 +149,18 @@
         box.edit.chords[1].hidden = !item?.chords?.enabled
         box.edit.chords[2].hidden = !item?.chords?.enabled
     }
-    $: if (id === "slide_tracker" && box?.edit?.default?.[3]) {
-        box.edit.default[2].hidden = item?.tracker?.type !== "group"
-        box.edit.default[3].hidden = item?.tracker?.type !== "group"
-    }
 
     $: if (id === "timer" && box?.edit?.font) box.edit.font[3].value = item?.auto ?? true
+    
+    $: if (id === "clock" && box?.edit?.default) {
+        // Get the clock type from the first option
+        const clockType = item?.clock?.type || "digital";
+
+        // Hide/show based on clock type
+        box.edit.default[1].hidden = clockType !== "digital";  // dateFormat
+        box.edit.default[2].hidden = clockType !== "digital";  // timeFormat
+        box.edit.default[3].hidden = clockType !== "custom";   // customFormat
+    }
 
     $: if (box?.edit?.default) {
         if (id === "mirror") getMirrorValues()
@@ -271,15 +280,11 @@
             return slide.items[allItems[0]]
         }
 
-        let newFontSize = 0
         if (input.id === "textFit") {
             // change font size to more clearly indicate what the different text fit does
-            newFontSize = input.value === "shrinkToFit" ? 100 : MAX_FONT_SIZE
-        } else if (input.id === "auto" && item?.textFit === "growToFit") {
-            if (input.value && Number(styles["font-size"]) < MAX_FONT_SIZE) newFontSize = MAX_FONT_SIZE
-            else if (!input.value && Number(styles["font-size"]) === MAX_FONT_SIZE) newFontSize = 100
+            let newFontSize = input.value === "shrinkToFit" ? 100 : MAX_FONT_SIZE
+            updateValue({ detail: { name: "font_size", id: "style", key: "font-size", value: newFontSize + "px" } })
         }
-        if (newFontSize) updateValue({ detail: { name: "font_size", id: "style", key: "font-size", value: newFontSize + "px" } })
 
         // UPDATE
 
@@ -526,7 +531,6 @@
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
 
 {#if loaded}
-    <!-- WIP edit checkbox does not animate because of this refresh -->
     {#key box}
         <EditValues edits={box?.edit} defaultEdits={clone(boxes[id])?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} {sessionId} />
     {/key}
