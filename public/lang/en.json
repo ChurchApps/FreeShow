@@ -972,7 +972,11 @@
         "type": "Type",
         "digital": "Digital",
         "analog": "Analog",
-        "seconds": "Seconds"
+        "seconds": "Seconds",
+        "custom": "Custom",
+        "date_format": "Date Format",
+        "time_format": "Time Format",
+        "custom_format": "Custom Format"
     },
     "captions": {
         "info": "Please click the URL to open in your browser if you haven't already, or open it on any other device! Make sure to give access to your microphone, and use Google Chrome for the best performance.",

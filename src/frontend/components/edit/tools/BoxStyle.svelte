@@ -165,6 +165,16 @@
 
     $: if (id === "timer" && box?.edit?.font) box.edit.font[3].value = item?.auto ?? true
 
+    $: if (id === "clock" && box?.edit?.default) {
+        // Get the clock type from the first option
+        const clockType = item?.clock?.type || "digital"
+
+        // Hide/show based on clock type
+        box.edit.default[1].hidden = clockType !== "digital" // dateFormat
+        box.edit.default[2].hidden = clockType !== "digital" // timeFormat
+        box.edit.default[3].hidden = clockType !== "custom" // customFormat
+    }
+
     $: if (box?.edit?.default) {
         if (id === "mirror") getMirrorValues()
         else if (id === "media") box.edit.default[0].value = item?.src || ""

@@ -52,13 +52,13 @@
         if (item.tracker.type) edits.default[0].value = item.tracker.type
         edits.default[1].value = item.tracker.accent || $themes[$theme]?.colors?.secondary || "#F0008C"
     }
-    $: if (item && items[0].includes("next_slide_text") && edits.default[5]) {
+    $: if (item && items[0]?.includes("next_slide_text") && edits.default[5]) {
         edits.default[5].value = item.lineCount || 0
     }
-    $: if (item && items[0].includes("slide_text") && edits.default[6]) {
+    $: if (item && items[0]?.includes("slide_text") && edits.default[6]) {
         edits.default[6].value = !!item.invertItems
     }
-    $: if (items[0].includes("slide_tracker") && edits?.default?.[2]) {
+    $: if (items[0]?.includes("slide_tracker") && edits?.default?.[2]) {
         edits.default[2].hidden = item?.tracker?.type !== "group"
     }
 

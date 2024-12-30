@@ -444,10 +444,12 @@
                         <Dropdown value={Object.entries($variables).find(([id]) => id === input.value)?.[1]?.name || "—"} options={keysToID($variables)} on:click={(e) => valueChange(e, input)} />
                     </CombinedInput>
                 {:else if input.input === "tip"}
-                    <p class="tip">
-                        <T id={input.name} />
-                        {input.values?.subtext || ""}
-                    </p>
+                    {#if (!input.hidden || (item?.clock?.type === "custom"))}
+                        <p class="tip">
+                            <T id={input.name} />
+                            {input.values?.subtext || ""}
+                        </p>
+                    {/if}
                 {:else if input.input === "popup"}
                     <CombinedInput>
                         <Button
@@ -631,5 +633,7 @@
         opacity: 0.8;
         text-align: center;
         padding: 8px;
+        text-overflow: revert;
+        white-space: normal;
     }
 </style>
