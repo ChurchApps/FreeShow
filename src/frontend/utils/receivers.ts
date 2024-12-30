@@ -7,7 +7,7 @@ import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { addDrawerFolder } from "../components/helpers/dropActions"
-import { captureCanvas } from "../components/helpers/media"
+import { setMediaTracks, captureCanvas } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
@@ -214,6 +214,7 @@ const receiveMAIN: any = {
         // sometimes when lagging the image will be "replaced" even when it exists
         if (prevPath !== path) newToast("$toast.media_replaced")
     },
+    MEDIA_TRACKS: (data: any) => setMediaTracks(data),
     API_TRIGGER: (data: any) => triggerAction(data),
     PRESENTATION_STATE: (data: any) => presentationData.set(data),
     SLIDESHOW_GET_APPS: (data: any) => presentationApps.set(data),

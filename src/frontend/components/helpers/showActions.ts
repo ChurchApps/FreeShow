@@ -113,7 +113,7 @@ export function swichProjectItem(pos: number, id: string) {
 
     // set project layout
     projects.update((a) => {
-        if (Object.keys(get(showsCache)[id].layouts).length < 2) delete a[get(activeProject)!].shows[pos!].layout
+        if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[get(activeProject)!].shows[pos!].layout
         else a[get(activeProject)!].shows[pos!].layout = get(showsCache)[id].settings.activeLayout
         return a
     })
@@ -300,7 +300,7 @@ export function goToNextProjectItem(key: string = "") {
         if (!get(activeProject) || typeof currentShow?.index !== "number") return
 
         let index: number = currentShow.index ?? -1
-        if (index + 1 < get(projects)[get(activeProject)!].shows.length) index++
+        if (index + 1 < get(projects)[get(activeProject)!]?.shows?.length) index++
         if (index > -1 && index !== currentShow.index) {
             let newShow = get(projects)[get(activeProject)!].shows[index]
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
@@ -325,7 +325,7 @@ export function goToPreviousProjectItem(key: string = "") {
         let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(activeProject) || typeof currentShow?.index !== "number") return
 
-        let index: number = currentShow.index ?? get(projects)[get(activeProject)!].shows.length
+        let index: number = currentShow.index ?? get(projects)[get(activeProject)!]?.shows?.length
         if (index - 1 >= 0) index--
         if (index > -1 && index !== currentShow.index) {
             let newShow = get(projects)[get(activeProject)!].shows[index]

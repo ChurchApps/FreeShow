@@ -1,17 +1,23 @@
 <script lang="ts">
+    import { uid } from "uid"
+    import { MAIN } from "../../../types/Channels"
     import type { MediaStyle } from "../../../types/Main"
-    import { activeProject, activeRename, dictionary, focusMode, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
+    import { activeProject, activeRename, dictionary, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
+    import { awaitRequest, send } from "../../utils/request"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { analyseAudio, getAnalyser } from "../helpers/audio"
+    import { enableSubtitle, getExtension, getFileName, removeExtension } from "../helpers/media"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import HoverButton from "../inputs/HoverButton.svelte"
+    import MediaPicker from "../inputs/MediaPicker.svelte"
     import VideoSlider from "../output/VideoSlider.svelte"
     import MediaControls from "../output/tools/MediaControls.svelte"
     import Player from "../system/Player.svelte"
+    import { SRTtoVTT } from "./media/subtitles"
 
     export let show
 
@@ -21,6 +27,10 @@
     // show updates when videoTime updates for some reason?
     // $: console.trace(show)
     // $: console.trace(videoTime)
+
+    $: tracks = $media[showId]?.tracks || []
+    $: subtitle = $media[showId]?.subtitle || ""
+    $: if (type !== "player" && showId && $media[showId]?.tracks === undefined) send(MAIN, ["MEDIA_TRACKS"], { path: showId })
 
     export let mediaStyle: MediaStyle = {}
 
@@ -90,6 +100,7 @@
     let hasLoaded: boolean = false
 
     let previewControls: boolean = false
+    let manageSubtitles: boolean = false
     let timeMarkersEnabled: boolean = false
 
     function onLoad() {
@@ -107,6 +118,8 @@
 
         if (autoPause) videoData.paused = false
         else videoTime = 0
+
+        if (subtitle) enableSubtitle(video, subtitle)
     }
 
     // player
@@ -186,6 +199,64 @@
 
     $: if (video && mediaStyle.speed) video.playbackRate = mediaStyle.speed
 
+    let edit: boolean = false
+
+    // SUBTITLE
+
+    function changeSubtitleName(e: any) {
+        let subtitleIndex = e.detail?.id?.slice("subtitle_".length)
+        let value = e.detail.value
+        if (subtitleIndex === undefined || !value) return
+
+        media.update((a) => {
+            if (!a[showId]?.tracks?.[subtitleIndex]) return a
+            a[showId].tracks[subtitleIndex].name = value
+            if (a[showId].tracks[subtitleIndex].lang.length !== 2) a[showId].tracks[subtitleIndex].lang = value.replaceAll(" ", "_").toLowerCase()
+
+            return a
+        })
+    }
+
+    async function subtitlePicked(e: any) {
+        let path = e.detail || ""
+        let content = (await awaitRequest(MAIN, "READ_FILE", { path }))?.content
+        if (!content) return
+
+        let extension = getExtension(path)
+        if (extension === "srt") {
+            content = SRTtoVTT(content)
+        }
+
+        media.update((a) => {
+            if (!a[showId]) a[showId] = {}
+            if (!a[showId].tracks) a[showId].tracks = []
+
+            let name = removeExtension(getFileName(path)).replaceAll(" ", "_")
+            let id = name || uid(5)
+            a[showId].tracks.push({ lang: id, name: "", vtt: content })
+
+            activeRename.set("subtitle_" + (a[showId].tracks.length - 1))
+
+            return a
+        })
+    }
+
+    function setActiveSubtitle(e: any, lang: string) {
+        if (e.target?.closest(".edit")) return
+
+        media.update((a) => {
+            if (!a[showId]) a[showId] = {}
+            if (a[showId].subtitle === lang) {
+                a[showId].subtitle = ""
+                lang = ""
+            } else a[showId].subtitle = lang
+
+            return a
+        })
+    }
+
+    $: if (subtitle !== undefined) enableSubtitle(video, subtitle)
+
     // MARKER
 
     // TODO: history
@@ -207,8 +278,6 @@
             return a
         })
     }
-
-    let edit: boolean = false
 
     function changeName(e: any) {
         let currentMarker = e.detail?.id?.slice("marker_".length)
@@ -256,11 +325,42 @@
                     bind:muted={videoData.muted}
                     bind:volume={$volume}
                 >
-                    <track kind="captions" />
+                    {#each tracks as track}
+                        <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
+                    {/each}
                 </video>
             {/if}
         </HoverButton>
     </div>
+
+    {#if playingInOutput ? tracks.length : manageSubtitles}
+        <div class="buttons" style="display: flex;">
+            <div class="markers">
+                {#if tracks.length}
+                    {#each tracks as track, i}
+                        <Button on:click={(e) => setActiveSubtitle(e, track.lang)} outline={subtitle === track.lang} class="context #video_subtitle{track.embedded ? '_embedded' : ''}" id={i.toString()} bold={false} center>
+                            {#if playingInOutput}
+                                <p style="padding: 5px;">{track.name}</p>
+                            {:else}
+                                <HiddenInput value={track.name} id={"subtitle_" + i} on:edit={changeSubtitleName} bind:edit />
+                            {/if}
+                        </Button>
+                    {/each}
+                {:else}
+                    <p style="opacity: 0.5;text-align: center;width: 100%;"><T id="empty.general" /></p>
+                {/if}
+            </div>
+
+            {#if !playingInOutput}
+                <div class="seperator" />
+
+                <MediaPicker id="subtitles" filter={{ name: "Video Text Track", extensions: ["vtt", "srt"] }} on:picked={subtitlePicked} dark={false}>
+                    <Icon id="add" right />
+                    <T id="scripture.local" />
+                </MediaPicker>
+            {/if}
+        </div>
+    {/if}
 
     {#if playingInOutput ? $videoMarkers[showId]?.length : timeMarkersEnabled}
         <div class="buttons" style="display: flex;">
@@ -277,7 +377,6 @@
                             }}
                             bold={false}
                             center
-                            dark
                         >
                             <p style="display: flex;align-items: center;">
                                 <HiddenInput value={marker.name} id={"marker_" + i} on:edit={changeName} bind:edit />
@@ -286,11 +385,13 @@
                         </Button>
                     {/each}
                 {:else}
-                    <p style="opacity: 0.7;text-align: center;width: 100%;"><T id="empty.general" /></p>
+                    <p style="opacity: 0.5;text-align: center;width: 100%;"><T id="empty.general" /></p>
                 {/if}
             </div>
 
             {#if previewControls && !playingInOutput}
+                <div class="seperator" />
+
                 <Button on:click={addMarker}>
                     <Icon id="add" right />
                     <p><T id="actions.add_time_marker" /></p>
@@ -318,7 +419,30 @@
             <Button style="flex: 0;" center title={videoData.muted ? $dictionary.actions?.unmute : $dictionary.actions?.mute} on:click={() => (videoData.muted = !videoData.muted)}>
                 <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} size={1.2} />
             </Button>
-            <Button style="flex: 0;" title={$dictionary.actions?.toggle_time_marker} on:click={() => (timeMarkersEnabled = !timeMarkersEnabled)} center>
+
+            <div class="seperator" />
+
+            <Button
+                style="flex: 0;"
+                title={$dictionary.actions?.manage_subtitles}
+                on:click={() => {
+                    manageSubtitles = !manageSubtitles
+                    if (timeMarkersEnabled) timeMarkersEnabled = false
+                }}
+                center
+            >
+                <Icon id="captions" white={!manageSubtitles} size={1.2} />
+            </Button>
+
+            <Button
+                style="flex: 0;"
+                title={$dictionary.actions?.toggle_time_marker}
+                on:click={() => {
+                    timeMarkersEnabled = !timeMarkersEnabled
+                    if (manageSubtitles) manageSubtitles = false
+                }}
+                center
+            >
                 <Icon id="timeMarker" white={!timeMarkersEnabled} size={1.2} />
             </Button>
         </div>
@@ -336,6 +460,12 @@
     }
 
     .buttons :global(.slider input) {
+        background-color: var(--primary);
+    }
+
+    .seperator {
+        width: 1px;
+        height: 100%;
         background-color: var(--primary);
     }
 

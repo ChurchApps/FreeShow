@@ -257,6 +257,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     meta_message: ["dynamic_values"],
 
     // MEDIA
+    video_subtitle: ["rename", "delete"],
+    video_subtitle_embedded: ["rename"],
     video_marker: ["rename", "delete"],
 
     // STAGE

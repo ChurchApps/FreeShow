@@ -18,7 +18,7 @@
         <p style="flex: 1;text-align: center;padding: 0.2em 0.8em;">{$activeProject.name}</p>
     </div>
 
-    {#if $activeProject.shows.length}
+    {#if $activeProject.shows?.length}
         <div class="scroll">
             {#each $activeProject.shows as show}
                 {@const s = $shows.find((a) => a.id === show.id) || {}}

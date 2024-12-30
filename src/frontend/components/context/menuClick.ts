@@ -147,6 +147,7 @@ const actions: any = {
         else if (id === "slide" || id === "group") activePopup.set("rename")
         else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
         else if (obj.contextElem?.classList?.contains("#project_template")) activeRename.set("project_" + id)
+        else if (obj.contextElem?.classList?.contains("#video_subtitle")) activeRename.set("subtitle_" + id)
         else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
@@ -195,6 +196,10 @@ const actions: any = {
 
         if (obj.contextElem?.classList.value.includes("#project_template")) {
             deleteAction({ id: "project_template", data: [{ id: obj.contextElem.id }] })
+            return
+        }
+        if (obj.contextElem?.classList.value.includes("#video_subtitle")) {
+            deleteAction({ id: "video_subtitle", data: { index: obj.contextElem.id } })
             return
         }
         if (obj.contextElem?.classList.value.includes("#video_marker")) {

@@ -29,6 +29,7 @@ import {
     getFileInfo,
     getFolderContent,
     getMediaCodec,
+    getMediaTracks,
     getPaths,
     getSimularPaths,
     getTempPaths,
@@ -126,6 +127,7 @@ const mainResponses: any = {
     SAVE_IMAGE: (data: any): any => saveImage(data),
     READ_EXIF: (data: any, e: any) => readExifData(data, e),
     MEDIA_CODEC: (data: any) => getMediaCodec(data),
+    MEDIA_TRACKS: (data: any) => getMediaTracks(data),
     DOWNLOAD_MEDIA: (data: any) => downloadMedia(data),
     MEDIA_BASE64: (data: any) => storeMedia(data),
     CAPTURE_SLIDE: (data: any) => captureSlide(data),
@@ -182,6 +184,7 @@ const mainResponses: any = {
     BUNDLE_MEDIA_FILES: (data: any) => bundleMediaFiles(data),
     FILE_INFO: (data: any, e: any) => getFileInfo(data, e),
     READ_FOLDER: (data: any) => getFolderContent(data),
+    READ_FILE: (data: any) => ({ ...data, content: readFile(data.path) }),
     OPEN_FOLDER: (data: any, e: any) => selectFolder(data, e),
     OPEN_FILE: (data: any, e: any) => selectFiles(data, e),
 }

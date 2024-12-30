@@ -108,7 +108,7 @@
         let currentOutput: any = getActiveOutputs()[0] || {}
         let slide: any = currentOutput.out?.slide || null
 
-        if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout].slides.length) {
+        if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
             updateOut("active", 0, _show("active").layouts("active").ref()[0], !e.altKey)
             if (slide?.id === id && slide?.index === 0 && slide?.layout === $showsCache[id].settings.activeLayout) return
             setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: 0 })

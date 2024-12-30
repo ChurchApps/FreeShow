@@ -21,6 +21,7 @@ import {
     events,
     focusedArea,
     folders,
+    media,
     mediaFolders,
     midiIn,
     outputs,
@@ -773,6 +774,20 @@ const deleteActions = {
         } else {
             newToast("$error.keep_one_layout")
         }
+    },
+    video_subtitle: (data: any) => {
+        let index = data.index
+        let id = get(activeShow)?.id || ""
+        if (!id) return
+
+        media.update((a) => {
+            if (a[id]?.tracks?.[index]) {
+                a[id].tracks!.splice(index, 1)
+                // reset tracks if all deleted, so any embedded tracks can be readded
+                if (!a[id].tracks!.length) delete a[id].tracks
+            }
+            return a
+        })
     },
     video_marker: (data: any) => {
         let index = data.index

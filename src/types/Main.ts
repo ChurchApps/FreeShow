@@ -108,7 +108,17 @@ export interface MediaStyle {
     volume?: number // audio
     rendering?: string // image rendering
     info?: any // cached codec/mime data
+    tracks?: Subtitle[]
+    subtitle?: string
     tags?: string[] // media tags
+}
+
+// subtitles/captions
+export interface Subtitle {
+    lang: string // id
+    name: string
+    vtt: string // WebVTT format
+    embedded?: boolean // extracted from the video
 }
 
 export type Popups =
