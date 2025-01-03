@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Slide } from "../../../types/Show"
+import type { Item, Slide } from "../../../types/Show"
 import { removeItemValues, splitItemInTwo } from "../../show/slides"
 import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, projects, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
@@ -14,6 +14,7 @@ import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayouts
 import { loadShows, saveTextCache } from "./setShow"
 import { getShowCacheId } from "./show"
 import { _show } from "./shows"
+import { getItemText } from "../edit/scripts/textStyle"
 
 // TODO: move history switch to actions
 
@@ -830,8 +831,16 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     let newTemplate = data.previousData.template !== data.id
                     if (shiftItems && !slide.settings?.template && !newTemplate) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 
+                    // shift items to any template textbox with matching "name" (content), if any
+                    if (!shiftItems && newTemplate && !slide.settings?.template && slideTemplate.items?.length > 1) {
+                        let previousTemplateItems = get(templates)[data.previousData.template]?.items || []
+                        let newTemplateItems = slideTemplate.items || []
+                        slide.items = clone(rearrangeContent(slide.items, previousTemplateItems, newTemplateItems))
+                        // WIP text style (font size) won't update first time
+                    }
+
                     let changeOverflowItems = slide.settings?.template || createItems
-                    let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false)
+                    let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false, createItems)
 
                     // remove items if not in template (and textbox is empty)
                     if (changeOverflowItems) {
@@ -1039,4 +1048,54 @@ function filterIndexes(data: any, subkey: string = "", { indexes, keys }) {
     }
 
     return filteredData
+}
+
+function rearrangeContent(content: Item[], prevState: Item[], newState: Item[]) {
+    const indexMap: { [key: string]: number } = {}
+
+    function getValue(value: string, count: number) {
+        return value + (count > 0 ? "__" + count : "")
+    }
+
+    // create a map of previous state values to their indices
+    prevState.forEach((item, index) => {
+        let value = getItemText(item)
+        let count = 0
+        while (indexMap[getValue(value, count)] !== undefined) count++
+        indexMap[getValue(value, count)] = index
+    })
+
+    // create a temporary array to store the rearranged content
+    const tempContent: Item[] = new Array(content.length).fill(null)
+    const usedIndices = new Set<number>()
+
+    newState.forEach((item, newIndex) => {
+        let value = getItemText(item)
+        if (indexMap[value] === undefined) return
+
+        let count = 0
+        while (usedIndices.has(indexMap[getValue(value, count)])) count++
+        const contentIndex = indexMap[getValue(value, count)]
+        if (contentIndex < content.length && !usedIndices.has(contentIndex)) {
+            if (content[contentIndex]) {
+                tempContent[newIndex] = clone({ ...content[newIndex], lines: clone(content[contentIndex].lines) })
+            }
+            usedIndices.add(contentIndex)
+        }
+    })
+
+    // fill any undefined positions with the original content
+    let tempIndex = 0
+    for (let i = 0; i < content.length; i++) {
+        if (tempContent[i] === null) {
+            while (usedIndices.has(tempIndex)) tempIndex++
+            if (tempIndex < content.length) {
+                if (content[tempIndex]) tempContent[i] = clone(content[tempIndex])
+                usedIndices.add(tempIndex)
+            }
+            tempIndex++
+        }
+    }
+
+    return tempContent
 }

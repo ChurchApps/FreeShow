@@ -154,6 +154,7 @@ export type Popups =
     | "animate"
     | "translate"
     | "next_timer"
+    | "display_duration"
     | "manage_tags"
     | "advanced_settings"
     | "about"

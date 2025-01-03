@@ -162,7 +162,13 @@
         },
         lock_to_output: () => {
             let id = $selected.data[0]
-            if ($overlays[id]?.locked) enabled = true
+            if ($overlays[id]?.displayDuration) disabled = true
+            else if ($overlays[id]?.locked) enabled = true
+        },
+        display_duration: () => {
+            let id = $selected.data[0]
+            if ($overlays[id]?.locked) disabled = true
+            else if ($overlays[id]?.displayDuration) enabled = true
         },
         move_to_front: () => {
             let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput)

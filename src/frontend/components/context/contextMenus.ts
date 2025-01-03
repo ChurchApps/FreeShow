@@ -136,6 +136,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // OVERLAYS
     lock_to_output: { label: "context.lock_to_output", icon: "locked" },
     place_under_slide: { label: "context.place_under_slide", icon: "under" },
+    display_duration: { label: "popup.display_duration", icon: "clock" },
     // TEMPLATES
     template_actions: { label: "tabs.actions", icon: "actions" },
     // STAGE
@@ -202,7 +203,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     media: ["media_tag_filter"],
     media_card: ["addToProject", "SEPERATOR", "edit", "preview", "favourite", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "media_tag_set", "media_tag_filter", "SEPERATOR", "system_open"],
     // "addToFirstSlide",
-    overlay_card: ["edit", "preview", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    overlay_card: ["edit", "preview", "SEPERATOR", "display_duration", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     effect_card: ["edit"],

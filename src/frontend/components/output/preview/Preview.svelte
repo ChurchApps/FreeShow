@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activeShow, dictionary, groups, guideActive, midiIn, outLocked, outputs, playingAudio, slideTimers, special, styles } from "../../../stores"
+    import { activePage, activeShow, dictionary, groups, guideActive, midiIn, outLocked, outputs, overlayTimers, playingAudio, slideTimers, special, styles } from "../../../stores"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
@@ -155,12 +155,12 @@
     let activeClear: any = null
     let autoChange: boolean = true
     $: if (outputId) autoChange = true
-    $: if (autoChange && $outputs) {
+    $: if (autoChange && ($outputs || $overlayTimers)) {
         let active = getActiveClear(!isOutCleared("transition"), $playingAudio, !isOutCleared("overlays"), !isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")), !isOutCleared("background"))
         if (active !== activeClear) activeClear = active
     }
     // enable autochange again if active has no value
-    $: if (!autoChange && ($outputs || $playingAudio)) checkStillActive()
+    $: if (!autoChange && ($outputs || $playingAudio || $overlayTimers)) checkStillActive()
     function checkStillActive() {
         if (activeClear === "nextTimer" && isOutCleared("transition")) autoChange = true
         else if (activeClear === "audio" && !$playingAudio) autoChange = true
@@ -248,7 +248,11 @@
         {:else if activeClear === "audio" && Object.keys($playingAudio).length}
             <Audio />
         {:else if activeClear === "nextTimer"}
-            <NextTimer {currentOutput} {timer} />
+            {#if timer}
+                <NextTimer {currentOutput} {timer} />
+            {:else}
+                <!-- overlay timer -->
+            {/if}
         {/if}
     {/if}
 </div>

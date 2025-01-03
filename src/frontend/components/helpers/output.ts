@@ -17,6 +17,7 @@ import {
     outputs,
     outputSlideCache,
     overlays,
+    overlayTimers,
     playingVideos,
     serverData,
     showsCache,
@@ -29,6 +30,7 @@ import {
     transitionData,
     usageLog,
 } from "../../stores"
+import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { videoExtensions } from "../../values/extensions"
@@ -41,7 +43,6 @@ import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
-import { newToast } from "../../utils/common"
 import { getStyles } from "./style"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
@@ -105,7 +106,19 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 if (toggle && outData?.includes(data[0])) outData!.splice(outData!.indexOf(data[0]), 1)
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[key] || []), ...data])
                 else outData = data
-            } else outData = data
+
+                data.forEach((overlayId) => {
+                    // timeout so output can update first
+                    if (outData.includes(overlayId)) startOverlayTimer(id, overlayId, outData)
+                    else if (get(overlayTimers)[id + overlayId]) clearOverlayTimer(id, overlayId)
+                })
+            } else {
+                outData = data
+
+                if (key === "overlays") {
+                    clearOverlayTimers(id)
+                }
+            }
 
             a[id].out![key] = clone(outData)
 
@@ -194,6 +207,51 @@ export function startCamera(cam: API_camera) {
     setOutput("background", { name: cam.name || "", id: cam.id, cameraGroup: cam.groupId, type: "camera" })
 }
 
+/// OVERLAY TIMERS
+
+function startOverlayTimer(outputId: string, overlayId: string, outData: string[] = []) {
+    if (!outData.length) outData = get(outputs)[outputId]?.out?.overlays || []
+    if (!outData.includes(overlayId)) return
+
+    let overlay = get(overlays)[overlayId]
+    if (!overlay.displayDuration) return
+
+    overlayTimers.update((a) => {
+        let id = outputId + overlayId
+        if (a[id]) clearTimeout(a[id].timer)
+
+        a[id] = {
+            outputId,
+            overlayId,
+            timer: setTimeout(() => {
+                clearOverlayTimer(outputId, overlayId)
+                if (!get(outputs)[outputId]?.out?.overlays?.includes(overlayId)) return
+
+                setOutput("overlays", overlayId, true, outputId)
+            }, overlay.displayDuration! * 1000),
+        }
+
+        return a
+    })
+}
+
+export function clearOverlayTimers(outputId: string) {
+    Object.values(get(overlayTimers)).forEach((a) => clearOverlayTimer(outputId, a.overlayId))
+}
+
+export function clearOverlayTimer(outputId: string, overlayId: string) {
+    overlayTimers.update((a) => {
+        let id = outputId + overlayId
+        if (!a[id]) return a
+
+        clearTimeout(a[id].timer)
+        delete a[id]
+        return a
+    })
+}
+
+///
+
 let sortedOutputs: any[] = []
 export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {
     // WIP cache outputs
@@ -257,8 +315,9 @@ export function refreshOut(refresh: boolean = true) {
 // outputs is just for updates
 export function isOutCleared(key: string | null = null, updater: any = get(outputs), checkLocked: boolean = false) {
     let cleared: boolean = true
+    let outputIds = getActiveOutputs(updater, true, true, true)
 
-    getActiveOutputs(updater, true, true, true).forEach((id: string) => {
+    outputIds.forEach((id: string) => {
         let output: any = updater[id]
         let keys: string[] = key ? [key] : Object.keys(output.out || {})
         keys.forEach((key: string) => {
@@ -271,6 +330,11 @@ export function isOutCleared(key: string | null = null, updater: any = get(outpu
             }
         })
     })
+
+    if (cleared && key === "transition") {
+        // check overlay timers
+        cleared = !outputIds.find((outputId) => Object.values(get(overlayTimers)).find((a) => a.outputId === outputId))
+    }
 
     return cleared
 }
@@ -528,7 +592,7 @@ export function getCurrentMediaTransition() {
 
 // TEMPLATE
 
-export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true) {
+export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true, templateClicked: boolean = false) {
     if (!slideItems?.length) return []
     slideItems = clone(slideItems)
 
@@ -576,10 +640,12 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 if (!text.customType?.includes("disableTemplate")) {
                     let style = templateText?.style || ""
 
-                    // add original text color
-                    let textColor = getStyles(text.style)["color"] || "#FFFFFF"
-                    // use template color if text is white (default)
-                    if (textColor !== "#FFFFFF") style += `color: ${textColor};`
+                    // add original text color, if template is not clicked
+                    if (!templateClicked) {
+                        let textColor = getStyles(text.style)["color"] || "#FFFFFF"
+                        // use template color if text is white (default)
+                        if (textColor !== "#FFFFFF") style += `color: ${textColor};`
+                    }
 
                     text.style = style
                 }

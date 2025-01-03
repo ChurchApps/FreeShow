@@ -413,6 +413,7 @@
         "animate": "Animate",
         "translate": "Localization",
         "next_timer": "Next slide timer",
+        "display_duration": "Display duration",
         "import": "Import",
         "songbeamer_import": "Songbeamer Import",
         "export": "Export",

@@ -306,6 +306,7 @@ export interface Overlay {
     items: Item[]
     locked?: boolean
     placeUnderSlide?: boolean
+    displayDuration?: number
 }
 
 export interface Templates {

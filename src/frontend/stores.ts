@@ -103,6 +103,7 @@ export const customMessageCredits: Writable<string> = writable("")
 export const presentationData: Writable<any> = writable({})
 export const presentationApps: Writable<null | string[]> = writable(null)
 export const colorbars: Writable<string> = writable("")
+export const overlayTimers: Writable<{ [key: string]: any }> = writable({})
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })

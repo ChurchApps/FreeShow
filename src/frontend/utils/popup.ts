@@ -48,6 +48,7 @@ import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
 import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelte"
+import DisplayDuration from "../components/main/popups/DisplayDuration.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -82,6 +83,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     animate: Animate,
     translate: Translate,
     next_timer: NextTimer,
+    display_duration: DisplayDuration,
     manage_tags: ManageTags,
     advanced_settings: AdvancedScreen,
     about: About,

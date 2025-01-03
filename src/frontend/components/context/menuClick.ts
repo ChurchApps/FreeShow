@@ -933,6 +933,9 @@ const actions: any = {
             return a
         })
     },
+    display_duration: () => {
+        activePopup.set("display_duration")
+    },
 
     // stage
     move_connections: (obj: any) => {
