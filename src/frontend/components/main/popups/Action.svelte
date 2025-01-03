@@ -1,25 +1,25 @@
 <script lang="ts">
+    import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import { activePopup, activeShow, midiIn, popupData, showsCache, templates } from "../../../stores"
+    import { activePopup, activeShow, midiIn, popupData, showsCache, templates, timers } from "../../../stores"
+    import { translate } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
     import { actionData } from "../../actions/actionData"
+    import type { API_midi } from "../../actions/api"
+    import { customActionActivations } from "../../actions/customActivation"
     import { convertOldMidiToNewAction, defaultMidiActionChannels, midiInListen } from "../../actions/midi"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { clone, convertToOptions } from "../../helpers/array"
+    import { history } from "../../helpers/history"
+    import { updateCachedShows } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-    import { onDestroy, onMount } from "svelte"
-    import { clone } from "../../helpers/array"
-    import { history } from "../../helpers/history"
-    import { translate } from "../../../utils/language"
-    import { updateCachedShows } from "../../helpers/show"
-    import type { API_midi } from "../../actions/api"
     import Dropdown from "../../inputs/Dropdown.svelte"
-    import { customActionActivations } from "../../actions/customActivation"
+    import TextInput from "../../inputs/TextInput.svelte"
 
     $: id = $popupData.id || ""
     $: mode = $popupData.mode || ""
@@ -252,6 +252,17 @@
     // custom activations
     const customActivations = [{ id: "", name: "—" }, ...customActionActivations]
     $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""
+    $: specificActivation = action.specificActivation || ""
+
+    const specificActivations = {
+        timer_end: {
+            name: "items.timer",
+            list: () => convertToOptions($timers),
+        },
+    }
+    function getSpecificActivation(customActivation) {
+        return [{ id: "", name: "$:actions.any:$" }, ...specificActivations[customActivation].list()]
+    }
 
     // keys
     const keys = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
@@ -296,6 +307,16 @@
                 <p><T id="actions.custom_activation" /></p>
                 <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} />
             </CombinedInput>
+            {#if customActivation === "timer_end"}
+                <CombinedInput>
+                    <p><T id={specificActivations[customActivation]?.name} /></p>
+                    <Dropdown
+                        options={getSpecificActivation(customActivation)}
+                        value={getSpecificActivation(customActivation).find((a) => (specificActivation ? `${customActivation}__${a.id}` === specificActivation : a.id === ""))?.name || "—"}
+                        on:click={(e) => updateValue("specificActivation", e.detail.id ? `${customActivation}__${e.detail.id}` : "")}
+                    />
+                </CombinedInput>
+            {/if}
 
             <!-- can be activated by Keypress -->
             <CombinedInput>

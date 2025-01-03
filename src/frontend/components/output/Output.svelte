@@ -255,7 +255,8 @@
     {/if}
 
     <!-- "underlays" -->
-    {#if layers.includes("overlays") && outUnderlays?.length}
+    {#if layers.includes("overlays")}
+        <!-- && outUnderlays?.length -->
         <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outUnderlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
     {/if}
 
@@ -292,9 +293,9 @@
         {/if}
 
         <!-- overlays -->
-        {#if outOverlays?.length}
-            <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
-        {/if}
+        <!-- {#if outOverlays?.length} -->
+        <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
+        <!-- {/if} -->
     {/if}
 
     <!-- draw -->

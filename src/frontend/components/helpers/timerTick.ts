@@ -53,7 +53,7 @@ export function startTimerById(id: string) {
 
 export function stopTimers() {
     // timeout so timer_end action don't clear at the same time as next timer tick starts
-    setTimeout(() => {    
+    setTimeout(() => {
         // if (timeout) clearTimeout(timeout) // clear timeout (timer does not start again then...)
         activeTimers.set([])
         customInterval = INTERVAL
@@ -61,10 +61,12 @@ export function stopTimers() {
 }
 
 function increment(timer: any, i: number) {
-    if (timer.start < timer.end ? timer.currentTime >= timer.end : timer.currentTime <= timer.end) {
+    if (!timer.paused && (timer.start < timer.end ? timer.currentTime >= timer.end && timer.currentTime < timer.end + 1 : timer.currentTime <= timer.end && timer.currentTime > timer.end - 1)) {
+        if (!timer.overflow) timer.paused = true
+
         // ended
         checkNextAfterMedia(timer.id, "timer")
-        customActionActivation("timer_end")
+        customActionActivation(`timer_end___` + timer.id)
     }
 
     if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer

@@ -217,6 +217,7 @@
                 <DropArea id="project" selectChildren let:fileOver file>
                     {#if $projects[$activeProject || ""]?.shows?.length}
                         {#each $projects[$activeProject || ""]?.shows as show, index}
+                            {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}
                             <SelectElem id="show" triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}
                                     <Button
@@ -239,9 +240,9 @@
                                             {/if}
                                         </p>
 
-                                        {#if $special.sectionTriggerAction}
-                                            <span style="display: flex;position: absolute;right: 5px;" title={$midiIn[$special.sectionTriggerAction]?.name}>
-                                                <Icon id={getActionIcon($special.sectionTriggerAction)} size={0.8} white />
+                                        {#if triggerAction}
+                                            <span style="display: flex;position: absolute;right: 5px;" title={$midiIn[triggerAction]?.name}>
+                                                <Icon id={getActionIcon(triggerAction)} size={0.8} white />
                                             </span>
                                         {/if}
                                     </Button>

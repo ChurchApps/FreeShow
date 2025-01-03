@@ -261,6 +261,7 @@ export const boxes: Box = {
             default: [
                 { id: "src", input: "media" },
                 { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
+                // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
                 { name: "actions.mute", id: "muted", input: "checkbox", value: false },
                 { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
                 { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false },

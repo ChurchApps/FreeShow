@@ -1,10 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
-    import type { Option } from "../../../types/Main"
     import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, outputs, popupData, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
+    import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
     import T from "../helpers/T.svelte"
-    import { keysToID, sortByName } from "../helpers/array"
-    import { _show } from "../helpers/shows"
+    import { convertToOptions, keysToID, sortByName } from "../helpers/array"
     import Button from "../inputs/Button.svelte"
     import Checkbox from "../inputs/Checkbox.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
@@ -14,7 +13,6 @@
     import MidiValues from "./MidiValues.svelte"
     import RestValues from "./RestValues.svelte"
     import ChooseStyle from "./specific/ChooseStyle.svelte"
-    import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
     import VariableInputs from "./specific/VariableInputs.svelte"
 
     export let inputId: string
@@ -42,11 +40,6 @@
 
     function checkboxChanged(e: any) {
         updateValue("value", { detail: e.target.checked })
-    }
-
-    function convertToOptions(object) {
-        let options: Option[] = Object.keys(object).map((id) => ({ id, name: object[id].name }))
-        return sortByName(options)
     }
 
     $: if (list && actionId === "start_show" && !value?.id) openSelectShow()

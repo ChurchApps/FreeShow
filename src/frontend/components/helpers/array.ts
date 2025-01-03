@@ -1,3 +1,4 @@
+import type { Option } from "../../../types/Main"
 import { translate } from "../../utils/language"
 
 // move data in array at given indexes to new pos
@@ -205,4 +206,10 @@ export function shuffleArray(array) {
     }
 
     return array
+}
+
+// convert object to dropdown options
+export function convertToOptions(object) {
+    let options: Option[] = Object.keys(object).map((id) => ({ id, name: object[id].name }))
+    return sortByName(options)
 }

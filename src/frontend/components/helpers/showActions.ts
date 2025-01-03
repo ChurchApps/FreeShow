@@ -306,8 +306,8 @@ export function goToNextProjectItem(key: string = "") {
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
             else activeShow.set({ ...newShow, index })
 
-            if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && get(special).sectionTriggerAction) {
-                runAction(get(midiIn)[get(special).sectionTriggerAction])
+            if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
+                runAction(get(midiIn)[newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction])
                 return
             }
 
@@ -332,8 +332,8 @@ export function goToPreviousProjectItem(key: string = "") {
             if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
             else activeShow.set({ ...newShow, index })
 
-            if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && get(special).sectionTriggerAction) {
-                runAction(get(midiIn)[get(special).sectionTriggerAction])
+            if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
+                runAction(get(midiIn)[newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction])
                 return
             }
 

@@ -111,7 +111,13 @@ export function checkStartupActions() {
 export function customActionActivation(id: string) {
     Object.keys(get(midiIn)).forEach((actionId) => {
         let action: any = get(midiIn)[actionId]
-        if (action.customActivation === id && action.enabled !== false) runAction(action)
+        let customActivation = id.split("___")[0]
+        let specificActivation = id.split("___")[1]
+
+        if (action.customActivation !== customActivation || action.enabled === false) return
+        if (specificActivation && action.specificActivation?.includes(customActivation) && action.specificActivation.split("__")[1] !== specificActivation) return
+
+        runAction(action)
     })
 }
 

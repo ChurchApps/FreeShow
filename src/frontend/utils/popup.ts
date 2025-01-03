@@ -49,6 +49,7 @@ import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
 import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelte"
 import DisplayDuration from "../components/main/popups/DisplayDuration.svelte"
+import MediaFit from "../components/main/popups/MediaFit.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -73,6 +74,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     trigger: Trigger,
     audio_stream: AudioStream,
     transition: Transition,
+    media_fit: MediaFit,
     import_scripture: ImportScripture,
     edit_event: EditEvent,
     choose_screen: ChooseScreen,

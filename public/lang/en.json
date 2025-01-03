@@ -148,6 +148,7 @@
         "overlays": "Clear overlays",
         "audio": "Clear audio",
         "nextTimer": "Clear next slide timer",
+        "timer": "Clear timer",
         "drawing": "Clear drawing"
     },
     "remove": {
@@ -400,6 +401,7 @@
         "trigger": "Trigger",
         "audio_stream": "Audio stream",
         "transition": "Transition",
+        "media_fit": "Change media fit",
         "delete_show": "Delete show",
         "delete_show_confirmation": "Are you sure you want to delete",
         "delete_duplicated_shows": "Delete duplicated shows",
@@ -685,6 +687,7 @@
         "toggle_action": "Toggle action",
         "send_rest_command": "Send HTTP-Request",
         "custom_activation": "Custom activation",
+        "any": "Any",
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",
         "activate_slide_clicked": "Activate on slide click",

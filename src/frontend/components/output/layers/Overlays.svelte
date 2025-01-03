@@ -10,9 +10,46 @@
 
     export let isKeyOutput: boolean = false
     export let mirror: boolean = false
+
+    // SPAM PREVENTION
+
+    // prevent spamming overlays as they get stuck due to Svelte bug
+    // might still get stuck with some timings, but very unlikely
+    let outputtedOverlays: string[] = []
+    let clearingOverlays: string[] = []
+
+    $: if (activeOverlays !== undefined) updateOverlays()
+    let clearingTimeout: any = null
+    function updateOverlays() {
+        ;[...activeOverlays, ...outputtedOverlays].forEach((id) => {
+            if (clearingOverlays.includes(id)) return
+
+            if (!activeOverlays.includes(id) && outputtedOverlays.includes(id)) {
+                outputtedOverlays.splice(outputtedOverlays.indexOf(id), 1)
+                clearingOverlays.push(id)
+                outputtedOverlays = outputtedOverlays
+            } else if (activeOverlays.includes(id) && !outputtedOverlays.includes(id)) {
+                outputtedOverlays.push(id)
+                outputtedOverlays = outputtedOverlays
+            }
+        })
+
+        if (!clearingOverlays.length) return
+
+        if (clearingTimeout) clearTimeout(clearingTimeout)
+        clearingTimeout = setTimeout(clearingFinished, 220)
+    }
+
+    function clearingFinished() {
+        clearingOverlays.forEach((id) => {
+            if (activeOverlays.includes(id) && !outputtedOverlays.includes(id)) outputtedOverlays.push(id)
+            outputtedOverlays = outputtedOverlays
+        })
+        clearingOverlays = []
+    }
 </script>
 
-{#each activeOverlays as id}
+{#each outputtedOverlays as id}
     {#if overlays[id]}
         <div class:key={isKeyOutput}>
             <Overlay {id} {outputId} {overlays} {mirror} {transition} />

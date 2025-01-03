@@ -142,6 +142,7 @@ export type Popups =
     | "trigger"
     | "audio_stream"
     | "transition"
+    | "media_fit"
     | "import_scripture"
     | "edit_event"
     | "choose_chord"
