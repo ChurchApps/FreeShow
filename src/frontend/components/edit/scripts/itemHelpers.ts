@@ -45,7 +45,7 @@ export function addItem(type: ItemType, id: any = null, options: any = {}, value
     else if (type === "timer") {
         newData.timerId = sortByName(keysToID(get(timers)))[0]?.id || createNewTimer()
         if (get(timers)[newData.timerId || ""]?.type === "counter") addSlideAction(get(activeEdit).slide ?? -1, "start_slide_timers")
-    } else if (type === "clock") newData.clock = { type: "digital", dateFormat: "none", timeFormat: "hh:mm a" }
+    } else if (type === "clock") newData.clock = { type: "digital", dateFormat: "none", showTime: true, seconds: false }
     else if (type === "mirror") newData.mirror = {}
     else if (type === "media") newData.src = options.src || ""
     else if (type === "variable") newData.variable = { id: "" }

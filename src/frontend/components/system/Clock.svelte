@@ -1,5 +1,6 @@
 <script lang="ts">
     import AnalogClock from "./AnalogClock.svelte"
+    import { timeFormat } from "../../stores"
     import dayjs from "dayjs"
     import localizedFormat from "dayjs/plugin/localizedFormat"
 
@@ -10,11 +11,36 @@
     export let autoSize: number = 0
     export let type: "digital" | "analog" | "custom" = "digital"
     export let dateFormat: string = "none"
-    export let timeFormat: string = "hh:mm a"
     export let customFormat: string = "hh:mm a"
+    export let showTime: boolean = true
+    export let seconds: boolean = true
+    
+    $: twelwe = $timeFormat === "12"
 
+    
     let d: Date = new Date()
     setInterval(() => (d = new Date()), 250)
+    let h: number = 0
+    let m: number = 0
+    let s: number = 0
+    
+    $: if (d) {
+        h = d.getHours()
+        m = d.getMinutes()
+        s = d.getSeconds()
+        if (twelwe) {
+            if (h === 0) h = 12
+            else if (h > 12) h -= 12
+        }
+    }
+    
+    function formatTime(date: Date): string {
+        const is12Hour = $timeFormat === "12"
+        const format = is12Hour 
+            ? (seconds ? "h:mm:ss A" : "h:mm A")
+            : (seconds ? "HH:mm:ss" : "HH:mm")
+        return dayjs(date).format(format)
+    }
 
     function formatDateTime(date: Date, format: string): string {
         if (format === "none") return ""
@@ -30,12 +56,12 @@
     }
 
     $: formattedDate = dateFormat !== "none" ? formatDateTime(d, dateFormat) : ""
-    $: formattedTime = timeFormat !== "none" ? formatDateTime(d, timeFormat) : ""
     $: formattedCustom = type === "custom" ? formatDateTime(d, customFormat) : ""
+
 </script>
 
 {#if type === "analog"}
-    <AnalogClock date={d} />
+    <AnalogClock date={d} {...{ h, m, s }} {seconds} />
 {:else if type === "custom"}
     <div class="clock" style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
         {#if style}
@@ -48,12 +74,12 @@
     <div class="clock" style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
         {#if style}
             {#if formattedDate}<span class="colored">{formattedDate}</span>{/if}
-            {#if formattedDate && formattedTime}&nbsp;{/if}
-            {#if formattedTime}<span class="colored">{formattedTime}</span>{/if}
+            {#if formattedDate && showTime}&nbsp;{/if}
+            {#if showTime}<span class="colored">{formatTime(d)}</span>{/if}
         {:else}
             {#if formattedDate}{formattedDate}{/if}
-            {#if formattedDate && formattedTime}&nbsp;{/if}
-            {#if formattedTime}{formattedTime}{/if}
+            {#if formattedDate && showTime}&nbsp;{/if}
+            {#if showTime}{formatTime(d)}{/if}
         {/if}
     </div>
 {/if}
