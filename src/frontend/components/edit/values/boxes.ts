@@ -402,22 +402,18 @@ export const boxes: Box = {
                     },
                 },
                 {
-                    name: "clock.time_format",
-                    input: "dropdown",
-                    id: "clock.timeFormat",
-                    value: "hh:mm a",
-                    hidden: true,
-                    values: {
-                        options: [
-                            { id: "none", name: "$:main.none:$" },
-                            { id: "LT", name: `${dayjs(now).format("LT")}` }, // 8:30 PM
-                            { id: "LTS", name: `${dayjs(now).format("LTS")}` }, // 8:30:25 PM
-                            { id: "hh:mm a", name: `${dayjs(now).format("hh:mm a")}` }, // 08:30 pm
-                            { id: "HH:mm", name: `${dayjs(now).format("HH:mm")}` }, // 20:30
-                            { id: "h:mm A", name: `${dayjs(now).format("h:mm A")}` }, // 8:30 PM
-                            { id: "H:mm:ss", name: `${dayjs(now).format("H:mm:ss")}` }, // 20:30:25
-                        ],
-                    },
+                    name: "clock.show_time",
+                    input: "checkbox",
+                    id: "clock.showTime", 
+                    value: true,
+                    hidden: true
+                },
+                {
+                    name: "clock.seconds",
+                    input: "checkbox",
+                    id: "clock.seconds",
+                    value: false,
+                    hidden: true
                 },
                 {
                     name: "clock.custom_format",
@@ -436,7 +432,7 @@ export const boxes: Box = {
                 // },
             ],
             font: [
-                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "monospace" },
+                { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
                 { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
             ],
             style: [{ input: "font-style" }, { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" }],

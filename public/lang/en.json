@@ -979,7 +979,7 @@
         "seconds": "Seconds",
         "custom": "Custom",
         "date_format": "Date Format",
-        "time_format": "Time Format",
+        "show_time": "Show Time",
         "custom_format": "Custom Format"
     },
     "captions": {
