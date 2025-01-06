@@ -1,7 +1,7 @@
 import axios from "axios"
 
 export type LyricSearchResult = {
-    source: string
+    source: "Genius" | "Hymnary" | "Letras"
     key: string
     artist: string
     title: string
@@ -10,13 +10,18 @@ export type LyricSearchResult = {
 
 export class LyricSearch {
     static search = async (artist: string, title: string) => {
-        const results = await Promise.all([LyricSearch.searchGenius(artist, title), LyricSearch.searchHymnary(title)])
+        const results = await Promise.all([
+            LyricSearch.searchGenius(artist, title),
+            LyricSearch.searchHymnary(title),
+            LyricSearch.searchLetras(title),
+        ])
         return results.flat()
     }
 
     static get(song: LyricSearchResult) {
         if (song.source === "Genius") return LyricSearch.getGenius(song)
         else if (song.source === "Hymnary") return LyricSearch.getHymnary(song)
+        else if (song.source === "Letras") return LyricSearch.getLetras(song)
         return Promise.resolve("")
     }
 
@@ -83,10 +88,53 @@ export class LyricSearch {
         const url = `https://hymnary.org/text/${song.key}`
         const response = await axios.get(url)
         const html = await response.data
-        const regex = /<div property=\"text\">(.*?)<\/div>/gs
-        const match = regex.exec(html)
+        return this.getLyricFromHtml(html, /<div property=\"text\">(.*?)<\/div>/gs);
+    }
 
+    private static convertHymnaryToResult = (hymnaryResult: any, originalQuery: string) => {
+        return {
+            source: "Hymnary",
+            key: hymnaryResult[4],
+            artist: hymnaryResult[6],
+            title: hymnaryResult[0],
+            originalQuery: originalQuery,
+        } as LyricSearchResult
+    }
+
+    //Letras
+    private static searchLetras = async (title: string) => {
+        try {
+            const url = `https://solr.sscdn.co/letras/m1/?q=${encodeURIComponent(title)}`
+            const response = await axios.get(url)
+            const json = JSON.parse(response.data.replace('LetrasSug(', '').slice(0, -2))
+            const songs = json.response.docs.filter((d: any) => d.id.startsWith("mus"))
+            return songs.map((s: any) => LyricSearch.convertLetrasToResult(s, title))
+        } catch (ex) {
+            console.log(ex)
+            return []
+        }
+    }
+
+    private static convertLetrasToResult = (letrasResult: any, originalQuery: string) => {
+        return {
+            source: "Letras",
+            key: `${letrasResult.dns}/${letrasResult.url}`,
+            artist: letrasResult.art,
+            title: letrasResult.txt,
+            originalQuery: originalQuery,
+        } as LyricSearchResult
+    }
+
+    private static getLetras = async (song: LyricSearchResult) => {
+        const url = `https://www.letras.mus.br/${song.key}`
+        const response = await axios.get(url)
+        const html = await response.data
+        return this.getLyricFromHtml(html, /<div class=\"lyric-original\">(.*?)<\/div>/gs);
+    }
+
+    private static getLyricFromHtml = (songHtml: string, regex: RegExp) => {
         let result = ""
+        const match = regex.exec(songHtml)
         if (match) {
             result = match[0]
             result = result.replace(/<br\s*\/?>/gi, "\n")
@@ -104,18 +152,7 @@ export class LyricSearch {
             })
             result = newLines.join("\n").trim()
         }
-
-        return result
-    }
-
-    private static convertHymnaryToResult = (hymnaryResult: any, originalQuery: string) => {
-        return {
-            source: "Hymnary",
-            key: hymnaryResult[4],
-            artist: hymnaryResult[6],
-            title: hymnaryResult[0],
-            originalQuery: originalQuery,
-        } as LyricSearchResult
+        return result;
     }
 
     // ref: http://stackoverflow.com/a/1293163/2343
