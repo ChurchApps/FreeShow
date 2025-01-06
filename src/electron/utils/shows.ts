@@ -1,7 +1,7 @@
 import path from "path"
 import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
-import { Show } from "../../types/Show"
+import type { Show } from "../../types/Show"
 import { deleteFile, doesPathExist, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFile } from "./files"
 
 export function getAllShows(data: any) {

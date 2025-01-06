@@ -7,7 +7,8 @@ import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
 import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
-import { Show } from "../../types/Show"
+import type { Subtitle } from "../../types/Main"
+import type { Show } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
@@ -15,7 +16,6 @@ import { OutputHelper } from "../output/OutputHelper"
 import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./shows"
-import type { Subtitle } from "../../types/Main"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)

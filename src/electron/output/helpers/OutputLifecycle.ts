@@ -1,13 +1,13 @@
 import { BrowserWindow } from "electron"
 import { OUTPUT_CONSOLE, isMac, loadWindowContent, mainWindow, toApp } from "../.."
-import { Output } from "../../../types/Output"
+import { OUTPUT } from "../../../types/Channels"
+import type { Output } from "../../../types/Output"
+import { CaptureHelper } from "../../capture/CaptureHelper"
 import { NdiSender } from "../../ndi/NdiSender"
 import { setDataNDI } from "../../ndi/talk"
+import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
-import { OUTPUT } from "../../../types/Channels"
-import { CaptureHelper } from "../../capture/CaptureHelper"
-import { wait } from "../../utils/helpers"
 
 export class OutputLifecycle {
     static async createOutput(output: Output) {

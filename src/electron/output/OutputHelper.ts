@@ -1,14 +1,14 @@
+import { toApp } from ".."
+import { OUTPUT } from "../../types/Channels"
+import type { Message } from "../../types/Socket"
+import { CaptureHelper } from "../capture/CaptureHelper"
 import { OutputBounds } from "./helpers/OutputBounds"
 import { OutputIdentify } from "./helpers/OutputIdentify"
+import { OutputLifecycle } from "./helpers/OutputLifecycle"
 import { OutputSend } from "./helpers/OutputSend"
 import { OutputValues } from "./helpers/OutputValues"
 import { OutputVisibility } from "./helpers/OutputVisibility"
-import { OutputLifecycle } from "./helpers/OutputLifecycle"
-import { Message } from "../../types/Socket"
-import { toApp } from ".."
-import { OUTPUT } from "../../types/Channels"
-import { Output } from "./Output"
-import { CaptureHelper } from "../capture/CaptureHelper"
+import type { Output } from "./Output"
 
 export class OutputHelper {
     static receiveOutput(_e: any, msg: Message) {

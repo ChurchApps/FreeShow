@@ -17,7 +17,7 @@ import { captureSlide, getThumbnail, getThumbnailFolderPath, saveImage } from ".
 import { OutputHelper } from "../output/OutputHelper"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers } from "../servers"
-import { Message } from "./../../types/Socket"
+import type { Message } from "./../../types/Socket"
 import { apiReturnData, startWebSocketAndRest, stopApiListener } from "./api"
 import {
     bundleMediaFiles,
