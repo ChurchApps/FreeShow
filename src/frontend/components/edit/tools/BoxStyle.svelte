@@ -169,20 +169,15 @@
         // Get the clock type from the first option
         const clockType = item?.clock?.type || "digital"
         const dateFormat = item?.clock?.dateFormat || "none"
-
-       // Default option [0] is the clock type selector which is always shown
-       
-       // [1] dateFormat
-       box.edit.default[1].hidden = clockType !== "digital"
-       
-       // [2] showTime
-       box.edit.default[2].hidden = clockType !== "digital"
-       
-       // [3] seconds
-       box.edit.default[3].hidden = clockType === "custom" || (clockType === "digital" && !item?.clock?.showTime)
-       
-       // [4] customFormat
-       box.edit.default[4].hidden = clockType !== "custom"
+        // Default option [0] is the clock type selector which is always shown
+        // [1] dateFormat
+        box.edit.default[1].hidden = clockType !== "digital"
+        // [2] showTime
+        box.edit.default[2].hidden = clockType !== "digital" || dateFormat === "none"
+        // [3] seconds
+        box.edit.default[3].hidden = clockType === "custom" || (clockType === "digital" && !item?.clock?.showTime)
+        // [4] customFormat
+        box.edit.default[4].hidden = clockType !== "custom"
     }
 
     $: if (box?.edit?.default) {

@@ -978,9 +978,7 @@
         "analog": "Analog",
         "seconds": "Seconds",
         "custom": "Custom",
-        "date_format": "Date Format",
-        "show_time": "Show Time",
-        "custom_format": "Custom Format"
+        "show_time": "Display time"
     },
     "captions": {
         "info": "Please click the URL to open in your browser if you haven't already, or open it on any other device! Make sure to give access to your microphone, and use Google Chrome for the best performance.",

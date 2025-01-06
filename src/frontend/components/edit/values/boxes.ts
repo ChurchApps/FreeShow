@@ -32,6 +32,7 @@ export type EditInput = {
     values?: any
     popup?: string
     enableNoColor?: boolean
+    title?: string // custom hover title
     relative?: boolean // updated values should be relative to each selected item (only for number px values)
     placeholder?: string
 }
@@ -65,7 +66,7 @@ export let trackerEdits = [
     },
 ]
 
-const now = new Date(2025, 0, 1)
+const now = new Date(2025, 0, 10)
 
 export const boxes: Box = {
     text: {
@@ -385,7 +386,7 @@ export const boxes: Box = {
                     },
                 },
                 {
-                    name: "clock.date_format",
+                    name: "sort.date",
                     input: "dropdown",
                     id: "clock.dateFormat",
                     value: "none",
@@ -393,43 +394,44 @@ export const boxes: Box = {
                     values: {
                         options: [
                             { id: "none", name: "$:main.none:$" },
-                            { id: "LL", name: `${dayjs(now).format("LL")}` }, // August 16, 2024
-                            { id: "ll", name: `${dayjs(now).format("ll")}` }, // Aug 16, 2024
-                            { id: "MM/DD/YYYY", name: `${dayjs(now).format("MM/DD/YYYY")}` }, // 12/16/2024
-                            { id: "DD/MM/YYYY", name: `${dayjs(now).format("DD/MM/YYYY")}` }, // 16/12/2024
-                            { id: "YYYY-MM-DD", name: `${dayjs(now).format("YYYY-MM-DD")}` }, // 2024-12-16
+                            { id: "LL", name: `${dayjs(now).format("LL")}` }, // January 10, 2025
+                            { id: "ll", name: `${dayjs(now).format("ll")}` }, // Jan 10, 2025
+                            { id: "DD/MM/YYYY", name: `${dayjs(now).format("DD/MM/YYYY")}` }, // 10/01/2025
+                            { id: "MM/DD/YYYY", name: `${dayjs(now).format("MM/DD/YYYY")}` }, // 01/10/2025
+                            { id: "YYYY-MM-DD", name: `${dayjs(now).format("YYYY-MM-DD")}` }, // 2025-01-10
                         ],
                     },
                 },
                 {
                     name: "clock.show_time",
                     input: "checkbox",
-                    id: "clock.showTime", 
+                    id: "clock.showTime",
                     value: true,
-                    hidden: true
+                    hidden: true,
                 },
                 {
                     name: "clock.seconds",
                     input: "checkbox",
                     id: "clock.seconds",
                     value: false,
-                    hidden: true
+                    hidden: true,
                 },
                 {
-                    name: "clock.custom_format",
+                    name: "actions.format",
+                    title: "Day: {DD}, Month: {MM}, Full year: {YYYY}, Hours: {hh}, Minutes: {mm}, Seconds: {ss}, AM/PM: {A}, Full date: {LLL}", // similar to getProjectName()
                     input: "text",
                     id: "clock.customFormat",
                     value: "hh:mm a",
                     hidden: true,
-                    placeholder: "Examples: LT, LLLL, MMMM D YYYY h:mm A",
+                    // input_placeholder: "Examples: LT, LLLL, MMMM D YYYY h:mm A",
                 },
-                // WIP should be internal
-                // {
-                //     name: "",
-                //     input: "tip",
-                //     values: { subtext: "Custom formats at day.js.org/docs/en/display/format" },
-                //     hidden: true,
-                // },
+                {
+                    name: "",
+                    input: "tip",
+                    values: { subtext: '<a href="https://day.js.org/docs/en/display/format#list-of-all-available-formats" class="open">List of day.js formats</a>' },
+                    hidden: true,
+                    disabled: "clock",
+                },
             ],
             font: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },

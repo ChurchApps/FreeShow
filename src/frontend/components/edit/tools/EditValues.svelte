@@ -444,10 +444,11 @@
                         <Dropdown value={Object.entries($variables).find(([id]) => id === input.value)?.[1]?.name || "—"} options={keysToID($variables)} on:click={(e) => valueChange(e, input)} />
                     </CombinedInput>
                 {:else if input.input === "tip"}
-                    {#if (!input.hidden || (item?.clock?.type === "custom"))}
+                    {#if !input.hidden || (input.disabled === "clock" && item?.clock?.type === "custom")}
                         <p class="tip">
-                            <T id={input.name} />
-                            {input.values?.subtext || ""}
+                            {#if input.name}<T id={input.name} />{/if}
+                            {@html input.values?.subtext || ""}
+                            {#if input.values?.subtext.includes("<a href=")}<Icon id="launch" white />{/if}
                         </p>
                     {/if}
                 {:else if input.input === "popup"}
@@ -543,7 +544,7 @@
                     {@const value = getValue(input, { styles, item })}
                     {#if !input.hidden}
                         <CombinedInput>
-                            <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
+                            <p title={input.title || $dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
                                 {#key input.name}
                                     <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
                                 {/key}
@@ -631,9 +632,27 @@
     .tip {
         font-size: 0.8em;
         opacity: 0.8;
-        text-align: center;
         padding: 8px;
+
+        text-align: center;
         text-overflow: revert;
         white-space: normal;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* Link */
+    .tip :global(a) {
+        color: var(--text);
+        opacity: 0.7;
+    }
+    .tip :global(a):hover {
+        opacity: 0.75;
+    }
+    .tip :global(a):active {
+        opacity: 0.9;
     }
 </style>
