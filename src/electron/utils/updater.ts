@@ -1,9 +1,12 @@
 // import { Notification, app } from "electron"
 import { autoUpdater } from "electron-updater"
+import { isProd } from ".."
 
 // let notification: Notification | null
 
 export default function checkForUpdates() {
+    if (!isProd) return
+
     autoUpdater.checkForUpdatesAndNotify()
     // {
     //   title: app.getName(),
