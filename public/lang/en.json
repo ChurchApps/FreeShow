@@ -425,6 +425,7 @@
         "edit_event": "Edit event",
         "about": "About",
         "history": "History",
+        "manage_emitters": "Manage emitters",
         "action": "Action",
         "category_action": "Category action",
         "user_data_overwrite": "Found existing data",

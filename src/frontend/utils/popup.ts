@@ -50,6 +50,7 @@ import { activePopup, popupData } from "../stores"
 import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelte"
 import DisplayDuration from "../components/main/popups/DisplayDuration.svelte"
 import MediaFit from "../components/main/popups/MediaFit.svelte"
+import Emitters from "../components/main/popups/Emitters.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -94,6 +95,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     reset_all: ResetAll,
     alert: Alert,
     history: History,
+    manage_emitters: Emitters,
     action: Action,
     category_action: CategoryAction,
     user_data_overwrite: UserDataOverwrite,

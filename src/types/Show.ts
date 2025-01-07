@@ -295,6 +295,11 @@ export interface MidiIn extends Midi {
     }[]
 }
 
+export interface Emitter {
+    name: string
+    type: "osc" | "http" | "midi"
+}
+
 //
 
 export interface Overlays {
