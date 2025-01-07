@@ -1,8 +1,8 @@
 <script lang="ts">
+    import { getStyleResolution } from "../../common/util/getStyleResolution"
     import Main from "../components/Main.svelte"
     import Textbox from "../components/Textbox.svelte"
     import Zoomed from "../components/Zoomed.svelte"
-    import { getStyleResolution } from "../helpers/getStyleResolution"
 
     export let slide: any
     export let stageItem: any

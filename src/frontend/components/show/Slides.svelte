@@ -30,7 +30,7 @@
     function fixBrokenMedia() {
         if (!currentShow) return
         showsCache.update((a) => {
-            Object.entries(currentShow.layouts).forEach(([layoutId, layout]) => {
+            Object.entries(currentShow.layouts || {}).forEach(([layoutId, layout]) => {
                 layout.slides.forEach((slide, i) => {
                     let backgroundId = slide.background
                     if (backgroundId && !currentShow.media[backgroundId]) {

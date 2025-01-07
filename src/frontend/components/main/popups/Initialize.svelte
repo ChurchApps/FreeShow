@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, dataPath, guideActive, showsPath } from "../../../stores"
+    import { activePopup, dataPath, guideActive, showsPath, timeFormat } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -9,6 +9,7 @@
     import FolderPicker from "../../inputs/FolderPicker.svelte"
     import LocaleSwitcher from "../../settings/LocaleSwitcher.svelte"
     import { send } from "../../../utils/request"
+    import Checkbox from "../../inputs/Checkbox.svelte"
 
     // const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
 
@@ -26,6 +27,10 @@
         guideActive.set(true)
         activePopup.set(null)
     }
+
+    const inputs = {
+        timeFormat: (e: any) => timeFormat.set(e.target.checked ? "24" : "12"),
+    }
 </script>
 
 <div class="main">
@@ -35,9 +40,17 @@
     <br />
 
     <p style="margin-bottom: 10px;font-style: italic;opacity: 0.7;"><T id="setup.change_later" />:</p>
+
     <CombinedInput textWidth={30}>
         <p><T id="settings.language" /></p>
         <LocaleSwitcher />
+    </CombinedInput>
+
+    <CombinedInput textWidth={30}>
+        <p><T id="settings.use24hClock" /></p>
+        <div class="alignRight">
+            <Checkbox checked={$timeFormat === "24"} on:change={inputs.timeFormat} />
+        </div>
     </CombinedInput>
 
     <CombinedInput textWidth={30}>

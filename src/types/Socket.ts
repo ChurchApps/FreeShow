@@ -13,6 +13,7 @@ export interface ClientMessage {
     id?: DeviceID
     api?: string // API ACTION ID (channel: "API:id")
     data?: any
+    send?: boolean
 }
 
 type DeviceID = string

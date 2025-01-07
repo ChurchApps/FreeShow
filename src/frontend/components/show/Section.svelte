@@ -79,7 +79,7 @@
 
         <CombinedInput>
             <p><T id="settings.section_trigger_action" /></p>
-            <Dropdown disabled={localAction} options={actionOptions} value={actionOptions.find((a) => a.id === $special.sectionTriggerAction || "")?.name || "—"} on:click={updateTrigger} />
+            <Dropdown disabled={localAction && $midiIn[localAction]} options={actionOptions} value={actionOptions.find((a) => a.id === $special.sectionTriggerAction || "")?.name || "—"} on:click={updateTrigger} />
         </CombinedInput>
 
         <h5><T id="groups.current" /></h5>

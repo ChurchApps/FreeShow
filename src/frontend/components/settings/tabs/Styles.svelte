@@ -4,7 +4,7 @@
     import { mediaExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, removeDuplicates, sortByName } from "../../helpers/array"
+    import { clone, keysToID, removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getFileName } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
@@ -62,14 +62,7 @@
         name: $dictionary.example?.default || "Default",
     }
 
-    $: stylesList = getList($styles)
-    function getList(styles) {
-        let list = Object.entries(styles).map(([id, obj]: any) => {
-            return { ...obj, id }
-        })
-
-        return sortByName(list)
-    }
+    $: stylesList = sortByName(keysToID($styles))
 
     // set id after deletion
     $: if (Object.keys($styles)?.length && !$styles[styleId]) styleId = $styles.default ? "default" : Object.keys($styles)[0]
@@ -97,11 +90,7 @@
 
     // slide
 
-    let activeLayers: any[] = []
-    $: {
-        if (currentStyle.layers) activeLayers = currentStyle.layers
-        else activeLayers = clone(defaultLayers)
-    }
+    $: activeLayers = currentStyle.layers || clone(defaultLayers)
 
     // overlays
 
@@ -114,7 +103,7 @@
     ]
 
     let templateList: any[] = []
-    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))]
+    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, a]: any) => ({ id, name: a?.name })))]
 
     // text divider
     function keydown(e: any) {

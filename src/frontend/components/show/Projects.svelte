@@ -240,8 +240,8 @@
                                             {/if}
                                         </p>
 
-                                        {#if triggerAction}
-                                            <span style="display: flex;position: absolute;right: 5px;" title={$midiIn[triggerAction]?.name}>
+                                        {#if triggerAction && $midiIn[triggerAction]}
+                                            <span style="display: flex;position: absolute;right: 5px;" title={$midiIn[triggerAction].name}>
                                                 <Icon id={getActionIcon(triggerAction)} size={0.8} white />
                                             </span>
                                         {/if}

@@ -148,7 +148,7 @@ export function slideHasAction(actions: any, key: string) {
 }
 
 export function getActionIcon(id: string) {
-    let actions = get(midiIn)[id]?.triggers
+    let actions = get(midiIn)[id]?.triggers || {}
     if (actions.length > 1) return "actions"
     return actionData[actions[0]]?.icon || "actions"
 }

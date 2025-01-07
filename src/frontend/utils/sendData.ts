@@ -59,7 +59,7 @@ export async function sendData(id: Clients, msg: ClientMessage, check: boolean =
     // let ids: string[] = []
     // if (msg.id) ids = [msg.id]
     // else ids = Object.keys(get(connections).REMOTE || {})
-    if (msg && msg.data !== null && (!check || !checkSent(id, msg))) {
+    if (msg && (msg.data !== null || msg.send) && (!check || !checkSent(id, msg))) {
         window.api.send(id, msg)
         // ids.forEach((id) => {
         // window.api.send(id, { id, ...msg })

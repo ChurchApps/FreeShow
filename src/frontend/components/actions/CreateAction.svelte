@@ -25,38 +25,25 @@
         pickAction = false
     }
 
-    const removeFromSlideAction = [
-        "next_project_item",
-        "previous_project_item",
-        "name_select_show",
-        "next_slide",
-        "previous_slide",
-        "random_slide",
-        "index_select_slide",
-        "name_select_slide",
-        "id_select_group",
-        "lock_output",
-        "toggle_output_windows",
-        "restore_output",
-        "clear_all",
-        "clear_slide",
-        "clear_next_timer",
-        "name_select_overlay",
-        "name_start_timer",
-        "id_start_timer",
-        "playlist_next",
-        "id_select_output_style",
-        "id_select_stage_layout",
-        "change_stage_output_layout",
-        "change_transition",
-        "change_variable",
-        "start_camera",
-        "toggle_action",
-        "send_rest_command",
+    const slideActions = [
+        "start_show",
+        "set_template",
+        "clear_background",
+        "clear_overlays",
+        "clear_audio",
+        "change_volume",
+        "start_audio_stream",
+        "start_playlist",
+        "start_metronome",
+        "start_slide_timers",
+        "stop_timers",
+        "start_slide_recording",
+        "change_output_style",
+        "start_trigger",
+        "send_midi",
     ]
     // remove actions that are not fully implemented to CustomInput yet
     const removeActions = ["change_transition"]
-    if (list) removeActions.push(...removeFromSlideAction)
     if ($popupData.mode !== "template") removeActions.push("run_action")
 
     $: ACTIONS = [
@@ -82,7 +69,9 @@
                 // if (actionData[actionId]?.input) return true
                 // remove already added or custom ones
                 if (removeActions.includes(id) || existingActions.includes(id)) return false
-                if (list && id.includes("index_select")) return false
+                // custom slide actions list
+                if (list && !slideActions.includes(id)) return false
+                // if (list && id.includes("index_select")) return false
                 return true
             }),
         // custom special

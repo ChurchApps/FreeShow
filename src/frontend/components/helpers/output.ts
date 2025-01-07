@@ -57,6 +57,11 @@ export function displayOutputs(e: any = {}, auto: boolean = false) {
     })
 }
 
+export function toggleOutput(id: string) {
+    if (!get(outputs)[id]?.enabled) return
+    send(OUTPUT, ["DISPLAY"], { enabled: "toggle", one: true, output: { id, ...get(outputs)[id] } })
+}
+
 // background: null,
 // slide: null,
 // overlays: [],

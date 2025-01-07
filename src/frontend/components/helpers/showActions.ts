@@ -307,7 +307,9 @@ export function goToNextProjectItem(key: string = "") {
             else activeShow.set({ ...newShow, index })
 
             if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
-                runAction(get(midiIn)[newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction])
+                let actionId = newShow.data?.settings?.triggerAction
+                if (!actionId || !get(midiIn)[actionId]) actionId = get(special).sectionTriggerAction
+                if (actionId) runAction(get(midiIn)[actionId])
                 return
             }
 
@@ -333,7 +335,9 @@ export function goToPreviousProjectItem(key: string = "") {
             else activeShow.set({ ...newShow, index })
 
             if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
-                runAction(get(midiIn)[newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction])
+                let actionId = newShow.data?.settings?.triggerAction
+                if (!actionId || !get(midiIn)[actionId]) actionId = get(special).sectionTriggerAction
+                if (actionId) runAction(get(midiIn)[actionId])
                 return
             }
 

@@ -8,6 +8,9 @@
     import { dictionary, errors, isConnected, password } from "./util/stores"
 
     initSocket()
+
+    // test API actions
+    // send("API:get_playlists")
 </script>
 
 <Error errors={$errors} />

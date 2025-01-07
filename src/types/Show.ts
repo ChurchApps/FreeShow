@@ -267,6 +267,7 @@ export interface Midi {
     name: string
     triggers: string[]
     actionValues?: any[]
+    tags?: string[]
     // action?: string
     // actionData?: any
     shows?: any[] // ??

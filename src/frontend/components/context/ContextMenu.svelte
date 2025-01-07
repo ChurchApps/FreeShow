@@ -96,6 +96,7 @@
         if (id === "remove_layers") return $contextData.layers
         if (id === "tag_set" || id === "tag_filter") return $contextData.tags
         if (id === "media_tag_filter") return $contextData.media_tags
+        if (id === "action_tag_filter") return $contextData.action_tags
 
         return true
     }

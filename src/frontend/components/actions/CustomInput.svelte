@@ -70,6 +70,7 @@
         start_trigger: () => convertToOptions($triggers),
         run_action: () => convertToOptions($midiIn).filter((a) => a.name && a.id !== mainId),
         set_template: () => convertToOptions($templates),
+        toggle_output: () => convertToOptions($outputs),
     }
 
     $: options = getOptions[actionId]?.() || []

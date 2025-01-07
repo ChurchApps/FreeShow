@@ -5,7 +5,7 @@ import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
-import { changeStageOutputLayout, displayOutputs, startCamera } from "../helpers/output"
+import { changeStageOutputLayout, displayOutputs, startCamera, toggleOutput } from "../helpers/output"
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShowSync } from "../helpers/showActions"
 import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
@@ -18,8 +18,14 @@ import {
     changeShowLayout,
     changeVariable,
     getClearedState,
+    getOutput,
     getPlainText,
+    getPlayingAudioTime,
+    getPlayingPlaylist,
+    getPlayingVideoTime,
+    getPlaylists,
     getShowGroups,
+    getSlide,
     gotoGroup,
     moveStageConnection,
     playMedia,
@@ -30,6 +36,7 @@ import {
     selectShowByName,
     selectSlideByIndex,
     selectSlideByName,
+    setShowAPI,
     setTemplate,
     startScripture,
     toggleLock,
@@ -61,11 +68,12 @@ interface API {
     returnId?: string
 }
 type API_id = { id: string }
+export type API_id_optional = { id?: string }
 type API_index = { index: number }
 type API_boolval = { value?: boolean }
 type API_strval = { value: string }
 type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
-type API_slide = { showId?: string | "active"; slideId?: string }
+export type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_id_value = { id: string; value: string }
 export type API_rearrange = { showId: string; from: number; to: number }
 export type API_group = { showId: string; groupId: string }
@@ -132,6 +140,7 @@ export const API_ACTIONS = {
     start_show: (data: API_id) => startShowSync(data.id),
     change_layout: (data: API_layout) => changeShowLayout(data),
     set_plain_text: (data: API_id_value) => formatText(data.value, data.id),
+    set_show: (data: API_id_value) => setShowAPI(data.id, data.value),
     rearrange_groups: (data: API_rearrange) => rearrangeGroups(data),
     add_group: (data: API_group) => addGroup(data),
     set_template: (data: API_id) => setTemplate(data.id),
@@ -209,6 +218,7 @@ export const API_ACTIONS = {
     send_midi: (data: API_midi) => sendMidi(data),
     run_action: (data: API_id) => runActionId(data.id),
     toggle_action: (data: API_toggle) => toggleAction(data),
+    toggle_output: (data: API_id) => toggleOutput(data.id),
     send_rest_command: (data: API_rest_command) => sendRestCommandSync(data),
 
     // GET
@@ -218,6 +228,13 @@ export const API_ACTIONS = {
     get_project: (data: API_id) => getProject(data),
     get_plain_text: (data: API_id) => getPlainText(data.id),
     get_groups: (data: API_id) => getShowGroups(data.id),
+
+    get_output: (data: API_id_optional) => getOutput(data),
+    get_playing_video_time: () => getPlayingVideoTime(),
+    get_playing_audio_time: () => getPlayingAudioTime(),
+    get_playlists: () => getPlaylists(),
+    get_playlist: (data: API_id_optional) => getPlayingPlaylist(data),
+    get_slide: (data: API_slide) => getSlide(data),
 
     get_thumbnail: (data: API_media) => getThumbnail(data),
     get_slide_thumbnail: (data: API_slide_thumbnail) => getSlideThumbnail(data),
@@ -240,7 +257,7 @@ export async function triggerAction(data: API) {
     let returnId = data.returnId
     delete data.returnId
     const returnData = await API_ACTIONS[id](data)
-    if (!returnId || !returnData) return
+    if (!returnId || returnData === undefined) return
 
     send(MAIN, ["API_TRIGGER"], { ...data, returnId, data: returnData })
 }
