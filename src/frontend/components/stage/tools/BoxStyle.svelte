@@ -32,6 +32,7 @@
             delete newEdits.chords
             edits = { default: trackerEdits, font: edits.default, ...newEdits }
         } else if (items[0].includes("clock")) edits.default.push({ name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: true })
+        else if (items[0].includes("timer")) edits.default.push({ name: "timer.hours", id: "timer.showHours", input: "checkbox", value: item.timer?.showHours !== false })
         else if (items[0].includes("output")) edits = {}
     }
 

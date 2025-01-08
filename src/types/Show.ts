@@ -120,6 +120,7 @@ export interface Timer {
     type: "counter" | "clock" | "event"
     viewType?: "time" | "line" | "circle"
     circleMask?: boolean
+    showHours?: boolean // use just minutes or minutes and hours
     start?: number
     end?: number
     event?: string

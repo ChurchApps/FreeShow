@@ -184,8 +184,10 @@
         if (id === "mirror") getMirrorValues()
         else if (id === "media") box.edit.default[0].value = item?.src || ""
         else if (id === "list") box.edit.default[0].value = item?.list?.items || []
-        else if (id === "timer") box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
-        else if (id === "variable") box.edit.default[0].value = item?.variable?.id
+        else if (id === "timer") {
+            box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
+            box.edit.default[3].value = item?.timer?.showHours !== false
+        } else if (id === "variable") box.edit.default[0].value = item?.variable?.id
         else if (id === "web") box.edit.default[0].value = item?.web?.src || ""
         else if (id === "slide_tracker") {
             if (item?.tracker?.type) box.edit.default[0].value = item.tracker.type

@@ -18,11 +18,10 @@
     $: ref = { id }
     $: timer = $timers[id] || {}
 
-    let times: string[] = []
     let timeValue: string = "00:00"
     let currentTime: number
     // $: currentTime = getCurrentTime()
-    $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
+    $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, item?.timer?.showHours !== false)
 
     $: if (Object.keys(timer).length) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
     else currentTime = 0
@@ -74,25 +73,7 @@
                 <span>-</span>
             {/if}
 
-            {#if times.length}
-                {#each times as ti, i}
-                    <div style="position: relative;display: flex;">
-                        {#each ti as t}
-                            <div>
-                                {#key t}
-                                    <span style="position: absolute;">{t}</span>
-                                    <!-- <span transition:blur={{ duration: 500 }} style="position: absolute;">{t}</span> -->
-                                {/key}
-                                <span style:opacity={0}>{t}</span>
-                            </div>
-                        {/each}
-                        <!-- style="margin: 0 10px;" -->
-                        {#if i % 2 === 0 && i < times.length}<span>:</span>{/if}
-                    </div>
-                {/each}
-            {:else}
-                {timeValue}
-            {/if}
+            {timeValue}
         </div>
     </div>
 {/if}

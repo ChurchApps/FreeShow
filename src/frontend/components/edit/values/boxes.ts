@@ -330,6 +330,7 @@ export const boxes: Box = {
                     },
                 },
                 { name: "timer.mask", id: "timer.circleMask", input: "checkbox", value: false },
+                { name: "timer.hours", id: "timer.showHours", input: "checkbox", value: true },
             ],
             // font: [
             //     { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },

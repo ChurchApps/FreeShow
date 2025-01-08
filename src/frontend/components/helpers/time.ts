@@ -29,10 +29,13 @@ export function joinTime(time: Time, ms: boolean = false): string {
     return arr.join(":")
 }
 
-export function joinTimeBig(time: number) {
+export function joinTimeBig(time: number, showHours: boolean = true) {
     let allTimes: any = secondsToTime(time)
 
-    let timeValue = (allTimes.d === 0 ? "" : allTimes.d + ", ") + [allTimes.h === "00" ? "" : allTimes.h, allTimes.m, allTimes.s].join(":")
+    let days = allTimes.d === 0 ? "" : allTimes.d + ", "
+    let hours = showHours ? (allTimes.h === "00" ? "" : allTimes.h) : ""
+    let minutes = padString(Number(allTimes.m) + (showHours ? 0 : Number(allTimes.h) * 60))
+    let timeValue = days + [hours, minutes, allTimes.s].join(":")
     while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
 
     timeValue = timeValue.replace(" :", " ")
@@ -104,6 +107,7 @@ export function format(t: string, { hours, minutes, seconds }: any) {
     return ""
 }
 
+export const padString = (a: number) => a.toString().padStart(2, "0")
 export const addZero = (a: number) => ("0" + a).slice(-2)
 // const clip = (a: number) => Math.max(0, Math.min(59, a))
 

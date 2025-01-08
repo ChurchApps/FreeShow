@@ -144,10 +144,10 @@
                 {:else if id.includes("video")}
                     <VideoTime {videoTime} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("first_active_timer")}
-                    <Timer timer={$timers[firstTimerId] || {}} ref={{ id: firstTimerId }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                    <Timer {item} timer={$timers[firstTimerId] || {}} ref={{ id: firstTimerId }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
-                        <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                        <Timer {item} timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                     {/if}
                 {:else if id.includes("variables")}
                     {#if $variables[id.split("#")[1]]}
