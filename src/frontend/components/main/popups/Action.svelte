@@ -345,7 +345,13 @@
         {/if}
 
         {#if action.midiEnabled}
-            <MidiValues midi={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide={mode === "slide_midi"} />
+            {#if mode === "slide_midi"}
+                <p style="opacity: 0.8;font-size: 0.8em;text-align: center;margin-bottom: 20px;"><T id="actions.play_on_midi_tip" /></p>
+            {:else}
+                <h3><T id="midi.midi" /></h3>
+            {/if}
+
+            <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide={mode === "slide_midi"} />
         {/if}
     {/if}
 </div>
@@ -356,5 +362,13 @@
         height: 2px;
         border: none;
         background-color: var(--primary-lighter);
+    }
+
+    h3 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
     }
 </style>

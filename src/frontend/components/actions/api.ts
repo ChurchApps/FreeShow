@@ -1,5 +1,5 @@
 import { MAIN } from "../../../types/Channels"
-import type { TransitionType } from "../../../types/Show"
+import type { MidiValues, TransitionType } from "../../../types/Show"
 import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
@@ -42,6 +42,7 @@ import {
     toggleLock,
 } from "./apiHelper"
 import { oscToAPI } from "./apiOSC"
+import { emitData } from "./emitters"
 import { sendRestCommandSync } from "./rest"
 
 /// STEPS TO CREATE A CUSTOM API ACTION ///
@@ -100,15 +101,8 @@ export type API_variable = {
     value?: string | number | boolean
     variableAction?: "increment" | "decrement"
 }
-export type API_midi = {
-    input?: string
-    output?: string
+export interface API_midi extends MidiValues {
     type: "noteon" | "noteoff"
-    values: {
-        note: number
-        velocity: number
-        channel: number
-    }
     defaultValues?: boolean // only used by actions
 }
 export type API_metronome = {
@@ -122,6 +116,11 @@ export type API_rest_command = {
     method: string
     contentType: string
     payload: string
+}
+export type API_emitter = {
+    emitter: string
+    template?: string
+    templateValues?: { name: string; value: string }[]
 }
 
 /// ACTIONS ///
@@ -220,6 +219,8 @@ export const API_ACTIONS = {
     toggle_action: (data: API_toggle) => toggleAction(data),
     toggle_output: (data: API_id) => toggleOutput(data.id),
     send_rest_command: (data: API_rest_command) => sendRestCommandSync(data),
+
+    emit_action: (data: API_emitter) => emitData(data),
 
     // GET
     get_shows: () => getShows(),

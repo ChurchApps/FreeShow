@@ -14,6 +14,7 @@
     import RestValues from "./RestValues.svelte"
     import ChooseStyle from "./specific/ChooseStyle.svelte"
     import VariableInputs from "./specific/VariableInputs.svelte"
+    import ChooseEmitter from "./ChooseEmitter.svelte"
 
     export let inputId: string
     export let value
@@ -96,7 +97,9 @@
         <Dropdown style="width: 100%;" value={cameras.find((a) => a.id === value?.id)?.name || "—"} options={cameras} on:click={(e) => updateValue("", e.detail)} />
     </CombinedInput>
 {:else if inputId === "midi"}
-    <MidiValues midi={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
+    <h3><T id="midi.midi" /></h3>
+
+    <MidiValues value={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
 {:else if inputId === "metronome"}
     <div class="column">
         <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={(e) => updateValue("", e)} volume={false} />
@@ -114,7 +117,9 @@
         </div>
     </CombinedInput>
 {:else if inputId === "rest"}
-    <RestValues rest={value || {}} on:change={(e) => updateValue("", e)} />
+    <RestValues value={value || {}} on:change={(e) => updateValue("", e)} />
+{:else if inputId === "emitter"}
+    <ChooseEmitter {value} on:change={(e) => updateValue("", e)} />
 {:else}
     <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
         {#if inputId === "index"}
@@ -157,5 +162,13 @@
     .column {
         display: flex;
         flex-direction: column;
+    }
+
+    h3 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
     }
 </style>

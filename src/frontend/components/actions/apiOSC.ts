@@ -78,3 +78,9 @@ function parsePath(path) {
 
     return currentPath
 }
+
+export type OSC_SIGNAL = { url?: string; port?: string }
+export function emitOSC(signal: OSC_SIGNAL, data: string) {
+    // TODO:
+    console.log(signal, data)
+}

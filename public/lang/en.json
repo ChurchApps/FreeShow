@@ -686,6 +686,7 @@
         "start_trigger": "Start trigger",
         "run_action": "Run action",
         "toggle_action": "Toggle action",
+        "emit_data": "Emit data",
         "send_rest_command": "Send HTTP-Request",
         "custom_activation": "Custom activation",
         "any": "Any",
@@ -1011,6 +1012,14 @@
         "tip_velocity": "Set velocity to -1 to disable.",
         "tip_action": "To activate specific slides, right click any slide and choose the midi in action.",
         "tip_index_by_velocity": "Index is determined by the received velocity, starting at 0."
+    },
+    "emitters": {
+        "emitter": "Emitter",
+        "tip": "Create emit templates to easily send specific messages.",
+        "signal": "Signal",
+        "message_template": "Message template",
+        "message_templates": "Message templates",
+        "inputs": "Inputs"
     },
     "draw": {
         "focus": "Focus",
