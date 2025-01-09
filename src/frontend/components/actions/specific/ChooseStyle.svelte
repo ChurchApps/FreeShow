@@ -10,11 +10,11 @@
 
     export let value: API_output_style
 
-    let styleId: string = value.outputStyle || Object.keys($styles)[0]
-    $: if (!styleId) newToast("$toast.empty_styles")
+    let styleId: string = value.outputStyle || ""
+    $: if (!Object.keys($styles).length) newToast("$toast.empty_styles")
 
     let styleOutputs = value.styleOutputs || { type: "active" }
-    $: currentStyle = $styles[styleId]
+    $: currentStyle = $styles[styleId] || {}
 
     let outputsOptions = [
         { id: "active", name: "$:actions.active_outputs:$" },
@@ -63,6 +63,6 @@
 {:else}
     <CombinedInput>
         <p><T id="edit.style" /></p>
-        <Dropdown value={currentStyle.name} options={stylesList} on:click={(e) => updateStyle("outputStyle", e.detail.id)} />
+        <Dropdown value={currentStyle?.name || "—"} options={stylesList} on:click={(e) => updateStyle("outputStyle", e.detail.id)} />
     </CombinedInput>
 {/if}

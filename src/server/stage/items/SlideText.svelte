@@ -1,8 +1,8 @@
 <script lang="ts">
+    import { getStyleResolution } from "../../common/util/getStyleResolution"
     import Main from "../components/Main.svelte"
     import Textbox from "../components/Textbox.svelte"
     import Zoomed from "../components/Zoomed.svelte"
-    import { getStyleResolution } from "../helpers/getStyleResolution"
 
     export let slide: any
     export let stageItem: any
@@ -32,7 +32,10 @@
                 if (!item.lines || !item.lines.find((a: any) => a?.text?.[0]?.value?.length)) return
 
                 if (!oneItem) oneItem = item
-                else oneItem.lines.push(...item.lines)
+                else {
+                    let EMPTY_LINE = { align: "", text: [{ style: "", value: "" }] }
+                    oneItem.lines.push(EMPTY_LINE, ...item.lines)
+                }
             })
 
         return oneItem ? [oneItem] : []

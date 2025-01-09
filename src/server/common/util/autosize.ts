@@ -1,5 +1,5 @@
 const DEF_FONT_SIZE = 100
-const MAX_FONT_SIZE = 800
+export const MAX_FONT_SIZE = 800
 const MIN_FONT_SIZE = 10
 
 // const BREAK_MARGIN = 2 // px

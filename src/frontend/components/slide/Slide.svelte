@@ -4,8 +4,10 @@
     import type { MediaStyle } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
     import {
+        activeEdit,
         activePage,
         activeTimers,
+        activeTriggerFunction,
         audioFolders,
         checkedFiles,
         dictionary,
@@ -22,6 +24,7 @@
         showsCache,
         slidesOptions,
         styles,
+        textEditActive,
     } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
@@ -40,6 +43,7 @@
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
     import { removeTagsAndContent } from "../drawer/bible/scripture"
+    import Icon from "../helpers/Icon.svelte"
 
     export let showId: string
     export let slide: Slide
@@ -295,6 +299,14 @@
         return color
     }
 
+    function openNotes() {
+        if ($textEditActive) textEditActive.set(false)
+        activeTriggerFunction.set("slide_notes")
+
+        activeEdit.set({ slide: index, items: [], showId })
+        activePage.set("edit")
+    }
+
     $: if ($refreshListBoxes >= 0) {
         setTimeout(() => {
             refreshListBoxes.set(-1)
@@ -426,7 +438,13 @@
                                 <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {getOutputColor(output.color)};" />
                             </div>
                         {/if}
-                        {#if slide.notes && icons}<p class="notes" title={slide.notes}>{slide.notes}</p>{/if}
+                        {#if slide.notes && icons}
+                            <p class="notes" title={slide.notes} on:click={openNotes}>
+                                <Icon id="notes" white right />
+                                <span>{slide.notes}</span>
+                            </p>
+                        {/if}
+
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->
                         <span style="position: absolute;display: contents;">{index + 1}</span>
@@ -600,6 +618,9 @@
     }
 
     .notes {
+        display: flex;
+        align-items: center;
+
         position: absolute;
         top: 0;
         left: 0;
@@ -609,6 +630,12 @@
         background-color: rgb(0 0 0 / 0.5);
         color: white;
         font-weight: normal;
+
+        cursor: pointer;
+        transition: 0.2s background-color;
+    }
+    .notes:hover {
+        background-color: rgb(255 255 255 / 0.2);
     }
 
     .label .text {

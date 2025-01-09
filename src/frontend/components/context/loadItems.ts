@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, activeMediaTagFilter, activeTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, outputs, overlays, selected, shows, sorted } from "../../stores"
+import { actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, activeTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, midiIn, outputs, overlays, selected, shows, sorted } from "../../stores"
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
@@ -22,6 +22,8 @@ const loadActions = {
 
         return items
     },
+
+    // TAGS
     tag_set: () => {
         let selectedShowTags = get(shows)[get(selected).data[0]?.id]?.quickAccess?.tags || []
         let sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
@@ -46,6 +48,20 @@ const loadActions = {
         setContextData("media_tags", sortedTags.length)
         return sortedTags
     },
+    action_tag_set: () => {
+        let selectedTags = get(midiIn)[get(selected).data[0]?.id]?.tags || []
+        let sortedTags = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
+        if (sortedTags.length) sortedTags.push("SEPERATOR")
+        sortedTags.push(create)
+        return sortedTags
+    },
+    action_tag_filter: () => {
+        let sortedTags = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeActionTagFilter).includes(a.id), translate: false }))
+        setContextData("action_tags", sortedTags.length)
+        return sortedTags
+    },
+
     sort_shows: (items: ContextMenuItem[]) => sortItems(items, "shows"),
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
     slide_groups: (items: ContextMenuItem[]) => {

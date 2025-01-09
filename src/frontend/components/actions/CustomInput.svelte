@@ -1,10 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
-    import type { Option } from "../../../types/Main"
     import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, outputs, popupData, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
+    import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
     import T from "../helpers/T.svelte"
-    import { keysToID, sortByName } from "../helpers/array"
-    import { _show } from "../helpers/shows"
+    import { convertToOptions, keysToID, sortByName } from "../helpers/array"
     import Button from "../inputs/Button.svelte"
     import Checkbox from "../inputs/Checkbox.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
@@ -14,8 +13,8 @@
     import MidiValues from "./MidiValues.svelte"
     import RestValues from "./RestValues.svelte"
     import ChooseStyle from "./specific/ChooseStyle.svelte"
-    import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
     import VariableInputs from "./specific/VariableInputs.svelte"
+    import ChooseEmitter from "./ChooseEmitter.svelte"
 
     export let inputId: string
     export let value
@@ -42,11 +41,6 @@
 
     function checkboxChanged(e: any) {
         updateValue("value", { detail: e.target.checked })
-    }
-
-    function convertToOptions(object) {
-        let options: Option[] = Object.keys(object).map((id) => ({ id, name: object[id].name }))
-        return sortByName(options)
     }
 
     $: if (list && actionId === "start_show" && !value?.id) openSelectShow()
@@ -77,6 +71,7 @@
         start_trigger: () => convertToOptions($triggers),
         run_action: () => convertToOptions($midiIn).filter((a) => a.name && a.id !== mainId),
         set_template: () => convertToOptions($templates),
+        toggle_output: () => convertToOptions($outputs),
     }
 
     $: options = getOptions[actionId]?.() || []
@@ -102,7 +97,9 @@
         <Dropdown style="width: 100%;" value={cameras.find((a) => a.id === value?.id)?.name || "—"} options={cameras} on:click={(e) => updateValue("", e.detail)} />
     </CombinedInput>
 {:else if inputId === "midi"}
-    <MidiValues midi={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
+    <h3><T id="midi.midi" /></h3>
+
+    <MidiValues value={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
 {:else if inputId === "metronome"}
     <div class="column">
         <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={(e) => updateValue("", e)} volume={false} />
@@ -120,7 +117,9 @@
         </div>
     </CombinedInput>
 {:else if inputId === "rest"}
-    <RestValues rest={value || {}} on:change={(e) => updateValue("", e)} />
+    <RestValues value={value || {}} on:change={(e) => updateValue("", e)} />
+{:else if inputId === "emitter"}
+    <ChooseEmitter {value} on:change={(e) => updateValue("", e)} />
 {:else}
     <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
         {#if inputId === "index"}
@@ -163,5 +162,13 @@
     .column {
         display: flex;
         flex-direction: column;
+    }
+
+    h3 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
     }
 </style>

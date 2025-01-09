@@ -1,5 +1,6 @@
 <script lang="ts">
     import Button from "../../../common/components/Button.svelte"
+    import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
     import Loading from "../../../common/components/Loading.svelte"
     import { keysToID } from "../../../common/util/helpers"
@@ -55,13 +56,15 @@
     {:else}
         <Clear />
     {/if}
-{:else}
+{:else if sortedBibles.length}
     {#each sortedBibles as scripture}
         <Button on:click={() => openScripture(scripture.id)} title={scripture.customName || scripture.name} style="padding: 0.5em 0.8em;" bold={false}>
             <Icon id={scripture.icon} right />
             <p>{scripture.customName || scripture.name}</p>
         </Button>
     {/each}
+{:else}
+    <Center faded>{translate("empty.general", $dictionary)}</Center>
 {/if}
 
 <style>

@@ -1,10 +1,10 @@
 <script lang="ts">
     import { uid } from "uid"
     import { activePopup, activeStyle, dictionary, outputs, popupData, styles, templates } from "../../../stores"
-    import { mediaFitOptions } from "../../edit/values/boxes"
+    import { mediaExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, removeDuplicates, sortByName } from "../../helpers/array"
+    import { clone, keysToID, removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getFileName } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
@@ -18,7 +18,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { mediaExtensions } from "../../../values/extensions"
+    import { mediaFitOptions } from "../../edit/values/boxes"
 
     function updateStyle(e: any, key: string, currentId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -62,14 +62,7 @@
         name: $dictionary.example?.default || "Default",
     }
 
-    $: stylesList = getList($styles)
-    function getList(styles) {
-        let list = Object.entries(styles).map(([id, obj]: any) => {
-            return { ...obj, id }
-        })
-
-        return sortByName(list)
-    }
+    $: stylesList = sortByName(keysToID($styles))
 
     // set id after deletion
     $: if (Object.keys($styles)?.length && !$styles[styleId]) styleId = $styles.default ? "default" : Object.keys($styles)[0]
@@ -97,11 +90,7 @@
 
     // slide
 
-    let activeLayers: any[] = []
-    $: {
-        if (currentStyle.layers) activeLayers = currentStyle.layers
-        else activeLayers = clone(defaultLayers)
-    }
+    $: activeLayers = currentStyle.layers || clone(defaultLayers)
 
     // overlays
 
@@ -114,7 +103,7 @@
     ]
 
     let templateList: any[] = []
-    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))]
+    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, a]: any) => ({ id, name: a?.name })))]
 
     // text divider
     function keydown(e: any) {
@@ -214,7 +203,36 @@
 
 <CombinedInput>
     <p><T id="edit.media_fit" /></p>
-    <Dropdown value={mediaFitOptions.find((a) => a.id === currentStyle.fit)?.name || "—"} options={[{ id: null, name: "—" }, ...mediaFitOptions]} on:click={(e) => updateStyle(e.detail.id, "fit")} />
+    <Button
+        on:click={() => {
+            popupData.set({ action: "style_fit", id: styleId })
+            activePopup.set("media_fit")
+        }}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="media_fit" style="margin-left: 0.5em;" right />
+            <p>
+                {#if currentStyle.fit}
+                    {#key currentStyle.fit}
+                        <T id={mediaFitOptions.find((a) => a.id === currentStyle.fit)?.name || ""} />
+                    {/key}
+                {:else}
+                    <T id="popup.media_fit" />
+                {/if}
+            </p>
+        </div>
+    </Button>
+    {#if currentStyle.fit}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "fit")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
 </CombinedInput>
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->

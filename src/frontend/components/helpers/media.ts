@@ -3,7 +3,7 @@
 
 import { get } from "svelte/store"
 import { MAIN } from "../../../types/Channels"
-import type { MediaStyle } from "../../../types/Main"
+import type { MediaStyle, Subtitle } from "../../../types/Main"
 import type { Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
@@ -202,6 +202,29 @@ export async function isVideoSupported(path: string) {
 
     if (isUnsupported) newToast("$toast.unsupported_video")
     return !isUnsupported
+}
+
+export function setMediaTracks(data: { path: string; tracks: Subtitle[] }) {
+    let path: string = data.path || ""
+
+    media.update((a) => {
+        if (!a[path]) a[path] = {}
+        a[path].tracks = data.tracks
+        return a
+    })
+}
+
+export function enableSubtitle(video: HTMLVideoElement, languageId: string) {
+    if (!video) return
+    let tracks = [...(video.textTracks || [])]
+
+    let enabled = tracks.find((a) => a.mode !== "disabled")
+    if (enabled) enabled.mode = "disabled"
+
+    if (!languageId) return
+
+    let newTrack = tracks.find((a) => a.language === languageId)
+    if (newTrack) newTrack.mode = "showing"
 }
 
 export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {

@@ -108,7 +108,17 @@ export interface MediaStyle {
     volume?: number // audio
     rendering?: string // image rendering
     info?: any // cached codec/mime data
+    tracks?: Subtitle[]
+    subtitle?: string
     tags?: string[] // media tags
+}
+
+// subtitles/captions
+export interface Subtitle {
+    lang: string // id
+    name: string
+    vtt: string // WebVTT format
+    embedded?: boolean // extracted from the video
 }
 
 export type Popups =
@@ -132,6 +142,7 @@ export type Popups =
     | "trigger"
     | "audio_stream"
     | "transition"
+    | "media_fit"
     | "import_scripture"
     | "edit_event"
     | "choose_chord"
@@ -144,6 +155,7 @@ export type Popups =
     | "animate"
     | "translate"
     | "next_timer"
+    | "display_duration"
     | "manage_tags"
     | "advanced_settings"
     | "about"
@@ -152,6 +164,7 @@ export type Popups =
     | "reset_all"
     | "alert"
     | "history"
+    | "manage_emitters"
     | "action"
     | "category_action"
     | "user_data_overwrite"

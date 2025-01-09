@@ -6,6 +6,7 @@ import type { Item, Slide } from "../../../types/Show"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
 import {
     $,
+    activeActionTagFilter,
     activeDrawerTab,
     activeEdit,
     activeFocus,
@@ -31,6 +32,7 @@ import {
     guideActive,
     media,
     mediaFolders,
+    midiIn,
     outLocked,
     outputs,
     overlayCategories,
@@ -73,7 +75,7 @@ import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers
 import { GetLayoutRef } from "../helpers/get"
 import { history, HistoryPages, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
-import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput } from "../helpers/output"
+import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput, toggleOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { dynamicValueText, sendMidi } from "../helpers/showActions"
@@ -147,6 +149,7 @@ const actions: any = {
         else if (id === "slide" || id === "group") activePopup.set("rename")
         else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
         else if (obj.contextElem?.classList?.contains("#project_template")) activeRename.set("project_" + id)
+        else if (obj.contextElem?.classList?.contains("#video_subtitle")) activeRename.set("subtitle_" + id)
         else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + id)
         else if (id?.includes("category")) activeRename.set("category_" + get(activeDrawerTab) + "_" + data)
         else console.log("Missing rename", obj)
@@ -197,6 +200,10 @@ const actions: any = {
             deleteAction({ id: "project_template", data: [{ id: obj.contextElem.id }] })
             return
         }
+        if (obj.contextElem?.classList.value.includes("#video_subtitle")) {
+            deleteAction({ id: "video_subtitle", data: { index: obj.contextElem.id } })
+            return
+        }
         if (obj.contextElem?.classList.value.includes("#video_marker")) {
             deleteAction({ id: "video_marker", data: { index: obj.contextElem.id } })
             return
@@ -245,6 +252,8 @@ const actions: any = {
         })
         return m
     },
+
+    // TAGS
     tag_set: (obj: any) => {
         let tagId = obj.menu.id
 
@@ -288,12 +297,15 @@ const actions: any = {
 
         activeTagFilter.set(activeTags || [])
     },
+    manage_media_tags: () => {
+        contextActive.set(false)
+        popupData.set({ type: "media" })
+        activePopup.set("manage_tags")
+    },
     media_tag_set: (obj: any) => {
         let tagId = obj.menu.id
         if (tagId === "create") {
-            contextActive.set(false)
-            popupData.set({ type: "media" })
-            activePopup.set("manage_tags")
+            actions.manage_media_tags()
             return
         }
 
@@ -326,6 +338,47 @@ const actions: any = {
 
         activeMediaTagFilter.set(activeTags || [])
     },
+    manage_action_tags: () => {
+        contextActive.set(false)
+        popupData.set({ type: "action" })
+        activePopup.set("manage_tags")
+    },
+    action_tag_set: (obj: any) => {
+        let tagId = obj.menu.id
+        if (tagId === "create") {
+            actions.manage_action_tags()
+            return
+        }
+
+        let disable = get(midiIn)[get(selected).data[0]?.id]?.tags?.includes(tagId)
+
+        obj.sel.data?.forEach(({ id }) => {
+            let tags = get(midiIn)[id]?.tags || []
+
+            let existingIndex = tags.indexOf(tagId)
+            if (disable) {
+                if (existingIndex > -1) tags.splice(existingIndex, 1)
+            } else {
+                if (existingIndex < 0) tags.push(tagId)
+            }
+
+            midiIn.update((a) => {
+                if (a[id]) a[id].tags = tags
+                return a
+            })
+        })
+    },
+    action_tag_filter: (obj: any) => {
+        let tagId = obj.menu.id
+
+        let activeTags = get(activeActionTagFilter)
+        let currentIndex = activeTags.indexOf(tagId)
+        if (currentIndex < 0) activeTags.push(tagId)
+        else activeTags.splice(currentIndex, 1)
+
+        activeActionTagFilter.set(activeTags || [])
+    },
+
     addToProject: (obj: any) => {
         if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return
 
@@ -425,7 +478,7 @@ const actions: any = {
     },
     toggle_output: (obj: any) => {
         let id: string = obj.contextElem.id
-        send(OUTPUT, ["DISPLAY"], { enabled: "toggle", one: true, output: { id, ...get(outputs)[id] } })
+        toggleOutput(id)
     },
     move_to_front: (obj: any) => {
         send(OUTPUT, ["TO_FRONT"], obj.contextElem.id)
@@ -927,6 +980,9 @@ const actions: any = {
             })
             return a
         })
+    },
+    display_duration: () => {
+        activePopup.set("display_duration")
     },
 
     // stage

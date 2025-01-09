@@ -8,6 +8,8 @@
     import MetronomeInputs from "./MetronomeInputs.svelte"
     import { toggleMetronome, updateMetronome } from "./metronome"
 
+    export let audioOutputs: any[] = []
+
     function playPause() {
         paused = !paused
         toggleMetronome()
@@ -19,7 +21,7 @@
     $: values = clone($metronome)
 
     $: updatePausedState($playingMetronome)
-    function updatePausedState(active) {
+    function updatePausedState(active: boolean) {
         paused = !active
     }
 </script>
@@ -35,6 +37,7 @@
     <div class="inputs">
         <MetronomeInputs
             {values}
+            {audioOutputs}
             on:change={(e) => {
                 values = e.detail
                 updateMetronome(values)

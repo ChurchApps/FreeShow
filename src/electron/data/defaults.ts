@@ -43,10 +43,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     maxConnections: 10,
     mediaFolders: {},
     audioFolders: {},
-    playerVideos: {
-        chosen: { name: "The Chosen Trailer", type: "youtube", id: "X-AJdKty74M" },
-        jesus: { name: "Jesus, Only Jesus", type: "vimeo", id: "426363743" },
-    },
     resized: {
         leftPanel: 290,
         rightPanel: 290,
@@ -122,6 +118,11 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     },
     groups: defaultGroups,
     midiIn: {},
+    emitters: {},
+    playerVideos: {
+        chosen: { name: "The Chosen Trailer", type: "youtube", id: "X-AJdKty74M" },
+        jesus: { name: "Jesus, Only Jesus", type: "vimeo", id: "426363743" },
+    },
     videoMarkers: {},
     mediaTags: {},
     customizedIcons: { disabled: [], svg: [] },

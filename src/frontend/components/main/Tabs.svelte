@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { TabsObj } from "../../../types/Tabs"
     import { dictionary, labelsDisabled, openToolsTab } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
@@ -20,6 +21,13 @@
 
     $: firstOverflowIndex = Object.values(tabs).findIndex((a) => a.overflow)
     export let overflowHidden: boolean = true
+
+    onMount(() => {
+        // show overflow if active is in overflow
+        if (active && Object.keys(tabs).find((id) => id === active && tabs[id].overflow)) {
+            overflowHidden = false
+        }
+    })
 </script>
 
 <div class="tabs">

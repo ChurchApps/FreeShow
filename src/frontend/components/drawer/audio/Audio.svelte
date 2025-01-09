@@ -133,6 +133,7 @@
 
     function createPlaylist() {
         let playlistName = ""
+        let empty = isDefault || !fullFilteredFiles.filter((a) => !a.folder)?.length
         if (!isDefault) {
             playlistName = name
             if (name.includes(".")) playlistName = $dictionary.category?.[name.slice(name.indexOf(".") + 1)] || ""
@@ -142,7 +143,7 @@
         audioPlaylists.update((a) => {
             a[playlistId] = {
                 name: playlistName,
-                songs: isDefault ? [] : fullFilteredFiles.filter((a) => !a.folder).map((a) => a.path),
+                songs: empty ? [] : fullFilteredFiles.filter((a) => !a.folder).map((a) => a.path),
             }
 
             return a
@@ -153,7 +154,7 @@
             return a
         })
 
-        if (isDefault) {
+        if (empty) {
             activeRename.set("category_audio_" + playlistId)
         }
     }
@@ -312,7 +313,7 @@
         </span>
 
         {#if !playlist}
-            <Button disabled={!isDefault && !fullFilteredFiles.filter((a) => !a.folder)?.length} title={$dictionary.new?.playlist} on:click={createPlaylist}>
+            <Button title={$dictionary.new?.playlist} on:click={createPlaylist}>
                 <Icon size={1.3} id="playlist_create" />
             </Button>
         {/if}

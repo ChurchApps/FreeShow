@@ -85,6 +85,15 @@ export function hideDisplay(ctrlKey: boolean = true) {
     })
 }
 
+export function mainClick(e: any) {
+    // open links externally
+    if (e.target?.closest("a.open")) {
+        e.preventDefault()
+        let href = e.target.getAttribute("href")
+        if (href) send(MAIN, ["URL"], href)
+    }
+}
+
 // select all focus
 export function focusArea(e: any) {
     if (get(quickSearchActive) && !e.target.closest(".quicksearch")) quickSearchActive.set(false)

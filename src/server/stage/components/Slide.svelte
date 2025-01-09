@@ -1,7 +1,7 @@
 <script lang="ts">
     import Zoomed from "./Zoomed.svelte"
     import Stagebox from "./Stagebox.svelte"
-    import { getStyleResolution } from "../helpers/getStyleResolution"
+    import { getStyleResolution } from "../../common/util/getStyleResolution"
 
     interface Show {
         settings: any

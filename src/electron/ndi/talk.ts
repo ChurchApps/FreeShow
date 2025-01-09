@@ -1,5 +1,5 @@
 import { NDI } from "../../types/Channels"
-import { Message } from "../../types/Socket"
+import type { Message } from "../../types/Socket"
 import { CaptureHelper } from "../capture/CaptureHelper"
 import { NdiReceiver } from "./NdiReceiver"
 

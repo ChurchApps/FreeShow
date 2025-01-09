@@ -162,7 +162,13 @@
         },
         lock_to_output: () => {
             let id = $selected.data[0]
-            if ($overlays[id]?.locked) enabled = true
+            if ($overlays[id]?.displayDuration) disabled = true
+            else if ($overlays[id]?.locked) enabled = true
+        },
+        display_duration: () => {
+            let id = $selected.data[0]
+            if ($overlays[id]?.locked) disabled = true
+            else if ($overlays[id]?.displayDuration) enabled = true
         },
         move_to_front: () => {
             let previewOutputs = keysToID($outputs).filter((a) => a.enabled && !a.isKeyOutput)
@@ -217,7 +223,7 @@
         // don't hide context menu
         const keepOpen = ["uppercase", "lowercase", "capitalize", "trim"] // "dynamic_values" (caret position is lost)
         if (keepOpen.includes(id)) return
-        const keepOpenToggle = ["enabled_drawer_tabs", "tag_set", "tag_filter", "media_tag_set", "media_tag_filter", "bind_slide", "bind_item"]
+        const keepOpenToggle = ["enabled_drawer_tabs", "tag_set", "tag_filter", "media_tag_set", "media_tag_filter", "action_tag_set", "action_tag_filter", "bind_slide", "bind_item"]
         if (keepOpenToggle.includes(id)) {
             enabled = !enabled
             return

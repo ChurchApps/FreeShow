@@ -7,7 +7,8 @@ import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
 import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
-import { Show } from "../../types/Show"
+import type { Subtitle } from "../../types/Main"
+import type { Show } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
@@ -451,6 +452,82 @@ async function extractCodecInfo(data: any) {
 function getMimeType(path: string) {
     const ext = path.split(".").pop()?.toLowerCase() || ""
     return mimeTypes[ext] || ""
+}
+
+// get embedded subtitles/captions
+export function getMediaTracks(data: any) {
+    extractSubtitles(data)
+}
+
+async function extractSubtitles(data: any) {
+    const MP4Box = require("mp4box")
+    let arrayBuffer: any
+
+    try {
+        arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
+    } catch (err) {
+        console.error(err)
+        toApp(MAIN, { channel: "MEDIA_TRACKS", data: { ...data, tracks: [] } })
+        return
+    }
+
+    const mp4boxfile = MP4Box.createFile()
+    mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
+    mp4boxfile.onReady = (info: any) => {
+        let tracks: Subtitle[] = []
+        let trackCount: number = 0
+        let completed: number = 0
+        info.tracks.forEach((track: any) => {
+            if (track.type !== "subtitles" && track.type !== "text") return
+            trackCount++
+
+            // console.log(`Found subtitle track ID ${track.id}, language: ${track.language}`)
+            const vttLines = ["WEBVTT\n"]
+            const timescale = track.timescale
+
+            mp4boxfile.setExtractionOptions(track.id, null, { nbSamples: track.nb_samples })
+            mp4boxfile.start()
+
+            mp4boxfile.onSamples = (_id: number, _user: any, samples: any[]) => {
+                let index = 1
+                samples.forEach((sample) => {
+                    const utf8Decoder = new TextDecoder("utf-8")
+                    let subtitleText = utf8Decoder.decode(sample.data).trim()
+                    // remove any non-printable characters (excluding line breaks)
+                    subtitleText = subtitleText.replace(/[^\x20-\x7E\n\r]+/g, "")
+                    if (!subtitleText) return
+
+                    const startTime = formatTimestamp((sample.cts / timescale) * 1000)
+                    const endTime = formatTimestamp(((sample.cts + sample.duration) / timescale) * 1000)
+
+                    vttLines.push(`${index}`)
+                    vttLines.push(`${startTime} --> ${endTime}`)
+                    vttLines.push(`${subtitleText}\n`)
+
+                    index++
+                })
+
+                completed++
+                if (vttLines.length > 1) tracks.push({ lang: track.language?.slice(0, 2), name: track.language || "", vtt: vttLines.join("\n"), embedded: true })
+                if (completed === trackCount) toApp(MAIN, { channel: "MEDIA_TRACKS", data: { ...data, tracks } })
+            }
+        })
+    }
+
+    arrayBuffer.fileStart = 0
+    mp4boxfile.appendBuffer(arrayBuffer)
+    mp4boxfile.flush()
+}
+
+// format timestamp in WebVTT format (HH:MM:SS.mmm)
+function formatTimestamp(timestamp: number) {
+    const hours = Math.floor(timestamp / 3600000)
+    const minutes = Math.floor((timestamp % 3600000) / 60000)
+    const seconds = Math.floor((timestamp % 60000) / 1000)
+    const milliseconds = Math.floor(timestamp % 1000)
+
+    const formatted = [hours.toString().padStart(2, "0"), minutes.toString().padStart(2, "0"), seconds.toString().padStart(2, "0") + "." + milliseconds.toString().padStart(3, "0")].join(":")
+    return formatted
 }
 
 //////

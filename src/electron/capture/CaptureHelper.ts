@@ -1,10 +1,10 @@
 import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
 import { NdiSender } from "../ndi/NdiSender"
-import { CaptureTransmitter } from "./helpers/CaptureTransmitter"
-import { CaptureOptions } from "./CaptureOptions"
-import { CaptureLifecycle } from "./helpers/CaptureLifecycle"
 import { OutputHelper } from "../output/OutputHelper"
+import type { CaptureOptions } from "./CaptureOptions"
+import { CaptureLifecycle } from "./helpers/CaptureLifecycle"
+import { CaptureTransmitter } from "./helpers/CaptureTransmitter"
 
 export class CaptureHelper {
     static Lifecycle = CaptureLifecycle

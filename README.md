@@ -56,8 +56,9 @@ You are welcome to contribute to the code!
 2. Install [Node.js](https://nodejs.org/en/download/)
 3. Install [Python 3.12](https://www.python.org/downloads/), and the [`setuptools`](https://pypi.org/project/setuptools/) package
 4. On Windows, download [Visual Studio](https://visualstudio.microsoft.com/downloads/) and install "Desktop development with C++", also select the "Windows 10 SDK"
-5. In the terminal, run: `npm install`
-6. To start the app, run: `npm start`
+5. On Linux, install the following library: `sudo apt-get install libfontconfig1-dev`
+6. In the terminal, run: `npm install`
+7. To start the app, run: `npm start`
 
 ## Join us on Slack
 

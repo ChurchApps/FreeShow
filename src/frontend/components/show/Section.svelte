@@ -55,9 +55,19 @@
         })
     }
 
+    function updateTriggerLocal(e: any) {
+        let actionId = e.detail.id
+
+        projects.update((a) => {
+            a[$activeProject!].shows[section.index].data = { settings: { triggerAction: actionId } }
+            return a
+        })
+    }
+
     let settingsOpened: boolean = false
 
     $: sectionUpdated = $projects[$activeProject || ""]?.shows[section.index] || {}
+    $: localAction = settingsOpened ? $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerAction || "" : ""
 </script>
 
 {#if settingsOpened}
@@ -65,10 +75,18 @@
         <!-- WIP change color? -->
 
         <!-- GLOBAL -->
+        <h5><T id="groups.global" /></h5>
 
         <CombinedInput>
             <p><T id="settings.section_trigger_action" /></p>
-            <Dropdown options={actionOptions} value={actionOptions.find((a) => a.id === $special.sectionTriggerAction || "")?.name || "—"} on:click={updateTrigger} />
+            <Dropdown disabled={localAction && $midiIn[localAction]} options={actionOptions} value={actionOptions.find((a) => a.id === $special.sectionTriggerAction || "")?.name || "—"} on:click={updateTrigger} />
+        </CombinedInput>
+
+        <h5><T id="groups.current" /></h5>
+
+        <CombinedInput>
+            <p><T id="settings.section_trigger_action" /></p>
+            <Dropdown options={actionOptions} value={actionOptions.find((a) => a.id === localAction)?.name || "—"} on:click={updateTriggerLocal} />
         </CombinedInput>
     </div>
 {:else}
@@ -99,6 +117,15 @@
     /* ::placeholder opacity does not work for some reason */
     h4.empty :global(input::placeholder) {
         color: rgb(255 255 255 / 0.4);
+    }
+
+    h5 {
+        overflow: visible;
+        text-align: center;
+        color: var(--text);
+        text-transform: uppercase;
+
+        padding: 20px;
     }
 
     .settings {

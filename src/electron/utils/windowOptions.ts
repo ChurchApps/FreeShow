@@ -2,9 +2,9 @@
 // Options for electron windows
 // https://www.electronjs.org/docs/latest/api/browser-window
 
+import type { BrowserWindowConstructorOptions } from "electron"
 import { join } from "path"
 import { isMac, isProd } from ".."
-import { BrowserWindowConstructorOptions } from "electron"
 
 export const loadingOptions: BrowserWindowConstructorOptions = {
     width: 500,

@@ -164,7 +164,7 @@
 
     <div class="choose">
         {#each createOptions as type, i}
-            <Button title={type.title} disabled={type.id === "web" && !values.name} on:click={() => selectOption(type.id)} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
+            <Button title={type.title} disabled={type.id === "web" && !values.name?.trim()} on:click={() => selectOption(type.id)} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
                 <Icon id={type.icon} size={4} white={type.id !== "text" || !values.text.length} />
                 <p><T id={type.name} /></p>
             </Button>
@@ -220,7 +220,6 @@
         {/if}
 
         <CombinedInput>
-            <!-- WIP test is now invalid -->
             <Button on:click={textToShow} style="width: 100%;" dark center data-testid="create.show.popup.new.show">
                 <div class="text" style="display: flex;align-items: center;padding: 0;">
                     {#if values.text.trim().length > 0}

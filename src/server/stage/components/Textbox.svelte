@@ -1,12 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import autosize, { AutosizeTypes } from "../helpers/autosize"
-    import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
     import ListView from "./ListView.svelte"
     import Button from "../../common/components/Button.svelte"
     import Icon from "../../common/components/Icon.svelte"
+    import { getStyles } from "../../common/util/style"
+    import autosize, { type AutosizeTypes } from "../../common/util/autosize"
 
     export let item: Item
     export let stageItem: any = {}

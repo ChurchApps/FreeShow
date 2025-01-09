@@ -139,12 +139,7 @@
     // styles
     $: stylesList = getList($styles)
     function getList(styles) {
-        let list = Object.entries(styles).map(([id, obj]: any) => {
-            return { ...obj, id }
-        })
-
-        let sortedList = sortByName(list)
-
+        let sortedList = sortByName(keysToID(styles))
         return [{ id: null, name: "—" }, ...sortedList]
     }
 

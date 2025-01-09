@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Line } from "../../../../types/Show"
     import { showsCache } from "../../../stores"
     import { getItemText } from "../../edit/scripts/textStyle"
     import { clone } from "../../helpers/array"
@@ -41,7 +42,10 @@
                 let text = getItemText(item)
                 if (text.length) {
                     if (!oneItem) oneItem = item
-                    else oneItem.lines.push(...item.lines)
+                    else {
+                        let EMPTY_LINE: Line = { align: "", text: [{ style: "", value: "" }] }
+                        oneItem.lines.push(EMPTY_LINE, ...item.lines)
+                    }
                 }
             })
 

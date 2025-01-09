@@ -171,7 +171,8 @@ export const receiveREMOTE: any = {
             msg.data = data
         }
 
-        return data ? msg : null
+        msg.send = true
+        return data !== undefined ? msg : null
     },
 }
 

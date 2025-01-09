@@ -16,10 +16,8 @@ export function convertPowerpoint(files: any[]) {
 
     setTimeout(() => {
         files.forEach(({ name, content }: any) => {
-            // sort by name to ensure correct slide order (ppt/slides/slide1.xml)
-            const slideKeys = Object.keys(content)
-                .filter((a) => a.includes("ppt/slides/slide"))
-                .sort((a, b) => a.localeCompare(b))
+            // sort by number in name to ensure correct slide order (ppt/slides/slide1.xml)
+            const slideKeys = sortByNameNumber(Object.keys(content).filter((a) => a.includes("ppt/slides/slide")))
 
             let slides: string[][][] = slideKeys.map((key) => convertPPTX(content[key]))
             if (!slides.length) {
@@ -54,6 +52,21 @@ export function convertPowerpoint(files: any[]) {
 
         setTempShows(tempShows)
     }, 10)
+}
+
+// extract number from ppt/slides/slide1.xml
+export function sortByNameNumber(array: string[]) {
+    return array.sort((a, b) => {
+        // get numbers in name
+        const matchA = a.match(/\d+/)
+        const matchB = b.match(/\d+/)
+        const numA = matchA ? parseInt(matchA[0], 10) : Infinity
+        const numB = matchB ? parseInt(matchB[0], 10) : Infinity
+
+        if (numA !== numB) return numA - numB
+
+        return a.localeCompare(b)
+    })
 }
 
 function convertPPTX(content: any) {

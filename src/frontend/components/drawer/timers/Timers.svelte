@@ -12,7 +12,7 @@
 
     export let searchValue
 
-    $: sortedTimers = sortByName(sortByName(keysToID(clone($timers))), "type")
+    $: sortedTimers = sortByName(sortByName(keysToID(clone($timers)), "name", true), "type")
     $: sortedTimersWithProject = sortedTimers.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
     $: filteredTimers = searchValue.length > 1 ? sortedTimersWithProject.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTimersWithProject
 

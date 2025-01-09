@@ -1,3 +1,4 @@
+import type { Option } from "../../../types/Main"
 import { translate } from "../../utils/language"
 
 // move data in array at given indexes to new pos
@@ -54,8 +55,24 @@ export function sortByTimeNew<T>(array: T, key: string = "time") {
 // OBJETS
 
 // sort objects in array by name
-export function sortByName(arr: any[], key: string = "name") {
-    return arr.filter((a) => typeof a[key] === "string").sort((a, b) => a[key].localeCompare(b[key]))
+export function sortByName(arr: any[], key: string = "name", numberSort: boolean = false) {
+    return arr
+        .filter((a) => typeof a[key] === "string")
+        .sort((a, b) => {
+            if (numberSort) {
+                const matchA = a[key].match(/^(\d+)(.*)$/)
+                const matchB = b[key].match(/^(\d+)(.*)$/)
+
+                if (matchA && matchB) {
+                    const numA = parseInt(matchA[1], 10)
+                    const numB = parseInt(matchB[1], 10)
+
+                    if (numA !== numB) return numA - numB
+                    // return matchA[2].localeCompare(matchB[2]);
+                }
+            }
+            return a[key].localeCompare(b[key])
+        })
 }
 
 // sort objects in array alphabeticly
@@ -205,4 +222,10 @@ export function shuffleArray(array) {
     }
 
     return array
+}
+
+// convert object to dropdown options
+export function convertToOptions(object) {
+    let options: Option[] = Object.keys(object).map((id) => ({ id, name: object[id].name }))
+    return sortByName(options)
 }

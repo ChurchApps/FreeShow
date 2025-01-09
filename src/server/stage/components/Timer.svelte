@@ -9,10 +9,9 @@
     export let today: Date
     export let style: string
 
-    let times: string[] = []
     let timeValue: string = "00:00"
     let currentTime: number
-    $: numberToText(typeof currentTime === "number" ? currentTime : 0)
+    $: numberToText(typeof currentTime === "number" ? currentTime : 0, item?.timer?.showHours)
 
     $: {
         if (timer.type === "counter") {
@@ -49,13 +48,18 @@
         return false
     }
 
-    function numberToText(time: number) {
+    function numberToText(time: number, showHours: boolean = true) {
         let allTimes: any = secondsToTime(time)
-        timeValue = (allTimes.d === 0 ? "" : allTimes.d + ", ") + [allTimes.h === "00" ? "" : allTimes.h, allTimes.m, allTimes.s].join(":")
+
+        let days = allTimes.d === 0 ? "" : allTimes.d + ", "
+        let hours = showHours ? (allTimes.h === "00" ? "" : allTimes.h) : ""
+        let minutes = padString(Number(allTimes.m) + (showHours ? 0 : Number(allTimes.h) * 60))
+        timeValue = days + [hours, minutes, allTimes.s].join(":")
 
         while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
         timeValue = timeValue.replace(" :", " ")
     }
+    export const padString = (a: number) => a.toString().padStart(2, "0")
 </script>
 
 <div class="align autoFontSize" style="{style}{item?.align || ''}">
@@ -63,25 +67,8 @@
         {#if overflow && negative}
             <span>-</span>
         {/if}
-        {#if times.length}
-            {#each times as ti, i}
-                <div style="position: relative;display: flex;">
-                    {#each ti as t}
-                        <div>
-                            {#key t}
-                                <span style="position: absolute;">{t}</span>
-                                <!-- <span transition:blur={{ duration: 500 }} style="position: absolute;">{t}</span> -->
-                            {/key}
-                            <span style:opacity={0}>{t}</span>
-                        </div>
-                    {/each}
-                    <!-- style="margin: 0 10px;" -->
-                    {#if i % 2 === 0 && i < times.length}<span>:</span>{/if}
-                </div>
-            {/each}
-        {:else}
-            {timeValue}
-        {/if}
+
+        {timeValue}
     </div>
 </div>
 

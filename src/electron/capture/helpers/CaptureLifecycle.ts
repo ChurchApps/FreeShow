@@ -1,6 +1,6 @@
-import { NativeImage } from "electron"
-import { CaptureHelper } from "../CaptureHelper"
+import type { NativeImage } from "electron"
 import { OutputHelper } from "../../output/OutputHelper"
+import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 
 export class CaptureLifecycle {

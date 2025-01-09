@@ -1,21 +1,22 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
+    import { dictionary } from "../../../stores"
+    import { getLeftParenthesis, getRightParenthesis } from "../../../utils/language"
+    import type { API_metronome } from "../../actions/api"
     import T from "../../helpers/T.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
-    import type { API_metronome } from "../../actions/api"
-    import { getLeftParenthesis, getRightParenthesis } from "../../../utils/language"
 
     export let values: API_metronome = {}
+    export let audioOutputs: any[] = []
     export let volume: boolean = true
 
     let dispatch = createEventDispatcher()
     function updateValue(key, e) {
-        let value = Number(e.detail)
-        console.log(value, Math.floor(value), Math.floor(values.tempo || 0) === (values.tempo || 0))
+        let value = e.detail !== undefined ? Number(e.detail) : e
 
-        if (Math.floor(value) === value) value = Math.floor(value) // remove .0
-        console.log(value)
+        if (typeof value === "number" && Math.floor(value) === value) value = Math.floor(value) // remove .0
 
         dispatch("change", { ...values, [key]: value })
     }
@@ -36,3 +37,18 @@
         <NumberInput value={values.volume || 1} min={0.1} max={3} decimals={1} step={0.1} inputMultiplier={100} on:change={(e) => updateValue("volume", e)} />
     </CombinedInput>
 {/if}
+
+{#if audioOutputs.length}
+    <div class="input" style="margin-top: 5px;">
+        <CombinedInput>
+            <p title={$dictionary.audio?.custom_output}><T id="audio.custom_output" /></p>
+            <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === values.audioOutput)?.name || "—"} on:click={(e) => updateValue("audioOutput", e.detail?.id)} />
+        </CombinedInput>
+    </div>
+{/if}
+
+<style>
+    .input :global(.dropdownElem) {
+        width: 50%; /* 0px / 90% works, not 100% */
+    }
+</style>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activeShow, outputs, showsCache, styles, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeTriggerFunction, outputs, showsCache, styles, templates } from "../../../stores"
     import { clone, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getActiveOutputs, getResolution } from "../../helpers/output"
@@ -16,6 +16,17 @@
     $: slideId = _show().layouts("active").ref()[0]?.[$activeEdit.slide || 0]?.id
     $: editSlide = $showsCache && $activeEdit.slide !== null && slideId ? _show().slides([slideId]).get()[0] : null
     $: backgroundColor = $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background
+
+    let notesElem: any = null
+    $: if (notesElem && $activeTriggerFunction === "slide_notes") {
+        setTimeout(() => {
+            // focus after any textbox is focused
+            notesElem.querySelector("textarea").focus()
+            notesElem.scrollIntoView()
+
+            activeTriggerFunction.set("")
+        }, 20)
+    }
 
     let settings: any = {}
 
@@ -110,7 +121,7 @@
     </CombinedInput>
 
     <h6><T id="tools.notes" /></h6>
-    <div class="notes">
+    <div class="notes" bind:this={notesElem}>
         <Notes value={note} on:edit={edit} />
     </div>
 </div>

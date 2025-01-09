@@ -8,7 +8,16 @@
 
     import type { API_rest_command } from "./api"
 
-    export let rest: API_rest_command
+    export let value: API_rest_command
+    export let emitter: boolean = false
+    $: rest = value
+
+    // const REST_MESSAGE_INPUTS: Input[] = [
+    //     {name: "inputs.url", id: "url", type: "string", value: ""},
+    //     {name: "inputs.method", id: "method", type: "dropdown", value: "GET", options: [{ name: "GET" }, { name: "POST" }, { name: "PUT" }, { name: "DELETE" }]},
+    //     {name: "inputs.contentType", id: "contentType", type: "string", value: "application/json"},
+    //     {name: "inputs.payload", id: "payload", type: "string", value: "{}"},
+    // ]
 
     /**
      * onChange Handler for URL component
@@ -77,14 +86,16 @@
 <!-- ContentType -->
 <CombinedInput>
     <p><T id="inputs.contentType" /></p>
-    <TextInput value={rest.contentType || ""} placeholder={"application/json"} on:change={(e) => updateContentType(e)} />
+    <TextInput disabled={emitter} value={rest.contentType || ""} placeholder={"application/json"} on:change={(e) => updateContentType(e)} />
 </CombinedInput>
 
 <!-- Body -->
-<CombinedInput>
-    <p><T id="inputs.payload" /></p>
-    <TextInput value={rest.payload || ""} placeholder={"{}"} on:change={(e) => updatePayload(e)} />
-</CombinedInput>
+{#if !emitter}
+    <CombinedInput>
+        <p><T id="inputs.payload" /></p>
+        <TextInput value={rest.payload || ""} placeholder={"{}"} on:change={(e) => updatePayload(e)} />
+    </CombinedInput>
+{/if}
 
 <!--
 TODO: Better Namings
