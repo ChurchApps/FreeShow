@@ -127,7 +127,7 @@
         { id: "controller", name: "ControlShow", defaultPort: 5512, icon: "connection", enabledByDefault: false },
         { id: "output_stream", name: "OutputShow", defaultPort: 5513, icon: "stage", enabledByDefault: false },
         // Bitfocus Companion (WebSocket/REST)
-        { id: "companion", name: "WebSocket/REST (Companion)", defaultPort: 5505, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" },
+        { id: "companion", name: "WebSocket/REST/OSC (Companion)", defaultPort: 5505, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" },
         // { id: "rest", name: "REST Listener", defaultPort: 5506, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },
     ]
     // Camera

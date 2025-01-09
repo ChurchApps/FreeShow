@@ -165,12 +165,29 @@
 
     $: if (id === "timer" && box?.edit?.font) box.edit.font[3].value = item?.auto ?? true
 
+    $: if (id === "clock" && box?.edit?.default) {
+        // Get the clock type from the first option
+        const clockType = item?.clock?.type || "digital"
+        const dateFormat = item?.clock?.dateFormat || "none"
+        // Default option [0] is the clock type selector which is always shown
+        // [1] dateFormat
+        box.edit.default[1].hidden = clockType !== "digital"
+        // [2] showTime
+        box.edit.default[2].hidden = clockType !== "digital" || dateFormat === "none"
+        // [3] seconds
+        box.edit.default[3].hidden = clockType === "custom" || (clockType === "digital" && !item?.clock?.showTime)
+        // [4] customFormat
+        box.edit.default[4].hidden = clockType !== "custom"
+    }
+
     $: if (box?.edit?.default) {
         if (id === "mirror") getMirrorValues()
         else if (id === "media") box.edit.default[0].value = item?.src || ""
         else if (id === "list") box.edit.default[0].value = item?.list?.items || []
-        else if (id === "timer") box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
-        else if (id === "variable") box.edit.default[0].value = item?.variable?.id
+        else if (id === "timer") {
+            box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
+            box.edit.default[3].value = item?.timer?.showHours !== false
+        } else if (id === "variable") box.edit.default[0].value = item?.variable?.id
         else if (id === "web") box.edit.default[0].value = item?.web?.src || ""
         else if (id === "slide_tracker") {
             if (item?.tracker?.type) box.edit.default[0].value = item.tracker.type

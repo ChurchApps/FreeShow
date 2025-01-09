@@ -1,5 +1,12 @@
 import type { ItemType } from "./../../../../types/Show"
 import { captionLanguages } from "./captionLanguages"
+import dayjs from "dayjs"
+import localizedFormat from "dayjs/plugin/localizedFormat"
+import extendedFormat from "dayjs/plugin/advancedFormat"
+
+// Initialize plugins
+dayjs.extend(localizedFormat)
+dayjs.extend(extendedFormat)
 
 export type Box = {
     [key in ItemType]?: {
@@ -25,7 +32,9 @@ export type EditInput = {
     values?: any
     popup?: string
     enableNoColor?: boolean
+    title?: string // custom hover title
     relative?: boolean // updated values should be relative to each selected item (only for number px values)
+    placeholder?: string
 }
 
 export const mediaFitOptions: any[] = [
@@ -55,9 +64,9 @@ export let trackerEdits = [
         id: "tracker.accent",
         value: "#F0008C",
     },
-    { name: "edit.sub_indexes", input: "checkbox", id: "tracker.childProgress", value: false },
-    { name: "edit.one_letter", input: "checkbox", id: "tracker.oneLetter", value: false },
 ]
+
+const now = new Date(2025, 0, 10)
 
 export const boxes: Box = {
     text: {
@@ -253,6 +262,7 @@ export const boxes: Box = {
             default: [
                 { id: "src", input: "media" },
                 { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
+                // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
                 { name: "actions.mute", id: "muted", input: "checkbox", value: false },
                 { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
                 { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false },
@@ -320,6 +330,7 @@ export const boxes: Box = {
                     },
                 },
                 { name: "timer.mask", id: "timer.circleMask", input: "checkbox", value: false },
+                { name: "timer.hours", id: "timer.showHours", input: "checkbox", value: true },
             ],
             // font: [
             //     { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },
@@ -371,10 +382,57 @@ export const boxes: Box = {
                         options: [
                             { id: "digital", name: "$:clock.digital:$" },
                             { id: "analog", name: "$:clock.analog:$" },
+                            { id: "custom", name: "$:clock.custom:$" },
                         ],
                     },
                 },
-                { name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: false },
+                {
+                    name: "sort.date",
+                    input: "dropdown",
+                    id: "clock.dateFormat",
+                    value: "none",
+                    hidden: true,
+                    values: {
+                        options: [
+                            { id: "none", name: "$:main.none:$" },
+                            { id: "LL", name: `${dayjs(now).format("LL")}` }, // January 10, 2025
+                            { id: "ll", name: `${dayjs(now).format("ll")}` }, // Jan 10, 2025
+                            { id: "DD/MM/YYYY", name: `${dayjs(now).format("DD/MM/YYYY")}` }, // 10/01/2025
+                            { id: "MM/DD/YYYY", name: `${dayjs(now).format("MM/DD/YYYY")}` }, // 01/10/2025
+                            { id: "YYYY-MM-DD", name: `${dayjs(now).format("YYYY-MM-DD")}` }, // 2025-01-10
+                        ],
+                    },
+                },
+                {
+                    name: "clock.show_time",
+                    input: "checkbox",
+                    id: "clock.showTime",
+                    value: true,
+                    hidden: true,
+                },
+                {
+                    name: "clock.seconds",
+                    input: "checkbox",
+                    id: "clock.seconds",
+                    value: false,
+                    hidden: true,
+                },
+                {
+                    name: "actions.format",
+                    title: "Day: {DD}, Month: {MM}, Full year: {YYYY}, Hours: {hh}, Minutes: {mm}, Seconds: {ss}, AM/PM: {A}, Full date: {LLL}", // similar to getProjectName()
+                    input: "text",
+                    id: "clock.customFormat",
+                    value: "hh:mm a",
+                    hidden: true,
+                    // input_placeholder: "Examples: LT, LLLL, MMMM D YYYY h:mm A",
+                },
+                {
+                    name: "",
+                    input: "tip",
+                    values: { subtext: '<a href="https://day.js.org/docs/en/display/format#list-of-all-available-formats" class="open">List of day.js formats</a>' },
+                    hidden: true,
+                    disabled: "clock",
+                },
             ],
             font: [
                 { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "CMGSans" },

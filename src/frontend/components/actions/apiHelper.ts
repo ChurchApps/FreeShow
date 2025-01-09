@@ -4,7 +4,9 @@ import {
     activeDrawerTab,
     activeEdit,
     activePage,
+    activePlaylist,
     activeProject,
+    audioPlaylists,
     dictionary,
     groupNumbers,
     groups,
@@ -23,6 +25,7 @@ import {
     sortedShowsList,
     styles,
     variables,
+    videosTime,
 } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
@@ -33,14 +36,14 @@ import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
 import { getMediaStyle } from "../helpers/media"
 import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
-import { loadShows } from "../helpers/setShow"
+import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId } from "../helpers/show"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_variable } from "./api"
+import type { API_group, API_id_optional, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -207,13 +210,23 @@ function updateVariable(value: any, id: string, key: string) {
 
 // SHOW
 
-export function changeShowLayout(data: API_layout) {
+export async function changeShowLayout(data: API_layout) {
+    await loadShows([data.showId])
     showsCache.update((a) => {
         if (!a[data.showId]?.layouts[data.layoutId]) return a
 
         a[data.showId].settings.activeLayout = data.layoutId
         return a
     })
+}
+
+export async function setShowAPI(id: string, value: string) {
+    await loadShows([id])
+    try {
+        setShow(id, JSON.parse(value))
+    } catch (err) {
+        console.error(err)
+    }
 }
 
 export async function getPlainText(id: string) {
@@ -291,6 +304,40 @@ export function startScripture(data: API_scripture) {
 
     openScripture.set({ ...ref })
     setTimeout(() => playScripture.set(true), 500)
+}
+
+///
+
+export function getOutput(data: API_id_optional) {
+    let outputId = data?.id || getActiveOutputs(get(outputs))[0]
+    let output = get(outputs)[outputId]
+    return output?.out || null
+}
+
+export function getPlayingVideoTime() {
+    let outputId = getActiveOutputs(get(outputs))[0]
+    let time = get(videosTime)[outputId]
+    return time || 0
+}
+
+export function getPlayingAudioTime() {
+    let audio = Object.values(get(playingAudio))[0]?.audio
+    return audio ? audio?.currentTime || 0 : 0
+}
+
+export function getPlaylists() {
+    return get(audioPlaylists)
+}
+
+export function getPlayingPlaylist(data: API_id_optional) {
+    let id = data?.id || get(activePlaylist)?.id
+    return get(audioPlaylists)[id] ? { ...get(audioPlaylists)[id], id } : null
+}
+
+export function getSlide(data: API_slide) {
+    let slides = _show(data.showId || "active").get("slides") || {}
+    let slide = slides[data.slideId || Object.keys(slides)[0]]
+    return slide || null
 }
 
 // MEDIA

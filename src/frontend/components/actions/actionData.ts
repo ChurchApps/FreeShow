@@ -65,7 +65,10 @@ export const actionData = {
     send_midi: { slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
     run_action: { name: "actions.run_action", icon: "actions", input: "id" },
     toggle_action: { name: "actions.toggle_action", icon: "actions", input: "toggle_action" },
+    toggle_output: { name: "actions.toggle_output", icon: "outputs", input: "id" },
     send_rest_command: { name: "actions.send_rest_command", icon: "trigger", input: "rest" },
+
+    emit_action: { name: "actions.emit_data", icon: "emitter", input: "emitter" },
 
     // CUSTOM
     wait: { name: "animate.wait", icon: "time_in", input: "number" },

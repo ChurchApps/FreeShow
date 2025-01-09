@@ -11,6 +11,7 @@
     export let multiple: boolean = false
     export let clearOnClick: boolean = false
     export let center: boolean = true
+    export let dark: boolean = true
 
     function pick() {
         if (clearOnClick) {
@@ -34,6 +35,6 @@
     }
 </script>
 
-<Button {title} style={$$props.style || null} on:click={pick} {center} dark>
+<Button {title} style={$$props.style || null} on:click={pick} {center} {dark}>
     <slot />
 </Button>

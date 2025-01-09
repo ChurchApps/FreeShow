@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, playingAudio, playingMetronome, special } from "../../../stores"
+    import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, special } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
     import { getOutputContent, isOutCleared } from "../../helpers/output"
@@ -143,7 +143,14 @@
 
         {#if outputContent?.type !== "pdf"}
             <div class="combinedButton">
-                <Button disabled={slideTimerCleared} on:click={() => clear("nextTimer")} title={$dictionary.clear?.nextTimer + ($special.disablePresenterControllerKeys ? " [F5]" : "")} dark red center>
+                <Button
+                    disabled={slideTimerCleared}
+                    on:click={() => clear("nextTimer")}
+                    title={$dictionary.clear?.[Object.keys($overlayTimers).length ? "timer" : "nextTimer"] + ($special.disablePresenterControllerKeys ? " [F5]" : "")}
+                    dark
+                    red
+                    center
+                >
                     <Icon id="clock" size={1.2} />
                 </Button>
                 {#if !allCleared}

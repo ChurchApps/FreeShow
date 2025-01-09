@@ -3,6 +3,7 @@ export const DEFAULT_DICTIONARY = {
         unnamed: "Unnamed",
     },
     empty: {
+        general: "Nothing here",
         project_select: "Select a project",
         show: "No show selected",
         shows: "No shows",

@@ -1,13 +1,13 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { ID, Slide, Item, Layout, SlideData, Line, Chords } from "../../types/Show"
+import type { Chords, ID, Item, Layout, Line, Slide, SlideData } from "../../types/Show"
 import { TranslationMethod } from "../../types/Songbeamer"
 import { ShowObj } from "../classes/Show"
-import { categories, globalTags, groups } from "../stores"
-import { checkName } from "../components/helpers/show"
-import { createCategory, setTempShows } from "./importHelpers"
 import { history } from "../components/helpers/history"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
+import { checkName, getGlobalGroup } from "../components/helpers/show"
+import { categories, globalTags } from "../stores"
+import { createCategory, setTempShows } from "./importHelpers"
 
 interface ImportSettings {
     category: string
@@ -290,7 +290,7 @@ const SongbeamerGroups: { [key: string]: string } = {
     strophe: "Verse",
     "pre-bridge": "Pre-Bridge",
     bridge: "Bridge",
-    misc: "",
+    misc: "Misc",
     "pre-refrain": "Pre-Chorus",
     refrain: "Chorus",
     "pre-chorus": "Pre-Chorus",
@@ -578,8 +578,9 @@ function createSlidesMultipleLanguagesPerSlide(songbeamerSlides: SongbeamerSlide
                 break
         }
 
-        if (!isChildSlide && songbeamerSlide.globalGroup !== null && get(groups)[songbeamerSlide.globalGroup]) {
-            slide.globalGroup = songbeamerSlide.globalGroup
+        if (!isChildSlide && songbeamerSlide.globalGroup !== null) {
+            let globalGroup = getGlobalGroup(songbeamerSlide.globalGroup) || "verse"
+            if (globalGroup) slide.globalGroup = globalGroup
         }
         slides[id] = slide
 
@@ -677,8 +678,10 @@ function createSlidesForLanguage(songbeamerSlides: SongbeamerSlide[], language: 
                 },
             ],
         }
-        if (!isChildSlide && songbeamerSlide.globalGroup !== null && get(groups)[songbeamerSlide.globalGroup]) {
-            slide.globalGroup = songbeamerSlide.globalGroup
+
+        if (!isChildSlide && songbeamerSlide.globalGroup !== null) {
+            let globalGroup = getGlobalGroup(songbeamerSlide.globalGroup) || "verse"
+            if (globalGroup) slide.globalGroup = globalGroup
         }
         slides[id] = slide
 
@@ -725,6 +728,8 @@ function createSlides(songbeamerSlides: SongbeamerSlide[], metadata: SongbeamerM
     let slides: { [key: ID]: Slide } = {}
     let layouts: Layout[] = []
 
+    console.log(songbeamerSlides)
+
     switch (settings.translationMethod) {
         case TranslationMethod.MultiLine:
         case TranslationMethod.Textboxes:
@@ -753,8 +758,8 @@ function createSlides(songbeamerSlides: SongbeamerSlide[], metadata: SongbeamerM
 
     // add layout slide groups
     layouts[0]?.slides?.forEach(({ id }) => {
-        if (slides[id]) {
-            slides[id].group = "—"
+        if (slides[id] && !slides[id].group) {
+            slides[id].group = ""
             slides[id].globalGroup = "verse"
         }
     })

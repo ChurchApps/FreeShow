@@ -1,7 +1,7 @@
-import { BrowserWindow, screen } from "electron"
-import { OutputHelper } from "../OutputHelper"
+import { screen, type BrowserWindow } from "electron"
 import { toApp } from "../.."
 import { OUTPUT } from "../../../types/Channels"
+import { OutputHelper } from "../OutputHelper"
 
 export class OutputBounds {
     // BOUNDS

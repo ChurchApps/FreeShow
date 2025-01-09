@@ -43,7 +43,7 @@
             if (!edit.id) return a
 
             let type = edit.edit.type || "show"
-            edit.icon = type === "show" ? "showIcon" : type
+            edit.icon = type === "show" ? "slide" : type // showIcon
             if (edit.icon === "media") edit.icon = getMediaType(getExtension(edit.id))
             if (edit.icon === "template") edit.icon = "templates"
             if (edit.icon === "overlay") edit.icon = "overlays"

@@ -1,7 +1,5 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import autosize from "../helpers/autosize"
-    import { getStyles } from "../helpers/style"
     import Clock from "../items/Clock.svelte"
     import SlideNotes from "../items/SlideNotes.svelte"
     import SlideProgress from "../items/SlideProgress.svelte"
@@ -13,6 +11,8 @@
     import Timer from "./Timer.svelte"
     import Variable from "./Variable.svelte"
     import { keysToID, sortByName } from "../../common/util/helpers"
+    import { getStyles } from "../../common/util/style"
+    import autosize from "../../common/util/autosize"
 
     export let show: any
     export let id: string
@@ -144,10 +144,10 @@
                 {:else if id.includes("video")}
                     <VideoTime {videoTime} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("first_active_timer")}
-                    <Timer timer={$timers[firstTimerId] || {}} ref={{ id: firstTimerId }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                    <Timer {item} timer={$timers[firstTimerId] || {}} ref={{ id: firstTimerId }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
-                        <Timer timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                        <Timer {item} timer={$timers[id.split("#")[1]]} ref={{ id: id.split("#")[1] }} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                     {/if}
                 {:else if id.includes("variables")}
                     {#if $variables[id.split("#")[1]]}

@@ -89,13 +89,14 @@
 
     let alignElem
     let size = 100
-    $: if (alignElem && item) size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
+    // currentSlide & timeout to update auto size properly if slide notes
+    $: if (alignElem && item && currentSlide !== undefined) setTimeout(() => (size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })))
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
     $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($currentWindow === "output" ? $allOutputs : $outputs, false, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
-    $: currentSlide = currentOutput.out?.slide || (next ? $outputSlideCache[stageOutputId] : null)
+    $: currentSlide = currentOutput.out?.slide || (next ? $outputSlideCache[stageOutputId] || null : null)
 
     let timeout: any = null
     $: if (stageOutputId && ($allOutputs || $outputs)) startTimeout()
@@ -208,10 +209,10 @@
                 {:else if id.includes("video")}
                     <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                 {:else if id.includes("first_active_timer")}
-                    <Timer id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                    <Timer {item} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                 {:else if id.includes("timers")}
                     {#if $timers[id.split("#")[1]]}
-                        <Timer id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                        <Timer {item} id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                     {/if}
                 {:else if id.includes("variables")}
                     {#if $variables[id.split("#")[1]]}

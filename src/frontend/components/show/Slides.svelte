@@ -7,7 +7,7 @@
     import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getCachedShow } from "../helpers/show"
-    import { getItemWithMostLines, updateOut } from "../helpers/showActions"
+    import { checkActionTrigger, getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getClosestRecordingSlide } from "../helpers/slideRecording"
     import T from "../helpers/T.svelte"
@@ -30,7 +30,7 @@
     function fixBrokenMedia() {
         if (!currentShow) return
         showsCache.update((a) => {
-            Object.entries(currentShow.layouts).forEach(([layoutId, layout]) => {
+            Object.entries(currentShow.layouts || {}).forEach(([layoutId, layout]) => {
                 layout.slides.forEach((slide, i) => {
                     let backgroundId = slide.background
                     if (backgroundId && !currentShow.media[backgroundId]) {
@@ -76,14 +76,19 @@
         customActionActivation("slide_click")
 
         let slideRef: any = _show(showId).layouts([activeLayout]).ref()[0]
-        updateOut(showId, index, slideRef, !e.altKey)
 
-        setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
+        let data = slideRef[index]?.data
+        checkActionTrigger(data, index)
+        // allow custom actions to trigger first
+        setTimeout(() => {
+            setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
+            updateOut(showId, index, slideRef, !e.altKey)
 
-        getClosestRecordingSlide({ showId, layoutId: activeLayout }, index)
+            getClosestRecordingSlide({ showId, layoutId: activeLayout }, index)
 
-        // force update output if index is the same as previous
-        if (activeSlides[index]) refreshOut()
+            // force update output if index is the same as previous
+            if (activeSlides[index]) refreshOut()
+        })
 
         // don't auto scroll if clicking with mouse!
         disableAutoScroll = true

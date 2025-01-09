@@ -41,6 +41,7 @@
 
         if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
 
+        // WIP keyboard shortcuts same as main app
         if ([" ", "ArrowRight", "PageDown"].includes(e.key)) next()
         else if (["ArrowLeft", "PageUp"].includes(e.key)) previous()
         else if (e.key === "Escape") send("OUT", "clear")

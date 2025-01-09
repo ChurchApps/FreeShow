@@ -9,7 +9,7 @@ import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { ID, MidiIn, Overlays, ShowList, Shows, Tag, Templates, Timer, Transition } from "../types/Show"
+import type { Emitter, ID, MidiIn, Overlays, ShowList, Shows, Tag, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { Channels, Playlist } from "./../types/Audio"
@@ -59,12 +59,15 @@ export const focusedArea: Writable<string> = writable("")
 export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
 export const activeScripture: Writable<any> = writable({})
-export const activeTagFilter: Writable<string[]> = writable([])
-export const activeMediaTagFilter: Writable<string[]> = writable([])
 export const activeTriggerFunction: Writable<string> = writable("")
 export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
 export const activeSlideRecording: Writable<any> = writable(null)
+
+// TAGS
+export const activeTagFilter: Writable<string[]> = writable([])
+export const activeMediaTagFilter: Writable<string[]> = writable([])
+export const activeActionTagFilter: Writable<string[]> = writable([])
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -77,7 +80,7 @@ export const audioChannels: Writable<Channels> = writable({})
 export const playingAudio: Writable<{ [key: string]: any }> = writable({})
 export const playingVideos: Writable<any[]> = writable([])
 export const activePlaylist: Writable<any> = writable(null)
-export const playingMetronome: Writable<any> = writable(null)
+export const playingMetronome: Writable<boolean> = writable(false)
 export const visualizerData: Writable<any> = writable(null)
 export const isFadingOut: Writable<any> = writable(false)
 
@@ -103,6 +106,7 @@ export const customMessageCredits: Writable<string> = writable("")
 export const presentationData: Writable<any> = writable({})
 export const presentationApps: Writable<null | string[]> = writable(null)
 export const colorbars: Writable<string> = writable("")
+export const overlayTimers: Writable<{ [key: string]: any }> = writable({})
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })
@@ -172,7 +176,6 @@ export const transitionData: Writable<{ text: Transition; media: Transition }> =
     media: { type: "fade", duration: 800, easing: "sine" },
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
-export const globalTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 
 // PROJECT
 export const openedFolders: Writable<ID[]> = writable([]) // []
@@ -194,7 +197,6 @@ export const triggers: Writable<{ [key: string]: any }> = writable({}) // {}
 export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
 export const videoMarkers: Writable<{ [key: string]: { name: string; time: number }[] }> = writable({}) // {}
-export const mediaTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const checkedFiles: Writable<any[]> = writable([])
 
 // OVERLAYS
@@ -237,6 +239,11 @@ export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}
 export const drawer: Writable<{ height: number; stored: null | number }> = writable({ height: 300, stored: null }) // {default}
 export const mediaOptions: Writable<MediaOptions> = writable({ columns: 5, mode: "grid" }) // {default}
 
+// TAGS
+export const globalTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
+export const mediaTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
+export const actionTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
+
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
 export const sorted: Writable<any> = writable({}) // {}
@@ -272,6 +279,7 @@ export const outLocked: Writable<boolean> = writable(false) // false
 // MIDI
 // this is repurposed as "actions"
 export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({}) // {}
+export const emitters: Writable<{ [key: string]: Emitter }> = writable({}) // {}
 
 // CONNECTIONS
 export const ports: Writable<any> = writable({ remote: 5510, stage: 5511, controller: 5512, output_stream: 5513 }) // {default}

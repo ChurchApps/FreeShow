@@ -52,7 +52,7 @@
     $: isPlaylist = !!activePlaylist
 
     // metronome
-    $: metronomeActive = !!$playingMetronome
+    $: metronomeActive = $playingMetronome
     $: if (metronomeActive) active = "metronome"
 
     // audio outputs
@@ -124,7 +124,7 @@
     <Tabs {tabs} bind:active style="flex: 1;" />
 
     {#if active === "metronome"}
-        <Metronome />
+        <Metronome {audioOutputs} />
     {:else}
         <AudioMix />
     {/if}

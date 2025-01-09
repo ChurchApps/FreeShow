@@ -8,6 +8,7 @@ import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
 import { currentlyDeletedShows } from "./cloud/drive"
 import { startBackup } from "./data/backup"
+import { defaultSettings, defaultSyncedSettings } from "./data/defaults"
 import { startExport } from "./data/export"
 import { config, getStore, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
@@ -15,13 +16,12 @@ import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { closeServers } from "./servers"
 import { stopApiListener } from "./utils/api"
-import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, loadShows, writeFile } from "./utils/files"
+import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, loadShows, writeFile } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, saveRecording, startImport } from "./utils/responses"
-import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { renameShows } from "./utils/shows"
-import { defaultSettings, defaultSyncedSettings } from "./data/defaults"
+import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
 
@@ -46,8 +46,7 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 
 // info
 console.log("Starting FreeShow...")
-if (!isProd) console.log("Building app! This may take 20-90 seconds")
-if (isLinux) console.log("libva error on Linux can be ignored")
+if (!isProd) console.log("Building app! (This may take 20-90 seconds)")
 
 // set application menu
 setGlobalMenu()
@@ -147,28 +146,37 @@ function createMain() {
     mainWindow.setMinimumSize(MIN_WINDOW_SIZE, MIN_WINDOW_SIZE)
 
     // this is to debug any weird positioning
-    console.log("Main Window Bounds:", mainWindow.getBounds())
+    // console.log("Main Window Bounds:", mainWindow.getBounds())
 
     loadWindowContent(mainWindow)
     setMainListeners()
 
-    // open devtools
-    if (!isProd) mainWindow.webContents.openDevTools()
-
     if (RECORD_STARTUP_TIME) console.timeEnd("Main window")
 }
 
-export function loadWindowContent(window: BrowserWindow, type: null | "output" = null) {
+function openDevTools(window: BrowserWindow) {
+    console.log('Opening DevTools... ("[ERROR:CONSOLE] Request Autofill" can be ignored)')
+    window.webContents.openDevTools()
+    // ERROR:CONSOLE(1)] "Request Autofill.enable failed. - can be ignored:
+    // https://github.com/electron/electron/issues/41614
+}
+
+export async function loadWindowContent(window: BrowserWindow, type: null | "output" = null) {
     let mainOutput = type === null
     if (mainOutput && RECORD_STARTUP_TIME) console.time("Main window content")
-    if (mainOutput) console.log("Loading main window content")
+
     if (isProd) window.loadFile("public/index.html").catch(error)
-    else window.loadURL("http://localhost:3000").catch(error)
+    else {
+        // load development environment
+        if (mainOutput) {
+            await waitForBundle()
+            openDevTools(window)
+        }
+        window.loadURL("http://localhost:3000").catch(error)
+    }
 
     window.webContents.on("did-finish-load", () => {
-        // if (window === mainWindow) type = null // make sure type is correct
         window.webContents.send(STARTUP, { channel: "TYPE", data: type })
-        if (mainOutput) retryLoadingContent()
     })
 
     function error(err: any) {
@@ -177,24 +185,29 @@ export function loadWindowContent(window: BrowserWindow, type: null | "output" =
     }
 }
 
-// retry loading until content has finshed building
-const retryInterval = 10
-let tries = 0
-function retryLoadingContent() {
-    if (isProd) return
+// wait until the main Rollup bundle exists before loading
+function waitForBundle() {
+    const BUNDLE_PATH = path.resolve(__dirname, "..", "..", "public/build/bundle.js")
+    const CHECK_INTERVAL = 2 // every 2 seconds
+    const MAX_SECONDS = 120
+    let tries = 0
 
-    setTimeout(() => {
-        if (isLoaded) return
+    return new Promise((resolve) => {
+        const interval = setInterval(() => {
+            if (doesPathExist(BUNDLE_PATH)) {
+                console.log("Main bundle created! Loading interface...")
+                clearInterval(interval)
+                resolve(true)
+            }
 
-        if (tries < 1) console.log("Loading content again. App is probably not finished building yet")
-        else if (tries > 15) {
-            console.log("Could not load app content. Please check console for any errors!")
-            return app.quit()
-        } else console.log("Trying to load content again")
-        tries++
-
-        mainWindow!.webContents.reload()
-    }, retryInterval * 1000)
+            tries += CHECK_INTERVAL / MAX_SECONDS
+            if (tries >= 1) {
+                clearInterval(interval)
+                app.quit()
+                throw new Error("Could not load app content. Please check console for any errors!")
+            }
+        }, CHECK_INTERVAL * 1000)
+    })
 }
 
 function setMainListeners() {

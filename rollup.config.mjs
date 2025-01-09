@@ -98,6 +98,11 @@ function mainApp() {
                     mangle: true,
                 }),
         ],
+        onwarn: (warning, warn) => {
+            // many false Svelte "Circular dependencies" warnings
+            if (warning.code === "CIRCULAR_DEPENDENCY") return
+            warn(warning)
+        },
         watch: {
             clearScreen: false,
         },

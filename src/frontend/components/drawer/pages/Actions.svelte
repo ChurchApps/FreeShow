@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, dictionary, labelsDisabled, midiIn, popupData, runningActions } from "../../../stores"
+    import { activeActionTagFilter, activePopup, dictionary, labelsDisabled, midiIn, popupData, runningActions } from "../../../stores"
     import { send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
     import { runAction } from "../../actions/actions"
@@ -37,10 +37,12 @@
         activePopup.set("action")
     }
 
-    $: actions = sortByName(keysToID($midiIn)).map(convertOldMidiToNewAction)
+    $: actions = sortByName(keysToID($midiIn), "name", true)
+        .map(convertOldMidiToNewAction)
+        .filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find((tagId) => !a.tags?.includes(tagId))))
 </script>
 
-<div style="position: relative;height: 100%;overflow-y: auto;">
+<div class="context #actions" style="position: relative;height: 100%;overflow-y: auto;">
     {#if actions.length}
         <div class="actions">
             {#each actions as action}

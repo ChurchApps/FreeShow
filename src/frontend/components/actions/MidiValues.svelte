@@ -13,10 +13,11 @@
     import { uid } from "uid"
     import type { API_midi } from "./api"
 
-    export let midi: API_midi
+    export let value: API_midi
     export let firstActionId: string = ""
     export let type: "input" | "output" = "input"
     export let playSlide: boolean = false
+    $: midi = value
 
     $: hasActions = !!firstActionId
 
@@ -104,14 +105,6 @@
     $: noActionOrDefaultValues = !hasActions || (midi.defaultValues && defaultMidiActionChannels[firstActionId])
 </script>
 
-{#if type !== "output"}
-    {#if playSlide}
-        <p style="opacity: 0.8;font-size: 0.8em;text-align: center;margin-bottom: 20px;"><T id="actions.play_on_midi_tip" /></p>
-    {:else}
-        <h3><T id="midi.midi" /></h3>
-    {/if}
-{/if}
-
 <CombinedInput>
     {#if type === "input"}
         <p><T id="midi.input" /></p>
@@ -173,13 +166,3 @@
     <p><T id="midi.channel" /></p>
     <NumberInput value={midi.values?.channel ?? 1} min={1} max={16} on:change={(e) => setValues("channel", Number(e.detail))} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
 </CombinedInput>
-
-<style>
-    h3 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-    }
-</style>

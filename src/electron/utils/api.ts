@@ -130,6 +130,42 @@ function startOSC(PORT: number | undefined) {
     osc.open({ port: PORT })
 }
 
+// let OSC_SENDER: null | OSC = null // must work with different ip:port
+export function emitOSC(msg: any) {
+    if (typeof msg.data !== "string") return
+
+    // if (!OSC_SENDER) {
+    const OSC_SENDER = new OSC({ plugin: new OSC.DatagramPlugin() }) // UDP
+
+    const options: any = { port: msg.signal?.port || 8080, host: msg.signal?.host || "localhost" }
+
+    OSC_SENDER.on("open", sendMessage)
+    OSC_SENDER.open(options)
+    //     return
+    // }
+
+    // const IS_OPEN = 1
+    // if (OSC_SENDER?.status() === IS_OPEN) {
+    //     sendMessage()
+    // }
+
+    OSC_SENDER.on("error", (err: any) => {
+        console.error("OSC EMIT ERROR:", err)
+        OSC_SENDER.close()
+    })
+
+    function sendMessage() {
+        if (!OSC_SENDER) return
+
+        const message = new OSC.Message(msg.data)
+        console.log(`Emitting OSC at ${options.host}:${options.port}:`, message.address)
+
+        OSC_SENDER.send(message)
+        // ensure message is sent
+        setTimeout(() => OSC_SENDER.close(), 100)
+    }
+}
+
 // DATA
 
 async function receivedData(data: any = {}, log: any) {

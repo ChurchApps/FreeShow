@@ -1,4 +1,5 @@
 import type { Resolution } from "./Settings"
+import type { Input } from "./Input"
 
 export interface Shows {
     [key: string]: Show
@@ -120,6 +121,7 @@ export interface Timer {
     type: "counter" | "clock" | "event"
     viewType?: "time" | "line" | "circle"
     circleMask?: boolean
+    showHours?: boolean // use just minutes or minutes and hours
     start?: number
     end?: number
     event?: string
@@ -131,8 +133,10 @@ export interface Timer {
 }
 
 export interface Clock {
-    type: "digital" | "analog"
-    seconds: boolean
+    type: "digital" | "analog" | "custom"
+    dateFormat: "none"
+    showTime?: boolean
+    seconds?: boolean
 }
 
 export interface DynamicEvent {
@@ -265,21 +269,24 @@ export interface Midi {
     name: string
     triggers: string[]
     actionValues?: any[]
+    tags?: string[]
     // action?: string
     // actionData?: any
     shows?: any[] // ??
     customActivation?: string
     keypressActivate?: string
     midiEnabled?: boolean
-    midi?: {
-        input?: string
-        output?: string
-        type: "noteon" | "noteoff" | "cc"
-        values: {
-            note: number
-            velocity: number
-            channel: number
-        }
+    midi?: MidiValues
+}
+
+export interface MidiValues {
+    input?: string
+    output?: string
+    type: "noteon" | "noteoff" | "cc"
+    values: {
+        note: number
+        velocity: number
+        channel: number
     }
 }
 
@@ -290,6 +297,25 @@ export interface MidiIn extends Midi {
         // layoutId: string
         // index: number
     }[]
+}
+
+export type EmitterTypes = "osc" | "http" | "midi"
+export interface EmitterTemplateValue {
+    name: string
+    value: string
+}
+export interface EmitterTemplate {
+    name: string
+    inputs: EmitterTemplateValue[]
+}
+export interface EmitterInputs {
+    signal?: Input[]
+}
+export interface Emitter {
+    name: string
+    type: EmitterTypes
+    signal?: any
+    templates?: { [key: string]: EmitterTemplate }
 }
 
 //
@@ -304,6 +330,7 @@ export interface Overlay {
     items: Item[]
     locked?: boolean
     placeUnderSlide?: boolean
+    displayDuration?: number
 }
 
 export interface Templates {

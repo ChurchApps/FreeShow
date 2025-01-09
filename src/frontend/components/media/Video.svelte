@@ -1,7 +1,8 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
-    import { encodeFilePath, isVideoSupported } from "../helpers/media"
+    import { media } from "../../stores"
+    import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
 
     export let path: any
     export let video: any = null
@@ -53,6 +54,19 @@
     $: if (path[0] === "/") path = `file://${path}`
 
     $: isVideoSupported(path)
+
+    $: subtitle = $media[path]?.subtitle
+    $: tracks = $media[path]?.tracks || []
+    $: if (video && subtitle !== undefined) updateSubtitles()
+    // don't change rapidly
+    let subtitleChange: any = null
+    function updateSubtitles() {
+        if (subtitleChange) clearTimeout(subtitleChange)
+        subtitleChange = setTimeout(() => {
+            if (subtitle) enableSubtitle(video, subtitle)
+            subtitleChange = null
+        }, 20)
+    }
 </script>
 
 <div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
@@ -74,6 +88,8 @@
         loop={videoData.loop || false}
     >
         <!-- bind:volume={audioVolume} -->
-        <track kind="captions" />
+        {#each tracks as track}
+            <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
+        {/each}
     </video>
 </div>

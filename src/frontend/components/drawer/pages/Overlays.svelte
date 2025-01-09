@@ -14,6 +14,7 @@
     import DropArea from "../../system/DropArea.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
+    import OverlayActions from "./OverlayActions.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -74,19 +75,22 @@
                         showPlayOnHover
                         on:click={(e) => {
                             if ($outLocked || e.ctrlKey || e.metaKey) return
-                            if (e.target?.closest(".edit")) return
+                            if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
                             setOutput("overlays", overlay.id, true)
                         }}
                         on:dblclick={(e) => {
                             if (e.ctrlKey || e.metaKey) return
-                            if (e.target?.closest(".edit")) return
+                            if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
                             activeShow.set({ id: overlay.id, type: "overlay" })
                             activePage.set("show")
                             if ($focusMode) focusMode.set(false)
                         }}
                     >
+                        <!-- icons -->
+                        <OverlayActions columns={$mediaOptions.columns} overlayId={overlay.id} />
+
                         <SelectElem id="overlay" data={overlay.id} fill draggable>
                             <Zoomed {resolution} background={overlay.items.length ? "black" : "transparent"}>
                                 {#each overlay.items as item}

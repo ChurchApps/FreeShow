@@ -1,6 +1,6 @@
 <script lang="ts">
     import { get } from "svelte/store"
-    import { activeMediaTagFilter, dictionary, mediaTags, popupData } from "../../../stores"
+    import { actionTags, activeActionTagFilter, activeMediaTagFilter, dictionary, mediaTags, popupData } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -14,6 +14,7 @@
 
     const store = {
         media: () => mediaTags,
+        action: () => actionTags,
     }
 
     let type: string = $popupData.type || "media"
@@ -43,7 +44,8 @@
             delete a[tagId]
             return a
         })
-        activeMediaTagFilter.set([])
+        if (type === "media") activeMediaTagFilter.set([])
+        else if (type === "action") activeActionTagFilter.set([])
 
         getTags()
     }

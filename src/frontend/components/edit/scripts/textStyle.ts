@@ -24,6 +24,9 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
                     if (to < length) newText.push({ value: text.value.slice(to, length), style: text.style })
                 } else newText.push(text)
 
+                // empty line
+                if (text && !newText.length) newText.push(text)
+
                 pos += length
             })
         } else newText.push(...(line.text || []))

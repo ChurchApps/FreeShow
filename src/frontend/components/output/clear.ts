@@ -10,6 +10,7 @@ import {
     outputs,
     outputSlideCache,
     overlays,
+    overlayTimers,
     playingAudio,
     playingMetronome,
     selected,
@@ -18,7 +19,7 @@ import {
     videosData,
     videosTime,
 } from "../../stores"
-import { clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
+import { clearOverlayTimer, clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { clearAudio } from "../helpers/audio"
 import { clone } from "../helpers/array"
 import { customActionActivation } from "../actions/actions"
@@ -142,10 +143,21 @@ export function clearOverlays(outputId: string = "") {
 }
 
 export function clearTimers(outputId: string = "") {
+    // clear slide timers
     setOutput("transition", null, false, outputId)
 
     let outputIds: string[] = outputId ? [outputId] : getActiveOutputs()
     Object.keys(get(slideTimers)).forEach((id) => {
         if (outputIds.includes(id)) get(slideTimers)[id].timer?.clear()
+    })
+
+    // clear overlay timers
+    outputIds.forEach((outputId) => {
+        Object.values(get(overlayTimers)).forEach((a) => {
+            if (a.outputId === outputId) {
+                clearTimeout(a.timer)
+                clearOverlayTimer(a.outputId, a.overlayId)
+            }
+        })
     })
 }

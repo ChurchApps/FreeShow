@@ -42,8 +42,12 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
     tag_set: { label: "context.setTag", icon: "tag", items: ["LOAD_tag_set"] },
     tag_filter: { label: "context.filterByTags", icon: "tag", items: ["LOAD_tag_filter"] },
+    manage_media_tags: { label: "popup.manage_tags", icon: "edit" },
     media_tag_set: { label: "context.setTag", icon: "tag", items: ["LOAD_media_tag_set"] },
     media_tag_filter: { label: "context.filterByTags", icon: "tag", items: ["LOAD_media_tag_filter"] },
+    manage_action_tags: { label: "popup.manage_tags", icon: "edit" },
+    action_tag_set: { label: "context.setTag", icon: "tag", items: ["LOAD_action_tag_set"] },
+    action_tag_filter: { label: "context.filterByTags", icon: "tag", items: ["LOAD_action_tag_filter"] },
     newCategory: { label: "context.newCategory", icon: "add" },
     newScripture: { label: "new.scripture", icon: "add" },
     createCollection: { label: "new.collection", icon: "collection" },
@@ -136,6 +140,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // OVERLAYS
     lock_to_output: { label: "context.lock_to_output", icon: "locked" },
     place_under_slide: { label: "context.place_under_slide", icon: "under" },
+    display_duration: { label: "popup.display_duration", icon: "clock" },
     // TEMPLATES
     template_actions: { label: "tabs.actions", icon: "actions" },
     // STAGE
@@ -199,10 +204,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
-    media: ["media_tag_filter"],
+    media: ["manage_media_tags", "media_tag_filter"],
     media_card: ["addToProject", "SEPERATOR", "edit", "preview", "favourite", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "media_tag_set", "media_tag_filter", "SEPERATOR", "system_open"],
     // "addToFirstSlide",
-    overlay_card: ["edit", "preview", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    overlay_card: ["edit", "preview", "SEPERATOR", "display_duration", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     effect_card: ["edit"],
@@ -212,7 +217,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "addToFirstSlide"
     live_card: ["recording"],
     // actions
-    action: ["duplicate"],
+    actions: ["manage_action_tags", "action_tag_filter"],
+    action: ["duplicate", "SEPERATOR", "action_tag_set", "action_tag_filter"],
     scripture_verse: ["create_show", "SEPERATOR", "selectAll"],
     scripture_chapter: ["create_show"],
 
@@ -257,6 +263,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     meta_message: ["dynamic_values"],
 
     // MEDIA
+    video_subtitle: ["rename", "delete"],
+    video_subtitle_embedded: ["rename"],
     video_marker: ["rename", "delete"],
 
     // STAGE

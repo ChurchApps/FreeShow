@@ -53,7 +53,7 @@
         activeProject.set(id)
 
         // select first if ALT key is NOT held down
-        if (e.altKey || !$projects[id].shows.length) return
+        if (e.altKey || !$projects[id]?.shows?.length) return
 
         activeShow.set({ ...$projects[id].shows[0], index: 0 })
     }

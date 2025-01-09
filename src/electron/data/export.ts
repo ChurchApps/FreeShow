@@ -2,16 +2,16 @@
 // Export as TXT or PDF
 // When exporting as PDF we create a new window and capture its content
 
+import AdmZip from "adm-zip"
 import { BrowserWindow, ipcMain } from "electron"
 import fs from "fs"
 import { join } from "path"
 import { EXPORT, MAIN, STARTUP } from "../../types/Channels"
+import type { Message } from "../../types/Socket"
 import { isProd, toApp } from "../index"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, getTimePointString, makeDir, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
-import { exportOptions } from "../utils/windowOptions"
-import { Message } from "../../types/Socket"
 import { getAllShows } from "../utils/shows"
-import AdmZip from "adm-zip"
+import { exportOptions } from "../utils/windowOptions"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions: any = {

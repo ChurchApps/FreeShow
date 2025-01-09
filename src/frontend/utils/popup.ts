@@ -48,6 +48,9 @@ import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
 import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelte"
+import DisplayDuration from "../components/main/popups/DisplayDuration.svelte"
+import MediaFit from "../components/main/popups/MediaFit.svelte"
+import Emitters from "../components/main/popups/Emitters.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -72,6 +75,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     trigger: Trigger,
     audio_stream: AudioStream,
     transition: Transition,
+    media_fit: MediaFit,
     import_scripture: ImportScripture,
     edit_event: EditEvent,
     choose_screen: ChooseScreen,
@@ -82,6 +86,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     animate: Animate,
     translate: Translate,
     next_timer: NextTimer,
+    display_duration: DisplayDuration,
     manage_tags: ManageTags,
     advanced_settings: AdvancedScreen,
     about: About,
@@ -90,6 +95,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     reset_all: ResetAll,
     alert: Alert,
     history: History,
+    manage_emitters: Emitters,
     action: Action,
     category_action: CategoryAction,
     user_data_overwrite: UserDataOverwrite,

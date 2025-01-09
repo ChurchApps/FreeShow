@@ -38,6 +38,7 @@ export interface StageLayout {
             tracker?: any // slide tracker data
             lineCount?: number // max lines to show in next slide preview
             invertItems?: boolean // invert items if more than one (used for e.g. scripture refs)
+            timer?: any // timer options
         }
     }
 }

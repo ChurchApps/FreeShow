@@ -1,3 +1,6 @@
+import { MAIN } from "../../../types/Channels"
+import { send } from "../../utils/request"
+
 // Examples: /show/<id>/start | /slide/next | /clear/all
 const oscActions = {
     // project: {
@@ -77,4 +80,9 @@ function parsePath(path) {
     if (typeof currentPath !== "object") return {}
 
     return currentPath
+}
+
+export type OSC_SIGNAL = { url?: string; port?: string }
+export function emitOSC(signal: OSC_SIGNAL, data: string) {
+    send(MAIN, ["EMIT_OSC"], { signal, data })
 }
