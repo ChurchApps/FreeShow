@@ -226,8 +226,13 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
         index = 0
         while (layout[index].data.disabled || notBound(layout[index], customOutputId)) index++
 
-        setOutput("slide", { id, layout: _show(id).get("settings.activeLayout"), index }, false, customOutputId)
-        updateOut(id, index, layout, !e?.altKey, customOutputId)
+        let data = layout[index]?.data
+        checkActionTrigger(data, index)
+        // allow custom actions to trigger first
+        setTimeout(() => {
+            setOutput("slide", { id, layout: _show(id).get("settings.activeLayout"), index }, false, customOutputId)
+            updateOut(id!, index!, layout, !e?.altKey, customOutputId)
+        })
         return
     }
 
@@ -250,9 +255,30 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     }
 
     if (index !== null) {
-        setOutput("slide", newSlideOut, false, customOutputId)
-        updateOut(slide ? slide.id : "active", index, layout, !e?.altKey, customOutputId)
+        let data = layout[index]?.data
+        checkActionTrigger(data, index)
+        // allow custom actions to trigger first
+        setTimeout(() => {
+            setOutput("slide", newSlideOut, false, customOutputId)
+            updateOut(slide ? slide.id : "active", index!, layout, !e?.altKey, customOutputId)
+        })
     }
+}
+
+const triggerActionsBeforeOutput = {
+    change_output_style: (actionValue: any) => {
+        const layers = get(styles)[actionValue?.outputStyle]?.layers
+        if (layers === undefined) return false
+        return !layers.includes("background")
+    },
+}
+function shouldTriggerBefore(action: any) {
+    return action.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
+}
+export function checkActionTrigger(layoutData: any, slideIndex: number = 0) {
+    layoutData?.actions?.slideActions?.forEach((a) => {
+        if (shouldTriggerBefore(a)) runAction(a, { slideIndex })
+    })
 }
 
 async function goToNextShowInProject(slide, customOutputId) {
@@ -436,10 +462,15 @@ export function previousSlide(e: any, customOutputId?: string) {
         line--
     }
 
-    if (slide) setOutput("slide", { ...slide, index, line }, false, customOutputId)
-    else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index }, false, customOutputId)
+    let data = layout[index]?.data
+    checkActionTrigger(data, index)
+    // allow custom actions to trigger first
+    setTimeout(() => {
+        if (slide) setOutput("slide", { ...slide, index, line }, false, customOutputId)
+        else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index }, false, customOutputId)
 
-    updateOut(slide ? slide.id : "active", index, layout, !e?.altKey, customOutputId)
+        updateOut(slide ? slide.id : "active", index!, layout, !e?.altKey, customOutputId)
+    })
 }
 
 // skip slides that are bound to specific output not customId
@@ -496,9 +527,8 @@ export function randomSlide() {
     let showId = slide?.id || currentShow?.id
     if (!showId) return
 
-    let layout: any[] = _show(showId)
-        .layouts(slide ? [slide.layout] : "active")
-        .ref()[0]
+    let layoutId = slide?.layout || _show(showId).get("settings.activeLayout")
+    let layout: any[] = _show(showId).layouts([layoutId]).ref()[0]
 
     let slideCount = layout.length || 0
     if (slideCount < 2) return
@@ -512,8 +542,13 @@ export function randomSlide() {
     } while (randomIndex === currentSlideIndex)
 
     // play slide
-    setOutput("slide", { id: showId, layout: _show(showId).get("settings.activeLayout"), index: randomIndex }, false)
-    updateOut(showId, currentSlideIndex, layout)
+    let data = layout[randomIndex]?.data
+    checkActionTrigger(data, randomIndex)
+    // allow custom actions to trigger first
+    setTimeout(() => {
+        setOutput("slide", { id: showId, layout: layoutId, index: randomIndex }, false)
+        updateOut(showId!, randomIndex, layout)
+    })
 }
 function randomNumber(end: number) {
     return Math.floor(Math.random() * end)
@@ -562,6 +597,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
     function activateActions(outputId: string) {
         let background = data.background
+        console.log("BG", background)
 
         // get ghost background
         if (!background) {
@@ -706,7 +742,12 @@ function playSlideActions(actions: any[], outputIds: string[] = [], slideIndex: 
         })
     }
 
-    actions.forEach((a) => runAction(a, { slideIndex }))
+    actions.forEach((a) => {
+        // no need to "re-run" actions triggered right before output
+        if (shouldTriggerBefore(a)) return
+
+        runAction(a, { slideIndex })
+    })
 
     playOutputStyleTemplateActions(outputIds)
 }
@@ -753,7 +794,7 @@ export function changeOutputStyle({ outputStyle, styleOutputs }: API_output_styl
     let type = styleOutputs?.type || "active"
     let outputsList = styleOutputs?.outputs || []
 
-    let chosenOutputs = getActiveOutputs(get(outputs), type === "active")
+    let chosenOutputs = getActiveOutputs(get(outputs), type === "active", true, true)
     chosenOutputs.forEach(changeStyle)
 
     function changeStyle(outputId: string) {
@@ -791,8 +832,13 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
     if (index === undefined) return
 
     // WIP duplicate of "slideClick" in Slides.svelte
-    updateOut(currentShowId, index, showRef, extra)
-    setOutput("slide", { id: currentShowId, layout: _show(currentShowId).get("settings.activeLayout"), index, line: 0 })
+    let data = showRef[index]?.data
+    checkActionTrigger(data, index)
+    // allow custom actions to trigger first
+    setTimeout(() => {
+        setOutput("slide", { id: currentShowId, layout: _show(currentShowId).get("settings.activeLayout"), index, line: 0 })
+        updateOut(currentShowId, index!, showRef, extra, "")
+    })
 
     setTimeout(() => {
         // defocus search input

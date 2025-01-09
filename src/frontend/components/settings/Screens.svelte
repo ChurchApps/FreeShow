@@ -203,28 +203,29 @@
 
     <CombinedInput>
         <p><T id="screen.top" /></p>
-        <NumberInput value={cropping.top || 0} max={currentScreen.bounds.height * 0.9 - (cropping.bottom || 0)} on:change={(e) => updateCropping(e.detail, "top")} />
+        <NumberInput value={cropping.top || 0} max={currentScreen.bounds?.height * 0.9 - (cropping.bottom || 0)} on:change={(e) => updateCropping(e.detail, "top")} />
     </CombinedInput>
     <CombinedInput>
         <p><T id="screen.right" /></p>
-        <NumberInput value={cropping.right || 0} max={currentScreen.bounds.width * 0.9 - (cropping.left || 0)} on:change={(e) => updateCropping(e.detail, "right")} />
+        <NumberInput value={cropping.right || 0} max={currentScreen.bounds?.width * 0.9 - (cropping.left || 0)} on:change={(e) => updateCropping(e.detail, "right")} />
     </CombinedInput>
     <CombinedInput>
         <p><T id="screen.bottom" /></p>
-        <NumberInput value={cropping.bottom || 0} max={currentScreen.bounds.height * 0.9 - (cropping.top || 0)} on:change={(e) => updateCropping(e.detail, "bottom")} />
+        <NumberInput value={cropping.bottom || 0} max={currentScreen.bounds?.height * 0.9 - (cropping.top || 0)} on:change={(e) => updateCropping(e.detail, "bottom")} />
     </CombinedInput>
     <CombinedInput>
         <p><T id="screen.left" /></p>
-        <NumberInput value={cropping.left || 0} max={currentScreen.bounds.width * 0.9 - (cropping.right || 0)} on:change={(e) => updateCropping(e.detail, "left")} />
+        <NumberInput value={cropping.left || 0} max={currentScreen.bounds?.width * 0.9 - (cropping.right || 0)} on:change={(e) => updateCropping(e.detail, "left")} />
     </CombinedInput>
 
     <!-- preview -->
     <div class="preview" style="margin-top: 20px;">
-        <div class="border" style="width: {currentScreen.bounds.width * previewSize}px;height: {currentScreen.bounds.height * previewSize}px;">
+        <div class="border" style="width: {currentScreen.bounds?.width * previewSize}px;height: {currentScreen.bounds?.height * previewSize}px;">
             <div class="cropped" style={getCroppedStyle(cropping)}>
                 <div
                     class="previewWindow"
-                    style="aspect-ratio: {currentScreen.bounds.width} / {currentScreen.bounds.height};max-height: {(currentScreen.bounds.height - (cropping.top || 0) - (cropping.bottom || 0)) * previewSize}px;max-width: {(currentScreen.bounds.width -
+                    style="aspect-ratio: {currentScreen.bounds?.width} / {currentScreen.bounds?.height};max-height: {(currentScreen.bounds?.height - (cropping.top || 0) - (cropping.bottom || 0)) * previewSize}px;max-width: {(currentScreen.bounds
+                        ?.width -
                         (cropping.left || 0) -
                         (cropping.right || 0)) *
                         previewSize}px;"
@@ -270,9 +271,9 @@
 
     <!-- preview -->
     <div class="preview" style="margin-top: 20px;">
-        <div class="border" style="background-color: white;width: {currentScreen.bounds.width * previewSize}px;height: {currentScreen.bounds.height * previewSize}px;">
+        <div class="border" style="background-color: white;width: {currentScreen.bounds?.width * previewSize}px;height: {currentScreen.bounds?.height * previewSize}px;">
             <div class="cropped" style={getBlendingStyle(blending)}>
-                <div class="previewWindow" style="aspect-ratio: {currentScreen.bounds.width} / {currentScreen.bounds.height};"></div>
+                <div class="previewWindow" style="aspect-ratio: {currentScreen.bounds?.width} / {currentScreen.bounds?.height};"></div>
             </div>
         </div>
     </div>
@@ -307,7 +308,7 @@
         {#if screens.length}
             <div class="screens" style="transform: translateX(-{totalScreensWidth}px)">
                 {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)}
-                    <div class="screen noClick" style="width: {currentScreen.bounds.width}px;height: {currentScreen.bounds.height}px;left: {currentScreen.bounds.x}px;top: {currentScreen.bounds.y}px;">
+                    <div class="screen noClick" style="width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;left: {currentScreen.bounds?.x}px;top: {currentScreen.bounds?.y}px;">
                         <!-- Current screen position -->
                     </div>
                 {/if}

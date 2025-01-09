@@ -10,6 +10,7 @@ const defaultMetronomeValues = {
     beats: 4,
     volume: 1,
     // notesPerBeat: 1
+    // audioOutput: ""
 }
 let metronomeValues: API_metronome = {}
 
@@ -50,13 +51,15 @@ export function updateMetronome(values: API_metronome, starting: boolean = false
     metronomeValues.tempo = values.tempo
     if (values.beats) metronomeValues.beats = values.beats
     if (values.volume) metronomeValues.volume = values.volume
+    if (values.audioOutput !== undefined) metronomeValues.audioOutput = values.audioOutput
 
     metronome.set(metronomeValues)
 }
 
 export function stopMetronome() {
-    clearTimeout(get(playingMetronome))
-    playingMetronome.set(null)
+    clearTimeout(scheduleTimeout)
+    scheduleTimeout = null
+    playingMetronome.set(false)
 
     startTime = 0
     beatsPlayed = 0
@@ -96,7 +99,11 @@ async function initializeMetronome() {
 }
 
 const preScheduleTime = 0.1
+let scheduleTimeout: any = null
 function scheduleNextNote(time = 0, beat = 1) {
+    // changing tempo when active could cause many to play at once without this check
+    if (scheduleTimeout) return
+
     if (!startTime) {
         startTime = audioContext.currentTime
         scheduleNote(beat)
@@ -105,14 +112,14 @@ function scheduleNextNote(time = 0, beat = 1) {
 
     if (beat > (metronomeValues.beats || defaultMetronomeValues.beats)) beat = 1
 
-    playingMetronome.set(
-        setTimeout(
-            () => {
-                scheduleNote(beat)
-            },
-            (time + timeBetweenEachBeat - preScheduleTime) * 1000
-        )
+    scheduleTimeout = setTimeout(
+        () => {
+            scheduleTimeout = null
+            scheduleNote(beat)
+        },
+        (time + timeBetweenEachBeat - preScheduleTime) * 1000
     )
+    playingMetronome.set(true)
 }
 
 let beatsPlayed = 0
@@ -133,7 +140,7 @@ function getTimeToNextNote() {
     return nextPlayTime - timePassed
 }
 
-function playNote(time: number, first: boolean = false) {
+async function playNote(time: number, first: boolean = false) {
     const source = audioContext.createBufferSource()
     const audioBuffer = audioBuffers[first ? "hi" : "lo"]
     source.buffer = audioBuffer
@@ -144,6 +151,15 @@ function playNote(time: number, first: boolean = false) {
     gainNode.connect(audioContext.destination)
 
     // WIP connect getAnalyser()
+
+    // custom audio output
+    if (metronomeValues.audioOutput !== undefined) {
+        try {
+            await (audioContext as any).setSinkId(metronomeValues.audioOutput)
+        } catch (err) {
+            console.error(err)
+        }
+    }
 
     gainNode.gain.value = getVolume(first ? accentVolume : secondaryVolume)
 

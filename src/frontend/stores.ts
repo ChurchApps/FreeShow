@@ -80,7 +80,7 @@ export const audioChannels: Writable<Channels> = writable({})
 export const playingAudio: Writable<{ [key: string]: any }> = writable({})
 export const playingVideos: Writable<any[]> = writable([])
 export const activePlaylist: Writable<any> = writable(null)
-export const playingMetronome: Writable<any> = writable(null)
+export const playingMetronome: Writable<boolean> = writable(false)
 export const visualizerData: Writable<any> = writable(null)
 export const isFadingOut: Writable<any> = writable(false)
 

@@ -110,6 +110,7 @@ export type API_metronome = {
     beats?: number
     volume?: number
     // notesPerBeat?: number
+    audioOutput?: string
 }
 export type API_rest_command = {
     url: string
