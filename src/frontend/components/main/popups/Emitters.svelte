@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import type { Emitter, EmitterTemplate, EmitterTemplateValue } from "../../../../types/Show"
     import { dictionary, emitters } from "../../../stores"
-    import { emitterData } from "../../actions/emitters"
+    import { emitterData, formatData } from "../../actions/emitters"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -23,6 +23,7 @@
     let editTemplate: string = ""
     $: template = emitter?.templates?.[editTemplate]
     $: templateInputs = (template?.inputs || []).map((a, i) => ({ ...a, id: i.toString() }))
+    $: dataPreview = templateInputs.length ? formatData[emitter?.type]?.(templateInputs) : ""
 
     $: emitterTypes = [
         { name: "OSC", id: "osc" },
@@ -143,6 +144,12 @@
             <TextInput placeholder={$dictionary.variables?.value} value={input.value} on:change={(e) => updateTemplateValue(input.id, "value", e)} />
         </div>
     </DynamicList>
+
+    {#if dataPreview}
+        <div class="preview">
+            {dataPreview}
+        </div>
+    {/if}
 {:else if editEmitter && emitter}
     <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (editEmitter = "")}>
         <Icon id="back" size={2} white />
@@ -176,3 +183,12 @@
         <p class="emitter" style="gap: 5px;width: 100%;min-width: auto;"><span style="display: flex;align-items: center;text-transform: uppercase;opacity: 0.7;">[{emitter.type}]</span>{emitter.name || "—"}</p>
     </DynamicList>
 {/if}
+
+<style>
+    .preview {
+        text-align: center;
+        font-size: 0.9em;
+        opacity: 0.8;
+        padding-top: 12px;
+    }
+</style>

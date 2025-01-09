@@ -218,7 +218,7 @@ export const API_ACTIONS = {
     run_action: (data: API_id) => runActionId(data.id),
     toggle_action: (data: API_toggle) => toggleAction(data),
     toggle_output: (data: API_id) => toggleOutput(data.id),
-    send_rest_command: (data: API_rest_command) => sendRestCommandSync(data),
+    send_rest_command: (data: API_rest_command) => sendRestCommandSync(data), // DEPRECATED, use emit_action instead
 
     emit_action: (data: API_emitter) => emitData(data),
 
