@@ -18,7 +18,7 @@ import { OutputHelper } from "../output/OutputHelper"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers } from "../servers"
 import type { Message } from "./../../types/Socket"
-import { apiReturnData, startWebSocketAndRest, stopApiListener } from "./api"
+import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "./api"
 import {
     bundleMediaFiles,
     checkShowsFolder,
@@ -142,10 +142,11 @@ const mainResponses: any = {
     // SERVERS
     START: (data: any): void => startServers(data),
     STOP: (): void => closeServers(),
-    // WebSocket / REST
+    // WebSocket / REST / OSC
     WEBSOCKET_START: (port: number | undefined) => startWebSocketAndRest(port),
     WEBSOCKET_STOP: () => stopApiListener(),
     API_TRIGGER: (data: any) => apiReturnData(data),
+    EMIT_OSC: (data: any) => emitOSC(data),
     // MIDI
     GET_MIDI_OUTPUTS: (): string[] => getMidiOutputs(),
     GET_MIDI_INPUTS: (): string[] => getMidiInputs(),

@@ -276,7 +276,7 @@
         {#if mode !== "slide_midi"}
             <CombinedInput>
                 <p><T id="midi.name" /></p>
-                <TextInput style="width: 70%;" value={action.name} on:change={(e) => updateValue("name", e)} />
+                <TextInput value={action.name} on:change={(e) => updateValue("name", e)} />
             </CombinedInput>
 
             <!-- multiple actions -->
@@ -289,7 +289,7 @@
                 {#if !action.triggers?.length || addTrigger}
                     <CreateAction actionId="" existingActions={action.triggers || []} on:change={changeAction} />
                 {:else}
-                    <CombinedInput>
+                    <CombinedInput style="border-top: 2px solid var(--primary-lighter);">
                         <Button on:click={() => (addTrigger = true)} style="width: 100%;" center>
                             <Icon id="add" right />
                             <T id="settings.add" />
@@ -299,10 +299,11 @@
             </div>
         {/if}
 
-        <!-- MIDI -->
-
         <!-- if not slide specific trigger action -->
         {#if !mode}
+            <!-- Custom Activations -->
+            <hr />
+
             <CombinedInput>
                 <p><T id="actions.custom_activation" /></p>
                 <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} />
@@ -344,7 +345,30 @@
         {/if}
 
         {#if action.midiEnabled}
-            <MidiValues midi={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide={mode === "slide_midi"} />
+            {#if mode === "slide_midi"}
+                <p style="opacity: 0.8;font-size: 0.8em;text-align: center;margin-bottom: 20px;"><T id="actions.play_on_midi_tip" /></p>
+            {:else}
+                <h3><T id="midi.midi" /></h3>
+            {/if}
+
+            <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide={mode === "slide_midi"} />
         {/if}
     {/if}
 </div>
+
+<style>
+    hr {
+        margin: 20px 0;
+        height: 2px;
+        border: none;
+        background-color: var(--primary-lighter);
+    }
+
+    h3 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
+    }
+</style>

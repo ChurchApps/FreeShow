@@ -1,4 +1,5 @@
 import type { Resolution } from "./Settings"
+import type { Input } from "./Input"
 
 export interface Shows {
     [key: string]: Show
@@ -275,15 +276,17 @@ export interface Midi {
     customActivation?: string
     keypressActivate?: string
     midiEnabled?: boolean
-    midi?: {
-        input?: string
-        output?: string
-        type: "noteon" | "noteoff" | "cc"
-        values: {
-            note: number
-            velocity: number
-            channel: number
-        }
+    midi?: MidiValues
+}
+
+export interface MidiValues {
+    input?: string
+    output?: string
+    type: "noteon" | "noteoff" | "cc"
+    values: {
+        note: number
+        velocity: number
+        channel: number
     }
 }
 
@@ -294,6 +297,25 @@ export interface MidiIn extends Midi {
         // layoutId: string
         // index: number
     }[]
+}
+
+export type EmitterTypes = "osc" | "http" | "midi"
+export interface EmitterTemplateValue {
+    name: string
+    value: string
+}
+export interface EmitterTemplate {
+    name: string
+    inputs: EmitterTemplateValue[]
+}
+export interface EmitterInputs {
+    signal?: Input[]
+}
+export interface Emitter {
+    name: string
+    type: EmitterTypes
+    signal?: any
+    templates?: { [key: string]: EmitterTemplate }
 }
 
 //

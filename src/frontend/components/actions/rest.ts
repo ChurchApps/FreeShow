@@ -37,6 +37,8 @@ export async function sendRestCommand(data: API_rest_command) {
         options.body = data.payload
     }
 
+    if (!data.url) return
+
     // Check if URL starts with HTTP or HTTPS, if not insert HTTP on default
     if (!(data.url.startsWith("http://") || data.url.startsWith("https://"))) {
         data.url = "http://" + data.url

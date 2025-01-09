@@ -14,6 +14,7 @@ export type SaveListSyncedSettings =
     | "scriptureSettings"
     | "groups"
     | "midiIn"
+    | "emitters"
     | "playerVideos"
     | "videoMarkers"
     | "mediaTags"

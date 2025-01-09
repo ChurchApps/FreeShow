@@ -126,7 +126,7 @@
         </div>
     {/if}
 {:else}
-    <CombinedInput>
+    <CombinedInput style={actionNameIndex > 1 || !actionId ? "border-top: 2px solid var(--primary-lighter);" : ""}>
         <p style="font-weight: 600;">
             <T id="midi.start_action" />
             <span style="color: var(--secondary);display: flex;align-items: center;margin-left: 8px;">

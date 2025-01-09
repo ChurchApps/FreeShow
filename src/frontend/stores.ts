@@ -9,7 +9,7 @@ import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { ID, MidiIn, Overlays, ShowList, Shows, Tag, Templates, Timer, Transition } from "../types/Show"
+import type { Emitter, ID, MidiIn, Overlays, ShowList, Shows, Tag, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { Channels, Playlist } from "./../types/Audio"
@@ -279,6 +279,7 @@ export const outLocked: Writable<boolean> = writable(false) // false
 // MIDI
 // this is repurposed as "actions"
 export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({}) // {}
+export const emitters: Writable<{ [key: string]: Emitter }> = writable({}) // {}
 
 // CONNECTIONS
 export const ports: Writable<any> = writable({ remote: 5510, stage: 5511, controller: 5512, output_stream: 5513 }) // {default}

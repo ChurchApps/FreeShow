@@ -1,13 +1,20 @@
 <script lang="ts">
-    import { activeTimers, drawerTabsData } from "../../../stores"
+    import { activePopup, activeTimers, drawerTabsData } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
     import TimerInfo from "../timers/TimerInfo.svelte"
 
     $: type = $drawerTabsData.functions?.activeSubTab || ""
 </script>
 
 {#if type === "actions"}
-    <!-- ACTIONS -->
+    <div class="scroll" />
+
+    <Button style="width: 100%;" on:click={() => activePopup.set("manage_emitters")} center dark>
+        <Icon id="emitter" right />
+        <T id="popup.manage_emitters" />
+    </Button>
 {:else if type === "timer"}
     {#if $activeTimers.length}
         <TimerInfo />
