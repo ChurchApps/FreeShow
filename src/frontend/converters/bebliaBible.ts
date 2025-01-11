@@ -52,8 +52,9 @@ function getBooks(oldBooks: any[]) {
     let books: any[] = []
 
     // if (!Array.isArray(oldBooks)) oldBooks = [oldBooks]
-    console.log(oldBooks)
+    console.log("Books:", oldBooks)
     oldBooks.forEach((book) => {
+        console.log("book: ", book);
         let currentBook = {
             number: book["@number"],
             name: book["@name"] || defaultNames[book["@number"]],
@@ -70,8 +71,9 @@ function getChapters(oldChapters: any[]) {
     let chapters: any[] = []
 
     if (!Array.isArray(oldChapters)) oldChapters = [oldChapters]
-    console.log(oldChapters)
+    console.log("Chapters", oldChapters)
     oldChapters.forEach((chapter) => {
+        console.log("chapter: ", chapter);
         let currentChapter = {
             number: chapter["@number"],
             verses: getVerses(chapter.verse || []),
@@ -87,6 +89,7 @@ function getVerses(oldVerses: any[]) {
     let verses: any[] = []
 
     console.log(oldVerses)
+    if (!Array.isArray(oldVerses)) oldVerses = [oldVerses]
     oldVerses.forEach((verse) => {
         let currentVerse = {
             number: verse["@number"],
