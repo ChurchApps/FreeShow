@@ -1,12 +1,14 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../../types/Channels"
-    import { dictionary } from "../../../../stores"
+    import { dictionary, special } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { destroy, receive, send } from "../../../../utils/request"
     import T from "../../../helpers/T.svelte"
     import Center from "../../../system/Center.svelte"
     import Loader from "../../Loader.svelte"
+    import Icon from "../../../helpers/Icon.svelte"
+    import Button from "../../../inputs/Button.svelte"
 
     export let query: string
 
@@ -47,11 +49,14 @@
 
     // encode using btoa()
     const blockedWords = ["ZnVjaw==", "Yml0Y2g=", "bmlnZ2E="]
+    const blockedArtists = ["R2hvc3Q=", "R2VuZXNpcw==", "QUMvREM=", "RGlzdHVyYmVk", "Qm9iIFJpdmVycw==", "Q2FyeSBBbm4gSGVhcnN0"]
     let id = "CREATE_SHOW"
     receive(
         MAIN,
         {
             SEARCH_LYRICS: (data: LyricSearchResult[]) => {
+                data = filterBadArtists(data)
+
                 if (!data.length) {
                     newToast("$empty.search")
                     setValue("")
@@ -89,9 +94,29 @@
     )
     onDestroy(() => destroy(MAIN, id))
 
+    function filterBadArtists(data: LyricSearchResult[]) {
+        return data.filter(
+            (a) =>
+                !blockedArtists.find((eArtist) => {
+                    const artist = atob(eArtist)
+                    return a.artist && a.artist === artist
+                }) && !($special.blockedArtists || []).includes(a.artist)
+        )
+    }
+
     let dispatch = createEventDispatcher()
     function setValue(lyrics: string) {
         dispatch("update", lyrics)
+    }
+
+    function blockArtist(artist: string) {
+        special.update((a) => {
+            if (!a.blockedArtists) a.blockedArtists = []
+            a.blockedArtists.push(artist)
+            return a
+        })
+
+        if (songs) songs = filterBadArtists(songs)
     }
 </script>
 
@@ -101,6 +126,7 @@
     </Center>
 {:else if songs !== null}
     <div class="header">
+        <Icon id="search" white right />
         <T id="create_show.search_results" />
     </div>
 
@@ -117,12 +143,20 @@
                 {#if songs}
                     {#each songs as song}
                         <tr
-                            on:click={() => {
+                            on:click={(e) => {
+                                if (e.target?.closest("button")) return
                                 getLyrics(song)
                             }}
                         >
                             <td class="title">{song.title}</td>
-                            <td>{song.artist}</td>
+                            <td class="flex-table">
+                                {song.artist}
+                                {#if song.artist && song.source !== "Hymnary"}
+                                    <Button title={$dictionary.create_show?.block} style="padding: 2px;" on:click={() => blockArtist(song.artist)}>
+                                        <Icon style="opacity: 0.4;" id="block" white />
+                                    </Button>
+                                {/if}
+                            </td>
                             <td>{song.source}</td>
                         </tr>
                     {/each}
@@ -138,7 +172,10 @@
 
 <style>
     .header {
-        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
         font-size: 0.9em;
         padding: 5px 0;
         background: var(--primary-darkest);
@@ -189,6 +226,14 @@
     .searchResultTable td:nth-of-type(3),
     .searchResultTable th:nth-of-type(3) {
         width: 14%;
+    }
+
+    .searchResultTable td.flex-table {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 5px;
+        width: 100%;
     }
 
     .searchResultTable .title {

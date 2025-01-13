@@ -74,13 +74,17 @@
         if (!type || type === "background") background = clone(out.background || null)
         if (!type || type === "overlays") {
             storedOverlayIds = JSON.stringify(out.overlays)
-            clonedOverlays = clone($overlays)
+            if (JSON.stringify($overlays) !== storedOverlays) {
+                clonedOverlays = clone($overlays)
+                storedOverlays = JSON.stringify($overlays)
+            }
         }
     }
 
     // overlays
     $: overlayIds = out.overlays
     let storedOverlayIds: string = ""
+    let storedOverlays: string = ""
     $: if (JSON.stringify(overlayIds) !== storedOverlayIds) updateOutData("overlays")
     $: outOverlays = out.overlays?.filter((id) => !clonedOverlays[id]?.placeUnderSlide)
     $: outUnderlays = out.overlays?.filter((id) => clonedOverlays[id]?.placeUnderSlide)

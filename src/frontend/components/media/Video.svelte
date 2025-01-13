@@ -63,7 +63,7 @@
     function updateSubtitles() {
         if (subtitleChange) clearTimeout(subtitleChange)
         subtitleChange = setTimeout(() => {
-            if (subtitle) enableSubtitle(video, subtitle)
+            if (subtitle !== undefined) enableSubtitle(video, subtitle)
             subtitleChange = null
         }, 20)
     }

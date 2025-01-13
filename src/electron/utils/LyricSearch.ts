@@ -8,14 +8,17 @@ export type LyricSearchResult = {
     originalQuery?: string
 }
 
+const lyricsSearchCache = new Map()
 export class LyricSearch {
     static search = async (artist: string, title: string) => {
-        const results = await Promise.all([
-            LyricSearch.searchGenius(artist, title),
-            LyricSearch.searchHymnary(title),
-            LyricSearch.searchLetras(title),
-        ])
-        return results.flat()
+        const cacheKey = artist + title
+        if (lyricsSearchCache.has(cacheKey)) return lyricsSearchCache.get(cacheKey)
+
+        const results = await Promise.all([LyricSearch.searchGenius(artist, title), LyricSearch.searchHymnary(title), LyricSearch.searchLetras(title)])
+        const joinedResults: LyricSearchResult[] = results.flat()
+
+        lyricsSearchCache.set(cacheKey, joinedResults)
+        return joinedResults
     }
 
     static get(song: LyricSearchResult) {
@@ -88,7 +91,7 @@ export class LyricSearch {
         const url = `https://hymnary.org/text/${song.key}`
         const response = await axios.get(url)
         const html = await response.data
-        return this.getLyricFromHtml(html, /<div property=\"text\">(.*?)<\/div>/gs);
+        return this.getLyricFromHtml(html, /<div property=\"text\">(.*?)<\/div>/gs)
     }
 
     private static convertHymnaryToResult = (hymnaryResult: any, originalQuery: string) => {
@@ -106,7 +109,7 @@ export class LyricSearch {
         try {
             const url = `https://solr.sscdn.co/letras/m1/?q=${encodeURIComponent(title)}`
             const response = await axios.get(url)
-            const json = JSON.parse(response.data.replace('LetrasSug(', '').slice(0, -2))
+            const json = JSON.parse(response.data.replace("LetrasSug(", "").slice(0, -2))
             const songs = json.response.docs.filter((d: any) => d.id.startsWith("mus"))
             return songs.map((s: any) => LyricSearch.convertLetrasToResult(s, title))
         } catch (ex) {
@@ -129,7 +132,7 @@ export class LyricSearch {
         const url = `https://www.letras.mus.br/${song.key}`
         const response = await axios.get(url)
         const html = await response.data
-        return this.getLyricFromHtml(html, /<div class=\"lyric-original\">(.*?)<\/div>/gs);
+        return this.getLyricFromHtml(html, /<div class=\"lyric-original\">(.*?)<\/div>/gs)
     }
 
     private static getLyricFromHtml = (songHtml: string, regex: RegExp) => {
@@ -152,7 +155,7 @@ export class LyricSearch {
             })
             result = newLines.join("\n").trim()
         }
-        return result;
+        return result
     }
 
     // ref: http://stackoverflow.com/a/1293163/2343

@@ -17,7 +17,7 @@
     import VideoSlider from "../output/VideoSlider.svelte"
     import MediaControls from "../output/tools/MediaControls.svelte"
     import Player from "../system/Player.svelte"
-    import { SRTtoVTT } from "./media/subtitles"
+    import { formatVTT, SRTtoVTT } from "./media/subtitles"
 
     export let show
 
@@ -226,6 +226,8 @@
         if (extension === "srt") {
             content = SRTtoVTT(content)
         }
+
+        content = formatVTT(content)
 
         media.update((a) => {
             if (!a[showId]) a[showId] = {}

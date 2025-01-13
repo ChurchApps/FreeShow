@@ -8,6 +8,7 @@
     import { getStyles } from "../../common/util/style"
     import autosize, { type AutosizeTypes } from "../../common/util/autosize"
 
+    export let showId: string
     export let item: Item
     export let stageItem: any = {}
     export let style: boolean = true
@@ -142,10 +143,21 @@
 
     let defaultChords: any = {}
     let amountTransposed: number = 0
-    function transpose(action: "up" | "down" | "reset") {
+    $: if (showId && chordLines.length) getTransposed()
+    function getTransposed() {
+        const transposed = JSON.parse(localStorage.transposed || "{}")
+        if (typeof transposed[showId] === "number") transpose(transposed[showId])
+    }
+    function transpose(action: "up" | "down" | "reset" | number) {
         if (action === "reset") amountTransposed = 0
         else if (action === "up") amountTransposed++
         else if (action === "down") amountTransposed--
+        else if (typeof action === "number") amountTransposed = action
+
+        // save
+        const transposed = JSON.parse(localStorage.transposed || "{}")
+        transposed[showId] = amountTransposed
+        localStorage.transposed = JSON.stringify(transposed)
 
         item.lines!.forEach((line) => {
             if (!line.chords?.length || !line.text) return
