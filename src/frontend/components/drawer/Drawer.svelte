@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Bible } from "../../../types/Scripture"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, dictionary, drawer, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, MENU_BAR_HEIGHT } from "../../utils/common"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
@@ -37,6 +37,10 @@
         drawer.set({ height: getHeight(window.innerHeight - e.clientY - mouse.offsetY), stored: null })
 
         selected.set({ id: null, data: [] })
+
+        const isClosed = $drawer.height <= minHeight
+        if (isClosed) drawerOpenedInEdit.set(false)
+        else if ($activePage === "edit") drawerOpenedInEdit.set(true)
     }
 
     function getHeight(height: any) {
@@ -56,11 +60,13 @@
         if (height > minHeight) {
             // close drawer
             if (e === null || e?.target.classList.contains("top") || e?.target?.closest("#" + $activeDrawerTab)) drawer.set({ height: minHeight, stored: height })
+            drawerOpenedInEdit.set(false)
             return
         }
 
         // open drawer
         drawer.set({ height: storeHeight === null || storeHeight < DEFAULT_DRAWER_HEIGHT ? DEFAULT_DRAWER_HEIGHT : storeHeight, stored: null })
+        if ($activePage === "edit") drawerOpenedInEdit.set(true)
 
         // if drawer is closed when searching, set category to "all"
         if (e === null && ["shows", "overlays", "templates", "media", "audio"].includes($activeDrawerTab)) {

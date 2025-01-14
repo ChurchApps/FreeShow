@@ -127,7 +127,7 @@ function startOSC(PORT: number | undefined) {
         console.log(`OSC: Error. ${JSON.stringify(err)}`)
     })
 
-    osc.open({ port: PORT })
+    osc.open({ port: PORT, host: "0.0.0.0" })
 }
 
 // let OSC_SENDER: null | OSC = null // must work with different ip:port

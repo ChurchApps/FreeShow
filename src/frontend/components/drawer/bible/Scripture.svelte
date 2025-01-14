@@ -458,7 +458,10 @@
     // auto search when char length is 5 or longer
     function searchValueChanged(e: any) {
         contentSearch = e.target?.value || ""
-        if (contentSearch.length < 5) return
+        if (contentSearch.length < 5) {
+            contentSearchActive = false
+            return
+        }
 
         searchInBible(e)
     }
@@ -485,7 +488,6 @@
         if (!bible) return
 
         let matches: any[] = []
-        let extraMatches: any[] = []
 
         // if new search includes previous search, then just search through previously filtered data
         // Bible.API will only give a fixed result, so search that again when "cachedSearches" is more than 5
@@ -498,30 +500,8 @@
             let searchResult: any = await searchBibleAPI(apiId, contentSearch)
             matches = searchResult?.verses?.map((a) => ({ book: a.bookId, chapter: a.chapterId, verse: a.reference.slice(a.reference.indexOf(":") + 1), reference: a.reference, text: a.text, api: true })) || []
         } else {
-            let allBooks: any[] = books[firstBibleId]
-            allBooks.forEach((book, bookIndex) => {
-                book.chapters.forEach((chapter, chapterIndex) => {
-                    chapter.verses.forEach((verse) => {
-                        let verseValue = formatText(verse.text || verse.value || "")
-                        if (verseValue.includes(searchValue)) {
-                            matches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value })
-                        } else {
-                            let wordInSearch = searchValue.split(" ")
-                            let matchingWords = wordInSearch.reduce((count, word) => (count += verseValue.includes(word) ? 1 : 0), 0)
-                            if (matchingWords === wordInSearch.length)
-                                extraMatches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value || "" })
-                        }
-                    })
-                })
-            })
+            matches = await bibleContentSearch(searchValue)
         }
-
-        function formatText(text: string) {
-            if (!text) return ""
-            return text.toLowerCase().replace(/[`!*()-?;:'",.]/gi, "")
-        }
-
-        matches.push(...extraMatches)
 
         contentSearchMatches = matches
         contentSearchActive = true
@@ -529,6 +509,38 @@
 
         if (!tempCache[firstBibleId]) tempCache[firstBibleId] = {}
         tempCache[firstBibleId][searchValue] = matches
+
+        function formatText(text: string) {
+            if (!text) return ""
+            return text.toLowerCase().replace(/[`!*()-?;:'",.]/gi, "")
+        }
+
+        function bibleContentSearch(searchValue: string): Promise<any[]> {
+            let matches: any[] = []
+            let extraMatches: any[] = []
+            let allBooks: any[] = books[firstBibleId]
+
+            return new Promise((resolve) => {
+                allBooks.forEach((book, bookIndex) => {
+                    book.chapters.forEach((chapter, chapterIndex) => {
+                        chapter.verses.forEach((verse) => {
+                            let verseValue = formatText(verse.text || verse.value || "")
+                            if (verseValue.includes(searchValue)) {
+                                matches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value })
+                            } else {
+                                let wordInSearch = searchValue.split(" ")
+                                let matchingWords = wordInSearch.reduce((count, word) => (count += verseValue.includes(word) ? 1 : 0), 0)
+                                if (matchingWords === wordInSearch.length)
+                                    extraMatches.push({ book: bookIndex, chapter: chapterIndex, verse: verse.number, reference: `${book.name} ${chapter.number}:${verse.number}`, text: verse.text || verse.value || "" })
+                            }
+                        })
+                    })
+                })
+
+                matches.push(...extraMatches)
+                resolve(matches)
+            })
+        }
     }
 
     function findBook() {

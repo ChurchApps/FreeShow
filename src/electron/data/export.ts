@@ -257,7 +257,12 @@ export function exportProject(data: any) {
 
     // copy files
     files.forEach((path: string) => {
-        zip.addLocalFile(path)
+        try {
+            // file might not exist
+            zip.addLocalFile(path)
+        } catch (err) {
+            console.error("Could not add a file to project:", err)
+        }
     })
 
     // add project file

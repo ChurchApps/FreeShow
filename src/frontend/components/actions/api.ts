@@ -12,20 +12,14 @@ import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTi
 import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { formatText } from "../show/formatTextEditor"
 import { runActionId, toggleAction } from "./actions"
-import { getProject, getProjects, getShow, getShows } from "./apiGet"
+import { getOutput, getPlayingAudioTime, getPlayingPlaylist, getPlayingVideoTime, getPlaylists, getProject, getProjects, getShow, getShowLayout, getShows, getSlide } from "./apiGet"
 import {
     addGroup,
     changeShowLayout,
     changeVariable,
     getClearedState,
-    getOutput,
     getPlainText,
-    getPlayingAudioTime,
-    getPlayingPlaylist,
-    getPlayingVideoTime,
-    getPlaylists,
     getShowGroups,
-    getSlide,
     gotoGroup,
     moveStageConnection,
     playMedia,
@@ -226,6 +220,7 @@ export const API_ACTIONS = {
     // GET
     get_shows: () => getShows(),
     get_show: (data: API_id) => getShow(data),
+    get_show_layout: (data: API_id) => getShowLayout(data),
     get_projects: () => getProjects(),
     get_project: (data: API_id) => getProject(data),
     get_plain_text: (data: API_id) => getPlainText(data.id),
