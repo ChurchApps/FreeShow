@@ -82,16 +82,20 @@ export function startRestListener(PORT: number | undefined) {
 
     app.use(express.json())
     // app.use(cors()) // if a browser should send body data (https://stackoverflow.com/a/63547498/10803046)
-    app.post("/", async (req) => {
+    app.post("/", async (req, res) => {
         // {action: ACTION_ID, ...{}}
         let data = req.body
         // ?action=ACTION_ID&data={}
         if (!data.action && req.query.action) data = { action: req.query.action, ...JSON.parse((req.query.data || "{}") as string) }
 
         const returnData = await receivedData(data, (msg: string) => console.log(`REST: ${msg}`))
-        if (!returnData) return
+        // WIP send error if action does not exist
+        if (!returnData) {
+            res.status(204).send()
+            return
+        }
 
-        req.emit("data", returnData)
+        res.json(returnData)
     })
 }
 

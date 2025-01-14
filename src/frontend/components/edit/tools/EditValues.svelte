@@ -466,11 +466,11 @@
                         >
                             <Icon id={input.icon || input.id} right />
                             {#key input.name}
-                                <p style="padding: 0;flex: initial;width: fit-content;min-width: unset;{input.name.includes('.') || !input.name.includes(' ') ? '' : 'opacity: 1;'}">
-                                    {#if input.name.includes(" ")}
+                                <p style="padding: 0;flex: initial;width: fit-content;min-width: unset;{input.name?.includes('.') || !input.name?.includes(' ') ? '' : 'opacity: 1;'}">
+                                    {#if input.name?.includes(" ")}
                                         {input.name}
                                     {:else}
-                                        <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
+                                        <T id={input.name?.includes(".") ? input.name : "popup." + input.name} />
                                     {/if}
                                 </p>
                             {/key}

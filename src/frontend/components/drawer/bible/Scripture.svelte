@@ -152,7 +152,14 @@
         let newVerses: any = {}
         let verse: string
 
-        data.content.toString().split("span").forEach(trimVerse)
+        // class: s1 (comment) - r (reference)
+        // remove custom tags
+        const content = data.content
+            .toString()
+            .replace(/<p class="s\d+">(.*?)<\/p>/g, "")
+            .replace(/<p class="r">(.*?)<\/p>/g, "")
+
+        content.split("span").forEach(trimVerse)
         function trimVerse(content) {
             // let xt = /(<span class="xt"\b[^>]*>)[^<>]*(<\/span>)/i
             let brackets = / *\[[0-9\]]*]/g // remove [1], not [text]
