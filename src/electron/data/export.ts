@@ -79,7 +79,7 @@ function doneWritingFile(err: any, exportFolder: string, toMain: boolean = true)
 // ----- PDF -----
 
 const options: any = {
-    marginsType: 1,
+    margins: {top: 0, bottom: 0, left: 0, right: 0},
     pageSize: "A4",
     printBackground: true,
     landscape: false,
