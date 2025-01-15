@@ -53,7 +53,7 @@
 
     // WIP better way of updating all of this
     $: if (!item && !tabs.text.disabled) {
-        active = "items"
+        if (active === "text" || active === "item") active = "items"
         tabs.text.disabled = true
     } else if (item && tabs.text.disabled) {
         // open item options when the first one is created (on an empty slide)

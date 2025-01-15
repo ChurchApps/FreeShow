@@ -114,6 +114,8 @@
     }
 
     let edit: any
+
+    $: mediaFit = currentStyle.fit || "contain"
 </script>
 
 <div class="info">
@@ -212,27 +214,13 @@
         <div style="display: flex;align-items: center;padding: 0;">
             <Icon id="media_fit" style="margin-left: 0.5em;" right />
             <p>
-                {#if currentStyle.fit}
-                    {#key currentStyle.fit}
-                        <T id={mediaFitOptions.find((a) => a.id === currentStyle.fit)?.name || ""} />
-                    {/key}
-                {:else}
-                    <T id="popup.media_fit" />
-                {/if}
+                <!-- <T id="popup.media_fit" />: -->
+                {#key mediaFit}
+                    <T id={mediaFitOptions.find((a) => a.id === mediaFit)?.name || ""} />
+                {/key}
             </p>
         </div>
     </Button>
-    {#if currentStyle.fit}
-        <Button
-            title={$dictionary.actions?.remove}
-            on:click={() => {
-                updateStyle("", "fit")
-            }}
-            redHover
-        >
-            <Icon id="close" size={1.2} white />
-        </Button>
-    {/if}
 </CombinedInput>
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->

@@ -55,7 +55,7 @@
 
     // set values
     $: if (currentMedia) {
-        edits.default[0].value = currentMedia.fit || "contain"
+        edits.default[0].value = currentMedia.fit || ""
         edits.default[1].value = currentMedia.flipped || false
         edits.default[2].value = currentMedia.flippedY || false
         if (edits.video) {
@@ -95,6 +95,7 @@
         if (!mediaId) return
 
         let value: any = input.value
+        if (value?.id !== undefined) value = value.id
         if (input.id === "filter") value = addFilterString(currentMedia?.filter || "", [input.key, value])
 
         updateStore("media", { keys: [mediaId, input.id], value })

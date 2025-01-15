@@ -4,7 +4,7 @@ import { OUTPUT, OUTPUT_STREAM } from "../../../types/Channels"
 import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
 import { OutputHelper } from "../../output/OutputHelper"
-import { toServer } from "../../servers"
+import { getConnections, toServer } from "../../servers"
 import { CaptureHelper } from "../CaptureHelper"
 import { toApp } from "../.."
 
@@ -116,8 +116,10 @@ export class CaptureTransmitter {
                 break
             case "server":
                 // const options = OutputHelper.getOutput(captureId)?.captureOptions
-                // phone screen size
-                this.sendBufferToServer(captureId, image.resize({ width: size.width / 5, height: size.height / 5, quality: "good" }))
+                // WIP base on receiving screen size
+                const outputshowConnections = getConnections("OUTPUT_STREAM")
+                let reduceSize = outputshowConnections > 5 ? 0.7 : outputshowConnections > 10 ? 0.5 : outputshowConnections > 20 ? 0.3 : 0.8
+                this.sendBufferToServer(captureId, image.resize({ width: size.width * reduceSize, height: size.height * reduceSize, quality: "good" }))
                 break
             case "stage":
                 this.sendBufferToMain(captureId, image)

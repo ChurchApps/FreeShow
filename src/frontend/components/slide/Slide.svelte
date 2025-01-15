@@ -69,8 +69,8 @@
     let ghostBackground: Media | null = null
     let bgIndex: number = -1
     let isFirstGhost: boolean = false
-    // don't show ghost backgrounds if more than 50 slides (because of loading!)
-    $: if (!background && layoutSlides.length < 50) {
+    // don't show ghost backgrounds if over slide 40 (because of loading/performance!)
+    $: if (!background && index < 40) {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i > index) return

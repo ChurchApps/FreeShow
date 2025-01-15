@@ -40,7 +40,7 @@
 
     // STYLE FIT
 
-    $: styleFit = $styles[styleId]?.fit || ""
+    $: styleFit = $styles[styleId]?.fit || "contain"
 </script>
 
 <div class="types">

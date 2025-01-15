@@ -4,7 +4,7 @@
     import { media } from "../../stores"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
 
-    export let path: any
+    export let path: string
     export let video: any = null
     export let videoData: any
     export let videoTime: any
@@ -51,7 +51,7 @@
     // $: audioVolume = Math.max(0, Math.min(1, $volume ?? 1))
 
     // path starting at "/" auto completes to app root, but should be file://
-    $: if (path[0] === "/") path = `file://${path}`
+    $: if (path?.[0] === "/") path = `file://${path}`
 
     $: isVideoSupported(path)
 

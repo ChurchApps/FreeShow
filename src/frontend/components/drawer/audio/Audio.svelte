@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
-    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, media, outLocked } from "../../../stores"
+    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, labelsDisabled, media, outLocked } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -314,7 +314,8 @@
 
         {#if !playlist}
             <Button title={$dictionary.new?.playlist} on:click={createPlaylist}>
-                <Icon size={1.3} id="playlist_create" />
+                <Icon size={1.3} id="playlist_create" right={!$labelsDisabled} />
+                {#if !$labelsDisabled}<p><T id="new.playlist" /></p>{/if}
             </Button>
         {/if}
     </div>

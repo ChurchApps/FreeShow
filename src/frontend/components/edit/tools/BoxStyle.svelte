@@ -157,6 +157,8 @@
     }
     $: if (id === "media" && item) {
         setBoxInputValue(box, "default", "src", "value", item.src || "")
+        // WIP does not update:
+        // setBoxInputValue(box, "default", "muted", "hidden", getMediaType(item.src || "") !== "video")
     }
     $: if (id === "web" && item) {
         setBoxInputValue(box, "default", "web.src", "value", item?.web?.src || "")
@@ -567,7 +569,7 @@
 
 {#if loaded}
     <!-- WIP edit checkbox does not animate because of this refresh -->
-    {#key box}
+    {#key id !== "media" && box}
         <EditValues edits={box?.edit} defaultEdits={clone(boxes[id])?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} {sessionId} />
     {/key}
 {/if}
