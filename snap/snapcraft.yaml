@@ -54,6 +54,7 @@ apps:
       - audio-playback
       - pulseaudio
       - opengl
+      - removable-media
     environment:
       PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
       SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
