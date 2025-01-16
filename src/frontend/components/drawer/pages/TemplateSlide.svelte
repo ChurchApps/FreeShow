@@ -62,8 +62,8 @@
 <!-- background={transparentOutput && template.items?.length ? "transparent" : backgroundColor}
 checkered={template.items?.length > 0 && transparentOutput} -->
 <Zoomed
-    background={!preview || template.items?.length ? template.settings?.backgroundColor || "transparent" : template.color || "var(--primary);"}
-    checkered={(!preview || template.items?.length > 0) && !template.settings?.backgroundColor}
+    background={!preview || template.items?.length ? template.settings?.backgroundColor || (preview ? "var(--primary);" : "transparent") : template.color || "var(--primary);"}
+    checkered={(!preview || template.items?.length > 0) && !template.settings?.backgroundColor && !thumbnailPath}
     {resolution}
     style={width && height ? getStyleResolution(resolution, width, height, "fit", { zoom }) : ""}
     bind:ratio
