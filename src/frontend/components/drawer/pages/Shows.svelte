@@ -84,6 +84,21 @@
     // }
 
     function keydown(e: any) {
+        if (e.target.closest(".search")) {
+            // get preview of shows
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                e.preventDefault()
+                let currentIndex = filteredShows.findIndex((a) => a.id === $activeShow?.id)
+                let newIndex = 0
+                if (currentIndex < 0) newIndex = e.key === "ArrowDown" ? 0 : filteredShows.length - 1
+                else newIndex = e.key === "ArrowDown" ? currentIndex + 1 : currentIndex - 1
+                if (newIndex < 0 || newIndex >= filteredShows.length) return
+
+                activeShow.set({ id: filteredShows[newIndex].id, type: "show", data: { searchInput: true } })
+            }
+            return
+        }
+
         if (e.target.closest("input") || e.target.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows?.length) return
         if ($activeEdit.items.length) return
 

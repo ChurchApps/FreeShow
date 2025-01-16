@@ -18,7 +18,7 @@ export interface Show {
     }
     settings: {
         activeLayout: ID
-        resolution?: Resolution
+        // resolution?: Resolution
         template: null | ID
     }
     timestamps: {

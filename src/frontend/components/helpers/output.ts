@@ -366,22 +366,30 @@ export function outputSlideHasContent(output) {
 
 // WIP style should override any slide resolution & color ? (it does not)
 
-export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, getSlideRes: boolean = false, outputId: string = ""): Resolution {
+export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, _getSlideRes: boolean = false, outputId: string = ""): Resolution {
+    if (initial) return initial
+
     if (!outputId) outputId = getActiveOutputs()[0]
     let currentOutput = get(outputs)[outputId]
-    let style = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
-    let slideRes: any = null
 
-    if (!initial && !style && getSlideRes) {
-        let outSlide: any = currentOutput?.out?.slide || {}
-        let slideRef = _show(outSlide.id || "")
-            .layouts([outSlide.layout])
-            .ref()[0]?.[outSlide.index]
-        let slideOutput = _show(outSlide.id || "").get("slides")?.[slideRef?.id] || null
-        slideRes = slideOutput?.settings?.resolution
-    }
+    let style: any = currentOutput?.style ? get(styles)[currentOutput?.style] || {} : {}
+    let styleRes = style.resolution || null
 
-    return initial || style || slideRes || { width: 1920, height: 1080 }
+    // let styleTemplate: any = style.template ? get(templates)[style.template] || {} : {}
+    // let styleTemplateRes: any = styleTemplate.settings?.resolution
+
+    // let slideRes: any = null
+    // if (getSlideRes) {
+    //     let outSlide: any = currentOutput?.out?.slide || {}
+    //     let slideRef = _show(outSlide.id || "")
+    //         .layouts([outSlide.layout])
+    //         .ref()[0]?.[outSlide.index]
+    //     let slideOutput = _show(outSlide.id || "").get("slides")?.[slideRef?.id] || null
+    //     slideRes = slideOutput?.settings?.resolution
+    // }
+
+    // slideRes || styleTemplateRes ||
+    return styleRes || { width: 1920, height: 1080 }
 }
 
 export function getOutputResolution(outputId: string, _updater = get(outputs), _styleUpdater = get(styles)) {
@@ -704,7 +712,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 export function updateSlideFromTemplate(slide: Slide, template: Template, isFirst: boolean = false, removeOverflow: boolean = false) {
     let settings = template.settings || {}
 
-    if (settings.resolution || slide.settings.resolution) slide.settings.resolution = getResolution(settings.resolution)
+    // if (settings.resolution || slide.settings.resolution) slide.settings.resolution = getResolution(settings.resolution)
     if (isFirst && (settings.firstSlideTemplate || removeOverflow)) slide.settings.template = settings.firstSlideTemplate || ""
     if (settings.backgroundColor || slide.settings.color) slide.settings.color = settings.backgroundColor || ""
 

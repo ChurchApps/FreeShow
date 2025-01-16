@@ -134,10 +134,11 @@
             if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || !$activeProject || $focusMode) return
             if ($activeDrawerTab !== "shows") return
 
+            let match = $activeShow?.data?.searchInput === true ? { id: $activeShow.id } : firstMatch
             searchElem.select()
             let newIndex = ($activeShow?.index ?? $projects[$activeProject].shows.length - 1) + 1
-            if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id: firstMatch.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
-            activeShow.set({ ...firstMatch, index: newIndex })
+            if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id: match.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
+            activeShow.set({ ...match, index: newIndex })
             searchValue = ""
         } else if (e.key === "Escape") {
             if (!searchValue.length && searchActive) searchActive = false

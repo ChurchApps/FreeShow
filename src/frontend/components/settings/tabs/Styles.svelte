@@ -72,6 +72,11 @@
 
     $: activeStyle.set(styleId || "")
 
+    $: styleTemplate = $templates[currentStyle.template || ""] || {}
+    $: styleTemplateScripture = $templates[currentStyle.templateScripture || ""] || {}
+    $: templateBackground = styleTemplate.settings?.backgroundColor || styleTemplateScripture.settings?.backgroundColor
+    // $: templateResolution = styleTemplate.settings?.resolution
+
     // resolutions
     // https://www.wearethefirehouse.com/aspect-ratio-cheat-sheet
     const resolutions = [
@@ -103,7 +108,14 @@
     ]
 
     let templateList: any[] = []
-    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, a]: any) => ({ id, name: a?.name })))]
+    $: templateList = [
+        { id: null, name: "—" },
+        ...sortByName(
+            Object.entries($templates)
+                .map(([id, a]: any) => ({ id, name: a?.name }))
+                .filter((a) => a.name)
+        ),
+    ]
 
     // text divider
     function keydown(e: any) {
@@ -124,7 +136,12 @@
 
 <!-- TODO: use stage (dropdown) -->
 <CombinedInput>
-    <p><T id="edit.background_color" /></p>
+    <p>
+        <T id="edit.background_color" />
+        {#if templateBackground}
+            <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.8em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
+        {/if}
+    </p>
     <span>
         <Color value={currentStyle.background || "#000000"} on:input={(e) => updateStyle(e, "background")} />
     </span>
@@ -227,6 +244,9 @@
 <!-- WIP foreground: mask/overlay -->
 <CombinedInput>
     <p><T id="settings.resolution" /></p>
+    <!-- {#if templateResolution}
+        <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.9em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
+    {:else} -->
     <span class="inputs">
         <!-- defaults dropdown -->
         <!-- custom... -->
@@ -256,6 +276,7 @@
             on:click={(e) => updateStyle(e.detail?.data, "resolution")}
         />
     </span>
+    <!-- {/if} -->
 </CombinedInput>
 
 <h3><T id="preview.slide" /></h3>

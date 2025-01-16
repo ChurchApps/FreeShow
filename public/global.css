@@ -37,6 +37,7 @@
     --secondary: #f0008c;
     --secondary-opacity: rgba(240, 0, 140, 0.5);
     --secondary-text: #f0f0ff;
+    --transparent: #232530;
 
     --hover: rgb(255 255 255 / 0.05);
     --focus: rgb(255 255 255 / 0.1);
@@ -125,4 +126,11 @@ p {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+}
+
+/* CHECKERED */
+
+.checkered {
+    /* background-color: var(--transparent); */
+    background: repeating-conic-gradient(rgba(70, 70, 80, 0.1) 0% 25%, transparent 0% 50%) 50% / 26px 26px;
 }

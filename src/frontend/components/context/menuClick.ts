@@ -747,8 +747,6 @@ const actions: any = {
             activePopup.set("action")
         } else if (obj.sel.id === "timer") {
             activePopup.set("timer")
-        } else if (obj.sel.id === "timer") {
-            activePopup.set("timer")
         } else if (obj.sel.id === "global_timer") {
             select("timer", { id: obj.sel.data[0].id })
             activePopup.set("timer")
