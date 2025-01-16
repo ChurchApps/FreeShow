@@ -132,6 +132,10 @@
     ]
     // Camera
     // Answer / Guess / Poll
+
+    function pcoConnect() {
+        send(MAIN, ["PCO_CONNECT"])
+    }
 </script>
 
 <!-- <CombinedInput>
@@ -213,6 +217,13 @@
     </CombinedInput>
 {/if}
 <!-- TODO: OutputShow set output... -->
+
+<br />
+<br />
+
+<CombinedInput>
+    <Button on:click={pcoConnect} style="width: 100%;" center>Connect to PlanningCenter</Button>
+</CombinedInput>
 
 <!-- <div>
   <p><T id="settings.allowed_connections" /></p>

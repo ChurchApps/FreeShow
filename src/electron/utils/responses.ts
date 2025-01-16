@@ -47,6 +47,7 @@ import { LyricSearch } from "./LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "./shows"
 import checkForUpdates from "./updater"
+import { pcoConnect } from "../planningcenter/connect"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -188,6 +189,8 @@ const mainResponses: any = {
     READ_FILE: (data: any) => ({ ...data, content: readFile(data.path) }),
     OPEN_FOLDER: (data: any, e: any) => selectFolder(data, e),
     OPEN_FILE: (data: any, e: any) => selectFiles(data, e),
+    // EXTRA
+    PCO_CONNECT: () => pcoConnect(),
 }
 
 export function receiveMain(e: any, msg: Message) {
