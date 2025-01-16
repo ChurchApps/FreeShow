@@ -49,7 +49,7 @@
     }
 </script>
 
-{#each outputtedOverlays as id}
+{#each outputtedOverlays as id (id)}
     {#if overlays[id]}
         <div class:key={isKeyOutput}>
             <Overlay {id} {outputId} {overlays} {mirror} {transition} />

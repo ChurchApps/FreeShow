@@ -205,20 +205,20 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "addToShow"
     // show_in_explorer!!
     media: ["manage_media_tags", "media_tag_filter"],
-    media_card: ["addToProject", "SEPERATOR", "edit", "preview", "favourite", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "media_tag_set", "media_tag_filter", "SEPERATOR", "system_open"],
+    media_card: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "favourite", "media_tag_set", "media_tag_filter", "SEPERATOR", "system_open"],
     // "addToFirstSlide",
     overlay_card: ["edit", "preview", "SEPERATOR", "display_duration", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
-    audio_button: ["addToProject", "SEPERATOR", "preview", "favourite", "SEPERATOR", "system_open"],
+    audio_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "favourite", "SEPERATOR", "system_open"],
     audio_button_playlist: ["preview", "SEPERATOR", "remove"],
     // "addToFirstSlide"
     live_card: ["recording"],
     // actions
     actions: ["manage_action_tags", "action_tag_filter"],
-    action: ["duplicate", "SEPERATOR", "action_tag_set", "action_tag_filter"],
+    action: ["edit", "SEPERATOR", "duplicate", "delete", "SEPERATOR", "action_tag_set", "action_tag_filter"],
     scripture_verse: ["create_show", "SEPERATOR", "selectAll"],
     scripture_chapter: ["create_show"],
 
@@ -240,7 +240,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     shows: ["newSlide", "selectAll"],
     // TIMER
     timer: ["play", "edit"], // , "reset"
-    global_timer: ["play", "edit", "SEPERATOR", "delete"], // , "reset"
+    global_timer: ["play", "edit", "SEPERATOR", "duplicate", "delete"], // , "reset"
     // VARIABLE
     variable: ["edit", "SEPERATOR", "delete"],
     // TRIGGER

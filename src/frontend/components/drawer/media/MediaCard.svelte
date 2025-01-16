@@ -117,6 +117,20 @@
             return a
         })
     }
+
+    function removeStyle() {
+        iconClicked = setTimeout(() => (iconClicked = null), 50)
+
+        media.update((a) => {
+            if (!a[path]) return a
+
+            delete a[path].fit
+            delete a[path].flipped
+            delete a[path].flippedY
+            delete a[path].filter
+            return a
+        })
+    }
 </script>
 
 <SelectElem id="media" class="context #media_card" data={{ name, path, type }} {shiftRange} draggable fill>
@@ -125,7 +139,6 @@
         style={thumbnail ? `width: ${$mediaOptions.mode === "grid" ? 100 : 100 / $mediaOptions.columns}%;` : ""}
         mode={$mediaOptions.mode}
         width={100}
-        changed={!!mediaStyle.filter?.length || mediaStyle.flipped || mediaStyle.flippedY}
         preview={$activeShow?.id === path}
         outlineColor={findMatchingOut(path, $outputs)}
         active={findMatchingOut(path, $outputs) !== null}
@@ -143,6 +156,15 @@
     >
         <!-- icons -->
         <div class="icons">
+            {#if !!mediaStyle.filter?.length || $media[path]?.fit || mediaStyle.flipped || mediaStyle.flippedY}
+                <div style="max-width: 100%;">
+                    <div class="button">
+                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={removeStyle}>
+                            <Icon id="filter" size={0.9} white />
+                        </Button>
+                    </div>
+                </div>
+            {/if}
             {#if tags.length}
                 <div style="max-width: 100%;">
                     <div class="button">

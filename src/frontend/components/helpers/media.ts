@@ -165,6 +165,7 @@ export function checkMedia(src: string): Promise<boolean> {
 }
 
 export async function getMediaInfo(path: string) {
+    if (!path) return {}
     if (path.includes("http") || path.includes("data:")) return {}
 
     const cachedInfo = get(media)[path]?.info
@@ -234,7 +235,7 @@ export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
         filter: "",
         flipped: false,
         flippedY: false,
-        fit: "contain",
+        fit: currentStyle?.fit || "contain",
         speed: "1",
         fromTime: 0,
         toTime: 0,
@@ -244,8 +245,6 @@ export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
         if (!mediaObj?.[key]) return
         mediaStyle[key] = mediaObj[key]
     })
-
-    if (currentStyle?.fit) mediaStyle.fit = currentStyle.fit
 
     return mediaStyle
 }

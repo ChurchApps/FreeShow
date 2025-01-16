@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { slide } from "svelte/transition"
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activePopup, activeShow, activeTriggerFunction, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, styles, textEditActive } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, activeTriggerFunction, alertMessage, dictionary, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, textEditActive } from "../../../stores"
     import { slideHasAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
@@ -35,7 +35,8 @@
 
     let width: number = 0
     let height: number = 0
-    $: resolution = getResolution(Slide?.settings?.resolution, { $outputs, $styles })
+    // Slide?.settings?.resolution
+    $: resolution = getResolution(null, { $outputs, $styles })
 
     let ratio: number = 1
 
@@ -70,6 +71,7 @@
     }
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: transparentOutput = !!currentOutput?.transparent
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     let mediaStyle: MediaStyle = {}
@@ -243,6 +245,9 @@
     //         }, 10)
     //     }, 200)
     // }
+
+    // $: styleTemplate = getStyleTemplate(null, currentStyle)
+    // || styleTemplate.settings?.backgroundColor
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={mousedown} on:wheel={wheel} />
@@ -253,7 +258,15 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
             <DropArea id="edit">
-                <Zoomed background={Slide?.settings?.color || currentStyle.background || "black"} {resolution} style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio {hideOverflow} center={zoom >= 1}>
+                <Zoomed
+                    background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : Slide?.settings?.color || currentStyle.background || "black"}
+                    checkered={(transparentOutput || $special.transparentSlides) && !background}
+                    {resolution}
+                    style={getStyleResolution(resolution, width, height, "fit", { zoom })}
+                    bind:ratio
+                    {hideOverflow}
+                    center={zoom >= 1}
+                >
                     <!-- <div class="chordsButton" style="zoom: {1 / ratio};">
                         <Button on:click={toggleChords}>
                             <Icon id="chords" white={!chordsMode} />

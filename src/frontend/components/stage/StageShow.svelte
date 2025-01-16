@@ -79,6 +79,7 @@
 
     let width: number = 0
     let height: number = 0
+    // WIP change stage resolution
     $: resolution = getResolution(show?.settings?.resolution, { $outputs, $styles })
 
     // ACTION BAR

@@ -1,13 +1,13 @@
 <script lang="ts">
     import type { TemplateSettings } from "../../../../types/Show"
-    import { activeEdit, dictionary, outputs, overlays, styles, templates } from "../../../stores"
+    import { activeEdit, dictionary, overlays, templates } from "../../../stores"
     import { getList } from "../../../utils/common"
     import { mediaExtensions } from "../../../values/extensions"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName } from "../../helpers/media"
-    import { getActiveOutputs, getResolution } from "../../helpers/output"
+    import { getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
@@ -19,16 +19,15 @@
     $: templateId = $activeEdit?.id || ""
     $: template = $templates[templateId] || {}
 
-    $: currentStyle = $styles[$outputs[getActiveOutputs()[0]].style || ""] || {}
-
     let settings: TemplateSettings = {}
 
     $: if (template) setValues()
     function setValues() {
-        let res = getResolution(template?.settings?.resolution)
+        // template?.settings?.resolution
+        let res = getResolution()
         settings = {
             resolution: { width: res.width, height: res.height },
-            backgroundColor: template?.settings?.backgroundColor || currentStyle.background || "#000000",
+            backgroundColor: template?.settings?.backgroundColor || "",
             ...(template.settings || {}),
         }
     }
@@ -50,12 +49,12 @@
 
         update()
     }
-    function setResolution(e: any, key: "width" | "height") {
-        let resolution = settings.resolution || {}
-        resolution[key] = Number(e.detail)
+    // function setResolution(e: any, key: "width" | "height") {
+    //     let resolution = settings.resolution || {}
+    //     resolution[key] = Number(e.detail)
 
-        setValue(resolution, "resolution")
-    }
+    //     setValue(resolution, "resolution")
+    // }
 
     $: templateList = getList($templates, true).filter((a) => a.id !== templateId)
     $: overlayList = getList($overlays, true)
@@ -64,7 +63,7 @@
 <div class="section">
     <CombinedInput>
         <p><T id="edit.background_color" /></p>
-        <Color bind:value={settings.backgroundColor} on:input={(e) => setValue(e, "backgroundColor")} />
+        <Color bind:value={settings.backgroundColor} on:input={(e) => setValue(e, "backgroundColor")} enableNoColor />
     </CombinedInput>
     <CombinedInput>
         <p><T id="edit.background_media" /></p>
@@ -98,7 +97,7 @@
         <NumberInput value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
     </CombinedInput>
 
-    <h6><T id="settings.resolution" /></h6>
+    <!-- <h6><T id="settings.resolution" /></h6>
     <CombinedInput>
         <p><T id="edit.width" /></p>
         <NumberInput value={settings.resolution?.width || 1920} max={100000} on:change={(e) => setResolution(e, "width")} buttons={false} />
@@ -106,7 +105,7 @@
     <CombinedInput>
         <p><T id="edit.height" /></p>
         <NumberInput value={settings.resolution?.height || 1080} max={100000} on:change={(e) => setResolution(e, "height")} buttons={false} />
-    </CombinedInput>
+    </CombinedInput> -->
 </div>
 
 <style>

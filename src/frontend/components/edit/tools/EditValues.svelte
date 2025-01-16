@@ -23,6 +23,7 @@
     import { getOriginalValue, removeExtension } from "../scripts/edit"
     import EditTimer from "./EditTimer.svelte"
     import { mediaExtensions } from "../../../values/extensions"
+    import Slider from "../../inputs/Slider.svelte"
 
     export let edits: any
     export let defaultEdits: any = {}
@@ -466,11 +467,11 @@
                         >
                             <Icon id={input.icon || input.id} right />
                             {#key input.name}
-                                <p style="padding: 0;flex: initial;width: fit-content;min-width: unset;{input.name.includes('.') || !input.name.includes(' ') ? '' : 'opacity: 1;'}">
-                                    {#if input.name.includes(" ")}
+                                <p style="padding: 0;flex: initial;width: fit-content;min-width: unset;{input.name?.includes('.') || !input.name?.includes(' ') ? '' : 'opacity: 1;'}">
+                                    {#if input.name?.includes(" ")}
                                         {input.name}
                                     {:else}
-                                        <T id={input.name.includes(".") ? input.name : "popup." + input.name} />
+                                        <T id={input.name?.includes(".") ? input.name : "popup." + input.name} />
                                     {/if}
                                 </p>
                             {/key}
@@ -543,7 +544,7 @@
                 {:else}
                     {@const value = getValue(input, { styles, item })}
                     {#if !input.hidden}
-                        <CombinedInput>
+                        <CombinedInput style={input.slider ? "border-bottom: 1px solid var(--primary-lighter);" : ""}>
                             <p title={input.title || $dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
                                 {#key input.name}
                                     <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
@@ -564,6 +565,9 @@
                                 on:change={(e) => valueChange(e, input)}
                             />
                         </CombinedInput>
+                        {#if input.slider}
+                            <Slider {...input.values || {}} {value} style="border-bottom: 2px solid var(--primary-lighter);" on:input={(e) => valueChange(e, input, true)} on:change={(e) => valueChange(e, input)} />
+                        {/if}
                     {/if}
                 {/if}
             {/each}

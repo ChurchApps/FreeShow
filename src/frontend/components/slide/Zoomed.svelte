@@ -11,6 +11,7 @@
     export let mirror: boolean = false
     export let showMirror: boolean = false
     export let disableStyle: boolean = false
+    export let checkered: boolean = false
     export let drawZoom: number = 1
 
     export let outline: string = ""
@@ -69,6 +70,7 @@
         class:disableStyle
         class:showMirror
         class:relative
+        class:checkered
         style="{$$props.style || ''}background-color: {background};transition: {backgroundDuration}ms background-color;{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};"
     >
         {#if zoom}

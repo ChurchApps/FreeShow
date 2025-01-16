@@ -126,7 +126,7 @@
 
 <style>
     .color {
-        border: 2px solid var(--primary-darker);
+        /* border: 2px solid var(--primary-darker); */
         transition: background-color 0.2s;
         position: relative;
         border-radius: var(--border-radius);

@@ -119,7 +119,7 @@
             <PreviewCanvas alpha={id.includes("_alpha")} id={show?.settings?.output} {socket} capture={stream[id.includes("_alpha") ? "alpha" : "default"]} />
         </span>
     {:else}
-        <div bind:this={alignElem} class="align" style={item.align}>
+        <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};">
             <div>
                 {#if id.includes("slide_tracker")}
                     <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
@@ -218,5 +218,12 @@
         line-height: normal;
         letter-spacing: normal;
         word-spacing: normal;
+    }
+
+    .align :global(.item .align) {
+        align-items: var(--align);
+    }
+    .align :global(.item .align .lines) {
+        text-align: var(--text-align);
     }
 </style>

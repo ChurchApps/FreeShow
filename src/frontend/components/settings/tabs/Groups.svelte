@@ -36,6 +36,7 @@
     const inputs = {
         colors: (e: any) => fullColors.set(e.target.checked),
         groupNumber: (e: any) => groupNumbers.set(e.target.checked),
+        transparentSlides: (e: any) => updateSpecial(e.target.checked, "transparentSlides"),
         numberKeys: (e: any) => updateSpecial(e.target.checked, "numberKeys"),
         autoLetterShortcut: (e: any) => updateSpecial(e.target.checked, "autoLetterShortcut"),
         capitalizeWords: (e: any) => updateSpecial(e.target.value || "", "capitalize_words"),
@@ -103,6 +104,12 @@
     <p><T id="settings.group_numbers" /></p>
     <div class="alignRight">
         <Checkbox checked={$groupNumbers} on:change={inputs.groupNumber} />
+    </div>
+</CombinedInput>
+<CombinedInput>
+    <p><T id="settings.transparent_slides" /></p>
+    <div class="alignRight">
+        <Checkbox checked={$special.transparentSlides} on:change={inputs.transparentSlides} />
     </div>
 </CombinedInput>
 <CombinedInput>

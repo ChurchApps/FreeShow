@@ -48,10 +48,11 @@
     $: red = id === "scripture" && $notFound.bible.find((a: any) => a.id === category.id)
 
     const defaultFolders = ["all", "unlabeled", "favourites", "online", "screens", "cameras", "microphones", "audio_streams"]
+    const tabsWithCategories = ["shows", "media", "audio", "overlays", "templates", "scripture"]
 </script>
 
 <Button
-    class={defaultFolders.includes(category.id) ? "" : $audioPlaylists[category.id] ? "context #playlist" : `context #category_${id}_button__category_${id}`}
+    class={!tabsWithCategories.includes(id) || defaultFolders.includes(category.id) ? "" : $audioPlaylists[category.id] ? "context #playlist" : `context #category_${id}_button__category_${id}`}
     active={category.id === $drawerTabsData[id]?.activeSubTab}
     {red}
     on:click={(e) => {
@@ -69,7 +70,7 @@
             right
         />
         <span id={category.id} style="width: calc(100% - 15px);text-align: left;">
-            {#if category.id === "all" || category.id === "unlabeled" || category.id === "favourites"}
+            {#if !tabsWithCategories.includes(id) || defaultFolders.includes(category.id)}
                 <p style="margin: 5px;"><T id={category.name} /></p>
             {:else}
                 <HiddenInput

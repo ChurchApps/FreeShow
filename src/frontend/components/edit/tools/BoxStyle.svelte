@@ -12,7 +12,7 @@
     import { getStyles } from "../../helpers/style"
     import { MAX_FONT_SIZE } from "../scripts/autosize"
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
-    import { boxes } from "../values/boxes"
+    import { boxes, setBoxInputValue } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
 
     export let id: ItemType
@@ -117,124 +117,135 @@
     $: lineAlignStyle = item?.lines ? getStyles(getLastLineAlign(item, selection)) : getStyles(item?.align)
     $: alignStyle = item?.align ? getStyles(item.align) : {}
 
+    /// SET INPUT VALUES ///
+
     // remove chord options
     $: if ($activeEdit.type === "overlay" && box?.edit?.chords) {
         delete box.edit.chords
     }
 
-    // WIP shouldn't have fixed values
-    $: if (id === "text" && box?.edit?.default) {
-        box.edit.default[0].styleValue = getStyles(style)["font"] || ""
-        box.edit.default[4].hidden = !item?.auto
-    }
-    $: if (id === "text" && box?.edit?.style) {
-        box.edit.lines[1].value = item?.specialStyle?.lineGap || 0
+    $: if (id === "text") {
+        setBoxInputValue(box, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
+        setBoxInputValue(box, "default", "textFit", "hidden", !item?.auto)
 
+        // text
+        setBoxInputValue(box, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
+
+        // lines
+        setBoxInputValue(box, "lines", "specialStyle.lineGap", "value", item?.specialStyle?.lineGap || 0)
         let lineBg = item?.specialStyle?.lineBg || ""
+        setBoxInputValue(box, "lines", "specialStyle.lineBg", "value", lineBg)
         let backgroundValue = splitRgb(lineBg)
-        box.edit.lines[2].value = lineBg
-        box.edit.lines[3].value = backgroundValue.a
-    }
-    $: if (id === "text" && box?.edit?.special) {
-        box.edit.text[4].value = !!styles["white-space"]?.includes("nowrap")
-        box.edit.special[0].value = item?.scrolling?.type || "none"
-    }
-    $: if (id === "text" && box?.edit?.list) {
-        box.edit.list[0].value = item?.list?.enabled || false
-        box.edit.list[1].value = item?.list?.style || "disc"
-        // box.edit.list[2].value = item?.list?.interval || 0
+        setBoxInputValue(box, "lines", "specialStyle.opacity", "value", backgroundValue.a)
 
-        box.edit.list[1].hidden = !item?.list?.enabled
-        // box.edit.list[2].hidden = !item?.list?.enabled
-    }
-    $: if (id === "text" && box?.edit?.chords) {
-        box.edit.chords[0].value = item?.chords?.enabled || false
-        box.edit.chords[1].value = item?.chords?.color || "#FF851B"
-        box.edit.chords[2].value = item?.chords?.size || 30
+        // list
+        setBoxInputValue(box, "list", "list.enabled", "value", item?.list?.enabled || false)
+        setBoxInputValue(box, "list", "list.style", "value", item?.list?.style || "disc")
+        setBoxInputValue(box, "list", "list.style", "hidden", !item?.list?.enabled)
+        // setBoxInputValue(box, "list", "list.interval", "value", item?.list?.interval || 0)
+        // setBoxInputValue(box, "list", "list.interval", "hidden", !item?.list?.enabled)
 
-        box.edit.chords[1].hidden = !item?.chords?.enabled
-        box.edit.chords[2].hidden = !item?.chords?.enabled
-    }
-    $: if (id === "camera" && box?.edit?.default?.[0] && item?.device?.name) {
-        box.edit.default[0].name = item.device.name
-    }
-    $: if (id === "slide_tracker" && box?.edit?.default?.[3]) {
-        box.edit.default[2].hidden = item?.tracker?.type !== "group"
-        box.edit.default[3].hidden = item?.tracker?.type !== "group"
-    }
+        // chords
+        setBoxInputValue(box, "chords", "chords.enabled", "value", item?.chords?.enabled || false)
+        setBoxInputValue(box, "chords", "chords.color", "value", item?.chords?.color || "#FF851B")
+        setBoxInputValue(box, "chords", "chords.size", "value", item?.chords?.size || 30)
+        setBoxInputValue(box, "chords", "chords.color", "hidden", !item?.chords?.enabled)
+        setBoxInputValue(box, "chords", "chords.size", "hidden", !item?.chords?.enabled)
 
-    $: if (id === "timer" && box?.edit?.font) box.edit.font[3].value = item?.auto ?? true
-
-    $: if (id === "clock" && box?.edit?.default) {
-        // Get the clock type from the first option
-        const clockType = item?.clock?.type || "digital"
-        const dateFormat = item?.clock?.dateFormat || "none"
-        // Default option [0] is the clock type selector which is always shown
-        // [1] dateFormat
-        box.edit.default[1].hidden = clockType !== "digital"
-        // [2] showTime
-        box.edit.default[2].hidden = clockType !== "digital" || dateFormat === "none"
-        // [3] seconds
-        box.edit.default[3].hidden = clockType === "custom" || (clockType === "digital" && !item?.clock?.showTime)
-        // [4] customFormat
-        box.edit.default[4].hidden = clockType !== "custom"
+        // special
+        setBoxInputValue(box, "special", "scrolling.type", "value", item?.scrolling?.type || "none")
     }
+    $: if (id === "media" && item) {
+        setBoxInputValue(box, "default", "src", "value", item.src || "")
+        // WIP does not update:
+        // setBoxInputValue(box, "default", "muted", "hidden", getMediaType(item.src || "") !== "video")
+    }
+    $: if (id === "web" && item) {
+        setBoxInputValue(box, "default", "web.src", "value", item?.web?.src || "")
+    }
+    $: if (id === "timer" && item) {
+        setBoxInputValue(box, "default", "timer.circleMask", "hidden", item.timer?.viewType !== "circle")
+        setBoxInputValue(box, "default", "timer.showHours", "value", item.timer?.showHours !== false)
+        setBoxInputValue(box, "font", "auto", "value", item.auto ?? true)
+    }
+    $: if (id === "clock" && item) {
+        const clockType = item.clock?.type || "digital"
+        const dateFormat = item.clock?.dateFormat || "none"
 
-    $: if (box?.edit?.default) {
-        if (id === "mirror") getMirrorValues()
-        else if (id === "media") box.edit.default[0].value = item?.src || ""
-        else if (id === "list") box.edit.default[0].value = item?.list?.items || []
-        else if (id === "timer") {
-            box.edit.default[2].hidden = item?.timer?.viewType !== "circle"
-            box.edit.default[3].value = item?.timer?.showHours !== false
-        } else if (id === "variable") box.edit.default[0].value = item?.variable?.id
-        else if (id === "web") box.edit.default[0].value = item?.web?.src || ""
-        else if (id === "slide_tracker") {
-            if (item?.tracker?.type) box.edit.default[0].value = item.tracker.type
-            box.edit.default[1].value = item?.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C"
-        } else if (id === "events" && box.edit.default[5]) {
-            box.edit.default[4].hidden = !item?.events?.enableStartDate
-            box.edit.default[5].hidden = !item?.events?.enableStartDate
-        }
+        setBoxInputValue(box, "default", "clock.dateFormat", "hidden", clockType !== "digital")
+        setBoxInputValue(box, "default", "clock.showTime", "hidden", clockType !== "digital" || dateFormat === "none")
+        setBoxInputValue(box, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && !item.clock?.showTime))
+        setBoxInputValue(box, "default", "clock.customFormat", "hidden", clockType !== "custom")
+    }
+    $: if (id === "camera" && item) {
+        setBoxInputValue(box, "default", "device", "name", item.device?.name)
+    }
+    $: if (id === "slide_tracker" && item) {
+        if (item.tracker?.type) setBoxInputValue(box, "default", "tracker.type", "value", item.tracker.type)
+        setBoxInputValue(box, "default", "tracker.accent", "value", item.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C")
+
+        setBoxInputValue(box, "default", "font-size", "hidden", item.tracker?.type !== "group")
+        setBoxInputValue(box, "default", "auto", "hidden", item.tracker?.type !== "group")
+    }
+    $: if (id === "events" && item) {
+        setBoxInputValue(box, "default", "events.startDate", "hidden", !item.events?.enableStartDate)
+        setBoxInputValue(box, "default", "events.startTime", "hidden", !item.events?.enableStartDate)
+    }
+    $: if (id === "mirror" && item) {
+        getMirrorValues()
     }
 
-    // $: fontMetadata = $fontData[styles["font-family"]] || []
+    // moved to textbox, but keep if someone still have old items
+    $: if (id === "list" && item) {
+        setBoxInputValue(box, "default", "list.items", "value", item.list?.items || [])
+    }
+    $: if (id === "variable" && item) {
+        setBoxInputValue(box, "default", "variable.id", "value", item.variable?.id)
+    }
 
     function getMirrorValues() {
-        if (!item?.mirror || !box) return
+        if (!item?.mirror) return
 
         let enableStage = item.mirror.enableStage || false
         let nextSlide = item.mirror.nextSlide || false
         let useSlideIndex = item.mirror.useSlideIndex
         let index = item.mirror.index
 
+        setBoxInputValue(box, "default", "mirror.enableStage", "value", true)
+        setBoxInputValue(box, "default", "mirror.nextSlide", "value", true)
+        setBoxInputValue(box, "default", "mirror.show", "value", true)
+        setBoxInputValue(box, "default", "mirror.useSlideIndex", "value", true)
+        setBoxInputValue(box, "default", "mirror.index", "value", true)
+
         if (nextSlide) {
-            box.edit.default[0].hidden = true
-            box.edit.default[2].hidden = true
-            box.edit.default[3].hidden = true
-            box.edit.default[4].hidden = true
+            setBoxInputValue(box, "default", "mirror.enableStage", "hidden", true)
+            setBoxInputValue(box, "default", "mirror.show", "hidden", true)
+            setBoxInputValue(box, "default", "mirror.useSlideIndex", "hidden", true)
+            setBoxInputValue(box, "default", "mirror.index", "hidden", true)
         } else if (enableStage) {
-            box!.edit.default[2].name = "select_stage"
-            box!.edit.default[2].values.options = getStageList()
-            box!.edit.default[2].id = "mirror.stage"
-            box.edit.default[1].hidden = true
-            box.edit.default[3].hidden = true
-            box.edit.default[4].hidden = true
+            setBoxInputValue(box, "default", "mirror.show", "name", "select_stage")
+            setBoxInputValue(box, "default", "mirror.show", "values", { options: getStageList() })
+            setBoxInputValue(box, "default", "mirror.show", "id", "mirror.stage")
+
+            setBoxInputValue(box, "default", "mirror.nextSlide", "hidden", true)
+            setBoxInputValue(box, "default", "mirror.useSlideIndex", "hidden", true)
+            setBoxInputValue(box, "default", "mirror.index", "hidden", true)
         } else {
-            box!.edit.default[2].name = "popup.select_show"
-            box!.edit.default[2].values.options = getListOfShows(!$activeEdit.id)
-            box!.edit.default[2].id = "mirror.show"
-            box.edit.default[0].hidden = false
-            box.edit.default[1].hidden = false
-            box.edit.default[2].hidden = false
-            box.edit.default[3].hidden = false
-            box.edit.default[4].hidden = false
+            setBoxInputValue(box, "default", "mirror.show", "name", "popup.select_show")
+            setBoxInputValue(box, "default", "mirror.show", "values", { options: getListOfShows(!$activeEdit.id) })
+            setBoxInputValue(box, "default", "mirror.show", "id", "mirror.show")
+
+            setBoxInputValue(box, "default", "mirror.enableStage", "hidden", false)
+            setBoxInputValue(box, "default", "mirror.nextSlide", "hidden", false)
+            setBoxInputValue(box, "default", "mirror.show", "hidden", false)
+            setBoxInputValue(box, "default", "mirror.useSlideIndex", "hidden", false)
+            setBoxInputValue(box, "default", "mirror.index", "hidden", false)
         }
 
-        box.edit.default[0].value = enableStage
-        box.edit.default[1].value = nextSlide
-        if (useSlideIndex !== undefined) box.edit.default[3].value = useSlideIndex
-        if (index !== undefined) box.edit.default[4].value = index
+        setBoxInputValue(box, "default", "mirror.enableStage", "value", enableStage)
+        setBoxInputValue(box, "default", "mirror.nextSlide", "value", nextSlide)
+        if (useSlideIndex !== undefined) setBoxInputValue(box, "default", "mirror.useSlideIndex", "value", useSlideIndex)
+        if (index !== undefined) setBoxInputValue(box, "default", "mirror.index", "value", index)
     }
 
     // background opacity
@@ -558,7 +569,7 @@
 
 {#if loaded}
     <!-- WIP edit checkbox does not animate because of this refresh -->
-    {#key box}
+    {#key id !== "media" && box}
         <EditValues edits={box?.edit} defaultEdits={clone(boxes[id])?.edit} {item} on:change={updateValue} {styles} {lineAlignStyle} {alignStyle} {sessionId} />
     {/key}
 {/if}

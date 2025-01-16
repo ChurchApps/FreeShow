@@ -14,8 +14,9 @@
     let ratio = 0
 
     $: isCustomRes = resolution.width !== 1920 || resolution.height !== 1080
-    $: slideResolution = slide?.settings?.resolution
-    $: newResolution = isCustomRes ? resolution : slideResolution || { width: 1920, height: 1080 }
+    // WIP get layout resolution
+    // $: slideResolution = slide?.settings?.resolution
+    $: newResolution = isCustomRes ? resolution : { width: 1920, height: 1080 }
 
     // WIP NAME
     // $: name = getGroupName({ show, showId }, layoutSlide.id, slide.group, index)

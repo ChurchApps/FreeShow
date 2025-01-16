@@ -22,8 +22,9 @@
     $: showSlide = $outShow?.slides?.[layout?.id] || null
 
     $: isCustomRes = resolution.width !== 1920 || resolution.height !== 1080
-    $: slideResolution = showSlide?.settings?.resolution
-    $: newResolution = isCustomRes ? resolution : slideResolution || { width: 1920, height: 1080 }
+    // WIP get layout resolution
+    // $: slideResolution = showSlide?.settings?.resolution
+    $: newResolution = isCustomRes ? resolution : { width: 1920, height: 1080 }
 </script>
 
 <div class="main" style={preview ? "width: 100%;" : ""} bind:offsetWidth={width} bind:offsetHeight={height}>

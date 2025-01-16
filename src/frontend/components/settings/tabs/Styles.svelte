@@ -72,6 +72,11 @@
 
     $: activeStyle.set(styleId || "")
 
+    $: styleTemplate = $templates[currentStyle.template || ""] || {}
+    $: styleTemplateScripture = $templates[currentStyle.templateScripture || ""] || {}
+    $: templateBackground = styleTemplate.settings?.backgroundColor || styleTemplateScripture.settings?.backgroundColor
+    // $: templateResolution = styleTemplate.settings?.resolution
+
     // resolutions
     // https://www.wearethefirehouse.com/aspect-ratio-cheat-sheet
     const resolutions = [
@@ -103,7 +108,14 @@
     ]
 
     let templateList: any[] = []
-    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, a]: any) => ({ id, name: a?.name })))]
+    $: templateList = [
+        { id: null, name: "—" },
+        ...sortByName(
+            Object.entries($templates)
+                .map(([id, a]: any) => ({ id, name: a?.name }))
+                .filter((a) => a.name)
+        ),
+    ]
 
     // text divider
     function keydown(e: any) {
@@ -114,6 +126,8 @@
     }
 
     let edit: any
+
+    $: mediaFit = currentStyle.fit || "contain"
 </script>
 
 <div class="info">
@@ -122,7 +136,12 @@
 
 <!-- TODO: use stage (dropdown) -->
 <CombinedInput>
-    <p><T id="edit.background_color" /></p>
+    <p>
+        <T id="edit.background_color" />
+        {#if templateBackground}
+            <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.8em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
+        {/if}
+    </p>
     <span>
         <Color value={currentStyle.background || "#000000"} on:input={(e) => updateStyle(e, "background")} />
     </span>
@@ -212,33 +231,22 @@
         <div style="display: flex;align-items: center;padding: 0;">
             <Icon id="media_fit" style="margin-left: 0.5em;" right />
             <p>
-                {#if currentStyle.fit}
-                    {#key currentStyle.fit}
-                        <T id={mediaFitOptions.find((a) => a.id === currentStyle.fit)?.name || ""} />
-                    {/key}
-                {:else}
-                    <T id="popup.media_fit" />
-                {/if}
+                <!-- <T id="popup.media_fit" />: -->
+                {#key mediaFit}
+                    <T id={mediaFitOptions.find((a) => a.id === mediaFit)?.name || ""} />
+                {/key}
             </p>
         </div>
     </Button>
-    {#if currentStyle.fit}
-        <Button
-            title={$dictionary.actions?.remove}
-            on:click={() => {
-                updateStyle("", "fit")
-            }}
-            redHover
-        >
-            <Icon id="close" size={1.2} white />
-        </Button>
-    {/if}
 </CombinedInput>
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->
 <!-- WIP foreground: mask/overlay -->
 <CombinedInput>
     <p><T id="settings.resolution" /></p>
+    <!-- {#if templateResolution}
+        <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.9em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
+    {:else} -->
     <span class="inputs">
         <!-- defaults dropdown -->
         <!-- custom... -->
@@ -268,6 +276,7 @@
             on:click={(e) => updateStyle(e.detail?.data, "resolution")}
         />
     </span>
+    <!-- {/if} -->
 </CombinedInput>
 
 <h3><T id="preview.slide" /></h3>

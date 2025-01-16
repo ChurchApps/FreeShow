@@ -21,6 +21,7 @@
         slidesOptions,
         stageShows,
         templateCategories,
+        timers,
         topContextActive,
         undoHistory,
     } from "../../stores"
@@ -133,6 +134,12 @@
                 if (!$activeShow || ($activeShow.type || "show") !== "show") disabled = true
             } else {
                 if (!$activeProject) disabled = true
+            }
+        },
+        play: () => {
+            if ($selected.id === "global_timer") {
+                let timer = $timers[$selected.data[0]?.id]
+                if (timer?.type !== "counter") disabled = true
             }
         },
         play_no_audio: () => {

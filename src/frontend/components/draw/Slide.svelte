@@ -1,18 +1,18 @@
 <script lang="ts">
-    import { activeShow, draw, drawSettings, drawTool, outputs, styles } from "../../stores"
+    import { draw, drawSettings, drawTool, outputs, styles } from "../../stores"
     import { getActiveOutputs, getResolution } from "../helpers/output"
-    import { _show } from "../helpers/shows"
     import Output from "../output/Output.svelte"
     import { getStyleResolution } from "../slide/getStyleResolution"
 
-    $: ref = $activeShow?.id ? _show("active").layouts("active").ref()[0] : null
     $: outputId = getActiveOutputs($outputs, true, true, true)[0]
-    $: currentOutput = $outputs[outputId] || {}
-    $: Slide = currentOutput.out?.slide && ref ? _show("active").slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
+    // $: ref = $activeShow?.id ? _show("active").layouts("active").ref()[0] : null
+    // $: currentOutput = $outputs[outputId] || {}
+    // $: Slide = currentOutput.out?.slide && ref ? _show("active").slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
 
     let width: number = 0
     let height: number = 0
-    $: resolution = getResolution(Slide?.settings?.resolution, { $outputs, $styles })
+    // Slide?.settings?.resolution
+    $: resolution = getResolution(null, { $outputs, $styles })
     let ratio: number = 0
 
     let parent: any
