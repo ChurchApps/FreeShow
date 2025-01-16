@@ -26,3 +26,14 @@ export function SRTtoVTT(srt: string) {
 
     return vtt.trim()
 }
+
+export function formatVTT(vtt: string) {
+    let lines = vtt.split("\n")
+    lines = lines.map((line, i) => {
+        // remove lines with one space that should be empty
+        if (line === " " && lines[i + 1].includes(" --> ")) return ""
+        return line
+    })
+
+    return lines.join("\n")
+}

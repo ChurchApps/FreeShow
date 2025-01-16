@@ -23,17 +23,20 @@
         refreshSlideThumbnails,
         showsCache,
         slidesOptions,
+        special,
         styles,
         textEditActive,
     } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import { slideHasAction } from "../actions/actions"
+    import { removeTagsAndContent } from "../drawer/bible/scripture"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
     import Editbox from "../edit/editbox/Editbox.svelte"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
+    import Icon from "../helpers/Icon.svelte"
     import { checkMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
     import { getActiveOutputs, getResolution } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
@@ -42,8 +45,6 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
-    import { removeTagsAndContent } from "../drawer/bible/scripture"
-    import Icon from "../helpers/Icon.svelte"
 
     export let showId: string
     export let slide: Slide
@@ -69,8 +70,8 @@
     let ghostBackground: Media | null = null
     let bgIndex: number = -1
     let isFirstGhost: boolean = false
-    // don't show ghost backgrounds if more than 50 slides (because of loading!)
-    $: if (!background && layoutSlides.length < 50) {
+    // don't show ghost backgrounds if over slide 40 (because of loading/performance!)
+    $: if (!background && index < 40) {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
             if (i > index) return
@@ -264,9 +265,11 @@
         })
     }
 
-    $: resolution = getResolution(slide?.settings?.resolution, { $outputs, $styles })
+    // slide?.settings?.resolution
+    $: resolution = getResolution(null, { $outputs, $styles })
 
     $: currentOutput = $outputs[getActiveOutputs()[0]]
+    $: transparentOutput = !!currentOutput?.transparent
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     let colorStyle: string = ""
@@ -315,6 +318,9 @@
 
     // correct view order based on arranged order in Items.svelte (?.reverse())
     $: itemsList = clone(slide.items) || []
+
+    // $: styleTemplate = getStyleTemplate(null, currentStyle)
+    // || styleTemplate.settings?.backgroundColor
 </script>
 
 <div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || noQuickEdit ? 100 / columns : 100}%;">
@@ -351,7 +357,12 @@
                     </div>
                 {/if}
                 <Zoomed
-                    background={slide.items?.length && (viewMode !== "lyrics" || noQuickEdit) ? slide.settings.color || currentStyle.background || "black" : (viewMode !== "lyrics" || noQuickEdit ? color : "") || "transparent"}
+                    background={slide.items?.length && (viewMode !== "lyrics" || noQuickEdit)
+                        ? transparentOutput || $special.transparentSlides
+                            ? "var(--primary);"
+                            : slide.settings.color || currentStyle.background || "black"
+                        : (viewMode !== "lyrics" || noQuickEdit ? color : "") || "transparent"}
+                    checkered={viewMode !== "lyrics" && slide.items?.length > 0 && (transparentOutput || $special.transparentSlides) && !bg}
                     let:ratio
                     {resolution}
                     zoom={viewMode !== "lyrics" || noQuickEdit}

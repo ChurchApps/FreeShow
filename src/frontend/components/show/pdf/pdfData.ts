@@ -17,6 +17,7 @@ export async function getPages(pdfPath: string): Promise<number> {
 }
 
 export async function getViewportSizes(pdfPath: string): Promise<{ width: number; height: number }[]> {
+    if (!pdfPath) return []
     // path starting at "/" auto completes to app root, but should be file://
     if (pdfPath[0] === "/") pdfPath = `file://${pdfPath}`
 

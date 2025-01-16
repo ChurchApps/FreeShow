@@ -74,13 +74,17 @@
         if (!type || type === "background") background = clone(out.background || null)
         if (!type || type === "overlays") {
             storedOverlayIds = JSON.stringify(out.overlays)
-            clonedOverlays = clone($overlays)
+            if (JSON.stringify($overlays) !== storedOverlays) {
+                clonedOverlays = clone($overlays)
+                storedOverlays = JSON.stringify($overlays)
+            }
         }
     }
 
     // overlays
     $: overlayIds = out.overlays
     let storedOverlayIds: string = ""
+    let storedOverlays: string = ""
     $: if (JSON.stringify(overlayIds) !== storedOverlayIds) updateOutData("overlays")
     $: outOverlays = out.overlays?.filter((id) => !clonedOverlays[id]?.placeUnderSlide)
     $: outUnderlays = out.overlays?.filter((id) => clonedOverlays[id]?.placeUnderSlide)
@@ -117,7 +121,8 @@
     }
 
     // slide styling
-    $: resolution = getResolution(currentSlide?.settings?.resolution, { currentOutput, currentStyle }, false, outputId)
+    // currentSlide?.settings?.resolution
+    $: resolution = getResolution(null, { currentOutput, currentStyle }, false, outputId)
     $: transitions = getOutputTransitions(slideData, currentStyle.transition, $transitionData, mirror && !preview)
     $: slideFilter = getSlideFilter(slideData)
 
@@ -127,11 +132,12 @@
     // currentSlide is so the background updates when scripture is removed (if template background on both) - not changed in preview
     $: if (outputStyle && currentStyle && currentSlide !== undefined) {
         if (currentSlide) setTemplateItems()
-        getTemplateBackground()
+        getStyleTemplateData()
     }
     const setTemplateItems = () => (currentSlide.items = setTemplateStyle(slide, currentStyle, currentSlide.items))
-    let templateBackground = ""
-    const getTemplateBackground = () => (templateBackground = getStyleTemplate(slide, currentStyle).settings?.backgroundPath || "")
+    let styleTemplate: any = {}
+    const getStyleTemplateData = () => (styleTemplate = getStyleTemplate(slide, currentStyle))
+    $: templateBackground = styleTemplate.settings?.backgroundPath || ""
 
     // lines
     let lines: any = {}
@@ -220,7 +226,7 @@
 
     // values
     $: isKeyOutput = currentOutput.isKeyOutput
-    $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : currentSlide?.settings?.color || currentStyle.background || "black"
+    $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : styleTemplate.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || "black"
     $: messageText = $showsCache[slide?.id]?.message?.text?.replaceAll("\n", "<br>") || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && slide ? "" : currentStyle?.backgroundImage || ""
@@ -238,7 +244,19 @@
     }, 1000)
 </script>
 
-<Zoomed id={outputId} background={backgroundColor} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} center {style} {resolution} {mirror} {drawZoom} {cropping} bind:ratio>
+<Zoomed
+    id={outputId}
+    background={backgroundColor}
+    checkered={preview && backgroundColor === "transparent"}
+    backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)}
+    center
+    {style}
+    {resolution}
+    {mirror}
+    {drawZoom}
+    {cropping}
+    bind:ratio
+>
     <!-- always show style background (behind other backgrounds) -->
     {#if styleBackground && slide?.type !== "pdf"}
         <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror styleBackground />

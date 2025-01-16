@@ -12,16 +12,17 @@
 
     export let searchValue
 
-    $: sortedTimers = sortByName(sortByName(keysToID(clone($timers)), "name", true), "type")
+    const typeOrder = { counter: 1, clock: 2, event: 3 }
+    $: sortedTimers = sortByName(keysToID(clone($timers)), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
     $: sortedTimersWithProject = sortedTimers.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
     $: filteredTimers = searchValue.length > 1 ? sortedTimersWithProject.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTimersWithProject
 
     // project
     $: projectShows = $projects[$activeProject!]?.shows || []
     let list: string[] = []
-    $: if (projectShows.length || $showsCache) getList()
+    $: if (projectShows.length || $showsCache || $timers) getList()
     async function getList() {
-        list = await loadProjectTimers(projectShows)
+        list = (await loadProjectTimers(projectShows)).filter((id) => $timers[id])
     }
 
     let today = new Date()
@@ -46,13 +47,26 @@
             return a
         })
     }
+
+    const timerTypeNames = {
+        counter: "timer.from_to",
+        clock: "timer.to_time",
+        event: "timer.to_event",
+    }
 </script>
 
 <svelte:window on:mouseup={() => disableDragging.set(false)} />
 
 {#if filteredTimers.length}
     <div class="timers">
-        {#each filteredTimers as timer}
+        {#each filteredTimers as timer, i}
+            {@const title = timer.type === filteredTimers[i - 1]?.type ? "" : timer.type}
+            {#if i === 0 && list.length}
+                <h5><T id="remote.project" /></h5>
+            {:else if title && i > 0}
+                <h5><T id={timerTypeNames[title]} /></h5>
+            {/if}
+
             <!-- {@const playing = $activeTimers.find((a) => a.id === id && a.paused !== true)} -->
             <SelectElem id="global_timer" data={timer} draggable>
                 <div class:outline={$activeTimers.find((a) => a.id === timer.id)} class:project={list.includes(timer.id)} class="context #global_timer" style="display: flex;justify-content: space-between;padding: 3px;">
@@ -60,7 +74,7 @@
                         <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={$activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>
                             <Icon id={timer.type !== "counter" || $activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? "pause" : "play"} />
                         </Button>
-                        <p style="align-self: center;padding: 0 5px;" title={timer.name}>
+                        <p style="align-self: center;padding: 0 5px;min-width: 100px;" title={timer.name}>
                             {#if timer.name}
                                 {timer.name}
                             {:else}
@@ -81,7 +95,7 @@
                         invert={(timer.end || 0) < (timer.start || 0)}
                     />
 
-                    <div style="display: flex;">
+                    <div style="display: flex;min-width: 125px;justify-content: right;">
                         <span style="display: flex;align-self: center;padding: 0 5px;">
                             <Timer id={timer.id} {today} />
                             <!-- {getTimes(list[active].timer.start, list[active].timer.format)} -->
@@ -137,5 +151,15 @@
 
     .timers div.project {
         background-color: var(--primary-darkest);
+    }
+
+    h5 {
+        overflow: visible;
+        text-align: center;
+        padding: 5px;
+        background-color: var(--primary-darkest);
+        color: var(--text);
+        font-size: 0.8em;
+        text-transform: uppercase;
     }
 </style>

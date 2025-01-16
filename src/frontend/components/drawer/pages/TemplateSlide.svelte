@@ -3,7 +3,7 @@
     import { activeEdit, outputs, overlays, styles } from "../../../stores"
     import Editbox from "../../edit/editbox/Editbox.svelte"
     import { loadThumbnail, mediaSize } from "../../helpers/media"
-    import { getActiveOutputs, getResolution } from "../../helpers/output"
+    import { getResolution } from "../../helpers/output"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
@@ -17,6 +17,7 @@
     export let height: number = 0
     export let zoom: number = 1
     export let ratio: number = 1
+    export let preview: boolean = false
 
     export let edit: boolean = false
     let lines: [string, number][] = []
@@ -24,10 +25,13 @@
     export let newStyles: any = {}
     $: active = $activeEdit.items
 
-    $: currentStyle = $styles[$outputs[getActiveOutputs()[0]].style || ""] || {}
+    // $: currentOutput = $outputs[getActiveOutputs()[0]]
+    // $: transparentOutput = !!currentOutput?.transparent
+    // $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     // RESOLUTION
-    $: resolution = getResolution(template?.settings?.resolution, { $outputs, $styles })
+    // template?.settings?.resolution
+    $: resolution = getResolution(null, { $outputs, $styles })
 
     // LOAD BACKGROUND
     $: bgPath = template?.settings?.backgroundPath || ""
@@ -47,12 +51,25 @@
     $: overlayId = template.settings?.overlayId || ""
     $: overlay = $overlays[overlayId] || null
 
-    let backgroundColor: string = ""
-    $: if (!edit && !template.items?.length) backgroundColor = "transparent"
-    else backgroundColor = template.settings?.backgroundColor || currentStyle.background || "black"
+    // $: styleTemplate = getStyleTemplate(null, currentStyle)
+    // || styleTemplate.settings?.backgroundColor
+
+    // let backgroundColor: string = ""
+    // $: if (!edit && !template.items?.length) backgroundColor = template.color || "transparent"
+    // else backgroundColor = template.settings?.backgroundColor || currentStyle.background || "black"
 </script>
 
-<Zoomed background={backgroundColor} {resolution} style={width && height ? getStyleResolution(resolution, width, height, "fit", { zoom }) : ""} bind:ratio hideOverflow={!edit} center={edit ? zoom >= 1 : false}>
+<!-- background={transparentOutput && template.items?.length ? "transparent" : backgroundColor}
+checkered={template.items?.length > 0 && transparentOutput} -->
+<Zoomed
+    background={!preview || template.items?.length ? template.settings?.backgroundColor || "transparent" : template.color || "var(--primary);"}
+    checkered={(!preview || template.items?.length > 0) && !template.settings?.backgroundColor}
+    {resolution}
+    style={width && height ? getStyleResolution(resolution, width, height, "fit", { zoom }) : ""}
+    bind:ratio
+    hideOverflow={!edit}
+    center={edit ? zoom >= 1 : false}
+>
     <!-- background -->
     <!-- WIP !altKeyPressed &&  -->
     {#if thumbnailPath}

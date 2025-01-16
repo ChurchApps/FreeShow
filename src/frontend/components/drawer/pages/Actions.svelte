@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { MAIN } from "../../../../types/Channels"
     import { activeActionTagFilter, activePopup, dictionary, labelsDisabled, midiIn, popupData, runningActions } from "../../../stores"
-    import { send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
     import { runAction } from "../../actions/actions"
     import { convertOldMidiToNewAction, midiToNote, receivedMidi } from "../../actions/midi"
@@ -14,23 +12,6 @@
 
     export let searchValue
     console.log(searchValue)
-
-    function openMidi(id: string, mode: string = "") {
-        let data: any = { id }
-        if (mode) data.mode = mode
-
-        popupData.set(data)
-        activePopup.set("action")
-    }
-
-    function deleteMidi(id: string) {
-        midiIn.update((a) => {
-            delete a[id]
-            return a
-        })
-
-        send(MAIN, ["CLOSE_MIDI"], { id })
-    }
 
     function addMidi() {
         popupData.set({})
@@ -54,18 +35,19 @@
                             title={$dictionary.media?.play}
                             on:click={() => (action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action))}
                             outline={$runningActions.includes(action.id)}
+                            bold={false}
                             dark
                         >
-                            <span style="display: flex;align-items: center;width: 100%;">
-                                {#if action.shows?.length}
-                                    <Icon id="slide" white right />
-                                {:else if action.triggers.length !== 1}
-                                    <Icon id="actions" right />
-                                {:else}
-                                    <Icon id={actionData[action.triggers[0]]?.icon || "actions"} right />
-                                {/if}
+                            <span style="display: flex;align-items: center;justify-content: space-between;width: 100%;">
+                                <p style="font-size: 1.03em;display: flex;align-items: center;" class:customActivation={action.customActivation || action.startupEnabled}>
+                                    {#if action.shows?.length}
+                                        <Icon id="slide" white right />
+                                    {:else if action.triggers.length !== 1}
+                                        <Icon id="actions" right />
+                                    {:else}
+                                        <Icon id={actionData[action.triggers[0]]?.icon || "actions"} right />
+                                    {/if}
 
-                                <p style="width: 350px;" class:customActivation={action.customActivation || action.startupEnabled}>
                                     {#if action.shows?.length}
                                         <T id="actions.play_on_midi" />
                                     {:else}
@@ -94,16 +76,10 @@
                                 {/if}
                             </span>
 
+                            <!-- this is probably not in use: -->
                             <p style="opacity: 0.5;font-style: italic;">{action.shows?.length > 1 ? action.shows.length : ""}</p>
                         </Button>
                     </SelectElem>
-
-                    <Button title={$dictionary.timer?.edit} on:click={() => openMidi(action.id, action.shows?.length ? "slide_midi" : "")}>
-                        <Icon id="edit" />
-                    </Button>
-                    <Button title={$dictionary.actions?.delete} on:click={() => deleteMidi(action.id)}>
-                        <Icon id="delete" />
-                    </Button>
                 </div>
             {/each}
         </div>

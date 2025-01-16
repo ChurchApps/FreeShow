@@ -39,6 +39,7 @@ import {
     templateCategories,
     templates,
     themes,
+    timers,
     triggers,
     variables,
     videoMarkers,
@@ -54,6 +55,8 @@ import { history } from "./history"
 import { getFileName, removeExtension } from "./media"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
+import { send } from "../../utils/request"
+import { MAIN } from "../../../types/Channels"
 
 export function copy({ id, data }: any = {}, getData: boolean = true) {
     let copy: any = { id, data }
@@ -621,6 +624,17 @@ const deleteActions = {
     group: (data: any) => {
         history({ id: "SLIDES", oldData: { type: "delete_group", data: data.map(({ id }: any) => ({ id })) } })
     },
+    action: (data: any) => {
+        // WIP history
+        data.forEach((selData) => {
+            midiIn.update((a) => {
+                delete a[selData.id]
+                return a
+            })
+
+            send(MAIN, ["CLOSE_MIDI"], { id: selData.id })
+        })
+    },
     timer: (data: any) => {
         data.forEach((a) => {
             let id = a.id || a.timer?.id
@@ -966,6 +980,19 @@ const duplicateActions = {
 
                 let newId = uid()
                 a[newId] = newAction
+            })
+
+            return a
+        })
+    },
+    global_timer: (data: any) => {
+        timers.update((a) => {
+            data.forEach(({ id }) => {
+                let newTimer = clone(get(timers)[id])
+                newTimer.name += " 2"
+
+                let newId = uid()
+                a[newId] = newTimer
             })
 
             return a

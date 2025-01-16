@@ -256,12 +256,16 @@
         currentOutputSlides = slides[0]
         previousSlides = JSON.stringify(slides[0])
     }
+
+    $: styleId = $outputs[getActiveOutputs()[0]]?.style || ""
+    $: templateId = $scriptureSettings.template // $styles[styleId]?.templateScripture || ""
+    $: background = $templates[templateId]?.settings?.backgroundColor || $styles[styleId]?.background || "#000000"
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <div class="scroll">
-    <Zoomed style="width: 100%;">
+    <Zoomed style="width: 100%;" {background}>
         {#if bibles[0]?.activeVerses}
             {#if templateBackground}
                 <Media path={templateBackground} videoData={{ paused: false, muted: true, loop: true }} mirror />

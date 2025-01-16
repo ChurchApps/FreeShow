@@ -275,7 +275,8 @@
     // WIP padding can be checked by auto size if style is added to parent
     function getPaddingCorrection(stageItem: any) {
         let result = ""
-        if (stageItem.style?.indexOf("padding") > -1) {
+        if (typeof stageItem?.style !== "string") return ""
+        if (stageItem.style.indexOf("padding") > -1) {
             let styles = stageItem.style.split(";")
             styles.forEach((s: string) => {
                 if (s.indexOf("padding") === 0) {

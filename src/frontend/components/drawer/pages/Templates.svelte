@@ -95,7 +95,7 @@
                         {/if}
 
                         <SelectElem id="template" data={template.id} fill draggable>
-                            <TemplateSlide templateId={template.id} {template} />
+                            <TemplateSlide templateId={template.id} {template} preview />
                         </SelectElem>
                     </Card>
                 {/each}

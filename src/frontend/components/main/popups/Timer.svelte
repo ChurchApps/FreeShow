@@ -192,7 +192,7 @@
     {#if timer.overflow}
         <CombinedInput>
             <p><T id="timer.overflow_color" /></p>
-            <Color style="width: 30%;" value={timer.overflowColor || "red"} on:input={(e) => (timer.overflowColor = e.detail)} />
+            <Color style="width: 30%;" value={timer.overflowColor || "#FF4136"} on:input={(e) => (timer.overflowColor = e.detail)} />
         </CombinedInput>
     {/if}
 
@@ -222,7 +222,7 @@
     {#if timer.overflow}
         <CombinedInput>
             <p><T id="timer.overflow_color" /></p>
-            <Color style="width: 30%;" value={timer.overflowColor || "red"} on:input={(e) => (timer.overflowColor = e.detail)} />
+            <Color style="width: 30%;" value={timer.overflowColor || "#FF4136"} on:input={(e) => (timer.overflowColor = e.detail)} />
         </CombinedInput>
     {/if}
 
@@ -252,7 +252,7 @@
     {#if timer.overflow}
         <CombinedInput>
             <p><T id="timer.overflow_color" /></p>
-            <Color style="width: 30%;" value={timer.overflowColor || "red"} on:input={(e) => (timer.overflowColor = e.detail)} />
+            <Color style="width: 30%;" value={timer.overflowColor || "#FF4136"} on:input={(e) => (timer.overflowColor = e.detail)} />
         </CombinedInput>
     {/if}
 

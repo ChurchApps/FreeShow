@@ -92,7 +92,7 @@
                         <OverlayActions columns={$mediaOptions.columns} overlayId={overlay.id} />
 
                         <SelectElem id="overlay" data={overlay.id} fill draggable>
-                            <Zoomed {resolution} background={overlay.items.length ? "black" : "transparent"}>
+                            <Zoomed {resolution} background={overlay.items.length ? "transparent" : overlay.color || "var(--primary);"} checkered={overlay.items.length}>
                                 {#each overlay.items as item}
                                     <Textbox {item} ref={{ type: "overlay", id: overlay.id }} />
                                 {/each}

@@ -21,9 +21,9 @@ export function getBoxStyle(item: Item): StyleClipboard {
     if (!item) return { keys: {}, style: {} }
 
     // skip scripture verse numbers (customType)
-    let normalText = item.lines?.[0].text?.filter((a) => !a.customType) || []
+    let normalText = item.lines?.[0]?.text?.filter((a) => !a.customType) || []
     let style = normalText[0]?.style || item.style
-    let linesAlign = item.lines?.[0].align || ""
+    let linesAlign = item.lines?.[0]?.align || ""
 
     const extraKeyValues: string[] = getSpecialBoxValues(item)
 

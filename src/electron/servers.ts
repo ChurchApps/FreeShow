@@ -15,7 +15,7 @@ let servers: { [key in ServerName]: any } = {
     OUTPUT_STREAM: { port: 5513 },
     // CAM: { port: 5513 },
 }
-let ioServers: any = {}
+let ioServers: { [key in ServerName]?: any } = {}
 
 createServers()
 function createServers() {
@@ -80,15 +80,19 @@ function createBridge(server: any) {
     })
 
     // SEND DATA FROM APP TO CLIENT
-    ioServers[server.id] = server.io
+    ioServers[server.id as ServerName] = server.io
     ipcMain.on(server.id, (_e, msg) => {
         if (msg.id) server.io.to(msg.id).emit(server.id, msg)
         else server.io.emit(server.id, msg)
     })
 }
 
-export function toServer(id: string, msg: any) {
+export function toServer(id: ServerName, msg: any) {
     ioServers[id].emit(id, msg)
+}
+
+export function getConnections(id: ServerName) {
+    return Object.keys(servers[id]?.connections || {}).length
 }
 
 // FUNCTIONS

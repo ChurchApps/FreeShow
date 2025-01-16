@@ -859,6 +859,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     show.slides[id].items = clone(newItems)
 
+                    // TemplateSettings / updateSlideFromTemplate()
+                    // if (slideTemplate.settings?.resolution) show.slides[id].settings.resolution = slideTemplate.settings?.resolution
+                    if (slideTemplate.settings?.backgroundColor) show.slides[id].settings.color = slideTemplate.settings?.backgroundColor
+
                     if (!isGlobalTemplate) return
 
                     // set custom values

@@ -18,7 +18,6 @@
     export let icon: null | string = null
     export let color: null | string = null
     export let white: boolean = true
-    export let changed: boolean = false
     export let showPlayOnHover: boolean = false
     export let mode: "grid" | "list" | "lyrics" = "grid"
     export let resolution: Resolution = getResolution(null, { $outputs, $styles })
@@ -27,7 +26,7 @@
 </script>
 
 <!-- display: table; -->
-<div class="main" style="{outlineColor ? 'outline: 2px solid ' + outlineColor + ';' : ''}flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mainWidth}%;" class:preview class:active class:changed>
+<div class="main" style="{outlineColor ? 'outline: 2px solid ' + outlineColor + ';' : ''}flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mainWidth}%;" class:preview class:active>
     <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;" on:mousedown on:click on:dblclick>
         {#if preview}
             <div class="overlay" />
@@ -120,11 +119,6 @@
         /* outline: 3px solid var(--secondary);
     outline-offset: -2px;
     outline-offset: -5px; */
-    }
-
-    .main.changed :global(.label) {
-        font-style: italic;
-        color: var(--secondary);
     }
 
     .main :global(video),

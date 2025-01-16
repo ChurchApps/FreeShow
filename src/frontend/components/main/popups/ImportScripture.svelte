@@ -119,10 +119,21 @@
         { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
         { id: "local", name: "$:cloud.local:$", icon: "scripture" },
     ]
+
+    function goBack() {
+        if (importType === "api" && searchActive && (document.getElementById("scriptureApiSearchInput") as any)?.value) {
+            searchActive = false
+            searchedBibles = sortedBibles
+            searchedRecommendedBibles = recommended
+            return
+        }
+
+        importType = ""
+    }
 </script>
 
 {#if importType}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (importType = "")}>
+    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={goBack}>
         <Icon id="back" size={2} white />
     </Button>
 {/if}
@@ -137,7 +148,7 @@
             </h2>
 
             {#if searchActive}
-                <TextInput style="width: 50%;border-bottom: 2px solid var(--secondary);" placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
+                <TextInput id="scriptureApiSearchInput" style="width: 50%;border-bottom: 2px solid var(--secondary);" placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
             {:else}
                 <Button class="search" style="border-bottom: 2px solid var(--secondary);" on:click={() => (searchActive = true)} bold={false}>
                     <Icon id="search" size={1.4} white right={!$labelsDisabled} />

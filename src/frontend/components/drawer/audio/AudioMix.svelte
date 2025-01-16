@@ -9,6 +9,7 @@
         let value = e.target.value
 
         // "snap" to 100%
+        // && !e.altKey
         if ($special.allowGaining && value > 0.95 && value < 1.05) value = 1
 
         let gain = 1

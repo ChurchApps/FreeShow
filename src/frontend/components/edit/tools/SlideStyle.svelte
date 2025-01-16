@@ -1,21 +1,19 @@
 <script lang="ts">
-    import { activeEdit, activeShow, activeTriggerFunction, outputs, showsCache, styles, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeTriggerFunction, showsCache, templates } from "../../../stores"
     import { clone, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getActiveOutputs, getResolution } from "../../helpers/output"
+    import { getResolution } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
     import Notes from "../../show/tools/Notes.svelte"
 
     // TODO: templates / overlays
 
     $: slideId = _show().layouts("active").ref()[0]?.[$activeEdit.slide || 0]?.id
     $: editSlide = $showsCache && $activeEdit.slide !== null && slideId ? _show().slides([slideId]).get()[0] : null
-    $: backgroundColor = $styles[$outputs[getActiveOutputs()[0]].style || ""]?.background
 
     let notesElem: any = null
     $: if (notesElem && $activeTriggerFunction === "slide_notes") {
@@ -32,10 +30,11 @@
 
     $: if ($showsCache || editSlide) setValues()
     function setValues() {
-        let res = getResolution(editSlide?.settings?.resolution)
+        // editSlide?.settings?.resolution
+        let res = getResolution()
         settings = {
             template: editSlide?.settings?.template,
-            color: editSlide?.settings?.color || backgroundColor || "#000000",
+            color: editSlide?.settings?.color || "",
             resolution: {
                 width: res.width,
                 height: res.height,
@@ -48,7 +47,6 @@
 
         let newData: any = { style: clone(settings) }
         if (JSON.stringify(newData.style.resolution) === JSON.stringify(getResolution())) delete newData.style.resolution
-        if (newData.style.color === backgroundColor) delete newData.style.color
 
         history({
             id: "slideStyle",
@@ -80,6 +78,7 @@
                 settings.color = e.detail
                 update()
             }}
+            enableNoColor
         />
     </CombinedInput>
     <CombinedInput>
@@ -94,7 +93,7 @@
         />
     </CombinedInput>
 
-    <h6><T id="settings.resolution" /></h6>
+    <!-- <h6><T id="settings.resolution" /></h6>
     <CombinedInput>
         <p><T id="edit.width" /></p>
         <NumberInput
@@ -118,7 +117,7 @@
             }}
             buttons={false}
         />
-    </CombinedInput>
+    </CombinedInput> -->
 
     <h6><T id="tools.notes" /></h6>
     <div class="notes" bind:this={notesElem}>

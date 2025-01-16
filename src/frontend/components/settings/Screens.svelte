@@ -35,7 +35,10 @@
         }
     }
 
+    let minPosX: number | null = null
+    let minPosY: number | null = null
     let totalScreensWidth: number = 0
+    let totalScreensHeight: number = 0
 
     let listenerId = "SCREENS"
     send(MAIN, ["GET_DISPLAYS"])
@@ -44,17 +47,33 @@
         MAIN,
         {
             GET_DISPLAYS: (d: any) => {
-                // d.push(fakeScreen0)
-                // d.push(fakeScreen)
-                // d.push(fakeScreen2)
-                // d.push(fakeScreen3)
-
                 let sortedScreens = d.sort(sortScreensByPosition)
                 screens = sortedScreens.sort(internalFirst)
 
-                let negativeWidth = screens.reduce((value, current) => (current.bounds.x < 0 ? value + current.bounds.width : value), 0)
-                let positiveWidth = screens.reduce((value, current) => (current.bounds.x >= 0 ? value + current.bounds.width : value), 0)
-                totalScreensWidth = (positiveWidth - negativeWidth) / 2
+                // get min/max bounds
+                minPosX = null
+                minPosY = null
+                let maxPosX: null | number = null
+                let maxPosY: null | number = null
+                screens.forEach(({ bounds }) => {
+                    if (minPosX === null || bounds.x < minPosX) minPosX = bounds.x
+                    if (minPosY === null || bounds.y < minPosY) minPosY = bounds.y
+                    if (maxPosX === null || bounds.x + bounds.width > maxPosX) maxPosX = bounds.x + bounds.width
+                    if (maxPosY === null || bounds.y + bounds.height > maxPosY) maxPosY = bounds.y + bounds.height
+                })
+
+                totalScreensWidth = maxPosX !== null && minPosX !== null ? (maxPosX - minPosX) / 2 : 0
+                totalScreensHeight = maxPosY !== null && minPosY !== null ? (maxPosY - minPosY) / 2 : 0
+
+                // don't overlap buttons (& allow scroll bars to work)
+                totalScreensWidth = Math.min(totalScreensWidth, 4800)
+                totalScreensHeight = Math.min(totalScreensHeight, 1000)
+
+                // make all values start at 0
+                screens.forEach((a) => {
+                    if (minPosX) a.bounds.x -= minPosX
+                    if (minPosY) a.bounds.y -= minPosY
+                })
             },
             SET_SCREEN: (d: any) => {
                 if (currentScreen.screen) return
@@ -306,9 +325,12 @@
 
     <div class="content">
         {#if screens.length}
-            <div class="screens" style="transform: translateX(-{totalScreensWidth}px)">
+            <div class="screens" style="transform: translate(-{totalScreensWidth}px, -{totalScreensHeight}px)">
                 {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)}
-                    <div class="screen noClick" style="width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;left: {currentScreen.bounds?.x}px;top: {currentScreen.bounds?.y}px;">
+                    <div
+                        class="screen noClick"
+                        style="width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;left: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;"
+                    >
                         <!-- Current screen position -->
                     </div>
                 {/if}
@@ -363,8 +385,8 @@
         margin-top: auto; */
         position: absolute;
         left: 50%;
-        top: calc(50% + 380px);
-        transform: translateX(-1080px);
+        top: calc(50% + 1000px);
+        /* transform: translateX(-1080px); */
 
         /* width: 30%;
     position: absolute;

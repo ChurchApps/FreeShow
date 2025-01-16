@@ -141,13 +141,15 @@ export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, update
 
 // ACTIONS
 
-export function playPauseGlobal(id: any, timer: any, forcePlay: boolean = false) {
+export function playPauseGlobal(id: any, timer: any, forcePlay: boolean = false, pausedState: boolean | null = null) {
+    if (get(timers)[id]?.type !== "counter") return
     let index = get(activeTimers).findIndex((a) => a.id === id)
 
     activeTimers.update((a) => {
-        if (index < 0) a.push({ ...timer, id, currentTime: timer?.start || 0, paused: false })
+        if (index < 0) a.push({ ...timer, id, currentTime: timer?.start || 0, paused: pausedState === null ? false : pausedState })
         else {
-            a[index].paused = forcePlay ? false : !a[index].paused
+            if (pausedState === null) a[index].paused = forcePlay ? false : !a[index].paused
+            else a[index].paused = pausedState
             delete a[index].startTime
         }
 

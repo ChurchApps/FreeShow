@@ -17,6 +17,7 @@ import {
     activeRename,
     activeShow,
     activeTagFilter,
+    activeTimers,
     audioFolders,
     categories,
     contextActive,
@@ -556,7 +557,7 @@ const actions: any = {
             if (id.length < 5) {
                 name += id.toUpperCase()
             } else {
-                let bibleName: string = Object.values(get(scriptures)).find((a) => a.id === id)?.name || ""
+                let bibleName: string = (get(scriptures)[id] || Object.values(get(scriptures)).find((a) => a.id === id))?.name || ""
                 name += getShortBibleName(bibleName)
             }
         })
@@ -738,6 +739,12 @@ const actions: any = {
         } else if (obj.sel.id === "global_group") {
             settingsTab.set("groups")
             activePage.set("settings")
+        } else if (obj.sel.id === "action") {
+            let firstActionId = obj.sel.data[0]?.id
+            let action = get(midiIn)[firstActionId]
+            let mode = action.shows?.length ? "slide_midi" : ""
+            popupData.set({ id: firstActionId, mode })
+            activePopup.set("action")
         } else if (obj.sel.id === "timer") {
             activePopup.set("timer")
         } else if (obj.sel.id === "global_timer") {
@@ -749,9 +756,6 @@ const actions: any = {
             activePopup.set("trigger")
         } else if (obj.sel.id === "audio_stream") {
             activePopup.set("audio_stream")
-        } else if (obj.sel.id === "action") {
-            popupData.set(obj.sel.data[0])
-            activePopup.set("action")
         } else if (obj.contextElem?.classList.value.includes("#event")) {
             eventEdit.set(obj.contextElem.id)
             activePopup.set("edit_event")
@@ -890,8 +894,10 @@ const actions: any = {
         }
 
         if (obj.sel.id.includes("timer")) {
+            let firstTimer = get(activeTimers).find((a) => a.id === obj.sel.data[0]?.id)
+            let shouldPlay = firstTimer?.paused === undefined ? true : firstTimer.paused
             obj.sel.data.forEach((data) => {
-                playPauseGlobal(data.id, data)
+                playPauseGlobal(data.id, data, false, !shouldPlay)
             })
             return
         }
