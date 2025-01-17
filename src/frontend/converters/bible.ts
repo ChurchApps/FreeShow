@@ -1,6 +1,66 @@
 import { uid } from "uid"
 import { formatToFileName } from "../components/helpers/show"
-import { drawerTabsData, scriptures, scripturesCache } from "../stores"
+import { activePopup, alertMessage, dictionary, drawerTabsData, scriptures, scripturesCache } from "../stores"
+import { convertZefaniaBible } from "./zefaniaBible"
+import { convertOSISBible } from "./osisBible"
+import { convertBebliaBible } from "./bebliaBible"
+import { convertOpenSongBible } from "./opensong"
+import { get } from "svelte/store"
+
+const bibleTypes = {
+    freeshow: { name: "FreeShow", func: importFSB },
+    zefania: { name: "Zefania", func: convertZefaniaBible },
+    osis: { name: "OSIS", func: convertOSISBible },
+    beblia: { name: "Beblia", func: convertBebliaBible },
+    opensong: { name: "OpenSong", func: convertOpenSongBible },
+}
+
+export function importBibles(data: any[]) {
+    alertMessage.set("popup.importing")
+    activePopup.set("alert")
+
+    // timeout to allow popup to display
+    setTimeout(() => {
+        let success: { [key: string]: number } = {}
+        let unsupported: { [key: string]: number } = {}
+
+        data.forEach((file) => {
+            if (bibleTypes[file.type]) {
+                const name = bibleTypes[file.type].name
+                if (!success[name]) success[name] = 0
+                success[name]++
+                bibleTypes[file.type].func([file])
+            } else {
+                const id = file.type || file.name
+                if (!unsupported[id]) unsupported[id] = 0
+                unsupported[id]++
+            }
+        })
+
+        let message = ""
+        if (Object.keys(success).length) {
+            message += "✓ " + get(dictionary).actions?.imported
+            Object.entries(success).forEach(([key, count]) => {
+                message += `<br>• ${key}`
+                if (count > 1) message += ` <span style="opacity: 0.5;">(${count})</span>`
+            })
+        }
+        if (Object.keys(unsupported).length) {
+            if (Object.keys(success).length) message += "<br><br>"
+
+            message += "✕ " + get(dictionary).error?.import
+            Object.entries(unsupported).forEach(([key, count]) => {
+                message += `<br>• ${key}`
+                if (count > 1) message += ` <span style="opacity: 0.5;">(${count})</span>`
+            })
+
+            // add link to Bible Converter
+            message += `<br><br>Try another version or use this link#bible-converter!`
+        }
+
+        alertMessage.set(message)
+    }, 200)
+}
 
 export function importFSB(data: any[]) {
     data.forEach(({ content, name }) => {

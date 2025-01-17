@@ -361,6 +361,44 @@ function splitTextToLines(text: string) {
     return lines
 }
 
+const latin1 = {
+    "92": "'",
+    "96": "–",
+    e6: "æ",
+    f8: "ø",
+    e5: "å",
+    c6: "Æ",
+    d8: "Ø",
+    c5: "Å",
+    f6: "ö",
+    e4: "ä",
+    d6: "Ö",
+    c4: "Ä",
+    "89": "ä", // ‰
+    "88": "ö", // ∘
+    c2: "å", // Â
+    a5: "ra", // ¥
+    e1: "á",
+    "9a": "š",
+    fd: "ý",
+    e9: "é",
+    fa: "ú",
+    ed: "í",
+    f4: "ô",
+    "9e": "ž",
+    c1: "Á",
+    c9: "É",
+    cd: "Í",
+    d3: "Ó",
+    da: "Ú",
+    fc: "ü",
+    dc: "Ü",
+    f1: "ñ",
+    d1: "Ñ",
+    a1: "¡",
+    bf: "¿",
+}
+
 function decodeBase64(text: string) {
     let b = 0,
         l = 0,
@@ -373,36 +411,19 @@ function decodeBase64(text: string) {
         if (l >= 8) r += String.fromCharCode((b >>> (l -= 8)) & 0xff)
     })
 
-    // WIP better convertion ?
-    // including GB2312 decode
+    // WIP better RTF decoding
+    // https://github.com/ChurchApps/FreeShow/issues/1200
 
     // https://www.oreilly.com/library/view/rtf-pocket-guide/9781449302047/ch04.html
     r = r.replaceAll("\\u8217 ?", "'")
 
-    // should be converted, but don't know proper length then
-    // r = r.replaceAll("\'", "\\u")
-
-    r = r.replaceAll("\\'92", "'")
-    r = r.replaceAll("\\'96", "–")
     // convert ‘ & ’ to '
     r = r.replaceAll("‘", "'").replaceAll("’", "'")
 
-    r = r.replaceAll("\\'e6", "æ")
-    r = r.replaceAll("\\'f8", "ø")
-    r = r.replaceAll("\\'e5", "å")
-    r = r.replaceAll("\\'c6", "Æ")
-    r = r.replaceAll("\\'d8", "Ø")
-    r = r.replaceAll("\\'c5", "Å")
-
-    r = r.replaceAll("\\'f6", "ö")
-    r = r.replaceAll("\\'e4", "ä")
-    r = r.replaceAll("\\'d6", "Ö")
-    r = r.replaceAll("\\'c4", "Ä")
-
-    r = r.replaceAll("\\'89", "ä") // ‰
-    r = r.replaceAll("\\'88", "ö") // ∘
-    r = r.replaceAll("\\'c2", "å") // Â
-    r = r.replaceAll("\\'a5", "ra") // ¥
+    // decode Latin-1
+    for (const [key, value] of Object.entries(latin1)) {
+        r = r.replaceAll(`\\'${key}`, value)
+    }
 
     // decode encoded unicode dec letters
     // https://unicodelookup.com/
