@@ -169,6 +169,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             function updateKeyData(a, newValue) {
+                if (!a[id]) return a
                 console.log(newValue, indexes, keys, a[id][key], subkey)
 
                 if (indexes?.length && Array.isArray(a[id][key])) {
@@ -201,6 +202,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         if (index === -1 && !Array.isArray(replacerValue)) replacerValue = [replacerValue]
 
                         if (subkey) {
+                            if (!a[id][key]?.[currentKey]) return
                             if (index === -1) a[id][key][currentKey][subkey].push(...replacerValue)
                             else a[id][key][currentKey][subkey] = replacerValue
                             return
@@ -431,9 +433,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             let slides = clone(data?.data) || []
 
-            let { showId, layout } = data.remember
+            let { showId, layout } = data.remember || {}
             if (!showId || !layout) return
-            let ref: any[] = _show(showId).layouts([layout]).ref()[0]
+            let ref: any[] = _show(showId).layouts([layout]).ref()[0] || []
             if (!deleting) data.index = data.index ?? ref.length
             let index = data.index
 
@@ -914,7 +916,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function updateLayoutSlides() {
                 showsCache.update((a: any) => {
                     if (!a[data.remember.showId]) return a
-                    let layoutSlides = a[data.remember.showId].layouts[data.remember.layout].slides
+                    let layoutSlides = a[data.remember.showId].layouts?.[data.remember.layout].slides || []
 
                     let currentIndex = -1
                     layoutSlides.forEach((l: any, i: number) => {

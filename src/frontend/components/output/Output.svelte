@@ -49,6 +49,7 @@
     $: if (currentOutput && JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) setNewLayers()
     function setNewLayers() {
         layers = clone(currentStyle.layers || defaultLayers)
+        if (!Array.isArray(layers)) layers = []
     }
     $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = clone(currentOutput?.out || {})
 

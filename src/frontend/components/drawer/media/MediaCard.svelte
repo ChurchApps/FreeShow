@@ -147,6 +147,7 @@
         icon={thumbnail ? icon : null}
         white={type === "image"}
         showPlayOnHover
+        checkered
         on:mousedown={mousedown}
         on:click={click}
         on:dblclick={dblclick}
