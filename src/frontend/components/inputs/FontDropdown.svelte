@@ -6,7 +6,6 @@
     import { dictionary, systemFonts } from "../../stores"
     import { awaitRequest } from "../../utils/request"
     import { formatSearch } from "../../utils/search"
-    import { removeDuplicates } from "../helpers/array"
     import Dropdown from "./Dropdown.svelte"
 
     export let value: string
@@ -15,13 +14,11 @@
 
     $: value = value.replaceAll("'", "")
 
-    let fonts: Family[] = [
-        { family: "CMGSans", default: 0, fonts: [{ name: "CMGSans", path: "", style: "", css: "font: 1em 'CMGSans'" }] },
-        // {family: "Arial"},
-        // "Helvetica",
-        // "Fantasy",
-        // "Monospace",
-    ]
+    // web fonts
+    const defaultFonts = ["CMGSans", "Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Garamond", "Courier New", "Brush Script MT", "Helvetica"]
+    // "Fantasy" (does not work with '')
+
+    let fonts: Family[] = []
 
     const dispatch = createEventDispatcher()
     function setFont(family: string) {
@@ -29,20 +26,24 @@
     }
 
     onMount(() => {
+        // { family: "CMGSans", default: 0, fonts: [{ name: "CMGSans", path: "", style: "", css: "font: 1em 'CMGSans'" }] }
+        fonts = defaultFonts.map((name) => ({ family: name, default: 0, fonts: [{ name, path: "", style: "", css: `font: 1em '${name}'` }] }))
+
         if ($systemFonts.length) addFonts($systemFonts)
         else loadSystemFonts()
     })
     async function loadSystemFonts() {
-        let fonts: Family[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
-        if (!fonts) return
+        let loadedFonts: Family[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
+        if (!loadedFonts) return
 
-        systemFonts.set(fonts)
-        addFonts(fonts)
+        systemFonts.set(loadedFonts)
+        addFonts(loadedFonts)
     }
 
     function addFonts(newFonts: Family[]) {
         // join and remove duplicates
-        fonts = removeDuplicates([...fonts, ...newFonts])
+        fonts = fonts.filter((font1) => !newFonts.find((font2) => font2.family === font1.family))
+        fonts = [...newFonts, ...fonts]
         // sort
         fonts = fonts.sort((a, b) => a.family.localeCompare(b.family))
         // add default app font

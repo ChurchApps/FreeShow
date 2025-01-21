@@ -691,6 +691,8 @@ let currentlyFading: any = {}
 async function fadeAudio(audio, duration = 1, increment: boolean = false): Promise<boolean> {
     duration = Number(duration)
     if (!audio || !duration) return true
+    // no need to fade out if paused
+    if (audio.paused) return true
 
     let currentSpeed = speed
     if (duration < 1) currentSpeed *= 10

@@ -915,10 +915,12 @@ export interface OutputMetadata {
     message?: { [key: string]: string }
     display?: string
     style?: string
+    transition?: any
     value?: string
     media?: boolean
 
     messageStyle?: string
+    messageTransition?: any
 }
 const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
 const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
@@ -934,6 +936,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
     metadata.message = metadata.media ? {} : show.meta
     metadata.display = overrideOutput ? settings.display : currentStyle.displayMetadata
     metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
+    metadata.transition = templatesUpdater[templateId]?.items?.[0]?.actions?.transition || null
 
     let metadataTemplateValue = templatesUpdater[templateId]?.items?.[0]?.lines?.[0]?.text?.[0]?.value || ""
     // if (metadataTemplateValue || metadata.message || currentStyle)
@@ -958,6 +961,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
 
     let messageTemplate = overrideOutput ? show.message?.template : currentStyle.messageTemplate || "message"
     metadata.messageStyle = getTemplateStyle(messageTemplate!, templatesUpdater) || defaultMessageStyle
+    metadata.messageTransition = templatesUpdater[messageTemplate]?.items?.[0]?.actions?.transition || null
 
     return clone(metadata)
 }

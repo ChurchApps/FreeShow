@@ -10,8 +10,12 @@
     export let active: string
     export let labels: boolean = $labelsDisabled ? false : true
 
+    let manuallyChanged: boolean = false
+
     $: if ($openToolsTab) openTab()
     function openTab() {
+        if (manuallyChanged) return
+
         let tabId = $openToolsTab
         openToolsTab.set("")
 
@@ -33,7 +37,18 @@
 <div class="tabs">
     {#each Object.entries(tabs) as [id, tab]}
         {#if tab.remove !== true && (!tab.overflow || !overflowHidden)}
-            <Button on:click={() => (active = id)} active={active === id} disabled={tab.disabled} title={$dictionary.tooltip?.[id]} style="padding: 0.3em 0.5em;{$$props.style || ''}" dark center>
+            <Button
+                on:click={() => {
+                    active = id
+                    manuallyChanged = true
+                }}
+                active={active === id}
+                disabled={tab.disabled}
+                title={$dictionary.tooltip?.[id]}
+                style="padding: 0.3em 0.5em;{$$props.style || ''}"
+                dark
+                center
+            >
                 <Icon id={tab.icon} />
                 {#if labels}
                     {#key tab.name}
