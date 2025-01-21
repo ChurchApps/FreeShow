@@ -14,10 +14,15 @@
     $: if (msg.includes("freeshow.app")) {
         msg = msg.replace("freeshow.app", '<a href="#void" class="website">freeshow.app</a>')
     }
+    $: if (msg.includes("link#")) {
+        msg = msg.replace("link#bible-converter", '<a id="bible-converter">Bible Converter</a>')
+    }
 
     function click(e: any) {
         if (e.target.closest(".website")) {
             send(MAIN, ["URL"], "https://freeshow.app/?download")
+        } else if (e.target.closest("a#bible-converter")) {
+            send(MAIN, ["URL"], "https://github.com/vassbo/bible-converter")
         }
     }
 </script>
@@ -55,6 +60,9 @@
         display: inline-flex;
         gap: 5px;
         align-items: flex-end;
+
+        text-decoration: underline;
+        cursor: pointer;
 
         -webkit-user-drag: none;
     }

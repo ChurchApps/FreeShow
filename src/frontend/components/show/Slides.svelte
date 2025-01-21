@@ -366,7 +366,7 @@
                 <div class="grid">
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {#if (loaded || i < lazyLoader) && currentShow.slides[slide.id] && ($slidesOptions.mode === "grid" || !slide.disabled)}
+                            {#if (loaded || i < lazyLoader) && currentShow.slides?.[slide.id] && ($slidesOptions.mode === "grid" || !slide.disabled)}
                                 <Slide
                                     {showId}
                                     slide={currentShow.slides[slide.id]}

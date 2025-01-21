@@ -7,31 +7,31 @@ import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { addDrawerFolder } from "../components/helpers/dropActions"
-import { setMediaTracks, captureCanvas } from "../components/helpers/media"
+import { captureCanvas, setMediaTracks } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
+import { loadShows, saveTextCache } from "../components/helpers/setShow"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
-import { convertBebliaBible } from "../converters/bebliaBible"
-import { importFSB } from "../converters/bible"
+import { importBibles } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
+import { convertEasyslides } from "../converters/easyslides"
 import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
 import { importShow, importSpecific } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
-import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
-import { convertOSISBible } from "../converters/osisBible"
+import { convertOpenSong } from "../converters/opensong"
 import { convertPowerpoint } from "../converters/powerpoint"
 import { addToProject, importProject } from "../converters/project"
 import { convertProPresenter } from "../converters/propresenter"
+import { convertQuelea } from "../converters/quelea"
 import { convertSoftProjector } from "../converters/softprojector"
 import { convertSongbeamerFiles } from "../converters/songbeamer"
 import { convertTexts } from "../converters/txt"
-import { convertVideopsalm } from "../converters/videopsalm"
-import { convertZefaniaBible } from "../converters/zefaniaBible"
 import { convertVerseVIEW } from "../converters/verseview"
+import { convertVideopsalm } from "../converters/videopsalm"
 import {
     activePage,
     activePopup,
@@ -105,9 +105,6 @@ import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { convertQuelea } from "../converters/quelea"
-import { convertEasyslides } from "../converters/easyslides"
-import { loadShows, saveTextCache } from "../components/helpers/setShow"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -620,9 +617,5 @@ const receiveIMPORT: any = {
     // Other
     calendar: (a: any) => convertCalendar(a),
     // Bibles
-    freeshow_bible: (a: any) => importFSB(a),
-    zefania_bible: (a: any) => convertZefaniaBible(a),
-    osis_bible: (a: any) => convertOSISBible(a),
-    beblia_bible: (a: any) => convertBebliaBible(a),
-    opensong_bible: (a: any) => convertOpenSongBible(a),
+    BIBLE: (a: any) => importBibles(a),
 }

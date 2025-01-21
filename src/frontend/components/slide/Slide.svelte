@@ -330,7 +330,7 @@
     {/if}
     <!-- icons -->
     {#if icons && !altKeyPressed && viewMode !== "simple"}
-        <Icons {timer} {layoutSlide} {background} {backgroundCount} {duration} {columns} {index} style={viewMode === "lyrics" ? "padding-top: 23px;" : ""} />
+        <Icons {slide} {timer} {layoutSlide} {background} {backgroundCount} {duration} {columns} {index} style={viewMode === "lyrics" ? "padding-top: 23px;" : ""} />
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->

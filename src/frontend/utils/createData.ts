@@ -101,6 +101,7 @@ export function setExampleOverlays() {
             name: get(dictionary).inputs?.name || "Name",
             color: "#0b57a2",
             category: "visuals",
+            displayDuration: 4,
             items: [
                 { style: "top:875px;left:80px;height:135px;width:750px;background-color: #0b57a2;box-shadow: 2px 2px 10px 0px rgb(0 0 0 / 0.8);" },
                 { style: "top:875px;left:80px;height:135px;width:50px;background-color: #74cbfb;" },
@@ -399,6 +400,50 @@ export function setExampleTemplates() {
                         { align: "", text: [{ value: "3", style: "font-size: 100px;" }] },
                         { align: "", text: [{ value: "4", style: "font-size: 100px;" }] },
                     ],
+                },
+            ],
+        }
+
+        // lower thirds
+        a.lowerThirdBlue = {
+            name: "Lower Third Blue",
+            color: "#800080",
+            category: "song",
+            items: [
+                {
+                    style: "top: 820px;left: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgba(16,28,65) 0%, rgba(18,75,135) 40%, rgba(68,135,196) 76%, rgba(107,212,240) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
+                    actions: { transition: { type: "none", duration: 0, easing: "linear" } },
+                    align: "",
+                    auto: true,
+                    lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: none;" }] }],
+                },
+            ],
+        }
+        a.lowerThirdColor = {
+            name: "Lower Third Color",
+            color: "#800080",
+            category: "song",
+            items: [
+                {
+                    style: "top: 820px;left: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgb(154, 12, 114) 0%, rgb(108, 4, 129) 20%, rgb(105, 33, 193) 40%, rgba(33,88,193,1) 80%, rgb(14, 177, 174) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
+                    actions: { transition: { type: "none", duration: 0, easing: "linear" } },
+                    align: "",
+                    auto: true,
+                    lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: none;" }] }],
+                },
+            ],
+        }
+        a.lowerThirdPastel = {
+            name: "Lower Third Pastel",
+            color: "#800080",
+            category: "song",
+            items: [
+                {
+                    style: "top: 820px;left: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgba(199,213,255) 0%, rgba(219,187,245) 34%, rgba(137,224,226) 76%, rgba(189,254,220) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
+                    actions: { transition: { type: "none", duration: 0, easing: "linear" } },
+                    align: "",
+                    auto: true,
+                    lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: none;color: #000000;" }] }],
                 },
             ],
         }

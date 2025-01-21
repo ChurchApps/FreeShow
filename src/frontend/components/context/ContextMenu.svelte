@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { fade } from "svelte/transition"
     import { activePage, activePopup, contextActive, contextData, os } from "../../stores"
     import { getEditItems } from "../edit/scripts/itemHelpers"
     import ContextChild from "./ContextChild.svelte"
@@ -116,7 +117,7 @@
 <svelte:window on:contextmenu={onContextMenu} on:click={click} />
 
 {#if $contextActive}
-    <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);" class:top>
+    <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);" class:top transition:fade={{ duration: 60 }}>
         {#key activeMenu}
             {#each activeMenu as id}
                 {#if id === "SEPERATOR"}

@@ -31,7 +31,9 @@
     $: currentBgOutput = backgroundOutputId ? $outputs[backgroundOutputId] || {} : {}
 
     function getLayersFromId(id: string) {
-        return $styles[$outputs[id]?.style || ""]?.layers || ["background"]
+        const layers = $styles[$outputs[id]?.style || ""]?.layers
+        if (Array.isArray(layers)) return layers
+        return ["background"]
     }
 
     let numberKeyTimeout: any = null

@@ -239,8 +239,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_ppt: ["remove"], // "rename",
     shows: ["newSlide", "selectAll"],
     // TIMER
-    timer: ["play", "edit"], // , "reset"
-    global_timer: ["play", "edit", "SEPERATOR", "duplicate", "delete"], // , "reset"
+    // timer: ["edit", "SEPERATOR", "play"], // , "reset"
+    global_timer: ["edit", "SEPERATOR", "play", "SEPERATOR", "duplicate", "delete"], // , "reset"
     // VARIABLE
     variable: ["edit", "SEPERATOR", "delete"],
     // TRIGGER

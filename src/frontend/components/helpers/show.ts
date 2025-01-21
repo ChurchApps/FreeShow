@@ -273,7 +273,7 @@ export function removeTemplatesFromShow(showId: string, enableHistory: boolean =
     // remove any slide templates
     showsCache.update((a) => {
         let show = a[showId]
-        Object.values(show.slides).forEach((slide) => {
+        Object.values(show.slides || {}).forEach((slide) => {
             if (slide.settings.template) delete slide.settings.template
         })
         return a

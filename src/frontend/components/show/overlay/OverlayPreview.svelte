@@ -20,7 +20,7 @@
         }}
         title={$dictionary.media?.play}
     >
-        <Zoomed center mirror>
+        <Zoomed background="transparent" checkered center mirror>
             <Overlay id={show.id} outputId="" overlays={$overlays} mirror transition={{ type: "none", duration: 0, easing: "" }} />
         </Zoomed>
     </HoverButton>

@@ -24,7 +24,7 @@ export function receive(ID: ValidChannels, channels: any, id: string = "") {
 }
 
 let currentlyAwaiting: string[] = []
-export async function awaitRequest(ID: ValidChannels, channel: string, data: any = null) {
+export async function awaitRequest(ID: ValidChannels, channel: string, data: object | null = null) {
     let listenerId = ID + "_" + channel
     listenerId += uid(5)
     currentlyAwaiting.push(listenerId)
