@@ -169,6 +169,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             function updateKeyData(a, newValue) {
+                if (!a[id]) return a
                 console.log(newValue, indexes, keys, a[id][key], subkey)
 
                 if (indexes?.length && Array.isArray(a[id][key])) {
@@ -201,6 +202,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         if (index === -1 && !Array.isArray(replacerValue)) replacerValue = [replacerValue]
 
                         if (subkey) {
+                            if (!a[id][key]?.[currentKey]) return
                             if (index === -1) a[id][key][currentKey][subkey].push(...replacerValue)
                             else a[id][key][currentKey][subkey] = replacerValue
                             return
@@ -431,9 +433,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             let slides = clone(data?.data) || []
 
-            let { showId, layout } = data.remember
+            let { showId, layout } = data.remember || {}
             if (!showId || !layout) return
-            let ref: any[] = _show(showId).layouts([layout]).ref()[0]
+            let ref: any[] = _show(showId).layouts([layout]).ref()[0] || []
             if (!deleting) data.index = data.index ?? ref.length
             let index = data.index
 
@@ -543,7 +545,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     // TODO: check if slide is active in edit and decrease index...
                 } else {
-                    _show(showId).slides([id]).add([slide], isParent)
+                    let slideData = clone(slide)
+                    if (data.addItems === false) slideData.items = []
+
+                    _show(showId).slides([id]).add([slideData], isParent)
 
                     // layout
                     let layoutValue: any = data.layouts?.[i] || {}
@@ -579,21 +584,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         let slideLayoutIndex = refAtIndex ? refAtIndex.index + 1 : (slideIndex ?? ref.length)
 
                         // add to layout at index
-                        // _show(showId).layouts([layout]).slides().add([layoutValue], null, slideIndex)
                         _show(showId).layouts([layout]).slides([slideLayoutIndex]).add([layoutValue])
-                        // } else {
-                        //     // add as child
-                        //     console.log(slideIndex)
-                        //     let parentSlideId = ref[slideIndex - 1]?.id
-                        //     if (!parentSlideId) return
-                        //     showsCache.update((a) => {
-                        //         let children = a[showId].slides[parentSlideId].children
-                        //         if (!children) a[showId].slides[parentSlideId].children = []
-                        //         else if (children?.includes(id)) return a
 
-                        //         a[showId].slides[parentSlideId].children!.push(id)
-                        //         return a
-                        //     })
+                        // set to correct index
+                        let updatedRef = _show(showId).layouts([layout]).ref()[0]
+                        index = updatedRef.find((a) => a.id === layoutValue.id)?.layoutIndex ?? index
                     } else if (slide.oldChild) {
                         let parent = ref.find((a) => a.children?.includes(slide.oldChild))
                         if (parent) {
@@ -914,7 +909,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function updateLayoutSlides() {
                 showsCache.update((a: any) => {
                     if (!a[data.remember.showId]) return a
-                    let layoutSlides = a[data.remember.showId].layouts[data.remember.layout].slides
+                    let layoutSlides = a[data.remember.showId].layouts?.[data.remember.layout].slides || []
 
                     let currentIndex = -1
                     layoutSlides.forEach((l: any, i: number) => {

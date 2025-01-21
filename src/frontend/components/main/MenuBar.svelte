@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { fade } from "svelte/transition"
     import { MAIN } from "../../../types/Channels"
     import { saved, topContextActive, windowState } from "../../stores"
     import { initializeClosing } from "../../utils/save"
@@ -46,7 +47,7 @@
 
 <main bind:clientHeight={y}>
     {#if $topContextActive}
-        <div class="contextMenu menu" style="left: {x}px; top: {y}px;">
+        <div class="contextMenu menu" style="left: {x}px; top: {y}px;" transition:fade={{ duration: 50 }}>
             {#key activeMenu}
                 {#each activeMenu as id}
                     {#if id === "SEPERATOR"}

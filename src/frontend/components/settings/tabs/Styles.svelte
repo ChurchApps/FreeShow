@@ -153,12 +153,13 @@
         title={currentStyle.backgroundImage}
         filter={{ name: "Media files", extensions: mediaExtensions }}
         center={false}
+        style="overflow: hidden;"
         on:picked={(e) => {
             if (e.detail) updateStyle(e, "backgroundImage")
         }}
     >
         <Icon id="image" style="margin-left: 0.5em;" right />
-        <p>
+        <p style="overflow: hidden;">
             {#if currentStyle.backgroundImage}
                 {getFileName(currentStyle.backgroundImage)}
             {:else}
@@ -239,6 +240,8 @@
         </div>
     </Button>
 </CombinedInput>
+<!-- WIP object-position -->
+
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->
 <!-- WIP foreground: mask/overlay -->

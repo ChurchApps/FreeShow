@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, special } from "../../../stores"
+    import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, special, styles } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
-    import { getOutputContent, isOutCleared } from "../../helpers/output"
+    import { getActiveOutputs, getOutputContent, isOutCleared } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../clear"
@@ -57,9 +57,16 @@
     $: outputContent = getOutputContent("", $outputs)
 
     $: backgroundCleared = $outLocked || isOutCleared("background", $outputs)
+    $: output = $outputs[getActiveOutputs()[0]] || {}
+    $: outputStyle = $styles[output.style || ""] || {}
+    $: canDisplayStyleBG = !outputStyle.clearStyleBackgroundOnText || (!output.out?.slide && !output.out?.background)
+    $: styleBackground = backgroundCleared && !$outLocked && outputStyle.backgroundImage && canDisplayStyleBG
+
     $: slideCleared = $outLocked || isOutCleared("slide", $outputs)
+
     $: overlayCleared = $outLocked || isOutCleared("overlays", $outputs, true)
     $: lockedOverlay = !overlayCleared && isOutCleared("overlays", $outputs, false)
+
     $: slideTimerCleared = $outLocked || isOutCleared("transition", $outputs)
 
     // audio fade out
@@ -103,7 +110,15 @@
     <span class="group">
         {#if outputContent?.type !== "pdf" && outputContent?.type !== "ppt"}
             <div class="combinedButton">
-                <Button disabled={backgroundCleared} on:click={() => clear("background")} title={$dictionary.clear?.background + " [F1]"} dark red center>
+                <Button
+                    style={styleBackground ? "opacity: 0.5;cursor: default;" : ""}
+                    disabled={backgroundCleared && !styleBackground}
+                    on:click={() => clear("background")}
+                    title={backgroundCleared ? "" : $dictionary.clear?.background + " [F1]"}
+                    dark
+                    red
+                    center
+                >
                     <Icon id="background" size={1.2} />
                 </Button>
                 {#if !allCleared}
@@ -124,7 +139,7 @@
         </div>
 
         <div class="combinedButton">
-            <Button style={lockedOverlay ? "opacity: 0.7;cursor: default;" : ""} disabled={overlayCleared} on:click={() => clear("overlays")} title={lockedOverlay ? "" : $dictionary.clear?.overlays + " [F3]"} dark red center>
+            <Button style={lockedOverlay ? "opacity: 0.5;cursor: default;" : ""} disabled={overlayCleared} on:click={() => clear("overlays")} title={lockedOverlay ? "" : $dictionary.clear?.overlays + " [F3]"} dark red center>
                 <Icon id="overlays" size={1.2} />
             </Button>
             {#if !allCleared}

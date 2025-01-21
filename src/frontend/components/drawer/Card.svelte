@@ -19,6 +19,7 @@
     export let color: null | string = null
     export let white: boolean = true
     export let showPlayOnHover: boolean = false
+    export let checkered: boolean = false
     export let mode: "grid" | "list" | "lyrics" = "grid"
     export let resolution: Resolution = getResolution(null, { $outputs, $styles })
     $: resolution = getResolution(resolution, { $outputs, $styles })
@@ -33,7 +34,7 @@
         {:else}
             <div class="hover overlay" />
         {/if}
-        <div data-media={mediaData} class="card {$$props.class || ''}" style="{$$props.style || ''};aspect-ratio: {resolution.width}/{resolution.height};" on:mouseenter on:mouseleave on:mousemove>
+        <div data-media={mediaData} class="card {$$props.class || ''}" class:checkered style="{$$props.style || ''};aspect-ratio: {resolution.width}/{resolution.height};" on:mouseenter on:mouseleave on:mousemove>
             {#if !loaded}
                 <div class="loader">
                     <Loader />

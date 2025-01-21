@@ -108,9 +108,8 @@
         let actionId = e.detail.id || ""
         if (!actionId) return
 
-        const canAddMultiple = ["wait"]
-        const multiple = canAddMultiple.includes(actionId)
-        if (multiple) actionId += ":" + uid(5)
+        const canAddMultiple = actionData[actionId]?.canAddMultiple
+        if (canAddMultiple) actionId += ":" + uid(5)
 
         if (e.detail.index !== undefined) index = e.detail.index
 
@@ -132,7 +131,7 @@
 
         if (!action.triggers) action.triggers = []
         // can't set if it exists already
-        if (!multiple && action.triggers.find((id) => id === actionId)) return
+        if (!canAddMultiple && action.triggers.find((id) => id === actionId)) return
 
         if (index > -1) action.triggers[index] = actionId
         else action.triggers.push(actionId)

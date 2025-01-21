@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+version=$(grep "\"version\"" package.json | cut -d ":" -f 2 | cut -d "\"" -f 2)
+sed -i "s/version:.*/version: ${version}/" snap/snapcraft.yaml
 npm install
 npm run build
 npm run pack

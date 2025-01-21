@@ -56,8 +56,8 @@
     //     setValue(resolution, "resolution")
     // }
 
-    $: templateList = getList($templates, true).filter((a) => a.id !== templateId)
-    $: overlayList = getList($overlays, true)
+    $: templateList = getList($templates, true).filter((a) => a.id !== templateId && a.name)
+    $: overlayList = getList($overlays, true).filter((a) => a.name)
 </script>
 
 <div class="section">
@@ -115,13 +115,13 @@
         margin: 10px;
     }
 
-    h6 {
+    /* h6 {
         color: var(--text);
         text-transform: uppercase;
         text-align: center;
         font-size: 0.9em;
         margin: 20px 0;
-    }
+    } */
 
     p {
         opacity: 0.8;

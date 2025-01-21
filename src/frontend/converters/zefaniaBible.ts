@@ -43,6 +43,7 @@ function XMLtoObject(xml: string): Bible {
 
             if (!Array.isArray(chapter.VERS)) chapter.VERS = [chapter.VERS]
             chapter.VERS.forEach((verse: any) => {
+                if (!verse) return
                 let text = verse["#text"] || ""
 
                 // remove <NOTE></NOTE>
@@ -53,7 +54,7 @@ function XMLtoObject(xml: string): Bible {
                 // add styled verses
                 let styledVerses = verse.STYLE || []
                 if (!Array.isArray(styledVerses)) styledVerses = [styledVerses]
-                text += styledVerses.map((a) => a["#text"] || "").join(" ")
+                text += styledVerses.map((a) => a?.["#text"] || "").join(" ")
 
                 // remove extra styling
                 text = text.replaceAll("\n", "").replaceAll('<BR art="x-p"/>', "")

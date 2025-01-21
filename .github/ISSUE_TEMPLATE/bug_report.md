@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Help up improve the stability of FreeShow
+about: Help us improve the stability of FreeShow
 title: ""
 labels: bug
 assignees: ''

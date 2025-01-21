@@ -97,8 +97,6 @@
         <Dropdown style="width: 100%;" value={cameras.find((a) => a.id === value?.id)?.name || "—"} options={cameras} on:click={(e) => updateValue("", e.detail)} />
     </CombinedInput>
 {:else if inputId === "midi"}
-    <h3><T id="midi.midi" /></h3>
-
     <MidiValues value={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
 {:else if inputId === "metronome"}
     <div class="column">
@@ -162,13 +160,5 @@
     .column {
         display: flex;
         flex-direction: column;
-    }
-
-    h3 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
     }
 </style>
