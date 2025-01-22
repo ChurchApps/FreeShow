@@ -56,7 +56,7 @@ export function splitPath(path: string): string[] {
 }
 
 export function joinPath(path: string[]): string {
-    if (!pathJoiner) splitPath(path[0])
+    if (!pathJoiner) splitPath(path?.[0])
     return path.join(pathJoiner)
 }
 

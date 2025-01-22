@@ -296,6 +296,7 @@ export function getSlides({ bibles, sorted }) {
     // add other items
     slides.forEach((items, i) => {
         slides[i] = [...templateOtherItems, ...items]
+        if (get(scriptureSettings).invertItems) slides[i].reverse()
     })
 
     return slides

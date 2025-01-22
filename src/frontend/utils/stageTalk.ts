@@ -167,6 +167,7 @@ export const receiveSTAGE: any = {
                 group = get(groups)[slide.globalGroup].default ? get(dictionary).groups?.[get(groups)[slide.globalGroup].name] : get(groups)[slide.globalGroup].name
             }
 
+            if (typeof group !== "string") group = ""
             let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
             let oneLetterName = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group[0].toUpperCase(), ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
             return { name: name || "—", oneLetterName: (oneLetterName || "—").replace(" ", ""), index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }

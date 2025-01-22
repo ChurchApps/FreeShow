@@ -7,7 +7,7 @@
     import { translate } from "../../util/helpers"
     import { GetLayout, getNextSlide, next, nextSlide, previous } from "../../util/output"
     import { send } from "../../util/socket"
-    import { _set, active, activeProject, activeShow, dictionary, outLayout, outShow, outSlide, projects, projectsOpened, scriptures, shows, textCache } from "../../util/stores"
+    import { _set, active, activeProject, activeShow, dictionary, isCleared, outLayout, outShow, outSlide, projects, projectsOpened, scriptures, shows, textCache } from "../../util/stores"
     import AddGroups from "../pages/AddGroups.svelte"
     import GroupsEdit from "../pages/GroupsEdit.svelte"
     import Media from "../pages/Media.svelte"
@@ -247,34 +247,41 @@
 </div>
 
 <div class="right" style="jutsify-content: space-between;">
-    {#if outShow && layout}
+    {#if !$isCleared.all}
         <div class="top flex">
-            <!-- <h2>{outShow.name}</h2> -->
-            <div class="outSlides">
-                <Slide outSlide={$outSlide} {transition} preview />
-            </div>
+            {#if outShow && layout}
+                <!-- <h2>{outShow.name}</h2> -->
+                <div class="outSlides">
+                    <Slide outSlide={$outSlide} {transition} preview />
+                </div>
+            {/if}
 
             <div class="buttons">
                 {#key $outSlide}
                     <Clear outSlide={$outSlide} tablet />
                 {/key}
             </div>
-            <div class="buttons" style="display: flex;width: 100%;">
-                <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-                <Button style="flex: 1;" on:click={previous} disabled={$outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
-                <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{$outSlide + 1}/{totalSlides}</span>
-                <Button style="flex: 1;" on:click={next} disabled={$outSlide + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
-                <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
-            </div>
-        </div>
 
-        <div class="outSlides">
-            {#if nextSlide(layout, $outSlide) && getNextSlide($outShow, $outSlide, $outLayout)}
-                <Slide outSlide={nextSlide(layout, $outSlide) || 0} {transition} preview />
-            {:else}
-                <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;padding: 20px 0;">{translate("remote.end", $dictionary)}</div>
+            {#if outShow && layout}
+                <div class="buttons" style="display: flex;width: 100%;">
+                    <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
+                    <Button style="flex: 1;" on:click={previous} disabled={$outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
+                    <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{$outSlide + 1}/{totalSlides}</span>
+                    <Button style="flex: 1;" on:click={next} disabled={$outSlide + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
+                    <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
+                </div>
             {/if}
         </div>
+
+        {#if outShow && layout}
+            <div class="outSlides">
+                {#if nextSlide(layout, $outSlide) && getNextSlide($outShow, $outSlide, $outLayout)}
+                    <Slide outSlide={nextSlide(layout, $outSlide) || 0} {transition} preview />
+                {:else}
+                    <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;padding: 20px 0;">{translate("remote.end", $dictionary)}</div>
+                {/if}
+            </div>
+        {/if}
     {:else}
         <Center faded>{translate("remote.no_output", $dictionary)}</Center>
     {/if}

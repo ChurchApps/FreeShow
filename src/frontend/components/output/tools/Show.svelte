@@ -43,7 +43,7 @@
             <span style="opacity: 0.6;white-space: nowrap;">
                 {currentIndex}/{totalLength}
                 {#if linesIndex !== null && maxLines !== null}
-                    ({linesIndex + 1}/{maxLines})
+                    <span style="opacity: 0.8;font-size: 0.8em;">({linesIndex + 1}/{maxLines})</span>
                 {/if}
             </span>
         {/if}

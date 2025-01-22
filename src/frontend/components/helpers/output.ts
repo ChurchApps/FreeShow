@@ -726,6 +726,9 @@ export function updateSlideFromTemplate(slide: Slide, template: Template, isFirs
 }
 
 export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, media: { [key: string]: Media }, template: Template, oldTemplate: Template, removeOverflow: boolean = false) {
+    if (typeof layouts !== "object") layouts = {}
+    if (typeof media !== "object") media = {}
+
     // only alter layout slides if clicking on the template
     if (!removeOverflow) return { layouts, media }
 
@@ -740,7 +743,7 @@ export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, me
         if (!existingId) media[bgId] = { path: settings.backgroundPath, name: removeExtension(getFileName(settings.backgroundPath)) }
     } else if (oldSettings.backgroundPath && oldSettings.backgroundPath === media[layouts[Object.keys(layouts)[0]]?.slides?.[0]?.background || ""]?.path) {
         // remove background if previous template has current background
-        layouts[Object.keys(layouts)[0]].slides[0].background = ""
+        if (layouts[Object.keys(layouts)[0]]?.slides?.[0]?.background) layouts[Object.keys(layouts)[0]].slides[0].background = ""
     }
 
     Object.keys(layouts).forEach((layoutId) => {

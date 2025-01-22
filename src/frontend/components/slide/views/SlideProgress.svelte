@@ -32,6 +32,7 @@
             group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
         }
 
+        if (typeof group !== "string") group = ""
         if (tracker.oneLetter) group = group[0].toUpperCase()
         let name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
         if (tracker.oneLetter) name = name?.replace(" ", "")

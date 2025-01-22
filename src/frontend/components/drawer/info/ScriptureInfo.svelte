@@ -70,7 +70,7 @@
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         // create first slide reference
-        if ($scriptureSettings.firstSlideReference && slides[0][0]?.lines) {
+        if ($scriptureSettings.firstSlideReference && slides[0]?.[0]?.lines?.[0]?.text?.[0]) {
             const slideClone = clone(slides[0])
             // remove reference item
             // slides.forEach((a) => a.splice(a.length - 1, 1))
@@ -252,7 +252,7 @@
 
     $: previousSlides = "{}"
     let currentOutputSlides: any[] = []
-    $: if (JSON.stringify(slides[0]) !== previousSlides) {
+    $: if (slides?.[0] && JSON.stringify(slides[0]) !== previousSlides) {
         currentOutputSlides = slides[0]
         previousSlides = JSON.stringify(slides[0])
     }
@@ -385,6 +385,15 @@
                     <p><T id="scripture.first_slide_reference" /></p>
                     <div class="alignRight">
                         <Checkbox id="firstSlideReference" checked={$scriptureSettings.firstSlideReference} on:change={checked} />
+                    </div>
+                </CombinedInput>
+            {/if}
+
+            {#if !$scriptureSettings.combineWithText}
+                <CombinedInput textWidth={70}>
+                    <p><T id="edit.invert_items" /></p>
+                    <div class="alignRight">
+                        <Checkbox id="invertItems" checked={$scriptureSettings.invertItems} on:change={checked} />
                     </div>
                 </CombinedInput>
             {/if}

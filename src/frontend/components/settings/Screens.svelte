@@ -55,7 +55,7 @@
                 minPosY = null
                 let maxPosX: null | number = null
                 let maxPosY: null | number = null
-                screens.forEach(({ bounds }) => {
+                clone(screens).forEach(({ bounds }) => {
                     if (minPosX === null || bounds.x < minPosX) minPosX = bounds.x
                     if (minPosY === null || bounds.y < minPosY) minPosY = bounds.y
                     if (maxPosX === null || bounds.x + bounds.width > maxPosX) maxPosX = bounds.x + bounds.width
@@ -70,8 +70,8 @@
                 totalScreensHeight = Math.min(totalScreensHeight, 1000)
 
                 // make all values start at 0
-                screens.forEach((a) => {
-                    a.previewBounds = {
+                screens.forEach((a, i) => {
+                    screens[i].previewBounds = {
                         x: a.bounds.x - (minPosX || 0),
                         y: a.bounds.y - (minPosY || 0),
                     }

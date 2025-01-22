@@ -190,6 +190,16 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let slideIndex: number = slide?.index || 0
     let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex].end : false
 
+    // open next project item if previous has been opened and next is still active when going forward
+    let isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
+    let isFirstLine = (slide?.line || 0) === 0
+    let nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(get(activeShow)?.index ?? -2) + 1]?.id
+    let isPreviousProjectItem = slide?.id === nextProjectItem && isFirstSlide && isFirstLine
+    if (isPreviousProjectItem && e?.key !== " ") {
+        goToNextProjectItem()
+        return
+    }
+
     let index: null | number = null
 
     // lines
@@ -214,7 +224,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     // go to beginning if live mode & ctrl | no output | last slide active
     let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
     if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || get(showsCache)[currentShow.id]?.settings.activeLayout !== slide.layout)))) {
-        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow.id]) return goToNextProjectItem()
+        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow.id] || !_show(currentShow.id).layouts("active").ref()[0]?.length) return goToNextProjectItem()
 
         let id = loop ? slide?.id : currentShow.id
         if (!id) return
@@ -416,12 +426,6 @@ export function previousSlide(e: any, customOutputId?: string) {
     }
 
     let activeShowLayout = get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout
-    if (index < 0 && activeShowLayout !== slide?.layout) {
-        slide = null
-        layout = _show("active").layouts("active").ref()[0]
-        activeLayout = activeShowLayout
-        index = (layout?.length || 0) - 1
-    }
 
     // lines
     let outputWithLines = getOutputWithLines()
@@ -429,10 +433,24 @@ export function previousSlide(e: any, customOutputId?: string) {
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
     let hasLinesEnded: boolean = !slide || linesIndex === null || linesIndex < 1
 
+    // open previous project item if next has been opened and previous is still active when going back
+    let slideIndex: number = slide?.index || 0
+    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex].end : false
+    let showSlide: any = _show(slide ? slide.id : "active")
+        .slides([layout[index]?.id])
+        .get()[0]
+    let isLastLine = slide?.line === undefined || !amountOfLinesToShow || !showSlide || slide.line >= Math.ceil(getItemWithMostLines(showSlide) / amountOfLinesToShow) - 1
+    let previousProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(get(activeShow)?.index ?? -2) - 1]?.id
+    let isNextProjectItem = slide?.id === previousProjectItem && isLastSlide && isLastLine
+    if (isNextProjectItem) {
+        goToPreviousProjectItem()
+        return
+    }
+
     // skip disabled slides if clicking previous when another show is selected and no enabled slide is before
     let isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
-    if (!hasLinesEnded && isFirstSlide) isFirstSlide = false
-    if (isFirstSlide && activeShowLayout !== slide?.layout) {
+    // if (!hasLinesEnded && isFirstSlide) isFirstSlide = false
+    if (activeShowLayout !== slide?.layout && hasLinesEnded && (index < 0 || isFirstSlide)) {
         slide = null
         layout = _show("active").layouts("active").ref()[0]
         activeLayout = activeShowLayout
@@ -443,7 +461,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     if (hasLinesEnded) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
-            if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""]) {
+            if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || get(activeShow)?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
                 if (PRESENTATION_KEYS_PREV.includes(e?.key)) goToPreviousProjectItem(e.key)
             }
             return
@@ -467,7 +485,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     // allow custom actions to trigger first
     setTimeout(() => {
         if (slide) setOutput("slide", { ...slide, index, line }, false, customOutputId)
-        else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index }, false, customOutputId)
+        else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index, line }, false, customOutputId)
 
         updateOut(slide ? slide.id : "active", index!, layout, !e?.altKey, customOutputId)
     })

@@ -6,7 +6,7 @@
     import { translate } from "../../util/helpers"
     import { GetLayout, next, previous } from "../../util/output"
     import { send } from "../../util/socket"
-    import { _set, activeShow, activeTab, dictionary, outLayout, outShow, outSlide, textCache } from "../../util/stores"
+    import { _set, activeShow, activeTab, dictionary, isCleared, outLayout, outShow, outSlide, textCache } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import Slides from "../show/Slides.svelte"
     import AddGroups from "./AddGroups.svelte"
@@ -110,19 +110,22 @@
             />
         </div>
 
-        {#if $activeShow.id === $outShow?.id}
+        {#if $activeShow.id === $outShow?.id || !$isCleared.all}
             <div class="buttons">
                 {#key $outSlide}
                     <Clear outSlide={$outSlide} />
                 {/key}
             </div>
-            <div class="buttons" style="display: flex;width: 100%;">
-                <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-                <Button style="flex: 1;" on:click={previous} disabled={$outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
-                <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{$outSlide + 1}/{totalSlides}</span>
-                <Button style="flex: 1;" on:click={next} disabled={$outSlide + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
-                <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
-            </div>
+
+            {#if $activeShow.id === $outShow?.id}
+                <div class="buttons" style="display: flex;width: 100%;">
+                    <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
+                    <Button style="flex: 1;" on:click={previous} disabled={$outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
+                    <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{$outSlide + 1}/{totalSlides}</span>
+                    <Button style="flex: 1;" on:click={next} disabled={$outSlide + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
+                    <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
+                </div>
+            {/if}
         {:else}
             <div class="buttons">
                 {#if layouts.length > 1}

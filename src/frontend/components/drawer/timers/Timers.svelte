@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeProject, activeTimers, dictionary, disableDragging, labelsDisabled, projects, showsCache, timers } from "../../../stores"
+    import { activePopup, activeTimers, dictionary, disableDragging, labelsDisabled, timers } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -8,7 +8,7 @@
     import Timer from "../../slide/views/Timer.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { getCurrentTimerValue, loadProjectTimers, playPauseGlobal, resetTimer } from "./timers"
+    import { getCurrentTimerValue, playPauseGlobal, resetTimer } from "./timers"
 
     export let searchValue
 
@@ -17,13 +17,13 @@
     $: sortedTimersWithProject = sortedTimers.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
     $: filteredTimers = searchValue.length > 1 ? sortedTimersWithProject.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTimersWithProject
 
-    // project
-    $: projectShows = $projects[$activeProject!]?.shows || []
+    // place timers in shows in project first
     let list: string[] = []
-    $: if (projectShows.length || $showsCache || $timers) getList()
-    async function getList() {
-        list = (await loadProjectTimers(projectShows)).filter((id) => $timers[id])
-    }
+    // $: projectShows = $projects[$activeProject!]?.shows || []
+    // $: if (projectShows.length || $showsCache || $timers) getList()
+    // async function getList() {
+    //     list = (await loadProjectTimers(projectShows)).filter((id) => $timers[id])
+    // }
 
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)

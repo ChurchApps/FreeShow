@@ -62,6 +62,9 @@
     let timeout: any = null
     $: if (items) preloadItems()
     function preloadItems() {
+        // don't update if exact same (not needed)
+        // if (JSON.stringify(firstActive ? items1 : items2) === JSON.stringify(items)) return
+
         if (firstActive) items2 = clone(items)
         else items1 = clone(items)
 

@@ -57,7 +57,7 @@ async function startupMain() {
 }
 
 function autoBackup() {
-    let interval = get(special).autoBackup || "never"
+    let interval = get(special).autoBackup || "weekly"
     if (interval === "never") return
 
     let now = Date.now()

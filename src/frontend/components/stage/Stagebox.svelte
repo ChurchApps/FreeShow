@@ -200,7 +200,7 @@
                         {/if}
 
                         <!-- refresh to update auto sizes -->
-                        {#key currentSlide}
+                        {#key currentSlide?.id || currentSlide?.index}
                             <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} style />
                         {/key}
                     </span>
