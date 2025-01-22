@@ -71,8 +71,10 @@
 
                 // make all values start at 0
                 screens.forEach((a) => {
-                    if (minPosX) a.bounds.x -= minPosX
-                    if (minPosY) a.bounds.y -= minPosY
+                    a.previewBounds = {
+                        x: a.bounds.x - (minPosX || 0),
+                        y: a.bounds.y - (minPosY || 0),
+                    }
                 })
             },
             SET_SCREEN: (d: any) => {
@@ -340,7 +342,7 @@
                         class="screen"
                         class:disabled={currentScreen?.forcedResolution}
                         class:active={$outputs[screenId || ""]?.screen === screen.id.toString()}
-                        style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.bounds.x}px;top: {screen.bounds.y}px;"
+                        style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.previewBounds.x}px;top: {screen.previewBounds.y}px;"
                         on:click={() => {
                             if (!currentScreen?.forcedResolution) changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
                         }}
