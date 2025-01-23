@@ -15,7 +15,7 @@ import { getActiveOutputs, getResolution } from "./output"
 import { clone } from "./array"
 
 export function getExtension(path: string): string {
-    if (!path) return ""
+    if (typeof path !== "string") return ""
     if (path.indexOf(".") < 0) return path
     if (path.includes("?")) path = path.slice(0, path.indexOf("?"))
     return path.substring(path.lastIndexOf(".") + 1).toLowerCase()
@@ -41,7 +41,7 @@ export function getMediaType(extension: string): ShowType {
 }
 
 export function getFileName(path: string): string {
-    if (!path) return ""
+    if (typeof path !== "string") return ""
     if (path.indexOf("\\") > -1) return path.substring(path.lastIndexOf("\\") + 1)
     if (path.indexOf("/") > -1) return path.substring(path.lastIndexOf("/") + 1)
     return path
@@ -49,20 +49,20 @@ export function getFileName(path: string): string {
 
 let pathJoiner = ""
 export function splitPath(path: string): string[] {
-    if (!path) return []
+    if (typeof path !== "string") return []
     if (path.indexOf("\\") > -1) pathJoiner = "\\"
     if (path.indexOf("/") > -1) pathJoiner = "/"
     return path.split(pathJoiner) || []
 }
 
 export function joinPath(path: string[]): string {
-    if (!pathJoiner) splitPath(path[0])
+    if (!pathJoiner) splitPath(path?.[0])
     return path.join(pathJoiner)
 }
 
 // fix for media files with special characters in file name not playing
 export function encodeFilePath(path: string): string {
-    if (!path) return ""
+    if (typeof path !== "string") return ""
 
     // already encoded
     if (path.match(/%\d+/g) || path.includes("http") || path.includes("data:")) return path
@@ -165,7 +165,7 @@ export function checkMedia(src: string): Promise<boolean> {
 }
 
 export async function getMediaInfo(path: string) {
-    if (!path) return {}
+    if (typeof path !== "string") return {}
     if (path.includes("http") || path.includes("data:")) return {}
 
     const cachedInfo = get(media)[path]?.info
@@ -257,7 +257,7 @@ export const mediaSize = {
 }
 
 export async function loadThumbnail(input: string, size: number) {
-    if (!input) return ""
+    if (typeof input !== "string") return ""
 
     // online media (e.g. Pixabay/Unsplash)
     if (input.includes("http") || input.includes("data:")) return input
@@ -323,7 +323,7 @@ function getThumbnailId(data: any) {
 
 // convert path to base64
 export async function getBase64Path(path: string, size: number = mediaSize.big) {
-    if (!path || !mediaExtensions.includes(getExtension(path))) return ""
+    if (typeof path !== "string" || !mediaExtensions.includes(getExtension(path))) return ""
 
     // online media (e.g. Pixabay/Unsplash)
     if (path.includes("http") || path.includes("data:")) return path

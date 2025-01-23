@@ -265,6 +265,7 @@ export const previewShortcuts: any = {
         }
         if (!get(showsCache)[currentShow?.id || ""]) {
             e.preventDefault()
+            if (currentShow?.type === "overlay") return setOutput("overlays", currentShow.id, false, "", true)
             return playMedia(e)
         }
 

@@ -301,8 +301,14 @@ export function logError(log: any, electron: boolean = false) {
     error_log.set({ [key]: previousLog })
 }
 
+const ERROR_FILTER = [
+    "ENOENT: no such file or directory", // file/folder does not exist
+]
 export function catchErrors() {
-    process.on("uncaughtException", (err) => logError(createLog(err), true))
+    process.on("uncaughtException", (err) => {
+        if (ERROR_FILTER.find((a) => err.message.includes(a))) return
+        logError(createLog(err), true)
+    })
 }
 
 function createLog(err: Error) {

@@ -192,7 +192,7 @@
                     <span style="pointer-events: none;">
                         {#if currentBackground}
                             {@const slideBackground = next ? currentBackground.next : currentBackground}
-                            {#if slideBackground?.path}
+                            {#if typeof slideBackground?.path === "string"}
                                 <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
                                     <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
                                 </div>
@@ -200,7 +200,7 @@
                         {/if}
 
                         <!-- refresh to update auto sizes -->
-                        {#key currentSlide}
+                        {#key currentSlide?.id || currentSlide?.index}
                             <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} style />
                         {/key}
                     </span>

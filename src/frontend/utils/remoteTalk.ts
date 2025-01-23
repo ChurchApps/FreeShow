@@ -198,16 +198,17 @@ export function initializeRemote(id: string) {
 }
 
 export async function convertBackgrounds(show: Show) {
-    if (!show) return {}
+    if (!show?.media) return {}
 
     show = clone(show)
     let mediaIds = show.layouts[show.settings?.activeLayout]?.slides.map((a) => a.background || "").filter(Boolean)
 
     await Promise.all(
         mediaIds.map(async (id) => {
-            let path = show.media[id].path || show.media[id].id || ""
+            let path = show.media[id]?.path || show.media[id]?.id || ""
             let cloudId = get(driveData).mediaId
-            if (cloudId && cloudId !== "default") path = show.media[id].cloud?.[cloudId] || path
+            if (cloudId && cloudId !== "default") path = show.media[id]?.cloud?.[cloudId] || path
+            if (!path) return
 
             let base64Path: string = await getBase64Path(path, mediaSize.slideSize)
             if (base64Path) show.media[id].path = base64Path

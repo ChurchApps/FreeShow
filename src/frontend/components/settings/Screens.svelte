@@ -55,7 +55,7 @@
                 minPosY = null
                 let maxPosX: null | number = null
                 let maxPosY: null | number = null
-                screens.forEach(({ bounds }) => {
+                clone(screens).forEach(({ bounds }) => {
                     if (minPosX === null || bounds.x < minPosX) minPosX = bounds.x
                     if (minPosY === null || bounds.y < minPosY) minPosY = bounds.y
                     if (maxPosX === null || bounds.x + bounds.width > maxPosX) maxPosX = bounds.x + bounds.width
@@ -70,9 +70,11 @@
                 totalScreensHeight = Math.min(totalScreensHeight, 1000)
 
                 // make all values start at 0
-                screens.forEach((a) => {
-                    if (minPosX) a.bounds.x -= minPosX
-                    if (minPosY) a.bounds.y -= minPosY
+                screens.forEach((a, i) => {
+                    screens[i].previewBounds = {
+                        x: a.bounds.x - (minPosX || 0),
+                        y: a.bounds.y - (minPosY || 0),
+                    }
                 })
             },
             SET_SCREEN: (d: any) => {
@@ -340,7 +342,7 @@
                         class="screen"
                         class:disabled={currentScreen?.forcedResolution}
                         class:active={$outputs[screenId || ""]?.screen === screen.id.toString()}
-                        style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.bounds.x}px;top: {screen.bounds.y}px;"
+                        style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.previewBounds.x}px;top: {screen.previewBounds.y}px;"
                         on:click={() => {
                             if (!currentScreen?.forcedResolution) changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
                         }}
@@ -385,7 +387,7 @@
         margin-top: auto; */
         position: absolute;
         left: 50%;
-        top: calc(50% + 1000px);
+        top: calc(50% + 950px);
         /* transform: translateX(-1080px); */
 
         /* width: 30%;

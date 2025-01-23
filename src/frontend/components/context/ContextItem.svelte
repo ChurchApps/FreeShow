@@ -9,6 +9,7 @@
         events,
         forceClock,
         media,
+        midiIn,
         os,
         outputs,
         overlayCategories,
@@ -81,6 +82,10 @@
                 enabled = ref[$selected.data[0].index]?.data?.disabled || false
             } else if ($selected.id === "stage") {
                 enabled = $stageShows[$selected.data[0].id]?.disabled
+            } else if ($selected.id === "action") {
+                let action = $midiIn[$selected.data[0].id] || {}
+                if (!action.keypressActivate && !action.customActivation) disabled = true
+                else enabled = action.enabled === false
             }
 
             menu.label = enabled ? "actions.enable" : "actions.disable"

@@ -712,6 +712,22 @@ const actions: any = {
                 })
                 return a
             })
+            return
+        }
+
+        if (obj.sel.id === "action") {
+            let enabledState = get(midiIn)[obj.sel.data[0].id].enabled
+            let value = enabledState === undefined ? false : !enabledState
+            midiIn.update((a) => {
+                obj.sel.data.forEach((b: any) => {
+                    let action = a[b.id]
+                    if (action && (action.keypressActivate || action.customActivation)) {
+                        a[b.id].enabled = value
+                    }
+                })
+                return a
+            })
+            return
         }
     },
     editSlideText: (obj) => {
