@@ -14,6 +14,7 @@
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
     import Link from "../../inputs/Link.svelte"
+    import { isFallback } from "../../drawer/bible/scripture"
 
     let error: null | string = null
     let bibles: any[] = []
@@ -33,21 +34,40 @@
             }
         }
 
-        const KEY = $bibleApiKey || getKey("bibleapi")
+        const KEY = $bibleApiKey || getKey("bibleapi" + (isFallback ? "_fallback" : ""))
         const api = "https://api.scripture.api.bible/v1/bibles"
         fetch(api, { headers: { "api-key": KEY } })
-            .then((response) => response.json())
-            .then((data) => {
-                bibles = data.data
+            .then((response) => {
+                // fallback key
+                if (response.status >= 400) {
+                    console.log("Could not fetch, trying fallback key")
+                    fetch(api, { headers: { "api-key": getKey("bibleapi_fallback") } })
+                        .then((response) => response.json())
+                        .then(manageResult)
+                        .catch((e) => {
+                            console.log(e)
+                            error = e
+                        })
+                    return
+                }
 
-                // cache bibles
-                let cache = { date: new Date(), bibles }
-                localStorage?.setItem("scriptureApiCache", JSON.stringify(cache))
+                return response.json()
             })
+            .then(manageResult)
             .catch((e) => {
                 console.log(e)
                 error = e
             })
+
+        function manageResult(data) {
+            if (!data) return
+
+            bibles = data.data
+
+            // cache bibles
+            let cache = { date: new Date(), bibles }
+            localStorage?.setItem("scriptureApiCache", JSON.stringify(cache))
+        }
     }
 
     // get list of bibles in language

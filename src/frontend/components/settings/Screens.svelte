@@ -387,7 +387,7 @@
         margin-top: auto; */
         position: absolute;
         left: 50%;
-        top: calc(50% + 1000px);
+        top: calc(50% + 950px);
         /* transform: translateX(-1080px); */
 
         /* width: 30%;

@@ -8,6 +8,7 @@ import { clone, removeDuplicates } from "../../helpers/array"
 const api = "https://api.scripture.api.bible/v1/bibles/"
 let tempCache: any = {}
 let fetchTimeout: any = {}
+export let isFallback = false
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
     let versesId: any = null
     if (ref.versesList.length) {
@@ -27,7 +28,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
     if (tempCache[urls[load]]) return tempCache[urls[load]]
 
     return new Promise((resolve, reject) => {
-        const KEY = get(bibleApiKey) || getKey("bibleapi")
+        const KEY = get(bibleApiKey) || getKey("bibleapi" + (isFallback ? "_fallback" : ""))
         if (!KEY) return reject("No API key!")
         if (urls[load].includes("null")) return reject("Something went wrong!")
 
@@ -37,30 +38,64 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
         }, 40000)
 
         fetch(urls[load], { headers: { "api-key": KEY } })
-            .then((response) => response.json())
-            .then((data) => {
-                tempCache[urls[load]] = data.data
-                clearTimeout(fetchTimeout[active])
-                resolve(data.data)
+            .then((response) => {
+                // fallback key
+                if (response.status >= 400) {
+                    isFallback = true
+                    console.log("Could not fetch, trying fallback key")
+                    fetch(urls[load], { headers: { "api-key": getKey("bibleapi_fallback") } })
+                        .then((response) => response.json())
+                        .then(manageResult)
+                        .catch((e) => {
+                            clearTimeout(fetchTimeout[active])
+                            reject(e)
+                        })
+                    return
+                }
+
+                return response.json()
             })
+            .then(manageResult)
             .catch((e) => {
                 clearTimeout(fetchTimeout[active])
                 reject(e)
             })
+
+        function manageResult(data) {
+            if (!data) return
+
+            tempCache[urls[load]] = data.data
+            clearTimeout(fetchTimeout[active])
+            resolve(data.data)
+        }
     })
 }
 
 export function searchBibleAPI(active: string, searchQuery: string) {
-    const KEY = get(bibleApiKey) || getKey("bibleapi")
+    const KEY = get(bibleApiKey) || getKey("bibleapi" + (isFallback ? "_fallback" : ""))
     let url = `${api}${active}/search?query=${searchQuery}`
 
     return new Promise((resolve, reject) => {
         if (!KEY) return reject("No API key!")
 
         fetch(url, { headers: { "api-key": KEY } })
-            .then((response) => response.json())
+            .then((response) => {
+                // fallback key
+                if (response.status >= 400) {
+                    console.log("Could not fetch, trying fallback key")
+                    fetch(url, { headers: { "api-key": getKey("bibleapi_fallback") } })
+                        .then((response) => response.json())
+                        .then((data) => resolve(data.data))
+                        .catch((e) => {
+                            reject(e)
+                        })
+                    return
+                }
+
+                return response.json()
+            })
             .then((data) => {
-                resolve(data.data)
+                if (data) resolve(data.data)
             })
             .catch((e) => {
                 reject(e)

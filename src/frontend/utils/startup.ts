@@ -65,11 +65,11 @@ function autoBackup() {
     let minTimeToBackup = getTimeFromInterval(interval)
 
     if (now - lastBackup > minTimeToBackup) {
-        save(false, { backup: true, silent: true })
         special.update((a) => {
             a.autoBackupPrevious = now
             return a
         })
+        save(false, { backup: true, silent: true })
     }
 }
 

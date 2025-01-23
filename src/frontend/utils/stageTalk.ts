@@ -17,6 +17,7 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
     let currentOutput = updater[outputId]?.out
     let next = await getNextBackground(currentOutput?.slide, returnPath)
     let path = currentOutput?.background?.path || ""
+    if (typeof path !== "string") path = ""
 
     if (returnPath) {
         return clone({ path, mediaStyle: get(media)[path] || {}, next })
@@ -47,7 +48,8 @@ async function getNextBackground(currentOutputSlide: any, returnPath = false) {
     if (!nextLayout) return {}
 
     let bgId = nextLayout.data.background || ""
-    let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path
+    let path = _show(currentOutputSlide.id).media([bgId]).get()?.[0]?.path || ""
+    if (typeof path !== "string") path = ""
 
     if (returnPath) return { path, mediaStyle: get(media)[path] || {} }
 

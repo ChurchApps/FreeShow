@@ -80,7 +80,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         // reset slide cache (after update)
         if (key === "slide" && data) setTimeout(() => outputSlideCache.set({}), 50)
         // trigger if show is not currently outputted
-        if (key === "slide" && data?.id && get(outputs)[outs[0]]?.out?.slide?.id !== data?.id) {
+        if (key === "slide" && data?.id && get(outputs)[outs?.[0]]?.out?.slide?.id !== data?.id) {
             let category = get(showsCache)[data.id]?.category || ""
             if (get(categories)[category]?.action) runAction(get(midiIn)[get(categories)[category].action!])
             appendShowUsage(data.id)
@@ -649,7 +649,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
             line.align = templateLine?.align || ""
             line.text?.forEach((text: any, k: number) => {
-                let templateText = templateLine?.text[k] || templateLine?.text[0]
+                let templateText = templateLine?.text?.[k] || templateLine?.text?.[0]
                 if (!text.customType?.includes("disableTemplate")) {
                     let style = templateText?.style || ""
 
@@ -669,6 +669,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 if (!text.value?.length && firstChar === "{") {
                     text.value = templateText!.value
                 }
+
+                if (!text.value?.[0]) return
 
                 // add bullets
                 if (firstChar === "•" || firstChar === "-") {
@@ -979,8 +981,8 @@ function getTemplateStyle(templateId: string, templates: any) {
     let template = templates[templateId]
     if (!template) return
 
-    let style = template.items[0]?.style || ""
-    let textStyle = template.items[0]?.lines?.[0]?.text?.[0]?.style || ""
+    let style = template.items?.[0]?.style || ""
+    let textStyle = template.items?.[0]?.lines?.[0]?.text?.[0]?.style || ""
 
     return style + textStyle
 }
