@@ -38,7 +38,6 @@
     async function updateCanvas() {
         if (!canvas) return
 
-        console.log(capture)
         const arr = new Uint8ClampedArray(capture.buffer)
         const pixels = new ImageData(arr, capture.size.width, capture.size.height)
         const bitmap = await createImageBitmap(pixels)

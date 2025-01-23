@@ -134,7 +134,8 @@
     </CombinedInput>
 </div>
 
-<Button disabled={currentOutput.allowMainScreen} on:click={() => displayOutputs({ ctrlKey: true })} style="width: 100%;margin-top: 10px;" dark center>
+<!-- disabled={currentOutput.allowMainScreen} -->
+<Button on:click={() => displayOutputs({ ctrlKey: true })} style="width: 100%;margin-top: 10px;" dark center>
     <Icon id="outputs" right />
     <p><T id="context.force_outputs" /></p>
 </Button>

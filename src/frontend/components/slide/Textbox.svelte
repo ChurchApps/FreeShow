@@ -212,17 +212,19 @@
 
         if (ref.type === "overlay") {
             overlays.update((a) => {
+                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.type === "template") {
             templates.update((a) => {
+                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.showId) {
             showsCache.update((a) => {
-                if (!a[ref.showId!]) return a
+                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
 
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a

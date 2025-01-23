@@ -74,7 +74,7 @@
 
             // look for existing shows with the same title
             if (values.name) {
-                const exists = Object.values($shows).find((a: any) => a.name?.toLowerCase() === values.name.toLowerCase())
+                const exists = Object.values($shows).find((a: any) => a?.name?.toLowerCase() === values.name.toLowerCase())
                 if (exists) newToast("$create_show.exists")
             }
         }

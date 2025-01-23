@@ -486,17 +486,17 @@ export function splitItemInTwo(slideRef: any, itemIndex: number, sel: any = [], 
     lines = lines.filter((a) => a.text?.[0]?.value?.length)
 
     // if only one line (like scriptures, split by text)
-    if (cutIndex === -1 && lines.length === 1 && lines[0].text?.length > 1) {
+    if (cutIndex === -1 && lines.length === 1 && lines[0]?.text?.length > 1) {
         let newLines: any[] = []
-        let centerTextIndex = Math.ceil(lines[0].text.length / 2)
-        if (lines[0].text[centerTextIndex - 1]?.customType) centerTextIndex++
-        newLines.push({ ...lines[0], text: lines[0].text.slice(0, centerTextIndex) })
-        if (centerTextIndex < lines[0].text.length) newLines.push({ ...lines[0], text: lines[0].text.slice(centerTextIndex) })
+        let centerTextIndex = Math.ceil(lines[0]?.text?.length / 2)
+        if (lines[0]?.text?.[centerTextIndex - 1]?.customType) centerTextIndex++
+        newLines.push({ ...lines[0], text: lines[0]?.text.slice(0, centerTextIndex) || [] })
+        if (centerTextIndex < lines[0]?.text?.length) newLines.push({ ...lines[0], text: lines[0].text.slice(centerTextIndex) })
         lines = newLines
     }
 
     // split text content directly in half
-    if (cutIndex === -1 && lines.length === 1 && lines[0].text?.[0]?.value?.length) {
+    if (cutIndex === -1 && lines.length === 1 && lines[0]?.text?.[0]?.value?.length) {
         // verse number style
         const custom = lines[0].text[0].customType ? lines[0].text.shift() : null
 
