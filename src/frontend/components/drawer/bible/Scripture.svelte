@@ -889,6 +889,7 @@
                 <div class="verses">
                     {#each contentSearchMatches as match}
                         <p
+                            class:showAllText={$resized.rightPanelDrawer <= 5}
                             on:dblclick={() => {
                                 bookId = match.book
                                 chapterId = match.chapter
@@ -917,6 +918,7 @@
                 <div class="verses">
                     {#each currentHistory as verse}
                         <p
+                            class:showAllText={$resized.rightPanelDrawer <= 5}
                             on:dblclick={() => {
                                 bookId = verse.book
                                 chapterId = verse.chapter

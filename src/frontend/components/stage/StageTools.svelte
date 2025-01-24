@@ -14,6 +14,7 @@
     import Items from "./tools/Items.svelte"
     import ItemStyle from "./tools/ItemStyle.svelte"
     import SlideStyle from "./tools/SlideStyle.svelte"
+    import { addStyleString } from "../edit/scripts/textStyle"
 
     // $: allSlideItems = $activeStage.id !== null ? $stageShows[$activeStage?.id!].items : []
     // // select active items or all items
@@ -31,7 +32,7 @@
     let active: string = $activeStage.items.length ? "item" : "items"
 
     const unsubscribe = activeStage.subscribe((as) => {
-        if (as.items.length && active !== "item" && active !== "text") {
+        if (as.items.length && active === "items") {
             tabs.text.disabled = tabs.item.disabled = false
             active = "text"
         } else if (!as.items.length) {
@@ -105,7 +106,56 @@
             history({ id: "UPDATE", newData: { data: {}, key: "settings" }, oldData: { id: stageId }, location: { page: "stage", id: "stage", override: "stage_reset" } })
         }
     }
+
+    // KEYDOWN EVENT
+
+    function keydown(e: any) {
+        if (document.activeElement?.closest(".edit")) return
+
+        let stageId = $activeStage.id
+        let activeItems = $activeStage.items
+
+        if (!stageId || !activeItems.length) return
+
+        if (e.key === "Escape") {
+            // give time so output don't clear
+            setTimeout(() => {
+                activeStage.set({ ...$activeStage, items: [] })
+            })
+            return
+        }
+
+        // move items with arrow keys
+        if (!e.key.includes("Arrow")) return
+        e.preventDefault()
+
+        const key = ["ArrowLeft", "ArrowRight"].includes(e.key) ? "left" : "top"
+        let value = ["ArrowLeft", "ArrowUp"].includes(e.key) ? -1 : 1
+        if (e.ctrlKey || e.metaKey) value *= 10
+
+        let itemStyles: { [key: string]: string } = {}
+
+        activeItems.forEach((itemId) => {
+            let item = $stageShows[stageId]?.items?.[itemId] || {}
+            let style = item.style
+            // if (Array.isArray(style)) style = style[0]
+            console.log(style)
+            let previousItemValue = Number(getStyles(style, true)?.[key] || "0")
+            let newValue = previousItemValue + value + "px"
+
+            itemStyles[itemId] = addStyleString(style, [key, newValue])
+        })
+
+        history({
+            id: "UPDATE",
+            newData: { data: itemStyles, key: "items", subkey: "style", keys: activeItems },
+            oldData: { id: stageId },
+            location: { page: "stage", id: "stage_item_style", override: stageId + "_reset_item" },
+        })
+    }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <div class="main border stageTools">
     <Tabs {tabs} bind:active />

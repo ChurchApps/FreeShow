@@ -75,12 +75,12 @@
         "scripture": "按住 Ctrl/Cmd 或 Shift 键可选择多节经文。"
     },
     "tips": {
-        "trigger": "触发器通常用于发送 HTTP 请求来更改摄像机的预设。"
+        "trigger": "触发器通常用于发送 HTTP 请求来修改摄像机的预设。"
     },
     "setup": {
         "good_luck": "希望你觉得这个软件有用。祝演出顺利！:)",
         "tips": "在网站上查找方便的提示和教程。",
-        "change_later": "你可以稍后更改这些设置",
+        "change_later": "你可以稍后修改这些设置",
         "get_started": "开始"
     },
     "example": {
@@ -104,6 +104,7 @@
         "web": "网络搜索",
         "search_web": "从网络上搜索歌曲",
         "search_results": "搜索结果",
+        "block": "块",
         "more_options": "更多选项",
         "auto_groups": "自动分配分组",
         "format_new_show": "格式化文本",
@@ -148,6 +149,7 @@
         "overlays": "清除叠加",
         "audio": "清除音频",
         "nextTimer": "清除下一张幻灯片计时器",
+        "timer": "清除计时器",
         "drawing": "清除绘图"
     },
     "remove": {
@@ -400,10 +402,11 @@
         "trigger": "触发器",
         "audio_stream": "音频流",
         "transition": "转场动画",
+        "media_fit": "修改媒体适应",
         "delete_show": "删除节目",
         "delete_show_confirmation": "你确定要删除",
         "delete_duplicated_shows": "删除重复的节目",
-        "change_name": "在此更改名称",
+        "change_name": "在此修改名称",
         "choose_screen": "选择屏幕",
         "choose_output": "选择输出类型",
         "change_output_values": "修改输出值",
@@ -413,6 +416,7 @@
         "animate": "动画",
         "translate": "本地化",
         "next_timer": "下一张幻灯片计时器",
+        "display_duration": "显示持续时间",
         "import": "导入",
         "songbeamer_import": "Songbeamer 导入",
         "export": "导出",
@@ -422,6 +426,7 @@
         "edit_event": "编辑事件",
         "about": "关于",
         "history": "历史记录",
+        "manage_emitters": "管理发射器",
         "action": "动作",
         "category_action": "分类动作",
         "user_data_overwrite": "发现已有数据",
@@ -521,7 +526,7 @@
     },
     "actions": {
         "rename": "重命名",
-        "recolor": "更改颜色",
+        "recolor": "修改颜色",
         "remove": "移除",
         "remove_group": "移除分组",
         "choose_group": "选择分组",
@@ -578,6 +583,7 @@
         "unmute": "取消静音",
         "increase_volume": "增大音量",
         "decrease_volume": "减小音量",
+        "manage_subtitles": "管理字幕",
         "toggle_time_marker": "切换时间标记",
         "add_time_marker": "添加时间标记",
         "bind_to": "指定输出",
@@ -608,7 +614,7 @@
         "fullscreen_preview": "切换全屏预览",
         "toggle_output": "切换输出屏幕",
         "toggle_panels": "切换面板",
-        "change_tab": "改变标签",
+        "change_tab": "修改标签",
         "change_drawer_tab": "修改抽屉标签",
         "change_slide": "修改幻灯片",
         "change_project_item": "修改项目元素",
@@ -681,8 +687,10 @@
         "start_trigger": "启动触发器",
         "run_action": "运行动作",
         "toggle_action": "切换动作",
+        "emit_data": "发出数据",
         "send_rest_command": "发送 HTTP 请求",
         "custom_activation": "自定义激活",
+        "any": "任意",
         "activate_on_startup": "启动时激活",
         "activate_save": "保存时激活",
         "activate_slide_clicked": "单击幻灯片时激活",
@@ -701,14 +709,14 @@
     "recording": {
         "remove": "移除录制",
         "tip": "记录并重放幻灯片的时间。与第一张幻灯片上的音轨同步。",
-        "layout_changed": "布局自上次录制后已更改！",
+        "layout_changed": "布局自上次录制后已修改！",
         "audio_synced": "与音频同步！",
         "start": "开始幻灯片录制",
         "use_duration": "使用持续时间",
         "use_duration_tip": "使用持续时间时间而非时间戳时间"
     },
     "animate": {
-        "change": "更改",
+        "change": "修改",
         "set": "设置",
         "wait": "等待",
         "background": "背景",
@@ -750,6 +758,8 @@
         "all_shows": "全部节目",
         "all_projects": "全部项目",
         "project": "项目",
+        "option_type": "您希望导出什么内容？",
+        "option_format": "您希望以什么格式导出？",
         "include_media": "包含媒体文件",
         "preview": "预览",
         "title": "标题",
@@ -950,6 +960,7 @@
         "to_event": "距离事件时间",
         "counter": "倒计时",
         "time": "时间",
+        "hours": "时",
         "minutes": "分钟",
         "seconds": "秒",
         "from": "从",
@@ -969,7 +980,9 @@
         "type": "类型",
         "digital": "数字",
         "analog": "模拟",
-        "seconds": "秒"
+        "seconds": "秒",
+        "custom": "自定义",
+        "show_time": "显示时间"
     },
     "captions": {
         "info": "请点击链接，并在浏览器中打开。确保启用麦克风，并使用谷歌浏览器以获得最佳体验。",
@@ -1001,6 +1014,14 @@
         "tip_velocity": "将速度设置为 -1 以禁用。",
         "tip_action": "要激活特定幻灯片，右键点击任意幻灯片并选择 MIDI 操作。",
         "tip_index_by_velocity": "Index由接收到的速度决定，从0开始。"
+    },
+    "emitters": {
+        "emitter": "发射器",
+        "tip": "创建发射模板，以便轻松发送特定消息。",
+        "signal": "信号",
+        "message_template": "消息模板",
+        "message_templates": "消息模板",
+        "inputs": "输入"
     },
     "draw": {
         "focus": "聚焦",
@@ -1070,9 +1091,9 @@
         "hide_output_hint": "双击输出窗口可隐藏。按住 Ctrl 键可拖动。",
         "hide_menubar_hint": "要隐藏菜单栏，请启用展台模式，或在 macOS 设置中启用“自动隐藏和显示菜单栏”。",
         "show_output_hint": "按住 Ctrl/Cmd 并点击显示按钮，可以强制显示内容在此屏幕。",
-        "move_output_hint": "找不到显示器？调整窗口位置，直到它出现在第二屏幕上。",
+        "move_output_hint": "找不到显示器？修改窗口位置，直到它出现在第二屏幕上。",
         "select_display": "点击你希望显示输出窗口的屏幕。",
-        "manual_input_hint": "找不到显示屏？点击这里手动改变位置。",
+        "manual_input_hint": "找不到显示屏？点击这里手动修改位置。",
         "manual_drag_hint": "可通过按住 Ctrl/Cmd 键并拖动激活的输出窗口来手动更改其位置。",
         "allow_main_screen": "允许自定义输出位置和大小",
         "edge_blending": "边缘融合",
@@ -1090,6 +1111,7 @@
         "lines": "行数",
         "override_with_template": "用模板覆盖幻灯片",
         "override_scripture_with_template": "用模板覆盖经文",
+        "overrided_value": "模板可能会覆盖此值",
         "active_layers": "活动图层",
         "window": "窗口",
         "active_style": "使用样式",
@@ -1097,6 +1119,7 @@
         "auto_updates": "自动更新",
         "disable_labels": "禁用标签",
         "group_numbers": "分组编号",
+        "transparent_slides": "透明幻灯片预览",
         "full_colors": "高对比度分组颜色",
         "slide_number_keys": "使用数字键播放幻灯片",
         "auto_shortcut_first_letter": "文本中首字母的自动快捷键",
@@ -1207,7 +1230,7 @@
     },
     "scripture": {
         "bibles": "来自 API.Bible 的圣经",
-        "custom": "或者导入你自己的",
+        "local": "导入本地文件",
         "max_verses": "每张幻灯片最大歌词数",
         "verse_numbers": "经文章节",
         "verses_on_individual_lines": "每行一句经文",
@@ -1320,7 +1343,7 @@
         "created": "已创建",
         "modified": "已修改",
         "used": "已使用",
-        "changed": "已更改",
+        "changed": "已修改",
         "recently_used": "最近使用",
         "extension": "文件扩展名",
         "size": "大小",

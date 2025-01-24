@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import {
     activeEdit,
     activePopup,
+    activeStage,
     contextActive,
     customMessageCredits,
     lockedOverlays,
@@ -28,7 +29,7 @@ import { _show } from "../helpers/shows"
 
 export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
-    if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length || get(contextActive) || get(topContextActive))) return
+    if (!button && (get(activePopup) || get(selected).id || get(activeEdit).items.length || get(activeStage).items.length || get(contextActive) || get(topContextActive))) return
 
     // reset slide cache on Escape
     outputSlideCache.set({})
