@@ -147,56 +147,26 @@
                 versesList[bibleId] = data
                 break
             case "versesText":
-                verses[bibleId] = divide(data, index)
+                verses[bibleId] = convertVerses(data, index) //divide(data, index)
                 bibles[index].verses = verses[bibleId]
                 // WIP verses[id] =
                 break
         }
     }
 
-    function divide(data: VerseText, index: number = 0): { [key: string]: string } {
-        let newVerses: any = {}
-        //let verse: string
-
-        // class: s1 (comment) - r (reference)
-        // remove custom tags
-        console.log("Data is", data)
-        newVerses = data.content
-
+    function convertVerses(data: VerseText[], index: number = 0): { [key: string]: string } {
+        let verses: any = {}
+        data.forEach((d: any, i: number) => {
+            verses[i + 1] = d.content
+        })
+        console.log(index)
         /*
-        const content = data.content
-            .toString()
-            .replace(/<p class="s\d+">(.*?)<\/p>/g, "")
-            .replace(/<p class="r">(.*?)<\/p>/g, "")
-
-        content.split("span").forEach(trimVerse)
-        function trimVerse(content) {
-            // let xt = /(<span class="xt"\b[^>]*>)[^<>]*(<\/span>)/i
-            let brackets = / *\[[0-9\]]*]/g // remove [1], not [text]
-            content = content.replace(brackets, "").replace(/(<([^>]+)>)/gi, "")
-
-            if (content.includes("data-number")) {
-                verse = content.split('"')[1]
-                newVerses[verse] = ""
-            } else if (content.includes("class")) {
-                newVerses[verse] += "<span" + content + "span>"
-            } else {
-                let noHTML = ""
-                content.split(/<|>/).forEach((a) => {
-                    noHTML += a || ""
-                })
-                if (newVerses[verse] !== undefined) newVerses[verse] += noHTML
-            }
-
-            if (newVerses[verse]) newVerses[verse] = newVerses[verse].replaceAll("¶ ", "")
-        }*/
-
         if (bibles[index]) {
             bibles[index].metadata = data.metadata || {}
             if (data.copyright) bibles[index].metadata.copyright = data.copyright
-        }
+        }*/
 
-        return newVerses
+        return verses
     }
 
     let listenerId = uid()
