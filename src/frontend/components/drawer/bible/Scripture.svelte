@@ -86,7 +86,6 @@
 
     let versesList: { [key: string]: Verse[] } = {}
     async function loadAPIBible(bibleId: string, load: string, index: number = 0) {
-        console.log("loadAPIBible", bibleId, load, index)
         error = null
         let data: any = null
 
@@ -116,7 +115,6 @@
         let hasId = false
         switch (load) {
             case "books":
-                console.log("books")
                 data.forEach((d: Book) => {
                     if (d.keyName === bookId) hasId = true
                 })
@@ -128,18 +126,6 @@
                 books[bibleId] = data
                 break
             case "chapters":
-                console.log("chapters")
-                /*
-                data.forEach((d: Chapter) => {
-                    console.log(d)
-                    if (d.id === chapterId) hasId = true
-                })
-                if (!hasId) {
-                    chapterId = cachedRef?.chapterId
-                    if (!data[chapterId]) chapterId = bookId + ".1"
-                }*/
-
-                //if (data[0].number === "intro") chapters[bibleId] = data.slice(1, data.length)
                 if (data[0].number === 0) chapters[bibleId] = data.slice(1, data.length)
                 else chapters[bibleId] = data
                 break
@@ -147,7 +133,7 @@
                 versesList[bibleId] = data
                 break
             case "versesText":
-                verses[bibleId] = convertVerses(data, index) //divide(data, index)
+                verses[bibleId] = convertVerses(data, index)
                 bibles[index].verses = verses[bibleId]
                 // WIP verses[id] =
                 break
