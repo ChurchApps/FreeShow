@@ -1,16 +1,21 @@
 import https from "https"
 
-export function postRequestSecure(hostname: string, path: string, content: any, cb: (err: any, result?: any) => void) {
-    const dataString = JSON.stringify(content)
+export function httpsRequest(hostname: string, path: string, method: "POST" | "GET", headers: object = {}, content: object = {}, cb: (err: any, result?: any) => void) {
+    const dataString = Object.keys(content).length ? JSON.stringify(content) : ""
     const options = {
         hostname: hostname.replace(/^https?:\/\//, ""),
         port: 443,
         path,
-        method: "POST",
+        method,
         headers: {
-            "Content-Type": "application/json",
-            "User-Agent": "Node.js",
-            "Content-Length": Buffer.byteLength(dataString),
+            ...(dataString.length
+                ? {
+                      "Content-Type": "application/json",
+                      "User-Agent": "Node.js",
+                      "Content-Length": Buffer.byteLength(dataString),
+                  }
+                : {}),
+            ...headers,
         },
         timeout: 10000,
     }
@@ -50,9 +55,9 @@ export function postRequestSecure(hostname: string, path: string, content: any, 
             cb(err, null)
         })
 
-        request.write(dataString)
+        if (dataString.length) request.write(dataString)
         request.end()
     } catch (err) {
-        console.error("POST Request Error:", err)
+        console.error("HTTP Request Error:", err)
     }
 }

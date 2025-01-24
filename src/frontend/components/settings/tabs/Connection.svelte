@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, companion, connections, disabledServers, maxConnections, outputs, popupData, ports, remotePassword, serverData } from "../../../stores"
+    import { activePopup, companion, connections, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -133,8 +133,9 @@
     // Camera
     // Answer / Guess / Poll
 
+    // WIP do this on startup (if connected!)
     function pcoConnect() {
-        send(MAIN, ["PCO_CONNECT"])
+        send(MAIN, ["PCO_LOAD_SERVICES"])
     }
 </script>
 
@@ -222,8 +223,11 @@
 <br />
 
 <CombinedInput>
-    <Button on:click={pcoConnect} style="width: 100%;" center>Connect to PlanningCenter</Button>
+    <Button on:click={pcoConnect} style="width: 100%;" center>Connect to PlanningCenter ({$pcoConnected})</Button>
 </CombinedInput>
+<!-- <CombinedInput>
+    <Button on:click={pcoData} style="width: 100%;" center>Test</Button>
+</CombinedInput> -->
 
 <!-- <div>
   <p><T id="settings.allowed_connections" /></p>

@@ -100,7 +100,7 @@ const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesB
 const cache = new Store({ name: fileNames.cache, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 let history = new Store({ name: fileNames.history, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 let usage = new Store({ name: fileNames.usage, defaults: { all: [] }, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let accessKeys = new Store({ name: fileNames.driveKeys, defaults: {} })
+let accessKeys = new Store({ name: fileNames.access, defaults: {} })
 
 export let stores: { [key: string]: Store<any> } = {
     SETTINGS: settings,

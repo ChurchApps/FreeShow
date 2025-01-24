@@ -63,6 +63,7 @@ import {
     outputDisplay,
     outputs,
     overlays,
+    pcoConnected,
     playerVideos,
     playingVideos,
     popupData,
@@ -226,6 +227,14 @@ const receiveMAIN: any = {
     CAPTURE_CANVAS: (data: any) => captureCanvas(data),
     LESSONS_DONE: (data: any) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
     IMAGES_TO_SHOW: (data: any) => createImageShow(data),
+
+    // CONNECTION
+    PCO_CONNECT: (data: any) => {
+        if (data.success) {
+            pcoConnected.set(true)
+            if (data.isFirstConnection) newToast("$main.finished")
+        }
+    },
 }
 
 const receiveSTORE: any = {

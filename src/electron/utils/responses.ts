@@ -16,6 +16,7 @@ import { config, error_log, stores } from "../data/store"
 import { captureSlide, getThumbnail, getThumbnailFolderPath, saveImage } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
+import { loadServices } from "../planningcenter/request"
 import { closeServers, startServers } from "../servers"
 import type { Message } from "./../../types/Socket"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "./api"
@@ -47,7 +48,6 @@ import { LyricSearch } from "./LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "./shows"
 import checkForUpdates from "./updater"
-import { pcoConnect } from "../planningcenter/connect"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -100,7 +100,7 @@ const mainResponses: any = {
     FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
     // MAIN
     AUTO_UPDATE: (): void => checkForUpdates(),
-    GET_SYSTEM_FONTS: (data: any): void => loadFonts(data),
+    GET_SYSTEM_FONTS: (data: any) => loadFonts(data),
     URL: (data: string): void => openURL(data),
     LANGUAGE: (data: any): void => setGlobalMenu(data.strings),
     GET_PATHS: (): any => getPaths(),
@@ -189,13 +189,13 @@ const mainResponses: any = {
     READ_FILE: (data: any) => ({ ...data, content: readFile(data.path) }),
     OPEN_FOLDER: (data: any, e: any) => selectFolder(data, e),
     OPEN_FILE: (data: any, e: any) => selectFiles(data, e),
-    // EXTRA
-    PCO_CONNECT: () => pcoConnect(),
+    // CONNECTION
+    PCO_LOAD_SERVICES: () => loadServices(),
 }
 
-export function receiveMain(e: any, msg: Message) {
+export async function receiveMain(e: any, msg: Message) {
     let data: any = msg
-    if (mainResponses[msg.channel]) data = mainResponses[msg.channel](msg.data, e)
+    if (mainResponses[msg.channel]) data = await mainResponses[msg.channel](msg.data, e)
 
     if (data !== undefined) e.reply(MAIN, { channel: msg.channel, data })
 }
@@ -209,10 +209,7 @@ export const openURL = (url: string) => {
 }
 
 // GET_SYSTEM_FONTS
-function loadFonts(data: any) {
-    loadFontsAsync(data)
-}
-async function loadFontsAsync(data: any) {
+async function loadFonts(data: any) {
     const fonts = await getFonts()
     toApp(MAIN, { channel: "GET_SYSTEM_FONTS", data: { ...data, fonts } })
 }
