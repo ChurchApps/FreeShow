@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { IMPORT } from "../../../../types/Channels"
-    import { bibleApiKey, dictionary, isDev, labelsDisabled, language, scriptures } from "../../../stores"
+    import { dictionary, isDev, labelsDisabled, language, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
     import { getKey } from "../../../values/keys"
@@ -14,7 +14,6 @@
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
     import Link from "../../inputs/Link.svelte"
-    import { isFallback } from "../../drawer/bible/scripture"
 
     let error: null | string = null
     let bibles: any[] = []
