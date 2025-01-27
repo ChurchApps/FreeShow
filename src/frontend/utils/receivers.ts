@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, IMPORT, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE, STORE } from "../../types/Channels"
+import type { Project } from "../../types/Projects"
 import type { ClientMessage } from "../../types/Socket"
 import { triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
@@ -7,9 +8,11 @@ import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { addDrawerFolder } from "../components/helpers/dropActions"
+import { history } from "../components/helpers/history"
 import { captureCanvas, setMediaTracks } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { loadShows, saveTextCache } from "../components/helpers/setShow"
+import { checkName } from "../components/helpers/show"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -19,7 +22,7 @@ import { convertChordPro } from "../converters/chordpro"
 import { convertEasyslides } from "../converters/easyslides"
 import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
-import { importShow, importSpecific } from "../converters/importHelpers"
+import { createCategory, importShow, importSpecific, setTempShows } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong } from "../converters/opensong"
@@ -63,6 +66,7 @@ import {
     outputDisplay,
     outputs,
     overlays,
+    pcoConnected,
     playerVideos,
     playingVideos,
     popupData,
@@ -70,6 +74,7 @@ import {
     presentationData,
     previewBuffers,
     projectTemplates,
+    projectView,
     projects,
     shows,
     showsCache,
@@ -156,6 +161,7 @@ const receiveMAIN: any = {
 
         activePopup.set("alert")
     },
+    TOAST: (data) => newToast(data),
     CLOSE: () => initializeClosing(),
     RECEIVE_MIDI: (msg) => receivedMidi(msg),
     DELETE_SHOWS: (a) => {
@@ -223,6 +229,54 @@ const receiveMAIN: any = {
     CAPTURE_CANVAS: (data: any) => captureCanvas(data),
     LESSONS_DONE: (data: any) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
     IMAGES_TO_SHOW: (data: any) => createImageShow(data),
+
+    // CONNECTION
+    PCO_CONNECT: (data: any) => {
+        if (!data.success) return
+        pcoConnected.set(true)
+        if (data.isFirstConnection) newToast("$main.finished")
+    },
+    PCO_DISCONNECT: (data: any) => {
+        if (!data.success) return
+        pcoConnected.set(false)
+    },
+    PCO_PROJECTS: (data: any) => {
+        if (!data.projects) return
+
+        // CREATE CATEGORY
+        createCategory("Planning Center")
+
+        // CREATE SHOWS
+        let tempShows: any = []
+        data.shows.forEach((show) => {
+            let id = show.id
+            delete show.id
+            tempShows.push({ id, show: { ...show, name: checkName(show.name, id), locked: true } })
+        })
+        setTempShows(tempShows)
+
+        data.projects.forEach((pcoProject) => {
+            // CREATE PROJECT FOLDER
+            let folderId = pcoProject.folderId
+            if (folderId && !get(folders)[folderId]) {
+                history({ id: "UPDATE", newData: { replace: { parent: "/", name: pcoProject.folderName } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
+            }
+
+            // CREATE PROJECT
+            let project: Project = {
+                name: pcoProject.name,
+                created: pcoProject.created,
+                used: Date.now(), // show on top in last used list
+                parent: folderId || "/",
+                shows: pcoProject.items || [],
+            }
+
+            let projectId = pcoProject.id
+            history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
+        })
+
+        projectView.set(false)
+    },
 }
 
 const receiveSTORE: any = {

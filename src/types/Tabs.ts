@@ -17,7 +17,7 @@ export interface Category {
 export interface BibleCategories extends Category {
     customName?: string
     api?: boolean
-    books?: any[]
+    books2?: any[] // api cache
     cacheUpdate?: Date
     collection?: {
         versions: string[]

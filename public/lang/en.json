@@ -900,7 +900,7 @@
         "padding": "Padding",
         "special": "Special",
         "scrolling": "Scrolling",
-        "scrolling_speed": "Scrolling speed",
+        "scrolling_speed": "Scrolling duration",
         "top_bottom": "Top to bottom",
         "bottom_top": "Bottom to top",
         "left_right": "Left to right",

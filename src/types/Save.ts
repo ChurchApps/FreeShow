@@ -62,5 +62,4 @@ export type SaveListSettings =
     | "driveData"
     | "calendarAddShow"
     | "metronome"
-    | "bibleApiKey"
     | "special"

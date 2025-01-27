@@ -1,10 +1,10 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
     import { ProjectShowRef } from "../../../../types/Projects"
-    import { dictionary, media, outLocked, showsCache } from "../../../stores"
+    import { dictionary, media, outLocked, outputs, showsCache, styles } from "../../../stores"
     import Image from "../../drawer/media/Image.svelte"
     import { getMediaStyle } from "../../helpers/media"
-    import { setOutput } from "../../helpers/output"
+    import { getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import AudioPreview from "../AudioPreview.svelte"
     import PdfPreview from "../pdf/PdfPreview.svelte"
@@ -14,8 +14,11 @@
     export let show: ProjectShowRef
     $: type = show.type
 
+    $: outputId = getActiveOutputs($outputs, false, true, true)[0]
+    $: outputStyle = getCurrentStyle($styles, $outputs[outputId]?.style)
+
     let mediaStyle: MediaStyle = {}
-    $: if (show) mediaStyle = getMediaStyle($media[show.id], { name: "" })
+    $: if (show) mediaStyle = getMediaStyle($media[show.id], outputStyle)
 </script>
 
 {#if type === "video" || type === "image" || type === "player"}

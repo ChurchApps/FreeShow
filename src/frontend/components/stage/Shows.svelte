@@ -16,6 +16,9 @@
 
     function keydown(e: any) {
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
+        if ($activeStage.items.length) return
+
+        // CHANGE STAGE LAYOUT
 
         let nextTab = -1
         let currentTabIndex = sortedStageSlides.findIndex((a) => a.id === $activeStage.id)

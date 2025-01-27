@@ -11,7 +11,7 @@ import { clone, keysToID, sortByTime } from "./array"
 import { loadShows } from "./setShow"
 import { checkNextAfterMedia } from "./showActions"
 import { sortByClosestMatch } from "../actions/apiHelper"
-import { playPauseGlobal } from "../drawer/timers/timers"
+import { getCurrentTimerValue, playPauseGlobal } from "../drawer/timers/timers"
 
 const INTERVAL = 1000
 const TEN_SECONDS = 1000 * 10
@@ -183,4 +183,27 @@ export function startEventTimer() {
 
 function convertEventAction(action) {
     return { triggers: [action.id], actionValues: { [action.id]: action.data || {} } }
+}
+
+// TOWARDS A TIME/EVENT
+
+let timerCheckTimeout: any = null
+export function checkTimers() {
+    if (timerCheckTimeout) clearTimeout(timerCheckTimeout)
+
+    Object.entries(get(timers)).forEach(([id, timer]) => {
+        if (timer.type === "counter") return
+
+        let time = getCurrentTimerValue({ ...timer, overflow: true }, {}, new Date())
+
+        if (time < 0 && time >= -1) {
+            checkNextAfterMedia(id, "timer")
+            customActionActivation(`timer_end___` + id)
+        }
+    })
+
+    timerCheckTimeout = setTimeout(() => {
+        timerCheckTimeout = null
+        checkTimers()
+    }, 1000)
 }
