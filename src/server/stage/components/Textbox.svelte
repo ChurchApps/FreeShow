@@ -72,7 +72,7 @@
     function createChordLines() {
         chordLines = []
 
-        item.lines!.forEach((line, i) => {
+        item.lines?.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
             let chords = JSON.parse(JSON.stringify(line.chords || []))
@@ -159,7 +159,7 @@
         transposed[showId] = amountTransposed
         localStorage.transposed = JSON.stringify(transposed)
 
-        item.lines!.forEach((line) => {
+        item.lines?.forEach((line) => {
             if (!line.chords?.length || !line.text) return
 
             let chords = JSON.parse(JSON.stringify(line.chords || []))

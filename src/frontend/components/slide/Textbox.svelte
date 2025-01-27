@@ -238,8 +238,9 @@
     $: if (chords && (item.lines || fontSize)) createChordLines()
     function createChordLines() {
         chordLines = []
+        if (!Array.isArray(item?.lines)) return
 
-        item.lines?.forEach((line, i) => {
+        item.lines.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
             let chords = clone(line.chords || [])

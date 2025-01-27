@@ -259,7 +259,7 @@ export function getItemTextArray(item: Item): string[] {
 // get chords map
 export function getItemChords(item: Item): string {
     let text: string = ""
-    if (!item?.lines) return ""
+    if (!Array.isArray(item?.lines)) return ""
 
     item.lines.forEach((line) => {
         if (!line.chords?.length) return
