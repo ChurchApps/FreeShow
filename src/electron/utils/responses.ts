@@ -191,8 +191,8 @@ const mainResponses: any = {
     OPEN_FOLDER: (data: any, e: any) => selectFolder(data, e),
     OPEN_FILE: (data: any, e: any) => selectFiles(data, e),
     // CONNECTION
-    PCO_LOAD_SERVICES: () => pcoLoadServices(),
-    PCO_STARTUP_LOAD: () => pcoStartupLoad(),
+    PCO_LOAD_SERVICES: (data: any) => pcoLoadServices(data.dataPath),
+    PCO_STARTUP_LOAD: (data: any) => pcoStartupLoad(data.dataPath),
     PCO_DISCONNECT: () => pcoDisconnect(),
 }
 

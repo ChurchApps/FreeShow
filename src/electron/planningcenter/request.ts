@@ -1,7 +1,10 @@
+import path from "path"
 import { uid } from "uid"
 import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
 import type { Show, Slide } from "../../types/Show"
+import { downloadMedia } from "../data/downloadMedia"
+import { dataFolderNames, getDataFolder } from "../utils/files"
 import { httpsRequest } from "../utils/requests"
 import { PCO_API_URL, pcoConnect, type PCOScopes } from "./connect"
 
@@ -39,7 +42,7 @@ export async function pcoRequest(data: PCORequestData): Promise<any> {
 // LOAD SERVICES
 
 const ONE_WEEK_MS = 604800000
-export async function pcoLoadServices() {
+export async function pcoLoadServices(dataPath: string) {
     let typesEndpoint = "service_types"
     const SERVICE_TYPES = (await pcoRequest({ scope: "services", endpoint: typesEndpoint }))?.data
     if (!Array.isArray(SERVICE_TYPES)) return
@@ -47,6 +50,7 @@ export async function pcoLoadServices() {
 
     let projects: any[] = []
     let shows: Show[] = []
+    let downloadableMedia: any[] = []
 
     await Promise.all(
         SERVICE_TYPES.map(async (serviceType) => {
@@ -58,8 +62,7 @@ export async function pcoLoadServices() {
             const filteredPlans = SERVICE_PLANS.filter(({ attributes: a }) => {
                 if (a.items_count === 0) return false
                 let date = new Date(a.sort_date).getTime()
-                // let today = Date.now()
-                let today = new Date("2025.01.24").getTime() // DEBUG
+                let today = Date.now()
                 return date > today && date < today + ONE_WEEK_MS
             })
 
@@ -78,14 +81,15 @@ export async function pcoLoadServices() {
                             let songDataEndpoint = itemsEndpoint + `/${item.id}/song`
                             const SONG_DATA: any = (await pcoRequest({ scope: "services", endpoint: songDataEndpoint }))?.data
                             if (!SONG_DATA) return
-                            let songArrangement: any = (await pcoRequest({ scope: "services", endpoint: `/songs/${SONG_DATA.id}/arrangements` }))?.data[0]
+                            let arrangementEndpoint = `/songs/${SONG_DATA.id}/arrangements`
+                            let songArrangement: any = (await pcoRequest({ scope: "services", endpoint: arrangementEndpoint }))?.data[0]
                             if (!songArrangement) return
 
                             const SONG = songArrangement.attributes
 
                             // let lyrics = SONG.lyrics || ""
                             let sequence: string[] = plan.custom_arrangement_sequence || SONG.sequence || []
-                            let SECTIONS: any[] = (await pcoRequest({ scope: "services", endpoint: `/songs/${SONG_DATA.id}/arrangements/${songArrangement.id}/sections` }))?.data.attributes.sections || []
+                            let SECTIONS: any[] = (await pcoRequest({ scope: "services", endpoint: `${arrangementEndpoint}/${songArrangement.id}/sections` }))?.data.attributes.sections || []
                             if (!SECTIONS.length) SECTIONS = sequence.map((id) => ({ label: id, lyrics: "" }))
 
                             const show = getShow(SONG_DATA, SONG, SECTIONS)
@@ -95,11 +99,19 @@ export async function pcoLoadServices() {
                             projectItems.push({ type: "show", id: showId })
                         } else if (type === "media") {
                             let mediaEndpoint = itemsEndpoint + `/${item.id}/media`
-                            const MEDIA = (await pcoRequest({ scope: "services", endpoint: mediaEndpoint }))?.data[0].attributes
+                            const MEDIA = (await pcoRequest({ scope: "services", endpoint: mediaEndpoint }))?.data[0]
+                            const ATTACHEMENT = (await pcoRequest({ scope: "services", endpoint: `media/${MEDIA.id}/attachments` }))?.data[0]
+                            const DOWNLOAD_URL = await getMediaStreamUrl(`attachments/${ATTACHEMENT.id}/open`)
 
-                            // WIP download actual media file!
-                            // projectItems.push({ type: "image/video", name: MEDIA.title, length: MEDIA.length })
-                            projectItems.push({ name: MEDIA.title, type: "image", id: MEDIA.thumbnail_url })
+                            // ATTACHEMENT.attributes.url (this is not streamable, just web downloadable)
+                            let downloadURL = DOWNLOAD_URL
+
+                            downloadableMedia.push({ path: dataPath, name: serviceType.attributes.name, type: "planningcenter", files: [{ name: ATTACHEMENT.attributes.filename, url: downloadURL }] })
+
+                            let fileFolderPath = getDataFolder(dataPath, dataFolderNames.planningcenter)
+                            const filePath = path.join(fileFolderPath, serviceType.attributes.name, ATTACHEMENT.attributes.filename)
+
+                            projectItems.push({ name: MEDIA.attributes.title, type: MEDIA.attributes.length ? "video" : "image", id: filePath })
                         } else if (type === "header" || type === "item") {
                             projectItems.push({ type: "section", id: uid(5), name: item.attributes.title || "", notes: item.attributes.description || "" })
                         }
@@ -120,6 +132,9 @@ export async function pcoLoadServices() {
             )
         })
     )
+
+    console.log(downloadableMedia)
+    downloadMedia(downloadableMedia)
 
     toApp(MAIN, { channel: "PCO_PROJECTS", data: { shows, projects } })
 }
@@ -186,4 +201,23 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     }
 
     return show
+}
+
+async function getMediaStreamUrl(endpoint: string): Promise<string> {
+    const PCO_ACCESS = await pcoConnect("services")
+    if (!PCO_ACCESS) return ""
+
+    const path = `/services/v${PCO_API_version}/${endpoint}`
+    const headers = { Authorization: `Bearer ${PCO_ACCESS.access_token}` }
+
+    return new Promise((resolve) => {
+        httpsRequest(PCO_API_URL, path, "POST", headers, {}, (err: any, result: any) => {
+            if (err) {
+                console.log("Could not get media stream URL:", err)
+                return resolve("")
+            }
+
+            resolve(result.data.attributes.attachment_url)
+        })
+    })
 }

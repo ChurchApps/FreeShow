@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, companion, connections, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
+    import { activePopup, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -135,7 +135,7 @@
 
     // WIP do this on startup (if connected!)
     function pcoConnect() {
-        if (!$pcoConnected) send(MAIN, ["PCO_LOAD_SERVICES"])
+        if (!$pcoConnected) send(MAIN, ["PCO_LOAD_SERVICES"], { dataPath: $dataPath })
         else send(MAIN, ["PCO_DISCONNECT"])
     }
 </script>

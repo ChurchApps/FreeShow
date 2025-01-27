@@ -187,6 +187,7 @@ export const dataFolderNames = {
     exports: "Exports",
     imports: "Imports",
     lessons: "Lessons",
+    planningcenter: "Planning Center",
     recordings: "Recordings",
     userData: "Config",
 }

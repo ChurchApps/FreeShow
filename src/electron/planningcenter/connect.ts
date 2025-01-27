@@ -129,7 +129,7 @@ export function pcoDisconnect(scope: PCOScopes = "services") {
     toApp(MAIN, { channel: "PCO_DISCONNECT", data: { success: true } })
 }
 
-export function pcoStartupLoad(scope: PCOScopes = "services") {
+export function pcoStartupLoad(dataPath: string, scope: PCOScopes = "services") {
     if (!stores.ACCESS.get(`pco_${scope}`)) return
-    pcoLoadServices()
+    pcoLoadServices(dataPath)
 }
