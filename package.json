@@ -149,7 +149,7 @@
         "@types/sqlite3": "^3.1.8",
         "@types/tmp": "^0.2.6",
         "@types/vimeo__player": "^2.16.2",
-        "electron": "^32.2.8",
+        "electron": "^32.2.6",
         "electron-builder": "^24.13.3",
         "playwright": "^1.49.0",
         "prettier": "^3.4.1",
