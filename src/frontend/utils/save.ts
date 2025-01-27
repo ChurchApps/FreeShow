@@ -10,7 +10,6 @@ import {
     audioPlaylists,
     autoOutput,
     autosave,
-    bibleApiKey,
     calendarAddShow,
     categories,
     customizedIcons,
@@ -140,7 +139,6 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         driveData: get(driveData),
         calendarAddShow: get(calendarAddShow),
         metronome: get(metronome),
-        bibleApiKey: get(bibleApiKey),
         special: get(special),
     }
 
@@ -363,7 +361,6 @@ const saveList: { [key in SaveList]: any } = {
     driveData: driveData,
     calendarAddShow: null,
     metronome: null,
-    bibleApiKey: null,
     special: special,
     companion: null,
     globalTags: globalTags,

@@ -94,9 +94,9 @@
         if (typeof chapterId === "number") chapterId = bookId + "." + (chapterId + 1)
 
         let objectId = Object.entries($scriptures).find(([_id, a]: any) => a.id === bibleId)?.[0] || ""
-        if (load === "books" && $scriptures[objectId]?.books) {
+        if (load === "books" && $scriptures[objectId]?.books2) {
             // load books cache
-            data = $scriptures[objectId].books
+            data = $scriptures[objectId].books2
         } else {
             try {
                 // get actual api id from the abbr
@@ -120,7 +120,8 @@
                 })
                 if (!hasId) {
                     bookId = cachedRef?.bookId
-                    if (!data[bookId]) bookId = data[0].id
+                    if (!data[bookId]) bookId = data[0].keyName
+                    chapterId = `${bookId}.1`
                 }
 
                 books[bibleId] = data
@@ -371,6 +372,7 @@
 
         if (bookId !== searchValues.book) {
             bookId = searchValues.book
+            if (bibles[0].api) chapterId = `${bookId}.1`
             getBook()
             getChapter()
         }
@@ -527,7 +529,7 @@
             const book = booksList.find((a) => a.abbr && formatBookSearch(a.abbr) === splittedSearch[0])
             if (book) {
                 updateSearchValue(book.name + " ")
-                return book.id
+                return book.keyName || book.id
             }
         }
 
@@ -582,10 +584,10 @@
 
         let matchingBook = exactMatch || findMatches[0]
         searchValues.bookName = matchingBook.name
-        if (searchValues.book !== undefined && searchValues.book === matchingBook.id) return matchingBook.id
+        if (searchValues.book !== undefined && searchValues.book === (matchingBook.keyName || matchingBook.id)) return matchingBook.keyName || matchingBook.id
 
         let fullMatch = formatBookSearch(searchValue).includes(formatBookSearch(matchingBook.name) + " ")
-        if (fullMatch || !autoComplete) return matchingBook.id
+        if (fullMatch || !autoComplete) return matchingBook.keyName || matchingBook.id
 
         // auto complete
         // let rest = searchValue.slice(match.length)
@@ -599,7 +601,7 @@
 
         autoComplete = false
 
-        return matchingBook.id
+        return matchingBook.keyName || matchingBook.id
     }
     function formatBookSearch(value: string) {
         // replace diacritic values like á -> a & ö -> o
@@ -844,8 +846,6 @@
             <Center faded>
                 <T id="error.bible" />
             </Center>
-            <!-- {:else if bibles[0].api && !$bibleApiKey}
-            <BibleApiKey /> -->
         {:else if error}
             <Center faded>
                 <T id="error.bible_api" />
@@ -910,7 +910,7 @@
                         {#key books[firstBibleId]}
                             {#each books[firstBibleId] as book, i}
                                 {@const id = bibles[0].api ? book.keyName : i}
-                                {@const color = getColorCode(books[firstBibleId], book.keyName ?? i)}
+                                {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
                                 {@const name = getShortName(book.name, i)}
 
                                 <span
@@ -989,12 +989,13 @@
                     {#key books[firstBibleId]}
                         {#each books[firstBibleId] as book, i}
                             {@const id = bibles[0].api ? book.keyName : i}
-                            {@const color = getColorCode(books[firstBibleId], book.keyName ?? i)}
+                            {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
 
                             <span
                                 id={id.toString()}
                                 on:click={() => {
                                     bookId = id
+                                    if (bibles[0].api) chapterId = `${bookId}.1`
                                     autoComplete = false
                                 }}
                                 class:active={bibles[0].api ? bookId === book.keyName : bookId === i}

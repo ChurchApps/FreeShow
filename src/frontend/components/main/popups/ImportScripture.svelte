@@ -4,16 +4,15 @@
     import { dictionary, isDev, labelsDisabled, language, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
-    import { getKey } from "../../../values/keys"
     import { sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Link from "../../inputs/Link.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
-    import Link from "../../inputs/Link.svelte"
 
     let error: null | string = null
     let bibles: any[] = []
@@ -21,7 +20,7 @@
     $: if (importType === "api") fetchBibles()
     async function fetchBibles() {
         // read cache
-        let cache = $isDev ? {} : JSON.parse(localStorage.getItem("scriptureApiCache") || "{}")
+        let cache = $isDev ? {} : JSON.parse(localStorage.getItem("scriptureApiCache2") || "{}")
         if (cache.date) {
             let cacheDate = new Date(cache.date).getTime()
             let today = new Date().getTime()
@@ -33,25 +32,9 @@
             }
         }
 
-        //const KEY = $bibleApiKey || getKey("bibleapi" + (isFallback ? "_fallback" : ""))
         const api = "https://contentapi.churchapps.org/bibles"
         fetch(api)
-            .then((response) => {
-                // fallback key
-                if (response.status >= 400) {
-                    console.log("Could not fetch, trying fallback key")
-                    fetch(api, { headers: { "api-key": getKey("bibleapi_fallback") } })
-                        .then((response) => response.json())
-                        .then(manageResult)
-                        .catch((e) => {
-                            console.log(e)
-                            error = e
-                        })
-                    return
-                }
-
-                return response.json()
-            })
+            .then((response) => response.json())
             .then(manageResult)
             .catch((e) => {
                 console.log(e)
@@ -66,7 +49,7 @@
 
             // cache bibles
             let cache = { date: new Date(), bibles }
-            localStorage?.setItem("scriptureApiCache", JSON.stringify(cache))
+            localStorage?.setItem("scriptureApiCache2", JSON.stringify(cache))
         }
     }
 
@@ -98,7 +81,7 @@
         }
     }
 
-    function toggleScripture({ id, name }: any) {
+    function toggleScripture({ sourceKey: id, name }: any) {
         scriptures.update((a: any) => {
             let key: string | null = null
             Object.entries(a).forEach(([sId, value]: any) => {
@@ -172,12 +155,9 @@
             {/if}
         </div>
         <div class="list">
-            <!-- custom key input: -->
-            <!-- <BibleApiKey /> -->
-
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
-                    <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
+                    <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
                         <Icon id="scripture_alt" right />{bible.nameLocal}
                         {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
                             <span class="description" title={bible.description}>({bible.description})</span>
@@ -189,7 +169,7 @@
             {#if sortedBibles.length}
                 {#if searchedBibles.length}
                     {#each searchedBibles as bible}
-                        <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
+                        <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
                             <Icon id="scripture_alt" right />{bible.name}
                             {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
                                 <span class="description" title={bible.description}>({bible.description})</span>
