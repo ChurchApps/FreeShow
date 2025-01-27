@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../types/Main"
-    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, styles } from "../../stores"
     import { playAudio } from "../helpers/audio"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -105,16 +105,19 @@
     function doubleClick(e: any) {
         if (editActive || $outLocked || e.target.closest("input")) return
 
-        let currentOutput: any = getActiveOutputs()[0] || {}
-        let slide: any = currentOutput.out?.slide || null
+        let outputId: string = getActiveOutputs($outputs, false, true, true)[0]
+        let currentOutput: any = $outputs[outputId] || {}
 
         if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
             updateOut("active", 0, _show("active").layouts("active").ref()[0], !e.altKey)
+
+            let slide: any = currentOutput.out?.slide || null
             if (slide?.id === id && slide?.index === 0 && slide?.layout === $showsCache[id].settings.activeLayout) return
+
             setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: 0 })
         } else if (type === "image" || type === "video") {
-            // WIP duplicate of Show.svelte - onVideoClick
-            let mediaStyle: MediaStyle = getMediaStyle($media[id], { name: "" })
+            let outputStyle = $styles[currentOutput.style]
+            let mediaStyle: MediaStyle = getMediaStyle($media[id], outputStyle)
             let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, startAt: 0, type: type, ...mediaStyle }
 
             // remove active slide

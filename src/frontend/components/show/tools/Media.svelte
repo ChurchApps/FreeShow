@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN, OUTPUT } from "../../../../types/Channels"
-    import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache } from "../../../stores"
+    import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
     import { runAction } from "../../actions/actions"
@@ -10,7 +10,7 @@
     import { sortByName } from "../../helpers/array"
     import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
     import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, mediaSize } from "../../helpers/media"
-    import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
+    import { findMatchingOut, getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import HoverButton from "../../inputs/HoverButton.svelte"
@@ -19,7 +19,8 @@
 
     $: show = $showsCache[$activeShow!.id]
 
-    $: outputId = getActiveOutputs($outputs, true, true, true)[0]
+    $: outputId = getActiveOutputs($outputs, false, true, true)[0]
+    $: outputStyle = getCurrentStyle($styles, $outputs[outputId]?.style)
 
     let layoutBackgrounds: any[] = []
     let layoutAudio: any[] = []
@@ -167,7 +168,7 @@
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
                 <!-- TODO: cameras -->
-                {@const mediaStyle = getMediaStyle($media[background.path], { name: "" })}
+                {@const mediaStyle = getMediaStyle($media[background.path], outputStyle)}
                 {@const bgPath = newPaths[background.path] || ""}
 
                 <SelectElem id="media" data={{ ...background }} draggable>
@@ -215,7 +216,7 @@
                 <h5><T id="media.recommended" /></h5>
 
                 {#each simularBgs as background}
-                    {@const mediaStyle = getMediaStyle($media[background.path], { name: "" })}
+                    {@const mediaStyle = getMediaStyle($media[background.path], outputStyle)}
                     {@const type = getMediaType(getExtension(background.path)) || "video"}
 
                     <SelectElem id="media" data={{ ...background, type }} draggable>

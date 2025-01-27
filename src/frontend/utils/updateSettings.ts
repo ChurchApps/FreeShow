@@ -13,7 +13,6 @@ import {
     audioStreams,
     autoOutput,
     autosave,
-    bibleApiKey,
     calendarAddShow,
     categories,
     companion,
@@ -299,10 +298,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
                 send(MAIN, ["WEBSOCKET_START"], get(ports).companion)
             }, 3000)
         }
-    },
-    bibleApiKey: (a: any) => {
-        // this is so users can manually add their own key
-        if (a) bibleApiKey.set(a)
     },
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God

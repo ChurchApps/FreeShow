@@ -228,9 +228,7 @@ export function enableSubtitle(video: HTMLVideoElement, languageId: string) {
     if (newTrack) newTrack.mode = "showing"
 }
 
-export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
-    if (!mediaObj && !currentStyle) return {}
-
+export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: Styles | undefined) {
     let mediaStyle: MediaStyle = {
         filter: "",
         flipped: false,
@@ -240,6 +238,8 @@ export function getMediaStyle(mediaObj: MediaStyle, currentStyle: Styles) {
         fromTime: 0,
         toTime: 0,
     }
+
+    if (!mediaObj && !currentStyle) return mediaStyle
 
     Object.keys(mediaStyle).forEach((key) => {
         if (!mediaObj?.[key]) return

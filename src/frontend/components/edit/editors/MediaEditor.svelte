@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activeShow, media } from "../../../stores"
+    import { activeEdit, activeShow, media, outputs, styles } from "../../../stores"
     import { getExtension, getMediaStyle, getMediaType } from "../../helpers/media"
+    import { getActiveOutputs, getCurrentStyle } from "../../helpers/output"
     import MediaControls from "../../media/MediaControls.svelte"
     import Media from "../../output/layers/Media.svelte"
 
@@ -13,10 +14,15 @@
     let videoTime: number = 0
     let videoData = { paused: false, muted: true, duration: 0, loop: true }
 
+    $: outputId = getActiveOutputs($outputs, false, true, true)[0]
+    $: outputStyle = getCurrentStyle($styles, $outputs[outputId]?.style)
+
+    $: console.log(outputId, outputStyle, mediaStyle)
+
     // get styling
     let mediaStyle: MediaStyle = {}
     $: mediaId = $activeEdit.id && $activeEdit.type === "media" ? $activeEdit.id : $activeShow?.id && ($activeShow.type === "image" || $activeShow.type === "video") ? $activeShow.id : ""
-    $: if (mediaId) mediaStyle = getMediaStyle($media[mediaId], { name: "" })
+    $: if (mediaId) mediaStyle = getMediaStyle($media[mediaId], outputStyle)
 </script>
 
 <div class="parent" style="display: flex;flex-direction: column;height: 100%;">

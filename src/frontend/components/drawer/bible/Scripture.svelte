@@ -94,9 +94,9 @@
         if (typeof chapterId === "number") chapterId = bookId + "." + (chapterId + 1)
 
         let objectId = Object.entries($scriptures).find(([_id, a]: any) => a.id === bibleId)?.[0] || ""
-        if (load === "books" && $scriptures[objectId]?.books) {
+        if (load === "books" && $scriptures[objectId]?.books2) {
             // load books cache
-            data = $scriptures[objectId].books
+            data = $scriptures[objectId].books2
         } else {
             try {
                 // get actual api id from the abbr
@@ -116,77 +116,44 @@
         switch (load) {
             case "books":
                 data.forEach((d: Book) => {
-                    if (d.id === bookId) hasId = true
+                    if (d.keyName === bookId) hasId = true
                 })
                 if (!hasId) {
                     bookId = cachedRef?.bookId
-                    if (!data[bookId]) bookId = data[0].id
+                    if (!data[bookId]) bookId = data[0].keyName
+                    chapterId = `${bookId}.1`
                 }
 
                 books[bibleId] = data
                 break
             case "chapters":
-                data.forEach((d: Chapter) => {
-                    if (d.id === chapterId) hasId = true
-                })
-                if (!hasId) {
-                    chapterId = cachedRef?.chapterId
-                    if (!data[chapterId]) chapterId = bookId + ".1"
-                }
-
-                if (data[0].number === "intro") chapters[bibleId] = data.slice(1, data.length)
+                if (data[0].number === 0) chapters[bibleId] = data.slice(1, data.length)
                 else chapters[bibleId] = data
                 break
             case "verses":
                 versesList[bibleId] = data
                 break
             case "versesText":
-                verses[bibleId] = divide(data, index)
+                verses[bibleId] = convertVerses(data, index)
                 bibles[index].verses = verses[bibleId]
                 // WIP verses[id] =
                 break
         }
     }
 
-    function divide(data: VerseText, index: number = 0): { [key: string]: string } {
-        let newVerses: any = {}
-        let verse: string
-
-        // class: s1 (comment) - r (reference)
-        // remove custom tags
-        const content = data.content
-            .toString()
-            .replace(/<p class="s\d+">(.*?)<\/p>/g, "")
-            .replace(/<p class="r">(.*?)<\/p>/g, "")
-
-        content.split("span").forEach(trimVerse)
-        function trimVerse(content) {
-            // let xt = /(<span class="xt"\b[^>]*>)[^<>]*(<\/span>)/i
-            let brackets = / *\[[0-9\]]*]/g // remove [1], not [text]
-            content = content.replace(brackets, "").replace(/(<([^>]+)>)/gi, "")
-
-            if (content.includes("data-number")) {
-                verse = content.split('"')[1]
-                newVerses[verse] = ""
-            } else if (content.includes("class")) {
-                newVerses[verse] += "<span" + content + "span>"
-            } else {
-                let noHTML = ""
-                content.split(/<|>/).forEach((a) => {
-                    noHTML += a || ""
-                })
-                if (newVerses[verse] !== undefined) newVerses[verse] += noHTML
-            }
-
-            if (newVerses[verse]) newVerses[verse] = newVerses[verse].replaceAll("¶ ", "")
-        }
-
+    function convertVerses(data: VerseText[], index: number = 0): { [key: string]: string } {
+        let verses: any = {}
+        data.forEach((d: any, i: number) => {
+            verses[i + 1] = d.content
+        })
+        console.log(index)
+        /*
         if (bibles[index]) {
             bibles[index].metadata = data.metadata || {}
             if (data.copyright) bibles[index].metadata.copyright = data.copyright
-        }
+        }*/
 
-        return newVerses
+        return verses
     }
 
     let listenerId = uid()
@@ -256,7 +223,7 @@
 
             if (bible.api) {
                 books[id].forEach((b) => {
-                    if (b.id === bookId) bibles[i].book = b.name
+                    if (b.keyName === bookId) bibles[i].book = b.name
                 })
                 loadAPIBible(id, "chapters", i)
             } else if (books[id][bookId]) {
@@ -277,7 +244,7 @@
 
             if (bible.api) {
                 chapters[id].forEach((c) => {
-                    if (c.id === chapterId) bibles[i].chapter = c.number
+                    if (c.keyName === chapterId) bibles[i].chapter = c.number
                 })
 
                 verses[id] = {}
@@ -405,6 +372,7 @@
 
         if (bookId !== searchValues.book) {
             bookId = searchValues.book
+            if (bibles[0].api) chapterId = `${bookId}.1`
             getBook()
             getChapter()
         }
@@ -561,7 +529,7 @@
             const book = booksList.find((a) => a.abbr && formatBookSearch(a.abbr) === splittedSearch[0])
             if (book) {
                 updateSearchValue(book.name + " ")
-                return book.id
+                return book.keyName || book.id
             }
         }
 
@@ -616,10 +584,10 @@
 
         let matchingBook = exactMatch || findMatches[0]
         searchValues.bookName = matchingBook.name
-        if (searchValues.book !== undefined && searchValues.book === matchingBook.id) return matchingBook.id
+        if (searchValues.book !== undefined && searchValues.book === (matchingBook.keyName || matchingBook.id)) return matchingBook.keyName || matchingBook.id
 
         let fullMatch = formatBookSearch(searchValue).includes(formatBookSearch(matchingBook.name) + " ")
-        if (fullMatch || !autoComplete) return matchingBook.id
+        if (fullMatch || !autoComplete) return matchingBook.keyName || matchingBook.id
 
         // auto complete
         // let rest = searchValue.slice(match.length)
@@ -633,7 +601,7 @@
 
         autoComplete = false
 
-        return matchingBook.id
+        return matchingBook.keyName || matchingBook.id
     }
     function formatBookSearch(value: string) {
         // replace diacritic values like á -> a & ö -> o
@@ -656,7 +624,7 @@
         // GEN.1 || 0
         let formattedChapter: string | number | null = null
         chapters[firstBibleId]?.forEach((c, i) => {
-            if (c.id?.replace(/\D+/g, "") === chapter) formattedChapter = c.id
+            if (c.keyName?.replace(/\D+/g, "") === chapter) formattedChapter = c.keyName
             else if (c.number.toString() === chapter) formattedChapter = i
         })
 
@@ -780,7 +748,7 @@
         if (changeChapter) {
             // find current chapter
             let notApi = typeof chapterId === "number"
-            let chapterIndex = notApi ? chapterId : chapters[firstBibleId].findIndex((a) => a.id === chapterId)
+            let chapterIndex = notApi ? chapterId : chapters[firstBibleId].findIndex((a) => a.keyName === chapterId)
 
             if (moveLeft) chapterIndex--
             else chapterIndex++
@@ -789,7 +757,7 @@
             if (!newChapter) return
 
             // set new chapter
-            let newChapterId = notApi ? chapterIndex : newChapter.id
+            let newChapterId = notApi ? chapterIndex : newChapter.keyName
             chapterId = newChapterId
 
             // select verses
@@ -878,8 +846,6 @@
             <Center faded>
                 <T id="error.bible" />
             </Center>
-            <!-- {:else if bibles[0].api && !$bibleApiKey}
-            <BibleApiKey /> -->
         {:else if error}
             <Center faded>
                 <T id="error.bible_api" />
@@ -889,6 +855,7 @@
                 <div class="verses">
                     {#each contentSearchMatches as match}
                         <p
+                            class:showAllText={$resized.rightPanelDrawer <= 5}
                             on:dblclick={() => {
                                 bookId = match.book
                                 chapterId = match.chapter
@@ -917,6 +884,7 @@
                 <div class="verses">
                     {#each currentHistory as verse}
                         <p
+                            class:showAllText={$resized.rightPanelDrawer <= 5}
                             on:dblclick={() => {
                                 bookId = verse.book
                                 chapterId = verse.chapter
@@ -941,7 +909,7 @@
                     {#if books[firstBibleId]?.length}
                         {#key books[firstBibleId]}
                             {#each books[firstBibleId] as book, i}
-                                {@const id = bibles[0].api ? book.id : i}
+                                {@const id = bibles[0].api ? book.keyName : i}
                                 {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
                                 {@const name = getShortName(book.name, i)}
 
@@ -951,7 +919,7 @@
                                         bookId = id
                                         autoComplete = false
                                     }}
-                                    class:active={bibles[0].api ? bookId === book.id : bookId === i}
+                                    class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
                                     style="color: {color};"
                                     title={book.name}
                                 >
@@ -967,14 +935,14 @@
                     <div class="chapters context #scripture_chapter" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
                         {#if chapters[firstBibleId]?.length}
                             {#each chapters[firstBibleId] as chapter, i}
-                                {@const id = bibles[0].api ? chapter.id : i}
+                                {@const id = bibles[0].api ? chapter.keyName : i}
                                 <span
                                     id={id.toString()}
                                     on:mousedown={() => {
                                         chapterId = id
                                         autoComplete = false
                                     }}
-                                    class:active={bibles[0].api ? chapterId === chapter.id : chapterId === i}
+                                    class:active={bibles[0].api ? chapterId === chapter.keyName : chapterId === i}
                                 >
                                     {chapter.number}
                                 </span>
@@ -1020,16 +988,17 @@
                 {#if books[firstBibleId]?.length}
                     {#key books[firstBibleId]}
                         {#each books[firstBibleId] as book, i}
-                            {@const id = bibles[0].api ? book.id : i}
+                            {@const id = bibles[0].api ? book.keyName : i}
                             {@const color = getColorCode(books[firstBibleId], book.id ?? i)}
 
                             <span
                                 id={id.toString()}
                                 on:click={() => {
                                     bookId = id
+                                    if (bibles[0].api) chapterId = `${bookId}.1`
                                     autoComplete = false
                                 }}
-                                class:active={bibles[0].api ? bookId === book.id : bookId === i}
+                                class:active={bibles[0].api ? bookId === book.keyName : bookId === i}
                                 style={color ? `border-left: 2px solid ${color};` : ""}
                             >
                                 {book.name}
@@ -1043,14 +1012,14 @@
             <div class="chapters context #scripture_chapter" bind:this={chaptersScrollElem} style="text-align: center;" class:center={!chapters[firstBibleId]?.length}>
                 {#if chapters[firstBibleId]?.length}
                     {#each chapters[firstBibleId] as chapter, i}
-                        {@const id = bibles[0].api ? chapter.id : i}
+                        {@const id = bibles[0].api ? chapter.keyName : i}
                         <span
                             id={id.toString()}
                             on:mousedown={() => {
                                 chapterId = id
                                 autoComplete = false
                             }}
-                            class:active={bibles[0].api ? chapterId === chapter.id : chapterId === i}
+                            class:active={bibles[0].api ? chapterId === chapter.keyName : chapterId === i}
                         >
                             {chapter.number}
                         </span>

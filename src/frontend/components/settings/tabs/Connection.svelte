@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, companion, connections, disabledServers, maxConnections, outputs, popupData, ports, remotePassword, serverData } from "../../../stores"
+    import { activePopup, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -132,6 +132,12 @@
     ]
     // Camera
     // Answer / Guess / Poll
+
+    // WIP do this on startup (if connected!)
+    function pcoConnect() {
+        if (!$pcoConnected) send(MAIN, ["PCO_LOAD_SERVICES"], { dataPath: $dataPath })
+        else send(MAIN, ["PCO_DISCONNECT"])
+    }
 </script>
 
 <!-- <CombinedInput>
@@ -214,6 +220,19 @@
 {/if}
 <!-- TODO: OutputShow set output... -->
 
+<!-- Planning Center -->
+<h3>Planning Center</h3>
+
+<CombinedInput>
+    <Button on:click={pcoConnect} style="width: 100%;" center>
+        {#if $pcoConnected}
+            Disconnect from Planning Center
+        {:else}
+            Connect to PlanningCenter
+        {/if}
+    </Button>
+</CombinedInput>
+
 <!-- <div>
   <p><T id="settings.allowed_connections" /></p>
   <span>(all, only phones, (laptops), ...)</span>
@@ -256,5 +275,13 @@
 
         display: flex;
         flex-direction: column;
+    }
+
+    h3 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
     }
 </style>

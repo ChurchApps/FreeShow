@@ -124,11 +124,7 @@ export function refreshAllShows(data: any) {
     toApp("MAIN", { channel: "REFRESH_SHOWS", data: newShows })
 }
 
-export function getEmptyShows(data: any) {
-    getEmptyShowsAsync(data)
-}
-
-export async function getEmptyShowsAsync(data: any) {
+export async function getEmptyShows(data: any) {
     if (!doesPathExist(data.path)) return
 
     // list all shows in folder

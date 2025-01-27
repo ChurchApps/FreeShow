@@ -85,15 +85,17 @@
                         </p>
                     </div>
 
-                    <Slider
-                        style="background: var(--primary);align-self: center;margin: 0 10px;"
-                        on:input={(e) => updateActiveTimer(e, { id: timer.id }, timer)}
-                        on:mousedown={() => disableDragging.set(true)}
-                        value={getCurrentValue(timer, { id: timer.id }, $activeTimers)}
-                        min={Math.min(timer.start || 0, timer.end || 0)}
-                        max={Math.max(timer.start || 0, timer.end || 0)}
-                        invert={(timer.end || 0) < (timer.start || 0)}
-                    />
+                    {#if timer.type === "counter"}
+                        <Slider
+                            style="background: var(--primary);align-self: center;margin: 0 10px;"
+                            on:input={(e) => updateActiveTimer(e, { id: timer.id }, timer)}
+                            on:mousedown={() => disableDragging.set(true)}
+                            value={getCurrentValue(timer, { id: timer.id }, $activeTimers)}
+                            min={Math.min(timer.start || 0, timer.end || 0)}
+                            max={Math.max(timer.start || 0, timer.end || 0)}
+                            invert={(timer.end || 0) < (timer.start || 0)}
+                        />
+                    {/if}
 
                     <div style="display: flex;min-width: 125px;justify-content: right;">
                         <span style="display: flex;align-self: center;padding: 0 5px;">

@@ -13,11 +13,13 @@ export function downloadMedia(lessons: any[]) {
 }
 
 function checkLesson(lesson: any) {
+    let type: keyof typeof dataFolderNames = lesson.type || "lessons"
+
     downloadCount = 0
     failedDownloads = 0
     toApp(MAIN, { channel: "LESSONS_DONE", data: { showId: lesson.showId, status: { finished: 0, failed: 0 } } })
 
-    const lessonsFolder = getDataFolder(lesson.path, dataFolderNames.lessons)
+    const lessonsFolder = getDataFolder(lesson.path, dataFolderNames[type])
     const lessonFolder = path.join(lessonsFolder, lesson.name)
     makeDir(lessonFolder)
 
@@ -31,6 +33,8 @@ function checkLesson(lesson: any) {
         .filter((a: any) => a)
 
     function getFilePath(file: any) {
+        if (type === "planningcenter") return path.join(lessonFolder, file.name)
+
         if (file.streamUrl) file.fileType = "video/mp4"
         let extension = getFileExtension(file.url, file.fileType)
         if (!extension) return
@@ -126,6 +130,7 @@ async function startDownload(downloading: any) {
 
     const fileStream = fs.createWriteStream(downloading.path)
     console.log(`Downloading lessons media: ${file.name}`)
+    console.log(url)
     https
         .get(url, (res) => {
             if (res.statusCode !== 200) {

@@ -64,6 +64,7 @@ export const activeTriggerFunction: Writable<string> = writable("")
 export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
 export const activeSlideRecording: Writable<any> = writable(null)
+export const pcoConnected: Writable<boolean> = writable(false)
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -233,7 +234,6 @@ export const stageShows: Writable<StageLayouts> = writable({}) // {default}
 export const scriptures: Writable<{ [key: string]: BibleCategories }> = writable({}) // {default}
 export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) // {}
 export const scriptureSettings: Writable<any> = writable({ template: "scripture", versesPerSlide: 3, verseNumbers: false, showVersion: false, showVerse: true, referenceDivider: ":" }) // {default}
-export const bibleApiKey: Writable<string> = writable("") // ""
 
 // DRAWER
 export const drawerTabsData: Writable<DrawerTabs> = writable({}) // {default}
