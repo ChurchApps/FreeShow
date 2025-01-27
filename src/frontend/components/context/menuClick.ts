@@ -918,11 +918,16 @@ const actions: any = {
             return
         }
 
+        // THIS IS NOT IN USE:
+
         // video
         let path = obj.sel.data[0].path || obj.sel.data[0].id
         if (!path) return
 
-        let mediaStyle: MediaStyle = getMediaStyle(get(media)[path], { name: "" })
+        let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
+        let currentOutput: any = get(outputs)[outputId] || {}
+        let outputStyle = get(styles)[currentOutput.style]
+        let mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
         if (!get(outLocked)) setOutput("background", { path, ...mediaStyle })
     },
     play_no_audio: (obj: any) => {

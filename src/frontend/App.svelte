@@ -5,7 +5,7 @@
     import Pdf from "./components/export/Pdf.svelte"
     import Guide from "./components/guide/Guide.svelte"
     import { getBlending } from "./components/helpers/output"
-    import { startEventTimer, startTimer } from "./components/helpers/timerTick"
+    import { checkTimers, startEventTimer, startTimer } from "./components/helpers/timerTick"
     import Loader from "./components/main/Loader.svelte"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
@@ -13,7 +13,7 @@
     import Toast from "./components/main/Toast.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
-    import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, loaded, os, outputDisplay, outputs } from "./stores"
+    import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, loaded, os, outputDisplay, outputs, timers } from "./stores"
     import { focusArea, logerror, mainClick, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -26,6 +26,7 @@
 
     // countdown timer tick
     $: if ($activeTimers.length) startTimer()
+    $: if (Object.keys($timers).length) checkTimers()
 
     // check for show event
     $: if (Object.keys($events).length) startEventTimer()

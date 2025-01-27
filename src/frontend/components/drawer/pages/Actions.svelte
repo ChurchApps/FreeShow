@@ -48,21 +48,25 @@
                                         <Icon id={actionData[action.triggers[0]]?.icon || "actions"} right />
                                     {/if}
 
-                                    {#if action.shows?.length}
-                                        <T id="actions.play_on_midi" />
-                                    {:else}
-                                        {action.name || "—"}
-                                    {/if}
+                                    <span style="display: flex;align-items: center;gap: 8px;">
+                                        {#if action.shows?.length}
+                                            <T id="actions.play_on_midi" />
+                                        {:else}
+                                            {action.name || "—"}
+                                        {/if}
 
-                                    {#if action.midi}
-                                        ({action.midi.input || "—"})
-                                    {/if}
+                                        {#if action.midi}
+                                            <span class="faded">
+                                                ({action.midi.input || "—"})
+                                            </span>
+                                        {/if}
 
-                                    {#if action.keypressActivate}
-                                        <span class="faded">
-                                            ({action.keypressActivate})
-                                        </span>
-                                    {/if}
+                                        {#if action.keypressActivate}
+                                            <span class="faded">
+                                                ({action.keypressActivate})
+                                            </span>
+                                        {/if}
+                                    </span>
                                 </p>
 
                                 {#if action.midiEnabled && action.midi}

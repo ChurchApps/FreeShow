@@ -644,7 +644,8 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             // }
 
             if (bg && bgPath !== outputBg?.path) {
-                let mediaStyle = getMediaStyle(get(media)[bgPath], { name: "" })
+                let outputStyle = get(styles)[get(outputs)[outputId]?.style || ""]
+                let mediaStyle = getMediaStyle(get(media)[bgPath], outputStyle)
                 let bgData: any = {
                     name,
                     type,
