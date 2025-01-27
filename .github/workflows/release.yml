@@ -95,7 +95,7 @@ jobs:
                    echo apt update
                    apt -q update
                    echo apt install
-                   apt -q install -y wget git python3 make g++ ruby-dev build-essential jq libfontconfig1-dev
+                   apt -q install -y --fix-missing wget git python3 make g++ ruby-dev build-essential jq libfontconfig1-dev
                    #  https://github.com/electron-userland/electron-builder/issues/6116#issuecomment-1091205145
                    gem install fpm
                run: |
