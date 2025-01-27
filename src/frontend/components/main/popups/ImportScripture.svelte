@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { IMPORT } from "../../../../types/Channels"
-    import { bibleApiKey, dictionary, isDev, labelsDisabled, language, scriptures } from "../../../stores"
+    import { dictionary, isDev, labelsDisabled, language, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
     import { getKey } from "../../../values/keys"
@@ -14,7 +14,6 @@
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
     import Link from "../../inputs/Link.svelte"
-    import { isFallback } from "../../drawer/bible/scripture"
 
     let error: null | string = null
     let bibles: any[] = []
@@ -34,9 +33,9 @@
             }
         }
 
-        const KEY = $bibleApiKey || getKey("bibleapi" + (isFallback ? "_fallback" : ""))
-        const api = "https://api.scripture.api.bible/v1/bibles"
-        fetch(api, { headers: { "api-key": KEY } })
+        //const KEY = $bibleApiKey || getKey("bibleapi" + (isFallback ? "_fallback" : ""))
+        const api = "https://contentapi.churchapps.org/bibles"
+        fetch(api)
             .then((response) => {
                 // fallback key
                 if (response.status >= 400) {
@@ -60,9 +59,10 @@
             })
 
         function manageResult(data) {
+            console.log("MANAGE RESULT", data)
             if (!data) return
 
-            bibles = data.data
+            bibles = data
 
             // cache bibles
             let cache = { date: new Date(), bibles }
@@ -81,16 +81,17 @@
             sortedBibles.forEach((bible) => {
                 newSorted.push(bible)
                 let found = false
-                bible.countries.forEach((country: any) => {
-                    replace[$language].forEach((r: any) => {
-                        r = r.slice(-2)
-                        if (!found && (country.id.toLowerCase() === r.toLowerCase() || country.id.toLowerCase() === langCode)) {
-                            found = true
-                            recommended.push(bible)
-                            newSorted.pop()
-                        }
-                    })
+                if (bible.countryList?.includes(langCode)) found = true
+
+                replace[$language].forEach((r: any) => {
+                    r = r.slice(-2)
+                    if (bible.countryList?.includes(r.toLowerCase())) found = true
                 })
+
+                if (found) {
+                    recommended.push(bible)
+                    newSorted.pop()
+                }
             })
             sortedBibles = newSorted
             recommended = recommended
