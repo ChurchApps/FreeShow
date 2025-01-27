@@ -5,13 +5,14 @@ import { stores } from "../data/store"
 import { httpsRequest } from "../utils/requests"
 import { openURL } from "../utils/responses"
 import { pcoLoadServices } from "./request"
+import { getKey } from "../utils/keys"
 
 const app = express()
 const PCO_PORT = 5501
 
 export const PCO_API_URL = "https://api.planningcenteronline.com"
-const clientId = "4aa9d118669e415d68221da6e83bcd40b877879520afe118b48d5d431eb000fd"
-const clientSecret = "" // need to get key here
+const clientId = getKey("pco_id")
+const clientSecret = getKey("pco_secret")
 
 export type PCOScopes = "calendar" | "check_ins" | "giving" | "groups" | "people" | "publishing" | "services"
 type PCOAuthData = {

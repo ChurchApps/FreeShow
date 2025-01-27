@@ -133,7 +133,6 @@ export async function pcoLoadServices(dataPath: string) {
         })
     )
 
-    console.log(downloadableMedia)
     downloadMedia(downloadableMedia)
 
     toApp(MAIN, { channel: "PCO_PROJECTS", data: { shows, projects } })
