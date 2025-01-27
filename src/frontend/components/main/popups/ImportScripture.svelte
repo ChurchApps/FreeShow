@@ -1,14 +1,15 @@
 <script lang="ts">
     import { uid } from "uid"
     import { IMPORT } from "../../../../types/Channels"
-    import { activePopup, alertMessage, bibleApiKey, dictionary, isDev, labelsDisabled, language, os, scriptures } from "../../../stores"
+    import { dictionary, isDev, labelsDisabled, language, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
-    import { getKey } from "../../../values/keys"
     import { sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Link from "../../inputs/Link.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
@@ -19,7 +20,7 @@
     $: if (importType === "api") fetchBibles()
     async function fetchBibles() {
         // read cache
-        let cache = $isDev ? {} : JSON.parse(localStorage.getItem("scriptureApiCache") || "{}")
+        let cache = $isDev ? {} : JSON.parse(localStorage.getItem("scriptureApiCache2") || "{}")
         if (cache.date) {
             let cacheDate = new Date(cache.date).getTime()
             let today = new Date().getTime()
@@ -31,21 +32,25 @@
             }
         }
 
-        const KEY = $bibleApiKey || getKey("bibleapi")
-        const api = "https://api.scripture.api.bible/v1/bibles"
-        fetch(api, { headers: { "api-key": KEY } })
+        const api = "https://contentapi.churchapps.org/bibles"
+        fetch(api)
             .then((response) => response.json())
-            .then((data) => {
-                bibles = data.data
-
-                // cache bibles
-                let cache = { date: new Date(), bibles }
-                localStorage?.setItem("scriptureApiCache", JSON.stringify(cache))
-            })
+            .then(manageResult)
             .catch((e) => {
                 console.log(e)
                 error = e
             })
+
+        function manageResult(data) {
+            console.log("MANAGE RESULT", data)
+            if (!data) return
+
+            bibles = data
+
+            // cache bibles
+            let cache = { date: new Date(), bibles }
+            localStorage?.setItem("scriptureApiCache2", JSON.stringify(cache))
+        }
     }
 
     // get list of bibles in language
@@ -59,23 +64,24 @@
             sortedBibles.forEach((bible) => {
                 newSorted.push(bible)
                 let found = false
-                bible.countries.forEach((country: any) => {
-                    replace[$language].forEach((r: any) => {
-                        r = r.slice(-2)
-                        if (!found && (country.id.toLowerCase() === r.toLowerCase() || country.id.toLowerCase() === langCode)) {
-                            found = true
-                            recommended.push(bible)
-                            newSorted.pop()
-                        }
-                    })
+                if (bible.countryList?.includes(langCode)) found = true
+
+                replace[$language].forEach((r: any) => {
+                    r = r.slice(-2)
+                    if (bible.countryList?.includes(r.toLowerCase())) found = true
                 })
+
+                if (found) {
+                    recommended.push(bible)
+                    newSorted.pop()
+                }
             })
             sortedBibles = newSorted
             recommended = recommended
         }
     }
 
-    function toggleScripture({ id, name }: any) {
+    function toggleScripture({ sourceKey: id, name }: any) {
         scriptures.update((a: any) => {
             let key: string | null = null
             Object.entries(a).forEach(([sId, value]: any) => {
@@ -87,14 +93,6 @@
             return a
         })
     }
-
-    const xmlFormats: any = [
-        { name: "Zefania", extensions: ["xml"], icon: "xml", id: "zefania" },
-        { name: "OSIS", extensions: ["xml"], icon: "xml", id: "osis" },
-        { name: "Beblia", extensions: ["xml"], id: "beblia" },
-        { name: "OpenSong", extensions: ["xml", "xmm"], id: "opensong" },
-    ]
-    const jsonFormats: any = [{ name: "FreeShow", extensions: ["fsb", "json"], icon: "bible_json", id: "freeshow" }]
 
     $: searchedBibles = sortedBibles
     $: searchedRecommendedBibles = recommended
@@ -157,12 +155,9 @@
             {/if}
         </div>
         <div class="list">
-            <!-- custom key input: -->
-            <!-- <BibleApiKey /> -->
-
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
-                    <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
+                    <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
                         <Icon id="scripture_alt" right />{bible.nameLocal}
                         {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
                             <span class="description" title={bible.description}>({bible.description})</span>
@@ -174,7 +169,7 @@
             {#if sortedBibles.length}
                 {#if searchedBibles.length}
                     {#each searchedBibles as bible}
-                        <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.id)}>
+                        <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
                             <Icon id="scripture_alt" right />{bible.name}
                             {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.name.includes(bible.description)}
                                 <span class="description" title={bible.description}>({bible.description})</span>
@@ -194,58 +189,33 @@
         </div>
     {/if}
 {:else if importType === "local"}
-    <h2>
-        <T id="scripture.local" />
-    </h2>
+    <p style="font-size: 1.1em;"><T id="scripture.supported_formats" /></p>
+    <ul style="list-style: inside;">
+        <li style="font-size: 0.8em;font-weight: bold;">XML</li>
+        <ul style="margin-left: 22px;">
+            <li>Zefania</li>
+            <li>OSIS</li>
+            <li>Beblia</li>
+            <li>OpenSong</li>
+        </ul>
+        <li style="font-size: 0.8em;font-weight: bold;">JSON</li>
+        <ul style="margin-left: 22px;">
+            <li>FreeShow</li>
+        </ul>
+    </ul>
 
-    <p style="font-weight: bold;font-size: 0.7em;opacity: 0.8;margin-top: 10px;">XML</p>
-    <div class="choose" style="margin-top: 2px;">
-        {#each xmlFormats as format}
-            <Button
-                on:click={() => {
-                    send(IMPORT, [format.id + "_bible"], { format })
+    <br />
 
-                    // linux dialog behind window message
-                    if ($os.platform === "linux") {
-                        alertMessage.set("The file select dialog might appear behind the window on Linux!<br>Please check that if you don't see it.")
-                        activePopup.set("alert")
-                    } else {
-                        activePopup.set(null)
-                    }
-                }}
-                bold={false}
-                center
-            >
-                <img src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" draggable={false} />
-                <p>{format.name}</p>
-            </Button>
-        {/each}
-    </div>
+    <p style="opacity: 0.9;">Find some available <Link url="https://freeshow.app/resources#scriptures">Bible versions</Link>.</p>
 
-    <p style="font-weight: bold;font-size: 0.7em;opacity: 0.8;margin-top: 10px;">JSON</p>
-    <div class="choose" style="margin-top: 2px;">
-        {#each jsonFormats as format}
-            <Button
-                style="max-width: calc(25% - 10px);"
-                on:click={() => {
-                    send(IMPORT, [format.id + "_bible"], { format })
+    <br />
 
-                    // linux dialog behind window message
-                    if ($os.platform === "linux") {
-                        alertMessage.set("The file select dialog might appear behind the window on Linux!<br>Please check that if you don't see it.")
-                        activePopup.set("alert")
-                    } else {
-                        activePopup.set(null)
-                    }
-                }}
-                bold={false}
-                center
-            >
-                <img style={format.id === "freeshow" ? "padding: 5px;" : ""} src="./import-logos/{format.icon || format.id}.webp" alt="{format.id}-logo" draggable={false} />
-                <p>{format.name}</p>
-            </Button>
-        {/each}
-    </div>
+    <CombinedInput>
+        <Button on:click={() => send(IMPORT, ["BIBLE"], { format: { name: "Bible", extensions: ["xml", "json"] } })} style="width: 100%;" center dark>
+            <Icon id="import" right />
+            <T id="scripture.local" />
+        </Button>
+    </CombinedInput>
 {:else}
     <div class="choose">
         {#each importTypes as type, i}
@@ -315,10 +285,5 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-    }
-
-    img {
-        height: 100px;
-        padding: 10px;
     }
 </style>

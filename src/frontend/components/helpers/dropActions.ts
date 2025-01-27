@@ -3,7 +3,26 @@ import { uid } from "uid"
 import type { Item, Show, Slide } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activePage, activeProject, activeShow, audioFolders, audioPlaylists, audioStreams, categories, drawerTabsData, media, mediaFolders, overlays, projects, scriptureSettings, shows, showsCache, templates } from "../../stores"
+import {
+    activeDrawerTab,
+    activePage,
+    activeProject,
+    activeShow,
+    audioFolders,
+    audioPlaylists,
+    audioStreams,
+    categories,
+    drawerTabsData,
+    media,
+    mediaFolders,
+    overlays,
+    projects,
+    scriptureSettings,
+    shows,
+    showsCache,
+    templates,
+    timers,
+} from "../../stores"
 import { newToast } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scripture"
@@ -533,7 +552,7 @@ const slideDrop: any = {
         let media: any = clone(get(showsCache)[get(activeShow)!.id].media || {})
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
-        if (drop.index === undefined) drop.index = layout.length + 1
+        if (drop.index === undefined) drop.index = layout.length
         let newIndex: number = drop.index
 
         let newMedia: any = media
@@ -669,7 +688,10 @@ const slideDrop: any = {
 
         // start timer layout
         const layout = { actions: { slideActions: [{ triggers: ["start_slide_timers"] }] } }
-        const layouts = slides.map(({ id }) => ({ id, ...layout }))
+        const layouts = slides.map(({ id }, i) => {
+            if (get(timers)[drag.data[i]?.id]?.type === "counter") return { id, ...layout }
+            return { id }
+        })
 
         let index = drop.index
         if (drop.trigger?.includes("end")) index++

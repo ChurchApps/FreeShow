@@ -70,7 +70,7 @@
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         // create first slide reference
-        if ($scriptureSettings.firstSlideReference && slides[0][0]?.lines) {
+        if ($scriptureSettings.firstSlideReference && slides[0]?.[0]?.lines?.[0]?.text?.[0]) {
             const slideClone = clone(slides[0])
             // remove reference item
             // slides.forEach((a) => a.splice(a.length - 1, 1))
@@ -252,7 +252,7 @@
 
     $: previousSlides = "{}"
     let currentOutputSlides: any[] = []
-    $: if (JSON.stringify(slides[0]) !== previousSlides) {
+    $: if (slides?.[0] && JSON.stringify(slides[0]) !== previousSlides) {
         currentOutputSlides = slides[0]
         previousSlides = JSON.stringify(slides[0])
     }
@@ -286,13 +286,13 @@
             <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} />
         </CombinedInput>
 
-        {#if $scriptureSettings.versesPerSlide != 3 || sorted.length > 1}
-            <CombinedInput textWidth={70}>
-                <p><T id="scripture.max_verses" /></p>
-                <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
-            </CombinedInput>
-        {/if}
-        {#if $scriptureSettings.versesOnIndividualLines || (sorted.length > 1 && $scriptureSettings.versesPerSlide > 1)}
+        <!-- {#if $scriptureSettings.versesPerSlide != 3 || sorted.length > 1} -->
+        <CombinedInput textWidth={70}>
+            <p><T id="scripture.max_verses" /></p>
+            <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
+        </CombinedInput>
+        <!-- {/if} -->
+        {#if $scriptureSettings.versesOnIndividualLines || $scriptureSettings.versesPerSlide > 1}
             <CombinedInput textWidth={70}>
                 <p><T id="scripture.verses_on_individual_lines" /></p>
                 <div class="alignRight">
@@ -341,7 +341,7 @@
                 <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
             </div>
         </CombinedInput>
-        {#if $scriptureSettings.showVerse && !$scriptureSettings.firstSlideReference && sorted.length > 1}
+        {#if $scriptureSettings.showVerse && !$scriptureSettings.firstSlideReference}
             <CombinedInput textWidth={70}>
                 <p><T id="scripture.split_reference" /></p>
                 <div class="alignRight">
@@ -385,6 +385,15 @@
                     <p><T id="scripture.first_slide_reference" /></p>
                     <div class="alignRight">
                         <Checkbox id="firstSlideReference" checked={$scriptureSettings.firstSlideReference} on:change={checked} />
+                    </div>
+                </CombinedInput>
+            {/if}
+
+            {#if !$scriptureSettings.combineWithText}
+                <CombinedInput textWidth={70}>
+                    <p><T id="edit.invert_items" /></p>
+                    <div class="alignRight">
+                        <Checkbox id="invertItems" checked={$scriptureSettings.invertItems} on:change={checked} />
                     </div>
                 </CombinedInput>
             {/if}

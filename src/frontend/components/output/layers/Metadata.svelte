@@ -7,7 +7,9 @@
     export let transition: Transition
     export let isKeyOutput: boolean = false
 
-    $: noTransition = transition.type === "none"
+    $: noTransition = transition.type === "none" || transition.duration === 0
+
+    // WIP metadata "auto size / align / etc." does not work
 </script>
 
 {#if noTransition}
@@ -26,5 +28,17 @@
         display: flex;
         justify-content: center;
         align-items: center;
+
+        /* default style */
+        color: white;
+        font-size: 100px;
+        font-family: unset;
+        line-height: 1.1;
+        -webkit-text-stroke-color: #000000;
+        text-shadow: 2px 2px 10px #000000;
+
+        border-style: solid;
+        border-width: 0px;
+        border-color: #ffffff;
     }
 </style>

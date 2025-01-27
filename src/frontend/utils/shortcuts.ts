@@ -21,6 +21,7 @@ import {
     activePopup,
     activeProject,
     activeSlideRecording,
+    activeStage,
     contextActive,
     currentWindow,
     drawer,
@@ -243,7 +244,7 @@ export const previewShortcuts: any = {
     ArrowRight: (e: any) => {
         // if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
-        if (!e.preview && get(activeEdit).items.length) return
+        if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
         if (get(activeSlideRecording)) return updateSlideRecording("next")
 
         nextSlideIndividual(e)
@@ -251,7 +252,7 @@ export const previewShortcuts: any = {
     ArrowLeft: (e: any) => {
         // if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
-        if (!e.preview && get(activeEdit).items.length) return
+        if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
         if (get(activeSlideRecording)) return updateSlideRecording("previous")
 
         previousSlideIndividual(e)
@@ -265,6 +266,7 @@ export const previewShortcuts: any = {
         }
         if (!get(showsCache)[currentShow?.id || ""]) {
             e.preventDefault()
+            if (currentShow?.type === "overlay") return setOutput("overlays", currentShow.id, false, "", true)
             return playMedia(e)
         }
 

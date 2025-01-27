@@ -36,7 +36,7 @@ export const actionData = {
     start_camera: { name: "actions.start_camera", icon: "camera", input: "camera" },
 
     // OVERLAYS
-    index_select_overlay: { name: "actions.index_select_overlay", icon: "overlays", input: "index" },
+    // index_select_overlay: { name: "actions.index_select_overlay", icon: "overlays", input: "index" },
     name_select_overlay: { name: "actions.name_select_overlay", icon: "overlays", input: "strval" },
 
     // AUDIO
@@ -47,7 +47,7 @@ export const actionData = {
     start_metronome: { name: "actions.start_metronome", icon: "metronome", input: "metronome" },
 
     // TIMERS
-    name_start_timer: { name: "actions.name_start_timer", icon: "timer", input: "strval" },
+    // name_start_timer: { name: "actions.name_start_timer", icon: "timer", input: "strval" },
     id_start_timer: { name: "actions.id_start_timer", icon: "timer", input: "id" },
     start_slide_timers: { slideId: "startTimer", name: "actions.start_slide_timers", icon: "timer" },
     stop_timers: { slideId: "stopTimers", name: "actions.stop_timers", icon: "stop", red: true },
@@ -60,16 +60,16 @@ export const actionData = {
     change_transition: { name: "actions.change_transition", icon: "transition", input: "transition" },
 
     // OTHER
-    change_variable: { name: "actions.change_variable", icon: "variable", input: "variable" },
-    start_trigger: { slideId: "trigger", name: "actions.start_trigger", icon: "trigger", input: "id" },
-    send_midi: { slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
-    run_action: { name: "actions.run_action", icon: "actions", input: "id" },
-    toggle_action: { name: "actions.toggle_action", icon: "actions", input: "toggle_action" },
-    toggle_output: { name: "actions.toggle_output", icon: "outputs", input: "id" },
-    send_rest_command: { name: "actions.send_rest_command", icon: "trigger", input: "rest" },
+    change_variable: { canAddMultiple: true, name: "actions.change_variable", icon: "variable", input: "variable" },
+    start_trigger: { canAddMultiple: true, slideId: "trigger", name: "actions.start_trigger", icon: "trigger", input: "id" },
+    send_midi: { canAddMultiple: true, slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
+    run_action: { canAddMultiple: true, name: "actions.run_action", icon: "actions", input: "id" },
+    toggle_action: { canAddMultiple: true, name: "actions.toggle_action", icon: "actions", input: "toggle_action" },
+    toggle_output: { canAddMultiple: true, name: "actions.toggle_output", icon: "outputs", input: "id" },
+    send_rest_command: { canAddMultiple: true, name: "actions.send_rest_command", icon: "trigger", input: "rest" },
 
-    emit_action: { name: "actions.emit_data", icon: "emitter", input: "emitter" },
+    emit_action: { canAddMultiple: true, name: "actions.emit_data", icon: "emitter", input: "emitter" },
 
     // CUSTOM
-    wait: { name: "animate.wait", icon: "time_in", input: "number" },
+    wait: { canAddMultiple: true, name: "animate.wait", icon: "time_in", input: "number" },
 }

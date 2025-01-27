@@ -8,9 +8,6 @@ export class OutputVisibility {
     static displayOutput(data: any) {
         let window: BrowserWindow = OutputHelper.getOutput(data.output?.id)?.window
 
-        if (data.enabled === "toggle") data.enabled = !window?.isVisible()
-        if (data.enabled !== false) data.enabled = true
-
         if (!window || window.isDestroyed()) {
             if (!data.output) return
 
@@ -18,6 +15,9 @@ export class OutputVisibility {
             window = OutputHelper.getOutput(data.output?.id)?.window
             if (!window || window.isDestroyed()) return
         }
+
+        if (data.enabled === "toggle") data.enabled = !window.isVisible()
+        if (data.enabled !== false) data.enabled = true
 
         /////
 

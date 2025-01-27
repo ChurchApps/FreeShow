@@ -3,6 +3,7 @@
     import { activeShow, activeTimers, dictionary, outputs, shows } from "../../stores"
     import { send } from "../../utils/request"
     import { videoExtensions } from "../../values/extensions"
+    import { clone } from "../helpers/array"
     import { getAudioDuration } from "../helpers/audio"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -11,6 +12,7 @@
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
 
+    export let slide: any
     export let timer: any
     export let layoutSlide: any
     export let background: any
@@ -56,6 +58,21 @@
             return a
         })
         send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
+    }
+
+    function removeSlideSetting(key: string) {
+        if (!slide || currentShow.locked) return
+
+        let settings = clone(slide.settings)
+        delete settings[key]
+        let newData: any = { style: settings }
+
+        history({
+            id: "slideStyle",
+            oldData: { style: slide.settings },
+            newData,
+            location: { page: "show", show: $activeShow!, slide: layoutSlide.id },
+        })
     }
 
     $: audio = layoutSlide.audio?.length ? _show("active").get()?.media?.[layoutSlide.audio[0]] || {} : {}
@@ -218,6 +235,16 @@
             {#if layoutSlide.overlays.length > 1}
                 <span><p>{layoutSlide.overlays.length}</p></span>
             {/if}
+        </div>
+    {/if}
+
+    {#if slide?.settings?.template}
+        <div>
+            <div class="button">
+                <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} {zoom} on:click={() => removeSlideSetting("template")}>
+                    <Icon id="templates" size={0.9} white />
+                </Button>
+            </div>
         </div>
     {/if}
 </div>

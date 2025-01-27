@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, special } from "../../../stores"
+    import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, special, styles } from "../../../stores"
     import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
-    import { getOutputContent, isOutCleared } from "../../helpers/output"
+    import { getActiveOutputs, getOutputContent, isOutCleared } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../clear"
@@ -56,11 +56,18 @@
 
     $: outputContent = getOutputContent("", $outputs)
 
-    $: backgroundCleared = $outLocked || isOutCleared("background", $outputs)
-    $: slideCleared = $outLocked || isOutCleared("slide", $outputs)
-    $: overlayCleared = $outLocked || isOutCleared("overlays", $outputs, true)
+    $: backgroundCleared = isOutCleared("background", $outputs)
+    $: output = $outputs[getActiveOutputs()[0]] || {}
+    $: outputStyle = $styles[output.style || ""] || {}
+    $: canDisplayStyleBG = !outputStyle.clearStyleBackgroundOnText || (!output.out?.slide && !output.out?.background)
+    $: styleBackground = backgroundCleared && !$outLocked && outputStyle.backgroundImage && canDisplayStyleBG
+
+    $: slideCleared = isOutCleared("slide", $outputs)
+
+    $: overlayCleared = isOutCleared("overlays", $outputs, true)
     $: lockedOverlay = !overlayCleared && isOutCleared("overlays", $outputs, false)
-    $: slideTimerCleared = $outLocked || isOutCleared("transition", $outputs)
+
+    $: slideTimerCleared = isOutCleared("transition", $outputs)
 
     // audio fade out
     let audioIcon: string = "audio"
@@ -103,7 +110,15 @@
     <span class="group">
         {#if outputContent?.type !== "pdf" && outputContent?.type !== "ppt"}
             <div class="combinedButton">
-                <Button disabled={backgroundCleared} on:click={() => clear("background")} title={$dictionary.clear?.background + " [F1]"} dark red center>
+                <Button
+                    style={styleBackground ? "opacity: 0.5;cursor: default;" : ""}
+                    disabled={($outLocked || backgroundCleared) && !styleBackground}
+                    on:click={() => clear("background")}
+                    title={$outLocked || backgroundCleared ? "" : $dictionary.clear?.background + " [F1]"}
+                    dark
+                    red
+                    center
+                >
                     <Icon id="background" size={1.2} />
                 </Button>
                 {#if !allCleared}
@@ -113,7 +128,7 @@
         {/if}
 
         <div class="combinedButton">
-            <Button disabled={slideCleared} on:click={() => clear("slide")} title={$dictionary.clear?.slide + " [F2]"} dark red center>
+            <Button disabled={$outLocked || slideCleared} on:click={() => clear("slide")} title={$dictionary.clear?.slide + " [F2]"} dark red center>
                 <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
                 <!-- display recording icon here if a slide recoring is playing -->
                 <Icon id={outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} />
@@ -124,7 +139,7 @@
         </div>
 
         <div class="combinedButton">
-            <Button style={lockedOverlay ? "opacity: 0.7;cursor: default;" : ""} disabled={overlayCleared} on:click={() => clear("overlays")} title={lockedOverlay ? "" : $dictionary.clear?.overlays + " [F3]"} dark red center>
+            <Button style={lockedOverlay ? "opacity: 0.5;cursor: default;" : ""} disabled={$outLocked || overlayCleared} on:click={() => clear("overlays")} title={lockedOverlay ? "" : $dictionary.clear?.overlays + " [F3]"} dark red center>
                 <Icon id="overlays" size={1.2} />
             </Button>
             {#if !allCleared}
@@ -137,14 +152,14 @@
                 <Icon id={audioIcon} size={1.2} />
             </Button>
             {#if !allCleared}
-                <Button disabled={$outLocked || audioCleared} on:click={() => openPreview("audio")} title={$dictionary.preview?.audio} dark={activeClear !== "audio"} />
+                <Button disabled={audioCleared} on:click={() => openPreview("audio")} title={$dictionary.preview?.audio} dark={activeClear !== "audio"} />
             {/if}
         </div>
 
         {#if outputContent?.type !== "pdf"}
             <div class="combinedButton">
                 <Button
-                    disabled={slideTimerCleared}
+                    disabled={$outLocked || slideTimerCleared}
                     on:click={() => clear("nextTimer")}
                     title={$dictionary.clear?.[Object.keys($overlayTimers).length ? "timer" : "nextTimer"] + ($special.disablePresenterControllerKeys ? " [F5]" : "")}
                     dark

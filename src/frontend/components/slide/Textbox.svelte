@@ -212,17 +212,19 @@
 
         if (ref.type === "overlay") {
             overlays.update((a) => {
+                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.type === "template") {
             templates.update((a) => {
+                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.showId) {
             showsCache.update((a) => {
-                if (!a[ref.showId!]) return a
+                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
 
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
@@ -237,7 +239,7 @@
     function createChordLines() {
         chordLines = []
 
-        item.lines!.forEach((line, i) => {
+        item.lines?.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
             let chords = clone(line.chords || [])
@@ -335,7 +337,7 @@
             class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"}
             class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"}
             class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"}
-            style="--scrollSpeed: {item?.scrolling?.speed ?? 15}s;{style ? item?.align : null}"
+            style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null}"
         >
             <div
                 class="lines"
@@ -539,7 +541,6 @@
     }
 
     /* scrolling */
-    /* WIP change time */
     /* WIP scroll with overflow too */
     .item .topBottomScrolling {
         animation: topBottom var(--scrollSpeed) linear infinite normal;

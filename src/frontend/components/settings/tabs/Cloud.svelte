@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, driveData, driveKeys } from "../../../stores"
+    import { driveData, driveKeys } from "../../../stores"
     import { syncDrive } from "../../../utils/drive"
     import { send } from "../../../utils/request"
     import { save } from "../../../utils/save"
@@ -13,7 +13,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
 
     function getKeysFile() {
-        activePopup.set("cloud_update")
+        // activePopup.set("cloud_update")
         send(MAIN, ["OPEN_FILE"], { channel: "GOOGLE_KEYS", id: "keys", title: "Select keys file", filter: { name: "JSON", extensions: ["json"] }, multiple: false, read: true })
     }
 

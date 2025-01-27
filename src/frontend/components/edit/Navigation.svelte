@@ -22,8 +22,8 @@
             if (ref[$activeEdit?.slide]) index = $activeEdit.slide + 1
         }
 
-        if (e.ctrlKey || e.metaKey) isParent = true
-        history({ id: "SLIDES", newData: { index, replace: { parent: isParent } } })
+        if (e.shiftKey) isParent = true
+        history({ id: "SLIDES", newData: { index, replace: { parent: isParent }, addItems: !e.ctrlKey && !e.metaKey } })
     }
 
     const names = {

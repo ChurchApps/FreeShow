@@ -49,6 +49,7 @@
     $: if (currentOutput && JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) setNewLayers()
     function setNewLayers() {
         layers = clone(currentStyle.layers || defaultLayers)
+        if (!Array.isArray(layers)) layers = []
     }
     $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = clone(currentOutput?.out || {})
 
@@ -229,7 +230,7 @@
     $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : styleTemplate.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || "black"
     $: messageText = $showsCache[slide?.id]?.message?.text?.replaceAll("\n", "<br>") || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
-    $: styleBackground = currentStyle?.clearStyleBackgroundOnText && slide ? "" : currentStyle?.backgroundImage || ""
+    $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
     $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
     $: backgroundData = templateBackground ? templateBackgroundData : background
@@ -299,7 +300,7 @@
             <Metadata
                 value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: slide?.id, layoutId: slide?.layout, slideIndex: slide?.index }, updateDynamic) : messageText}
                 style={metadata.messageStyle || ""}
-                transition={transitions.overlay}
+                transition={metadata.messageTransition || transitions.overlay}
                 {isKeyOutput}
             />
         {/if}
@@ -307,7 +308,7 @@
         <!-- metadata -->
         {#if metadataValue || $customMessageCredits}
             <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: slide?.id, layoutId: slide?.layout, slideIndex: slide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
-            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} transition={transitions.overlay} {isKeyOutput} />
+            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} transition={metadata.transition || transitions.overlay} {isKeyOutput} />
         {/if}
 
         <!-- overlays -->

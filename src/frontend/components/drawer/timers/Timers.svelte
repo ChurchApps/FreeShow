@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeProject, activeTimers, dictionary, disableDragging, labelsDisabled, projects, showsCache, timers } from "../../../stores"
+    import { activePopup, activeTimers, dictionary, disableDragging, labelsDisabled, timers } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -8,7 +8,7 @@
     import Timer from "../../slide/views/Timer.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { getCurrentTimerValue, loadProjectTimers, playPauseGlobal, resetTimer } from "./timers"
+    import { getCurrentTimerValue, playPauseGlobal, resetTimer } from "./timers"
 
     export let searchValue
 
@@ -17,13 +17,13 @@
     $: sortedTimersWithProject = sortedTimers.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
     $: filteredTimers = searchValue.length > 1 ? sortedTimersWithProject.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTimersWithProject
 
-    // project
-    $: projectShows = $projects[$activeProject!]?.shows || []
+    // place timers in shows in project first
     let list: string[] = []
-    $: if (projectShows.length || $showsCache || $timers) getList()
-    async function getList() {
-        list = (await loadProjectTimers(projectShows)).filter((id) => $timers[id])
-    }
+    // $: projectShows = $projects[$activeProject!]?.shows || []
+    // $: if (projectShows.length || $showsCache || $timers) getList()
+    // async function getList() {
+    //     list = (await loadProjectTimers(projectShows)).filter((id) => $timers[id])
+    // }
 
     let today = new Date()
     setInterval(() => (today = new Date()), 1000)
@@ -85,15 +85,17 @@
                         </p>
                     </div>
 
-                    <Slider
-                        style="background: var(--primary);align-self: center;margin: 0 10px;"
-                        on:input={(e) => updateActiveTimer(e, { id: timer.id }, timer)}
-                        on:mousedown={() => disableDragging.set(true)}
-                        value={getCurrentValue(timer, { id: timer.id }, $activeTimers)}
-                        min={Math.min(timer.start || 0, timer.end || 0)}
-                        max={Math.max(timer.start || 0, timer.end || 0)}
-                        invert={(timer.end || 0) < (timer.start || 0)}
-                    />
+                    {#if timer.type === "counter"}
+                        <Slider
+                            style="background: var(--primary);align-self: center;margin: 0 10px;"
+                            on:input={(e) => updateActiveTimer(e, { id: timer.id }, timer)}
+                            on:mousedown={() => disableDragging.set(true)}
+                            value={getCurrentValue(timer, { id: timer.id }, $activeTimers)}
+                            min={Math.min(timer.start || 0, timer.end || 0)}
+                            max={Math.max(timer.start || 0, timer.end || 0)}
+                            invert={(timer.end || 0) < (timer.start || 0)}
+                        />
+                    {/if}
 
                     <div style="display: flex;min-width: 125px;justify-content: right;">
                         <span style="display: flex;align-self: center;padding: 0 5px;">

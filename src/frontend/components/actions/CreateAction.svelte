@@ -68,7 +68,7 @@
                 // show if it has an input (because you probably want to have multiple)
                 // if (actionData[actionId]?.input) return true
                 // remove already added or custom ones
-                if (removeActions.includes(id) || existingActions.includes(id)) return false
+                if (removeActions.includes(id) || (!actionData[id].canAddMultiple && existingActions.includes(id))) return false
                 // custom slide actions list
                 if (list && !slideActions.includes(id)) return false
                 // if (list && id.includes("index_select")) return false

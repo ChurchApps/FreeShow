@@ -1,24 +1,25 @@
 import { get } from "svelte/store"
 import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
-import { bibleApiKey, dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
+import { dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
 import { getKey } from "../../../values/keys"
 import { clone, removeDuplicates } from "../../helpers/array"
 
-const api = "https://api.scripture.api.bible/v1/bibles/"
+const api = "https://contentapi.churchapps.org/bibles/"
 let tempCache: any = {}
 let fetchTimeout: any = {}
+export let isFallback = false
 export async function fetchBible(load: string, active: string, ref: any = { versesList: [], bookId: "GEN", chapterId: "GEN.1" }) {
     let versesId: any = null
     if (ref.versesList.length) {
-        versesId = ref.versesList[0].id + "-" + ref.versesList[ref.versesList.length - 1].id
+        versesId = ref.versesList[0].keyName + "-" + ref.versesList[ref.versesList.length - 1].keyName
         versesId = versesId.split("-")
         versesId = versesId[0] + "-" + versesId[versesId.length - 1]
     }
 
     const urls: StringObject = {
         books: `${api}${active}/books`,
-        chapters: `${api}${active}/books/${ref.bookId}/chapters`,
+        chapters: `${api}${active}/${ref.bookId}/chapters`,
         verses: `${api}${active}/chapters/${ref.chapterId}/verses`,
         versesText: `${api}${active}/verses/${versesId}`,
     }
@@ -27,7 +28,7 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
     if (tempCache[urls[load]]) return tempCache[urls[load]]
 
     return new Promise((resolve, reject) => {
-        const KEY = get(bibleApiKey) || getKey("bibleapi")
+        const KEY = getKey("bibleapi" + (isFallback ? "_fallback" : ""))
         if (!KEY) return reject("No API key!")
         if (urls[load].includes("null")) return reject("Something went wrong!")
 
@@ -36,31 +37,69 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
             reject("Timed out!")
         }, 40000)
 
+        console.log("fetchBible", urls[load])
         fetch(urls[load], { headers: { "api-key": KEY } })
-            .then((response) => response.json())
-            .then((data) => {
-                tempCache[urls[load]] = data.data
-                clearTimeout(fetchTimeout[active])
-                resolve(data.data)
+            .then((response) => {
+                // fallback key
+                if (response.status >= 400) {
+                    isFallback = true
+                    console.log("Could not fetch, trying fallback key")
+                    fetch(urls[load], { headers: { "api-key": getKey("bibleapi_fallback") } })
+                        .then((response) => response.json())
+                        .then(manageResult)
+                        .catch((e) => {
+                            clearTimeout(fetchTimeout[active])
+                            reject(e)
+                        })
+                    return
+                }
+
+                return response.json()
             })
+            .then(manageResult)
             .catch((e) => {
                 clearTimeout(fetchTimeout[active])
                 reject(e)
             })
+
+        function manageResult(data) {
+            if (!data) return
+
+            console.log(load, data)
+
+            tempCache[urls[load]] = data
+            clearTimeout(fetchTimeout[active])
+            resolve(data)
+        }
     })
 }
 
 export function searchBibleAPI(active: string, searchQuery: string) {
-    const KEY = get(bibleApiKey) || getKey("bibleapi")
+    const KEY = getKey("bibleapi" + (isFallback ? "_fallback" : ""))
+    const api = "https://api.scripture.api.bible/v1/bibles/" // TEMP
     let url = `${api}${active}/search?query=${searchQuery}`
 
     return new Promise((resolve, reject) => {
         if (!KEY) return reject("No API key!")
 
         fetch(url, { headers: { "api-key": KEY } })
-            .then((response) => response.json())
+            .then((response) => {
+                // fallback key
+                if (response.status >= 400) {
+                    console.log("Could not fetch, trying fallback key")
+                    fetch(url, { headers: { "api-key": getKey("bibleapi_fallback") } })
+                        .then((response) => response.json())
+                        .then((data) => resolve(data.data))
+                        .catch((e) => {
+                            reject(e)
+                        })
+                    return
+                }
+
+                return response.json()
+            })
             .then((data) => {
-                resolve(data.data)
+                if (data) resolve(data.data)
             })
             .catch((e) => {
                 reject(e)
@@ -296,6 +335,7 @@ export function getSlides({ bibles, sorted }) {
     // add other items
     slides.forEach((items, i) => {
         slides[i] = [...templateOtherItems, ...items]
+        if (get(scriptureSettings).invertItems) slides[i].reverse()
     })
 
     return slides
@@ -377,7 +417,7 @@ function stripMarkdown(input: string) {
 
 export function setBooksCache(scriptureId: string, data: any) {
     scriptures.update((a) => {
-        a[scriptureId].books = data
+        a[scriptureId].books2 = data
         a[scriptureId].cacheUpdate = new Date()
         return a
     })

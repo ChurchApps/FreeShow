@@ -58,7 +58,7 @@ async function startupMain() {
 }
 
 function autoBackup() {
-    let interval = get(special).autoBackup || "never"
+    let interval = get(special).autoBackup || "weekly"
     if (interval === "never") return
 
     let now = Date.now()
@@ -66,11 +66,11 @@ function autoBackup() {
     let minTimeToBackup = getTimeFromInterval(interval)
 
     if (now - lastBackup > minTimeToBackup) {
-        save(false, { backup: true, silent: true })
         special.update((a) => {
             a.autoBackupPrevious = now
             return a
         })
+        save(false, { backup: true, silent: true })
     }
 }
 

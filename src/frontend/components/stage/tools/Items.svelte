@@ -4,7 +4,7 @@
     import { activeDrawerTab, activePage, activePopup, activeStage, drawer, drawerTabsData, outputs, stageShows, timers, variables } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { keysToID, sortByName } from "../../helpers/array"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import { checkWindowCapture, getActiveOutputs, getResolution } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
@@ -71,7 +71,8 @@
 
     let timeout: any = null
 
-    let timersList: any[] = sortByName(keysToID($timers))
+    const typeOrder = { counter: 1, clock: 2, event: 3 }
+    let timersList: any[] = sortByName(keysToID(clone($timers)), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
     let variablesList: any[] = sortByName(keysToID($variables))
 
     const drawerPages: { [key: string]: DrawerTabIds } = {

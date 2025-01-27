@@ -80,7 +80,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         // reset slide cache (after update)
         if (key === "slide" && data) setTimeout(() => outputSlideCache.set({}), 50)
         // trigger if show is not currently outputted
-        if (key === "slide" && data?.id && get(outputs)[outs[0]]?.out?.slide?.id !== data?.id) {
+        if (key === "slide" && data?.id && get(outputs)[outs?.[0]]?.out?.slide?.id !== data?.id) {
             let category = get(showsCache)[data.id]?.category || ""
             if (get(categories)[category]?.action) runAction(get(midiIn)[get(categories)[category].action!])
             appendShowUsage(data.id)
@@ -649,7 +649,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
             line.align = templateLine?.align || ""
             line.text?.forEach((text: any, k: number) => {
-                let templateText = templateLine?.text[k] || templateLine?.text[0]
+                let templateText = templateLine?.text?.[k] || templateLine?.text?.[0]
                 if (!text.customType?.includes("disableTemplate")) {
                     let style = templateText?.style || ""
 
@@ -669,6 +669,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 if (!text.value?.length && firstChar === "{") {
                     text.value = templateText!.value
                 }
+
+                if (!text.value?.[0]) return
 
                 // add bullets
                 if (firstChar === "•" || firstChar === "-") {
@@ -726,6 +728,9 @@ export function updateSlideFromTemplate(slide: Slide, template: Template, isFirs
 }
 
 export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, media: { [key: string]: Media }, template: Template, oldTemplate: Template, removeOverflow: boolean = false) {
+    if (typeof layouts !== "object") layouts = {}
+    if (typeof media !== "object") media = {}
+
     // only alter layout slides if clicking on the template
     if (!removeOverflow) return { layouts, media }
 
@@ -740,7 +745,7 @@ export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, me
         if (!existingId) media[bgId] = { path: settings.backgroundPath, name: removeExtension(getFileName(settings.backgroundPath)) }
     } else if (oldSettings.backgroundPath && oldSettings.backgroundPath === media[layouts[Object.keys(layouts)[0]]?.slides?.[0]?.background || ""]?.path) {
         // remove background if previous template has current background
-        layouts[Object.keys(layouts)[0]].slides[0].background = ""
+        if (layouts[Object.keys(layouts)[0]]?.slides?.[0]?.background) layouts[Object.keys(layouts)[0]].slides[0].background = ""
     }
 
     Object.keys(layouts).forEach((layoutId) => {
@@ -915,10 +920,12 @@ export interface OutputMetadata {
     message?: { [key: string]: string }
     display?: string
     style?: string
+    transition?: any
     value?: string
     media?: boolean
 
     messageStyle?: string
+    messageTransition?: any
 }
 const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
 const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
@@ -934,6 +941,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
     metadata.message = metadata.media ? {} : show.meta
     metadata.display = overrideOutput ? settings.display : currentStyle.displayMetadata
     metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
+    metadata.transition = templatesUpdater[templateId]?.items?.[0]?.actions?.transition || null
 
     let metadataTemplateValue = templatesUpdater[templateId]?.items?.[0]?.lines?.[0]?.text?.[0]?.value || ""
     // if (metadataTemplateValue || metadata.message || currentStyle)
@@ -958,6 +966,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
 
     let messageTemplate = overrideOutput ? show.message?.template : currentStyle.messageTemplate || "message"
     metadata.messageStyle = getTemplateStyle(messageTemplate!, templatesUpdater) || defaultMessageStyle
+    metadata.messageTransition = templatesUpdater[messageTemplate]?.items?.[0]?.actions?.transition || null
 
     return clone(metadata)
 }
@@ -972,8 +981,8 @@ function getTemplateStyle(templateId: string, templates: any) {
     let template = templates[templateId]
     if (!template) return
 
-    let style = template.items[0]?.style || ""
-    let textStyle = template.items[0]?.lines?.[0]?.text?.[0]?.style || ""
+    let style = template.items?.[0]?.style || ""
+    let textStyle = template.items?.[0]?.lines?.[0]?.text?.[0]?.style || ""
 
     return style + textStyle
 }

@@ -218,7 +218,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     live_card: ["recording"],
     // actions
     actions: ["manage_action_tags", "action_tag_filter"],
-    action: ["edit", "SEPERATOR", "duplicate", "delete", "SEPERATOR", "action_tag_set", "action_tag_filter"],
+    action: ["edit", "SEPERATOR", "disable", "SEPERATOR", "duplicate", "delete", "SEPERATOR", "action_tag_set", "action_tag_filter"],
     scripture_verse: ["create_show", "SEPERATOR", "selectAll"],
     scripture_chapter: ["create_show"],
 

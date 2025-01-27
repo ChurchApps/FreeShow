@@ -46,7 +46,8 @@ export interface Version {
 export interface Book {
     abbreviation: string // "Gen"
     bibleId: string // "de4e12af7f28f599-01"
-    id: string // "GEN"
+    id?: string // "GEN"
+    keyName: string // "GEN"
     name: string // "Genesis"
     nameLong: string // "The First Book of Moses, called Genesis"
 }
@@ -54,7 +55,7 @@ export interface Book {
 export interface Chapter {
     bibleId: string // "de4e12af7f28f599-01"
     bookId: string // "GEN"
-    id: string // "GEN.intro"
+    keyName: string // "GEN.intro"
     number: string // "intro"
     reference: string // "Genesis"
 }
@@ -63,7 +64,7 @@ export interface Verse {
     bibleId: string //"de4e12af7f28f599-01"
     bookId: string // "GEN"
     chapterId: string // "GEN.1"
-    id: string // "GEN.1.1"
+    keyName: string // "GEN.1.1"
     orgId: string // "GEN.1.1"
     reference: string // "Genesis 1:1"
 }
