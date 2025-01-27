@@ -16,7 +16,7 @@ import { config, error_log, stores } from "../data/store"
 import { captureSlide, getThumbnail, getThumbnailFolderPath, saveImage } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
-import { loadServices } from "../planningcenter/request"
+import { pcoLoadServices } from "../planningcenter/request"
 import { closeServers, startServers } from "../servers"
 import type { Message } from "./../../types/Socket"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "./api"
@@ -48,6 +48,7 @@ import { LyricSearch } from "./LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "./midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "./shows"
 import checkForUpdates from "./updater"
+import { pcoDisconnect, pcoStartupLoad } from "../planningcenter/connect"
 
 // IMPORT
 export function startImport(_e: any, msg: Message) {
@@ -190,7 +191,9 @@ const mainResponses: any = {
     OPEN_FOLDER: (data: any, e: any) => selectFolder(data, e),
     OPEN_FILE: (data: any, e: any) => selectFiles(data, e),
     // CONNECTION
-    PCO_LOAD_SERVICES: () => loadServices(),
+    PCO_LOAD_SERVICES: () => pcoLoadServices(),
+    PCO_STARTUP_LOAD: () => pcoStartupLoad(),
+    PCO_DISCONNECT: () => pcoDisconnect(),
 }
 
 export async function receiveMain(e: any, msg: Message) {

@@ -135,7 +135,8 @@
 
     // WIP do this on startup (if connected!)
     function pcoConnect() {
-        send(MAIN, ["PCO_LOAD_SERVICES"])
+        if (!$pcoConnected) send(MAIN, ["PCO_LOAD_SERVICES"])
+        else send(MAIN, ["PCO_DISCONNECT"])
     }
 </script>
 
@@ -219,15 +220,18 @@
 {/if}
 <!-- TODO: OutputShow set output... -->
 
-<br />
-<br />
+<!-- Planning Center -->
+<h3>Planning Center</h3>
 
 <CombinedInput>
-    <Button on:click={pcoConnect} style="width: 100%;" center>Connect to PlanningCenter ({$pcoConnected})</Button>
+    <Button on:click={pcoConnect} style="width: 100%;" center>
+        {#if $pcoConnected}
+            Disconnect from Planning Center
+        {:else}
+            Connect to PlanningCenter
+        {/if}
+    </Button>
 </CombinedInput>
-<!-- <CombinedInput>
-    <Button on:click={pcoData} style="width: 100%;" center>Test</Button>
-</CombinedInput> -->
 
 <!-- <div>
   <p><T id="settings.allowed_connections" /></p>
@@ -271,5 +275,13 @@
 
         display: flex;
         flex-direction: column;
+    }
+
+    h3 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
     }
 </style>

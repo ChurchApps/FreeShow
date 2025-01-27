@@ -4,13 +4,14 @@ import { MAIN } from "../../types/Channels"
 import { stores } from "../data/store"
 import { httpsRequest } from "../utils/requests"
 import { openURL } from "../utils/responses"
+import { pcoLoadServices } from "./request"
 
 const app = express()
 const PCO_PORT = 5501
 
 export const PCO_API_URL = "https://api.planningcenteronline.com"
 const clientId = "4aa9d118669e415d68221da6e83bcd40b877879520afe118b48d5d431eb000fd"
-const clientSecret = process.env.PCO_SECRET || "" // confidential
+const clientSecret = "" // need to get key here
 
 export type PCOScopes = "calendar" | "check_ins" | "giving" | "groups" | "people" | "publishing" | "services"
 type PCOAuthData = {
@@ -120,4 +121,15 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
             resolve(data)
         })
     })
+}
+
+export function pcoDisconnect(scope: PCOScopes = "services") {
+    stores.ACCESS.set(`pco_${scope}`, null)
+    PCO_ACCESS = null
+    toApp(MAIN, { channel: "PCO_DISCONNECT", data: { success: true } })
+}
+
+export function pcoStartupLoad(scope: PCOScopes = "services") {
+    if (!stores.ACCESS.get(`pco_${scope}`)) return
+    pcoLoadServices()
 }

@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, IMPORT, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE, STORE } from "../../types/Channels"
+import type { Project } from "../../types/Projects"
 import type { ClientMessage } from "../../types/Socket"
 import { triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
@@ -7,8 +8,11 @@ import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
 import { analyseAudio } from "../components/helpers/audio"
 import { addDrawerFolder } from "../components/helpers/dropActions"
-import { setMediaTracks, captureCanvas } from "../components/helpers/media"
+import { history } from "../components/helpers/history"
+import { captureCanvas, setMediaTracks } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
+import { loadShows, saveTextCache } from "../components/helpers/setShow"
+import { checkName } from "../components/helpers/show"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -16,9 +20,10 @@ import { convertBebliaBible } from "../converters/bebliaBible"
 import { importFSB } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
+import { convertEasyslides } from "../converters/easyslides"
 import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
-import { importShow, importSpecific } from "../converters/importHelpers"
+import { createCategory, importShow, importSpecific, setTempShows } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong, convertOpenSongBible } from "../converters/opensong"
@@ -26,12 +31,13 @@ import { convertOSISBible } from "../converters/osisBible"
 import { convertPowerpoint } from "../converters/powerpoint"
 import { addToProject, importProject } from "../converters/project"
 import { convertProPresenter } from "../converters/propresenter"
+import { convertQuelea } from "../converters/quelea"
 import { convertSoftProjector } from "../converters/softprojector"
 import { convertSongbeamerFiles } from "../converters/songbeamer"
 import { convertTexts } from "../converters/txt"
+import { convertVerseVIEW } from "../converters/verseview"
 import { convertVideopsalm } from "../converters/videopsalm"
 import { convertZefaniaBible } from "../converters/zefaniaBible"
-import { convertVerseVIEW } from "../converters/verseview"
 import {
     activePage,
     activePopup,
@@ -71,6 +77,7 @@ import {
     presentationData,
     previewBuffers,
     projectTemplates,
+    projectView,
     projects,
     shows,
     showsCache,
@@ -106,9 +113,6 @@ import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { convertQuelea } from "../converters/quelea"
-import { convertEasyslides } from "../converters/easyslides"
-import { loadShows, saveTextCache } from "../components/helpers/setShow"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -160,6 +164,7 @@ const receiveMAIN: any = {
 
         activePopup.set("alert")
     },
+    TOAST: (data) => newToast(data),
     CLOSE: () => initializeClosing(),
     RECEIVE_MIDI: (msg) => receivedMidi(msg),
     DELETE_SHOWS: (a) => {
@@ -230,10 +235,50 @@ const receiveMAIN: any = {
 
     // CONNECTION
     PCO_CONNECT: (data: any) => {
-        if (data.success) {
-            pcoConnected.set(true)
-            if (data.isFirstConnection) newToast("$main.finished")
-        }
+        if (!data.success) return
+        pcoConnected.set(true)
+        if (data.isFirstConnection) newToast("$main.finished")
+    },
+    PCO_DISCONNECT: (data: any) => {
+        if (!data.success) return
+        pcoConnected.set(false)
+    },
+    PCO_PROJECTS: (data: any) => {
+        if (!data.projects) return
+
+        // CREATE CATEGORY
+        createCategory("Planning Center")
+
+        // CREATE SHOWS
+        let tempShows: any = []
+        data.shows.forEach((show) => {
+            let id = show.id
+            delete show.id
+            tempShows.push({ id, show: { ...show, name: checkName(show.name, id), locked: true } })
+        })
+        setTempShows(tempShows)
+
+        data.projects.forEach((pcoProject) => {
+            // CREATE PROJECT FOLDER
+            let folderId = pcoProject.folderId
+            if (folderId && !get(folders)[folderId]) {
+                history({ id: "UPDATE", newData: { replace: { parent: "/", name: pcoProject.folderName } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
+            }
+
+            // CREATE PROJECT
+            let project: Project = {
+                name: pcoProject.name,
+                created: pcoProject.created,
+                used: Date.now(), // show on top in last used list
+                parent: folderId || "/",
+                shows: pcoProject.items || [],
+            }
+
+            let projectId = pcoProject.id
+            history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
+        })
+
+        projectView.set(false)
     },
 }
 

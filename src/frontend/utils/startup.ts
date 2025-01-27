@@ -51,6 +51,7 @@ async function startupMain() {
     checkStartupActions()
     autoBackup()
     startTracking()
+    connect()
 
     await wait(5000)
     unsavedUpdater()
@@ -71,6 +72,10 @@ function autoBackup() {
             return a
         })
     }
+}
+
+function connect() {
+    send(MAIN, ["PCO_STARTUP_LOAD"])
 }
 
 function getMainData() {
