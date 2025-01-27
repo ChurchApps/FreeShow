@@ -16,7 +16,7 @@ export function createCategory(name: string, icon: string = "song", { isDefault,
         if (!categoryCount) return selectedCategory
     }
 
-    let id = name.toLowerCase()
+    let id = name.toLowerCase().replaceAll(" ", "_")
     if (get(categories)[id]) return id
     if (isDefault) name = "category." + name
 

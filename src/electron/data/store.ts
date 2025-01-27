@@ -27,6 +27,7 @@ const fileNames: { [key: string]: string } = {
     cache: "cache",
     history: "history",
     usage: "usage",
+    access: "ACCESS",
 }
 
 // NOTE: defaults will always replace the keys with any in the default when they are removed
@@ -99,6 +100,7 @@ const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesB
 const cache = new Store({ name: fileNames.cache, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 let history = new Store({ name: fileNames.history, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 let usage = new Store({ name: fileNames.usage, defaults: { all: [] }, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let accessKeys = new Store({ name: fileNames.access, defaults: {} })
 
 export let stores: { [key: string]: Store<any> } = {
     SETTINGS: settings,
@@ -115,6 +117,7 @@ export let stores: { [key: string]: Store<any> } = {
     CACHE: cache,
     HISTORY: history,
     USAGE: usage,
+    ACCESS: accessKeys,
 }
 
 // ----- GET STORE -----

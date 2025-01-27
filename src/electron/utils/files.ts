@@ -187,6 +187,7 @@ export const dataFolderNames = {
     exports: "Exports",
     imports: "Imports",
     lessons: "Lessons",
+    planningcenter: "Planning Center",
     recordings: "Recordings",
     userData: "Config",
 }
@@ -534,11 +535,7 @@ function formatTimestamp(timestamp: number) {
 
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
 const NESTED_SEARCH = 8 // folder levels deep
-export function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
-    locateMediaFileAsync({ fileName, splittedPath, folders, ref })
-}
-
-async function locateMediaFileAsync({ fileName, splittedPath, folders, ref }: any) {
+export async function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
     let matches: string[] = []
 
     await findMatches()

@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STARTUP, STORE } from "../../types/Channels"
 import { checkStartupActions } from "../components/actions/actions"
-import { currentWindow, loaded, loadedState, special } from "../stores"
+import { currentWindow, dataPath, loaded, loadedState, special } from "../stores"
 import { startTracking } from "./analytics"
 import { wait } from "./common"
 import { setLanguage } from "./language"
@@ -51,6 +51,7 @@ async function startupMain() {
     checkStartupActions()
     autoBackup()
     startTracking()
+    connect()
 
     await wait(5000)
     unsavedUpdater()
@@ -71,6 +72,10 @@ function autoBackup() {
         })
         save(false, { backup: true, silent: true })
     }
+}
+
+function connect() {
+    send(MAIN, ["PCO_STARTUP_LOAD"], { dataPath: get(dataPath) })
 }
 
 function getMainData() {
