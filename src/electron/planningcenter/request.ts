@@ -29,7 +29,8 @@ export async function pcoRequest(data: PCORequestData): Promise<any> {
         httpsRequest(PCO_API_URL, path, "GET", headers, {}, (err: any, result: any) => {
             if (err) {
                 console.log(path, err)
-                toApp(MAIN, { channel: "ALERT", data: "Could not get data! " + err.message })
+                let message = err.message?.includes("401") ? "Make sure you have created some 'services' in your account!" : err.message
+                toApp(MAIN, { channel: "ALERT", data: "Could not get data! " + message })
                 return resolve(null)
             }
 
