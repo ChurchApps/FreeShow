@@ -1,14 +1,14 @@
-import path, { join } from "path";
-import PPTX2Json from "pptx2json";
-import protobufjs from "protobufjs";
-import SqliteToJson from "sqlite-to-json";
-import sqlite3 from "sqlite3";
-import WordExtractor from "word-extractor";
-import { toApp } from "..";
-import { IMPORT, MAIN } from "../../types/Channels";
-import { dataFolderNames, doesPathExist, getDataFolder, getExtension, makeDir, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files";
-import { detectFileType } from "./bibleDetecter";
-import { decompress, isZip } from "./zip";
+import path, { join } from "path"
+import PPTX2Json from "pptx2json"
+import protobufjs from "protobufjs"
+import SqliteToJson from "sqlite-to-json"
+import sqlite3 from "sqlite3"
+import WordExtractor from "word-extractor"
+import { toApp } from ".."
+import { IMPORT, MAIN } from "../../types/Channels"
+import { dataFolderNames, doesPathExist, getDataFolder, getExtension, makeDir, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
+import { decompress, isZip } from "./zip"
+import { detectFileType } from "./bibleDetecter"
 
 const specialImports: any = {
     powerpoint: async (files: string[]) => {
