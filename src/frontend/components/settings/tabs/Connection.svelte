@@ -284,4 +284,12 @@
         font-size: 0.9em;
         margin: 20px 0;
     }
+
+    h3 {
+        color: var(--text);
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.9em;
+        margin: 20px 0;
+    }
 </style>

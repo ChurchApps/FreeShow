@@ -37,7 +37,6 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
             reject("Timed out!")
         }, 40000)
 
-        console.log("fetchBible", urls[load])
         fetch(urls[load], { headers: { "api-key": KEY } })
             .then((response) => {
                 // fallback key
@@ -64,8 +63,6 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
 
         function manageResult(data) {
             if (!data) return
-
-            console.log(load, data)
 
             tempCache[urls[load]] = data
             clearTimeout(fetchTimeout[active])
