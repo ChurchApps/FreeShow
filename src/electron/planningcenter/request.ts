@@ -29,7 +29,7 @@ export async function pcoRequest(data: PCORequestData): Promise<any> {
         httpsRequest(PCO_API_URL, path, "GET", headers, {}, (err: any, result: any) => {
             if (err) {
                 console.log(path, err)
-                toApp(MAIN, { channel: "ALERT", data: err.message })
+                toApp(MAIN, { channel: "ALERT", data: "Could not get data! " + err.message })
                 return resolve(null)
             }
 
@@ -169,18 +169,19 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     })
 
     const metadata = {
-        bpm: SONG.bpm,
-        key: SONG.chord_chart_key,
-        copyright: SONG_DATA.attributes.copyright,
-        author: SONG_DATA.attributes.author,
-        CCLI: SONG_DATA.attributes.ccli_number,
         title: SONG_DATA.attributes.title,
+        author: SONG_DATA.attributes.author,
+        publisher: SONG.name,
+        copyright: SONG_DATA.attributes.copyright,
+        CCLI: SONG_DATA.attributes.ccli_number,
+        key: SONG.chord_chart_key,
+        BPM: SONG.bpm,
     }
 
     let layoutId = uid()
 
     let show: Show = {
-        name: SONG.name,
+        name: SONG_DATA.attributes.title,
         category: "planning_center",
         timestamps: { created: new Date(SONG.created_at).getTime(), modified: new Date(SONG.updated_at).getTime(), used: null },
         meta: metadata,

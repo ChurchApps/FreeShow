@@ -86,7 +86,8 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             appendShowUsage(data.id)
         }
 
-        outs.forEach((id: string) => {
+        let toggleState = false
+        outs.forEach((id: string, i: number) => {
             let output: any = a[id]
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
@@ -108,7 +109,8 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             let outData = a[id].out?.[key] || null
             if (key === "overlays" && data.length) {
                 if (!Array.isArray(data)) data = [data]
-                if (toggle && outData?.includes(data[0])) outData!.splice(outData!.indexOf(data[0]), 1)
+                if (toggle && i === 0) toggleState = outData?.includes(data[0])
+                if (toggle && toggleState) outData!.splice(outData!.indexOf(data[0]), 1)
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[key] || []), ...data])
                 else outData = data
 

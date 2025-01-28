@@ -130,8 +130,9 @@ export function getItemWithMostLines(slide: Slide) {
 }
 
 // TODO: multiple outputs with different lines!
-function getOutputWithLines() {
-    let outs = getActiveOutputs()
+// get output with fewest lines
+function getFewestOutputLines() {
+    let outs = getActiveOutputs(get(outputs), true, true, true)
 
     let currentLines = 0
     outs.forEach((id: string) => {
@@ -143,7 +144,7 @@ function getOutputWithLines() {
         let lines = style.lines
         if (!lines) return
 
-        if (lines > currentLines) currentLines = lines
+        if (!currentLines || lines < currentLines) currentLines = lines
     })
 
     return Number(currentLines)
@@ -203,7 +204,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let index: null | number = null
 
     // lines
-    let amountOfLinesToShow: number = getOutputWithLines() ? getOutputWithLines() : 0
+    let amountOfLinesToShow: number = getFewestOutputLines() ? getFewestOutputLines() : 0
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
     let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout?.[slideIndex]?.id]).get()[0] : null
     let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
@@ -428,7 +429,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     let activeShowLayout = get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout
 
     // lines
-    let outputWithLines = getOutputWithLines()
+    let outputWithLines = getFewestOutputLines()
     let amountOfLinesToShow: number = outputWithLines ? outputWithLines : 0
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
     let hasLinesEnded: boolean = !slide || linesIndex === null || linesIndex < 1

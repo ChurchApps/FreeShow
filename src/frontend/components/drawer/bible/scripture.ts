@@ -76,7 +76,6 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
 
 export function searchBibleAPI(active: string, searchQuery: string) {
     const KEY = getKey("bibleapi" + (isFallback ? "_fallback" : ""))
-    const api = "https://api.scripture.api.bible/v1/bibles/" // TEMP
     let url = `${api}${active}/search?query=${searchQuery}`
 
     return new Promise((resolve, reject) => {

@@ -44,6 +44,9 @@ const icons: { [key: string]: string } = {
     upload_failed:
         '<g><rect fill="none" height="24" width="24"/></g><g><g><polygon points="21.19,21.19 2.81,2.81 1.39,4.22 6.09,8.91 5,10 7.17,10 9,11.83 9,16 13.17,16 15.17,18 5,18 5,20 17.17,20 19.78,22.61"/><polygon points="15,10 19,10 12,3 8.91,6.09 15,12.17"/></g></g>',
 
+    login: '<g><rect fill="none" height="24" width="24"/></g><g><path d="M11,7L9.6,8.4l2.6,2.6H2v2h10.2l-2.6,2.6L11,17l5-5L11,7z M20,19h-8v2h8c1.1,0,2-0.9,2-2V5c0-1.1-0.9-2-2-2h-8v2h8V19z"/></g>',
+    logout: '<path d="M0 0h24v24H0z" fill="none"/><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>',
+
     // actions
     add: '<path d="M0 0h24v24H0z" fill="none"/><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>',
     remove: '<path d="M0 0h24v24H0z" fill="none"/><path d="M19 13H5v-2h14v2z"/>',

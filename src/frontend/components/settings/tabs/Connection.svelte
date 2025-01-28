@@ -133,7 +133,6 @@
     // Camera
     // Answer / Guess / Poll
 
-    // WIP do this on startup (if connected!)
     function pcoConnect() {
         if (!$pcoConnected) send(MAIN, ["PCO_LOAD_SERVICES"], { dataPath: $dataPath })
         else send(MAIN, ["PCO_DISCONNECT"])
@@ -223,8 +222,9 @@
 <!-- Planning Center -->
 <h3>Planning Center</h3>
 
-<CombinedInput>
+<CombinedInput style="border-bottom: 2px solid {$pcoConnected ? '#27a827' : '#a82727'};">
     <Button on:click={pcoConnect} style="width: 100%;" center>
+        <Icon id={$pcoConnected ? "logout" : "login"} right />
         {#if $pcoConnected}
             Disconnect from Planning Center
         {:else}
