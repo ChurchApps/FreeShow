@@ -1,14 +1,14 @@
-import path, { join } from "path"
-import PPTX2Json from "pptx2json"
-import protobufjs from "protobufjs"
-import SqliteToJson from "sqlite-to-json"
-import sqlite3 from "sqlite3"
-import WordExtractor from "word-extractor"
-import { toApp } from ".."
-import { IMPORT, MAIN } from "../../types/Channels"
-import { dataFolderNames, doesPathExist, getDataFolder, getExtension, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
-import { decompress, isZip } from "./zip"
-import { detectFileType } from "./bibleDetecter"
+import path, { join } from "path";
+import PPTX2Json from "pptx2json";
+import protobufjs from "protobufjs";
+import SqliteToJson from "sqlite-to-json";
+import sqlite3 from "sqlite3";
+import WordExtractor from "word-extractor";
+import { toApp } from "..";
+import { IMPORT, MAIN } from "../../types/Channels";
+import { dataFolderNames, doesPathExist, getDataFolder, getExtension, makeDir, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files";
+import { detectFileType } from "./bibleDetecter";
+import { decompress, isZip } from "./zip";
 
 const specialImports: any = {
     powerpoint: async (files: string[]) => {
@@ -156,7 +156,16 @@ async function importProject(files: string[], dataPath: string) {
 
     const data = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
 
-    const importPath = getDataFolder(dataPath, dataFolderNames.imports)
+    const importDataPath = getDataFolder(dataPath, dataFolderNames.imports)
+
+    // We want to store the new media files in the import folder under a subdirectory
+    // with the current date and time to avoid conflicts with existing files
+    const currentDate = new Date().toISOString().replace(/:/g, "-")
+    const importPath = path.join(importDataPath, `import-${currentDate}`)
+    if (!doesPathExist(importPath)) {
+        makeDir(importPath)
+    }
+
     zipFiles.forEach((zipFile) => {
         let zipData = decompress([zipFile], true)
         const dataFile = zipData.find((a) => a.name === "data.json")
@@ -168,6 +177,10 @@ async function importProject(files: string[], dataPath: string) {
             // check if path already exists on the system
             if (doesPathExist(filePath)) return
 
+            // TODO: taking the basename of the file path means that if there
+            // are multiple files with the same name that were originally in
+            // different directories, they will be overwritten. This needs to
+            // be fixed on the exporter side first.
             const fileName = path.basename(filePath)
             const file = zipData.find((a) => a.name === fileName)?.content
             const newMediaPath = path.join(importPath, fileName)
