@@ -1,9 +1,8 @@
-// import pcmconvert from "pcm-converter"
 import os from "os"
 import { toApp } from ".."
 import { CaptureHelper } from "../capture/CaptureHelper"
-import util from "./vingester-util"
 import { CaptureTransmitter } from "../capture/helpers/CaptureTransmitter"
+import util from "./vingester-util"
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -123,27 +122,33 @@ export class NdiSender {
         }
     }
 
-    static async sendAudioBufferNDI(id: string, buffer: Buffer, { sampleRate, noChannels, bytesForFloat32 }: any) {
-        if (this.ndiDisabled || !this.NDI[id].sender) return
+    static async sendAudioBufferNDI(id: string, buffer: Buffer, { sampleRate, channelCount, bytesForFloat32 }: any) {
+        if (this.ndiDisabled || !this.NDI[id]?.sender) return
         const grandiose = require("grandiose")
 
         /*  convert from PCM/signed-16-bit/little-endian data
         to NDI's "PCM/planar/signed-float32/little-endian  */
-        const pcmconvert: any = {} // TODO:
-        const buffer2 = pcmconvert(
-            buffer,
-            {
-                channels: noChannels,
-                dtype: "int16",
-                endianness: "le",
-                interleaved: true,
-            },
-            {
-                dtype: "float32",
-                endianness: "le",
-                interleaved: false,
-            }
-        )
+        let buffer2: Buffer
+        try {
+            const pcmconvert = require("pcm-convert")
+            buffer2 = pcmconvert(
+                buffer,
+                {
+                    channels: channelCount,
+                    dtype: "int16",
+                    endianness: "le",
+                    interleaved: true,
+                },
+                {
+                    dtype: "float32",
+                    endianness: "le",
+                    interleaved: false,
+                }
+            )
+        } catch (err) {
+            console.log("Could not convert audio")
+            return
+        }
 
         /*  create frame  */
         const now = this.timeStart + process.hrtime.bigint()
@@ -154,14 +159,16 @@ export class NdiSender {
 
             /*  type-specific information  */
             sampleRate,
-            noChannels,
-            noSamples: Math.trunc(buffer2.byteLength / noChannels / bytesForFloat32),
-            channelStrideBytes: Math.trunc(buffer2.byteLength / noChannels),
+            noChannels: channelCount,
+            noSamples: Math.trunc(buffer2.byteLength / channelCount / bytesForFloat32),
+            channelStrideBytes: Math.trunc(buffer2.byteLength / channelCount),
 
             /*  the data itself  */
             fourCC: (grandiose as any).FOURCC_FLTp,
             data: buffer2,
         }
+
+        console.log(buffer2.byteLength, timecode, sampleRate, channelCount, frame.noSamples, frame.channelStrideBytes, frame.fourCC)
 
         await this.NDI[id].sender.audio(frame)
     }

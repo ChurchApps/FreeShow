@@ -3,7 +3,7 @@
 
 import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
-import { CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
+import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { cloudConnect } from "./cloud/cloud"
 import { currentlyDeletedShows } from "./cloud/drive"
@@ -22,6 +22,7 @@ import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, saveRecording, startImport } from "./utils/responses"
 import { renameShows } from "./utils/shows"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { receiveAudio } from "./audio/receiveAudio"
 
 // ----- STARTUP -----
 
@@ -430,6 +431,7 @@ ipcMain.on(BIBLE, loadScripture)
 ipcMain.on(CLOUD, cloudConnect)
 ipcMain.on(RECORDER, saveRecording)
 ipcMain.on(NDI, receiveNDI)
+ipcMain.on(AUDIO, receiveAudio)
 
 // ----- HELPERS -----
 

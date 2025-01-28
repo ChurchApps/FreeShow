@@ -167,6 +167,7 @@
         "typescript": "^4.9.5"
     },
     "dependencies": {
+        "@discordjs/opus": "^0.10.0",
         "@googleapis/drive": "^8.14.0",
         "@mapbox/node-pre-gyp": "^1.0.11",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
@@ -189,6 +190,7 @@
         "node-machine-id": "^1.1.12",
         "npm-run-all": "^4.1.5",
         "osc-js": "^2.4.1",
+        "pcm-convert": "^1.6.5",
         "pdf2img-electron": "^1.2.3",
         "pptx2json": "^0.0.10",
         "protobufjs": "^7.2.3",

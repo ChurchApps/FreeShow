@@ -11,13 +11,14 @@ import type { ValidChannels } from "../types/Channels"
 // wait to log messages until after intial load is done
 let appLoaded: boolean = false
 const LOG_MESSAGES: boolean = process.env.NODE_ENV !== "production"
-const filteredChannels: any[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM", "BUFFER", "REQUEST_STREAM", "MAIN_TIME", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM"]
+const filteredChannelsData: string[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM", "BUFFER", "REQUEST_STREAM", "MAIN_TIME", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM"]
+const filteredChannels: ValidChannels[] = ["AUDIO"]
 
 let storedReceivers: any = {}
 
 contextBridge.exposeInMainWorld("api", {
     send: (channel: ValidChannels, data: any) => {
-        if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(data?.channel)) console.log("TO ELECTRON [" + channel + "]: ", data)
+        if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(data?.channel)) console.log("TO ELECTRON [" + channel + "]: ", data)
         // if (useTimeout.includes(channel) && data.channel === lastChannel && data.id) return
 
         ipcRenderer.send(channel, data)
@@ -28,7 +29,7 @@ contextBridge.exposeInMainWorld("api", {
     receive: (channel: ValidChannels, func: any, id: string = "") => {
         const receiver = (_e: IpcRendererEvent, ...args: any[]) => {
             if (!appLoaded && channel === "STORE" && args[0]?.channel === "SHOWS") setTimeout(() => (appLoaded = true), 3000)
-            if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(args[0]?.channel)) console.log("TO CLIENT [" + channel + "]: ", ...args)
+            if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(args[0]?.channel)) console.log("TO CLIENT [" + channel + "]: ", ...args)
 
             func(...args)
         }

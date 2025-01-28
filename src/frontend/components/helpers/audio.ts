@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { MAIN, OUTPUT } from "../../../types/Channels"
+import { AUDIO, MAIN, OUTPUT } from "../../../types/Channels"
 import { activePlaylist, audioChannels, audioPlaylists, gain, isFadingOut, media, outLocked, playingAudio, playingVideos, special } from "../../stores"
 import { send } from "../../utils/request"
 import { customActionActivation } from "../actions/actions"
@@ -737,10 +737,18 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
     })
 }
 
+const channelCount = 2
+const sampleRate = 48 // kHz
+
 // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
+let ac = new AudioContext({
+    latencyHint: "interactive",
+    sampleRate: sampleRate * 1000,
+})
+let destNode: MediaStreamAudioDestinationNode | null = null
+let recorder: MediaRecorder | null = null
 export async function getAnalyser(elem: any, stream: any = null) {
-    let ac = new AudioContext()
-    let source
+    let source: MediaStreamAudioSourceNode | MediaElementAudioSourceNode
 
     try {
         if (stream) source = ac.createMediaStreamSource(stream)
@@ -801,14 +809,41 @@ export async function getAnalyser(elem: any, stream: any = null) {
 
     console.log("ANALYZING AUDIO", elem)
 
+    if (!destNode) {
+        destNode = ac.createMediaStreamDestination()
+        destNode.channelCount = channelCount
+        destNode.channelCountMode = "explicit"
+        destNode.channelInterpretation = "speakers"
+    }
+    source.connect(destNode)
+
+    // CAPTURE
+    if (!recorder) {
+        recorder = new MediaRecorder(destNode.stream, {
+            mimeType: 'audio/webm; codecs="opus"',
+            // mimeType: 'audio/webm; codecs="pcm"',
+        })
+        recorder.addEventListener("dataavailable", async (ev) => {
+            const ab = await ev.data.arrayBuffer()
+            const u8 = new Uint8Array(ab, 0, ab.byteLength)
+            send(AUDIO, ["CAPTURE"], u8)
+        })
+    }
+
+    if (recorder.state === "paused") recorder.play()
+    else if (recorder.state !== "recording") {
+        // const frameRate = 24 // fps
+        const frameRate = 0.5 // fps // DEBUG
+        recorder.start(Math.round(1000 / frameRate))
+        // WIP recorder.stop() if no input
+    }
+
     // custom audio output (supported in Chrome 110+)
     // https://developer.chrome.com/blog/audiocontext-setsinkid/
     // this applies to both audio & video
     if (get(special).audioOutput) {
-        let audioDest = ac.createMediaStreamDestination()
-        source.connect(audioDest)
         let newAudio: any = new Audio()
-        newAudio.srcObject = audioDest.stream
+        newAudio.srcObject = destNode.stream
 
         try {
             await (ac as any).setSinkId(get(special).audioOutput)
