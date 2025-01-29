@@ -608,13 +608,19 @@ export function getCurrentMediaTransition() {
 // TEMPLATE
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true, templateClicked: boolean = false) {
-    if (!slideItems?.length) return []
+    // if (!slideItems?.length && !addOverflowTemplateItems) return []
     slideItems = clone(slideItems)
 
     if (!templateItems.length) return slideItems
     templateItems = clone(templateItems)
 
     let sortedTemplateItems = sortItemsByType(templateItems)
+
+    // reduce template textboxes to slide items
+    let slideTextboxes = slideItems.reduce((count, a) => (count += (a.type || "text") === "text" ? 1 : 0), 0)
+    if (!templateClicked && slideTextboxes < (sortedTemplateItems.text?.length || 0)) {
+        sortedTemplateItems.text = sortedTemplateItems.text.slice(0, slideTextboxes)
+    }
 
     // remove slide items if no text
     if (addOverflowTemplateItems && templateItems.length < slideItems.length) {
@@ -668,7 +674,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 let firstChar = templateText?.value?.[0] || ""
 
                 // add dynamic values
-                if (!text.value?.length && firstChar === "{") {
+                if (!text.value?.length && firstChar === "{" && templateItem?.lines?.[j]) {
                     text.value = templateText!.value
                 }
 
@@ -693,7 +699,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     // let remainingTextTemplateItems: any[] = []
     if (addOverflowTemplateItems) {
-        sortedTemplateItems.text = removeTextValue(sortedTemplateItems.text)
+        sortedTemplateItems.text = removeTextValue(sortedTemplateItems.text || [])
         // remainingTextTemplateItems = templateItems.filter((a) => (a.type || "text") === "text")
     } else {
         delete sortedTemplateItems.text
