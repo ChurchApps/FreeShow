@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { AudioPlayer } from "../../audio/audioPlayer"
     import { dictionary, focusMode, media, outLocked, playingAudio } from "../../stores"
-    import { clearAudio, getAudioDuration, playAudio, updateVolume } from "../helpers/audio"
+    import { clearAudio, getAudioDuration, updateVolume } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
@@ -60,7 +61,7 @@
         // if (e.target.closest("input") || e.target.closest(".edit")) return
         if ($outLocked || isMic || $focusMode || document.activeElement !== document.body) return
 
-        if (e.key === " ") playAudio({ path, name }, true, currentTime)
+        if (e.key === " ") AudioPlayer.start(path, { name }, { pauseIfPlaying: true, startAt: currentTime })
     }
 
     // visualizer
@@ -151,7 +152,8 @@
             title={paused ? $dictionary.media?.play : $dictionary.media?.pause}
             on:click={() => {
                 if ($outLocked) return
-                playAudio({ path, name }, true, currentTime)
+                // playAudio({ path, name }, true, currentTime)
+                AudioPlayer.start(path, { name }, { pauseIfPlaying: true, startAt: currentTime })
             }}
         >
             <Icon id={paused ? "play" : "pause"} white={paused} size={1.2} />

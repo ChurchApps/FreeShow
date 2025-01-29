@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { AudioPlayer } from "../../../audio/audioPlayer"
     import { activeFocus, activeShow, focusMode, media, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { getAudioDuration, playAudio, startPlaylist } from "../../helpers/audio"
+    import { getAudioDuration, startPlaylist } from "../../helpers/audio"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
 
@@ -28,7 +29,8 @@
             if ($outLocked || e.ctrlKey || e.metaKey) return
 
             if (playlist) startPlaylist(active, path, true)
-            else playAudio({ path, name }, true, 0, e.altKey)
+            // else playAudio({ path, name }, true, 0, e.altKey)
+            else AudioPlayer.start(path, { name }, { playMultiple: e.altKey })
         }}
         on:dblclick={(e) => {
             if (e.ctrlKey || e.metaKey) return

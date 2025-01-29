@@ -10,6 +10,7 @@ import { clone, keysToID, sortByName, sortObject } from "../helpers/array"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
+import { removeExtension } from "../helpers/media"
 
 const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
@@ -134,7 +135,7 @@ const loadActions = {
         if (bg && showMedia[bg]?.name) {
             media.push({
                 id: bg,
-                label: showMedia[bg].name.indexOf(".") > -1 ? showMedia[bg].name.slice(0, showMedia[bg].name.lastIndexOf(".")) : showMedia[bg].name,
+                label: removeExtension(showMedia[bg].name),
                 translate: false,
                 icon: "image",
             })

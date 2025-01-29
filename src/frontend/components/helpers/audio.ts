@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { AUDIO, MAIN, OUTPUT } from "../../../types/Channels"
+import { MAIN, OUTPUT } from "../../../types/Channels"
 import { activePlaylist, audioChannels, audioPlaylists, gain, isFadingOut, media, outLocked, playingAudio, playingVideos, special } from "../../stores"
 import { send } from "../../utils/request"
 import { customActionActivation } from "../actions/actions"
@@ -746,7 +746,7 @@ let ac = new AudioContext({
     sampleRate: sampleRate * 1000,
 })
 let destNode: MediaStreamAudioDestinationNode | null = null
-let recorder: MediaRecorder | null = null
+// let recorder: MediaRecorder | null = null
 export async function getAnalyser(elem: any, stream: any = null) {
     let source: MediaStreamAudioSourceNode | MediaElementAudioSourceNode
 
@@ -818,25 +818,25 @@ export async function getAnalyser(elem: any, stream: any = null) {
     source.connect(destNode)
 
     // CAPTURE
-    if (!recorder) {
-        recorder = new MediaRecorder(destNode.stream, {
-            mimeType: 'audio/webm; codecs="opus"',
-            // mimeType: 'audio/webm; codecs="pcm"',
-        })
-        recorder.addEventListener("dataavailable", async (ev) => {
-            const ab = await ev.data.arrayBuffer()
-            const u8 = new Uint8Array(ab, 0, ab.byteLength)
-            send(AUDIO, ["CAPTURE"], u8)
-        })
-    }
+    // if (!recorder) {
+    //     recorder = new MediaRecorder(destNode.stream, {
+    //         mimeType: 'audio/webm; codecs="opus"',
+    //         // mimeType: 'audio/webm; codecs="pcm"',
+    //     })
+    //     recorder.addEventListener("dataavailable", async (ev) => {
+    //         const ab = await ev.data.arrayBuffer()
+    //         const u8 = new Uint8Array(ab, 0, ab.byteLength)
+    //         send(AUDIO, ["CAPTURE"], u8)
+    //     })
+    // }
 
-    if (recorder.state === "paused") recorder.play()
-    else if (recorder.state !== "recording") {
-        // const frameRate = 24 // fps
-        const frameRate = 0.5 // fps // DEBUG
-        recorder.start(Math.round(1000 / frameRate))
-        // WIP recorder.stop() if no input
-    }
+    // if (recorder.state === "paused") recorder.play()
+    // else if (recorder.state !== "recording") {
+    //     // const frameRate = 24 // fps
+    //     const frameRate = 0.5 // fps // DEBUG
+    //     recorder.start(Math.round(1000 / frameRate))
+    //     // WIP recorder.stop() if no input
+    // }
 
     // custom audio output (supported in Chrome 110+)
     // https://developer.chrome.com/blog/audiocontext-setsinkid/
