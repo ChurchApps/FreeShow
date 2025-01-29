@@ -81,7 +81,7 @@
         }
     }
 
-    function toggleScripture({ sourceKey: id, name }: any) {
+    function toggleScripture({ sourceKey: id, name, copyright }: any) {
         scriptures.update((a: any) => {
             let key: string | null = null
             Object.entries(a).forEach(([sId, value]: any) => {
@@ -89,7 +89,7 @@
             })
 
             if (key) delete a[key]
-            else a[uid()] = { name, api: true, id }
+            else a[uid()] = { name, api: true, id, copyright }
             return a
         })
     }
