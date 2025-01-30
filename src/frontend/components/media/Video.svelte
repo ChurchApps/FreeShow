@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, onDestroy } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
     import { media } from "../../stores"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
@@ -21,6 +21,10 @@
         hasLoaded = true
         dispatch("loaded", true)
     }
+
+    onDestroy(() => {
+        if (endInterval) clearInterval(endInterval)
+    })
 
     // custom end time
     $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0

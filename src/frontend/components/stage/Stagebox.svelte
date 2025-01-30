@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import autosize from "../edit/scripts/autosize"
@@ -83,7 +84,9 @@
 
     // timer
     let today = new Date()
-    setInterval(() => (today = new Date()), 1000)
+    const dateInterval = setInterval(() => (today = new Date()), 1000)
+
+    onDestroy(() => clearInterval(dateInterval))
 
     $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100 // item.autoFontSize ||
 

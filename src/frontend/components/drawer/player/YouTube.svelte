@@ -34,13 +34,14 @@
     let dispatch = createEventDispatcher()
     let player = null
     let loaded = false
+    let getDurationInterval = null
     function onReady(e) {
         player = e.detail.target
 
         if (videoData.muted || (!preview && $currentWindow !== "output")) player.mute()
 
         // get duration
-        let getDuration = setInterval(() => {
+        getDurationInterval = setInterval(() => {
             videoData.duration = player.getDuration()
             if (videoData.duration) clearInterval(getDuration)
         }, 200)
@@ -76,15 +77,20 @@
     }
 
     $: if (loaded) updateTime()
-    let interval
+    let timeInterval = null
     function updateTime() {
         if (!preview) return
 
-        if (interval) clearInterval(interval)
-        interval = setInterval(() => {
+        if (timeInterval) clearInterval(timeInterval)
+        timeInterval = setInterval(() => {
             if (player.getPlayerState() === 1) videoTime = player.getCurrentTime()
         }, 500)
     }
+
+    onDestroy(() => {
+        if (timeInterval) clearInterval(timeInterval)
+        if (getDurationInterval) clearInterval(getDurationInterval)
+    })
 
     $: if (!seeking && videoTime !== undefined) seekPlayer()
     function seekPlayer() {

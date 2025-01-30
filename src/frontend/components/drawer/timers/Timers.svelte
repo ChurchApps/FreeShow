@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { activePopup, activeTimers, dictionary, disableDragging, labelsDisabled, timers } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -26,7 +27,8 @@
     // }
 
     let today = new Date()
-    setInterval(() => (today = new Date()), 1000)
+    const interval = setInterval(() => (today = new Date()), 1000)
+    onDestroy(() => clearInterval(interval))
 
     function getCurrentValue(timer: any, ref: any, _updater: any) {
         let currentTime = getCurrentTimerValue(timer, ref, today)

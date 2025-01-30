@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { dictionary, focusMode, media, outLocked, playingAudio } from "../../stores"
     import { clearAudio, getAudioDuration, playAudio, updateVolume } from "../helpers/audio"
     import Icon from "../helpers/Icon.svelte"
@@ -26,18 +27,22 @@
     $: if (!paused && path) startUpdater()
 
     // updater
-    let interval: any = null
+    let updaterInterval: any = null
     function startUpdater() {
-        if (interval) return
+        if (updaterInterval) return
 
-        interval = setInterval(() => {
+        updaterInterval = setInterval(() => {
             if (paused) {
-                clearInterval(interval)
-                interval = null
+                clearInterval(updaterInterval)
+                updaterInterval = null
             }
             if (sliderValue === null) currentTime = playing.audio?.currentTime || 0
         }, 100)
     }
+
+    onDestroy(() => {
+        if (updaterInterval) clearInterval(updaterInterval)
+    })
 
     function setTime(e: any) {
         sliderValue = null
