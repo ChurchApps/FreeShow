@@ -5,7 +5,7 @@ import { uid } from "uid"
 import { customActionActivation } from "../components/actions/actions"
 import { stopMetronome } from "../components/drawer/audio/metronome"
 import { clearAudioStreams } from "../components/helpers/audio"
-import { activePlaylist, isFadingOut, special } from "../stores"
+import { activePlaylist, isFadingOut, playingAudio22, special } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
 
 let clearing: string[] = []
@@ -26,56 +26,55 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         setTimeout(() => (forceClear = false), 100)
         return
     }
-    if (!Object.keys(AudioPlayer.playing).length) return
+    if (!Object.keys(get(playingAudio22)).length) return
 
-    let newPlaying: any = AudioPlayer.playing
-    AudioPlayer.playing = updatePlaying(AudioPlayer.playing)
-    function updatePlaying(a) {
-        if (path) clearAudio(path)
-        else Object.keys(AudioPlayer.playing).forEach(clearAudio)
+    const clearIds = path ? [path] : Object.keys(get(playingAudio22))
+    clearIds.forEach(clearAudio)
 
-        return a
+    async function clearAudio(path: string) {
+        clearing.push(path)
+        const audio = AudioPlayer.getAudio(path)
+        if (!audio) return deleteAudio(path)
 
-        async function clearAudio(path) {
-            clearing.push(path)
-            if (!a[path]?.audio) return deleteAudio(path)
+        let faded = await fadeAudio(audio, clearTime)
+        if (faded) removeAudio(path)
+    }
 
-            let faded = await fadeAudio(a[path].audio, clearTime)
-            if (faded) removeAudio(path)
-        }
+    function removeAudio(path) {
+        const audio = AudioPlayer.getAudio(path)
+        if (!audio) return deleteAudio(path)
 
-        function removeAudio(path) {
-            if (!a[path]?.audio) return deleteAudio(path)
+        audio.pause()
+        customActionActivation("audio_end")
+        deleteAudio(path)
+    }
 
-            a[path].audio.pause()
-            customActionActivation("audio_end")
-            deleteAudio(path)
-        }
-
-        function deleteAudio(path) {
+    function deleteAudio(path) {
+        playingAudio22.update((a) => {
             delete a[path]
-            newPlaying = a
+            return a
+        })
 
-            startUpdate()
-        }
+        // startUpdate()
+        clearAudioStreams()
     }
 
-    let updating = false
-    function startUpdate() {
-        if (updating) return
-        updating = true
+    // let updating = false
+    // function startUpdate() {
+    //     if (updating) return
+    //     updating = true
 
-        setTimeout(() => {
-            AudioPlayer.playing = newPlaying
-            clearAudioStreams()
-            clearing.splice(clearing.indexOf(path), 1)
-        }, 200)
-    }
+    //     setTimeout(() => {
+    //         playingAudio22.set(newPlaying)
+    //         clearAudioStreams()
+    //         clearing.splice(clearing.indexOf(path), 1)
+    //     }, 200)
+    // }
 }
 
 let currentlyCrossfading: string[] = []
 export function fadeOutAudio(crossfade: number = 0) {
-    Object.entries(AudioPlayer.playing).forEach(async ([path, { audio }]) => {
+    Object.entries(get(playingAudio22)).forEach(async ([path, { audio }]) => {
         if (currentlyCrossfading.includes(path)) return
 
         currentlyCrossfading.push(path)

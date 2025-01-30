@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { AudioAnalyser } from "../../audio/audioAnalyser"
+    import { clearAudio } from "../../audio/audioFading"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { dictionary, focusMode, media, outLocked, playingAudio } from "../../stores"
-    import { clearAudio, getAudioDuration, updateVolume } from "../helpers/audio"
+    import { dictionary, focusMode, media, outLocked, playingAudio22 } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
@@ -12,7 +13,7 @@
     $: path = active?.id || ""
     $: name = active?.name || ""
     $: isMic = active?.data?.isMic
-    $: playing = $playingAudio[path] || {}
+    $: playing = $playingAudio22[path] || {}
     $: paused = playing.paused !== false
 
     let currentTime: number = 0
@@ -20,7 +21,8 @@
     $: if (path) getDuration()
     async function getDuration() {
         duration = 0
-        duration = playing.mic ? 0 : await getAudioDuration(path)
+        // duration = playing.isMic ? 0 : await getAudioDuration(path)
+        duration = playing.isMic ? 0 : await AudioPlayer.getDuration(path)
         currentTime = playing.audio?.currentTime || 0
     }
 
@@ -36,20 +38,27 @@
                 clearInterval(interval)
                 interval = null
             }
-            if (sliderValue === null) currentTime = playing.audio?.currentTime || 0
+            if (sliderValue === null) currentTime = AudioPlayer.getTime(path)
+
+            console.log("interval")
         }, 100)
     }
 
     function setTime(e: any) {
         sliderValue = null
-        if (playing.audio) {
-            playing.audio.currentTime = e.target.value
 
-            // something (in audio.ts I guess) plays the audio when updating the time, so this will pause it again
-            if (paused) setTimeout(() => playing.audio.pause(), 20)
-        } else {
-            currentTime = e.target.value
+        const time = e.target.value
+        if (!AudioPlayer.setTime(path, time)) {
+            currentTime = time
         }
+        // if (playing.audio) {
+        //     playing.audio.currentTime = e.target.value
+
+        //     // something (in audio.ts I guess) plays the audio when updating the time, so this will pause it again
+        //     if (paused) setTimeout(() => playing.audio.pause(), 20)
+        // } else {
+        //     currentTime = e.target.value
+        // }
     }
 
     let sliderValue: any = null
@@ -64,66 +73,73 @@
         if (e.key === " ") AudioPlayer.start(path, { name }, { pauseIfPlaying: true, startAt: currentTime })
     }
 
-    // visualizer
-    let analyser: any = null
-    $: if (path) analyser = $playingAudio[path]?.analyser || null
-    $: console.log(analyser)
+    let mediaElem: any = null
     let canvas: any = null
-    $: if (analyser && canvas) visualizer()
+    $: if ($playingAudio22[path]?.paused === false && canvas) renderVisualiser()
 
-    function visualizer() {
-        let leftChannel = analyser.left
-        let rightChannel = analyser.right
+    let isRendering: boolean = false
+    let analysers: AnalyserNode[] = []
+    function renderVisualiser() {
+        analysers = AudioAnalyser.getAnalysers()
+        if (!canvas || !analysers.length) return
+        if (isRendering) return
 
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
-        let ctx = canvas.getContext("2d")
+        const WIDTH = mediaElem.clientWidth || window.innerWidth
+        const HEIGHT = 120
 
-        let bufferLengthLeft = leftChannel.frequencyBinCount
-        let bufferLengthRight = rightChannel.frequencyBinCount
+        canvas.width = WIDTH
+        canvas.height = HEIGHT
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return
 
-        let dataArrayLeft = new Uint8Array(bufferLengthLeft)
-        let dataArrayRight = new Uint8Array(bufferLengthRight)
+        const bufferLength = analysers[0].frequencyBinCount // 128
+        const maxHeightValue = analysers[0].fftSize // 256
+        if (!bufferLength || !maxHeightValue) return
 
-        let WIDTH = canvas.width
-        let HEIGHT = canvas.height
+        const dataArrays: Uint8Array[] = analysers.map(() => new Uint8Array(bufferLength))
 
-        let padding = -0.5
-        let barWidth = (WIDTH / bufferLengthLeft - padding) * 1.3
-        let barHeight
-        let x = 0
+        // const padding = -0.5
+        // const barWidth = bufferLength ? (WIDTH / bufferLength - padding) * 1.3 : 0
 
+        const padding = -0.5
+        const barWidth = (WIDTH / bufferLength - padding) * 1.3
+
+        isRendering = true
         function renderFrame() {
-            if (analyser) {
-                requestAnimationFrame(renderFrame)
-            } else {
+            // || ($playingAudio22[path]?.paused !== false && allBars === 0)
+            if (!$playingAudio22[path]) {
                 ctx.clearRect(0, 0, WIDTH, HEIGHT)
+                isRendering = false
                 return
             }
 
-            x = 0
+            requestAnimationFrame(renderFrame)
 
-            leftChannel.getByteFrequencyData(dataArrayLeft)
-            rightChannel.getByteFrequencyData(dataArrayRight)
+            // update frequency data for all analysers
+            analysers.forEach((analyser, i) => analyser.getByteFrequencyData(dataArrays[i]))
 
             ctx.clearRect(0, 0, WIDTH, HEIGHT)
-            // ctx.fillStyle = "transparent"
-            // ctx.fillRect(0, 0, WIDTH, HEIGHT)
 
-            for (let i = 0; i < bufferLengthLeft; i++) {
-                let mid = Math.round((dataArrayLeft[i] + dataArrayRight[i]) / 2)
-                barHeight = mid * 0.5
+            let x = 0
 
-                let r = barHeight * 1.5 + 5 // * (i / bufferLengthLeft)
-                let g = 5 // 250 * (i / bufferLengthLeft)
-                let b = 150
-                // if (barHeight > 125) b = 120
-                // green - yellow - red
-                // let r = barHeight * 5 + 5
-                // let g = barHeight > 120 ? 10 : 10 * barHeight
-                // let b = 20
+            for (let i = 0; i < bufferLength; i++) {
+                // if (i % 10 === 0 || i === bufferLength - 1) {
+                //     ctx.fillStyle = `rgb(255, 0, 0)`
+                //     ctx.fillRect(x, 0, barWidth, HEIGHT)
+                //     x += barWidth + padding
+                //     continue
+                // }
 
-                ctx.fillStyle = "rgb(" + r + "," + g + "," + b + ")"
+                // const sum = dataArrays.reduce((total, array) => total + array[i], 0)
+                const sum = dataArrays[0][i] + dataArrays[1][i]
+                const percentage = Math.round(sum / dataArrays.length) / maxHeightValue
+                const barHeight = HEIGHT * percentage
+
+                const r = 255 * percentage
+                const g = 5
+                const b = 150
+
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
                 ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight)
 
                 x += barWidth + padding
@@ -143,7 +159,7 @@
     <canvas bind:this={canvas} />
 {/if}
 
-<div class="main media context #media_preview">
+<div class="main media context #media_preview" bind:this={mediaElem}>
     <div class="buttons">
         <Button
             style="flex: 0"
@@ -223,7 +239,8 @@
                         return a
                     })
 
-                    updateVolume("local")
+                    // updateVolume("local")
+                    AudioPlayer.updateVolume(path)
                 }}
             >
                 <Icon id="volume_down" white size={1.2} />
@@ -241,7 +258,8 @@
                         return a
                     })
 
-                    updateVolume("local")
+                    // updateVolume("local")
+                    AudioPlayer.updateVolume(path)
                 }}
             >
                 <Icon id="volume" white size={1.2} />

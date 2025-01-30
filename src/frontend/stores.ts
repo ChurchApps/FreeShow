@@ -15,6 +15,7 @@ import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } 
 import type { Channels, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
+import type { AudioData } from "./audio/audioPlayer"
 import type { API_metronome } from "./components/actions/api"
 import type { History } from "./components/helpers/history"
 
@@ -80,6 +81,7 @@ export const nextActionEventPaused: Writable<boolean> = writable(false)
 // AUDIO
 export const audioChannels: Writable<Channels> = writable({})
 export const playingAudio: Writable<{ [key: string]: any }> = writable({})
+export const playingAudio22: Writable<{ [key: string]: AudioData }> = writable({})
 export const playingVideos: Writable<any[]> = writable([])
 export const activePlaylist: Writable<any> = writable(null)
 export const playingMetronome: Writable<boolean> = writable(false)

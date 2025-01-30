@@ -4,7 +4,9 @@
 
     export let advanced: boolean = false
     // const numbers: number = 8
-    const numbers: number[] = [-10, -15, -20, -25, -30, -50, -70, -85, -100]
+    // const numbers: number[] = [-10, -15, -20, -25, -30, -50, -70, -85, -100]
+    // TODO:
+    const numbers: number[] = [0, -3, -6, -9, -12, -15, -20, -40, -50, -62, -80]
 
     function getDBValue(dB: any, side: "left" | "right") {
         if (!dB) return 0
@@ -46,8 +48,8 @@
     // }
 
     function getPercentageFromDB(dB: number) {
-        const max: number = $audioChannels.dB?.max ?? -10
-        const min: number = $audioChannels.dB?.min ?? -100
+        const max: number = $audioChannels.dB?.max ?? 0
+        const min: number = $audioChannels.dB?.min ?? -80
 
         // invert
         // dB = max + min - dB
@@ -95,7 +97,7 @@
         </div> -->
         <div class="lines" style="padding: 0 5px;">
             {#each numbers as i}
-                <p class="absolute" style="top: {getPercentageFromDB(i)}%;" class:start={i === numbers[0]} class:end={i === numbers[numbers.length - 1]}>{i <= -100 ? "-∞" : i}</p>
+                <p class="absolute" style="top: {getPercentageFromDB(i)}%;" class:start={i === numbers[0]} class:end={i === numbers[numbers.length - 1]}>{i <= -80 ? "-∞" : i}</p>
             {/each}
         </div>
     </div>
@@ -189,6 +191,7 @@
     }
 
     span div {
+        /* transition: height 0.05s ease 0s; */
         transition: height 0.05s ease 0s;
         /* background-color: transparent; */
         background-color: var(--primary-darker);

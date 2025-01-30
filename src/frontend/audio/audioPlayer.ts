@@ -2,11 +2,10 @@
 
 import { get } from "svelte/store"
 import { customActionActivation } from "../components/actions/actions"
-import { analyseAudio, clearAudio } from "../components/helpers/audio"
 import { encodeFilePath, removeExtension } from "../components/helpers/media"
-import { gain, media, volume } from "../stores"
+import { gain, media, playingAudio22, volume } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
-import { fadeInAudio, fadeOutAudio } from "./audioFading"
+import { clearAudio, fadeInAudio, fadeOutAudio } from "./audioFading"
 
 type AudioMetadata = {
     name: string
@@ -19,7 +18,7 @@ type AudioOptions = {
     crossfade?: number
     playlistCrossfade?: boolean
 }
-type AudioData = {
+export type AudioData = {
     name: string
     paused: boolean
     audio: HTMLAudioElement
@@ -30,7 +29,7 @@ export class AudioPlayer {
     static channelCount = 2
     static sampleRate = 48000 // Hz
 
-    static playing: { [key: string]: AudioData } = {}
+    // static playing: { [key: string]: AudioData } = {}
 
     // INIT
 
@@ -41,7 +40,7 @@ export class AudioPlayer {
     static async start(path: string, metadata: AudioMetadata, options: AudioOptions) {
         if (this.audioExists(path)) {
             if (options.pauseIfPlaying === false) {
-                this.playing[path].audio.currentTime = 0
+                updateAudioStore(path, "currentTime", 0)
                 return
             }
 
@@ -49,26 +48,29 @@ export class AudioPlayer {
             return
         }
 
-        let audioPlaying = Object.keys(this.playing).length
+        let audioPlaying = Object.keys(get(playingAudio22)).length
         if (options.crossfade) fadeOutAudio(options.crossfade)
         else if (!options.playMultiple) clearAudio("", false, options.playlistCrossfade)
 
         const audio = await this.createAudio(path)
         if (!audio) return
 
-        AudioAnalyser.append(path, audio)
+        // AudioAnalyser.attach(path, audio)
 
         // // another audio might have been started while awaiting (if played rapidly)
         // if (this.audioExists(path)) return
 
         if ((options.startAt || 0) > 0) audio.currentTime = options.startAt || 0
 
-        this.playing[path] = {
-            name: removeExtension(metadata.name),
-            paused: false,
-            isMic: !!metadata.isMic,
-            audio,
-        }
+        playingAudio22.update((a) => {
+            a[path] = {
+                name: removeExtension(metadata.name),
+                paused: false,
+                isMic: !!metadata.isMic,
+                audio,
+            }
+            return a
+        })
 
         // if (analyser?.gainNode) {
         //     analyser.gainNode.gain.value = this.getVolume(path) * this.getGain()
@@ -81,16 +83,14 @@ export class AudioPlayer {
             audio.volume = 0
             waitToPlay = options.crossfade * 0.6
             fadeInAudio(path, options.crossfade, !!waitToPlay)
-            return // WIP
+            // return // WIP
         }
 
         this.initAudio(path, waitToPlay)
     }
 
     private static async createAudio(path: string): Promise<HTMLAudioElement | null> {
-        let encodedPath = encodeFilePath(path)
-        const audio = new Audio(encodedPath)
-
+        const audio = new Audio(encodeFilePath(path))
         return new Promise((resolve) => {
             audio.addEventListener("canplay", () => resolve(audio))
             audio.addEventListener("error", (err) => {
@@ -107,11 +107,12 @@ export class AudioPlayer {
     private static initAudio(id: string, waitToPlay: number = 0) {
         setTimeout(() => {
             // audio might have been cleared
-            if (!this.audioExists(id)) return
+            const audio = this.getAudio(id)
+            if (!audio) return
 
             this.play(id)
             customActionActivation("audio_start")
-            analyseAudio()
+            AudioAnalyser.attach(id, audio)
         }, waitToPlay * 1000)
     }
 
@@ -120,24 +121,27 @@ export class AudioPlayer {
     static play(id: string) {
         if (!this.audioExists(id)) return
 
-        this.playing[id].paused = false
-        this.playing[id].audio.play()
-        // WIP analyseAudio()
+        updatePlayingStore(id, "paused", false)
+        this.getAudio(id)?.play()
     }
 
     static pause(id: string) {
         if (!this.audioExists(id)) return
 
-        this.playing[id].paused = true
-        this.playing[id].audio.pause()
+        updatePlayingStore(id, "paused", true)
+        this.getAudio(id)?.pause()
     }
 
     static stop(id: string) {
         if (!this.audioExists(id)) return
 
         this.pause(id)
-        // WIP stop analyser!!
-        delete this.playing[id]
+        playingAudio22.update((a) => {
+            delete a[id]
+            return a
+        })
+        // WIP stop analyser!!??
+        // if (!get(playingAudio22).length)
     }
 
     private static togglePausedState(id: string) {
@@ -147,9 +151,9 @@ export class AudioPlayer {
     }
 
     static updateVolume(id: string | null = null) {
-        const ids = id ? [id] : Object.keys(this.playing)
+        const ids = id ? [id] : Object.keys(get(playingAudio22))
         ids.forEach((id) => {
-            this.playing[id].audio.volume = this.getVolume(id)
+            updateAudioStore(id, "volume", this.getVolume(id))
         })
     }
 
@@ -157,10 +161,31 @@ export class AudioPlayer {
         AudioAnalyser.setGain(value)
     }
 
+    static setTime(id: string, time: number) {
+        if (!this.getAudio(id)) return false
+        updateAudioStore(id, "currentTime", time)
+        return true
+    }
+
     // GET
 
     static getPlaying(id: string): AudioData | null {
-        return this.playing[id] || null
+        return get(playingAudio22)[id] || null
+    }
+
+    static getAudio(id: string): HTMLAudioElement | null {
+        return get(playingAudio22)[id]?.audio || null
+    }
+
+    static getTime(id: string) {
+        return this.getAudio(id)?.currentTime || 0
+    }
+
+    static async getDuration(id: string) {
+        const audio = this.getAudio(id) || (await loadAudioFile(id))
+        const duration = audio?.duration || 0
+        // audio streams does not end and have Infinite duration
+        return duration === Infinity ? 0 : duration
     }
 
     static getVolume(id: string | null = null) {
@@ -181,4 +206,31 @@ export class AudioPlayer {
     static isPaused(id: string) {
         return !!this.getPlaying(id)?.paused
     }
+}
+
+function updatePlayingStore(id: string, key: string, value: any) {
+    playingAudio22.update((a) => {
+        if (!a[id]) return a
+        a[id][key] = value
+        return a
+    })
+}
+
+function updateAudioStore(id: string, key: string, value: any) {
+    playingAudio22.update((a) => {
+        if (!a[id]?.audio) return a
+        a[id].audio[key] = value
+        return a
+    })
+}
+
+export async function loadAudioFile(path: string): Promise<HTMLAudioElement | null> {
+    return new Promise((resolve) => {
+        const audio = new Audio(encodeFilePath(path))
+        audio.addEventListener("canplaythrough", () => resolve(audio))
+        audio.addEventListener("error", (err) => {
+            console.error("Could not get audio:", err)
+            resolve(null)
+        })
+    })
 }

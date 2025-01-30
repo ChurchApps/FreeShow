@@ -12,12 +12,14 @@ export class AudioAnalyser {
     static recorderFrameRate = 0.5 // DEBUG
 
     private static ac = new AudioContext({ latencyHint: "interactive", sampleRate: this.sampleRate })
+    private static splitter = this.ac.createChannelSplitter(this.channels)
     private static analysers: AnalyserNode[] = []
     private static sources: { [key: string]: MediaElementAudioSourceNode } = {}
 
-    static append(id: string, audio: HTMLAudioElement) {
-        let source: MediaElementAudioSourceNode
+    static attach(id: string, audio: HTMLAudioElement) {
+        if (this.sources[id]) return
 
+        let source: MediaElementAudioSourceNode
         try {
             source = this.ac.createMediaElementSource(audio)
             this.sources[id] = source
@@ -30,6 +32,7 @@ export class AudioAnalyser {
         this.initRecorder()
         if (get(special).audioOutput) this.customOutput(get(special).audioOutput)
 
+        source.connect(this.splitter)
         this.connectGain(source)
         this.connectDestination(source)
     }
@@ -47,17 +50,15 @@ export class AudioAnalyser {
     private static initAnalysers() {
         if (this.analysers.length) return
 
-        const SPLITTER = this.ac.createChannelSplitter(this.channels)
         const MERGER = this.ac.createChannelMerger(this.channels)
-        // source.connect(splitter) <<<
 
         // analyse left/right channels individually
         ;[...Array(this.channels)].forEach((_, channel) => {
             const analyser = (this.analysers[channel] = this.ac.createAnalyser())
             analyser.smoothingTimeConstant = 0.9
             analyser.fftSize = 256
-            SPLITTER.connect(analyser, channel)
-            SPLITTER.connect(MERGER, channel, channel)
+            this.splitter.connect(analyser, channel)
+            this.splitter.connect(MERGER, channel, channel)
         })
 
         AudioAnalyserMerger.init()
@@ -162,42 +163,57 @@ export class AudioAnalyser {
         return [...Array(this.channels)].map((_, channel) => this.getChannelVolume(channel))
     }
 
+    // private static getChannelVolume(channelIndex: number) {
+    //     const analyser = this.analysers[channelIndex]
+
+    //     const size = analyser.fftSize
+    //     var array = new Uint8Array(size)
+
+    //     // decibels
+
+    //     analyser.getByteFrequencyData(array)
+    //     console.log(analyser)
+    //     console.log(array)
+    //     analyser.maxDecibels = -10
+    //     // analyser.maxDecibels = 0
+    //     let value = array[0]
+    //     let percent = value / (array.length - 1)
+    //     let dB = analyser.minDecibels + (analyser.maxDecibels - analyser.minDecibels) * percent
+
+    //     return { volume: 1, dB: { value: dB, min: analyser.minDecibels, max: analyser.maxDecibels } }
+    // }
+
     private static getChannelVolume(channelIndex: number) {
         const analyser = this.analysers[channelIndex]
 
-        const size = analyser.fftSize
-        var array = new Uint8Array(size)
+        const size = analyser.fftSize // 256
+        const array = new Uint8Array(size)
 
-        // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
-        // analyser.getByteTimeDomainData(array)
-        // let channel: number = 0
-        // var average = 0
-        // var max = 0
-        // for (let i = 0; i < array.length; i++) {
-        //     let a = Math.abs(array[i] - array.length / 2)
-        //     average += a
-        //     max = Math.max(max, a)
-        // }
+        // Analyze amplitude values in time domain
+        analyser.getByteTimeDomainData(array)
 
-        // average /= array.length
+        // Calculate RMS value to represent perceived volume
+        const sumOfSquares = array.reduce((sum, value) => {
+            const normalizedValue = (value - 128) / 128 // Normalize between -1 and 1
+            return sum + normalizedValue * normalizedValue
+        }, 0)
 
-        // channel = (average / 256) * 100
-        // not sure about this
-        // if (channel < 25) channel *= 3
-        // else if (channel < 50) channel *= 2
-        // else if (channel < 75) channel *= 1.2
+        const rms = Math.sqrt(sumOfSquares / array.length)
 
-        // decibels
+        // Map RMS to dB scale
+        const dB = 20 * Math.log10(rms || 0.0001) // Protect against log(0)
 
-        analyser.getByteFrequencyData(array)
-        console.log(analyser)
-        console.log(array)
-        analyser.maxDecibels = -10
-        // analyser.maxDecibels = 0
-        let value = array[0]
-        let percent = value / (array.length - 1)
-        let dB = analyser.minDecibels + (analyser.maxDecibels - analyser.minDecibels) * percent
+        return {
+            volume: rms,
+            dB: { value: dB, min: analyser.minDecibels, max: analyser.maxDecibels },
+        }
+    }
 
-        return { volume: 1, dB: { value: dB, min: analyser.minDecibels, max: analyser.maxDecibels } }
+    static getSource(id: string): MediaElementAudioSourceNode | null {
+        return this.sources[id] || null
+    }
+
+    static getAnalysers() {
+        return this.analysers
     }
 }
