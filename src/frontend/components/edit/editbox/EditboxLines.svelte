@@ -157,12 +157,13 @@
         if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
         let editItemIndex: number = $activeEdit.items[0] ?? Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) ?? 0
 
-        let slideRef: any = _show().layouts("active").ref()[0][editIndex]
+        let layoutRef = _show().layouts("active").ref()[0]
+        let slideRef: any = layoutRef[editIndex]
         if (!slideRef) return
 
         // create new slide
         let newSlide = clone(_show().slides([ref.id]).get()[0]) || {}
-        if (!newSlide.items[editItemIndex]) return
+        if (!newSlide.items?.[editItemIndex]) return
         newSlide.items[editItemIndex].lines = secondLines
         delete newSlide.id
         delete newSlide.globalGroup
@@ -185,7 +186,11 @@
         children = addToPos(children, [id], slideIndex)
         _show().slides([parentId]).set({ key: "children", value: children })
 
-        if (e?.target?.closest(".item")) activeEdit.set({ slide: $activeEdit.slide! + 1, items: [], showId: $activeShow?.id })
+        let parentIndex = slideRef.type === "child" ? slideRef.parent.layoutIndex : slideRef.layoutIndex
+        let parentsBefore = layoutRef.filter((a, i) => i < parentIndex && a.id === parentId)?.length
+        let newIndex = $activeEdit.slide! + (parentsBefore + 1)
+
+        if (e?.target?.closest(".item")) activeEdit.set({ slide: newIndex, items: [], showId: $activeShow?.id })
         else getStyle()
     }
 

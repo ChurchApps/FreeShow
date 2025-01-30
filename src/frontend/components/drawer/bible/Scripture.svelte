@@ -110,6 +110,7 @@
             }
         }
 
+        console.log("LOADED", data)
         if (!data) return
 
         let hasId = false
@@ -141,17 +142,15 @@
         }
     }
 
-    function convertVerses(data: VerseText[], index: number = 0): { [key: string]: string } {
+    function convertVerses(data: VerseText[], _index: number = 0): { [key: string]: string } {
         let verses: any = {}
         data.forEach((d: any, i: number) => {
             verses[i + 1] = d.content
         })
-        console.log(index)
-        /*
-        if (bibles[index]) {
-            bibles[index].metadata = data.metadata || {}
-            if (data.copyright) bibles[index].metadata.copyright = data.copyright
-        }*/
+        // if (bibles[index]) {
+        //     bibles[index].metadata = data[0].metadata || {}
+        //     if (data[0].copyright) bibles[index].metadata.copyright = data[0].copyright
+        // }
 
         return verses
     }

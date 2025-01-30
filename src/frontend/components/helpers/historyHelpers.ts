@@ -378,6 +378,15 @@ export const _updaters = {
                 return a
             })
 
+            // open selected drawer tab
+            let activeCategory = get(drawerTabsData).shows?.activeSubTab
+            if (activeCategory !== "all" && activeCategory !== "unlabeled") {
+                drawerTabsData.update((a) => {
+                    a.shows = { enabled: true, activeSubTab: data.data.category }
+                    return a
+                })
+            }
+
             // remove from "not found" (should not be nessesary)
             setTimeout(() => {
                 notFound.update((a) => {
@@ -443,7 +452,7 @@ export const _updaters = {
         },
         deselect: () => {
             activeTagFilter.set([])
-        }
+        },
     },
     tag_key: { store: globalTags },
 
