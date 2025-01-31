@@ -111,6 +111,7 @@ export function loadBible(active: string, index: number = 0, bible: any) {
             bible.api = true
             bible.version = customName
             bible.copyright = scripture.copyright
+            bible.attributionRequired = scripture.attributionRequired || false
             return
         }
         delete bible.api
@@ -289,7 +290,7 @@ export function getSlides({ bibles, sorted }) {
                 if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
                 let indexes = [bibles.length]
                 if (combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
-                indexes.forEach((i) => addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: i }))
+                indexes.forEach((i) => addMeta(clone(get(scriptureSettings)), joinRange(range), { slideIndex, itemIndex: i }))
             }
 
             if (i + 1 >= sorted.length) return
@@ -307,7 +308,7 @@ export function getSlides({ bibles, sorted }) {
             if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
             let indexes = [bibles.length]
             if (combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
-            if (remainder) indexes.forEach((i) => addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: i }))
+            if (remainder) indexes.forEach((i) => addMeta(clone(get(scriptureSettings)), joinRange(range), { slideIndex, itemIndex: i }))
         }
 
         // auto size
@@ -347,6 +348,12 @@ export function getSlides({ bibles, sorted }) {
         let bibleVersions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
         let versions = combineWithText ? bibleVersions[itemIndex] : bibleVersions.join(" + ")
         let books = combineWithText ? bibles[itemIndex]?.book : removeDuplicates(bibles.map((a) => a.book)).join(" / ")
+
+        // custom value (API)
+        if (bibles[itemIndex]?.attributionRequired) {
+            showVersion = true
+            if (!customText.includes(textKeys.showVersion)) customText += textKeys.showVersion
+        }
 
         const referenceDivider = get(scriptureSettings).referenceDivider || ":"
         let text = customText

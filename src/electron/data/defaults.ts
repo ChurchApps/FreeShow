@@ -122,7 +122,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         template: "scripture",
         versesPerSlide: 3,
         verseNumbers: false,
-        showVersion: true,
+        showVersion: false,
         showVerse: true,
         referenceDivider: ":",
     },
