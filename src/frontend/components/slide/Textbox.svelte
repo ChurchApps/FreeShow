@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import type { Item } from "../../../types/Show"
     import { currentWindow, outputs, overlays, showsCache, slidesOptions, templates, variables, volume } from "../../stores"
     import Cam from "../drawer/live/Cam.svelte"
@@ -75,11 +75,16 @@
     // timer updater
     let today = new Date()
     let loaded = false
+    let dateInterval: any = null
     onMount(() => {
         setTimeout(() => (loaded = true), 100)
 
         if (item?.type !== "timer") return
-        setInterval(() => (today = new Date()), 500)
+        dateInterval = setInterval(() => (today = new Date()), 500)
+    })
+    onDestroy(() => {
+        clearInterval(dynamicInterval)
+        if (dateInterval) clearInterval(dateInterval)
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
@@ -317,7 +322,7 @@
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
     $: if ($variables) updateDynamic++
-    setInterval(() => {
+    const dynamicInterval = setInterval(() => {
         updateDynamic++
     }, 1000)
 </script>

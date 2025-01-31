@@ -200,7 +200,7 @@ export interface Layout {
 export interface Recording {
     id: string
     // name: string
-    useDurationTime?: boolean
+    // useDurationTime?: boolean // moved to global settings
     layoutAtRecording: string // store layout ids to detect changes
     sequence: {
         time: number

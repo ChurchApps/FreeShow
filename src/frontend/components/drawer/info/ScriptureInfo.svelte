@@ -64,6 +64,8 @@
         }
     }
 
+    $: showVersion = bibles[0]?.attributionRequired || $scriptureSettings.showVersion
+
     function createSlides() {
         if (!bibles[0]) return { show: null }
 
@@ -220,7 +222,9 @@
         let text = ""
 
         Object.keys(textKeys).forEach((key) => {
-            if ($scriptureSettings[key]) {
+            let isEnabled = $scriptureSettings[key]
+            if (key === "showVersion" && bibles[0]?.attributionRequired) isEnabled = true
+            if (isEnabled) {
                 if (text.length) text += "\n"
                 text += textKeys[key]
             }
@@ -352,17 +356,17 @@
         <CombinedInput textWidth={70}>
             <p><T id="scripture.version" /></p>
             <div class="alignRight">
-                <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
+                <Checkbox disabled={bibles[0]?.attributionRequired} id="showVersion" checked={showVersion} on:change={checked} />
             </div>
         </CombinedInput>
 
-        {#if $scriptureSettings.showVersion || ($scriptureSettings.showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
+        {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
             <CombinedInput>
                 <Notes lines={2} value={customText} on:change={(e) => update("customText", e.detail)} />
             </CombinedInput>
         {/if}
 
-        {#if $scriptureSettings.showVersion || $scriptureSettings.showVerse}
+        {#if showVersion || $scriptureSettings.showVerse}
             {#if !$scriptureSettings.firstSlideReference}
                 <CombinedInput textWidth={70}>
                     <p><T id="scripture.combine_with_text" /></p>

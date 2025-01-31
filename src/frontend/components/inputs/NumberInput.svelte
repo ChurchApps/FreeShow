@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, onDestroy } from "svelte"
     import Icon from "../helpers/Icon.svelte"
     import Button from "./Button.svelte"
     import TextInput from "./TextInput.svelte"
@@ -56,6 +56,10 @@
             timeout = null
         }, 500)
     }
+
+    onDestroy(() => {
+        if (interval) clearInterval(interval)
+    })
 
     let nextScrollTimeout: any = null
     function wheel(e: any) {

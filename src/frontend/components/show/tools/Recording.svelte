@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { Recording } from "../../../../types/Show"
-    import { activeSlideRecording, dictionary, labelsDisabled, outputs, showsCache } from "../../../stores"
+    import { activeSlideRecording, dictionary, labelsDisabled, outputs, showsCache, special } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -17,6 +17,7 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import { addSlideAction } from "../../actions/actions"
 
     export let showId: string
 
@@ -32,7 +33,8 @@
 
     let settingsOpened: boolean = false
 
-    $: useDurationTime = recordingData?.useDurationTime || false
+    // $: useDurationTime = recordingData?.useDurationTime !== false
+    $: useDurationTime = $special.useDurationTime !== false
     // check if layout slides has changed
     $: hasChanged = recordingData?.layoutAtRecording !== layoutSequence
 
@@ -97,6 +99,9 @@
         let layout = clone(showLayout)
         layout.recording = [currentRecording]
         history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
+
+        // add start recording to first slide in recording
+        addSlideAction(sequence[0].slideRef.index, "start_slide_recording")
     }
 
     function updateTime(e: any, index: number) {
@@ -153,12 +158,18 @@
     }
 
     const isChecked = (e: any) => e.target.checked
-    function setRecordingKey(key: string, value: any) {
-        let layout = clone(showLayout)
-        if (!layout.recording) return
+    // function setRecordingKey(key: string, value: any) {
+    //     let layout = clone(showLayout)
+    //     if (!layout.recording) return
 
-        layout.recording[0][key] = value
-        history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
+    //     layout.recording[0][key] = value
+    //     history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
+    // }
+    function setSpecialValue(key: string, value: any) {
+        special.update((a) => {
+            a[key] = value
+            return a
+        })
     }
 
     function groupName({ index }) {
@@ -218,7 +229,7 @@
             <CombinedInput textWidth={70}>
                 <p title={$dictionary.recording?.use_duration_tip}><T id="recording.use_duration" /></p>
                 <div class="alignRight">
-                    <Checkbox checked={useDurationTime} on:change={(e) => setRecordingKey("useDurationTime", isChecked(e))} />
+                    <Checkbox checked={useDurationTime} on:change={(e) => setSpecialValue("useDurationTime", isChecked(e))} />
                 </div>
             </CombinedInput>
         </div>
@@ -258,10 +269,10 @@
 
                     {#if useDurationTime ? i < recordingData.sequence.length - 1 : i > 0}
                         {#key recordingData}
-                            <NumberInput style="width: 100px;" buttons={false} value={getTime(i)} inputMultiplier={0.001} fixed={2} step={500} max={10000000} on:change={(e) => updateTime(e, i)} />
+                            <NumberInput style="width: 100px;min-width: 100px;" buttons={false} value={getTime(i)} inputMultiplier={0.001} fixed={2} step={500} max={10000000} on:change={(e) => updateTime(e, i)} />
                         {/key}
                     {:else}
-                        <NumberInput disabled style="width: 100px;" buttons={false} fixed={2} value={0} />
+                        <NumberInput disabled style="width: 100px;min-width: 100px;" buttons={false} fixed={2} value={0} />
                     {/if}
 
                     {#if recordingPlaying?.index === i}

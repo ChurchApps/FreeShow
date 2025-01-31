@@ -77,10 +77,10 @@ export function getThumbnailFolderPath() {
 
 function getThumbnailPath(filePath: string, size: number = 250) {
     let folderPath = thumbnailFolderPath || getThumbnailFolderPath()
-    return path.join(folderPath, `${hashCode(filePath)}-${size}.png`)
+    return path.join(folderPath, `${filePathHashCode(filePath)}-${size}.png`)
 }
 
-function hashCode(str: string) {
+export function filePathHashCode(str: string) {
     let hash = 0
 
     for (let i = 0; i < str.length; i++) {

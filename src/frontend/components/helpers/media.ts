@@ -359,8 +359,8 @@ let capturing: string[] = []
 let retries: any = {}
 export function captureCanvas(data: any) {
     let completed: boolean = false
-    if (capturing.includes(data.input)) return exit()
-    capturing.push(data.input)
+    if (capturing.includes(data.output)) return exit()
+    capturing.push(data.output)
 
     let canvas = document.createElement("canvas")
 

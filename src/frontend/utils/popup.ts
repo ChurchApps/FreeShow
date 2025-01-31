@@ -122,7 +122,7 @@ export function waitForPopupData(popupId: Popups): Promise<any> {
 
         function finish(value) {
             unsubscribe()
-            clearTimeout(interval)
+            clearInterval(interval)
             resolve(value)
         }
     })

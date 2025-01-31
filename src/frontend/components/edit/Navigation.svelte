@@ -126,7 +126,7 @@
     {/if}
 {:else if $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")}
     <Slides />
-    <Button on:click={addSlide} center dark>
+    <Button disabled={$shows[currentShowId]?.locked} on:click={addSlide} center dark>
         <Icon id="add" right={!$labelsDisabled} />
         {#if !$labelsDisabled}<T id="new.slide" />{/if}
     </Button>

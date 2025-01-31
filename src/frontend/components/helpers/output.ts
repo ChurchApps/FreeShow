@@ -86,7 +86,8 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             appendShowUsage(data.id)
         }
 
-        outs.forEach((id: string) => {
+        let toggleState = false
+        outs.forEach((id: string, i: number) => {
             let output: any = a[id]
             if (!output.out) a[id].out = {}
             if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
@@ -108,7 +109,8 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             let outData = a[id].out?.[key] || null
             if (key === "overlays" && data.length) {
                 if (!Array.isArray(data)) data = [data]
-                if (toggle && outData?.includes(data[0])) outData!.splice(outData!.indexOf(data[0]), 1)
+                if (toggle && i === 0) toggleState = outData?.includes(data[0])
+                if (toggle && toggleState) outData!.splice(outData!.indexOf(data[0]), 1)
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[key] || []), ...data])
                 else outData = data
 
@@ -606,13 +608,19 @@ export function getCurrentMediaTransition() {
 // TEMPLATE
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true, templateClicked: boolean = false) {
-    if (!slideItems?.length) return []
+    // if (!slideItems?.length && !addOverflowTemplateItems) return []
     slideItems = clone(slideItems)
 
     if (!templateItems.length) return slideItems
     templateItems = clone(templateItems)
 
     let sortedTemplateItems = sortItemsByType(templateItems)
+
+    // reduce template textboxes to slide items
+    let slideTextboxes = slideItems.reduce((count, a) => (count += (a.type || "text") === "text" ? 1 : 0), 0)
+    if (!templateClicked && slideTextboxes < (sortedTemplateItems.text?.length || 0)) {
+        sortedTemplateItems.text = sortedTemplateItems.text.slice(0, slideTextboxes)
+    }
 
     // remove slide items if no text
     if (addOverflowTemplateItems && templateItems.length < slideItems.length) {
@@ -666,7 +674,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 let firstChar = templateText?.value?.[0] || ""
 
                 // add dynamic values
-                if (!text.value?.length && firstChar === "{") {
+                if (!text.value?.length && firstChar === "{" && templateItem?.lines?.[j]) {
                     text.value = templateText!.value
                 }
 
@@ -691,7 +699,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     // let remainingTextTemplateItems: any[] = []
     if (addOverflowTemplateItems) {
-        sortedTemplateItems.text = removeTextValue(sortedTemplateItems.text)
+        sortedTemplateItems.text = removeTextValue(sortedTemplateItems.text || [])
         // remainingTextTemplateItems = templateItems.filter((a) => (a.type || "text") === "text")
     } else {
         delete sortedTemplateItems.text

@@ -101,11 +101,22 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     audioStreams: {},
     audioPlaylists: {},
     scriptures: {
-        kjv: { name: "King James (Authorised) Version", api: true, id: "de4e12af7f28f599-02" },
-        asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01" },
-        web: { name: "World English Bible", api: true, id: "9879dbb7cfe39e4d-04" },
-        wmb: { name: "World Messianic Bible", api: true, id: "f72b840c855f362c-04" },
-        bsb: { name: "Berean Study Bible", api: true, id: "bba9f40183526463-01" },
+        kjv: {
+            name: "King James (Authorised) Version",
+            api: true,
+            id: "de4e12af7f28f599-02",
+            copyright: "PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent",
+        },
+        asv: { name: "The Holy Bible, American Standard Version", api: true, id: "06125adad2d5898a-01", copyright: "PUBLIC DOMAIN" },
+        web: { name: "World English Bible", api: true, id: "9879dbb7cfe39e4d-04", copyright: "PUBLIC DOMAIN" },
+        wmb: { name: "World Messianic Bible", api: true, id: "f72b840c855f362c-04", copyright: "PUBLIC DOMAIN" },
+        bsb: {
+            name: "Berean Study Bible",
+            api: true,
+            id: "bba9f40183526463-01",
+            copyright:
+                "The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation Committee. This text of God's Word has been dedicated to the public domain",
+        },
     },
     scriptureSettings: {
         template: "scripture",

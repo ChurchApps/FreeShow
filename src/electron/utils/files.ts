@@ -51,6 +51,14 @@ export function readFolder(path: string): string[] {
     }
 }
 
+export function deleteFolder(path: string) {
+    try {
+        fs.rmSync(path, { recursive: true })
+    } catch (err: any) {
+        actionComplete(err, "Error when deleting folder")
+    }
+}
+
 export function doesPathExistAsync(path: string): Promise<boolean> {
     return new Promise((resolve) => {
         fs.access(path, (err) => {
@@ -209,6 +217,7 @@ export function createFolder(path: string) {
     return makeDir(path)
 }
 
+// 2025-01-21_15-59
 export function getTimePointString() {
     const date = new Date()
     let name = date.toISOString()

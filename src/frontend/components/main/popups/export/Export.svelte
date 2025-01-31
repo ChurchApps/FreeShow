@@ -70,11 +70,9 @@
         }
 
         if (exportFormat === "project") {
-            if (!showIds.length) return
-
             let project: Project | null = exportType === "project" && $activeProject ? $projects[$activeProject] : null
             if (!project) {
-                if (!previewShow) return
+                if (!showIds.length || !previewShow) return
 
                 project = {
                     name: previewShow.name,
@@ -110,7 +108,7 @@
 
     <div class="choose">
         {#each exportTypes as type, i}
-            <Button disabled={!getShowIdsFromType[type.id || ""]?.()?.length} on:click={() => (exportType = type.id || "")} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
+            <Button disabled={!getShowIdsFromType[type.id || ""]?.(false)?.length} on:click={() => (exportType = type.id || "")} style={i === 0 ? "border: 2px solid var(--focus);" : ""}>
                 <Icon id={type.icon || ""} size={4} white />
                 <p><T id={type.name} /></p>
             </Button>
@@ -177,7 +175,7 @@
     {/if}
 
     <CombinedInput>
-        <Button style="width: 100%;" disabled={!showIds.length && exportType !== "all_shows"} on:click={exportClick} center dark>
+        <Button style="width: 100%;" disabled={exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows"} on:click={exportClick} center dark>
             <div style="display: flex;align-items: center;">
                 <Icon id="export" size={1.2} right />
                 <T id="export.export" />

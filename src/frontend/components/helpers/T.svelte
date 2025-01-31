@@ -4,19 +4,27 @@
     export let id: string
     export let index: number = 0
     export let lowercase: boolean = false
+    export let replace: string[] = []
 
     const hasPeriod = id?.includes(".")
     const periodIndex = id?.indexOf(".")
     $: category = hasPeriod ? id.slice(0, periodIndex).replace("$:", "") : ""
     $: key = hasPeriod ? id.slice(periodIndex + 1, id.length).replace(":$", "") : ""
+
+    $: keyString = replacePlaceholders($dictionary[category]?.[key] || "", replace)
+
+    function replacePlaceholders(input: string, values: string[]) {
+        if (!values.length) return input
+        return input.replace(/\$(\d+)/g, (_, index) => values[index - 1] || "")
+    }
 </script>
 
 {#key language}
-    {#if $dictionary[category]?.[key]?.includes("{}")}
-        {$dictionary[category]?.[key].split("{}")[index] || `[${id}]`}
+    {#if keyString.includes("{}")}
+        {keyString.split("{}")[index] || `[${id}]`}
     {:else if lowercase}
-        {$dictionary[category]?.[key].toLowerCase() || `[${id}]`}
+        {keyString.toLowerCase() || `[${id}]`}
     {:else}
-        {$dictionary[category]?.[key] || `[${id}]`}
+        {keyString || `[${id}]`}
     {/if}
 {/key}
