@@ -75,6 +75,12 @@ jobs:
             - name: Install dependencies
               run: npm install
 
+            - name: Install FPM
+              run: |
+                sudo apt-get update
+                sudo apt-get install ruby ruby-dev build-essential
+                sudo gem install --no-document fpm
+
             # wait because this will only publish if the draft exists
             - name: Sleep for 30 seconds
               run: sleep 30s
@@ -83,6 +89,7 @@ jobs:
             - name: Build and release app
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  USE_SYSTEM_FPM: true
               run: npm run release:arm64
 
 
