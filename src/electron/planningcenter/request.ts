@@ -97,7 +97,12 @@ export async function pcoLoadServices(dataPath: string) {
                             let showId = `pcosong_${SONG_DATA.id}`
                             shows.push({ id: showId, ...show })
 
-                            projectItems.push({ type: "show", id: showId })
+                            projectItems.push({ type: "show", id: showId, scheduleLength: item.attributes.length })
+                        } else if (type === "item") {
+                            let showId = `pcosong_${item.id}`
+                            const show = getShow(item, {}, [])
+                            shows.push({ id: showId, ...show })
+                            projectItems.push({ type: "show", id: showId, scheduleLength: item.attributes.length })
                         } else if (type === "media") {
                             let mediaEndpoint = itemsEndpoint + `/${item.id}/media`
                             const MEDIA = (await pcoRequest({ scope: "services", endpoint: mediaEndpoint }))?.data[0]
@@ -112,9 +117,9 @@ export async function pcoLoadServices(dataPath: string) {
                             let fileFolderPath = getDataFolder(dataPath, dataFolderNames.planningcenter)
                             const filePath = path.join(fileFolderPath, serviceType.attributes.name, ATTACHEMENT.attributes.filename)
 
-                            projectItems.push({ name: MEDIA.attributes.title, type: MEDIA.attributes.length ? "video" : "image", id: filePath })
-                        } else if (type === "header" || type === "item") {
-                            projectItems.push({ type: "section", id: uid(5), name: item.attributes.title || "", notes: item.attributes.description || "" })
+                            projectItems.push({ name: MEDIA.attributes.title, scheduleLength: item.attributes.length, type: MEDIA.attributes.length ? "video" : "image", id: filePath })
+                        } else if (type === "header") {
+                            projectItems.push({ type: "section", id: uid(5), name: item.attributes.title || "", scheduleLength: item.attributes.length, notes: item.attributes.description || "" })
                         }
                     }
 
@@ -170,13 +175,13 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     })
 
     const metadata = {
-        title: SONG_DATA.attributes.title,
-        author: SONG_DATA.attributes.author,
-        publisher: SONG.name,
-        copyright: SONG_DATA.attributes.copyright,
-        CCLI: SONG_DATA.attributes.ccli_number,
-        key: SONG.chord_chart_key,
-        BPM: SONG.bpm,
+        title: SONG_DATA.attributes.title || "",
+        author: SONG_DATA.attributes.author || "",
+        publisher: SONG.name || "",
+        copyright: SONG_DATA.attributes.copyright || "",
+        CCLI: SONG_DATA.attributes.ccli_number || "",
+        key: SONG.chord_chart_key || "",
+        BPM: SONG.bpm || "",
     }
 
     let layoutId = uid()

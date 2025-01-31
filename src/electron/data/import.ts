@@ -7,8 +7,9 @@ import WordExtractor from "word-extractor"
 import { toApp } from ".."
 import { IMPORT, MAIN } from "../../types/Channels"
 import { dataFolderNames, doesPathExist, getDataFolder, getExtension, makeDir, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
-import { decompress, isZip } from "./zip"
 import { detectFileType } from "./bibleDetecter"
+import { filePathHashCode } from "./thumbnails"
+import { decompress, isZip } from "./zip"
 
 const specialImports: any = {
     powerpoint: async (files: string[]) => {
@@ -157,14 +158,12 @@ async function importProject(files: string[], dataPath: string) {
     const data = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
 
     const importDataPath = getDataFolder(dataPath, dataFolderNames.imports)
+    const importFolder = path.join(importDataPath, "Projects")
 
-    // We want to store the new media files in the import folder under a subdirectory
-    // with the current date and time to avoid conflicts with existing files
-    const currentDate = new Date().toISOString().replace(/:/g, "-")
-    const importPath = path.join(importDataPath, `import-${currentDate}`)
-    if (!doesPathExist(importPath)) {
-        makeDir(importPath)
-    }
+    // we can store the new media files under a subdirectory with the current date/time
+    // to avoid conflicts with same file name, but this does not work for all scenarios
+    // const importFolder = path.join(importDataPath, `project-${getTimePointString()}`)
+    if (!doesPathExist(importFolder)) makeDir(importFolder)
 
     zipFiles.forEach((zipFile) => {
         let zipData = decompress([zipFile], true)
@@ -177,16 +176,19 @@ async function importProject(files: string[], dataPath: string) {
             // check if path already exists on the system
             if (doesPathExist(filePath)) return
 
-            // TODO: taking the basename of the file path means that if there
-            // are multiple files with the same name that were originally in
-            // different directories, they will be overwritten. This needs to
-            // be fixed on the exporter side first.
             const fileName = path.basename(filePath)
             const file = zipData.find((a) => a.name === fileName)?.content
-            const newMediaPath = path.join(importPath, fileName)
+
+            // get file path hash to prevent the same file importing multiple times
+            // this also ensures files with the same name don't get overwritten
+            const ext = path.extname(fileName)
+            const pathHash = `${path.basename(filePath, ext)}_${filePathHashCode(filePath)}${ext}`
+            const newMediaPath = path.join(importFolder, pathHash)
 
             if (!file) return
             replacedMedia[filePath] = newMediaPath
+
+            if (doesPathExist(newMediaPath)) return
             writeFile(newMediaPath, file)
         })
 
@@ -199,6 +201,9 @@ async function importProject(files: string[], dataPath: string) {
 
         data.push(dataFile)
     })
+
+    // remove folder if no files stored
+    // if (!readFolder(importFolder).length) deleteFolder(importFolder)
 
     toApp(IMPORT, { channel: "freeshow_project", data })
 }
