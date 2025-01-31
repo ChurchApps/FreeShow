@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { activeEdit } from "../../../stores"
     import Cam from "../../drawer/live/Cam.svelte"
@@ -30,7 +31,8 @@
 
     let autoSize: number = 0
     let today = new Date()
-    setInterval(() => (today = new Date()), 1000)
+    const interval = setInterval(() => (today = new Date()), 1000)
+    onDestroy(() => clearInterval(interval))
 
     $: if (item && itemElem) calculateAutosize()
     let loopStop: any = null

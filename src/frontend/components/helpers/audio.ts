@@ -491,6 +491,7 @@ function getPlayingAudio() {
                     playlistNext(audioPath, "", 0, playlist.loop !== false)
                     return false
                 } else {
+                    customActionActivation("audio_end")
                     playingAudio.update((a: any) => {
                         if (get(special).clearMediaOnFinish === false) {
                             // a[audioPath].audio?.pause()

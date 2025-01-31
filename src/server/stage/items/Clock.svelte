@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { timeFormat } from "../store"
 
     export let autoSize: number = 0
@@ -8,11 +9,13 @@
     $: twelwe = $timeFormat === "12"
 
     let d: Date = new Date()
-    setInterval(() => (d = new Date()), 250)
+    const updateInterval = setInterval(() => (d = new Date()), 250)
     let h: number = 0
     let m: number = 0
     let s: number = 0
     let pm: boolean = false
+
+    onDestroy(() => clearInterval(updateInterval))
 
     $: if (d) {
         h = d.getHours()

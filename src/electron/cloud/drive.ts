@@ -219,7 +219,11 @@ export async function syncDataDrive(data: any) {
 
         // combine
         if (data.method !== "upload" && data.method !== "download" && driveFile && storeContent && combineLocations.includes(id)) {
-            const project = () => ({ projects: combineFiles(driveContent.projects, store.store.projects, newest), folders: combineFiles(driveContent.folders, store.store.folders, newest) })
+            const project = () => ({
+                projects: combineFiles(driveContent.projects, store.store.projects, newest) || {},
+                folders: combineFiles(driveContent.folders, store.store.folders, newest) || {},
+                projectTemplates: combineFiles(driveContent.projectTemplates, store.store.projectTemplates, newest) || {},
+            })
             const combined = id === "PROJECTS" ? project() : combineFiles(driveContent, store.store, newest)
 
             // download

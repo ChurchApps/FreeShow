@@ -240,9 +240,10 @@
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
-    setInterval(() => {
+    const dynamicInterval = setInterval(() => {
         updateDynamic++
     }, 1000)
+    onDestroy(() => clearInterval(dynamicInterval))
 </script>
 
 <Zoomed

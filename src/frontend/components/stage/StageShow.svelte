@@ -16,6 +16,7 @@
     import { updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
     import { getResolution } from "../helpers/output"
+    import { onDestroy } from "svelte"
 
     export let outputId: string = ""
     export let stageId: string = ""
@@ -74,6 +75,10 @@
         if (interval) return
         interval = setInterval(() => send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId }), 1000) // , stageId
     }
+
+    onDestroy(() => {
+        if (interval) clearInterval(interval)
+    })
 
     // RESOLUTION
 

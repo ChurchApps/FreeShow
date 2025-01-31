@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { activeDrawerTab, drawer, variables } from "../../../stores"
     import { setDrawerTabData } from "../../helpers/historyHelpers"
@@ -25,9 +26,10 @@
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
-    setInterval(() => {
+    const dynamicInterval = setInterval(() => {
         updateDynamic++
     }, 1000)
+    onDestroy(() => clearInterval(dynamicInterval))
 </script>
 
 <div class="align autoFontSize" style="{style}{item?.align || ''}" on:dblclick={openInDrawer}>

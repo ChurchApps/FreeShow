@@ -25,8 +25,22 @@ type PCOAuthData = {
 } | null
 
 const HTML_success = `
-    <h1>Success!</h1>
-    <p>You can close this page</p>
+    <head>
+        <title>Success!</title>
+    </head>
+    <body style="padding: 80px;background: #292c36;color: #f0f0ff;font-family: system-ui;font-size: 1.2em;">
+        <h1 style="color: #f0008c;">Success!</h1>
+        <p>You can close this page</p>
+    </body>
+`
+const HTML_error = `
+    <head>
+        <title>Error!</title>
+    </head>
+    <body style="padding: 80px;background: #292c36;color: #f0f0ff;font-family: system-ui;font-size: 1.2em;">
+        <h1>Could not complete authentication!</h1>
+        <p>{error_msg}</p>
+    </body>
 `
 
 let PCO_ACCESS: PCOAuthData = null
@@ -69,13 +83,13 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
             console.log("OAuth code received!")
 
             const params = { grant_type: "authorization_code", code, client_id: clientId, client_secret: clientSecret, redirect_uri }
-            console.log(params)
             httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err: any, data: PCOAuthData) => {
                 if (err) {
                     res.setHeader("Content-Type", "text/html")
-                    res.send(`<h2>${err.message}</h2>`)
+                    const errorPage = HTML_error.replace("{error_msg}", err.message)
+                    res.send(errorPage)
 
-                    toApp(MAIN, { channel: "ALERT", data: err.message })
+                    toApp(MAIN, { channel: "ALERT", data: "Could not authorize! " + err.message })
                     return resolve(null)
                 }
 
@@ -112,7 +126,7 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
         const params = { grant_type: "refresh_token", client_id: clientId, client_secret: clientSecret, refresh_token: access.refresh_token }
         httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err: any, data: PCOAuthData) => {
             if (err || data === null) {
-                toApp(MAIN, { channel: "ALERT", data: err ? err.message : "No data" })
+                toApp(MAIN, { channel: "ALERT", data: "Could not refresh token! " + err?.message })
                 resolve(null)
                 return
             }

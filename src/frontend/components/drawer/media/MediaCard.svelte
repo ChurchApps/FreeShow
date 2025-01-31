@@ -103,7 +103,8 @@
     $: if (path) mediaStyle = getMediaStyle($media[path], currentStyle)
 
     // fixed resolution
-    let resolution = { width: 1920, height: 1080 }
+    let resolution = { width: 16, height: 9 }
+    // $: resolution = getResolution(null, { $outputs, $styles })
 
     $: icon = active !== "favourites" && $media[path]?.favourite === true ? "star" : type === "video" ? "movie" : "image"
     $: tags = $media[path]?.tags || []
@@ -135,6 +136,7 @@
 
 <SelectElem id="media" class="context #media_card" data={{ name, path, type }} {shiftRange} draggable fill>
     <Card
+        resolution={{ width: 16, height: 9 }}
         {loaded}
         style={thumbnail ? `width: ${$mediaOptions.mode === "grid" ? 100 : 100 / $mediaOptions.columns}%;` : ""}
         mode={$mediaOptions.mode}

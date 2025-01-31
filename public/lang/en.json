@@ -1173,6 +1173,8 @@
         "connect": "Connect by typing this in a web browser",
         "connect_qr": "Or scan this QR code",
         "restart": "Restart servers",
+        "connect_to": "Connect to $1",
+        "disconnect_from": "Disconnect from $1",
         "reset_all": "Reset everything",
         "reset_theme": "Reset theme",
         "reset_themes": "Reset themes",

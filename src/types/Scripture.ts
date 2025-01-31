@@ -9,6 +9,7 @@ export interface Bible {
     chapter: null | string
     verses: any
     activeVerses: string[]
+    attributionRequired?: boolean // API needs attribution
 }
 
 export interface Version {

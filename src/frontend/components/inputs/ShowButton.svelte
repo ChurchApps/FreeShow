@@ -10,6 +10,7 @@
     import { checkName } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
+    import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "./Button.svelte"
     import HiddenInput from "./HiddenInput.svelte"
 
@@ -153,7 +154,11 @@
             <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
 
             {#if show.layoutInfo?.name}
-                <span class="layout">{show.layoutInfo.name}</span>
+                <span class="layout" style="opacity: 0.6;font-style: italic;font-size: 0.9em;">{show.layoutInfo.name}</span>
+            {/if}
+
+            {#if show.scheduleLength !== undefined}
+                <span class="layout">{joinTime(secondsToTime(show.scheduleLength))}</span>
             {/if}
         </span>
 
@@ -174,9 +179,8 @@
     }
 
     .layout {
-        opacity: 0.6;
-        font-style: italic;
-        font-size: 0.9em;
+        opacity: 0.8;
+        font-size: 0.8em;
         padding-left: 5px;
 
         /* overflow: hidden;

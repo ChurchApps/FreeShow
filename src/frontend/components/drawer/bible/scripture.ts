@@ -37,7 +37,6 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
             reject("Timed out!")
         }, 40000)
 
-        console.log("fetchBible", urls[load])
         fetch(urls[load], { headers: { "api-key": KEY } })
             .then((response) => {
                 // fallback key
@@ -65,8 +64,6 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
         function manageResult(data) {
             if (!data) return
 
-            console.log(load, data)
-
             tempCache[urls[load]] = data
             clearTimeout(fetchTimeout[active])
             resolve(data)
@@ -75,14 +72,10 @@ export async function fetchBible(load: string, active: string, ref: any = { vers
 }
 
 export function searchBibleAPI(active: string, searchQuery: string) {
-    const KEY = getKey("bibleapi" + (isFallback ? "_fallback" : ""))
-    const api = "https://api.scripture.api.bible/v1/bibles/" // TEMP
     let url = `${api}${active}/search?query=${searchQuery}`
 
     return new Promise((resolve, reject) => {
-        if (!KEY) return reject("No API key!")
-
-        fetch(url, { headers: { "api-key": KEY } })
+        fetch(url)
             .then((response) => {
                 // fallback key
                 if (response.status >= 400) {
@@ -117,6 +110,8 @@ export function loadBible(active: string, index: number = 0, bible: any) {
         if (isAPI) {
             bible.api = true
             bible.version = customName
+            bible.copyright = scripture.copyright
+            bible.attributionRequired = scripture.attributionRequired || false
             return
         }
         delete bible.api
@@ -295,7 +290,7 @@ export function getSlides({ bibles, sorted }) {
                 if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
                 let indexes = [bibles.length]
                 if (combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
-                indexes.forEach((i) => addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: i }))
+                indexes.forEach((i) => addMeta(clone(get(scriptureSettings)), joinRange(range), { slideIndex, itemIndex: i }))
             }
 
             if (i + 1 >= sorted.length) return
@@ -313,7 +308,7 @@ export function getSlides({ bibles, sorted }) {
             if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
             let indexes = [bibles.length]
             if (combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
-            if (remainder) indexes.forEach((i) => addMeta(get(scriptureSettings), joinRange(range), { slideIndex, itemIndex: i }))
+            if (remainder) indexes.forEach((i) => addMeta(clone(get(scriptureSettings)), joinRange(range), { slideIndex, itemIndex: i }))
         }
 
         // auto size
@@ -353,6 +348,12 @@ export function getSlides({ bibles, sorted }) {
         let bibleVersions = bibles.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
         let versions = combineWithText ? bibleVersions[itemIndex] : bibleVersions.join(" + ")
         let books = combineWithText ? bibles[itemIndex]?.book : removeDuplicates(bibles.map((a) => a.book)).join(" / ")
+
+        // custom value (API)
+        if (bibles[itemIndex]?.attributionRequired) {
+            showVersion = true
+            if (!customText.includes(textKeys.showVersion)) customText += textKeys.showVersion
+        }
 
         const referenceDivider = get(scriptureSettings).referenceDivider || ":"
         let text = customText

@@ -4,6 +4,7 @@
     import { timeFormat } from "../../stores"
 
     import AnalogClock from "./AnalogClock.svelte"
+    import { onDestroy } from "svelte"
     // Initialize plugins
     dayjs.extend(localizedFormat)
 
@@ -18,11 +19,13 @@
     $: twelwe = $timeFormat === "12"
 
     let d: Date = new Date()
-    setInterval(() => (d = new Date()), 250)
+    const clockInterval = setInterval(() => (d = new Date()), 250)
     let h: number = 0
     let m: number = 0
     let s: number = 0
     let pm: boolean = false
+
+    onDestroy(() => clearInterval(clockInterval))
 
     $: if (d) {
         h = d.getHours()

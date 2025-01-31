@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import type { Timer } from "../../../../types/Show"
     import { activePopup, dictionary, events, timers } from "../../../stores"
@@ -45,9 +45,10 @@
 
     // update today
     let today = new Date()
-    setInterval(() => {
+    const interval = setInterval(() => {
         today = new Date()
     }, 1000)
+    onDestroy(() => clearInterval(interval))
 
     // clock
     let timeCountdown = 0

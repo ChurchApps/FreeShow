@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
     import { currentWindow, outputs, showsCache, stageShows } from "../../../stores"
     import { send } from "../../../utils/request"
@@ -64,14 +65,19 @@
     $: currentRatio = itemStyle.width / itemStyle.height
 
     // request preview capture
+    let previewRequestInterval: any = null
     $: if ($currentWindow === "output" && stageEnabled && $stageShows[item.mirror?.stage]?.items?.["output#current_output"]?.enabled) {
         let id = Object.keys($outputs)[0]
         let previewId = $stageShows[item.mirror?.stage]?.settings?.output
 
-        setInterval(() => {
+        previewRequestInterval = setInterval(() => {
             send(OUTPUT, ["REQUEST_PREVIEW"], { id, previewId })
         }, 1000)
     }
+
+    onDestroy(() => {
+        if (previewRequestInterval) clearInterval(previewRequestInterval)
+    })
 </script>
 
 <Zoomed ratio={currentRatio} center style="height: 100%;" background="transparent" disableStyle showMirror>

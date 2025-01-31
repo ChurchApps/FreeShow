@@ -39,6 +39,9 @@
     --secondary-text: #f0f0ff;
     --transparent: #232530;
 
+    --connected: #27a827;
+    --disconnected: #a82727;
+
     --hover: rgb(255 255 255 / 0.05);
     --focus: rgb(255 255 255 / 0.1);
 

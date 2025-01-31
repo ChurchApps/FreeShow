@@ -165,8 +165,9 @@
             if (isFirstGhost) {
                 // create image (if not created) when it's first slide after actual background
                 thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
+                // WIP refresh all ghost thumbnails after created
             } else {
-                await wait(100)
+                await wait(200)
 
                 // load ghost thumbnails (wait a bit to reduce loading lag)
                 thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)

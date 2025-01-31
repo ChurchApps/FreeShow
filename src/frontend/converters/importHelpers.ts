@@ -36,7 +36,7 @@ export function setTempShows(tempShows: any[]) {
     if (tempShows.length === 1) {
         history({ id: "UPDATE", newData: { data: tempShows[0].show, remember: { project: get(activeProject) } }, oldData: { id: tempShows[0].id }, location: { page: "show", id: "show" } })
     } else {
-        history({ id: "SHOWS", newData: { data: tempShows }, location: { page: "show" } })
+        history({ id: "SHOWS", newData: { data: tempShows, replace: true }, location: { page: "show" } })
     }
 
     activePopup.set(null)
