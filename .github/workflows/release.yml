@@ -69,6 +69,9 @@ jobs:
               with:
                   node-version: 20
 
+            - name: Install libraries
+              run: sudo apt-get install libfontconfig1-dev --fix-missing
+
             - name: Install dependencies
               run: npm install
 
