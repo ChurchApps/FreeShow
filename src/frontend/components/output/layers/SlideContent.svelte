@@ -35,6 +35,8 @@
     let transitioningBetween: boolean = false
 
     function updateItems() {
+        if (!currentSlide.items?.length) return
+
         // get any items with no transition between the two slides
         let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
         let newItemTransition = currentSlide.items.find((a) => a.actions?.transition)?.actions?.transition

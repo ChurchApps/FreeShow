@@ -77,7 +77,7 @@
             if (!editElem) return
 
             let selectedLine = selection.findIndex((a) => a.start !== undefined)
-            if (selectedLine > -1) setCaret(editElem, { line: selectedLine, pos: selection[selectedLine].end })
+            if (selectedLine > -1 && selection[selectedLine]) setCaret(editElem, { line: selectedLine, pos: selection[selectedLine].end })
         }, 10)
     }
 

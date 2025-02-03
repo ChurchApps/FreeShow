@@ -110,12 +110,14 @@
         let currentOutput: any = $outputs[outputId] || {}
 
         if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
-            updateOut("active", 0, _show("active").layouts("active").ref()[0], !e.altKey)
+            let layoutRef = _show("active").layouts("active").ref()[0] || []
+            let firstEnabledIndex: number = layoutRef.findIndex((a) => !a.data.disabled) || 0
+            updateOut("active", firstEnabledIndex, layoutRef, !e.altKey)
 
             let slide: any = currentOutput.out?.slide || null
-            if (slide?.id === id && slide?.index === 0 && slide?.layout === $showsCache[id].settings.activeLayout) return
+            if (slide?.id === id && slide?.index === firstEnabledIndex && slide?.layout === $showsCache[id].settings.activeLayout) return
 
-            setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: 0 })
+            setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: firstEnabledIndex })
         } else if (type === "image" || type === "video") {
             let outputStyle = $styles[currentOutput.style]
             let mediaStyle: MediaStyle = getMediaStyle($media[id], outputStyle)

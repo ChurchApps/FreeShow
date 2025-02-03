@@ -3,6 +3,7 @@ import { MAIN, STORE } from "../../types/Channels"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import {
+    actionTags,
     activePopup,
     activeProject,
     alertUpdates,
@@ -161,6 +162,7 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         playerVideos: get(playerVideos),
         videoMarkers: get(videoMarkers),
         mediaTags: get(mediaTags),
+        actionTags: get(actionTags),
         customizedIcons: get(customizedIcons),
         companion: get(companion),
         globalTags: get(globalTags),
@@ -356,6 +358,7 @@ const saveList: { [key in SaveList]: any } = {
     emitters: emitters,
     videoMarkers: videoMarkers,
     mediaTags: mediaTags,
+    actionTags: actionTags,
     customizedIcons: customizedIcons,
     driveKeys: driveKeys,
     driveData: driveData,

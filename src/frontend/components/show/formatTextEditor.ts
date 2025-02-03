@@ -246,7 +246,7 @@ export function formatText(text: string, showId: string = "") {
 
     // remove first slide if no content
     if (!text && Object.keys(newSlides).length === 1) {
-        let textItem = Object.values(newSlides)[0].items.find((a) => (a.type || "text") === "text")
+        let textItem = Object.values(newSlides)[0].items?.find((a) => (a.type || "text") === "text")
         if (textItem) {
             let fullOldSlideText = getItemText(textItem)
             if (!fullOldSlideText) {

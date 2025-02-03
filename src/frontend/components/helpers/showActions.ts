@@ -131,12 +131,12 @@ export function getItemWithMostLines(slide: Slide) {
 
 // TODO: multiple outputs with different lines!
 // get output with fewest lines
-function getFewestOutputLines() {
-    let outs = getActiveOutputs(get(outputs), true, true, true)
+export function getFewestOutputLines(updater = get(outputs)) {
+    let outs = getActiveOutputs(updater, true, true, true)
 
     let currentLines = 0
     outs.forEach((id: string) => {
-        let output = get(outputs)[id]
+        let output = updater[id]
         if (!output.style) return
 
         let style = get(styles)[output.style]
@@ -189,7 +189,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
     let slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex].end : false
+    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.end : false
 
     // open next project item if previous has been opened and next is still active when going forward
     let isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
@@ -204,7 +204,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let index: null | number = null
 
     // lines
-    let amountOfLinesToShow: number = getFewestOutputLines() ? getFewestOutputLines() : 0
+    let amountOfLinesToShow: number = getFewestOutputLines()
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
     let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout?.[slideIndex]?.id]).get()[0] : null
     let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
@@ -436,7 +436,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     // open previous project item if next has been opened and previous is still active when going back
     let slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex].end : false
+    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.end : false
     let showSlide: any = _show(slide ? slide.id : "active")
         .slides([layout[index]?.id])
         .get()[0]
@@ -520,7 +520,7 @@ function getNextEnabled(index: null | number, end: boolean = false, customOutput
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
 
-    if (layout[index - 1]?.data.end) index = 0
+    if (layout[index - 1]?.data?.end) index = 0
     if (!layout[index]) return null
     if (index >= layout.length || !layout.slice(index, layout.length).filter((a) => !a.data.disabled).length) return null
 

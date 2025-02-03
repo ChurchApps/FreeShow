@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, styles } from "../../stores"
+    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
     import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
@@ -7,7 +7,7 @@
     import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getCachedShow } from "../helpers/show"
-    import { checkActionTrigger, getItemWithMostLines, updateOut } from "../helpers/showActions"
+    import { checkActionTrigger, getFewestOutputLines, getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getClosestRecordingSlide } from "../helpers/slideRecording"
     import T from "../helpers/T.svelte"
@@ -188,13 +188,14 @@
             let currentOutput: any = $outputs[a]
             if (!currentOutput || currentOutput.stageOutput) return
 
-            let currentStyle = $styles[currentOutput?.style || ""] || {}
+            // let currentStyle = $styles[currentOutput?.style || ""] || {}
             let outSlide: any = currentOutput.out?.slide || $outputSlideCache[a] || {}
 
             if (activeSlides[outSlide.index] || outSlide.id !== showId || outSlide.layout !== activeLayout) return
 
             // get progress of current line division
-            let amountOfLinesToShow: number = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
+            // let amountOfLinesToShow: number = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
+            let amountOfLinesToShow: number = getFewestOutputLines($outputs)
             let lineIndex: any = outSlide.line || 0
             let maxLines: number = 0
             if (amountOfLinesToShow > 0) {
