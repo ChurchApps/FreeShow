@@ -617,14 +617,14 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     let sortedTemplateItems = sortItemsByType(templateItems)
 
     // reduce template textboxes to slide items
-    let slideTextboxes = slideItems.reduce((count, a) => (count += (a.type || "text") === "text" ? 1 : 0), 0)
+    let slideTextboxes = slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
     if (!templateClicked && slideTextboxes < (sortedTemplateItems.text?.length || 0)) {
         sortedTemplateItems.text = sortedTemplateItems.text.slice(0, slideTextboxes)
     }
 
     // remove slide items if no text
     if (addOverflowTemplateItems && templateItems.length < slideItems.length) {
-        slideItems = slideItems.filter((a) => (a.type || "text") !== "text" || getItemText(a).length)
+        slideItems = slideItems.filter((a) => (a?.type || "text") !== "text" || getItemText(a).length)
     }
 
     let newSlideItems: Item[] = []

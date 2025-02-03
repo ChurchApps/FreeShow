@@ -90,9 +90,9 @@ import { newToast } from "./common"
 import { syncDrive } from "./drive"
 import { send } from "./request"
 
-export function save(closeWhenFinished: boolean = false, customTriggers: { backup?: boolean; silent?: boolean; changeUserData?: any } = {}) {
+export function save(closeWhenFinished: boolean = false, customTriggers: { backup?: boolean; silent?: boolean; changeUserData?: any; autosave?: boolean } = {}) {
     console.log("SAVING...")
-    if (!customTriggers.backup) {
+    if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
         newToast("$toast.saving")
         customActionActivation("save")
     }
@@ -212,10 +212,10 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
 
 export function saveComplete({ closeWhenFinished, customTriggers }: any) {
     if (!closeWhenFinished) {
+        if ((!customTriggers.autosave || !get(saved)) && !customTriggers?.backup) newToast("$toast.saved")
+
         saved.set(true)
         console.log("SAVED!")
-
-        if (!customTriggers?.backup) newToast("$toast.saved")
     }
 
     if (customTriggers?.backup || customTriggers?.changeUserData) return

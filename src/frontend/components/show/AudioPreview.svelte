@@ -46,11 +46,17 @@
 
     function setTime(e: any) {
         sliderValue = null
-        if (playing.audio) {
-            playing.audio.currentTime = e.target.value
 
-            // something (in audio.ts I guess) plays the audio when updating the time, so this will pause it again
-            if (paused) setTimeout(() => playing.audio.pause(), 20)
+        if (playing.audio) {
+            playingAudio.update((a) => {
+                if (a[path]?.audio?.currentTime === undefined) return a
+                a[path].audio.currentTime = e.target.value || 0
+
+                // something (in audio.ts I guess) plays the audio when updating the time, so this will pause it again
+                if (paused) setTimeout(() => playing.audio.pause(), 20)
+
+                return a
+            })
         } else {
             currentTime = e.target.value
         }

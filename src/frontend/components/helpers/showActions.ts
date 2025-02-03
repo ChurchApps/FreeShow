@@ -624,13 +624,13 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 if (i <= index && !a.data.disabled) {
                     if (slideHasAction(a.data?.actions, "clear_background")) background = null
                     else if (a.data.background) background = a.data.background
-                    if (a.data.background && _show(showId).get("media")[a.data.background]?.loop === false) background = null
+                    if (a.data.background && _show(showId).get("media")?.[a.data.background]?.loop === false) background = null
                 }
             })
         }
 
         // background
-        if (background && _show(showId).get("media")[background]) {
+        if (background && _show(showId).get("media")?.[background]) {
             let bg = _show(showId).get("media")[background]
             let outputBg = get(outputs)[outputId]?.out?.background
             let cloudId = get(driveData).mediaId
@@ -1011,7 +1011,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     }
 
     let show = _show(showId).get()
-    if (!show) return text
+    if (type === "show" && !show) return text
 
     getDynamicIds().forEach((id) => {
         if (!text.includes(dynamicValueText(id))) return
@@ -1045,6 +1045,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (id.includes("video_") && get(currentWindow) === "output") {
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
         }
+
+        if (!showId) return ""
 
         let activeLayout = layoutId ? [layoutId] : "active"
         let ref = _show(showId).layouts(activeLayout).ref()[0]

@@ -70,6 +70,7 @@ export type SelectIds =
 export interface Selected {
     id: null | SelectIds
     data: any[]
+    hoverActive?: boolean
 }
 
 export interface SlidesOptions {
