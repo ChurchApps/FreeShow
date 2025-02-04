@@ -93,7 +93,7 @@ export interface Item {
     events?: DynamicEvent
     type?: ItemType
     mirror?: Mirror
-    src?: string
+    src?: string // media item path
     customSvg?: string
     device?: any // camera
     fit?: string
@@ -111,6 +111,7 @@ export interface Item {
     visualizer?: any
     captions?: any
     language?: string // used to store auto localized text
+    fromTemplate?: boolean // these will be removed if another template is applied
     // media: fit, startAt, endAt
     // tag?: string; // p, div????
 }

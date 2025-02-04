@@ -188,6 +188,7 @@
         "fit": "Fit",
         "contain": "Contain",
         "fill": "Fill",
+        "blur_fill": "Blur fill",
         "cover": "Cover",
         "online": "Online",
         "recommended": "Recommended",

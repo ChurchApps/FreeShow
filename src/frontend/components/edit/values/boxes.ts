@@ -55,6 +55,7 @@ export const mediaFitOptions: any[] = [
     { id: "contain", name: "$:media.contain:$" },
     { id: "cover", name: "$:media.cover:$" },
     { id: "fill", name: "$:media.fill:$" },
+    { id: "blur", name: "$:media.blur_fill:$" },
     // { id: "scale-down", name: "Scale down" },
 ]
 

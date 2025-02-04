@@ -15,6 +15,9 @@
 
     let mediaStyle: MediaStyle = {}
     $: if (show) mediaStyle = getMediaStyle($media[show.id], currentStyle)
+
+    $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 </script>
 
 {#if show}
@@ -32,11 +35,10 @@
                     }}
                     title={$dictionary.media?.play}
                 >
-                    <Image
-                        style="width: 100%;height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});"
-                        src={show.id}
-                        alt={show.name || ""}
-                    />
+                    {#if mediaStyle.fit === "blur"}
+                        <Image style={mediaStyleBlurString} src={show.id} alt="" />
+                    {/if}
+                    <Image style={mediaStyleString} src={show.id} alt={show.name || ""} />
                 </HoverButton>
             </div>
         {/if}

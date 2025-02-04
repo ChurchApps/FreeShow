@@ -317,7 +317,7 @@
     }
 
     // list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};
-    $: listStyle = item.list?.enabled ? `;font-size: inherit;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
+    $: listStyle = item?.list?.enabled ? `;font-size: inherit;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
@@ -325,6 +325,9 @@
     const dynamicInterval = setInterval(() => {
         updateDynamic++
     }, 1000)
+
+    $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};filter: ${item?.filter};transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;filter: ${item?.filter};transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
 </script>
 
 <div
@@ -385,25 +388,19 @@
     {:else if item?.type === "media"}
         {#if mediaItemPath}
             {#if ($currentWindow || preview) && getMediaType(getExtension(mediaItemPath)) === "video"}
-                <video
-                    src={encodeFilePath(mediaItemPath)}
-                    style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
-                    muted={mirror || item.muted}
-                    volume={Math.max(1, $volume)}
-                    autoplay
-                    loop
-                >
+                {#if item.fit === "blur"}
+                    <video src={encodeFilePath(mediaItemPath)} style={mediaStyleBlurString} muted autoplay loop />
+                {/if}
+                <video src={encodeFilePath(mediaItemPath)} style={mediaStyleString} muted={mirror || item.muted} volume={Math.max(1, $volume)} autoplay loop>
                     <track kind="captions" />
                 </video>
             {:else}
                 <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
                 <!-- TODO: use custom transition... -->
-                <Image
-                    src={mediaItemPath}
-                    alt=""
-                    style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
-                    transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"}
-                />
+                {#if item.fit === "blur"}
+                    <Image style={mediaStyleBlurString} src={mediaItemPath} alt="" transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+                {/if}
+                <Image src={mediaItemPath} alt="" style={mediaStyleString} transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
             {/if}
         {/if}
     {:else if item?.type === "camera"}

@@ -56,7 +56,7 @@ export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
 
         // TODO: "backup" global timer to show item.timer
 
-        let timerIndex = items.findIndex((a) => !a.timerId && a.timer)
+        let timerIndex = items.findIndex((a) => !a?.timerId && a?.timer)
         while (timerIndex >= 0) {
             timerCreated = true
             let globalTimerId = uid()

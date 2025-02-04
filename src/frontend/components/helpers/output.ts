@@ -609,7 +609,7 @@ export function getCurrentMediaTransition() {
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true, templateClicked: boolean = false) {
     // if (!slideItems?.length && !addOverflowTemplateItems) return []
-    slideItems = clone(slideItems)
+    slideItems = clone(slideItems).filter((a) => a && (!templateClicked || !a.fromTemplate))
 
     if (!templateItems.length) return slideItems
     templateItems = clone(templateItems)
@@ -652,6 +652,15 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         if (type !== "text") return finish()
 
+        const allTextColors = [
+            ...new Set(
+                item.lines
+                    ?.map((line) => line.text?.map((text) => getStyles(text.style)["color"] || "#FFFFFF"))
+                    .flat()
+                    .filter(Boolean)
+            ),
+        ] as string[]
+
         item.lines?.forEach((line: any, j: number) => {
             let templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
 
@@ -661,11 +670,11 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 if (!text.customType?.includes("disableTemplate")) {
                     let style = templateText?.style || ""
 
-                    // add original text color, if template is not clicked
-                    if (!templateClicked) {
+                    // add original text color, if template is not clicked & slide text has multiple colors
+                    // - use template color if item text has just one color
+                    if (!templateClicked && allTextColors.length > 1) {
                         let textColor = getStyles(text.style)["color"] || "#FFFFFF"
-                        // use template color if text is white (default)
-                        if (textColor !== "#FFFFFF") style += `color: ${textColor};`
+                        style += `color: ${textColor};`
                     }
 
                     text.style = style
@@ -713,6 +722,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     // this will ensure the correct order on the remaining items
     let remainingCount = Object.values(sortedTemplateItems).reduce((value, items) => (value += items.length), 0)
     let remainingTemplateItems = remainingCount ? templateItems.slice(remainingCount * -1) : []
+    // add template marker
+    remainingTemplateItems = remainingTemplateItems.map((a) => ({ ...a, fromTemplate: true }))
     // add behind existing items (any textboxes previously on top not in use will not be replaced by any underneath)
     newSlideItems = [...remainingTemplateItems, ...newSlideItems, ...(sortedTemplateItems.text || [])]
 
@@ -735,13 +746,29 @@ export function updateSlideFromTemplate(slide: Slide, template: Template, isFirs
     return slide
 }
 
-export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, media: { [key: string]: Media }, template: Template, oldTemplate: Template, removeOverflow: boolean = false) {
+export function updateLayoutsFromTemplate(
+    layouts: { [key: string]: Layout },
+    media: { [key: string]: Media },
+    template: Template,
+    oldTemplate: Template,
+    layoutId: string,
+    slideRef: any,
+    templateMode: "global" | "group" | "slide",
+    removeOverflow: boolean = false
+) {
     if (typeof layouts !== "object") layouts = {}
     if (typeof media !== "object") media = {}
 
     // only alter layout slides if clicking on the template
-    if (!removeOverflow) return { layouts, media }
+    if (templateMode === "global" && !removeOverflow) return { layouts, media }
 
+    // no need to add background/actions to slide/group children
+    if (slideRef.type !== "parent") return { layouts, media }
+
+    let slideIndex = slideRef.index
+    if (!layouts[layoutId]?.slides?.[slideIndex]) return { layouts, media }
+
+    let slide = layouts[layoutId].slides[slideIndex]
     let settings = template.settings || {}
     let oldSettings = oldTemplate.settings || {}
 
@@ -751,33 +778,26 @@ export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, me
         let existingId = Object.keys(media).find((id) => (media[id].path || media[id].id) === settings.backgroundPath)
         bgId = existingId || uid()
         if (!existingId) media[bgId] = { path: settings.backgroundPath, name: removeExtension(getFileName(settings.backgroundPath)) }
-    } else if (oldSettings.backgroundPath && oldSettings.backgroundPath === media[layouts[Object.keys(layouts)[0]]?.slides?.[0]?.background || ""]?.path) {
+    } else if ((templateMode !== "global" || slideIndex === 0) && oldSettings.backgroundPath && oldSettings.backgroundPath === media[slide.background || ""]?.path) {
         // remove background if previous template has current background
-        if (layouts[Object.keys(layouts)[0]]?.slides?.[0]?.background) layouts[Object.keys(layouts)[0]].slides[0].background = ""
+        if (slide.background) slide.background = ""
     }
 
-    Object.keys(layouts).forEach((layoutId) => {
-        let slides = layouts[layoutId].slides
-        slides.forEach((slide, i) => {
-            if (i === 0 && settings.backgroundPath) slide.background = bgId
+    if (settings.backgroundPath) slide.background = bgId
+    if (settings.actions?.length) {
+        if (!slide.actions) slide.actions = {}
 
-            if (settings.actions?.length) {
-                if (!slide.actions) slide.actions = {}
-
-                // remove existing
-                let newSlideActions: any[] = []
-                slide.actions.slideActions?.forEach((action) => {
-                    if (settings.actions?.find((a) => a.id === action.id || a.triggers?.[0] === action.triggers?.[0])) return
-                    newSlideActions.push(action)
-                })
-
-                slide.actions.slideActions = [...newSlideActions, ...settings.actions]
-            }
+        // remove existing
+        let newSlideActions: any[] = []
+        slide.actions.slideActions?.forEach((action) => {
+            if (settings.actions?.find((a) => a.id === action.id || a.triggers?.[0] === action.triggers?.[0])) return
+            newSlideActions.push(action)
         })
 
-        layouts[layoutId].slides = slides
-    })
+        slide.actions.slideActions = [...newSlideActions, ...settings.actions]
+    }
 
+    layouts[layoutId].slides[slideIndex] = slide
     return { layouts, media }
 }
 

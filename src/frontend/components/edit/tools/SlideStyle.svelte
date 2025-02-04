@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activeShow, activeTriggerFunction, showsCache, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeTriggerFunction, groups, showsCache, templates } from "../../../stores"
     import { clone, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getResolution } from "../../helpers/output"
@@ -14,6 +14,10 @@
 
     $: slideId = _show().layouts("active").ref()[0]?.[$activeEdit.slide || 0]?.id
     $: editSlide = $showsCache && $activeEdit.slide !== null && slideId ? _show().slides([slideId]).get()[0] : null
+
+    $: globalGroup = _show().get("slides")[slideId]?.globalGroup || ""
+    $: groupData = $groups[globalGroup] || {}
+    $: groupTemplate = groupData.template
 
     let notesElem: any = null
     $: if (notesElem && $activeTriggerFunction === "slide_notes") {
@@ -82,7 +86,12 @@
         />
     </CombinedInput>
     <CombinedInput>
-        <p><T id="show.slide_template" /></p>
+        <p>
+            <T id="show.slide_template" />
+            {#if groupTemplate && !settings.template}
+                <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.8em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
+            {/if}
+        </p>
         <Dropdown
             options={templateList}
             value={$templates[settings.template || ""]?.name || "—"}
