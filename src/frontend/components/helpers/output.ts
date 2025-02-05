@@ -53,7 +53,7 @@ export function displayOutputs(e: any = {}, auto: boolean = false) {
 
     enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1
-        send(OUTPUT, ["DISPLAY"], { enabled: forceKey || !get(outputDisplay), output, force: output.allowMainScreen || forceKey, auto, autoPosition })
+        send(OUTPUT, ["DISPLAY"], { enabled: forceKey || !get(outputDisplay), output, force: output.allowMainScreen || output.boundsLocked || forceKey, auto, autoPosition })
     })
 }
 

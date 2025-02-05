@@ -35,7 +35,18 @@
     let transitioningBetween: boolean = false
 
     function updateItems() {
-        if (!currentSlide.items?.length) return
+        if (!currentSlide.items?.length) {
+            currentItems = []
+            filteredItems = [] // this has to be updated here due to Svelte $ not updating properly
+            current = {
+                outSlide: clone(outSlide),
+                slideData: clone(slideData),
+                currentSlide: clone(currentSlide),
+                lines: clone(lines),
+                currentStyle: clone(currentStyle),
+            }
+            return
+        }
 
         // get any items with no transition between the two slides
         let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition

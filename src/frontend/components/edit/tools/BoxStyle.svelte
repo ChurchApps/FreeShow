@@ -174,7 +174,7 @@
 
         setBoxInputValue(box, "default", "clock.dateFormat", "hidden", clockType !== "digital")
         setBoxInputValue(box, "default", "clock.showTime", "hidden", clockType !== "digital" || dateFormat === "none")
-        setBoxInputValue(box, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && !item.clock?.showTime))
+        setBoxInputValue(box, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && item.clock?.showTime === false && dateFormat !== "none"))
         setBoxInputValue(box, "default", "clock.customFormat", "hidden", clockType !== "custom")
     }
     $: if (id === "camera" && item) {

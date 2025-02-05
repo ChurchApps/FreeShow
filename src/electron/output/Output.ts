@@ -4,6 +4,7 @@ import type { CaptureOptions } from "../capture/CaptureOptions"
 export class Output {
     window: BrowserWindow
     invisible?: boolean
+    boundsLocked?: boolean
     //previewWindow: BrowserWindow
     captureOptions?: CaptureOptions
     /*

@@ -17,8 +17,8 @@
     $: if (moreOptions) send("API:get_cleared")
 
     let dispatch = createEventDispatcher()
-    function clear(id: string, value?: any) {
-        send(id, value)
+    function clear(id: string) {
+        send(id)
         send("API:get_cleared")
         dispatch("clear")
     }
@@ -76,7 +76,7 @@
     {/if}
 
     <span style="display: flex;">
-        <Button class="clearAll" disabled={locked || !(outSlide || !$isCleared.all)} on:click={() => clear("OUT", "clear")} red dark center>
+        <Button class="clearAll" disabled={locked || !(outSlide || !$isCleared.all)} on:click={() => clear("API:clear_all")} red dark center>
             <Icon id="clear" size={1.2} />
             <span style="padding-left: 10px;">{translate("clear.all", $dictionary)}</span>
         </Button>

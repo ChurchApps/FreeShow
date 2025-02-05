@@ -241,7 +241,7 @@
         },
     }
 
-    function checkIsClosed(id: string) {
+    function checkIsClosed(id: string, _updater = null) {
         if (noClosing) return false
         if (id === "CSS") return true
 
@@ -427,7 +427,7 @@
 
                     {#if !noClosing && (closed[section] || section === "CSS")}
                         <Button style="position: absolute;right: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.[checkIsClosed(section) ? "close" : "reset"]}>
-                            {#if checkIsClosed(section)}
+                            {#if checkIsClosed(section, item)}
                                 <Icon id="remove" white />
                             {:else}
                                 <Icon id="reset" white />

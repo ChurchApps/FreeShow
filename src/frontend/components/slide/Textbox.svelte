@@ -342,6 +342,7 @@
     {#if lines}
         <div
             class="align"
+            class:scrolling={!isStage && item?.scrolling?.type}
             class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"}
             class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"}
             class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"}
@@ -544,7 +545,10 @@
     }
 
     /* scrolling */
-    /* WIP scroll with overflow too */
+    .item .scrolling {
+        /* scroll will always show overflowing text */
+        overflow: visible !important;
+    }
     .item .topBottomScrolling {
         animation: topBottom var(--scrollSpeed) linear infinite normal;
     }
