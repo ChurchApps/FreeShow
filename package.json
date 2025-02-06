@@ -76,22 +76,21 @@
                 {
                     "target": "dmg",
                     "arch": [
-                        "x64",
-                        "arm64"
+                        "arm64",
+                        "x64"
                     ]
                 },
                 {
                     "target": "zip",
                     "arch": [
-                        "x64",
-                        "arm64"
+                        "arm64",
+                        "x64"
                     ]
                 }
             ],
             "category": "public.app-category.utilities",
             "hardenedRuntime": true,
             "gatekeeperAssess": false,
-            "notarize": false,
             "entitlements": "scripts/entitlements.mac.plist",
             "entitlementsInherit": "scripts/entitlements.mac.plist",
             "extendInfo": {
