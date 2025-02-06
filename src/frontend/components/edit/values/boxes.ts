@@ -184,7 +184,7 @@ export const boxes: Box = {
             chords: [
                 { name: "chords", id: "chords.enabled", input: "checkbox", value: false },
                 { name: "color", id: "chords.color", input: "color", value: "#FF851B", hidden: true },
-                { name: "size", id: "chords.size", input: "number", value: 30, hidden: true },
+                { name: "size", id: "chords.size", input: "number", value: 60, hidden: true },
             ],
             special: [
                 {

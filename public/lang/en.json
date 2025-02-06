@@ -853,6 +853,7 @@
         "line_height": "Line height",
         "letter_spacing": "Letter spacing",
         "word_spacing": "Word spacing",
+        "position": "Position",
         "transform": "Transform",
         "text_transform": "Text transform",
         "uppercase": "Uppercase",

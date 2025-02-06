@@ -28,7 +28,22 @@
 
     $: filteredItems = currentItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
 
-    $: if (currentSlide.items !== undefined || outSlide) updateItems()
+    // do not update if only line has changed
+    $: currentOutSlide = "{}"
+    $: if (outSlide) {
+        let newOutSlide = clone(outSlide)
+        delete newOutSlide.line
+        let outSlideString = JSON.stringify(newOutSlide)
+        if (outSlideString !== currentOutSlide) currentOutSlide = outSlideString
+    }
+    // do not update if lines has no changes for this output
+    $: currentLines = "{}"
+    $: if (lines) {
+        let outLinesString = JSON.stringify(lines)
+        if (outLinesString !== currentLines) currentLines = outLinesString
+    }
+
+    $: if (currentSlide.items !== undefined || currentOutSlide || currentLines) updateItems()
     let timeout: any = null
 
     // if anything is outputted & changing to something that's outputted

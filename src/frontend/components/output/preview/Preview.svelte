@@ -201,10 +201,13 @@
     let maxLines: null | number = null
     // $: amountOfLinesToShow = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
     $: amountOfLinesToShow = getFewestOutputLines($outputs)
-    $: linesIndex = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
+    // $: linesIndex = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
     $: showSlide = outSlide?.index !== undefined && ref ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
-    $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : Math.ceil(slideLines / amountOfLinesToShow)) : null
+    $: maxLines = slideLines && amountOfLinesToShow < slideLines ? Math.ceil(slideLines / amountOfLinesToShow) : null
+    $: outputLine = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
+    $: linesPercentage = slideLines && outputLine !== null ? outputLine / slideLines : 0
+    $: linesIndex = maxLines !== null ? Math.floor(maxLines * linesPercentage) : 0
 
     // HIDE PREVIEW
 

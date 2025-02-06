@@ -3,6 +3,7 @@
     import { getBackgroundOpacity, setBackgroundColor } from "../../edit/scripts/edit"
     import { addFilterString, addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
+    import { setBoxInputValue } from "../../edit/values/boxes"
     import { itemEdits } from "../../edit/values/item"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -23,6 +24,10 @@
 
     // CSS
     $: if (itemEdit?.CSS && item?.style) itemEdit.CSS[0].value = item.style
+
+    $: if (data) {
+        setBoxInputValue({ icon: "", edit: itemEdit }, "default", "background-opacity", "hidden", !data["background-color"])
+    }
 
     $: if (item) itemEdit = getBackgroundOpacity(itemEdit, data)
 

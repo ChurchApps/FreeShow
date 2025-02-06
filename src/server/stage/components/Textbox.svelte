@@ -200,12 +200,14 @@
 
         return transposedRootNote + (bassNote || "") + chordQuality
     }
+
+    $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chordsData?.size || 80 : "undefined"}px;--chord-color: ${stageItem?.chordsData?.color || "#FF851B"};`
 </script>
 
 <svelte:window on:click={closeActions} />
 
 <!-- bind:offsetHeight={height} -->
-<div bind:this={thisElem} class="item" style={style ? itemStyle : null} on:click={toggleActions}>
+<div bind:this={thisElem} class="item" style={style ? itemStyle : null} class:chords={chordLines.length} on:click={toggleActions}>
     <!-- can have more actions here if needed -->
     {#if actionButtons && (chordLines.length || false)}
         <div class="actions">
@@ -222,12 +224,12 @@
 
     {#if item.lines}
         <div class="align" style={style ? item.align : null} bind:this={alignElem}>
-            <div class="lines" style={style && lineGap ? `gap: ${lineGap}px;` : ""}>
+            <div class="lines" style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{chordsStyle}">
                 {#each item.lines as line, i}
                     {#if !maxLines || i < maxLines}
                         <!-- WIP chords are way bigger than stage preview for some reason -->
                         {#if chordLines[i]}
-                            <div class:first={i === 0} class="break chords" style="--chord-size: {stageItem?.chordsData?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || '#FF851B'};--font-size: {fontSize}px;">
+                            <div class:first={i === 0} class="break chords" style="--font-size: {fontSize}px;">
                                 {@html chordLines[i]}
                             </div>
                         {/if}
@@ -361,8 +363,9 @@
         position: absolute;
         color: var(--chord-color);
         font-size: var(--chord-size) !important;
+        font-weight: bold;
 
-        transform: translate(-50%, -20%);
+        transform: translate(-50%, calc(-55% - 2px));
         line-height: initial;
         z-index: 2;
     }
@@ -377,6 +380,14 @@
     }
     .break.chords.first {
         line-height: var(--chord-size) !important;
+    }
+
+    .item.chords,
+    .item.chords .align {
+        overflow: visible;
+    }
+    .lines {
+        line-height: calc(var(--chord-size) * 1.2 + 4px) !important;
     }
 
     /* custom svg icon */

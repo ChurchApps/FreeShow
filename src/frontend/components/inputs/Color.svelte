@@ -78,7 +78,13 @@
         </div>
     {/if}
 {:else}
-    <div bind:this={colorElem} id={pickerId} class="color" style={(height ? "height: " + height + "px;" : "") + (width ? "width: " + width + "px;" : "") + "background-color: " + value + ";" + ($$props.style || "")} on:click={togglePicker}>
+    <div
+        bind:this={colorElem}
+        id={pickerId}
+        class="color"
+        style="--outline-color: {getContrast(value)};{(height ? 'height: ' + height + 'px;' : '') + (width ? 'width: ' + width + 'px;' : '') + 'background-color: ' + value + ';' + ($$props.style || '')}"
+        on:click={togglePicker}
+    >
         {#if pickerOpen}
             <div class="picker" class:clipRight bind:this={colorElem}>
                 {#if enableNoColor || colors.length}
@@ -138,7 +144,7 @@
         opacity: 0.98;
     } */
     .color:hover {
-        outline: 2px solid #ddd !important;
+        outline: 2px solid var(--outline-color) !important;
         outline-offset: -2px;
     }
 

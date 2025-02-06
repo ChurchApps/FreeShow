@@ -346,11 +346,13 @@
                     {/if}
                     <!-- Current screen position -->
                     <div class="screen noClick" style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}"></div>
-                    <Button class="lock" on:click={lockScreen} red={currentScreen.boundsLocked} center>
-                        <div style="display: contents;" title={currentScreen.boundsLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock}>
-                            <Icon id={currentScreen.boundsLocked ? "locked" : "unlocked"} size={1.1} />
-                        </div>
-                    </Button>
+                    {#if !activateOutput}
+                        <Button class="lock" on:click={lockScreen} red={currentScreen.boundsLocked} center>
+                            <div style="display: contents;" title={currentScreen.boundsLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock}>
+                                <Icon id={currentScreen.boundsLocked ? "locked" : "unlocked"} size={1.1} />
+                            </div>
+                        </Button>
+                    {/if}
                 </div>
                 <!-- {/if} -->
 
@@ -362,6 +364,8 @@
                         style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.previewBounds.x}px;top: {screen.previewBounds.y}px;"
                         on:click={() => {
                             if (currentScreen?.forcedResolution || currentScreen.boundsLocked) return
+
+                            // WIP this will not always change correct output if multiple & "activateOutput"
                             changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
                         }}
                     >

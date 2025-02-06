@@ -41,7 +41,7 @@ import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
-import { replaceDynamicValues } from "./showActions"
+import { getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
 
@@ -927,13 +927,24 @@ export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]
 }
 
 export function getOutputLines(outSlide: any, styleLines: any = 0) {
-    let maxLines: number = styleLines ? Number(styleLines) : 0
-    let linesIndex: number | null = maxLines && outSlide && outSlide.id !== "temp" ? outSlide.line || 0 : null
+    if (!outSlide?.id || outSlide.id === "temp") return { start: 0, end: 0 } // , index: 0, max: 0
 
-    let start = linesIndex !== null && outSlide?.id ? maxLines * linesIndex : null
-    let end = start !== null ? start + maxLines : null
+    let ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
+    let showSlide = _show(outSlide.id).slides([ref?.[outSlide.index]?.id]).get()[0]
+    let maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
+    if (!maxLines) return { start: 0, end: 0 } // , index: 0, max: 0
 
-    return { start, end, index: linesIndex, max: maxLines }
+    let progress = ((outSlide.line || 0) + 1) / maxLines
+
+    let maxStyleLines = Number(styleLines || 0)
+
+    // ensure last content is shown when e.g. two styles has 2 & 3 lines, and the slide has 4 lines
+    if ((outSlide.line || 0) + maxStyleLines > maxLines) progress = 1
+
+    let linesIndex = Math.ceil(maxLines * progress) - 1
+    let start = maxStyleLines * Math.floor(linesIndex / maxStyleLines)
+
+    return { start: start, end: start + maxStyleLines } // , index: linesIndex, max: maxStyleLines
 }
 
 // METADATA
