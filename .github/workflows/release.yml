@@ -82,8 +82,8 @@ jobs:
                   sudo gem install --no-document fpm
 
             # wait because this will only publish if the draft exists
-            - name: Sleep for 8 minutes
-              run: sleep 480s
+            - name: Sleep for 30 seconds
+              run: sleep 30s
               shell: bash
 
             - name: Build and release app
@@ -122,9 +122,9 @@ jobs:
               run: npm i dmg-license
 
             # for some reason the build command don't continue after the rollup build
-            # - name: Sleep for 5 minutes
-            #   run: sleep 300
-            #   shell: bash
+            - name: Sleep for 10 minutes
+              run: sleep 600
+              shell: bash
 
             - name: Build and release app
               env:
@@ -134,7 +134,6 @@ jobs:
                   APPLE_ID: ${{ secrets.APPLEID }}
                   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
                   APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
-                  DEBUG: electron-builder
               uses: nick-fields/retry@v3
               with:
                   timeout_minutes: 8
