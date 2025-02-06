@@ -135,7 +135,7 @@
         }
     },
     "devDependencies": {
-        "@electron/notarize": "^2.4.0",
+        "@electron/notarize": "^2.5.0",
         "@playwright/test": "^1.49.0",
         "@rollup/plugin-commonjs": "^28.0.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
