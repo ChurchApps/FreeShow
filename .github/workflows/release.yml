@@ -94,7 +94,7 @@ jobs:
 
     publish_mac:
         name: "Publish MacOS"
-        runs-on: macos-latest
+        runs-on: macos-15
 
         steps:
             - name: Check out Git repository
