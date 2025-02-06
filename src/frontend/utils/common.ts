@@ -115,7 +115,7 @@ export function startAutosave() {
     }
 
     autosaveTimeout = setTimeout(() => {
-        save()
+        save(false, { autosave: true })
         startAutosave()
     }, saveInterval)
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeShow, alertMessage, dictionary, labelsDisabled, mediaOptions, outputs, showsCache, styles, templateCategories, templates } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, dictionary, labelsDisabled, mediaOptions, outputs, selected, showsCache, styles, templateCategories, templates } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,6 +14,8 @@
     import Card from "../Card.svelte"
     import TemplateSlide from "./TemplateSlide.svelte"
     import Loader from "../../main/Loader.svelte"
+    import { _show } from "../../helpers/shows"
+    import { deselect } from "../../helpers/select"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -83,6 +85,31 @@
                             if ($showsCache[$activeShow.id]?.locked) {
                                 alertMessage.set("show.locked_info")
                                 activePopup.set("alert")
+                                return
+                            }
+
+                            // one selected slides
+                            let ref = _show().layouts("active").ref()[0]
+                            if ($selected.id === "slide" && $selected.data.length < ref.length) {
+                                $selected.data.forEach(({ index, showId }) => {
+                                    let slideId = ref[index]?.id
+                                    let slideSettings = _show(showId || "active")
+                                        .slides([slideId])
+                                        .get("settings")
+                                    let oldData = { style: clone(slideSettings) }
+                                    let newData = { style: { ...clone(slideSettings), template: template.id } }
+
+                                    // WIP apply to all slides at once...
+                                    history({
+                                        id: "slideStyle",
+                                        oldData,
+                                        newData,
+                                        location: { page: "edit", show: $activeShow, slide: slideId },
+                                    })
+                                })
+
+                                deselect()
+                                // WIP refresh slides (apply template)
                                 return
                             }
 

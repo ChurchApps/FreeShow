@@ -57,13 +57,16 @@
     // let backgroundColor: string = ""
     // $: if (!edit && !template.items?.length) backgroundColor = template.color || "transparent"
     // else backgroundColor = template.settings?.backgroundColor || currentStyle.background || "black"
+
+    $: checkered = (!preview || template.items?.length > 0) && !template.settings?.backgroundColor && !thumbnailPath
 </script>
 
 <!-- background={transparentOutput && template.items?.length ? "transparent" : backgroundColor}
 checkered={template.items?.length > 0 && transparentOutput} -->
 <Zoomed
     background={!preview || template.items?.length ? template.settings?.backgroundColor || (preview ? "var(--primary);" : "transparent") : template.color || "var(--primary);"}
-    checkered={(!preview || template.items?.length > 0) && !template.settings?.backgroundColor && !thumbnailPath}
+    {checkered}
+    border={!preview && checkered}
     {resolution}
     style={width && height ? getStyleResolution(resolution, width, height, "fit", { zoom }) : ""}
     bind:ratio

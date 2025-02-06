@@ -12,7 +12,7 @@
     export let fontStyleValue: string = ""
     export let system: boolean = false
 
-    $: value = value.replaceAll("'", "")
+    $: value = value ? value.replaceAll("'", "") : ""
 
     // web fonts
     const defaultFonts = ["CMGSans", "Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Garamond", "Courier New", "Brush Script MT", "Helvetica"]
@@ -75,6 +75,8 @@
 
     $: if (active) scrollToActive(value)
     function scrollToActive(value: string) {
+        if (!value) return
+
         let id = formatId(value)
         if (!id) return
 

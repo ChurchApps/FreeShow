@@ -92,7 +92,8 @@
         }, 20)
     }
 
-    $: mediaStyleString = `pointer-events: none;position: absolute;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleString = `pointer-events: none;position: absolute;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `filter: blur(4px) opacity(0.3);object-fit: cover;pointer-events: none;position: absolute;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 
     let readyToLoad: boolean = false
     onMount(() => {
@@ -114,6 +115,9 @@
                 <!-- show nothing if ghost without thumbnail -->
             {:else if type !== "video" || (thumbnailPath && retryCount <= MAX_RETRIES)}
                 {#key retryCount}
+                    {#if mediaStyle.fit === "blur"}
+                        <img src={type !== "video" && useOriginal ? encodeFilePath(path) : thumbnailPath} alt={name} style={mediaStyleBlurString} loading="lazy" class:loading={!loaded} class="hideError" />
+                    {/if}
                     <img
                         src={type !== "video" && useOriginal ? encodeFilePath(path) : thumbnailPath}
                         alt={name}
@@ -127,6 +131,11 @@
                 {/key}
             {/if}
             {#if type === "video" && useOriginal && !ghost}
+                {#if mediaStyle.fit === "blur"}
+                    <video style={mediaStyleBlurString} src={encodeFilePath(path)} muted>
+                        <track kind="captions" />
+                    </video>
+                {/if}
                 <video style={mediaStyleString} bind:this={videoElem} on:error={reload} src={encodeFilePath(path)} on:canplaythrough={getCurrentDuration}>
                     <track kind="captions" />
                 </video>

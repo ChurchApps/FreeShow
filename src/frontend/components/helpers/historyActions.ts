@@ -801,11 +801,11 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     // show template
                     let slideTemplate = template
-                    let isGlobalTemplate = true
+                    let templateMode: "global" | "group" | "slide" = "global"
                     // slide template
                     if (slide.settings?.template) {
                         slideTemplate = clone(get(templates)[slide.settings.template]) || template
-                        isGlobalTemplate = false
+                        templateMode = "slide"
                     } else {
                         // group template
                         let isChild = slide.group === null
@@ -816,7 +816,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         }
                         if (globalGroup && get(groups)[globalGroup]?.template) {
                             slideTemplate = clone(get(templates)[get(groups)[globalGroup]?.template]) || template
-                            isGlobalTemplate = false
+                            templateMode = "group"
                         }
                     }
 
@@ -845,6 +845,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             let type = a.type || "text"
                             if (templateItemCount[type] - slideItemCount[type] >= 0) return true
                             if (type === "text" && !isEmptyOrSpecial(a)) return true
+                            if (type === "media" && a.src) return true
 
                             // remove item
                             slideItemCount[type]--
@@ -858,16 +859,18 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // if (slideTemplate.settings?.resolution) show.slides[id].settings.resolution = slideTemplate.settings?.resolution
                     if (slideTemplate.settings?.backgroundColor) show.slides[id].settings.color = slideTemplate.settings?.backgroundColor
 
-                    if (!isGlobalTemplate) return
-
-                    // set custom values
-                    let isFirst = !!Object.values(show.layouts || {}).find((layout) => layout.slides[0]?.id === id)
+                    let isFirst = templateMode === "global" && !!show.layouts[data.remember.layout].slides?.find((a) => a?.id === id)
                     show.slides[id] = updateSlideFromTemplate(show.slides[id], slideTemplate, isFirst, changeOverflowItems)
-                    let oldTemplate = get(templates)[previousTemplateId || ""] || {}
-                    let newLayoutData = updateLayoutsFromTemplate(show.layouts, show.media, slideTemplate, oldTemplate, changeOverflowItems)
 
-                    show.layouts = newLayoutData.layouts
-                    show.media = newLayoutData.media
+                    let slideRefs = ref.filter((a) => a.id === id)
+                    let oldTemplate = get(templates)[previousTemplateId || ""] || {}
+                    slideRefs.forEach((slideRef) => {
+                        // set custom values
+                        let newLayoutData = updateLayoutsFromTemplate(show.layouts, show.media, slideTemplate, oldTemplate, data.remember.layout, slideRef, templateMode, changeOverflowItems)
+
+                        show.layouts = newLayoutData.layouts
+                        show.media = newLayoutData.media
+                    })
                 })
 
                 // don't update if show has not changed

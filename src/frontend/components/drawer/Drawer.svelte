@@ -105,7 +105,7 @@
             .filter((n) => n)
             .join(" ")
     function search() {
-        if (storeHeight === null) return
+        if (storeHeight === null && $drawer.height > minHeight) return
 
         click(null)
         // if ($activeDrawerTab === "shows") {

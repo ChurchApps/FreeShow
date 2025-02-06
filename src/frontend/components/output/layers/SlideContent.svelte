@@ -28,13 +28,41 @@
 
     $: filteredItems = currentItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
 
-    $: if (currentSlide.items !== undefined || outSlide) updateItems()
+    // do not update if only line has changed
+    $: currentOutSlide = "{}"
+    $: if (outSlide) {
+        let newOutSlide = clone(outSlide)
+        delete newOutSlide.line
+        let outSlideString = JSON.stringify(newOutSlide)
+        if (outSlideString !== currentOutSlide) currentOutSlide = outSlideString
+    }
+    // do not update if lines has no changes for this output
+    $: currentLines = "{}"
+    $: if (lines) {
+        let outLinesString = JSON.stringify(lines)
+        if (outLinesString !== currentLines) currentLines = outLinesString
+    }
+
+    $: if (currentSlide.items !== undefined || currentOutSlide || currentLines) updateItems()
     let timeout: any = null
 
     // if anything is outputted & changing to something that's outputted
     let transitioningBetween: boolean = false
 
     function updateItems() {
+        if (!currentSlide.items?.length) {
+            currentItems = []
+            filteredItems = [] // this has to be updated here due to Svelte $ not updating properly
+            current = {
+                outSlide: clone(outSlide),
+                slideData: clone(slideData),
+                currentSlide: clone(currentSlide),
+                lines: clone(lines),
+                currentStyle: clone(currentStyle),
+            }
+            return
+        }
+
         // get any items with no transition between the two slides
         let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
         let newItemTransition = currentSlide.items.find((a) => a.actions?.transition)?.actions?.transition

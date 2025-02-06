@@ -70,6 +70,7 @@ export type SelectIds =
 export interface Selected {
     id: null | SelectIds
     data: any[]
+    hoverActive?: boolean
 }
 
 export interface SlidesOptions {
@@ -90,7 +91,7 @@ export interface ActiveEdit {
     showId?: string // only used to reset to slide 0 if changed ($activeShow.id is actually used)
 }
 
-export type MediaFit = "contain" | "cover" | "fill"
+export type MediaFit = "contain" | "cover" | "fill" | "blur"
 export interface Media {
     [key: string]: MediaStyle
 }

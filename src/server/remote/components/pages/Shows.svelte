@@ -89,7 +89,7 @@
         send("SHOW", id)
 
         if ($quickPlay) {
-            send("OUT", { id, index: 0 })
+            send("API:index_select_slide", { showId: id, index: 0 })
             searchElem.select()
         } else {
             _set("activeTab", "show")

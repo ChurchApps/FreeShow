@@ -43,7 +43,7 @@
         // get duration
         getDurationInterval = setInterval(() => {
             videoData.duration = player.getDuration()
-            if (videoData.duration) clearInterval(getDuration)
+            if (videoData.duration) clearInterval(getDurationInterval)
         }, 200)
 
         videoTime = startAt

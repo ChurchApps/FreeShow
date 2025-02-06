@@ -10,6 +10,7 @@
     import { addFilterString, addStyleString } from "../scripts/textStyle"
     import { itemEdits } from "../values/item"
     import EditValues from "./EditValues.svelte"
+    import { setBoxInputValue } from "../values/boxes"
 
     export let allSlideItems: Item[]
     export let item: Item | null
@@ -22,6 +23,10 @@
 
     // CSS
     $: if (itemEditValues?.CSS && item?.style) itemEditValues.CSS[0].value = item.style
+
+    $: if (data) {
+        setBoxInputValue({ icon: "", edit: itemEditValues }, "default", "background-opacity", "hidden", !data["background-color"])
+    }
 
     $: itemBackFilters = getStyles(item?.style)["backdrop-filter"]
     $: if (itemBackFilters) getItemFilters()

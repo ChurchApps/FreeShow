@@ -71,12 +71,23 @@
             subtitleChange = null
         }, 20)
     }
+
+    $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+
+    let blurVideo: any = null
+    $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.3 || videoTime > blurVideo.currentTime + 0.3)) blurVideo.currentTime = videoTime
+    $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
+    $: blurPausedState = videoData.paused
 </script>
 
 <div style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
+    {#if mediaStyle.fit === "blur"}
+        <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:playbackRate bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop || false} />
+    {/if}
     <video
         class="media"
-        style="width: 100%;height: 100%;object-fit: {mediaStyle.fit};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});"
+        style={mediaStyleString}
         bind:this={video}
         on:loadedmetadata={loaded}
         on:playing={playing}

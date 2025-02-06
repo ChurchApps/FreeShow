@@ -149,7 +149,7 @@
         icon={thumbnail ? icon : null}
         white={type === "image"}
         showPlayOnHover
-        checkered
+        checkered={mediaStyle.fit !== "blur"}
         on:mousedown={mousedown}
         on:click={click}
         on:dblclick={dblclick}

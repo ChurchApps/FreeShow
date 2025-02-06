@@ -105,7 +105,8 @@ function initialize(id: ServerName, socket: any) {
     // SEND DATA FROM CLIENT TO APP
     socket.on(id, async (msg: any) => {
         if (msg.channel === "OUTPUT_FRAME") {
-            const window = OutputHelper.getOutput(msg.data.outputId).window
+            const window = OutputHelper.getOutput(msg.data.outputId)?.window
+            if (!window || window.isDestroyed()) return
             const frame = await CaptureHelper.captureBase64Frame(window)
             toServer(id, { channel: "OUTPUT_FRAME", data: { frame } })
         } else if (msg) {

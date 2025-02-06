@@ -27,7 +27,7 @@ export const textEdits: { [key: string]: EditInput[] } = {
     chords: [
         { name: "chords", id: "chords", input: "checkbox", value: false },
         { name: "color", id: "chordsData.color", input: "color", value: "#FF851B", hidden: true },
-        { name: "size", id: "chordsData.size", input: "number", value: 30, hidden: true },
+        { name: "size", id: "chordsData.size", input: "number", value: 50, hidden: true },
     ],
     CSS: [{ id: "CSS", input: "CSS" }],
 }

@@ -80,7 +80,7 @@
 {#if type === "analog"}
     <AnalogClock date={d} {...{ h, m, s }} {seconds} />
 {:else if type === "custom"}
-    <div class="clock autoFontSize" style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
+    <div class="clock autoFontSize" style={autoSize ? `font-size: ${autoSize * 0.97}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
         {#if style}
             <span class="colored">{formattedCustom}</span>
         {:else}
@@ -88,7 +88,7 @@
         {/if}
     </div>
 {:else}
-    <div class="clock autoFontSize" style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
+    <div class="clock autoFontSize" style={autoSize ? `font-size: ${autoSize * 0.97}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
         {#if style}
             <span class="colored">{("0" + h).slice(-2)}</span>:
             <span class="colored">{("0" + m).slice(-2)}</span>
@@ -108,6 +108,8 @@
         justify-content: center;
         align-items: baseline;
         font-size: 4em;
+
+        white-space: nowrap;
     }
     .colored {
         color: var(--secondary);

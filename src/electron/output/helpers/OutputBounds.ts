@@ -44,6 +44,7 @@ export class OutputBounds {
     static alignWithScreens() {
         OutputHelper.getKeys().forEach((outputId) => {
             let output = OutputHelper.getOutput(outputId)
+            if (output.boundsLocked) return
 
             let wBounds = output.window.getBounds()
             let centerLeft = wBounds.x + wBounds.width / 2

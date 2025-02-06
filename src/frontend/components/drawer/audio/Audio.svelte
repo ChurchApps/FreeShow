@@ -74,7 +74,7 @@
     }
 
     let filesInFolders: string[] = []
-    $: console.log(filesInFolders)
+    let folderFiles: any = {}
 
     let listenerId = uid()
     onDestroy(() => destroy(READ_FOLDER, listenerId))
@@ -84,15 +84,24 @@
     function receiveContent(msg: any) {
         filesInFolders = sortByName(msg.filesInFolders || [])
 
-        if (active === "all" || msg.path === path) {
-            files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
-            files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        if (active !== "all" && msg.path !== path) return
 
-            files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
+        files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
+        files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
-            // filterFiles()
-            scrollElem?.scrollTo(0, 0)
-        }
+        files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
+
+        // set valid files in folder
+        folderFiles = {}
+        Object.keys(msg.folderFiles).forEach((path) => {
+            folderFiles[path] = msg.folderFiles[path].filter((file) => file.folder || getMediaType(file.extension) === "audio")
+        })
+
+        // remove folders with no content
+        files = files.filter((a) => !a.folder || !folderFiles[a.path] || folderFiles[a.path].length > 0)
+
+        // filterFiles()
+        scrollElem?.scrollTo(0, 0)
     }
 
     // search

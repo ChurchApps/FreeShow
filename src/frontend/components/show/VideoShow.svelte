@@ -303,6 +303,14 @@
         videoData.paused = false
         pausedByEdit = false
     }
+
+    $: mediaStyleString = `width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+
+    let blurVideo: any = null
+    $: if (blurVideo && (videoTime < blurVideo.currentTime - 1 || videoTime > blurVideo.currentTime + 1)) blurVideo.currentTime = videoTime
+    $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
+    $: blurPausedState = videoData.paused
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -315,8 +323,11 @@
                 <Player id={showId} bind:videoData bind:videoTime preview />
             {:else}
                 <!-- TODO: on:error={videoError} - ERR_FILE_NOT_FOUND -->
+                {#if mediaStyle.fit === "blur"}
+                    <video style={mediaStyleBlurString} src={showId} bind:this={blurVideo} bind:paused={blurPausedState} muted />
+                {/if}
                 <video
-                    style="width: 100%;height: 100%;filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});"
+                    style={mediaStyleString}
                     src={showId}
                     on:loadedmetadata={onLoad}
                     on:playing={onPlay}

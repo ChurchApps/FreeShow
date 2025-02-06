@@ -41,5 +41,7 @@
         justify-content: center;
         align-items: baseline;
         font-size: 4em;
+
+        white-space: nowrap;
     }
 </style>

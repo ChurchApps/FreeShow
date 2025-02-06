@@ -248,6 +248,8 @@
 
     // $: styleTemplate = getStyleTemplate(null, currentStyle)
     // || styleTemplate.settings?.backgroundColor
+
+    $: checkered = (transparentOutput || $special.transparentSlides) && !background
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={mousedown} on:wheel={wheel} />
@@ -260,7 +262,8 @@
             <DropArea id="edit">
                 <Zoomed
                     background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : Slide?.settings?.color || currentStyle.background || "black"}
-                    checkered={(transparentOutput || $special.transparentSlides) && !background}
+                    {checkered}
+                    border={checkered}
                     {resolution}
                     style={getStyleResolution(resolution, width, height, "fit", { zoom })}
                     bind:ratio
