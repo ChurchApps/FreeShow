@@ -76,21 +76,22 @@
                 {
                     "target": "dmg",
                     "arch": [
-                        "arm64",
-                        "x64"
+                        "x64",
+                        "arm64"
                     ]
                 },
                 {
                     "target": "zip",
                     "arch": [
-                        "arm64",
-                        "x64"
+                        "x64",
+                        "arm64"
                     ]
                 }
             ],
             "category": "public.app-category.utilities",
             "hardenedRuntime": true,
             "gatekeeperAssess": false,
+            "notarize": false,
             "entitlements": "scripts/entitlements.mac.plist",
             "entitlementsInherit": "scripts/entitlements.mac.plist",
             "extendInfo": {
@@ -148,8 +149,8 @@
         "@types/sqlite3": "^3.1.8",
         "@types/tmp": "^0.2.6",
         "@types/vimeo__player": "^2.16.2",
-        "electron": "^32.2.3",
-        "electron-builder": "^25.1.8",
+        "electron": "^32.2.6",
+        "electron-builder": "^24.13.3",
         "playwright": "^1.49.0",
         "prettier": "^3.4.1",
         "rollup": "^4.28.0",
