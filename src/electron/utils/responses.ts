@@ -289,7 +289,7 @@ export function saveRecording(_: any, msg: any) {
 // ERROR LOGGER
 const maxLogLength = 250
 export function logError(log: any, electron: boolean = false) {
-    if (!isProd) return
+    if (!isProd) log.dev = true
 
     let storedLog: any = error_log.store
     let key = electron ? "main" : "renderer"

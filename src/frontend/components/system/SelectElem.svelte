@@ -18,7 +18,7 @@
     let elem: any
 
     function enter(e: any) {
-        if (!selectable) return
+        if (!selectable || $selected.hoverActive) return
         if (!e.buttons || dragActive || onlyRightClickSelect) return
 
         if ((id === "project" || id === "folder") && $selected.data[0] && data.index < $selected.data[0].index) {
@@ -53,26 +53,32 @@
         show: () => {
             if (($selected.id === "slide" || $selected.id === "group" || $selected.id === "global_group") && (data.type || "show") === "show") {
                 // copy slide data
-                if ($selected.id === "slide") {
-                    let slides: any[] = convertDataToSlide($selected.data)
+                if (($selected.id === "slide" || $selected.id === "group") && !$selected.hoverActive) {
+                    let slides: any[] = convertDataToSlide(clone($selected.data))
+                    selected.set({ ...$selected, hoverActive: true })
+
                     // select after show is opened (because a slide is selected in the new show)
                     setTimeout(() => {
-                        selected.set({ id: "global_group", data: slides }) // , overrideDrop: true
+                        selected.set({ id: "global_group", data: slides, hoverActive: true })
                     }, 50)
                 }
+
                 // open show
                 activeShow.set(data)
             }
         },
     }
 
-    function convertDataToSlide(slideRef: { index: number }[]) {
+    function convertDataToSlide(slideRef: { index?: number; id?: string }[]) {
         let currentSlides = _show().get("slides")
         let currentMedia = _show().get("media") || {}
         let currentLayoutRef = _show().layouts("active").ref()[0]
 
-        let slideData = slideRef.map(({ index }) => {
-            let layout = currentLayoutRef[index] || {}
+        let slideData = slideRef.map(({ index, id }) => {
+            let layout
+            if (id) layout = currentLayoutRef.find((a) => a.id === id) || {}
+            else if (index !== undefined) layout = currentLayoutRef[index] || {}
+
             let layoutMedia: any = {}
             if (layout.data?.background) layoutMedia[layout.data.background] = currentMedia[layout.data?.background]
             if (layout.data?.audio) {
@@ -101,7 +107,10 @@
         if (!selectable) return
         if (dragged && ($activeRename !== null || $disableDragging)) return e.preventDefault()
 
-        if ($selected.id !== id) selected.set({ id, data: [] })
+        if ($selected.id !== id) {
+            if (remainSelected(e)) return
+            selected.set({ id, data: [] })
+        }
 
         // this affects the cursor
         // https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/dropEffect
@@ -194,10 +203,16 @@
     }
 
     function deselect(e: any) {
-        if (e.ctrlKey || e.metaKey || $selected.id !== id) return
+        if (e.ctrlKey || e.metaKey || !remainSelected(e)) return
         if (e.target.closest(".menus") || e.target.closest(".selectElem") || e.target.closest(".popup") || e.target.closest(".edit") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
 
         selected.set({ id: null, data: [] })
+    }
+
+    function remainSelected(e: any) {
+        if ($selected.id === "slide" && e.button === 0 && e.target.closest("#template")) return true
+        if ($selected.id === id) return true
+        return false
     }
 
     let dragover: null | "start" | "center" | "end" = null

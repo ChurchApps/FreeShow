@@ -317,7 +317,7 @@
     }
 
     // list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};
-    $: listStyle = item.list?.enabled ? `;font-size: inherit;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
+    $: listStyle = item?.list?.enabled ? `;font-size: inherit;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
@@ -325,6 +325,11 @@
     const dynamicInterval = setInterval(() => {
         updateDynamic++
     }, 1000)
+
+    $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};filter: ${item?.filter};transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;filter: ${item?.filter};transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
+
+    $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chordsData?.size || item.chords?.size || 50 : "undefined"}px;--chord-color: ${stageItem?.chordsData?.color || item.chords?.color || "#FF851B"};`
 </script>
 
 <div
@@ -334,11 +339,13 @@
     class:key
     class:addDefaultItemStyle
     class:isDisabledVariable
+    class:chords={chordLines.length}
     bind:this={itemElem}
 >
     {#if lines}
         <div
             class="align"
+            class:scrolling={!isStage && item?.scrolling?.type}
             class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"}
             class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"}
             class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"}
@@ -347,17 +354,12 @@
         >
             <div
                 class="lines"
-                style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
+                style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}"
             >
                 {#each lines as line, i}
                     {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || i < maxLines)}
                         {#if chords && chordLines[i]}
-                            <div
-                                class:first={i === 0}
-                                class="break chords"
-                                class:stageChords={!!stageItem}
-                                style="--chord-size: {stageItem?.chordsData?.size || item.chords?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || item.chords?.color || '#FF851B'};"
-                            >
+                            <div class:first={i === 0} class="break chords" class:stageChords={!!stageItem}>
                                 {@html chordLines[i]}
                             </div>
                         {/if}
@@ -385,25 +387,19 @@
     {:else if item?.type === "media"}
         {#if mediaItemPath}
             {#if ($currentWindow || preview) && getMediaType(getExtension(mediaItemPath)) === "video"}
-                <video
-                    src={encodeFilePath(mediaItemPath)}
-                    style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
-                    muted={mirror || item.muted}
-                    volume={Math.max(1, $volume)}
-                    autoplay
-                    loop
-                >
+                {#if item.fit === "blur"}
+                    <video src={encodeFilePath(mediaItemPath)} style={mediaStyleBlurString} muted autoplay loop />
+                {/if}
+                <video src={encodeFilePath(mediaItemPath)} style={mediaStyleString} muted={mirror || item.muted} volume={Math.max(1, $volume)} autoplay loop>
                     <track kind="captions" />
                 </video>
             {:else}
                 <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
                 <!-- TODO: use custom transition... -->
-                <Image
-                    src={mediaItemPath}
-                    alt=""
-                    style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
-                    transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"}
-                />
+                {#if item.fit === "blur"}
+                    <Image style={mediaStyleBlurString} src={mediaItemPath} alt="" transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+                {/if}
+                <Image src={mediaItemPath} alt="" style={mediaStyleString} transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
             {/if}
         {/if}
     {:else if item?.type === "camera"}
@@ -547,7 +543,10 @@
     }
 
     /* scrolling */
-    /* WIP scroll with overflow too */
+    .item .scrolling {
+        /* scroll will always show overflowing text */
+        overflow: visible !important;
+    }
     .item .topBottomScrolling {
         animation: topBottom var(--scrollSpeed) linear infinite normal;
     }
@@ -604,8 +603,10 @@
         position: absolute;
         color: var(--chord-color);
         font-size: var(--chord-size) !important;
+        font-weight: bold;
 
-        transform: translate(-50%, -20%);
+        /* transform: translate(-50%, calc(0% - var(--chord-size) * 0.8)); */
+        transform: translate(-50%, calc(-55% - 2px));
         line-height: initial;
         /* WIP chords goes over other (stage) items */
         z-index: 2;
@@ -623,6 +624,14 @@
     .break.chords.first {
         line-height: var(--chord-size) !important;
         /* max-height: unset; */
+    }
+
+    .item.chords,
+    .item.chords .align {
+        overflow: visible;
+    }
+    .lines {
+        line-height: calc(var(--chord-size) * 1.2 + 4px) !important;
     }
 
     /* custom svg icon */

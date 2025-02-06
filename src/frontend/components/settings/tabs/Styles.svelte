@@ -75,6 +75,7 @@
     $: styleTemplate = $templates[currentStyle.template || ""] || {}
     $: styleTemplateScripture = $templates[currentStyle.templateScripture || ""] || {}
     $: templateBackground = styleTemplate.settings?.backgroundColor || styleTemplateScripture.settings?.backgroundColor
+    $: templateBackgroundImage = styleTemplate.settings?.backgroundPath || styleTemplateScripture.settings?.backgroundPath
     // $: templateResolution = styleTemplate.settings?.resolution
 
     // resolutions
@@ -147,7 +148,12 @@
     </span>
 </CombinedInput>
 <CombinedInput>
-    <p><T id="edit.background_media" /></p>
+    <p>
+        <T id="edit.background_media" />
+        {#if templateBackgroundImage}
+            <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.8em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
+        {/if}
+    </p>
     <MediaPicker
         id="styles"
         title={currentStyle.backgroundImage}

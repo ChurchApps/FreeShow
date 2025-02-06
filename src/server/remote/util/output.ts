@@ -6,7 +6,7 @@ export function next() {
     if (!_get("layout")) {
         if (_get("activeTab") === "show" && _get("activeShow")) {
             // play slide
-            send("OUT", { id: _get("activeShow").id, index: 0, layout: _get("activeShow").settings.activeLayout })
+            send("API:index_select_slide", { showId: _get("activeShow").id, index: 0, layoutId: _get("activeShow").settings.activeLayout })
             _set("outShow", _get("activeShow"))
         }
         return
@@ -15,7 +15,7 @@ export function next() {
     // WIP don't play next when reached end!
 
     let index = nextSlide(_get("layout"), _get("outSlide") ?? -1)
-    if (index !== null) send("OUT", { id: _get("outShow").id, index, layout: _get("outShow").settings.activeLayout })
+    if (index !== null) send("API:index_select_slide", { showId: _get("outShow").id, index, layoutId: _get("outShow").settings.activeLayout })
     else {
         // go to next show in project
         let currentProjectShows = _get("projects").find((a) => a.id === _get("project"))?.shows || []
@@ -32,12 +32,6 @@ export function next() {
 
         send("SHOW", newProjectShow.id)
         _set("activeTab", "show")
-
-        // play slide
-        // setTimeout(() => {
-        //     send("OUT", { id: newProjectShow.id, index: 0, layout: _get("activeShow")?.settings?.activeLayout })
-        //     _set("outShow", _get("activeShow"))
-        // }, 100)
     }
 }
 
@@ -47,7 +41,7 @@ export function previous() {
     // WIP go to previous show & play last slide
 
     let index = nextSlide(_get("layout"), _get("outSlide") ?? _get("layout")?.length, true)
-    if (index !== null) send("OUT", { id: _get("outShow").id, index, layout: _get("outShow").settings.activeLayout })
+    if (index !== null) send("API:index_select_slide", { showId: _get("outShow").id, index, layoutId: _get("outShow").settings.activeLayout })
     else {
         // go to preview show in project
         let currentProjectShows = _get("projects").find((a) => a.id === _get("project"))?.shows || []

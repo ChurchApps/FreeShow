@@ -266,16 +266,15 @@
 </script>
 
 <div class="info">
-    <p><T id="settings.hide_output_hint" /></p>
+    <p><T id="settings.outputs_hint" /></p>
+    <!-- <p><T id="settings.hide_output_hint" /></p> -->
     <!-- <p><T id="settings.show_output_hint" /></p> -->
-    {#if $os.platform === "darwin"}
-        <p><T id="settings.hide_menubar_hint" /></p>
-    {/if}
+    <!-- {#if $os.platform === "darwin"}<p><T id="settings.hide_menubar_hint" /></p>{/if} -->
 </div>
 
 <!-- main -->
 
-{#if outputsList.length > 1 || !currentOutput.enabled}
+{#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput.enabled || currentOutput.stageOutput}
     <CombinedInput>
         <p><T id="settings.enabled" /></p>
         <div class="alignRight">
@@ -341,7 +340,7 @@
 <CombinedInput>
     <p><T id="settings.output_screen" /></p>
     <Button disabled={currentOutput.invisible} on:click={() => activePopup.set("choose_screen")}>
-        <Icon id="screen" style="margin-left: 0.5em;" right />
+        <Icon id={currentOutput.boundsLocked ? "locked" : "screen"} style="margin-left: 0.5em;" right />
         <p>
             <T id="popup.choose_screen" />
             {#if currentOutput.bounds?.width}

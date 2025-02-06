@@ -21,6 +21,7 @@
     // enable output window dragging
     let enableOutputMove: boolean = false
     function mousemoveOutput(e: any) {
+        if ($outputs[outputId]?.boundsLocked || $special.hideCursor) return
         if (e.ctrlKey || e.metaKey || e.target.closest(".dragger")) enableOutputMove = true
         else enableOutputMove = false
     }

@@ -272,6 +272,7 @@
     <Zoomed style="width: 100%;" {background}>
         {#if bibles[0]?.activeVerses}
             {#if templateBackground}
+                <!-- WIP mediaStyle -->
                 <Media path={templateBackground} videoData={{ paused: false, muted: true, loop: true }} mirror />
             {/if}
 

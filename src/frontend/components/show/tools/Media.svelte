@@ -258,7 +258,7 @@
                         bold={false}
                     >
                         <Icon id={$playingAudio[file.path]?.paused === true ? "play" : $playingAudio[file.path]?.paused === false ? "pause" : "music"} size={1.2} right />
-                        <p style="width: 100%;text-align: left;">{file.name.slice(0, file.name.lastIndexOf("."))}</p>
+                        <p style="width: 100%;text-align: left;">{file.name.includes(".") ? file.name.slice(0, file.name.lastIndexOf(".")) : file.name}</p>
 
                         {#if file.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{file.count}</span>

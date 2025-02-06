@@ -381,7 +381,7 @@ const receiveOUTPUTasMAIN: any = {
     },
     MOVE: (data) => {
         outputs.update((a) => {
-            if (!a[data.id]) return a
+            if (!a[data.id] || a[data.id].boundsLocked) return a
 
             a[data.id].bounds = data.bounds
             return a

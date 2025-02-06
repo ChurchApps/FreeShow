@@ -158,10 +158,10 @@ export function saveTextCache(id: string, show: Show) {
     if (!show?.slides || show.reference?.type || get(categories)[show.category || ""]?.isArchive) return
 
     const txt = Object.values(show.slides)
-        .flatMap((slide) => slide.items)
-        .flatMap((item) => item.lines || [])
-        .flatMap((line) => line.text || [])
-        .map((text) => text.value)
+        .flatMap((slide) => slide?.items)
+        .flatMap((item) => item?.lines || [])
+        .flatMap((line) => line?.text || [])
+        .map((text) => text?.value)
         .join(" ")
         .toLowerCase()
     // .replace(/[^a-z0-9 ]+/g, "")

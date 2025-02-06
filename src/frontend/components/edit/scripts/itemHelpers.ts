@@ -13,7 +13,7 @@ export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px
 
 function getDefaultStyles(type: ItemType, template: any = null) {
     // Get position styles from template or use default from boxes.ts
-    const positionStyle = template?.[0]?.style || DEFAULT_ITEM_STYLE
+    const positionStyle = template?.find((a) => (a.type || "text") === type)?.style || DEFAULT_ITEM_STYLE
 
     // Get default styles from boxes configuration
     const boxDefaults = boxes[type]?.edit?.font || []

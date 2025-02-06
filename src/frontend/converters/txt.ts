@@ -49,17 +49,7 @@ export function convertText({ name = "", category = null, text, noFormatting = f
     labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] }))
     labeled = checkRepeats(labeled)
 
-    if (!name) {
-        let firstSlideText = labeled[0].text.split("\n")
-        name = firstSlideText[0]
-        if (firstSlideText.length > 1 && (name.includes("[") || name.includes(":"))) name = firstSlideText[1]
-        name = name
-            .replace(/[,.!]/g, "")
-            .replace(/<[^>]*>/g, "")
-            .trim()
-        if (name.length > 30) name = name.slice(0, name.indexOf(" ", 30))
-        if (name.length > 38) name = name.slice(0, 30)
-    }
+    if (!name) name = trimNameFromString(labeled[0].text)
 
     let layoutID: string = uid()
     let show: Show = new ShowObj(false, category, layoutID)
@@ -101,6 +91,26 @@ export function convertText({ name = "", category = null, text, noFormatting = f
     history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
 
     return show
+}
+
+export function trimNameFromString(text: string) {
+    if (!text?.length) return ""
+
+    let txt = text.split("\n")
+    let name = txt[0]
+
+    // don't get group if any
+    if (txt.length > 1 && (name.includes("[") || name.includes(":"))) name = txt[1]
+
+    name = name
+        .replace(/[,.!]/g, "")
+        .replace(/<[^>]*>/g, "")
+        .trim()
+
+    if (name.length > 30) name = name.slice(0, name.indexOf(" ", 30))
+    if (name.length > 38) name = name.slice(0, 30)
+
+    return name
 }
 
 // TODO: this sometimes splits all slides up with no children (when adding [group])

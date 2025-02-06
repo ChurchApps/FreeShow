@@ -12,6 +12,7 @@
     export let showMirror: boolean = false
     export let disableStyle: boolean = false
     export let checkered: boolean = false
+    export let border: boolean = false
     export let drawZoom: number = 1
 
     export let outline: string = ""
@@ -71,6 +72,7 @@
         class:showMirror
         class:relative
         class:checkered
+        class:border
         style="{$$props.style || ''}background-color: {background};transition: {backgroundDuration}ms background-color;{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};"
     >
         {#if zoom}
@@ -98,6 +100,10 @@
     .slide {
         position: relative;
         transition: 800ms background-color;
+    }
+    .slide.border {
+        outline: 2px solid var(--primary-lighter);
+        outline-offset: 0;
     }
 
     .slide:not(.relative) :global(.item) {

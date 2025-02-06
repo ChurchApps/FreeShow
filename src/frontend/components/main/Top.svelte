@@ -10,7 +10,7 @@
     export let isWindows: boolean = false
 
     // && !$editHistory.length
-    $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? $shows[$activeShow?.id || ""]?.locked : true
+    $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? $shows[$activeShow?.id || ""]?.locked : !$activeShow?.id
 
     let confirm: boolean = false
     let disableClick: boolean = false
@@ -22,7 +22,7 @@
             if (confirm) {
                 // prevent displaying just after close
                 disableClick = true
-                setTimeout(() => (disableClick = false), 1000)
+                setTimeout(() => (disableClick = false), 800)
             }
 
             confirm = false
@@ -83,7 +83,7 @@
                 <Icon id="outputs" size={1.6} white />
             {/if}
 
-            {#if confirm}
+            {#if $outputDisplay && confirm}
                 <div class="click_again" transition:slide>
                     <T id="menu.again_confirm" />
                 </div>

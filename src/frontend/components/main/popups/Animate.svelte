@@ -147,24 +147,34 @@
                 <NumberInput style="max-width: 80px;" value={animate.duration || 3} on:change={(e) => (animation.actions[i].duration = e.detail)} fixed={Number(animate.duration).toString().includes(".") ? 1 : 0} decimals={1} buttons={false} />
                 <span style="flex: 20;"><T id="animate.seconds" /></span>
                 <!-- {:else if animate.type === "set"}
-                <Dropdown options={setIds} value={getOptionName(animate.id, setIds) || Object.values(setIds)[0].name} on:click={(e) => (animation.actions[i].id = e.detail.id)} />
+                <Dropdown options={setIds} value={getOptionName(animate.id, setIds) || setIds[0].name} on:click={(e) => (animation.actions[i].id = e.detail.id)} />
 
                 {#if !animate.id || animate.id === "text"}
-                    <Dropdown options={textKeys} value={getOptionName(animate.key, textKeys) || Object.values(textKeys)[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
+                    <Dropdown options={textKeys} value={getOptionName(animate.key, textKeys) || textKeys[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
                 {:else if animate.id === "item"}
-                    <Dropdown options={itemKeys} value={getOptionName(animate.key, itemKeys) || Object.values(itemKeys)[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
+                    <Dropdown options={itemKeys} value={getOptionName(animate.key, itemKeys) || itemKeys[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
                 {/if}
 
                 <span><T id="animate.to" /></span>
                 <NumberInput style="flex: 20;" value={animate.value || 0} on:change={(e) => (animation.actions[i].value = e.detail)} buttons={false} /> -->
             {:else if animate.type === "change"}
-                <Dropdown options={ids} value={getOptionName(animate.id, ids) || Object.values(ids)[0].name} on:click={(e) => (animation.actions[i].id = e.detail.id)} />
+                <Dropdown
+                    options={ids}
+                    value={getOptionName(animate.id, ids) || ids[0].name}
+                    on:click={(e) => {
+                        animation.actions[i].id = e.detail.id
+
+                        let key = e.detail.id
+                        let object = key === "text" ? textKeys : key === "item" ? itemKeys : key === "background" ? backgroundKeys : { id: "" }
+                        animation.actions[i].key = object[0]?.id || ""
+                    }}
+                />
 
                 {#if !animate.id || animate.id === "text"}
                     <!-- style="text-transform: lowercase;" -->
                     <Dropdown
                         options={textKeys}
-                        value={getOptionName(animate.key, textKeys) || Object.values(textKeys)[0].name}
+                        value={getOptionName(animate.key, textKeys) || textKeys[0].name}
                         on:click={(e) => {
                             animation.actions[i].key = e.detail.id
                             animation.actions[i].extension = e.detail.data?.extension || ""
@@ -173,14 +183,14 @@
                 {:else if animate.id === "item"}
                     <Dropdown
                         options={itemKeys}
-                        value={getOptionName(animate.key, itemKeys) || Object.values(itemKeys)[0].name}
+                        value={getOptionName(animate.key, itemKeys) || itemKeys[0].name}
                         on:click={(e) => {
                             animation.actions[i].key = e.detail.id
                             animation.actions[i].extension = e.detail.data?.extension || ""
                         }}
                     />
                 {:else if animate.id === "background"}
-                    <Dropdown options={backgroundKeys} value={getOptionName(animate.key, backgroundKeys) || Object.values(backgroundKeys)[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
+                    <Dropdown options={backgroundKeys} value={getOptionName(animate.key, backgroundKeys) || backgroundKeys[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
                 {/if}
 
                 {#if !animate.id || animate.id === "text"}

@@ -66,16 +66,16 @@
         })
     }
 
-    $: styles = getStyles(item.lines?.[0]?.text?.[0]?.style)
+    $: styles = getStyles(item?.lines?.[0]?.text?.[0]?.style)
     $: textTransform = !!(styles["text-transform"] && styles["text-transform"] !== "none")
 </script>
 
 <!-- all icons are square, so only corner resizers need to be active -->
-<Movebox {ratio} active={$activeEdit.items.includes(index)} onlyCorners={item.type === "icon"} />
+<Movebox {ratio} active={$activeEdit.items.includes(index)} onlyCorners={item?.type === "icon"} />
 
 <div class="actions">
     <!-- localization -->
-    {#if item.language}
+    {#if item?.language}
         <div title={isoLanguages.find((a) => a.code === item.language)?.name || item.language} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="translate" white />
@@ -93,7 +93,7 @@
     {/if}
 
     <!-- list mode -->
-    {#if item.list?.enabled}
+    {#if item?.list?.enabled}
         <div title={$dictionary.edit?.list} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="list" white />
@@ -102,7 +102,7 @@
     {/if}
 
     <!-- scrolling -->
-    {#if item.scrolling?.type && item.scrolling.type !== "none"}
+    {#if item?.scrolling?.type && item.scrolling.type !== "none"}
         <div title={$dictionary.edit?.scrolling} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="scrolling" white />
@@ -111,7 +111,7 @@
     {/if}
 
     <!-- bindings -->
-    {#if item.bindings?.length}
+    {#if item?.bindings?.length}
         <div title={$dictionary.actions?.remove_binding} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
             <Button on:click={removeBindings} redHover>
                 <Icon id="bind" white />
@@ -131,7 +131,7 @@
     {/if}
 
     <!-- actions -->
-    {#if item.actions}
+    {#if item?.actions}
         {#each Object.keys(item.actions) as action}
             <div title={actions[action] ? $dictionary[actions[action].label.split(".")[0]]?.[actions[action].label.split(".")[1]] : ""} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
                 <Button on:click={() => removeAction(action)} redHover>

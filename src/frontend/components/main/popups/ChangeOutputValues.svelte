@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { currentOutputSettings, outputs, dictionary, activePopup } from "../../../stores"
+    import { currentOutputSettings, outputs, dictionary, activePopup, special } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -40,7 +40,9 @@
 </Button>
 
 <div style="min-width: 650px;">
-    <p class="tip"><T id="settings.manual_drag_hint" /></p>
+    {#if !$special.hideCursor}
+        <p class="tip"><T id="settings.manual_drag_hint" /></p>
+    {/if}
 
     <CombinedInput>
         <!-- This also makes the output never "auto position" itself if there is just 1 output and 1 extra screen -->
@@ -56,7 +58,9 @@
             <p><T id="settings.change_key_output_position" /></p>
         </Button>
     {/if}
+</div>
 
+{#if currentOutput.allowMainScreen === true}
     <h3><T id="settings.position" /></h3>
     <CombinedInput>
         <p style="width: 80px;"><T id="edit.x" /></p>
@@ -92,9 +96,7 @@
             outline
         />
     </CombinedInput>
-</div>
 
-<div>
     <h3><T id="edit.size" /></h3>
     <CombinedInput>
         <p style="width: 80px;"><T id="edit.width" /></p>
@@ -132,7 +134,7 @@
             outline
         />
     </CombinedInput>
-</div>
+{/if}
 
 <!-- disabled={currentOutput.allowMainScreen} -->
 <Button on:click={() => displayOutputs({ ctrlKey: true })} style="width: 100%;margin-top: 10px;" dark center>

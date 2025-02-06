@@ -2,6 +2,7 @@ import type { BrowserWindow } from "electron"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 import { NdiSender } from "../../ndi/NdiSender"
 import { OutputHelper } from "../OutputHelper"
+import type { Output } from "../Output"
 
 export class OutputValues {
     private static setValues: any = {
@@ -18,10 +19,10 @@ export class OutputValues {
         transparent: (value: boolean, window: BrowserWindow) => {
             window.setBackgroundColor(value ? "#00000000" : "#000000")
         },
-        alwaysOnTop: (value: boolean, window: BrowserWindow) => {
+        alwaysOnTop: (value: boolean, window: BrowserWindow, _id: string, output: Output) => {
             window.setAlwaysOnTop(value, "pop-up-menu", 1)
-            window.setResizable(!value)
             window.setSkipTaskbar(value)
+            if (output.boundsLocked !== true) window.setResizable(!value)
         },
         kioskMode: (value: boolean, window: BrowserWindow) => {
             window.setKiosk(value)
@@ -33,6 +34,6 @@ export class OutputValues {
         if (!this.setValues[key]) return
 
         if (!output?.window || output.window.isDestroyed()) return
-        this.setValues[key](value, output.window, id)
+        this.setValues[key](value, output.window, id, output)
     }
 }

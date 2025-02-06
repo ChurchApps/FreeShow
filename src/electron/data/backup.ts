@@ -59,7 +59,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
             let localShowPath = path.join(showsPath, name)
 
             let localContent = readFile(localShowPath)
-            if (localContent) allShows[id] = JSON.parse(localContent)[1]
+            if (localContent && isValidJSON(localContent)) allShows[id] = JSON.parse(localContent)[1]
         }
 
         let content: string = JSON.stringify(allShows)

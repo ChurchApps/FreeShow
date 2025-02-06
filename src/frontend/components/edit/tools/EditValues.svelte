@@ -227,12 +227,12 @@
             // transform_scaleX: -1,
             transform_perspective: 1,
         },
-        style: {
-            // WIP opacity does not get applied here
-            // "style_background-color": "rgb(0 0 0 / 0.3)",
-            // "(style_)background-opacity": "0.3", (this is linked to the color)
-            style_padding: 10,
-        },
+        // style: {
+        //     // WIP opacity does not get applied here
+        //     // "style_background-color": "rgb(0 0 0 / 0.3)",
+        //     // "(style_)background-opacity": "0.3", (this is linked to the color)
+        //     style_padding: 10,
+        // },
         border: {
             "style_border-width": 5,
         },
@@ -241,9 +241,11 @@
         },
     }
 
-    function checkIsClosed(id: string) {
+    const ALWAYS_CLOSED = ["CSS", "position"]
+
+    function checkIsClosed(id: string, _updater = null) {
         if (noClosing) return false
-        if (id === "CSS") return true
+        if (ALWAYS_CLOSED.includes(id)) return true
 
         let closedVal = closed[id]
         let defaultEdit = defaultEdits?.[id]
@@ -425,9 +427,9 @@
                         <T id="edit.{section}" />
                     {/if}
 
-                    {#if !noClosing && (closed[section] || section === "CSS")}
+                    {#if !noClosing && (closed[section] || ALWAYS_CLOSED.includes(section))}
                         <Button style="position: absolute;right: 0;" on:click={() => resetAndClose(section)} title={$dictionary.actions?.[checkIsClosed(section) ? "close" : "reset"]}>
-                            {#if checkIsClosed(section)}
+                            {#if checkIsClosed(section, item)}
                                 <Icon id="remove" white />
                             {:else}
                                 <Icon id="reset" white />

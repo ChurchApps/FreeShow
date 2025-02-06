@@ -62,10 +62,10 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Install Node.js and NPM
-              uses: actions/setup-node@master
+              uses: actions/setup-node@v4
               with:
                   node-version: 20
 
@@ -77,9 +77,9 @@ jobs:
 
             - name: Install FPM
               run: |
-                sudo apt-get update
-                sudo apt-get install ruby ruby-dev build-essential
-                sudo gem install --no-document fpm
+                  sudo apt-get update
+                  sudo apt-get install ruby ruby-dev build-essential
+                  sudo gem install --no-document fpm
 
             # wait because this will only publish if the draft exists
             - name: Sleep for 30 seconds
@@ -91,7 +91,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   USE_SYSTEM_FPM: true
               run: npm run release:arm64
-
 
     publish_mac:
         name: "Publish MacOS"

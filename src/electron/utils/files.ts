@@ -276,7 +276,7 @@ export function getFolderContent(data: any) {
     let fileList: string[] = readFolder(folderPath)
 
     if (!fileList.length) {
-        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [] })
+        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [], folderFiles: {} })
         return
     }
 
@@ -293,12 +293,13 @@ export function getFolderContent(data: any) {
     }
 
     if (!files.length) {
-        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [] })
+        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [], folderFiles: {} })
         return
     }
 
     // get first "layer" of files inside folder for searching
     let filesInFolders: string[] = []
+    let folderFiles: any = {}
     if (data.listFilesInFolders) {
         let folders: any[] = files.filter((a) => a.folder)
         folders.forEach(getFilesInFolder)
@@ -306,16 +307,20 @@ export function getFolderContent(data: any) {
 
     function getFilesInFolder(folder: any) {
         let fileList: string[] = readFolder(folder.path)
+        folderFiles[folder.path] = []
         if (!fileList.length) return
 
         for (const name of fileList) {
             let p: string = path.join(folder.path, name)
             let stats: any = getFileStats(p)
-            if (stats && !stats.folder) filesInFolders.push({ ...stats, name })
+            if (!stats) return
+
+            if (!stats.folder) filesInFolders.push({ ...stats, name })
+            folderFiles[folder.path].push({ ...stats, name })
         }
     }
 
-    toApp(READ_FOLDER, { path: folderPath, files, filesInFolders })
+    toApp(READ_FOLDER, { path: folderPath, files, filesInFolders, folderFiles })
 }
 
 export function getSimularPaths(data: any) {

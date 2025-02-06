@@ -19,10 +19,10 @@ export class OutputLifecycle {
             return
         }
 
-        const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name)
+        const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
         //const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow, invisible: output.invisible })
+        OutputHelper.setOutput(id, { window: outputWindow, invisible: output.invisible, boundsLocked: output.boundsLocked })
         //OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds(output)
 
@@ -66,12 +66,12 @@ export class OutputLifecycle {
         return window
     }*/
 
-    private static createOutputWindow(options: any, id: string, name: string) {
+    private static createOutputWindow(options: any, id: string, name: string, extra: any) {
         options = { ...outputOptions, ...options }
 
         if (options.alwaysOnTop === false) {
             options.skipTaskbar = false
-            options.resizable = true
+            if (!extra.boundsLocked) options.resizable = true
         }
 
         if (OUTPUT_CONSOLE) options.webPreferences.devTools = true
@@ -140,7 +140,7 @@ export class OutputLifecycle {
         // Argument of type '"move"' is not assignable to parameter of type '"will-resize"'.
         // @ts-ignore
         window.on("move", (e: any) => {
-            if (!OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()
+            if (!OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds || OutputHelper.getOutput(id).boundsLocked) return e.preventDefault()
 
             let bounds = window.getBounds()
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
@@ -148,7 +148,7 @@ export class OutputLifecycle {
 
         // @ts-ignore
         window.on("resize", (e: any) => {
-            if (OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds) return e.preventDefault()
+            if (OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds || OutputHelper.getOutput(id).boundsLocked) return e.preventDefault()
 
             let bounds = window.getBounds()
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })

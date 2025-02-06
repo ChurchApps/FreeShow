@@ -131,17 +131,17 @@ export function getItemWithMostLines(slide: Slide) {
 
 // TODO: multiple outputs with different lines!
 // get output with fewest lines
-function getFewestOutputLines() {
-    let outs = getActiveOutputs(get(outputs), true, true, true)
+export function getFewestOutputLines(updater = get(outputs)) {
+    let outs = getActiveOutputs(updater, true, true, true)
 
     let currentLines = 0
     outs.forEach((id: string) => {
-        let output = get(outputs)[id]
+        let output = updater[id]
         if (!output.style) return
 
         let style = get(styles)[output.style]
         if (!style) return
-        let lines = style.lines
+        let lines = Number(style.lines || 0)
         if (!lines) return
 
         if (!currentLines || lines < currentLines) currentLines = lines
@@ -162,7 +162,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     if (get(outLocked) && !bypassLock) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-    let outputId = customOutputId || getActiveOutputs()[0]
+    let outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     if (!slide) {
@@ -189,7 +189,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
     let slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex].end : false
+    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.end : false
 
     // open next project item if previous has been opened and next is still active when going forward
     let isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
@@ -204,12 +204,11 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let index: null | number = null
 
     // lines
-    let amountOfLinesToShow: number = getFewestOutputLines() ? getFewestOutputLines() : 0
+    let amountOfLinesToShow: number = getFewestOutputLines()
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
     let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout?.[slideIndex]?.id]).get()[0] : null
     let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
-    let currentLineStart: number = slideLines ? slideLines - (amountOfLinesToShow! % slideLines) : 0
-    let hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : slideLines <= amountOfLinesToShow || amountOfLinesToShow! * linesIndex >= currentLineStart
+    let hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : linesIndex + amountOfLinesToShow >= slideLines
     if (isLastSlide && !hasLinesEnded) isLastSlide = false
 
     // TODO: active show slide index on delete......
@@ -252,7 +251,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     let newSlideOut: any = { ...slide, line: 0 }
     if (!hasLinesEnded) {
         index = slideIndex
-        newSlideOut.line = linesIndex! + 1
+        if (amountOfLinesToShow && linesIndex !== null) newSlideOut.line = linesIndex + amountOfLinesToShow
     } else {
         // TODO: Check for loop to beginning slide...
         index = getNextEnabled(slideIndex, end, customOutputId)
@@ -393,7 +392,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     if (get(outLocked)) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-    let outputId = customOutputId || getActiveOutputs()[0]
+    let outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     if (!slide) {
@@ -436,7 +435,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     // open previous project item if next has been opened and previous is still active when going back
     let slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex].end : false
+    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.end : false
     let showSlide: any = _show(slide ? slide.id : "active")
         .slides([layout[index]?.id])
         .get()[0]
@@ -475,10 +474,13 @@ export function previousSlide(e: any, customOutputId?: string) {
             .slides([layout[index].id])
             .get()[0]
         let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
-        if (amountOfLinesToShow) line = slideLines ? Math.ceil(slideLines / amountOfLinesToShow) - 1 : 0
+        if (amountOfLinesToShow) {
+            let maxIndex = slideLines ? amountOfLinesToShow * Math.ceil(slideLines / amountOfLinesToShow) : 0
+            line = maxIndex ? maxIndex - amountOfLinesToShow : 0
+        }
     } else {
         index = slide!.index!
-        line--
+        if (amountOfLinesToShow) line -= amountOfLinesToShow
     }
 
     let data = layout[index]?.data
@@ -513,14 +515,14 @@ function getNextEnabled(index: null | number, end: boolean = false, customOutput
 
     index++
 
-    let outputId = customOutputId || getActiveOutputs()[0]
+    let outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
     let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     let layout: any[] = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
 
-    if (layout[index - 1]?.data.end) index = 0
+    if (layout[index - 1]?.data?.end) index = 0
     if (!layout[index]) return null
     if (index >= layout.length || !layout.slice(index, layout.length).filter((a) => !a.data.disabled).length) return null
 
@@ -539,7 +541,7 @@ export function randomSlide() {
     if (get(outLocked)) return
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
-    let outputId = getActiveOutputs()[0]
+    let outputId = getActiveOutputs(get(outputs), true, true, true)[0]
     let currentOutput: any = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
@@ -624,13 +626,13 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 if (i <= index && !a.data.disabled) {
                     if (slideHasAction(a.data?.actions, "clear_background")) background = null
                     else if (a.data.background) background = a.data.background
-                    if (a.data.background && _show(showId).get("media")[a.data.background]?.loop === false) background = null
+                    if (a.data.background && _show(showId).get("media")?.[a.data.background]?.loop === false) background = null
                 }
             })
         }
 
         // background
-        if (background && _show(showId).get("media")[background]) {
+        if (background && _show(showId).get("media")?.[background]) {
             let bg = _show(showId).get("media")[background]
             let outputBg = get(outputs)[outputId]?.out?.background
             let cloudId = get(driveData).mediaId
@@ -920,7 +922,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
 
 export function playSlideTimers({ showId = "active", slideId = "", overlayIds = [] }) {
     if (!slideId) {
-        let outputRef: any = get(outputs)[getActiveOutputs()[0]]?.out?.slide || {}
+        let outputRef: any = get(outputs)[getActiveOutputs(get(outputs), false, true, true)[0]]?.out?.slide || {}
         showId = outputRef.id
 
         let layoutRef = _show(showId).layouts([outputRef.layout]).ref()[0]
@@ -1011,7 +1013,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     }
 
     let show = _show(showId).get()
-    if (!show) return text
+    if (type === "show" && !show) return text
 
     getDynamicIds().forEach((id) => {
         if (!text.includes(dynamicValueText(id))) return
@@ -1040,10 +1042,21 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             return replaceDynamicValues(variable.text || "", { showId, layoutId, slideIndex, type, id })
         }
 
-        let outputId: string = getActiveOutputs()[0]
+        let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
 
         if (id.includes("video_") && get(currentWindow) === "output") {
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
+        }
+
+        if (!showId) {
+            let outSlide = get(outputs)[outputId]?.out?.slide
+            if (!outSlide?.id) return ""
+
+            showId = outSlide.id
+            layoutId = outSlide.layout
+            slideIndex = outSlide.index
+            show = _show(showId).get()
+            if (!show) return
         }
 
         let activeLayout = layoutId ? [layoutId] : "active"
@@ -1072,9 +1085,11 @@ const dynamicValues = {
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
 
-    slide_group: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.group || "",
     slide_number: ({ slideIndex }) => Number(slideIndex || 0) + 1,
+    slide_group: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.group || "",
+    slide_group_next: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex + 1]?.id]?.group || "",
     slide_notes: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.notes || "",
+    slide_notes_next: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex + 1]?.id]?.notes || "",
 
     // media
     video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),

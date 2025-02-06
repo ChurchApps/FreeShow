@@ -101,8 +101,7 @@
                 {dictionary}
                 {scrollElem}
                 on:click={(e) => {
-                    // TODO: fix...
-                    send("OUT", { id: $activeShow.id, index: e.detail, layout: $activeShow.settings.activeLayout })
+                    send("API:index_select_slide", { showId: $activeShow.id, layoutId: $activeShow.settings.activeLayout, index: e.detail })
                     _set("outShow", $activeShow)
                     send("API:get_cleared")
                 }}

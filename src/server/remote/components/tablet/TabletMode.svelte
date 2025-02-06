@@ -167,7 +167,7 @@
                                 <span
                                     style="padding: 5px;{$outShow?.id === $activeShow.id && $outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}"
                                     on:click={() => {
-                                        send("OUT", { id: $activeShow.id, index: i, layout: $activeShow.settings.activeLayout })
+                                        send("API:index_select_slide", { showId: $activeShow.id, index: i, layoutId: $activeShow.settings.activeLayout })
                                         _set("outShow", $activeShow)
                                     }}
                                 >
@@ -198,8 +198,7 @@
                             {dictionary}
                             {scrollElem}
                             on:click={(e) => {
-                                // TODO: fix...
-                                send("OUT", { id: $activeShow.id, index: e.detail, layout: $activeShow.settings.activeLayout })
+                                send("API:index_select_slide", { showId: $activeShow.id, index: e.detail, layoutId: $activeShow.settings.activeLayout })
                                 _set("outShow", $activeShow)
                             }}
                             outSlide={$outSlide}
