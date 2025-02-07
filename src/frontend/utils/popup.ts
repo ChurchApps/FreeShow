@@ -51,6 +51,7 @@ import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelt
 import DisplayDuration from "../components/main/popups/DisplayDuration.svelte"
 import MediaFit from "../components/main/popups/MediaFit.svelte"
 import Emitters from "../components/main/popups/Emitters.svelte"
+import SelectTemplate from "../components/main/popups/SelectTemplate.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -60,6 +61,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     show: CreateShow,
     delete_show: DeleteShow,
     select_show: SelectShow,
+    select_template: SelectTemplate,
     delete_duplicated_shows: DeleteDuplicatedShows,
     icon: ChangeIcon,
     manage_icons: ManageIcons,

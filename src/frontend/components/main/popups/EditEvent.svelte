@@ -320,7 +320,7 @@
                 <Icon id="edit" size={1.2} right />
                 <T id="calendar.name" />
             </p>
-            <TextInput value={editEvent.name} style="width: 50%;" on:input={(e) => inputChange(e, "name")} />
+            <TextInput value={editEvent.name} style="width: 50%;" on:input={(e) => inputChange(e, "name")} autofocus={!editEvent.name} />
         </CombinedInput>
 
         <CombinedInput textWidth={30}>

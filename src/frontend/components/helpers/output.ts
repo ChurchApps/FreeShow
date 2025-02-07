@@ -927,12 +927,12 @@ export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]
 }
 
 export function getOutputLines(outSlide: any, styleLines: any = 0) {
-    if (!outSlide?.id || outSlide.id === "temp") return { start: 0, end: 0 } // , index: 0, max: 0
+    if (!outSlide?.id || outSlide.id === "temp") return { start: null, end: null } // , index: 0, max: 0
 
     let ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
     let showSlide = _show(outSlide.id).slides([ref?.[outSlide.index]?.id]).get()[0]
     let maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
-    if (!maxLines) return { start: 0, end: 0 } // , index: 0, max: 0
+    if (!maxLines) return { start: null, end: null } // , index: 0, max: 0
 
     let progress = ((outSlide.line || 0) + 1) / maxLines
 

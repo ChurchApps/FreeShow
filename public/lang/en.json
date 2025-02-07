@@ -395,6 +395,7 @@
     "popup": {
         "show": "New show",
         "select_show": "Select show",
+        "select_template": "Select template",
         "rename": "Rename",
         "color": "Color",
         "find_replace": "Find and replace",

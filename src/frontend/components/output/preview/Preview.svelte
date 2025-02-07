@@ -199,12 +199,10 @@
     $: ref = outSlide ? (outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]) : []
     let linesIndex: null | number = null
     let maxLines: null | number = null
-    // $: amountOfLinesToShow = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
     $: amountOfLinesToShow = getFewestOutputLines($outputs)
-    // $: linesIndex = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
     $: showSlide = outSlide?.index !== undefined && ref ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
-    $: maxLines = slideLines && amountOfLinesToShow < slideLines ? Math.ceil(slideLines / amountOfLinesToShow) : null
+    $: maxLines = slideLines && amountOfLinesToShow && amountOfLinesToShow < slideLines ? Math.ceil(slideLines / amountOfLinesToShow) : null
     $: outputLine = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
     $: linesPercentage = slideLines && outputLine !== null ? outputLine / slideLines : 0
     $: linesIndex = maxLines !== null ? Math.floor(maxLines * linesPercentage) : 0

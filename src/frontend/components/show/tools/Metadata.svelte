@@ -1,20 +1,19 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeShow, dictionary, outputs, shows, showsCache, styles, templates } from "../../../stores"
+    import { activePopup, activeShow, dictionary, outputs, popupData, shows, showsCache, styles, templates } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
+    import { getActiveOutputs } from "../../helpers/output"
+    import { initializeMetadata } from "../../helpers/show"
+    import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Panel from "../../system/Panel.svelte"
-    import Notes from "./Notes.svelte"
-    import { getActiveOutputs } from "../../helpers/output"
     import Tags from "../Tags.svelte"
-    import { sortByName } from "../../helpers/array"
-    import { initializeMetadata } from "../../helpers/show"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Icon from "../../helpers/Icon.svelte"
+    import Notes from "./Notes.svelte"
 
     // WIP duplicate of Outputs.svelte
     const metaDisplay: any[] = [
@@ -30,7 +29,6 @@
     let values: { [key: string]: string } = {}
     let message: any = {}
     let metadata: any = {}
-    let templateList: any[] = []
     let outputShowSettings: any = {}
 
     let loaded: boolean = false
@@ -46,8 +44,6 @@
 
         metadata = currentShow.metadata || {}
         message = currentShow.message || {}
-
-        templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))]
 
         let outputId = getActiveOutputs($outputs)[0]
         outputShowSettings = $styles[$outputs[outputId]?.style || ""] || {}
@@ -189,14 +185,38 @@
                 <!-- meta template -->
                 <CombinedInput>
                     <p title={$dictionary.meta?.meta_template}><T id="meta.meta_template" /></p>
-                    <Dropdown
-                        options={templateList}
-                        value={$templates[metadata.template === undefined ? outputShowSettings.metadataTemplate || "metadata" : metadata.template]?.name || "—"}
-                        on:click={(e) => {
-                            metadata.template = e.detail.id
-                            updateData(metadata, "metadata")
+                    <Button
+                        on:click={() => {
+                            popupData.set({
+                                action: "select_template",
+                                active: (metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata",
+                                trigger: (id) => {
+                                    metadata.template = id
+                                    updateData(metadata, "metadata")
+                                },
+                            })
+                            activePopup.set("select_template")
                         }}
-                    />
+                        style="overflow: hidden;"
+                        bold={false}
+                    >
+                        <div style="display: flex;align-items: center;padding: 0;">
+                            <Icon id="templates" />
+                            <p style="opacity: 1;font-size: 1em;">{$templates[(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"]?.name || "—"}</p>
+                        </div>
+                    </Button>
+                    {#if metadata.template}
+                        <Button
+                            title={$dictionary.actions?.remove}
+                            on:click={() => {
+                                metadata.template = ""
+                                updateData(metadata, "metadata")
+                            }}
+                            redHover
+                        >
+                            <Icon id="close" size={1.2} white />
+                        </Button>
+                    {/if}
                 </CombinedInput>
             {/if}
             <!-- message display -->
@@ -207,15 +227,40 @@
             <!-- message template -->
             <CombinedInput>
                 <p title={$dictionary.meta?.message_template}><T id="meta.message_template" /></p>
-                <Dropdown
-                    options={templateList}
-                    value={$templates[message.template === undefined ? outputShowSettings.messageTemplate || "message" : message.template]?.name || "—"}
-                    on:click={(e) => {
-                        if (currentShow.message) message = currentShow.message
-                        message.template = e.detail.id
-                        updateData(message, "message")
+                <Button
+                    on:click={() => {
+                        popupData.set({
+                            action: "select_template",
+                            active: (message.template ? message.template : outputShowSettings.messageTemplate) || "message",
+                            trigger: (id) => {
+                                if (currentShow.message) message = currentShow.message
+                                message.template = id
+                                updateData(message, "message")
+                            },
+                        })
+                        activePopup.set("select_template")
                     }}
-                />
+                    style="overflow: hidden;"
+                    bold={false}
+                >
+                    <div style="display: flex;align-items: center;padding: 0;">
+                        <Icon id="templates" />
+                        <p style="opacity: 1;font-size: 1em;">{$templates[(message.template ? message.template : outputShowSettings.messageTemplate) || "message"]?.name || "—"}</p>
+                    </div>
+                </Button>
+                {#if message.template}
+                    <Button
+                        title={$dictionary.actions?.remove}
+                        on:click={() => {
+                            if (currentShow.message) message = currentShow.message
+                            message.template = ""
+                            updateData(message, "message")
+                        }}
+                        redHover
+                    >
+                        <Icon id="close" size={1.2} white />
+                    </Button>
+                {/if}
             </CombinedInput>
         {/if}
     </div>

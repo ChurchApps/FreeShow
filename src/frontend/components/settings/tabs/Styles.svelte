@@ -2,6 +2,7 @@
     import { uid } from "uid"
     import { activePopup, activeStyle, dictionary, outputs, popupData, styles, templates } from "../../../stores"
     import { mediaExtensions } from "../../../values/extensions"
+    import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, removeDuplicates, sortByName } from "../../helpers/array"
@@ -18,7 +19,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { mediaFitOptions } from "../../edit/values/boxes"
+    import { transitionTypes } from "../../../utils/transitions"
 
     function updateStyle(e: any, key: string, currentId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -108,16 +109,6 @@
         { id: "first_last", name: "$:show_at.first_last:$" },
     ]
 
-    let templateList: any[] = []
-    $: templateList = [
-        { id: null, name: "—" },
-        ...sortByName(
-            Object.entries($templates)
-                .map(([id, a]: any) => ({ id, name: a?.name }))
-                .filter((a) => a.name)
-        ),
-    ]
-
     // text divider
     function keydown(e: any) {
         if (e.key === "Enter") {
@@ -129,6 +120,7 @@
     let edit: any
 
     $: mediaFit = currentStyle.fit || "contain"
+    $: textTransitionData = transitionTypes.find((a) => a.id === currentStyle.transition?.text?.type)
 </script>
 
 <div class="info">
@@ -202,12 +194,13 @@
             popupData.set({ action: "style_transition", id: styleId })
             activePopup.set("transition")
         }}
+        bold={!currentStyle.transition}
     >
         <div style="display: flex;align-items: center;padding: 0;">
             <Icon id="transition" style="margin-left: 0.5em;" right />
             <p>
                 {#if currentStyle.transition}
-                    <T id="actions.change_transition" />
+                    <T id={textTransitionData?.name || "actions.change_transition"} />
                 {:else}
                     <T id="popup.transition" />
                 {/if}
@@ -234,6 +227,7 @@
             popupData.set({ action: "style_fit", id: styleId })
             activePopup.set("media_fit")
         }}
+        bold={false}
     >
         <div style="display: flex;align-items: center;padding: 0;">
             <Icon id="media_fit" style="margin-left: 0.5em;" right />
@@ -355,11 +349,67 @@
 
 <CombinedInput>
     <p><T id="settings.override_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "template")} />
+    <Button
+        on:click={() => {
+            popupData.set({ action: "select_template", active: currentStyle.template || "", trigger: (id) => updateStyle(id, "template") })
+            activePopup.set("select_template")
+        }}
+        bold={!currentStyle.template}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="templates" style="margin-left: 0.5em;" right />
+            <p>
+                {#if currentStyle.template}
+                    {$templates[currentStyle.template || ""]?.name || "—"}
+                {:else}
+                    <T id="popup.select_template" />
+                {/if}
+            </p>
+        </div>
+    </Button>
+    {#if currentStyle.template}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "template")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
 </CombinedInput>
 <CombinedInput>
     <p><T id="settings.override_scripture_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.templateScripture || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "templateScripture")} />
+    <Button
+        on:click={() => {
+            popupData.set({ action: "select_template", active: currentStyle.templateScripture || "", trigger: (id) => updateStyle(id, "templateScripture") })
+            activePopup.set("select_template")
+        }}
+        bold={!currentStyle.templateScripture}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="templates" style="margin-left: 0.5em;" right />
+            <p>
+                {#if currentStyle.templateScripture}
+                    {$templates[currentStyle.templateScripture || ""]?.name || "—"}
+                {:else}
+                    <T id="popup.select_template" />
+                {/if}
+            </p>
+        </div>
+    </Button>
+    {#if currentStyle.templateScripture}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "templateScripture")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
 </CombinedInput>
 
 <!-- meta -->
@@ -370,12 +420,34 @@
 </CombinedInput>
 {#if (currentStyle.displayMetadata || "never") !== "never"}
     <CombinedInput>
-        <p><T id="meta.meta_template" /></p>
-        <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} up />
-    </CombinedInput>
-    <CombinedInput>
         <p><T id="meta.text_divider" /></p>
         <TextInput value={currentStyle.metadataDivider === undefined ? "; " : currentStyle.metadataDivider} on:change={(e) => updateStyle(e, "metadataDivider")} on:keydown={keydown} />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="meta.meta_template" /></p>
+        <Button
+            on:click={() => {
+                popupData.set({ action: "select_template", active: currentStyle.metadataTemplate || "metadata", trigger: (id) => updateStyle(id, "metadataTemplate") })
+                activePopup.set("select_template")
+            }}
+            bold={false}
+        >
+            <div style="display: flex;align-items: center;padding: 0;">
+                <Icon id="templates" style="margin-left: 0.5em;" right />
+                <p>{$templates[currentStyle.metadataTemplate || "metadata"]?.name || "—"}</p>
+            </div>
+        </Button>
+        {#if (currentStyle.metadataTemplate || "metadata") !== "metadata"}
+            <Button
+                title={$dictionary.actions?.remove}
+                on:click={() => {
+                    updateStyle("", "metadataTemplate")
+                }}
+                redHover
+            >
+                <Icon id="close" size={1.2} white />
+            </Button>
+        {/if}
     </CombinedInput>
     <!-- <CombinedInput>
         <p><T id="meta.metadata_layout" /></p>
@@ -384,7 +456,29 @@
 {/if}
 <CombinedInput>
     <p><T id="meta.message_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} up />
+    <Button
+        on:click={() => {
+            popupData.set({ action: "select_template", active: currentStyle.messageTemplate || "message", trigger: (id) => updateStyle(id, "messageTemplate") })
+            activePopup.set("select_template")
+        }}
+        bold={false}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="templates" style="margin-left: 0.5em;" right />
+            <p>{$templates[currentStyle.messageTemplate || "message"]?.name || "—"}</p>
+        </div>
+    </Button>
+    {#if (currentStyle.messageTemplate || "message") !== "message"}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "messageTemplate")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
 </CombinedInput>
 
 <!-- TODO: override transition ? -->
