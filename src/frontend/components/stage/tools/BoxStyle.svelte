@@ -31,8 +31,10 @@
             delete newEdits.align
             delete newEdits.chords
             edits = { default: trackerEdits, font: edits.default, ...newEdits }
-        } else if (items[0].includes("clock")) edits.default.push({ name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: true })
-        else if (items[0].includes("timer")) edits.default.push({ name: "timer.hours", id: "timer.showHours", input: "checkbox", value: item.timer?.showHours !== false })
+        } else if (items[0].includes("clock")) {
+            edits.default.push({ name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: true })
+            edits.default.push({ name: "clock.show_date", id: "clock.show_date", input: "checkbox", value: false })
+        } else if (items[0].includes("timer")) edits.default.push({ name: "timer.hours", id: "timer.showHours", input: "checkbox", value: item.timer?.showHours !== false })
         else if (items[0].includes("output")) edits = {}
     }
 
@@ -102,7 +104,6 @@
             newValue[splitted[1]] = value
             value = newValue
         }
-
         history({ id: "UPDATE", newData: { data: value, key: "items", subkey: input.id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
     }
 
@@ -152,3 +153,4 @@
         <T id="empty.items" />
     </Center>
 {/if}
+
