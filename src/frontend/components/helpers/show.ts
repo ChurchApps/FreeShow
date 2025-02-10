@@ -114,6 +114,14 @@ export function initializeMetadata({ number = "", title = "", artist = "", autho
     return { number, title, artist, author, composer, publisher, copyright, CCLI, year, key }
 }
 
+export const metadataDisplayValues = [
+    { id: "never", name: "$:show_at.never:$" },
+    { id: "always", name: "$:show_at.always:$" },
+    { id: "first", name: "$:show_at.first:$" },
+    { id: "last", name: "$:show_at.last:$" },
+    { id: "first_last", name: "$:show_at.first_last:$" },
+]
+
 // create new slides
 export function newSlide(data: any): Slide {
     return {

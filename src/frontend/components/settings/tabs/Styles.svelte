@@ -20,6 +20,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { transitionTypes } from "../../../utils/transitions"
+    import { metadataDisplayValues } from "../../helpers/show"
 
     function updateStyle(e: any, key: string, currentId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -99,16 +100,6 @@
 
     $: activeLayers = currentStyle.layers || clone(defaultLayers)
 
-    // overlays
-
-    const meta: any[] = [
-        { id: "never", name: "$:show_at.never:$" },
-        { id: "always", name: "$:show_at.always:$" },
-        { id: "first", name: "$:show_at.first:$" },
-        { id: "last", name: "$:show_at.last:$" },
-        { id: "first_last", name: "$:show_at.first_last:$" },
-    ]
-
     // text divider
     function keydown(e: any) {
         if (e.key === "Enter") {
@@ -120,6 +111,7 @@
     let edit: any
 
     $: mediaFit = currentStyle.fit || "contain"
+    $: metadataDisplay = currentStyle.displayMetadata || "never"
     $: textTransitionData = transitionTypes.find((a) => a.id === currentStyle.transition?.text?.type)
 </script>
 
@@ -416,7 +408,22 @@
 <h3><T id="tools.metadata" /></h3>
 <CombinedInput>
     <p><T id="meta.display_metadata" /></p>
-    <Dropdown options={meta} value={meta.find((a) => a.id === (currentStyle.displayMetadata || "never"))?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "displayMetadata")} up />
+    <Button
+        on:click={() => {
+            popupData.set({ action: "style_metadata", id: styleId })
+            activePopup.set("metadata_display")
+        }}
+        bold={false}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="info" style="margin-left: 0.5em;" right />
+            <p>
+                {#key metadataDisplay}
+                    <T id={metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""} />
+                {/key}
+            </p>
+        </div>
+    </Button>
 </CombinedInput>
 {#if (currentStyle.displayMetadata || "never") !== "never"}
     <CombinedInput>

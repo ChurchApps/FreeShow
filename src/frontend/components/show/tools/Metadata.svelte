@@ -5,24 +5,14 @@
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
     import { getActiveOutputs } from "../../helpers/output"
-    import { initializeMetadata } from "../../helpers/show"
+    import { initializeMetadata, metadataDisplayValues } from "../../helpers/show"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Panel from "../../system/Panel.svelte"
     import Tags from "../Tags.svelte"
     import Notes from "./Notes.svelte"
-
-    // WIP duplicate of Outputs.svelte
-    const metaDisplay: any[] = [
-        { id: "never", name: "$:show_at.never:$" },
-        { id: "always", name: "$:show_at.always:$" },
-        { id: "first", name: "$:show_at.first:$" },
-        { id: "last", name: "$:show_at.last:$" },
-        { id: "first_last", name: "$:show_at.first_last:$" },
-    ]
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
@@ -123,6 +113,9 @@
 
         changeValue({ value }, key)
     }
+
+    $: metadataDisplay = metadata.display || "never"
+    // $: metadataDisplay = (metadata.display ? metadata.display : outputShowSettings.displayMetadata) || "never"
 </script>
 
 <Panel flex column={!tempHide}>
@@ -172,14 +165,43 @@
             <!-- meta display -->
             <CombinedInput style="margin-top: 10px;">
                 <p title={$dictionary.meta?.display_metadata}><T id="meta.display_metadata" /></p>
-                <Dropdown
-                    options={metaDisplay}
-                    value={metaDisplay.find((a) => a.id === (metadata.display || "never"))?.name || "—"}
-                    on:click={(e) => {
-                        metadata.display = e.detail.id
-                        updateData(metadata, "metadata")
+                <Button
+                    on:click={() => {
+                        popupData.set({
+                            action: "show_metadata",
+                            active: metadataDisplay,
+                            trigger: (id) => {
+                                metadata.display = id
+                                updateData(metadata, "metadata")
+                            },
+                        })
+                        activePopup.set("metadata_display")
                     }}
-                />
+                    style="overflow: hidden;"
+                    bold={false}
+                >
+                    <div style="display: flex;align-items: center;padding: 0;">
+                        <Icon id="info" />
+                        <p style="opacity: 1;font-size: 1em;">
+                            {#key metadataDisplay}
+                                <T id={metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""} />
+                            {/key}
+                        </p>
+                    </div>
+                </Button>
+                <!-- WIP This does not work with the "Override output style" option -->
+                <!-- {#if metadata.display}
+                    <Button
+                        title={$dictionary.actions?.remove}
+                        on:click={() => {
+                            metadata.display = ""
+                            updateData(metadata, "metadata")
+                        }}
+                        redHover
+                    >
+                        <Icon id="close" size={1.2} white />
+                    </Button>
+                {/if} -->
             </CombinedInput>
             {#if (metadata.display || "never") !== "never"}
                 <!-- meta template -->

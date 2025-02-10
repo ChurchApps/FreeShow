@@ -406,6 +406,7 @@
         "audio_stream": "Audio stream",
         "transition": "Transition",
         "media_fit": "Change media fit",
+        "metadata_display": "Metadata display",
         "delete_show": "Delete show",
         "delete_show_confirmation": "Are you sure you want to delete",
         "delete_duplicated_shows": "Delete duplicated shows",

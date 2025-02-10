@@ -145,6 +145,7 @@ export type Popups =
     | "audio_stream"
     | "transition"
     | "media_fit"
+    | "metadata_display"
     | "import_scripture"
     | "edit_event"
     | "choose_chord"

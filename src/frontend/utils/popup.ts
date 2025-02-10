@@ -52,6 +52,7 @@ import DisplayDuration from "../components/main/popups/DisplayDuration.svelte"
 import MediaFit from "../components/main/popups/MediaFit.svelte"
 import Emitters from "../components/main/popups/Emitters.svelte"
 import SelectTemplate from "../components/main/popups/SelectTemplate.svelte"
+import MetadataDisplay from "../components/main/popups/MetadataDisplay.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -78,6 +79,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     audio_stream: AudioStream,
     transition: Transition,
     media_fit: MediaFit,
+    metadata_display: MetadataDisplay,
     import_scripture: ImportScripture,
     edit_event: EditEvent,
     choose_screen: ChooseScreen,

@@ -103,7 +103,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
 
                 let index = allOutputs.findIndex((outId) => outId === id)
-                data = changeOutputBackground(data, { output, id, mute: allOutputs.length > 1 && index !== firstOutputWithBackground })
+                data = changeOutputBackground(data, { output, id, mute: allOutputs.length > 1 && index !== firstOutputWithBackground, videoOutputId: allOutputs[firstOutputWithBackground] })
             }
 
             let outData = a[id].out?.[key] || null
@@ -157,7 +157,7 @@ function appendShowUsage(showId: string) {
     })
 }
 
-function changeOutputBackground(data, { output, id, mute }) {
+function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
     if (get(currentWindow) === null) {
         setTimeout(() => {
             // update stage background if any
@@ -170,7 +170,7 @@ function changeOutputBackground(data, { output, id, mute }) {
     let previousWasVideo: boolean = videoExtensions.includes(getExtension(output.out?.background?.path))
 
     if (data === null) {
-        fadeinAllPlayingAudio()
+        if (id === videoOutputId) fadeinAllPlayingAudio()
         if (previousWasVideo) videoEnding()
 
         return data
@@ -183,13 +183,15 @@ function changeOutputBackground(data, { output, id, mute }) {
 
     let videoData: any = { muted: data.muted, loop: data.loop || false }
 
-    let muteAudio = get(special).muteAudioWhenVideoPlays
-    let isVideo = videoExtensions.includes(getExtension(data.path))
-    if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
-    else fadeinAllPlayingAudio()
+    if (id === videoOutputId) {
+        let muteAudio = get(special).muteAudioWhenVideoPlays
+        let isVideo = videoExtensions.includes(getExtension(data.path))
+        if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
+        else fadeinAllPlayingAudio()
 
-    if (isVideo) videoStarting()
-    else if (previousWasVideo) videoEnding()
+        if (isVideo) videoStarting()
+        else if (previousWasVideo) videoEnding()
+    }
 
     // wait for video receiver to change
     setTimeout(() => {
