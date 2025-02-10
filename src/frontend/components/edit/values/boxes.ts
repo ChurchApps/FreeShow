@@ -410,13 +410,6 @@ export const boxes: Box = {
                     hidden: true,
                 },
                 {
-                    name: "clock.show_date",
-                    input: "checkbox",
-                    id: "clock.show_date",
-                    value: false,
-                    hidden: true,
-                },
-                {
                     name: "actions.format",
                     title: "Day: {DD}, Month: {MM}, Full year: {YYYY}, Hours: {hh}, Minutes: {mm}, Seconds: {ss}, AM/PM: {A}, Full date: {LLL}", // similar to getProjectName()
                     input: "text",

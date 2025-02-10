@@ -9,7 +9,7 @@
 
     let styles: any = {}
     function mousemove(e: any) {
-        if (!mouse) return
+        if (!mouse || mouse.rightClick) return
 
         let notTextBox: boolean = mouse.item.type !== undefined && mouse.item.type !== "text"
         if (!notTextBox && !e.ctrlKey && !e.metaKey && !mouse.e.target.closest(".line") && !mouse.e.target.closest(".square")) return

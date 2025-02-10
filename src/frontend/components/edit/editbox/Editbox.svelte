@@ -71,6 +71,7 @@
             },
             item,
             e: e,
+            rightClick,
         }
     }
 

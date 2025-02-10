@@ -57,10 +57,17 @@
 
     let resolution = getResolution(null, { $outputs, $styles })
 
+    function chooseTemplate(e: any) {
+        if (e.key !== "Enter" || !searchValue.length || !searchedTemplates.length) return
+        selectTemplate(searchedTemplates[0])
+    }
+
     // open drawer tab instantly before content has loaded
     let preloader: boolean = true
     onMount(() => setTimeout(() => (preloader = false), 20))
 </script>
+
+<svelte:window on:keydown={chooseTemplate} />
 
 <CombinedInput style="border-bottom: 2px solid var(--secondary);">
     <TextInput placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
@@ -73,8 +80,8 @@
         </Center>
     {:else if searchedTemplates.length}
         <div class="grid">
-            {#each searchedTemplates as template}
-                <Card active={active === template.id} label={template.name} color={template.color} {resolution} on:click={() => selectTemplate(template)}>
+            {#each searchedTemplates as template, i}
+                <Card preview={!!(searchValue.length && i === 0)} active={active === template.id} label={template.name} color={template.color} {resolution} on:click={() => selectTemplate(template)}>
                     <TemplateSlide templateId={template.id} {template} preview />
                 </Card>
             {/each}

@@ -39,6 +39,7 @@
     }
 
     let error: null | string = null
+    $: if (active) error = null
 
     let firstBibleId = ""
 

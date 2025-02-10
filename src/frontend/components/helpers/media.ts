@@ -331,7 +331,7 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     let thumbnailPath = await loadThumbnail(path, size)
     if (!thumbnailPath) return ""
 
-    // wait if thumnail is not generated yet
+    // wait if thumbnail is not generated yet
     await checkThatMediaExists(thumbnailPath)
 
     let base64Path = await toDataURL(thumbnailPath)

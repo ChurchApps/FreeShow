@@ -253,6 +253,9 @@
             return a
         })
     }
+
+    $: actionDataString = ""
+    $: if (JSON.stringify(actionData) !== actionDataString) actionDataString = JSON.stringify(actionData)
 </script>
 
 <div style="min-width: 45vw;min-height: 50vh;">
@@ -348,7 +351,7 @@
         </CombinedInput>
     {:else if selectedType === "action"}
         <br />
-        {#key actionData}
+        {#key actionDataString}
             <!-- TODO: only choose actual "Actions" -->
             <CreateAction actionId={actionData?.id || ""} actionValue={actionData?.data || {}} on:change={changeAction} />
         {/key}

@@ -202,7 +202,7 @@
                 {#if currentStyle.transition}
                     <T id={textTransitionData?.name || "actions.change_transition"} />
                 {:else}
-                    <T id="popup.transition" />
+                    <T id="actions.change_transition" />
                 {/if}
             </p>
         </div>

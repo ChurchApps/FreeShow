@@ -33,7 +33,7 @@
             edits = { default: trackerEdits, font: edits.default, ...newEdits }
         } else if (items[0].includes("clock")) {
             edits.default.push({ name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: true })
-            edits.default.push({ name: "clock.show_date", id: "clock.show_date", input: "checkbox", value: false })
+            edits.default.push({ name: "sort.date", id: "clock.show_date", input: "checkbox", value: false })
         } else if (items[0].includes("timer")) edits.default.push({ name: "timer.hours", id: "timer.showHours", input: "checkbox", value: item.timer?.showHours !== false })
         else if (items[0].includes("output")) edits = {}
     }
@@ -153,4 +153,3 @@
         <T id="empty.items" />
     </Center>
 {/if}
-

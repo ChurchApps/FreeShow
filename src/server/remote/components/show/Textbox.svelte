@@ -70,7 +70,7 @@
                 {#each item.lines as line}
                     <div class="break" style="{lineBg ? `background-color: ${lineBg};` : ''}{line.align}">
                         {#each line.text || [] as text}
-                            <span style="{text.style};{fontSize ? `font-size: ${fontSize}px;` : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                            <span style="{text.style};{fontSize ? `font-size: ${fontSize}px;` : ''}">{@html text.value?.replaceAll("\n", "<br>") || "<br>"}</span>
                         {/each}
                     </div>
                 {/each}

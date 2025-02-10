@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeShow, customMessageCredits, dictionary, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, selected, styles } from "../../../stores"
+    import { activeShow, customMessageCredits, dictionary, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
@@ -32,7 +32,11 @@
 
     const steps: number = 10
     function move(e: any) {
-        if (!loaded || !videoElem) return
+        if (!loaded || !videoElem) {
+            // if (hover) clearTimeout(enterTimeout)
+            hover = false
+            return
+        }
 
         let percentage: number = e.offsetX / e.target.offsetWidth
 
@@ -52,16 +56,25 @@
         }
     }
 
-    function mouseenter() {
+    // let enterTimeout: any = null
+    function mouseenter(e: any) {
         const mediaGrid = document.querySelector(".grid")?.querySelector(".grid")
         if (!mediaGrid) return
 
-        const scrollTop = mediaGrid.scrollTop
-        setTimeout(() => {
-            // return if scrolling or selected
-            if (scrollTop !== mediaGrid.scrollTop || $selected.data.find((a) => a.path === path)) return
-            hover = true
-        }, 200)
+        // don't load if clicked (probably selecting)
+        // WIP return if scrolling & don't load if quickly dragging the mouse across..
+        if (e.buttons > 0) return
+        hover = true
+
+        // don't load all the videos if scrolling, or selecting
+        // const scrollTop = mediaGrid.scrollTop
+        // if (enterTimeout) clearTimeout(enterTimeout)
+        // enterTimeout = setTimeout(() => {
+        //     enterTimeout = null
+        //     // return if scrolling or selected
+        //     if (scrollTop !== mediaGrid.scrollTop || $selected.data.find((a) => a.path === path)) return
+        //     hover = true
+        // }, 200)
     }
 
     let wait = false

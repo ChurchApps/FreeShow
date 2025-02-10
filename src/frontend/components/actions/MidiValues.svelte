@@ -41,10 +41,13 @@
     let inputs: any[] = [{ name: "—" }]
     let outputs: any[] = [{ name: "—" }]
     // request midi inputs/outputs
-    $: if (type === "input") {
-        send(MAIN, ["GET_MIDI_INPUTS"])
-    } else {
-        send(MAIN, ["GET_MIDI_OUTPUTS"])
+    $: if (type) requestData()
+    function requestData() {
+        if (type === "input") {
+            send(MAIN, ["GET_MIDI_INPUTS"])
+        } else {
+            send(MAIN, ["GET_MIDI_OUTPUTS"])
+        }
     }
 
     function setInitialData() {

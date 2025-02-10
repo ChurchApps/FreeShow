@@ -609,7 +609,7 @@ export function getCurrentMediaTransition() {
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true, templateClicked: boolean = false) {
     // if (!slideItems?.length && !addOverflowTemplateItems) return []
-    slideItems = clone(slideItems).filter((a) => a && (!templateClicked || !a.fromTemplate))
+    slideItems = clone(slideItems || []).filter((a) => a && (!templateClicked || !a.fromTemplate))
 
     if (!templateItems.length) return slideItems
     templateItems = clone(templateItems)

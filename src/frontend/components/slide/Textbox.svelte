@@ -327,9 +327,9 @@
     }, 1000)
 
     $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};filter: ${item?.filter};transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
-    $: mediaStyleBlurString = `position: absolute;filter: blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;filter: ${item?.filter};transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: ${item?.filter} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
 
-    $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chordsData?.size || item.chords?.size || 50 : "undefined"}px;--chord-color: ${stageItem?.chordsData?.color || item.chords?.color || "#FF851B"};`
+    $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chordsData?.size || item?.chords?.size || 50 : "undefined"}px;--chord-color: ${stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
 </script>
 
 <div
@@ -367,7 +367,7 @@
                         <!-- class:height={!line.text[0]?.value.length} -->
                         <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}{listStyle}">
                             {#each line.text || [] as text}
-                                {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
+                                {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                 <span
                                     style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
                                         ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;`

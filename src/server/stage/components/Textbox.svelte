@@ -235,7 +235,7 @@
                         {/if}
                         <div class="break" style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                             {#each line.text || [] as text}
-                                <span style="{style ? text.style + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                                <span style="{style ? text.style + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html text.value?.replaceAll("\n", "<br>") || "<br>"}</span>
                             {/each}
                         </div>
                     {/if}
