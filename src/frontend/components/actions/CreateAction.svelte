@@ -61,6 +61,8 @@
                 if (!actionData[id]) return false
                 // show if it is the currently selected
                 if (id === actionId) return true
+                // don't show action if incompatible with any existing action
+                if (actionData[id].incompatible?.find((id) => existingActions.includes(id))) return false
                 // don't display GET actions
                 if (id.includes("get_")) return false
 

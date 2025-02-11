@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activeShow, dictionary, groups, guideActive, midiIn, outLocked, outputs, overlayTimers, playingAudio, slideTimers, special, styles } from "../../../stores"
+    import { activePage, activePopup, activeShow, dictionary, groups, guideActive, midiIn, outLocked, outputs, overlayTimers, playingAudio, slideTimers, special, styles } from "../../../stores"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
@@ -39,7 +39,7 @@
     let numberKeyTimeout: any = null
     let previousNumberKey: string = ""
     function keydown(e: any) {
-        if ($guideActive) return
+        if ($guideActive || $activePopup === "assign_shortcut") return
         if ((e.ctrlKey || e.metaKey || e.altKey) && previewCtrlShortcuts[e.key]) {
             e.preventDefault()
             previewCtrlShortcuts[e.key]()
@@ -48,8 +48,9 @@
         const functionKey = /^F(?:[1-9]|1[0-9]|2[0-4])$/
         if ((e.target.closest("input") || e.target.closest(".edit")) && !functionKey.test(e.key)) return
 
-        // start action with custom shortcut key (A-Z)
-        if (!e.ctrlKey && !e.metaKey && /^[A-Z]{1}$/i.test(e.key) && actionKeyActivate(e.key.toUpperCase())) {
+        // start action with custom shortcut key
+        // /^[A-Z]{1}$/i.test(e.key) &&
+        if (!e.ctrlKey && !e.metaKey && actionKeyActivate(e.key.toUpperCase())) {
             e.preventDefault()
             return
         }
@@ -65,8 +66,9 @@
                 return
             }
 
-            // play group with custom shortcut keys (A-Z)
-            if (/^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
+            // play group with custom shortcut keys
+            // /^[A-Z]{1}$/i.test(e.key) &&
+            if (checkGroupShortcuts(e)) {
                 e.preventDefault()
                 return
             }

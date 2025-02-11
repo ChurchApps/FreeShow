@@ -116,10 +116,10 @@ export function initializeMetadata({ number = "", title = "", artist = "", autho
 
 export const metadataDisplayValues = [
     { id: "never", name: "$:show_at.never:$" },
-    { id: "always", name: "$:show_at.always:$" },
     { id: "first", name: "$:show_at.first:$" },
     { id: "last", name: "$:show_at.last:$" },
     { id: "first_last", name: "$:show_at.first_last:$" },
+    { id: "always", name: "$:show_at.always:$" },
 ]
 
 // create new slides

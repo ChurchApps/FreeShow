@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
-    import { audioPlaylists, dictionary, drawerTabsData, playingMetronome, special } from "../../../stores"
+    import { dictionary, playingMetronome, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { updatePlaylist, updateVolume } from "../../helpers/audio"
+    import { updateVolume } from "../../helpers/audio"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -15,7 +15,7 @@
     import Metronome from "../audio/Metronome.svelte"
 
     let tabs: TabsObj = {
-        mixer: { name: "audio.mixer", icon: "options" },
+        mixer: { name: "audio.mixer", icon: "equalizer" },
         metronome: { name: "audio.metronome", icon: "metronome" },
         // effects: { name: "items.effect", icon: "image" },
     }
@@ -45,11 +45,6 @@
 
     //     audioOutputs = [{ id: "", name: "—" }, ...outputs.map((device) => ({ id: device.deviceId, name: device.label }))]
     // }
-
-    // playlist
-    $: activeTab = $drawerTabsData.audio?.activeSubTab || ""
-    $: activePlaylist = $audioPlaylists[activeTab] || null
-    $: isPlaylist = !!activePlaylist
 
     // metronome
     $: metronomeActive = $playingMetronome
@@ -105,20 +100,6 @@
             <p title={$dictionary.audio?.custom_output}><T id="audio.custom_output" /></p>
             <Dropdown style="width: 100%;" options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail?.id, "audioOutput")} />
         </CombinedInput>
-
-        {#if isPlaylist}
-            <h5 style="border-bottom: 1px solid var(--secondary);margin-top: 10px;"><T id="audio.playlist_settings" /></h5>
-            <!-- <h6><T id="audio.playlist_settings" /></h6> -->
-            <CombinedInput>
-                <p><T id="settings.audio_crossfade" /></p>
-                <NumberInput value={activePlaylist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updatePlaylist(activeTab, "crossfade", e.detail)} />
-            </CombinedInput>
-
-            <!-- <CombinedInput>
-                <p><T id="settings.custom_audio_output" /></p>
-                <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
-            </CombinedInput> -->
-        {/if}
     </main>
 {:else}
     <Tabs {tabs} bind:active style="flex: 1;" />
@@ -136,23 +117,3 @@
     <!-- <Icon id="options" white={settingsOpened} right />
     <T id="edit.options" /> -->
 </Button>
-
-<style>
-    h5 {
-        overflow: visible;
-        text-align: center;
-        padding: 5px;
-        background-color: var(--primary-darkest);
-        color: var(--text);
-        font-size: 0.8em;
-        text-transform: uppercase;
-    }
-
-    /* h6 {
-        color: var(--text);
-        text-transform: uppercase;
-        text-align: center;
-        font-size: 0.9em;
-        margin: 20px 0;
-    } */
-</style>

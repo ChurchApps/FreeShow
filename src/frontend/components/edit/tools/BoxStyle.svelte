@@ -148,7 +148,7 @@
         // chords
         setBoxInputValue(box, "chords", "chords.enabled", "value", item?.chords?.enabled || false)
         setBoxInputValue(box, "chords", "chords.color", "value", item?.chords?.color || "#FF851B")
-        setBoxInputValue(box, "chords", "chords.size", "value", item?.chords?.size || 30)
+        setBoxInputValue(box, "chords", "chords.size", "value", item?.chords?.size || 60)
         setBoxInputValue(box, "chords", "chords.color", "hidden", !item?.chords?.enabled)
         setBoxInputValue(box, "chords", "chords.size", "hidden", !item?.chords?.enabled)
 
@@ -537,7 +537,7 @@
 
         // no text
         // values: {key: [[[]]]}
-        let textLength = Object.values(values).reduce((length: number, value: any) => (length += value.flat(2)?.length || 0), 0)
+        let textLength = Object.values(values).reduce((length: number, value: any) => length + value.flat(2).reduce((value, text) => value + (text?.value || ""), "").length, 0)
         if (!textLength) {
             newToast("$empty.text")
             return

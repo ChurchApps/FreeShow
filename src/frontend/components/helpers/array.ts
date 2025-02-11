@@ -55,23 +55,35 @@ export function sortByTimeNew<T>(array: T, key: string = "time") {
 // OBJETS
 
 // sort objects in array by name
-export function sortByName(arr: any[], key: string = "name", numberSort: boolean = false) {
+export function sortByName(arr: any[], key: string = "name", numberSort: boolean = true) {
     return arr
         .filter((a) => typeof a[key] === "string")
         .sort((a, b) => {
-            if (numberSort) {
-                const matchA = a[key].match(/^(\d+)(.*)$/)
-                const matchB = b[key].match(/^(\d+)(.*)$/)
+            if (!numberSort) return a[key].localeCompare(b[key])
 
-                if (matchA && matchB) {
-                    const numA = parseInt(matchA[1], 10)
-                    const numB = parseInt(matchB[1], 10)
+            const regex = /(\d+|\D+)/g
 
+            const segmentsA = a[key].match(regex) || []
+            const segmentsB = b[key].match(regex) || []
+
+            const len = Math.min(segmentsA.length, segmentsB.length)
+
+            for (let i = 0; i < len; i++) {
+                const partA = segmentsA[i]
+                const partB = segmentsB[i]
+
+                const numA = parseInt(partA, 10)
+                const numB = parseInt(partB, 10)
+
+                if (!isNaN(numA) && !isNaN(numB)) {
                     if (numA !== numB) return numA - numB
-                    // return matchA[2].localeCompare(matchB[2]);
+                } else {
+                    const cmp = partA.localeCompare(partB)
+                    if (cmp !== 0) return cmp
                 }
             }
-            return a[key].localeCompare(b[key])
+
+            return segmentsA.length - segmentsB.length
         })
 }
 

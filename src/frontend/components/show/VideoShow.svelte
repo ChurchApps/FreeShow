@@ -163,25 +163,10 @@
     //     })
     // }
 
-    function keydown(e: any) {
-        if (e.target.closest("input") || e.target.closest(".edit")) return
-
-        let output = $outputs[getActiveOutputs()[0]] || {}
-        let outputPath = output.out?.background?.path
-
-        if (e.key === " " && !$focusMode && show && (!outputPath || outputPath !== showId)) {
-            e.preventDefault()
-            if ((type === "video" && outputPath !== showId) || (type === "player" && output.out?.background?.id !== showId)) playVideo()
-            else if (type === "image" && !$outLocked) setOutput("background", { path: showId, ...mediaStyle })
-            // TODO: this will play first slide
-            // else if (type === "section") goToNextProjectItem()
-        }
-    }
-
     function playVideo(startAt: number = 0) {
         if ($outLocked) return
 
-        let bg: any = { type: type, startAt, muted: false, loop: false, ...mediaStyle }
+        let bg: any = { type, startAt, muted: false, loop: false, ...mediaStyle }
 
         if (type === "player") bg.id = showId
         else {
@@ -313,8 +298,6 @@
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused
 </script>
-
-<svelte:window on:keydown={keydown} />
 
 {#key showId}
     <div class="media context #media_preview" style="flex: 1;overflow: hidden;">

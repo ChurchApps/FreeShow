@@ -211,8 +211,8 @@
             "list.enabled": true,
         },
         chords: {
-            "chords.enabled": true,
-            chords: true,
+            "chords.enabled": false,
+            // chords: undefined,
         },
         // media
         filters: {

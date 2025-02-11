@@ -86,7 +86,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     choose_output: ChooseOutput,
     change_output_values: ChangeOutputValues,
     set_time: SetTime,
-    slide_shortcut: SlideShortcut,
+    assign_shortcut: SlideShortcut,
     animate: Animate,
     translate: Translate,
     next_timer: NextTimer,

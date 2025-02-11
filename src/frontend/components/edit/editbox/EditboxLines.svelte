@@ -622,6 +622,7 @@
         padding-top: 0;
 
         line-height: 1.5em;
+        text-shadow: none;
     }
 
     .edit:global(.invisible) {
