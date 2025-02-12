@@ -33,6 +33,8 @@ import { getExtension, getFileName, getMediaType, removeExtension } from "./medi
 import { addToPos, getIndexes, mover } from "./mover"
 import { checkName } from "./show"
 import { _show } from "./shows"
+import { actionData } from "../actions/actionData"
+import { getActionTriggerId } from "../actions/actions"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -717,22 +719,36 @@ const slideDrop: any = {
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
         let data: any = ref.data.actions || {}
+
         let slideActions = data.slideActions || []
+        let newActions: any[] = []
 
-        // WIP MIDI you should maybe be able to add more than one
-        let existingIndex = slideActions.findIndex((a) => a.triggers?.[0] === "run_action")
+        drag.data.forEach((action) => {
+            if (!action?.triggers) return
 
-        let actionId = drag.data[0].id
-        let action = { id: uid(), triggers: ["run_action"], actionValues: { run_action: { id: actionId } } }
-        if (drag.data[0].triggers?.[0] && drag.data[0].triggers.length === 1) {
-            action = drag.data[0]
-            existingIndex = -1
-        }
+            if (action.triggers.length > 1) {
+                let existingIndex = slideActions.findIndex((a) => a.actionValues?.run_action?.id === action.id)
+                if (existingIndex > -1) return
 
-        if (existingIndex > -1) slideActions[existingIndex] = action
-        else slideActions.push(action)
-        data.slideActions = slideActions
+                newActions.push({ id: uid(), triggers: ["run_action"], actionValues: { run_action: { id: action.id } } })
+                return
+            }
 
+            let triggerId = getActionTriggerId(action.triggers[0])
+            let data = actionData[triggerId]
+            if (!data) return
+
+            // replace if existing & and only one or value is the same
+            let existingIndex = slideActions.findIndex((a) => getActionTriggerId(a.triggers[0]) === triggerId && (!data.canAddMultiple || JSON.stringify(a.actionValues) === JSON.stringify(action.actionValues)))
+            if (existingIndex > -1) {
+                slideActions[existingIndex] = { ...action, id: slideActions[existingIndex].id }
+                return
+            }
+
+            newActions.push({ id: uid(), ...action })
+        })
+
+        data.slideActions = [...slideActions, ...newActions]
         history.newData = { key: "actions", data, indexes: [drop.index] }
         return history
     },

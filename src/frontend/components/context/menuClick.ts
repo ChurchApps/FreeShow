@@ -1293,7 +1293,7 @@ function changeSlideAction(obj: any, id: string) {
         let data: any = { index: layoutSlide, mode: "slide_shortcut" }
 
         popupData.set(data)
-        activePopup.set("slide_shortcut")
+        activePopup.set("assign_shortcut")
         return
     }
 

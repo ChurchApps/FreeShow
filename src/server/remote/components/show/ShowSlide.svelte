@@ -32,7 +32,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         <Zoomed resolution={newResolution} background={slide.items.length ? "black" : "transparent"} bind:ratio>
             <!-- class:ghost={!background} -->
             <div class="background" style="zoom: {1 / ratio}">
-                {#if media[layoutSlide.background]}
+                {#if media[layoutSlide.background]?.path && !media[layoutSlide.background].path.includes("freeshow-cache")}
                     <img src={media[layoutSlide.background].path} />
                 {/if}
             </div>

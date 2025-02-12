@@ -208,7 +208,7 @@
                         {/key}
                     </span>
                 {:else if id.includes("clock")}
-                    <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} />
+                    <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
                 {:else if id.includes("video")}
                     <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                 {:else if id.includes("first_active_timer")}

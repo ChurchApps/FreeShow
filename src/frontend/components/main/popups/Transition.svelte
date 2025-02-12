@@ -1,32 +1,22 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { get } from "svelte/store"
     import { OUTPUT } from "../../../../types/Channels"
-    import type { Transition, TransitionType } from "../../../../types/Show"
+    import type { Transition } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, popupData, selected, showsCache, styles, templates, transitionData } from "../../../stores"
-    import { easings } from "../../../utils/transitions"
+    import { send } from "../../../utils/request"
+    import { easings, transitionTypes } from "../../../utils/transitions"
+    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
-    import { clone } from "../../helpers/array"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import { onMount } from "svelte"
-    import { send } from "../../../utils/request"
 
     // VALUES
-
-    const types: { id: TransitionType; name: string }[] = [
-        { id: "none", name: "$:transition.none:$" },
-        { id: "fade", name: "$:transition.fade:$" },
-        // { id: "crossfade", name: "$:transition.crossfade:$" },
-        { id: "blur", name: "$:transition.blur:$" },
-        { id: "spin", name: "$:transition.spin:$" },
-        { id: "scale", name: "$:transition.scale:$" },
-        { id: "slide", name: "$:transition.slide:$" },
-    ]
 
     const iconSize: number = 60
     const icons = {
@@ -288,7 +278,7 @@
 <!-- TYPE -->
 
 <div class="types">
-    {#each types as type}
+    {#each transitionTypes as type}
         {@const isActive = type.id === currentTransition.type}
         <Button outline={isActive} active={isActive} on:click={() => changeTransition(selectedType, "type", type.id)} bold={false}>
             <svg viewBox="0 0 100 100" width="{iconSize}pt" height="{iconSize}pt">

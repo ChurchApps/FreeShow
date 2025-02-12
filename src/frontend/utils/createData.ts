@@ -415,7 +415,7 @@ export function setExampleTemplates() {
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                     align: "",
                     auto: true,
-                    lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: none;" }] }],
+                    lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }],
                 },
             ],
         }
@@ -429,7 +429,7 @@ export function setExampleTemplates() {
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                     align: "",
                     auto: true,
-                    lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: none;" }] }],
+                    lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }],
                 },
             ],
         }
@@ -443,7 +443,7 @@ export function setExampleTemplates() {
                     actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                     align: "",
                     auto: true,
-                    lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: none;color: #000000;" }] }],
+                    lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;color: #000000;" }] }],
                 },
             ],
         }

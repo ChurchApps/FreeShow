@@ -2,6 +2,7 @@
     import { fullColors, overlays, playerVideos, templates } from "../../stores"
     import { getContrast } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
 
     export let label: string
@@ -55,7 +56,11 @@
         <HiddenInput value={label} id={renameId} on:edit={(e) => changeName(e, renameId)} bind:edit={editActive} />
     {:else}
         <span class="title" style={count ? "margin-right: 14px;" : ""}>
-            {label}
+            {#if label}
+                {label}
+            {:else}
+                <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+            {/if}
             {#if count}<span style="opacity: 0.6;font-size: 0.8em;position: absolute;right: 6px;top: 50%;transform: translateY(-50%);">{count}</span>{/if}
         </span>
     {/if}

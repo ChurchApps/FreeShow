@@ -3,11 +3,11 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activeProject, activeTriggerFunction, categories, drawerTabsData, media, outLocked, outputs, playScripture, scriptureHistory, scriptureSettings, styles, templates } from "../../../stores"
+    import { activePopup, activeProject, activeTriggerFunction, categories, dictionary, drawerTabsData, media, outLocked, outputs, playScripture, popupData, scriptureHistory, scriptureSettings, styles, templates } from "../../../stores"
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, removeDuplicates, sortByName } from "../../helpers/array"
+    import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getMediaStyle } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -16,7 +16,6 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Media from "../../output/layers/Media.svelte"
     import Notes from "../../show/tools/Notes.svelte"
@@ -36,16 +35,17 @@
     let slides: Item[][] = [[]]
 
     // background
-    $: template = $templates[$scriptureSettings.template] || {}
+    $: templateId = $scriptureSettings.template || "scripture" // $styles[styleId]?.templateScripture || ""
+    $: template = $templates[templateId] || {}
     $: templateBackground = template.settings?.backgroundPath
 
-    $: if ($drawerTabsData) setTimeout(checkTemplate, 100)
+    $: if ($drawerTabsData || templateId) setTimeout(checkTemplate, 100)
     function checkTemplate() {
-        if (!$scriptureSettings.template?.includes("scripture")) return
+        if (!templateId.includes("scripture")) return
 
-        let templateId = "scripture_" + bibles.length
+        let newTemplateId = "scripture_" + bibles.length
         scriptureSettings.update((a) => {
-            a.template = $templates[templateId] ? templateId : "scripture"
+            a.template = $templates[newTemplateId] ? newTemplateId : "scripture"
             return a
         })
     }
@@ -145,9 +145,6 @@
         let id = e.target.id
         update(id, val)
     }
-
-    let templateList: any[] = []
-    $: templateList = sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))
 
     function update(id: string, value: any) {
         scriptureSettings.update((a) => {
@@ -262,7 +259,6 @@
     }
 
     $: styleId = $outputs[getActiveOutputs()[0]]?.style || ""
-    $: templateId = $scriptureSettings.template // $styles[styleId]?.templateScripture || ""
     $: background = $templates[templateId]?.settings?.backgroundColor || $styles[styleId]?.background || "#000000"
 </script>
 
@@ -288,7 +284,24 @@
     <div class="settings">
         <CombinedInput>
             <p><T id="info.template" /></p>
-            <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} />
+            <Button
+                on:click={() => {
+                    popupData.set({ action: "select_template", active: templateId, trigger: (id) => update("template", id) })
+                    activePopup.set("select_template")
+                }}
+                style="overflow: hidden;"
+                bold={false}
+            >
+                <div style="display: flex;align-items: center;padding: 0;">
+                    <Icon id="templates" />
+                    <p>{$templates[templateId]?.name || "popup.select_template"}</p>
+                </div>
+            </Button>
+            {#if !templateId.includes("scripture")}
+                <Button title={$dictionary.actions?.remove} on:click={() => update("template", "")} redHover>
+                    <Icon id="close" size={1.2} white />
+                </Button>
+            {/if}
         </CombinedInput>
 
         <!-- {#if $scriptureSettings.versesPerSlide != 3 || sorted.length > 1} -->

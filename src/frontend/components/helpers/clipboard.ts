@@ -57,6 +57,7 @@ import { loadShows } from "./setShow"
 import { _show } from "./shows"
 import { send } from "../../utils/request"
 import { MAIN } from "../../../types/Channels"
+import { checkName } from "./show"
 
 export function copy({ id, data }: any = {}, getData: boolean = true) {
     let copy: any = { id, data }
@@ -1014,7 +1015,7 @@ async function duplicateShows(selected: any) {
         let show = clone(get(showsCache)[id])
         if (!show) return
 
-        show.name += " 2"
+        show.name = checkName(show.name + " 2")
         show.timestamps.modified = new Date().getTime()
         history({ id: "UPDATE", newData: { data: show, remember: { project: id === "show" ? get(activeProject) : null } }, location: { page: "show", id: "show" } })
     })

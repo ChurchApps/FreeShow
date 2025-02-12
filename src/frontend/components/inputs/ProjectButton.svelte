@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { ID } from "../../../types/Show"
-    import { activeProject, activeRename, activeShow, dictionary, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects } from "../../stores"
+    import { activeEdit, activeProject, activeRename, activeShow, dictionary, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects } from "../../stores"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -55,7 +55,15 @@
         // select first if ALT key is NOT held down
         if (e.altKey || !$projects[id]?.shows?.length) return
 
-        activeShow.set({ ...$projects[id].shows[0], index: 0 })
+        let showRef = $projects[id].shows[0]
+        if (!showRef) return
+
+        activeShow.set({ ...showRef, index: 0 })
+
+        let type = showRef.type
+        // same as ShowButton
+        if (type === "image" || type === "video") activeEdit.set({ id: showRef.id, type: "media", items: [] })
+        else if ($activeEdit.id) activeEdit.set({ type: "show", slide: 0, items: [], showId: showRef.id })
     }
 
     function dblclick() {

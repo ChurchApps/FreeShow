@@ -45,7 +45,13 @@
             custom = false
             if (type === "show") {
                 if ($shows[show.id]?.private) iconID = "private"
-                else if ($shows[show.id]?.category && $categories[$shows[show.id].category || ""]) {
+                else if ($showsCache[show.id]?.reference?.type === "scripture") {
+                    custom = true
+                    iconID = "scripture"
+                } else if ($showsCache[show.id]?.reference?.type === "calendar") {
+                    custom = true
+                    iconID = "event"
+                } else if ($shows[show.id]?.category && $categories[$shows[show.id].category || ""]) {
                     custom = true
                     iconID = $categories[$shows[show.id].category || ""].icon || null
                 } else iconID = "noIcon"

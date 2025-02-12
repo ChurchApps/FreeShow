@@ -93,7 +93,7 @@
     }
 
     $: mediaStyleString = `pointer-events: none;position: absolute;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
-    $: mediaStyleBlurString = `filter: blur(4px) opacity(0.3);object-fit: cover;pointer-events: none;position: absolute;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `filter: ${mediaStyle.filter || ""} blur(4px) opacity(0.3);object-fit: cover;pointer-events: none;position: absolute;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 
     let readyToLoad: boolean = false
     onMount(() => {
@@ -152,6 +152,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
+
+        overflow: hidden;
     }
 
     img {

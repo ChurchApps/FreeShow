@@ -27,7 +27,7 @@ export interface Styles {
     displayMetadata?: string
     metadataTemplate?: string
     messageTemplate?: string
-    transition?: Transition
+    transition?: { [key: string]: Transition }
 }
 
 export interface Resolution {

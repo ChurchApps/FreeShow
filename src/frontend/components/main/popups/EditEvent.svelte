@@ -253,6 +253,9 @@
             return a
         })
     }
+
+    $: actionDataString = ""
+    $: if (JSON.stringify(actionData) !== actionDataString) actionDataString = JSON.stringify(actionData)
 </script>
 
 <div style="min-width: 45vw;min-height: 50vh;">
@@ -320,7 +323,7 @@
                 <Icon id="edit" size={1.2} right />
                 <T id="calendar.name" />
             </p>
-            <TextInput value={editEvent.name} style="width: 50%;" on:input={(e) => inputChange(e, "name")} />
+            <TextInput value={editEvent.name} style="width: 50%;" on:input={(e) => inputChange(e, "name")} autofocus={!editEvent.name} />
         </CombinedInput>
 
         <CombinedInput textWidth={30}>
@@ -348,7 +351,7 @@
         </CombinedInput>
     {:else if selectedType === "action"}
         <br />
-        {#key actionData}
+        {#key actionDataString}
             <!-- TODO: only choose actual "Actions" -->
             <CreateAction actionId={actionData?.id || ""} actionValue={actionData?.data || {}} on:change={changeAction} />
         {/key}

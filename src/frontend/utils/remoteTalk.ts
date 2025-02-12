@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
-import { getBase64Path, mediaSize } from "../components/helpers/media"
+import { getBase64Path, getThumbnailPath, mediaSize } from "../components/helpers/media"
 import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { updateOut } from "../components/helpers/showActions"
@@ -20,6 +20,7 @@ import { waitUntilValueIsDefined } from "./common"
 // REMOTE
 
 let currentOut: string = ""
+let loadingShow: string = ""
 export const receiveREMOTE: any = {
     PASSWORD: (msg: any) => {
         msg.data = {
@@ -68,10 +69,6 @@ export const receiveREMOTE: any = {
         let showID: string = msg.data
         console.log(msg)
 
-        await loadShows([showID])
-        msg.data = clone({ ...(await convertBackgrounds(get(showsCache)[showID])), id: showID })
-        // send(REMOTE, ["MEDIA"], { media: msg.data.media })
-
         if (msg.id) {
             connections.update((a) => {
                 if (!a.REMOTE) a.REMOTE = {}
@@ -80,6 +77,19 @@ export const receiveREMOTE: any = {
                 return a
             })
         }
+
+        loadingShow = showID
+        await loadShows([showID])
+
+        // send before any backgrounds has loaded
+        msg.data = clone({ ...(await convertBackgrounds(get(showsCache)[showID], true)), id: showID })
+        if (loadingShow !== showID) return
+        window.api.send(REMOTE, msg)
+
+        msg.data = clone({ ...(await convertBackgrounds(get(showsCache)[showID])), id: showID })
+        // send(REMOTE, ["MEDIA"], { media: msg.data.media })
+
+        if (loadingShow !== showID) return
 
         return msg
     },
@@ -197,7 +207,7 @@ export function initializeRemote(id: string) {
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
 }
 
-export async function convertBackgrounds(show: Show) {
+export async function convertBackgrounds(show: Show, noLoad: boolean = false) {
     if (!show?.media) return {}
 
     show = clone(show)
@@ -209,6 +219,11 @@ export async function convertBackgrounds(show: Show) {
             let cloudId = get(driveData).mediaId
             if (cloudId && cloudId !== "default") path = show.media[id]?.cloud?.[cloudId] || path
             if (!path) return
+
+            if (noLoad) {
+                show.media[id].path = getThumbnailPath(path, mediaSize.slideSize)
+                return
+            }
 
             let base64Path: string = await getBase64Path(path, mediaSize.slideSize)
             if (base64Path) show.media[id].path = base64Path

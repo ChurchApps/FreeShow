@@ -266,7 +266,11 @@
         {#if menu?.icon}<Icon id={menu.icon} />{/if}
         <p style="display: flex;align-items: center;gap: 5px;{customStyle}">
             {#if menu?.translate === false}
-                {menu?.label}
+                {#if menu?.label}
+                    {menu.label}
+                {:else}
+                    <span style="opacity: 0.5;font-style: italic;pointer-events: none;"><T id="main.unnamed" /></span>
+                {/if}
             {:else}
                 {#key menu}
                     <T id={menu?.label || id} />

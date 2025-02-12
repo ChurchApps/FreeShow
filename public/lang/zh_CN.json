@@ -188,6 +188,7 @@
         "fit": "适应屏幕",
         "contain": "等比缩放",
         "fill": "拉伸填充",
+        "blur_fill": "模糊填充",
         "cover": "全屏填充",
         "online": "在线",
         "recommended": "推荐",
@@ -211,7 +212,7 @@
     },
     "menu": {
         "show": "节目",
-        "_title_show": "展示",
+        "_title_show": "演示中",
         "edit": "编辑",
         "_title_edit": "编辑",
         "stage": "舞台",
@@ -222,7 +223,7 @@
         "_title_calendar": "事件",
         "settings": "设置",
         "_title_settings": "设置",
-        "_title_display": "展示",
+        "_title_display": "演示",
         "_title_display_stop": "停止演示文稿",
         "again_confirm": "再次点击确认"
     },
@@ -265,8 +266,9 @@
     "error": {
         "no_show": "找不到节目",
         "no_layouts": "找不到任何布局",
-        "load": "不能装载",
+        "load": "无法加载",
         "bible": "找不到本地圣经",
+        "import": "无法导入",
         "bible_api": "无法从 API.Bible 获取经文，请检查你的网络连接。",
         "not_found": "没有找到",
         "display": "无法在当前显示器上显示输出窗口",
@@ -373,7 +375,7 @@
         "offers": "报价",
         "notice": "通知",
         "visuals": "视觉",
-        "action_tip": "每次展示该类别的节目时触发的操作。"
+        "action_tip": "每次演示该类别的节目时触发的操作。"
     },
     "groups": {
         "current": "当前",
@@ -393,6 +395,7 @@
     "popup": {
         "show": "新建节目",
         "select_show": "选择节目",
+        "select_template": "选择模板",
         "rename": "重命名",
         "color": "颜色",
         "find_replace": "查找和替换",
@@ -851,6 +854,7 @@
         "line_height": "行高",
         "letter_spacing": "字间距",
         "word_spacing": "词间距",
+        "position": "位置",
         "transform": "变换",
         "text_transform": "文本变换",
         "uppercase": "大写字母",
@@ -899,7 +903,7 @@
         "padding": "内边距",
         "special": "特别选项",
         "scrolling": "滚动",
-        "scrolling_speed": "滚动速度",
+        "scrolling_speed": "滚动持续时间",
         "top_bottom": "从上到下",
         "bottom_top": "从下到上",
         "left_right": "从左到右",
@@ -1088,8 +1092,10 @@
         "minutes": "分钟",
         "use24hClock": "显示24小时制时间",
         "styles_hint": "创建不同的样式，应用于输出以改变外观。",
+        "outputs_hint": "创建多个输出窗口，将其定位在外接屏幕上，或发送屏幕截图。",
         "hide_output_hint": "双击输出窗口可隐藏。按住 Ctrl 键可拖动。",
         "hide_menubar_hint": "要隐藏菜单栏，请启用展台模式，或在 macOS 设置中启用“自动隐藏和显示菜单栏”。",
+        "output_locked": "输出位置已被锁定！",
         "show_output_hint": "按住 Ctrl/Cmd 并点击显示按钮，可以强制显示内容在此屏幕。",
         "move_output_hint": "找不到显示器？修改窗口位置，直到它出现在第二屏幕上。",
         "select_display": "点击你希望显示输出窗口的屏幕。",
@@ -1172,6 +1178,8 @@
         "connect": "在网页浏览器中输入以下内容进行连接",
         "connect_qr": "或者扫描这个二维码",
         "restart": "重启服务器",
+        "connect_to": "连接到 $1",
+        "disconnect_from": "与 $1 断开连接",
         "reset_all": "全部重置",
         "reset_theme": "重置主题",
         "reset_themes": "重置主题",
@@ -1231,6 +1239,7 @@
     "scripture": {
         "bibles": "来自 API.Bible 的圣经",
         "local": "导入本地文件",
+        "supported_formats": "支持的格式：",
         "max_verses": "每张幻灯片最大歌词数",
         "verse_numbers": "经文章节",
         "verses_on_individual_lines": "每行一句经文",

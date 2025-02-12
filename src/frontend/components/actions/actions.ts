@@ -150,7 +150,15 @@ export function slideHasAction(actions: any, key: string) {
 export function getActionIcon(id: string) {
     let actions = get(midiIn)[id]?.triggers || {}
     if (actions.length > 1) return "actions"
-    return actionData[actions[0]]?.icon || "actions"
+
+    let trigger = getActionTriggerId(actions[0])
+    return actionData[trigger]?.icon || "actions"
+}
+
+export function getActionTriggerId(id: string) {
+    let trigger = id || ""
+    if (trigger.includes(":")) trigger = trigger.slice(0, trigger.indexOf(":"))
+    return trigger
 }
 
 // extra names
@@ -171,6 +179,10 @@ export function getActionName(actionId: string, actionValue: any) {
     if (actionId === "start_metronome") {
         let beats = (actionValue.beats || 4) === 4 ? "" : " | " + actionValue.beats
         return (actionValue.tempo || 120) + beats
+    }
+
+    if (actionId === "change_volume") {
+        return Number(actionValue.volume || 1) * 100
     }
 
     if (!namedObjects[actionId]) return

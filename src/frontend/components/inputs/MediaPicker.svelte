@@ -35,6 +35,6 @@
     }
 </script>
 
-<Button {title} style={$$props.style || null} on:click={pick} {center} {dark}>
+<Button {title} style={$$props.style || null} on:click={pick} {center} {dark} bold={!title}>
     <slot />
 </Button>

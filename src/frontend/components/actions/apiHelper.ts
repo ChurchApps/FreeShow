@@ -139,8 +139,8 @@ export function selectSlideByName(name: string) {
 function outputSlide(showRef, data: API_slide_index) {
     if (get(outLocked)) return
 
-    updateOut("active", data.index, showRef)
-    let showId = data.showId || get(activeShow)!.id
+    let showId = data.showId || get(activeShow)?.id || ""
+    updateOut(showId, data.index, showRef)
     let activeLayout = _show(showId).get("settings.activeLayout")
     setOutput("slide", { id: showId, layout: data.layoutId || activeLayout, index: data.index, line: 0 })
 }

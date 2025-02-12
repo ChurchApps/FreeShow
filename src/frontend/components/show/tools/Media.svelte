@@ -1,9 +1,10 @@
 <script lang="ts">
     import { MAIN, OUTPUT } from "../../../../types/Channels"
     import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
+    import { translate } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
-    import { runAction } from "../../actions/actions"
+    import { getActionName, getActionTriggerId, runAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -28,12 +29,12 @@
     let layoutActions: any[] = []
 
     $: {
-        if (show) {
-            layoutBackgrounds = []
-            layoutAudio = []
-            layoutMics = []
-            layoutActions = []
+        layoutBackgrounds = []
+        layoutAudio = []
+        layoutMics = []
+        layoutActions = []
 
+        if (show) {
             let refs = _show("active").layouts().ref()
             refs.forEach((slides: any) => {
                 layoutBackgrounds.push(...slides.map((a: any) => a.data.background).filter((a: any) => a !== undefined))
@@ -306,15 +307,21 @@
         {#if actions.length}
             <h5><T id="tabs.actions" /></h5>
             {#each actions as action}
-                {@const actionId = action.triggers?.[0] || ""}
+                {@const actionId = getActionTriggerId(action.triggers?.[0])}
                 {@const customData = actionData[actionId] || {}}
+                {@const actionValue = action?.actionValues?.[actionId] || {}}
+                {@const customName = getActionName(actionId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")}
 
                 <SelectElem id="action" data={action} draggable>
                     <!-- class="context #action" -->
                     <Button on:click={() => runAction(action)} style="padding: 8px;width: 100%;" title={action.name} bold={false}>
-                        <Icon id={customData.icon || "actions"} size={1.2} right />
+                        <Icon id={customData.icon || "actions"} size={1.1} style="margin-left: 0.5em;" right />
                         {#key customData.name}
-                            <p><T id={customData.name || ""} /></p>
+                            <p>
+                                <T id={customData.name || ""} />{#if customName}:
+                                    <span style="padding: 0;opacity: 0.7;font-size: 0.8em;">{customName}</span>
+                                {/if}
+                            </p>
                         {/key}
                     </Button>
                 </SelectElem>
