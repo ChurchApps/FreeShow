@@ -19,7 +19,6 @@ import {
     activeFocus,
     activePage,
     activePopup,
-    activeProject,
     activeSlideRecording,
     activeStage,
     contextActive,
@@ -28,16 +27,17 @@ import {
     focusedArea,
     focusMode,
     guideActive,
+    media,
     os,
     outLocked,
     outputs,
     outputSlideCache,
-    projects,
     quickSearchActive,
     refreshEditSlide,
     selected,
     showsCache,
     special,
+    styles,
     topContextActive,
     volume,
 } from "../stores"
@@ -46,6 +46,7 @@ import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
+import { getMediaStyle } from "../components/helpers/media"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -68,6 +69,10 @@ const ctrlKeys: any = {
     z: () => undo(),
     Z: () => redo(),
     "?": () => activePopup.set("shortcuts"),
+}
+
+const shiftCtrlKeys: any = {
+    f: () => menuClick("focus_mode"),
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]
@@ -150,6 +155,12 @@ export function keydown(e: any) {
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
         const macShortcutDebug = false
         if ((key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(key) && get(os).platform !== "darwin" && !macShortcutDebug)) {
+            return
+        }
+
+        if (e.shiftKey && shiftCtrlKeys[key]) {
+            e.preventDefault()
+            shiftCtrlKeys[key](e)
             return
         }
 
@@ -265,8 +276,10 @@ export const previewShortcuts: any = {
             return nextSlideIndividual(e, true)
         }
         if (!get(showsCache)[currentShow?.id || ""]) {
-            e.preventDefault()
-            if (currentShow?.type === "overlay") return setOutput("overlays", currentShow.id, false, "", true)
+            if (currentShow?.type === "overlay") {
+                e.preventDefault()
+                return setOutput("overlays", currentShow.id, false, "", true)
+            }
             return playMedia(e)
         }
 
@@ -329,17 +342,23 @@ function createNew() {
 }
 
 function playMedia(e: Event) {
-    if (get(outLocked) || !get(focusMode)) return
-    let projectItem: any = get(projects)[get(activeProject) || ""]?.shows?.[get(activeFocus).index!]
+    if (get(outLocked) || get(focusMode)) return
+    let item = get(activeShow)
 
-    let type: ShowType = projectItem.type
-    if (!type) return
+    let type: ShowType | undefined = item?.type
+    if (!item || !type) return
     e.preventDefault()
 
+    let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
+    let currentOutput: any = get(outputs)[outputId] || {}
+
+    if (currentOutput.out?.background?.path === item.id) return
+
     if (type === "video" || type === "image" || type === "player") {
-        // , ...mediaStyle
-        setOutput("background", { type: projectItem.type, path: projectItem.id, muted: false, loop: false })
+        let outputStyle = get(styles)[currentOutput.style]
+        let mediaStyle = getMediaStyle(get(media)[item.id], outputStyle)
+        setOutput("background", { type, path: item.id, muted: false, loop: false, ...mediaStyle })
     } else if (type === "audio") {
-        playAudio({ path: projectItem.id, name: projectItem.name })
+        playAudio({ path: item.id, name: item.name })
     }
 }

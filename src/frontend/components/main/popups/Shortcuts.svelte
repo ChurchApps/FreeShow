@@ -35,6 +35,10 @@
         "actions.undo": `${ctrl} + z`,
         "popup.shortcuts": `${ctrl} + ?`,
 
+        shift: "SEPERATOR",
+
+        "actions.focus_mode": `${ctrl} + shift + f`,
+
         clear: "SEPERATOR",
 
         "actions.remove_selection": "esc",
@@ -118,6 +122,6 @@
         text-transform: uppercase;
 
         padding: 4px 10px;
-        min-width: 150px;
+        min-width: 160px;
     }
 </style>

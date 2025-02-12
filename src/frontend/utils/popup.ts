@@ -51,6 +51,8 @@ import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelt
 import DisplayDuration from "../components/main/popups/DisplayDuration.svelte"
 import MediaFit from "../components/main/popups/MediaFit.svelte"
 import Emitters from "../components/main/popups/Emitters.svelte"
+import SelectTemplate from "../components/main/popups/SelectTemplate.svelte"
+import MetadataDisplay from "../components/main/popups/MetadataDisplay.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -60,6 +62,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     show: CreateShow,
     delete_show: DeleteShow,
     select_show: SelectShow,
+    select_template: SelectTemplate,
     delete_duplicated_shows: DeleteDuplicatedShows,
     icon: ChangeIcon,
     manage_icons: ManageIcons,
@@ -76,13 +79,14 @@ export const popups: { [key in Popups]: ComponentType } = {
     audio_stream: AudioStream,
     transition: Transition,
     media_fit: MediaFit,
+    metadata_display: MetadataDisplay,
     import_scripture: ImportScripture,
     edit_event: EditEvent,
     choose_screen: ChooseScreen,
     choose_output: ChooseOutput,
     change_output_values: ChangeOutputValues,
     set_time: SetTime,
-    slide_shortcut: SlideShortcut,
+    assign_shortcut: SlideShortcut,
     animate: Animate,
     translate: Translate,
     next_timer: NextTimer,

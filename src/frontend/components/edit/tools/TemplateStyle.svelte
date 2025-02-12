@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { TemplateSettings } from "../../../../types/Show"
-    import { activeEdit, dictionary, overlays, templates } from "../../../stores"
+    import { activeEdit, activePopup, dictionary, overlays, popupData, templates } from "../../../stores"
     import { getList } from "../../../utils/common"
     import { mediaExtensions } from "../../../values/extensions"
     import { clone } from "../../helpers/array"
@@ -56,7 +56,6 @@
     //     setValue(resolution, "resolution")
     // }
 
-    $: templateList = getList($templates, true).filter((a) => a.id !== templateId && a.name)
     $: overlayList = getList($overlays, true).filter((a) => a.name)
 </script>
 
@@ -89,7 +88,35 @@
 
     <CombinedInput>
         <p title={$dictionary.edit?.different_first_template}><T id="edit.different_first_template" /></p>
-        <Dropdown options={templateList} value={$templates[settings.firstSlideTemplate || ""]?.name || "—"} on:click={(e) => setValue(e?.detail?.id, "firstSlideTemplate")} />
+        <Button
+            on:click={() => {
+                popupData.set({
+                    action: "select_template",
+                    active: settings.firstSlideTemplate || "",
+                    hideIds: [templateId],
+                    trigger: (id) => setValue(id, "firstSlideTemplate"),
+                })
+                activePopup.set("select_template")
+            }}
+            style="overflow: hidden;"
+            bold={!settings.firstSlideTemplate}
+        >
+            <div style="display: flex;align-items: center;padding: 0;">
+                <Icon id="templates" />
+                <p style="opacity: 1;font-size: 1em;">
+                    {#if settings.firstSlideTemplate}
+                        {$templates[settings.firstSlideTemplate || ""]?.name || "—"}
+                    {:else}
+                        <T id="popup.select_template" />
+                    {/if}
+                </p>
+            </div>
+        </Button>
+        {#if settings.firstSlideTemplate}
+            <Button title={$dictionary.actions?.remove} on:click={() => setValue("", "firstSlideTemplate")} redHover>
+                <Icon id="close" size={1.2} white />
+            </Button>
+        {/if}
     </CombinedInput>
 
     <CombinedInput>
@@ -124,6 +151,7 @@
     } */
 
     p {
+        overflow: hidden !important;
         opacity: 0.8;
         font-size: 0.9em;
     }

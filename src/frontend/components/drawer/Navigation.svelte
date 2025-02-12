@@ -1,9 +1,25 @@
 <script lang="ts">
     import { IMPORT } from "../../../types/Channels"
     import type { Category } from "../../../types/Tabs"
-    import { activeEdit, activePopup, audioFolders, audioPlaylists, categories, dictionary, drawerTabsData, labelsDisabled, mediaFolders, overlayCategories, scriptures, templateCategories } from "../../stores"
+    import {
+        actionTags,
+        activeActionTagFilter,
+        activeEdit,
+        activePopup,
+        audioFolders,
+        audioPlaylists,
+        categories,
+        dictionary,
+        drawerTabsData,
+        labelsDisabled,
+        mediaFolders,
+        midiIn,
+        overlayCategories,
+        scriptures,
+        templateCategories,
+    } from "../../stores"
     import { send } from "../../utils/request"
-    import { keysToID, sortObject } from "../helpers/array"
+    import { keysToID, sortByName, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -91,7 +107,21 @@
             ]
         } else if (id === "functions") {
             buttons = [
-                { id: "actions", name: "tabs.actions", default: true, icon: "actions" },
+                {
+                    id: "actions",
+                    name: "tabs.actions",
+                    default: true,
+                    icon: "actions",
+                    openTrigger: () => activeActionTagFilter.set([]),
+                    submenu: {
+                        options: sortObject(sortByName(keysToID($actionTags)), "color").map((a) => ({
+                            ...a,
+                            icon: "tag",
+                            openTrigger: (id) => activeActionTagFilter.set([id]),
+                            count: Object.values($midiIn).filter((b) => b.tags?.includes(a.id)).length,
+                        })),
+                    },
+                },
                 { id: "SEPERATOR", name: "" },
                 { id: "timer", name: "tabs.timers", default: true, icon: "timer" },
                 { id: "variables", name: "tabs.variables", default: true, icon: "variable" },

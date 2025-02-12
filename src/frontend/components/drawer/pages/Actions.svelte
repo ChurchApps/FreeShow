@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeActionTagFilter, activePopup, dictionary, labelsDisabled, midiIn, popupData, runningActions } from "../../../stores"
-    import { actionData } from "../../actions/actionData"
-    import { runAction } from "../../actions/actions"
+    import { getActionIcon, runAction } from "../../actions/actions"
+    import { customActionActivations } from "../../actions/customActivation"
     import { convertOldMidiToNewAction, midiToNote, receivedMidi } from "../../actions/midi"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -31,9 +31,11 @@
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
                         <Button
-                            style={action.enabled === false ? "opacity: 0.6;" : ""}
                             title={$dictionary.media?.play}
-                            on:click={() => (action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action))}
+                            on:click={(e) => {
+                                if (e.ctrlKey || e.metaKey) return
+                                action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action)
+                            }}
                             outline={$runningActions.includes(action.id)}
                             bold={false}
                             dark
@@ -45,7 +47,7 @@
                                     {:else if action.triggers.length !== 1}
                                         <Icon id="actions" right />
                                     {:else}
-                                        <Icon id={actionData[action.triggers[0]]?.icon || "actions"} right />
+                                        <Icon id={getActionIcon(action.id)} right />
                                     {/if}
 
                                     <span style="display: flex;align-items: center;gap: 8px;">
@@ -55,29 +57,30 @@
                                             {action.name || "—"}
                                         {/if}
 
-                                        {#if action.midi}
-                                            <span class="faded">
-                                                ({action.midi.input || "—"})
-                                            </span>
-                                        {/if}
-
                                         {#if action.keypressActivate}
-                                            <span class="faded">
-                                                ({action.keypressActivate})
-                                            </span>
+                                            <span class="key">{action.keypressActivate}</span>
                                         {/if}
                                     </span>
                                 </p>
 
-                                {#if action.midiEnabled && action.midi}
-                                    <p style="opacity: 0.8;display: inline;">
-                                        <T id="midi.note" />: {action.midi.values?.note} - {midiToNote(action.midi.values?.note)},
-                                        {#if action.midi.values?.velocity > -1}<T id="midi.velocity" />: {action.midi.values?.velocity},{/if}
-                                        <T id="midi.channel" />: {action.midi.values?.channel}
-                                        {#if action.midi.type !== "noteon"}
-                                            — {action.midi.type}{/if}
-                                    </p>
-                                {/if}
+                                <p style="opacity: 0.8;display: flex;gap: 20px;" class:deactivated={action.enabled === false}>
+                                    {#if action.customActivation || action.startupEnabled}
+                                        <span>
+                                            <T id={customActionActivations.find((a) => a.id === action.customActivation)?.name || "actions.custom_activation"} />
+                                        </span>
+                                    {/if}
+
+                                    {#if action.midiEnabled && action.midi}
+                                        <span>
+                                            <!-- ({action.midi.input || "—"}) -->
+                                            <T id="midi.note" />: {action.midi.values?.note} - {midiToNote(action.midi.values?.note)},
+                                            {#if action.midi.values?.velocity > -1}<T id="midi.velocity" />: {action.midi.values?.velocity},{/if}
+                                            <T id="midi.channel" />: {action.midi.values?.channel}
+                                            {#if action.midi.type !== "noteon"}
+                                                — {action.midi.type}{/if}
+                                        </span>
+                                    {/if}
+                                </p>
                             </span>
 
                             <!-- this is probably not in use: -->
@@ -119,9 +122,9 @@
         width: 100%;
         min-height: 35px;
     }
-    .customActivation {
+    /* .customActivation {
         color: var(--secondary);
-    }
+    } */
 
     .action :global(button:nth-child(1)) {
         width: 100%;
@@ -134,7 +137,13 @@
         background-color: var(--primary-darkest);
     }
 
-    .faded {
-        opacity: 0.5;
+    .key {
+        color: var(--secondary);
+        font-weight: bold;
+    }
+
+    .deactivated {
+        opacity: 0.5 !important;
+        text-decoration: line-through;
     }
 </style>

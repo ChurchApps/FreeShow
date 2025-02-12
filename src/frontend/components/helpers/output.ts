@@ -103,7 +103,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
 
                 let index = allOutputs.findIndex((outId) => outId === id)
-                data = changeOutputBackground(data, { output, id, mute: allOutputs.length > 1 && index !== firstOutputWithBackground })
+                data = changeOutputBackground(data, { output, id, mute: allOutputs.length > 1 && index !== firstOutputWithBackground, videoOutputId: allOutputs[firstOutputWithBackground] })
             }
 
             let outData = a[id].out?.[key] || null
@@ -157,7 +157,7 @@ function appendShowUsage(showId: string) {
     })
 }
 
-function changeOutputBackground(data, { output, id, mute }) {
+function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
     if (get(currentWindow) === null) {
         setTimeout(() => {
             // update stage background if any
@@ -170,7 +170,7 @@ function changeOutputBackground(data, { output, id, mute }) {
     let previousWasVideo: boolean = videoExtensions.includes(getExtension(output.out?.background?.path))
 
     if (data === null) {
-        fadeinAllPlayingAudio()
+        if (id === videoOutputId) fadeinAllPlayingAudio()
         if (previousWasVideo) videoEnding()
 
         return data
@@ -183,13 +183,15 @@ function changeOutputBackground(data, { output, id, mute }) {
 
     let videoData: any = { muted: data.muted, loop: data.loop || false }
 
-    let muteAudio = get(special).muteAudioWhenVideoPlays
-    let isVideo = videoExtensions.includes(getExtension(data.path))
-    if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
-    else fadeinAllPlayingAudio()
+    if (id === videoOutputId) {
+        let muteAudio = get(special).muteAudioWhenVideoPlays
+        let isVideo = videoExtensions.includes(getExtension(data.path))
+        if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
+        else fadeinAllPlayingAudio()
 
-    if (isVideo) videoStarting()
-    else if (previousWasVideo) videoEnding()
+        if (isVideo) videoStarting()
+        else if (previousWasVideo) videoEnding()
+    }
 
     // wait for video receiver to change
     setTimeout(() => {
@@ -609,7 +611,7 @@ export function getCurrentMediaTransition() {
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true, templateClicked: boolean = false) {
     // if (!slideItems?.length && !addOverflowTemplateItems) return []
-    slideItems = clone(slideItems).filter((a) => a && (!templateClicked || !a.fromTemplate))
+    slideItems = clone(slideItems || []).filter((a) => a && (!templateClicked || !a.fromTemplate))
 
     if (!templateItems.length) return slideItems
     templateItems = clone(templateItems)
@@ -927,12 +929,12 @@ export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]
 }
 
 export function getOutputLines(outSlide: any, styleLines: any = 0) {
-    if (!outSlide?.id || outSlide.id === "temp") return { start: 0, end: 0 } // , index: 0, max: 0
+    if (!outSlide?.id || outSlide.id === "temp") return { start: null, end: null } // , index: 0, max: 0
 
     let ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
     let showSlide = _show(outSlide.id).slides([ref?.[outSlide.index]?.id]).get()[0]
     let maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
-    if (!maxLines) return { start: 0, end: 0 } // , index: 0, max: 0
+    if (!maxLines) return { start: null, end: null } // , index: 0, max: 0
 
     let progress = ((outSlide.line || 0) + 1) / maxLines
 

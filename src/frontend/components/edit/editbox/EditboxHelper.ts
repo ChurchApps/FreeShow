@@ -143,7 +143,7 @@ export class EditboxHelper {
 
                 let listStyle = "" // item.list?.enabled ? ";display: list-item;" : ""
                 let style = a.style || listStyle ? 'style="' + a.style + listStyle + '"' : ""
-                let value = a.value.replaceAll("\n", "<br>") || "<br>"
+                let value = a.value?.replaceAll("\n", "<br>") || "<br>"
                 if (value === " ") value = "&nbsp;"
 
                 // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)

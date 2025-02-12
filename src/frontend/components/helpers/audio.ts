@@ -81,7 +81,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
 
     let localVolume: number = get(volume) * (get(media)[path]?.volume || 1)
     if (analyser.gainNode) {
-        analyser.gainNode.gain.value = localVolume * (get(gain) || 1)
+        analyser.gainNode.gain.value = localVolume * (get(special).allowGaining ? get(gain) || 1 : 1)
         if (get(special).preFaderVolumeMeter) audio.volume = 1
         else audio.volume = localVolume
     } else audio.volume = localVolume
@@ -172,7 +172,7 @@ export function updateVolume(value: number | undefined | "local", changeGain: bo
             let localVolume: number = get(volume) * (get(media)[id]?.volume || 1)
 
             if (a[id].analyser.gainNode) {
-                let gainedValue = localVolume * (get(gain) || 1)
+                let gainedValue = localVolume * (get(special).allowGaining ? get(gain) || 1 : 1)
                 a[id].analyser.gainNode.gain.value = gainedValue
 
                 if (get(special).preFaderVolumeMeter) a[id].audio.volume = 1
@@ -441,7 +441,7 @@ function mergeDB(array: number[]) {
 
     if (!get(special).preFaderVolumeMeter) {
         // add gain & volume
-        sum *= get(volume) * get(gain)
+        sum *= get(volume) * (get(special).allowGaining ? get(gain) || 1 : 1)
     }
 
     return (Math.log(sum) / Math.LN10) * 20
@@ -525,7 +525,7 @@ function getPlayingVideos() {
         // set volume (video in output window)
         let newVolume = get(volume) * ((get(media)[a.id]?.volume ?? 100) / 100)
         if (a.analyser.gainNode) {
-            let gainedValue = newVolume * (get(gain) || 1)
+            let gainedValue = newVolume * (get(special).allowGaining ? get(gain) || 1 : 1)
             a.analyser.gainNode.gain.value = gainedValue
         } else a.video.volume = newVolume
 
@@ -599,7 +599,10 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         setTimeout(() => (forceClear = false), 100)
         return
     }
-    if (!Object.keys(get(playingAudio)).length) return
+    if (!Object.keys(get(playingAudio)).length) {
+        isFadingOut.set(false)
+        return
+    }
 
     let newPlaying: any = get(playingAudio)
     playingAudio.update((a) => {

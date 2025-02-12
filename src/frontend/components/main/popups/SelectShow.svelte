@@ -56,8 +56,8 @@
     let showPrivate = false
 </script>
 
-<CombinedInput>
-    <TextInput placeholder={$dictionary.main?.search} value={searchValue} on:input={search} />
+<CombinedInput style="border-bottom: 2px solid var(--secondary);">
+    <TextInput placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
 </CombinedInput>
 <CombinedInput>
     <p><T id="actions.view_private" /></p>

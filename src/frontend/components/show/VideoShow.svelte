@@ -87,6 +87,7 @@
     }
     $: if (playingInOutput && Math.abs(videoTime - $videosTime[outputId]) > 1) updateVideoTime()
     function updateVideoTime() {
+        console.log("UPDATE")
         // get and set actual time
         videoTime = $videosTime[outputId]
     }
@@ -162,25 +163,10 @@
     //     })
     // }
 
-    function keydown(e: any) {
-        if (e.target.closest("input") || e.target.closest(".edit")) return
-
-        let output = $outputs[getActiveOutputs()[0]] || {}
-        let outputPath = output.out?.background?.path
-
-        if (e.key === " " && !$focusMode && show && (!outputPath || outputPath !== showId)) {
-            e.preventDefault()
-            if ((type === "video" && outputPath !== showId) || (type === "player" && output.out?.background?.id !== showId)) playVideo()
-            else if (type === "image" && !$outLocked) setOutput("background", { path: showId, ...mediaStyle })
-            // TODO: this will play first slide
-            // else if (type === "section") goToNextProjectItem()
-        }
-    }
-
     function playVideo(startAt: number = 0) {
         if ($outLocked) return
 
-        let bg: any = { type: type, startAt, muted: false, loop: false, ...mediaStyle }
+        let bg: any = { type, startAt, muted: false, loop: false, ...mediaStyle }
 
         if (type === "player") bg.id = showId
         else {
@@ -305,15 +291,13 @@
     }
 
     $: mediaStyleString = `width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
-    $: mediaStyleBlurString = `position: absolute;filter: blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 
     let blurVideo: any = null
-    $: if (blurVideo && (videoTime < blurVideo.currentTime - 1 || videoTime > blurVideo.currentTime + 1)) blurVideo.currentTime = videoTime
+    $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.3 || videoTime > blurVideo.currentTime + 0.3)) blurVideo.currentTime = videoTime
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused
 </script>
-
-<svelte:window on:keydown={keydown} />
 
 {#key showId}
     <div class="media context #media_preview" style="flex: 1;overflow: hidden;">
@@ -324,7 +308,7 @@
             {:else}
                 <!-- TODO: on:error={videoError} - ERR_FILE_NOT_FOUND -->
                 {#if mediaStyle.fit === "blur"}
-                    <video style={mediaStyleBlurString} src={showId} bind:this={blurVideo} bind:paused={blurPausedState} muted />
+                    <video style={mediaStyleBlurString} src={showId} bind:this={blurVideo} bind:paused={blurPausedState} loop={videoData.loop} muted />
                 {/if}
                 <video
                     style={mediaStyleString}
@@ -337,6 +321,7 @@
                     bind:duration={videoData.duration}
                     bind:muted={videoData.muted}
                     bind:volume={$volume}
+                    loop={videoData.loop}
                 >
                     {#each tracks as track}
                         <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />

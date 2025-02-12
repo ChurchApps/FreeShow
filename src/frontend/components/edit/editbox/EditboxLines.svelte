@@ -62,7 +62,8 @@
         clone(item?.lines)?.forEach((line) => {
             let align = line.align.replaceAll(lineBg, "")
             s += align + lineBg // + line.chords?.map((a) => a.key)
-            line.text?.forEach((a) => {
+            console.assert(Array.isArray(line?.text), "Text is not an array!")
+            line?.text?.forEach((a) => {
                 s += EditboxHelper.getTextStyle(a)
             })
         })
@@ -622,6 +623,7 @@
         padding-top: 0;
 
         line-height: 1.5em;
+        text-shadow: none;
     }
 
     .edit:global(.invisible) {

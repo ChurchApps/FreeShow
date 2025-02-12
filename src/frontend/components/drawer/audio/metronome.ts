@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { gain, metronome, playingMetronome, volume } from "../../../stores"
+import { gain, metronome, playingMetronome, special, volume } from "../../../stores"
 import { clone } from "../../helpers/array"
 import type { API_metronome } from "../../actions/api"
 
@@ -169,5 +169,5 @@ async function playNote(time: number, first: boolean = false) {
 let accentVolume = 2
 let secondaryVolume = 1.75
 function getVolume(beatVolume) {
-    return beatVolume * (metronomeValues.volume || 1) * get(volume) * get(gain)
+    return beatVolume * (metronomeValues.volume || 1) * get(volume) * (get(special).allowGaining ? get(gain) || 1 : 1)
 }

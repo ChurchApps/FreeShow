@@ -83,7 +83,7 @@
                 title={$dictionary.items?.[item.name || item.id]}
                 icon={item.icon || item.id}
                 disabled={item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount}
-                on:click={() => addItem(item.id)}
+                on:click={() => addItem(item.id, null, {}, $activeEdit.type === "template" ? $dictionary.example?.text || "" : "")}
             />
 
             {#if i === 0}

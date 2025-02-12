@@ -3,6 +3,7 @@ import { uid } from "uid"
 import { ShowObj } from "../../classes/Show"
 import {
     activeDrawerTab,
+    activeEdit,
     activeProject,
     activeRename,
     activeShow,
@@ -364,7 +365,10 @@ export const _updaters = {
 
             // don't open when importing lots of songs
             // if (data.open !== false)
-            if (!get(focusMode)) activeShow.set(showRef)
+            if (!get(focusMode)) {
+                activeShow.set(showRef)
+                activeEdit.set({ type: "show", slide: 0, items: [], showId: showRef.id })
+            }
 
             // set text cache
             saveTextCache(id, data.data)

@@ -1,13 +1,14 @@
 <script lang="ts">
-    import { activeEdit, activeShow, activeTriggerFunction, groups, showsCache, templates } from "../../../stores"
-    import { clone, sortByName } from "../../helpers/array"
+    import { activeEdit, activePopup, activeShow, activeTriggerFunction, dictionary, groups, popupData, showsCache, templates } from "../../../stores"
+    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import Icon from "../../helpers/Icon.svelte"
     import { getResolution } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import Notes from "../../show/tools/Notes.svelte"
 
     // TODO: templates / overlays
@@ -68,9 +69,6 @@
 
         _show($activeShow!.id).slides([slideId]).set({ key: "notes", value: e.detail })
     }
-
-    let templateList: any[] = []
-    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))]
 </script>
 
 <div class="section">
@@ -92,14 +90,44 @@
                 <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.8em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
             {/if}
         </p>
-        <Dropdown
-            options={templateList}
-            value={$templates[settings.template || ""]?.name || "—"}
-            on:click={(e) => {
-                settings.template = e.detail.id
-                update()
+        <Button
+            on:click={() => {
+                popupData.set({
+                    action: "select_template",
+                    active: settings.template || "",
+                    trigger: (id) => {
+                        settings.template = id
+                        update()
+                    },
+                })
+                activePopup.set("select_template")
             }}
-        />
+            style="overflow: hidden;"
+            bold={!settings.template}
+        >
+            <div style="display: flex;align-items: center;padding: 0;">
+                <Icon id="templates" />
+                <p style="opacity: 1;font-size: 1em;">
+                    {#if settings.template}
+                        {$templates[settings.template || ""]?.name || "—"}
+                    {:else}
+                        <T id="popup.select_template" />
+                    {/if}
+                </p>
+            </div>
+        </Button>
+        {#if settings.template}
+            <Button
+                title={$dictionary.actions?.remove}
+                on:click={() => {
+                    settings.template = ""
+                    update()
+                }}
+                redHover
+            >
+                <Icon id="close" size={1.2} white />
+            </Button>
+        {/if}
     </CombinedInput>
 
     <!-- <h6><T id="settings.resolution" /></h6>

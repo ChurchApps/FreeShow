@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, popupData, styles } from "../../../stores"
+    import { activePopup, dictionary, popupData, styles } from "../../../stores"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import { history } from "../../helpers/history"
     import T from "../../helpers/T.svelte"
@@ -21,19 +21,27 @@
 
     function changeFit(id: string) {
         if (isStyle) {
-            if (!$styles[styleId]) return
             if (styleFit === id) {
                 activePopup.set(null)
                 return
             }
+            if (!$styles[styleId]) setInitialStyle()
 
             history({ id: "UPDATE", newData: { key: "fit", data: id }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style", override: "style_" + styleId } })
         }
     }
 
+    function setInitialStyle() {
+        // create a style if nothing exists
+        styles.update((a) => {
+            if (!a[styleId]) a[styleId] = { name: $dictionary.example?.default || "Default" }
+            return a
+        })
+    }
+
     // let isItem: boolean = $popupData.id === "fit"
     let isStyle: boolean = $popupData.action === "style_fit"
-    let styleId: string = $popupData.id
+    let styleId: string = $popupData.id || "default"
 
     onMount(() => {
         popupData.set({})

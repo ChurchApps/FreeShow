@@ -36,6 +36,7 @@ import { convertTexts } from "../converters/txt"
 import { convertVerseVIEW } from "../converters/verseview"
 import { convertVideopsalm } from "../converters/videopsalm"
 import {
+    activeEdit,
     activePage,
     activePopup,
     activeShow,
@@ -194,7 +195,11 @@ const receiveMAIN: any = {
         if (!finished) return activePopup.set(null)
         if (starting) return newToast("$settings.restore_started")
 
+        // close opened
+        activeEdit.set({ items: [] })
+        activeShow.set(null)
         activePage.set("show")
+
         newToast("$settings.restore_finished")
     },
     LOCATE_MEDIA_FILE: ({ path, ref }) => {

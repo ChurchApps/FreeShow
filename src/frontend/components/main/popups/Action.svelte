@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import { activePopup, activeShow, midiIn, popupData, showsCache, templates, timers } from "../../../stores"
+    import { activePopup, activeShow, drawerTabsData, midiIn, popupData, showsCache, templates, timers } from "../../../stores"
     import { translate } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
@@ -191,6 +191,7 @@
             let newData = { key: "settings", data: templateSettings }
             history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "drawer", id: "template_settings", override: `actions_${templateId}` } })
         } else if (mode !== "slide") {
+            let exists = !!$midiIn[id]
             midiIn.update((a) => {
                 if (mode === "slide_midi") {
                     let shows = a[id]?.shows || []
@@ -202,6 +203,11 @@
                 }
 
                 a[id] = clone(action)
+
+                // set tag
+                if (!exists && $drawerTabsData.functions?.activeSubTab === "actions" && $drawerTabsData.functions?.activeSubmenu) {
+                    a[id].tags = [$drawerTabsData.functions?.activeSubmenu]
+                }
 
                 return a
             })

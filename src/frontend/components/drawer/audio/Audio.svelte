@@ -17,12 +17,16 @@
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
     import AudioFile from "./AudioFile.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import NumberInput from "../../inputs/NumberInput.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
 
     let files: any[] = []
     let scrollElem: any
+
+    let playlistSettings: boolean = false
 
     $: playlist = active && $audioPlaylists[active]
 
@@ -232,6 +236,16 @@
             <Microphones />
         {:else if active === "audio_streams"}
             <AudioStreams />
+        {:else if playlist && playlistSettings}
+            <CombinedInput>
+                <p><T id="settings.audio_crossfade" /></p>
+                <NumberInput value={playlist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updatePlaylist(active || "", "crossfade", e.detail)} />
+            </CombinedInput>
+
+            <!-- <CombinedInput>
+                <p><T id="settings.custom_audio_output" /></p>
+                <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
+            </CombinedInput> -->
         {:else if playlist}
             <DropArea id="audio_playlist" selectChildren let:fileOver file>
                 {#if playlist.songs.length}
@@ -290,7 +304,7 @@
                     // if ($activePlaylist?.id === active) playlistNext("", $activePlaylist.active)
                 }}
             >
-                <Icon size={1.3} id="shuffle_play" white={$audioPlaylists[active || ""]?.mode !== "shuffle"} />
+                <Icon size={1.1} id="shuffle_play" white={$audioPlaylists[active || ""]?.mode !== "shuffle"} />
             </Button>
             <Button
                 title={$dictionary.media?._loop}
@@ -299,7 +313,7 @@
                     updatePlaylist(active, "loop", $audioPlaylists[active]?.loop === undefined ? false : !$audioPlaylists[active]?.loop)
                 }}
             >
-                <Icon size={1.3} id="loop" white={$audioPlaylists[active || ""]?.loop === false} />
+                <Icon size={1.1} id="loop" white={$audioPlaylists[active || ""]?.loop === false} />
             </Button>
         {:else}
             <Button disabled={rootPath === path} title={$dictionary.actions?.back} on:click={goBack}>
@@ -323,8 +337,13 @@
 
         {#if !playlist}
             <Button title={$dictionary.new?.playlist} on:click={createPlaylist}>
-                <Icon size={1.3} id="playlist_create" right={!$labelsDisabled} />
+                <Icon size={1.2} id="playlist_create" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<p><T id="new.playlist" /></p>{/if}
+            </Button>
+        {:else}
+            <Button active={playlistSettings === true} title={$dictionary.audio?.playlist_settings} on:click={() => (playlistSettings = !playlistSettings)}>
+                <Icon size={1.1} id="options" right={!$labelsDisabled} white={playlistSettings} />
+                {#if !$labelsDisabled}<p><T id="audio.playlist_settings" /></p>{/if}
             </Button>
         {/if}
     </div>

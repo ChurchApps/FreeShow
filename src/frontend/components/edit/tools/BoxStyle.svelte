@@ -148,7 +148,7 @@
         // chords
         setBoxInputValue(box, "chords", "chords.enabled", "value", item?.chords?.enabled || false)
         setBoxInputValue(box, "chords", "chords.color", "value", item?.chords?.color || "#FF851B")
-        setBoxInputValue(box, "chords", "chords.size", "value", item?.chords?.size || 30)
+        setBoxInputValue(box, "chords", "chords.size", "value", item?.chords?.size || 60)
         setBoxInputValue(box, "chords", "chords.color", "hidden", !item?.chords?.enabled)
         setBoxInputValue(box, "chords", "chords.size", "hidden", !item?.chords?.enabled)
 
@@ -301,9 +301,9 @@
         function getSelectedItem() {
             if ($activeEdit.id) {
                 if ($activeEdit.type === "overlay") {
-                    return $overlays[$activeEdit.id].items[allItems[0]]
+                    return clone($overlays[$activeEdit.id].items[allItems[0]])
                 } else if ($activeEdit.type === "template") {
-                    return $templates[$activeEdit.id].items[allItems[0]]
+                    return clone($templates[$activeEdit.id].items[allItems[0]])
                 }
             }
 
@@ -371,7 +371,7 @@
         allSlideItems = clone(allSlideItems)
 
         // reverse to get same order as "Textbox" & "Items" etc., uses
-        allItems = allItems.reverse()
+        if (($activeEdit.type || "show") === "show") allItems = allItems.reverse()
 
         // only same type
         let currentType = id || allSlideItems[allItems[0]].type || "text"
@@ -479,10 +479,12 @@
         if ($activeEdit.id) {
             // overlay / template
             let currentItems: any[] = []
-            if ($activeEdit.type === "overlay") currentItems = $overlays[$activeEdit.id!].items
-            if ($activeEdit.type === "template") currentItems = $templates[$activeEdit.id!].items
+            if ($activeEdit.type === "overlay") currentItems = clone($overlays[$activeEdit.id!].items)
+            if ($activeEdit.type === "template") currentItems = clone($templates[$activeEdit.id!].items)
             // only selected
-            currentItems = clone(currentItems).filter((_item, i) => allItems.includes(i))
+            currentItems = currentItems.filter((_item, i) => allItems.includes(i))
+
+            // WIP changing the default "Name" overlay causes textbox swapping....
 
             allItems.forEach((_itemIndex, i) => {
                 let allValues: any = Object.values(values)[0]
@@ -494,11 +496,14 @@
                 else if (currentType !== "text") currentItems[i].style = currentValue
                 else {
                     let lines: any = currentItems[i].lines
+                    console.log(clone(lines), clone(currentValue), clone(currentItems))
                     lines?.forEach((_a: any, j: number) => {
                         currentItems[i].lines![j][aligns ? "align" : "text"] = currentValue[j]
                     })
                 }
             })
+
+            // WIP if top textbox is empty, and another has text, that will update (but the right side won't update (as top is empty as not changed)), that is confusing
 
             // no text
             if (currentItems[0].lines) {
@@ -537,8 +542,8 @@
 
         // no text
         // values: {key: [[[]]]}
-        let textLength = Object.values(values).reduce((length: number, value: any) => (length += value.flat(2)?.length || 0), 0)
-        if (!textLength) {
+        let textLength = Object.values(values).reduce((length: number, value: any) => length + value.flat(2).reduce((value, text) => value + (text?.value || ""), "").length, 0)
+        if (input.key !== "text-align" && !aligns && !textLength) {
             newToast("$empty.text")
             return
         }

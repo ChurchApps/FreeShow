@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeShow, dictionary, midiIn, projects, special } from "../../stores"
+    import { activeProject, activeShow, dictionary, labelsDisabled, midiIn, projects, special } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -101,8 +101,9 @@
 {/if}
 
 <div class="settingsButton">
-    <Button title={$dictionary.menu?.settings} on:click={() => (settingsOpened = !settingsOpened)} style="padding: 10px;" dark>
-        <Icon id="settings" white={settingsOpened} size={1.1} />
+    <Button title={$dictionary.menu?.settings} on:click={() => (settingsOpened = !settingsOpened)} style="padding: 8px 10px;" dark>
+        <Icon id="options" white={settingsOpened} size={1.1} right={!$labelsDisabled} />
+        {#if !$labelsDisabled}<T id="edit.options" />{/if}
     </Button>
 </div>
 
@@ -137,5 +138,7 @@
         position: absolute;
         bottom: 0;
         right: 0;
+
+        background-color: var(--primary);
     }
 </style>
