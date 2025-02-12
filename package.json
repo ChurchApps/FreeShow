@@ -156,7 +156,7 @@
         "@types/tmp": "^0.2.6",
         "@types/vimeo__player": "^2.16.2",
         "electron": "^32.1.2",
-        "electron-builder": "^26.0.6",
+        "electron-builder": "^26.0.1",
         "playwright": "^1.49.0",
         "prettier": "^3.4.1",
         "rollup": "^4.28.0",
