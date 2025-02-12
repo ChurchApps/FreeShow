@@ -231,7 +231,8 @@ export function getItemText(item: Item): string {
     if (!item?.lines) return ""
 
     item.lines.forEach((line) => {
-        if (!line.text) return
+        console.assert(Array.isArray(line?.text), "Text is not an array!")
+        if (!Array.isArray(line?.text)) return
 
         line.text.forEach((content) => {
             text += content.value

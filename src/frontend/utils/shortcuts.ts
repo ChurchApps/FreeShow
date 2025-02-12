@@ -71,6 +71,10 @@ const ctrlKeys: any = {
     "?": () => activePopup.set("shortcuts"),
 }
 
+const shiftCtrlKeys: any = {
+    f: () => menuClick("focus_mode"),
+}
+
 export const disablePopupClose = ["initialize", "cloud_method"]
 const keys: any = {
     Escape: () => {
@@ -151,6 +155,12 @@ export function keydown(e: any) {
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
         const macShortcutDebug = false
         if ((key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(key) && get(os).platform !== "darwin" && !macShortcutDebug)) {
+            return
+        }
+
+        if (e.shiftKey && shiftCtrlKeys[key]) {
+            e.preventDefault()
+            shiftCtrlKeys[key](e)
             return
         }
 

@@ -60,7 +60,7 @@
 
             // verses
             activeVerses = $openScripture.verses
-            bibles[0].activeVerses = activeVerses
+            if (bibles[0]) bibles[0].activeVerses = activeVerses
 
             openScripture.set(null)
         }, 100)
@@ -107,7 +107,7 @@
 
                 if (load === "books" && data?.length) setBooksCache(objectId, data)
             } catch (err) {
-                if (bibles[0].api) error = err
+                if (bibles[0]?.api) error = err
             }
         }
 
@@ -372,7 +372,7 @@
 
         if (bookId !== searchValues.book) {
             bookId = searchValues.book
-            if (bibles[0].api) chapterId = `${bookId}.1`
+            if (bibles[0]?.api) chapterId = `${bookId}.1`
             getBook()
             getChapter()
         }
@@ -835,7 +835,7 @@
     let gridMode: boolean = false
     let history: boolean = false
 
-    $: currentHistory = clone($scriptureHistory.filter((a) => a.id === bibles[0].id)).reverse()
+    $: currentHistory = clone($scriptureHistory.filter((a) => a.id === bibles[0]?.id)).reverse()
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />

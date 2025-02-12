@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, popupData, styles } from "../../../stores"
+    import { activePopup, dictionary, popupData, styles } from "../../../stores"
     import { history } from "../../helpers/history"
     import { metadataDisplayValues } from "../../helpers/show"
     import T from "../../helpers/T.svelte"
@@ -27,7 +27,7 @@
         }
 
         if (isStyle) {
-            if (!$styles[styleId]) return
+            if (!$styles[styleId]) setInitialStyle()
             history({ id: "UPDATE", newData: { key: "displayMetadata", data: id }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style", override: "style_" + styleId } })
         } else if (triggerFunction) {
             metadataDisplay = id
@@ -35,10 +35,18 @@
         }
     }
 
+    function setInitialStyle() {
+        // create a style if nothing exists
+        styles.update((a) => {
+            if (!a[styleId]) a[styleId] = { name: $dictionary.example?.default || "Default" }
+            return a
+        })
+    }
+
     let isStyle: boolean = $popupData.action === "style_metadata"
     let triggerFunction: any = $popupData.trigger
     let value: string = $popupData.active || ""
-    let styleId: string = $popupData.id
+    let styleId: string = $popupData.id || "default"
 
     onMount(() => {
         popupData.set({})
