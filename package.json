@@ -134,8 +134,8 @@
             "icon": "build/public/icon.png",
             "azureSignOptions": {
                 "publisherName": "Live Church Solutions",
-                "endpoint": "https://neu.codesigning.azure.net/",
-                "certificateProfileName": "freeshow-code-signing",
+                "endpoint": "https://wus2.codesigning.azure.net/",
+                "certificateProfileName": "FreeShow",
                 "codeSigningAccountName": "FreeShow"
             }
         }
