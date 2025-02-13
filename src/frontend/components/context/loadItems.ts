@@ -10,6 +10,7 @@ import { clone, keysToID, sortByName, sortObject } from "../helpers/array"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
+import { getActionName, getActionTriggerId } from "../actions/actions"
 
 const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
@@ -190,12 +191,17 @@ const loadActions = {
         if (slideActions.length) {
             if (media.length) media.push("SEPERATOR")
             let actionItems = sortByName(
-                slideActions.map((action: any) => ({
-                    id: action.id,
-                    label: actionData[action.triggers?.[0]]?.name || "",
-                    icon: actionData[action.triggers?.[0]]?.icon || "actions",
-                    type: "action",
-                })),
+                slideActions.map((action: any) => {
+                    let triggerId = getActionTriggerId(action.triggers?.[0])
+                    let customData = actionData[triggerId] || {}
+                    let actionValue = action?.actionValues?.[triggerId] || {}
+                    let customName = getActionName(triggerId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")
+
+                    let label = translate(actionData[triggerId]?.name || "") + (customName ? ` (${customName})` : "")
+                    let icon = actionData[triggerId]?.icon || "actions"
+
+                    return { id: action.id, label, translate: false, icon, type: "action" }
+                }),
                 "label"
             )
             media.push(...actionItems)

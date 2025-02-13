@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../types/Tabs"
-    import { dictionary, labelsDisabled, openToolsTab } from "../../stores"
+    import { activePage, dictionary, labelsDisabled, openToolsTab } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -14,7 +14,7 @@
 
     $: if ($openToolsTab) openTab()
     function openTab() {
-        if (manuallyChanged) return
+        if ($activePage !== "show" && manuallyChanged) return
 
         let tabId = $openToolsTab
         openToolsTab.set("")

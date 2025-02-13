@@ -264,7 +264,7 @@
 
 <svelte:window on:keydown={keydown} />
 
-<div class="scroll">
+<div class="scroll split">
     <Zoomed style="width: 100%;" {background}>
         {#if bibles[0]?.activeVerses}
             {#if templateBackground}
@@ -281,7 +281,7 @@
     </Zoomed>
 
     <!-- settings -->
-    <div class="settings">
+    <div class="settings border">
         <CombinedInput>
             <p><T id="info.template" /></p>
             <Button
@@ -438,12 +438,14 @@
 
     div :global(.zoomed) {
         height: initial !important;
+        flex: 1;
     }
 
     .settings {
         display: flex;
         flex-direction: column;
         padding: 10px;
+        flex: 1;
     }
 
     .settings :global(.dropdown) {

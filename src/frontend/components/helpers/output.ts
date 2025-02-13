@@ -41,7 +41,7 @@ import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
-import { getItemWithMostLines, replaceDynamicValues } from "./showActions"
+import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
 
@@ -941,7 +941,8 @@ export function getOutputLines(outSlide: any, styleLines: any = 0) {
     let maxStyleLines = Number(styleLines || 0)
 
     // ensure last content is shown when e.g. two styles has 2 & 3 lines, and the slide has 4 lines
-    if ((outSlide.line || 0) + maxStyleLines > maxLines) progress = 1
+    let amountOfLinesToShow: number = getFewestOutputLines()
+    if ((outSlide.line || 0) + amountOfLinesToShow > maxLines) progress = 1
 
     let linesIndex = Math.ceil(maxLines * progress) - 1
     let start = maxStyleLines * Math.floor(linesIndex / maxStyleLines)
