@@ -39,6 +39,7 @@ import {
     activeEdit,
     activePage,
     activePopup,
+    activeProject,
     activeShow,
     activeTimers,
     alertMessage,
@@ -263,7 +264,7 @@ const receiveMAIN: any = {
         data.projects.forEach((pcoProject) => {
             // CREATE PROJECT FOLDER
             let folderId = pcoProject.folderId
-            if (folderId && !get(folders)[folderId]) {
+            if (folderId && (!get(folders)[folderId] || get(folders)[folderId].deleted)) {
                 history({ id: "UPDATE", newData: { replace: { parent: "/", name: pcoProject.folderName } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
             }
 
@@ -280,6 +281,8 @@ const receiveMAIN: any = {
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
         })
 
+        // open closest to today
+        activeProject.set(data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]?.id)
         projectView.set(false)
     },
 }

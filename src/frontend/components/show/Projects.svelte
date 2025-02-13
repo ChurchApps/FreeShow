@@ -32,6 +32,7 @@
     $: p = Object.entries($projects)
         .filter(([_, a]) => !a.deleted)
         .map(([id, project]) => ({ ...project, parent: $folders[project.parent] ? project.parent : "/", id, shows: [] as any }))
+
     $: {
         let sortType = $sorted.projects?.type || "name"
         // sort by name regardless because project folders <= 0.9.5 doesn't have created date
@@ -48,6 +49,9 @@
         }
 
         tree = [...sortedFolders, ...sortedProjects]
+
+        // update parents (if folders are missing)
+        tree = tree.map((a) => ({ ...a, parent: !$folders[a.parent] || $folders[a.parent].deleted ? "/" : a.parent }))
 
         folderSorted = []
         sortFolders()
@@ -202,11 +206,19 @@
         {/if}
 
         <div id="projectsButtons" class="tabs">
-            <Button on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $projects[$activeProject || ""]?.parent || "/" } }, location: { page: "show", id: "project_folder" } })} center title={$dictionary.new?.folder}>
+            <Button
+                on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/" } }, location: { page: "show", id: "project_folder" } })}
+                center
+                title={$dictionary.new?.folder}
+            >
                 <Icon id="folder" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<p><T id="new.folder" /></p>{/if}
             </Button>
-            <Button on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $projects[$activeProject || ""]?.parent || "/" } }, location: { page: "show", id: "project" } })} center title={$dictionary.new?.project}>
+            <Button
+                on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/" } }, location: { page: "show", id: "project" } })}
+                center
+                title={$dictionary.new?.project}
+            >
                 <Icon id="project" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<p><T id="new.project" /></p>{/if}
             </Button>
