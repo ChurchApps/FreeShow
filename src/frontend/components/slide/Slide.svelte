@@ -256,7 +256,7 @@
     let timer: number[] = []
     $: if ($activeTimers) {
         timer = []
-        slide.items?.forEach(checkItem)
+        if (Array.isArray(slide.items)) slide.items.forEach(checkItem)
     }
     function checkItem(item: any) {
         if (item?.type !== "timer") return
