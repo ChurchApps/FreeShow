@@ -21,6 +21,7 @@ export interface BibleCategories extends Category {
     api?: boolean
     copyright?: string // API copyright information
     attributionRequired?: boolean // API needs attribution
+    attributionString?: string // API needs custom attribution
     books2?: any[] // api cache
     cacheUpdate?: Date
     collection?: {

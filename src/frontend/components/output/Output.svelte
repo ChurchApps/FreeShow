@@ -8,6 +8,7 @@
     import { colorbars, customMessageCredits, drawSettings, drawTool, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { destroy, receive, send } from "../../utils/request"
+    import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
     import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, setTemplateStyle } from "../helpers/output"
@@ -318,8 +319,25 @@
         <!-- {/if} -->
     {/if}
 
+    {#if slide?.attributionString}
+        <p class="attributionString" transition:custom={transitions.text}>{slide.attributionString}</p>
+    {/if}
+
     <!-- draw -->
     {#if currentOutput.active || (mirror && !preview)}
         <Draw />
     {/if}
 </Zoomed>
+
+<style>
+    .attributionString {
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+
+        font-size: 28px;
+        font-style: italic;
+        opacity: 0.7;
+    }
+</style>

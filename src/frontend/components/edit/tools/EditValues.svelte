@@ -211,8 +211,8 @@
             "list.enabled": true,
         },
         chords: {
-            "chords.enabled": false,
-            // chords: undefined,
+            "chords.enabled": true, // normal slide
+            chords: true, // stage
         },
         // media
         filters: {

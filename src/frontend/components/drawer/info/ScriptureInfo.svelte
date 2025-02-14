@@ -64,7 +64,7 @@
         }
     }
 
-    $: showVersion = bibles[0]?.attributionRequired || $scriptureSettings.showVersion
+    $: showVersion = bibles.find((a) => a?.attributionRequired) || $scriptureSettings.showVersion
 
     function createSlides() {
         if (!bibles[0]) return { show: null }
@@ -181,7 +181,7 @@
         if (!outputIsScripture) customActionActivation("scripture_start")
 
         let tempItems: Item[] = slides[0] || []
-        setOutput("slide", { id: "temp", tempItems })
+        setOutput("slide", { id: "temp", tempItems, attributionString })
 
         // play template background
         if (!templateBackground) return
@@ -220,7 +220,7 @@
 
         Object.keys(textKeys).forEach((key) => {
             let isEnabled = $scriptureSettings[key]
-            if (key === "showVersion" && bibles[0]?.attributionRequired) isEnabled = true
+            if (key === "showVersion" && bibles.find((a) => a?.attributionRequired)) isEnabled = true
             if (isEnabled) {
                 if (text.length) text += "\n"
                 text += textKeys[key]
@@ -260,6 +260,8 @@
 
     $: styleId = $outputs[getActiveOutputs()[0]]?.style || ""
     $: background = $templates[templateId]?.settings?.backgroundColor || $styles[styleId]?.background || "#000000"
+
+    $: attributionString = [...new Set(bibles.map((a) => a?.attributionString).filter(Boolean))].join(" / ")
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -277,6 +279,10 @@
                     <Textbox {item} ref={{ id: "scripture" }} />
                 {/each}
             {/key}
+
+            {#if attributionString}
+                <p class="attributionString">{attributionString}</p>
+            {/if}
         {/if}
     </Zoomed>
 
@@ -370,7 +376,7 @@
         <CombinedInput textWidth={70}>
             <p><T id="scripture.version" /></p>
             <div class="alignRight">
-                <Checkbox disabled={bibles[0]?.attributionRequired} id="showVersion" checked={showVersion} on:change={checked} />
+                <Checkbox disabled={bibles.find((a) => a?.attributionRequired)} id="showVersion" checked={showVersion} on:change={checked} />
             </div>
         </CombinedInput>
 
@@ -452,5 +458,16 @@
         /* position: absolute; */
         width: 160%;
         right: 0;
+    }
+
+    .attributionString {
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+
+        font-size: 28px;
+        font-style: italic;
+        opacity: 0.7;
     }
 </style>

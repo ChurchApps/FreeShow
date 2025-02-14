@@ -122,6 +122,7 @@ export const tempPath: Writable<string> = writable("")
 export const scriptureHistory: Writable<any[]> = writable([])
 
 // EDIT
+export const editColumns: Writable<number> = writable(1)
 export const editHistory: Writable<any[]> = writable([])
 export const refreshEditSlide: Writable<boolean> = writable(false)
 export const refreshListBoxes: Writable<number> = writable(-1)
