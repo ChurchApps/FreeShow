@@ -194,7 +194,7 @@ const loadActions = {
                 slideActions.map((action: any) => {
                     let triggerId = getActionTriggerId(action.triggers?.[0])
                     let customData = actionData[triggerId] || {}
-                    let actionValue = action?.actionValues?.[triggerId] || {}
+                    let actionValue = action?.actionValues?.[triggerId] || action?.actionValues?.[action.triggers?.[0]] || {}
                     let customName = getActionName(triggerId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")
 
                     let label = translate(actionData[triggerId]?.name || "") + (customName ? ` (${customName})` : "")

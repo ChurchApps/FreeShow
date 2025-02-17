@@ -568,7 +568,13 @@
                             />
                         </CombinedInput>
                         {#if input.slider}
-                            <Slider {...input.values || {}} {value} style="border-bottom: 2px solid var(--primary-lighter);" on:input={(e) => valueChange(e, input, true)} on:change={(e) => valueChange(e, input)} />
+                            <Slider
+                                {...{ ...(input.values || {}), ...(input.sliderValues || {}) }}
+                                {value}
+                                style="border-bottom: 2px solid var(--primary-lighter);"
+                                on:input={(e) => valueChange(e, input, true)}
+                                on:change={(e) => valueChange(e, input)}
+                            />
                         {/if}
                     {/if}
                 {/if}

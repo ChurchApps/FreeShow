@@ -85,8 +85,8 @@
         {#each actions.slideActions as action}
             <!-- should be always just one trigger on each action when on a slide -->
             {@const actionId = getActionTriggerId(action.triggers?.[0])}
-            {@const actionValue = action?.actionValues?.[actionId] || {}}
             {@const customData = actionData[actionId] || {}}
+            {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
             {@const customName = getActionName(actionId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")}
 
             <div class="button {customData.red ? '' : 'white'}">

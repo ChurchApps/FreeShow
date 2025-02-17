@@ -34,6 +34,7 @@ export type EditInput = {
     popup?: string
     enableNoColor?: boolean
     slider?: boolean // include number slider
+    sliderValues?: any // custom number slider values
     styleValue?: string // custom css styling
     title?: string // custom hover title
     relative?: boolean // updated values should be relative to each selected item (only for number px values)
@@ -111,8 +112,8 @@ export const boxes: Box = {
             ],
             align: [{ input: "align-x" }, { input: "align-y" }],
             text: [
-                { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
-                { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100 }, extension: "px" },
+                { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -300 }, extension: "px" },
+                { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100, max: 200 }, extension: "px" },
                 {
                     name: "text_transform",
                     input: "dropdown",
@@ -128,14 +129,15 @@ export const boxes: Box = {
                         ],
                     },
                 },
-                { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", enableNoColor: true },
+                // probably not needed as we have line and item background color
+                // { name: "background_color", id: "style", key: "background-color", input: "color", value: "rgb(0 0 0 / 0)", enableNoColor: true },
                 { name: "no_wrap", id: "nowrap", input: "checkbox", value: false },
             ],
             lines: [
-                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
+                { name: "line_height", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 5, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
                 { name: "line_spacing", id: "specialStyle.lineGap", input: "number", value: 0, values: { max: 500 } },
                 { name: "background_color", id: "specialStyle.lineBg", input: "color", value: "", enableNoColor: true },
-                { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
+                { name: "background_opacity", id: "specialStyle.opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } },
             ],
             list: [
                 { name: "list", id: "list.enabled", input: "checkbox", value: false },
@@ -264,16 +266,17 @@ export const boxes: Box = {
                 // object-position: 20px 20px;
                 // transform: scale(1.2) translate(0, 5%);
             ],
+            // same as media.ts mediaFilters
             filters: [
                 { name: "filter.hue-rotate", id: "filter", key: "hue-rotate", input: "number", slider: true, value: 0, values: { max: 360 }, extension: "deg" },
                 { name: "filter.invert", id: "filter", key: "invert", input: "number", slider: true, value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
-                { name: "filter.blur", id: "filter", key: "blur", input: "number", slider: true, value: 0, values: { max: 100 }, extension: "px" },
+                { name: "filter.blur", id: "filter", key: "blur", input: "number", slider: true, value: 0, values: { max: 100 }, extension: "px", sliderValues: { max: 50 } },
                 { name: "filter.grayscale", id: "filter", key: "grayscale", input: "number", slider: true, value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
                 { name: "filter.sepia", id: "filter", key: "sepia", input: "number", slider: true, value: 0, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
-                { name: "filter.brightness", id: "filter", key: "brightness", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
-                { name: "filter.contrast", id: "filter", key: "contrast", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
-                { name: "filter.saturate", id: "filter", key: "saturate", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 } },
-                { name: "filter.opacity", id: "filter", key: "opacity", input: "number", slider: true, value: 1, values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 } },
+                { name: "filter.brightness", id: "filter", key: "brightness", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0.2, max: 1.8 } },
+                { name: "filter.contrast", id: "filter", key: "contrast", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { min: 0.2, max: 1.8 } },
+                { name: "filter.saturate", id: "filter", key: "saturate", input: "number", slider: true, value: 1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, sliderValues: { max: 2 } },
+                { name: "filter.opacity", id: "filter", key: "opacity", input: "number", slider: true, value: 1, values: { max: 1, step: 0.1, decimals: 2, inputMultiplier: 100 }, sliderValues: { step: 0.01 } },
             ],
             // shadow: [
             //   { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },

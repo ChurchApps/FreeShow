@@ -191,6 +191,8 @@ export function getActionName(actionId: string, actionValue: any) {
         return Number(actionValue.volume || 1) * 100
     }
 
+    console.log(actionId, actionValue)
+
     if (!namedObjects[actionId]) return
 
     return namedObjects[actionId]()[actionValue.id]?.name

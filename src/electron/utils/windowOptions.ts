@@ -56,6 +56,7 @@ export const outputOptions: BrowserWindowConstructorOptions = {
     // titleBarStyle: "hidden", // hide titlebar
     // kiosk: true, // fixed window over menu bar
     // roundedCorners: false, // disable rounded corners on mac
+    // thickFrame: false, // remove window shadow and window animations on Windows
     webPreferences: {
         preload: join(__dirname, "..", "preload"),
         webSecurity: isProd,

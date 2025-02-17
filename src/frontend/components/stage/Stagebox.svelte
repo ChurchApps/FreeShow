@@ -168,7 +168,7 @@
         <div class="label">{getCustomStageLabel(id, $dictionary)}</div>
     {/if}
     {#if edit}
-        <Movebox {ratio} active={$activeStage.items.includes(id)} />
+        <Movebox {ratio} itemStyle={item.style} active={$activeStage.items.includes(id)} />
     {/if}
 
     {#if id.includes("current_output")}

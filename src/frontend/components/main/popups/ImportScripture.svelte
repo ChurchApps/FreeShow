@@ -227,7 +227,7 @@
     <br />
 
     <CombinedInput>
-        <Button on:click={() => send(IMPORT, ["BIBLE"], { format: { name: "Bible", extensions: ["xml", "json"] } })} style="width: 100%;" center dark>
+        <Button on:click={() => send(IMPORT, ["BIBLE"], { format: { name: "Bible", extensions: ["xml", "json", "fsb"] } })} style="width: 100%;" center dark>
             <Icon id="import" right />
             <T id="scripture.local" />
         </Button>

@@ -26,7 +26,7 @@
     export let mouse: any = {}
     function mousedown(e: any) {
         if (e.target.closest(".chords") || e.target.closest(".editTools")) return
-        if (!e.target.closest(".line") && !e.target.closest(".square")) openToolsTab.set("text")
+        if (!e.target.closest(".line") && !e.target.closest(".square") && !e.target.closest(".rotate") && !e.target.closest(".radius")) openToolsTab.set("text")
 
         const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 

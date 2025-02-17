@@ -137,6 +137,7 @@
         setBoxInputValue(box, "lines", "specialStyle.lineBg", "value", lineBg)
         let backgroundValue = splitRgb(lineBg)
         setBoxInputValue(box, "lines", "specialStyle.opacity", "value", backgroundValue.a)
+        setBoxInputValue(box, "lines", "specialStyle.opacity", "hidden", !lineBg)
 
         // list
         setBoxInputValue(box, "list", "list.enabled", "value", item?.list?.enabled || false)

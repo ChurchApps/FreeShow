@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { moveBox, resizeBox } from "./textbox"
+    import { getRadius, moveBox, resizeBox, rotateBox } from "./textbox"
 
     export let lines: [string, number][]
     export let mouse: any
@@ -12,7 +12,7 @@
         if (!mouse || mouse.rightClick) return
 
         let notTextBox: boolean = mouse.item.type !== undefined && mouse.item.type !== "text"
-        if (!notTextBox && !e.ctrlKey && !e.metaKey && !mouse.e.target.closest(".line") && !mouse.e.target.closest(".square")) return
+        if (!notTextBox && !e.ctrlKey && !e.metaKey && !mouse.e.target.closest(".line") && !mouse.e.target.closest(".square") && !mouse.e.target.closest(".rotate") && !mouse.e.target.closest(".radius")) return
 
         e?.preventDefault()
         styles = {}
@@ -24,14 +24,21 @@
         let square = e.shiftKey
         if (mouse.item.type === "icon") square = true
 
-        if (moveCondition) [styles, lines] = moveBox(e, mouse, ratio, active, lines)
-        else if (mouse.e.target.closest(".square")) {
+        if (mouse.e.target.closest(".rotate")) {
+            let rotation = rotateBox(e, mouse, ratio)
+            styles = { transform: `rotate(${rotation.toFixed(2)}deg);` }
+        } else if (mouse.e.target.closest(".radius")) {
+            let radius = getRadius(e, mouse, ratio)
+            styles = { "border-radius": `${radius.toFixed(2)}px;` }
+        } else if (moveCondition) {
+            ;[styles, lines] = moveBox(e, mouse, ratio, active, lines)
+        } else if (mouse.e.target.closest(".square")) {
             styles = resizeBox(e, mouse, square, ratio)
             if (!e.altKey) [styles, lines] = moveBox(e, mouse, ratio, active, lines, styles)
         }
 
         Object.keys(styles).forEach((key) => {
-            if (styles[key] === undefined || styles[key].toString().includes("px")) return
+            if (styles[key] === undefined || styles[key].toString().includes("px") || styles[key].toString().includes("deg")) return
             if (key === "width" || key === "height") styles[key] = Math.max(16 / ratio, styles[key])
             styles[key] = styles[key].toFixed(2) + "px"
         })
