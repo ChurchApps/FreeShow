@@ -37,6 +37,7 @@ import { videoExtensions } from "../../values/extensions"
 import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
+import type { EditInput } from "../edit/values/boxes"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
@@ -370,6 +371,7 @@ export function outputSlideHasContent(output) {
 
 // WIP style should override any slide resolution & color ? (it does not)
 
+// this actually gets aspect ratio
 export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, _getSlideRes: boolean = false, outputId: string = ""): Resolution {
     if (initial) return initial
 
@@ -377,30 +379,70 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
     let currentOutput = get(outputs)[outputId]
 
     let style: any = currentOutput?.style ? get(styles)[currentOutput?.style] || {} : {}
-    let styleRes = style.resolution || null
+    let styleRatio = style.aspectRatio || style.resolution
 
-    // let styleTemplate: any = style.template ? get(templates)[style.template] || {} : {}
-    // let styleTemplateRes: any = styleTemplate.settings?.resolution
+    let ratio = styleRatio?.outputResolutionAsRatio ? currentOutput?.bounds : styleRatio
 
-    // let slideRes: any = null
-    // if (getSlideRes) {
-    //     let outSlide: any = currentOutput?.out?.slide || {}
-    //     let slideRef = _show(outSlide.id || "")
-    //         .layouts([outSlide.layout])
-    //         .ref()[0]?.[outSlide.index]
-    //     let slideOutput = _show(outSlide.id || "").get("slides")?.[slideRef?.id] || null
-    //     slideRes = slideOutput?.settings?.resolution
-    // }
-
-    // slideRes || styleTemplateRes ||
-    return styleRes || { width: 1920, height: 1080 }
+    return ratio || { width: 16, height: 9 }
 }
 
-export function getOutputResolution(outputId: string, _updater = get(outputs), _styleUpdater = get(styles)) {
+// calculate actual output resolution based on style aspect ratio
+export function getOutputResolution(outputId: string, _updater = get(outputs), scaled: boolean = false) {
     let currentOutput = _updater[outputId]
-    let style = currentOutput?.style ? _styleUpdater[currentOutput?.style]?.resolution : null
+    let outputRes = clone(currentOutput?.bounds || { width: 1920, height: 1080 })
+    if (!scaled) return outputRes
 
-    return style || { width: 1920, height: 1080 }
+    let styleRatio = getResolution(null, null, false, outputId)
+    let styleAspectRatio = styleRatio.width / styleRatio.height
+
+    // output window size is narrow
+    if (outputRes.width < outputRes.height) {
+        outputRes.width = Math.round(outputRes.height * styleAspectRatio)
+
+        // let outputAspectRatio = outputRes.width / outputRes.height
+        // outputRes.width = Math.round(outputRes.height * outputAspectRatio)
+    } else {
+        outputRes.height = Math.round(outputRes.width / styleAspectRatio)
+    }
+
+    return outputRes
+}
+
+export function stylePosToPercentage(styles: { [key: string]: any }) {
+    if (styles.left) styles.left = (styles.left / 1920) * 100
+    if (styles.top) styles.top = (styles.top / 1080) * 100
+    if (styles.width) styles.width = (styles.width / 1920) * 100
+    if (styles.height) styles.height = (styles.height / 1080) * 100
+
+    return styles
+}
+
+export function percentageStylePos(style: string, resolution: Resolution) {
+    let styles = getStyles(style, true)
+    styles = stylePosToPercentage(styles)
+
+    let width = resolution.width || 1920
+    let height = resolution.height || 1080
+
+    if (styles.left) style += "left: " + width * (Number(styles.left) / 100) + "px;"
+    if (styles.top) style += "top: " + height * (Number(styles.top) / 100) + "px;"
+    if (styles.width) style += "width: " + width * (Number(styles.width) / 100) + "px;"
+    if (styles.height) style += "height: " + height * (Number(styles.height) / 100) + "px;"
+
+    return style
+}
+
+export function percentageToAspectRatio(input: EditInput) {
+    if (input.id !== "style") return input
+
+    if (input.key === "left" || input.key === "width") input.value = 1920 * (trimPixelValue(input.value) / 100) + "px"
+    else if (input.key === "top" || input.key === "height") input.value = 1080 * (trimPixelValue(input.value) / 100) + "px"
+
+    return input
+}
+
+function trimPixelValue(value: any) {
+    return Number(value?.toString().replace("px", ""))
 }
 
 export function checkWindowCapture(startup: boolean = false) {

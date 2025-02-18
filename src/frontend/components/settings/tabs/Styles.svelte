@@ -1,6 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
+    import type { AspectRatio, Resolution } from "../../../../types/Settings"
     import { activePopup, activeStyle, dictionary, outputs, popupData, styles, templates } from "../../../stores"
+    import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
@@ -9,18 +11,16 @@
     import { history } from "../../helpers/history"
     import { getFileName } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
+    import { metadataDisplayValues } from "../../helpers/show"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import MediaPicker from "../../inputs/MediaPicker.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { transitionTypes } from "../../../utils/transitions"
-    import { metadataDisplayValues } from "../../helpers/show"
 
     function updateStyle(e: any, key: string, currentId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -82,19 +82,33 @@
 
     // resolutions
     // https://www.wearethefirehouse.com/aspect-ratio-cheat-sheet
-    const resolutions = [
-        { name: "720p 960x720 (4/3)", data: { width: 960, height: 720 } },
-        { name: "720p 1280x720 (16/9)", data: { width: 1280, height: 720 } },
-        { name: "1080p 1440x1080 (4/3)", data: { width: 1440, height: 1080 } },
-        { name: "1080p 1920x1080 (16/9)", data: { width: 1920, height: 1080 } },
-        { name: "2K 2048x1152 (16/9)", data: { width: 2048, height: 1152 } },
-        { name: "4K 3840x2160 (16/9)", data: { width: 3840, height: 2160 } },
-        { name: "8K 7680x4320 (16/9)", data: { width: 7680, height: 4320 } },
-        { name: "Cinema Flat 2K 1998x1080 (1.85)", data: { width: 1998, height: 1080 } },
-        { name: "Cinema Scope 2K 2048x858 (2.39)", data: { width: 2048, height: 858 } },
-        { name: "Cinema Flat 4K 3996x2160 (1.85)", data: { width: 3996, height: 2160 } },
-        { name: "Cinema Scope 4K 4096x1716 (2.39)", data: { width: 4096, height: 1716 } },
-    ]
+    // const resolutions = [
+    //     { name: "720p 960x720 (4/3)", data: { width: 960, height: 720 } },
+    //     { name: "720p 1280x720 (16/9)", data: { width: 1280, height: 720 } },
+    //     { name: "1080p 1440x1080 (4/3)", data: { width: 1440, height: 1080 } },
+    //     { name: "1080p 1920x1080 (16/9)", data: { width: 1920, height: 1080 } },
+    //     { name: "2K 2048x1152 (16/9)", data: { width: 2048, height: 1152 } },
+    //     { name: "4K 3840x2160 (16/9)", data: { width: 3840, height: 2160 } },
+    //     { name: "8K 7680x4320 (16/9)", data: { width: 7680, height: 4320 } },
+    //     { name: "Cinema Flat 2K 1998x1080 (1.85)", data: { width: 1998, height: 1080 } },
+    //     { name: "Cinema Scope 2K 2048x858 (2.39)", data: { width: 2048, height: 858 } },
+    //     { name: "Cinema Flat 4K 3996x2160 (1.85)", data: { width: 3996, height: 2160 } },
+    //     { name: "Cinema Scope 4K 4096x1716 (2.39)", data: { width: 4096, height: 1716 } },
+    // ]
+
+    function getAspectRatio(resolution: Resolution | undefined): AspectRatio {
+        if (!resolution || (resolution.width === 1920 && resolution.height === 1080)) return { width: 16, height: 9 }
+
+        let ratio = resolution
+        if (ratio.width > 100 || ratio.height > 100) {
+            let width = Number((ratio.width / ratio.height).toFixed(2))
+            if (width === 1.78) return { width: 16, height: 9 }
+            if (width === 1.33) return { width: 4, height: 3 }
+            return { width, height: 1 }
+        }
+
+        return ratio
+    }
 
     // slide
 
@@ -111,6 +125,7 @@
     let edit: any
 
     $: mediaFit = currentStyle.fit || "contain"
+    $: aspectRatio = currentStyle.aspectRatio || getAspectRatio(currentStyle.resolution)
     $: metadataDisplay = currentStyle.displayMetadata || "never"
     $: textTransitionData = transitionTypes.find((a) => a.id === currentStyle.transition?.text?.type)
 </script>
@@ -186,6 +201,7 @@
             popupData.set({ action: "style_transition", id: styleId })
             activePopup.set("transition")
         }}
+        title={$dictionary.actions?.change_transition}
         bold={!currentStyle.transition}
     >
         <div style="display: flex;align-items: center;padding: 0;">
@@ -219,6 +235,7 @@
             popupData.set({ action: "style_fit", id: styleId })
             activePopup.set("media_fit")
         }}
+        title={$dictionary.popup?.media_fit}
         bold={false}
     >
         <div style="display: flex;align-items: center;padding: 0;">
@@ -237,15 +254,29 @@
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->
 <!-- WIP foreground: mask/overlay -->
+
 <CombinedInput>
-    <p><T id="settings.resolution" /></p>
-    <!-- {#if templateResolution}
-        <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.9em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
-    {:else} -->
-    <span class="inputs">
-        <!-- defaults dropdown -->
-        <!-- custom... -->
-        <!-- <span class="text"><T id="screen.width" /></span> -->
+    <p><T id="settings.aspect_ratio" /></p>
+    <Button
+        on:click={() => {
+            popupData.set({ action: "style_ratio", active: aspectRatio, trigger: (value) => updateStyle(value, "aspectRatio") })
+            activePopup.set("aspect_ratio")
+        }}
+        title={$dictionary.popup?.aspect_ratio}
+        bold={false}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="aspect_ratio" style="margin-left: 0.5em;" right />
+            <p>
+                {#if aspectRatio.outputResolutionAsRatio}
+                    <T id="settings.output_resolution_ratio" />
+                {:else}
+                    {aspectRatio.width}:{aspectRatio.height}
+                {/if}
+            </p>
+        </div>
+    </Button>
+    <!-- <span class="inputs">
         <NumberInput
             title={$dictionary.screen?.width}
             value={currentStyle.resolution?.width || 1920}
@@ -254,7 +285,6 @@
             buttons={false}
             on:change={(e) => updateStyle({ width: Number(e.detail), height: currentStyle.resolution?.height || 1080 }, "resolution")}
         />
-        <!-- <span class="text"><T id="screen.height" /></span> -->
         <NumberInput
             title={$dictionary.screen?.height}
             value={currentStyle.resolution?.height || 1080}
@@ -270,8 +300,7 @@
             title={$dictionary.settings?.resolution}
             on:click={(e) => updateStyle(e.detail?.data, "resolution")}
         />
-    </span>
-    <!-- {/if} -->
+    </span> -->
 </CombinedInput>
 
 <h3><T id="preview.slide" /></h3>
@@ -413,6 +442,7 @@
             popupData.set({ action: "style_metadata", id: styleId })
             activePopup.set("metadata_display")
         }}
+        title={$dictionary.popup?.metadata_display}
         bold={false}
     >
         <div style="display: flex;align-items: center;padding: 0;">

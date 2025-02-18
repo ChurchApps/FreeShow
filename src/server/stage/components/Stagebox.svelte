@@ -104,12 +104,8 @@
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
-<div
-    class="item"
-    class:border={show?.settings.labels}
-    class:isDisabledVariable
-    style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{show.settings.autoStretch === false ? '' : newSizes}--labelColor: {show?.settings?.labelColor || '#d0a853'};"
->
+<!-- {show.settings.autoStretch === false ? '' : newSizes} -->
+<div class="item" class:border={show?.settings.labels} class:isDisabledVariable style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {show?.settings?.labelColor || '#d0a853'};">
     {#if show?.settings.labels}
         <div class="label">{item.label || ""}</div>
     {/if}
@@ -127,7 +123,8 @@
                     <SlideNotes notes={slide?.notes || ""} autoSize={item.auto !== false ? autoSize : fontSize} />
                 {:else if id.includes("slide_text")}
                     {#key item || slide}
-                        <SlideText {slide} stageItem={item} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} {textStyle} />
+                        <!-- autoStage={show.settings.autoStretch !== false} -->
+                        <SlideText {slide} stageItem={item} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage {textStyle} />
                     {/key}
                 {:else if id.includes("slide")}
                     {@const slideBackground = next ? background.next : background}
@@ -137,7 +134,8 @@
                             <MediaOutput path={slideBackground.path} mediaStyle={slideBackground.mediaStyle} />
                         {/if}
 
-                        <SlideText {slide} stageItem={item} {show} {resolution} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage={show.settings.autoStretch !== false} {textStyle} style />
+                        <!-- autoStage={show.settings.autoStretch !== false} -->
+                        <SlideText {slide} stageItem={item} {show} {resolution} chords={item.chords} autoSize={item.auto !== false} {fontSize} autoStage {textStyle} style />
                     </span>
                 {:else if id.includes("clock")}
                     <Clock autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} />

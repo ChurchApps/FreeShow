@@ -38,6 +38,8 @@
     // don't refresh content unless it changes
     $: if (JSON.stringify(currentStyling) !== JSON.stringify(currentStyle)) currentStyle = clone(currentStyling)
 
+    $: alignPosition = currentStyle?.aspectRatio?.alignPosition || "center"
+
     // layers
     let layers: string[] = []
     let out: any = {}
@@ -252,6 +254,7 @@
     background={backgroundColor}
     checkered={preview && backgroundColor === "transparent"}
     backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)}
+    align={alignPosition}
     center
     {style}
     {resolution}

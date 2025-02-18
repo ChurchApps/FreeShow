@@ -11,8 +11,8 @@ import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { awaitRequest, send } from "../../utils/request"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
-import { getActiveOutputs, getResolution } from "./output"
 import { clone } from "./array"
+import { getActiveOutputs, getOutputResolution } from "./output"
 
 export function getExtension(path: string): string {
     if (typeof path !== "string") return ""
@@ -106,7 +106,7 @@ export async function getSlideThumbnail(data: API_slide_thumbnail) {
     if (!output.out) output.out = {}
     output.out.slide = { id: data.showId, layout: data.layoutId, index: data.index }
 
-    let resolution = getResolution()
+    let resolution: any = getOutputResolution(outputId)
     resolution = { width: resolution.width * 0.5, height: resolution.height * 0.5 }
 
     const thumbnail = await awaitRequest(MAIN, "CAPTURE_SLIDE", { output: { [outputId]: output }, resolution })

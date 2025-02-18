@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { draw, drawSettings, drawTool, outputs, styles } from "../../stores"
-    import { getActiveOutputs, getResolution } from "../helpers/output"
+    import { draw, drawSettings, drawTool, outputs } from "../../stores"
+    import { getActiveOutputs, getOutputResolution } from "../helpers/output"
     import Output from "../output/Output.svelte"
     import { getStyleResolution } from "../slide/getStyleResolution"
 
@@ -12,7 +12,7 @@
     let width: number = 0
     let height: number = 0
     // Slide?.settings?.resolution
-    $: resolution = getResolution(null, { $outputs, $styles })
+    $: resolution = getOutputResolution(outputId, $outputs, true)
     let ratio: number = 0
 
     let parent: any
@@ -35,7 +35,7 @@
             y -= size / 2
         }
 
-        draw.set({ x, y })
+        draw.set({ x, y, resolution })
     }
 
     const wheel = (e: any) => {
@@ -54,7 +54,7 @@
             a[$drawTool].size = newSize
 
             if ($drawTool === "zoom") sizeDiff = 0
-            if ($draw) draw.set({ x: $draw.x - sizeDiff / 2, y: $draw.y - sizeDiff / 2 })
+            if ($draw) draw.set({ x: $draw.x - sizeDiff / 2, y: $draw.y - sizeDiff / 2, resolution })
 
             return a
         })

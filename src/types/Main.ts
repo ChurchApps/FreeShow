@@ -143,6 +143,7 @@ export type Popups =
     | "variable"
     | "trigger"
     | "audio_stream"
+    | "aspect_ratio"
     | "transition"
     | "media_fit"
     | "metadata_display"

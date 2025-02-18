@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
     import { OUTPUT } from "../../../types/Channels"
-    import { activeStage, currentWindow, dictionary, outputs, stageShows, styles } from "../../stores"
+    import { activeStage, currentWindow, dictionary, stageShows } from "../../stores"
     import { send } from "../../utils/request"
     import { keysToID, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -15,8 +16,6 @@
     import Snaplines from "../system/Snaplines.svelte"
     import { updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
-    import { getResolution } from "../helpers/output"
-    import { onDestroy } from "svelte"
 
     export let outputId: string = ""
     export let stageId: string = ""
@@ -85,7 +84,8 @@
     let width: number = 0
     let height: number = 0
     // WIP change stage resolution
-    $: resolution = getResolution(show?.settings?.resolution, { $outputs, $styles })
+    // $: resolution = getResolution(show?.settings?.resolution, { $outputs, $styles })
+    let resolution = { width: 1920, height: 1080 }
 
     // ACTION BAR
 

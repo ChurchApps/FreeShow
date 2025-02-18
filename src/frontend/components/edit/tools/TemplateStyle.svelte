@@ -7,7 +7,6 @@
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName } from "../../helpers/media"
-    import { getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
@@ -23,10 +22,7 @@
 
     $: if (template) setValues()
     function setValues() {
-        // template?.settings?.resolution
-        let res = getResolution()
         settings = {
-            resolution: { width: res.width, height: res.height },
             backgroundColor: template?.settings?.backgroundColor || "",
             ...(template.settings || {}),
         }
@@ -37,9 +33,6 @@
 
         let newData: any = { key: "settings", data: clone(settings) }
 
-        // don't store resolution if it's the default app resolution
-        if (JSON.stringify(newData.data.resolution) === JSON.stringify(getResolution())) delete newData.data.resolution
-
         history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
     }
 
@@ -49,12 +42,6 @@
 
         update()
     }
-    // function setResolution(e: any, key: "width" | "height") {
-    //     let resolution = settings.resolution || {}
-    //     resolution[key] = Number(e.detail)
-
-    //     setValue(resolution, "resolution")
-    // }
 
     $: overlayList = getList($overlays, true).filter((a) => a.name)
 </script>
@@ -123,16 +110,6 @@
         <p title={$dictionary.edit?.max_lines_per_slide}><T id="edit.max_lines_per_slide" /></p>
         <NumberInput value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
     </CombinedInput>
-
-    <!-- <h6><T id="settings.resolution" /></h6>
-    <CombinedInput>
-        <p><T id="edit.width" /></p>
-        <NumberInput value={settings.resolution?.width || 1920} max={100000} on:change={(e) => setResolution(e, "width")} buttons={false} />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="edit.height" /></p>
-        <NumberInput value={settings.resolution?.height || 1080} max={100000} on:change={(e) => setResolution(e, "height")} buttons={false} />
-    </CombinedInput> -->
 </div>
 
 <style>

@@ -1,6 +1,5 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
-    import { getResolution } from "../helpers/output"
 
     export let id: string
     export let groupId: string
@@ -10,8 +9,8 @@
         video: {
             deviceId: { exact: id },
             groupId,
-            width: { ideal: getResolution().width },
-            height: { ideal: getResolution().height },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
         },
     }
 

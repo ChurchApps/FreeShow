@@ -61,12 +61,13 @@
         <p><T id="edit.background_color" /></p>
         <Color value={settings.color || defaultSettings.color} on:input={(e) => updateStageSettings(e.detail, "color")} />
     </CombinedInput>
-    <CombinedInput>
+    <!-- probably not needed -->
+    <!-- <CombinedInput>
         <p><T id="stage.auto_stretch" /></p>
         <div class="alignRight">
             <Checkbox checked={settings.autoStretch ?? true} on:change={(e) => toggleValue(e, "autoStretch")} />
         </div>
-    </CombinedInput>
+    </CombinedInput> -->
 
     <CombinedInput>
         <p><T id="stage.labels" /></p>

@@ -1,10 +1,10 @@
 <script lang="ts">
     import type { Cropping, Resolution } from "../../../types/Settings"
     import { draw, outputs, styles } from "../../stores"
-    import { getActiveOutputs, getResolution } from "../helpers/output"
+    import { getActiveOutputs, getOutputResolution, getResolution } from "../helpers/output"
 
     export let id: string = ""
-    export let background: string = $styles[$outputs[getActiveOutputs()[0]]?.style || ""]?.background || "#000000"
+    export let background: string = $styles[$outputs[id || getActiveOutputs()[0]]?.style || ""]?.background || "#000000"
     export let backgroundDuration: number = 800
     export let center: boolean = false
     export let zoom: boolean = true
@@ -13,6 +13,7 @@
     export let disableStyle: boolean = false
     export let checkered: boolean = false
     export let border: boolean = false
+    export let align: string = ""
     export let drawZoom: number = 1
 
     export let outline: string = ""
@@ -31,7 +32,9 @@
 
     let slideWidth: number = 0
     export let ratio: number = 1
-    $: ratio = Math.max(0.01, slideWidth / resolution.width) / customZoom
+    export let editRatio: number = 1
+    $: ratio = Math.max(0.01, slideWidth / 1920) / customZoom
+    $: editRatio = resolution.width / resolution.height
 
     $: croppedStyle = getCropping(cropping)
     function getCropping(cropping) {
@@ -41,12 +44,15 @@
         let minusHeight = cropping.top + cropping.bottom
         let minusWidth = cropping.right + cropping.left
 
-        let newHeight = resolution.height - minusHeight
-        let newWidth = resolution.width - minusWidth
-        let heightRatio = newHeight / resolution.height
-        let widthRatio = newWidth / resolution.width
-        let paddingSides = (resolution.width - minusWidth - resolution.width * heightRatio) / 2
-        let paddingTops = (resolution.height - minusHeight - resolution.height * widthRatio) / 2
+        let outputId = id || getActiveOutputs()[0]
+        let outputRes = getOutputResolution(outputId)
+
+        let newHeight = outputRes.height - minusHeight
+        let newWidth = outputRes.width - minusWidth
+        let heightRatio = newHeight / outputRes.height
+        let widthRatio = newWidth / outputRes.width
+        let paddingSides = (outputRes.width - minusWidth - outputRes.width * heightRatio) / 2
+        let paddingTops = (outputRes.height - minusHeight - outputRes.height * widthRatio) / 2
 
         // if (minusHeight) style += `height: calc(100% - ${minusHeight}px);`
         style += `margin-top: ${cropping.top + paddingTops}px;`
@@ -60,9 +66,11 @@
     }
 
     // $: zoomTransform = 50 * (drawZoom - 1) * -1
+
+    $: alignStyle = align ? ($$props.style?.includes("width") ? `align-items: ${align};` : `justify-content: ${align};`) : ""
 </script>
 
-<div {id} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
+<div {id} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
     <div
         bind:offsetWidth={slideWidth}
         class="slide"
@@ -80,10 +88,9 @@
                 class="zoom"
                 style="zoom: {ratio};{drawZoom === 1
                     ? ''
-                    : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` +
-                      ($draw ? `left: ${($draw.x / resolution.width - 0.5) * (drawZoom - 1) * -1 * 100}%;top: ${($draw.y / resolution.height - 0.5) * (drawZoom - 1) * -1 * 100}%;` : '')}"
+                    : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` + ($draw ? `left: ${($draw.x / 1920 - 0.5) * (drawZoom - 1) * -1 * 100}%;top: ${($draw.y / 1080 - 0.5) * (drawZoom - 1) * -1 * 100}%;` : '')}"
             >
-                <!-- ($draw ? `left: calc(${zoomTransform}% + ${($draw.x / resolution.width - 0.5) * -2 * 100}%);top: calc(${zoomTransform}% + ${($draw.y / resolution.height - 0.5) * -2 * 100}%);` : `left: ${zoomTransform}%;top: ${zoomTransform}%;`)}" -->
+                <!-- ($draw ? `left: calc(${zoomTransform}% + ${($draw.x / 1920 - 0.5) * -2 * 100}%);top: calc(${zoomTransform}% + ${($draw.y / 1080 - 0.5) * -2 * 100}%);` : `left: ${zoomTransform}%;top: ${zoomTransform}%;`)}" -->
                 <slot {ratio} />
             </span>
         {:else}
