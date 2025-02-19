@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { getActiveOutputs, getResolution } from "../components/helpers/output"
+import { getActiveOutputs, getOutputResolution } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { clearAll, clearSlide } from "../components/output/clear"
 import { outputs, paintCache, serverData } from "../stores"
@@ -39,7 +39,8 @@ export const receiveCONTROLLER = {
             return
         }
 
-        let resolution = getResolution()
+        let outputId = getActiveOutputs(get(outputs), true, true, true)[0]
+        let resolution = getOutputResolution(outputId, get(outputs), true)
         data.offset.x *= resolution.width
         data.offset.y *= resolution.height
 

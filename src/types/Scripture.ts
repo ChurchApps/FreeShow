@@ -10,6 +10,7 @@ export interface Bible {
     verses: any
     activeVerses: string[]
     attributionRequired?: boolean // API needs attribution
+    attributionString?: string // API needs custom attribution
 }
 
 export interface Version {

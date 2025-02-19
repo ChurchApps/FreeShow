@@ -19,6 +19,7 @@ import {
     overlays,
     overlayTimers,
     playingVideos,
+    scriptures,
     serverData,
     showsCache,
     special,
@@ -37,13 +38,15 @@ import { videoExtensions } from "../../values/extensions"
 import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
+import type { EditInput } from "../edit/values/boxes"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
-import { getItemWithMostLines, replaceDynamicValues } from "./showActions"
+import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
+import { trackScriptureUsage } from "../../utils/analytics"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let forceKey = e.ctrlKey || e.metaKey
@@ -68,6 +71,25 @@ export function toggleOutput(id: string) {
 // transition: null,
 // TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
 export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string = "", add: boolean = false) {
+    // track usage
+    if (key === "slide" && data?.id) {
+        let showReference = _show(data.id).get("reference")
+        if (showReference?.type === "scripture") {
+            let translation = showReference.data
+            let ref = _show(data.id).layouts([data.layout]).ref()[0]
+            let slide = _show(data.id).get("slides")[ref[data.index]?.id]
+
+            let scripture = get(scriptures)[translation.collection] || {}
+            let versions = scripture.collection?.versions || [scripture.id || ""]
+            versions.forEach((id) => {
+                let name = get(scriptures)[id]?.name || translation.version || ""
+                let scriptureId = get(scriptures)[id]?.id || id
+                let apiId = translation.api ? scriptureId : null
+                if (name || apiId) trackScriptureUsage(name, apiId, slide.group)
+            })
+        }
+    }
+
     outputs.update((a: any) => {
         let bindings = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0]?.[data.index]?.data?.bindings || [] : []
         let allOutputs = bindings.length ? bindings : getActiveOutputs()
@@ -370,37 +392,86 @@ export function outputSlideHasContent(output) {
 
 // WIP style should override any slide resolution & color ? (it does not)
 
+// this actually gets aspect ratio
 export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, _getSlideRes: boolean = false, outputId: string = ""): Resolution {
     if (initial) return initial
 
     if (!outputId) outputId = getActiveOutputs()[0]
     let currentOutput = get(outputs)[outputId]
 
+    if (currentOutput?.stageOutput) return currentOutput.bounds
+
     let style: any = currentOutput?.style ? get(styles)[currentOutput?.style] || {} : {}
-    let styleRes = style.resolution || null
+    let styleRatio = style.aspectRatio || style.resolution
 
-    // let styleTemplate: any = style.template ? get(templates)[style.template] || {} : {}
-    // let styleTemplateRes: any = styleTemplate.settings?.resolution
+    let ratio = styleRatio?.outputResolutionAsRatio ? currentOutput?.bounds : styleRatio
 
-    // let slideRes: any = null
-    // if (getSlideRes) {
-    //     let outSlide: any = currentOutput?.out?.slide || {}
-    //     let slideRef = _show(outSlide.id || "")
-    //         .layouts([outSlide.layout])
-    //         .ref()[0]?.[outSlide.index]
-    //     let slideOutput = _show(outSlide.id || "").get("slides")?.[slideRef?.id] || null
-    //     slideRes = slideOutput?.settings?.resolution
-    // }
-
-    // slideRes || styleTemplateRes ||
-    return styleRes || { width: 1920, height: 1080 }
+    return ratio || { width: 16, height: 9 }
 }
 
-export function getOutputResolution(outputId: string, _updater = get(outputs), _styleUpdater = get(styles)) {
-    let currentOutput = _updater[outputId]
-    let style = currentOutput?.style ? _styleUpdater[currentOutput?.style]?.resolution : null
+// this will get the first available stage output
+export function getStageOutputId(_updater = get(outputs)): string {
+    return keysToID(_updater).find((a) => a.stageOutput)?.id
+}
+export function getStageResolution(outputId: string = "", _updater = get(outputs)): Resolution {
+    if (!outputId) outputId = getStageOutputId()
+    return _updater[outputId]?.bounds || { width: 1920, height: 1080 }
+}
 
-    return style || { width: 1920, height: 1080 }
+// calculate actual output resolution based on style aspect ratio
+export function getOutputResolution(outputId: string, _updater = get(outputs), scaled: boolean = false) {
+    let currentOutput = _updater[outputId]
+    let outputRes = clone(currentOutput?.bounds || { width: 1920, height: 1080 })
+    if (!scaled) return outputRes
+
+    let styleRatio = getResolution(null, null, false, outputId)
+    let styleAspectRatio = styleRatio.width / styleRatio.height
+
+    // output window size is narrow
+    if (outputRes.width < outputRes.height) {
+        outputRes.width = Math.round(outputRes.height * styleAspectRatio)
+    } else {
+        outputRes.height = Math.round(outputRes.width / styleAspectRatio)
+    }
+
+    return outputRes
+}
+
+export function stylePosToPercentage(styles: { [key: string]: any }) {
+    if (styles.left) styles.left = (styles.left / 1920) * 100
+    if (styles.top) styles.top = (styles.top / 1080) * 100
+    if (styles.width) styles.width = (styles.width / 1920) * 100
+    if (styles.height) styles.height = (styles.height / 1080) * 100
+
+    return styles
+}
+
+export function percentageStylePos(style: string, resolution: Resolution) {
+    let styles = getStyles(style, true)
+    styles = stylePosToPercentage(styles)
+
+    let width = resolution.width || 1920
+    let height = resolution.height || 1080
+
+    if (styles.left) style += "left: " + width * (Number(styles.left) / 100) + "px;"
+    if (styles.top) style += "top: " + height * (Number(styles.top) / 100) + "px;"
+    if (styles.width) style += "width: " + width * (Number(styles.width) / 100) + "px;"
+    if (styles.height) style += "height: " + height * (Number(styles.height) / 100) + "px;"
+
+    return style
+}
+
+export function percentageToAspectRatio(input: EditInput) {
+    if (input.id !== "style") return input
+
+    if (input.key === "left" || input.key === "width") input.value = 1920 * (trimPixelValue(input.value) / 100) + "px"
+    else if (input.key === "top" || input.key === "height") input.value = 1080 * (trimPixelValue(input.value) / 100) + "px"
+
+    return input
+}
+
+function trimPixelValue(value: any) {
+    return Number(value?.toString().replace("px", ""))
 }
 
 export function checkWindowCapture(startup: boolean = false) {
@@ -941,7 +1012,8 @@ export function getOutputLines(outSlide: any, styleLines: any = 0) {
     let maxStyleLines = Number(styleLines || 0)
 
     // ensure last content is shown when e.g. two styles has 2 & 3 lines, and the slide has 4 lines
-    if ((outSlide.line || 0) + maxStyleLines > maxLines) progress = 1
+    let amountOfLinesToShow: number = getFewestOutputLines()
+    if ((outSlide.line || 0) + amountOfLinesToShow > maxLines) progress = 1
 
     let linesIndex = Math.ceil(maxLines * progress) - 1
     let start = maxStyleLines * Math.floor(linesIndex / maxStyleLines)

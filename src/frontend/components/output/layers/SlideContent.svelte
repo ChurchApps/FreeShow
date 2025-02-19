@@ -43,14 +43,14 @@
         if (outLinesString !== currentLines) currentLines = outLinesString
     }
 
-    $: if (currentSlide.items !== undefined || currentOutSlide || currentLines) updateItems()
+    $: if (currentSlide?.items !== undefined || currentOutSlide || currentLines) updateItems()
     let timeout: any = null
 
     // if anything is outputted & changing to something that's outputted
     let transitioningBetween: boolean = false
 
     function updateItems() {
-        if (!currentSlide.items?.length) {
+        if (!currentSlide?.items?.length) {
             currentItems = []
             filteredItems = [] // this has to be updated here due to Svelte $ not updating properly
             current = {
@@ -142,13 +142,14 @@
                     animationStyle={animationData.style || {}}
                     item={customItem}
                     {ratio}
-                    ref={{ showId: customOut.id, slideId: customSlide.id, id: customSlide.id || "", layoutId: customOut.layout }}
+                    {outputId}
+                    ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout }}
                     linesStart={customLines?.[currentLineId]?.start}
                     linesEnd={customLines?.[currentLineId]?.end}
                     outputStyle={current.currentStyle}
                     {mirror}
                     {preview}
-                    slideIndex={customOut.index}
+                    slideIndex={customOut?.index}
                 />
             </SlideItemTransition>
         {/if}

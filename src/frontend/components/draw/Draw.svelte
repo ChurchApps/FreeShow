@@ -6,6 +6,14 @@
 
     $: tool = $drawTool
     $: settings = $drawSettings[tool]
+
+    // $: outputId = getActiveOutputs($outputs, true, true, true)[0]
+    // $: resolution = getOutputResolution(outputId, $outputs, true)
+    // // get corrected value
+    // $: x = $draw === null ? 0 : resolution.width * ($draw.x / ($draw.resolution?.width || 1))
+    // $: y = $draw === null ? 0 : resolution.height * ($draw.y / ($draw.resolution?.height || 1))
+    $: x = $draw === null ? 0 : $draw.x
+    $: y = $draw === null ? 0 : $draw.y
 </script>
 
 {#if tool === "fill"}
@@ -16,7 +24,7 @@
     {#if tool === "focus"}
         <div
             class="focus"
-            style="left: {$draw.x}px;top: {$draw.y}px;opacity: {settings?.opacity};border-radius: {settings?.radius}%;width: {settings?.size}px;height: {settings?.size}px;box-shadow: 0 0 0 50000px {settings?.color}{settings?.glow
+            style="left: {x}px;top: {y}px;opacity: {settings?.opacity};border-radius: {settings?.radius}%;width: {settings?.size}px;height: {settings?.size}px;box-shadow: 0 0 0 50000px {settings?.color}{settings?.glow
                 ? `, inset 0 0 ${settings?.size / 3}px ${settings?.color}`
                 : ''};"
         />
@@ -24,7 +32,7 @@
         <div
             class="point"
             class:hollow={settings?.hollow === true}
-            style="left: {$draw.x}px;top: {$draw.y}px;--color: {settings?.color};border-radius: {settings?.radius}%;opacity: {settings?.opacity};width: {settings?.size}px;height: {settings?.size}px;{settings?.glow
+            style="left: {x}px;top: {y}px;--color: {settings?.color};border-radius: {settings?.radius}%;opacity: {settings?.opacity};width: {settings?.size}px;height: {settings?.size}px;{settings?.glow
                 ? `box-shadow: 0 0 ${settings?.size / 5}px ${settings?.size / 20}px ${settings?.color}`
                 : ''}"
         />

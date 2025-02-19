@@ -75,7 +75,8 @@
         "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses."
     },
     "tips": {
-        "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras."
+        "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",
+        "global_options": "These options are applied globally."
     },
     "setup": {
         "good_luck": "I hope you find this software useful. Good luck showing! :)",
@@ -404,6 +405,7 @@
         "variable": "Variable",
         "trigger": "Trigger",
         "audio_stream": "Audio stream",
+        "aspect_ratio": "Change aspect ratio",
         "transition": "Transition",
         "media_fit": "Change media fit",
         "metadata_display": "Metadata display",
@@ -441,6 +443,7 @@
         "icon": "Icons",
         "manage_icons": "Manage icons",
         "manage_colors": "Manage colors",
+        "manage_metadata": "Manage metadata",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
         "initialize": "Welcome to FreeShow",
@@ -869,6 +872,9 @@
         "_title_justify": "Align justify",
         "_title_top": "Align top",
         "_title_bottom": "Align bottom",
+        "align_center": "Centered",
+        "align_start": "Start",
+        "align_end": "End",
         "outline": "Outline",
         "shadow": "Shadow",
         "shadow_inset": "Shadow inset",
@@ -1140,6 +1146,8 @@
         "audio_crossfade": "Audio crossfade",
         "clear_style_background_on_text": "Clear style background when slide is active",
         "resolution": "Resolution",
+        "aspect_ratio": "Aspect ratio",
+        "output_resolution_ratio": "Use output resolution aspect ratio",
         "cropping": "Cropping",
         "frame_rate": "Frame rate",
         "device": "Device",

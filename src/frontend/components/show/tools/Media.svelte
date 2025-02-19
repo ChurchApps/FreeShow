@@ -309,7 +309,7 @@
             {#each actions as action}
                 {@const actionId = getActionTriggerId(action.triggers?.[0])}
                 {@const customData = actionData[actionId] || {}}
-                {@const actionValue = action?.actionValues?.[actionId] || {}}
+                {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
                 {@const customName = getActionName(actionId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")}
 
                 <SelectElem id="action" data={action} draggable>

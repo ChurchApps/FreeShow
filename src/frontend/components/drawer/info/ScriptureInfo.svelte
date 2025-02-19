@@ -3,7 +3,7 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activePopup, activeProject, activeTriggerFunction, categories, dictionary, drawerTabsData, media, outLocked, outputs, playScripture, popupData, scriptureHistory, scriptureSettings, styles, templates } from "../../../stores"
+    import { activePopup, activeProject, activeTriggerFunction, categories, dictionary, drawerTabsData, media, outLocked, outputs, playScripture, popupData, scriptureHistory, scriptures, scriptureSettings, styles, templates } from "../../../stores"
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -22,6 +22,7 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
+    import { trackScriptureUsage } from "../../../utils/analytics"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -64,7 +65,7 @@
         }
     }
 
-    $: showVersion = bibles[0]?.attributionRequired || $scriptureSettings.showVersion
+    $: showVersion = bibles.find((a) => a?.attributionRequired) || $scriptureSettings.showVersion
 
     function createSlides() {
         if (!bibles[0]) return { show: null }
@@ -181,7 +182,15 @@
         if (!outputIsScripture) customActionActivation("scripture_start")
 
         let tempItems: Item[] = slides[0] || []
-        setOutput("slide", { id: "temp", tempItems })
+        setOutput("slide", { id: "temp", tempItems, attributionString })
+
+        // track
+        let reference = `${bibles[0].book} ${bibles[0].chapter}:${verseRange}`
+        bibles.forEach((translation) => {
+            let name = translation.version || ""
+            let apiId = translation.api ? $scriptures[translation.id!]?.id || translation.id || "" : null
+            if (name || apiId) trackScriptureUsage(name, apiId, reference)
+        })
 
         // play template background
         if (!templateBackground) return
@@ -220,7 +229,7 @@
 
         Object.keys(textKeys).forEach((key) => {
             let isEnabled = $scriptureSettings[key]
-            if (key === "showVersion" && bibles[0]?.attributionRequired) isEnabled = true
+            if (key === "showVersion" && bibles.find((a) => a?.attributionRequired)) isEnabled = true
             if (isEnabled) {
                 if (text.length) text += "\n"
                 text += textKeys[key]
@@ -260,11 +269,13 @@
 
     $: styleId = $outputs[getActiveOutputs()[0]]?.style || ""
     $: background = $templates[templateId]?.settings?.backgroundColor || $styles[styleId]?.background || "#000000"
+
+    $: attributionString = [...new Set(bibles.map((a) => a?.attributionString).filter(Boolean))].join(" / ")
 </script>
 
 <svelte:window on:keydown={keydown} />
 
-<div class="scroll">
+<div class="scroll split">
     <Zoomed style="width: 100%;" {background}>
         {#if bibles[0]?.activeVerses}
             {#if templateBackground}
@@ -277,11 +288,15 @@
                     <Textbox {item} ref={{ id: "scripture" }} />
                 {/each}
             {/key}
+
+            {#if attributionString}
+                <p class="attributionString">{attributionString}</p>
+            {/if}
         {/if}
     </Zoomed>
 
     <!-- settings -->
-    <div class="settings">
+    <div class="settings border">
         <CombinedInput>
             <p><T id="info.template" /></p>
             <Button
@@ -370,7 +385,7 @@
         <CombinedInput textWidth={70}>
             <p><T id="scripture.version" /></p>
             <div class="alignRight">
-                <Checkbox disabled={bibles[0]?.attributionRequired} id="showVersion" checked={showVersion} on:change={checked} />
+                <Checkbox disabled={bibles.find((a) => a?.attributionRequired)} id="showVersion" checked={showVersion} on:change={checked} />
             </div>
         </CombinedInput>
 
@@ -438,17 +453,30 @@
 
     div :global(.zoomed) {
         height: initial !important;
+        flex: 1;
     }
 
     .settings {
         display: flex;
         flex-direction: column;
         padding: 10px;
+        flex: 1;
     }
 
     .settings :global(.dropdown) {
         /* position: absolute; */
         width: 160%;
         right: 0;
+    }
+
+    .attributionString {
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+
+        font-size: 28px;
+        font-style: italic;
+        opacity: 0.7;
     }
 </style>

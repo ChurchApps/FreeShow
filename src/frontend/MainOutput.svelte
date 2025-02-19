@@ -18,6 +18,8 @@
     let resolution: Resolution = getResolution()
     $: if ($currentWindow === "output") resolution = getResolution(null, { $outputs, $styles }, true)
 
+    // $: outputStyle = getCurrentStyle($styles, $outputs[outputId]?.style)
+
     // enable output window dragging
     let enableOutputMove: boolean = false
     function mousemoveOutput(e: any) {
@@ -38,7 +40,7 @@
 
 <div
     class="fill context #output_window"
-    style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') && !Object.values($outputs)[0]?.stageOutput ? 'row' : 'column'}"
+    style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') && !Object.values($outputs)[0]?.stageOutput ? 'row' : 'column'};"
     class:hideCursor={$special.hideCursor}
     on:mousemove={mousemoveOutput}
     bind:offsetWidth={width}

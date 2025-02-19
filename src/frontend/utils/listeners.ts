@@ -56,6 +56,9 @@ export function storeSubscriber() {
 
         // temporary cache shows data
         updateShowsList(data)
+
+        // dynamic values
+        send(OUTPUT, ["SHOWS_DATA"], data)
     })
 
     let timeout: any = null
@@ -225,14 +228,20 @@ export function storeSubscriber() {
         send(STAGE, ["DATA"], { timeFormat: a })
     })
 
-    projects.subscribe(() => {
+    projects.subscribe((a) => {
         sendData(REMOTE, { channel: "PROJECTS" }, true)
+
+        // dynamic values
+        send(OUTPUT, ["PROJECTS"], a)
     })
     folders.subscribe((data) => {
         send(REMOTE, ["FOLDERS"], { folders: data, opened: get(openedFolders) })
     })
-    activeProject.subscribe((data) => {
-        send(REMOTE, ["PROJECT"], data)
+    activeProject.subscribe((a) => {
+        send(REMOTE, ["PROJECT"], a)
+
+        // dynamic values
+        send(OUTPUT, ["ACTIVE_PROJECT"], a)
     })
 
     colorbars.subscribe((a) => {
@@ -293,6 +302,11 @@ const initalOutputData = {
 
     PLAYER_VIDEOS: "playerVideos",
     STAGE_SHOWS: "stageShows",
+
+    // for dynamic values
+    PROJECTS: "projects",
+    ACTIVE_PROJECT: "activeProject",
+    SHOWS_DATA: "shows",
 
     // received by Output
     VOLUME: "volume",

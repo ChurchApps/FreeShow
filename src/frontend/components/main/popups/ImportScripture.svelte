@@ -60,8 +60,8 @@
     $: {
         if (bibles?.length) {
             let langCode = window.navigator.language.slice(-2).toLowerCase()
-            // if the need attribution, they are probably more in demand!
-            sortedBibles = sortByName(bibles).sort((a, b) => b.attributionRequired - a.attributionRequired)
+            // if it needs attribution, it's probably more in demand!
+            sortedBibles = sortByName(bibles).sort((a, b) => (b.attributionRequired || b.attributionString) - (a.attributionRequired || a.attributionString))
             let newSorted: any[] = []
             sortedBibles.forEach((bible) => {
                 newSorted.push(bible)
@@ -94,9 +94,10 @@
         language: string // "eng"
         copyright: string
         attributionRequired: boolean
+        attributionString?: string
     }
 
-    function toggleScripture({ sourceKey: id, name, copyright, attributionRequired }: ChurchAppsApiBible) {
+    function toggleScripture({ sourceKey: id, name, copyright, attributionRequired, attributionString }: ChurchAppsApiBible) {
         scriptures.update((a: any) => {
             let key: string | null = null
             Object.entries(a).forEach(([sId, value]: any) => {
@@ -104,7 +105,7 @@
             })
 
             if (key) delete a[key]
-            else a[uid()] = { name, api: true, id, copyright, attributionRequired } as BibleCategories
+            else a[uid()] = { name, api: true, id, copyright, attributionRequired, attributionString } as BibleCategories
             return a
         })
     }
@@ -226,7 +227,7 @@
     <br />
 
     <CombinedInput>
-        <Button on:click={() => send(IMPORT, ["BIBLE"], { format: { name: "Bible", extensions: ["xml", "json"] } })} style="width: 100%;" center dark>
+        <Button on:click={() => send(IMPORT, ["BIBLE"], { format: { name: "Bible", extensions: ["xml", "json", "fsb"] } })} style="width: 100%;" center dark>
             <Icon id="import" right />
             <T id="scripture.local" />
         </Button>

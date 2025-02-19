@@ -8,6 +8,7 @@
     import Icon from "../helpers/Icon.svelte"
     import { clone } from "../helpers/array"
     import { encodeFilePath, getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
+    import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
@@ -21,7 +22,6 @@
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
-    import { getActiveOutputs } from "../helpers/output"
 
     export let item: Item
     export let itemIndex: number = -1
@@ -30,6 +30,7 @@
     export let mirror: boolean = true
     export let isMirrorItem: boolean = false
     export let ratio: number = 1
+    export let outputId: string = ""
     export let filter: string = ""
     export let backdropFilter: string = ""
     export let key: boolean = false
@@ -89,10 +90,19 @@
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
 
-    function getAlphaStyle(style: string) {
+    let customOutputId = outputId
+    $: if (!outputId) customOutputId = getActiveOutputs($outputs, true, true, true)[0]
+
+    function getCustomStyle(style: string, outputId: string = "") {
+        if (outputId) {
+            let outputResolution = getOutputResolution(outputId, $outputs, true)
+            style = percentageStylePos(style, outputResolution)
+        }
+
         if (!key) return style
         let styles = getStyles(style)
 
+        // alpha style
         let alphaStyles = ";"
         let bgAlpha = getAlphaValues(styles["background-color"])
         let textAlpha = getAlphaValues(styles["color"]) || 1
@@ -265,7 +275,7 @@
 
                     // let size = fontSizeValue
                     let size = fontSize || 0
-                    html += `<span class="invisible" style="${style ? getAlphaStyle(text.style) : ""}${size ? `font-size: ${size}px;` : ""}">${letter}</span>`
+                    html += `<span class="invisible" style="${style ? getCustomStyle(text.style) : ""}${size ? `font-size: ${size}px;` : ""}">${letter}</span>`
 
                     index++
                 })
@@ -334,7 +344,7 @@
 
 <div
     class="item"
-    style="{style ? getAlphaStyle(item?.style) : null};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
+    style="{style ? getCustomStyle(item?.style, customOutputId) : null};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
     class:white={key && !lines?.length}
     class:key
     class:addDefaultItemStyle
@@ -369,7 +379,7 @@
                             {#each line.text || [] as text}
                                 {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                 <span
-                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
+                                    style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
                                         ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;`
                                         : ''}"
                                 >

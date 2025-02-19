@@ -456,12 +456,12 @@ export function setExampleTemplates() {
             items: [
                 {
                     // auto: true,
-                    style: "top: 30px;left: 30px;width: 1860px;height: 875px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;",
+                    style: "top: 30px;left: 30px;width: 1860px;height: 865px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;",
                     align: "",
                     lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;" }] }],
                 },
                 {
-                    style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                    style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
                 },
@@ -485,7 +485,7 @@ export function setExampleTemplates() {
                     lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 70px;" }] }],
                 },
                 {
-                    style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                    style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
                 },
@@ -515,7 +515,7 @@ export function setExampleTemplates() {
                     lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }],
                 },
                 {
-                    style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                    style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
                 },
@@ -551,7 +551,7 @@ export function setExampleTemplates() {
                     lines: [{ align: "text-align: left;", text: [{ value: "4", style: "font-size: 60px;" }] }],
                 },
                 {
-                    style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                    style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
                     align: "",
                     lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }],
                 },

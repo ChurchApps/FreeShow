@@ -176,3 +176,90 @@ export function resizeBox(e: any, mouse: any, square: boolean, ratio: number) {
 
     return styles
 }
+
+export function rotateBox(e: any, mouse: any, ratio: number) {
+    let itemElem = mouse.e.target.closest(".item")
+    if (!itemElem?.closest(".slide")) return 0
+
+    const itemPosX = itemElem.offsetLeft * ratio + itemElem.closest(".slide").offsetLeft + (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft
+    const itemPosY = itemElem.offsetTop * ratio + itemElem.closest(".slide").offsetTop + (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetTop
+
+    const itemCenterX = itemPosX + (itemElem.offsetWidth * ratio) / 2
+    const itemCenterY = itemPosY + (itemElem.offsetHeight * ratio) / 2
+
+    // mouse pos relative to item center
+    const relativeX = e.clientX - itemCenterX
+    const relativeY = e.clientY - itemCenterY
+
+    // get angle and make 0° point upwards
+    let angle = (Math.atan2(relativeY, relativeX) * (180 / Math.PI) + 450) % 360
+
+    // snap to 0°, 90°, 180°, or 270° if within a margin
+    const margin = 5 // degrees
+    const snapAngles = [0, 90, 180, 270, 360]
+    for (let snapAngle of snapAngles) {
+        if (e.altKey) break
+        if (Math.abs(angle - snapAngle) < margin || Math.abs(angle - (snapAngle - 360)) < margin) {
+            angle = snapAngle % 360 // ensure 360 becomes 0
+            break
+        }
+    }
+
+    return angle
+
+    // // 0 - 90 deg
+    // if (relativeY < 0 && relativeX >= 0) {
+    //     if (relativeX === 0) return 0
+    //     return getAngle(Math.abs(relativeY), relativeX)
+    // }
+
+    // // 90 - 180 deg
+    // if (relativeY >= 0 && relativeX > 0) {
+    //     if (relativeY === 0) return 90
+    //     return 90 + getAngle(relativeX, relativeY)
+    // }
+
+    // // 180 - 270 deg
+    // if (relativeY > 0 && relativeX <= 0) {
+    //     if (relativeX === 0) return 180
+    //     return 180 + getAngle(relativeY, Math.abs(relativeX))
+    // }
+
+    // // 270 - 360 deg
+    // if (relativeY <= 0 && relativeX < 0) {
+    //     if (relativeY === 0) return 270
+    //     return 270 + getAngle(Math.abs(relativeX), Math.abs(relativeY))
+    // }
+
+    // console.error("Could not get correct angle!")
+    // return 0
+
+    // function getAngle(hypotenuse: number, opposite: number) {
+    //     // let isFlipped = hypotenuse < opposite
+    //     // const ratio = isFlipped ? hypotenuse / opposite : opposite / hypotenuse
+    //     // let angle = 45 * Math.asin(ratio)
+    //     // if (isFlipped) angle = 90 - angle
+    //     // return angle
+    //     return (Math.atan2(opposite, hypotenuse) * (180 / Math.PI) + 360) % 360
+    // }
+}
+
+const maxRadius = 500
+export const radiusSliderOffset = 20
+export const radiusSliderRatio = 0.8
+export function getRadius(e: any, mouse: any, ratio: number) {
+    let itemElem = mouse.e.target.closest(".item")
+    if (!itemElem?.closest(".slide")) return 0
+
+    const sliderStart = radiusSliderOffset
+    const sliderLength = maxRadius * radiusSliderRatio
+
+    const itemPosX = itemElem.offsetLeft * ratio + itemElem.closest(".slide").offsetLeft + (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft
+    const sliderPosStart = itemPosX + sliderStart * ratio
+    // const sliderPosEnd = sliderPosStart + sliderLength * ratio
+
+    const relativeX = (e.clientX - sliderPosStart) / ratio
+    const percentage = Math.max(0, Math.min(sliderLength, relativeX)) / sliderLength
+
+    return maxRadius * percentage
+}

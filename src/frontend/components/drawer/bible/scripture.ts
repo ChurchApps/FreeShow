@@ -112,6 +112,7 @@ export function loadBible(active: string, index: number = 0, bible: any) {
             bible.version = customName
             bible.copyright = scripture.copyright
             bible.attributionRequired = scripture.attributionRequired || false
+            bible.attributionString = scripture.attributionString || ""
             return
         }
         delete bible.api
@@ -340,6 +341,8 @@ export function getSlides({ bibles, sorted }) {
 
         let lines: any[] = []
 
+        // WIP itemIndex is mostly correct if combineWithText
+
         // if (combineWithText) itemIndex = 0
         let metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
         let alignStyle = metaTemplate?.lines?.[0]?.align || ""
@@ -350,7 +353,7 @@ export function getSlides({ bibles, sorted }) {
         let books = combineWithText ? bibles[itemIndex]?.book : removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
         // custom value (API)
-        if (bibles[itemIndex]?.attributionRequired) {
+        if (bibles.find((a) => a?.attributionRequired)) {
             showVersion = true
             if (!customText.includes(textKeys.showVersion)) customText += textKeys.showVersion
         }

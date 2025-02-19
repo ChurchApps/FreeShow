@@ -17,7 +17,8 @@ export interface Styles {
     backgroundImage?: string
     clearStyleBackgroundOnText?: boolean
     fit?: MediaFit | null
-    resolution?: Resolution
+    resolution?: Resolution // pre 1.3.9
+    aspectRatio?: AspectRatio
     cropping?: Cropping // pre 1.3.3
     lines?: number
     template?: string // slide
@@ -33,6 +34,10 @@ export interface Styles {
 export interface Resolution {
     width: number
     height: number
+}
+export interface AspectRatio extends Resolution {
+    outputResolutionAsRatio?: boolean
+    alignPosition?: "center" | "start" | "end"
 }
 export interface Cropping {
     top: number

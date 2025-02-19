@@ -24,6 +24,7 @@ import {
     outputSlideCache,
     overlays,
     projects,
+    shows,
     showsCache,
     slideTimers,
     special,
@@ -234,7 +235,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
         if (!layout?.filter((a) => !a.data.disabled).length) return
 
         index = 0
-        while (layout[index].data.disabled || notBound(layout[index], customOutputId)) index++
+        while (layout[index]?.data.disabled || notBound(layout[index], customOutputId)) index++
 
         let data = layout[index]?.data
         checkActionTrigger(data, index)
@@ -496,7 +497,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 
 // skip slides that are bound to specific output not customId
 function notBound(ref, outputId: string | undefined) {
-    return outputId && ref.data.bindings?.length && !ref.data.bindings.includes(outputId)
+    return outputId && ref?.data?.bindings?.length && !ref?.data?.bindings.includes(outputId)
 }
 
 function playPdf(slide: null | OutSlide, nextPage: number) {
@@ -1049,14 +1050,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         }
 
         if (!showId) {
-            let outSlide = get(outputs)[outputId]?.out?.slide
-            if (!outSlide?.id) return ""
+            let outSlide: any = get(outputs)[outputId]?.out?.slide || {}
+            // if (!outSlide?.id) return ""
 
             showId = outSlide.id
             layoutId = outSlide.layout
-            slideIndex = outSlide.index
-            show = _show(showId).get()
-            if (!show) return
+            slideIndex = outSlide.index ?? -2
+            show = _show(showId).get() || {}
+            // if (!show) return
         }
 
         let activeLayout = layoutId ? [layoutId] : "active"
@@ -1066,7 +1067,11 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         let videoTime: number = get(videosTime)[outputId] || 0
         let videoDuration: number = get(videosData)[outputId]?.duration || 0
 
-        return dynamicValues[id]({ show, ref, slideIndex, layout, videoTime, videoDuration })
+        let projectIndex = get(projects)[get(activeProject) || ""]?.shows.findIndex((a) => a.id === showId)
+        if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
+        let projectRef = { id: get(activeProject) || "", index: projectIndex }
+
+        return dynamicValues[id]({ show, ref, slideIndex, layout, projectRef, videoTime, videoDuration })
     }
 }
 
@@ -1081,15 +1086,16 @@ const dynamicValues = {
 
     // show
     show_name: ({ show }) => show.name || "",
+    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows[projectRef.index + 1]?.id]?.name || "",
 
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
 
     slide_number: ({ slideIndex }) => Number(slideIndex || 0) + 1,
-    slide_group: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.group || "",
-    slide_group_next: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex + 1]?.id]?.group || "",
-    slide_notes: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex]?.id]?.notes || "",
-    slide_notes_next: ({ show, ref, slideIndex }) => show.slides[ref[slideIndex + 1]?.id]?.notes || "",
+    slide_group: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.group || "",
+    slide_group_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.group || "",
+    slide_notes: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.notes || "",
+    slide_notes_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
 
     // media
     video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),
