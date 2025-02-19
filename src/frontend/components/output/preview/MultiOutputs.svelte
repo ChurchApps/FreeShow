@@ -3,7 +3,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { getOutputResolution, getResolution } from "../../helpers/output"
+    import { getOutputResolution } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import PreviewOutput from "./PreviewOutput.svelte"
 
@@ -40,7 +40,7 @@
 
     let resolution: any = {}
     function currentResolution() {
-        resolution = getResolution(getOutputResolution(fullscreenId), null, true)
+        resolution = getOutputResolution(fullscreenId, $outputs, true)
     }
 </script>
 

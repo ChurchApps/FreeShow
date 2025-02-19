@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Bible } from "../../../types/Scripture"
     import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
-    import { DEFAULT_DRAWER_HEIGHT, MENU_BAR_HEIGHT } from "../../utils/common"
+    import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
@@ -190,8 +190,10 @@
             <Navigation id={$activeDrawerTab} />
         </Resizeable>
         <Content id={$activeDrawerTab} bind:searchValue bind:firstMatch bind:bibles />
-        <Resizeable id="rightPanelDrawer" side="right">
-            <Info id={$activeDrawerTab} {bibles} />
+        <Resizeable id="rightPanelDrawer" let:width side="right">
+            <div class="right" class:row={width > DEFAULT_WIDTH * 1.8}>
+                <Info id={$activeDrawerTab} {bibles} />
+            </div>
         </Resizeable>
     </div>
 </section>
@@ -263,6 +265,17 @@
         display: flex;
         height: calc(100% - 40px);
         justify-content: space-between;
+    }
+
+    .right {
+        display: contents;
+    }
+    .right.row :global(.scroll.split) {
+        flex-direction: row-reverse;
+    }
+    .right.row :global(.scroll.split .border) {
+        border-right: 2px solid var(--primary-lighter);
+        overflow-y: auto;
     }
 
     @media screen and (max-width: 750px) {

@@ -11,6 +11,7 @@
     import { itemEdits } from "../values/item"
     import EditValues from "./EditValues.svelte"
     import { setBoxInputValue } from "../values/boxes"
+    import { percentageToAspectRatio, stylePosToPercentage } from "../../helpers/output"
 
     export let allSlideItems: Item[]
     export let item: Item | null
@@ -19,13 +20,20 @@
 
     let data: { [key: string]: any } = {}
 
-    $: if (item?.style || item === null) data = getStyles(item?.style, true)
+    $: if (item?.style || item === null) updateData()
+    function updateData() {
+        data = getStyles(item?.style, true)
+        dataChanged()
+    }
 
     // CSS
     $: if (itemEditValues?.CSS && item?.style) itemEditValues.CSS[0].value = item.style
 
-    $: if (data) {
+    // $: if (data) dataChanged()
+    function dataChanged() {
         setBoxInputValue({ icon: "", edit: itemEditValues }, "default", "background-opacity", "hidden", !data["background-color"])
+
+        data = stylePosToPercentage(data)
     }
 
     $: itemBackFilters = getStyles(item?.style)["backdrop-filter"]
@@ -47,6 +55,7 @@
 
     function updateStyle(e: any) {
         let input = e.detail
+        input = percentageToAspectRatio(input)
 
         console.log(input)
 

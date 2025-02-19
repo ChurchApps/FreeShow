@@ -71,7 +71,7 @@
 </script>
 
 <!-- all icons are square, so only corner resizers need to be active -->
-<Movebox {ratio} active={$activeEdit.items.includes(index)} onlyCorners={item?.type === "icon"} />
+<Movebox {ratio} itemStyle={item?.style} active={$activeEdit.items.includes(index)} onlyCorners={item?.type === "icon"} />
 
 <div class="actions">
     <!-- localization -->

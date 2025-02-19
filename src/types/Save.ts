@@ -22,6 +22,7 @@ export type SaveListSyncedSettings =
     | "customizedIcons"
     | "companion"
     | "globalTags"
+    | "customMetadata"
 
 export type SaveListSettings =
     | "initialized"

@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import { MAIN } from "../../../../types/Channels"
     import { os, outputs } from "../../../stores"
-    import { findMatchingOut, getResolution } from "../../helpers/output"
+    import { findMatchingOut } from "../../helpers/output"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
-    import { MAIN } from "../../../../types/Channels"
 
     interface Cam {
         id: string
@@ -26,8 +26,8 @@
         video: {
             deviceId: { exact: cam.id },
             groupId: cam.group,
-            width: { ideal: getResolution().width },
-            height: { ideal: getResolution().height },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
             // aspectRatio: 1.777777778,
             // frameRate: { max: 30 },
             // facingMode: { exact: "user" }

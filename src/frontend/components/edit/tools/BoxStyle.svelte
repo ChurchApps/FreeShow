@@ -137,6 +137,7 @@
         setBoxInputValue(box, "lines", "specialStyle.lineBg", "value", lineBg)
         let backgroundValue = splitRgb(lineBg)
         setBoxInputValue(box, "lines", "specialStyle.opacity", "value", backgroundValue.a)
+        setBoxInputValue(box, "lines", "specialStyle.opacity", "hidden", !lineBg)
 
         // list
         setBoxInputValue(box, "list", "list.enabled", "value", item?.list?.enabled || false)
@@ -184,8 +185,8 @@
         if (item.tracker?.type) setBoxInputValue(box, "default", "tracker.type", "value", item.tracker.type)
         setBoxInputValue(box, "default", "tracker.accent", "value", item.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C")
 
-        setBoxInputValue(box, "default", "font-size", "hidden", item.tracker?.type !== "group")
-        setBoxInputValue(box, "default", "auto", "hidden", item.tracker?.type !== "group")
+        setBoxInputValue(box, "default", "tracker.childProgress", "hidden", item.tracker?.type !== "group")
+        setBoxInputValue(box, "default", "tracker.oneLetter", "hidden", item.tracker?.type !== "group")
     }
     $: if (id === "events" && item) {
         setBoxInputValue(box, "default", "events.startDate", "hidden", !item.events?.enableStartDate)

@@ -197,10 +197,12 @@ export function initializeRemote(id: string) {
 
     let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
     let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
-    let out: any = { slide: currentOutput?.out?.slide ? currentOutput.out.slide.index : null, layout: currentOutput.out?.slide?.layout || null, styleRes }
-    if (out.slide !== null && out.slide?.id) {
-        oldOutSlide = out.slide.id
-        out.show = get(showsCache)[oldOutSlide]
+    let outSlide = currentOutput?.out?.slide
+    let out: any = { slide: outSlide ? outSlide.index : null, layout: outSlide?.layout || null, styleRes }
+    if (out.slide !== null && outSlide?.id) {
+        oldOutSlide = outSlide.id
+        out.show = get(showsCache)[oldOutSlide] || {}
+        out.show.id = oldOutSlide
     }
     send(REMOTE, ["OUT"], out)
 

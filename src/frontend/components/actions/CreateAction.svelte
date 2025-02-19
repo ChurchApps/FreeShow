@@ -41,10 +41,12 @@
         "change_output_style",
         "start_trigger",
         "send_midi",
+        "run_action",
     ]
     // remove actions that are not fully implemented to CustomInput yet
     const removeActions = ["change_transition"]
-    if ($popupData.mode !== "template") removeActions.push("run_action")
+    // remove run action if creating an action (not "template" or "slide")
+    if (!$popupData.mode) removeActions.push("run_action")
 
     $: ACTIONS = [
         ...Object.keys(API_ACTIONS)

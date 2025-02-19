@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeEdit, activeShow, cachedShowsData, showsCache } from "../../stores"
+    import { activeEdit, activeShow, cachedShowsData, editColumns, showsCache } from "../../stores"
     import T from "../helpers/T.svelte"
     import { findMatchingOut } from "../helpers/output"
     import { getShowCacheId } from "../helpers/show"
@@ -55,15 +55,13 @@
         }
     }
 
-    let columns: number = 1
-
     let nextScrollTimeout: any = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
         if (nextScrollTimeout) return
 
         e.preventDefault()
-        columns = Math.max(1, Math.min(4, columns + (e.deltaY < 0 ? -1 : 1)))
+        editColumns.set(Math.max(1, Math.min(4, $editColumns + (e.deltaY < 0 ? -1 : 1))))
 
         // don't start timeout if scrolling with mouse
         if (e.deltaY >= 100 || e.deltaY <= -100) return
@@ -130,7 +128,7 @@
                                 focused={$activeEdit.slide === i}
                                 noQuickEdit
                                 {altKeyPressed}
-                                {columns}
+                                columns={$editColumns}
                                 on:click={(e) => {
                                     if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
                                         activeEdit.set({ slide: i, items: [], showId })

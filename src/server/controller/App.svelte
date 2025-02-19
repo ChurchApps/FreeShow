@@ -20,6 +20,7 @@
         switch (msg.channel) {
             case "OUTPUT_FRAME":
                 thumbnailBackground = msg.data.frame || ""
+                frameReceived = true
                 break
             case "GET_OUTPUT_ID":
                 outputId = msg.data
@@ -28,10 +29,12 @@
     })
 
     let thumbnailInterval: any = null
+    let frameReceived = true
     $: if (draw) thumbnailInterval = setInterval(requestThumbnail, 800)
     else if (thumbnailInterval) clearInterval(thumbnailInterval)
     function requestThumbnail() {
-        if (!outputId) return
+        if (!outputId || !frameReceived) return
+        frameReceived = false
         socket.emit("CONTROLLER", { channel: "OUTPUT_FRAME", data: { outputId } })
     }
 

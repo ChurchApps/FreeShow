@@ -1,6 +1,7 @@
 <script lang="ts">
     import { StageLayout } from "../../../types/Stage"
-    import { stageShows } from "../../stores"
+    import { outputs, stageShows } from "../../stores"
+    import { getStageOutputId, getStageResolution } from "../helpers/output"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -14,6 +15,8 @@
     export let list: boolean = false
 
     let ratio: number = 1
+    $: stageOutputId = getStageOutputId($outputs)
+    $: resolution = getStageResolution(stageOutputId, $outputs)
 
     function edit(e: any) {
         let name = e.detail.value
@@ -28,7 +31,7 @@
     <div class="slide context #stage_slide" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} on:click>
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }}>
-                <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" disableStyle center bind:ratio>
+                <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} disableStyle center bind:ratio>
                     {#each Object.entries(layout.items) as [id, item]}
                         {#if item.enabled !== false}
                             <Stagebox {id} {item} {ratio} show={layout} />

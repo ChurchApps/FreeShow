@@ -122,6 +122,7 @@ export const tempPath: Writable<string> = writable("")
 export const scriptureHistory: Writable<any[]> = writable([])
 
 // EDIT
+export const editColumns: Writable<number> = writable(1)
 export const editHistory: Writable<any[]> = writable([])
 export const refreshEditSlide: Writable<boolean> = writable(false)
 export const refreshListBoxes: Writable<number> = writable(-1)
@@ -154,6 +155,7 @@ export const storedChordsData: Writable<any> = writable({})
 export const photoApiCredits: Writable<any> = writable({})
 export const errorHasOccured: Writable<boolean> = writable(false)
 export const disableDragging: Writable<boolean> = writable(false)
+export const activeDropId: Writable<string> = writable("")
 
 // ----- SAVED VARIABLES -----
 
@@ -178,6 +180,7 @@ export const transitionData: Writable<{ text: Transition; media: Transition }> =
     media: { type: "fade", duration: 800, easing: "sine" },
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
+export const customMetadata: Writable<{ disabled: string[]; custom: string[] }> = writable({ disabled: [], custom: [] }) // {disabled: [], custom: []}
 
 // PROJECT
 export const openedFolders: Writable<ID[]> = writable([]) // []

@@ -7,7 +7,7 @@ import { _show } from "../helpers/shows"
 import { API_ACTIONS, API_toggle } from "./api"
 import { convertOldMidiToNewAction } from "./midi"
 import { getActiveOutputs } from "../helpers/output"
-import { wait } from "../../utils/common"
+import { newToast, wait } from "../../utils/common"
 import { actionData } from "./actionData"
 
 export function runActionId(id: string) {
@@ -109,6 +109,7 @@ export function checkStartupActions() {
 }
 
 export function customActionActivation(id: string) {
+    let actionTriggered = false
     Object.keys(get(midiIn)).forEach((actionId) => {
         let action: any = get(midiIn)[actionId]
         let customActivation = id.split("___")[0]
@@ -118,7 +119,12 @@ export function customActionActivation(id: string) {
         if (specificActivation && action.specificActivation?.includes(customActivation) && action.specificActivation.split("__")[1] !== specificActivation) return
 
         runAction(action)
+        actionTriggered = true
     })
+
+    if (actionTriggered && id === "startup") {
+        newToast("$toast.starting_action")
+    }
 }
 
 export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}, allowMultiple: boolean = false) {
@@ -184,6 +190,8 @@ export function getActionName(actionId: string, actionValue: any) {
     if (actionId === "change_volume") {
         return Number(actionValue.volume || 1) * 100
     }
+
+    console.log(actionId, actionValue)
 
     if (!namedObjects[actionId]) return
 

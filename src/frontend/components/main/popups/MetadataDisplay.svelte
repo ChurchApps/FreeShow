@@ -72,7 +72,7 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 20px;
+        gap: 10px;
         padding: 15px 0;
     }
 

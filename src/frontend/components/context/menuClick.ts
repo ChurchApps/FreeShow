@@ -850,9 +850,12 @@ const actions: any = {
     remove_layers: (obj: any) => {
         let type: "image" | "overlays" | "music" | "microphone" | "action" = obj.menu.type || obj.menu.icon
         let slide: number = obj.sel.data[0].index
+        let indexes: number[] = obj.sel.data.map(({ index }) => index)
         let newData: any = null
 
-        let layoutSlide = _show().layouts("active").ref()[0][slide].data
+        let ref = _show().layouts("active").ref()[0]
+        let layoutSlide = ref[slide]?.data || {}
+
         if (type === "image") {
             newData = { key: "background", data: null, indexes: [slide] }
         } else if (type === "overlays") {
@@ -871,15 +874,19 @@ const actions: any = {
             mics.splice(mics.indexOf(obj.menu.id), 1)
             newData = { key: "mics", data: mics, dataIsArray: true, indexes: [slide] }
         } else if (type === "action") {
-            let actions = layoutSlide.actions || {}
-            let slideActions = actions.slideActions || []
+            let newActions: any[] = []
+            indexes.forEach((i) => {
+                let actions = ref[i]?.actions || {}
+                let slideActions = actions.slideActions || []
 
-            let actionId = obj.menu.id
-            let actionIndex = slideActions.findIndex((a) => a.id === actionId)
-            if (actionIndex > -1) slideActions.splice(actionIndex, 1)
+                let actionId = obj.menu.id
+                let actionIndex = slideActions.findIndex((a) => a.id === actionId)
+                if (actionIndex > -1) slideActions.splice(actionIndex, 1)
 
-            actions.slideActions = slideActions
-            newData = { key: "actions", data: actions, indexes: [slide] }
+                actions.slideActions = slideActions
+                newActions.push(actions)
+            })
+            newData = { key: "actions", data: newActions, indexes }
         }
 
         if (newData) history({ id: "SHOW_LAYOUT", newData })
@@ -1024,16 +1031,24 @@ const actions: any = {
     selectAll: (obj: any) => selectAll(obj.sel),
 
     bind_slide: (obj: any) => {
-        let layoutSlide: number = obj.sel.data[0]?.index || 0
         let ref = _show().layouts("active").ref()[0]
-
-        let bindings: string[] = ref[layoutSlide]?.data?.bindings || []
         let outputId = obj.menu.id
-        let existingIndex = bindings.indexOf(outputId)
-        if (existingIndex >= 0) bindings.splice(existingIndex, 1)
-        else bindings.push(outputId)
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "bindings", data: bindings, indexes: [layoutSlide], dataIsArray: true } })
+        let indexes: number[] = obj.sel.data.map(({ index }) => index)
+        let newBindings: any[] = []
+
+        let add = !ref[indexes[0]]?.data?.bindings?.includes(outputId)
+
+        indexes.forEach((i) => {
+            let bindings: string[] = ref[i]?.data?.bindings || []
+            let existingIndex = bindings.indexOf(outputId)
+            if (add && existingIndex < 0) bindings.push(outputId)
+            else if (!add && existingIndex >= 0) bindings.splice(existingIndex, 1)
+
+            newBindings.push(bindings)
+        })
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "bindings", data: newBindings, indexes, dataIsArray: false } })
     },
     // bind item
     bind_item: (obj: any) => {
@@ -1274,20 +1289,7 @@ function changeSlideAction(obj: any, id: string) {
     let ref = _show().layouts("active").ref()[0]
     if (!ref[layoutSlide]) return
 
-    let actions = clone(ref[layoutSlide].data?.actions) || {}
-
-    if (id === "action") {
-        let id = uid()
-        if (!actions.slideActions) actions.slideActions = []
-        actions.slideActions.push({ id })
-
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
-
-        popupData.set({ id, mode: "slide", index: layoutSlide, existing: actions.slideActions.map((a) => a.triggers?.[0]) })
-        activePopup.set("action")
-
-        return
-    }
+    // ONLY ONE
 
     if (id === "slide_shortcut") {
         let data: any = { index: layoutSlide, mode: "slide_shortcut" }
@@ -1296,6 +1298,8 @@ function changeSlideAction(obj: any, id: string) {
         activePopup.set("assign_shortcut")
         return
     }
+
+    let actions = clone(ref[layoutSlide].data?.actions) || {}
 
     if (id === "receiveMidi") {
         let midiId: string = uid()
@@ -1313,7 +1317,33 @@ function changeSlideAction(obj: any, id: string) {
         return
     }
 
+    // MULTIPLE
+
     let indexes: number[] = obj.sel.data.map(({ index }) => index)
+
+    if (id === "action") {
+        let id = uid()
+        let existing: any[] = []
+        let actions = clone(
+            indexes
+                .map((i) => {
+                    let a = ref[i]?.data?.actions || {}
+                    if (!a.slideActions) a.slideActions = []
+                    a.slideActions.push({ id })
+
+                    existing.push(...a.slideActions.map((a) => a.triggers?.[0]))
+                    return a
+                })
+                .filter(Boolean) || []
+        )
+
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes } })
+
+        popupData.set({ id, mode: "slide", indexes, existing })
+        activePopup.set("action")
+
+        return
+    }
 
     if (id === "animate") {
         if (!actions[id]) {

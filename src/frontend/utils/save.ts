@@ -13,6 +13,7 @@ import {
     autosave,
     calendarAddShow,
     categories,
+    customMetadata,
     customizedIcons,
     dataPath,
     deletedShows,
@@ -166,6 +167,7 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         customizedIcons: get(customizedIcons),
         companion: get(companion),
         globalTags: get(globalTags),
+        customMetadata: get(customMetadata),
     }
 
     let allSavedData: any = {
@@ -367,4 +369,5 @@ const saveList: { [key in SaveList]: any } = {
     special: special,
     companion: null,
     globalTags: globalTags,
+    customMetadata: null,
 }
