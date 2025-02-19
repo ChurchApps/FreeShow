@@ -71,14 +71,15 @@ jobs:
                   node-version: 20
 
             - name: Install libraries
-              run: sudo apt-get install libfontconfig1-dev --fix-missing
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y libfontconfig1-dev uuid-dev --fix-missing
 
             - name: Install dependencies
               run: npm install
 
             - name: Install FPM
               run: |
-                  sudo apt-get update
                   sudo apt-get install ruby ruby-dev build-essential
                   sudo gem install --no-document fpm
 
