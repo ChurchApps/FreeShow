@@ -3,7 +3,7 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activePopup, activeProject, activeTriggerFunction, categories, dictionary, drawerTabsData, media, outLocked, outputs, playScripture, popupData, scriptureHistory, scriptureSettings, styles, templates } from "../../../stores"
+    import { activePopup, activeProject, activeTriggerFunction, categories, dictionary, drawerTabsData, media, outLocked, outputs, playScripture, popupData, scriptureHistory, scriptures, scriptureSettings, styles, templates } from "../../../stores"
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -22,6 +22,7 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
+    import { trackScriptureUsage } from "../../../utils/analytics"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -182,6 +183,14 @@
 
         let tempItems: Item[] = slides[0] || []
         setOutput("slide", { id: "temp", tempItems, attributionString })
+
+        // track
+        let reference = `${bibles[0].book} ${bibles[0].chapter}:${verseRange}`
+        bibles.forEach((translation) => {
+            let name = translation.version || ""
+            let apiId = translation.api ? $scriptures[translation.id!]?.id || translation.id || "" : null
+            if (name || apiId) trackScriptureUsage(name, apiId, reference)
+        })
 
         // play template background
         if (!templateBackground) return

@@ -258,6 +258,20 @@ export const previewShortcuts: any = {
         if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
         if (get(activeSlideRecording)) return updateSlideRecording("next")
 
+        let currentShow: any = get(focusMode) ? get(activeFocus) : get(activeShow)
+        if (!get(showsCache)[currentShow?.id || ""]) {
+            let out = get(outputs)[getActiveOutputs()[0]]?.out
+            if (!out?.slide) {
+                if (currentShow?.type === "overlay" && !out?.overlays?.includes(currentShow?.id)) {
+                    e.preventDefault()
+                    return setOutput("overlays", currentShow.id, false, "", true)
+                } else if ((currentShow?.type === "video" || currentShow?.type === "image" || currentShow?.type === "player") && (out?.background?.path || out?.background?.id) !== currentShow?.id) {
+                    return playMedia(e)
+                }
+                // WIP audio
+            }
+        }
+
         nextSlideIndividual(e)
     },
     ArrowLeft: (e: any) => {

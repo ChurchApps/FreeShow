@@ -315,7 +315,8 @@ function checkRepeats(labeled: any[]) {
 function fixText(text: string, formatText: boolean): string {
     if (formatText) {
         // remove strings (1) shorter than 3, not (this)
-        text = text.replaceAll(".", "").replace(/\([^)]{1,2}\) /g, "")
+        // .replaceAll(".", "")
+        text = text.replace(/\([^)]{1,2}\) /g, "")
     }
 
     // remove group from text

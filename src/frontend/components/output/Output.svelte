@@ -295,7 +295,7 @@
                 <Window id={slide?.screen?.id} class="media" style="width: 100%;height: 100%;" />
             {/if}
         </span>
-    {:else if slide && slide.type !== "pdf" && layers.includes("slide")}
+    {:else if slide && slide?.type !== "pdf" && layers.includes("slide")}
         <SlideContent {outputId} outSlide={slide} {slideData} {currentSlide} {currentStyle} {animationData} {currentLineId} {lines} {ratio} {mirror} {preview} transition={transitions.text} transitionEnabled={!mirror || preview} {isKeyOutput} />
     {/if}
 

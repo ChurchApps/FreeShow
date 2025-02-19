@@ -155,6 +155,7 @@ export const storedChordsData: Writable<any> = writable({})
 export const photoApiCredits: Writable<any> = writable({})
 export const errorHasOccured: Writable<boolean> = writable(false)
 export const disableDragging: Writable<boolean> = writable(false)
+export const activeDropId: Writable<string> = writable("")
 
 // ----- SAVED VARIABLES -----
 
@@ -179,6 +180,7 @@ export const transitionData: Writable<{ text: Transition; media: Transition }> =
     media: { type: "fade", duration: 800, easing: "sine" },
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
+export const customMetadata: Writable<{ disabled: string[]; custom: string[] }> = writable({ disabled: [], custom: [] }) // {disabled: [], custom: []}
 
 // PROJECT
 export const openedFolders: Writable<ID[]> = writable([]) // []

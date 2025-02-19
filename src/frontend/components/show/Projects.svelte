@@ -234,8 +234,8 @@
                                 {#if show.type === "section"}
                                     <Button
                                         active={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
-                                        class="section context #project_section__project"
-                                        style={show.color ? `border-bottom: 2px solid ${show.color}` : ""}
+                                        class="section context #project_section__project {show.color ? 'color-border' : ''}"
+                                        style="--border-color: {show.color};"
                                         on:click={() => {
                                             if ($focusMode) activeFocus.set({ id: show.id, index })
                                             else activeShow.set({ ...show, index })
@@ -349,5 +349,10 @@
         overflow-y: auto;
 
         border-top: 2px solid var(--primary-lighter);
+    }
+
+    #projectArea :global(button.color-border) {
+        border-bottom: 2px solid var(--border-color);
+        outline-color: var(--border-color);
     }
 </style>

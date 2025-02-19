@@ -54,6 +54,7 @@ import Emitters from "../components/main/popups/Emitters.svelte"
 import SelectTemplate from "../components/main/popups/SelectTemplate.svelte"
 import MetadataDisplay from "../components/main/popups/MetadataDisplay.svelte"
 import AspectRatio from "../components/main/popups/AspectRatio.svelte"
+import ManageMetadata from "../components/main/popups/ManageMetadata.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -68,6 +69,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     icon: ChangeIcon,
     manage_icons: ManageIcons,
     manage_colors: ManageColors,
+    manage_metadata: ManageMetadata,
     choose_chord: ChooseChord,
     choose_camera: ChooseCamera,
     player: CreatePlayer,

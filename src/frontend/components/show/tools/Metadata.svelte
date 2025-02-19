@@ -1,11 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeShow, dictionary, outputs, popupData, shows, showsCache, styles, templates } from "../../../stores"
+    import { activePopup, activeShow, customMetadata, dictionary, outputs, popupData, shows, showsCache, styles, templates } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
     import { getActiveOutputs } from "../../helpers/output"
-    import { initializeMetadata, metadataDisplayValues } from "../../helpers/show"
+    import { getCustomMetadata, initializeMetadata, metadataDisplayValues } from "../../helpers/show"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -24,11 +24,14 @@
     let loaded: boolean = false
     onMount(getValues)
     $: messageUpdate = $showsCache[$activeShow?.id || ""]?.message
-    $: if ($activeShow!.id || messageUpdate) getValues()
+    $: if ($activeShow!.id || messageUpdate || $customMetadata) getValues()
 
     function getValues() {
-        values = initializeMetadata({})
+        values = getCustomMetadata()
+
+        const defaultKeys = Object.keys(initializeMetadata({}))
         Object.entries(meta).forEach(([key, value]) => {
+            if (!value && defaultKeys.includes(key) && $customMetadata.disabled?.includes(key)) return
             values[key] = value
         })
 
@@ -114,13 +117,17 @@
         changeValue({ value }, key)
     }
 
+    $: slideBackgrounds = Object.values(currentShow?.layouts)
+        .map((a) => a.slides.map((a) => a.background).filter(Boolean))
+        .flat()
+
     $: metadataDisplay = metadata.display || "never"
     // $: metadataDisplay = (metadata.display ? metadata.display : outputShowSettings.displayMetadata) || "never"
 </script>
 
 <Panel flex column={!tempHide}>
     {#if metadata.autoMedia !== true}
-        <div class="gap">
+        <div class="gap" style={slideBackgrounds.length ? "" : "margin-bottom: 10px;"}>
             {#each Object.entries(values) as [key, value]}
                 <CombinedInput textWidth={40}>
                     {#if $dictionary.meta?.[key]}
@@ -137,15 +144,22 @@
                     {/if}
                 </CombinedInput>
             {/each}
+
+            <Button on:click={() => activePopup.set("manage_metadata")} center dark>
+                <Icon id="edit" right />
+                <T id="popup.manage_metadata" />
+            </Button>
         </div>
     {/if}
 
-    <div class="styling">
-        <div>
-            <p title="{$dictionary.meta?.auto_media} (EXIF from .JPEG)"><T id="meta.auto_media" /></p>
-            <Checkbox checked={metadata.autoMedia || false} on:change={toggleAutoMedia} />
+    {#if slideBackgrounds.length}
+        <div class="styling">
+            <div>
+                <p title="{$dictionary.meta?.auto_media} (EXIF from .JPEG)"><T id="meta.auto_media" /></p>
+                <Checkbox checked={metadata.autoMedia || false} on:change={toggleAutoMedia} />
+            </div>
         </div>
-    </div>
+    {/if}
 
     <!-- message -->
     <h5><T id="meta.message" /></h5>

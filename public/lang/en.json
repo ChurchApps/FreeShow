@@ -75,7 +75,8 @@
         "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses."
     },
     "tips": {
-        "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras."
+        "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",
+        "global_options": "These options are applied globally."
     },
     "setup": {
         "good_luck": "I hope you find this software useful. Good luck showing! :)",
@@ -442,6 +443,7 @@
         "icon": "Icons",
         "manage_icons": "Manage icons",
         "manage_colors": "Manage colors",
+        "manage_metadata": "Manage metadata",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
         "initialize": "Welcome to FreeShow",

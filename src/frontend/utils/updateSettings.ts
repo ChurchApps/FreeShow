@@ -17,6 +17,7 @@ import {
     calendarAddShow,
     categories,
     companion,
+    customMetadata,
     customizedIcons,
     dataPath,
     disabledServers,
@@ -292,6 +293,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     calendarAddShow: (v: any) => calendarAddShow.set(v),
     metronome: (v: any) => metronome.set(v),
     globalTags: (v: any) => globalTags.set(v),
+    customMetadata: (v: any) => customMetadata.set(v),
     companion: (v: any) => {
         companion.set(v)
 

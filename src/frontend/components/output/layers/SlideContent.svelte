@@ -143,13 +143,13 @@
                     item={customItem}
                     {ratio}
                     {outputId}
-                    ref={{ showId: customOut.id, slideId: customSlide.id, id: customSlide.id || "", layoutId: customOut.layout }}
+                    ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout }}
                     linesStart={customLines?.[currentLineId]?.start}
                     linesEnd={customLines?.[currentLineId]?.end}
                     outputStyle={current.currentStyle}
                     {mirror}
                     {preview}
-                    slideIndex={customOut.index}
+                    slideIndex={customOut?.index}
                 />
             </SlideItemTransition>
         {/if}

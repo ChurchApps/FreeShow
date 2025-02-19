@@ -235,7 +235,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
         if (!layout?.filter((a) => !a.data.disabled).length) return
 
         index = 0
-        while (layout[index].data.disabled || notBound(layout[index], customOutputId)) index++
+        while (layout[index]?.data.disabled || notBound(layout[index], customOutputId)) index++
 
         let data = layout[index]?.data
         checkActionTrigger(data, index)
@@ -497,7 +497,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 
 // skip slides that are bound to specific output not customId
 function notBound(ref, outputId: string | undefined) {
-    return outputId && ref.data.bindings?.length && !ref.data.bindings.includes(outputId)
+    return outputId && ref?.data?.bindings?.length && !ref?.data?.bindings.includes(outputId)
 }
 
 function playPdf(slide: null | OutSlide, nextPage: number) {

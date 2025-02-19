@@ -19,6 +19,7 @@ import {
     overlays,
     overlayTimers,
     playingVideos,
+    scriptures,
     serverData,
     showsCache,
     special,
@@ -45,6 +46,7 @@ import { getExtension, getFileName, removeExtension } from "./media"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
+import { trackScriptureUsage } from "../../utils/analytics"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let forceKey = e.ctrlKey || e.metaKey
@@ -69,6 +71,25 @@ export function toggleOutput(id: string) {
 // transition: null,
 // TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
 export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string = "", add: boolean = false) {
+    // track usage
+    if (key === "slide" && data?.id) {
+        let showReference = _show(data.id).get("reference")
+        if (showReference?.type === "scripture") {
+            let translation = showReference.data
+            let ref = _show(data.id).layouts([data.layout]).ref()[0]
+            let slide = _show(data.id).get("slides")[ref[data.index]?.id]
+
+            let scripture = get(scriptures)[translation.collection] || {}
+            let versions = scripture.collection?.versions || [scripture.id || ""]
+            versions.forEach((id) => {
+                let name = get(scriptures)[id]?.name || translation.version || ""
+                let scriptureId = get(scriptures)[id]?.id || id
+                let apiId = translation.api ? scriptureId : null
+                if (name || apiId) trackScriptureUsage(name, apiId, slide.group)
+            })
+        }
+    }
+
     outputs.update((a: any) => {
         let bindings = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0]?.[data.index]?.data?.bindings || [] : []
         let allOutputs = bindings.length ? bindings : getActiveOutputs()
