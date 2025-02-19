@@ -37,7 +37,7 @@
         {#if show}
             <SlideItemTransition {transitionEnabled} globalTransition={transition} {item} let:customItem>
                 {#if !item.bindings?.length || item.bindings.includes(outputId)}
-                    <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} />
+                    <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {outputId} />
                 {/if}
             </SlideItemTransition>
         {/if}

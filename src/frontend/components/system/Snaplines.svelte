@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { outputs } from "../../stores"
+    import { getActiveOutputs, getOutputResolution, getStageResolution } from "../helpers/output"
     import { getRadius, moveBox, resizeBox, rotateBox } from "./textbox"
 
     export let lines: [string, number][]
@@ -6,6 +8,7 @@
     export let newStyles: any
     export let ratio: number
     export let active: any
+    export let isStage: boolean = false
 
     let styles: any = {}
     function mousemove(e: any) {
@@ -37,6 +40,18 @@
             if (!e.altKey) [styles, lines] = moveBox(e, mouse, ratio, active, lines, styles)
         }
 
+        // percentage scale
+        let outputId = isStage ? "" : getActiveOutputs($outputs, true, true, true)[0]
+        let outputResolution = isStage ? getStageResolution() : getOutputResolution(outputId, $outputs, true)
+        let width = outputResolution.width
+        let height = outputResolution.height
+
+        if (styles.left) styles.left = 1920 * (Number(styles.left) / width)
+        if (styles.top) styles.top = 1080 * (Number(styles.top) / height)
+        if (styles.width) styles.width = 1920 * (Number(styles.width) / width)
+        if (styles.height) styles.height = 1080 * (Number(styles.height) / height)
+
+        // finalize values
         Object.keys(styles).forEach((key) => {
             if (styles[key] === undefined || styles[key].toString().includes("px") || styles[key].toString().includes("deg")) return
             if (key === "width" || key === "height") styles[key] = Math.max(16 / ratio, styles[key])

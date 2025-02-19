@@ -52,6 +52,7 @@
             //     popupData.set({ ...$popupData, templateId: template.id })
         }
 
+        if (!$popupData.revert) popupData.set({})
         activePopup.set($popupData.revert || null)
     }
 

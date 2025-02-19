@@ -3,7 +3,6 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
-    import { getResolution } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -35,15 +34,9 @@
 
     $: if ($showsCache || editSlide) setValues()
     function setValues() {
-        // editSlide?.settings?.resolution
-        let res = getResolution()
         settings = {
             template: editSlide?.settings?.template,
             color: editSlide?.settings?.color || "",
-            resolution: {
-                width: res.width,
-                height: res.height,
-            },
         }
     }
 
@@ -51,7 +44,6 @@
         if (!editSlide) return
 
         let newData: any = { style: clone(settings) }
-        if (JSON.stringify(newData.style.resolution) === JSON.stringify(getResolution())) delete newData.style.resolution
 
         history({
             id: "slideStyle",
@@ -129,32 +121,6 @@
             </Button>
         {/if}
     </CombinedInput>
-
-    <!-- <h6><T id="settings.resolution" /></h6>
-    <CombinedInput>
-        <p><T id="edit.width" /></p>
-        <NumberInput
-            value={settings.resolution.width}
-            max={100000}
-            on:change={(e) => {
-                settings.resolution.width = Number(e.detail)
-                update()
-            }}
-            buttons={false}
-        />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="edit.height" /></p>
-        <NumberInput
-            value={settings.resolution.height}
-            max={100000}
-            on:change={(e) => {
-                settings.resolution.height = Number(e.detail)
-                update()
-            }}
-            buttons={false}
-        />
-    </CombinedInput> -->
 
     <h6><T id="tools.notes" /></h6>
     <div class="notes" bind:this={notesElem}>

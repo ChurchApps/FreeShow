@@ -142,6 +142,7 @@
                     animationStyle={animationData.style || {}}
                     item={customItem}
                     {ratio}
+                    {outputId}
                     ref={{ showId: customOut.id, slideId: customSlide.id, id: customSlide.id || "", layoutId: customOut.layout }}
                     linesStart={customLines?.[currentLineId]?.start}
                     linesEnd={customLines?.[currentLineId]?.end}

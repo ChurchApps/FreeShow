@@ -1,7 +1,7 @@
 <script lang="ts">
     import { outputs, styles } from "../../../stores"
     //import { currentWindow, outputs, styles } from "../../../stores"
-    import { getOutputResolution } from "../../helpers/output"
+    import { getResolution } from "../../helpers/output"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import StageShow from "../../stage/StageShow.svelte"
     import Output from "../Output.svelte"
@@ -12,7 +12,7 @@
     export let outputId: string = ""
     export let style: string = ""
 
-    $: resolution = getOutputResolution(outputId, $outputs, $styles)
+    $: resolution = getResolution(null, [$outputs, $styles], false, outputId)
     let width = 0
     let height = 0
 
