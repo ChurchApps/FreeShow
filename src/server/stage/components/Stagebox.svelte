@@ -42,6 +42,7 @@
     }
 
     // custom dynamic size
+    // WIP this does not update when window size changes...
     let newSizes = `;
         top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
         left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;

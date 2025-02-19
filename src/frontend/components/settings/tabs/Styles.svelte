@@ -78,23 +78,6 @@
     $: styleTemplateScripture = $templates[currentStyle.templateScripture || ""] || {}
     $: templateBackground = styleTemplate.settings?.backgroundColor || styleTemplateScripture.settings?.backgroundColor
     $: templateBackgroundImage = styleTemplate.settings?.backgroundPath || styleTemplateScripture.settings?.backgroundPath
-    // $: templateResolution = styleTemplate.settings?.resolution
-
-    // resolutions
-    // https://www.wearethefirehouse.com/aspect-ratio-cheat-sheet
-    // const resolutions = [
-    //     { name: "720p 960x720 (4/3)", data: { width: 960, height: 720 } },
-    //     { name: "720p 1280x720 (16/9)", data: { width: 1280, height: 720 } },
-    //     { name: "1080p 1440x1080 (4/3)", data: { width: 1440, height: 1080 } },
-    //     { name: "1080p 1920x1080 (16/9)", data: { width: 1920, height: 1080 } },
-    //     { name: "2K 2048x1152 (16/9)", data: { width: 2048, height: 1152 } },
-    //     { name: "4K 3840x2160 (16/9)", data: { width: 3840, height: 2160 } },
-    //     { name: "8K 7680x4320 (16/9)", data: { width: 7680, height: 4320 } },
-    //     { name: "Cinema Flat 2K 1998x1080 (1.85)", data: { width: 1998, height: 1080 } },
-    //     { name: "Cinema Scope 2K 2048x858 (2.39)", data: { width: 2048, height: 858 } },
-    //     { name: "Cinema Flat 4K 3996x2160 (1.85)", data: { width: 3996, height: 2160 } },
-    //     { name: "Cinema Scope 4K 4096x1716 (2.39)", data: { width: 4096, height: 1716 } },
-    // ]
 
     function getAspectRatio(resolution: Resolution | undefined): AspectRatio {
         if (!resolution || (resolution.width === 1920 && resolution.height === 1080)) return { width: 16, height: 9 }
@@ -587,17 +570,6 @@
     .flex :global(button) {
         flex: 1;
     }
-
-    .inputs {
-        display: flex;
-    }
-
-    /* .text {
-        display: flex;
-        align-items: center;
-        padding: 0 10px;
-        border: none;
-    } */
 
     .filler {
         height: 48px;

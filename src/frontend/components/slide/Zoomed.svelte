@@ -4,7 +4,9 @@
     import { getActiveOutputs, getOutputResolution, getResolution } from "../helpers/output"
 
     export let id: string = ""
-    export let background: string = $styles[$outputs[id || getActiveOutputs()[0]]?.style || ""]?.background || "#000000"
+    $: outputId = id || getActiveOutputs($outputs, true, true, true)[0]
+
+    export let background: string = $styles[$outputs[outputId]?.style || ""]?.background || "#000000"
     export let backgroundDuration: number = 800
     export let center: boolean = false
     export let zoom: boolean = true
@@ -24,17 +26,17 @@
     export let hideOverflow: boolean = true
     export let customZoom: number = 1
     export let cropping: Cropping | undefined = { top: 0, right: 0, bottom: 0, left: 0 }
-    export let resolution: Resolution = getResolution(null, { $outputs, $styles }, false, id)
-    $: resolution = getResolution(resolution, { $outputs, $styles }, false, id)
+    export let resolution: Resolution = getResolution(null, { $outputs, $styles }, false, outputId)
+    $: resolution = getResolution(resolution, { $outputs, $styles }, false, outputId)
+    $: outputRes = getOutputResolution(outputId, $outputs)
 
     let elemWidth: number = 0
     let elemHeight: number = 0
 
     let slideWidth: number = 0
+    let slideHeight: number = 0
     export let ratio: number = 1
-    export let editRatio: number = 1
-    $: ratio = Math.max(0.01, slideWidth / 1920) / customZoom
-    $: editRatio = resolution.width / resolution.height
+    $: ratio = Math.max(0.01, outputRes.width < outputRes.height ? slideHeight / outputRes.height : slideWidth / outputRes.width) / customZoom
 
     $: croppedStyle = getCropping(cropping)
     function getCropping(cropping) {
@@ -43,9 +45,6 @@
 
         let minusHeight = cropping.top + cropping.bottom
         let minusWidth = cropping.right + cropping.left
-
-        let outputId = id || getActiveOutputs()[0]
-        let outputRes = getOutputResolution(outputId)
 
         let newHeight = outputRes.height - minusHeight
         let newWidth = outputRes.width - minusWidth
@@ -70,9 +69,10 @@
     $: alignStyle = align ? ($$props.style?.includes("width") ? `align-items: ${align};` : `justify-content: ${align};`) : ""
 </script>
 
-<div {id} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
+<div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
     <div
         bind:offsetWidth={slideWidth}
+        bind:offsetHeight={slideHeight}
         class="slide"
         class:landscape={resolution.width / resolution.height > elemWidth / elemHeight}
         class:hideOverflow

@@ -378,12 +378,23 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
     if (!outputId) outputId = getActiveOutputs()[0]
     let currentOutput = get(outputs)[outputId]
 
+    if (currentOutput?.stageOutput) return currentOutput.bounds
+
     let style: any = currentOutput?.style ? get(styles)[currentOutput?.style] || {} : {}
     let styleRatio = style.aspectRatio || style.resolution
 
     let ratio = styleRatio?.outputResolutionAsRatio ? currentOutput?.bounds : styleRatio
 
     return ratio || { width: 16, height: 9 }
+}
+
+// this will get the first available stage output
+export function getStageOutputId(_updater = get(outputs)): string {
+    return keysToID(_updater).find((a) => a.stageOutput)?.id
+}
+export function getStageResolution(outputId: string = "", _updater = get(outputs)): Resolution {
+    if (!outputId) outputId = getStageOutputId()
+    return _updater[outputId]?.bounds || { width: 1920, height: 1080 }
 }
 
 // calculate actual output resolution based on style aspect ratio
@@ -398,9 +409,6 @@ export function getOutputResolution(outputId: string, _updater = get(outputs), s
     // output window size is narrow
     if (outputRes.width < outputRes.height) {
         outputRes.width = Math.round(outputRes.height * styleAspectRatio)
-
-        // let outputAspectRatio = outputRes.width / outputRes.height
-        // outputRes.width = Math.round(outputRes.height * outputAspectRatio)
     } else {
         outputRes.height = Math.round(outputRes.width / styleAspectRatio)
     }

@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
     import { OUTPUT } from "../../../types/Channels"
-    import { activeStage, currentWindow, dictionary, stageShows } from "../../stores"
+    import { activeStage, currentWindow, dictionary, outputs, stageShows } from "../../stores"
     import { send } from "../../utils/request"
     import { keysToID, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
@@ -16,6 +16,7 @@
     import Snaplines from "../system/Snaplines.svelte"
     import { updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
+    import { getStageOutputId, getStageResolution } from "../helpers/output"
 
     export let outputId: string = ""
     export let stageId: string = ""
@@ -83,9 +84,8 @@
 
     let width: number = 0
     let height: number = 0
-    // WIP change stage resolution
-    // $: resolution = getResolution(show?.settings?.resolution, { $outputs, $styles })
-    let resolution = { width: 1920, height: 1080 }
+    $: stageOutputId = getStageOutputId($outputs)
+    $: resolution = getStageResolution(stageOutputId, $outputs)
 
     // ACTION BAR
 
@@ -124,10 +124,10 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if stageShowId}
             <!-- TODO: stage resolution... -->
-            <Zoomed background={show.settings?.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio disableStyle hideOverflow={!edit} center={zoom >= 1}>
+            <Zoomed background={show.settings?.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio disableStyle hideOverflow={!edit} center={zoom >= 1}>
                 <!-- TODO: snapping to top left... -->
                 {#if edit}
-                    <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
+                    <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />
                 {/if}
                 <!-- {#key Slide} -->
                 {#each Object.entries(show.items || {}) as [id, item]}

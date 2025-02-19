@@ -7,6 +7,7 @@
     import { itemEdits } from "../../edit/values/item"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { percentageToAspectRatio, stylePosToPercentage } from "../../helpers/output"
     import { getStyles } from "../../helpers/style"
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
@@ -17,7 +18,11 @@
     $: item = items ? stageItems[items[0]] : null
 
     let data: { [key: string]: any } = {}
-    $: if (item?.style || item === null) data = getStyles(item?.style, true)
+    $: if (item?.style || item === null) updateData()
+    function updateData() {
+        data = getStyles(item?.style, true)
+        dataChanged()
+    }
 
     $: itemEdit = clone(itemEdits)
     $: if (itemEdit.backdrop_filters) delete itemEdit.backdrop_filters
@@ -25,14 +30,17 @@
     // CSS
     $: if (itemEdit?.CSS && item?.style) itemEdit.CSS[0].value = item.style
 
-    $: if (data) {
+    function dataChanged() {
         setBoxInputValue({ icon: "", edit: itemEdit }, "default", "background-opacity", "hidden", !data["background-color"])
+
+        data = stylePosToPercentage(data)
     }
 
     $: if (item) itemEdit = getBackgroundOpacity(itemEdit, data)
 
     function updateStyle(e: any) {
         let input = e.detail
+        input = percentageToAspectRatio(input)
 
         if (input.id === "transform") {
             let oldString = data[input.id]

@@ -35,7 +35,6 @@
         showLabelIfEmptySlide: true,
     }
 
-    // resolution ?
     // show labels
     // flash on update
     // stage notes/message
@@ -82,31 +81,7 @@
         </CombinedInput>
     {/if}
 
-    <!-- <h6><T id="settings.resolution" /></h6>
-  <CombinedInput>
-      <p><T id="edit.width" /></p>
-      <NumberInput
-          value={settings.resolution.width}
-          max={100000}
-          on:change={(e) => {
-              settings.resolution.width = Number(e.detail)
-              update()
-          }}
-      />
-  </CombinedInput>
-  <CombinedInput>
-      <p><T id="edit.height" /></p>
-      <NumberInput
-          value={settings.resolution.height}
-          max={100000}
-          on:change={(e) => {
-              settings.resolution.height = Number(e.detail)
-              update()
-          }}
-      />
-  </CombinedInput>
-
-  <h6><T id="tools.notes" /></h6>
+    <!-- <h6><T id="tools.notes" /></h6>
   <div class="notes">
       <Notes value={note} on:edit={edit} />
   </div> -->

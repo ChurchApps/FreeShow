@@ -39,7 +39,6 @@
     $: resolution = getResolution(null, { $outputs, $styles })
 
     let ratio: number = 1
-    let editRatio: number = 1
 
     $: layoutSlide = ref?.[$activeEdit.slide!]?.data || {}
     // get backgruond
@@ -268,7 +267,6 @@
                     {resolution}
                     style={getStyleResolution(resolution, width, height, "fit", { zoom })}
                     bind:ratio
-                    bind:editRatio
                     {hideOverflow}
                     center={zoom >= 1}
                 >

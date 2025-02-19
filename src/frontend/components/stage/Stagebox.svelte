@@ -4,7 +4,7 @@
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import autosize from "../edit/scripts/autosize"
     import { keysToID, sortByName } from "../helpers/array"
-    import { getActiveOutputs } from "../helpers/output"
+    import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import Media from "../output/layers/Media.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
@@ -143,6 +143,12 @@
         })
     }
 
+    function getCustomStyle(style: string) {
+        let outputResolution = getStageResolution()
+        style = percentageStylePos(style, outputResolution)
+        return style
+    }
+
     let video: any
     function loaded() {
         if (!video) return
@@ -161,7 +167,7 @@
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
-    style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};"
+    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}

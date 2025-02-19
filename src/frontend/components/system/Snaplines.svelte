@@ -1,6 +1,6 @@
 <script lang="ts">
     import { outputs } from "../../stores"
-    import { getActiveOutputs, getOutputResolution } from "../helpers/output"
+    import { getActiveOutputs, getOutputResolution, getStageResolution } from "../helpers/output"
     import { getRadius, moveBox, resizeBox, rotateBox } from "./textbox"
 
     export let lines: [string, number][]
@@ -8,6 +8,7 @@
     export let newStyles: any
     export let ratio: number
     export let active: any
+    export let isStage: boolean = false
 
     let styles: any = {}
     function mousemove(e: any) {
@@ -40,8 +41,8 @@
         }
 
         // percentage scale
-        let outputId = getActiveOutputs($outputs, true, true, true)[0]
-        let outputResolution = getOutputResolution(outputId, $outputs, true)
+        let outputId = isStage ? "" : getActiveOutputs($outputs, true, true, true)[0]
+        let outputResolution = isStage ? getStageResolution() : getOutputResolution(outputId, $outputs, true)
         let width = outputResolution.width
         let height = outputResolution.height
 
