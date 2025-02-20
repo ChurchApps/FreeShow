@@ -15,7 +15,7 @@
     <div class="streams">
         {#each streamsList as stream}
             <SelectElem id="audio_stream" data={{ id: stream.id, type: "audio_stream" }} draggable>
-                <Button class="context #audio_stream" style="flex: 1;" outline={Object.keys($playingAudio).includes(stream.id)} on:click={() => startAudioStream(stream)}>
+                <Button class="context #audio_stream" style="flex: 1;" outline={Object.keys($playingAudio).includes(stream.value)} on:click={() => startAudioStream(stream)}>
                     <div class="stream">
                         <span style="padding-left: 5px;">
                             <p>{stream.name}</p>

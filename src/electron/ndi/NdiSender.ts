@@ -117,42 +117,31 @@ export class NdiSender {
 
         try {
             await this.NDI[id].sender.video(frame)
-        } catch (error) {
-            console.log(error)
+        } catch (err) {
+            console.log("Error sending NDI video frame:", err)
         }
     }
 
-    static async sendAudioBufferNDI(id: string, buffer: Buffer, { sampleRate, channelCount, bytesForFloat32 }: any) {
-        if (this.ndiDisabled || !this.NDI[id]?.sender) return
+    static enableAudio(id: string) {
+        if (!this.NDI[id]) return
+        this.NDI[id].sendAudio = true
+    }
+
+    static disableAudio(id: string) {
+        if (!this.NDI[id]) return
+        this.NDI[id].sendAudio = false
+    }
+
+    static sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: any) {
+        if (this.ndiDisabled || !Object.values(this.NDI).find((a: any) => a?.sendAudio)) return
         const grandiose = require("grandiose")
 
-        /*  convert from PCM/signed-16-bit/little-endian data
-        to NDI's "PCM/planar/signed-float32/little-endian  */
-        let buffer2: Buffer
-        try {
-            const pcmconvert = require("pcm-convert")
-            buffer2 = pcmconvert(
-                buffer,
-                {
-                    channels: channelCount,
-                    dtype: "int16",
-                    endianness: "le",
-                    interleaved: true,
-                },
-                {
-                    dtype: "float32",
-                    endianness: "le",
-                    interleaved: false,
-                }
-            )
-        } catch (err) {
-            console.log("Could not convert audio")
-            return
-        }
+        const ndiAudioBuffer = convertPCMtoPlanarFloat32(buffer, channelCount)
+        if (!ndiAudioBuffer) return
 
-        /*  create frame  */
         const now = this.timeStart + process.hrtime.bigint()
         const timecode = now / BigInt(100)
+        const bytesForFloat32 = 4
         const frame = {
             /*  base information  */
             timecode,
@@ -160,16 +149,36 @@ export class NdiSender {
             /*  type-specific information  */
             sampleRate,
             noChannels: channelCount,
-            noSamples: Math.trunc(buffer2.byteLength / channelCount / bytesForFloat32),
-            channelStrideBytes: Math.trunc(buffer2.byteLength / channelCount),
+            noSamples: Math.trunc(ndiAudioBuffer.byteLength / channelCount / bytesForFloat32),
+            channelStrideBytes: Math.trunc(ndiAudioBuffer.byteLength / channelCount),
 
             /*  the data itself  */
             fourCC: (grandiose as any).FOURCC_FLTp,
-            data: buffer2,
+            data: ndiAudioBuffer,
         }
 
-        console.log(buffer2.byteLength, timecode, sampleRate, channelCount, frame.noSamples, frame.channelStrideBytes, frame.fourCC)
+        try {
+            Object.values(this.NDI).forEach(async (sender: any) => {
+                if (!sender?.sendAudio || !sender?.sender) return
 
-        await this.NDI[id].sender.audio(frame)
+                await sender.sender.audio(frame)
+            })
+        } catch (err) {
+            console.log("Error sending NDI audio frame:", err)
+        }
     }
+}
+
+// convert from PCM/signed-16-bit/little-endian data to NDI's "PCM/planar/signed-float32/little-endian"
+function convertPCMtoPlanarFloat32(buffer: Buffer, channels: number) {
+    let audioBuffer: Buffer
+    try {
+        const pcmconvert = require("pcm-convert")
+        audioBuffer = pcmconvert(buffer, { channels, dtype: "int16", endianness: "le", interleaved: true }, { dtype: "float32", endianness: "le", interleaved: false })
+    } catch (err) {
+        console.log("Could not convert audio")
+        return
+    }
+
+    return audioBuffer
 }

@@ -2,6 +2,7 @@ import { NDI } from "../../types/Channels"
 import type { Message } from "../../types/Socket"
 import { CaptureHelper } from "../capture/CaptureHelper"
 import { NdiReceiver } from "./NdiReceiver"
+import { NdiSender } from "./NdiSender"
 
 export async function receiveNDI(e: any, msg: Message) {
     let data: any = {}
@@ -32,4 +33,7 @@ export function setDataNDI(data: any) {
 
         CaptureHelper.updateFramerate(data.id)
     }
+
+    if (data.audio) NdiSender.enableAudio(data.id)
+    else NdiSender.disableAudio(data.id)
 }

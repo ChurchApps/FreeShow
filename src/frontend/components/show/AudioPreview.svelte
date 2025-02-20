@@ -2,7 +2,7 @@
     import { AudioAnalyser } from "../../audio/audioAnalyser"
     import { clearAudio } from "../../audio/audioFading"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { dictionary, focusMode, media, outLocked, playingAudio22 } from "../../stores"
+    import { dictionary, focusMode, media, outLocked, playingAudio } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
@@ -13,7 +13,7 @@
     $: path = active?.id || ""
     $: name = active?.name || ""
     $: isMic = active?.data?.isMic
-    $: playing = $playingAudio22[path] || {}
+    $: playing = $playingAudio[path] || {}
     $: paused = playing.paused !== false
 
     let currentTime: number = 0
@@ -75,7 +75,7 @@
 
     let mediaElem: any = null
     let canvas: any = null
-    $: if ($playingAudio22[path]?.paused === false && canvas) renderVisualiser()
+    $: if ($playingAudio[path]?.paused === false && canvas) renderVisualiser()
 
     let isRendering: boolean = false
     let analysers: AnalyserNode[] = []
@@ -106,8 +106,8 @@
 
         isRendering = true
         function renderFrame() {
-            // || ($playingAudio22[path]?.paused !== false && allBars === 0)
-            if (!$playingAudio22[path]) {
+            // || ($playingAudio[path]?.paused !== false && allBars === 0)
+            if (!$playingAudio[path]) {
                 ctx.clearRect(0, 0, WIDTH, HEIGHT)
                 isRendering = false
                 return
@@ -168,7 +168,6 @@
             title={paused ? $dictionary.media?.play : $dictionary.media?.pause}
             on:click={() => {
                 if ($outLocked) return
-                // playAudio({ path, name }, true, currentTime)
                 AudioPlayer.start(path, { name }, { pauseIfPlaying: true, startAt: currentTime })
             }}
         >
@@ -239,7 +238,6 @@
                         return a
                     })
 
-                    // updateVolume("local")
                     AudioPlayer.updateVolume(path)
                 }}
             >
@@ -258,7 +256,6 @@
                         return a
                     })
 
-                    // updateVolume("local")
                     AudioPlayer.updateVolume(path)
                 }}
             >

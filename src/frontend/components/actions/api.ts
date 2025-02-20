@@ -1,9 +1,10 @@
 import { MAIN } from "../../../types/Channels"
 import type { MidiValues, TransitionType } from "../../../types/Show"
+import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
-import { audioPlaylistNext, clearAudio, startPlaylist, updateVolume } from "../helpers/audio"
+import { clearAudio } from "../helpers/audio"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, displayOutputs, startCamera, toggleOutput } from "../helpers/output"
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startAudioStream, startShowSync } from "../helpers/showActions"
@@ -34,6 +35,7 @@ import {
     setTemplate,
     startScripture,
     toggleLock,
+    updateVolumeValues,
 } from "./apiHelper"
 import { oscToAPI } from "./apiOSC"
 import { emitData } from "./emitters"
@@ -184,10 +186,10 @@ export const API_ACTIONS = {
     // control audio time
     // start specific folder (playlist)
     // folder_select_audio: () => ,
-    change_volume: (data: API_volume) => updateVolume(data.volume ?? data.gain, data.gain !== undefined), // BC
+    change_volume: (data: API_volume) => updateVolumeValues(data.volume ?? data.gain, data.gain !== undefined), // BC
     start_audio_stream: (data: API_id) => startAudioStream(data),
-    start_playlist: (data: API_id) => startPlaylist(data.id),
-    playlist_next: () => audioPlaylistNext(),
+    start_playlist: (data: API_id) => AudioPlaylist.start(data.id),
+    playlist_next: () => AudioPlaylist.next(),
     start_metronome: (data: API_metronome) => startMetronome(data),
 
     // TIMERS

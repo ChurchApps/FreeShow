@@ -44,6 +44,7 @@ import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
+import { AudioAnalyser } from "../../audio/audioAnalyser"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let forceKey = e.ctrlKey || e.metaKey
@@ -403,6 +404,8 @@ export function getOutputResolution(outputId: string, _updater = get(outputs), _
 
 export function checkWindowCapture(startup: boolean = false) {
     getActiveOutputs(get(outputs), false, true, true).forEach((a) => shouldBeCaptured(a, startup))
+
+    AudioAnalyser.recorderActivate()
 }
 
 // NDI | OutputShow | Stage CurrentOutput

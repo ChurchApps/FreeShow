@@ -1,5 +1,8 @@
 <script lang="ts">
     import { MAIN, OUTPUT } from "../../../../types/Channels"
+    import { clearAudioStreams } from "../../../audio/audioFading"
+    import { AudioMicrophone } from "../../../audio/audioMicrophone"
+    import { AudioPlayer } from "../../../audio/audioPlayer"
     import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
@@ -8,7 +11,6 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { sortByName } from "../../helpers/array"
-    import { clearAudioStreams, playAudio, startMicrophone } from "../../helpers/audio"
     import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
@@ -250,9 +252,9 @@
                         class="context #show_audio"
                         on:click={() => {
                             if ($outLocked) return
-                            playAudio(file)
+                            AudioPlayer.start(file.path, { name: file.name })
                         }}
-                        outline={$playingAudio[file.path]}
+                        outline={!!$playingAudio[file.path]}
                         style="padding: 8px;width: 100%;"
                         title={file.path}
                         bold={false}
@@ -281,7 +283,7 @@
                             if ($outLocked) return
 
                             if (muted) {
-                                startMicrophone(mic)
+                                AudioMicrophone.start(mic.id, { name: mic.name })
                                 return
                             }
 

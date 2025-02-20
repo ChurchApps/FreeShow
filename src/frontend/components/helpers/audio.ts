@@ -10,6 +10,7 @@ import { volume } from "./../../stores"
 import { clone, shuffleArray } from "./array"
 import { encodeFilePath } from "./media"
 import { checkNextAfterMedia } from "./showActions"
+import { AudioPlayer } from "../../audio/audioPlayer"
 
 // WIP use get(special).audio_fade_duration ?? 1.5 to fade in when starting song ?? (currently just when fading out)
 
@@ -71,8 +72,8 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
         a[path] = {
             name: name.indexOf(".") > -1 ? name.slice(0, name.lastIndexOf(".")) : name,
             paused: false,
-            mic: !!stream,
-            analyser,
+            isMic: !!stream,
+            // analyser,
             audio,
         }
 
@@ -81,7 +82,7 @@ export async function playAudio({ path, name = "", audio = null, stream = null }
 
     let localVolume: number = get(volume) * (get(media)[path]?.volume || 1)
     if (analyser.gainNode) {
-        analyser.gainNode.gain.value = localVolume * (get(gain) || 1)
+        analyser.gainNode.gain.value = localVolume * AudioPlayer.getGain()
         if (get(special).preFaderVolumeMeter) audio.volume = 1
         else audio.volume = localVolume
     } else audio.volume = localVolume
@@ -167,21 +168,21 @@ export function updateVolume(value: number | undefined | "local", changeGain: bo
     }
 
     // update volume on playing audio
-    playingAudio.update((a) => {
-        Object.keys(a).forEach((id) => {
-            let localVolume: number = get(volume) * (get(media)[id]?.volume || 1)
+    // playingAudio.update((a) => {
+    //     Object.keys(a).forEach((id) => {
+    //         let localVolume: number = get(volume) * (get(media)[id]?.volume || 1)
 
-            if (a[id].analyser.gainNode) {
-                let gainedValue = localVolume * (get(gain) || 1)
-                a[id].analyser.gainNode.gain.value = gainedValue
+    //         if (a[id].analyser.gainNode) {
+    //             let gainedValue = localVolume * AudioPlayer.getGain()
+    //             a[id].analyser.gainNode.gain.value = gainedValue
 
-                if (get(special).preFaderVolumeMeter) a[id].audio.volume = 1
-                else a[id].audio.volume = localVolume
-            } else a[id].audio.volume = localVolume
-        })
+    //             if (get(special).preFaderVolumeMeter) a[id].audio.volume = 1
+    //             else a[id].audio.volume = localVolume
+    //         } else a[id].audio.volume = localVolume
+    //     })
 
-        return a
-    })
+    //     return a
+    // })
 
     if (get(volume)) analyseAudio()
 }
@@ -320,6 +321,8 @@ export function clearAudioStreams(id: string = "") {
     })
 }
 
+///////////////////
+
 // const audioUpdateInterval: number = 100 // ms
 const audioUpdateInterval: number = 50 // ms
 let analyseTimeout: any = null
@@ -441,7 +444,7 @@ function mergeDB(array: number[]) {
 
     if (!get(special).preFaderVolumeMeter) {
         // add gain & volume
-        sum *= get(volume) * get(gain)
+        sum *= get(volume) * AudioPlayer.getGain()
     }
 
     return (Math.log(sum) / Math.LN10) * 20
@@ -524,7 +527,7 @@ function getPlayingVideos() {
         // set volume (video in output window)
         let newVolume = get(volume) * ((get(media)[a.id]?.volume ?? 100) / 100)
         if (a.analyser.gainNode) {
-            let gainedValue = newVolume * (get(gain) || 1)
+            let gainedValue = newVolume * AudioPlayer.getGain()
             a.analyser.gainNode.gain.value = gainedValue
         } else a.video.volume = newVolume
 
@@ -598,7 +601,10 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         setTimeout(() => (forceClear = false), 100)
         return
     }
-    if (!Object.keys(get(playingAudio)).length) return
+    if (!Object.keys(get(playingAudio)).length) {
+        isFadingOut.set(false)
+        return
+    }
 
     let newPlaying: any = get(playingAudio)
     playingAudio.update((a) => {
@@ -692,7 +698,7 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
     duration = Number(duration)
     if (!audio || !duration) return true
     // no need to fade out if paused
-    if (audio.paused) return true
+    if (!increment && audio.paused) return true
 
     let currentSpeed = speed
     if (duration < 1) currentSpeed *= 10

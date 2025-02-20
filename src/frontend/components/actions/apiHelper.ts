@@ -6,6 +6,7 @@ import {
     activePage,
     activeProject,
     dictionary,
+    gain,
     groupNumbers,
     groups,
     media,
@@ -23,6 +24,7 @@ import {
     sortedShowsList,
     styles,
     variables,
+    volume,
 } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
@@ -315,6 +317,20 @@ export function playMedia(data: API_media) {
     const mediaStyle = getMediaStyle(get(media)[data.path], currentStyle)
 
     setOutput("background", { path: data.path, ...mediaStyle })
+}
+
+// AUDIO
+
+let unmutedValue = 1
+export function updateVolumeValues(value: number | undefined | "local", changeGain: boolean = false) {
+    // api mute(unmute)
+    if (value === undefined) {
+        value = get(volume) ? 0 : unmutedValue
+        if (!value) unmutedValue = get(volume)
+    }
+
+    if (changeGain) gain.set(Number(Number(value).toFixed(2)))
+    else volume.set(Number(Number(value).toFixed(2)))
 }
 
 // SPECIAL

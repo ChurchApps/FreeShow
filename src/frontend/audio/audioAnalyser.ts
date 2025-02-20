@@ -1,15 +1,15 @@
 import { get } from "svelte/store"
-import { special } from "../stores"
-import { send } from "../utils/request"
 import { AUDIO } from "../../types/Channels"
-import { AudioPlayer } from "./audioPlayer"
+import { outputs, special } from "../stores"
+import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
+import { AudioPlayer } from "./audioPlayer"
 
 export class AudioAnalyser {
     static sampleRate = 48000 // Hz
-    static channels = 2
-    // static recorderFramerate = 24
-    static recorderFrameRate = 0.5 // DEBUG
+    static channels = 2 // left/right
+    static recorderFrameRate = 24 // fps
+    // WIP set recorder send time delay?
 
     private static ac = new AudioContext({ latencyHint: "interactive", sampleRate: this.sampleRate })
     private static splitter = this.ac.createChannelSplitter(this.channels)
@@ -41,6 +41,7 @@ export class AudioAnalyser {
         const source = this.sources[id]
         if (!source) return
 
+        this.recorderDeactivate()
         this.disconnectGain(source)
         this.disconnectDestination(source)
         delete this.sources[id]
@@ -103,7 +104,7 @@ export class AudioAnalyser {
     }
     private static disconnectDestination(source: MediaElementAudioSourceNode) {
         if (!this.destNode) return
-        source.connect(this.destNode)
+        source.disconnect(this.destNode)
     }
 
     // RECORDER
@@ -117,9 +118,11 @@ export class AudioAnalyser {
             // mimeType: 'audio/webm; codecs="pcm"',
         })
         this.recorder.addEventListener("dataavailable", async (ev) => {
-            const ab = await ev.data.arrayBuffer()
-            const u8 = new Uint8Array(ab, 0, ab.byteLength)
-            send(AUDIO, ["CAPTURE"], u8)
+            const arrayBuffer = await ev.data.arrayBuffer()
+            // const uint8Array = new Uint8Array(arrayBuffer, 0, arrayBuffer.byteLength)
+            const uint8Array = new Uint8Array(arrayBuffer)
+            // console.log("Sending OPUS chunk, size:", uint8Array.length)
+            send(AUDIO, ["CAPTURE"], { buffer: uint8Array })
         })
 
         if (this.recorder.state === "paused") this.recorder.play()
@@ -130,11 +133,15 @@ export class AudioAnalyser {
 
     private static recorderActive: boolean = false
     static recorderActivate() {
+        let shouldBeActive = Object.values(get(outputs)).find((a) => a.ndi && a.ndiData?.audio)
+        if (!shouldBeActive) return
+
         this.recorderActive = true
         this.initRecorder()
     }
     static recorderDeactivate() {
-        if (!this.recorder) return
+        let shouldBeActive = Object.values(get(outputs)).find((a) => a.ndi && a.ndiData?.audio)
+        if (shouldBeActive || !this.recorder) return
 
         this.recorderActive = false
         this.recorder.stop()

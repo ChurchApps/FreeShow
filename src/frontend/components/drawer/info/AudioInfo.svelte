@@ -1,10 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
+    import { AudioPlayer } from "../../../audio/audioPlayer"
+    import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { audioPlaylists, dictionary, drawerTabsData, playingMetronome, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { updatePlaylist, updateVolume } from "../../helpers/audio"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -31,7 +32,7 @@
             return a
         })
 
-        if (!value && key === "allowGaining") updateVolume(1, true)
+        if (!value && key === "allowGaining") AudioPlayer.updateVolume()
     }
 
     // WIP add once electron is updated to >24
@@ -111,7 +112,7 @@
             <!-- <h6><T id="audio.playlist_settings" /></h6> -->
             <CombinedInput>
                 <p><T id="settings.audio_crossfade" /></p>
-                <NumberInput value={activePlaylist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updatePlaylist(activeTab, "crossfade", e.detail)} />
+                <NumberInput value={activePlaylist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => AudioPlaylist.update(activeTab, "crossfade", e.detail)} />
             </CombinedInput>
 
             <!-- <CombinedInput>

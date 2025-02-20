@@ -2,12 +2,12 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
+    import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, labelsDisabled, media, outLocked } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
-    import { startPlaylist, stopPlaylist, updatePlaylist } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
     import { getFileName, getMediaType } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
@@ -265,7 +265,7 @@
                 title={$activePlaylist?.id === active ? $dictionary.media?.stop : $dictionary.media?.play}
                 on:click={() => {
                     if ($outLocked) return
-                    $activePlaylist?.id === active ? stopPlaylist() : startPlaylist(active)
+                    $activePlaylist?.id === active ? AudioPlaylist.stop() : AudioPlaylist.start(active || "")
                 }}
             >
                 <Icon size={1.3} id={$activePlaylist?.id === active ? "stop" : "play"} white={$activePlaylist?.id === active} />
@@ -277,7 +277,7 @@
                 title={$dictionary.media?.toggle_shuffle}
                 on:click={() => {
                     if (!active) return
-                    updatePlaylist(active, "mode", $audioPlaylists[active]?.mode === "shuffle" ? "default" : "shuffle")
+                    AudioPlaylist.update(active, "mode", $audioPlaylists[active]?.mode === "shuffle" ? "default" : "shuffle")
                     // if ($activePlaylist?.id === active) playlistNext("", $activePlaylist.active)
                 }}
             >
@@ -287,7 +287,7 @@
                 title={$dictionary.media?._loop}
                 on:click={() => {
                     if (!active) return
-                    updatePlaylist(active, "loop", $audioPlaylists[active]?.loop === undefined ? false : !$audioPlaylists[active]?.loop)
+                    AudioPlaylist.update(active, "loop", $audioPlaylists[active]?.loop === undefined ? false : !$audioPlaylists[active]?.loop)
                 }}
             >
                 <Icon size={1.3} id="loop" white={$audioPlaylists[active || ""]?.loop === false} />

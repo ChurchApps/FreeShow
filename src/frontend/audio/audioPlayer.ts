@@ -2,8 +2,8 @@
 
 import { get } from "svelte/store"
 import { customActionActivation } from "../components/actions/actions"
-import { encodeFilePath, removeExtension } from "../components/helpers/media"
-import { gain, media, playingAudio22, volume } from "../stores"
+import { encodeFilePath, getFileName, removeExtension } from "../components/helpers/media"
+import { gain, media, playingAudio, special, volume } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
 import { clearAudio, fadeInAudio, fadeOutAudio } from "./audioFading"
 
@@ -33,11 +33,7 @@ export class AudioPlayer {
 
     // INIT
 
-    // static playMicrophone(id: string, streamOrAudio: Buffer | HTMLAudioElement, metadata: AudioMetadata) {
-
-    // }
-
-    static async start(path: string, metadata: AudioMetadata, options: AudioOptions) {
+    static async start(path: string, metadata: AudioMetadata, options: AudioOptions = {}) {
         if (this.audioExists(path)) {
             if (options.pauseIfPlaying === false) {
                 updateAudioStore(path, "currentTime", 0)
@@ -48,7 +44,7 @@ export class AudioPlayer {
             return
         }
 
-        let audioPlaying = Object.keys(get(playingAudio22)).length
+        let audioPlaying = Object.keys(get(playingAudio)).length
         if (options.crossfade) fadeOutAudio(options.crossfade)
         else if (!options.playMultiple) clearAudio("", false, options.playlistCrossfade)
 
@@ -62,9 +58,9 @@ export class AudioPlayer {
 
         if ((options.startAt || 0) > 0) audio.currentTime = options.startAt || 0
 
-        playingAudio22.update((a) => {
+        playingAudio.update((a) => {
             a[path] = {
-                name: removeExtension(metadata.name),
+                name: removeExtension(metadata.name || getFileName(path)),
                 paused: false,
                 isMic: !!metadata.isMic,
                 audio,
@@ -87,6 +83,19 @@ export class AudioPlayer {
         }
 
         this.initAudio(path, waitToPlay)
+    }
+
+    static playMicrophone(id: string, streamOrAudio: Buffer | HTMLAudioElement, metadata: AudioMetadata) {
+        // playAudio({ path: id, name: metadata.name, stream: streamOrAudio }, false)
+        if (this.audioExists(id)) {
+            this.togglePausedState(id)
+            return
+        }
+
+        // WIP analyze
+
+        metadata.isMic = true
+        console.log(streamOrAudio)
     }
 
     private static async createAudio(path: string): Promise<HTMLAudioElement | null> {
@@ -136,12 +145,12 @@ export class AudioPlayer {
         if (!this.audioExists(id)) return
 
         this.pause(id)
-        playingAudio22.update((a) => {
+        playingAudio.update((a) => {
             delete a[id]
             return a
         })
         // WIP stop analyser!!??
-        // if (!get(playingAudio22).length)
+        // if (!get(playingAudio).length)
     }
 
     private static togglePausedState(id: string) {
@@ -151,10 +160,12 @@ export class AudioPlayer {
     }
 
     static updateVolume(id: string | null = null) {
-        const ids = id ? [id] : Object.keys(get(playingAudio22))
+        const ids = id ? [id] : Object.keys(get(playingAudio))
         ids.forEach((id) => {
             updateAudioStore(id, "volume", this.getVolume(id))
         })
+
+        AudioAnalyser.setGain(this.getGain())
     }
 
     static setGain(value: number) {
@@ -170,11 +181,11 @@ export class AudioPlayer {
     // GET
 
     static getPlaying(id: string): AudioData | null {
-        return get(playingAudio22)[id] || null
+        return get(playingAudio)[id] || null
     }
 
     static getAudio(id: string): HTMLAudioElement | null {
-        return get(playingAudio22)[id]?.audio || null
+        return get(playingAudio)[id]?.audio || null
     }
 
     static getTime(id: string) {
@@ -194,7 +205,7 @@ export class AudioPlayer {
     }
 
     static getGain() {
-        return get(gain) || 1
+        return get(special).allowGaining ? get(gain) || 1 : 1
     }
 
     // STATE
@@ -209,7 +220,7 @@ export class AudioPlayer {
 }
 
 function updatePlayingStore(id: string, key: string, value: any) {
-    playingAudio22.update((a) => {
+    playingAudio.update((a) => {
         if (!a[id]) return a
         a[id][key] = value
         return a
@@ -217,7 +228,7 @@ function updatePlayingStore(id: string, key: string, value: any) {
 }
 
 function updateAudioStore(id: string, key: string, value: any) {
-    playingAudio22.update((a) => {
+    playingAudio.update((a) => {
         if (!a[id]?.audio) return a
         a[id].audio[key] = value
         return a

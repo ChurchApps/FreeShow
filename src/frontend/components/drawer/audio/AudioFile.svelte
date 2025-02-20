@@ -1,8 +1,9 @@
 <script lang="ts">
     import { AudioPlayer } from "../../../audio/audioPlayer"
+    import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activeFocus, activeShow, focusMode, media, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { getAudioDuration, startPlaylist } from "../../helpers/audio"
+    import { getAudioDuration } from "../../helpers/audio"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
 
@@ -19,7 +20,7 @@
 <SelectElem id="audio" data={{ path, name, index }} {fileOver} borders={playlist ? "edges" : "all"} trigger={playlist ? "column" : null} draggable>
     <Button
         class="context #audio_button{playlist ? '_playlist' : ''}"
-        outline={$playingAudio[path]}
+        outline={!!$playingAudio[path]}
         active={$activeShow?.id === path}
         border
         style="width: 100%;"
@@ -28,8 +29,7 @@
         on:click={(e) => {
             if ($outLocked || e.ctrlKey || e.metaKey) return
 
-            if (playlist) startPlaylist(active, path, true)
-            // else playAudio({ path, name }, true, 0, e.altKey)
+            if (playlist) AudioPlaylist.start(active || "", path, { pauseIfPlaying: true })
             else AudioPlayer.start(path, { name }, { playMultiple: e.altKey })
         }}
         on:dblclick={(e) => {

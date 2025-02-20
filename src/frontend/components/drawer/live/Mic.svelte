@@ -1,9 +1,10 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
+    import { clearAudioStreams } from "../../../audio/audioFading"
+    import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { activeFocus, activeShow, focusMode, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { clearAudioStreams, startMicrophone } from "../../helpers/audio"
     import Button from "../../inputs/Button.svelte"
 
     export let mic: any
@@ -114,7 +115,7 @@
             if ($outLocked || !context) return
 
             if (muted) {
-                startMicrophone(mic)
+                AudioMicrophone.start(mic.id, { name: mic.name })
                 return
             }
 

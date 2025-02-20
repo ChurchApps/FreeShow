@@ -4,8 +4,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { customActionActivation } from "../components/actions/actions"
 import { stopMetronome } from "../components/drawer/audio/metronome"
-import { clearAudioStreams } from "../components/helpers/audio"
-import { activePlaylist, isFadingOut, playingAudio22, special } from "../stores"
+import { activePlaylist, audioStreams, isFadingOut, playingAudio, special } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
 
 let clearing: string[] = []
@@ -26,9 +25,12 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         setTimeout(() => (forceClear = false), 100)
         return
     }
-    if (!Object.keys(get(playingAudio22)).length) return
+    if (!Object.keys(get(playingAudio)).length) {
+        isFadingOut.set(false)
+        return
+    }
 
-    const clearIds = path ? [path] : Object.keys(get(playingAudio22))
+    const clearIds = path ? [path] : Object.keys(get(playingAudio))
     clearIds.forEach(clearAudio)
 
     async function clearAudio(path: string) {
@@ -50,7 +52,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
     }
 
     function deleteAudio(path) {
-        playingAudio22.update((a) => {
+        playingAudio.update((a) => {
             delete a[path]
             return a
         })
@@ -65,7 +67,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
     //     updating = true
 
     //     setTimeout(() => {
-    //         playingAudio22.set(newPlaying)
+    //         playingAudio.set(newPlaying)
     //         clearAudioStreams()
     //         clearing.splice(clearing.indexOf(path), 1)
     //     }, 200)
@@ -74,7 +76,7 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
 
 let currentlyCrossfading: string[] = []
 export function fadeOutAudio(crossfade: number = 0) {
-    Object.entries(get(playingAudio22)).forEach(async ([path, { audio }]) => {
+    Object.entries(get(playingAudio)).forEach(async ([path, { audio }]) => {
         if (currentlyCrossfading.includes(path)) return
 
         currentlyCrossfading.push(path)
@@ -107,7 +109,7 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
     duration = Number(duration)
     if (!audio || !duration) return true
     // no need to fade out if paused
-    if (audio.paused) return true
+    if (!increment && audio.paused) return true
 
     let currentSpeed = speed
     if (duration < 1) currentSpeed *= 10
@@ -149,5 +151,18 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
                 isFadingOut.set(false)
             }
         }
+    })
+}
+
+export function audioIsFading() {
+    return !!Object.keys(currentlyFading).length
+}
+
+export function clearAudioStreams(id: string = "") {
+    let ids = id ? [id] : Object.keys(audioStreams)
+
+    ids.forEach((streamId) => {
+        let stream = audioStreams[streamId]
+        stream?.getAudioTracks().forEach((track: any) => track.stop())
     })
 }

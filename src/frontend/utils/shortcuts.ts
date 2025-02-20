@@ -2,9 +2,10 @@ import { get } from "svelte/store"
 import { IMPORT, MAIN, OUTPUT } from "../../types/Channels"
 import type { ShowType } from "../../types/Show"
 import type { TopViews } from "../../types/Tabs"
+import { AudioPlayer } from "../audio/audioPlayer"
 import { menuClick } from "../components/context/menuClick"
 import { addItem } from "../components/edit/scripts/itemHelpers"
-import { clearAudio, playAudio } from "../components/helpers/audio"
+import { clearAudio } from "../components/helpers/audio"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
 import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
@@ -340,6 +341,6 @@ function playMedia(e: Event) {
         // , ...mediaStyle
         setOutput("background", { type: projectItem.type, path: projectItem.id, muted: false, loop: false })
     } else if (type === "audio") {
-        playAudio({ path: projectItem.id, name: projectItem.name })
+        AudioPlayer.start(projectItem.id, { name: projectItem.name })
     }
 }
