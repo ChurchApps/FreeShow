@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { currentWindow, outputs, overlays, showsCache, slidesOptions, templates, variables, volume } from "../../stores"
+    import { currentWindow, outputs, overlays, showsCache, slidesOptions, styles, templates, variables, volume } from "../../stores"
     import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
     import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
@@ -93,7 +93,7 @@
     let customOutputId = outputId
     $: if (!outputId) customOutputId = getActiveOutputs($outputs, true, true, true)[0]
 
-    function getCustomStyle(style: string, outputId: string = "") {
+    function getCustomStyle(style: string, outputId: string = "", _updater: any = null) {
         if (outputId) {
             let outputResolution = getOutputResolution(outputId, $outputs, true)
             style = percentageStylePos(style, outputResolution)
@@ -344,7 +344,7 @@
 
 <div
     class="item"
-    style="{style ? getCustomStyle(item?.style, customOutputId) : null};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
+    style="{style ? getCustomStyle(item?.style, customOutputId, { $styles }) : null};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
     class:white={key && !lines?.length}
     class:key
     class:addDefaultItemStyle

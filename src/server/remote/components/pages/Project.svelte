@@ -44,9 +44,9 @@
                         </span>
                     </Button>
                 {:else if (show.type || "show") !== "show"}
-                    <!-- WIP audio / player / PDF / PPT -->
+                    <!-- WIP audio / player / PDF / PPT / overlay -->
                     <div class="item" style="display: flex;align-items: center;padding: 0.2em 0.8em;">
-                        <Icon id={show.type === "audio" ? "music" : show.type} box={show.type === "ppt" ? 50 : 24} right />
+                        <Icon id={show.type === "audio" ? "music" : show.type === "overlay" ? "overlays" : show.type} box={show.type === "ppt" ? 50 : 24} right />
                         <p style="font-size: 0.7em;opacity: 0.5;margin: 3px 5px;text-transform: uppercase;font-size: 0.8em;">{show.type}</p>
                     </div>
                 {:else if s}

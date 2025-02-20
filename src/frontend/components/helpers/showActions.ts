@@ -650,15 +650,19 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             if (bg && bgPath !== outputBg?.path) {
                 let outputStyle = get(styles)[get(outputs)[outputId]?.style || ""]
                 let mediaStyle = getMediaStyle(get(media)[bgPath], outputStyle)
+                let loop = bg.loop !== false
+                let muted = bg.muted !== false
+
                 let bgData: any = {
                     name,
                     type,
                     path: bgPath,
                     cameraGroup: bg.cameraGroup || "",
                     id: bg.id || bgPath, // path = cameras
-                    muted: bg.muted !== false,
-                    loop: bg.loop !== false,
+                    loop,
+                    muted,
                     ...mediaStyle,
+                    ignoreLayer: mediaStyle.videoType === "foreground",
                 }
 
                 // outBackground.set(bgData)

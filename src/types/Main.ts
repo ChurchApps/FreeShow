@@ -103,6 +103,7 @@ export interface MediaStyle {
     speed?: string
     fromTime?: number
     toTime?: number
+    videoType?: string // default | "background" | "foreground"
     favourite?: boolean
     audio?: boolean
     loop?: boolean // audio

@@ -129,7 +129,7 @@ export const receiveREMOTE: any = {
             }
             msg.data = null
         } else {
-            let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+            let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : null
             msg.data = { slide: out ? out.index : null, layout: out?.layout || null, styleRes }
             // && out.id !== oldOutSlide
             if (out && out.id !== "temp") {
@@ -196,7 +196,9 @@ export function initializeRemote(id: string) {
     send(REMOTE, ["PROJECT"], get(activeProject))
 
     let currentOutput: any = get(outputs)[getActiveOutputs()[0]]
-    let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.resolution : null
+    // this is actually aspect ratio
+    let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : null
+
     let outSlide = currentOutput?.out?.slide
     let out: any = { slide: outSlide ? outSlide.index : null, layout: outSlide?.layout || null, styleRes }
     if (out.slide !== null && outSlide?.id) {

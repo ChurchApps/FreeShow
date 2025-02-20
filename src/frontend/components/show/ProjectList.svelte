@@ -24,8 +24,8 @@
 
     let startLoading: boolean = tree.length < 50
     onMount(() => {
-        // remove any deleted opened folders
-        openedFolders.set($openedFolders.filter((id) => $folders[id]))
+        // remove any deleted opened folders (and remove duplicates)
+        openedFolders.set([...new Set($openedFolders.filter((id) => $folders[id]))])
 
         setTimeout(() => (startLoading = true), 20)
     })

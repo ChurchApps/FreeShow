@@ -7,7 +7,7 @@
     export let resolution: Resolution
 
     export let ratio: number = 1
-    $: ratio = slideWidth / resolution.width
+    $: ratio = slideWidth / 1920
 
     let slideWidth: number = 0
 </script>

@@ -92,7 +92,10 @@
             return
         }
 
-        setOutput("background", { path, type, loop: true, muted: false, startAt: 0, ...mediaStyle })
+        let videoType = mediaStyle.videoType || ""
+        let loop = videoType === "foreground" ? false : true
+        let muted = videoType === "background" ? true : false
+        setOutput("background", { path, type, loop, muted, startAt: 0, ...mediaStyle, ignoreLayer: videoType === "foreground" })
 
         // unsplash requires the download to be triggered when using their images
         if (credits.type === "unsplash" && credits.trigger_download) {
@@ -123,25 +126,23 @@
     $: tags = $media[path]?.tags || []
 
     let iconClicked: any = null
-    function removeTags() {
-        iconClicked = setTimeout(() => (iconClicked = null), 50)
-
-        media.update((a) => {
-            if (a[path]) a[path].tags = []
-            return a
-        })
-    }
-
-    function removeStyle() {
+    function removeStyle(key: string) {
         iconClicked = setTimeout(() => (iconClicked = null), 50)
 
         media.update((a) => {
             if (!a[path]) return a
 
-            delete a[path].fit
-            delete a[path].flipped
-            delete a[path].flippedY
-            delete a[path].filter
+            if (key === "type") {
+                delete a[path].videoType
+            } else if (key === "filters") {
+                delete a[path].fit
+                delete a[path].flipped
+                delete a[path].flippedY
+                delete a[path].filter
+            } else if (key === "tags") {
+                a[path].tags = []
+            }
+
             return a
         })
     }
@@ -172,10 +173,19 @@
     >
         <!-- icons -->
         <div class="icons">
+            {#if mediaStyle.videoType}
+                <div style="max-width: 100%;">
+                    <div class="button">
+                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("type")}>
+                            <Icon id={mediaStyle.videoType === "background" ? "muted" : mediaStyle.videoType === "foreground" ? "volume" : ""} size={0.9} white />
+                        </Button>
+                    </div>
+                </div>
+            {/if}
             {#if !!mediaStyle.filter?.length || $media[path]?.fit || mediaStyle.flipped || mediaStyle.flippedY}
                 <div style="max-width: 100%;">
                     <div class="button">
-                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={removeStyle}>
+                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("filters")}>
                             <Icon id="filter" size={0.9} white />
                         </Button>
                     </div>
@@ -184,7 +194,7 @@
             {#if tags.length}
                 <div style="max-width: 100%;">
                     <div class="button">
-                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={removeTags}>
+                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("tags")}>
                             <Icon id="tag" size={0.9} white />
                         </Button>
                     </div>

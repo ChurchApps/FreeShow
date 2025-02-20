@@ -166,7 +166,10 @@
     function playVideo(startAt: number = 0) {
         if ($outLocked) return
 
-        let bg: any = { type, startAt, muted: false, loop: false, ...mediaStyle }
+        let videoType = mediaStyle.videoType || ""
+        let loop = videoType === "background" ? true : false
+        let muted = videoType === "background" ? true : false
+        let bg: any = { type, startAt, muted, loop, ...mediaStyle, ignoreLayer: videoType === "foreground" }
 
         if (type === "player") bg.id = showId
         else {

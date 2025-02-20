@@ -24,7 +24,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     paste: { label: "actions.paste", icon: "paste", shortcuts: ["Ctrl+V"] },
     docs: { label: "main.docs", icon: "document", external: true },
     quick_start_guide: { label: "guide.start", icon: "guide" },
-    focus_mode: { label: "actions.focus_mode", icon: "focus_mode" },
+    focus_mode: { label: "actions.focus_mode", icon: "focus_mode", shortcuts: ["Ctrl+Shift+F"] },
     fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11"] },
     resetZoom: { label: "actions.resetZoom", icon: "reset" },
     zoomIn: { label: "actions.zoomIn", icon: "zoomIn" },
