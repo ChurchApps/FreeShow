@@ -33,7 +33,7 @@ function XMLtoObject(xml: string): Bible {
 
     bible.div?.forEach((book, i) => {
         let bookId = book["@osisID"]
-        let name = defaultNames[bookId] || book["@name"]
+        let name = book["@name"] || defaultNames[bookId]
         let number = (Object.keys(defaultNames).findIndex((a) => a === bookId) ?? i) + 1
         let chapters: any[] = []
 

@@ -10,6 +10,7 @@
     import { checkName } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
+    import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "./Button.svelte"
     import HiddenInput from "./HiddenInput.svelte"
 
@@ -44,7 +45,13 @@
             custom = false
             if (type === "show") {
                 if ($shows[show.id]?.private) iconID = "private"
-                else if ($shows[show.id]?.category && $categories[$shows[show.id].category || ""]) {
+                else if ($showsCache[show.id]?.reference?.type === "scripture") {
+                    custom = true
+                    iconID = "scripture"
+                } else if ($showsCache[show.id]?.reference?.type === "calendar") {
+                    custom = true
+                    iconID = "event"
+                } else if ($shows[show.id]?.category && $categories[$shows[show.id].category || ""]) {
                     custom = true
                     iconID = $categories[$shows[show.id].category || ""].icon || null
                 } else iconID = "noIcon"
@@ -109,12 +116,14 @@
         let currentOutput: any = $outputs[outputId] || {}
 
         if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
-            updateOut("active", 0, _show("active").layouts("active").ref()[0], !e.altKey)
+            let layoutRef = _show("active").layouts("active").ref()[0] || []
+            let firstEnabledIndex: number = layoutRef.findIndex((a) => !a.data.disabled) || 0
+            updateOut("active", firstEnabledIndex, layoutRef, !e.altKey)
 
             let slide: any = currentOutput.out?.slide || null
-            if (slide?.id === id && slide?.index === 0 && slide?.layout === $showsCache[id].settings.activeLayout) return
+            if (slide?.id === id && slide?.index === firstEnabledIndex && slide?.layout === $showsCache[id].settings.activeLayout) return
 
-            setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: 0 })
+            setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: firstEnabledIndex })
         } else if (type === "image" || type === "video") {
             let outputStyle = $styles[currentOutput.style]
             let mediaStyle: MediaStyle = getMediaStyle($media[id], outputStyle)
@@ -153,7 +162,11 @@
             <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
 
             {#if show.layoutInfo?.name}
-                <span class="layout">{show.layoutInfo.name}</span>
+                <span class="layout" style="opacity: 0.6;font-style: italic;font-size: 0.9em;">{show.layoutInfo.name}</span>
+            {/if}
+
+            {#if show.scheduleLength !== undefined}
+                <span class="layout">{joinTime(secondsToTime(show.scheduleLength))}</span>
             {/if}
         </span>
 
@@ -174,9 +187,8 @@
     }
 
     .layout {
-        opacity: 0.6;
-        font-style: italic;
-        font-size: 0.9em;
+        opacity: 0.8;
+        font-size: 0.8em;
         padding-left: 5px;
 
         /* overflow: hidden;

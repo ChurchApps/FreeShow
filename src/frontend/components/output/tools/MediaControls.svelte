@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
     import { activeFocus, activeShow, dictionary, focusMode, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
     import { send } from "../../../utils/request"
@@ -26,12 +26,17 @@
     }
 
     // custom time update (for player videos)
+    let timeInterval: any = null
     onMount(() => {
         if ($videosTime[outputId]) videoTime = $videosTime[outputId]
-        setInterval(() => {
+        timeInterval = setInterval(() => {
             if (videoData.paused || timeJustUpdated) return
             videoTime++
         }, 1000)
+    })
+
+    onDestroy(() => {
+        if (timeInterval) clearInterval(timeInterval)
     })
 
     // reset

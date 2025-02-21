@@ -145,6 +145,7 @@ export class LyricSearch {
             result = result.replaceAll("</p>", "\n\n")
             result = result.replaceAll("\n\n\n", "\n\n").replaceAll("\n\r\n\n", "\n\n")
             result = result.replace(/<[^>]*>?/gm, "")
+            result = result.replaceAll("&#39;", "'")
 
             const lines = result.split("\n")
             const newLines: any[] = []

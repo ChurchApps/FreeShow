@@ -123,18 +123,18 @@
     }
 
     function changeOutputScreen(e: any) {
-        if (!currentScreen) return
+        if (!currentScreen || !screenId) return
 
-        let alreadySelected = $outputs[screenId!]?.screen === e.detail.id.toString()
+        let alreadySelected = $outputs[screenId]?.screen === e.detail.id.toString()
 
         let bounds = e.detail.bounds
         let keyOutput = currentScreen.keyOutput
         outputs.update((a) => {
-            if (!a[screenId!]) return a
+            if (!a[screenId]) return a
 
-            a[screenId!].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
-            a[screenId!].screen = e.detail.id.toString()
-            // a[screenId!].kiosk = true
+            a[screenId].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
+            a[screenId].screen = e.detail.id.toString()
+            // a[screenId].kiosk = true
 
             if (keyOutput && a[keyOutput]) {
                 a[keyOutput].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
@@ -161,6 +161,17 @@
             activePopup.set(null)
             alertMessage.set("")
         }
+    }
+
+    function lockScreen() {
+        if (!screenId) return
+
+        outputs.update((a) => {
+            if (!a[screenId]) return a
+
+            a[screenId].boundsLocked = !a[screenId].boundsLocked
+            return a
+        })
     }
 
     function identifyScreens() {
@@ -299,8 +310,8 @@
         </div>
     </div>
 {:else}
-    <p class="tip"><T id="settings.select_display" /></p>
-    <Button on:click={() => activePopup.set("change_output_values")} title={activateOutput ? $dictionary.popup?.change_output_values : $dictionary.settings?.manual_input_hint} style="width: 100%;" dark center>
+    <p class="tip"><T id="settings.{currentScreen.boundsLocked ? 'output_locked' : 'select_display'}" /></p>
+    <Button disabled={currentScreen.boundsLocked} on:click={() => activePopup.set("change_output_values")} title={activateOutput ? $dictionary.popup?.change_output_values : $dictionary.settings?.manual_input_hint} style="width: 100%;" dark center>
         <Icon id="options" right />
         {#if activateOutput}
             <p><T id="settings.manual_input_hint" /></p>
@@ -328,23 +339,34 @@
     <div class="content">
         {#if screens.length}
             <div class="screens" style="transform: translate(-{totalScreensWidth}px, -{totalScreensHeight}px)">
-                {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)}
-                    <div
-                        class="screen noClick"
-                        style="width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;left: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;"
-                    >
-                        <!-- Current screen position -->
-                    </div>
-                {/if}
+                <!-- {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)} -->
+                <div style="position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;left: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;">
+                    {#if currentScreen.screen}
+                        <span style="z-index: 2;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);">{screens.findIndex((a) => a.id.toString() === currentScreen.screen) + 1 || ""}</span>
+                    {/if}
+                    <!-- Current screen position -->
+                    <div class="screen noClick" style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}"></div>
+                    {#if !activateOutput}
+                        <Button class="lock" on:click={lockScreen} red={currentScreen.boundsLocked} center>
+                            <div style="display: contents;" title={currentScreen.boundsLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock}>
+                                <Icon id={currentScreen.boundsLocked ? "locked" : "unlocked"} size={1.1} />
+                            </div>
+                        </Button>
+                    {/if}
+                </div>
+                <!-- {/if} -->
 
                 {#each screens as screen, i}
+                    <!-- class:active={$outputs[screenId || ""]?.screen === screen.id.toString()} -->
                     <div
                         class="screen"
-                        class:disabled={currentScreen?.forcedResolution}
-                        class:active={$outputs[screenId || ""]?.screen === screen.id.toString()}
+                        class:disabled={currentScreen?.forcedResolution || currentScreen.boundsLocked}
                         style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.previewBounds.x}px;top: {screen.previewBounds.y}px;"
                         on:click={() => {
-                            if (!currentScreen?.forcedResolution) changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
+                            if (currentScreen?.forcedResolution || currentScreen.boundsLocked) return
+
+                            // WIP this will not always change correct output if multiple & "activateOutput"
+                            changeOutputScreen({ detail: { id: screen.id, bounds: screen.bounds } })
                         }}
                     >
                         {i + 1}
@@ -356,12 +378,14 @@
         {/if}
     </div>
 
-    <div class="bottom">
-        <Button on:click={identifyScreens} title={$dictionary.settings?.identify_screens} style="padding: 12px;" dark center>
-            <Icon id="search" size={1.4} white />
-            <!-- <p><T id="settings.identify_screens" /></p> -->
-        </Button>
-    </div>
+    {#if !currentScreen.boundsLocked}
+        <div class="bottom">
+            <Button on:click={identifyScreens} title={$dictionary.settings?.identify_screens} style="padding: 12px;" dark center>
+                <Icon id="search" size={1.4} white />
+                <!-- <p><T id="settings.identify_screens" /></p> -->
+            </Button>
+        </div>
+    {/if}
 {/if}
 
 <style>
@@ -380,7 +404,8 @@
         /* transform: translateX(-20%); */
     }
     .screens {
-        zoom: 0.08;
+        --zoom: 0.08;
+        zoom: var(--zoom);
         font-size: 20em;
         overflow: visible;
         /* position: relative;
@@ -394,6 +419,17 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%); */
+    }
+
+    .screens :global(.lock) {
+        zoom: calc(1 / var(--zoom));
+        position: absolute;
+        top: 0;
+        right: 0;
+
+        /* pointer-events: initial; */
+        padding: 5px !important;
+        z-index: 2;
     }
 
     .bottom {
@@ -425,7 +461,7 @@
         pointer-events: none;
     }
 
-    .screen.active,
+    /* .screen.active, */
     .screen.noClick {
         outline: 40px solid var(--secondary);
         background-color: var(--primary-darker);

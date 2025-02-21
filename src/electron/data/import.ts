@@ -6,9 +6,10 @@ import sqlite3 from "sqlite3"
 import WordExtractor from "word-extractor"
 import { toApp } from ".."
 import { IMPORT, MAIN } from "../../types/Channels"
-import { dataFolderNames, doesPathExist, getDataFolder, getExtension, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
-import { decompress, isZip } from "./zip"
+import { dataFolderNames, doesPathExist, getDataFolder, getExtension, makeDir, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
 import { detectFileType } from "./bibleDetecter"
+import { filePathHashCode } from "./thumbnails"
+import { decompress, isZip } from "./zip"
 
 const specialImports: any = {
     powerpoint: async (files: string[]) => {
@@ -156,7 +157,14 @@ async function importProject(files: string[], dataPath: string) {
 
     const data = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
 
-    const importPath = getDataFolder(dataPath, dataFolderNames.imports)
+    const importDataPath = getDataFolder(dataPath, dataFolderNames.imports)
+    const importFolder = path.join(importDataPath, "Projects")
+
+    // we can store the new media files under a subdirectory with the current date/time
+    // to avoid conflicts with same file name, but this does not work for all scenarios
+    // const importFolder = path.join(importDataPath, `project-${getTimePointString()}`)
+    if (!doesPathExist(importFolder)) makeDir(importFolder)
+
     zipFiles.forEach((zipFile) => {
         let zipData = decompress([zipFile], true)
         const dataFile = zipData.find((a) => a.name === "data.json")
@@ -170,10 +178,17 @@ async function importProject(files: string[], dataPath: string) {
 
             const fileName = path.basename(filePath)
             const file = zipData.find((a) => a.name === fileName)?.content
-            const newMediaPath = path.join(importPath, fileName)
+
+            // get file path hash to prevent the same file importing multiple times
+            // this also ensures files with the same name don't get overwritten
+            const ext = path.extname(fileName)
+            const pathHash = `${path.basename(filePath, ext)}_${filePathHashCode(filePath)}${ext}`
+            const newMediaPath = path.join(importFolder, pathHash)
 
             if (!file) return
             replacedMedia[filePath] = newMediaPath
+
+            if (doesPathExist(newMediaPath)) return
             writeFile(newMediaPath, file)
         })
 
@@ -186,6 +201,9 @@ async function importProject(files: string[], dataPath: string) {
 
         data.push(dataFile)
     })
+
+    // remove folder if no files stored
+    // if (!readFolder(importFolder).length) deleteFolder(importFolder)
 
     toApp(IMPORT, { channel: "freeshow_project", data })
 }

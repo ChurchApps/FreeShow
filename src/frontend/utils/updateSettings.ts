@@ -5,6 +5,7 @@ import { clone, keysToID } from "../components/helpers/array"
 import { checkWindowCapture, displayOutputs, setOutput } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import {
+    actionTags,
     activePopup,
     activeProject,
     alertUpdates,
@@ -16,6 +17,7 @@ import {
     calendarAddShow,
     categories,
     companion,
+    customMetadata,
     customizedIcons,
     dataPath,
     disabledServers,
@@ -285,11 +287,13 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     midiIn: (v: any) => midiIn.set(v),
     videoMarkers: (v: any) => videoMarkers.set(v),
     mediaTags: (v: any) => mediaTags.set(v),
+    actionTags: (v: any) => actionTags.set(v),
     customizedIcons: (v: any) => customizedIcons.set(v),
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
     metronome: (v: any) => metronome.set(v),
     globalTags: (v: any) => globalTags.set(v),
+    customMetadata: (v: any) => customMetadata.set(v),
     companion: (v: any) => {
         companion.set(v)
 

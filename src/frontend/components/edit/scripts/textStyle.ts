@@ -189,7 +189,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
         let currentPos: number = 0
         lines[i]?.text?.some((text): any => {
             // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
-            if (pos && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
+            if (pos?.[i] && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
                 style = text.style
                 return true
             }
@@ -231,7 +231,8 @@ export function getItemText(item: Item): string {
     if (!item?.lines) return ""
 
     item.lines.forEach((line) => {
-        if (!line.text) return
+        console.assert(Array.isArray(line?.text), "Text is not an array!")
+        if (!Array.isArray(line?.text)) return
 
         line.text.forEach((content) => {
             text += content.value

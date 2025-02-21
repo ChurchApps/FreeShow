@@ -3,9 +3,10 @@
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
+    import { translate } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
-    import { runAction } from "../../actions/actions"
+    import { getActionName, getActionTriggerId, runAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -29,12 +30,12 @@
     let layoutActions: any[] = []
 
     $: {
-        if (show) {
-            layoutBackgrounds = []
-            layoutAudio = []
-            layoutMics = []
-            layoutActions = []
+        layoutBackgrounds = []
+        layoutAudio = []
+        layoutMics = []
+        layoutActions = []
 
+        if (show) {
             let refs = _show("active").layouts().ref()
             refs.forEach((slides: any) => {
                 layoutBackgrounds.push(...slides.map((a: any) => a.data.background).filter((a: any) => a !== undefined))
@@ -259,7 +260,7 @@
                         bold={false}
                     >
                         <Icon id={$playingAudio[file.path]?.paused === true ? "play" : $playingAudio[file.path]?.paused === false ? "pause" : "music"} size={1.2} right />
-                        <p style="width: 100%;text-align: left;">{file.name.slice(0, file.name.lastIndexOf("."))}</p>
+                        <p style="width: 100%;text-align: left;">{file.name.includes(".") ? file.name.slice(0, file.name.lastIndexOf(".")) : file.name}</p>
 
                         {#if file.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{file.count}</span>
@@ -290,15 +291,21 @@
         {#if actions.length}
             <h5><T id="tabs.actions" /></h5>
             {#each actions as action}
-                {@const actionId = action.triggers?.[0] || ""}
+                {@const actionId = getActionTriggerId(action.triggers?.[0])}
                 {@const customData = actionData[actionId] || {}}
+                {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
+                {@const customName = getActionName(actionId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")}
 
                 <SelectElem id="action" data={action} draggable>
                     <!-- class="context #action" -->
                     <Button on:click={() => runAction(action)} style="padding: 8px;width: 100%;" title={action.name} bold={false}>
-                        <Icon id={customData.icon || "actions"} size={1.2} right />
+                        <Icon id={customData.icon || "actions"} size={1.1} style="margin-left: 0.5em;" right />
                         {#key customData.name}
-                            <p><T id={customData.name || ""} /></p>
+                            <p>
+                                <T id={customData.name || ""} />{#if customName}:
+                                    <span style="padding: 0;opacity: 0.7;font-size: 0.8em;">{customName}</span>
+                                {/if}
+                            </p>
                         {/key}
                     </Button>
                 </SelectElem>

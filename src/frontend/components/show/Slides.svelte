@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, styles } from "../../stores"
+    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
     import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
@@ -7,7 +7,7 @@
     import { encodeFilePath, getExtension } from "../helpers/media"
     import { getActiveOutputs, refreshOut, setOutput } from "../helpers/output"
     import { getCachedShow } from "../helpers/show"
-    import { checkActionTrigger, getItemWithMostLines, updateOut } from "../helpers/showActions"
+    import { checkActionTrigger, getFewestOutputLines, getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getClosestRecordingSlide } from "../helpers/slideRecording"
     import T from "../helpers/T.svelte"
@@ -81,7 +81,22 @@
         checkActionTrigger(data, index)
         // allow custom actions to trigger first
         setTimeout(() => {
-            setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
+            // get line
+            let outputId = getActiveOutputs($outputs, true, true, true)[0]
+            let currentOutput: any = $outputs[outputId] || {}
+            let outSlide = currentOutput.out?.slide || {}
+            let amountOfLinesToShow = getFewestOutputLines()
+            let line = 0
+            if (outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && amountOfLinesToShow > 0) {
+                line = (outSlide.line || 0) + amountOfLinesToShow
+
+                let showSlide = _show(showId).slides([slideRef[index]?.id]).get()[0]
+                let slideLines = showSlide ? getItemWithMostLines(showSlide) : 0
+                // loop back to line start
+                if (line >= slideLines) line = 0
+            }
+
+            setOutput("slide", { id: showId, layout: activeLayout, index, line })
             updateOut(showId, index, slideRef, !e.altKey)
 
             getClosestRecordingSlide({ showId, layoutId: activeLayout }, index)
@@ -188,20 +203,28 @@
             let currentOutput: any = $outputs[a]
             if (!currentOutput || currentOutput.stageOutput) return
 
-            let currentStyle = $styles[currentOutput?.style || ""] || {}
+            // let currentStyle = $styles[currentOutput?.style || ""] || {}
             let outSlide: any = currentOutput.out?.slide || $outputSlideCache[a] || {}
 
             if (activeSlides[outSlide.index] || outSlide.id !== showId || outSlide.layout !== activeLayout) return
 
             // get progress of current line division
-            let amountOfLinesToShow: number = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
-            let lineIndex: any = outSlide.line || 0
-            let maxLines: number = 0
+            // let amountOfLinesToShow: number = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
+            let amountOfLinesToShow: number = getFewestOutputLines($outputs)
+            let lineIndex = 0
+            let maxLines = 0
             if (amountOfLinesToShow > 0) {
                 let ref = a?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
                 let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()[0] : null
                 let slideLines = showSlide ? getItemWithMostLines(showSlide) : null
-                maxLines = slideLines && lineIndex !== null ? (amountOfLinesToShow >= slideLines ? 0 : Math.ceil(slideLines / amountOfLinesToShow)) : 0
+
+                maxLines = slideLines && amountOfLinesToShow < slideLines ? Math.ceil(slideLines / amountOfLinesToShow) : 0
+
+                let outputLine = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
+                let linesPercentage = slideLines && outputLine !== null ? outputLine / slideLines : 0
+                lineIndex = maxLines !== null ? Math.floor(maxLines * linesPercentage) : 0
+
+                if (!maxLines) maxLines = 1
             }
 
             activeSlides[outSlide.index] = {

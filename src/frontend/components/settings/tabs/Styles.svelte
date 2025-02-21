@@ -1,24 +1,26 @@
 <script lang="ts">
     import { uid } from "uid"
+    import type { AspectRatio, Resolution } from "../../../../types/Settings"
     import { activePopup, activeStyle, dictionary, outputs, popupData, styles, templates } from "../../../stores"
+    import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
+    import { mediaFitOptions } from "../../edit/values/boxes"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, removeDuplicates, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getFileName } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
+    import { metadataDisplayValues } from "../../helpers/show"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import MediaPicker from "../../inputs/MediaPicker.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { mediaFitOptions } from "../../edit/values/boxes"
 
     function updateStyle(e: any, key: string, currentId: string = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -75,47 +77,25 @@
     $: styleTemplate = $templates[currentStyle.template || ""] || {}
     $: styleTemplateScripture = $templates[currentStyle.templateScripture || ""] || {}
     $: templateBackground = styleTemplate.settings?.backgroundColor || styleTemplateScripture.settings?.backgroundColor
-    // $: templateResolution = styleTemplate.settings?.resolution
+    $: templateBackgroundImage = styleTemplate.settings?.backgroundPath || styleTemplateScripture.settings?.backgroundPath
 
-    // resolutions
-    // https://www.wearethefirehouse.com/aspect-ratio-cheat-sheet
-    const resolutions = [
-        { name: "720p 960x720 (4/3)", data: { width: 960, height: 720 } },
-        { name: "720p 1280x720 (16/9)", data: { width: 1280, height: 720 } },
-        { name: "1080p 1440x1080 (4/3)", data: { width: 1440, height: 1080 } },
-        { name: "1080p 1920x1080 (16/9)", data: { width: 1920, height: 1080 } },
-        { name: "2K 2048x1152 (16/9)", data: { width: 2048, height: 1152 } },
-        { name: "4K 3840x2160 (16/9)", data: { width: 3840, height: 2160 } },
-        { name: "8K 7680x4320 (16/9)", data: { width: 7680, height: 4320 } },
-        { name: "Cinema Flat 2K 1998x1080 (1.85)", data: { width: 1998, height: 1080 } },
-        { name: "Cinema Scope 2K 2048x858 (2.39)", data: { width: 2048, height: 858 } },
-        { name: "Cinema Flat 4K 3996x2160 (1.85)", data: { width: 3996, height: 2160 } },
-        { name: "Cinema Scope 4K 4096x1716 (2.39)", data: { width: 4096, height: 1716 } },
-    ]
+    function getAspectRatio(resolution: Resolution | undefined): AspectRatio {
+        if (!resolution || (resolution.width === 1920 && resolution.height === 1080)) return { width: 16, height: 9 }
+
+        let ratio = resolution
+        if (ratio.width > 100 || ratio.height > 100) {
+            let width = Number((ratio.width / ratio.height).toFixed(2))
+            if (width === 1.78) return { width: 16, height: 9 }
+            if (width === 1.33) return { width: 4, height: 3 }
+            return { width, height: 1 }
+        }
+
+        return ratio
+    }
 
     // slide
 
     $: activeLayers = currentStyle.layers || clone(defaultLayers)
-
-    // overlays
-
-    const meta: any[] = [
-        { id: "never", name: "$:show_at.never:$" },
-        { id: "always", name: "$:show_at.always:$" },
-        { id: "first", name: "$:show_at.first:$" },
-        { id: "last", name: "$:show_at.last:$" },
-        { id: "first_last", name: "$:show_at.first_last:$" },
-    ]
-
-    let templateList: any[] = []
-    $: templateList = [
-        { id: null, name: "—" },
-        ...sortByName(
-            Object.entries($templates)
-                .map(([id, a]: any) => ({ id, name: a?.name }))
-                .filter((a) => a.name)
-        ),
-    ]
 
     // text divider
     function keydown(e: any) {
@@ -128,6 +108,9 @@
     let edit: any
 
     $: mediaFit = currentStyle.fit || "contain"
+    $: aspectRatio = currentStyle.aspectRatio || getAspectRatio(currentStyle.resolution)
+    $: metadataDisplay = currentStyle.displayMetadata || "never"
+    $: textTransitionData = transitionTypes.find((a) => a.id === currentStyle.transition?.text?.type)
 </script>
 
 <div class="info">
@@ -147,7 +130,12 @@
     </span>
 </CombinedInput>
 <CombinedInput>
-    <p><T id="edit.background_media" /></p>
+    <p>
+        <T id="edit.background_media" />
+        {#if templateBackgroundImage}
+            <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.8em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
+        {/if}
+    </p>
     <MediaPicker
         id="styles"
         title={currentStyle.backgroundImage}
@@ -196,14 +184,16 @@
             popupData.set({ action: "style_transition", id: styleId })
             activePopup.set("transition")
         }}
+        title={$dictionary.actions?.change_transition}
+        bold={!currentStyle.transition}
     >
         <div style="display: flex;align-items: center;padding: 0;">
             <Icon id="transition" style="margin-left: 0.5em;" right />
             <p>
                 {#if currentStyle.transition}
-                    <T id="actions.change_transition" />
+                    <T id={textTransitionData?.name || "actions.change_transition"} />
                 {:else}
-                    <T id="popup.transition" />
+                    <T id="actions.change_transition" />
                 {/if}
             </p>
         </div>
@@ -228,6 +218,8 @@
             popupData.set({ action: "style_fit", id: styleId })
             activePopup.set("media_fit")
         }}
+        title={$dictionary.popup?.media_fit}
+        bold={false}
     >
         <div style="display: flex;align-items: center;padding: 0;">
             <Icon id="media_fit" style="margin-left: 0.5em;" right />
@@ -245,15 +237,29 @@
 <!-- TODO: transparency? -->
 <!-- WIP background image (clear to image...) -->
 <!-- WIP foreground: mask/overlay -->
+
 <CombinedInput>
-    <p><T id="settings.resolution" /></p>
-    <!-- {#if templateResolution}
-        <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.9em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
-    {:else} -->
-    <span class="inputs">
-        <!-- defaults dropdown -->
-        <!-- custom... -->
-        <!-- <span class="text"><T id="screen.width" /></span> -->
+    <p><T id="settings.aspect_ratio" /></p>
+    <Button
+        on:click={() => {
+            popupData.set({ action: "style_ratio", active: aspectRatio, trigger: (value) => updateStyle(value, "aspectRatio") })
+            activePopup.set("aspect_ratio")
+        }}
+        title={$dictionary.popup?.aspect_ratio}
+        bold={false}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="aspect_ratio" style="margin-left: 0.5em;" right />
+            <p>
+                {#if aspectRatio.outputResolutionAsRatio}
+                    <T id="settings.output_resolution_ratio" />
+                {:else}
+                    {aspectRatio.width}:{aspectRatio.height}
+                {/if}
+            </p>
+        </div>
+    </Button>
+    <!-- <span class="inputs">
         <NumberInput
             title={$dictionary.screen?.width}
             value={currentStyle.resolution?.width || 1920}
@@ -262,7 +268,6 @@
             buttons={false}
             on:change={(e) => updateStyle({ width: Number(e.detail), height: currentStyle.resolution?.height || 1080 }, "resolution")}
         />
-        <!-- <span class="text"><T id="screen.height" /></span> -->
         <NumberInput
             title={$dictionary.screen?.height}
             value={currentStyle.resolution?.height || 1080}
@@ -278,8 +283,7 @@
             title={$dictionary.settings?.resolution}
             on:click={(e) => updateStyle(e.detail?.data, "resolution")}
         />
-    </span>
-    <!-- {/if} -->
+    </span> -->
 </CombinedInput>
 
 <h3><T id="preview.slide" /></h3>
@@ -349,27 +353,121 @@
 
 <CombinedInput>
     <p><T id="settings.override_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.template || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "template")} />
+    <Button
+        on:click={() => {
+            popupData.set({ action: "select_template", active: currentStyle.template || "", trigger: (id) => updateStyle(id, "template") })
+            activePopup.set("select_template")
+        }}
+        bold={!currentStyle.template}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="templates" style="margin-left: 0.5em;" right />
+            <p>
+                {#if currentStyle.template}
+                    {$templates[currentStyle.template || ""]?.name || "—"}
+                {:else}
+                    <T id="popup.select_template" />
+                {/if}
+            </p>
+        </div>
+    </Button>
+    {#if currentStyle.template}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "template")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
 </CombinedInput>
 <CombinedInput>
     <p><T id="settings.override_scripture_with_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.templateScripture || ""]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "templateScripture")} />
+    <Button
+        on:click={() => {
+            popupData.set({ action: "select_template", active: currentStyle.templateScripture || "", trigger: (id) => updateStyle(id, "templateScripture") })
+            activePopup.set("select_template")
+        }}
+        bold={!currentStyle.templateScripture}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="templates" style="margin-left: 0.5em;" right />
+            <p>
+                {#if currentStyle.templateScripture}
+                    {$templates[currentStyle.templateScripture || ""]?.name || "—"}
+                {:else}
+                    <T id="popup.select_template" />
+                {/if}
+            </p>
+        </div>
+    </Button>
+    {#if currentStyle.templateScripture}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "templateScripture")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
 </CombinedInput>
 
 <!-- meta -->
 <h3><T id="tools.metadata" /></h3>
 <CombinedInput>
     <p><T id="meta.display_metadata" /></p>
-    <Dropdown options={meta} value={meta.find((a) => a.id === (currentStyle.displayMetadata || "never"))?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "displayMetadata")} up />
+    <Button
+        on:click={() => {
+            popupData.set({ action: "style_metadata", id: styleId })
+            activePopup.set("metadata_display")
+        }}
+        title={$dictionary.popup?.metadata_display}
+        bold={false}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="info" style="margin-left: 0.5em;" right />
+            <p>
+                {#key metadataDisplay}
+                    <T id={metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""} />
+                {/key}
+            </p>
+        </div>
+    </Button>
 </CombinedInput>
 {#if (currentStyle.displayMetadata || "never") !== "never"}
     <CombinedInput>
-        <p><T id="meta.meta_template" /></p>
-        <Dropdown options={templateList} value={$templates[currentStyle.metadataTemplate === undefined ? "metadata" : currentStyle.metadataTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "metadataTemplate")} up />
-    </CombinedInput>
-    <CombinedInput>
         <p><T id="meta.text_divider" /></p>
         <TextInput value={currentStyle.metadataDivider === undefined ? "; " : currentStyle.metadataDivider} on:change={(e) => updateStyle(e, "metadataDivider")} on:keydown={keydown} />
+    </CombinedInput>
+    <CombinedInput>
+        <p><T id="meta.meta_template" /></p>
+        <Button
+            on:click={() => {
+                popupData.set({ action: "select_template", active: currentStyle.metadataTemplate || "metadata", trigger: (id) => updateStyle(id, "metadataTemplate") })
+                activePopup.set("select_template")
+            }}
+            bold={false}
+        >
+            <div style="display: flex;align-items: center;padding: 0;">
+                <Icon id="templates" style="margin-left: 0.5em;" right />
+                <p>{$templates[currentStyle.metadataTemplate || "metadata"]?.name || "—"}</p>
+            </div>
+        </Button>
+        {#if (currentStyle.metadataTemplate || "metadata") !== "metadata"}
+            <Button
+                title={$dictionary.actions?.remove}
+                on:click={() => {
+                    updateStyle("", "metadataTemplate")
+                }}
+                redHover
+            >
+                <Icon id="close" size={1.2} white />
+            </Button>
+        {/if}
     </CombinedInput>
     <!-- <CombinedInput>
         <p><T id="meta.metadata_layout" /></p>
@@ -378,7 +476,29 @@
 {/if}
 <CombinedInput>
     <p><T id="meta.message_template" /></p>
-    <Dropdown options={templateList} value={$templates[currentStyle.messageTemplate === undefined ? "message" : currentStyle.messageTemplate]?.name || "—"} on:click={(e) => updateStyle(e.detail.id, "messageTemplate")} up />
+    <Button
+        on:click={() => {
+            popupData.set({ action: "select_template", active: currentStyle.messageTemplate || "message", trigger: (id) => updateStyle(id, "messageTemplate") })
+            activePopup.set("select_template")
+        }}
+        bold={false}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="templates" style="margin-left: 0.5em;" right />
+            <p>{$templates[currentStyle.messageTemplate || "message"]?.name || "—"}</p>
+        </div>
+    </Button>
+    {#if (currentStyle.messageTemplate || "message") !== "message"}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "messageTemplate")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
 </CombinedInput>
 
 <!-- TODO: override transition ? -->
@@ -450,17 +570,6 @@
     .flex :global(button) {
         flex: 1;
     }
-
-    .inputs {
-        display: flex;
-    }
-
-    /* .text {
-        display: flex;
-        align-items: center;
-        padding: 0 10px;
-        border: none;
-    } */
 
     .filler {
         height: 48px;

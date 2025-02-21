@@ -4,6 +4,7 @@
     import { timeFormat } from "../../stores"
 
     import AnalogClock from "./AnalogClock.svelte"
+    import { onDestroy } from "svelte"
     // Initialize plugins
     dayjs.extend(localizedFormat)
 
@@ -18,11 +19,13 @@
     $: twelwe = $timeFormat === "12"
 
     let d: Date = new Date()
-    setInterval(() => (d = new Date()), 250)
+    const clockInterval = setInterval(() => (d = new Date()), 250)
     let h: number = 0
     let m: number = 0
     let s: number = 0
     let pm: boolean = false
+
+    onDestroy(() => clearInterval(clockInterval))
 
     $: if (d) {
         h = d.getHours()
@@ -77,7 +80,7 @@
 {#if type === "analog"}
     <AnalogClock date={d} {...{ h, m, s }} {seconds} />
 {:else if type === "custom"}
-    <div class="clock autoFontSize" style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
+    <div class="clock autoFontSize" style={autoSize ? `font-size: ${autoSize * 0.97}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
         {#if style}
             <span class="colored">{formattedCustom}</span>
         {:else}
@@ -85,7 +88,7 @@
         {/if}
     </div>
 {:else}
-    <div class="clock autoFontSize" style={autoSize ? `font-size: ${autoSize}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
+    <div class="clock autoFontSize" style={autoSize ? `font-size: ${autoSize * 0.97}px;height: 100%;align-items: center;{$$props.style || ''}` : ""}>
         {#if style}
             <span class="colored">{("0" + h).slice(-2)}</span>:
             <span class="colored">{("0" + m).slice(-2)}</span>
@@ -105,6 +108,8 @@
         justify-content: center;
         align-items: baseline;
         font-size: 4em;
+
+        white-space: nowrap;
     }
     .colored {
         color: var(--secondary);

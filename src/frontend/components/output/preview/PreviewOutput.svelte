@@ -1,7 +1,7 @@
 <script lang="ts">
     import { outputs, styles } from "../../../stores"
     //import { currentWindow, outputs, styles } from "../../../stores"
-    import { getOutputResolution } from "../../helpers/output"
+    import { getResolution } from "../../helpers/output"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import StageShow from "../../stage/StageShow.svelte"
     import Output from "../Output.svelte"
@@ -12,19 +12,19 @@
     export let outputId: string = ""
     export let style: string = ""
 
-    $: resolution = getOutputResolution(outputId, $outputs, $styles)
-    $: width = resolution.width || 160
-    $: height = resolution.height || 90
+    $: resolution = getResolution(null, [$outputs, $styles], false, outputId)
+    let width = 0
+    let height = 0
 
     $: stageOutput = $outputs[outputId]?.stageOutput
 </script>
 
-<!-- bind:offsetWidth={width} bind:offsetHeight={height} -->
-<div class="center previewOutput" id={outputId} class:fullscreen={fullscreen && !stageOutput} class:disabled style={style + ("; aspect-ratio: " + width + "/" + height + ";")}>
+<!-- class:fullscreen={fullscreen && !stageOutput} -->
+<div class="center previewOutput" id={outputId} class:disabled style={style + ("; aspect-ratio: " + resolution.width + "/" + resolution.height + ";")} bind:offsetWidth={width} bind:offsetHeight={height}>
     {#if stageOutput}
         <StageShow {outputId} stageId={stageOutput} edit={false} />
     {:else}
-        <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} mirror preview={!disableTransitions} />
+        <Output {outputId} style={getStyleResolution(resolution, fullscreen ? width : resolution.width, fullscreen ? height : resolution.height, "fit")} mirror preview={!disableTransitions} />
     {/if}
 </div>
 
@@ -39,10 +39,10 @@
 
         /* max-height: 50vh; */
     }
-    .center.fullscreen {
-        width: unset;
+    /* .center.fullscreen {
+        width: 100%;
         height: 100%;
-    }
+    } */
 
     .center.disabled {
         opacity: 0.5;

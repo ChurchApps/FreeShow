@@ -18,9 +18,11 @@ export type SaveListSyncedSettings =
     | "playerVideos"
     | "videoMarkers"
     | "mediaTags"
+    | "actionTags"
     | "customizedIcons"
     | "companion"
     | "globalTags"
+    | "customMetadata"
 
 export type SaveListSettings =
     | "initialized"

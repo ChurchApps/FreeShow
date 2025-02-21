@@ -58,7 +58,7 @@ export const receiver = {
 
         _set("outSlide", data.slide)
         if (data.layout) _set("outLayout", data.layout)
-        if (data.styleRes) _set("styleRes", data.styleRes)
+        // if (data.styleRes) _set("styleRes", data.styleRes)
         if (_get("outSlide") === null) _set("outShow", null)
         else if (data.show) {
             _set("outShow", data.show)

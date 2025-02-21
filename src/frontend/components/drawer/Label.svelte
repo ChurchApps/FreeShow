@@ -2,9 +2,11 @@
     import { fullColors, overlays, playerVideos, templates } from "../../stores"
     import { getContrast } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
 
     export let label: string
+    export let count: number = 0
     export let renameId: string = ""
     export let title: string = ""
     export let icon: null | string = null
@@ -53,7 +55,14 @@
     {#if renameId}
         <HiddenInput value={label} id={renameId} on:edit={(e) => changeName(e, renameId)} bind:edit={editActive} />
     {:else}
-        <span>{label}</span>
+        <span class="title" style={count ? "margin-right: 14px;" : ""}>
+            {#if label}
+                {label}
+            {:else}
+                <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+            {/if}
+            {#if count}<span style="opacity: 0.6;font-size: 0.8em;position: absolute;right: 6px;top: 50%;transform: translateY(-50%);">{count}</span>{/if}
+        </span>
     {/if}
 </div>
 
@@ -109,19 +118,24 @@
         position: absolute;
     }
 
-    div.label span {
+    div.label .title {
         width: 100%;
         margin: 0 5px;
         text-align: center;
         overflow-x: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+
+        /* display: flex;
+        align-items: center; / * baseline * /
+        justify-content: space-between;
+        gap: 5px; */
     }
-    div.label.alignRight span {
+    div.label.alignRight .title {
         margin: 0;
         margin-left: 24px;
     }
-    div.label.list span {
+    div.label.list .title {
         text-align: left;
         padding: 0 10px;
     }

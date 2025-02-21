@@ -12,11 +12,16 @@ export interface Category {
     description?: string
     isArchive?: boolean
     action?: string // trigger custom action on content presentation
+    submenu?: { options: any[] } // open a submenu of options (tags)
+    openTrigger?: Function // trigger a custom function
 }
 
 export interface BibleCategories extends Category {
     customName?: string
     api?: boolean
+    copyright?: string // API copyright information
+    attributionRequired?: boolean // API needs attribution
+    attributionString?: string // API needs custom attribution
     books2?: any[] // api cache
     cacheUpdate?: Date
     collection?: {
@@ -38,6 +43,8 @@ export interface DrawerTabs {
     [key: string]: {
         enabled: boolean
         activeSubTab: null | string
+        openedSubmenus?: string[]
+        activeSubmenu?: string
     }
 }
 

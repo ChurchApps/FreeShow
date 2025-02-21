@@ -16,7 +16,7 @@
 
     function onContextMenu(e: MouseEvent) {
         let target: any = e.target
-        if (!target) return
+        if (!target || closingMenu) return
 
         let input = ["text", "textarea"].includes(target.type) && !target.closest(".numberInput")
         if ((!input && (target.closest(".contextMenu") || $activePopup)) || target.closest(".nocontext")) {
@@ -74,6 +74,13 @@
 
     const click = (e: MouseEvent) => {
         if (!e.target?.closest(".contextMenu")) contextActive.set(false)
+    }
+
+    // prevent duplicated menus (due to Svelte transition bug)
+    let closingMenu: any = null
+    $: if ($contextActive === false) startCloseTimer()
+    function startCloseTimer() {
+        closingMenu = setTimeout(() => (closingMenu = null), 70)
     }
 
     // preload data (to check if some of the buttons can be hidden)

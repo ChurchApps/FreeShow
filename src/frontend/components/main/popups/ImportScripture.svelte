@@ -1,6 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import { IMPORT } from "../../../../types/Channels"
+    import type { BibleCategories } from "../../../../types/Tabs"
     import { dictionary, isDev, labelsDisabled, language, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
@@ -59,7 +60,8 @@
     $: {
         if (bibles?.length) {
             let langCode = window.navigator.language.slice(-2).toLowerCase()
-            sortedBibles = sortByName(bibles)
+            // if it needs attribution, it's probably more in demand!
+            sortedBibles = sortByName(bibles).sort((a, b) => (b.attributionRequired || b.attributionString) - (a.attributionRequired || a.attributionString))
             let newSorted: any[] = []
             sortedBibles.forEach((bible) => {
                 newSorted.push(bible)
@@ -81,7 +83,21 @@
         }
     }
 
-    function toggleScripture({ sourceKey: id, name }: any) {
+    type ChurchAppsApiBible = {
+        id: string // not needed
+        abbreviation: string
+        name: string
+        nameLocal: string
+        description: string | null
+        source: "api.bible"
+        sourceKey: string // id
+        language: string // "eng"
+        copyright: string
+        attributionRequired: boolean
+        attributionString?: string
+    }
+
+    function toggleScripture({ sourceKey: id, name, copyright, attributionRequired, attributionString }: ChurchAppsApiBible) {
         scriptures.update((a: any) => {
             let key: string | null = null
             Object.entries(a).forEach(([sId, value]: any) => {
@@ -89,7 +105,7 @@
             })
 
             if (key) delete a[key]
-            else a[uid()] = { name, api: true, id }
+            else a[uid()] = { name, api: true, id, copyright, attributionRequired, attributionString } as BibleCategories
             return a
         })
     }
@@ -211,7 +227,7 @@
     <br />
 
     <CombinedInput>
-        <Button on:click={() => send(IMPORT, ["BIBLE"], { format: { name: "Bible", extensions: ["xml", "json"] } })} style="width: 100%;" center dark>
+        <Button on:click={() => send(IMPORT, ["BIBLE"], { format: { name: "Bible", extensions: ["xml", "json", "fsb"] } })} style="width: 100%;" center dark>
             <Icon id="import" right />
             <T id="scripture.local" />
         </Button>

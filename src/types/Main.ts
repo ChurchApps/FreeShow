@@ -70,6 +70,7 @@ export type SelectIds =
 export interface Selected {
     id: null | SelectIds
     data: any[]
+    hoverActive?: boolean
 }
 
 export interface SlidesOptions {
@@ -90,7 +91,7 @@ export interface ActiveEdit {
     showId?: string // only used to reset to slide 0 if changed ($activeShow.id is actually used)
 }
 
-export type MediaFit = "contain" | "cover" | "fill"
+export type MediaFit = "contain" | "cover" | "fill" | "blur"
 export interface Media {
     [key: string]: MediaStyle
 }
@@ -102,6 +103,7 @@ export interface MediaStyle {
     speed?: string
     fromTime?: number
     toTime?: number
+    videoType?: string // default | "background" | "foreground"
     favourite?: boolean
     audio?: boolean
     loop?: boolean // audio
@@ -129,10 +131,12 @@ export type Popups =
     | "show"
     | "delete_show"
     | "select_show"
+    | "select_template"
     | "delete_duplicated_shows"
     | "icon"
     | "manage_icons"
     | "manage_colors"
+    | "manage_metadata"
     | "player"
     | "rename"
     | "color"
@@ -141,8 +145,10 @@ export type Popups =
     | "variable"
     | "trigger"
     | "audio_stream"
+    | "aspect_ratio"
     | "transition"
     | "media_fit"
+    | "metadata_display"
     | "import_scripture"
     | "edit_event"
     | "choose_chord"
@@ -151,7 +157,7 @@ export type Popups =
     | "choose_output"
     | "change_output_values"
     | "set_time"
-    | "slide_shortcut"
+    | "assign_shortcut"
     | "animate"
     | "translate"
     | "next_timer"

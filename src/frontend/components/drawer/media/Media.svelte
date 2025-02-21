@@ -122,6 +122,7 @@
     }
 
     let filesInFolders: string[] = []
+    let folderFiles: any = {}
 
     let listenerId = uid()
     onDestroy(() => destroy(READ_FOLDER, listenerId))
@@ -133,10 +134,16 @@
 
         if (active !== "all" && msg.path !== path) return
 
-        files.push(...msg.files.filter((file: any) => isMediaExtension(file.extension) || file.folder))
+        files.push(...msg.files.filter((file: any) => file.folder || isMediaExtension(file.extension)))
         files = sortFilenames(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
+
+        // set valid files in folder
+        folderFiles = {}
+        Object.keys(msg.folderFiles).forEach((path) => {
+            folderFiles[path] = msg.folderFiles[path].filter((file) => file.folder || isMediaExtension(file.extension))
+        })
 
         filterFiles()
     }
@@ -170,6 +177,9 @@
         if ($activeMediaTagFilter.length) {
             filteredFiles = filteredFiles.filter((a) => !a.folder && $media[a.path]?.tags?.length && !$activeMediaTagFilter.find((tagId) => !$media[a.path].tags!.includes(tagId)))
         }
+
+        // remove folders with no content
+        filteredFiles = filteredFiles.filter((a) => !a.folder || !folderFiles[a.path] || folderFiles[a.path].length > 0)
 
         // reset arrow selector
         loadAllFiles(filteredFiles)

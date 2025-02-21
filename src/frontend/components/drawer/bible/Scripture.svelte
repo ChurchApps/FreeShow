@@ -39,6 +39,7 @@
     }
 
     let error: null | string = null
+    $: if (active) error = null
 
     let firstBibleId = ""
 
@@ -59,7 +60,7 @@
 
             // verses
             activeVerses = $openScripture.verses
-            bibles[0].activeVerses = activeVerses
+            if (bibles[0]) bibles[0].activeVerses = activeVerses
 
             openScripture.set(null)
         }, 100)
@@ -106,10 +107,11 @@
 
                 if (load === "books" && data?.length) setBooksCache(objectId, data)
             } catch (err) {
-                if (bibles[0].api) error = err
+                if (bibles[0]?.api) error = err
             }
         }
 
+        console.log("LOADED", data)
         if (!data) return
 
         let hasId = false
@@ -141,17 +143,15 @@
         }
     }
 
-    function convertVerses(data: VerseText[], index: number = 0): { [key: string]: string } {
+    function convertVerses(data: VerseText[], _index: number = 0): { [key: string]: string } {
         let verses: any = {}
         data.forEach((d: any, i: number) => {
             verses[i + 1] = d.content
         })
-        console.log(index)
-        /*
-        if (bibles[index]) {
-            bibles[index].metadata = data.metadata || {}
-            if (data.copyright) bibles[index].metadata.copyright = data.copyright
-        }*/
+        // if (bibles[index]) {
+        //     bibles[index].metadata = data[0].metadata || {}
+        //     if (data[0].copyright) bibles[index].metadata.copyright = data[0].copyright
+        // }
 
         return verses
     }
@@ -372,7 +372,7 @@
 
         if (bookId !== searchValues.book) {
             bookId = searchValues.book
-            if (bibles[0].api) chapterId = `${bookId}.1`
+            if (bibles[0]?.api) chapterId = `${bookId}.1`
             getBook()
             getChapter()
         }
@@ -835,7 +835,7 @@
     let gridMode: boolean = false
     let history: boolean = false
 
-    $: currentHistory = clone($scriptureHistory.filter((a) => a.id === bibles[0].id)).reverse()
+    $: currentHistory = clone($scriptureHistory.filter((a) => a.id === bibles[0]?.id)).reverse()
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />

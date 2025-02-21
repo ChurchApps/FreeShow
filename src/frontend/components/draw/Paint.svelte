@@ -1,15 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { draw, drawSettings, outputs, paintCache, styles } from "../../stores"
-    import { getResolution } from "../helpers/output"
+    import { draw, drawSettings, paintCache } from "../../stores"
 
     export let settings: any = {}
-
-    // $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
-    // $: currentLayout = currentOutput.out?.slide ? _show(currentOutput.out.slide.id).layouts([currentOutput.out.slide.layout]).ref()[0] : []
-    // $: currentSlide = currentOutput.out?.slide ? (currentOutput.out.slide.id === "temp" ? { items: currentOutput.out.slide.tempItems } : _show(currentOutput.out.slide.id).slides([currentLayout![currentOutput.out.slide.index!].id]).get()[0]) : null
-    // currentSlide?.settings?.resolution
-    $: resolution = getResolution(null, { $outputs, $styles })
 
     let canvas: any = null
     let ctx: any = null
@@ -50,7 +43,7 @@
     function clear() {
         if (!ctx) return
 
-        ctx.clearRect(0, 0, resolution.width, resolution.height)
+        ctx.clearRect(0, 0, 1920, 1080)
         lines = []
         paintCache.set([])
 
@@ -121,7 +114,7 @@
     }
 </script>
 
-<canvas bind:this={canvas} width={resolution.width} height={resolution.height} />
+<canvas bind:this={canvas} width={1920} height={1080} />
 
 <style>
     canvas {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { TopViews } from "../../../types/Tabs"
-    import { activeEdit, activePage, activeShow, dictionary, editHistory, labelsDisabled } from "../../stores"
+    import { activeEdit, activePage, activeShow, dictionary, editHistory, labelsDisabled, shows, special } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "./Button.svelte"
@@ -11,7 +11,9 @@
     export let hideLabel: null | boolean = null
     $: label = hideLabel === null ? !$labelsDisabled : !hideLabel
 
-    $: title = $dictionary.menu?.["_title_" + id]
+    const keys = { show: 1, edit: 2, stage: 3, draw: 4, settings: 5 }
+
+    $: title = $dictionary.menu?.["_title_" + id] + ($special.numberKeys ? "" : ` [${keys[id] || ""}]`)
 
     function openPage() {
         activePage.set(id)
@@ -26,8 +28,9 @@
         else if (showIsActive && $activeEdit.showId && $activeEdit.showId !== $activeShow?.id) openEdit()
 
         function updateEditItem() {
-            // set to show if: media has been opened AND show has not been opened
+            // set to show if: media has been opened AND show has not been opened AND it's not locked
             if ($activeEdit.id && (!$editHistory.find((a) => $activeEdit.id === a.edit?.id) || $editHistory.find((a) => $activeShow?.id === a.show?.id))) return
+            if ($shows[$activeShow?.id || ""]?.locked) return
 
             openEdit()
         }

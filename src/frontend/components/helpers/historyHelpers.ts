@@ -3,6 +3,7 @@ import { uid } from "uid"
 import { ShowObj } from "../../classes/Show"
 import {
     activeDrawerTab,
+    activeEdit,
     activeProject,
     activeRename,
     activeShow,
@@ -364,7 +365,10 @@ export const _updaters = {
 
             // don't open when importing lots of songs
             // if (data.open !== false)
-            if (!get(focusMode)) activeShow.set(showRef)
+            if (!get(focusMode)) {
+                activeShow.set(showRef)
+                activeEdit.set({ type: "show", slide: 0, items: [], showId: showRef.id })
+            }
 
             // set text cache
             saveTextCache(id, data.data)
@@ -377,6 +381,15 @@ export const _updaters = {
 
                 return a
             })
+
+            // open selected drawer tab
+            let activeCategory = get(drawerTabsData).shows?.activeSubTab
+            if (activeCategory !== "all" && activeCategory !== "unlabeled") {
+                drawerTabsData.update((a) => {
+                    a.shows = { enabled: true, activeSubTab: data.data.category }
+                    return a
+                })
+            }
 
             // remove from "not found" (should not be nessesary)
             setTimeout(() => {
@@ -443,7 +456,7 @@ export const _updaters = {
         },
         deselect: () => {
             activeTagFilter.set([])
-        }
+        },
     },
     tag_key: { store: globalTags },
 
@@ -586,7 +599,7 @@ export const projectReplacers = [
     { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) },
 ]
 export const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
-function getProjectName() {
+export function getProjectName() {
     let name = get(special).default_project_name ?? DEFAULT_PROJECT_NAME
 
     let date = new Date()

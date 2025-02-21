@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activeShow, dictionary, groups, guideActive, midiIn, outLocked, outputs, overlayTimers, playingAudio, slideTimers, special, styles } from "../../../stores"
+    import { activePage, activePopup, activeShow, dictionary, groups, guideActive, midiIn, outLocked, outputs, overlayTimers, playingAudio, slideTimers, special, styles } from "../../../stores"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
@@ -7,7 +7,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getActiveOutputs, isOutCleared, outputSlideHasContent, setOutput } from "../../helpers/output"
-    import { getItemWithMostLines, playNextGroup, updateOut } from "../../helpers/showActions"
+    import { getFewestOutputLines, getItemWithMostLines, playNextGroup, updateOut } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import { newSlideTimer } from "../../helpers/tick"
     import Button from "../../inputs/Button.svelte"
@@ -39,16 +39,18 @@
     let numberKeyTimeout: any = null
     let previousNumberKey: string = ""
     function keydown(e: any) {
-        if ($guideActive) return
+        if ($guideActive || $activePopup === "assign_shortcut") return
         if ((e.ctrlKey || e.metaKey || e.altKey) && previewCtrlShortcuts[e.key]) {
             e.preventDefault()
             previewCtrlShortcuts[e.key]()
         }
 
-        if (e.target.closest("input") || e.target.closest(".edit")) return
+        const functionKey = /^F(?:[1-9]|1[0-9]|2[0-4])$/
+        if ((e.target.closest("input") || e.target.closest(".edit")) && !functionKey.test(e.key)) return
 
-        // start action with custom shortcut key (A-Z)
-        if (!e.ctrlKey && !e.metaKey && /^[A-Z]{1}$/i.test(e.key) && actionKeyActivate(e.key.toUpperCase())) {
+        // start action with custom shortcut key
+        // /^[A-Z]{1}$/i.test(e.key) &&
+        if (!e.ctrlKey && !e.metaKey && actionKeyActivate(e.key.toUpperCase())) {
             e.preventDefault()
             return
         }
@@ -64,8 +66,9 @@
                 return
             }
 
-            // play group with custom shortcut keys (A-Z)
-            if (/^[A-Z]{1}$/i.test(e.key) && checkGroupShortcuts(e)) {
+            // play group with custom shortcut keys
+            // /^[A-Z]{1}$/i.test(e.key) &&
+            if (checkGroupShortcuts(e)) {
                 e.preventDefault()
                 return
             }
@@ -190,7 +193,7 @@
         newSlideTimer(id, output.out.transition.duration)
     })
 
-    $: currentStyle = $styles[currentOutput?.style] || {}
+    // $: currentStyle = $styles[currentOutput?.style] || {}
 
     // LINES
 
@@ -198,11 +201,13 @@
     $: ref = outSlide ? (outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]) : []
     let linesIndex: null | number = null
     let maxLines: null | number = null
-    $: amountOfLinesToShow = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
-    $: linesIndex = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
+    $: amountOfLinesToShow = getFewestOutputLines($outputs)
     $: showSlide = outSlide?.index !== undefined && ref ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()[0] : null
     $: slideLines = showSlide ? getItemWithMostLines(showSlide) : null
-    $: maxLines = slideLines && linesIndex !== null ? (amountOfLinesToShow >= slideLines ? null : Math.ceil(slideLines / amountOfLinesToShow)) : null
+    $: maxLines = slideLines && amountOfLinesToShow && amountOfLinesToShow < slideLines ? Math.ceil(slideLines / amountOfLinesToShow) : null
+    $: outputLine = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
+    $: linesPercentage = slideLines && outputLine !== null ? outputLine / slideLines : 0
+    $: linesIndex = maxLines !== null ? Math.floor(maxLines * linesPercentage) : 0
 
     // HIDE PREVIEW
 

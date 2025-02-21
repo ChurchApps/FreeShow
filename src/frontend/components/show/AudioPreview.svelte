@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { AudioAnalyser } from "../../audio/audioAnalyser"
     import { clearAudio } from "../../audio/audioFading"
     import { AudioPlayer } from "../../audio/audioPlayer"
@@ -29,18 +30,22 @@
     $: if (!paused && path) startUpdater()
 
     // updater
-    let interval: any = null
+    let updaterInterval: any = null
     function startUpdater() {
-        if (interval) return
+        if (updaterInterval) return
 
-        interval = setInterval(() => {
+        updaterInterval = setInterval(() => {
             if (paused) {
-                clearInterval(interval)
-                interval = null
+                clearInterval(updaterInterval)
+                updaterInterval = null
             }
             if (sliderValue === null) currentTime = AudioPlayer.getTime(path)
         }, 200)
     }
+
+    onDestroy(() => {
+        if (updaterInterval) clearInterval(updaterInterval)
+    })
 
     function setTime(e: any) {
         sliderValue = null

@@ -1,13 +1,14 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import type { Item } from "../../../types/Show"
-    import { currentWindow, outputs, overlays, showsCache, slidesOptions, templates, variables, volume } from "../../stores"
+    import { currentWindow, outputs, overlays, showsCache, slidesOptions, styles, templates, variables, volume } from "../../stores"
     import Cam from "../drawer/live/Cam.svelte"
     import Image from "../drawer/media/Image.svelte"
     import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
     import Icon from "../helpers/Icon.svelte"
     import { clone } from "../helpers/array"
     import { encodeFilePath, getExtension, getMediaType, loadThumbnail, mediaSize } from "../helpers/media"
+    import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
@@ -21,7 +22,6 @@
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
     import Website from "./views/Website.svelte"
-    import { getActiveOutputs } from "../helpers/output"
 
     export let item: Item
     export let itemIndex: number = -1
@@ -30,6 +30,7 @@
     export let mirror: boolean = true
     export let isMirrorItem: boolean = false
     export let ratio: number = 1
+    export let outputId: string = ""
     export let filter: string = ""
     export let backdropFilter: string = ""
     export let key: boolean = false
@@ -75,19 +76,33 @@
     // timer updater
     let today = new Date()
     let loaded = false
+    let dateInterval: any = null
     onMount(() => {
         setTimeout(() => (loaded = true), 100)
 
         if (item?.type !== "timer") return
-        setInterval(() => (today = new Date()), 500)
+        dateInterval = setInterval(() => (today = new Date()), 500)
+    })
+    onDestroy(() => {
+        clearInterval(dynamicInterval)
+        if (dateInterval) clearInterval(dateInterval)
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
 
-    function getAlphaStyle(style: string) {
+    let customOutputId = outputId
+    $: if (!outputId) customOutputId = getActiveOutputs($outputs, true, true, true)[0]
+
+    function getCustomStyle(style: string, outputId: string = "", _updater: any = null) {
+        if (outputId) {
+            let outputResolution = getOutputResolution(outputId, $outputs, true)
+            style = percentageStylePos(style, outputResolution)
+        }
+
         if (!key) return style
         let styles = getStyles(style)
 
+        // alpha style
         let alphaStyles = ";"
         let bgAlpha = getAlphaValues(styles["background-color"])
         let textAlpha = getAlphaValues(styles["color"]) || 1
@@ -260,7 +275,7 @@
 
                     // let size = fontSizeValue
                     let size = fontSize || 0
-                    html += `<span class="invisible" style="${style ? getAlphaStyle(text.style) : ""}${size ? `font-size: ${size}px;` : ""}">${letter}</span>`
+                    html += `<span class="invisible" style="${style ? getCustomStyle(text.style) : ""}${size ? `font-size: ${size}px;` : ""}">${letter}</span>`
 
                     index++
                 })
@@ -312,28 +327,35 @@
     }
 
     // list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};
-    $: listStyle = item.list?.enabled ? `;font-size: inherit;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
+    $: listStyle = item?.list?.enabled ? `;font-size: inherit;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
     $: if ($variables) updateDynamic++
-    setInterval(() => {
+    const dynamicInterval = setInterval(() => {
         updateDynamic++
     }, 1000)
+
+    $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};filter: ${item?.filter};transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: ${item?.filter} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
+
+    $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chordsData?.size || item?.chords?.size || 50 : "undefined"}px;--chord-color: ${stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
 </script>
 
 <div
     class="item"
-    style="{style ? getAlphaStyle(item?.style) : null};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
+    style="{style ? getCustomStyle(item?.style, customOutputId, { $styles }) : null};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
     class:white={key && !lines?.length}
     class:key
     class:addDefaultItemStyle
     class:isDisabledVariable
+    class:chords={chordLines.length}
     bind:this={itemElem}
 >
     {#if lines}
         <div
             class="align"
+            class:scrolling={!isStage && item?.scrolling?.type}
             class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"}
             class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"}
             class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"}
@@ -342,17 +364,12 @@
         >
             <div
                 class="lines"
-                style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}"
+                style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}"
             >
                 {#each lines as line, i}
                     {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || i < maxLines)}
                         {#if chords && chordLines[i]}
-                            <div
-                                class:first={i === 0}
-                                class="break chords"
-                                class:stageChords={!!stageItem}
-                                style="--chord-size: {stageItem?.chordsData?.size || item.chords?.size || 30}px;--chord-color: {stageItem?.chordsData?.color || item.chords?.color || '#FF851B'};"
-                            >
+                            <div class:first={i === 0} class="break chords" class:stageChords={!!stageItem}>
                                 {@html chordLines[i]}
                             </div>
                         {/if}
@@ -360,9 +377,9 @@
                         <!-- class:height={!line.text[0]?.value.length} -->
                         <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}{listStyle}">
                             {#each line.text || [] as text}
-                                {@const value = text.value.replaceAll("\n", "<br>") || "<br>"}
+                                {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                 <span
-                                    style="{style ? getAlphaStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
+                                    style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
                                         ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;`
                                         : ''}"
                                 >
@@ -380,25 +397,19 @@
     {:else if item?.type === "media"}
         {#if mediaItemPath}
             {#if ($currentWindow || preview) && getMediaType(getExtension(mediaItemPath)) === "video"}
-                <video
-                    src={encodeFilePath(mediaItemPath)}
-                    style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
-                    muted={mirror || item.muted}
-                    volume={Math.max(1, $volume)}
-                    autoplay
-                    loop
-                >
+                {#if item.fit === "blur"}
+                    <video src={encodeFilePath(mediaItemPath)} style={mediaStyleBlurString} muted autoplay loop />
+                {/if}
+                <video src={encodeFilePath(mediaItemPath)} style={mediaStyleString} muted={mirror || item.muted} volume={Math.max(1, $volume)} autoplay loop>
                     <track kind="captions" />
                 </video>
             {:else}
                 <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
                 <!-- TODO: use custom transition... -->
-                <Image
-                    src={mediaItemPath}
-                    alt=""
-                    style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});"
-                    transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"}
-                />
+                {#if item.fit === "blur"}
+                    <Image style={mediaStyleBlurString} src={mediaItemPath} alt="" transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+                {/if}
+                <Image src={mediaItemPath} alt="" style={mediaStyleString} transition={item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
             {/if}
         {/if}
     {:else if item?.type === "camera"}
@@ -542,7 +553,10 @@
     }
 
     /* scrolling */
-    /* WIP scroll with overflow too */
+    .item .scrolling {
+        /* scroll will always show overflowing text */
+        overflow: visible !important;
+    }
     .item .topBottomScrolling {
         animation: topBottom var(--scrollSpeed) linear infinite normal;
     }
@@ -599,8 +613,10 @@
         position: absolute;
         color: var(--chord-color);
         font-size: var(--chord-size) !important;
+        font-weight: bold;
 
-        transform: translate(-50%, -20%);
+        /* transform: translate(-50%, calc(0% - var(--chord-size) * 0.8)); */
+        transform: translate(-50%, calc(-55% - 2px));
         line-height: initial;
         /* WIP chords goes over other (stage) items */
         z-index: 2;
@@ -618,6 +634,14 @@
     .break.chords.first {
         line-height: var(--chord-size) !important;
         /* max-height: unset; */
+    }
+
+    .item.chords,
+    .item.chords .align {
+        overflow: visible;
+    }
+    .lines {
+        line-height: calc(var(--chord-size) * 1.2 + 4px) !important;
     }
 
     /* custom svg icon */

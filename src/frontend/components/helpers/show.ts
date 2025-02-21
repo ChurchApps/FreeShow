@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Show, ShowList, Shows, Slide } from "../../../types/Show"
-import { activeShow, cachedShowsData, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
+import { activeShow, cachedShowsData, customMetadata, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
 import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
 import { _show } from "./shows"
@@ -113,6 +113,30 @@ export function getStageList() {
 export function initializeMetadata({ number = "", title = "", artist = "", author = "", composer = "", publisher = "", copyright = "", CCLI = "", year = "", key = "" }) {
     return { number, title, artist, author, composer, publisher, copyright, CCLI, year, key }
 }
+export function getCustomMetadata() {
+    let defaultKeys = Object.keys(initializeMetadata({}))
+
+    const customKeys = get(customMetadata).custom?.filter(Boolean) || []
+    const values: { [key: string]: string } = {}
+
+    defaultKeys.forEach((key) => {
+        if (get(customMetadata).disabled?.includes(key)) return
+        values[key] = ""
+    })
+    customKeys.forEach((key) => {
+        values[key] = ""
+    })
+
+    return values
+}
+
+export const metadataDisplayValues = [
+    { id: "never", name: "$:show_at.never:$" },
+    { id: "first", name: "$:show_at.first:$" },
+    { id: "last", name: "$:show_at.last:$" },
+    { id: "first_last", name: "$:show_at.first_last:$" },
+    { id: "always", name: "$:show_at.always:$" },
+]
 
 // create new slides
 export function newSlide(data: any): Slide {

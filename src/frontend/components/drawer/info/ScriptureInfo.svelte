@@ -3,11 +3,11 @@
     import type { Bible } from "../../../../types/Scripture"
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
-    import { activeProject, activeTriggerFunction, categories, drawerTabsData, media, outLocked, outputs, playScripture, scriptureHistory, scriptureSettings, styles, templates } from "../../../stores"
+    import { activePopup, activeProject, activeTriggerFunction, categories, dictionary, drawerTabsData, media, outLocked, outputs, playScripture, popupData, scriptureHistory, scriptures, scriptureSettings, styles, templates } from "../../../stores"
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, removeDuplicates, sortByName } from "../../helpers/array"
+    import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getMediaStyle } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -16,13 +16,13 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Media from "../../output/layers/Media.svelte"
     import Notes from "../../show/tools/Notes.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
+    import { trackScriptureUsage } from "../../../utils/analytics"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -36,16 +36,17 @@
     let slides: Item[][] = [[]]
 
     // background
-    $: template = $templates[$scriptureSettings.template] || {}
+    $: templateId = $scriptureSettings.template || "scripture" // $styles[styleId]?.templateScripture || ""
+    $: template = $templates[templateId] || {}
     $: templateBackground = template.settings?.backgroundPath
 
-    $: if ($drawerTabsData) setTimeout(checkTemplate, 100)
+    $: if ($drawerTabsData || templateId) setTimeout(checkTemplate, 100)
     function checkTemplate() {
-        if (!$scriptureSettings.template?.includes("scripture")) return
+        if (!templateId.includes("scripture")) return
 
-        let templateId = "scripture_" + bibles.length
+        let newTemplateId = "scripture_" + bibles.length
         scriptureSettings.update((a) => {
-            a.template = $templates[templateId] ? templateId : "scripture"
+            a.template = $templates[newTemplateId] ? newTemplateId : "scripture"
             return a
         })
     }
@@ -63,6 +64,8 @@
             history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
         }
     }
+
+    $: showVersion = bibles.find((a) => a?.attributionRequired) || $scriptureSettings.showVersion
 
     function createSlides() {
         if (!bibles[0]) return { show: null }
@@ -144,9 +147,6 @@
         update(id, val)
     }
 
-    let templateList: any[] = []
-    $: templateList = sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))
-
     function update(id: string, value: any) {
         scriptureSettings.update((a) => {
             a[id] = value
@@ -182,7 +182,15 @@
         if (!outputIsScripture) customActionActivation("scripture_start")
 
         let tempItems: Item[] = slides[0] || []
-        setOutput("slide", { id: "temp", tempItems })
+        setOutput("slide", { id: "temp", tempItems, attributionString })
+
+        // track
+        let reference = `${bibles[0].book} ${bibles[0].chapter}:${verseRange}`
+        bibles.forEach((translation) => {
+            let name = translation.version || ""
+            let apiId = translation.api ? $scriptures[translation.id!]?.id || translation.id || "" : null
+            if (name || apiId) trackScriptureUsage(name, apiId, reference)
+        })
 
         // play template background
         if (!templateBackground) return
@@ -220,7 +228,9 @@
         let text = ""
 
         Object.keys(textKeys).forEach((key) => {
-            if ($scriptureSettings[key]) {
+            let isEnabled = $scriptureSettings[key]
+            if (key === "showVersion" && bibles.find((a) => a?.attributionRequired)) isEnabled = true
+            if (isEnabled) {
                 if (text.length) text += "\n"
                 text += textKeys[key]
             }
@@ -258,16 +268,18 @@
     }
 
     $: styleId = $outputs[getActiveOutputs()[0]]?.style || ""
-    $: templateId = $scriptureSettings.template // $styles[styleId]?.templateScripture || ""
     $: background = $templates[templateId]?.settings?.backgroundColor || $styles[styleId]?.background || "#000000"
+
+    $: attributionString = [...new Set(bibles.map((a) => a?.attributionString).filter(Boolean))].join(" / ")
 </script>
 
 <svelte:window on:keydown={keydown} />
 
-<div class="scroll">
+<div class="scroll split">
     <Zoomed style="width: 100%;" {background}>
         {#if bibles[0]?.activeVerses}
             {#if templateBackground}
+                <!-- WIP mediaStyle -->
                 <Media path={templateBackground} videoData={{ paused: false, muted: true, loop: true }} mirror />
             {/if}
 
@@ -276,14 +288,35 @@
                     <Textbox {item} ref={{ id: "scripture" }} />
                 {/each}
             {/key}
+
+            {#if attributionString}
+                <p class="attributionString">{attributionString}</p>
+            {/if}
         {/if}
     </Zoomed>
 
     <!-- settings -->
-    <div class="settings">
+    <div class="settings border">
         <CombinedInput>
             <p><T id="info.template" /></p>
-            <Dropdown options={templateList} value={$templates[$scriptureSettings.template]?.name || "—"} on:click={(e) => update("template", e.detail.id)} />
+            <Button
+                on:click={() => {
+                    popupData.set({ action: "select_template", active: templateId, trigger: (id) => update("template", id) })
+                    activePopup.set("select_template")
+                }}
+                style="overflow: hidden;"
+                bold={false}
+            >
+                <div style="display: flex;align-items: center;padding: 0;">
+                    <Icon id="templates" />
+                    <p>{$templates[templateId]?.name || "popup.select_template"}</p>
+                </div>
+            </Button>
+            {#if !templateId.includes("scripture")}
+                <Button title={$dictionary.actions?.remove} on:click={() => update("template", "")} redHover>
+                    <Icon id="close" size={1.2} white />
+                </Button>
+            {/if}
         </CombinedInput>
 
         <!-- {#if $scriptureSettings.versesPerSlide != 3 || sorted.length > 1} -->
@@ -352,17 +385,17 @@
         <CombinedInput textWidth={70}>
             <p><T id="scripture.version" /></p>
             <div class="alignRight">
-                <Checkbox id="showVersion" checked={$scriptureSettings.showVersion} on:change={checked} />
+                <Checkbox disabled={bibles.find((a) => a?.attributionRequired)} id="showVersion" checked={showVersion} on:change={checked} />
             </div>
         </CombinedInput>
 
-        {#if $scriptureSettings.showVersion || ($scriptureSettings.showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
+        {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
             <CombinedInput>
                 <Notes lines={2} value={customText} on:change={(e) => update("customText", e.detail)} />
             </CombinedInput>
         {/if}
 
-        {#if $scriptureSettings.showVersion || $scriptureSettings.showVerse}
+        {#if showVersion || $scriptureSettings.showVerse}
             {#if !$scriptureSettings.firstSlideReference}
                 <CombinedInput textWidth={70}>
                     <p><T id="scripture.combine_with_text" /></p>
@@ -420,17 +453,30 @@
 
     div :global(.zoomed) {
         height: initial !important;
+        flex: 1;
     }
 
     .settings {
         display: flex;
         flex-direction: column;
         padding: 10px;
+        flex: 1;
     }
 
     .settings :global(.dropdown) {
         /* position: absolute; */
         width: 160%;
         right: 0;
+    }
+
+    .attributionString {
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+
+        font-size: 28px;
+        font-style: italic;
+        opacity: 0.7;
     }
 </style>

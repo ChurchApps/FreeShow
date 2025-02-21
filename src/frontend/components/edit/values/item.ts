@@ -13,10 +13,17 @@ const borderOptions: any[] = [
 
 export const itemEdits: { [key: string]: EditInput[] } = {
     default: [
-        { name: "x", id: "style", key: "left", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px", relative: true },
-        { name: "y", id: "style", key: "top", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px", relative: true },
-        { name: "width", id: "style", key: "width", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px", relative: true },
-        { name: "height", id: "style", key: "height", input: "number", value: 0, values: { min: -100000, max: 100000 }, extension: "px", relative: true },
+        { name: "background_color", id: "style", key: "background-color", input: "color", value: "", enableNoColor: true },
+        { name: "background_opacity", id: "background-opacity", input: "number", value: 0, values: { step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } },
+        { name: "opacity", id: "style", key: "opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, min: 0.1, max: 1, inputMultiplier: 10 } },
+        { name: "padding", id: "style", key: "padding", input: "number", value: 0, extension: "px", values: { max: 300 } },
+        { name: "corner_radius", id: "style", key: "border-radius", input: "number", value: 0, values: { step: 10, max: 500, inputMultiplier: 0.1 }, extension: "px" },
+    ],
+    position: [
+        { name: "x", id: "style", key: "left", input: "number", value: 0, values: { min: -200, max: 200, decimals: 2 }, extension: "px", relative: true },
+        { name: "y", id: "style", key: "top", input: "number", value: 0, values: { min: -200, max: 200, decimals: 2 }, extension: "px", relative: true },
+        { name: "width", id: "style", key: "width", input: "number", value: 0, values: { min: -200, max: 200, decimals: 2 }, extension: "px", relative: true },
+        { name: "height", id: "style", key: "height", input: "number", value: 0, values: { min: -200, max: 200, decimals: 2 }, extension: "px", relative: true },
     ],
     transform: [
         { name: "rotation", id: "transform", key: "rotate", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
@@ -24,13 +31,7 @@ export const itemEdits: { [key: string]: EditInput[] } = {
         { name: "tilt", id: "transform", key: "rotateX", input: "number", value: 0, values: { max: 360 }, extension: "deg" },
         { name: "perspective", id: "transform", key: "perspective", input: "number", value: 0, values: { max: 5000 }, extension: "px" },
     ],
-    style: [
-        { name: "background_color", id: "style", key: "background-color", input: "color", value: "", enableNoColor: true },
-        { name: "background_opacity", id: "background-opacity", input: "number", value: 0, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
-        { name: "opacity", id: "style", key: "opacity", input: "number", value: 1, values: { step: 0.1, decimals: 1, max: 1, inputMultiplier: 10 } },
-        { name: "padding", id: "style", key: "padding", input: "number", value: 0, extension: "px" },
-        { name: "corner_radius", id: "style", key: "border-radius", input: "number", value: 0, values: { step: 10, max: 500, inputMultiplier: 0.1 }, extension: "px" },
-    ],
+    // style: [],
     border: [
         { name: "color", id: "style", key: "border-color", input: "color", value: "#FFFFFF" },
         { name: "width", id: "style", key: "border-width", input: "number", value: 0, values: { max: 500 }, extension: "px" },

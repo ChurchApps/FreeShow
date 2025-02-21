@@ -95,7 +95,7 @@
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
-            <Zoomed background="transparent" checkered style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio hideOverflow={false} center={zoom >= 1}>
+            <Zoomed background="transparent" checkered border style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio hideOverflow={false} center={zoom >= 1}>
                 <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                 {#each Slide.items as item, index}
                     <Editbox ref={{ type: "overlay", id: currentId }} {item} {index} {ratio} bind:mouse />

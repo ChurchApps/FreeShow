@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import { activePopup, activeShow, midiIn, popupData, showsCache, templates, timers } from "../../../stores"
+    import { activePopup, activeShow, drawerTabsData, midiIn, popupData, showsCache, templates, timers } from "../../../stores"
     import { translate } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
@@ -39,9 +39,9 @@
         } else {
             // old
             let showMidi = _show().get("midi")?.[id]
-            if (mode === "slide" && $popupData.index !== undefined) {
+            if (mode === "slide" && ($popupData.index !== undefined || $popupData.indexes?.length)) {
                 let ref = _show().layouts("active").ref()[0] || []
-                let layoutSlide = ref[$popupData.index] || {}
+                let layoutSlide = ref[$popupData.index ?? $popupData.indexes[0]] || {}
                 let slideActions = layoutSlide.data?.actions?.slideActions || []
                 let existingAction = slideActions.find((a) => a.id === id)
                 if (existingAction) showMidi = existingAction
@@ -61,27 +61,41 @@
     onDestroy(removeEmptyAction)
     function removeEmptyAction(actionId = "") {
         let ref = _show().layouts("active").ref()[0] || []
-        let layoutSlide = ref[$popupData.index] || {}
-        let actions = layoutSlide.data?.actions || {}
-        let slideActions = actions.slideActions || []
-        let existingActionIndex = slideActions.findIndex((a) => a.id === (actionId || id))
+        let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
 
-        // if actionId is set remove action regardless, else remove if empty
-        if (existingActionIndex < 0 || (!actionId && slideActions[existingActionIndex].triggers?.[0])) return
+        let newActions: any[] = []
+        let changed: boolean = false
+        indexes.forEach((i) => {
+            let layoutSlide = ref[i] || {}
+            let actions = layoutSlide.data?.actions || {}
+            let slideActions = actions.slideActions || []
+            let existingActionIndex = slideActions.findIndex((a) => a.id === (actionId || id))
 
-        slideActions.splice(existingActionIndex, 1)
-        actions.slideActions = slideActions
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [$popupData.index] } })
+            // if actionId is set remove action regardless, else remove if empty
+            if (existingActionIndex < 0 || (!actionId && slideActions[existingActionIndex].triggers?.[0])) {
+                newActions.push(actions)
+                return
+            }
+
+            slideActions.splice(existingActionIndex, 1)
+            actions.slideActions = slideActions
+
+            changed = true
+            newActions.push(actions)
+        })
+
+        if (!changed) return
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: newActions, indexes } })
     }
 
     let existingSearched: boolean = false
     $: if (action.triggers?.[0]) findExisting()
     function findExisting() {
-        if (mode !== "slide" || $popupData.index === undefined || existingSearched) return
+        if (mode !== "slide" || ($popupData.index === undefined && !$popupData.indexes?.length) || existingSearched) return
         existingSearched = true
 
         let ref = _show().layouts("active").ref()[0] || []
-        let layoutSlide = ref[$popupData.index] || {}
+        let layoutSlide = ref[$popupData.index ?? $popupData.indexes[0]] || {}
         let slideActions = layoutSlide.data?.actions?.slideActions || []
         // find any action with the same value, but different id
         let existingAction = slideActions.find((a) => a.triggers?.[0] === action.triggers?.[0] && (!id || a.id !== id))
@@ -109,7 +123,7 @@
         if (!actionId) return
 
         const canAddMultiple = actionData[actionId]?.canAddMultiple
-        if (canAddMultiple) actionId += ":" + uid(5)
+        if (canAddMultiple && !actionId.includes(":")) actionId += ":" + uid(5)
 
         if (e.detail.index !== undefined) index = e.detail.index
 
@@ -191,10 +205,11 @@
             let newData = { key: "settings", data: templateSettings }
             history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "drawer", id: "template_settings", override: `actions_${templateId}` } })
         } else if (mode !== "slide") {
+            let exists = !!$midiIn[id]
             midiIn.update((a) => {
                 if (mode === "slide_midi") {
                     let shows = a[id]?.shows || []
-                    let showId = $popupData.index === undefined ? "" : $activeShow?.id || ""
+                    let showId = $popupData.index === undefined && !$popupData.indexes?.length ? "" : $activeShow?.id || ""
                     if (showId && !shows.find((a) => a.id === showId)) shows.push({ id: showId })
                     action.shows = shows
 
@@ -202,6 +217,11 @@
                 }
 
                 a[id] = clone(action)
+
+                // set tag
+                if (!exists && $drawerTabsData.functions?.activeSubTab === "actions" && $drawerTabsData.functions?.activeSubmenu) {
+                    a[id].tags = [$drawerTabsData.functions?.activeSubmenu]
+                }
 
                 return a
             })
@@ -222,22 +242,31 @@
     }
 
     function saveSlide(remove: boolean = false) {
-        let layoutSlide: number = $popupData.index
-        if (layoutSlide === undefined) return
-
         let ref = _show().layouts("active").ref()[0]
-        if (!ref[layoutSlide]) return
+        let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
+        if (!Array.isArray(indexes)) return
 
-        let actions = clone(ref[layoutSlide].data?.actions) || {}
-        if (!actions.slideActions) actions.slideActions = []
+        let newActions: any[] = []
+        let changed: boolean = false
+        indexes.forEach((i) => {
+            let actions = clone(ref[i]?.data?.actions) || {}
+            if (!actions.slideActions) actions.slideActions = []
 
-        let currentSlideActionIndex = actions.slideActions.findIndex((a) => a.id === id)
-        if (currentSlideActionIndex < 0) return
+            let currentSlideActionIndex = actions.slideActions.findIndex((a) => a.id === id)
+            if (currentSlideActionIndex < 0) {
+                newActions.push(actions)
+                return
+            }
 
-        if (remove) actions.slideActions.splice(currentSlideActionIndex, 1)
-        else actions.slideActions[currentSlideActionIndex] = { ...action, id }
+            if (remove) actions.slideActions.splice(currentSlideActionIndex, 1)
+            else actions.slideActions[currentSlideActionIndex] = { ...action, id }
 
-        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [layoutSlide] } })
+            changed = true
+            newActions.push(actions)
+        })
+
+        if (!changed) return
+        history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: newActions, indexes } })
     }
 
     let addTrigger: boolean = false

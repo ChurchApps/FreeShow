@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STARTUP, STORE } from "../../types/Channels"
 import { checkStartupActions } from "../components/actions/actions"
-import { currentWindow, dataPath, loaded, loadedState, special } from "../stores"
+import { activePopup, currentWindow, dataPath, loaded, loadedState, special } from "../stores"
 import { startTracking } from "./analytics"
 import { wait } from "./common"
 import { setLanguage } from "./language"
@@ -59,7 +59,7 @@ async function startupMain() {
 
 function autoBackup() {
     let interval = get(special).autoBackup || "weekly"
-    if (interval === "never") return
+    if (interval === "never" || get(activePopup) === "initialize") return
 
     let now = Date.now()
     let lastBackup = get(special).autoBackupPrevious || 0

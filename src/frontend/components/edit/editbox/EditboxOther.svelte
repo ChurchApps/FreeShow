@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { activeEdit } from "../../../stores"
     import Cam from "../../drawer/live/Cam.svelte"
@@ -30,7 +31,8 @@
 
     let autoSize: number = 0
     let today = new Date()
-    setInterval(() => (today = new Date()), 1000)
+    const interval = setInterval(() => (today = new Date()), 1000)
+    onDestroy(() => clearInterval(interval))
 
     $: if (item && itemElem) calculateAutosize()
     let loopStop: any = null
@@ -53,6 +55,9 @@
     function getThumbnail() {
         thumbnailPath = getThumbnailPath(mediaPath!, mediaSize.slideSize)
     }
+
+    $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};filter: ${item?.filter};transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: ${item?.filter} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
 </script>
 
 {#if item?.type === "list"}
@@ -60,7 +65,10 @@
     <ListView list={item.list} disableTransition />
 {:else if item?.type === "media"}
     {#if thumbnailPath}
-        <Image src={thumbnailPath} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
+        {#if item?.fit === "blur"}
+            <Image src={thumbnailPath} alt="" style={mediaStyleBlurString} />
+        {/if}
+        <Image src={thumbnailPath} alt="" style={mediaStyleString} />
     {/if}
 {:else if item?.type === "camera"}
     {#if item.device}

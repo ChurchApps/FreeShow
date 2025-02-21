@@ -9,6 +9,16 @@ import { transitionData } from "../stores"
 // export const crossfade = cfade({})
 // export const [send, receive] = crossfade
 
+export const transitionTypes: { id: TransitionType; name: string }[] = [
+    { id: "none", name: "$:transition.none:$" },
+    { id: "fade", name: "$:transition.fade:$" },
+    // { id: "crossfade", name: "$:transition.crossfade:$" },
+    { id: "blur", name: "$:transition.blur:$" },
+    { id: "spin", name: "$:transition.spin:$" },
+    { id: "scale", name: "$:transition.scale:$" },
+    { id: "slide", name: "$:transition.slide:$" },
+]
+
 export const transitions: { [key in TransitionType]: any } = {
     none: () => {},
     blur,

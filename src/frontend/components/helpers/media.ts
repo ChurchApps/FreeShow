@@ -11,8 +11,8 @@ import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { awaitRequest, send } from "../../utils/request"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
-import { getActiveOutputs, getResolution } from "./output"
 import { clone } from "./array"
+import { getActiveOutputs, getOutputResolution } from "./output"
 
 export function getExtension(path: string): string {
     if (typeof path !== "string") return ""
@@ -106,7 +106,7 @@ export async function getSlideThumbnail(data: API_slide_thumbnail) {
     if (!output.out) output.out = {}
     output.out.slide = { id: data.showId, layout: data.layoutId, index: data.index }
 
-    let resolution = getResolution()
+    let resolution: any = getOutputResolution(outputId)
     resolution = { width: resolution.width * 0.5, height: resolution.height * 0.5 }
 
     const thumbnail = await awaitRequest(MAIN, "CAPTURE_SLIDE", { output: { [outputId]: output }, resolution })
@@ -237,6 +237,7 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
         speed: "1",
         fromTime: 0,
         toTime: 0,
+        videoType: "",
     }
 
     if (!mediaObj && !currentStyle) return mediaStyle
@@ -331,7 +332,7 @@ export async function getBase64Path(path: string, size: number = mediaSize.big) 
     let thumbnailPath = await loadThumbnail(path, size)
     if (!thumbnailPath) return ""
 
-    // wait if thumnail is not generated yet
+    // wait if thumbnail is not generated yet
     await checkThatMediaExists(thumbnailPath)
 
     let base64Path = await toDataURL(thumbnailPath)
@@ -359,8 +360,8 @@ let capturing: string[] = []
 let retries: any = {}
 export function captureCanvas(data: any) {
     let completed: boolean = false
-    if (capturing.includes(data.input)) return exit()
-    capturing.push(data.input)
+    if (capturing.includes(data.output)) return exit()
+    capturing.push(data.output)
 
     let canvas = document.createElement("canvas")
 

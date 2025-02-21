@@ -61,16 +61,22 @@
 
         fontSize = autosize(elem, { type, textQuery, defaultFontSize, maxFontSize })
     }
+
+    function getCustomStyle(style: string) {
+        // let outputResolution = // get actual output resolution
+        // style = percentageStylePos(style, outputResolution)
+        return style
+    }
 </script>
 
-<div class="item" style={item.style} bind:this={itemElem}>
+<div class="item" style={getCustomStyle(item.style)} bind:this={itemElem}>
     {#if item.lines}
         <div class="align" style={item.align}>
             <div class="lines" style={lineGap ? `gap: ${lineGap}px;` : ""}>
                 {#each item.lines as line}
                     <div class="break" style="{lineBg ? `background-color: ${lineBg};` : ''}{line.align}">
                         {#each line.text || [] as text}
-                            <span style="{text.style};{fontSize ? `font-size: ${fontSize}px;` : ''}">{@html text.value.replaceAll("\n", "<br>") || "<br>"}</span>
+                            <span style="{text.style};{fontSize ? `font-size: ${fontSize}px;` : ''}">{@html text.value?.replaceAll("\n", "<br>") || "<br>"}</span>
                         {/each}
                     </div>
                 {/each}

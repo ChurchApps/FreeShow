@@ -1,9 +1,10 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import autosize from "../edit/scripts/autosize"
     import { keysToID, sortByName } from "../helpers/array"
-    import { getActiveOutputs } from "../helpers/output"
+    import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import Media from "../output/layers/Media.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
@@ -83,7 +84,9 @@
 
     // timer
     let today = new Date()
-    setInterval(() => (today = new Date()), 1000)
+    const dateInterval = setInterval(() => (today = new Date()), 1000)
+
+    onDestroy(() => clearInterval(dateInterval))
 
     $: fontSize = Number(getStyles(item.style, true)?.["font-size"] || 0) || 100 // item.autoFontSize ||
 
@@ -140,6 +143,12 @@
         })
     }
 
+    function getCustomStyle(style: string) {
+        let outputResolution = getStageResolution()
+        style = percentageStylePos(style, outputResolution)
+        return style
+    }
+
     let video: any
     function loaded() {
         if (!video) return
@@ -158,14 +167,14 @@
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
-    style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};"
+    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}
         <div class="label">{getCustomStageLabel(id, $dictionary)}</div>
     {/if}
     {#if edit}
-        <Movebox {ratio} active={$activeStage.items.includes(id)} />
+        <Movebox {ratio} itemStyle={item.style} active={$activeStage.items.includes(id)} />
     {/if}
 
     {#if id.includes("current_output")}
@@ -205,7 +214,7 @@
                         {/key}
                     </span>
                 {:else if id.includes("clock")}
-                    <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} />
+                    <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
                 {:else if id.includes("video")}
                     <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                 {:else if id.includes("first_active_timer")}

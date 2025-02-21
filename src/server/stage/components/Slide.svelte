@@ -26,17 +26,18 @@
 
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
     <div class="slide">
-        {#key show.settings.autoStretch}
-            <Zoomed {show} style={getStyleResolution(resolution, width, height) + ";" + `background-color: ${show.settings.color || "#000000"};`} dynamicResolution={show.settings.autoStretch !== false} disableStyle>
-                {#each Object.entries(show.items) as [id, item]}
-                    {#if item.enabled}
-                        {#key show}
-                            <Stagebox {show} {id} {item} {slides} {socketId} {socket} {stream} {background} />
-                        {/key}
-                    {/if}
-                {/each}
-            </Zoomed>
-        {/key}
+        <!-- {#key show.settings.autoStretch} -->
+        <!-- dynamicResolution={show.settings.autoStretch !== false} -->
+        <Zoomed {show} style={getStyleResolution(resolution, width, height) + ";" + `background-color: ${show.settings.color || "#000000"};`} dynamicResolution disableStyle>
+            {#each Object.entries(show.items) as [id, item]}
+                {#if item.enabled}
+                    {#key show}
+                        <Stagebox {show} {id} {item} {slides} {socketId} {socket} {stream} {background} />
+                    {/key}
+                {/if}
+            {/each}
+        </Zoomed>
+        <!-- {/key} -->
     </div>
 </div>
 

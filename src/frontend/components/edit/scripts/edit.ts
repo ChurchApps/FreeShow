@@ -50,16 +50,16 @@ function getOldOpacity(data) {
 
 export function getBackgroundOpacity(itemEditValues, data) {
     let backgroundValue = data["background-color"] || ""
-    let boIndex = itemEditValues.style.findIndex((a) => a.id === "background-opacity")
+    let boIndex = itemEditValues.default.findIndex((a) => a.id === "background-opacity")
     if (boIndex < 0) return itemEditValues
 
     if (!backgroundValue.includes("rgb")) {
-        itemEditValues.style[boIndex].value = 1
+        itemEditValues.default[boIndex].value = 1
         return itemEditValues
     }
 
     let rgb = splitRgb(backgroundValue)
-    itemEditValues.style[boIndex].value = rgb.a
+    itemEditValues.default[boIndex].value = rgb.a
 
     return itemEditValues
 }

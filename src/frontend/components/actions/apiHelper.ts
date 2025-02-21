@@ -42,7 +42,7 @@ import { _show } from "../helpers/shows"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_variable } from "./api"
+import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -96,14 +96,18 @@ export function selectProjectByIndex(index: number) {
     activeProject.set(selectedProject.id)
 }
 
-export function selectSlideByIndex(index: number) {
-    let showRef = _show().layouts("active").ref()[0]
+export async function selectSlideByIndex(data: API_slide_index) {
+    if (data.showId) await loadShows([data.showId])
+
+    let showRef = _show(data.showId || "active")
+        .layouts(data.layoutId ? [data.layoutId] : "active")
+        .ref()[0]
     if (!showRef) return newToast("$toast.midi_no_show")
 
-    let slideRef = showRef[index]
-    if (!slideRef) return newToast(get(dictionary).toast?.midi_no_slide + " " + index)
+    let slideRef = showRef[data.index]
+    if (!slideRef) return newToast(get(dictionary).toast?.midi_no_slide + " " + data.index)
 
-    outputSlide(showRef, index)
+    outputSlide(showRef, data)
 }
 export function selectSlideByName(name: string) {
     let slides = _show().slides().get()
@@ -131,16 +135,16 @@ export function selectSlideByName(name: string) {
     let slideRef = showRef[index]
     if (!slideRef) return
 
-    outputSlide(showRef, index)
+    outputSlide(showRef, { index })
 }
 // WIP duplicate of Slides.svelte:57 (slideClick)
-function outputSlide(showRef, index) {
+function outputSlide(showRef, data: API_slide_index) {
     if (get(outLocked)) return
 
-    updateOut("active", index, showRef)
-    let showId = get(activeShow)!.id
-    let activeLayout = _show().get("settings.activeLayout")
-    setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
+    let showId = data.showId || get(activeShow)?.id || ""
+    updateOut(showId, data.index, showRef)
+    let activeLayout = _show(showId).get("settings.activeLayout")
+    setOutput("slide", { id: showId, layout: data.layoutId || activeLayout, index: data.index, line: 0 })
 }
 
 function getSortedOverlays() {

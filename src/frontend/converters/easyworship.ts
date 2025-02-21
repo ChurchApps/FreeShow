@@ -7,6 +7,7 @@ import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
+import { trimNameFromString } from "./txt"
 
 interface Song {
     administrator: string
@@ -86,7 +87,7 @@ export function convertEasyWorship(data: any) {
 
         show.slides = slides
         show.layouts = { [layoutID]: { name: get(dictionary).example?.default || "", notes: song?.description || "", slides: layout } }
-        let allText = getSlidesText(slides).slice(0, 20)
+        let allText = trimNameFromString(getSlidesText(slides))
         show.name = checkName(song?.title || allText || showId, showId)
         show.settings.template = "default"
 
@@ -152,6 +153,9 @@ function createSlides({ words }: Words) {
         // console.log(text.includes("plainf") && sliced.length, sliced)
         if (sliced.length) {
             sliced.split("line").forEach((line: string, i: number) => {
+                // \sdewparatemplatestyle102\plain\sdewtemplatestyle102\
+                if (line.includes("templatestyle")) return
+
                 // console.log(line, line.slice(line.indexOf(" ") + 1, line.length))
                 if (i > 0) line = line.slice(line.indexOf(" ", 2) + 1, line.length)
                 let plainIndex = line.indexOf("plainf")

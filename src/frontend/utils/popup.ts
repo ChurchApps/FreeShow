@@ -51,6 +51,10 @@ import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelt
 import DisplayDuration from "../components/main/popups/DisplayDuration.svelte"
 import MediaFit from "../components/main/popups/MediaFit.svelte"
 import Emitters from "../components/main/popups/Emitters.svelte"
+import SelectTemplate from "../components/main/popups/SelectTemplate.svelte"
+import MetadataDisplay from "../components/main/popups/MetadataDisplay.svelte"
+import AspectRatio from "../components/main/popups/AspectRatio.svelte"
+import ManageMetadata from "../components/main/popups/ManageMetadata.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -60,10 +64,12 @@ export const popups: { [key in Popups]: ComponentType } = {
     show: CreateShow,
     delete_show: DeleteShow,
     select_show: SelectShow,
+    select_template: SelectTemplate,
     delete_duplicated_shows: DeleteDuplicatedShows,
     icon: ChangeIcon,
     manage_icons: ManageIcons,
     manage_colors: ManageColors,
+    manage_metadata: ManageMetadata,
     choose_chord: ChooseChord,
     choose_camera: ChooseCamera,
     player: CreatePlayer,
@@ -74,15 +80,17 @@ export const popups: { [key in Popups]: ComponentType } = {
     variable: Variable,
     trigger: Trigger,
     audio_stream: AudioStream,
+    aspect_ratio: AspectRatio,
     transition: Transition,
     media_fit: MediaFit,
+    metadata_display: MetadataDisplay,
     import_scripture: ImportScripture,
     edit_event: EditEvent,
     choose_screen: ChooseScreen,
     choose_output: ChooseOutput,
     change_output_values: ChangeOutputValues,
     set_time: SetTime,
-    slide_shortcut: SlideShortcut,
+    assign_shortcut: SlideShortcut,
     animate: Animate,
     translate: Translate,
     next_timer: NextTimer,
@@ -122,7 +130,7 @@ export function waitForPopupData(popupId: Popups): Promise<any> {
 
         function finish(value) {
             unsubscribe()
-            clearTimeout(interval)
+            clearInterval(interval)
             resolve(value)
         }
     })

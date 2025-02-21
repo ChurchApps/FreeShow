@@ -22,6 +22,7 @@ export const languages: any = {
     zh_CN: "简体中文", // Chinese (Simplified)
     ro: "Română", // Romanian
     cs_CZ: "Čeština", // Czech (Czech Republic)
+    fi: "Suomi", // Finnish
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -51,6 +52,7 @@ export const replace: any = {
     zh_CN: ["zh"],
     ro: ["ro"],
     cs_CZ: ["cs-CZ", "cz", "cs"],
+    fi: ["fi"],
 }
 
 export const languageFlags: any = {
@@ -76,4 +78,5 @@ export const languageFlags: any = {
     zh_CN: "🇨🇳",
     ro: "🇷🇴",
     cs_CZ: "🇨🇿",
+    fi: "🇫🇮",
 }

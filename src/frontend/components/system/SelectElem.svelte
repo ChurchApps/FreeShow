@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { uid } from "uid"
     import type { SelectIds } from "../../../types/Main"
-    import { activeRename, activeShow, disableDragging, os, selected } from "../../stores"
+    import { activeDropId, activeRename, activeShow, disableDragging, os, selected } from "../../stores"
     import { arrayHasData, clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
 
@@ -18,7 +19,7 @@
     let elem: any
 
     function enter(e: any) {
-        if (!selectable) return
+        if (!selectable || $selected.hoverActive) return
         if (!e.buttons || dragActive || onlyRightClickSelect) return
 
         if ((id === "project" || id === "folder") && $selected.data[0] && data.index < $selected.data[0].index) {
@@ -53,26 +54,32 @@
         show: () => {
             if (($selected.id === "slide" || $selected.id === "group" || $selected.id === "global_group") && (data.type || "show") === "show") {
                 // copy slide data
-                if ($selected.id === "slide") {
-                    let slides: any[] = convertDataToSlide($selected.data)
+                if (($selected.id === "slide" || $selected.id === "group") && !$selected.hoverActive) {
+                    let slides: any[] = convertDataToSlide(clone($selected.data))
+                    selected.set({ ...$selected, hoverActive: true })
+
                     // select after show is opened (because a slide is selected in the new show)
                     setTimeout(() => {
-                        selected.set({ id: "global_group", data: slides }) // , overrideDrop: true
+                        selected.set({ id: "global_group", data: slides, hoverActive: true })
                     }, 50)
                 }
+
                 // open show
                 activeShow.set(data)
             }
         },
     }
 
-    function convertDataToSlide(slideRef: { index: number }[]) {
+    function convertDataToSlide(slideRef: { index?: number; id?: string }[]) {
         let currentSlides = _show().get("slides")
         let currentMedia = _show().get("media") || {}
         let currentLayoutRef = _show().layouts("active").ref()[0]
 
-        let slideData = slideRef.map(({ index }) => {
-            let layout = currentLayoutRef[index] || {}
+        let slideData = slideRef.map(({ index, id }) => {
+            let layout
+            if (id) layout = currentLayoutRef.find((a) => a.id === id) || {}
+            else if (index !== undefined) layout = currentLayoutRef[index] || {}
+
             let layoutMedia: any = {}
             if (layout.data?.background) layoutMedia[layout.data.background] = currentMedia[layout.data?.background]
             if (layout.data?.audio) {
@@ -101,7 +108,10 @@
         if (!selectable) return
         if (dragged && ($activeRename !== null || $disableDragging)) return e.preventDefault()
 
-        if ($selected.id !== id) selected.set({ id, data: [] })
+        if ($selected.id !== id) {
+            if (remainSelected(e)) return
+            selected.set({ id, data: [] })
+        }
 
         // this affects the cursor
         // https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/dropEffect
@@ -194,10 +204,16 @@
     }
 
     function deselect(e: any) {
-        if (e.ctrlKey || e.metaKey || $selected.id !== id) return
+        if (e.ctrlKey || e.metaKey || !remainSelected(e)) return
         if (e.target.closest(".menus") || e.target.closest(".selectElem") || e.target.closest(".popup") || e.target.closest(".edit") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
 
         selected.set({ id: null, data: [] })
+    }
+
+    function remainSelected(e: any) {
+        if ($selected.id === "slide" && e.button === 0 && e.target.closest("#template")) return true
+        if ($selected.id === id) return true
+        return false
     }
 
     let dragover: null | "start" | "center" | "end" = null
@@ -212,10 +228,15 @@
     function endDrag() {
         dragActive = false
         dragover = null
+        activeDropId.set("")
         if ($selected.id !== id) selected.set({ id, data: [] })
     }
 
-    function stopDrag() {
+    let thisId = "_" + uid(5)
+    $: if ($activeDropId !== thisId) dragover = null
+    function stopDrag(e) {
+        if (e.target?.classList.contains("TriggerBlock") && e.target?.closest("#" + thisId)) return
+
         // TODO: allow dropping over borders (edges)
         // if (e.target?.closest(".selectElem") === elem) return
 
@@ -226,6 +247,7 @@
         if (!selectable) return
         dragover = key
         triggerHoverAction()
+        activeDropId.set(thisId)
     }
 </script>
 
@@ -237,6 +259,7 @@
         dragActive = false
         fileOver = false
         dragover = null
+        activeDropId.set("")
     }}
 />
 
@@ -257,7 +280,7 @@
     on:contextmenu={contextmenu} -->
     <!-- TODO: validateDrop(id, $selected.id, true) -->
     {#if trigger && (dragActive || fileOver)}
-        <div class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={stopDrag}>
+        <div id={thisId} class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={stopDrag}>
             {#if borders === "all" || borders === "edges"}
                 <span id="start" class="TriggerBlock" on:dragover={() => dragOver("start")} />
             {/if}
@@ -268,6 +291,9 @@
             {#if borders === "all" || borders === "edges"}
                 <span id="end" class="TriggerBlock" on:dragover={() => dragOver("end")} />
             {/if}
+
+            <!-- center drop -->
+            <span id="end" class="TriggerBlock between" />
         </div>
     {/if}
     <slot {elem} />
@@ -308,25 +334,43 @@
         border-style: solid;
         border-color: var(--secondary);
         border-width: 0px;
+        --border-width: 2px;
     }
     .trigger.column.start {
-        border-top-width: 2px;
+        border-top-width: var(--border-width);
     }
     .trigger.column.end {
-        border-bottom-width: 2px;
+        border-bottom-width: var(--border-width);
     }
     .trigger.row.start {
-        border-left-width: 2px;
+        border-left-width: var(--border-width);
     }
     .trigger.row.end {
-        border-right-width: 2px;
+        border-right-width: var(--border-width);
     }
     .trigger.center {
-        border-width: 2px;
+        border-width: var(--border-width);
     }
 
     .trigger span {
         width: 100%;
         height: 100%;
+    }
+
+    .between {
+        position: absolute;
+        background-color: transparent;
+
+        --border-width: 8px;
+    }
+    .trigger.column .between {
+        bottom: calc(var(--border-width) / 2 * -1);
+        width: 100%;
+        height: var(--border-width);
+    }
+    .trigger.row .between {
+        right: calc(var(--border-width) / 2 * -1);
+        height: 100%;
+        width: var(--border-width);
     }
 </style>

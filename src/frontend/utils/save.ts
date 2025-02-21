@@ -3,6 +3,7 @@ import { MAIN, STORE } from "../../types/Channels"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import {
+    actionTags,
     activePopup,
     activeProject,
     alertUpdates,
@@ -12,6 +13,7 @@ import {
     autosave,
     calendarAddShow,
     categories,
+    customMetadata,
     customizedIcons,
     dataPath,
     deletedShows,
@@ -89,9 +91,9 @@ import { newToast } from "./common"
 import { syncDrive } from "./drive"
 import { send } from "./request"
 
-export function save(closeWhenFinished: boolean = false, customTriggers: { backup?: boolean; silent?: boolean; changeUserData?: any } = {}) {
+export function save(closeWhenFinished: boolean = false, customTriggers: { backup?: boolean; silent?: boolean; changeUserData?: any; autosave?: boolean } = {}) {
     console.log("SAVING...")
-    if (!customTriggers.backup) {
+    if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
         newToast("$toast.saving")
         customActionActivation("save")
     }
@@ -161,9 +163,11 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         playerVideos: get(playerVideos),
         videoMarkers: get(videoMarkers),
         mediaTags: get(mediaTags),
+        actionTags: get(actionTags),
         customizedIcons: get(customizedIcons),
         companion: get(companion),
         globalTags: get(globalTags),
+        customMetadata: get(customMetadata),
     }
 
     let allSavedData: any = {
@@ -210,10 +214,10 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
 
 export function saveComplete({ closeWhenFinished, customTriggers }: any) {
     if (!closeWhenFinished) {
+        if ((!customTriggers.autosave || !get(saved)) && !customTriggers?.backup) newToast("$toast.saved")
+
         saved.set(true)
         console.log("SAVED!")
-
-        if (!customTriggers?.backup) newToast("$toast.saved")
     }
 
     if (customTriggers?.backup || customTriggers?.changeUserData) return
@@ -356,6 +360,7 @@ const saveList: { [key in SaveList]: any } = {
     emitters: emitters,
     videoMarkers: videoMarkers,
     mediaTags: mediaTags,
+    actionTags: actionTags,
     customizedIcons: customizedIcons,
     driveKeys: driveKeys,
     driveData: driveData,
@@ -364,4 +369,5 @@ const saveList: { [key in SaveList]: any } = {
     special: special,
     companion: null,
     globalTags: globalTags,
+    customMetadata: null,
 }

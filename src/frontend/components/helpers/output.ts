@@ -21,6 +21,7 @@ import {
     overlays,
     overlayTimers,
     playingVideos,
+    scriptures,
     serverData,
     showsCache,
     special,
@@ -39,12 +40,14 @@ import { videoExtensions } from "../../values/extensions"
 import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
+import type { EditInput } from "../edit/values/boxes"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { getExtension, getFileName, removeExtension } from "./media"
-import { replaceDynamicValues } from "./showActions"
+import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
+import { trackScriptureUsage } from "../../utils/analytics"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let forceKey = e.ctrlKey || e.metaKey
@@ -54,7 +57,7 @@ export function displayOutputs(e: any = {}, auto: boolean = false) {
 
     enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1
-        send(OUTPUT, ["DISPLAY"], { enabled: forceKey || !get(outputDisplay), output, force: output.allowMainScreen || forceKey, auto, autoPosition })
+        send(OUTPUT, ["DISPLAY"], { enabled: forceKey || !get(outputDisplay), output, force: output.allowMainScreen || output.boundsLocked || forceKey, auto, autoPosition })
     })
 }
 
@@ -69,6 +72,25 @@ export function toggleOutput(id: string) {
 // transition: null,
 // TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
 export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string = "", add: boolean = false) {
+    // track usage
+    if (key === "slide" && data?.id) {
+        let showReference = _show(data.id).get("reference")
+        if (showReference?.type === "scripture") {
+            let translation = showReference.data
+            let ref = _show(data.id).layouts([data.layout]).ref()[0]
+            let slide = _show(data.id).get("slides")[ref[data.index]?.id]
+
+            let scripture = get(scriptures)[translation.collection] || {}
+            let versions = scripture.collection?.versions || [scripture.id || ""]
+            versions.forEach((id) => {
+                let name = get(scriptures)[id]?.name || translation.version || ""
+                let scriptureId = get(scriptures)[id]?.id || id
+                let apiId = translation.api ? scriptureId : null
+                if (name || apiId) trackScriptureUsage(name, apiId, slide.group)
+            })
+        }
+    }
+
     outputs.update((a: any) => {
         let bindings = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0]?.[data.index]?.data?.bindings || [] : []
         let allOutputs = bindings.length ? bindings : getActiveOutputs()
@@ -104,7 +126,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
 
                 let index = allOutputs.findIndex((outId) => outId === id)
-                data = changeOutputBackground(data, { output, id, mute: allOutputs.length > 1 && index !== firstOutputWithBackground })
+                data = changeOutputBackground(data, { output, id, mute: allOutputs.length > 1 && index !== firstOutputWithBackground, videoOutputId: allOutputs[firstOutputWithBackground] })
             }
 
             let outData = a[id].out?.[key] || null
@@ -158,7 +180,7 @@ function appendShowUsage(showId: string) {
     })
 }
 
-function changeOutputBackground(data, { output, id, mute }) {
+function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
     if (get(currentWindow) === null) {
         setTimeout(() => {
             // update stage background if any
@@ -171,7 +193,7 @@ function changeOutputBackground(data, { output, id, mute }) {
     let previousWasVideo: boolean = videoExtensions.includes(getExtension(output.out?.background?.path))
 
     if (data === null) {
-        fadeinAllPlayingAudio()
+        if (id === videoOutputId) fadeinAllPlayingAudio()
         if (previousWasVideo) videoEnding()
 
         return data
@@ -184,13 +206,15 @@ function changeOutputBackground(data, { output, id, mute }) {
 
     let videoData: any = { muted: data.muted, loop: data.loop || false }
 
-    let muteAudio = get(special).muteAudioWhenVideoPlays
-    let isVideo = videoExtensions.includes(getExtension(data.path))
-    if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
-    else fadeinAllPlayingAudio()
+    if (id === videoOutputId) {
+        let muteAudio = get(special).muteAudioWhenVideoPlays
+        let isVideo = videoExtensions.includes(getExtension(data.path))
+        if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
+        else fadeinAllPlayingAudio()
 
-    if (isVideo) videoStarting()
-    else if (previousWasVideo) videoEnding()
+        if (isVideo) videoStarting()
+        else if (previousWasVideo) videoEnding()
+    }
 
     // wait for video receiver to change
     setTimeout(() => {
@@ -369,37 +393,86 @@ export function outputSlideHasContent(output) {
 
 // WIP style should override any slide resolution & color ? (it does not)
 
+// this actually gets aspect ratio
 export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, _getSlideRes: boolean = false, outputId: string = ""): Resolution {
     if (initial) return initial
 
     if (!outputId) outputId = getActiveOutputs()[0]
     let currentOutput = get(outputs)[outputId]
 
+    if (currentOutput?.stageOutput) return currentOutput.bounds
+
     let style: any = currentOutput?.style ? get(styles)[currentOutput?.style] || {} : {}
-    let styleRes = style.resolution || null
+    let styleRatio = style.aspectRatio || style.resolution
 
-    // let styleTemplate: any = style.template ? get(templates)[style.template] || {} : {}
-    // let styleTemplateRes: any = styleTemplate.settings?.resolution
+    let ratio = styleRatio?.outputResolutionAsRatio ? currentOutput?.bounds : styleRatio
 
-    // let slideRes: any = null
-    // if (getSlideRes) {
-    //     let outSlide: any = currentOutput?.out?.slide || {}
-    //     let slideRef = _show(outSlide.id || "")
-    //         .layouts([outSlide.layout])
-    //         .ref()[0]?.[outSlide.index]
-    //     let slideOutput = _show(outSlide.id || "").get("slides")?.[slideRef?.id] || null
-    //     slideRes = slideOutput?.settings?.resolution
-    // }
-
-    // slideRes || styleTemplateRes ||
-    return styleRes || { width: 1920, height: 1080 }
+    return ratio || { width: 16, height: 9 }
 }
 
-export function getOutputResolution(outputId: string, _updater = get(outputs), _styleUpdater = get(styles)) {
-    let currentOutput = _updater[outputId]
-    let style = currentOutput?.style ? _styleUpdater[currentOutput?.style]?.resolution : null
+// this will get the first available stage output
+export function getStageOutputId(_updater = get(outputs)): string {
+    return keysToID(_updater).find((a) => a.stageOutput)?.id
+}
+export function getStageResolution(outputId: string = "", _updater = get(outputs)): Resolution {
+    if (!outputId) outputId = getStageOutputId()
+    return _updater[outputId]?.bounds || { width: 1920, height: 1080 }
+}
 
-    return style || { width: 1920, height: 1080 }
+// calculate actual output resolution based on style aspect ratio
+export function getOutputResolution(outputId: string, _updater = get(outputs), scaled: boolean = false) {
+    let currentOutput = _updater[outputId]
+    let outputRes = clone(currentOutput?.bounds || { width: 1920, height: 1080 })
+    if (!scaled) return outputRes
+
+    let styleRatio = getResolution(null, null, false, outputId)
+    let styleAspectRatio = styleRatio.width / styleRatio.height
+
+    // output window size is narrow
+    if (outputRes.width < outputRes.height) {
+        outputRes.width = Math.round(outputRes.height * styleAspectRatio)
+    } else {
+        outputRes.height = Math.round(outputRes.width / styleAspectRatio)
+    }
+
+    return outputRes
+}
+
+export function stylePosToPercentage(styles: { [key: string]: any }) {
+    if (styles.left) styles.left = (styles.left / 1920) * 100
+    if (styles.top) styles.top = (styles.top / 1080) * 100
+    if (styles.width) styles.width = (styles.width / 1920) * 100
+    if (styles.height) styles.height = (styles.height / 1080) * 100
+
+    return styles
+}
+
+export function percentageStylePos(style: string, resolution: Resolution) {
+    let styles = getStyles(style, true)
+    styles = stylePosToPercentage(styles)
+
+    let width = resolution.width || 1920
+    let height = resolution.height || 1080
+
+    if (styles.left) style += "left: " + width * (Number(styles.left) / 100) + "px;"
+    if (styles.top) style += "top: " + height * (Number(styles.top) / 100) + "px;"
+    if (styles.width) style += "width: " + width * (Number(styles.width) / 100) + "px;"
+    if (styles.height) style += "height: " + height * (Number(styles.height) / 100) + "px;"
+
+    return style
+}
+
+export function percentageToAspectRatio(input: EditInput) {
+    if (input.id !== "style") return input
+
+    if (input.key === "left" || input.key === "width") input.value = 1920 * (trimPixelValue(input.value) / 100) + "px"
+    else if (input.key === "top" || input.key === "height") input.value = 1080 * (trimPixelValue(input.value) / 100) + "px"
+
+    return input
+}
+
+function trimPixelValue(value: any) {
+    return Number(value?.toString().replace("px", ""))
 }
 
 export function checkWindowCapture(startup: boolean = false) {
@@ -611,17 +684,23 @@ export function getCurrentMediaTransition() {
 // TEMPLATE
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems: boolean = false, resetAutoSize: boolean = true, templateClicked: boolean = false) {
-    if (!slideItems?.length) return []
-    slideItems = clone(slideItems)
+    // if (!slideItems?.length && !addOverflowTemplateItems) return []
+    slideItems = clone(slideItems || []).filter((a) => a && (!templateClicked || !a.fromTemplate))
 
     if (!templateItems.length) return slideItems
     templateItems = clone(templateItems)
 
     let sortedTemplateItems = sortItemsByType(templateItems)
 
+    // reduce template textboxes to slide items
+    let slideTextboxes = slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
+    if (!templateClicked && slideTextboxes < (sortedTemplateItems.text?.length || 0)) {
+        sortedTemplateItems.text = sortedTemplateItems.text.slice(0, slideTextboxes)
+    }
+
     // remove slide items if no text
     if (addOverflowTemplateItems && templateItems.length < slideItems.length) {
-        slideItems = slideItems.filter((a) => (a.type || "text") !== "text" || getItemText(a).length)
+        slideItems = slideItems.filter((a) => (a?.type || "text") !== "text" || getItemText(a).length)
     }
 
     let newSlideItems: Item[] = []
@@ -649,6 +728,15 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         if (type !== "text") return finish()
 
+        const allTextColors = [
+            ...new Set(
+                item.lines
+                    ?.map((line) => line.text?.map((text) => getStyles(text.style)["color"] || "#FFFFFF"))
+                    .flat()
+                    .filter(Boolean)
+            ),
+        ] as string[]
+
         item.lines?.forEach((line: any, j: number) => {
             let templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
 
@@ -658,11 +746,11 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 if (!text.customType?.includes("disableTemplate")) {
                     let style = templateText?.style || ""
 
-                    // add original text color, if template is not clicked
-                    if (!templateClicked) {
+                    // add original text color, if template is not clicked & slide text has multiple colors
+                    // - use template color if item text has just one color
+                    if (!templateClicked && allTextColors.length > 1) {
                         let textColor = getStyles(text.style)["color"] || "#FFFFFF"
-                        // use template color if text is white (default)
-                        if (textColor !== "#FFFFFF") style += `color: ${textColor};`
+                        style += `color: ${textColor};`
                     }
 
                     text.style = style
@@ -671,7 +759,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 let firstChar = templateText?.value?.[0] || ""
 
                 // add dynamic values
-                if (!text.value?.length && firstChar === "{") {
+                if (!text.value?.length && firstChar === "{" && templateItem?.lines?.[j]) {
                     text.value = templateText!.value
                 }
 
@@ -696,7 +784,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     // let remainingTextTemplateItems: any[] = []
     if (addOverflowTemplateItems) {
-        sortedTemplateItems.text = removeTextValue(sortedTemplateItems.text)
+        sortedTemplateItems.text = removeTextValue(sortedTemplateItems.text || [])
         // remainingTextTemplateItems = templateItems.filter((a) => (a.type || "text") === "text")
     } else {
         delete sortedTemplateItems.text
@@ -710,6 +798,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     // this will ensure the correct order on the remaining items
     let remainingCount = Object.values(sortedTemplateItems).reduce((value, items) => (value += items.length), 0)
     let remainingTemplateItems = remainingCount ? templateItems.slice(remainingCount * -1) : []
+    // add template marker
+    remainingTemplateItems = remainingTemplateItems.map((a) => ({ ...a, fromTemplate: true }))
     // add behind existing items (any textboxes previously on top not in use will not be replaced by any underneath)
     newSlideItems = [...remainingTemplateItems, ...newSlideItems, ...(sortedTemplateItems.text || [])]
 
@@ -732,13 +822,29 @@ export function updateSlideFromTemplate(slide: Slide, template: Template, isFirs
     return slide
 }
 
-export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, media: { [key: string]: Media }, template: Template, oldTemplate: Template, removeOverflow: boolean = false) {
+export function updateLayoutsFromTemplate(
+    layouts: { [key: string]: Layout },
+    media: { [key: string]: Media },
+    template: Template,
+    oldTemplate: Template,
+    layoutId: string,
+    slideRef: any,
+    templateMode: "global" | "group" | "slide",
+    removeOverflow: boolean = false
+) {
     if (typeof layouts !== "object") layouts = {}
     if (typeof media !== "object") media = {}
 
     // only alter layout slides if clicking on the template
-    if (!removeOverflow) return { layouts, media }
+    if (templateMode === "global" && !removeOverflow) return { layouts, media }
 
+    // no need to add background/actions to slide/group children
+    if (slideRef.type !== "parent") return { layouts, media }
+
+    let slideIndex = slideRef.index
+    if (!layouts[layoutId]?.slides?.[slideIndex]) return { layouts, media }
+
+    let slide = layouts[layoutId].slides[slideIndex]
     let settings = template.settings || {}
     let oldSettings = oldTemplate.settings || {}
 
@@ -748,33 +854,26 @@ export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, me
         let existingId = Object.keys(media).find((id) => (media[id].path || media[id].id) === settings.backgroundPath)
         bgId = existingId || uid()
         if (!existingId) media[bgId] = { path: settings.backgroundPath, name: removeExtension(getFileName(settings.backgroundPath)) }
-    } else if (oldSettings.backgroundPath && oldSettings.backgroundPath === media[layouts[Object.keys(layouts)[0]]?.slides?.[0]?.background || ""]?.path) {
+    } else if ((templateMode !== "global" || slideIndex === 0) && oldSettings.backgroundPath && oldSettings.backgroundPath === media[slide.background || ""]?.path) {
         // remove background if previous template has current background
-        if (layouts[Object.keys(layouts)[0]]?.slides?.[0]?.background) layouts[Object.keys(layouts)[0]].slides[0].background = ""
+        if (slide.background) slide.background = ""
     }
 
-    Object.keys(layouts).forEach((layoutId) => {
-        let slides = layouts[layoutId].slides
-        slides.forEach((slide, i) => {
-            if (i === 0 && settings.backgroundPath) slide.background = bgId
+    if (settings.backgroundPath) slide.background = bgId
+    if (settings.actions?.length) {
+        if (!slide.actions) slide.actions = {}
 
-            if (settings.actions?.length) {
-                if (!slide.actions) slide.actions = {}
-
-                // remove existing
-                let newSlideActions: any[] = []
-                slide.actions.slideActions?.forEach((action) => {
-                    if (settings.actions?.find((a) => a.id === action.id || a.triggers?.[0] === action.triggers?.[0])) return
-                    newSlideActions.push(action)
-                })
-
-                slide.actions.slideActions = [...newSlideActions, ...settings.actions]
-            }
+        // remove existing
+        let newSlideActions: any[] = []
+        slide.actions.slideActions?.forEach((action) => {
+            if (settings.actions?.find((a) => a.id === action.id || a.triggers?.[0] === action.triggers?.[0])) return
+            newSlideActions.push(action)
         })
 
-        layouts[layoutId].slides = slides
-    })
+        slide.actions.slideActions = [...newSlideActions, ...settings.actions]
+    }
 
+    layouts[layoutId].slides[slideIndex] = slide
     return { layouts, media }
 }
 
@@ -904,13 +1003,25 @@ export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]
 }
 
 export function getOutputLines(outSlide: any, styleLines: any = 0) {
-    let maxLines: number = styleLines ? Number(styleLines) : 0
-    let linesIndex: number | null = maxLines && outSlide && outSlide.id !== "temp" ? outSlide.line || 0 : null
+    if (!outSlide?.id || outSlide.id === "temp") return { start: null, end: null } // , index: 0, max: 0
 
-    let start = linesIndex !== null && outSlide?.id ? maxLines * linesIndex : null
-    let end = start !== null ? start + maxLines : null
+    let ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
+    let showSlide = _show(outSlide.id).slides([ref?.[outSlide.index]?.id]).get()[0]
+    let maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
+    if (!maxLines) return { start: null, end: null } // , index: 0, max: 0
 
-    return { start, end, index: linesIndex, max: maxLines }
+    let progress = ((outSlide.line || 0) + 1) / maxLines
+
+    let maxStyleLines = Number(styleLines || 0)
+
+    // ensure last content is shown when e.g. two styles has 2 & 3 lines, and the slide has 4 lines
+    let amountOfLinesToShow: number = getFewestOutputLines()
+    if ((outSlide.line || 0) + amountOfLinesToShow > maxLines) progress = 1
+
+    let linesIndex = Math.ceil(maxLines * progress) - 1
+    let start = maxStyleLines * Math.floor(linesIndex / maxStyleLines)
+
+    return { start: start, end: start + maxStyleLines } // , index: linesIndex, max: maxStyleLines
 }
 
 // METADATA

@@ -29,7 +29,7 @@
 <span class="group">
     <Button
         on:click={() => previewShortcuts.ArrowLeft({ preview: true })}
-        title={$dictionary.preview?._previous_slide}
+        title={$dictionary.preview?._previous_slide + " [Arrow Left]"}
         disabled={$outLocked || (!$activeSlideRecording && (slide?.id === "temp" || (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)))}
         center
     >
@@ -37,7 +37,7 @@
     </Button>
     <Button
         on:click={() => previewShortcuts.ArrowRight({ preview: true, key: "ArrowRight" })}
-        title={$dictionary.preview?._next_slide}
+        title={$dictionary.preview?._next_slide + " [Arrow Right]"}
         disabled={$outLocked ||
             (!$activeSlideRecording && (slide?.id === "temp" || (slide ? (slide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)))}
         center
@@ -56,19 +56,19 @@
                 }
                 updateOut("active", $activeEdit.slide || 0, _show("active").layouts("active").ref()[0], !e.altKey)
             }}
-            title={$dictionary.preview?._start}
+            title={$dictionary.preview?._start + " [Space]"}
             disabled={$outLocked || !$activeShow || !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length}
             center
         >
             <Icon id="play" size={1.2} white />
         </Button>
     {:else}
-        <Button on:click={() => refreshOut()} title={$dictionary.preview?._update} disabled={(!slide && !overlays) || $outLocked} center>
+        <Button on:click={() => refreshOut()} title={$dictionary.preview?._update + " [Ctrl+R]"} disabled={(!slide && !overlays) || $outLocked} center>
             <Icon id="refresh" size={1.1} />
         </Button>
     {/if}
 
-    <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={$outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock} center>
+    <Button on:click={() => outLocked.set(!$outLocked)} red={$outLocked} title={($outLocked ? $dictionary.preview?._unlock : $dictionary.preview?._lock) + " [Ctrl+L]"} center>
         <Icon id={$outLocked ? "locked" : "unlocked"} size={1.1} />
     </Button>
     <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition} center>

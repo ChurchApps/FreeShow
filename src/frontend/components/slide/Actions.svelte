@@ -2,7 +2,7 @@
     import { activeShow, dictionary, shows, templates } from "../../stores"
     import { translate } from "../../utils/language"
     import { actionData } from "../actions/actionData"
-    import { getActionName } from "../actions/actions"
+    import { getActionName, getActionTriggerId } from "../actions/actions"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -84,13 +84,19 @@
     {#if actions.slideActions?.length}
         {#each actions.slideActions as action}
             <!-- should be always just one trigger on each action when on a slide -->
-            {@const actionId = action.triggers?.[0] || ""}
-            {@const actionValue = action?.actionValues?.[actionId] || {}}
+            {@const actionId = getActionTriggerId(action.triggers?.[0])}
             {@const customData = actionData[actionId] || {}}
-            {@const customName = getActionName(actionId, actionValue)}
+            {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
+            {@const customName = getActionName(actionId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")}
 
             <div class="button {customData.red ? '' : 'white'}">
-                <Button style="padding: 3px;" redHover title="{$dictionary.actions?.remove}: {translate(customData.name)}" {zoom} on:click={() => deleteSlideAction(action.id || actionId)}>
+                <Button
+                    style="padding: 3px;"
+                    redHover
+                    title="{$dictionary.actions?.remove}: {translate(customData.name)}{action.name !== translate(customData.name) ? ` (${action.name})` : ''}"
+                    {zoom}
+                    on:click={() => deleteSlideAction(action.id || actionId)}
+                >
                     {#if customName}<p>{customName}</p>{/if}
                     <Icon id={customData.icon || "actions"} size={0.9} white />
                 </Button>

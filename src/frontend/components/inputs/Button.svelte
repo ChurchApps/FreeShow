@@ -5,6 +5,7 @@
     export let outlineColor: string | null = null
     export let outline: boolean = false
     export let title: string = ""
+    export let flipTitlePos: boolean = false
     export let zoom: number = 1
     export let center: boolean = false
     export let border: boolean = false
@@ -53,7 +54,7 @@
         const RIGHT_CLIP = mouse.x + 250 > window.innerWidth
         const BOTTOM_CLIP = mouse.y + 80 > window.innerHeight
         if (RIGHT_CLIP) tooltipStyle += `transform: translate(-100%, ${BOTTOM_CLIP ? "-100%" : "0"});` + (title.length > 30 ? "width: 250px;" : "white-space: nowrap;")
-        else if (BOTTOM_CLIP) tooltipStyle += "transform: translateY(-100%);"
+        else if (flipTitlePos || BOTTOM_CLIP) tooltipStyle += "transform: translateY(-100%);"
     }
 </script>
 

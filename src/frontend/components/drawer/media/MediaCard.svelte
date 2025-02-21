@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeShow, customMessageCredits, dictionary, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, selected, styles } from "../../../stores"
+    import { activeShow, customMessageCredits, dictionary, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaStyle } from "../../helpers/media"
@@ -32,7 +32,11 @@
 
     const steps: number = 10
     function move(e: any) {
-        if (!loaded || !videoElem) return
+        if (!loaded || !videoElem) {
+            // if (hover) clearTimeout(enterTimeout)
+            hover = false
+            return
+        }
 
         let percentage: number = e.offsetX / e.target.offsetWidth
 
@@ -52,16 +56,25 @@
         }
     }
 
-    function mouseenter() {
+    // let enterTimeout: any = null
+    function mouseenter(e: any) {
         const mediaGrid = document.querySelector(".grid")?.querySelector(".grid")
         if (!mediaGrid) return
 
-        const scrollTop = mediaGrid.scrollTop
-        setTimeout(() => {
-            // return if scrolling or selected
-            if (scrollTop !== mediaGrid.scrollTop || $selected.data.find((a) => a.path === path)) return
-            hover = true
-        }, 200)
+        // don't load if clicked (probably selecting)
+        // WIP return if scrolling & don't load if quickly dragging the mouse across..
+        if (e.buttons > 0) return
+        hover = true
+
+        // don't load all the videos if scrolling, or selecting
+        // const scrollTop = mediaGrid.scrollTop
+        // if (enterTimeout) clearTimeout(enterTimeout)
+        // enterTimeout = setTimeout(() => {
+        //     enterTimeout = null
+        //     // return if scrolling or selected
+        //     if (scrollTop !== mediaGrid.scrollTop || $selected.data.find((a) => a.path === path)) return
+        //     hover = true
+        // }, 200)
     }
 
     let wait = false
@@ -79,7 +92,10 @@
             return
         }
 
-        setOutput("background", { path, type, loop: true, muted: false, startAt: 0, ...mediaStyle })
+        let videoType = mediaStyle.videoType || ""
+        let loop = videoType === "foreground" ? false : true
+        let muted = videoType === "background" ? true : false
+        setOutput("background", { path, type, loop, muted, startAt: 0, ...mediaStyle, ignoreLayer: videoType === "foreground" })
 
         // unsplash requires the download to be triggered when using their images
         if (credits.type === "unsplash" && credits.trigger_download) {
@@ -103,31 +119,30 @@
     $: if (path) mediaStyle = getMediaStyle($media[path], currentStyle)
 
     // fixed resolution
-    let resolution = { width: 1920, height: 1080 }
+    let resolution = { width: 16, height: 9 }
+    // $: resolution = getResolution(null, { $outputs, $styles })
 
     $: icon = active !== "favourites" && $media[path]?.favourite === true ? "star" : type === "video" ? "movie" : "image"
     $: tags = $media[path]?.tags || []
 
     let iconClicked: any = null
-    function removeTags() {
-        iconClicked = setTimeout(() => (iconClicked = null), 50)
-
-        media.update((a) => {
-            if (a[path]) a[path].tags = []
-            return a
-        })
-    }
-
-    function removeStyle() {
+    function removeStyle(key: string) {
         iconClicked = setTimeout(() => (iconClicked = null), 50)
 
         media.update((a) => {
             if (!a[path]) return a
 
-            delete a[path].fit
-            delete a[path].flipped
-            delete a[path].flippedY
-            delete a[path].filter
+            if (key === "type") {
+                delete a[path].videoType
+            } else if (key === "filters") {
+                delete a[path].fit
+                delete a[path].flipped
+                delete a[path].flippedY
+                delete a[path].filter
+            } else if (key === "tags") {
+                a[path].tags = []
+            }
+
             return a
         })
     }
@@ -135,6 +150,7 @@
 
 <SelectElem id="media" class="context #media_card" data={{ name, path, type }} {shiftRange} draggable fill>
     <Card
+        resolution={{ width: 16, height: 9 }}
         {loaded}
         style={thumbnail ? `width: ${$mediaOptions.mode === "grid" ? 100 : 100 / $mediaOptions.columns}%;` : ""}
         mode={$mediaOptions.mode}
@@ -147,7 +163,7 @@
         icon={thumbnail ? icon : null}
         white={type === "image"}
         showPlayOnHover
-        checkered
+        checkered={mediaStyle.fit !== "blur"}
         on:mousedown={mousedown}
         on:click={click}
         on:dblclick={dblclick}
@@ -157,10 +173,19 @@
     >
         <!-- icons -->
         <div class="icons">
+            {#if mediaStyle.videoType}
+                <div style="max-width: 100%;">
+                    <div class="button">
+                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("type")}>
+                            <Icon id={mediaStyle.videoType === "background" ? "muted" : mediaStyle.videoType === "foreground" ? "volume" : ""} size={0.9} white />
+                        </Button>
+                    </div>
+                </div>
+            {/if}
             {#if !!mediaStyle.filter?.length || $media[path]?.fit || mediaStyle.flipped || mediaStyle.flippedY}
                 <div style="max-width: 100%;">
                     <div class="button">
-                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={removeStyle}>
+                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("filters")}>
                             <Icon id="filter" size={0.9} white />
                         </Button>
                     </div>
@@ -169,7 +194,7 @@
             {#if tags.length}
                 <div style="max-width: 100%;">
                     <div class="button">
-                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={removeTags}>
+                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("tags")}>
                             <Icon id="tag" size={0.9} white />
                         </Button>
                     </div>

@@ -3,14 +3,15 @@ import { actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, ac
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
+import { getActionName, getActionTriggerId } from "../actions/actions"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
 import { getSlideText } from "../edit/scripts/textStyle"
 import { chordTypes, keys } from "../edit/values/chords"
 import { clone, keysToID, sortByName, sortObject } from "../helpers/array"
+import { removeExtension } from "../helpers/media"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
-import { removeExtension } from "../helpers/media"
 
 const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
@@ -59,6 +60,7 @@ const loadActions = {
     },
     action_tag_filter: () => {
         let sortedTags = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeActionTagFilter).includes(a.id), translate: false }))
+        sortedTags = sortedTags.filter((a) => a.id !== get(drawerTabsData).functions?.activeSubmenu)
         setContextData("action_tags", sortedTags.length)
         return sortedTags
     },
@@ -190,12 +192,17 @@ const loadActions = {
         if (slideActions.length) {
             if (media.length) media.push("SEPERATOR")
             let actionItems = sortByName(
-                slideActions.map((action: any) => ({
-                    id: action.id,
-                    label: actionData[action.triggers?.[0]]?.name || "",
-                    icon: actionData[action.triggers?.[0]]?.icon || "actions",
-                    type: "action",
-                })),
+                slideActions.map((action: any) => {
+                    let triggerId = getActionTriggerId(action.triggers?.[0])
+                    let customData = actionData[triggerId] || {}
+                    let actionValue = action?.actionValues?.[triggerId] || action?.actionValues?.[action.triggers?.[0]] || {}
+                    let customName = getActionName(triggerId, actionValue) || (action.name !== translate(customData.name) ? action.name : "")
+
+                    let label = translate(actionData[triggerId]?.name || "") + (customName ? ` (${customName})` : "")
+                    let icon = actionData[triggerId]?.icon || "actions"
+
+                    return { id: action.id, label, translate: false, icon, type: "action" }
+                }),
                 "label"
             )
             media.push(...actionItems)

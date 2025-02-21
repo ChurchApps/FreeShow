@@ -8,6 +8,7 @@
     import { colorbars, customMessageCredits, drawSettings, drawTool, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { destroy, receive, send } from "../../utils/request"
+    import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
     import { OutputMetadata, decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, setTemplateStyle } from "../helpers/output"
@@ -36,6 +37,8 @@
     let currentStyle: Styles = { name: "" }
     // don't refresh content unless it changes
     $: if (JSON.stringify(currentStyling) !== JSON.stringify(currentStyle)) currentStyle = clone(currentStyling)
+
+    $: alignPosition = currentStyle?.aspectRatio?.alignPosition || "center"
 
     // layers
     let layers: string[] = []
@@ -240,9 +243,10 @@
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
-    setInterval(() => {
+    const dynamicInterval = setInterval(() => {
         updateDynamic++
     }, 1000)
+    onDestroy(() => clearInterval(dynamicInterval))
 </script>
 
 <Zoomed
@@ -250,6 +254,7 @@
     background={backgroundColor}
     checkered={preview && backgroundColor === "transparent"}
     backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)}
+    align={alignPosition}
     center
     {style}
     {resolution}
@@ -264,7 +269,7 @@
     {/if}
 
     <!-- background -->
-    {#if layers.includes("background") && backgroundData}
+    {#if (layers.includes("background") || backgroundData?.ignoreLayer) && backgroundData}
         <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror={isKeyOutput || mirror} />
     {/if}
 
@@ -290,7 +295,7 @@
                 <Window id={slide?.screen?.id} class="media" style="width: 100%;height: 100%;" />
             {/if}
         </span>
-    {:else if slide && slide.type !== "pdf" && layers.includes("slide")}
+    {:else if slide && slide?.type !== "pdf" && layers.includes("slide")}
         <SlideContent {outputId} outSlide={slide} {slideData} {currentSlide} {currentStyle} {animationData} {currentLineId} {lines} {ratio} {mirror} {preview} transition={transitions.text} transitionEnabled={!mirror || preview} {isKeyOutput} />
     {/if}
 
@@ -317,8 +322,25 @@
         <!-- {/if} -->
     {/if}
 
+    {#if slide?.attributionString}
+        <p class="attributionString" transition:custom={transitions.text}>{slide.attributionString}</p>
+    {/if}
+
     <!-- draw -->
     {#if currentOutput.active || (mirror && !preview)}
         <Draw />
     {/if}
 </Zoomed>
+
+<style>
+    .attributionString {
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+
+        font-size: 28px;
+        font-style: italic;
+        opacity: 0.7;
+    }
+</style>

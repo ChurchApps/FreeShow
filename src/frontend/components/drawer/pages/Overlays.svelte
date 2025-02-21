@@ -65,6 +65,7 @@
                 {#each fullFilteredOverlays as overlay}
                     <Card
                         class="context #overlay_card"
+                        preview={$activeShow?.type === "overlay" && $activeShow?.id === overlay.id}
                         outlineColor={findMatchingOut(overlay.id, $outputs)}
                         active={findMatchingOut(overlay.id, $outputs) !== null}
                         label={overlay.name}

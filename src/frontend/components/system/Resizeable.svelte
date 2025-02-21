@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { resized } from "../../stores"
+    import { editColumns, resized } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
 
@@ -94,6 +94,19 @@
             a[id] = width
             return a
         })
+
+        if (id === "leftPanel") {
+            let gap = maxWidth - DEFAULT_WIDTH
+            let triple = DEFAULT_WIDTH + gap * 0.8
+            let double = DEFAULT_WIDTH + gap * 0.4
+            if (width > triple && $editColumns === 2) {
+                editColumns.set(3)
+            } else if (width > double && width < triple && ($editColumns === 1 || $editColumns === 3)) {
+                editColumns.set(2)
+            } else if (width <= double && $editColumns === 2) {
+                editColumns.set(1)
+            }
+        }
     }
 
     function mouseup(e: any) {

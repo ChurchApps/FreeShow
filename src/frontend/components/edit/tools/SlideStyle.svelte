@@ -1,19 +1,23 @@
 <script lang="ts">
-    import { activeEdit, activeShow, activeTriggerFunction, showsCache, templates } from "../../../stores"
-    import { clone, sortByName } from "../../helpers/array"
+    import { activeEdit, activePopup, activeShow, activeTriggerFunction, dictionary, groups, popupData, showsCache, templates } from "../../../stores"
+    import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getResolution } from "../../helpers/output"
+    import Icon from "../../helpers/Icon.svelte"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import Notes from "../../show/tools/Notes.svelte"
 
     // TODO: templates / overlays
 
     $: slideId = _show().layouts("active").ref()[0]?.[$activeEdit.slide || 0]?.id
     $: editSlide = $showsCache && $activeEdit.slide !== null && slideId ? _show().slides([slideId]).get()[0] : null
+
+    $: globalGroup = _show().get("slides")[slideId]?.globalGroup || ""
+    $: groupData = $groups[globalGroup] || {}
+    $: groupTemplate = groupData.template
 
     let notesElem: any = null
     $: if (notesElem && $activeTriggerFunction === "slide_notes") {
@@ -30,15 +34,9 @@
 
     $: if ($showsCache || editSlide) setValues()
     function setValues() {
-        // editSlide?.settings?.resolution
-        let res = getResolution()
         settings = {
             template: editSlide?.settings?.template,
             color: editSlide?.settings?.color || "",
-            resolution: {
-                width: res.width,
-                height: res.height,
-            },
         }
     }
 
@@ -46,7 +44,6 @@
         if (!editSlide) return
 
         let newData: any = { style: clone(settings) }
-        if (JSON.stringify(newData.style.resolution) === JSON.stringify(getResolution())) delete newData.style.resolution
 
         history({
             id: "slideStyle",
@@ -64,9 +61,6 @@
 
         _show($activeShow!.id).slides([slideId]).set({ key: "notes", value: e.detail })
     }
-
-    let templateList: any[] = []
-    $: templateList = [{ id: null, name: "—" }, ...sortByName(Object.entries($templates).map(([id, template]: any) => ({ id, name: template.name })))]
 </script>
 
 <div class="section">
@@ -82,42 +76,51 @@
         />
     </CombinedInput>
     <CombinedInput>
-        <p><T id="show.slide_template" /></p>
-        <Dropdown
-            options={templateList}
-            value={$templates[settings.template || ""]?.name || "—"}
-            on:click={(e) => {
-                settings.template = e.detail.id
-                update()
+        <p>
+            <T id="show.slide_template" />
+            {#if groupTemplate && !settings.template}
+                <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.8em;opacity: 0.7;"><T id="settings.overrided_value" /></span>
+            {/if}
+        </p>
+        <Button
+            on:click={() => {
+                popupData.set({
+                    action: "select_template",
+                    active: settings.template || "",
+                    trigger: (id) => {
+                        settings.template = id
+                        update()
+                    },
+                })
+                activePopup.set("select_template")
             }}
-        />
+            style="overflow: hidden;"
+            bold={!settings.template}
+        >
+            <div style="display: flex;align-items: center;padding: 0;">
+                <Icon id="templates" />
+                <p style="opacity: 1;font-size: 1em;">
+                    {#if settings.template}
+                        {$templates[settings.template || ""]?.name || "—"}
+                    {:else}
+                        <T id="popup.select_template" />
+                    {/if}
+                </p>
+            </div>
+        </Button>
+        {#if settings.template}
+            <Button
+                title={$dictionary.actions?.remove}
+                on:click={() => {
+                    settings.template = ""
+                    update()
+                }}
+                redHover
+            >
+                <Icon id="close" size={1.2} white />
+            </Button>
+        {/if}
     </CombinedInput>
-
-    <!-- <h6><T id="settings.resolution" /></h6>
-    <CombinedInput>
-        <p><T id="edit.width" /></p>
-        <NumberInput
-            value={settings.resolution.width}
-            max={100000}
-            on:change={(e) => {
-                settings.resolution.width = Number(e.detail)
-                update()
-            }}
-            buttons={false}
-        />
-    </CombinedInput>
-    <CombinedInput>
-        <p><T id="edit.height" /></p>
-        <NumberInput
-            value={settings.resolution.height}
-            max={100000}
-            on:change={(e) => {
-                settings.resolution.height = Number(e.detail)
-                update()
-            }}
-            buttons={false}
-        />
-    </CombinedInput> -->
 
     <h6><T id="tools.notes" /></h6>
     <div class="notes" bind:this={notesElem}>

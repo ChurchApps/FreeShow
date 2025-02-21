@@ -7,7 +7,7 @@ import { _show } from "../helpers/shows"
 import { API_ACTIONS, API_toggle } from "./api"
 import { convertOldMidiToNewAction } from "./midi"
 import { getActiveOutputs } from "../helpers/output"
-import { wait } from "../../utils/common"
+import { newToast, wait } from "../../utils/common"
 import { actionData } from "./actionData"
 
 export function runActionId(id: string) {
@@ -109,6 +109,7 @@ export function checkStartupActions() {
 }
 
 export function customActionActivation(id: string) {
+    let actionTriggered = false
     Object.keys(get(midiIn)).forEach((actionId) => {
         let action: any = get(midiIn)[actionId]
         let customActivation = id.split("___")[0]
@@ -118,7 +119,12 @@ export function customActionActivation(id: string) {
         if (specificActivation && action.specificActivation?.includes(customActivation) && action.specificActivation.split("__")[1] !== specificActivation) return
 
         runAction(action)
+        actionTriggered = true
     })
+
+    if (actionTriggered && id === "startup") {
+        newToast("$toast.starting_action")
+    }
 }
 
 export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}, allowMultiple: boolean = false) {
@@ -150,7 +156,15 @@ export function slideHasAction(actions: any, key: string) {
 export function getActionIcon(id: string) {
     let actions = get(midiIn)[id]?.triggers || {}
     if (actions.length > 1) return "actions"
-    return actionData[actions[0]]?.icon || "actions"
+
+    let trigger = getActionTriggerId(actions[0])
+    return actionData[trigger]?.icon || "actions"
+}
+
+export function getActionTriggerId(id: string) {
+    let trigger = id || ""
+    if (trigger.includes(":")) trigger = trigger.slice(0, trigger.indexOf(":"))
+    return trigger
 }
 
 // extra names
@@ -172,6 +186,12 @@ export function getActionName(actionId: string, actionValue: any) {
         let beats = (actionValue.beats || 4) === 4 ? "" : " | " + actionValue.beats
         return (actionValue.tempo || 120) + beats
     }
+
+    if (actionId === "change_volume") {
+        return Number(actionValue.volume || 1) * 100
+    }
+
+    console.log(actionId, actionValue)
 
     if (!namedObjects[actionId]) return
 

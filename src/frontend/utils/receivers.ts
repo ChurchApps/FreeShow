@@ -36,8 +36,10 @@ import { convertTexts } from "../converters/txt"
 import { convertVerseVIEW } from "../converters/verseview"
 import { convertVideopsalm } from "../converters/videopsalm"
 import {
+    activeEdit,
     activePage,
     activePopup,
+    activeProject,
     activeShow,
     activeTimers,
     alertMessage,
@@ -193,7 +195,11 @@ const receiveMAIN: any = {
         if (!finished) return activePopup.set(null)
         if (starting) return newToast("$settings.restore_started")
 
+        // close opened
+        activeEdit.set({ items: [] })
+        activeShow.set(null)
         activePage.set("show")
+
         newToast("$settings.restore_finished")
     },
     LOCATE_MEDIA_FILE: ({ path, ref }) => {
@@ -257,7 +263,7 @@ const receiveMAIN: any = {
         data.projects.forEach((pcoProject) => {
             // CREATE PROJECT FOLDER
             let folderId = pcoProject.folderId
-            if (folderId && !get(folders)[folderId]) {
+            if (folderId && (!get(folders)[folderId] || get(folders)[folderId].deleted)) {
                 history({ id: "UPDATE", newData: { replace: { parent: "/", name: pcoProject.folderName } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
             }
 
@@ -274,6 +280,8 @@ const receiveMAIN: any = {
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
         })
 
+        // open closest to today
+        activeProject.set(data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]?.id)
         projectView.set(false)
     },
 }
@@ -375,7 +383,7 @@ const receiveOUTPUTasMAIN: any = {
     },
     MOVE: (data) => {
         outputs.update((a) => {
-            if (!a[data.id]) return a
+            if (!a[data.id] || a[data.id].boundsLocked) return a
 
             a[data.id].bounds = data.bounds
             return a
@@ -504,6 +512,11 @@ export const receiveOUTPUTasOUTPUT: any = {
     // POSITION: (a: any) => outputPosition.set(a),
     PLAYER_VIDEOS: (a: any) => playerVideos.set(a),
     STAGE_SHOWS: (a: any) => stageShows.set(a),
+
+    // for dynamic values
+    PROJECTS: (a: any) => projects.set(a),
+    ACTIVE_PROJECT: (a: any) => activeProject.set(a),
+    SHOWS_DATA: (a: any) => shows.set(a),
 
     // stage & dynamic value (video)
     VIDEO_DATA: (data) => {

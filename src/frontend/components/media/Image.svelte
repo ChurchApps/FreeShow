@@ -13,18 +13,17 @@
 
     // path starting at "/" auto completes to app root, but should be file:// (src="file://{path}")
     $: if (typeof path === "string" && path[0] === "/") path = `file://${path}`
+
+    $: console.log(mediaStyle)
+
+    $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});image-rendering: ${mediaStyle.rendering || "initial"};`
+    $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});image-rendering: ${mediaStyle.rendering || "initial"};`
 </script>
 
-<img
-    class="media"
-    style="width: 100%;height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});image-rendering: {mediaStyle.rendering ||
-        'initial'};"
-    src={encodeFilePath(path)}
-    alt=""
-    draggable="false"
-    on:error
-    on:load={loaded}
-/>
+{#if mediaStyle.fit === "blur"}
+    <img class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} alt="" draggable="false" />
+{/if}
+<img class="media" style={mediaStyleString} src={encodeFilePath(path)} alt="" draggable="false" on:error on:load={loaded} />
 
 <style>
     /* hide alt text */
