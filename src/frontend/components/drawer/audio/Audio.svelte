@@ -19,10 +19,6 @@
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
     import AudioFile from "./AudioFile.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
