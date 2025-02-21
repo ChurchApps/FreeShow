@@ -12,6 +12,7 @@ import { removeExtension } from "../helpers/media"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
+import { getActionName, getActionTriggerId } from "../actions/actions"
 
 const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
