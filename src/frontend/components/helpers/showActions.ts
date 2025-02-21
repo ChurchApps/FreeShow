@@ -1,6 +1,9 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
+import { clearAudio } from "../../audio/audioFading"
+import { AudioMicrophone } from "../../audio/audioMicrophone"
+import { AudioPlayer } from "../../audio/audioPlayer"
 import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
@@ -13,7 +16,6 @@ import {
     activeProject,
     activeShow,
     allOutputs,
-    audioStreams,
     currentWindow,
     driveData,
     focusMode,
@@ -38,7 +40,6 @@ import {
     videosTime,
 } from "./../../stores"
 import { clone } from "./array"
-import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
@@ -673,10 +674,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         // mics
         if (data.mics) {
             data.mics.forEach((mic: any) => {
-                // setTimeout(() => {
-                //     setMicState.set({ id: mic.id, muted: false })
-                // }, 10 * i)
-                startMicrophone(mic)
+                AudioMicrophone.start(mic.id, { name: mic.name })
             })
         }
 
@@ -689,7 +687,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                     let cloudId = get(driveData).mediaId
                     if (cloudId && cloudId !== "default") a.path = a.cloud?.[cloudId] || a.path
 
-                    if (a) playAudio(a, false)
+                    if (a) AudioPlayer.start(a.path, { name: a.name }, { pauseIfPlaying: false })
                 })
             }, 200)
         }
@@ -722,7 +720,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
         // startShow is at the top
         if (data.actions.trigger) activateTrigger(data.actions.trigger)
-        if (data.actions.audioStream) startAudioStream(data.actions.audioStream)
+        if (data.actions.audioStream) AudioPlayer.start(data.actions.audioStream, { name: "" })
         // if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions)
@@ -984,12 +982,6 @@ const customTriggers = {
                 })
         })
     },
-}
-
-export function startAudioStream(stream) {
-    let url = stream.value || get(audioStreams)[stream.id]?.value
-
-    playAudio({ path: url, name: stream.name })
 }
 
 // DYNAMIC VALUES

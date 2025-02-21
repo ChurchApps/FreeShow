@@ -4,6 +4,8 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
+import { AudioAnalyser } from "../../audio/audioAnalyser"
+import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
 import {
     activeRename,
     categories,
@@ -41,7 +43,6 @@ import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import type { EditInput } from "../edit/values/boxes"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
-import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
@@ -476,6 +477,8 @@ function trimPixelValue(value: any) {
 
 export function checkWindowCapture(startup: boolean = false) {
     getActiveOutputs(get(outputs), false, true, true).forEach((a) => shouldBeCaptured(a, startup))
+
+    AudioAnalyser.recorderActivate()
 }
 
 // NDI | OutputShow | Stage CurrentOutput

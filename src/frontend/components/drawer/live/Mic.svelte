@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activeFocus, activeShow, focusMode, outLocked, playingAudio } from "../../../stores"
+    import { AudioMicrophone } from "../../../audio/audioMicrophone"
+    import { activeFocus, activeShow, focusMode, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { clearAudioStreams, startMicrophone } from "../../helpers/audio"
     import Button from "../../inputs/Button.svelte"
 
     export let mic: any
@@ -72,20 +72,13 @@
         audio.srcObject = stream
         audio.play()
         audio.volume = 0
-        console.log(audio)
-
-        // TODO: add this to audioChannels / audioAnalyzer
     }
 
     onMount(capture)
 
     function capture() {
         navigator.mediaDevices
-            .getUserMedia({
-                audio: {
-                    deviceId: { exact: mic.id },
-                },
-            })
+            .getUserMedia({ audio: { deviceId: { exact: mic.id } } })
             .then(handleSuccess)
             .catch((err) => {
                 console.log(err)
@@ -111,18 +104,8 @@
         bold={false}
         disabled={!context}
         on:click={() => {
-            if ($outLocked || !context) return
-
-            if (muted) {
-                startMicrophone(mic)
-                return
-            }
-
-            playingAudio.update((a) => {
-                delete a[mic.id]
-                return a
-            })
-            clearAudioStreams(mic.id)
+            if (!context) return
+            AudioMicrophone.start(mic.id, { name: mic.name }, { pauseIfPlaying: true })
         }}
         on:dblclick={(e) => {
             if (e.ctrlKey || e.metaKey) return

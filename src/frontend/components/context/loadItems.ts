@@ -3,10 +3,12 @@ import { actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, ac
 import { translate } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
+import { getActionName, getActionTriggerId } from "../actions/actions"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
 import { getSlideText } from "../edit/scripts/textStyle"
 import { chordTypes, keys } from "../edit/values/chords"
 import { clone, keysToID, sortByName, sortObject } from "../helpers/array"
+import { removeExtension } from "../helpers/media"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
@@ -136,7 +138,7 @@ const loadActions = {
         if (bg && showMedia[bg]?.name) {
             media.push({
                 id: bg,
-                label: showMedia[bg].name.indexOf(".") > -1 ? showMedia[bg].name.slice(0, showMedia[bg].name.lastIndexOf(".")) : showMedia[bg].name,
+                label: removeExtension(showMedia[bg].name),
                 translate: false,
                 icon: "image",
             })

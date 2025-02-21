@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { clearAudio } from "../../../audio/audioFading"
     import { activeSlideRecording, dictionary, isFadingOut, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, special, styles } from "../../../stores"
-    import { clearAudio } from "../../helpers/audio"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs, getOutputContent, isOutCleared } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
@@ -32,7 +32,7 @@
         background: () => clearBackground(),
         slide: () => clearSlide(),
         overlays: () => clearOverlays(),
-        audio: () => clearAudio("", true, false, true),
+        audio: () => clearAudio("", { clearPlaylist: true, commonClear: true }),
         nextTimer: () => clearTimers(),
     }
 

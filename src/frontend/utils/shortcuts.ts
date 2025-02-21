@@ -2,11 +2,13 @@ import { get } from "svelte/store"
 import { IMPORT, MAIN, OUTPUT } from "../../types/Channels"
 import type { ShowType } from "../../types/Show"
 import type { TopViews } from "../../types/Tabs"
+import { clearAudio } from "../audio/audioFading"
+import { AudioPlayer } from "../audio/audioPlayer"
 import { menuClick } from "../components/context/menuClick"
 import { addItem } from "../components/edit/scripts/itemHelpers"
-import { clearAudio, playAudio } from "../components/helpers/audio"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
+import { getMediaStyle } from "../components/helpers/media"
 import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
@@ -46,7 +48,6 @@ import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
-import { getMediaStyle } from "../components/helpers/media"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -229,7 +230,7 @@ export const previewShortcuts: any = {
         if (!get(outLocked)) setOutput("overlays", [])
     },
     F4: () => {
-        if (!get(outLocked)) clearAudio("", true, false, true)
+        if (!get(outLocked)) clearAudio("", { clearPlaylist: true, commonClear: true })
     },
     F5: () => {
         if (!get(special).disablePresenterControllerKeys) nextSlideIndividual(null)
@@ -373,6 +374,6 @@ function playMedia(e: Event) {
         let mediaStyle = getMediaStyle(get(media)[item.id], outputStyle)
         setOutput("background", { type, path: item.id, muted: false, loop: false, ...mediaStyle })
     } else if (type === "audio") {
-        playAudio({ path: item.id, name: item.name })
+        AudioPlayer.start(item.id, { name: item.name || "" })
     }
 }

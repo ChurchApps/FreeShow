@@ -2,11 +2,11 @@ import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, IMPORT, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE, STORE } from "../../types/Channels"
 import type { Project } from "../../types/Projects"
 import type { ClientMessage } from "../../types/Socket"
+import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
 import { triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
-import { analyseAudio } from "../components/helpers/audio"
 import { addDrawerFolder } from "../components/helpers/dropActions"
 import { history } from "../components/helpers/history"
 import { captureCanvas, setMediaTracks } from "../components/helpers/media"
@@ -44,7 +44,6 @@ import {
     activeTimers,
     alertMessage,
     allOutputs,
-    audioChannels,
     closeAd,
     colorbars,
     currentOutputSettings,
@@ -366,22 +365,17 @@ const receiveOUTPUTasMAIN: any = {
     RESTART: () => restartOutputs(),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     AUDIO_MAIN: async (data: any) => {
-        if (!data.id) {
-            // WIP merge with existing (audio.ts)
-            audioChannels.set(data.channels)
-            return
-        }
+        if (!data.id) return
+
+        AudioAnalyserMerger.addChannels(data.id, data.channels)
 
         playingVideos.update((a) => {
             let existing = a.findIndex((a) => a.id === data.id && a.location === "output")
 
             if (existing > -1) {
-                let wasPaused = a[existing].paused
-                a[existing] = { ...data, location: "output" }
-                if (wasPaused === true && !data.paused) analyseAudio()
+                a[existing] = data
             } else if (get(outputs)[data.id]?.out?.background) {
                 a.push({ location: "output", ...data })
-                analyseAudio()
             }
 
             return a

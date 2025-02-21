@@ -2,21 +2,25 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
+    import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, labelsDisabled, media, outLocked } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
-    import { startPlaylist, stopPlaylist, updatePlaylist } from "../../helpers/audio"
     import { splitPath } from "../../helpers/get"
     import { getFileName, getMediaType } from "../../helpers/media"
     import Button from "../../inputs/Button.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import NumberInput from "../../inputs/NumberInput.svelte"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
     import AudioStreams from "../live/AudioStreams.svelte"
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
     import AudioFile from "./AudioFile.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import NumberInput from "../../inputs/NumberInput.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
 
@@ -239,7 +243,7 @@
         {:else if playlist && playlistSettings}
             <CombinedInput>
                 <p><T id="settings.audio_crossfade" /></p>
-                <NumberInput value={playlist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => updatePlaylist(active || "", "crossfade", e.detail)} />
+                <NumberInput value={playlist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
             </CombinedInput>
 
             <!-- <CombinedInput>
@@ -288,7 +292,7 @@
                 title={$activePlaylist?.id === active ? $dictionary.media?.stop : $dictionary.media?.play}
                 on:click={() => {
                     if ($outLocked) return
-                    $activePlaylist?.id === active ? stopPlaylist() : startPlaylist(active)
+                    $activePlaylist?.id === active ? AudioPlaylist.stop() : AudioPlaylist.start(active || "")
                 }}
             >
                 <Icon size={1.3} id={$activePlaylist?.id === active ? "stop" : "play"} white={$activePlaylist?.id === active} />
@@ -300,7 +304,7 @@
                 title={$dictionary.media?.toggle_shuffle}
                 on:click={() => {
                     if (!active) return
-                    updatePlaylist(active, "mode", $audioPlaylists[active]?.mode === "shuffle" ? "default" : "shuffle")
+                    AudioPlaylist.update(active, "mode", $audioPlaylists[active]?.mode === "shuffle" ? "default" : "shuffle")
                     // if ($activePlaylist?.id === active) playlistNext("", $activePlaylist.active)
                 }}
             >
@@ -310,7 +314,7 @@
                 title={$dictionary.media?._loop}
                 on:click={() => {
                     if (!active) return
-                    updatePlaylist(active, "loop", $audioPlaylists[active]?.loop === undefined ? false : !$audioPlaylists[active]?.loop)
+                    AudioPlaylist.update(active, "loop", $audioPlaylists[active]?.loop === undefined ? false : !$audioPlaylists[active]?.loop)
                 }}
             >
                 <Icon size={1.1} id="loop" white={$audioPlaylists[active || ""]?.loop === false} />
