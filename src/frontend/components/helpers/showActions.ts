@@ -15,7 +15,6 @@ import {
     activeProject,
     activeShow,
     allOutputs,
-    audioStreams,
     currentWindow,
     driveData,
     focusMode,
@@ -39,7 +38,6 @@ import {
     videosTime,
 } from "./../../stores"
 import { clone } from "./array"
-import { clearAudio } from "./audio"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
@@ -47,6 +45,7 @@ import { initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
+import { clearAudio } from "../../audio/audioFading"
 
 const getProjectIndex: any = {
     next: (index: number | null, shows: any) => {
@@ -668,9 +667,6 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         // mics
         if (data.mics) {
             data.mics.forEach((mic: any) => {
-                // setTimeout(() => {
-                //     setMicState.set({ id: mic.id, muted: false })
-                // }, 10 * i)
                 AudioMicrophone.start(mic.id, { name: mic.name })
             })
         }
@@ -717,7 +713,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
         // startShow is at the top
         if (data.actions.trigger) activateTrigger(data.actions.trigger)
-        if (data.actions.audioStream) startAudioStream(data.actions.audioStream)
+        if (data.actions.audioStream) AudioPlayer.start(data.actions.audioStream, { name: "" })
         // if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions)
@@ -979,12 +975,6 @@ const customTriggers = {
                 })
         })
     },
-}
-
-export function startAudioStream(stream) {
-    let url = stream.value || get(audioStreams)[stream.id]?.value
-
-    AudioPlayer.start(url, { name: stream.name })
 }
 
 // DYNAMIC VALUES

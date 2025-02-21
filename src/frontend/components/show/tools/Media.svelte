@@ -1,6 +1,5 @@
 <script lang="ts">
     import { MAIN, OUTPUT } from "../../../../types/Channels"
-    import { clearAudioStreams } from "../../../audio/audioFading"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
@@ -276,24 +275,7 @@
                 {@const muted = !$playingAudio[mic.id]}
 
                 <SelectElem id="microphone" data={{ id: mic.id, type: "microphone", name: mic.name }} draggable>
-                    <Button
-                        style="padding: 8px;width: 100%;"
-                        bold={false}
-                        on:click={() => {
-                            if ($outLocked) return
-
-                            if (muted) {
-                                AudioMicrophone.start(mic.id, { name: mic.name })
-                                return
-                            }
-
-                            playingAudio.update((a) => {
-                                delete a[mic.id]
-                                return a
-                            })
-                            clearAudioStreams(mic.id)
-                        }}
-                    >
+                    <Button style="padding: 8px;width: 100%;" bold={false} on:click={() => AudioMicrophone.start(mic.id, { name: mic.name }, { pauseIfPlaying: true })}>
                         <Icon id="microphone" white={muted} right />
                         <p style="width: 100%;text-align: left;">{mic.name}</p>
 

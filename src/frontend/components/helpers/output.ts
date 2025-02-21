@@ -4,6 +4,8 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
+import { AudioAnalyser } from "../../audio/audioAnalyser"
+import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
 import {
     activeRename,
     categories,
@@ -39,12 +41,10 @@ import type { API_camera, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
-import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
-import { AudioAnalyser } from "../../audio/audioAnalyser"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let forceKey = e.ctrlKey || e.metaKey

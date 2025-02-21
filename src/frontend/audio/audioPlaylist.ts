@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
-import { activePlaylist, audioPlaylists, outLocked, playingAudio } from "../stores"
+import { activePlaylist, audioPlaylists, media, outLocked, playingAudio } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
-import { audioIsFading, clearAudio, fadeOutAudio } from "./audioFading"
+import { audioIsFading, clearAudio, fadeOutAudio, isAllAudioFading } from "./audioFading"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, shuffleArray } from "../components/helpers/array"
 
@@ -28,11 +28,11 @@ export class AudioPlaylist {
         activePlaylist.set({ id: playlistId })
 
         let crossfade = Number(playlist.crossfade) || 0
-        AudioPlaylist.nextInternal("", audioPath, { crossfade })
+        AudioPlaylist.nextInternal(audioPath, { crossfade })
     }
 
     static stop() {
-        let activeAudio = get(activePlaylist).active
+        let activeAudio = AudioPlaylist.getPlayingPath()
         clearAudio(activeAudio)
     }
 
@@ -46,20 +46,63 @@ export class AudioPlaylist {
     }
 
     static next() {
-        let playlistId = get(activePlaylist)?.id || ""
-        let playlist = get(audioPlaylists)[playlistId]
+        let playlist = AudioPlaylist.getActivePlaylist()
         if (get(outLocked) || !playlist) return
 
-        let activePath = get(activePlaylist).active
         let crossfade = Number(playlist.crossfade) || 0
-        AudioPlaylist.nextInternal(activePath, "", { crossfade, loop: playlist.loop !== false })
+        AudioPlaylist.nextInternal("", { crossfade, loop: playlist.loop !== false })
     }
 
-    protected static nextInternal(previousPath: string, audioPath: string = "", data: PlaylistData) {
+    static getPlayingPath(): string {
+        return get(activePlaylist)?.active || ""
+    }
+
+    static getActivePlaylist() {
         let playlistId = get(activePlaylist)?.id || ""
-        let playlist = clone(get(audioPlaylists)[playlistId])
+        let playlist = get(audioPlaylists)[playlistId]
+        if (!playlist) return null
+        return playlist
+    }
+
+    private static isCrossfading: boolean = false
+    static checkCrossfade() {
+        let audioPath = AudioPlaylist.getPlayingPath()
+        if (isAllAudioFading || !audioPath || get(media)[audioPath]?.loop) {
+            this.isCrossfading = false
+            return
+        }
+        if (this.isCrossfading) return
+
+        let crossfadeDuration = this.crossfade()
+        if (!crossfadeDuration) return
+
+        this.isCrossfading = true
+        setTimeout(() => (this.isCrossfading = false), crossfadeDuration)
+    }
+
+    private static extraMargin = 0.1 // s
+    private static crossfade() {
+        let playlist = AudioPlaylist.getActivePlaylist()
+        if (!playlist) return 0
+
+        let crossfade = Number(playlist.crossfade) || 0
+        let audioPath = AudioPlaylist.getPlayingPath()
+        let playing = AudioPlayer.getAudio(audioPath)
+        if (!crossfade || !audioPath || !playing) return 0
+
+        let customCrossfade = crossfade > 3 ? crossfade * 0.6 : crossfade
+        let reachedEnding = playing.currentTime + customCrossfade + this.extraMargin >= playing.duration
+        if (!reachedEnding) return 0
+
+        AudioPlaylist.nextInternal("", { crossfade: customCrossfade, loop: playlist.loop !== false })
+        return crossfade
+    }
+
+    protected static nextInternal(audioPath: string = "", data: PlaylistData) {
+        let playlist = clone(AudioPlaylist.getActivePlaylist())
         if (!playlist) return
 
+        let previousPath = AudioPlaylist.getPlayingPath()
         let songs = getSongs()
         if (!songs.length) return
 
@@ -70,7 +113,7 @@ export class AudioPlaylist {
         if (!nextSong) {
             if (!data.loop && !audioIsFading()) {
                 if (data.crossfade) fadeOutAudio(data.crossfade)
-                else clearAudio("", false, true)
+                else clearAudio("", { playlistCrossfade: true })
 
                 setTimeout(() => {
                     if (!get(playingAudio)[previousPath]) customActionActivation("audio_playlist_ended")

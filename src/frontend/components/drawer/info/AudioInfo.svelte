@@ -95,12 +95,12 @@
             </div>
         </CombinedInput>
 
-        <CombinedInput textWidth={70}>
+        <!-- <CombinedInput textWidth={70}>
             <p title={$dictionary.audio?.pre_fader_volume_meter}><T id="audio.pre_fader_volume_meter" /></p>
             <div class="alignRight">
                 <Checkbox checked={$special.preFaderVolumeMeter || false} on:change={(e) => updateSpecial(isChecked(e), "preFaderVolumeMeter")} />
             </div>
-        </CombinedInput>
+        </CombinedInput> -->
 
         <CombinedInput>
             <p title={$dictionary.audio?.custom_output}><T id="audio.custom_output" /></p>

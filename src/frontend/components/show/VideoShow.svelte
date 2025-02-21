@@ -6,7 +6,6 @@
     import { awaitRequest, send } from "../../utils/request"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import { analyseAudio, getAnalyser } from "../helpers/audio"
     import { enableSubtitle, getExtension, getFileName, removeExtension } from "../helpers/media"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
@@ -141,14 +140,16 @@
             if (!playingInOutput) videoTime = 0
             hasLoaded = false
 
-            let analyser = await getAnalyser(video)
-            if (!analyser) return
+            // let analyser = await getAnalyser(video)
+            // if (!analyser) return
 
             playingVideos.update((a) => {
-                a.push({ id: showId, location: "preview", analyser })
+                a.push({ id: showId, location: "preview" })
                 return a
             })
-            analyseAudio()
+
+            // WIP analyser
+            // analyseAudio()
         }
     }
     // $: if (videoData) {

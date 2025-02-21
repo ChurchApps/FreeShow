@@ -3,7 +3,6 @@
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activeFocus, activePlaylist, activeShow, audioPlaylists, dictionary, focusMode, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { getAudioDuration } from "../../helpers/audio"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
@@ -26,7 +25,7 @@
     else duration = 0
     async function getDuration() {
         duration = 0
-        duration = playing.isMic ? 0 : await getAudioDuration(Object.keys($playingAudio)[0])
+        duration = playing.isMic ? 0 : await AudioPlayer.getDuration(Object.keys($playingAudio)[0])
         currentTime = playing.audio?.currentTime || 0
     }
 

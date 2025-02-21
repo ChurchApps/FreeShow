@@ -12,7 +12,7 @@ import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Emitter, ID, MidiIn, Overlays, ShowList, Shows, Tag, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
-import type { Channels, Playlist } from "./../types/Audio"
+import type { AudioChannel, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
@@ -79,7 +79,7 @@ export const nextActionEventStart: Writable<any> = writable({})
 export const nextActionEventPaused: Writable<boolean> = writable(false)
 
 // AUDIO
-export const audioChannels: Writable<Channels> = writable({})
+export const audioChannels: Writable<AudioChannel[]> = writable([])
 export const playingAudio: Writable<{ [key: string]: AudioData }> = writable({})
 export const playingVideos: Writable<any[]> = writable([])
 export const activePlaylist: Writable<any> = writable(null)
@@ -208,7 +208,7 @@ export const overlays: Writable<Overlays> = writable({}) // {default}
 
 // AUDIO
 export const audioFolders: Writable<Categories> = writable({}) // {default}
-export const audioStreams: Writable<any> = writable({}) // {}
+export const audioStreams: Writable<{ [key: string]: any }> = writable({}) // {}
 export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}) // {}
 export const volume: Writable<number> = writable(1) // 1
 export const gain: Writable<number> = writable(1) // 1

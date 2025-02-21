@@ -3,13 +3,14 @@
 import { get } from "svelte/store"
 import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, removeExtension } from "../components/helpers/media"
-import { gain, media, playingAudio, special, volume } from "../stores"
+import { checkNextAfterMedia } from "../components/helpers/showActions"
+import { gain, media, outLocked, playingAudio, special, volume } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
-import { clearAudio, fadeInAudio, fadeOutAudio } from "./audioFading"
+import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
+import { AudioPlaylist } from "./audioPlaylist"
 
 type AudioMetadata = {
     name: string
-    isMic?: boolean
 }
 type AudioOptions = {
     pauseIfPlaying?: boolean
@@ -21,8 +22,9 @@ type AudioOptions = {
 export type AudioData = {
     name: string
     paused: boolean
-    audio: HTMLAudioElement
     isMic: boolean
+    audio: HTMLAudioElement
+    stream?: MediaStream
 }
 
 export class AudioPlayer {
@@ -34,6 +36,8 @@ export class AudioPlayer {
     // INIT
 
     static async start(path: string, metadata: AudioMetadata, options: AudioOptions = {}) {
+        if (get(outLocked) || clearing.includes(path)) return
+
         if (this.audioExists(path)) {
             if (options.pauseIfPlaying === false) {
                 updateAudioStore(path, "currentTime", 0)
@@ -46,15 +50,11 @@ export class AudioPlayer {
 
         let audioPlaying = Object.keys(get(playingAudio)).length
         if (options.crossfade) fadeOutAudio(options.crossfade)
-        else if (!options.playMultiple) clearAudio("", false, options.playlistCrossfade)
+        else if (!options.playMultiple) clearAudio("", { playlistCrossfade: options.playlistCrossfade })
 
         const audio = await this.createAudio(path)
-        if (!audio) return
-
-        // AudioAnalyser.attach(path, audio)
-
-        // // another audio might have been started while awaiting (if played rapidly)
-        // if (this.audioExists(path)) return
+        // another audio might have been started while awaiting (if played rapidly)
+        if (!audio || this.audioExists(path)) return
 
         if ((options.startAt || 0) > 0) audio.currentTime = options.startAt || 0
 
@@ -62,49 +62,70 @@ export class AudioPlayer {
             a[path] = {
                 name: removeExtension(metadata.name || getFileName(path)),
                 paused: false,
-                isMic: !!metadata.isMic,
+                isMic: false,
                 audio,
             }
             return a
         })
-
-        // if (analyser?.gainNode) {
-        //     analyser.gainNode.gain.value = this.getVolume(path) * this.getGain()
-        //     if (get(special).preFaderVolumeMeter) audio.volume = 1
-        //     else audio.volume = this.getVolume(path)
-        // } else audio.volume = this.getVolume(path)
 
         let waitToPlay = 0
         if (audioPlaying && options.crossfade) {
             audio.volume = 0
             waitToPlay = options.crossfade * 0.6
             fadeInAudio(path, options.crossfade, !!waitToPlay)
-            // return // WIP
         }
 
         this.initAudio(path, waitToPlay)
     }
 
-    static playMicrophone(id: string, streamOrAudio: Buffer | HTMLAudioElement, metadata: AudioMetadata) {
-        // playAudio({ path: id, name: metadata.name, stream: streamOrAudio }, false)
+    static async playStream(id: string, stream: MediaStream, metadata: AudioMetadata) {
         if (this.audioExists(id)) {
             this.togglePausedState(id)
             return
         }
 
-        // WIP analyze
+        const audio = await this.createAudioFromStream(id, stream)
+        if (!audio) return
 
-        metadata.isMic = true
-        console.log(streamOrAudio)
+        playingAudio.update((a) => {
+            a[id] = {
+                name: metadata.name,
+                paused: false,
+                isMic: true,
+                audio,
+                stream,
+            }
+            return a
+        })
+
+        this.initAudio(id)
     }
 
     private static async createAudio(path: string): Promise<HTMLAudioElement | null> {
         const audio = new Audio(encodeFilePath(path))
         return new Promise((resolve) => {
+            let done: boolean = false
+            audio.addEventListener("canplay", () => {
+                done = true
+                resolve(audio)
+            })
+            audio.addEventListener("error", (err) => {
+                if (done) return
+                console.error("Could not get audio:", path, err)
+                this.stop(path)
+                resolve(null)
+            })
+        })
+    }
+
+    private static async createAudioFromStream(id: string, stream: MediaStream): Promise<HTMLAudioElement | null> {
+        const audio = new Audio()
+        audio.srcObject = stream
+        return new Promise((resolve) => {
             audio.addEventListener("canplay", () => resolve(audio))
             audio.addEventListener("error", (err) => {
                 console.error("Could not get audio:", err)
-                this.stop(path)
+                this.stop(id)
                 resolve(null)
             })
         })
@@ -121,6 +142,9 @@ export class AudioPlayer {
 
             this.play(id)
             customActionActivation("audio_start")
+
+            // WIP get microphone input stream (audio will have to be muted in that case)
+            // let stream = this.getPlaying(id)?.stream || audio
             AudioAnalyser.attach(id, audio)
         }, waitToPlay * 1000)
     }
@@ -146,11 +170,20 @@ export class AudioPlayer {
 
         this.pause(id)
         playingAudio.update((a) => {
+            // reset
+            a[id].audio.src = ""
+            this.stopStream(a[id].stream)
+
             delete a[id]
             return a
         })
-        // WIP stop analyser!!??
-        // if (!get(playingAudio).length)
+
+        AudioAnalyser.detach(id)
+    }
+
+    private static stopStream(stream: MediaStream | undefined) {
+        if (!stream) return
+        stream.getAudioTracks().forEach((track: any) => track.stop())
     }
 
     private static togglePausedState(id: string) {
@@ -178,10 +211,46 @@ export class AudioPlayer {
         return true
     }
 
+    static checkIfEnding(id: string) {
+        let playing = this.getPlaying(id)
+        if (!playing || playing.paused) return
+
+        let audio = this.getAudio(id)
+        if (!audio) return
+
+        if (audio.currentTime < audio.duration) return
+
+        // loop single audio
+        if (get(media)[id]?.loop) {
+            get(playingAudio)[id].audio.currentTime = 0
+            get(playingAudio)[id].audio.play()
+            return
+        }
+
+        if (AudioPlaylist.getPlayingPath() === id) {
+            this.stop(id) // stop existing
+            AudioPlaylist.next()
+            return
+        }
+
+        if (get(special).clearMediaOnFinish === false) this.pause(id)
+        else this.stop(id)
+
+        let stillPlaying = this.getAllPlaying()
+        if (!stillPlaying.length) checkNextAfterMedia(id, "audio")
+    }
+
     // GET
 
     static getPlaying(id: string): AudioData | null {
         return get(playingAudio)[id] || null
+    }
+
+    static getAllPlaying() {
+        return Object.keys(get(playingAudio)).filter((id) => {
+            let audioData = get(playingAudio)[id]
+            return audioData.audio && !audioData.paused
+        })
     }
 
     static getAudio(id: string): HTMLAudioElement | null {

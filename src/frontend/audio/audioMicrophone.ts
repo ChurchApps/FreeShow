@@ -1,27 +1,28 @@
+import { get } from "svelte/store"
 import { MAIN } from "../../types/Channels"
-import { audioStreams } from "../stores"
+import { outLocked } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
 
 type AudioMetadata = {
     name: string
 }
+type AudioOptions = {
+    pauseIfPlaying?: boolean
+}
 
 export class AudioMicrophone {
-    static start(id: string, metadata: AudioMetadata) {
+    static start(id: string, metadata: AudioMetadata, options: AudioOptions = {}) {
+        if (get(outLocked)) return
+
+        if (AudioPlayer.audioExists(id)) {
+            if (options.pauseIfPlaying) AudioPlayer.stop(id)
+            return
+        }
+
         navigator.mediaDevices
-            .getUserMedia({
-                audio: {
-                    deviceId: { exact: id },
-                },
-            })
-            .then((stream: any) => {
-                audioStreams[id] = stream
-
-                // let audio = new Audio()
-                // audio.srcObject = stream
-                // audio.volume = 0
-
-                AudioPlayer.playMicrophone(id, stream, metadata)
+            .getUserMedia({ audio: { deviceId: { exact: id } } })
+            .then((stream) => {
+                AudioPlayer.playStream(id, stream, metadata)
             })
             .catch((err) => {
                 console.log(err)
@@ -29,5 +30,9 @@ export class AudioMicrophone {
                     window.api.send(MAIN, { channel: "ACCESS_MICROPHONE_PERMISSION" })
                 }
             })
+    }
+
+    static stop(id: string) {
+        AudioPlayer.stop(id)
     }
 }

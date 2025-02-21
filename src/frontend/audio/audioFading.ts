@@ -1,25 +1,29 @@
 // CROSSFADE
 
 import { get } from "svelte/store"
-import { uid } from "uid"
 import { customActionActivation } from "../components/actions/actions"
 import { stopMetronome } from "../components/drawer/audio/metronome"
-import { activePlaylist, audioStreams, isFadingOut, playingAudio, special } from "../stores"
+import { activePlaylist, isFadingOut, playingAudio, special } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
+import { AudioPlaylist } from "./audioPlaylist"
 
-let clearing: string[] = []
+type AudioClearOptions = {
+    clearPlaylist?: boolean
+    playlistCrossfade?: boolean
+    commonClear?: boolean
+}
+
+export let clearing: string[] = []
 let forceClear: boolean = false
-export function clearAudio(path: string = "", clearPlaylist: boolean = true, playlistCrossfade: boolean = false, commonClear: boolean = false) {
+export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
     // turn off any playlist
-    if (clearPlaylist && (!path || get(activePlaylist)?.active === path)) activePlaylist.set(null)
+    if (options.clearPlaylist && (!path || AudioPlaylist.getPlayingPath() === path)) activePlaylist.set(null)
 
     // stop playing metronome
-    if (clearPlaylist && !path) stopMetronome()
-
-    const clearTime = playlistCrossfade ? 0 : (get(special).audio_fade_duration ?? 1.5)
+    if (options.clearPlaylist && !path) stopMetronome()
 
     if (clearing.includes(path)) {
-        if (!commonClear) return
+        if (!options.commonClear) return
         // force stop audio files (bypass timeout if already active)
         forceClear = true
         setTimeout(() => (forceClear = false), 100)
@@ -30,15 +34,18 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
         return
     }
 
+    const clearTime = options.playlistCrossfade ? 0 : (get(special).audio_fade_duration ?? 1.5)
     const clearIds = path ? [path] : Object.keys(get(playingAudio))
-    clearIds.forEach(clearAudio)
+    clearIds.forEach(clear)
 
-    async function clearAudio(path: string) {
+    async function clear(path: string) {
+        if (clearing.includes(path)) return
+
         clearing.push(path)
         const audio = AudioPlayer.getAudio(path)
         if (!audio) return deleteAudio(path)
 
-        let faded = await fadeAudio(audio, clearTime)
+        let faded = await fadeAudio(path, audio, clearTime)
         if (faded) removeAudio(path)
     }
 
@@ -52,36 +59,21 @@ export function clearAudio(path: string = "", clearPlaylist: boolean = true, pla
     }
 
     function deleteAudio(path) {
-        playingAudio.update((a) => {
-            delete a[path]
-            return a
-        })
+        AudioPlayer.stop(path)
 
-        // startUpdate()
-        clearAudioStreams()
+        clearing.splice(clearing.indexOf(path), 1)
     }
-
-    // let updating = false
-    // function startUpdate() {
-    //     if (updating) return
-    //     updating = true
-
-    //     setTimeout(() => {
-    //         playingAudio.set(newPlaying)
-    //         clearAudioStreams()
-    //         clearing.splice(clearing.indexOf(path), 1)
-    //     }, 200)
-    // }
 }
 
-let currentlyCrossfading: string[] = []
+let currentlyCrossfadingOut: string[] = []
 export function fadeOutAudio(crossfade: number = 0) {
     Object.entries(get(playingAudio)).forEach(async ([path, { audio }]) => {
-        if (currentlyCrossfading.includes(path)) return
+        if (currentlyCrossfadingOut.includes(path)) return
+        currentlyCrossfadingOut.push(path)
 
-        currentlyCrossfading.push(path)
-        let faded = await fadeAudio(audio, crossfade)
-        currentlyCrossfading.splice(currentlyCrossfading.indexOf(path), 1)
+        let faded = await fadeAudio(path, audio, crossfade)
+
+        currentlyCrossfadingOut.splice(currentlyCrossfadingOut.indexOf(path), 1)
         if (!faded) return
 
         customActionActivation("audio_end")
@@ -89,25 +81,30 @@ export function fadeOutAudio(crossfade: number = 0) {
     })
 }
 // if no "path" is provided it will fade out/clear all audio
+let currentlyCrossfadingIn: string[] = []
 export function fadeInAudio(path: string, crossfade: number, waitToPlay: boolean = false) {
-    if (!path || currentlyCrossfading[path]) return
+    if (!path || currentlyCrossfadingIn.includes(path) || currentlyCrossfadingOut.includes(path)) return
 
-    let playing = AudioPlayer.getPlaying(path)?.audio
-    if (!playing) return
-
-    currentlyCrossfading.push(path)
+    currentlyCrossfadingIn.push(path)
     let waitTime = waitToPlay ? crossfade * 0.6 * 1000 : 0
     setTimeout(async () => {
-        await fadeAudio(playing, waitToPlay ? crossfade * 0.4 : crossfade, true)
-        currentlyCrossfading.splice(currentlyCrossfading.indexOf(path), 1)
+        let playing = AudioPlayer.getPlaying(path)?.audio
+        if (!playing) {
+            currentlyCrossfadingIn.splice(currentlyCrossfadingIn.indexOf(path), 1)
+            return
+        }
+
+        await fadeAudio(path, playing, waitToPlay ? crossfade * 0.4 : crossfade, true)
+        currentlyCrossfadingIn.splice(currentlyCrossfadingIn.indexOf(path), 1)
     }, waitTime)
 }
 
 const speed = 0.01
 let currentlyFading: any = {}
-async function fadeAudio(audio, duration = 1, increment: boolean = false): Promise<boolean> {
+async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, increment: boolean = false): Promise<boolean> {
     duration = Number(duration)
-    if (!audio || !duration) return true
+    let fadeId = (increment ? "in_" : "out_") + id
+    if (!audio || !duration || currentlyFading[fadeId]) return true
     // no need to fade out if paused
     if (!increment && audio.paused) return true
 
@@ -121,10 +118,9 @@ async function fadeAudio(audio, duration = 1, increment: boolean = false): Promi
         isFadingOut.set(true)
     }
 
-    let fadeId = (increment ? "in_" : "out_") + uid()
     return new Promise((resolve) => {
         currentlyFading[fadeId] = setInterval(() => {
-            if (forceClear) return finished()
+            if (forceClear || (increment && currentlyCrossfadingOut.includes(id))) return finished()
 
             if (increment) {
                 audio.volume = Math.min(1, Number((audio.volume + currentSpeed).toFixed(3)))
@@ -158,11 +154,45 @@ export function audioIsFading() {
     return !!Object.keys(currentlyFading).length
 }
 
-export function clearAudioStreams(id: string = "") {
-    let ids = id ? [id] : Object.keys(audioStreams)
+// fade out/in when video starts playing
+export let isAllAudioFading = false
+export function fadeoutAllPlayingAudio() {
+    stopFading()
+    isAllAudioFading = true
 
-    ids.forEach((streamId) => {
-        let stream = audioStreams[streamId]
-        stream?.getAudioTracks().forEach((track: any) => track.stop())
+    Object.values(get(playingAudio)).forEach(({ audio }) => {
+        fadeoutAudio(audio)
+    })
+
+    async function fadeoutAudio(audio) {
+        let faded = await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5)
+        if (faded) {
+            audio.pause()
+            // analyseAudio()
+        }
+    }
+}
+export function fadeinAllPlayingAudio() {
+    if (!isAllAudioFading) return
+    isFadingOut.set(false)
+    stopFading()
+
+    Object.values(get(playingAudio)).forEach(({ audio }) => {
+        fadeinAudio(audio)
+    })
+
+    isAllAudioFading = false
+
+    async function fadeinAudio(audio) {
+        audio.play()
+        await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5, true)
+        // if (faded) analyseAudio()
+    }
+}
+
+function stopFading() {
+    Object.values(currentlyFading).forEach((fadeInterval: any) => {
+        clearInterval(fadeInterval)
+        delete currentlyFading[fadeInterval]
     })
 }

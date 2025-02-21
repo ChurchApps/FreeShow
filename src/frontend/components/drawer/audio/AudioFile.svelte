@@ -3,7 +3,6 @@
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activeFocus, activeShow, focusMode, media, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { getAudioDuration } from "../../helpers/audio"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
 
@@ -48,7 +47,7 @@
             <p>{name.slice(0, name.lastIndexOf("."))}</p>
         </span>
         <span style="opacity: 0.8;">
-            {#await getAudioDuration(path)}
+            {#await AudioPlayer.getDuration(path)}
                 <p>00:00</p>
             {:then duration}
                 <p>{joinTime(secondsToTime(duration))}</p>

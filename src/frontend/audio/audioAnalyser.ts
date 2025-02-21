@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
+import type { AudioChannel } from "../../types/Audio"
 import { AUDIO } from "../../types/Channels"
-import { outputs, special } from "../stores"
+import { currentWindow, outputs, playingAudio, playingVideos, special } from "../stores"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { AudioPlayer } from "./audioPlayer"
@@ -14,14 +15,15 @@ export class AudioAnalyser {
     private static ac = new AudioContext({ latencyHint: "interactive", sampleRate: this.sampleRate })
     private static splitter = this.ac.createChannelSplitter(this.channels)
     private static analysers: AnalyserNode[] = []
-    private static sources: { [key: string]: MediaElementAudioSourceNode } = {}
+    private static sources: { [key: string]: MediaElementAudioSourceNode | MediaStreamAudioSourceNode } = {}
 
-    static attach(id: string, audio: HTMLAudioElement) {
+    static attach(id: string, audio: HTMLMediaElement | MediaStream) {
         if (this.sources[id]) return
 
-        let source: MediaElementAudioSourceNode
+        let source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode
         try {
-            source = this.ac.createMediaElementSource(audio)
+            if (audio instanceof MediaStream) source = this.ac.createMediaStreamSource(audio)
+            else source = this.ac.createMediaElementSource(audio)
             this.sources[id] = source
         } catch (err) {
             console.error("Could not create media source:", err)
@@ -30,7 +32,7 @@ export class AudioAnalyser {
 
         this.initAnalysers()
         this.initRecorder()
-        if (get(special).audioOutput) this.customOutput(get(special).audioOutput)
+        this.customOutput(get(special).audioOutput)
 
         source.connect(this.splitter)
         this.connectGain(source)
@@ -45,11 +47,22 @@ export class AudioAnalyser {
         this.disconnectGain(source)
         this.disconnectDestination(source)
         delete this.sources[id]
+
+        if (!this.shouldAnalyse()) {
+            AudioAnalyserMerger.stop()
+        }
+    }
+
+    static shouldAnalyse() {
+        return Object.keys(get(playingAudio)).length || Object.keys(get(playingVideos)).length
     }
 
     // https://stackoverflow.com/questions/48930799/connecting-nodes-with-each-other-with-the-web-audio-api
     private static initAnalysers() {
-        if (this.analysers.length) return
+        if (this.analysers.length) {
+            AudioAnalyserMerger.init()
+            return
+        }
 
         const MERGER = this.ac.createChannelMerger(this.channels)
 
@@ -79,11 +92,11 @@ export class AudioAnalyser {
         this.gainNode!.gain.value = Math.max(1, value)
     }
 
-    private static connectGain(source: MediaElementAudioSourceNode) {
+    private static connectGain(source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode) {
         this.initGain()
         source.connect(this.gainNode!)
     }
-    private static disconnectGain(source: MediaElementAudioSourceNode) {
+    private static disconnectGain(source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode) {
         if (!this.gainNode) return
         source.disconnect(this.gainNode)
     }
@@ -98,11 +111,11 @@ export class AudioAnalyser {
         this.destNode.channelInterpretation = "speakers"
     }
 
-    private static connectDestination(source: MediaElementAudioSourceNode) {
+    private static connectDestination(source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode) {
         this.initDestination()
         source.connect(this.destNode!)
     }
-    private static disconnectDestination(source: MediaElementAudioSourceNode) {
+    private static disconnectDestination(source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode) {
         if (!this.destNode) return
         source.disconnect(this.destNode)
     }
@@ -111,18 +124,16 @@ export class AudioAnalyser {
     private static recorder: MediaRecorder | null = null
     private static initRecorder() {
         if (this.recorder || !this.recorderActive) return
-        if (!this.destNode) this.initDestination()
+        this.initDestination()
 
         this.recorder = new MediaRecorder(this.destNode!.stream, {
             mimeType: 'audio/webm; codecs="opus"',
-            // mimeType: 'audio/webm; codecs="pcm"',
         })
         this.recorder.addEventListener("dataavailable", async (ev) => {
             const arrayBuffer = await ev.data.arrayBuffer()
-            // const uint8Array = new Uint8Array(arrayBuffer, 0, arrayBuffer.byteLength)
             const uint8Array = new Uint8Array(arrayBuffer)
-            // console.log("Sending OPUS chunk, size:", uint8Array.length)
-            send(AUDIO, ["CAPTURE"], { buffer: uint8Array })
+            let id = get(currentWindow) === "output" ? Object.keys(get(outputs))[0] : "main"
+            send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array })
         })
 
         if (this.recorder.state === "paused") this.recorder.play()
@@ -133,29 +144,34 @@ export class AudioAnalyser {
 
     private static recorderActive: boolean = false
     static recorderActivate() {
-        let shouldBeActive = Object.values(get(outputs)).find((a) => a.ndi && a.ndiData?.audio)
-        if (!shouldBeActive) return
+        if (!this.shouldBeActive()) return
 
         this.recorderActive = true
         this.initRecorder()
     }
     static recorderDeactivate() {
-        let shouldBeActive = Object.values(get(outputs)).find((a) => a.ndi && a.ndiData?.audio)
-        if (shouldBeActive || !this.recorder) return
+        if (this.shouldBeActive() || !this.recorder) return
 
         this.recorderActive = false
         this.recorder.stop()
         this.recorder = null
     }
 
+    private static shouldBeActive() {
+        let outputList = Object.values(get(outputs))
+        if (get(currentWindow) === "output") outputList = [Object.values(get(outputs))[0]]
+
+        // any outputs with ndi audio enabled
+        if (outputList.find((a) => a.enabled && a.ndi && a.ndiData?.audio)) return true
+        return false
+    }
+
     // custom audio output (supported in Chrome 110+)
     // https://developer.chrome.com/blog/audiocontext-setsinkid/
     // this applies to both audio & video
     static async customOutput(sinkId: string) {
-        this.initAnalysers()
-
         try {
-            await (this.analysers as any).setSinkId(sinkId)
+            await (this.ac as any).setSinkId(sinkId || "")
             return true
         } catch (err) {
             console.error("Could not set custom audio sink ID:", err)
@@ -166,40 +182,23 @@ export class AudioAnalyser {
     // CHANNEL
 
     static getChannelsVolume() {
-        this.initAnalysers()
         return [...Array(this.channels)].map((_, channel) => this.getChannelVolume(channel))
     }
 
-    // private static getChannelVolume(channelIndex: number) {
-    //     const analyser = this.analysers[channelIndex]
-
-    //     const size = analyser.fftSize
-    //     var array = new Uint8Array(size)
-
-    //     // decibels
-
-    //     analyser.getByteFrequencyData(array)
-    //     console.log(analyser)
-    //     console.log(array)
-    //     analyser.maxDecibels = -10
-    //     // analyser.maxDecibels = 0
-    //     let value = array[0]
-    //     let percent = value / (array.length - 1)
-    //     let dB = analyser.minDecibels + (analyser.maxDecibels - analyser.minDecibels) * percent
-
-    //     return { volume: 1, dB: { value: dB, min: analyser.minDecibels, max: analyser.maxDecibels } }
-    // }
-
-    private static getChannelVolume(channelIndex: number) {
+    private static getChannelVolume(channelIndex: number): AudioChannel {
         const analyser = this.analysers[channelIndex]
+        if (!analyser) return { dB: { value: AudioAnalyserMerger.dBmin } }
+
+        analyser.minDecibels = AudioAnalyserMerger.dBmin
+        analyser.maxDecibels = AudioAnalyserMerger.dBmax
 
         const size = analyser.fftSize // 256
         const array = new Uint8Array(size)
 
-        // Analyze amplitude values in time domain
+        // analyze amplitude values in time domain
         analyser.getByteTimeDomainData(array)
 
-        // Calculate RMS value to represent perceived volume
+        // calculate RMS value to represent perceived volume
         const sumOfSquares = array.reduce((sum, value) => {
             const normalizedValue = (value - 128) / 128 // Normalize between -1 and 1
             return sum + normalizedValue * normalizedValue
@@ -207,16 +206,14 @@ export class AudioAnalyser {
 
         const rms = Math.sqrt(sumOfSquares / array.length)
 
-        // Map RMS to dB scale
-        const dB = 20 * Math.log10(rms || 0.0001) // Protect against log(0)
+        // map RMS to dB scale & protect against log(0)
+        const dB = 20 * Math.log10(rms || 0.0001)
 
-        return {
-            volume: rms,
-            dB: { value: dB, min: analyser.minDecibels, max: analyser.maxDecibels },
-        }
+        // const volume = rms
+        return { dB: { value: dB } }
     }
 
-    static getSource(id: string): MediaElementAudioSourceNode | null {
+    static getSource(id: string): MediaElementAudioSourceNode | MediaStreamAudioSourceNode | null {
         return this.sources[id] || null
     }
 

@@ -39,9 +39,7 @@
                 interval = null
             }
             if (sliderValue === null) currentTime = AudioPlayer.getTime(path)
-
-            console.log("interval")
-        }, 100)
+        }, 200)
     }
 
     function setTime(e: any) {
@@ -85,7 +83,7 @@
         if (isRendering) return
 
         const WIDTH = mediaElem.clientWidth || window.innerWidth
-        const HEIGHT = 120
+        const HEIGHT = 80
 
         canvas.width = WIDTH
         canvas.height = HEIGHT
@@ -102,7 +100,7 @@
         // const barWidth = bufferLength ? (WIDTH / bufferLength - padding) * 1.3 : 0
 
         const padding = -0.5
-        const barWidth = (WIDTH / bufferLength - padding) * 1.3
+        const barWidth = (WIDTH / bufferLength - padding) * 1.42 // 1.3
 
         isRendering = true
         function renderFrame() {

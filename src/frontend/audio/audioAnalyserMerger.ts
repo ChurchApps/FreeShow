@@ -1,30 +1,33 @@
 import { get } from "svelte/store"
-import { audioChannels, currentWindow, special } from "../stores"
+import type { AudioChannel } from "../../types/Audio"
+import { OUTPUT } from "../../types/Channels"
+import { audioChannels, currentWindow, outputs } from "../stores"
+import { send } from "../utils/request"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioPlayer } from "./audioPlayer"
-
-type Channel = {
-    volume: number // WIP
-    dB: {
-        value: number
-        min: number
-        max: number
-    }
-}
+import { AudioPlaylist } from "./audioPlaylist"
 
 export class AudioAnalyserMerger {
     static dBmin: number = -80
     static dBmax: number = 0
 
-    private static channels: { [key: string]: Channel[] } = {}
+    private static channels: { [key: string]: AudioChannel[] } = {}
 
     static init() {
         this.timeoutNext()
     }
 
-    static setChannels(id: string, channels: Channel[]) {
-        channels[id] = channels
-        this.timeoutNext()
+    static addChannels(id: string, channels: AudioChannel[]) {
+        this.channels[id] = channels
+        AudioAnalyserMerger.init()
+    }
+
+    static stop() {
+        if (!this.timeout) return
+        clearTimeout(this.timeout)
+        this.timeout = null
+        this.channels = {}
+        audioChannels.set([])
     }
 
     private static timeout: any = null
@@ -42,6 +45,7 @@ export class AudioAnalyserMerger {
             return
         }
 
+        this.checkAudioTime()
         this.mergeAnalysers()
         this.previousMerge = Date.now()
 
@@ -51,13 +55,21 @@ export class AudioAnalyserMerger {
         }, this.updateInterval)
     }
 
+    private static checkAudio = 50
+    private static checkAudioTime() {
+        this.checkAudio++
+        if (this.checkAudio < 10) return
+        this.checkAudio = 0
+
+        AudioPlaylist.checkCrossfade()
+
+        const playing = AudioPlayer.getAllPlaying()
+        playing.forEach((id) => {
+            AudioPlayer.checkIfEnding(id)
+        })
+    }
+
     private static mergeAnalysers() {
-        if (get(currentWindow) !== null) return
-
-        let min: number = this.dBmin
-        let max: number = this.dBmax
-
-        // const volumes: { left: number, right: number } = { left: 0, right: 0 };
         let merged: any[] = []
 
         const channels = this.channels
@@ -69,36 +81,42 @@ export class AudioAnalyserMerger {
 
                 merged[channelIndex].push(channel.dB.value)
 
-                min = Math.min(min, channel.dB.min)
-                max = Math.max(max, channel.dB.max)
-
-                // if (channelIndex === 0) volumes.left = Math.max(volumes.left, channel.volume);
-                // if (channelIndex === 1) volumes.right = Math.max(volumes.right, channel.volume);
+                // min = Math.min(min, channel.dB.min || this.dBmin)
+                // max = Math.max(max, channel.dB.max || this.dBmax)
             })
         })
 
-        let mergedDB = {
-            left: this.mergeDB(merged[0] || [], 0),
-            right: this.mergeDB(merged[1] || [], 1),
-        }
+        const mergedChannels = merged.map((a, i) => ({ dB: { value: this.mergeDB(a, i) } }))
+        audioChannels.set(mergedChannels)
 
-        const volume = { left: 1, right: 1 } // WIP
-        audioChannels.set({ volume, dB: { value: mergedDB, min: this.dBmin, max: this.dBmax } })
+        if (get(currentWindow) === "output") {
+            send(OUTPUT, ["AUDIO_MAIN"], { id: Object.keys(get(outputs))[0], channels: mergedChannels })
+        }
     }
 
     private static mergeDB(array: number[], channelIndex: number) {
         if (!array.length) return this.dBmin
 
         // https://stackoverflow.com/a/22613964
-        let sum = array.reduce((value, number) => (value += Math.pow(10, number / 20)), 0)
+        let avgLinear = array.reduce((sum, dB) => (sum += Math.pow(10, dB / 20)), 0) / array.length
 
-        if (!get(special).preFaderVolumeMeter) {
-            // add gain & volume
-            sum *= AudioPlayer.getVolume() * AudioPlayer.getGain()
-        }
+        // convert back to dB
+        let newDB = Math.log10(avgLinear) * 20
 
-        // return (Math.log(sum) / Math.LN10) * 20
-        return sum > 0 ? this.getExponentiallySmoothedVolume(channelIndex, Math.log10(sum) * 20) : this.dBmin
+        // ensure we don't get an artificial boost for very low values
+        newDB = Math.max(newDB, Math.min(...array))
+
+        // if (!get(special).preFaderVolumeMeter) {
+        // add gain & volume
+        // newDB *= AudioPlayer.getVolume() * AudioPlayer.getGain()
+        // }
+
+        // add any gain value
+        // newDB *= AudioPlayer.getGain()
+
+        // return (Math.log(newDB) / Math.LN10) * 20
+        // return newDB > 0 ? this.getExponentiallySmoothedVolume(channelIndex, Math.log10(newDB) * 20) : this.dBmin
+        return this.getExponentiallySmoothedVolume(channelIndex, newDB)
     }
 
     private static smoothingFactor = 0.5 // 0 < factor <= 1, lower values smooth more

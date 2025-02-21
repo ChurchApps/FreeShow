@@ -5,7 +5,6 @@ import type { TopViews } from "../../types/Tabs"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { menuClick } from "../components/context/menuClick"
 import { addItem } from "../components/edit/scripts/itemHelpers"
-import { clearAudio } from "../components/helpers/audio"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
 import { displayOutputs, getActiveOutputs, refreshOut, setOutput } from "../components/helpers/output"
@@ -47,6 +46,7 @@ import { activeShow } from "./../stores"
 import { hideDisplay, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
+import { clearAudio } from "../audio/audioFading"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -219,7 +219,7 @@ export const previewShortcuts: any = {
         if (!get(outLocked)) setOutput("overlays", [])
     },
     F4: () => {
-        if (!get(outLocked)) clearAudio("", true, false, true)
+        if (!get(outLocked)) clearAudio("", { clearPlaylist: true, commonClear: true })
     },
     F5: () => {
         if (!get(special).disablePresenterControllerKeys) nextSlideIndividual(null)
