@@ -13,8 +13,9 @@ const PCO_API_version = 2
 type PCORequestData = {
     scope: PCOScopes
     endpoint: string
-    // params?: object
+    params?: Record<string, string> // Add params type
 }
+
 export async function pcoRequest(data: PCORequestData): Promise<any> {
     const PCO_ACCESS = await pcoConnect(data.scope)
     if (!PCO_ACCESS) {
@@ -22,7 +23,13 @@ export async function pcoRequest(data: PCORequestData): Promise<any> {
         return null
     }
 
-    const path = `/${data.scope || "services"}/v${PCO_API_version}/${data.endpoint}`
+    // Build the path with query parameters if they exist
+    let path = `/${data.scope || "services"}/v${PCO_API_version}/${data.endpoint}`
+    if (data.params) {
+        const queryParams = new URLSearchParams(data.params).toString()
+        path = `${path}?${queryParams}`
+    }
+
     const headers = { Authorization: `Bearer ${PCO_ACCESS.access_token}` }
 
     return new Promise((resolve) => {
@@ -50,7 +57,11 @@ export async function pcoRequest(data: PCORequestData): Promise<any> {
 const ONE_WEEK_MS = 604800000
 export async function pcoLoadServices(dataPath: string) {
     let typesEndpoint = "service_types"
-    const SERVICE_TYPES = await pcoRequest({ scope: "services", endpoint: typesEndpoint })
+    const SERVICE_TYPES = await pcoRequest({
+        scope: "services",
+        endpoint: typesEndpoint,
+    })
+
     if (!SERVICE_TYPES[0]?.id) return
     toApp(MAIN, { channel: "TOAST", data: "Getting schedules from Planning Center" })
 
@@ -61,15 +72,23 @@ export async function pcoLoadServices(dataPath: string) {
     await Promise.all(
         SERVICE_TYPES.map(async (serviceType: any) => {
             let plansEndpoint = typesEndpoint + `/${serviceType.id}/plans`
-            const SERVICE_PLANS = await pcoRequest({ scope: "services", endpoint: plansEndpoint })
+            const SERVICE_PLANS = await pcoRequest({
+                scope: "services",
+                endpoint: plansEndpoint,
+                params: {
+                    order: "sort_date",
+                    filter: "future",
+                },
+            })
+
             if (!SERVICE_PLANS[0]?.id) return
 
-            // only get plans from today to max a week in the future & with items
+            // Now we only need to filter for the one week window since we're already getting future plans
             const filteredPlans = SERVICE_PLANS.filter(({ attributes: a }: any) => {
                 if (a.items_count === 0) return false
                 let date = new Date(a.sort_date).getTime()
                 let today = Date.now()
-                return date > today && date < today + ONE_WEEK_MS
+                return date < today + ONE_WEEK_MS
             })
 
             await Promise.all(
