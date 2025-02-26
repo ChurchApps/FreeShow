@@ -9,7 +9,7 @@ import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { Emitter, ID, MidiIn, Overlays, ShowList, Shows, Tag, Templates, Timer, Transition } from "../types/Show"
+import type { Emitter, ID, MidiIn, Overlays, ShowList, Shows, ShowType, Tag, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { AudioChannel, Playlist } from "./../types/Audio"
@@ -41,14 +41,14 @@ export const contextActive: Writable<boolean> = writable(false)
 export const topContextActive: Writable<boolean> = writable(false)
 export const quickSearchActive: Writable<boolean> = writable(false)
 export const focusMode: Writable<boolean> = writable(false)
-export const activeFocus: Writable<{ id: string; index?: number }> = writable({ id: "" })
+export const activeFocus: Writable<{ id: string; index?: number; type?: ShowType }> = writable({ id: "" })
 export const activeShow: Writable<null | ShowRef> = writable(null)
 export const activeEdit: Writable<ActiveEdit> = writable({ items: [] })
 export const activeStage: Writable<ActiveStage> = writable({ id: null, items: [] })
 export const activeTimers: Writable<any[]> = writable([])
 export const activeRename: Writable<any> = writable(null)
 export const activeDrawerTab: Writable<DrawerTabIds> = writable("shows")
-export const activeDrawerOnlineTab: Writable<string> = writable("youtube")
+export const activeDrawerMediaSubTab: Writable<string> = writable("youtube")
 export const drawerOpenedInEdit: Writable<boolean> = writable(false)
 export const activeStyle: Writable<string> = writable("")
 export const settingsTab: Writable<SettingsTabs> = writable("general")

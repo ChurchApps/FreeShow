@@ -79,11 +79,11 @@
         disable: () => {
             if ($selected.id === "slide" && $activeShow) {
                 let ref = _show().layouts("active").ref()[0]
-                enabled = ref[$selected.data[0].index]?.data?.disabled || false
+                enabled = ref[$selected.data[0]?.index]?.data?.disabled || false
             } else if ($selected.id === "stage") {
-                enabled = $stageShows[$selected.data[0].id]?.disabled
+                enabled = $stageShows[$selected.data[0]?.id]?.disabled
             } else if ($selected.id === "action") {
-                let action = $midiIn[$selected.data[0].id] || {}
+                let action = $midiIn[$selected.data[0]?.id] || {}
                 if (!action.keypressActivate && !action.customActivation) disabled = true
                 else enabled = action.enabled === false
             }
@@ -93,7 +93,7 @@
         slide_transition: () => {
             if ($selected.id === "slide" && $activeShow) {
                 let ref = _show().layouts("active").ref()[0]
-                enabled = ref[$selected.data[0].index]?.data?.transition || false
+                enabled = ref[$selected.data[0]?.index]?.data?.transition || false
             }
         },
         transition: () => {
@@ -107,7 +107,7 @@
 
                 // $showsCache[$activeShow.id].slides?.[$activeEdit.]?.
                 // let ref = _show().layouts("active").ref()[0]
-                // enabled = ref[$selected.data[0].index]?.data?.transition || false
+                // enabled = ref[$selected.data[0]?.index]?.data?.transition || false
             }
         },
         remove_group: () => {
@@ -123,7 +123,7 @@
             disabled = true
         },
         remove: () => {
-            if ($selected.id !== "show" || _show($selected.data[0].id).get("private") !== true) return
+            if ($selected.id !== "show" || _show($selected.data[0]?.id).get("private") !== true) return
             disabled = true
         },
         undo: () => {

@@ -115,8 +115,8 @@ const actions: any = {
         activeShow.set(null)
         showRecentlyUsedProjects.set(false)
 
-        let firstItem = project.shows[0].id
-        activeFocus.set({ id: firstItem, index: 0 })
+        let firstItem = project.shows[0]
+        if (firstItem) activeFocus.set({ id: firstItem.id, index: 0, type: firstItem.type })
 
         activePage.set("show")
         focusMode.set(!get(focusMode))

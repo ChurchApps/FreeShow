@@ -95,7 +95,7 @@ export function selectProjectShow(select: number | "next" | "previous") {
 
     // set active show in project list
     if (newIndex !== index) {
-        if (get(focusMode)) activeFocus.set({ id: shows[newIndex]?.id, index: newIndex })
+        if (get(focusMode)) activeFocus.set({ id: shows[newIndex].id, index: newIndex, type: shows[newIndex].type })
         else activeShow.set({ ...shows[newIndex], index: newIndex })
     }
 }
@@ -321,7 +321,7 @@ async function goToNextShowInProject(slide, customOutputId) {
 
     // open next item in project (if current is open)
     if (get(activeShow)?.index === projectIndex) {
-        if (get(focusMode)) activeFocus.set({ id: nextShow.id, index: nextShowInProjectIndex })
+        if (get(focusMode)) activeFocus.set({ id: nextShow.id, index: nextShowInProjectIndex, type: nextShow.type })
         else activeShow.set({ ...nextShow, index: nextShowInProjectIndex })
     }
 }
@@ -341,7 +341,7 @@ export function goToNextProjectItem(key: string = "") {
         if (index + 1 < get(projects)[get(activeProject)!]?.shows?.length) index++
         if (index > -1 && index !== currentShow.index) {
             let newShow = get(projects)[get(activeProject)!].shows[index]
-            if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
+            if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
 
             if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
@@ -369,7 +369,7 @@ export function goToPreviousProjectItem(key: string = "") {
         if (index - 1 >= 0) index--
         if (index > -1 && index !== currentShow.index) {
             let newShow = get(projects)[get(activeProject)!].shows[index]
-            if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
+            if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
 
             if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {

@@ -69,7 +69,7 @@
     }
 
     function openAudio(id: string, audio: any) {
-        if ($focusMode) activeFocus.set({ id })
+        if ($focusMode) activeFocus.set({ id, type: "audio" })
         else activeShow.set({ id, type: "audio", data: { isMic: audio.isMic } })
     }
 

@@ -188,10 +188,11 @@ export function getSlides({ bibles, sorted }) {
     bibles.forEach((bible, bibleIndex) => {
         let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
         let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
+        let itemAlignStyle = currentTemplate?.align || ""
         let alignStyle = currentTemplate?.lines?.[1]?.align || currentTemplate?.lines?.[0]?.align || "text-align: left;"
         let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
-        let emptyItem = { lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings
+        let emptyItem = { align: itemAlignStyle, lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings
 
         let slideIndex: number = 0
         slides[slideIndex].push(clone(emptyItem))
@@ -212,7 +213,7 @@ export function getSlides({ bibles, sorted }) {
             if (get(scriptureSettings).verseNumbers) {
                 let size = get(scriptureSettings).numberSize || 50
                 if (i === 0) size *= 1.2
-                let verseNumberStyle = textStyle + "font-size: " + size + "px;color: " + (get(scriptureSettings).numberColor || "#919191")
+                let verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
 
                 slideArr.lines![lineIndex].text.push({
                     value: s + " ",

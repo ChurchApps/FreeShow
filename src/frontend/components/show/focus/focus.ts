@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { ProjectShowRef } from "../../../../types/Projects"
-import { categories, dictionary, playerVideos, showsCache } from "../../../stores"
+import { categories, dictionary, overlays, playerVideos, showsCache } from "../../../stores"
 import { loadShows } from "../../helpers/setShow"
 
 export async function getAllProjectItems(projectShows: ProjectShowRef[]) {
@@ -16,6 +16,9 @@ export async function getAllProjectItems(projectShows: ProjectShowRef[]) {
             a.icon = get(categories)[show.category || ""]?.icon || ""
         } else if (a.type === "audio") {
             a.icon = "music"
+        } else if (a.type === "overlay") {
+            a.name = get(overlays)[a.id]?.name
+            a.icon = "overlays"
         } else if (a.type === "player") {
             a.name = get(playerVideos)[a.id]?.name
         }

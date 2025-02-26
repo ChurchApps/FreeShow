@@ -731,7 +731,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         const allTextColors = [
             ...new Set(
                 item.lines
-                    ?.map((line) => line.text?.map((text) => getStyles(text.style)["color"] || "#FFFFFF"))
+                    ?.map((line) => line.text?.filter((a) => !a.customType).map((text) => getStyles(text.style)["color"] || "#FFFFFF"))
                     .flat()
                     .filter(Boolean)
             ),

@@ -396,7 +396,7 @@
 <CombinedInput>
     <Button style="width: 50%;" on:click={openLog}>
         <Icon id="document" style="margin-left: 0.5em;" right />
-        <p><T id="actions.open_log_file" /></p>
+        <p><T id="actions.open_error_log" /></p>
     </Button>
     <Button on:click={openCache}>
         <Icon id="folder" style="margin-left: 0.5em;" right />

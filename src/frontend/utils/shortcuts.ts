@@ -357,8 +357,8 @@ function createNew() {
 }
 
 function playMedia(e: Event) {
-    if (get(outLocked) || get(focusMode)) return
-    let item = get(activeShow)
+    if (get(outLocked)) return
+    let item = get(focusMode) ? get(activeFocus) : get(activeShow)
 
     let type: ShowType | undefined = item?.type
     if (!item || !type) return
@@ -374,6 +374,6 @@ function playMedia(e: Event) {
         let mediaStyle = getMediaStyle(get(media)[item.id], outputStyle)
         setOutput("background", { type, path: item.id, muted: false, loop: false, ...mediaStyle })
     } else if (type === "audio") {
-        AudioPlayer.start(item.id, { name: item.name || "" })
+        AudioPlayer.start(item.id, { name: (item as any).name || "" })
     }
 }

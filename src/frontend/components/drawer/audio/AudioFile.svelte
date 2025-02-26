@@ -34,7 +34,7 @@
         on:dblclick={(e) => {
             if (e.ctrlKey || e.metaKey) return
 
-            if ($focusMode) activeFocus.set({ id: path })
+            if ($focusMode) activeFocus.set({ id: path, type: "audio" })
             else activeShow.set({ id: path, name, type: "audio" })
         }}
     >

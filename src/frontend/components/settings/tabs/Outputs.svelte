@@ -500,6 +500,7 @@
                         center
                     >
                         {#if output.stageOutput}<Icon id="stage" right />{/if}
+                        {#if output.enabled !== false}<Icon id="check" size={0.7} white right />{/if}
                         <HiddenInput value={output.name} id={"output_" + output.id} on:edit={(e) => updateOutput("name", e.detail.value, output.id)} bind:edit />
                     </Button>
                 </SelectElem>

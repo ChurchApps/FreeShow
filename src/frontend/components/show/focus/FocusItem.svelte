@@ -7,6 +7,7 @@
     import { getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import AudioPreview from "../AudioPreview.svelte"
+    import OverlayPreview from "../overlay/OverlayPreview.svelte"
     import PdfPreview from "../pdf/PdfPreview.svelte"
     import Slides from "../Slides.svelte"
     import VideoShow from "../VideoShow.svelte"
@@ -52,6 +53,10 @@
     {#if show.notes}
         <p class="notes">{show.notes}</p>
     {/if}
+{:else if show.type === "overlay"}
+    <div style="height: 250px;">
+        <OverlayPreview {show} />
+    </div>
 {:else if type === "pdf"}
     <PdfPreview {show} />
 {:else}

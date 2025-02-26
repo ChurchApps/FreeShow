@@ -128,13 +128,23 @@
     </div>
 
     <h6><T id="edit.arrange_items" /></h6>
-    <div class="items" style="display: flex;flex-direction: column;">
+    <div
+        class="items {invertedItemList.length > 1 ? 'context #items_list_item' : ''}"
+        style="display: flex;flex-direction: column;"
+        on:mousedown={(e) => {
+            if (e.button !== 2) return
+            const index = Number((e.target?.closest(".item_button")?.id || "").slice(1))
+            activeEdit.set({ ...$activeEdit, items: [index] })
+        }}
+    >
         {#if invertedItemList.length}
             {#each invertedItemList as currentItem, i}
                 {@const index = invertedItemList.length - i - 1}
                 {@const type = getType(currentItem)}
                 <!-- TODO: context menu (delete / move to top/bottom / etc.) -->
                 <Button
+                    id="#{index}"
+                    class="item_button"
                     style="width: 100%;justify-content: space-between;"
                     active={$activeEdit.items.includes(index)}
                     dark

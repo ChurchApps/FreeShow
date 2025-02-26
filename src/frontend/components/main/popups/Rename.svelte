@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeShow, playerVideos, selected, showsCache } from "../../../stores"
+    import { activePopup, activeShow, selected, showsCache } from "../../../stores"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -82,16 +82,6 @@
             })
         },
         group: () => renameAction.slide(),
-        overlay: () => {
-            $selected.data.forEach((id) => {
-                history({ id: "UPDATE", newData: { key: "name", data: groupName }, oldData: { id }, location: { page: "drawer", id: "overlay_name" } })
-            })
-        },
-        template: () => {
-            $selected.data.forEach((id) => {
-                history({ id: "UPDATE", newData: { key: "name", data: groupName }, oldData: { id }, location: { page: "drawer", id: "template_name" } })
-            })
-        },
         chord: () => {
             let chord = $selected.data[0]
             let lines = _show().slides([chord.slideId]).items([chord.itemIndex]).get("lines")[0][0]
@@ -109,15 +99,6 @@
                 .slides([chord.slideId])
                 .items([chord.itemIndex])
                 .set({ key: "lines", values: [newLines] })
-        },
-        player: () => {
-            playerVideos.update((a) => {
-                $selected.data.forEach((id) => {
-                    a[id].name = groupName
-                })
-
-                return a
-            })
         },
     }
 

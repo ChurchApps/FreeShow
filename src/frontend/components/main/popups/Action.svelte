@@ -62,6 +62,7 @@
     function removeEmptyAction(actionId = "") {
         let ref = _show().layouts("active").ref()[0] || []
         let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
+        if (!indexes) return
 
         let newActions: any[] = []
         let changed: boolean = false

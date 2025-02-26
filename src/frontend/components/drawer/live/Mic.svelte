@@ -110,7 +110,7 @@
         on:dblclick={(e) => {
             if (e.ctrlKey || e.metaKey) return
 
-            if ($focusMode) activeFocus.set({ id: mic.id })
+            if ($focusMode) activeFocus.set({ id: mic.id, type: "audio" })
             else activeShow.set({ id: mic.id, name: mic.name, type: "audio", data: { isMic: true } })
         }}
     >
