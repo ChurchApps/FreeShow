@@ -23,6 +23,10 @@ jobs:
               # npm ci is better, but requires package-lock.json file
               run: npm install
 
+            # Needed for OPUS
+            - name: Rebuild Native Modules
+              run: npx electron-rebuild
+
             - name: Build and release app
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

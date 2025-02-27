@@ -68,6 +68,10 @@
                 "filter": [
                     "connector-*"
                 ]
+            },
+            {
+                "from": "node_modules/@discordjs/opus",
+                "to": "app.asar.unpacked/node_modules/@discordjs/opus"
             }
         ],
         "mac": {
