@@ -8,6 +8,7 @@ import { gain, media, outLocked, playingAudio, special, volume } from "../stores
 import { AudioAnalyser } from "./audioAnalyser"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
 import { AudioPlaylist } from "./audioPlaylist"
+import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 
 type AudioMetadata = {
     name: string
@@ -156,6 +157,8 @@ export class AudioPlayer {
 
         updatePlayingStore(id, "paused", false)
         this.getAudio(id)?.play()
+
+        AudioAnalyserMerger.init()
     }
 
     static pause(id: string) {
@@ -163,6 +166,10 @@ export class AudioPlayer {
 
         updatePlayingStore(id, "paused", true)
         this.getAudio(id)?.pause()
+
+        if (!AudioAnalyser.shouldAnalyse()) {
+            AudioAnalyserMerger.stop()
+        }
     }
 
     static stop(id: string) {

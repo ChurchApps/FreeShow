@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import { clearAudio } from "../../audio/audioFading"
 import {
     activeEdit,
     activePopup,
@@ -25,7 +26,6 @@ import { clone } from "../helpers/array"
 import { clearOverlayTimer, clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { _show } from "../helpers/shows"
 import { stopSlideRecording } from "../helpers/slideRecording"
-import { clearAudio } from "../../audio/audioFading"
 
 export function clearAll(button: boolean = false) {
     if (get(outLocked)) return

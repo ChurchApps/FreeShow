@@ -90,6 +90,7 @@ export function receivedMidi(msg) {
     if (!msgAction) return
 
     let action: Midi = convertOldMidiToNewAction(msgAction)
+    if (action.enabled === false) return
 
     // get index
     if (!msg.values) msg.values = {}

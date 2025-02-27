@@ -111,6 +111,7 @@ import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { AudioAnalyser } from "../audio/audioAnalyser"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -362,24 +363,33 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     OUTPUTS: (a: any) => outputs.set(a),
-    RESTART: () => restartOutputs(),
+    RESTART: ({ id }) => restartOutputs(id),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     AUDIO_MAIN: async (data: any) => {
         if (!data.id) return
 
-        AudioAnalyserMerger.addChannels(data.id, data.channels)
+        if (data.channels) AudioAnalyserMerger.addChannels(data.id, data.channels)
 
         playingVideos.update((a) => {
-            let existing = a.findIndex((a) => a.id === data.id && a.location === "output")
+            let existing = a.findIndex((a) => a.id === data.id)
+
+            if (data.stop) {
+                if (existing > -1) a.splice(existing, 1)
+                return a
+            }
 
             if (existing > -1) {
-                a[existing] = data
+                a[existing] = { ...data, location: "output" }
             } else if (get(outputs)[data.id]?.out?.background) {
                 a.push({ location: "output", ...data })
             }
 
             return a
         })
+
+        if (data.stop && !AudioAnalyser.shouldAnalyse()) {
+            AudioAnalyserMerger.stop()
+        }
     },
     MOVE: (data) => {
         outputs.update((a) => {

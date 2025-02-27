@@ -17,6 +17,7 @@
     export let firstActionId: string = ""
     export let type: "input" | "output" = "input"
     export let playSlide: boolean = false
+    export let simple: boolean = false
     $: midi = value
 
     $: hasActions = !!firstActionId
@@ -118,7 +119,7 @@
     {/if}
 </CombinedInput>
 
-{#if type !== "output"}
+{#if type !== "output" && !simple}
     <br />
 {/if}
 

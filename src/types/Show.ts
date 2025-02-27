@@ -276,6 +276,7 @@ export interface Midi {
     shows?: any[] // ??
     customActivation?: string
     keypressActivate?: string
+    enabled?: boolean // should customActivation trigger
     midiEnabled?: boolean
     midi?: MidiValues
 }

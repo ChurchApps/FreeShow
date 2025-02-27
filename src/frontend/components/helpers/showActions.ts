@@ -929,6 +929,7 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
         showId = outputRef.id
 
         let layoutRef = _show(showId).layouts([outputRef.layout]).ref()[0]
+        if (!layoutRef) return
         slideId = layoutRef[outputRef.index]?.id || ""
     }
 

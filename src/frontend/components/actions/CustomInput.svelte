@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
-    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, outputs, popupData, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
+    import { activePopup, audioPlaylists, audioStreams, dictionary, groups, midiIn, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
     import T from "../helpers/T.svelte"
     import { convertToOptions, keysToID, sortByName } from "../helpers/array"
@@ -45,7 +45,7 @@
 
     $: if (list && actionId === "start_show" && !value?.id) openSelectShow()
     function openSelectShow() {
-        popupData.set({ ...$popupData, action: "select_show", revert: $activePopup, active: value?.id, actionIndex })
+        popupData.set({ ...$popupData, action: "select_show", revert: "action", active: value?.id, actionIndex })
         activePopup.set("select_show")
     }
 
@@ -60,7 +60,9 @@
     }
 
     const getOptions = {
+        id_select_project: () => convertToOptions($projects),
         id_select_group: () => sortByName(Object.keys($groups).map((id) => ({ id, name: $dictionary.groups?.[$groups[id].name] || $groups[id].name }))),
+        id_select_overlay: () => convertToOptions($overlays),
         id_select_stage_layout: () => convertToOptions($stageShows),
         stage_outputs: () => [{ id: null, name: "—" }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput))],
         start_audio_stream: () => convertToOptions($audioStreams),
@@ -117,7 +119,7 @@
 {:else if inputId === "rest"}
     <RestValues value={value || {}} on:change={(e) => updateValue("", e)} />
 {:else if inputId === "emitter"}
-    <ChooseEmitter {value} on:change={(e) => updateValue("", e)} />
+    <ChooseEmitter value={value || {}} on:change={(e) => updateValue("", e)} />
 {:else}
     <CombinedInput style={inputId === "midi" ? "flex-direction: column;" : ""}>
         {#if inputId === "index"}

@@ -26,8 +26,10 @@ import {
     moveStageConnection,
     playMedia,
     rearrangeGroups,
+    selectOverlayById,
     selectOverlayByIndex,
     selectOverlayByName,
+    selectProjectById,
     selectProjectByIndex,
     selectShowByName,
     selectSlideByIndex,
@@ -128,6 +130,7 @@ export type API_emitter = {
 // BC = Integrated to Bitfocus Companion.
 export const API_ACTIONS = {
     // PROJECT
+    id_select_project: (data: API_id) => selectProjectById(data.id),
     index_select_project: (data: API_index) => selectProjectByIndex(data.index), // BC
     next_project_item: () => selectProjectShow("next"), // BC
     previous_project_item: () => selectProjectShow("previous"), // BC
@@ -150,15 +153,7 @@ export const API_ACTIONS = {
     index_select_slide: (data: API_slide_index) => selectSlideByIndex(data), // BC
     name_select_slide: (data: API_strval) => selectSlideByName(data.value), // BC
     id_select_group: (data: API_id) => gotoGroup(data.id), // BC
-    lock_output: (data: API_boolval) => toggleLock(data.value), // BC
-    toggle_output_windows: () => displayOutputs(), // BC
-    // WIP disable stage ?
-    // WIP disable NDI ?
-    // index_select_layout | name_select_layout
-    start_scripture: (data: API_scripture) => startScripture(data),
-
-    // STAGE
-    id_select_stage_layout: (data: API_id) => moveStageConnection(data.id), // BC
+    start_slide_recording: () => playSlideRecording(),
 
     // CLEAR
     restore_output: () => restoreOutput(), // BC
@@ -182,6 +177,24 @@ export const API_ACTIONS = {
     // OVERLAYS
     index_select_overlay: (data: API_index) => selectOverlayByIndex(data.index), // BC
     name_select_overlay: (data: API_strval) => selectOverlayByName(data.value), // BC
+    id_select_overlay: (data: API_id) => selectOverlayById(data.id),
+
+    // SCRIPTURE
+    start_scripture: (data: API_scripture) => startScripture(data),
+
+    // OUTPUT
+    lock_output: (data: API_boolval) => toggleLock(data.value), // BC
+    toggle_output_windows: () => displayOutputs(), // BC
+    toggle_output: (data: API_id) => toggleOutput(data.id),
+    // WIP disable stage ?
+    // WIP disable NDI ?
+    id_select_output_style: (data: API_id) => changeOutputStyle({ outputStyle: data.id }), // BC
+    change_output_style: (data: API_output_style) => changeOutputStyle(data), // BC
+    change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),
+    change_transition: (data: API_transition) => updateTransition(data), // BC
+
+    // STAGE
+    id_select_stage_layout: (data: API_id) => moveStageConnection(data.id), // BC
 
     // AUDIO
     // play / pause playing audio
@@ -202,24 +215,19 @@ export const API_ACTIONS = {
     id_start_timer: (data: API_id) => startTimerById(data.id),
     start_slide_timers: (data: API_slide) => playSlideTimers(data),
     stop_timers: () => stopTimers(),
-    start_slide_recording: () => playSlideRecording(),
 
-    // VISUAL
-    id_select_output_style: (data: API_id) => changeOutputStyle({ outputStyle: data.id }), // BC
-    change_output_style: (data: API_output_style) => changeOutputStyle(data), // BC
-    change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),
-    change_transition: (data: API_transition) => updateTransition(data), // BC
-
-    // OTHER
+    // FUNCTIONS
     change_variable: (data: API_variable) => changeVariable(data), // BC
     start_trigger: (data: API_id) => activateTriggerSync(data.id),
+
+    // EMIT
     send_midi: (data: API_midi) => sendMidi(data),
+    send_rest_command: (data: API_rest_command) => sendRestCommandSync(data), // DEPRECATED, use emit_action instead
+    emit_action: (data: API_emitter) => emitData(data),
+
+    // ACTION
     run_action: (data: API_id) => runActionId(data.id),
     toggle_action: (data: API_toggle) => toggleAction(data),
-    toggle_output: (data: API_id) => toggleOutput(data.id),
-    send_rest_command: (data: API_rest_command) => sendRestCommandSync(data), // DEPRECATED, use emit_action instead
-
-    emit_action: (data: API_emitter) => emitData(data),
 
     // GET
     get_shows: () => getShows(),

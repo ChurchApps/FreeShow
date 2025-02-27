@@ -86,7 +86,6 @@
     }
     $: if (playingInOutput && Math.abs(videoTime - $videosTime[outputId]) > 1) updateVideoTime()
     function updateVideoTime() {
-        console.log("UPDATE")
         // get and set actual time
         videoTime = $videosTime[outputId]
     }

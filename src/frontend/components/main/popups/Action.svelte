@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import { activePopup, activeShow, drawerTabsData, midiIn, popupData, showsCache, templates, timers } from "../../../stores"
+    import { activePopup, activeShow, dictionary, drawerTabsData, midiIn, popupData, showsCache, templates, timers } from "../../../stores"
     import { translate } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
@@ -279,7 +279,6 @@
     }
 
     // custom activations
-    const customActivations = [{ id: "", name: "—" }, ...customActionActivations]
     $: customActivation = action.customActivation || (action.startupEnabled ? "startup" : "") || ""
     $: specificActivation = action.specificActivation || ""
 
@@ -294,32 +293,215 @@
     }
 
     // keys
-    const keys = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
-    let shortcuts: any[] = [{ name: "—", id: "" }, ...keys.map((key) => ({ name: key }))]
+    $: existingShortcuts = Object.values($midiIn)
+        .map((a) => a.keypressActivate || "")
+        .filter(Boolean)
+
+    let actionSelector: any = null
+    let actionActivationSelector: boolean = false
+    let activationMenuOpened: boolean = false
+
+    // pre 1.3.9
+    $: if (action?.midiEnabled && !customActivation) {
+        updateValue("customActivation", "midi_signal_received")
+    }
 </script>
 
-<div style="min-width: 45vw;min-height: 50vh;">
+<!-- min-height: 50vh; -->
+<div style="min-width: 45vw;">
     {#if mode === "slide" || mode === "template"}
         <CreateAction mainId={id} actionId={action.triggers?.[0] || ""} existingActions={action.triggers || []} actionValue={action.actionValues?.[action.triggers?.[0] || ""]} on:change={changeAction} list />
     {:else}
-        {#if mode !== "slide_midi"}
-            <CombinedInput>
+        {#if actionActivationSelector}
+            <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (actionActivationSelector = false)}>
+                <Icon id="back" size={2} white />
+            </Button>
+
+            <div class="buttons">
+                {#each customActionActivations as activation}
+                    <Button
+                        on:click={() => {
+                            updateValue("customActivation", activation.id)
+                            activationMenuOpened = true
+                            actionActivationSelector = false
+
+                            // pre 1.3.9
+                            if (activation.id === "midi_signal_received") updateValue("midiEnabled", true)
+                        }}
+                        outline={customActivation === activation.id}
+                        active={customActivation === activation.id}
+                        style="width: 100%;"
+                        bold={false}
+                    >
+                        <!-- <Icon id={activation.icon} right /> -->
+                        <p><T id={activation.name} /></p>
+                    </Button>
+                {/each}
+            </div>
+            <!-- <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} /> -->
+        {:else if actionSelector !== null}
+            <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (actionSelector = null)}>
+                <Icon id="back" size={2} white />
+            </Button>
+
+            <CreateAction
+                mainId={id}
+                actionId={actionSelector.id}
+                existingActions={action.triggers}
+                actionValue={action.actionValues?.[actionSelector.id] || {}}
+                on:change={(e) => {
+                    changeAction(e, actionSelector.index)
+                    actionSelector = null
+                }}
+                list
+                full
+            />
+        {:else if mode !== "slide_midi"}
+            <CombinedInput textWidth={38}>
                 <p><T id="midi.name" /></p>
-                <TextInput value={action.name} on:change={(e) => updateValue("name", e)} />
+                {#key action.name}
+                    <TextInput value={action.name} on:change={(e) => updateValue("name", e)} autofocus={!action.name} />
+                {/key}
+            </CombinedInput>
+        {/if}
+
+        <!-- if not slide specific trigger action -->
+        {#if !mode && !actionSelector && !actionActivationSelector}
+            <CombinedInput textWidth={38}>
+                <p><T id="midi.activate_keypress" /></p>
+                <Button
+                    disabled={!$midiIn[id]}
+                    on:click={() => {
+                        popupData.set({
+                            ...$popupData,
+                            id,
+                            mode: "action",
+                            revert: "action",
+                            value: action.keypressActivate,
+                            existingShortcuts,
+                        })
+                        // popupData.set({ id: group.id, value: group.shortcut, existingShortcuts: g.filter((a) => a.id !== group.id && a.shortcut).map((a) => a.shortcut), mode: "global_group", trigger: (id) => changeGroup(id, group.id, "shortcut") })
+                        activePopup.set("assign_shortcut")
+                    }}
+                    style="width: 100%;"
+                    bold={!action.keypressActivate}
+                >
+                    <div style="display: flex;align-items: center;padding: 0;">
+                        <Icon id="shortcut" style="margin-left: 0.5em;" right />
+                        <p>
+                            {#if action.keypressActivate}
+                                <span style="text-transform: uppercase;display: flex;align-items: center;">{action.keypressActivate}</span>
+                            {:else}
+                                <T id="popup.assign_shortcut" />
+                            {/if}
+                        </p>
+                    </div>
+                </Button>
+                {#if action.keypressActivate}
+                    <Button title={$dictionary.actions?.remove} on:click={() => updateValue("keypressActivate", "")} redHover>
+                        <Icon id="close" size={1.2} white />
+                    </Button>
+                {/if}
             </CombinedInput>
 
+            <!-- only used to disable customActionActivation if any -->
+            {#if customActivation || action.enabled === false}
+                <CombinedInput textWidth={38} style="border-top: 2px solid var(--primary-lighter);">
+                    <p><T id="settings.enabled" /></p>
+                    <div class="alignRight">
+                        <Checkbox checked={action.enabled ?? true} on:change={(e) => updateValue("enabled", e, true)} />
+                    </div>
+                </CombinedInput>
+            {/if}
+
+            <CombinedInput textWidth={38} style={activationMenuOpened && customActionActivations.find((a) => a.id === customActivation)?.inputs ? "border-bottom: 4px solid var(--primary-lighter);" : ""}>
+                <p><T id="actions.custom_activation" /></p>
+                <Button disabled={!$midiIn[id] || action.enabled === false} on:click={() => (actionActivationSelector = true)} title={$dictionary.actions?.set_custom_activation} bold={!customActivation}>
+                    <div style="display: flex;align-items: center;padding: 0;">
+                        <Icon id="trigger" style="margin-left: 0.5em;" right />
+                        <p>
+                            {#if customActivation}
+                                <T id={customActionActivations.find((a) => a.id === customActivation)?.name || ""} />
+                            {:else}
+                                <T id="actions.set_custom_activation" />
+                            {/if}
+                        </p>
+                    </div>
+                </Button>
+                {#if customActivation}
+                    <Button
+                        disabled={action.enabled === false}
+                        title={$dictionary.remove?.general}
+                        on:click={() => {
+                            updateValue("customActivation", "")
+                            // pre 1.3.9
+                            updateValue("midiEnabled", false)
+                        }}
+                        redHover
+                    >
+                        <Icon id="close" size={1.2} white />
+                    </Button>
+                {/if}
+
+                {#if customActionActivations.find((a) => a.id === customActivation)?.inputs}
+                    <Button class="submenu_open" on:click={() => (activationMenuOpened = !activationMenuOpened)}>
+                        {#if activationMenuOpened}
+                            <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+                        {:else}
+                            <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                        {/if}
+                    </Button>
+                {/if}
+            </CombinedInput>
+
+            {#if activationMenuOpened}
+                {#if customActivation === "timer_end"}
+                    <CombinedInput textWidth={38}>
+                        <p><T id={specificActivations[customActivation]?.name} /></p>
+                        <Dropdown
+                            options={getSpecificActivation(customActivation)}
+                            value={getSpecificActivation(customActivation).find((a) => (specificActivation ? `${customActivation}__${a.id}` === specificActivation : a.id === ""))?.name || "—"}
+                            on:click={(e) => updateValue("specificActivation", e.detail.id ? `${customActivation}__${e.detail.id}` : "")}
+                        />
+                    </CombinedInput>
+                {:else if customActivation === "midi_signal_received"}
+                    <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide={mode === "slide_midi"} simple />
+                {/if}
+            {/if}
+        {/if}
+
+        {#if mode !== "slide_midi" && !actionSelector && !actionActivationSelector}
+            <!-- {#if action.triggers?.length}<hr />{/if} -->
+            <hr />
+
             <!-- multiple actions -->
-            <div class="actions" style="margin: 10px 0;">
+            <div class="actions">
                 {#each action.triggers as actionId, i}
                     {#key actionId}
-                        <CreateAction mainId={id} {actionId} existingActions={action.triggers} actionValue={action.actionValues?.[actionId]} actionNameIndex={i + 1} on:change={(e) => changeAction(e, i)} />
+                        <CreateAction
+                            mainId={id}
+                            {actionId}
+                            existingActions={action.triggers}
+                            actionValue={action.actionValues?.[actionId]}
+                            actionNameIndex={i + 1}
+                            on:change={(e) => changeAction(e, i)}
+                            on:choose={() => (actionSelector = { id: actionId, index: i })}
+                            choosePopup
+                        />
                     {/key}
                 {/each}
                 {#if !action.triggers?.length || addTrigger}
-                    <CreateAction actionId="" existingActions={action.triggers || []} on:change={changeAction} />
+                    <CreateAction actionId="" existingActions={action.triggers || []} on:change={changeAction} on:choose={() => (actionSelector = { id: "" })} choosePopup />
                 {:else}
-                    <CombinedInput style="border-top: 2px solid var(--primary-lighter);">
-                        <Button on:click={() => (addTrigger = true)} style="width: 100%;" center>
+                    <CombinedInput textWidth={38} style="border-top: 2px solid var(--primary-lighter);">
+                        <Button
+                            on:click={() => {
+                                addTrigger = true
+                                actionSelector = { id: "" }
+                            }}
+                            style="width: 100%;"
+                            center
+                        >
                             <Icon id="add" right />
                             <T id="settings.add" />
                         </Button>
@@ -328,52 +510,7 @@
             </div>
         {/if}
 
-        <!-- if not slide specific trigger action -->
-        {#if !mode}
-            <!-- Custom Activations -->
-            <hr />
-
-            <CombinedInput>
-                <p><T id="actions.custom_activation" /></p>
-                <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} />
-            </CombinedInput>
-            {#if customActivation === "timer_end"}
-                <CombinedInput>
-                    <p><T id={specificActivations[customActivation]?.name} /></p>
-                    <Dropdown
-                        options={getSpecificActivation(customActivation)}
-                        value={getSpecificActivation(customActivation).find((a) => (specificActivation ? `${customActivation}__${a.id}` === specificActivation : a.id === ""))?.name || "—"}
-                        on:click={(e) => updateValue("specificActivation", e.detail.id ? `${customActivation}__${e.detail.id}` : "")}
-                    />
-                </CombinedInput>
-            {/if}
-
-            <!-- can be activated by Keypress -->
-            <CombinedInput>
-                <p><T id="midi.activate_keypress" /></p>
-                <Dropdown options={shortcuts} value={shortcuts.find((a) => a.name === action.keypressActivate)?.name || "—"} on:click={(e) => updateValue("keypressActivate", e.detail.id ?? e.detail.name)} />
-            </CombinedInput>
-
-            <!-- only used to disable keypressActivate/customActionActivation if any -->
-            {#if action.keypressActivate || customActivation || action.enabled === false}
-                <CombinedInput>
-                    <p><T id="settings.enabled" /></p>
-                    <div class="alignRight">
-                        <Checkbox checked={action.enabled ?? true} on:change={(e) => updateValue("enabled", e, true)} />
-                    </div>
-                </CombinedInput>
-            {/if}
-
-            <!-- can be activated by MIDI input signal -->
-            <CombinedInput>
-                <p><T id="midi.activate" /></p>
-                <div class="alignRight">
-                    <Checkbox checked={action.midiEnabled} on:change={(e) => updateValue("midiEnabled", e, true)} />
-                </div>
-            </CombinedInput>
-        {/if}
-
-        {#if action.midiEnabled}
+        {#if action.midiEnabled && customActivation !== "midi_signal_received" && !actionSelector && !actionActivationSelector}
             {#if mode === "slide_midi"}
                 <p style="opacity: 0.8;font-size: 0.8em;text-align: center;margin-bottom: 20px;"><T id="actions.play_on_midi_tip" /></p>
             {:else}

@@ -33,6 +33,7 @@ import {
     transitionData,
     usageLog,
 } from "../../stores"
+import { trackScriptureUsage } from "../../utils/analytics"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
@@ -47,7 +48,6 @@ import { getExtension, getFileName, removeExtension } from "./media"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
-import { trackScriptureUsage } from "../../utils/analytics"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let forceKey = e.ctrlKey || e.metaKey
@@ -645,12 +645,13 @@ export async function clearPlayingVideo(clearOutput: string = "") {
             playingVideos.update((a) => {
                 let existing = -1
                 do {
-                    existing = a.findIndex((a) => a.location === "output")
+                    existing = a.findIndex((a) => (clearOutput ? a.id === clearOutput : a.location === "output") || a.location === "preview")
                     if (existing > -1) a.splice(existing, 1)
                 } while (existing > -1)
 
                 return a
             })
+            // playingVideos.set([])
 
             //   let video = null
             let videoData = {
@@ -660,6 +661,11 @@ export async function clearPlayingVideo(clearOutput: string = "") {
                 muted: false,
                 loop: false,
             }
+
+            // if (!AudioAnalyser.shouldAnalyse()) {
+            //     // wait for video to clear in output
+            //     setTimeout(() => AudioAnalyserMerger.stop(), 5000)
+            // }
 
             // send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
 

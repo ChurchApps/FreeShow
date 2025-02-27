@@ -5,7 +5,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { allOutputs, media, outputs, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
+    import { allOutputs, currentWindow, media, outputs, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
@@ -184,10 +184,13 @@
 
     // AUDIO
 
-    $: if (!mirror && video) analyseVideo()
+    $: if ($currentWindow === "output" && video) analyseVideo()
 
     onDestroy(() => {
-        if (id) AudioAnalyser.detach(id)
+        if ($currentWindow !== "output" || !id) return
+
+        playingVideos.set([])
+        AudioAnalyser.detach(id)
     })
 
     // analyse video audio
@@ -199,7 +202,7 @@
         }
         if (!video) return
 
-        playingVideos.set([{ video }])
+        playingVideos.set([{ id, video }])
         AudioAnalyser.attach(id, video)
         AudioAnalyser.recorderActivate()
     }

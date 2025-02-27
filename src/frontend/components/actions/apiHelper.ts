@@ -83,6 +83,12 @@ export function gotoGroup(dataGroupId: string) {
     playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId })
 }
 
+export function selectProjectById(id: string) {
+    if (!get(projects)[id]) return
+
+    activeProject.set(id)
+}
+
 export function selectProjectByIndex(index: number) {
     if (index < 0) return
 
@@ -157,7 +163,7 @@ export function selectOverlayByIndex(index: number) {
     let overlayId = sortedOverlays[index]?.id
     if (!overlayId) return // newToast("$toast.action_no_id": action_id)
 
-    setOutput("overlays", overlayId, true)
+    setOutput("overlays", overlayId)
 }
 export function selectOverlayByName(name: string) {
     if (get(outLocked)) return
@@ -166,7 +172,12 @@ export function selectOverlayByName(name: string) {
     let overlayId = sortedOverlays[0]?.id
     if (!overlayId) return
 
-    setOutput("overlays", overlayId, true)
+    setOutput("overlays", overlayId)
+}
+export function selectOverlayById(id: string) {
+    if (get(outLocked)) return
+
+    setOutput("overlays", id)
 }
 
 export function toggleLock(value?: boolean) {

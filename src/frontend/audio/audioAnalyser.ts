@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
-import { AUDIO } from "../../types/Channels"
+import { AUDIO, OUTPUT } from "../../types/Channels"
 import { currentWindow, outputs, playingAudio, playingVideos, special } from "../stores"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
@@ -48,13 +48,22 @@ export class AudioAnalyser {
         this.disconnectDestination(source)
         delete this.sources[id]
 
+        if (get(currentWindow) !== "output") return
+
         if (!this.shouldAnalyse()) {
             AudioAnalyserMerger.stop()
+            send(OUTPUT, ["AUDIO_MAIN"], { id: Object.keys(get(outputs))[0], stop: true })
         }
     }
 
     static shouldAnalyse() {
-        return Object.keys(get(playingAudio)).length || Object.keys(get(playingVideos)).length
+        return this.getActiveAudio() || this.getActiveVideos()
+    }
+    private static getActiveAudio() {
+        return !!Object.values(get(playingAudio)).filter((a) => !a.paused).length
+    }
+    private static getActiveVideos() {
+        return !!Object.values(get(playingVideos)).filter((a) => !a.paused && !a.muted).length
     }
 
     // https://stackoverflow.com/questions/48930799/connecting-nodes-with-each-other-with-the-web-audio-api
