@@ -1,17 +1,18 @@
 <script lang="ts">
+    import { AudioAnalyserMerger } from "../../../audio/audioAnalyserMerger"
     import { activeDrawerTab, activePage, audioChannels, drawer } from "../../../stores"
     import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
 
     export let advanced: boolean = false
-    // const numbers: number = 8
-    const numbers: number[] = [-10, -15, -20, -25, -30, -50, -70, -85, -100]
+    // const numbers: number[] = [0, -3, -6, -9, -12, -15, -21, -36, -51, -63, -80]
+    const numbers: number[] = [0, -3, -6, -9, -12, -15, -20, -35, -50, -64, -80]
 
-    function getDBValue(dB: any, side: "left" | "right") {
-        if (!dB) return 0
+    function getDBValue(dB: any) {
+        if (!dB) return AudioAnalyserMerger.dBmax
 
-        let value: number = dB.value[side]
-        const max: number = dB.max
-        const min: number = dB.min
+        let value: number = dB.value
+        const max: number = dB.max || AudioAnalyserMerger.dBmax
+        const min: number = dB.min || AudioAnalyserMerger.dBmin
 
         if (value > max) value = max
         if (value < min) value = min
@@ -35,31 +36,15 @@
         }
     }
 
-    // function getDBFromPercentage(percentage: number) {
-    //     const dB = $audioChannels.dB
-
-    //     const max: number = dB?.max ?? -10
-    //     const min: number = dB?.min ?? -100
-
-    //     percentage = 1 - transformRange(percentage)
-    //     return (max - min) * percentage + min
-    // }
-
     function getPercentageFromDB(dB: number) {
-        const max: number = $audioChannels.dB?.max ?? -10
-        const min: number = $audioChannels.dB?.min ?? -100
+        const max: number = $audioChannels[0]?.dB?.max ?? AudioAnalyserMerger.dBmax
+        const min: number = $audioChannels[0]?.dB?.min ?? AudioAnalyserMerger.dBmin
 
         // invert
-        // dB = max + min - dB
         let percentage = (dB - min) / (max - min)
         percentage = 1 - percentage
-        // console.log(dB, percentage, transformRange(percentage))
+
         return transformRange(percentage) * 100
-
-        // const percentage = 1 - transformRange(percentage)
-        // return (max - min) * percentage + min
-
-        // (transformRange(1 - 1 / (i * -1))) * 100
     }
 
     function openAudioMix() {
@@ -75,10 +60,10 @@
     <div class="main advanced">
         <!-- WIP volume dots!!! instead of transition.. -->
         <span class="left">
-            <div style="height: {100 - getDBValue($audioChannels.dB, 'left')}%" />
+            <div style="height: {100 - getDBValue($audioChannels[0]?.dB)}%" />
         </span>
         <span class="right">
-            <div style="height: {100 - getDBValue($audioChannels.dB, 'right')}%" />
+            <div style="height: {100 - getDBValue($audioChannels[1]?.dB)}%" />
         </span>
 
         <!-- <div class="lines">
@@ -95,7 +80,7 @@
         </div> -->
         <div class="lines" style="padding: 0 5px;">
             {#each numbers as i}
-                <p class="absolute" style="top: {getPercentageFromDB(i)}%;" class:start={i === numbers[0]} class:end={i === numbers[numbers.length - 1]}>{i <= -100 ? "-∞" : i}</p>
+                <p class="absolute" style="top: {getPercentageFromDB(i)}%;" class:start={i === numbers[0]} class:end={i === numbers[numbers.length - 1]}>{i <= -80 ? "-∞" : i}</p>
             {/each}
         </div>
     </div>
@@ -108,10 +93,10 @@
             <div style="height: {100 - ($audioChannels.volume?.right || 0)}%" />
         </span> -->
         <span class="left">
-            <div style="height: {100 - getDBValue($audioChannels.dB, 'left')}%" />
+            <div style="height: {100 - getDBValue($audioChannels[0]?.dB)}%" />
         </span>
         <span class="right">
-            <div style="height: {100 - getDBValue($audioChannels.dB, 'right')}%" />
+            <div style="height: {100 - getDBValue($audioChannels[1]?.dB)}%" />
         </span>
     </div>
 {/if}
@@ -189,6 +174,7 @@
     }
 
     span div {
+        /* transition: height 0.05s ease 0s; */
         transition: height 0.05s ease 0s;
         /* background-color: transparent; */
         background-color: var(--primary-darker);

@@ -67,7 +67,7 @@
     function openPreview() {
         if (!background) return
 
-        if ($focusMode) activeFocus.set({ id: path })
+        if ($focusMode) activeFocus.set({ id: path, type })
         else activeShow.set({ id: path, type })
     }
 

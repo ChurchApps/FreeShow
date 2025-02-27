@@ -108,7 +108,7 @@ export class OutputVisibility {
         if (!captureEnabled) return
 
         console.log("RESTARTING OUTPUT:", data.id)
-        toApp(OUTPUT, { channel: "RESTART" })
+        toApp(OUTPUT, { channel: "RESTART", data: { id: data.id } })
     }
 
     /*

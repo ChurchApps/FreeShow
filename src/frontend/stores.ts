@@ -9,12 +9,13 @@ import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
 import type { ActiveEdit, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { Emitter, ID, MidiIn, Overlays, ShowList, Shows, Tag, Templates, Timer, Transition } from "../types/Show"
+import type { Emitter, ID, MidiIn, Overlays, ShowList, Shows, ShowType, Tag, Templates, Timer, Transition } from "../types/Show"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
-import type { Channels, Playlist } from "./../types/Audio"
+import type { AudioChannel, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
+import type { AudioData } from "./audio/audioPlayer"
 import type { API_metronome } from "./components/actions/api"
 import type { History } from "./components/helpers/history"
 
@@ -40,14 +41,14 @@ export const contextActive: Writable<boolean> = writable(false)
 export const topContextActive: Writable<boolean> = writable(false)
 export const quickSearchActive: Writable<boolean> = writable(false)
 export const focusMode: Writable<boolean> = writable(false)
-export const activeFocus: Writable<{ id: string; index?: number }> = writable({ id: "" })
+export const activeFocus: Writable<{ id: string; index?: number; type?: ShowType }> = writable({ id: "" })
 export const activeShow: Writable<null | ShowRef> = writable(null)
 export const activeEdit: Writable<ActiveEdit> = writable({ items: [] })
 export const activeStage: Writable<ActiveStage> = writable({ id: null, items: [] })
 export const activeTimers: Writable<any[]> = writable([])
 export const activeRename: Writable<any> = writable(null)
 export const activeDrawerTab: Writable<DrawerTabIds> = writable("shows")
-export const activeDrawerOnlineTab: Writable<string> = writable("youtube")
+export const activeDrawerMediaSubTab: Writable<string> = writable("youtube")
 export const drawerOpenedInEdit: Writable<boolean> = writable(false)
 export const activeStyle: Writable<string> = writable("")
 export const settingsTab: Writable<SettingsTabs> = writable("general")
@@ -78,8 +79,8 @@ export const nextActionEventStart: Writable<any> = writable({})
 export const nextActionEventPaused: Writable<boolean> = writable(false)
 
 // AUDIO
-export const audioChannels: Writable<Channels> = writable({})
-export const playingAudio: Writable<{ [key: string]: any }> = writable({})
+export const audioChannels: Writable<AudioChannel[]> = writable([])
+export const playingAudio: Writable<{ [key: string]: AudioData }> = writable({})
 export const playingVideos: Writable<any[]> = writable([])
 export const activePlaylist: Writable<any> = writable(null)
 export const playingMetronome: Writable<boolean> = writable(false)
@@ -210,7 +211,7 @@ export const overlays: Writable<Overlays> = writable({}) // {default}
 
 // AUDIO
 export const audioFolders: Writable<Categories> = writable({}) // {default}
-export const audioStreams: Writable<any> = writable({}) // {}
+export const audioStreams: Writable<{ [key: string]: any }> = writable({}) // {}
 export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}) // {}
 export const volume: Writable<number> = writable(1) // 1
 export const gain: Writable<number> = writable(1) // 1

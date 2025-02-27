@@ -4,11 +4,11 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { MediaStyle } from "../../../../types/Main"
     import type { OutBackground, Transition } from "../../../../types/Show"
-    import { allOutputs, audioChannels, media, outputs, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
+    import { AudioAnalyser } from "../../../audio/audioAnalyser"
+    import { allOutputs, currentWindow, media, outputs, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
-    import { analyseAudio, getAnalyser } from "../../helpers/audio"
     import { getMediaStyle } from "../../helpers/media"
     import Player from "../../system/Player.svelte"
     import Camera from "../Camera.svelte"
@@ -184,40 +184,27 @@
 
     // AUDIO
 
-    // analyse and send to main if window is output
-    $: if (!mirror && $audioChannels && video !== null) updateVideo()
-    let updateCount = 0
-    let previousChannels: string = JSON.stringify({ left: 0, right: 0 })
-    function updateVideo() {
-        updateCount++
-        if (updateCount < 2) return
-        updateCount = 0
+    $: if ($currentWindow === "output" && video) analyseVideo()
 
-        let current = JSON.stringify($audioChannels.volume)
-        if (previousChannels === current) return
-        previousChannels = current
+    onDestroy(() => {
+        if ($currentWindow !== "output" || !id) return
 
-        send(OUTPUT, ["AUDIO_MAIN"], { id: outputId, channels: $audioChannels, paused: videoData.paused })
-    }
-    $: if (!mirror && video !== null) setTimeout(analyseVideo, 100)
+        playingVideos.set([])
+        AudioAnalyser.detach(id)
+    })
 
     // analyse video audio
     let video: any = null
-    let currentAnalysedElem: any = null
+    let previousPath = id
     async function analyseVideo() {
-        if (!video) return
-        let currentAnalyser: any = null
-
-        // Failed to execute 'createMediaElementSource' on 'AudioContext': HTMLMediaElement already connected previously to a different MediaElementSourceNode.
-        if (currentAnalysedElem !== video) {
-            currentAnalyser = await getAnalyser(video)
-            currentAnalysedElem = video
+        if (previousPath && previousPath !== id) {
+            AudioAnalyser.detach(id)
         }
-        if (!currentAnalyser) return
+        if (!video) return
 
-        // WIP multiple outputs & analysers
-        playingVideos.set([{ video, analyser: currentAnalyser }])
-        analyseAudio()
+        playingVideos.set([{ id, video }])
+        AudioAnalyser.attach(id, video)
+        AudioAnalyser.recorderActivate()
     }
 </script>
 

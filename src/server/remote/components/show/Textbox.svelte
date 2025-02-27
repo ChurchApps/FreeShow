@@ -61,9 +61,15 @@
 
         fontSize = autosize(elem, { type, textQuery, defaultFontSize, maxFontSize })
     }
+
+    function getCustomStyle(style: string) {
+        // let outputResolution = // get actual output resolution
+        // style = percentageStylePos(style, outputResolution)
+        return style
+    }
 </script>
 
-<div class="item" style={item.style} bind:this={itemElem}>
+<div class="item" style={getCustomStyle(item.style)} bind:this={itemElem}>
     {#if item.lines}
         <div class="align" style={item.align}>
             <div class="lines" style={lineGap ? `gap: ${lineGap}px;` : ""}>

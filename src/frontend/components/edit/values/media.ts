@@ -53,6 +53,19 @@ export const videoEdit = [
         value: 0,
         values: { max: 100000 },
     },
+    {
+        name: "clock.type",
+        id: "videoType",
+        input: "dropdown",
+        value: "",
+        values: {
+            options: [
+                { id: "", name: "$:example.default:$" },
+                { id: "background", name: "$:preview.background:$" }, // muted, looping
+                { id: "foreground", name: "$:preview.foreground:$" }, // unmuted, not looping, will display even when the "Background" layer is turned off.
+            ],
+        },
+    },
 ]
 
 export const mediaFilters: Box = {

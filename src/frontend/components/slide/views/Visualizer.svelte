@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { currentWindow, playingAudio, playingVideos, visualizerData } from "../../../stores"
+    import { currentWindow, visualizerData } from "../../../stores"
     import { send } from "../../../utils/request"
+    import { AudioAnalyser } from "../../../audio/audioAnalyser"
 
     export let item: any
     export let preview: boolean = false
@@ -12,8 +13,9 @@
     // visualizer
     // TODO: videos & mics
     // WIP circles: https://medium.com/swlh/building-a-audio-visualizer-with-javascript-324b8d420e7
-    let analysers: any[] = []
-    $: analysers = [...Object.values($playingAudio), ...$playingVideos]
+    let analysers: any[] = AudioAnalyser.getAnalysers()
+    // WIP get video analysers from outputs
+    // $: analysers = [...Object.values($playingAudio), ...$playingVideos]
 
     $: if (($visualizerData || analysers?.length) && canvas && item) visualizer()
     $: if (ctx && canvas && !$visualizerData) ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -46,23 +48,14 @@
         let WIDTH = canvas.width
         let HEIGHT = canvas.height
 
-        let channels: any[] = []
         let bufferLengths: any[] = []
-        let dataArrays: Uint8Array[] = []
 
-        if (!$visualizerData) {
-            let leftChannels = analysers.map((a) => a.analyser?.left)
-            let rightChannels = analysers.map((a) => a.analyser?.right)
-            channels = [...leftChannels, ...rightChannels]
+        const bufferLength = analysers[0].frequencyBinCount // 128
+        const maxHeightValue = analysers[0].fftSize // 256
+        if (!bufferLength || !maxHeightValue) return
 
-            // remove empty
-            channels = channels.filter((a) => a)
+        const dataArrays: Uint8Array[] = analysers.map(() => new Uint8Array(bufferLength))
 
-            bufferLengths = channels.map((a) => a.frequencyBinCount)
-            dataArrays = bufferLengths.map((a) => new Uint8Array(a))
-        }
-
-        let bufferLength = $visualizerData ? $visualizerData.buffers : bufferLengths[0]
         let barWidth = (WIDTH / bufferLength) * 1.3 - padding
         let barHeight
 
@@ -97,7 +90,8 @@
             if (count > 3) {
                 count = 0
 
-                channels.map((a, i) => a.getByteFrequencyData(dataArrays[i]))
+                // update frequency data for all analysers
+                analysers.forEach((analyser, i) => analyser.getByteFrequencyData(dataArrays[i]))
 
                 let bars: any[] = []
                 for (let i = 0; i < bufferLengths[0]; i++) {

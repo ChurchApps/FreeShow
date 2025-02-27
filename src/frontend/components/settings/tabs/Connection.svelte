@@ -5,16 +5,10 @@
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, keysToID, sortByName } from "../../helpers/array"
-    import { checkWindowCapture, getActiveOutputs } from "../../helpers/output"
+    import { checkWindowCapture } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
-
-    const setRemotePassword = (e: any) => remotePassword.set(e.target.value)
 
     let ip = "localhost"
     let listenerId = "IP_ADDRESS"
@@ -50,20 +44,11 @@
 
     const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
 
-    function updatePort(e: any, id: string) {
-        let port = Number(e.detail)
-        if (Object.values($ports).includes(port)) return
-        ports.update((a) => {
-            a[id] = port
-            return a
-        })
-    }
-
     function toggleServer(e: any, id: string) {
-        let value = !e.target.checked
+        let value = e.target.checked
 
         disabledServers.update((a) => {
-            a[id] = value
+            a[id] = !value
             return a
         })
 
@@ -75,7 +60,7 @@
                 })
             }
 
-            checkWindowCapture()
+            if (value) checkWindowCapture()
         }
     }
 
@@ -91,26 +76,6 @@
         else send(MAIN, ["WEBSOCKET_STOP"])
     }
 
-    // output
-    $: outputsList = getList(clone($outputs))
-    function getList(outputs) {
-        let list = keysToID(outputs).filter((a) => !a.isKeyOutput && a.enabled === true)
-        return sortByName(list)
-    }
-
-    function setOutputId(e: any) {
-        let outputId = e.detail.id
-
-        serverData.update((a) => {
-            if (!a.output_stream) a.output_stream = {}
-            a.output_stream.outputId = outputId
-
-            return a
-        })
-    }
-
-    $: enableOutputSelector = ($serverData?.output_stream?.outputId && $outputs[$serverData.output_stream.outputId]) || (getActiveOutputs($outputs, false, true).length > 1 && $disabledServers.output_stream === false)
-
     function restart() {
         send(MAIN, ["START"], { ports: $ports, max: $maxConnections, disabled: $disabledServers })
     }
@@ -122,13 +87,13 @@
     $: console.log($connections)
 
     const servers = [
-        { id: "remote", name: "RemoteShow", defaultPort: 5510, icon: "connection", enabledByDefault: true },
-        { id: "stage", name: "StageShow", defaultPort: 5511, icon: "stage", enabledByDefault: true },
-        { id: "controller", name: "ControlShow", defaultPort: 5512, icon: "connection", enabledByDefault: false },
-        { id: "output_stream", name: "OutputShow", defaultPort: 5513, icon: "stage", enabledByDefault: false },
+        { id: "remote", name: "RemoteShow", icon: "connection", enabledByDefault: true },
+        { id: "stage", name: "StageShow", icon: "stage", enabledByDefault: true },
+        { id: "controller", name: "ControlShow", icon: "connection", enabledByDefault: false },
+        { id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false },
         // Bitfocus Companion (WebSocket/REST)
-        { id: "companion", name: "WebSocket/REST/OSC (Companion)", defaultPort: 5505, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" },
-        // { id: "rest", name: "REST Listener", defaultPort: 5506, icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },
+        { id: "companion", name: "API", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" },
+        // { id: "rest", name: "REST Listener", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },
     ]
     // Camera
     // Answer / Guess / Poll
@@ -155,15 +120,10 @@
     {@const disabled = server.id === "companion" ? $companion.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
     {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
     <CombinedInput>
-        <span style="flex: 1;">
+        <span style="width: 100%;">
             <Button
                 style="width: 100%;"
                 on:click={() => {
-                    if (server.url) {
-                        send(MAIN, ["URL"], server.url)
-                        return
-                    }
-
                     popupData.set({ ip, id: server.id })
                     activePopup.set("connect")
                 }}
@@ -173,51 +133,21 @@
                     <Icon id={server.icon} size={1.1} right />
                     <p style="min-width: fit-content;padding-right: 0;">
                         {server.name}
+                        {#if server.id === "companion"}<span style="border: none;opacity: 0.8;font-size: 0.9em;padding-left: 15px;" class="connections">WebSocket/REST/OSC/Companion</span>{/if}
                         {#if connections}<span style="border: none;" class="connections">{connections}</span>{/if}
-                        {#if server.url}<span style="margin-left: 5px;border: none;display: inline-flex;align-items: center;"><Icon id="launch" white /></span>{/if}
                     </p>
                 </div>
             </Button>
         </span>
-        <span style="display: flex;">
-            <span style="flex: 1;">
-                <span class="alignLeft">
-                    {#if server.id === "companion"}
-                        <Checkbox checked={$companion.enabled === true} on:change={toggleCompanion} />
-                    {:else}
-                        <Checkbox checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
-                    {/if}
-                </span>
-            </span>
-            <span style="display: flex;flex: 1;">
-                <span style="display: flex;align-items: center;padding: 0 10px;white-space:nowrap;"><T id="settings.port" />:</span>
-                <NumberInput value={$ports[server.id] || server.defaultPort} on:change={(e) => updatePort(e, server.id)} min={1025} max={65535} buttons={false} />
-            </span>
+        <span class="alignRight" style="padding-left: 10px;">
+            {#if server.id === "companion"}
+                <Checkbox checked={$companion.enabled === true} on:change={toggleCompanion} />
+            {:else}
+                <Checkbox checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
+            {/if}
         </span>
     </CombinedInput>
 {/each}
-
-<br />
-
-<CombinedInput>
-    <p><T id="settings.max_connections" /></p>
-    <NumberInput value={$maxConnections} on:change={(e) => maxConnections.set(e.detail)} max={100} />
-</CombinedInput>
-
-{#if $disabledServers.remote !== true}
-    <CombinedInput>
-        <p>RemoteShow <T id="settings.password" /></p>
-        <TextInput style="max-width: 50%;" value={$remotePassword} light on:change={setRemotePassword} />
-    </CombinedInput>
-{/if}
-
-{#if enableOutputSelector}
-    <CombinedInput>
-        <p>OutputShow <T id="midi.output" /></p>
-        <Dropdown value={outputsList.find((a) => a.id === $serverData?.output_stream?.outputId)?.name || "—"} options={outputsList} on:click={setOutputId} />
-    </CombinedInput>
-{/if}
-<!-- TODO: OutputShow set output... -->
 
 <!-- Planning Center -->
 <h3>Planning Center</h3>

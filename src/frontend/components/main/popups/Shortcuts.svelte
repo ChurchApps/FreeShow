@@ -21,7 +21,7 @@
         "preview._lock": `${ctrl} + l`,
         "actions.mute": `${ctrl} + m`,
         "new.create": `${ctrl} + n`,
-        "actions.toggle_output": `${ctrl} + o`,
+        "actions.toggle_output_windows": `${ctrl} + o`,
         // "new.project": `${ctrl} + p`,
         // "this_is_default_mac_close!": `${ctrl} + q`,
         "preview._update": `${ctrl} + r`,

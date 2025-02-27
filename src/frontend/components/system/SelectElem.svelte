@@ -136,6 +136,8 @@
         if (e.shiftKey && (shiftRange.length || $selected.data[0]?.index !== undefined)) {
             const searchKeys = ["id", "index", "path"]
             let lastSelected = $selected.data[$selected.data.length - 1]
+            if (!lastSelected) return
+
             let lastSelectedIndex = shiftRange.length ? shiftRange.findLastIndex((a) => searchKeys.find((key) => lastSelected[key] !== undefined && lastSelected[key] === a[key])) : lastSelected.index
             let newIndex = shiftRange.length ? shiftRange.findIndex((a) => searchKeys.find((key) => data[key] !== undefined && data[key] === a[key])) : data.index
             let lowestNumber = Math.min(lastSelectedIndex, newIndex) + 1

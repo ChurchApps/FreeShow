@@ -63,6 +63,7 @@
             edits.video[1].value = currentMedia.volume ?? 100
             edits.video[2].value = currentMedia.fromTime || 0
             edits.video[3].value = currentMedia.toTime || edits.video[3].value
+            edits.video[4].value = currentMedia?.videoType || ""
         }
 
         // update filters
@@ -76,7 +77,7 @@
     }
 
     function reset() {
-        let deleteKeys: string[] = ["flipped", "flippedY", "fit", "speed", "fromTime", "toTime"]
+        let deleteKeys: string[] = ["flipped", "flippedY", "fit", "speed", "volume", "fromTime", "toTime", "videoType"]
 
         // reset
         if (active === "filters") deleteKeys = ["filter"]

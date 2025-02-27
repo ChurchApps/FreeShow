@@ -4,6 +4,8 @@ import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
+import { AudioAnalyser } from "../../audio/audioAnalyser"
+import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
 import {
     activeRename,
     categories,
@@ -31,6 +33,7 @@ import {
     transitionData,
     usageLog,
 } from "../../stores"
+import { trackScriptureUsage } from "../../utils/analytics"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
@@ -41,12 +44,10 @@ import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import type { EditInput } from "../edit/values/boxes"
 import { clearSlide } from "../output/clear"
 import { clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
-import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "./audio"
 import { getExtension, getFileName, removeExtension } from "./media"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
-import { trackScriptureUsage } from "../../utils/analytics"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let forceKey = e.ctrlKey || e.metaKey
@@ -476,6 +477,8 @@ function trimPixelValue(value: any) {
 
 export function checkWindowCapture(startup: boolean = false) {
     getActiveOutputs(get(outputs), false, true, true).forEach((a) => shouldBeCaptured(a, startup))
+
+    AudioAnalyser.recorderActivate()
 }
 
 // NDI | OutputShow | Stage CurrentOutput
@@ -642,12 +645,13 @@ export async function clearPlayingVideo(clearOutput: string = "") {
             playingVideos.update((a) => {
                 let existing = -1
                 do {
-                    existing = a.findIndex((a) => a.location === "output")
+                    existing = a.findIndex((a) => (clearOutput ? a.id === clearOutput : a.location === "output") || a.location === "preview")
                     if (existing > -1) a.splice(existing, 1)
                 } while (existing > -1)
 
                 return a
             })
+            // playingVideos.set([])
 
             //   let video = null
             let videoData = {
@@ -657,6 +661,11 @@ export async function clearPlayingVideo(clearOutput: string = "") {
                 muted: false,
                 loop: false,
             }
+
+            // if (!AudioAnalyser.shouldAnalyse()) {
+            //     // wait for video to clear in output
+            //     setTimeout(() => AudioAnalyserMerger.stop(), 5000)
+            // }
 
             // send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
 
@@ -728,7 +737,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         const allTextColors = [
             ...new Set(
                 item.lines
-                    ?.map((line) => line.text?.map((text) => getStyles(text.style)["color"] || "#FFFFFF"))
+                    ?.map((line) => line.text?.filter((a) => !a.customType).map((text) => getStyles(text.style)["color"] || "#FFFFFF"))
                     .flat()
                     .filter(Boolean)
             ),

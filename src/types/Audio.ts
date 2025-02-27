@@ -6,11 +6,10 @@ export interface Playlist {
     crossfade?: number
 }
 
-export interface Channels {
-    volume?: { left: number; right: number }
-    dB?: {
-        value: { left: number; right: number }
-        min: number
-        max: number
+export interface AudioChannel {
+    dB: {
+        value: number
+        min?: number
+        max?: number
     }
 }

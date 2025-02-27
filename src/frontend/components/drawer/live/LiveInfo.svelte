@@ -1,9 +1,11 @@
 <script lang="ts">
-    import { activeRecording, currentRecordingStream } from "../../../stores"
+    import { activeDrawerMediaSubTab, activeRecording, currentRecordingStream } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import { mediaRecorderIsPaused, stopMediaRecorder, toggleMediaRecorder } from "./recorder"
+
+    $: active = $activeDrawerMediaSubTab
 
     let videoElem
     $: if ($currentRecordingStream && videoElem) {
@@ -42,7 +44,7 @@
             <T id="actions.export_recording" />
         </Button>
     </div>
-{:else}
+{:else if active === "screens" || active === "windows"}
     <div class="scroll" style="padding: 10px;">
         <T id="empty.recording" />
     </div>

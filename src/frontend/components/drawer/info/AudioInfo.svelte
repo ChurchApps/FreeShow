@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../../types/Tabs"
+    import { AudioPlayer } from "../../../audio/audioPlayer"
     import { dictionary, playingMetronome, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { updateVolume } from "../../helpers/audio"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
@@ -31,7 +31,7 @@
             return a
         })
 
-        if (!value && key === "allowGaining") updateVolume(1, true)
+        if (!value && key === "allowGaining") AudioPlayer.updateVolume()
     }
 
     // WIP add once electron is updated to >24
@@ -89,12 +89,12 @@
             </div>
         </CombinedInput>
 
-        <CombinedInput textWidth={70}>
+        <!-- <CombinedInput textWidth={70}>
             <p title={$dictionary.audio?.pre_fader_volume_meter}><T id="audio.pre_fader_volume_meter" /></p>
             <div class="alignRight">
                 <Checkbox checked={$special.preFaderVolumeMeter || false} on:change={(e) => updateSpecial(isChecked(e), "preFaderVolumeMeter")} />
             </div>
-        </CombinedInput>
+        </CombinedInput> -->
 
         <CombinedInput>
             <p title={$dictionary.audio?.custom_output}><T id="audio.custom_output" /></p>

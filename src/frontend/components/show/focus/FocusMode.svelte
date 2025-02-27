@@ -85,7 +85,10 @@
 
         // set to activeFocus
         let index = Number(focusedId.split("_")[2])
-        activeFocus.set({ id: project.shows[index].id, index })
+        let projectItem = project.shows[index]
+        if (!projectItem) return
+
+        activeFocus.set({ id: projectItem.id, index, type: projectItem.type })
     }
 
     function getId(text: string) {

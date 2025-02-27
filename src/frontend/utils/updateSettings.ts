@@ -155,29 +155,37 @@ export function updateSettings(data: any) {
     window.api.send("LOADED")
 }
 
-export function restartOutputs() {
+let videoDataUpdating: boolean = false
+export function restartOutputs(id: string = "") {
     let data = clone(videosData)
     let time = clone(videosTime)
 
     let allOutputs = keysToID(get(outputs))
-    allOutputs
-        .filter((a) => a.enabled)
-        .forEach((output: Output) => {
-            // key output styling
-            if (output.isKeyOutput) {
-                let parentOutput = allOutputs.find((a) => a.keyOutput === output.id)
-                if (parentOutput) output = { ...parentOutput, ...output }
-            }
+    let outputIds = id ? [id] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
 
-            // , rate: get(special).previewRate || "auto"
-            send(OUTPUT, ["CREATE"], output)
-        })
+    outputIds.forEach((id: string) => {
+        let output: Output = get(outputs)[id]
+        if (!output) return
+
+        // key output styling
+        if (output.isKeyOutput) {
+            let parentOutput = allOutputs.find((a) => a.keyOutput === id)
+            if (parentOutput) output = { ...parentOutput, ...output, id }
+        }
+
+        // , rate: get(special).previewRate || "auto"
+        send(OUTPUT, ["CREATE"], { ...output, id })
+    })
+
+    if (videoDataUpdating) return
+    videoDataUpdating = true
 
     // restore output video data when recreating window
     // WIP values are empty when sent
     setTimeout(() => {
         send(OUTPUT, ["DATA"], data)
         send(OUTPUT, ["TIME"], time)
+        videoDataUpdating = false
     }, 2200)
 }
 

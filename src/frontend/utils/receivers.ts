@@ -2,11 +2,11 @@ import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, IMPORT, MAIN, NDI, OPEN_FILE, OPEN_FOLDER, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE, STORE } from "../../types/Channels"
 import type { Project } from "../../types/Projects"
 import type { ClientMessage } from "../../types/Socket"
+import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
 import { triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { clone } from "../components/helpers/array"
-import { analyseAudio } from "../components/helpers/audio"
 import { addDrawerFolder } from "../components/helpers/dropActions"
 import { history } from "../components/helpers/history"
 import { captureCanvas, setMediaTracks } from "../components/helpers/media"
@@ -44,7 +44,6 @@ import {
     activeTimers,
     alertMessage,
     allOutputs,
-    audioChannels,
     closeAd,
     colorbars,
     currentOutputSettings,
@@ -112,6 +111,7 @@ import { closeApp, initializeClosing, save, saveComplete } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
+import { AudioAnalyser } from "../audio/audioAnalyser"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -363,29 +363,33 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     OUTPUTS: (a: any) => outputs.set(a),
-    RESTART: () => restartOutputs(),
+    RESTART: ({ id }) => restartOutputs(id),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     AUDIO_MAIN: async (data: any) => {
-        if (!data.id) {
-            // WIP merge with existing (audio.ts)
-            audioChannels.set(data.channels)
-            return
-        }
+        if (!data.id) return
+
+        if (data.channels) AudioAnalyserMerger.addChannels(data.id, data.channels)
 
         playingVideos.update((a) => {
-            let existing = a.findIndex((a) => a.id === data.id && a.location === "output")
+            let existing = a.findIndex((a) => a.id === data.id)
+
+            if (data.stop) {
+                if (existing > -1) a.splice(existing, 1)
+                return a
+            }
 
             if (existing > -1) {
-                let wasPaused = a[existing].paused
                 a[existing] = { ...data, location: "output" }
-                if (wasPaused === true && !data.paused) analyseAudio()
             } else if (get(outputs)[data.id]?.out?.background) {
                 a.push({ location: "output", ...data })
-                analyseAudio()
             }
 
             return a
         })
+
+        if (data.stop && !AudioAnalyser.shouldAnalyse()) {
+            AudioAnalyserMerger.stop()
+        }
     },
     MOVE: (data) => {
         outputs.update((a) => {

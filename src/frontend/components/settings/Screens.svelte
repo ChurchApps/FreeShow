@@ -342,7 +342,7 @@
                 <!-- {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)} -->
                 <div style="position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;left: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;">
                     {#if currentScreen.screen}
-                        <span style="z-index: 2;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);">{screens.findIndex((a) => a.id.toString() === currentScreen.screen) + 1 || ""}</span>
+                        <span style="z-index: 2;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);">{screens.findIndex((a) => JSON.stringify(currentScreen.bounds) === JSON.stringify(a.bounds)) + 1 || ""}</span>
                     {/if}
                     <!-- Current screen position -->
                     <div class="screen noClick" style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}"></div>

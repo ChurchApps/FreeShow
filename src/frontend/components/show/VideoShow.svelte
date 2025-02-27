@@ -6,7 +6,6 @@
     import { awaitRequest, send } from "../../utils/request"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import { analyseAudio, getAnalyser } from "../helpers/audio"
     import { enableSubtitle, getExtension, getFileName, removeExtension } from "../helpers/media"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
@@ -87,7 +86,6 @@
     }
     $: if (playingInOutput && Math.abs(videoTime - $videosTime[outputId]) > 1) updateVideoTime()
     function updateVideoTime() {
-        console.log("UPDATE")
         // get and set actual time
         videoTime = $videosTime[outputId]
     }
@@ -142,14 +140,16 @@
             if (!playingInOutput) videoTime = 0
             hasLoaded = false
 
-            let analyser = await getAnalyser(video)
-            if (!analyser) return
+            // let analyser = await getAnalyser(video)
+            // if (!analyser) return
 
             playingVideos.update((a) => {
-                a.push({ id: showId, location: "preview", analyser })
+                a.push({ id: showId, location: "preview" })
                 return a
             })
-            analyseAudio()
+
+            // WIP analyser
+            // analyseAudio()
         }
     }
     // $: if (videoData) {
@@ -166,7 +166,10 @@
     function playVideo(startAt: number = 0) {
         if ($outLocked) return
 
-        let bg: any = { type, startAt, muted: false, loop: false, ...mediaStyle }
+        let videoType = mediaStyle.videoType || ""
+        let loop = videoType === "background" ? true : false
+        let muted = videoType === "background" ? true : false
+        let bg: any = { type, startAt, muted, loop, ...mediaStyle, ignoreLayer: videoType === "foreground" }
 
         if (type === "player") bg.id = showId
         else {

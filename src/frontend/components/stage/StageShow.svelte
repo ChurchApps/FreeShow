@@ -115,6 +115,9 @@
 
         zoomOpened = false
     }
+
+    $: currentOutput = $outputs[outputId] || {}
+    $: backgroundColor = currentOutput.transparent ? "transparent" : show.settings?.color || "#000000"
 </script>
 
 <svelte:window on:mousedown={mousedown} on:wheel={wheel} />
@@ -124,7 +127,7 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if stageShowId}
             <!-- TODO: stage resolution... -->
-            <Zoomed background={show.settings?.color || "#000000"} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio disableStyle hideOverflow={!edit} center={zoom >= 1}>
+            <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio disableStyle hideOverflow={!edit} center={zoom >= 1}>
                 <!-- TODO: snapping to top left... -->
                 {#if edit}
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />

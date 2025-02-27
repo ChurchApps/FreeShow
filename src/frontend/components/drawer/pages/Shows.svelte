@@ -118,7 +118,7 @@
         }
 
         if (id) {
-            if ($focusMode) activeFocus.set({ id })
+            if ($focusMode) activeFocus.set({ id, type: "show" })
             else activeShow.set({ id, type: "show" })
         }
     }
