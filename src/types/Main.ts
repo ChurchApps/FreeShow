@@ -103,6 +103,7 @@ export interface MediaStyle {
     speed?: string
     fromTime?: number
     toTime?: number
+    videoType?: string // default | "background" | "foreground"
     favourite?: boolean
     audio?: boolean
     loop?: boolean // audio
@@ -145,6 +146,7 @@ export type Popups =
     | "trigger"
     | "audio_stream"
     | "aspect_ratio"
+    | "max_lines"
     | "transition"
     | "media_fit"
     | "metadata_display"

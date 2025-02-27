@@ -66,14 +66,17 @@
                                 <p style="opacity: 0.8;display: flex;gap: 20px;" class:deactivated={action.enabled === false}>
                                     {#if action.customActivation || action.startupEnabled}
                                         <span>
-                                            <T id={customActionActivations.find((a) => a.id === action.customActivation)?.name || "actions.custom_activation"} />
+                                            {#key action.customActivation}
+                                                <T id={customActionActivations.find((a) => a.id === action.customActivation)?.name || "actions.custom_activation"} />
+                                            {/key}
                                         </span>
                                     {/if}
 
                                     {#if action.midiEnabled && action.midi}
                                         <span>
                                             <!-- ({action.midi.input || "—"}) -->
-                                            <T id="midi.note" />: {action.midi.values?.note} - {midiToNote(action.midi.values?.note)},
+                                            <!-- <T id="midi.note" />: {action.midi.values?.note} - {midiToNote(action.midi.values?.note)}, -->
+                                            <T id="midi.note" />: {midiToNote(action.midi.values?.note)},
                                             {#if action.midi.values?.velocity > -1}<T id="midi.velocity" />: {action.midi.values?.velocity},{/if}
                                             <T id="midi.channel" />: {action.midi.values?.channel}
                                             {#if action.midi.type !== "noteon"}
@@ -140,6 +143,7 @@
     .key {
         color: var(--secondary);
         font-weight: bold;
+        text-transform: uppercase;
     }
 
     .deactivated {

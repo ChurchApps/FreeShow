@@ -45,8 +45,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         let triggerData = data[actionId] || {}
         if (midiIndex > -1) triggerData = { ...triggerData, index: midiIndex }
 
-        let multiple = actionId.indexOf(":")
-        if (multiple > -1) actionId = actionId.slice(0, multiple)
+        actionId = getActionTriggerId(actionId)
 
         if (actionId === "wait") {
             await wait(triggerData.number * 1000)

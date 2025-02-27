@@ -102,23 +102,24 @@ export class OutputLifecycle {
         await CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
 
-        if (!OutputHelper.getOutput(id)) return
-        if (OutputHelper.getOutput(id).window.isDestroyed()) {
+        const output = OutputHelper.getOutput(id)
+        if (!output) return
+
+        if (output.window.isDestroyed()) {
             OutputHelper.deleteOutput(id)
             if (reopen) OutputLifecycle.createOutput(reopen)
             return
         }
 
-        OutputHelper.getOutput(id).window.once("closed", () => {
+        output.window.once("closed", () => {
             OutputHelper.deleteOutput(id)
             if (reopen) OutputLifecycle.createOutput(reopen)
         })
 
         try {
-            const output = OutputHelper.getOutput(id)
             // this has to be called to actually remove the process!
-            output?.window?.removeAllListeners("close")
-            output?.window?.close()
+            output.window.removeAllListeners("close")
+            output.window.close()
             await wait(80)
         } catch (error) {
             console.log(error)

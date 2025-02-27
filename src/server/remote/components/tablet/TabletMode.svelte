@@ -239,7 +239,7 @@
             <Center faded>{translate("empty.show", $dictionary)}</Center>
         {/if}
     {:else if $active.type === "image" || $active.type === "video"}
-        <Media />
+        <Media tablet />
     {:else}
         <p style="text-transform: capitalize;">{$active.type}</p>
     {/if}

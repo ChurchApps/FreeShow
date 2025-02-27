@@ -69,7 +69,7 @@
                 setOutput("background", { id: video.rid, type: "player", muted: false, loop: false, startAt: 0 })
             }}
             on:dblclick={() => {
-                if ($focusMode) activeFocus.set({ id: video.rid })
+                if ($focusMode) activeFocus.set({ id: video.rid, type: "player" })
                 else activeShow.set({ id: video.rid, type: "player" })
             }}
         >

@@ -55,6 +55,7 @@ import SelectTemplate from "../components/main/popups/SelectTemplate.svelte"
 import MetadataDisplay from "../components/main/popups/MetadataDisplay.svelte"
 import AspectRatio from "../components/main/popups/AspectRatio.svelte"
 import ManageMetadata from "../components/main/popups/ManageMetadata.svelte"
+import MaxLines from "../components/main/popups/MaxLines.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -81,6 +82,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     trigger: Trigger,
     audio_stream: AudioStream,
     aspect_ratio: AspectRatio,
+    max_lines: MaxLines,
     transition: Transition,
     media_fit: MediaFit,
     metadata_display: MetadataDisplay,

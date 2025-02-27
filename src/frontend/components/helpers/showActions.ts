@@ -1,6 +1,9 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { OutSlide, Slide } from "../../../types/Show"
+import { clearAudio } from "../../audio/audioFading"
+import { AudioMicrophone } from "../../audio/audioMicrophone"
+import { AudioPlayer } from "../../audio/audioPlayer"
 import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
@@ -13,7 +16,6 @@ import {
     activeProject,
     activeShow,
     allOutputs,
-    audioStreams,
     currentWindow,
     driveData,
     focusMode,
@@ -38,7 +40,6 @@ import {
     videosTime,
 } from "./../../stores"
 import { clone } from "./array"
-import { clearAudio, playAudio, startMicrophone } from "./audio"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
@@ -94,7 +95,7 @@ export function selectProjectShow(select: number | "next" | "previous") {
 
     // set active show in project list
     if (newIndex !== index) {
-        if (get(focusMode)) activeFocus.set({ id: shows[newIndex]?.id, index: newIndex })
+        if (get(focusMode)) activeFocus.set({ id: shows[newIndex].id, index: newIndex, type: shows[newIndex].type })
         else activeShow.set({ ...shows[newIndex], index: newIndex })
     }
 }
@@ -320,7 +321,7 @@ async function goToNextShowInProject(slide, customOutputId) {
 
     // open next item in project (if current is open)
     if (get(activeShow)?.index === projectIndex) {
-        if (get(focusMode)) activeFocus.set({ id: nextShow.id, index: nextShowInProjectIndex })
+        if (get(focusMode)) activeFocus.set({ id: nextShow.id, index: nextShowInProjectIndex, type: nextShow.type })
         else activeShow.set({ ...nextShow, index: nextShowInProjectIndex })
     }
 }
@@ -340,7 +341,7 @@ export function goToNextProjectItem(key: string = "") {
         if (index + 1 < get(projects)[get(activeProject)!]?.shows?.length) index++
         if (index > -1 && index !== currentShow.index) {
             let newShow = get(projects)[get(activeProject)!].shows[index]
-            if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
+            if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
 
             if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
@@ -368,7 +369,7 @@ export function goToPreviousProjectItem(key: string = "") {
         if (index - 1 >= 0) index--
         if (index > -1 && index !== currentShow.index) {
             let newShow = get(projects)[get(activeProject)!].shows[index]
-            if (get(focusMode)) activeFocus.set({ id: newShow.id, index })
+            if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
             else activeShow.set({ ...newShow, index })
 
             if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
@@ -650,15 +651,19 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
             if (bg && bgPath !== outputBg?.path) {
                 let outputStyle = get(styles)[get(outputs)[outputId]?.style || ""]
                 let mediaStyle = getMediaStyle(get(media)[bgPath], outputStyle)
+                let loop = bg.loop !== false
+                let muted = bg.muted !== false
+
                 let bgData: any = {
                     name,
                     type,
                     path: bgPath,
                     cameraGroup: bg.cameraGroup || "",
                     id: bg.id || bgPath, // path = cameras
-                    muted: bg.muted !== false,
-                    loop: bg.loop !== false,
+                    loop,
+                    muted,
                     ...mediaStyle,
+                    ignoreLayer: mediaStyle.videoType === "foreground",
                 }
 
                 // outBackground.set(bgData)
@@ -669,10 +674,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         // mics
         if (data.mics) {
             data.mics.forEach((mic: any) => {
-                // setTimeout(() => {
-                //     setMicState.set({ id: mic.id, muted: false })
-                // }, 10 * i)
-                startMicrophone(mic)
+                AudioMicrophone.start(mic.id, { name: mic.name })
             })
         }
 
@@ -685,7 +687,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                     let cloudId = get(driveData).mediaId
                     if (cloudId && cloudId !== "default") a.path = a.cloud?.[cloudId] || a.path
 
-                    if (a) playAudio(a, false)
+                    if (a) AudioPlayer.start(a.path, { name: a.name }, { pauseIfPlaying: false })
                 })
             }, 200)
         }
@@ -718,7 +720,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
         // startShow is at the top
         if (data.actions.trigger) activateTrigger(data.actions.trigger)
-        if (data.actions.audioStream) startAudioStream(data.actions.audioStream)
+        if (data.actions.audioStream) AudioPlayer.start(data.actions.audioStream, { name: "" })
         // if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions)
@@ -927,6 +929,7 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
         showId = outputRef.id
 
         let layoutRef = _show(showId).layouts([outputRef.layout]).ref()[0]
+        if (!layoutRef) return
         slideId = layoutRef[outputRef.index]?.id || ""
     }
 
@@ -980,12 +983,6 @@ const customTriggers = {
                 })
         })
     },
-}
-
-export function startAudioStream(stream) {
-    let url = stream.value || get(audioStreams)[stream.id]?.value
-
-    playAudio({ path: url, name: stream.name })
 }
 
 // DYNAMIC VALUES

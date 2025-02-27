@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
+    import { AudioPlayer } from "../../../audio/audioPlayer"
+    import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activeFocus, activePlaylist, activeShow, audioPlaylists, dictionary, focusMode, outLocked, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { audioPlaylistNext, getAudioDuration, playAudio } from "../../helpers/audio"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import Button from "../../inputs/Button.svelte"
@@ -25,7 +26,7 @@
     else duration = 0
     async function getDuration() {
         duration = 0
-        duration = playing.mic ? 0 : await getAudioDuration(Object.keys($playingAudio)[0])
+        duration = playing.isMic ? 0 : await AudioPlayer.getDuration(Object.keys($playingAudio)[0])
         currentTime = playing.audio?.currentTime || 0
     }
 
@@ -68,8 +69,8 @@
     }
 
     function openAudio(id: string, audio: any) {
-        if ($focusMode) activeFocus.set({ id })
-        else activeShow.set({ id, type: "audio", data: { isMic: audio.mic } })
+        if ($focusMode) activeFocus.set({ id, type: "audio" })
+        else activeShow.set({ id, type: "audio", data: { isMic: audio.isMic } })
     }
 
     let fullLength: boolean = false
@@ -80,7 +81,7 @@
         {#each Object.entries($playingAudio) as [id, audio]}
             {@const name = audio.name || getName(id)}
             <Button title={name} on:click={() => openAudio(id, audio)} active={$activeShow?.id === id} style="z-index: 2;" bold={false} center>
-                {#if audio.mic}<Icon id="microphone" size={1.2} right />{/if}
+                {#if audio.isMic}<Icon id="microphone" size={1.2} right />{/if}
                 <p>{name}</p>
             </Button>
         {/each}
@@ -89,12 +90,12 @@
     {@const name = playing.name || getName(path)}
 
     <Button title={name} on:click={() => openAudio(path, playing)} active={$activeShow?.id === path} style="padding: 5px 10px;opacity: 0.8;width: 100%;z-index: 2;" bold={false} center>
-        {#if playing.mic}<Icon id="microphone" size={1.2} right />{/if}
+        {#if playing.isMic}<Icon id="microphone" size={1.2} right />{/if}
         <p>{$activePlaylist?.active === path ? `${$audioPlaylists[$activePlaylist.id]?.name}: ` : ""}{name}</p>
     </Button>
 
     <!-- AUDIO CONTROLS -->
-    {#if !playing.mic}
+    {#if !playing.isMic}
         <div class="controls">
             <Button
                 style="flex: 0"
@@ -103,7 +104,7 @@
                 title={paused ? $dictionary.media?.play : $dictionary.media?.pause}
                 on:click={() => {
                     if ($outLocked) return
-                    playAudio({ path, name }, true, currentTime)
+                    AudioPlayer.start(path, { name }, { pauseIfPlaying: true, startAt: currentTime })
                 }}
             >
                 <Icon id={paused ? "play" : "pause"} white={paused} size={1.2} />
@@ -130,7 +131,7 @@
             </span>
 
             {#if $activePlaylist?.active === path}
-                <Button style="flex: 0" disabled={$outLocked} center title={$dictionary.media?.next} on:click={audioPlaylistNext}>
+                <Button style="flex: 0" disabled={$outLocked} center title={$dictionary.media?.next} on:click={AudioPlaylist.next}>
                     <Icon id="audio_forward" size={1.2} />
                 </Button>
             {/if}

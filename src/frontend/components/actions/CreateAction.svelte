@@ -4,20 +4,23 @@
     import { translate } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import Dropdown from "../inputs/Dropdown.svelte"
     import CustomInput from "./CustomInput.svelte"
     import { actionData } from "./actionData"
+    import { getActionTriggerId } from "./actions"
     import { API_ACTIONS } from "./api"
+    import HRule from "../input/HRule.svelte"
 
     export let list: boolean = false
+    export let full: boolean = false
     export let mainId: string = ""
     export let actionId: string
     export let actionValue: any = {}
     export let existingActions: string[] = []
     export let actionNameIndex: number = 0
+    export let choosePopup: boolean = false
 
     let dispatch = createEventDispatcher()
     function changeAction(e: any) {
@@ -48,6 +51,8 @@
     // remove run action if creating an action (not "template" or "slide")
     if (!$popupData.mode) removeActions.push("run_action")
 
+    let usedSections: string[] = []
+
     $: ACTIONS = [
         ...Object.keys(API_ACTIONS)
             .map((id) => {
@@ -56,7 +61,7 @@
                 let icon = data.icon || "actions"
                 let common = !!data.common
 
-                return { id, name, icon, common }
+                return { id, name, icon, common, section: "" }
             })
             .filter(({ id }) => {
                 // don't show actions with no custom data
@@ -74,22 +79,32 @@
                 // remove already added or custom ones
                 if (removeActions.includes(id) || (!actionData[id].canAddMultiple && existingActions.includes(id))) return false
                 // custom slide actions list
-                if (list && !slideActions.includes(id)) return false
+                if (list && !full && !slideActions.includes(id)) return false
                 // if (list && id.includes("index_select")) return false
                 return true
             }),
         // custom special
-        ...(list ? [] : [{ id: "wait", name: $dictionary.animate?.wait || "", icon: "time_in", common: false }]),
-    ]
+        ...(list && !full ? [] : [{ id: "wait", name: $dictionary.animate?.wait || "", icon: "time_in", common: false, section: "edit.special" }]),
+    ].map((a, i) => {
+        if (i === 0) usedSections = []
+
+        let data = actionData[a.id] || {}
+        let section = data.SECTION || ""
+
+        if (usedSections.includes(section)) section = ""
+        if (section) usedSections.push(section)
+
+        return { ...a, section }
+    })
 
     let pickAction: boolean = false
 
     let input = ""
     $: if (actionId && !pickAction) loadInputs()
     function loadInputs() {
-        input = actionData[getId(actionId)]?.input || ""
+        input = actionData[getActionTriggerId(actionId)]?.input || ""
 
-        if (!list) return
+        if (!list || full) return
 
         if (!input) {
             // close popup if no custom inputs
@@ -98,21 +113,24 @@
         }
     }
 
-    function getId(actionId: string) {
-        let multiple = actionId.indexOf(":")
-        if (multiple > -1) actionId = actionId.slice(0, multiple)
-        return actionId
-    }
-
     function findName(actionId: string): string {
-        actionId = getId(actionId)
+        actionId = getActionTriggerId(actionId)
         return ACTIONS.find((a) => a.id === actionId)?.name || actionId || ""
     }
+
+    function findIcon(actionId: string): string {
+        actionId = getActionTriggerId(actionId)
+        return ACTIONS.find((a) => a.id === actionId)?.icon || "actions"
+    }
+
+    $: dataInputs = !!(input && actionId && !pickAction && !full)
+    let dataOpened = !Object.keys(actionValue).length || !existingActions?.length // || existingActions.length < 2
+    let dataMenuOpened = false
 </script>
 
 {#if list}
-    {#if actionId && !pickAction}
-        <CombinedInput>
+    {#if actionId && !pickAction && !full}
+        <CombinedInput textWidth={38}>
             <Button on:click={() => (pickAction = true)} style="width: 100%;" center dark>
                 <Icon id={actionData[actionId]?.icon || "actions"} right />
                 <p style="display: contents;">{findName(actionId)}</p>
@@ -121,8 +139,18 @@
     {:else}
         <div class="buttons">
             {#each ACTIONS as action}
+                {#if action.section}
+                    <HRule title={action.section} />
+                {/if}
+
                 <!-- disabled={$popupData.existing.includes(action.id)} -->
-                <Button on:click={() => changeAction({ ...action, index: 0 })} outline={actionId === action.id} active={$popupData.existing.includes(action.id)} style="width: 100%;" bold={action.common}>
+                <Button
+                    on:click={() => changeAction({ ...action, index: full ? undefined : 0 })}
+                    outline={getActionTriggerId(actionId) === action.id}
+                    active={(existingActions || $popupData.existing || []).map(getActionTriggerId).includes(action.id)}
+                    style="width: 100%;"
+                    bold={action.common}
+                >
                     <Icon id={action.icon} right />
                     <p>{action.name}</p>
                 </Button>
@@ -130,19 +158,45 @@
         </div>
     {/if}
 {:else}
-    <CombinedInput style={actionNameIndex > 1 || !actionId ? "border-top: 2px solid var(--primary-lighter);" : ""}>
+    <CombinedInput textWidth={38} style={actionNameIndex > 1 || !actionId ? "border-top: 2px solid var(--primary-lighter);" : ""}>
         <p style="font-weight: 600;">
             <T id="midi.start_action" />
             <span style="color: var(--secondary);display: flex;align-items: center;margin-left: 8px;">
                 {#if actionNameIndex}#{actionNameIndex}{/if}
             </span>
         </p>
-        <Dropdown activeId={actionId} value={findName(actionId) || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={(e) => changeAction(e.detail)} />
+
+        {#if !choosePopup}
+            <Dropdown activeId={actionId} value={findName(actionId) || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={(e) => changeAction(e.detail)} />
+        {:else}
+            <Button on:click={() => dispatch("choose")} title={$dictionary.actions?.choose_action} bold={!actionId}>
+                <div style="display: flex;align-items: center;padding: 0;">
+                    <Icon id={findIcon(actionId)} style="margin-left: 0.5em;" right />
+                    <p>
+                        {#if actionId}
+                            {findName(actionId) || "—"}
+                        {:else}
+                            <T id="actions.choose_action" />
+                        {/if}
+                    </p>
+                </div>
+            </Button>
+        {/if}
+
+        {#if dataInputs && !dataOpened}
+            <Button class="submenu_open" on:click={() => (dataMenuOpened = !dataMenuOpened)}>
+                {#if dataMenuOpened}
+                    <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+                {:else}
+                    <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                {/if}
+            </Button>
+        {/if}
     </CombinedInput>
 {/if}
 
-{#if input && actionId && !pickAction}
-    <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} actionId={getId(actionId)} on:change={(e) => changeAction({ id: actionId, actionValue: e.detail })} list />
+{#if dataInputs && (dataOpened || dataMenuOpened)}
+    <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} actionId={getActionTriggerId(actionId)} on:change={(e) => changeAction({ id: actionId, actionValue: e.detail })} list />
 {/if}
 
 <style>

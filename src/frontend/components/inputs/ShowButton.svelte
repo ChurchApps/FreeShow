@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../types/Main"
+    import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, styles } from "../../stores"
-    import { playAudio } from "../helpers/audio"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, getMediaStyle, removeExtension } from "../helpers/media"
@@ -133,7 +133,7 @@
             if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === out.path)) setOutput("slide", null)
 
             setOutput("background", out)
-        } else if (type === "audio") playAudio({ path: id, name: show.name })
+        } else if (type === "audio") AudioPlayer.start(id, { name: show.name })
         else if (type === "overlay") setOutput("overlays", show.id, false, "", true)
         else if (type === "player") setOutput("background", { id, type: "player" })
     }
@@ -149,7 +149,7 @@
 </script>
 
 <div id="show_{id}" class="main">
-    <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} outline={activeOutput !== null || $playingAudio[id]} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
+    <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} outline={activeOutput !== null || !!$playingAudio[id]} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
             {#if icon}
                 <Icon id={iconID || "noIcon"} {custom} box={iconID === "ppt" ? 50 : 24} right />

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { activeProject, activeRename, dictionary, projectView } from "../../stores"
+    import { activeEdit, activePage, activeProject, activeRename, dictionary, projectView } from "../../stores"
 
     export let value: string = ""
     export let style: string = ""
@@ -76,10 +76,26 @@
         })
     }
 
+    let initiallyEmpty = false
+    $: if (id) updateState()
+    function updateState() {
+        initiallyEmpty = !value
+    }
+
     const dispatch = createEventDispatcher()
     function change(e: any) {
         let value = e.target.value
         if (allowEmpty || value.length) dispatch("edit", { value, id })
+
+        if (!initiallyEmpty) return
+
+        let objectId = id.slice(id.indexOf("_") + 1)
+        // open editor if no name (probably just created)
+        if (id.includes("template") || id.includes("overlay")) {
+            let type: any = id.slice(0, id.indexOf("_"))
+            activeEdit.set({ type, id: objectId, items: [] })
+            activePage.set("edit")
+        }
     }
 
     $: if (edit === id && allowEdit) setTimeout(selectText, 10)

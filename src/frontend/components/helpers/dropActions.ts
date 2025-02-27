@@ -29,7 +29,7 @@ import { getShortBibleName, getSlides, joinRange } from "../drawer/bible/scriptu
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
-import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
+import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
 import { checkName } from "./show"
 import { _show } from "./shows"
@@ -417,7 +417,16 @@ const slideDrop: any = {
         // videos are probably not meant to be background if they are added in bulk
         if (data.length > 1) notBackgrounds = { muted: false, loop: false }
 
-        data = data.map((a) => ({ ...a, path: a.path || a.id, ...(a.type === "video" ? notBackgrounds : {}) }))
+        data = data.map((a) => {
+            let path = a.path || a.id
+
+            let backgroundData = notBackgrounds
+            let mediaStyle = getMediaStyle(get(media)[path], undefined)
+            if (mediaStyle.videoType === "background") backgroundData = { muted: true, loop: true }
+            else if (mediaStyle.videoType === "foreground") backgroundData = { muted: false, loop: false }
+
+            return { ...a, path, ...(a.type === "video" ? backgroundData : {}) }
+        })
         history.newData = { index: drop.index, data: slides, layout: { backgrounds: data } }
 
         return history

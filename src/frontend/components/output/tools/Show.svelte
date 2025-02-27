@@ -22,7 +22,7 @@
             })
         }
 
-        if ($focusMode) activeFocus.set({ id: slide?.id })
+        if ($focusMode) activeFocus.set({ id: slide?.id, type: slide?.type || "show" })
         else activeShow.set({ id: slide?.id, type: slide?.type || "show" })
     }
 

@@ -1,10 +1,10 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
+    import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeShow, activeTimers, dictionary, outputs, shows } from "../../stores"
     import { send } from "../../utils/request"
     import { videoExtensions } from "../../values/extensions"
     import { clone } from "../helpers/array"
-    import { getAudioDuration } from "../helpers/audio"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension } from "../helpers/media"
@@ -214,7 +214,7 @@
             </div>
             <span>
                 {#if layoutSlide.audio.length === 1}
-                    {#await getAudioDuration(audioPath || "")}
+                    {#await AudioPlayer.getDuration(audioPath || "")}
                         <p>00:00</p>
                     {:then duration}
                         <p>{joinTime(secondsToTime(duration))}</p>

@@ -17,6 +17,7 @@
     import { newToast } from "../../../utils/common"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import { waitForPopupData } from "../../../utils/popup"
+    import { AudioAnalyser } from "../../../audio/audioAnalyser"
 
     let outputsList: any[] = []
     $: outputsList = sortObject(sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput)), "stageOutput")
@@ -152,11 +153,18 @@
 
         let newData = $outputs[id]?.ndiData
         if (!newData) newData = {}
-        newData[key] = e.detail.id
+
+        let value = e?.detail?.id ?? e
+        newData[key] = value
 
         updateOutput("ndiData", newData)
 
         send(NDI, ["NDI_DATA"], { id, ...newData })
+
+        if (key === "audio") {
+            if (value) AudioAnalyser.recorderActivate()
+            else AudioAnalyser.recorderDeactivate()
+        }
     }
 
     const framerates: any = [
@@ -397,9 +405,9 @@
 
 {#if currentOutput.ndi}
     <CombinedInput>
-        <p><T id="preview.audio" /> (Not implemented yet)</p>
+        <p><T id="preview.audio" /></p>
         <div class="alignRight">
-            <Checkbox disabled checked={currentOutput.audio} on:change={(e) => updateOutput("audio", isChecked(e))} />
+            <Checkbox checked={currentOutput.ndiData?.audio} on:change={(e) => updateNdiData(isChecked(e), "audio")} />
         </div>
     </CombinedInput>
 
@@ -492,6 +500,7 @@
                         center
                     >
                         {#if output.stageOutput}<Icon id="stage" right />{/if}
+                        {#if output.enabled !== false}<Icon id="check" size={0.7} white right />{/if}
                         <HiddenInput value={output.name} id={"output_" + output.id} on:edit={(e) => updateOutput("name", e.detail.value, output.id)} bind:edit />
                     </Button>
                 </SelectElem>

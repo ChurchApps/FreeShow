@@ -1,7 +1,7 @@
 <script lang="ts">
+    import { AudioPlayer } from "../../../audio/audioPlayer"
     import { drawer, gain, special, volume } from "../../../stores"
     import T from "../../helpers/T.svelte"
-    import { updateVolume } from "../../helpers/audio"
     import Slider from "../../inputs/Slider.svelte"
     import AudioMeter from "../../output/preview/AudioMeter.svelte"
 
@@ -12,14 +12,16 @@
         // && !e.altKey
         if ($special.allowGaining && value > 0.95 && value < 1.05) value = 1
 
-        let gain = 1
-        let volume = 1
+        let newGain = 1
+        let newVolume = 1
 
-        if (value > 1) gain = (value - 1) / 0.125 + 1
-        else volume = value
+        if (value > 1) newGain = (value - 1) / 0.125 + 1
+        else newVolume = value
 
-        updateVolume(volume)
-        if ($special.allowGaining) updateVolume(gain, true)
+        volume.set(newVolume)
+        gain.set(newGain)
+
+        AudioPlayer.updateVolume()
     }
 
     // 25% / 200 = 0.125

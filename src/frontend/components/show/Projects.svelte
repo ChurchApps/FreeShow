@@ -237,7 +237,7 @@
                                         class="section context #project_section__project {show.color ? 'color-border' : ''}"
                                         style="--border-color: {show.color};"
                                         on:click={() => {
-                                            if ($focusMode) activeFocus.set({ id: show.id, index })
+                                            if ($focusMode) activeFocus.set({ id: show.id, index, type: show.type })
                                             else activeShow.set({ ...show, index })
                                         }}
                                         dark

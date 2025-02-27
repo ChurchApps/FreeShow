@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import { clearAudio } from "../../audio/audioFading"
 import {
     activeEdit,
     activePopup,
@@ -20,12 +21,11 @@ import {
     videosData,
     videosTime,
 } from "../../stores"
-import { clearOverlayTimer, clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
-import { clearAudio } from "../helpers/audio"
-import { clone } from "../helpers/array"
 import { customActionActivation } from "../actions/actions"
-import { stopSlideRecording } from "../helpers/slideRecording"
+import { clone } from "../helpers/array"
+import { clearOverlayTimer, clearPlayingVideo, getActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { _show } from "../helpers/shows"
+import { stopSlideRecording } from "../helpers/slideRecording"
 
 export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
@@ -43,7 +43,7 @@ export function clearAll(button: boolean = false) {
     clearBackground()
     clearSlide(true)
     clearOverlays()
-    clearAudio("", true, false, true)
+    clearAudio("", { clearPlaylist: true, commonClear: true })
     clearTimers()
 }
 

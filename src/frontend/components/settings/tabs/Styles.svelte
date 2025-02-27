@@ -18,7 +18,6 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import MediaPicker from "../../inputs/MediaPicker.svelte"
-    import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
@@ -109,6 +108,7 @@
 
     $: mediaFit = currentStyle.fit || "contain"
     $: aspectRatio = currentStyle.aspectRatio || getAspectRatio(currentStyle.resolution)
+    $: maxLines = Number(currentStyle.lines || 0)
     $: metadataDisplay = currentStyle.displayMetadata || "never"
     $: textTransitionData = transitionTypes.find((a) => a.id === currentStyle.transition?.text?.type)
 </script>
@@ -341,14 +341,36 @@
 
 <CombinedInput>
     <p><T id="settings.lines" /></p>
-    <NumberInput
-        value={currentStyle.lines || 0}
-        min={0}
-        max={99}
-        on:change={(e) => {
-            updateStyle(e, "lines")
+    <Button
+        on:click={() => {
+            popupData.set({ active: maxLines, trigger: (value) => updateStyle(value, "lines") })
+            activePopup.set("max_lines")
         }}
-    />
+        title={$dictionary.popup?.max_lines}
+        bold={!maxLines}
+    >
+        <div style="display: flex;align-items: center;padding: 0;">
+            <Icon id="lines" style="margin-left: 0.5em;" right />
+            <p>
+                {#if maxLines}
+                    {maxLines}
+                {:else}
+                    <T id="popup.max_lines" />
+                {/if}
+            </p>
+        </div>
+    </Button>
+    {#if maxLines}
+        <Button
+            title={$dictionary.actions?.remove}
+            on:click={() => {
+                updateStyle("", "lines")
+            }}
+            redHover
+        >
+            <Icon id="close" size={1.2} white />
+        </Button>
+    {/if}
 </CombinedInput>
 
 <CombinedInput>
@@ -512,6 +534,7 @@
 
                 <SelectElem id="style" data={{ id: currentStyle.id }} fill>
                     <Button border={active} class="context #style" {active} style="width: 100%;" on:click={() => (styleId = currentStyle.id)} bold={false} center>
+                        {#if Object.values($outputs).find((a) => a.style === currentStyle.id)}<Icon id="check" size={0.7} white right />{/if}
                         <HiddenInput value={currentStyle.name} id={"style_" + currentStyle.id} on:edit={(e) => updateStyle(e.detail.value, "name", currentStyle.id)} bind:edit />
                     </Button>
                 </SelectElem>

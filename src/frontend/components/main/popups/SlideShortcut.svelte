@@ -1,12 +1,16 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, popupData } from "../../../stores"
+    import { activePopup, dictionary, midiIn, popupData } from "../../../stores"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
+    import Icon from "../../helpers/Icon.svelte"
 
+    let id = $popupData.id
     let index = $popupData.index
     let mode = $popupData.mode
+    let revert = $popupData.revert
     let value = $popupData.value || ""
     let trigger = $popupData.trigger
     let existingShortcuts = $popupData.existingShortcuts || []
@@ -16,8 +20,9 @@
     let currentShortcut = mode === "slide_shortcut" ? (actions.slide_shortcut || {}).key : value
 
     onMount(() => {
-        popupData.set({})
-        if (mode !== "slide_shortcut" && mode !== "global_group") activePopup.set(null)
+        if (mode === "action") popupData.set({ ...$popupData, mode: "" })
+        else popupData.set({})
+        if (mode !== "slide_shortcut" && mode !== "global_group" && mode !== "action") activePopup.set(null)
     })
 
     function keydown(e: any) {
@@ -43,15 +48,26 @@
         if (mode === "slide_shortcut") {
             actions.slide_shortcut = { key }
             history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actions, indexes: [index] } })
+        } else if (mode === "action") {
+            midiIn.update((a) => {
+                if (a[id]) a[id].keypressActivate = key
+                return a
+            })
         } else if (trigger) {
             trigger(key)
         }
 
-        activePopup.set(null)
+        activePopup.set(revert || null)
     }
 </script>
 
 <svelte:window on:keydown={keydown} />
+
+{#if revert}
+    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)}>
+        <Icon id="back" size={2} white />
+    </Button>
+{/if}
 
 <p style="text-align: center;opacity: 0.7;" class:existing>
     {#if existing}

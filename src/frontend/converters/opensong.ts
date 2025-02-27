@@ -7,6 +7,7 @@ import { activePopup, alertMessage, dictionary, groups, scriptures, scripturesCa
 import { setActiveScripture } from "./bible"
 import { createCategory, setTempShows } from "./importHelpers"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
+import type { Chords } from "../../types/Show"
 
 interface Song {
     title: string
@@ -81,7 +82,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     if (!lyrics) return { slides, layout }
 
     // fix incorrect formatting
-    lyrics = lyrics.replaceAll("[", "\n\n[").trim()
+    lyrics = lyrics.replaceAll("\n \n", "\n\n").replaceAll("[", "\n\n[").trim()
     lyrics = lyrics.replaceAll("\n\n\n\n", "\n\n")
     lyrics = lyrics.replaceAll("||", "__CHILD_SLIDE__")
 
@@ -94,6 +95,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
             .split("\n")
             .splice(0, 1)[0]
             ?.replace(/[\[\]]/g, "")
+        if (group.startsWith(".")) group = "V"
         if (!groupText) return
 
         slideOrder.push(group)
@@ -102,22 +104,32 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
         groupText.split("__CHILD_SLIDE__").forEach((slideText, i) => {
             let lines = slideText.trim().split("\n")
             if (i === 0 && lines[0].includes("[")) lines.shift()
-            let chords = lines.filter((_v: string) => _v.startsWith("."))
+            let chordData = lines.filter((_v: string) => _v.startsWith(".")).join("")
             let text = lines.filter((_v: string) => !_v.startsWith("."))
 
             let id: string = i === 0 ? parentId : uid()
             if (i === 0) slideRef[group] = id
             else children.push(id)
 
+            let chords: Chords[] = []
+            let pos = -1
+            chordData
+                .slice(1)
+                .split(" ")
+                .forEach((letter) => {
+                    pos++
+                    if (letter === "") return
+                    chords.push({ id: uid(5), pos, key: letter })
+                    pos++ // add extra " " removed by split
+                })
+
             let items = [
                 {
                     style: "left:50px;top:120px;width:1820px;height:840px;",
-                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;") }] })),
+                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;").replaceAll("_", "") }], chords })),
                 },
             ]
 
-            // TODO: chords
-            console.log(chords)
             slides[id] = {
                 group: i === 0 ? "" : null,
                 color: null,
@@ -144,8 +156,12 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
         layout = []
         slideOrder.forEach((group) => {
             let id = slideRef[group]
-            layout.push({ id })
+            if (id) layout.push({ id })
         })
+    }
+
+    if (!layout.length) {
+        layout = Object.keys(slides).map((id) => ({ id }))
     }
 
     // add backgrounds

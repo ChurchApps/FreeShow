@@ -6,6 +6,7 @@ import {
     activePage,
     activeProject,
     dictionary,
+    gain,
     groupNumbers,
     groups,
     media,
@@ -23,6 +24,7 @@ import {
     sortedShowsList,
     styles,
     variables,
+    volume,
 } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
@@ -79,6 +81,12 @@ export function gotoGroup(dataGroupId: string) {
     })
 
     playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId })
+}
+
+export function selectProjectById(id: string) {
+    if (!get(projects)[id]) return
+
+    activeProject.set(id)
 }
 
 export function selectProjectByIndex(index: number) {
@@ -155,7 +163,7 @@ export function selectOverlayByIndex(index: number) {
     let overlayId = sortedOverlays[index]?.id
     if (!overlayId) return // newToast("$toast.action_no_id": action_id)
 
-    setOutput("overlays", overlayId, true)
+    setOutput("overlays", overlayId)
 }
 export function selectOverlayByName(name: string) {
     if (get(outLocked)) return
@@ -164,7 +172,12 @@ export function selectOverlayByName(name: string) {
     let overlayId = sortedOverlays[0]?.id
     if (!overlayId) return
 
-    setOutput("overlays", overlayId, true)
+    setOutput("overlays", overlayId)
+}
+export function selectOverlayById(id: string) {
+    if (get(outLocked)) return
+
+    setOutput("overlays", id)
 }
 
 export function toggleLock(value?: boolean) {
@@ -319,6 +332,20 @@ export function playMedia(data: API_media) {
     const mediaStyle = getMediaStyle(get(media)[data.path], currentStyle)
 
     setOutput("background", { path: data.path, ...mediaStyle })
+}
+
+// AUDIO
+
+let unmutedValue = 1
+export function updateVolumeValues(value: number | undefined | "local", changeGain: boolean = false) {
+    // api mute(unmute)
+    if (value === undefined) {
+        value = get(volume) ? 0 : unmutedValue
+        if (!value) unmutedValue = get(volume)
+    }
+
+    if (changeGain) gain.set(Number(Number(value).toFixed(2)))
+    else volume.set(Number(Number(value).toFixed(2)))
 }
 
 // SPECIAL

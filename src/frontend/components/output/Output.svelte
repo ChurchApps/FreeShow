@@ -269,7 +269,7 @@
     {/if}
 
     <!-- background -->
-    {#if layers.includes("background") && backgroundData}
+    {#if (layers.includes("background") || backgroundData?.ignoreLayer) && backgroundData}
         <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} {isKeyOutput} animationStyle={animationData.style?.background || ""} mirror={isKeyOutput || mirror} />
     {/if}
 

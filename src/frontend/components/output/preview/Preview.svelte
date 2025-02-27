@@ -118,7 +118,7 @@
         let actionTriggered: boolean = false
 
         Object.values($midiIn).forEach((action) => {
-            if (action.keypressActivate === key && action.enabled !== false) {
+            if (action.keypressActivate?.toUpperCase() === key) {
                 runAction(action)
                 actionTriggered = true
             }

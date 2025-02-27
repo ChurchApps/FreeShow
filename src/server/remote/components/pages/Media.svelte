@@ -5,6 +5,8 @@
     import { active, mediaCache } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
 
+    export let tablet: boolean = false
+
     $: path = $active?.id
     $: thumbnailPath = $mediaCache[path]
 </script>
@@ -27,7 +29,9 @@
     {/if}
 </div>
 
-<Clear />
+{#if !tablet}
+    <Clear />
+{/if}
 
 <style>
     .media {
