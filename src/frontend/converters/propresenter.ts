@@ -111,7 +111,7 @@ export function convertProPresenter(data: any) {
         })
 
         setTempShows(tempShows)
-    }, 10)
+    }, 50)
 }
 
 function convertJSONBundleToSlides(song: any) {
@@ -692,6 +692,7 @@ function getSlides(cues: any) {
             backgroundColor: getColorValue(baseSlide.backgroundColor),
             size: baseSlide.size,
             items: baseSlide.elements?.map(getItem) || [],
+            // .filter((a) => a.text || a.bounds?.size?.width)
         }
     })
 
@@ -702,12 +703,14 @@ function getItem(item: any) {
     let newItem: any = {}
 
     newItem.bounds = item.element.bounds
-    newItem.text = decodeRTF(item.element.text.rtfData)
+    newItem.text = decodeRTF(item.element.text?.rtfData)
 
     return newItem
 }
 
 function decodeRTF(text: string) {
+    if (!text) return ""
+
     text = decodeBase64(text)
     // console.log(text)
     text = RTFToText(text)
