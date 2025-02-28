@@ -537,4 +537,12 @@
         font-size: 0.9em;
         margin: 20px 0;
     }
+
+    .buttons {
+        display: flex;
+        flex-direction: column;
+    }
+    .buttons :global(button:not(.active):nth-child(even)) {
+        background-color: rgb(0 0 20 / 0.08);
+    }
 </style>

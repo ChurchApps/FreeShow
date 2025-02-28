@@ -6,7 +6,7 @@
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
-    import { clearBackground } from "../../output/clear"
+    import { clearBackground, clearSlide } from "../../output/clear"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import MediaLoader from "./MediaLoader.svelte"
@@ -95,6 +95,7 @@
         let videoType = mediaStyle.videoType || ""
         let loop = videoType === "foreground" ? false : true
         let muted = videoType === "background" ? true : false
+        if (videoType === "foreground") clearSlide()
         setOutput("background", { path, type, loop, muted, startAt: 0, ...mediaStyle, ignoreLayer: videoType === "foreground" })
 
         // unsplash requires the download to be triggered when using their images

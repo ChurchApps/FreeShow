@@ -142,6 +142,7 @@ export class AudioAnalyser {
             const arrayBuffer = await ev.data.arrayBuffer()
             const uint8Array = new Uint8Array(arrayBuffer)
             let id = get(currentWindow) === "output" ? Object.keys(get(outputs))[0] : "main"
+            // , audioDelay: 0, channels: this.channels, frameRate: this.recorderFrameRate
             send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array })
         })
 

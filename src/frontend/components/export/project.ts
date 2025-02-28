@@ -52,6 +52,16 @@ export async function exportProject(project: Project) {
                 getFile(media[id].path || media[id].id)
             })
 
+            // get media from "Media" items
+            let slides = shows[showRef.id].slides
+            Object.values(slides).forEach(({ items }: any) => {
+                items.forEach((item) => {
+                    if (item.type === "media") {
+                        getFile(item.src)
+                    }
+                })
+            })
+
             // TODO: timers etc.
         },
         video: (showRef: ProjectShowRef) => getFile(showRef.id),

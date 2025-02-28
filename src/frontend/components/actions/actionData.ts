@@ -7,7 +7,7 @@ export const actionData = {
 
     // SHOWS
     name_select_show: { SECTION: "guide_title.show", name: "actions.name_select_show", icon: "showIcon", input: "strval" },
-    start_show: { SECTION: "guide_title.show", slideId: "startShow", name: "preview._start", icon: "showIcon", input: "id" }, // any play actions are incompatible with clear actions...
+    start_show: { slideId: "startShow", name: "preview._start", icon: "showIcon", input: "id" }, // any play actions are incompatible with clear actions...
     set_template: { name: "actions.set_template_active", icon: "templates", input: "id" },
 
     // PRESENTATION
@@ -22,7 +22,7 @@ export const actionData = {
     // CLEAR
     restore_output: { SECTION: "clear.general", name: "preview.restore_output", icon: "reset", incompatible: ["clear_all", "clear_background", "clear_slide", "clear_overlays", "clear_audio", "clear_next_timer"] },
     clear_all: { name: "clear.all", icon: "clear", incompatible: ["restore_output", "clear_background", "clear_slide", "clear_overlays", "clear_audio", "clear_next_timer"] },
-    clear_background: { SECTION: "clear.general", slideId: "clearBackground", name: "clear.background", icon: "background", red: true, incompatible: ["restore_output", "clear_all"] },
+    clear_background: { slideId: "clearBackground", name: "clear.background", icon: "background", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_slide: { name: "clear.slide", icon: "slide", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_overlays: { slideId: "clearOverlays", name: "clear.overlays", icon: "overlays", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_audio: { slideId: "clearAudio", name: "clear.audio", icon: "audio", red: true, incompatible: ["restore_output", "clear_all"] },
@@ -57,12 +57,12 @@ export const actionData = {
 
     // TIMERS
     id_start_timer: { SECTION: "tabs.timers", name: "actions.id_start_timer", icon: "timer", input: "id", incompatible: ["stop_timers"] },
-    start_slide_timers: { SECTION: "tabs.timers", slideId: "startTimer", name: "actions.start_slide_timers", icon: "timer", incompatible: ["stop_timers"] },
+    start_slide_timers: { slideId: "startTimer", name: "actions.start_slide_timers", icon: "timer", incompatible: ["stop_timers"] },
     stop_timers: { slideId: "stopTimers", name: "actions.stop_timers", icon: "stop", red: true, incompatible: ["id_start_timer", "start_slide_timers"] },
 
     // FUNCTIONS
     change_variable: { SECTION: "tabs.functions", canAddMultiple: true, name: "actions.change_variable", icon: "variable", input: "variable" },
-    start_trigger: { SECTION: "tabs.functions", canAddMultiple: true, slideId: "trigger", name: "actions.start_trigger", icon: "trigger", input: "id" },
+    start_trigger: { canAddMultiple: true, slideId: "trigger", name: "actions.start_trigger", icon: "trigger", input: "id" },
 
     // EMIT
     send_midi: { SECTION: "actions.emit_data", canAddMultiple: true, slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
@@ -71,7 +71,7 @@ export const actionData = {
 
     // ACTION
     run_action: { SECTION: "popup.action", canAddMultiple: true, name: "actions.run_action", icon: "actions", input: "id" },
-    toggle_action: { SECTION: "popup.action", canAddMultiple: true, name: "actions.toggle_action", icon: "actions", input: "toggle_action" },
+    toggle_action: { canAddMultiple: true, name: "actions.toggle_action", icon: "actions", input: "toggle_action" },
 
     // SPECIAL
     // SECTION: "edit.special",

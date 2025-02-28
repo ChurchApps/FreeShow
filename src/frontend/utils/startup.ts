@@ -75,6 +75,10 @@ function autoBackup() {
 }
 
 function connect() {
+    pcoSync()
+}
+
+export function pcoSync() {
     send(MAIN, ["PCO_STARTUP_LOAD"], { dataPath: get(dataPath) })
 }
 

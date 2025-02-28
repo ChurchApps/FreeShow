@@ -14,6 +14,7 @@
     import HoverButton from "../inputs/HoverButton.svelte"
     import MediaPicker from "../inputs/MediaPicker.svelte"
     import VideoSlider from "../output/VideoSlider.svelte"
+    import { clearSlide } from "../output/clear"
     import MediaControls from "../output/tools/MediaControls.svelte"
     import Player from "../system/Player.svelte"
     import { formatVTT, SRTtoVTT } from "./media/subtitles"
@@ -169,6 +170,7 @@
         let videoType = mediaStyle.videoType || ""
         let loop = videoType === "background" ? true : false
         let muted = videoType === "background" ? true : false
+        if (videoType === "foreground") clearSlide()
         let bg: any = { type, startAt, muted, loop, ...mediaStyle, ignoreLayer: videoType === "foreground" }
 
         if (type === "player") bg.id = showId

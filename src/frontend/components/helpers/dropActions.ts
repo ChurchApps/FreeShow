@@ -396,6 +396,22 @@ const slideDrop: any = {
         let center = drop.center
         if (drag.id === "files" && drop.index !== undefined) center = true
 
+        // get background type
+        let backgroundTypeData: any = {}
+        // videos are probably not meant to be background if they are added in bulk
+        if (data.length > 1 && !center) backgroundTypeData = { muted: false, loop: false }
+
+        data = data.map((a) => {
+            let path = a.path || a.id
+
+            let backgroundData = backgroundTypeData
+            let mediaStyle = getMediaStyle(get(media)[path], undefined)
+            if (mediaStyle.videoType === "background") backgroundData = { muted: true, loop: true }
+            else if (mediaStyle.videoType === "foreground") backgroundData = { muted: false, loop: false }
+
+            return { ...a, path, ...(a.type === "video" ? backgroundData : {}) }
+        })
+
         if (center) {
             if (!data[0]) return
             history.id = "showMedia"
@@ -413,20 +429,6 @@ const slideDrop: any = {
         history.id = "SLIDES"
         let slides: any[] = drag.data.map((a: any) => ({ id: a.id || uid(), group: removeExtension(a.name || ""), color: null, settings: {}, notes: "", items: [] }))
 
-        let notBackgrounds: any = {}
-        // videos are probably not meant to be background if they are added in bulk
-        if (data.length > 1) notBackgrounds = { muted: false, loop: false }
-
-        data = data.map((a) => {
-            let path = a.path || a.id
-
-            let backgroundData = notBackgrounds
-            let mediaStyle = getMediaStyle(get(media)[path], undefined)
-            if (mediaStyle.videoType === "background") backgroundData = { muted: true, loop: true }
-            else if (mediaStyle.videoType === "foreground") backgroundData = { muted: false, loop: false }
-
-            return { ...a, path, ...(a.type === "video" ? backgroundData : {}) }
-        })
         history.newData = { index: drop.index, data: slides, layout: { backgrounds: data } }
 
         return history

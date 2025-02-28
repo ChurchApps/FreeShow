@@ -1,8 +1,10 @@
+import { Decoder } from "ebml"
 import type { Message } from "../../types/Socket"
 import { processAudio } from "./processAudio"
-import { Decoder } from "ebml"
 
-let audioDelay = 0
+// let channelCount = 2
+// let sampleRate = 48000 // Hz
+// let audioDelay = 0
 
 export async function receiveAudio(_e: any, msg: Message) {
     switch (msg.channel) {
@@ -12,7 +14,10 @@ export async function receiveAudio(_e: any, msg: Message) {
                 return
             }
 
-            audioDelay = msg.data.audioDelay || 0
+            // if (msg.data.channels) channelCount = msg.data.channels
+            // if (msg.data.sampleRate) sampleRate = msg.data.sampleRate
+            // if (msg.data.audioDelay) audioDelay = msg.data.audioDelay
+
             const decoder = createDecoder(msg.data.id)
             decoder.write(Buffer.from(msg.data.buffer))
             break
@@ -22,29 +27,40 @@ export async function receiveAudio(_e: any, msg: Message) {
     }
 }
 
-const ebmlDecoders: { [key: string]: Decoder } = {}
+const ebmlDecoders = new Map<string, Decoder>()
 let previousDataId = ""
 let newIdTimeout: any = null
+let timeoutId: string = ""
 function createDecoder(id: string) {
-    if (ebmlDecoders[id]) return ebmlDecoders[id]
+    if (ebmlDecoders.has(id)) return ebmlDecoders.get(id)!
     previousDataId = id
 
-    ebmlDecoders[id] = new Decoder()
-    try {
-        ebmlDecoders[id].on("data", ([blockType, data]: any) => {
-            if (blockType === "tag" && data.name === "SimpleBlock" && data.type === "b") {
-                // WIP audio from both video (output) and main does not combine well
-                // this will ensure only one "input" is allowed at once
-                if (newIdTimeout) clearTimeout(newIdTimeout)
-                newIdTimeout = setTimeout(() => (previousDataId = id), 1000)
-                if (previousDataId !== id) return
+    const decoder = new Decoder()
+    ebmlDecoders.set(id, decoder)
 
-                processAudio(data.payload, audioDelay)
-            }
-        })
-    } catch (err) {
-        console.error("Error when processing audio:", err)
-    }
+    decoder.on("data", ([blockType, data]: any) => {
+        if (timeoutId === id) return
+        if (blockType !== "tag" || data.name !== "SimpleBlock" || data.type !== "b" || !data.payload) return
+        if (timeoutId && new Set(data.payload).size < 4) return
 
-    return ebmlDecoders[id]
+        // audio from both video (output) and main does not combine well
+        // this will ensure only one "input" is allowed at once
+        if (newIdTimeout) {
+            timeoutId = ""
+            clearTimeout(newIdTimeout)
+        }
+        if (previousDataId !== id) {
+            timeoutId = id
+            newIdTimeout = setTimeout(() => {
+                timeoutId = ""
+                previousDataId = id
+            }, 100)
+            return
+        }
+
+        // { channelCount, sampleRate, audioDelay }
+        processAudio(data.payload)
+    })
+
+    return decoder
 }

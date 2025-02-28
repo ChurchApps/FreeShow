@@ -8,7 +8,7 @@ import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { clearOverlays, clearTimers } from "../output/clear"
+import { clearOverlays, clearSlide, clearTimers } from "../output/clear"
 import {
     activeEdit,
     activeFocus,
@@ -653,6 +653,8 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 let mediaStyle = getMediaStyle(get(media)[bgPath], outputStyle)
                 let loop = bg.loop !== false
                 let muted = bg.muted !== false
+
+                if (mediaStyle.videoType === "foreground") clearSlide()
 
                 let bgData: any = {
                     name,

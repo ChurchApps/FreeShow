@@ -53,6 +53,7 @@
 
     let usedSections: string[] = []
 
+    let previousSection = ""
     $: ACTIONS = [
         ...Object.keys(API_ACTIONS)
             .map((id) => {
@@ -61,7 +62,8 @@
                 let icon = data.icon || "actions"
                 let common = !!data.common
 
-                return { id, name, icon, common, section: "" }
+                if (data.SECTION) previousSection = data.SECTION
+                return { id, name, icon, common, section: previousSection }
             })
             .filter(({ id }) => {
                 // don't show actions with no custom data
@@ -88,8 +90,7 @@
     ].map((a, i) => {
         if (i === 0) usedSections = []
 
-        let data = actionData[a.id] || {}
-        let section = data.SECTION || ""
+        let section = a.section || ""
 
         if (usedSections.includes(section)) section = ""
         if (section) usedSections.push(section)

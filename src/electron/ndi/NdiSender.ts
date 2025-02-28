@@ -132,6 +132,7 @@ export class NdiSender {
         this.NDI[id].sendAudio = false
     }
 
+    static bytesForFloat32 = 4
     static sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: any) {
         if (this.ndiDisabled || !Object.values(this.NDI).find((a: any) => a?.sendAudio)) return
         const grandiose = require("grandiose")
@@ -140,16 +141,14 @@ export class NdiSender {
         if (!ndiAudioBuffer) return
 
         const now = this.timeStart + process.hrtime.bigint()
-        const timecode = now / BigInt(100)
-        const bytesForFloat32 = 4
         const frame = {
             /*  base information  */
-            timecode,
+            timecode: now / BigInt(100),
 
             /*  type-specific information  */
             sampleRate,
             noChannels: channelCount,
-            noSamples: Math.trunc(ndiAudioBuffer.byteLength / channelCount / bytesForFloat32),
+            noSamples: Math.trunc(ndiAudioBuffer.byteLength / channelCount / this.bytesForFloat32),
             channelStrideBytes: Math.trunc(ndiAudioBuffer.byteLength / channelCount),
 
             /*  the data itself  */
@@ -157,28 +156,25 @@ export class NdiSender {
             data: ndiAudioBuffer,
         }
 
-        try {
-            Object.values(this.NDI).forEach(async (sender: any) => {
-                if (!sender?.sendAudio || !sender?.sender) return
+        Object.values(this.NDI).forEach((sender: any) => {
+            if (!sender?.sendAudio || !sender?.sender) return
 
-                await sender.sender.audio(frame)
-            })
-        } catch (err) {
-            console.log("Error sending NDI audio frame:", err)
-        }
+            try {
+                sender.sender.audio(frame)
+            } catch (err) {
+                console.log("Error sending NDI audio frame:", err)
+            }
+        })
     }
 }
 
 // convert from PCM/signed-16-bit/little-endian data to NDI's "PCM/planar/signed-float32/little-endian"
 function convertPCMtoPlanarFloat32(buffer: Buffer, channels: number) {
-    let audioBuffer: Buffer
     try {
         const pcmconvert = require("pcm-convert")
-        audioBuffer = pcmconvert(buffer, { channels, dtype: "int16", endianness: "le", interleaved: true }, { dtype: "float32", endianness: "le", interleaved: false })
+        return pcmconvert(buffer, { channels, dtype: "int16", endianness: "le", interleaved: true }, { dtype: "float32", endianness: "le", interleaved: false }) as Buffer
     } catch (err) {
         console.log("Could not convert audio")
-        return
+        return null
     }
-
-    return audioBuffer
 }

@@ -162,80 +162,83 @@
 </script>
 
 {#if !currentTimer?.id}
-    <CombinedInput>
+    <CombinedInput textWidth={50}>
+        <p><T id="clock.type" /></p>
         <Dropdown style="width: 100%;" {options} value={currentOption.name} on:click={(e) => (timer.type = e.detail.id)} />
     </CombinedInput>
 {/if}
 
-<CombinedInput>
+<CombinedInput textWidth={50}>
     <p><T id="inputs.name" /></p>
     <TextInput value={timer.name} on:change={changeName} />
 </CombinedInput>
 
 {#if timer.type === "counter"}
-    <CombinedInput style="margin-top: 10px;">
-        <p><T id="timer.from" /></p>
+    <CombinedInput style="margin-top: 10px;" textWidth={50}>
+        <p>
+            <span style="border: none;display: flex;align-items: center;min-width: 100px;"><T id="timer.from" /></span>
+            <span style="border: none;display: flex;align-items: center;justify-content: end;padding: 0px 10px;opacity: 0.6;font-size: 0.85em;">
+                {#if Number(fromTime.d)}{fromTime.d},
+                {/if}{#if Number(fromTime.h)}{fromTime.h}:{/if}{fromTime.m}:{fromTime.s}
+            </span>
+        </p>
         <NumberInput title={$dictionary.timer?.minutes} value={timer.start === undefined ? 5 : getMinutes(timer.start)} max={60 * 24 * 365} on:change={(e) => (timer.start = getSeconds(timer.start || 0) + Number(e.detail) * 60)} />
         <NumberInput title={$dictionary.timer?.seconds} value={timer.start === undefined ? 0 : getSeconds(timer.start)} max={59} on:change={(e) => (timer.start = getMinutes(timer.start ?? 300) * 60 + Number(e.detail))} />
     </CombinedInput>
-    <CombinedInput>
-        <p><T id="timer.to" /></p>
+    <CombinedInput textWidth={50}>
+        <p>
+            <span style="border: none;display: flex;align-items: center;min-width: 100px;"><T id="timer.to" /></span>
+            <span style="border: none;display: flex;align-items: center;justify-content: end;padding: 0px 10px;opacity: 0.6;font-size: 0.85em;">
+                {#if Number(toTime.d)}{toTime.d},
+                {/if}{#if Number(toTime.h)}{toTime.h}:{/if}{toTime.m}:{toTime.s}
+            </span>
+        </p>
         <NumberInput title={$dictionary.timer?.minutes} value={timer.end === undefined ? 5 : getMinutes(timer.end)} max={60 * 24 * 365} on:change={(e) => (timer.end = getSeconds(timer.end || 0) + Number(e.detail) * 60)} />
         <NumberInput title={$dictionary.timer?.seconds} value={timer.end === undefined ? 0 : getSeconds(timer.end)} max={59} on:change={(e) => (timer.end = getMinutes(timer.end ?? 300) * 60 + Number(e.detail))} />
     </CombinedInput>
 
-    <CombinedInput>
+    <CombinedInput textWidth={50}>
         <p><T id="timer.overflow" /></p>
         <div class="alignRight">
             <Checkbox checked={timer.overflow} on:change={toggleOverflow} />
         </div>
     </CombinedInput>
     {#if timer.overflow}
-        <CombinedInput>
+        <CombinedInput textWidth={50}>
             <p><T id="timer.overflow_color" /></p>
             <Color style="width: 30%;" value={timer.overflowColor || "#FF4136"} on:input={(e) => (timer.overflowColor = e.detail)} />
         </CombinedInput>
     {/if}
 
-    <CombinedInput style="margin-top: 10px;">
+    <!-- <div class="preview">
         <p><T id="timer.preview" /></p>
-        <div style="padding: 0 10px;display: flex;align-items: center;">
-            {#if Number(fromTime.d)}{fromTime.d},
-            {/if}{#if Number(fromTime.h)}{fromTime.h}:{/if}{fromTime.m}:{fromTime.s}
-            <Icon id="next" />
-            {#if Number(toTime.d)}{toTime.d},
-            {/if}{#if Number(toTime.h)}{toTime.h}:{/if}{toTime.m}:{toTime.s}
-        </div>
-    </CombinedInput>
+        {#if Number(fromTime.d)}{fromTime.d},
+        {/if}{#if Number(fromTime.h)}{fromTime.h}:{/if}{fromTime.m}:{fromTime.s}
+        <Icon id="next" />
+        {#if Number(toTime.d)}{toTime.d},
+        {/if}{#if Number(toTime.h)}{toTime.h}:{/if}{toTime.m}:{toTime.s}
+    </div> -->
 {:else if timer.type === "clock"}
-    <CombinedInput style="margin-top: 10px;">
+    <CombinedInput style="margin-top: 10px;" textWidth={50}>
         <p><T id="timer.clock" /></p>
         <!-- <Date value={to} on:change={(e) => (to = e.detail)} />x -->
         <input type="time" bind:value={timer.time} />
     </CombinedInput>
 
-    <CombinedInput>
+    <CombinedInput textWidth={50}>
         <p><T id="timer.overflow" /></p>
         <div class="alignRight">
             <Checkbox checked={timer.overflow} on:change={toggleOverflow} />
         </div>
     </CombinedInput>
     {#if timer.overflow}
-        <CombinedInput>
+        <CombinedInput textWidth={50}>
             <p><T id="timer.overflow_color" /></p>
             <Color style="width: 30%;" value={timer.overflowColor || "#FF4136"} on:input={(e) => (timer.overflowColor = e.detail)} />
         </CombinedInput>
     {/if}
-
-    <CombinedInput style="margin-top: 10px;">
-        <p><T id="timer.preview" /></p>
-        <div style="padding: 0 10px;display: flex;align-items: center;">
-            {#if Number(timeCountdownTime.d)}{timeCountdownTime.d},
-            {/if}{#if Number(timeCountdownTime.h)}{timeCountdownTime.h}:{/if}{timeCountdownTime.m}:{timeCountdownTime.s}
-        </div>
-    </CombinedInput>
 {:else if timer.type === "event"}
-    <CombinedInput style="margin-top: 10px;">
+    <CombinedInput style="margin-top: 10px;" textWidth={50}>
         <p><T id="timer.event" /></p>
         {#if eventList.length}
             <Dropdown options={eventList} activeId={timer.event} value={eventList.find((a) => a.id === timer.event)?.name || "—"} on:click={updateEvent} />
@@ -244,36 +247,42 @@
         {/if}
     </CombinedInput>
 
-    <CombinedInput>
+    <CombinedInput textWidth={50}>
         <p><T id="timer.overflow" /></p>
         <div class="alignRight">
             <Checkbox checked={timer.overflow} on:change={toggleOverflow} />
         </div>
     </CombinedInput>
     {#if timer.overflow}
-        <CombinedInput>
+        <CombinedInput textWidth={50}>
             <p><T id="timer.overflow_color" /></p>
             <Color style="width: 30%;" value={timer.overflowColor || "#FF4136"} on:input={(e) => (timer.overflowColor = e.detail)} />
         </CombinedInput>
     {/if}
-
-    <CombinedInput style="margin-top: 10px;">
-        <p><T id="timer.preview" /></p>
-        <div style="padding: 0 10px;display: flex;align-items: center;">
-            {#if Number(eventCountdown.d)}{eventCountdown.d},
-            {/if}{#if Number(eventCountdown.h)}{eventCountdown.h}:{/if}{eventCountdown.m}:{eventCountdown.s}
-        </div>
-    </CombinedInput>
 {/if}
 
-<CombinedInput>
+<CombinedInput style="margin-top: 10px;" textWidth={50}>
     <Button style="width: 100%;" center dark on:click={() => (currentTimer?.id ? editTimer() : createTimer())}>
-        <Icon id="timer" right />
+        <Icon id={currentTimer?.id ? "edit" : "add"} right />
         {#if currentTimer?.id}
+            <!-- <T id="edit.update" /> -->
             <T id="timer.edit" />
         {:else}
             <T id="timer.create" />
         {/if}
+
+        <span style="border: none;flex: unset;display: flex;align-items: center;padding: 0px 10px;opacity: 0.6;font-size: 0.85em;">
+            {#if timer.type === "counter"}
+                {#if Number(fromTime.d)}{fromTime.d},
+                {/if}{#if Number(fromTime.h)}{fromTime.h}:{/if}{fromTime.m}:{fromTime.s}
+            {:else if timer.type === "clock"}
+                {#if Number(timeCountdownTime.d)}{timeCountdownTime.d},
+                {/if}{#if Number(timeCountdownTime.h)}{timeCountdownTime.h}:{/if}{timeCountdownTime.m}:{timeCountdownTime.s}
+            {:else if timer.type === "event"}
+                {#if Number(eventCountdown.d)}{eventCountdown.d},
+                {/if}{#if Number(eventCountdown.h)}{eventCountdown.h}:{/if}{eventCountdown.m}:{eventCountdown.s}
+            {/if}
+        </span>
     </Button>
 </CombinedInput>
 

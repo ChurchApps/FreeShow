@@ -351,6 +351,8 @@ export function updateVolumeValues(value: number | undefined | "local", changeGa
 // SPECIAL
 
 export function sortByClosestMatch(array: any[], value: string, key: string = "name") {
+    if (!value) return array
+
     // the object key must contain the input string
     array = array.filter((a) => a[key] && a[key].toLowerCase().includes(value.toLowerCase()))
 

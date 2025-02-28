@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
+    import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -9,6 +9,7 @@
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import { pcoSync } from "../../../utils/startup"
 
     let ip = "localhost"
     let listenerId = "IP_ADDRESS"
@@ -102,6 +103,12 @@
         if (!$pcoConnected) send(MAIN, ["PCO_LOAD_SERVICES"], { dataPath: $dataPath })
         else send(MAIN, ["PCO_DISCONNECT"])
     }
+
+    function syncPCO() {
+        pcoSync()
+        activeShow.set(null)
+        activePage.set("show")
+    }
 </script>
 
 <!-- <CombinedInput>
@@ -161,6 +168,12 @@
             <T id="settings.connect_to" replace={["Planning Center"]} />
         {/if}
     </Button>
+    {#if $pcoConnected}
+        <Button on:click={syncPCO}>
+            <Icon id="cloud_sync" right />
+            <p><T id="cloud.sync" /></p>
+        </Button>
+    {/if}
 </CombinedInput>
 
 <!-- <div>
