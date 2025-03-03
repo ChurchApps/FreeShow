@@ -53,6 +53,11 @@
             return a
         })
 
+        if (value) {
+            popupData.set({ ip, id })
+            activePopup.set("connect")
+        }
+
         if (id === "output_stream") {
             if ($serverData?.output_stream?.outputId && !$outputs[$serverData.output_stream.outputId]) {
                 serverData.update((a) => {
@@ -78,7 +83,7 @@
     }
 
     function restart() {
-        send(MAIN, ["START"], { ports: $ports, max: $maxConnections, disabled: $disabledServers })
+        send(MAIN, ["START"], { ports: $ports, max: $maxConnections, disabled: $disabledServers, data: $serverData })
     }
 
     // restart servers on toggle on/off
@@ -136,7 +141,7 @@
                 }}
                 {disabled}
             >
-                <div style="margin: 0;">
+                <div style="margin: 0;border: none;">
                     <Icon id={server.icon} size={1.1} right />
                     <p style="min-width: fit-content;padding-right: 0;">
                         {server.name}
@@ -144,6 +149,11 @@
                         {#if connections}<span style="border: none;" class="connections">{connections}</span>{/if}
                     </p>
                 </div>
+                {#if server.id === "output_stream" && $serverData.output_stream?.sendAudio}
+                    <span style="border: none;display: flex;align-items: center;justify-content: end;">
+                        <Icon id="volume" />
+                    </span>
+                {/if}
             </Button>
         </span>
         <span class="alignRight" style="padding-left: 10px;">

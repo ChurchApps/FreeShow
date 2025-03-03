@@ -774,6 +774,8 @@ export function getShowsFromIds(showIds: string[], showsPath: string) {
 
     showIds.forEach((id) => {
         let cachedShow = cachedShows[id]
+        if (!cachedShow) return
+
         let fileName = cachedShow.name || id
 
         let p: string = path.join(showsPath, `${fileName}.show`)

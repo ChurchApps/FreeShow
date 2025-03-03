@@ -155,6 +155,11 @@ function createMain() {
     if (RECORD_STARTUP_TIME) console.timeEnd("Main window")
 }
 
+export function getMainWindow() {
+    if (!mainWindow || mainWindow.isDestroyed()) return null
+    return mainWindow
+}
+
 function openDevTools(window: BrowserWindow) {
     console.log('Opening DevTools... ("[ERROR:CONSOLE] Request Autofill" can be ignored)')
     window.webContents.openDevTools()
@@ -436,7 +441,10 @@ ipcMain.on(AUDIO, receiveAudio)
 // ----- HELPERS -----
 
 // send messages to main frontend
-export const toApp = (channel: string, ...args: any[]): void => mainWindow?.webContents.send(channel, ...args)
+export const toApp = (channel: string, ...args: any[]): void => {
+    if (!mainWindow || mainWindow.isDestroyed()) return
+    mainWindow.webContents.send(channel, ...args)
+}
 
 // set/update global application menu
 export function setGlobalMenu(strings: any = {}) {

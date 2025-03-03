@@ -298,7 +298,6 @@
         }
 
         autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })
-        console.log(type, autoSize, maxFontSize, defaultFontSize, alignElem)
     }
 
     // UPDATE STYLE FROM LINES

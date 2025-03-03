@@ -43,7 +43,7 @@
         let stream = $audioStreams[streamId]
 
         let ref: any = _show().layouts("active").ref()[0][slideIndex]
-        let data: any = ref.data.actions || {}
+        let data: any = ref?.data?.actions || {}
         data.audioStream = stream
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data, indexes: [slideIndex] }, location: { page: "show", override: "audio_stream" } })

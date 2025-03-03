@@ -4,17 +4,20 @@
     import { outLocked, outputs } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
-    import NDIStream from "./NDIStream.svelte"
+    import T from "../../helpers/T.svelte"
+    import Loader from "../../main/Loader.svelte"
     import { clearBackground } from "../../output/clear"
     import Center from "../../system/Center.svelte"
-    import T from "../../helpers/T.svelte"
+    import NDIStream from "./NDIStream.svelte"
 
     let sources: any[] = []
 
     $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
 
+    let loading: boolean = true
     const receiveNDI: any = {
         RECEIVE_LIST: (msg) => {
+            loading = false
             if (!msg || sources.length) return
 
             sources = JSON.parse(msg).map(({ name, urlAddress }) => ({ name, id: urlAddress }))
@@ -26,7 +29,11 @@
     onDestroy(() => destroy(NDI, "NDI_CAPTURE"))
 </script>
 
-{#if sources.length}
+{#if loading}
+    <Center>
+        <Loader />
+    </Center>
+{:else if sources.length}
     {#each sources as screen}
         <NDIStream
             {screen}

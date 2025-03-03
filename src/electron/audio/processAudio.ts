@@ -1,4 +1,5 @@
 import { NdiSender } from "../ndi/NdiSender"
+import { getServerData, toServer } from "../servers"
 
 // const isStopping = false
 const channelCount = 2
@@ -29,4 +30,11 @@ export async function processAudio(buffer: Buffer) {
     }
 
     NdiSender.sendAudioBufferNDI(buffer, { sampleRate, channelCount })
+    sendAudioToOutputServer(buffer, { sampleRate, channelCount })
+}
+
+export function sendAudioToOutputServer(buffer: Buffer, { sampleRate, channelCount }: any) {
+    if (!getServerData("OUTPUT_STREAM").sendAudio) return
+
+    toServer("OUTPUT_STREAM", { channel: "AUDIO_BUFFER", data: { buffer, sampleRate, channelCount } })
 }

@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { AUDIO, OUTPUT } from "../../types/Channels"
-import { currentWindow, outputs, playingAudio, playingVideos, special } from "../stores"
+import { currentWindow, disabledServers, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { AudioPlayer } from "./audioPlayer"
@@ -57,13 +57,16 @@ export class AudioAnalyser {
     }
 
     static shouldAnalyse() {
-        return this.getActiveAudio() || this.getActiveVideos()
+        return this.getActiveAudio() || this.getActiveVideos() || this.sendOutputShowAudio()
     }
     private static getActiveAudio() {
         return !!Object.values(get(playingAudio)).filter((a) => !a.paused).length
     }
     private static getActiveVideos() {
         return !!Object.values(get(playingVideos)).filter((a) => !a.paused && !a.muted).length
+    }
+    private static sendOutputShowAudio() {
+        return get(disabledServers).output_stream === false && get(serverData)?.output_stream?.sendAudio
     }
 
     // https://stackoverflow.com/questions/48930799/connecting-nodes-with-each-other-with-the-web-audio-api
@@ -135,13 +138,15 @@ export class AudioAnalyser {
         if (this.recorder || !this.recorderActive) return
         this.initDestination()
 
+        let id = get(currentWindow) === "output" ? Object.keys(get(outputs))[0] : "main"
+        // might only work in "main" for OutputShow
+
         this.recorder = new MediaRecorder(this.destNode!.stream, {
             mimeType: 'audio/webm; codecs="opus"',
         })
         this.recorder.addEventListener("dataavailable", async (ev) => {
             const arrayBuffer = await ev.data.arrayBuffer()
             const uint8Array = new Uint8Array(arrayBuffer)
-            let id = get(currentWindow) === "output" ? Object.keys(get(outputs))[0] : "main"
             // , audioDelay: 0, channels: this.channels, frameRate: this.recorderFrameRate
             send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array })
         })

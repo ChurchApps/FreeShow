@@ -718,7 +718,7 @@ const slideDrop: any = {
         history.id = "SHOW_LAYOUT"
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let data: any = ref.data.actions || {}
+        let data: any = ref?.data?.actions || {}
         let key = drag.data[0].type === "in" ? "receiveMidi" : "sendMidi"
         data[key] = drag.data[0].id
 
@@ -729,7 +729,7 @@ const slideDrop: any = {
         history.id = "SHOW_LAYOUT"
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let data: any = ref.data.actions || {}
+        let data: any = ref?.data?.actions || {}
 
         let slideActions = data.slideActions || []
         let newActions: any[] = []

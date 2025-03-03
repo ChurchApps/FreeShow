@@ -43,8 +43,9 @@ export interface DrawerTabs {
     [key: string]: {
         enabled: boolean
         activeSubTab: null | string
-        openedSubmenus?: string[]
-        activeSubmenu?: string
+        openedSubSubTab?: { [key: string]: string } // media "Online"/"Screens" sub tabs
+        openedSubmenus?: string[] // submenu (action tags) opened/closed state (contains activeSubTab ids)
+        activeSubmenu?: string // active submenu if any
     }
 }
 
