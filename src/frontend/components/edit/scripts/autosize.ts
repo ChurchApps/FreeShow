@@ -34,6 +34,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     }
 
     const boxElem = virtualElem(elem)
+    if (!boxElem) return defaultFontSize
 
     let boxWidth = boxElem.clientWidth
     let boxHeight = boxElem.clientHeight
@@ -101,6 +102,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
 
     function virtualElem(elem: HTMLElement) {
         const cloned: any = elem.cloneNode(true)
+        if (!cloned) return null
 
         cloned.style.pointerEvents = "none"
         cloned.style.position = "absolute"
@@ -114,6 +116,10 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         cloned.style.width = `${newWidth}px`
         cloned.style.height = `${newHeight}px`
         cloned.style.padding = 0
+
+        // "align-items: flex-end;" does not work with auto size
+        cloned.style.alignItems = "center"
+        if (cloned.querySelector(".edit")) cloned.querySelector(".edit").style.justifyContent = "center"
 
         for (let elemHide of cloned.querySelectorAll(".hideFromAutosize")) {
             elemHide.style.display = "none"

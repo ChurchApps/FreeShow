@@ -23,6 +23,9 @@ export interface Styles {
     lines?: number
     template?: string // slide
     templateScripture?: string
+    templateScripture_2?: string
+    templateScripture_3?: string
+    templateScripture_4?: string
     metadataDivider?: string
     metadataLayout?: string // not in use yet 1.2.8
     displayMetadata?: string

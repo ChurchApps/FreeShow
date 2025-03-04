@@ -23,9 +23,9 @@ jobs:
               # npm ci is better, but requires package-lock.json file
               run: npm install
 
-            # Needed for OPUS
-            - name: Rebuild Native Modules
-              run: npx electron-rebuild
+            # needed for OPUS to use "electron" and not "node" abi
+            - name: Rebuild native modules
+              run: npm rebuild @discordjs/opus --runtime=electron --target=$(npx electron -v)
 
             - name: Build and release app
               env:
@@ -54,6 +54,9 @@ jobs:
             - name: Install dependencies
               run: npm install
 
+            - name: Rebuild native modules
+              run: npm rebuild @discordjs/opus --runtime=electron --target=$(npx electron -v)
+
             - name: Build and release app
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,6 +84,9 @@ jobs:
 
             - name: Install dependencies
               run: npm install
+
+            - name: Rebuild native modules
+              run: npm rebuild @discordjs/opus --runtime=electron --target=$(npx electron -v)
 
             - name: Install FPM
               run: |
@@ -124,12 +130,15 @@ jobs:
             - name: Install dependencies
               run: npm install
 
+            - name: Rebuild native modules
+              run: npm rebuild @discordjs/opus --runtime=electron --target=$(npx electron -v)
+
             - name: Install dmg-license
               run: npm i dmg-license
 
             # for some reason the build command don't continue after the rollup build
-            - name: Sleep for 5 minutes
-              run: sleep 300
+            - name: Sleep for 3 minutes
+              run: sleep 180
               shell: bash
 
             - name: Build and release app

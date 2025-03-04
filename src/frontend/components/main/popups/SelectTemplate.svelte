@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { activePopup, dictionary, outputs, popupData, styles, templates } from "../../../stores"
+    import { translate } from "../../../utils/language"
     import { formatSearch } from "../../../utils/search"
     import Card from "../../drawer/Card.svelte"
     import TemplateSlide from "../../drawer/pages/TemplateSlide.svelte"
@@ -8,6 +9,7 @@
     import { getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
@@ -20,12 +22,24 @@
 
     $: active = $popupData.active || ""
 
+    // multiple types (scripture)
+    let types: any[] = []
+    $: types = $popupData.types || []
+    $: values = $popupData.values || []
+
+    let selectedType = types[0]?.id || ""
+
+    $: customTypes = types.length > 1
+    $: value = customTypes ? values[types.findIndex((a) => a.id === selectedType)] || "" : active
+
     let searchedTemplates = clone(defaultTemplates)
     let searchValue = ""
     let previousSearchValue: string = ""
     function search(e: any = null) {
-        preloader = true
-        setTimeout(() => (preloader = false), 20)
+        if (searchValue !== previousSearchValue) {
+            preloader = true
+            setTimeout(() => (preloader = false), 20)
+        }
 
         searchValue = formatSearch(e?.target?.value || "")
 
@@ -44,16 +58,21 @@
     }
 
     function selectTemplate(template: any) {
-        if ($popupData.action !== "select_template") return
+        // update before closing
+        value = template.id
 
-        if ($popupData.trigger) {
-            $popupData.trigger(template.id)
-            // } else {
-            //     popupData.set({ ...$popupData, templateId: template.id })
-        }
+        setTimeout(() => {
+            if ($popupData.action !== "select_template") return
 
-        if (!$popupData.revert) popupData.set({})
-        activePopup.set($popupData.revert || null)
+            if ($popupData.trigger) {
+                $popupData.trigger(value, selectedType)
+                // } else {
+                //     popupData.set({ ...$popupData, templateId: value })
+            }
+
+            if (!$popupData.revert) setTimeout(() => popupData.set({}), 500) // revert after closing
+            activePopup.set($popupData.revert || null)
+        })
     }
 
     let resolution = getResolution(null, { $outputs, $styles })
@@ -74,6 +93,13 @@
     <TextInput placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
 </CombinedInput>
 
+{#if customTypes}
+    <CombinedInput>
+        <p><T id="songbeamer_import.translations" /></p>
+        <Dropdown options={types} value={types.find((a) => a.id === selectedType)?.name || ""} on:click={(e) => (selectedType = e.detail.id)} />
+    </CombinedInput>
+{/if}
+
 <div style="position: relative;height: 100%;width: calc(100vw - (var(--navigation-width) + 20px) * 2);overflow-y: auto;">
     {#if preloader && sortedTemplates.length > 10}
         <Center style="height: 100px;padding-top: 20px;">
@@ -81,8 +107,14 @@
         </Center>
     {:else if searchedTemplates.length}
         <div class="grid">
+            {#if customTypes && selectedType !== types[0]?.id}
+                <Card active={!value} label={translate("example.default")} icon="star" {resolution} on:click={() => selectTemplate("")}>
+                    <!--  -->
+                </Card>
+            {/if}
+
             {#each searchedTemplates as template, i}
-                <Card preview={!!(searchValue.length && i === 0)} active={active === template.id} label={template.name} color={template.color} {resolution} on:click={() => selectTemplate(template)}>
+                <Card preview={!!(searchValue.length && i === 0)} active={value === template.id} label={template.name} color={template.color} {resolution} on:click={() => selectTemplate(template)}>
                     <TemplateSlide templateId={template.id} {template} preview />
                 </Card>
             {/each}

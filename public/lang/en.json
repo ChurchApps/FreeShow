@@ -471,6 +471,7 @@
         "less_than_minute": "in less than a minute.",
         "less_than_seconds": "in less than {} seconds.",
         "now": "now!",
+        "template_applied_globally": "This template is already applied to the show globally.",
         "unsupported_video": "Unsupported video!",
         "no_video_id": "No video ID",
         "no_name": "No name",
@@ -592,6 +593,9 @@
         "unmute": "Unmute",
         "increase_volume": "Increase volume",
         "decrease_volume": "Decrease volume",
+        "mode": "Mode",
+        "increment": "Increment",
+        "decrement": "Decrement",
         "manage_subtitles": "Manage subtitles",
         "toggle_time_marker": "Toggle time markers",
         "add_time_marker": "Add time marker",
@@ -658,6 +662,7 @@
         "open_cache_folder": "Open cache folder",
         "refresh_all_shows": "Get all shows in 'Shows' folder",
         "start_timer": "Start timer",
+        "pause_timers": "Pause active timers",
         "stop_timers": "Stop active timers",
         "next_after_media": "Next on media finished",
         "remove_media": "Remove media",
@@ -1333,7 +1338,9 @@
         "number": "Number",
         "text": "Text",
         "step": "Step",
-        "value": "Value"
+        "default_value": "Default value",
+        "value": "Value",
+        "set_state": "Set state"
     },
     "month": {
         "1": "January",

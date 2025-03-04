@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import { io } from "socket.io-client"
+    import { onMount } from "svelte"
     import Icon from "../common/components/Icon.svelte"
+    import { audioContext, mutePlayback, processBuffer, unmutePlayback } from "../common/util/audioStream"
 
     let socket = io()
 
@@ -24,6 +25,10 @@
         }, time)
     }
 
+    let audioSignal = false
+    let audioMuted = true
+    let showAudioIcon = false
+
     // let initialDelay = 0
     socket.on("OUTPUT_STREAM", (msg) => {
         switch (msg.channel) {
@@ -42,6 +47,16 @@
                 // }
 
                 capture = msg.data
+                break
+            case "AUDIO_BUFFER":
+                if (audioSignal && audioMuted) return
+                if (!audioSignal) {
+                    showAudioIcon = true
+                    setTimeout(() => (showAudioIcon = false), 3000)
+                }
+                audioSignal = true
+
+                processBuffer(msg.data.buffer, { sampleRate: msg.data.sampleRate, channelCount: msg.data.channelCount })
                 break
         }
     })
@@ -114,6 +129,25 @@
             timeout = null
         }, 2000)
     }
+
+    function toggleMute() {
+        if (!audioMuted) {
+            audioMuted = true
+            mutePlayback()
+            return
+        }
+
+        audioMuted = false
+
+        if (audioContext?.state === "suspended") {
+            audioContext.resume().then(() => {
+                console.log("AudioContext resumed after user interaction")
+            })
+            return
+        }
+
+        unmutePlayback()
+    }
 </script>
 
 <svelte:window on:click={click} />
@@ -132,6 +166,12 @@
     <div class="count" style="position: absolute;bottom: 4px;left: 4px;font-size: 0.5em;opacity: 0.3;">
         FPS: {fps} | {capture?.size?.width || 1920}x{capture?.size?.height || 1080}
     </div>
+{/if}
+
+{#if (clicked || showAudioIcon) && audioSignal}
+    <button on:click={toggleMute} style="left: 20px;">
+        <Icon id={audioMuted ? "muted" : "volume"} size={1.5} white={audioMuted} />
+    </button>
 {/if}
 
 <style>

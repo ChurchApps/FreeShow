@@ -49,7 +49,7 @@
 
         setTimeout(() => {
             drawSettings.update((ds: any) => {
-                delete ds.paint.clear
+                if (ds.paint?.clear) delete ds.paint.clear
                 return ds
             })
         }, 100)

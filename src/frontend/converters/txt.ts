@@ -8,7 +8,8 @@ import { history } from "../components/helpers/history"
 import { checkName, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { linesToTextboxes } from "../components/show/formatTextEditor"
-import { activeProject, dictionary, formatNewShow, groups, special, splitLines } from "../stores"
+import { activePopup, activeProject, alertMessage, dictionary, drawerTabsData, formatNewShow, groups, special, splitLines } from "../stores"
+import { setTempShows } from "./importHelpers"
 
 export function getQuickExample() {
     let tip = get(dictionary).create_show?.quick_lyrics_example_tip || ""
@@ -22,13 +23,27 @@ export function getQuickExample() {
 
 // convert .txt files to shows
 export function convertTexts(files: any[]) {
-    files.forEach(({ name, content }) => convertText({ name, text: content, noFormatting: true }))
+    if (files.length > 1) {
+        alertMessage.set("popup.importing")
+        activePopup.set("alert")
+    }
 
-    // WIP setTempShows(tempShows)
+    let activeCategory = get(drawerTabsData).shows?.activeSubTab
+    if (activeCategory === "all" || activeCategory === "unlabeled") activeCategory = null
+    let tempShows: any[] = []
+
+    setTimeout(() => {
+        files?.forEach(({ content, name }: any) => {
+            const show = convertText({ name, category: activeCategory, text: content, noFormatting: true, returnData: true })
+            tempShows.push({ show, id: uid() })
+        })
+
+        setTempShows(tempShows)
+    }, 50)
 }
 
 // convert a plain text input into a show
-export function convertText({ name = "", category = null, text, noFormatting = false }: any, onlySlides: boolean = false, { existingSlides } = { existingSlides: {} }) {
+export function convertText({ name = "", category = null, text, noFormatting = false, returnData = false }: any, onlySlides: boolean = false, { existingSlides } = { existingSlides: {} }) {
     // remove empty spaces (as groups [] should be used for empty slides)
     // in "Text edit" spaces can be used to create empty "child" slides
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
@@ -87,6 +102,8 @@ export function convertText({ name = "", category = null, text, noFormatting = f
             }
         }
     }
+
+    if (returnData) return show
 
     history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
 

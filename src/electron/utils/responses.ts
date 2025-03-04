@@ -6,7 +6,7 @@ import { app, BrowserWindow, desktopCapturer, DesktopCapturerSource, Display, sc
 import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
-import { closeMain, exitApp, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
+import { closeMain, exitApp, getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu, toApp } from ".."
 import { BIBLE, MAIN, SHOW } from "../../types/Channels"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
@@ -17,7 +17,7 @@ import { captureSlide, getThumbnail, getThumbnailFolderPath, saveImage } from ".
 import { OutputHelper } from "../output/OutputHelper"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { pcoLoadServices } from "../planningcenter/request"
-import { closeServers, startServers } from "../servers"
+import { closeServers, startServers, updateServerData } from "../servers"
 import type { Message } from "./../../types/Socket"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "./api"
 import {
@@ -96,9 +96,9 @@ const mainResponses: any = {
     // APP
     CLOSE: (): void => closeMain(),
     MAXIMIZE: (): void => maximizeMain(),
-    MAXIMIZED: (): boolean => !!mainWindow?.isMaximized(),
-    MINIMIZE: (): void => mainWindow?.minimize(),
-    FULLSCREEN: (): void => mainWindow?.setFullScreen(!mainWindow?.isFullScreen()),
+    MAXIMIZED: (): boolean => !!getMainWindow()?.isMaximized(),
+    MINIMIZE: (): void => getMainWindow()?.minimize(),
+    FULLSCREEN: (): void => getMainWindow()?.setFullScreen(!getMainWindow()?.isFullScreen()),
     // MAIN
     AUTO_UPDATE: (): void => checkForUpdates(),
     GET_SYSTEM_FONTS: (data: any) => loadFonts(data),
@@ -123,7 +123,7 @@ const mainResponses: any = {
     GET_SCREENS: (): void => getScreens(),
     GET_WINDOWS: (): void => getScreens("window"),
     GET_DISPLAYS: (): Display[] => screen.getAllDisplays(),
-    OUTPUT: (_: any, e: any): "true" | "false" => (e.sender.id === mainWindow?.webContents.id ? "false" : "true"),
+    OUTPUT: (_: any, e: any): "true" | "false" => (e.sender.id === getMainWindow()?.webContents.id ? "false" : "true"),
     // MEDIA
     GET_THUMBNAIL: (data: any): any => getThumbnail(data),
     SAVE_IMAGE: (data: any): any => saveImage(data),
@@ -144,6 +144,7 @@ const mainResponses: any = {
     // SERVERS
     START: (data: any): void => startServers(data),
     STOP: (): void => closeServers(),
+    SERVER_DATA: (data: any): void => updateServerData(data),
     // WebSocket / REST / OSC
     WEBSOCKET_START: (port: number | undefined) => startWebSocketAndRest(port),
     WEBSOCKET_STOP: () => stopApiListener(),

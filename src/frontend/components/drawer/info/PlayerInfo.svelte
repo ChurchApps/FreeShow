@@ -1,13 +1,13 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { activeDrawerMediaSubTab, photoApiCredits } from "../../../stores"
+    import { drawerTabsData, photoApiCredits } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Link from "../../inputs/Link.svelte"
 
-    $: active = $activeDrawerMediaSubTab
+    $: active = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
 
     // remove part after ? in URL
     function removeExtra(link: string) {

@@ -6,6 +6,7 @@ import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
+import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, displayOutputs, startCamera, toggleOutput } from "../helpers/output"
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
@@ -14,7 +15,22 @@ import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTi
 import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { formatText } from "../show/formatTextEditor"
 import { runActionId, toggleAction } from "./actions"
-import { getOutput, getPlayingAudioTime, getPlayingPlaylist, getPlayingVideoTime, getPlaylists, getProject, getProjects, getShow, getShowLayout, getShows, getSlide } from "./apiGet"
+import {
+    getOutput,
+    getOutputGroupName,
+    getPlayingAudioDuration,
+    getPlayingAudioTime,
+    getPlayingPlaylist,
+    getPlayingVideoDuration,
+    getPlayingVideoTime,
+    getPlaylists,
+    getProject,
+    getProjects,
+    getShow,
+    getShowLayout,
+    getShows,
+    getSlide,
+} from "./apiGet"
 import {
     addGroup,
     changeShowLayout,
@@ -97,7 +113,7 @@ export type API_variable = {
     name?: string
     index?: number
     // no values will toggle on/off:
-    key?: "text" | "number" | "value" | "enabled" | "step" | "name" | "type" // default: "enabled"
+    key?: "text" | "number" | "value" | "enabled" | "step" | "name" | "type" | "increment" | "decrement" // default: "enabled"
     value?: string | number | boolean
     variableAction?: "increment" | "decrement"
 }
@@ -214,6 +230,7 @@ export const API_ACTIONS = {
     name_start_timer: (data: API_strval) => startTimerByName(data.value),
     id_start_timer: (data: API_id) => startTimerById(data.id),
     start_slide_timers: (data: API_slide) => playSlideTimers(data),
+    pause_timers: () => pauseAllTimers(),
     stop_timers: () => stopTimers(),
 
     // FUNCTIONS
@@ -239,8 +256,15 @@ export const API_ACTIONS = {
     get_groups: (data: API_id) => getShowGroups(data.id),
 
     get_output: (data: API_id_optional) => getOutput(data),
+    get_output_group_name: () => getOutputGroupName(),
+
+    get_playing_video_duration: () => getPlayingVideoDuration(),
     get_playing_video_time: () => getPlayingVideoTime(),
+    get_playing_video_time_left: () => getPlayingVideoDuration() - getPlayingVideoTime(),
+    get_playing_audio_duration: () => getPlayingAudioDuration(),
     get_playing_audio_time: () => getPlayingAudioTime(),
+    get_playing_audio_time_left: () => getPlayingAudioDuration() - getPlayingAudioTime(),
+
     get_playlists: () => getPlaylists(),
     get_playlist: (data: API_id_optional) => getPlayingPlaylist(data),
     get_slide: (data: API_slide) => getSlide(data),

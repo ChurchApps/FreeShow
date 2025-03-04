@@ -1,6 +1,6 @@
 import os from "os"
 import Slideshow from "slideshow"
-import { isProd, mainWindow, toApp } from "../.."
+import { getMainWindow, isProd, toApp } from "../.."
 import { MAIN } from "../../../types/Channels"
 import { OutputHelper } from "../OutputHelper"
 import { OutputValues } from "../helpers/OutputValues"
@@ -146,7 +146,7 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     }
 
     // focus on main window instead of PowerPoint window (seemingly not working)
-    mainWindow?.focus()
+    getMainWindow()?.focus()
 
     starting = false
     updateState()

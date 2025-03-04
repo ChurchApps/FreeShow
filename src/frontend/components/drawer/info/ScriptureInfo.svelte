@@ -133,7 +133,15 @@
         let versions = bibles.map((a) => a.version).join(" + ")
         show.reference = {
             type: "scripture",
-            data: { collection: $drawerTabsData.scripture?.activeSubTab || bibles[0].id || "", version: versions, api: bibles[0].api, book: bibles[0].bookId ?? bibles[0].book, chapter: bibles[0].chapter, verses: bibles[0].activeVerses },
+            data: {
+                collection: $drawerTabsData.scripture?.activeSubTab || bibles[0].id || "",
+                translations: bibles.length,
+                version: versions,
+                api: bibles[0].api,
+                book: bibles[0].bookId ?? bibles[0].book,
+                chapter: bibles[0].chapter,
+                verses: bibles[0].activeVerses,
+            },
         }
 
         // WIP add template background?
@@ -182,7 +190,7 @@
         if (!outputIsScripture) customActionActivation("scripture_start")
 
         let tempItems: Item[] = slides[0] || []
-        setOutput("slide", { id: "temp", tempItems, attributionString })
+        setOutput("slide", { id: "temp", tempItems, attributionString, translations: bibles.length })
 
         // track
         let reference = `${bibles[0].book} ${bibles[0].chapter}:${verseRange}`

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { AspectRatio, Resolution } from "../../../../types/Settings"
-    import { activePopup, activeStyle, dictionary, outputs, popupData, styles, templates } from "../../../stores"
+    import { activePopup, activeStyle, dictionary, outputs, popupData, scriptures, styles, templates } from "../../../stores"
     import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
     import { mediaFitOptions } from "../../edit/values/boxes"
@@ -77,6 +77,15 @@
     $: styleTemplateScripture = $templates[currentStyle.templateScripture || ""] || {}
     $: templateBackground = styleTemplate.settings?.backgroundColor || styleTemplateScripture.settings?.backgroundColor
     $: templateBackgroundImage = styleTemplate.settings?.backgroundPath || styleTemplateScripture.settings?.backgroundPath
+
+    let scriptureTemplateTypes = Object.values($scriptures).find((a) => a.collection)
+        ? [
+              { id: "", name: "$:example.default:$ (1)" },
+              { id: "_2", name: "2" },
+              { id: "_3", name: "3" },
+              { id: "_4", name: "4" },
+          ]
+        : []
 
     function getAspectRatio(resolution: Resolution | undefined): AspectRatio {
         if (!resolution || (resolution.width === 1920 && resolution.height === 1080)) return { width: 16, height: 9 }
@@ -409,27 +418,42 @@
     <p><T id="settings.override_scripture_with_template" /></p>
     <Button
         on:click={() => {
-            popupData.set({ action: "select_template", active: currentStyle.templateScripture || "", trigger: (id) => updateStyle(id, "templateScripture") })
+            popupData.set({
+                action: "select_template",
+                active: currentStyle.templateScripture || "",
+                types: scriptureTemplateTypes,
+                values: scriptureTemplateTypes.map((a) => currentStyle["templateScripture" + a.id] || ""),
+                trigger: (id, type) => updateStyle(id, "templateScripture" + type),
+            })
             activePopup.set("select_template")
         }}
-        bold={!currentStyle.templateScripture}
+        bold={!(currentStyle.templateScripture || currentStyle.templateScripture_2 || currentStyle.templateScripture_3 || currentStyle.templateScripture_4)}
     >
         <div style="display: flex;align-items: center;padding: 0;">
             <Icon id="templates" style="margin-left: 0.5em;" right />
             <p>
                 {#if currentStyle.templateScripture}
                     {$templates[currentStyle.templateScripture || ""]?.name || "—"}
+                {:else if currentStyle.templateScripture_2}
+                    {$templates[currentStyle.templateScripture_2 || ""]?.name || "—"} (2)
+                {:else if currentStyle.templateScripture_3}
+                    {$templates[currentStyle.templateScripture_3 || ""]?.name || "—"} (3)
+                {:else if currentStyle.templateScripture_4}
+                    {$templates[currentStyle.templateScripture_4 || ""]?.name || "—"} (4)
                 {:else}
                     <T id="popup.select_template" />
                 {/if}
             </p>
         </div>
     </Button>
-    {#if currentStyle.templateScripture}
+    {#if currentStyle.templateScripture || currentStyle.templateScripture_2 || currentStyle.templateScripture_3 || currentStyle.templateScripture_4}
         <Button
             title={$dictionary.actions?.remove}
             on:click={() => {
                 updateStyle("", "templateScripture")
+                if (currentStyle.templateScripture_2) updateStyle("", "templateScripture_2")
+                if (currentStyle.templateScripture_3) updateStyle("", "templateScripture_3")
+                if (currentStyle.templateScripture_4) updateStyle("", "templateScripture_4")
             }}
             redHover
         >

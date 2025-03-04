@@ -5,13 +5,13 @@
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
     import {
-        activeDrawerMediaSubTab,
         activeEdit,
         activeFocus,
         activeMediaTagFilter,
         activePopup,
         activeShow,
         dictionary,
+        drawerTabsData,
         focusMode,
         labelsDisabled,
         media,
@@ -70,13 +70,25 @@
         loadAllFiles(fullFilteredFiles)
     }
 
-    let screenTab = "screens"
+    function setSubSubTab(id: string) {
+        if (!active) return
 
-    let onlineTab = "youtube"
+        drawerTabsData.update((a) => {
+            if (!a.media) a.media = { enabled: true, activeSubTab: active }
+            if (!a.media.openedSubSubTab) a.media.openedSubSubTab = {}
+            a.media.openedSubSubTab[active] = id
+            return a
+        })
+
+        if (active === "screens") screenTab = id
+        else if (active === "online") onlineTab = id
+    }
+
+    let screenTab = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
+    let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
+
     $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
     $: if (active === "online" && onlineTab === "unsplash" && (searchValue !== null || activeView)) loadFilesAsync()
-    // only for info!
-    $: activeDrawerMediaSubTab.set(active === "online" ? onlineTab : screenTab)
 
     // get list of files & folders
     let prevActive: null | string = null
@@ -315,39 +327,39 @@
 
 {#if active === "screens"}
     <div class="tabs">
-        <Button style="flex: 1;" active={screenTab === "screens"} on:click={() => (screenTab = "screens")} center>
+        <Button style="flex: 1;" active={screenTab === "screens"} on:click={() => setSubSubTab("screens")} center>
             <Icon size={1.2} id="screen" right />
             <p><T id="live.screens" /></p>
         </Button>
-        <Button style="flex: 1;" active={screenTab === "windows"} on:click={() => (screenTab = "windows")} center>
+        <Button style="flex: 1;" active={screenTab === "windows"} on:click={() => setSubSubTab("windows")} center>
             <Icon size={1.2} id="window" right />
             <p><T id="live.windows" /></p>
         </Button>
-        <Button style="flex: 1;" active={screenTab === "ndi"} on:click={() => (screenTab = "ndi")} center>
+        <Button style="flex: 1;" active={screenTab === "ndi"} on:click={() => setSubSubTab("ndi")} center>
             <Icon size={1.2} id="ndi" right />
             <p>NDI</p>
         </Button>
         <!-- BLACKMAGIC CURRENTLY NOT WORKING -->
-        <!-- <Button style="flex: 1;" active={screenTab === "blackmagic"} on:click={() => (screenTab = "blackmagic")} center>
+        <!-- <Button style="flex: 1;" active={screenTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")} center>
             <Icon size={1.2} id="blackmagic" right />
             <p>Blackmagic</p>
         </Button> -->
     </div>
 {:else if active === "online"}
     <div class="tabs">
-        <Button style="flex: 1;" active={onlineTab === "youtube"} on:click={() => (onlineTab = "youtube")} center>
+        <Button style="flex: 1;" active={onlineTab === "youtube"} on:click={() => setSubSubTab("youtube")} center>
             <Icon style="fill: {onlineTab !== 'youtube' ? 'white' : '#ff0000'};" size={1.2} id="youtube" right />
             <p>YouTube</p>
         </Button>
-        <Button style="flex: 1;" active={onlineTab === "vimeo"} on:click={() => (onlineTab = "vimeo")} center>
+        <Button style="flex: 1;" active={onlineTab === "vimeo"} on:click={() => setSubSubTab("vimeo")} center>
             <Icon style="fill: {onlineTab !== 'vimeo' ? 'white' : '#17d5ff'};" size={1.2} id="vimeo" right />
             <p>Vimeo</p>
         </Button>
-        <Button style="flex: 1;" active={onlineTab === "pixabay"} on:click={() => (onlineTab = "pixabay")} center>
+        <Button style="flex: 1;" active={onlineTab === "pixabay"} on:click={() => setSubSubTab("pixabay")} center>
             <Icon style="fill: {onlineTab !== 'pixabay' ? 'white' : '#00ab6b'};" size={1.2} id="pixabay" box={48} right />
             <p>Pixabay</p>
         </Button>
-        <Button style="flex: 1;" active={onlineTab === "unsplash"} on:click={() => (onlineTab = "unsplash")} center>
+        <Button style="flex: 1;" active={onlineTab === "unsplash"} on:click={() => setSubSubTab("unsplash")} center>
             <!-- #111111 -->
             <Icon style="fill: {onlineTab !== 'unsplash' ? 'white' : '#bbbbbb'};" size={1.2} id="unsplash" right />
             <p>Unsplash</p>
@@ -397,7 +409,7 @@
                                 <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={fullFilteredFiles.length < 20} />
                             {:else}
                                 <Media
-                                    credits={item.credits}
+                                    credits={item.credits || {}}
                                     name={item.name}
                                     path={item.path}
                                     thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)}
@@ -415,7 +427,7 @@
                                 <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
                             {:else}
                                 <Media
-                                    credits={file.credits}
+                                    credits={file.credits || {}}
                                     thumbnail={$mediaOptions.mode !== "list"}
                                     name={file.name}
                                     path={file.path}
