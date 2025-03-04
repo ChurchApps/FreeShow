@@ -50,10 +50,13 @@
     <div class="triggers" class:center={globalList.length <= 10}>
         {#each globalList as trigger}
             <SelectElem class={status.id === trigger.id ? status.type || "pending" : ""} id="trigger" data={trigger} draggable>
-                <Button style="flex: 1;padding: 0;" class="context #trigger" on:click={() => buttonClick(trigger.id)}>
+                <Button style="flex: 1;padding: 0;" class="context #trigger" title={formatTriggerValue(trigger.value)} on:click={() => buttonClick(trigger.id)}>
                     <p>
-                        {trigger.name}
-                        <span style="font-size: 0;position: absolute;">{console.log(formatTriggerValue(trigger.value))}</span>
+                        {#if trigger.name?.length}
+                            {trigger.name}
+                        {:else}
+                            <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+                        {/if}
                         <!-- {#if trigger.name.length < 18}
                             <span>{formatTriggerValue(trigger.value)}</span>
                         {/if} -->

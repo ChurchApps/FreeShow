@@ -993,7 +993,7 @@ export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds() {
     let mainValues = Object.keys(dynamicValues)
     let metaValues = Object.keys(initializeMetadata({})).map((id) => `meta_` + id)
-    let variableValues = Object.values(get(variables)).map(({ name }) => `variable_` + getNameId(name))
+    let variableValues = Object.values(get(variables)).map(({ name }) => `variable_` + getVariableNameId(name))
 
     return [...mainValues, ...metaValues, ...variableValues]
 }
@@ -1032,7 +1032,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         if (id.includes("variable_")) {
             let nameId = id.slice(9)
-            let variable = Object.values(get(variables)).find((a) => getNameId(a.name) === nameId)
+            let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
             if (!variable) return ""
 
             if (variable.type === "number") return Number(variable.number || 0)
@@ -1102,6 +1102,6 @@ const dynamicValues = {
     video_countdown: ({ videoTime, videoDuration }) => joinTime(secondsToTime(videoDuration - videoTime)),
 }
 
-function getNameId(name) {
+export function getVariableNameId(name: string) {
     return name.toLowerCase().trim().replaceAll(" ", "_")
 }

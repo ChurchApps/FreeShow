@@ -267,6 +267,14 @@
         <Checkbox checked={$alertUpdates} on:change={(e) => alertUpdates.set(isChecked(e))} />
     </div>
 </CombinedInput>
+{#if $alertUpdates}
+    <CombinedInput>
+        <p>Alert when a new beta version is available</p>
+        <div class="alignRight">
+            <Checkbox checked={$special.betaVersionAlert} on:change={(e) => updateSpecial(isChecked(e), "betaVersionAlert")} />
+        </div>
+    </CombinedInput>
+{/if}
 
 <CombinedInput>
     <p><T id="settings.popup_before_close" /></p>

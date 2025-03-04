@@ -35,6 +35,7 @@ import { checkName } from "./show"
 import { _show } from "./shows"
 import { actionData } from "../actions/actionData"
 import { getActionTriggerId } from "../actions/actions"
+import { getVariableNameId } from "./showActions"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -156,6 +157,12 @@ export const dropActions: any = {
             let indexes: number[] = []
             // dropping on the center of a slide will add the template to just that slide
             if (drop.center) {
+                let showTemplateId: string = _show().get("settings.template") || ""
+                if (showTemplateId === templateId) {
+                    newToast("$toast.template_applied_globally")
+                    return
+                }
+
                 // indexes.push(drop.index)
                 // history({ id: "UPDATE", newData: { data: templateId, key: "settings", keys: ["template"] }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key" } })
                 // history({ id: "SLIDES", newData: { index: drop.index, replace: { settings: isParent } } })
@@ -172,10 +179,14 @@ export const dropActions: any = {
                     newData,
                     location: { page: "edit", show: get(activeShow)!, slide: slideId },
                 })
+
+                // update
+                history({ id: "TEMPLATE", save: false, newData: { id: showTemplateId }, location: { page: "show" } })
                 return
             }
 
             // create slide from template if dropping on a slide
+            // WIP add to correct index
             if (drop.trigger) {
                 let slides: Slide[] = []
                 drag.data.forEach((id) => {
@@ -296,8 +307,7 @@ export const dropActions: any = {
             drag.data.forEach((a: any) => addItem("timer", null, { timer: { id: a.id } }))
         } else if (drag.id === "variable") {
             drag.data.forEach((a: any) => {
-                // showActions.ts getNameId()
-                let name = a.name?.toLowerCase().trim().replaceAll(" ", "_") || ""
+                let name = getVariableNameId(a.name || "")
                 addItem("text", null, {}, `{variable_${name}}`)
             })
         }
@@ -694,7 +704,7 @@ const slideDrop: any = {
         // center drop to add to existing slide?
 
         history.id = "SLIDES"
-        let slides: any[] = drag.data.map((a: any) => ({ id: uid(), group: removeExtension(a.name || ""), color: null, settings: {}, notes: "", items: getTimerItem(a) }))
+        let slides: any[] = drag.data.map((a: any) => ({ id: uid(), group: a.name || "", color: null, settings: {}, notes: "", items: getTimerItem(a) }))
         function getTimerItem(timer): Item[] {
             return [{ type: "timer", style: DEFAULT_ITEM_STYLE, timerId: timer.id }]
         }
@@ -705,6 +715,28 @@ const slideDrop: any = {
             if (get(timers)[drag.data[i]?.id]?.type === "counter") return { id, ...layout }
             return { id }
         })
+
+        let index = drop.index
+        if (drop.trigger?.includes("end")) index++
+
+        history.newData = { index, data: slides, layouts }
+
+        return history
+    },
+    variable: ({ drag, drop }: any, history: any) => {
+        history.id = "SLIDES"
+
+        const variables = drag.data.filter((a) => a?.name)
+        if (!variables.length) return
+
+        let slides: any[] = variables.map((a: any) => ({ id: uid(), group: a.name || "", color: null, settings: {}, notes: "", items: getItem(a) }))
+        function getItem(a): Item[] {
+            const variableId = `{variable_${getVariableNameId(a.name || "")}}`
+            const lines = [{ align: "", text: [{ value: variableId, style: "font-size: 150px;" }] }]
+            return [{ type: "text", style: DEFAULT_ITEM_STYLE, lines }]
+        }
+
+        const layouts = slides.map(({ id }) => ({ id }))
 
         let index = drop.index
         if (drop.trigger?.includes("end")) index++

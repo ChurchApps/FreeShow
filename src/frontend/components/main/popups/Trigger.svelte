@@ -64,7 +64,7 @@
 {:else}
     <CombinedInput textWidth={25}>
         <p><T id="inputs.name" /></p>
-        <TextInput value={currentTrigger.name} on:change={(e) => updateValue(e, "name")} />
+        <TextInput value={currentTrigger.name} on:change={(e) => updateValue(e, "name")} autofocus={!currentTrigger.name} />
     </CombinedInput>
     <CombinedInput textWidth={25}>
         <p><T id="variables.value" /></p>

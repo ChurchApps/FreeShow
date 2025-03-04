@@ -198,9 +198,11 @@ export function changeVariable(data: API_variable) {
 
     let value
     let key = data.key || "enabled"
-    if (data.variableAction) {
-        if (data.variableAction === "increment") value = Number(variable.number || 0) + Number(variable.step || 1)
-        else if (data.variableAction === "decrement") value = Number(variable.number || 0) - Number(variable.step || 1)
+    if (data.variableAction || variable.type === "number") {
+        value = Number(variable.number || variable.default || 0)
+        if (data.variableAction === "increment" || key === "increment") value += Number(data.value || variable.step || 1)
+        else if (data.variableAction === "decrement" || key === "decrement") value -= Number(data.value || variable.step || 1)
+        else if (!data.variableAction) value = Number(data.value || variable.default || 0)
         key = "number"
     } else if (data.value !== undefined) {
         value = data.value

@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Shows } from "../../../types/Show"
-import { activePlaylist, audioPlaylists, outputs, playingAudio, projects, shows, showsCache, videosTime } from "../../stores"
+import { activePlaylist, audioPlaylists, outputs, playingAudio, playingVideos, projects, shows, showsCache, videosTime } from "../../stores"
 import { getActiveOutputs } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
@@ -34,10 +34,32 @@ export function getOutput(data: API_id_optional) {
     return output?.out || null
 }
 
+export function getOutputGroupName() {
+    const outputId = getActiveOutputs(get(outputs))[0]
+    const outputSlide = get(outputs)[outputId]?.out?.slide
+    const layoutRef = _show(outputSlide?.id).layouts([outputSlide?.layout]).ref()[0]
+    const slideId = layoutRef[outputSlide?.index || -1]?.id
+    const slide = _show(outputSlide?.id).get("slides")[slideId]
+    return slide?.group || ""
+}
+
+export function getPlayingVideoDuration() {
+    let outputId = getActiveOutputs(get(outputs))[0]
+    let outputPath = get(outputs)[outputId]?.out?.background?.path || ""
+    let video = get(playingVideos)[outputPath] || {}
+    let time: number = video?.duration || video?.video?.duration || 0
+    return time
+}
+
 export function getPlayingVideoTime() {
     let outputId = getActiveOutputs(get(outputs))[0]
-    let time = get(videosTime)[outputId]
-    return time || 0
+    let time: number = get(videosTime)[outputId] || 0
+    return time
+}
+
+export function getPlayingAudioDuration() {
+    let audio = Object.values(get(playingAudio))[0]?.audio
+    return audio ? audio?.duration || 0 : 0
 }
 
 export function getPlayingAudioTime() {
