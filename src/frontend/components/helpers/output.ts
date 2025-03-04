@@ -983,9 +983,16 @@ export function getOutputTransitions(slideData: any, styleTransition: any, trans
 }
 
 export function getStyleTemplate(outSlide: any, currentStyle: any) {
-    let isScripture = outSlide?.id === "temp" || _show(outSlide?.id).get("reference")?.type === "scripture"
+    if (!currentStyle) return {} as Template
 
-    let templateId = currentStyle[`template${isScripture ? "Scripture" : ""}`]
+    // scripture
+    const reference = _show(outSlide?.id).get("reference")
+    let isScripture = outSlide?.id === "temp" || reference?.type === "scripture"
+
+    let translations: number = outSlide?.id === "temp" ? outSlide.translations || 1 : reference?.data?.translations || reference?.data?.version?.split("+")?.length || 1
+    let translationKey = translations > 1 ? `_${translations}` : ""
+
+    let templateId = isScripture ? currentStyle[`templateScripture${translationKey}`] || currentStyle.templateScripture : currentStyle.template
     let template = get(templates)[templateId || ""] || {}
 
     return template

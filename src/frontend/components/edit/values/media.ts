@@ -7,6 +7,19 @@ export const mediaEdits: Box = {
         edit: {
             default: [
                 {
+                    name: "clock.type",
+                    id: "videoType", // can be image as well
+                    input: "dropdown",
+                    value: "",
+                    values: {
+                        options: [
+                            { id: "", name: "$:example.default:$" },
+                            { id: "background", name: "$:preview.background:$" }, // muted, looping
+                            { id: "foreground", name: "$:preview.foreground:$" }, // unmuted, not looping, will display even when the "Background" layer is turned off.
+                        ],
+                    },
+                },
+                {
                     name: "media.fit",
                     id: "fit",
                     input: "dropdown",
@@ -52,19 +65,6 @@ export const videoEdit = [
         input: "number",
         value: 0,
         values: { max: 100000 },
-    },
-    {
-        name: "clock.type",
-        id: "videoType",
-        input: "dropdown",
-        value: "",
-        values: {
-            options: [
-                { id: "", name: "$:example.default:$" },
-                { id: "background", name: "$:preview.background:$" }, // muted, looping
-                { id: "foreground", name: "$:preview.foreground:$" }, // unmuted, not looping, will display even when the "Background" layer is turned off.
-            ],
-        },
     },
 ]
 

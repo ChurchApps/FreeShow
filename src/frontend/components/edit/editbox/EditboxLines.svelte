@@ -191,8 +191,23 @@
         let parentsBefore = layoutRef.filter((a, i) => i < parentIndex && a.id === parentId)?.length
         let newIndex = $activeEdit.slide! + (parentsBefore + 1)
 
-        if (e?.target?.closest(".item")) activeEdit.set({ slide: newIndex, items: [], showId: $activeShow?.id })
-        else getStyle()
+        if (!e?.target?.closest(".item")) {
+            getStyle()
+            return
+        }
+
+        // set focus to textbox
+        activeEdit.set({ slide: newIndex, items: [0], showId: $activeShow?.id })
+        setTimeout(() => {
+            // timeout because elem is refreshed first
+            const elem: any = document.querySelector(".editItem")?.querySelector(".edit")
+            if (elem) elem.focus()
+
+            // set caret at the end
+            let sel = getSelectionRange()
+            const caret = { line: sel.length - 1, pos: 999 }
+            setCaret(elem, caret)
+        })
     }
 
     let HISTORY_UPDATE_KEY = 0
@@ -298,7 +313,6 @@
         }
 
         autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })
-        console.log(type, autoSize, maxFontSize, defaultFontSize, alignElem)
     }
 
     // UPDATE STYLE FROM LINES

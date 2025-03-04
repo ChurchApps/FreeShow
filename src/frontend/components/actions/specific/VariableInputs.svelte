@@ -20,9 +20,15 @@
 
     const variableOptions = convertToOptions($variables) // .map((a) => ({...a, type: $variables[a.id]?.type}))
 
-    const variableModes = [
-        { id: "enabled", name: "Toggle" }, // set enabled state
-        { id: "value", name: "Value" }, // variables.value
+    const variableTextModes = [
+        { id: "enabled", name: "$:variables.set_state:$" }, // set enabled state
+        { id: "value", name: "$:variables.value:$" },
+    ]
+
+    const variableNumberModes = [
+        { id: "value", name: "$:variables.value:$" },
+        { id: "increment", name: "$:actions.increment:$" },
+        { id: "decrement", name: "$:actions.decrement:$" },
     ]
 
     let dispatch = createEventDispatcher()
@@ -34,31 +40,38 @@
     function checkboxChanged(e: any) {
         dispatch("update", { key: "value", value: e.target.checked })
     }
+
+    $: variable = $variables[value?.id]
 </script>
 
 <CombinedInput>
     <Dropdown style="width: 100%;" activeId={value?.id} value={variableOptions.find((a) => a.id === value?.id)?.name || value?.id || "—"} options={variableOptions} on:click={(e) => updateValue("id", e.detail?.id)} />
 </CombinedInput>
 
-{#if $variables[value?.id]?.type === "text"}
+{#if value?.id}
     <CombinedInput>
-        <Dropdown style="width: 100%;" value={variableModes.find((a) => a.id === (value?.key || "enabled"))?.name || ""} options={variableModes} on:click={(e) => updateValue("key", e.detail?.id)} />
-    </CombinedInput>
-{/if}
-
-{#if value?.key === "value" || $variables[value?.id]?.type === "number"}
-    <CombinedInput>
-        {#if $variables[value?.id]?.type === "number"}
-            <NumberInput value={!isNaN(value?.value) ? value?.value || "0" : "0"} on:change={(e) => updateValue("value", e)} />
-        {:else}
-            <TextInput value={typeof value?.value === "string" ? value?.value || "" : ""} on:change={(e) => updateValue("value", e)} />
+        <p><T id="actions.mode" /></p>
+        {#if variable?.type === "text"}
+            <Dropdown style="width: 100%;" value={variableTextModes.find((a) => a.id === (value?.key || "enabled"))?.name || "—"} options={variableTextModes} on:click={(e) => updateValue("key", e.detail?.id)} />
+        {:else if variable?.type === "number"}
+            <Dropdown style="width: 100%;" value={variableNumberModes.find((a) => a.id === (value?.key || "value"))?.name || "—"} options={variableNumberModes} on:click={(e) => updateValue("key", e.detail?.id)} />
         {/if}
     </CombinedInput>
-{:else}
-    <CombinedInput>
-        {#if value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;"><T id="actions.toggle_checkbox_tip" /></p>{/if}
-        <div class="alignRight" style="width: 100%;">
-            <Checkbox checked={!!value?.value} on:change={checkboxChanged} />
-        </div>
-    </CombinedInput>
+
+    {#if value?.key === "value" || variable?.type === "number"}
+        <CombinedInput>
+            {#if variable?.type === "number"}
+                <NumberInput value={!isNaN(value?.value) ? value?.value || "1" : "1"} step={1} decimals={1} fixed={Number(value?.value).toString().includes(".") ? 1 : 0} on:change={(e) => updateValue("value", e)} />
+            {:else}
+                <TextInput value={isNaN(value?.value) ? value?.value || "" : ""} on:change={(e) => updateValue("value", e)} />
+            {/if}
+        </CombinedInput>
+    {:else}
+        <CombinedInput>
+            {#if value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;"><T id="actions.toggle_checkbox_tip" /></p>{/if}
+            <div class="alignRight" style="width: 100%;">
+                <Checkbox checked={!!value?.value} on:change={checkboxChanged} />
+            </div>
+        </CombinedInput>
+    {/if}
 {/if}

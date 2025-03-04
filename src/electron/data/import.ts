@@ -76,6 +76,9 @@ const specialImports: any = {
     },
 }
 
+// protobufjs (.pro) import can't handle close to 1000 files at once
+const BATCH_SIZE = 500
+
 export async function importShow(id: any, files: string[] | null, importSettings: any) {
     if (!files?.length) return
 
@@ -108,7 +111,11 @@ export async function importShow(id: any, files: string[] | null, importSettings
     if (specialImports[importId]) data = await specialImports[importId](files, importSettings)
     else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
-        data = await Promise.all(files.map(async (file) => await readFile(file)))
+        for (let i = 0; i < files.length; i += BATCH_SIZE) {
+            const batch = files.slice(i, i + BATCH_SIZE)
+            const batchData = await Promise.all(batch.map((file) => readFile(file)))
+            data.push(...batchData)
+        }
     }
 
     if (!data.length) return

@@ -5,7 +5,7 @@
     import Particles from "./Particles.svelte"
 
     $: tool = $drawTool
-    $: settings = $drawSettings[tool]
+    $: settings = $drawSettings[tool] || {}
 
     // $: outputId = getActiveOutputs($outputs, true, true, true)[0]
     // $: resolution = getOutputResolution(outputId, $outputs, true)

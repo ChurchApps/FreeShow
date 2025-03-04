@@ -32,9 +32,10 @@
     const click = (e: MouseEvent) => {
         if (e.target?.closest(".menu") || e.target?.closest(".menus")) return
 
-        activeID = null
         topContextActive.set(false)
     }
+
+    $: if ($topContextActive === false) activeID = null
 
     const move = (e: any) => {
         if (!$topContextActive || activeID === e.target.id) return

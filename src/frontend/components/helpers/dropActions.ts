@@ -35,6 +35,7 @@ import { checkName } from "./show"
 import { _show } from "./shows"
 import { actionData } from "../actions/actionData"
 import { getActionTriggerId } from "../actions/actions"
+import { getVariableNameId } from "./showActions"
 
 function getId(drag: any): string {
     let id: string = ""
@@ -156,6 +157,12 @@ export const dropActions: any = {
             let indexes: number[] = []
             // dropping on the center of a slide will add the template to just that slide
             if (drop.center) {
+                let showTemplateId: string = _show().get("settings.template") || ""
+                if (showTemplateId === templateId) {
+                    newToast("$toast.template_applied_globally")
+                    return
+                }
+
                 // indexes.push(drop.index)
                 // history({ id: "UPDATE", newData: { data: templateId, key: "settings", keys: ["template"] }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key" } })
                 // history({ id: "SLIDES", newData: { index: drop.index, replace: { settings: isParent } } })
@@ -172,10 +179,14 @@ export const dropActions: any = {
                     newData,
                     location: { page: "edit", show: get(activeShow)!, slide: slideId },
                 })
+
+                // update
+                history({ id: "TEMPLATE", save: false, newData: { id: showTemplateId }, location: { page: "show" } })
                 return
             }
 
             // create slide from template if dropping on a slide
+            // WIP add to correct index
             if (drop.trigger) {
                 let slides: Slide[] = []
                 drag.data.forEach((id) => {
@@ -296,8 +307,7 @@ export const dropActions: any = {
             drag.data.forEach((a: any) => addItem("timer", null, { timer: { id: a.id } }))
         } else if (drag.id === "variable") {
             drag.data.forEach((a: any) => {
-                // showActions.ts getNameId()
-                let name = a.name?.toLowerCase().trim().replaceAll(" ", "_") || ""
+                let name = getVariableNameId(a.name || "")
                 addItem("text", null, {}, `{variable_${name}}`)
             })
         }
@@ -396,6 +406,22 @@ const slideDrop: any = {
         let center = drop.center
         if (drag.id === "files" && drop.index !== undefined) center = true
 
+        // get background type
+        let backgroundTypeData: any = {}
+        // videos are probably not meant to be background if they are added in bulk
+        if (data.length > 1 && !center) backgroundTypeData = { muted: false, loop: false }
+
+        data = data.map((a) => {
+            let path = a.path || a.id
+
+            let backgroundData = backgroundTypeData
+            let mediaStyle = getMediaStyle(get(media)[path], undefined)
+            if (mediaStyle.videoType === "background") backgroundData = { muted: true, loop: true }
+            else if (mediaStyle.videoType === "foreground") backgroundData = { muted: false, loop: false }
+
+            return { ...a, path, ...(a.type === "video" ? backgroundData : {}) }
+        })
+
         if (center) {
             if (!data[0]) return
             history.id = "showMedia"
@@ -413,20 +439,6 @@ const slideDrop: any = {
         history.id = "SLIDES"
         let slides: any[] = drag.data.map((a: any) => ({ id: a.id || uid(), group: removeExtension(a.name || ""), color: null, settings: {}, notes: "", items: [] }))
 
-        let notBackgrounds: any = {}
-        // videos are probably not meant to be background if they are added in bulk
-        if (data.length > 1) notBackgrounds = { muted: false, loop: false }
-
-        data = data.map((a) => {
-            let path = a.path || a.id
-
-            let backgroundData = notBackgrounds
-            let mediaStyle = getMediaStyle(get(media)[path], undefined)
-            if (mediaStyle.videoType === "background") backgroundData = { muted: true, loop: true }
-            else if (mediaStyle.videoType === "foreground") backgroundData = { muted: false, loop: false }
-
-            return { ...a, path, ...(a.type === "video" ? backgroundData : {}) }
-        })
         history.newData = { index: drop.index, data: slides, layout: { backgrounds: data } }
 
         return history
@@ -692,7 +704,7 @@ const slideDrop: any = {
         // center drop to add to existing slide?
 
         history.id = "SLIDES"
-        let slides: any[] = drag.data.map((a: any) => ({ id: uid(), group: removeExtension(a.name || ""), color: null, settings: {}, notes: "", items: getTimerItem(a) }))
+        let slides: any[] = drag.data.map((a: any) => ({ id: uid(), group: a.name || "", color: null, settings: {}, notes: "", items: getTimerItem(a) }))
         function getTimerItem(timer): Item[] {
             return [{ type: "timer", style: DEFAULT_ITEM_STYLE, timerId: timer.id }]
         }
@@ -711,12 +723,34 @@ const slideDrop: any = {
 
         return history
     },
+    variable: ({ drag, drop }: any, history: any) => {
+        history.id = "SLIDES"
+
+        const variables = drag.data.filter((a) => a?.name)
+        if (!variables.length) return
+
+        let slides: any[] = variables.map((a: any) => ({ id: uid(), group: a.name || "", color: null, settings: {}, notes: "", items: getItem(a) }))
+        function getItem(a): Item[] {
+            const variableId = `{variable_${getVariableNameId(a.name || "")}}`
+            const lines = [{ align: "", text: [{ value: variableId, style: "font-size: 150px;" }] }]
+            return [{ type: "text", style: DEFAULT_ITEM_STYLE, lines }]
+        }
+
+        const layouts = slides.map(({ id }) => ({ id }))
+
+        let index = drop.index
+        if (drop.trigger?.includes("end")) index++
+
+        history.newData = { index, data: slides, layouts }
+
+        return history
+    },
     midi: ({ drag, drop }: any, history: any) => {
         // WIP not in use:
         history.id = "SHOW_LAYOUT"
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let data: any = ref.data.actions || {}
+        let data: any = ref?.data?.actions || {}
         let key = drag.data[0].type === "in" ? "receiveMidi" : "sendMidi"
         data[key] = drag.data[0].id
 
@@ -727,7 +761,7 @@ const slideDrop: any = {
         history.id = "SHOW_LAYOUT"
 
         let ref: any = _show().layouts("active").ref()[0][drop.index!]
-        let data: any = ref.data.actions || {}
+        let data: any = ref?.data?.actions || {}
 
         let slideActions = data.slideActions || []
         let newActions: any[] = []

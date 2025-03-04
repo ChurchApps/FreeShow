@@ -94,6 +94,9 @@ export class EditboxHelper {
             if (!firstLines.at(-1)?.text.length) firstLines.pop()
         })
 
+        // remove first line if empty
+        if (secondLines?.[0]?.text?.[0]?.value === "") secondLines.shift()
+
         let defaultLine = [
             {
                 align: lines[0].align || "",

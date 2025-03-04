@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { activeDrawerMediaSubTab, activeRecording, currentRecordingStream } from "../../../stores"
+    import { activeRecording, currentRecordingStream, drawerTabsData } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import { mediaRecorderIsPaused, stopMediaRecorder, toggleMediaRecorder } from "./recorder"
 
-    $: active = $activeDrawerMediaSubTab
+    $: active = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
 
     let videoElem
     $: if ($currentRecordingStream && videoElem) {

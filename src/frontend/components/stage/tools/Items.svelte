@@ -5,7 +5,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
-    import { checkWindowCapture, getActiveOutputs, getResolution } from "../../helpers/output"
+    import { checkWindowCapture, getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Center from "../../system/Center.svelte"
     import Panel from "../../system/Panel.svelte"
@@ -35,7 +35,7 @@
     function click(item: string) {
         if (!$activeStage.id) return
 
-        let resolution = getResolution()
+        let resolution = { width: 1920, height: 1080 }
         let style = `
             width: ${resolution.width / 2}px;
             height: ${resolution.height / 2}px;

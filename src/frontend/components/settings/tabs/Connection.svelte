@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
-    import { activePopup, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
+    import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -9,6 +9,7 @@
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import { pcoSync } from "../../../utils/startup"
 
     let ip = "localhost"
     let listenerId = "IP_ADDRESS"
@@ -52,6 +53,11 @@
             return a
         })
 
+        if (value) {
+            popupData.set({ ip, id })
+            activePopup.set("connect")
+        }
+
         if (id === "output_stream") {
             if ($serverData?.output_stream?.outputId && !$outputs[$serverData.output_stream.outputId]) {
                 serverData.update((a) => {
@@ -77,7 +83,7 @@
     }
 
     function restart() {
-        send(MAIN, ["START"], { ports: $ports, max: $maxConnections, disabled: $disabledServers })
+        send(MAIN, ["START"], { ports: $ports, max: $maxConnections, disabled: $disabledServers, data: $serverData })
     }
 
     // restart servers on toggle on/off
@@ -101,6 +107,12 @@
     function pcoConnect() {
         if (!$pcoConnected) send(MAIN, ["PCO_LOAD_SERVICES"], { dataPath: $dataPath })
         else send(MAIN, ["PCO_DISCONNECT"])
+    }
+
+    function syncPCO() {
+        pcoSync()
+        activeShow.set(null)
+        activePage.set("show")
     }
 </script>
 
@@ -129,7 +141,7 @@
                 }}
                 {disabled}
             >
-                <div style="margin: 0;">
+                <div style="margin: 0;border: none;">
                     <Icon id={server.icon} size={1.1} right />
                     <p style="min-width: fit-content;padding-right: 0;">
                         {server.name}
@@ -137,6 +149,11 @@
                         {#if connections}<span style="border: none;" class="connections">{connections}</span>{/if}
                     </p>
                 </div>
+                {#if server.id === "output_stream" && $serverData.output_stream?.sendAudio}
+                    <span style="border: none;display: flex;align-items: center;justify-content: end;">
+                        <Icon id="volume" />
+                    </span>
+                {/if}
             </Button>
         </span>
         <span class="alignRight" style="padding-left: 10px;">
@@ -161,6 +178,12 @@
             <T id="settings.connect_to" replace={["Planning Center"]} />
         {/if}
     </Button>
+    {#if $pcoConnected}
+        <Button on:click={syncPCO}>
+            <Icon id="cloud_sync" right />
+            <p><T id="cloud.sync" /></p>
+        </Button>
+    {/if}
 </CombinedInput>
 
 <!-- <div>

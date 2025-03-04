@@ -1,5 +1,5 @@
 import { BrowserWindow } from "electron"
-import { OUTPUT_CONSOLE, isMac, loadWindowContent, mainWindow, toApp } from "../.."
+import { OUTPUT_CONSOLE, getMainWindow, isMac, loadWindowContent, toApp } from "../.."
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import { CaptureHelper } from "../../capture/CaptureHelper"
@@ -132,7 +132,8 @@ export class OutputLifecycle {
 
     static setWindowListeners(window: BrowserWindow, { id, name }: { [key: string]: string }) {
         window.on("ready-to-show", () => {
-            mainWindow?.focus()
+            getMainWindow()?.focus()
+
             window.setMenu(null)
             window.setTitle(name || "Output")
         })

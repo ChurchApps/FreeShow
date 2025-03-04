@@ -81,6 +81,7 @@
         outlineColor={findMatchingOut(screen.id, $outputs)}
         active={findMatchingOut(screen.id, $outputs) !== null}
         on:click
+        title={screen.name}
         label={screen.name}
         icon={screen.id.includes("screen") ? "screen" : "window"}
         white={!screen.id.includes("screen")}

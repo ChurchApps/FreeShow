@@ -55,15 +55,15 @@
 
     // set values
     $: if (currentMedia) {
-        edits.default[0].value = currentMedia.fit || ""
-        edits.default[1].value = currentMedia.flipped || false
-        edits.default[2].value = currentMedia.flippedY || false
+        edits.default[0].value = currentMedia?.videoType || ""
+        edits.default[1].value = currentMedia.fit || ""
+        edits.default[2].value = currentMedia.flipped || false
+        edits.default[3].value = currentMedia.flippedY || false
         if (edits.video) {
             edits.video[0].value = currentMedia.speed || "1"
             edits.video[1].value = currentMedia.volume ?? 100
             edits.video[2].value = currentMedia.fromTime || 0
             edits.video[3].value = currentMedia.toTime || edits.video[3].value
-            edits.video[4].value = currentMedia?.videoType || ""
         }
 
         // update filters

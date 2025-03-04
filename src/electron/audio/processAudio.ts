@@ -1,4 +1,5 @@
 import { NdiSender } from "../ndi/NdiSender"
+import { getServerData, toServer } from "../servers"
 
 // const isStopping = false
 const channelCount = 2
@@ -12,12 +13,12 @@ try {
     console.log("OPUS not found!")
 }
 
-export async function processAudio(buffer: Buffer, timeDelay = 0) {
+// , { audioDelay }
+export async function processAudio(buffer: Buffer) {
     if (!opusEncoder) return
 
-    /*  optionally delay the processing  */
-    const offset = timeDelay
-    if (offset > 0) await new Promise((resolve) => setTimeout(resolve, offset))
+    // const offset = audioDelay
+    // if (offset > 0) await new Promise((resolve) => setTimeout(resolve, offset))
     // if (isStopping) return
 
     // decode raw OPUS packets into raw PCM/interleaved/signed-int16/little-endian data
@@ -29,10 +30,11 @@ export async function processAudio(buffer: Buffer, timeDelay = 0) {
     }
 
     NdiSender.sendAudioBufferNDI(buffer, { sampleRate, channelCount })
-    // Object.keys(NdiSender.NDI).forEach((id) => {
-    //     let sender = NdiSender.NDI[id]
-    //     if (!sender?.sendAudio) return
+    sendAudioToOutputServer(buffer, { sampleRate, channelCount })
+}
 
-    //     NdiSender.sendAudioBufferNDI(id, buffer, { sampleRate, channelCount })
-    // })
+export function sendAudioToOutputServer(buffer: Buffer, { sampleRate, channelCount }: any) {
+    if (!getServerData("OUTPUT_STREAM").sendAudio) return
+
+    toServer("OUTPUT_STREAM", { channel: "AUDIO_BUFFER", data: { buffer, sampleRate, channelCount } })
 }

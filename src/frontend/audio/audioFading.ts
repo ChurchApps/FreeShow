@@ -59,6 +59,7 @@ export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
     }
 
     function deleteAudio(path) {
+        isFadingOut.set(false)
         AudioPlayer.stop(path)
 
         clearing.splice(clearing.indexOf(path), 1)

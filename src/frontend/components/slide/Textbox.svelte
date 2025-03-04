@@ -94,7 +94,7 @@
     $: if (!outputId) customOutputId = getActiveOutputs($outputs, true, true, true)[0]
 
     function getCustomStyle(style: string, outputId: string = "", _updater: any = null) {
-        if (outputId) {
+        if (outputId && !isMirrorItem) {
             let outputResolution = getOutputResolution(outputId, $outputs, true)
             style = percentageStylePos(style, outputResolution)
         }
@@ -337,7 +337,7 @@
     }, 1000)
 
     $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};filter: ${item?.filter};transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
-    $: mediaStyleBlurString = `position: absolute;filter: ${item?.filter} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
+    $: mediaStyleBlurString = `position: absolute;filter: ${item?.filter || ""} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
 
     $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chordsData?.size || item?.chords?.size || 50 : "undefined"}px;--chord-color: ${stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
 </script>

@@ -48,7 +48,6 @@ export const activeStage: Writable<ActiveStage> = writable({ id: null, items: []
 export const activeTimers: Writable<any[]> = writable([])
 export const activeRename: Writable<any> = writable(null)
 export const activeDrawerTab: Writable<DrawerTabIds> = writable("shows")
-export const activeDrawerMediaSubTab: Writable<string> = writable("youtube")
 export const drawerOpenedInEdit: Writable<boolean> = writable(false)
 export const activeStyle: Writable<string> = writable("")
 export const settingsTab: Writable<SettingsTabs> = writable("general")

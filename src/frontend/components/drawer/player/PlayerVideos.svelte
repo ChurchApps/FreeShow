@@ -3,7 +3,7 @@
     import { clone, sortByName } from "../../helpers/array"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
-    import { clearBackground } from "../../output/clear"
+    import { clearBackground, clearSlide } from "../../output/clear"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
@@ -66,14 +66,16 @@
                     return
                 }
 
-                setOutput("background", { id: video.rid, type: "player", muted: false, loop: false, startAt: 0 })
+                // set as "foreground" type (clear slide & ignore "background" layer)
+                clearSlide()
+                setOutput("background", { id: video.rid, type: "player", muted: false, loop: false, startAt: 0, ignoreLayer: true })
             }}
             on:dblclick={() => {
                 if ($focusMode) activeFocus.set({ id: video.rid, type: "player" })
                 else activeShow.set({ id: video.rid, type: "player" })
             }}
         >
-            <SelectElem id="player" data={video.rid} draggable>
+            <SelectElem id="player" data={video.rid} style="width: 100%;" draggable>
                 <img src={getThumbnail(video.id)} style="width: 100%;height: 100%;aspect-ratio: 19/9;object-fit: cover;" on:load={() => (loaded[video.rid] = true)} />
             </SelectElem>
         </Card>

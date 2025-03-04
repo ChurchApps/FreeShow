@@ -33,6 +33,7 @@ function createServers() {
             io: new Server(server),
             max: 10,
             connections: {},
+            data: {},
         }
 
         createBridge({ id, ...servers[id] })
@@ -40,7 +41,7 @@ function createServers() {
 }
 
 var started: boolean = false
-export function startServers({ ports, max, disabled }: any) {
+export function startServers({ ports, max, disabled, data }: any) {
     if (started) closeServers()
     started = true
 
@@ -51,11 +52,24 @@ export function startServers({ ports, max, disabled }: any) {
         servers[id].max = max
         if (ports[id.toLowerCase()]) servers[id].port = ports[id.toLowerCase()]
 
+        servers[id].data = data[id.toLowerCase()] || {}
+
         servers[id].server.listen(servers[id].port, () => console.log(id + " on: " + servers[id].port))
         servers[id].server.once("error", (err: any) => {
             if (err.code === "EADDRINUSE") servers[id].server.close()
         })
     })
+}
+
+export function updateServerData(data: { [key: string]: any }) {
+    let serverList = Object.keys(servers) as ServerName[]
+    serverList.forEach((id: ServerName) => {
+        servers[id].data = data[id.toLowerCase()] || {}
+    })
+}
+
+export function getServerData(id: ServerName) {
+    return servers[id]?.data || {}
 }
 
 export function closeServers() {

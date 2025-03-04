@@ -52,14 +52,14 @@
 
     $: storeHeight = $drawer.stored
     function click(e: any) {
-        if (move || e?.target instanceof HTMLInputElement) {
+        if ((height > minHeight && e?.target?.closest("button")) || move || e?.target instanceof HTMLInputElement) {
             move = false
             return
         }
 
         if (height > minHeight) {
             // close drawer
-            if (e === null || e?.target.classList.contains("top") || e?.target?.closest("#" + $activeDrawerTab)) drawer.set({ height: minHeight, stored: height })
+            if (e === null || e?.target.classList.contains("top") || e?.target?.closest("#" + $activeDrawerTab)) closeDrawer()
             drawerOpenedInEdit.set(false)
             return
         }
@@ -75,6 +75,11 @@
                 return a
             })
         }
+    }
+
+    function closeDrawer() {
+        drawer.set({ height: minHeight, stored: height })
+        drawerOpenedInEdit.set(false)
     }
 
     function mouseup(e: any) {
@@ -167,7 +172,14 @@
         <span class="tabs">
             {#each tabs as tab, i}
                 {#if $drawerTabsData[tab.id]?.enabled !== false && (!$focusMode || !hiddenInFocusMode.includes(tab.id))}
-                    <Button id={tab.id} on:click={() => openDrawerTab(tab)} active={$activeDrawerTab === tab.id} class="context #drawer_top" title="{$dictionary[tab.name.split('.')[0]]?.[tab.name.split('.')[1]]} [Ctrl+{i + 1}]">
+                    <Button
+                        id={tab.id}
+                        on:click={() => openDrawerTab(tab)}
+                        on:dblclick={closeDrawer}
+                        active={$activeDrawerTab === tab.id}
+                        class="context #drawer_top"
+                        title="{$dictionary[tab.name.split('.')[0]]?.[tab.name.split('.')[1]]} [Ctrl+{i + 1}]"
+                    >
                         <Icon id={tab.icon} size={1.3} />
                         {#if !$labelsDisabled && !$focusMode}
                             <span><T id={tab.name} /></span>

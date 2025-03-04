@@ -34,7 +34,7 @@
     {#each items as item}
         <CombinedInput>
             {#if allowOpen}
-                <Button style="width: 100%;" title={$dictionary.timer?.edit} on:click={() => openItem(item.id)} bold={false}>
+                <Button style="width: 100%;" title={$dictionary.titlebar?.edit} on:click={() => openItem(item.id)} bold={false}>
                     <slot {item} />
                 </Button>
             {:else}

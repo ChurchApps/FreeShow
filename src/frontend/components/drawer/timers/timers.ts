@@ -141,6 +141,13 @@ export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, update
 
 // ACTIONS
 
+export function pauseAllTimers() {
+    activeTimers.update((active) => {
+        active.forEach((a) => (a.paused = true))
+        return active
+    })
+}
+
 export function playPauseGlobal(id: any, timer: any, forcePlay: boolean = false, pausedState: boolean | null = null) {
     if (get(timers)[id]?.type !== "counter") return
     let index = get(activeTimers).findIndex((a) => a.id === id)

@@ -16,9 +16,12 @@ export class NdiReceiver {
     static receiverTimeout = -1 // 5000 // looks like this timeout exits the app even if the request is successful (if video() is called rapidly)
     static NDI_RECEIVERS: any = {}
 
+    private static findSourcesInterval: NodeJS.Timeout | null = null
     static async findStreamsNDI(): Promise<any> {
         if (this.ndiDisabled) return
         const grandiose = require("grandiose")
+
+        if (this.findSourcesInterval) clearInterval(this.findSourcesInterval)
 
         // grandiose.find() crashes the app without "{}"
         const finder = await grandiose.find({ showLocalSources: true })
@@ -27,11 +30,11 @@ export class NdiReceiver {
             // without the interval it only finds one source
             // https://github.com/emanspeaks/grandiose/commit/271cd73b5269ab827155a1a944c15d3b5fe4d564
             let previousLength = 0
-            let findSourcesInterval = setInterval(() => {
+            this.findSourcesInterval = setInterval(() => {
                 const sources = finder.sources()
                 let currentLength = sources.length
                 if (previousLength === currentLength) {
-                    clearInterval(findSourcesInterval)
+                    if (this.findSourcesInterval) clearInterval(this.findSourcesInterval)
                     resolve(sources)
                     return
                 }
