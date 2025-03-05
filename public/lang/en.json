@@ -173,6 +173,8 @@
         "play_no_audio": "Play without audio",
         "play_no_filters": "Play without filters",
         "favourite": "Favorite",
+        "effects_library_add": "Add to effects library",
+        "effects_library_remove": "Remove from effects library",
         "pause": "Pause",
         "stop": "Stop",
         "back10": "Go back 10 seconds",
@@ -210,7 +212,9 @@
         "toggle_metronome": "Toggle metronome",
         "tempo": "Tempo",
         "bpm": "BPM",
-        "beats": "Beats"
+        "beats": "Beats",
+        "type_music": "Music",
+        "type_effect": "Effect"
     },
     "menu": {
         "show": "Show",
@@ -366,6 +370,7 @@
         "all": "All",
         "unlabeled": "Unlabeled",
         "favourites": "Favorites",
+        "sound_effects": "Sounds effects",
         "song": "Songs",
         "presentation": "Presentations",
         "info": "Info",
@@ -1154,6 +1159,7 @@
         "default_project_name": "Default project name",
         "audio_fade_duration": "Audio fade duration",
         "audio_crossfade": "Audio crossfade",
+        "playlist_volume": "Playlist volume",
         "clear_style_background_on_text": "Clear style background when slide is active",
         "resolution": "Resolution",
         "aspect_ratio": "Aspect ratio",

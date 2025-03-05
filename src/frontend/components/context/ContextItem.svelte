@@ -6,6 +6,7 @@
         activeShow,
         categories,
         contextActive,
+        effectsLibrary,
         events,
         forceClock,
         media,
@@ -171,6 +172,13 @@
         favourite: () => {
             let path = $selected.data[0]?.path || $selected.data[0]?.id
             if (path && $media[path]?.favourite === true) enabled = true
+        },
+        effects_library_add: () => {
+            // WIP don't show this if not an effect
+            let path = $selected.data[0]?.path || $selected.data[0]?.id
+            let existing = $effectsLibrary.find((a) => a.path === path)
+            if (path && existing) enabled = true
+            menu.label = enabled ? "media.effects_library_remove" : "media.effects_library_add"
         },
         lock_to_output: () => {
             let id = $selected.data[0]

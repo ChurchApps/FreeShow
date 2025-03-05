@@ -11,7 +11,9 @@
         categories,
         dictionary,
         drawerTabsData,
+        effectsLibrary,
         labelsDisabled,
+        media,
         mediaFolders,
         midiIn,
         overlayCategories,
@@ -22,6 +24,7 @@
     import { keysToID, sortByName, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
+    import { getMediaType } from "../helpers/media"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import FolderPicker from "../inputs/FolderPicker.svelte"
@@ -50,9 +53,12 @@
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
             }
         } else if (id === "media") {
+            const activeTab = $drawerTabsData.media.activeSubTab
+            const anyFavourites = activeTab === "favourites" || Object.entries($media).find(([path, a]) => getMediaType(path) !== "audio" && a.favourite)
+
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
-                { id: "favourites", name: "category.favourites", default: true, icon: "star" },
+                ...(anyFavourites ? [{ id: "favourites", name: "category.favourites", default: true, icon: "star" }] : []),
                 { id: "SEPERATOR", name: "" },
                 { id: "online", name: "media.online", default: true, icon: "web" },
                 { id: "screens", name: "live.screens", default: true, icon: "screen" },
@@ -87,9 +93,14 @@
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
             }
         } else if (id === "audio") {
+            const activeTab = $drawerTabsData.audio.activeSubTab
+            const anyFavourites = activeTab === "favourites" || Object.entries($media).find(([path, a]) => getMediaType(path) === "audio" && a.favourite)
+            const anyEffects = activeTab === "effects_library" || $effectsLibrary.length
+
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
-                { id: "favourites", name: "category.favourites", default: true, icon: "star" },
+                ...(anyFavourites ? [{ id: "favourites", name: "category.favourites", default: true, icon: "star" }] : []),
+                ...(anyEffects ? [{ id: "effects_library", name: "category.sound_effects", default: true, icon: "effect" }] : []),
                 { id: "SEPERATOR", name: "" },
                 { id: "microphones", name: "live.microphones", default: true, icon: "microphone" },
                 { id: "audio_streams", name: "live.audio_streams", default: true, icon: "audio_stream" },

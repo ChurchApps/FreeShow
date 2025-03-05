@@ -179,7 +179,8 @@
         setBoxInputValue(box, "default", "clock.customFormat", "hidden", clockType !== "custom")
     }
     $: if (id === "camera" && item) {
-        setBoxInputValue(box, "default", "device", "name", item.device?.name)
+        if (item.device?.name) setBoxInputValue(box, "default", "device", "name", item.device.name)
+        // WIP this does not update name when chosen
     }
     $: if (id === "slide_tracker" && item) {
         if (item.tracker?.type) setBoxInputValue(box, "default", "tracker.type", "value", item.tracker.type)

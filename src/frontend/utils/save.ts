@@ -23,6 +23,7 @@ import {
     drawerTabsData,
     driveData,
     driveKeys,
+    effectsLibrary,
     emitters,
     errorHasOccured,
     events,
@@ -141,6 +142,7 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         driveData: get(driveData),
         calendarAddShow: get(calendarAddShow),
         metronome: get(metronome),
+        effectsLibrary: get(effectsLibrary),
         special: get(special),
     }
 
@@ -366,6 +368,7 @@ const saveList: { [key in SaveList]: any } = {
     driveData: driveData,
     calendarAddShow: null,
     metronome: null,
+    effectsLibrary: null,
     special: special,
     companion: null,
     globalTags: globalTags,

@@ -70,8 +70,8 @@
                 if (!actionData[id]) return false
                 // show if it is the currently selected
                 if (id === actionId) return true
-                // don't show action if incompatible with any existing action
-                if (actionData[id].incompatible?.find((id) => existingActions.includes(id))) return false
+                // don't show action if incompatible with any existing action (and no wait action is added)
+                if (!existingActions.find((a) => a.includes("wait")) && actionData[id].incompatible?.find((id) => existingActions.includes(id))) return false
                 // don't display GET actions
                 if (id.includes("get_")) return false
 
@@ -86,7 +86,7 @@
                 return true
             }),
         // custom special
-        ...(list && !full ? [] : [{ id: "wait", name: $dictionary.animate?.wait || "", icon: "time_in", common: false, section: "edit.special" }]),
+        ...(list && !full ? [] : [{ id: "wait", name: $dictionary.animate?.wait || "", icon: "time_in", common: false, section: "popup.action" }]),
     ].map((a, i) => {
         if (i === 0) usedSections = []
 
@@ -127,6 +127,8 @@
     $: dataInputs = !!(input && actionId && !pickAction && !full)
     let dataOpened = !Object.keys(actionValue).length || !existingActions?.length // || existingActions.length < 2
     let dataMenuOpened = false
+
+    $: isLast = actionNameIndex >= existingActions.length
 </script>
 
 {#if list}
@@ -184,8 +186,14 @@
             </Button>
         {/if}
 
+        {#if isLast && actionId && existingActions.length > 1}
+            <Button title={$dictionary.actions?.remove} on:click={() => changeAction({ id: "remove" })} redHover>
+                <Icon id="close" size={1.2} white />
+            </Button>
+        {/if}
+
         {#if dataInputs && !dataOpened}
-            <Button class="submenu_open" on:click={() => (dataMenuOpened = !dataMenuOpened)}>
+            <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (dataMenuOpened = !dataMenuOpened)}>
                 {#if dataMenuOpened}
                     <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
                 {:else}

@@ -215,6 +215,7 @@ export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}
 export const volume: Writable<number> = writable(1) // 1
 export const gain: Writable<number> = writable(1) // 1
 export const metronome: Writable<API_metronome> = writable({}) // {}
+export const effectsLibrary: Writable<{ path: string; name: string }[]> = writable([]) // []
 
 // PLAYER
 export const playerVideos: Writable<Categories> = writable({}) // {default}

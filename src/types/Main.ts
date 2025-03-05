@@ -45,6 +45,7 @@ export type SelectIds =
     | "stage"
     | "media"
     | "audio"
+    | "audio_effect"
     | "metronome"
     | "overlay"
     | "template"
@@ -104,6 +105,7 @@ export interface MediaStyle {
     fromTime?: number
     toTime?: number
     videoType?: string // default | "background" | "foreground"
+    audioType?: AudioType // default | "music" | "effect"
     favourite?: boolean
     audio?: boolean
     loop?: boolean // audio
@@ -114,6 +116,8 @@ export interface MediaStyle {
     subtitle?: string
     tags?: string[] // media tags
 }
+
+export type AudioType = "music" | "effect"
 
 // subtitles/captions
 export interface Subtitle {

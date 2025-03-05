@@ -25,6 +25,7 @@ import {
     drawer,
     drawerTabsData,
     driveData,
+    effectsLibrary,
     emitters,
     formatNewShow,
     fullColors,
@@ -300,6 +301,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
     metronome: (v: any) => metronome.set(v),
+    effectsLibrary: (v: any) => effectsLibrary.set(v),
     globalTags: (v: any) => globalTags.set(v),
     customMetadata: (v: any) => customMetadata.set(v),
     companion: (v: any) => {

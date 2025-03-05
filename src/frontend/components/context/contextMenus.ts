@@ -134,6 +134,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     play_no_audio: { label: "media.play_no_audio", icon: "play" },
     play_no_filters: { label: "media.play_no_filters", icon: "play" },
     favourite: { label: "media.favourite", icon: "star" },
+    effects_library_add: { label: "media.effects_library_add", icon: "effect" },
     system_open: { label: "main.system_open", icon: "launch" },
     // LIVE
     recording: { label: "actions.start_recording", icon: "record" },
@@ -212,8 +213,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
     effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
-    audio_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "favourite", "SEPERATOR", "system_open"],
-    audio_button_playlist: ["preview", "SEPERATOR", "remove"],
+    audio_button: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "effects_library_add", "favourite", "SEPERATOR", "system_open"],
+    audio_effect_button: ["rename", "remove", "SEPERATOR", "system_open"],
+    audio_button_playlist: ["edit", "preview", "SEPERATOR", "remove"],
     // "addToFirstSlide"
     live_card: ["recording"],
     // actions

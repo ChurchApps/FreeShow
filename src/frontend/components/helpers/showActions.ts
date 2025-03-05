@@ -993,7 +993,8 @@ export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds() {
     let mainValues = Object.keys(dynamicValues)
     let metaValues = Object.keys(initializeMetadata({})).map((id) => `meta_` + id)
-    let variableValues = Object.values(get(variables)).map(({ name }) => `variable_` + getVariableNameId(name))
+    const variablesList = Object.values(get(variables)).filter((a) => a?.name)
+    let variableValues = variablesList.map(({ name }) => `variable_` + getVariableNameId(name))
 
     return [...mainValues, ...metaValues, ...variableValues]
 }

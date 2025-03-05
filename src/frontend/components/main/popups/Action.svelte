@@ -444,7 +444,7 @@
                 {/if}
 
                 {#if customActionActivations.find((a) => a.id === customActivation)?.inputs}
-                    <Button class="submenu_open" on:click={() => (activationMenuOpened = !activationMenuOpened)}>
+                    <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (activationMenuOpened = !activationMenuOpened)}>
                         {#if activationMenuOpened}
                             <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
                         {:else}

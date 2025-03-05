@@ -224,6 +224,7 @@ export const dropActions: any = {
             return
         }
 
+        // outdated:
         if (drop.data === "favourites" && drag.id === "media") {
             drag.data.forEach((card: any) => {
                 let path: string = card.path || card.id

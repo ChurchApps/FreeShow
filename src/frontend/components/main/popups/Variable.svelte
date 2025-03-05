@@ -28,7 +28,17 @@
         let value = e?.target?.value ?? e
         if (!value) return
 
+        // update current number if default is changed
         if (key === "default" && Number(currentVariable.number || 0) === Number(currentVariable.default || 0)) currentVariable.number = Number(value)
+
+        // can't have the same name as existing
+        if (key === "name") {
+            let existing
+            do {
+                existing = Object.entries($variables).find(([id, a]) => id !== variableId && value.toLowerCase() === a.name.toLowerCase())
+                if (existing) value += " 2"
+            } while (existing)
+        }
 
         currentVariable[key] = value
 

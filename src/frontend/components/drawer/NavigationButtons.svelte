@@ -51,7 +51,7 @@
         })
     }
 
-    const ignoreSelection = ["all", "unlabeled", "favourites", "online", "screens", "cameras", "microphones", "audio_streams"]
+    const ignoreSelection = ["all", "unlabeled", "favourites", "effects_library", "online", "screens", "cameras", "microphones", "audio_streams"]
     const idIgnore = ["calendar", "functions"]
     function getCategoryId(category) {
         return (selectId + (id === "scripture" ? "___" + category.icon : "")) as SelectIds

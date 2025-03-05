@@ -26,6 +26,7 @@ import {
     dataPath,
     dictionary,
     drawerTabsData,
+    effectsLibrary,
     eventEdit,
     events,
     focusMode,
@@ -147,7 +148,7 @@ const actions: any = {
 
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
-        else if (id === "slide" || id === "group") activePopup.set("rename")
+        else if (id === "slide" || id === "group" || id === "audio_effect") activePopup.set("rename")
         else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
         else if (obj.contextElem?.classList?.contains("#project_template")) activeRename.set("project_" + id)
         else if (obj.contextElem?.classList?.contains("#video_subtitle")) activeRename.set("subtitle_" + id)
@@ -167,6 +168,21 @@ const actions: any = {
             layout.recording?.[0].sequence.splice(index, 1)
 
             history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: get(activeShow)!.id }, location: { page: "show", id: "show_layout" } })
+            return
+        }
+
+        let id = obj.sel?.id
+        if (id === "audio_effect") {
+            effectsLibrary.update((a) => {
+                obj.sel.data.forEach((audio: any) => {
+                    const path = audio.path || audio.id
+                    let index = a.findIndex((a) => a.path === path)
+                    if (index < 0) return
+
+                    a.splice(index, 1)
+                })
+                return a
+            })
             return
         }
 
@@ -748,6 +764,12 @@ const actions: any = {
         } else if (obj.sel.id === "media") {
             activeEdit.set({ type: "media", id: obj.sel.data[0].path, items: [] })
             activePage.set("edit")
+        } else if (obj.sel.id === "audio") {
+            const path = obj.sel.data[0].path
+            activeEdit.set({ type: "audio", id: path, items: [] })
+            activePage.set("edit")
+
+            activeShow.set({ id: path, type: "audio" })
         } else if (["overlay", "template", "effect"].includes(obj.sel.id)) {
             activeEdit.set({ type: obj.sel.id, id: obj.sel.data[0], items: [] })
             activePage.set("edit")
@@ -898,7 +920,7 @@ const actions: any = {
         if (!path) return
 
         let type = obj.sel.id || "media"
-        if (type === "media") activeEdit.set({ id: path, type: "media", items: [] })
+        if (type === "media" || type === "audio") activeEdit.set({ id: path, type, items: [] })
 
         let name = removeExtension(getFileName(path))
         let mediaType = type === "media" ? getMediaType(getExtension(path)) : type
@@ -964,6 +986,27 @@ const actions: any = {
                 a[path].favourite = favourite
                 return a
             })
+        })
+    },
+    effects_library_add: (obj: any) => {
+        const path = obj.sel.data[0].path || obj.sel.data[0].id
+        let existing: boolean = !!get(effectsLibrary).find((a) => a.path === path)
+
+        effectsLibrary.update((a) => {
+            obj.sel.data.forEach((audio: any) => {
+                let path = audio.path || audio.id
+
+                let index = a.findIndex((a) => a.path === path)
+                if (existing) {
+                    if (index < 0) return
+                    a.splice(index, 1)
+                    return
+                }
+
+                if (index < 0) a.push({ path, name: removeExtension(getFileName(path)) })
+                return
+            })
+            return a
         })
     },
     system_open: (obj: any) => {

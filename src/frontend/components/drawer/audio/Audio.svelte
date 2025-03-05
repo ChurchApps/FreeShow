@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
-    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, labelsDisabled, media, outLocked } from "../../../stores"
+    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, effectsLibrary, labelsDisabled, media, outLocked } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -19,6 +19,7 @@
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
     import AudioFile from "./AudioFile.svelte"
+    import AudioEffect from "./AudioEffect.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -30,7 +31,7 @@
 
     $: playlist = active && $audioPlaylists[active]
 
-    $: isDefault = ["all", "favourites", "microphones", "audio_streams"].includes(active || "")
+    $: isDefault = ["all", "favourites", "effects_library", "microphones", "audio_streams"].includes(active || "")
     $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path! || "" : ""
     $: path = isDefault || playlist ? "" : rootPath
     $: name =
@@ -38,11 +39,13 @@
             ? "category.all"
             : active === "favourites"
               ? "category.favourites"
-              : rootPath === path
-                ? active !== "microphones" && active !== "audio_streams" && active !== null
-                    ? $audioFolders[active]?.name || ""
-                    : ""
-                : splitPath(path).name
+              : active === "effects_library"
+                ? "category.sound_effects"
+                : rootPath === path
+                  ? active !== "microphones" && active !== "audio_streams" && active !== null
+                      ? $audioFolders[active]?.name || ""
+                      : ""
+                  : splitPath(path).name
 
     // get list of files & folders
     let prevActive: null | string = null
@@ -58,6 +61,11 @@
                 .filter((a) => a.favourite === true && a.audio === true)
 
             // filterFiles()
+            scrollElem?.scrollTo(0, 0)
+        } else if (active === "effects_library") {
+            prevActive = active
+            files = clone($effectsLibrary)
+
             scrollElem?.scrollTo(0, 0)
         } else if (active === "all") {
             if (active !== prevActive) {
@@ -242,6 +250,11 @@
                 <NumberInput value={playlist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
             </CombinedInput>
 
+            <CombinedInput>
+                <p><T id="settings.playlist_volume" /></p>
+                <NumberInput value={playlist?.volume || 1} min={0.01} max={1} decimals={2} step={0.01} inputMultiplier={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail)} />
+            </CombinedInput>
+
             <!-- <CombinedInput>
                 <p><T id="settings.custom_audio_output" /></p>
                 <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
@@ -258,6 +271,12 @@
                     </Center>
                 {/if}
             </DropArea>
+        {:else if active === "effects_library"}
+            <div class="effects">
+                {#each fullFilteredFiles as file}
+                    <AudioEffect path={file.path} name={file.name} />
+                {/each}
+            </div>
         {:else if fullFilteredFiles.length}
             {#key rootPath}
                 {#key path}
@@ -278,7 +297,7 @@
     </div>
 </div>
 
-{#if active !== "microphones" && active !== "audio_streams"}
+{#if active !== "microphones" && active !== "audio_streams" && active !== "effects_library"}
     <div class="tabs" style="display: flex;align-items: center;">
         {#if isDefault}
             <span style="padding: 0.2em;opacity: 0;">.</span>
@@ -374,6 +393,21 @@
     }
     .grid :global(.selectElem:not(.isSelected):nth-child(even)) {
         background-color: rgb(0 0 20 / 0.08);
+    }
+
+    .effects {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 5px;
+
+        height: 100%;
+        margin: 10px;
+    }
+    .effects :global(.selectElem button) {
+        background-color: var(--primary-darkest);
+        /* transition: 0.2s outline; */
     }
 
     .seperator {

@@ -4,6 +4,7 @@ export interface Playlist {
     mode?: "default" | "shuffle"
     loop?: boolean
     crossfade?: number
+    volume?: number // playlist specific volume
 }
 
 export interface AudioChannel {

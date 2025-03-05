@@ -67,6 +67,9 @@ export function encodeFilePath(path: string): string {
     // already encoded
     if (path.match(/%\d+/g) || path.includes("http") || path.includes("data:")) return path
 
+    // can't load file paths with "#"
+    path = path.replaceAll("#", "%23")
+
     let splittedPath = splitPath(path)
     let fileName = splittedPath.pop() || ""
     let encodedName = encodeURIComponent(fileName)

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, activeShow, selected, showsCache } from "../../../stores"
+    import { activePopup, activeShow, effectsLibrary, selected, showsCache } from "../../../stores"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -24,6 +24,8 @@
             list = removeDuplicates(list)
         } else if ($selected.id === "chord") {
             groupName = $selected.data?.[0]?.chord?.key || ""
+        } else if ($selected.data?.[0]?.name) {
+            groupName = $selected.data[0].name
         }
     }
 
@@ -99,6 +101,14 @@
                 .slides([chord.slideId])
                 .items([chord.itemIndex])
                 .set({ key: "lines", values: [newLines] })
+        },
+        audio_effect: () => {
+            let selectedPath = $selected.data?.[0]?.path
+            effectsLibrary.update((a) => {
+                let index = a.findIndex((a) => a.path === selectedPath)
+                if (index > -1) a[index].name = groupName
+                return a
+            })
         },
     }
 

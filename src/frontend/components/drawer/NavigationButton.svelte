@@ -55,7 +55,7 @@
 
     $: red = id === "scripture" && $notFound.bible.find((a: any) => a.id === category.id)
 
-    const defaultFolders = ["all", "unlabeled", "favourites", "online", "screens", "cameras", "microphones", "audio_streams"]
+    const defaultFolders = ["all", "unlabeled", "favourites", "effects_library", "online", "screens", "cameras", "microphones", "audio_streams"]
     const tabsWithCategories = ["shows", "media", "audio", "overlays", "templates", "scripture"]
 </script>
 
@@ -74,7 +74,7 @@
         <Icon
             id={category.icon || "noIcon"}
             custom={["shows", "overlays", "templates"].includes(id) && ![undefined, "noIcon", "all", "variable", "trigger"].includes(category.icon)}
-            select={["shows", "overlays", "templates"].includes(id) && !["all", "unlabeled", "favourites", "variables", "triggers"].includes(category.id)}
+            select={["shows", "overlays", "templates"].includes(id) && !["all", "unlabeled", "favourites", "effects_library", "variables", "triggers"].includes(category.id)}
             selectData={{ id: "category_" + id, data: [category.id] }}
             size={isSubmenu ? 0.8 : 1}
             right
