@@ -59,8 +59,9 @@
     const tabsWithCategories = ["shows", "media", "audio", "overlays", "templates", "scripture"]
 </script>
 
+<!-- #category_${id}_button__category_${id} -->
 <Button
-    class={!tabsWithCategories.includes(id) || defaultFolders.includes(category.id) ? "" : $audioPlaylists[category.id] ? "context #playlist" : `context #category_${id}_button__category_${id}`}
+    class={!tabsWithCategories.includes(id) || defaultFolders.includes(category.id) ? "" : $audioPlaylists[category.id] ? "context #playlist" : `context #category_${id}_button`}
     active={category.id === $drawerTabsData[id]?.[isSubmenu ? "activeSubmenu" : "activeSubTab"]}
     {red}
     on:click={(e) => {

@@ -40,6 +40,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     export: { label: "actions.export", icon: "export" },
     // DRAWER
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
+    manage_show_tags: { label: "popup.manage_tags", icon: "edit" },
     tag_set: { label: "context.setTag", icon: "tag", items: ["LOAD_tag_set"] },
     tag_filter: { label: "context.filterByTags", icon: "tag", items: ["LOAD_tag_filter"] },
     manage_media_tags: { label: "popup.manage_tags", icon: "edit" },
@@ -64,7 +65,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     hide_from_preview: { label: "context.hide_from_preview", icon: "hide" },
     // PROJECT
     close: { label: "actions.close", icon: "close" },
-    newProject: { label: "new.project", icon: "project" },
+    newProject: { label: "new.project", icon: "add" },
     newFolder: { label: "new.folder", icon: "folder" },
     newShowPopup: { label: "new.show", icon: "add" },
     newShow: { label: "new.empty_show", icon: "add" },
@@ -188,12 +189,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_scripture_button: ["createCollection", "SEPERATOR", "rename", "delete"],
     playlist: ["rename", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "newShow", "SEPERATOR", "tag_filter", "sort_shows_by"],
+    drawer_show: ["newShowPopup", "SEPERATOR", "manage_show_tags", "tag_filter", "sort_shows_by"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPERATOR", "export"
-    drawer_show_button: ["addToProject", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "tag_set", "SEPERATOR", "tag_filter", "sort_shows_by", "selectAll"],
-    drawer_new_show: ["newShowPopup", "newShow"],
+    drawer_show_button: ["addToProject", "lock_show", "SEPERATOR", "rename", "duplicate", "delete", "SEPERATOR", "tag_set", "tag_filter", "sort_shows_by", "SEPERATOR", "selectAll"],
+    drawer_new_show: ["newShow"],
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPERATOR", "edit",
     media_preview: ["close"],
@@ -206,7 +207,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "addToShow"
     // show_in_explorer!!
     media: ["manage_media_tags", "media_tag_filter"],
-    media_card: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "favourite", "media_tag_set", "media_tag_filter", "SEPERATOR", "system_open"],
+    media_card: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "favourite", "SEPERATOR", "media_tag_set", "media_tag_filter", "SEPERATOR", "system_open"],
     // "addToFirstSlide",
     overlay_card: ["edit", "preview", "SEPERATOR", "display_duration", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
@@ -225,10 +226,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     scripture_chapter: ["create_show"],
 
     // PROJECT
-    projects: ["newProject", "newFolder", "sort_projects_by"],
+    projects: ["newProject", "newFolder", "SEPERATOR", "sort_projects_by"],
     projectTab: ["export", "SEPERATOR", "close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template"], // "open",
+    project_button: ["rename", "duplicate", "delete", "SEPERATOR", "export", "copy_to_template", "SEPERATOR", "sort_projects_by"], // "open",
     project_template: ["rename", "delete"],
     folder: ["rename", "duplicate", "delete"],
     project_media: ["play", "play_no_audio", "play_no_filters", "remove"],

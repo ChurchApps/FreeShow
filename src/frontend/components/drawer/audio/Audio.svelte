@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { MAIN, READ_FOLDER } from "../../../../types/Channels"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
-    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, effectsLibrary, labelsDisabled, media, outLocked } from "../../../stores"
+    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, effectsLibrary, labelsDisabled, media, outLocked, selectAllAudio, selected } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -152,10 +152,21 @@
         path = folder.length > rootPath.length ? folder : rootPath
     }
 
-    function createPlaylist() {
+    // selected will be cleared when clicked, so store them on mousedown
+    let selectedFiles: any[] = []
+    function storeSelected() {
+        if ($selected.id === "audio") selectedFiles = clone($selected.data)
+        else selectedFiles = []
+    }
+
+    function createPlaylist(e) {
         let playlistName = ""
-        let empty = isDefault || !fullFilteredFiles.filter((a) => !a.folder)?.length
-        if (!isDefault) {
+        let files = fullFilteredFiles.filter((a) => !a.folder)
+        if (selectedFiles.length) files = selectedFiles
+
+        if (e.ctrlKey || e.metaKey) {
+            files = []
+        } else if (!isDefault) {
             playlistName = name
             if (name.includes(".")) playlistName = $dictionary.category?.[name.slice(name.indexOf(".") + 1)] || ""
         }
@@ -164,7 +175,7 @@
         audioPlaylists.update((a) => {
             a[playlistId] = {
                 name: playlistName,
-                songs: empty ? [] : fullFilteredFiles.filter((a) => !a.folder).map((a) => a.path),
+                songs: files.map((a) => a.path),
             }
 
             return a
@@ -175,65 +186,24 @@
             return a
         })
 
-        if (empty) {
+        if (!playlistName || !files.length) {
             activeRename.set("category_audio_" + playlistId)
         }
     }
 
-    // function playAudio(file: any) {
-    //   if ($playingAudio[file.path]) {
-    //     playingAudio.update((a) => {
-    //       let paused = a[file.path].paused
-    //       a[file.path].paused = !paused
-    //       if (paused) a[file.path].audio.play()
-    //       else a[file.path].audio.pause()
-    //       return a
-    //     })
-    //     return
-    //   }
+    // select all
+    $: if ($selectAllAudio) selectAll()
+    function selectAll() {
+        let data = (playlist ? playlist.songs : fullFilteredFiles)
+            .filter((a) => (playlist ? true : a.extension))
+            .map((file, index) => {
+                if (playlist) return { path: file, name: getFileName(file), index }
+                return { path: file.path, name: file.name, index: -1 }
+            })
 
-    //   let audio = new Audio(file.path)
-    //   playingAudio.update((a) => {
-    //     a[file.path] = {
-    //       name: file.name.slice(0, file.name.lastIndexOf(".")),
-    //       paused: false,
-    //       audio,
-    //     }
-    //     return a
-    //   })
-
-    //   audioSource.set(audio)
-    //   analyse()
-    //   audio.play()
-    // }
-
-    // ANALYSER
-    // let analyser: any = null
-    // let interval: any = null
-    // $: if (analyser) startInterval()
-
-    // function startInterval() {
-    //   interval = setInterval(() => {
-    //     audioChannels.set(audioAnalyser(analyser))
-    //   }, 100)
-    // }
-
-    // async function analyse() {
-    //   console.log(0)
-    //   // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
-    //   let ac = new AudioContext()
-    //   let source = ac.createMediaElementSource($audioSource)
-
-    //   analyser = ac.createAnalyser() //we create an analyser
-    //   analyser.smoothingTimeConstant = 0.9
-    //   analyser.fftSize = 512 //the total samples are half the fft size.
-
-    //   source.connect(analyser)
-    //   analyser.connect(ac.destination)
-
-    //   if (interval) clearInterval(interval)
-    //   startInterval()
-    // }
+        selected.set({ id: "audio", data })
+        selectAllAudio.set(false)
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -298,7 +268,7 @@
 </div>
 
 {#if active !== "microphones" && active !== "audio_streams" && active !== "effects_library"}
-    <div class="tabs" style="display: flex;align-items: center;">
+    <div class="tabs" style="display: flex;align-items: center;" on:mousedown={storeSelected}>
         {#if isDefault}
             <span style="padding: 0.2em;opacity: 0;">.</span>
         {:else if playlist}

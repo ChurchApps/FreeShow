@@ -120,6 +120,16 @@ export const guideSteps = [
             activeShow.set({ id: "default" })
         },
     },
+    // drawer (media)
+    {
+        title: "guide_title.drawer",
+        description: "guide_description.media",
+        query: ".drawer",
+        pre: () => {
+            activeDrawerTab.set("media")
+            openDrawer()
+        },
+    },
     // output
     {
         title: "guide_title.output",
@@ -128,7 +138,14 @@ export const guideSteps = [
         pre: () => {
             activePage.set("show")
             nextSlide({}, true)
+
+            closeDrawer()
         },
+    },
+    {
+        title: "guide_title.output",
+        description: "guide_description.output_window",
+        query: "#output_window_button",
     },
     {
         title: "guide_title.output",
@@ -159,7 +176,7 @@ export const guideSteps = [
             activePage.set("show")
             activeProject.set(null)
             activeShow.set(null)
-            clearAll()
+            clearAll(true)
             outputCache.set(null)
             openDrawer()
         },

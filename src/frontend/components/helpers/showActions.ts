@@ -8,7 +8,7 @@ import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { clearOverlays, clearSlide, clearTimers } from "../output/clear"
+import { clearOverlays, clearTimers } from "../output/clear"
 import {
     activeEdit,
     activeFocus,
@@ -654,8 +654,6 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 let loop = bg.loop !== false
                 let muted = bg.muted !== false
 
-                if (mediaStyle.videoType === "foreground") clearSlide()
-
                 let bgData: any = {
                     name,
                     type,
@@ -1067,7 +1065,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         let videoTime: number = get(videosTime)[outputId] || 0
         let videoDuration: number = get(videosData)[outputId]?.duration || 0
 
-        let projectIndex = get(projects)[get(activeProject) || ""]?.shows.findIndex((a) => a.id === showId)
+        let projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId)
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         let projectRef = { id: get(activeProject) || "", index: projectIndex }
 
@@ -1086,7 +1084,7 @@ const dynamicValues = {
 
     // show
     show_name: ({ show }) => show.name || "",
-    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows[projectRef.index + 1]?.id]?.name || "",
+    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.[projectRef.index + 1]?.id]?.name || "",
 
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",

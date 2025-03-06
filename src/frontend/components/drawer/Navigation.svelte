@@ -17,14 +17,16 @@
         mediaFolders,
         midiIn,
         overlayCategories,
+        overlays,
         scriptures,
+        shows,
         templateCategories,
+        templates,
     } from "../../stores"
     import { send } from "../../utils/request"
     import { keysToID, sortByName, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getMediaType } from "../helpers/media"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import FolderPicker from "../inputs/FolderPicker.svelte"
@@ -32,6 +34,11 @@
     import NavigationButtons from "./NavigationButtons.svelte"
 
     export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "functions" | "templates" | "timers"
+
+    $: activeSubTab = $drawerTabsData[id]?.activeSubTab
+    $: unlabeledShows = !!Object.values($shows).filter((a: any) => a && !a.private && (a.category === null || !$categories[a.category])).length
+    $: unlabeledOverlays = !!Object.values($overlays).filter((a: any) => a.category === null || !$overlayCategories[a.category]).length
+    $: unlabeledTemplates = !!Object.values($templates).filter((a: any) => a.category === null || !$templateCategories[a.category]).length
 
     interface Button extends Category {
         id: string
@@ -45,7 +52,7 @@
 
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
-                { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
+                ...(activeSubTab === "unlabeled" || unlabeledShows ? [{ id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" }] : []),
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(categoriesList, "name") as Button[]),
             ]
@@ -53,8 +60,8 @@
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
             }
         } else if (id === "media") {
-            const activeTab = $drawerTabsData.media.activeSubTab
-            const anyFavourites = activeTab === "favourites" || Object.entries($media).find(([path, a]) => getMediaType(path) !== "audio" && a.favourite)
+            // const anyFavourites = activeTab === "favourites" || Object.entries($media).find(([path, a]) => getMediaType(path) !== "audio" && a.favourite)
+            const anyFavourites = activeSubTab === "favourites" || Object.values($media).find((a) => !a.audio && a.favourite)
 
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
@@ -72,7 +79,7 @@
 
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
-                { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
+                ...(activeSubTab === "unlabeled" || unlabeledOverlays ? [{ id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" }] : []),
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(categoriesList, "name") as Button[]),
             ]
@@ -85,7 +92,7 @@
 
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },
-                { id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" },
+                ...(activeSubTab === "unlabeled" || unlabeledTemplates ? [{ id: "unlabeled", name: "category.unlabeled", default: true, icon: "noIcon" }] : []),
                 { id: "SEPERATOR", name: "" },
                 ...(sortObject(categoriesList, "name") as Button[]),
             ]
@@ -93,9 +100,8 @@
                 buttons = [...buttons, { id: "SEPERATOR", name: "" }, ...(sortObject(archivedCategories, "name") as Button[])]
             }
         } else if (id === "audio") {
-            const activeTab = $drawerTabsData.audio.activeSubTab
-            const anyFavourites = activeTab === "favourites" || Object.entries($media).find(([path, a]) => getMediaType(path) === "audio" && a.favourite)
-            const anyEffects = activeTab === "effects_library" || $effectsLibrary.length
+            const anyFavourites = activeSubTab === "favourites" || Object.values($media).find((a) => a.audio && a.favourite)
+            const anyEffects = activeSubTab === "effects_library" || $effectsLibrary.length
 
             buttons = [
                 { id: "all", name: "category.all", default: true, icon: "all" },

@@ -84,6 +84,7 @@
 
                     // delete a[outputId].ndiData
                     if (!a[outputId].blackmagic) {
+                        if (delete a[outputId].ndiData?.audio) delete a[outputId].ndiData.audio
                         delete a[outputId].transparent
                         delete a[outputId].invisible
                     }

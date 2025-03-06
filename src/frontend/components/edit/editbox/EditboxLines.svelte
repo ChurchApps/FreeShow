@@ -591,11 +591,13 @@
     <div bind:this={alignElem} class="align" class:plain style={plain ? null : item.align || null}>
         {#if item.lines?.length < 2 && !item.lines?.[0]?.text?.[0]?.value?.length}
             <span class="placeholder">
-                {#if chordsMode}
-                    <T id="edit.chords" />
-                {:else}
-                    <T id="empty.text" />
-                {/if}
+                <p>
+                    {#if chordsMode}
+                        <T id="edit.chords" />
+                    {:else}
+                        <T id="empty.text" />
+                    {/if}
+                </p>
             </span>
         {/if}
         {#if isLocked}
@@ -655,6 +657,8 @@
         display: flex;
         text-align: center;
         align-items: center;
+
+        position: relative; /* type something overflow */
     }
     .align.plain {
         text-align: left;

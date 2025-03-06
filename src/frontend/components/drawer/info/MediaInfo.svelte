@@ -47,7 +47,7 @@
     <PlayerInfo />
 {:else}
     <main style="overflow-y: auto;">
-        <h2 style="text-align: center;padding: 0 5px;" title={name}>
+        <h2 style="text-align: center;padding: 10px;" title={name}>
             {#if name.length}
                 {name}
             {:else}
@@ -89,16 +89,18 @@
                 <span>-</span>
             {/if}
         </p>
-        {#if codecInfo.codecs || codecInfo.mimeType}
+        {#if codecInfo.codecs}
             <p>
                 <span class="title"><T id="info.codecs" /></span>
                 <span>{codecInfo.codecs?.join(", ") || "—"}</span>
             </p>
+        {/if}
+        <!-- {#if codecInfo.mimeType}
             <p>
                 <span class="title"><T id="info.mimeType" /></span>
                 <span>{codecInfo.mimeType || "—"}</span>
             </p>
-        {/if}
+        {/if} -->
     </main>
 {/if}
 

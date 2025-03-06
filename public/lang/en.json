@@ -370,7 +370,7 @@
         "all": "All",
         "unlabeled": "Unlabeled",
         "favourites": "Favorites",
-        "sound_effects": "Sounds effects",
+        "sound_effects": "Sound effects",
         "song": "Songs",
         "presentation": "Presentations",
         "info": "Info",
@@ -1346,7 +1346,9 @@
         "step": "Step",
         "default_value": "Default value",
         "value": "Value",
-        "set_state": "Set state"
+        "set_state": "Set state",
+        "minimum": "Minimum",
+        "maximum": "Maximum"
     },
     "month": {
         "1": "January",
@@ -1417,10 +1419,12 @@
         "create_show_button": "Click this to create a new show (song, presentation, etc.)",
         "create_show_popup": "Fill in the main details of the show, you can also auto find lyrics on the web from the name, or paste the lyrics manually.",
         "show": "A show is the main presentation, click on any slide to present, and use the arrow keys to navigate. You can also drag & drop media files on a slide to set as background.",
+        "media": "You can add media content with drag and drop, from the drawer or from your computer, into a show or a project.",
         "show_slide": "After a slide is clicked, it will show in the output and you will see a preview on the right, here you'll also find some extra actions like pausing a video.",
+        "output_window": "Click this button to open an output window on a secondary screen.",
         "output_clear": "Clear individual output layers, or clear all layers in the output.",
         "edit": "Open slide editing with one click at the top.",
-        "end": "You can always look on the web if you need help with other features."
+        "end": "Feel free to look on the web if you need help with other features."
     },
     "songbeamer_import": {
         "options": "Options",

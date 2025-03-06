@@ -33,7 +33,7 @@
     // CATEGORY
 
     const cats: any = [
-        { id: "", name: "—" },
+        // { id: "", name: "—" }, // unlabeled
         ...sortObject(
             Object.keys($categories).map((key: string) => ({
                 id: key,

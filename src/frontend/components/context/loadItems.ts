@@ -29,7 +29,9 @@ const loadActions = {
     tag_set: () => {
         let selectedShowTags = get(shows)[get(selected).data[0]?.id]?.quickAccess?.tags || []
         let sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
-        setContextData("tags", sortedTags.length)
+        const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
+        if (sortedTags.length) sortedTags.push("SEPERATOR")
+        sortedTags.push(create)
         return sortedTags
     },
     tag_filter: () => {

@@ -289,6 +289,10 @@
         border-right: 2px solid var(--primary-lighter);
         overflow-y: auto;
     }
+    /* scripture preview */
+    .right.row :global(.scroll.split .zoomed) {
+        flex: 1;
+    }
 
     @media screen and (max-width: 750px) {
         .tabs span {

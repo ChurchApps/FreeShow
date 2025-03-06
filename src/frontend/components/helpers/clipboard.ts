@@ -30,6 +30,7 @@ import {
     projects,
     refreshEditSlide,
     scriptures,
+    selectAllAudio,
     selectAllMedia,
     selected,
     shows,
@@ -334,6 +335,7 @@ const selectActions: any = {
         selected.set({ id: "template", data: newSelection })
     },
     media: () => selectAllMedia.set(true),
+    audio: () => selectAllAudio.set(true),
 }
 
 const copyActions: any = {

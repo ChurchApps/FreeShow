@@ -1,6 +1,6 @@
 <script lang="ts">
     import { get } from "svelte/store"
-    import { actionTags, activeActionTagFilter, activeMediaTagFilter, dictionary, mediaTags, popupData } from "../../../stores"
+    import { actionTags, activeActionTagFilter, activeMediaTagFilter, activeTagFilter, dictionary, globalTags, mediaTags, popupData } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -13,11 +13,12 @@
     import { onMount } from "svelte"
 
     const store = {
+        show: () => globalTags,
         media: () => mediaTags,
         action: () => actionTags,
     }
 
-    let type: string = $popupData.type || "media"
+    let type: string = $popupData.type || "show"
     let tags: any[] = []
 
     let emptyTag: boolean = false
@@ -44,7 +45,8 @@
             delete a[tagId]
             return a
         })
-        if (type === "media") activeMediaTagFilter.set([])
+        if (type === "show") activeTagFilter.set([])
+        else if (type === "media") activeMediaTagFilter.set([])
         else if (type === "action") activeActionTagFilter.set([])
 
         getTags()

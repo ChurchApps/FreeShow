@@ -271,8 +271,17 @@ const actions: any = {
     },
 
     // TAGS
+    manage_show_tags: () => {
+        contextActive.set(false)
+        popupData.set({ type: "show" })
+        activePopup.set("manage_tags")
+    },
     tag_set: (obj: any) => {
         let tagId = obj.menu.id
+        if (tagId === "create") {
+            actions.manage_show_tags()
+            return
+        }
 
         let disable = get(shows)[obj.sel.data?.[0].id]?.quickAccess?.tags?.includes(tagId)
 
@@ -762,14 +771,15 @@ const actions: any = {
             activePage.set("edit")
             setTimeout(() => selected.set({ id: null, data: [] }))
         } else if (obj.sel.id === "media") {
-            activeEdit.set({ type: "media", id: obj.sel.data[0].path, items: [] })
+            const path = obj.sel.data[0].path
+            activeEdit.set({ type: "media", id: path, items: [] })
             activePage.set("edit")
+            if (!get(activeShow) || (get(activeShow)!.type || "show") !== "show") activeShow.set({ id: path, type: getMediaType(getExtension(path)) })
         } else if (obj.sel.id === "audio") {
             const path = obj.sel.data[0].path
             activeEdit.set({ type: "audio", id: path, items: [] })
             activePage.set("edit")
-
-            activeShow.set({ id: path, type: "audio" })
+            if (!get(activeShow) || (get(activeShow)!.type || "show") !== "show") activeShow.set({ id: path, type: "audio" })
         } else if (["overlay", "template", "effect"].includes(obj.sel.id)) {
             activeEdit.set({ type: obj.sel.id, id: obj.sel.data[0], items: [] })
             activePage.set("edit")

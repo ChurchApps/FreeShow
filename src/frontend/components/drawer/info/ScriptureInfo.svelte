@@ -461,7 +461,6 @@
 
     div :global(.zoomed) {
         height: initial !important;
-        flex: 1;
     }
 
     .settings {

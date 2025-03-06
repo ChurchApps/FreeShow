@@ -207,19 +207,21 @@
 
         <div id="projectsButtons" class="tabs">
             <Button
+                style="flex: 0;padding: 0.2em 1.3em;"
                 on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/" } }, location: { page: "show", id: "project_folder" } })}
                 center
                 title={$dictionary.new?.folder}
             >
-                <Icon id="folder" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<p><T id="new.folder" /></p>{/if}
+                <Icon id="folder" white />
             </Button>
+            <div class="seperator"></div>
             <Button
+                style="flex: 1;"
                 on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/" } }, location: { page: "show", id: "project" } })}
                 center
                 title={$dictionary.new?.project}
             >
-                <Icon id="project" right={!$labelsDisabled} />
+                <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<p><T id="new.project" /></p>{/if}
             </Button>
         </div>
@@ -354,5 +356,11 @@
     #projectArea :global(button.color-border) {
         border-bottom: 2px solid var(--border-color);
         outline-color: var(--border-color);
+    }
+
+    .seperator {
+        width: 1px;
+        height: 100%;
+        background-color: var(--primary);
     }
 </style>
