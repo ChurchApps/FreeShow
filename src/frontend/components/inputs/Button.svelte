@@ -1,5 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
+    import { os } from "../../stores"
 
     export let active: boolean = false
     export let outlineColor: string | null = null
@@ -56,6 +57,16 @@
         if (RIGHT_CLIP) tooltipStyle += `transform: translate(-100%, ${BOTTOM_CLIP ? "-100%" : "0"});` + (title.length > 30 ? "width: 250px;" : "white-space: nowrap;")
         else if (flipTitlePos || BOTTOM_CLIP) tooltipStyle += "transform: translateY(-100%);"
     }
+
+    const ctrl = $os.platform === "darwin" ? "Cmd" : "Ctrl"
+
+    // extract shortcuts in brackets "[]"
+    function extractShortcuts(input: string) {
+        const match = input.match(/^(.+?)\s*(?:\[(.*?)\])?$/)
+        return match ? match.slice(1).filter(Boolean) : [input]
+    }
+    let titleContent: string[] = []
+    $: if (title) titleContent = extractShortcuts(title)
 </script>
 
 <button
@@ -82,7 +93,8 @@
 >
     {#if showTooltip}
         <div class="tooltip" transition:fade={{ duration: 200 }} style="left: {mouse.x}px;top: {mouse.y}px;{tooltipStyle};zoom: {1 / zoom};">
-            {title}
+            {titleContent[0]}
+            {#if titleContent[1]}<span style="display: block;font-weight: bold;text-transform: uppercase;">{titleContent[1].replace("Ctrl", ctrl)}</span>{/if}
         </div>
     {/if}
     <slot />
@@ -219,5 +231,6 @@
         max-width: 250px;
         text-align: left;
         white-space: normal;
+        font-weight: normal;
     }
 </style>

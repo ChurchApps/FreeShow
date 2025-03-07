@@ -114,6 +114,17 @@ export const dropActions: any = {
 
         let projectShows = get(projects)[history.oldData.id]?.shows || []
 
+        if (drag.id === "action") {
+            let index = drop.index
+            if (drop.trigger?.includes("end")) index--
+            if (projectShows[index]?.type !== "section") return
+
+            const actionId: string = drag.data?.[0]?.id || ""
+            projectShows[index].data = { settings: { triggerAction: actionId } }
+            history.newData = { key: "shows", data: projectShows }
+            return history
+        }
+
         if (drop.index === undefined) drop.index = projectShows.length
         if (drag.id === "files" && drop.trigger?.includes("end")) drop.index++
 

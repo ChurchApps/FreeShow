@@ -19,7 +19,7 @@ const areas: { [key in DropAreas | string]: string[] } = {
 }
 const areaChildren: { [key in DropAreas | string]: string[] } = {
     projects: ["folder", "project"],
-    project: ["show", "media", "audio", "show_drawer", "player"],
+    project: ["show", "media", "audio", "show_drawer", "player", "action"],
     slides: ["slide", "group", "global_group", "screen", "camera", "microphone", "media", "audio", "show"],
     all_slides: [],
     navigation: ["show", "show_drawer", "media", "audio", "overlay", "template"],

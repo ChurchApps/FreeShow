@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { BIBLE } from "../../../../types/Channels"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
-    import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, os, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, selected } from "../../../stores"
+    import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, os, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, scriptureSettings, selected } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,7 +14,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { bookIds, fetchBible, formatBibleText, getColorCode, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache } from "./scripture"
+    import { bookIds, fetchBible, formatBibleText, getColorCode, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
 
     export let active: any
     export let bibles: Bible[]
@@ -23,6 +23,30 @@
     let books: { [key: string]: Book[] } = {}
     let chapters: { [key: string]: Chapter[] } = {}
     let verses: { [key: string]: { [key: string]: string } } = {}
+
+    let splittedVerses: { [key: string]: { [key: string]: string } } = {}
+    $: if ($scriptureSettings.longVersesChars) updateSplitted()
+    function updateSplitted() {
+        if (!$scriptureSettings.splitLongVerses) {
+            splittedVerses = verses
+            return
+        }
+
+        const chars = Number($scriptureSettings.longVersesChars || 100)
+        const newVerses: { [key: string]: string } = {}
+        Object.keys(verses?.[firstBibleId] || {}).forEach((verseKey) => {
+            let verse = verses[firstBibleId][verseKey]
+            let newVerseStrings = splitText(verse, chars)
+
+            for (let i = 0; i < newVerseStrings.length; i++) {
+                const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
+                // WIP object keys are sorted incorrectly, should use array!!
+                newVerses[verseKey + key] = newVerseStrings[i]
+            }
+        })
+
+        splittedVerses[firstBibleId] = newVerses
+    }
 
     let cachedRef: any = {}
     if ($activeScripture) cachedRef = $activeScripture[bibles[0]?.api ? "api" : "bible"] || {}
@@ -272,6 +296,8 @@
 
             selectFirstVerse(id, i)
         })
+
+        updateSplitted()
     }
 
     let loaded: boolean = false
@@ -951,9 +977,13 @@
                             <Loader />
                         {/if}
                     </div>
-                    <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(verses[firstBibleId] || {}).length}>
-                        {#if Object.keys(verses[firstBibleId] || {}).length}
-                            {#each Object.keys(verses[firstBibleId] || {}) as id}
+                    <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(splittedVerses[firstBibleId] || {}).length}>
+                        {#if Object.keys(splittedVerses[firstBibleId] || {}).length}
+                            {#each Object.keys(splittedVerses[firstBibleId] || {}) as id2}
+                                {@const splitted = id2.split("_")}
+                                {@const id = splitted[0]}
+                                {@const subverse = Number(splitted[1] || 0)}
+
                                 <!-- custom drag -->
                                 <span
                                     class:showAllText={$resized.rightPanelDrawer <= 5}
@@ -971,6 +1001,7 @@
                                     title={$dictionary.tooltip?.scripture}
                                 >
                                     {id}
+                                    {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{subverse}</span>{/if}
                                 </span>
                             {/each}
                         {:else}
@@ -1028,9 +1059,13 @@
                     <Loader />
                 {/if}
             </div>
-            <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(verses[firstBibleId] || {}).length}>
-                {#if Object.keys(verses[firstBibleId] || {}).length}
-                    {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
+            <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(splittedVerses[firstBibleId] || {}).length}>
+                {#if Object.keys(splittedVerses[firstBibleId] || {}).length}
+                    {#each Object.entries(splittedVerses[firstBibleId] || {}) as [id2, content]}
+                        {@const splitted = id2.split("_")}
+                        {@const id = splitted[0]}
+                        {@const subverse = Number(splitted[1] || 0)}
+
                         <!-- custom drag -->
                         <p
                             class:showAllText={$resized.rightPanelDrawer <= 5}
@@ -1047,7 +1082,11 @@
                             class:active={activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}
                         >
-                            <span class="v">{id}</span>{@html formatBibleText(content.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
+                            <span class="v">
+                                {id}
+                                {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{subverse}</span>{/if}
+                            </span>
+                            {@html formatBibleText(content.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
                     {/each}
                     {#if bibles[0].copyright || bibles[0].metadata?.copyright}

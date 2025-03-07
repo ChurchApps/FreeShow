@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeShow, labelsDisabled, showsCache } from "../../stores"
+    import { activeShow, dictionary, labelsDisabled, showsCache } from "../../stores"
     import { _show } from "../helpers/shows"
     import Tabs from "../main/Tabs.svelte"
     import Media from "./tools/Media.svelte"
@@ -13,7 +13,7 @@
         groups: { name: "tools.groups", icon: "groups" },
         media: { name: "tools.media", icon: "media", remove: true },
         metadata: { name: "tools.metadata", icon: "info", overflow: true },
-        recording: { name: "example.recording", icon: "record", overflow: true },
+        recording: { name: "example.recording", icon: "record", overflow: true, tooltip: $dictionary.recording?.tip },
         notes: { name: "tools.notes", icon: "notes", overflow: true },
     }
     let active: string = Object.keys(tabs)[0]

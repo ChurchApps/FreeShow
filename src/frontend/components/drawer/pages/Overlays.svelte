@@ -71,7 +71,6 @@
                         label={overlay.name}
                         renameId="overlay_{overlay.id}"
                         color={overlay.color}
-                        icon={overlay.placeUnderSlide ? "under" : overlay.locked ? "locked" : null}
                         {resolution}
                         showPlayOnHover
                         on:click={(e) => {

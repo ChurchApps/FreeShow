@@ -155,6 +155,7 @@ export type Popups =
     | "media_fit"
     | "metadata_display"
     | "import_scripture"
+    | "scripture_show"
     | "edit_event"
     | "choose_chord"
     | "choose_screen"

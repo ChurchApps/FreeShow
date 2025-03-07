@@ -23,7 +23,10 @@
     let editTemplate: string = ""
     $: template = emitter?.templates?.[editTemplate]
     $: templateInputs = (template?.inputs || []).map((a, i) => ({ ...a, id: i.toString() }))
-    $: dataPreview = templateInputs.length ? formatData[emitter?.type]?.(templateInputs) : ""
+    $: dataPreview = templateInputs.length ? formatData[emitter?.type]?.(setEmptyValues(templateInputs)) : ""
+    function setEmptyValues(object) {
+        return clone(object).map((a) => ({ ...a, value: a.value || `{${a.name.toLowerCase()}}` }))
+    }
 
     $: emitterTypes = [
         { name: "OSC", id: "osc" },

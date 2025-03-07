@@ -172,11 +172,46 @@ export function joinRange(array: string[]) {
     return range
 }
 
+export function splitText(value: string, maxLength: number) {
+    let splitted: string[] = []
+
+    // for (let i = 0; i < value.length; i += maxLength) {
+    //     let string = value.substring(i, i + maxLength)
+    //     // merge short strings
+    //     if (string.length < 10) splitted[splitted.length - 1] += string
+    //     else splitted.push(string)
+    // }
+
+    let start = 0
+    while (start < value.length) {
+        // find the next possible break point
+        let end = start + maxLength
+        if (end < value.length) {
+            let spaceIndex = value.lastIndexOf(" ", end)
+            if (spaceIndex > start) {
+                end = spaceIndex // adjust to the last space within range
+            }
+        }
+
+        let string = value.substring(start, end).trim()
+        splitted.push(string)
+
+        start = end + 1
+    }
+
+    // merge short strings
+    if (splitted.length > 1 && splitted[splitted.length - 1].length < 20) {
+        splitted[splitted.length - 2] += " " + splitted.pop()
+    }
+
+    return splitted
+}
+
 export const textKeys = {
     showVersion: "[version]",
     showVerse: "[reference]",
 }
-export function getSlides({ bibles, sorted }) {
+export function getSlides({ bibles, sorted }, onlyOne: boolean = false) {
     let slides: any[][] = [[]]
 
     let template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
@@ -285,10 +320,10 @@ export function getSlides({ bibles, sorted }) {
             slideArr.lines![lineIndex].text.push(...textArray)
 
             // if (bibleIndex + 1 < bibles.length) return
-            if ((i + 1) % get(scriptureSettings).versesPerSlide > 0) return
+            if (onlyOne || (i + 1) % get(scriptureSettings).versesPerSlide > 0) return
 
             if (bibleIndex + 1 >= bibles.length) {
-                let range: any[] = sorted.slice(i - get(scriptureSettings).versesPerSlide + 1, i + 1)
+                let range: any[] = onlyOne ? sorted : sorted.slice(i - get(scriptureSettings).versesPerSlide + 1, i + 1)
                 if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
                 let indexes = [bibles.length]
                 if (combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
@@ -305,7 +340,7 @@ export function getSlides({ bibles, sorted }) {
 
         // add remaining
         if (bibleIndex + 1 >= bibles.length) {
-            let remainder = sorted.length % get(scriptureSettings).versesPerSlide
+            let remainder = onlyOne ? sorted.length : sorted.length % get(scriptureSettings).versesPerSlide
             let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
             if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
             let indexes = [bibles.length]
@@ -362,8 +397,8 @@ export function getSlides({ bibles, sorted }) {
         const referenceDivider = get(scriptureSettings).referenceDivider || ":"
         let text = customText
         if (!showVersion && !showVerse) return
-        if (showVersion) text = text.replaceAll(textKeys.showVersion, versions)
-        if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + referenceDivider + range)
+        text = text.replaceAll(textKeys.showVersion, showVersion ? versions : "")
+        text = text.replaceAll(textKeys.showVerse, showVerse ? books + " " + bibles[0].chapter + referenceDivider + range : "")
 
         text.split("\n").forEach((line) => {
             if (!line.trim()) return

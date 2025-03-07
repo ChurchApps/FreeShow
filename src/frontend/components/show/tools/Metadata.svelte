@@ -324,9 +324,9 @@
         gap: 0;
     }
 
+    /* .tags */
     .message,
-    .styling,
-    .tags {
+    .styling {
         padding: 10px;
     }
 

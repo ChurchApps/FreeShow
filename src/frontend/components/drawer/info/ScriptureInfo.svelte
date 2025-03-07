@@ -4,6 +4,7 @@
     import type { Item, Show } from "../../../../types/Show"
     import { ShowObj } from "../../../classes/Show"
     import { activePopup, activeProject, activeTriggerFunction, categories, dictionary, drawerTabsData, media, outLocked, outputs, playScripture, popupData, scriptureHistory, scriptures, scriptureSettings, styles, templates } from "../../../stores"
+    import { trackScriptureUsage } from "../../../utils/analytics"
     import { customActionActivation } from "../../actions/actions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -22,7 +23,6 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
-    import { trackScriptureUsage } from "../../../utils/analytics"
 
     export let bibles: Bible[]
     $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
@@ -52,23 +52,33 @@
     }
 
     $: {
-        if (sorted.length || $scriptureSettings) slides = getSlides({ bibles, sorted })
+        if (sorted.length || $scriptureSettings) slides = getSlides({ bibles, sorted }, true)
         else slides = [[]]
     }
 
     $: if ($activeTriggerFunction === "scripture_newShow") createShow()
-    function createShow() {
-        if (verseRange) {
-            let { show } = createSlides()
-            if (!show) return
-            history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
+    $: if ($activeTriggerFunction === "scripture_newShow_popup") createShow(true)
+    function createShow(noPopup: boolean = false, showPopup: boolean = false) {
+        if (!verseRange) return
+
+        if (!noPopup && (showPopup || sorted.length > 3)) {
+            popupData.set({ showVersion })
+            activePopup.set("scripture_show")
+            return
         }
+
+        let { show } = createSlides()
+        if (!show) return
+        history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
     }
 
     $: showVersion = bibles.find((a) => a?.attributionRequired) || $scriptureSettings.showVersion
 
     function createSlides() {
         if (!bibles[0]) return { show: null }
+
+        let slides: any[][] = [[]]
+        if (sorted.length || $scriptureSettings) slides = getSlides({ bibles, sorted })
 
         let books = removeDuplicates(bibles.map((a) => a.book)).join(" / ")
 
@@ -153,6 +163,11 @@
         let val = e.target.checked
         let id = e.target.id
         update(id, val)
+
+        // if (id === "splitLongVerses") longVersesMenuOpened = val
+        if (id === "verseNumbers") verseMenuOpened = val
+        if (id === "redJesus") redMenuOpened = val
+        if (id === "showVerse" || id === "showVersion") referenceMenuOpened = showVersion || $scriptureSettings.showVerse ? (val ? true : referenceMenuOpened) : false
     }
 
     function update(id: string, value: any) {
@@ -279,6 +294,11 @@
     $: background = $templates[templateId]?.settings?.backgroundColor || $styles[styleId]?.background || "#000000"
 
     $: attributionString = [...new Set(bibles.map((a) => a?.attributionString).filter(Boolean))].join(" / ")
+
+    // let longVersesMenuOpened: boolean = false
+    let verseMenuOpened: boolean = false
+    let redMenuOpened: boolean = false
+    let referenceMenuOpened: boolean = false
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -305,7 +325,8 @@
 
     <!-- settings -->
     <div class="settings border">
-        <CombinedInput>
+        <!-- Template -->
+        <CombinedInput style="border-bottom: 4px solid var(--primary-lighter);">
             <p><T id="info.template" /></p>
             <Button
                 on:click={() => {
@@ -327,28 +348,55 @@
             {/if}
         </CombinedInput>
 
-        <!-- {#if $scriptureSettings.versesPerSlide != 3 || sorted.length > 1} -->
-        <CombinedInput textWidth={70}>
-            <p><T id="scripture.max_verses" /></p>
-            <NumberInput value={$scriptureSettings.versesPerSlide} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} buttons={false} />
+        <!-- {#if $scriptureSettings.versesOnIndividualLines || sorted.length > 1} -->
+        <CombinedInput>
+            <p style="flex: 1;"><T id="scripture.verses_on_individual_lines" /></p>
+            <div class="alignRight">
+                <Checkbox id="versesOnIndividualLines" checked={$scriptureSettings.versesOnIndividualLines} on:change={checked} />
+            </div>
         </CombinedInput>
         <!-- {/if} -->
-        {#if $scriptureSettings.versesOnIndividualLines || $scriptureSettings.versesPerSlide > 1}
-            <CombinedInput textWidth={70}>
-                <p><T id="scripture.verses_on_individual_lines" /></p>
-                <div class="alignRight">
-                    <Checkbox id="versesOnIndividualLines" checked={$scriptureSettings.versesOnIndividualLines} on:change={checked} />
-                </div>
-            </CombinedInput>
-        {/if}
 
-        <CombinedInput textWidth={70}>
-            <p><T id="scripture.verse_numbers" /></p>
+        <!-- Long verses -->
+        <!-- <CombinedInput>
+            <p style="flex: 1;"><T id="scripture.divide_long_verses" /></p>
+            <div class="alignRight">
+                <Checkbox id="splitLongVerses" checked={$scriptureSettings.splitLongVerses} on:change={checked} />
+            </div>
+            {#if $scriptureSettings.splitLongVerses}
+                <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (longVersesMenuOpened = !longVersesMenuOpened)}>
+                    {#if longVersesMenuOpened}
+                        <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+                    {:else}
+                        <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                    {/if}
+                </Button>
+            {/if}
+        </CombinedInput>
+        {#if $scriptureSettings.splitLongVerses && longVersesMenuOpened}
+            <CombinedInput style="border-bottom: 4px solid var(--primary-lighter);">
+                <p><T id="edit.size" /></p>
+                <NumberInput value={$scriptureSettings.longVersesChars || 100} min={50} on:change={(e) => update("longVersesChars", e.detail)} />
+            </CombinedInput>
+        {/if} -->
+
+        <!-- Verse numbers -->
+        <CombinedInput>
+            <p style="flex: 1;"><T id="scripture.verse_numbers" /></p>
             <div class="alignRight">
                 <Checkbox id="verseNumbers" checked={$scriptureSettings.verseNumbers} on:change={checked} />
             </div>
+            {#if $scriptureSettings.verseNumbers}
+                <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (verseMenuOpened = !verseMenuOpened)}>
+                    {#if verseMenuOpened}
+                        <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+                    {:else}
+                        <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                    {/if}
+                </Button>
+            {/if}
         </CombinedInput>
-        {#if $scriptureSettings.verseNumbers}
+        {#if $scriptureSettings.verseNumbers && verseMenuOpened}
             <CombinedInput>
                 <p><T id="edit.color" /></p>
                 <Color height={20} width={50} value={$scriptureSettings.numberColor || "#919191"} on:input={(e) => update("numberColor", e.detail)} />
@@ -359,95 +407,118 @@
             </CombinedInput>
         {/if}
 
+        <!-- Red Jesus -->
         {#if $scriptureSettings.redJesus || containsJesusWords}
-            <CombinedInput textWidth={70}>
-                <p><T id="scripture.red_jesus" /></p>
+            <CombinedInput style="border-top: 2px solid var(--primary-lighter);">
+                <p style="flex: 1;"><T id="scripture.red_jesus" /></p>
                 <div class="alignRight">
                     <Checkbox id="redJesus" checked={$scriptureSettings.redJesus} on:change={checked} />
                 </div>
+                {#if $scriptureSettings.redJesus}
+                    <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (redMenuOpened = !redMenuOpened)}>
+                        {#if redMenuOpened}
+                            <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+                        {:else}
+                            <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                        {/if}
+                    </Button>
+                {/if}
             </CombinedInput>
         {/if}
-        {#if $scriptureSettings.redJesus}
+        {#if $scriptureSettings.redJesus && redMenuOpened}
             <CombinedInput>
                 <p><T id="edit.color" /></p>
                 <Color height={20} width={50} value={$scriptureSettings.jesusColor || "#FF4136"} on:input={(e) => update("jesusColor", e.detail)} />
             </CombinedInput>
         {/if}
 
-        <br />
-
-        <CombinedInput textWidth={70}>
-            <p><T id="scripture.reference" /></p>
+        <!-- Reference options -->
+        <CombinedInput style="border-top: 2px solid var(--primary-lighter);">
+            <p style="flex: 1;"><T id="scripture.reference" /></p>
             <div class="alignRight">
                 <Checkbox id="showVerse" checked={$scriptureSettings.showVerse} on:change={checked} />
             </div>
+            {#if $scriptureSettings.showVerse}
+                <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (referenceMenuOpened = !referenceMenuOpened)}>
+                    {#if referenceMenuOpened}
+                        <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+                    {:else}
+                        <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                    {/if}
+                </Button>
+            {/if}
         </CombinedInput>
-        {#if $scriptureSettings.showVerse && !$scriptureSettings.firstSlideReference}
-            <CombinedInput textWidth={70}>
-                <p><T id="scripture.split_reference" /></p>
-                <div class="alignRight">
-                    <Checkbox id="splitReference" checked={$scriptureSettings.splitReference !== false} on:change={checked} />
-                </div>
-            </CombinedInput>
-        {/if}
-        <CombinedInput textWidth={70}>
-            <p><T id="scripture.version" /></p>
+        <CombinedInput style={referenceMenuOpened ? "border-bottom: 4px solid var(--primary-lighter);" : ""}>
+            <p style="flex: 1;"><T id="scripture.version" /></p>
             <div class="alignRight">
                 <Checkbox disabled={bibles.find((a) => a?.attributionRequired)} id="showVersion" checked={showVersion} on:change={checked} />
             </div>
+            {#if showVersion}
+                <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (referenceMenuOpened = !referenceMenuOpened)}>
+                    {#if referenceMenuOpened}
+                        <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
+                    {:else}
+                        <Icon class="submenu_open" id="arrow_right" size={1.4} style="fill: var(--text);" />
+                    {/if}
+                </Button>
+            {/if}
         </CombinedInput>
 
-        {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
-            <CombinedInput>
-                <Notes lines={2} value={customText} on:change={(e) => update("customText", e.detail)} />
-            </CombinedInput>
-        {/if}
+        {#if referenceMenuOpened}
+            {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
+                <CombinedInput>
+                    <Notes lines={2} value={customText} on:change={(e) => update("customText", e.detail)} />
+                </CombinedInput>
+            {/if}
 
-        {#if showVersion || $scriptureSettings.showVerse}
-            {#if !$scriptureSettings.firstSlideReference}
-                <CombinedInput textWidth={70}>
-                    <p><T id="scripture.combine_with_text" /></p>
+            {#if showVersion || $scriptureSettings.showVerse}
+                <!-- {#if !$scriptureSettings.firstSlideReference} -->
+                <CombinedInput>
+                    <p style="flex: 1;"><T id="scripture.combine_with_text" /></p>
                     <div class="alignRight">
                         <Checkbox id="combineWithText" checked={$scriptureSettings.combineWithText} on:change={checked} />
                     </div>
                 </CombinedInput>
                 {#if $scriptureSettings.combineWithText}
-                    <CombinedInput textWidth={70}>
-                        <p><T id="scripture.reference_at_bottom" /></p>
+                    <CombinedInput>
+                        <p style="flex: 1;"><T id="scripture.reference_at_bottom" /></p>
                         <div class="alignRight">
                             <Checkbox id="referenceAtBottom" checked={$scriptureSettings.referenceAtBottom} on:change={checked} />
                         </div>
                     </CombinedInput>
                 {/if}
-            {/if}
+                <!-- {/if} -->
 
-            {#if !$scriptureSettings.combineWithText}
-                <CombinedInput textWidth={70}>
-                    <p><T id="scripture.first_slide_reference" /></p>
-                    <div class="alignRight">
-                        <Checkbox id="firstSlideReference" checked={$scriptureSettings.firstSlideReference} on:change={checked} />
-                    </div>
-                </CombinedInput>
-            {/if}
-
-            {#if !$scriptureSettings.combineWithText}
-                <CombinedInput textWidth={70}>
-                    <p><T id="edit.invert_items" /></p>
-                    <div class="alignRight">
-                        <Checkbox id="invertItems" checked={$scriptureSettings.invertItems} on:change={checked} />
-                    </div>
-                </CombinedInput>
+                <!-- <br /> -->
+                <!-- WIP Unwanted: -->
+                {#if !$scriptureSettings.combineWithText}
+                    <CombinedInput>
+                        <p style="flex: 1;"><T id="edit.invert_items" /></p>
+                        <div class="alignRight">
+                            <Checkbox id="invertItems" checked={$scriptureSettings.invertItems} on:change={checked} />
+                        </div>
+                    </CombinedInput>
+                {/if}
             {/if}
         {/if}
     </div>
 </div>
 
-<Button on:click={createShow} style="width: 100%;" disabled={!verseRange} dark center>
+<Button
+    on:click={(e) => {
+        const preventPopup = e.ctrlKey || e.metaKey
+        createShow(preventPopup, e.altKey)
+    }}
+    style="width: 100%;"
+    disabled={!verseRange}
+    dark
+    center
+>
     <Icon id="slide" right />
-    <T id="new.show" />
-    {#if slides.length > 1}
+    <T id="new.show_convert" />
+    <!-- {#if slides.length > 1}
         <span style="opacity: 0.5;margin-left: 0.5em;">({slides.length})</span>
-    {/if}
+    {/if} -->
 </Button>
 
 <style>
@@ -485,5 +556,10 @@
         font-size: 28px;
         font-style: italic;
         opacity: 0.7;
+    }
+
+    .alignRight {
+        flex: 0 !important;
+        padding: 0 10px;
     }
 </style>
