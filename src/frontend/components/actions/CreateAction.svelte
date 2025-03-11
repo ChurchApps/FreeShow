@@ -12,6 +12,10 @@
     import { getActionTriggerId } from "./actions"
     import { API_ACTIONS } from "./api"
     import HRule from "../input/HRule.svelte"
+    import TextInput from "../inputs/TextInput.svelte"
+    import { clone } from "../helpers/array"
+    import { formatSearch } from "../../utils/search"
+    import Center from "../system/Center.svelte"
 
     export let list: boolean = false
     export let full: boolean = false
@@ -129,7 +133,37 @@
     let dataMenuOpened = false
 
     $: isLast = actionNameIndex >= existingActions.length
+
+    // SEARCH
+
+    let searchedActions = clone(ACTIONS) // initially empty
+    $: if (ACTIONS) search()
+    let searchValue = ""
+    let previousSearchValue: string = ""
+    function search(e: any = null) {
+        searchValue = formatSearch(e?.target?.value || "")
+
+        if (searchValue.length < 2) {
+            searchedActions = clone(ACTIONS)
+            return
+        }
+
+        let currentActionsList = searchedActions
+        // reset if search value changed
+        if (!searchValue.includes(previousSearchValue)) currentActionsList = clone(ACTIONS)
+
+        searchedActions = currentActionsList.filter((a) => formatSearch(a.name || "").includes(searchValue))
+
+        previousSearchValue = searchValue
+    }
+
+    function chooseAction(e: any) {
+        if (e.key !== "Enter" || !searchValue.length || !searchedActions.length) return
+        changeAction({ ...searchedActions[0], index: full ? undefined : 0 })
+    }
 </script>
+
+<svelte:window on:keydown={chooseAction} />
 
 {#if list}
     {#if actionId && !pickAction && !full}
@@ -140,25 +174,35 @@
             </Button>
         </CombinedInput>
     {:else}
-        <div class="buttons">
-            {#each ACTIONS as action}
-                {#if action.section}
-                    <HRule title={action.section} />
-                {/if}
+        <CombinedInput style="border-bottom: 2px solid var(--secondary);">
+            <TextInput placeholder={$dictionary.main?.search} value="" on:input={search} autofocus />
+        </CombinedInput>
 
-                <!-- disabled={$popupData.existing.includes(action.id)} -->
-                <Button
-                    on:click={() => changeAction({ ...action, index: full ? undefined : 0 })}
-                    outline={getActionTriggerId(actionId) === action.id}
-                    active={(existingActions || $popupData.existing || []).map(getActionTriggerId).includes(action.id)}
-                    style="width: 100%;"
-                    bold={action.common}
-                >
-                    <Icon id={action.icon} right />
-                    <p>{action.name}</p>
-                </Button>
-            {/each}
-        </div>
+        {#if searchedActions.length}
+            <div class="buttons" style={searchValue.length ? "padding-top: 20px;" : ""}>
+                {#each searchedActions as action, i}
+                    {#if action.section && !searchValue.length}
+                        <HRule title={action.section} />
+                    {/if}
+
+                    <!-- disabled={$popupData.existing.includes(action.id)} -->
+                    <Button
+                        on:click={() => changeAction({ ...action, index: full ? undefined : 0 })}
+                        outline={getActionTriggerId(actionId) === action.id}
+                        active={(existingActions || $popupData.existing || []).map(getActionTriggerId).includes(action.id)}
+                        style="width: 100%;{searchValue.length && i === 0 ? 'background-color: var(--primary-lighter);' : ''}"
+                        bold={action.common}
+                    >
+                        <Icon id={action.icon} right />
+                        <p>{action.name}</p>
+                    </Button>
+                {/each}
+            </div>
+        {:else}
+            <Center size={1.2} faded style="height: 100px;padding-top: 20px;">
+                <T id="empty.search" />
+            </Center>
+        {/if}
     {/if}
 {:else}
     <CombinedInput textWidth={38} style={actionNameIndex > 1 || !actionId ? "border-top: 2px solid var(--primary-lighter);" : ""}>

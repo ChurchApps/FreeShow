@@ -22,6 +22,7 @@ export function getExtension(path: string): string {
 }
 
 export function removeExtension(name: string): string {
+    if (!name) return ""
     if (name.indexOf(".") < 0) return name
     return name.slice(0, name.lastIndexOf("."))
 }

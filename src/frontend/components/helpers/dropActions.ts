@@ -785,7 +785,7 @@ const slideDrop: any = {
                 let existingIndex = slideActions.findIndex((a) => a.actionValues?.run_action?.id === action.id)
                 if (existingIndex > -1) return
 
-                newActions.push({ id: uid(), triggers: ["run_action"], actionValues: { run_action: { id: action.id } } })
+                newActions.push({ id: uid(), triggers: ["run_action"], name: action.name || "", actionValues: { run_action: { id: action.id } } })
                 return
             }
 

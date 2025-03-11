@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, popupData } from "../../../stores"
+    import { activePopup, activeShow, popupData, showsCache } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
@@ -29,6 +29,19 @@
         history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: value, indexes }, location: { page: "show", override: "change_slide_action_timer" } })
 
         if (allSlides) {
+            // remove existing go to start if just one applied to any slide
+            let goToStartRefs: any[] = allActiveSlides.reduce((value, ref) => (ref.data?.end ? [...value, ref] : value), [])
+            if (goToStartRefs.length === 1) {
+                let showId = $activeShow?.id || ""
+                let layoutId = _show().get("settings.activeLayout")
+                showsCache.update((a) => {
+                    let ref = goToStartRefs[0]
+                    if (ref.type === "parent") delete a[showId].layouts[layoutId]?.slides?.[ref.index]?.end
+                    else delete a[showId].layouts[layoutId]?.slides?.[ref.parent.index]?.children?.[ref.id]?.end
+                    return a
+                })
+            }
+
             history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !!value, indexes: [indexes[indexes.length - 1]] }, location: { page: "show", override: "change_slide_action_loop" } })
             activePopup.set(null)
         }

@@ -301,6 +301,12 @@
     let actionActivationSelector: boolean = false
     let activationMenuOpened: boolean = false
 
+    // function nameKeydown(e: any) {
+    //     if (e.key === "Enter" && !action?.triggers?.length) {
+    //         // WIP enter to open choose list
+    //     }
+    // }
+
     // pre 1.3.9
     $: if (action?.midiEnabled && !customActivation) {
         updateValue("customActivation", "midi_signal_received")
@@ -357,6 +363,7 @@
                 full
             />
         {:else if mode !== "slide_midi"}
+            <!-- on:keydown={nameKeydown} -->
             <CombinedInput textWidth={38}>
                 <p><T id="midi.name" /></p>
                 {#key action.name}
@@ -376,7 +383,7 @@
                             ...$popupData,
                             id,
                             mode: "action",
-                            revert: "action",
+                            revert: $activePopup,
                             value: action.keypressActivate,
                             existingShortcuts,
                         })
