@@ -1,10 +1,11 @@
-import type { ProjectShowRef } from "./../../../types/Projects"
 import { get, Writable, writable } from "svelte/store"
 import type { Dictionary } from "../../../types/Settings"
-import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
-import { clone } from "../../common/util/helpers"
-import { DEFAULT_DICTIONARY } from "./dictionary"
+import type { Overlays } from "../../../types/Show"
 import type { BibleCategories } from "../../../types/Tabs"
+import { clone } from "../../common/util/helpers"
+import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
+import type { ProjectShowRef } from "./../../../types/Projects"
+import { DEFAULT_DICTIONARY } from "./dictionary"
 
 export let dictionary: Writable<Dictionary> = writable(clone(DEFAULT_DICTIONARY))
 
@@ -39,6 +40,7 @@ export let projects: Writable<any[]> = writable([])
 export let project: Writable<string> = writable("")
 
 export let scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
+export let overlays: Writable<Overlays> = writable({})
 
 export let mediaCache: Writable<any> = writable({})
 export let textCache: Writable<any> = writable({})

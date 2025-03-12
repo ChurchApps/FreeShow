@@ -163,7 +163,7 @@ export function selectOverlayByIndex(index: number) {
     let overlayId = sortedOverlays[index]?.id
     if (!overlayId) return // newToast("$toast.action_no_id": action_id)
 
-    setOutput("overlays", overlayId)
+    setOutput("overlays", overlayId, false, "", true)
 }
 export function selectOverlayByName(name: string) {
     if (get(outLocked)) return
@@ -172,12 +172,12 @@ export function selectOverlayByName(name: string) {
     let overlayId = sortedOverlays[0]?.id
     if (!overlayId) return
 
-    setOutput("overlays", overlayId)
+    setOutput("overlays", overlayId, false, "", true)
 }
 export function selectOverlayById(id: string) {
     if (get(outLocked)) return
 
-    setOutput("overlays", id)
+    setOutput("overlays", id, false, "", true)
 }
 
 export function toggleLock(value?: boolean) {

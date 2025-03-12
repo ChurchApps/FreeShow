@@ -1,5 +1,5 @@
 import { setError, translate } from "./helpers"
-import { _, _get, _set, _update, scriptures } from "./stores"
+import { _, _get, _set, _update, overlays, scriptures } from "./stores"
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
@@ -104,6 +104,9 @@ export const receiver = {
     GET_SCRIPTURE: (data: any) => {
         if (!data) return
         _update("scriptureCache", data.id, data.bible)
+    },
+    OVERLAYS: (data: any) => {
+        overlays.set(data)
     },
 
     /////

@@ -16,6 +16,7 @@
     import Shows from "../pages/Shows.svelte"
     import TextEdit from "../pages/TextEdit.svelte"
     import Clear from "../show/Clear.svelte"
+    import OverlayPreview from "../show/OverlayPreview.svelte"
     import Slide from "../show/Slide.svelte"
     import Slides from "../show/Slides.svelte"
 
@@ -240,6 +241,8 @@
         {/if}
     {:else if $active.type === "image" || $active.type === "video"}
         <Media tablet />
+    {:else if $active.type === "overlay"}
+        <OverlayPreview show={$active} />
     {:else}
         <p style="text-transform: capitalize;">{$active.type}</p>
     {/if}

@@ -6,7 +6,7 @@ import { loadShows } from "../components/helpers/setShow"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { BIBLE, REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
+import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
 import { sendData } from "./sendData"
 import { uid } from "uid"
 import { clearAll } from "../components/output/clear"
@@ -153,7 +153,17 @@ export const receiveREMOTE: any = {
         return msg
     },
     PROJECTS: (msg: any) => {
-        msg.data = removeDeleted(keysToID(get(projects)))
+        msg.data = removeDeleted(keysToID(clone(get(projects))))
+
+        // get names
+        msg.data.forEach((project) => {
+            project.shows.forEach((show) => {
+                if (show.type === "overlay") show.name = get(overlays)[show.id]?.name || get(dictionary).main?.unnamed
+            })
+
+            return project
+        })
+
         return msg
     },
     GET_SCRIPTURE: async (msg: ClientMessage) => {
@@ -208,6 +218,7 @@ export function initializeRemote(id: string) {
     }
     send(REMOTE, ["OUT"], out)
 
+    send(REMOTE, ["OVERLAYS"], get(overlays))
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
 }
 

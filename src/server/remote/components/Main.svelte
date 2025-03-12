@@ -12,6 +12,7 @@
     import Show from "./pages/Show.svelte"
     import Shows from "./pages/Shows.svelte"
     import Slide from "./pages/Slide.svelte"
+    import OverlayPreview from "./show/OverlayPreview.svelte"
     import TabletMode from "./tablet/TabletMode.svelte"
 
     $: tab = $activeTab
@@ -80,6 +81,8 @@
                 <Show />
             {:else if $active.type === "image" || $active.type === "video"}
                 <Media />
+            {:else if $active.type === "overlay"}
+                <OverlayPreview show={$active} />
             {:else}
                 <p style="text-transform: capitalize;">{$active.type}</p>
             {/if}

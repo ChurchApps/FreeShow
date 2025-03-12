@@ -5,6 +5,7 @@
     export let center: boolean = false
     export let hideOverflow: boolean = true
     export let resolution: Resolution
+    export let checkered: boolean = false
 
     export let ratio: number = 1
     $: ratio = slideWidth / 1920
@@ -13,7 +14,7 @@
 </script>
 
 <div class:center>
-    <div bind:offsetWidth={slideWidth} class="slide" class:hideOverflow style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};">
+    <div bind:offsetWidth={slideWidth} class="slide" class:hideOverflow class:checkered style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};">
         <!-- WIP firefox does not support "zoom": https://stackoverflow.com/questions/4049342/how-can-i-zoom-an-html-element-in-firefox-and-opera (-moz-transform: scale({ratio});) -->
         <span style="zoom: {ratio};">
             <slot />

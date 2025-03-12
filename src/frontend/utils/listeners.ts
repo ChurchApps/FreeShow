@@ -113,6 +113,7 @@ export function storeSubscriber() {
     })
     overlays.subscribe((data) => {
         send(OUTPUT, ["OVERLAYS"], data)
+        send(REMOTE, ["OVERLAYS"], data)
     })
 
     events.subscribe((data) => {

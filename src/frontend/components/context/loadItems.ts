@@ -151,7 +151,7 @@ const loadActions = {
             if (media.length) media.push("SEPERATOR")
             media.push(
                 ...sortByName(
-                    ol.map((id: string) => ({ id, label: get(overlays)[id].name, translate: false, icon: "overlays" })),
+                    ol.map((id: string) => ({ id, label: get(overlays)[id]?.name, translate: false, icon: "overlays" })),
                     "label"
                 )
             )

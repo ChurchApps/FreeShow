@@ -173,7 +173,7 @@ export const API_ACTIONS = {
 
     // CLEAR
     restore_output: () => restoreOutput(), // BC
-    clear_all: () => clearAll(), // BC
+    clear_all: () => clearAll(true), // BC
     clear_background: () => clearBackground(), // BC
     clear_slide: () => clearSlide(), // BC
     clear_overlays: () => clearOverlays(), // BC
