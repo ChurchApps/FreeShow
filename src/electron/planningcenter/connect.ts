@@ -24,6 +24,15 @@ type PCOAuthData = {
     scope: PCOScopes
 } | null
 
+export const DEFAULT_PCO_DATA: PCOAuthData = {
+    access_token: "",
+    refresh_token: "",
+    token_type: "Bearer",
+    created_at: 0,
+    expires_in: 0,
+    scope: "services",
+}
+
 const HTML_success = `
     <head>
         <title>Success!</title>
@@ -46,7 +55,7 @@ const HTML_error = `
 let PCO_ACCESS: PCOAuthData = null
 export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
     let storedAccess = PCO_ACCESS || stores.ACCESS.get(`pco_${scope}`)
-    if (storedAccess) {
+    if (storedAccess?.created_at) {
         if (hasExpired(storedAccess)) {
             PCO_ACCESS = await refreshToken(storedAccess)
             return PCO_ACCESS

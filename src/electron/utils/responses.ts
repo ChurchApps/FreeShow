@@ -339,13 +339,13 @@ function storeMedia(files: any[]) {
 }
 
 // GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
-function getStoreValue(data: { file: string; key: string }) {
+function getStoreValue(data: { file: "config" | keyof typeof stores; key: string }) {
     let store = data.file === "config" ? config : stores[data.file]
-    return { ...data, value: store.get(data.key) }
+    return { ...data, value: (store as any).get(data.key) }
 }
 
 // GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
-function setStoreValue(data: { file: string; key: string; value: any }) {
+function setStoreValue(data: { file: "config" | keyof typeof stores; key: string; value: any }) {
     let store = data.file === "config" ? config : stores[data.file]
     store.set(data.key, data.value)
 }

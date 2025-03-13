@@ -86,13 +86,13 @@ import {
     videoMarkers,
     volume,
 } from "../stores"
-import type { SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
+import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
 import { send } from "./request"
 
-export function save(closeWhenFinished: boolean = false, customTriggers: { backup?: boolean; silent?: boolean; changeUserData?: any; autosave?: boolean } = {}) {
+export function save(closeWhenFinished: boolean = false, customTriggers: SaveActions = {}) {
     console.log("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
         newToast("$toast.saving")
@@ -172,8 +172,8 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         customMetadata: get(customMetadata),
     }
 
-    let allSavedData: any = {
-        path: get(showsPath),
+    let allSavedData: SaveData = {
+        path: get(showsPath) || "",
         dataPath: get(dataPath),
         // SETTINGS
         SETTINGS: settings,
@@ -194,21 +194,17 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         scripturesCache: clone(get(scripturesCache)),
         deletedShows: clone(get(deletedShows)),
         renamedShows: clone(get(renamedShows)),
+        // CACHES
+        CACHE: { text: get(textCache) },
+        HISTORY: { undo: get(undoHistory), redo: get(redoHistory) },
+        USAGE: get(usageLog),
+        // SAVE INFO DATA
+        closeWhenFinished,
+        customTriggers,
     }
 
     deletedShows.set([])
     renamedShows.set([])
-
-    // CACHES
-    allSavedData = {
-        ...allSavedData,
-        CACHE: { text: get(textCache) },
-        HISTORY: { undo: get(undoHistory), redo: get(redoHistory) },
-        USAGE: get(usageLog),
-    }
-
-    allSavedData.closeWhenFinished = closeWhenFinished
-    allSavedData.customTriggers = customTriggers
 
     if (customTriggers.backup) newToast("$settings.backup_started")
     send(STORE, ["SAVE"], allSavedData)

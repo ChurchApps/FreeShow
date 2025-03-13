@@ -167,7 +167,7 @@ export async function downloadFile(fileId: string) {
 
 const SHOWS_CONTENT = "SHOWS_CONTENT"
 const combineLocations = ["PROJECTS"]
-const storesToSave = ["EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTINGS", "STAGE_SHOWS", "TEMPLATES", "THEMES", "MEDIA"]
+const storesToSave: (keyof typeof stores)[] = ["EVENTS", "OVERLAYS", "PROJECTS", "SYNCED_SETTINGS", "STAGE_SHOWS", "TEMPLATES", "THEMES", "MEDIA"]
 // don't upload: settings.json, config.json, cache.json, history.json
 
 export let currentlyDeletedShows: string[] = []
@@ -201,8 +201,8 @@ export async function syncDataDrive(data: any) {
 
     /////
 
-    async function syncStores(id: string) {
-        let store = stores[id]
+    async function syncStores(id: keyof typeof stores) {
+        let store = stores[id] as any
         let name = id + ".json"
 
         let driveFileId = files.find((a: any) => a.name === name)?.id

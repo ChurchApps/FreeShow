@@ -4,11 +4,10 @@
 import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
 import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
+import type { Dictionary } from "../types/Settings"
 import { BIBLE, IMPORT } from "./../types/Channels"
+import { receiveAudio } from "./audio/receiveAudio"
 import { cloudConnect } from "./cloud/cloud"
-import { currentlyDeletedShows } from "./cloud/drive"
-import { startBackup } from "./data/backup"
-import { defaultSettings, defaultSyncedSettings } from "./data/defaults"
 import { startExport } from "./data/export"
 import { config, getStore, stores, updateDataPath, userDataPath } from "./data/store"
 import { NdiReceiver } from "./ndi/NdiReceiver"
@@ -16,13 +15,11 @@ import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { closeServers } from "./servers"
 import { stopApiListener } from "./utils/api"
-import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, loadShows, writeFile } from "./utils/files"
+import { doesPathExist, loadShows } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { stopMidi } from "./utils/midi"
 import { catchErrors, loadScripture, loadShow, receiveMain, saveRecording, startImport } from "./utils/responses"
-import { renameShows } from "./utils/shows"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-import { receiveAudio } from "./audio/receiveAudio"
 
 // ----- STARTUP -----
 
@@ -120,14 +117,15 @@ function createLoading() {
 export let mainWindow: BrowserWindow | null = null
 export let dialogClose: boolean = false // is unsaved
 const MIN_WINDOW_SIZE = 200
+const DEFAULT_WINDOW_SIZE = { width: 800, height: 600 }
 function createMain() {
     if (RECORD_STARTUP_TIME) console.time("Main window")
     let bounds: Rectangle = config.get("bounds")
     let screenBounds: Rectangle = screen.getPrimaryDisplay().bounds
 
-    let options: any = {
-        width: !bounds.width || bounds.width === 800 ? screenBounds.width || 800 : bounds.width,
-        height: !bounds.height || bounds.height === 600 ? screenBounds.height || 600 : bounds.height,
+    let options: Electron.BrowserWindowConstructorOptions = {
+        width: getWindowBounds("width"),
+        height: getWindowBounds("height"),
         frame: !isProd || !isWindows,
         autoHideMenuBar: isProd && isWindows,
     }
@@ -135,10 +133,6 @@ function createMain() {
     // should be centered to screen if x & y is not set (or bottom left on mac)
     if (bounds.x) options.x = bounds.x
     if (bounds.y) options.y = bounds.y
-
-    // set minimum window size on startup (in case it's tiny)
-    options.width = Math.max(MIN_WINDOW_SIZE, options.width)
-    options.height = Math.max(MIN_WINDOW_SIZE, options.height)
 
     // create window
     mainWindow = new BrowserWindow({ ...mainOptions, ...options })
@@ -153,6 +147,12 @@ function createMain() {
     setMainListeners()
 
     if (RECORD_STARTUP_TIME) console.timeEnd("Main window")
+
+    function getWindowBounds(type: "width" | "height") {
+        const size = !bounds[type] || bounds[type] === DEFAULT_WINDOW_SIZE[type] ? screenBounds[type] || DEFAULT_WINDOW_SIZE[type] : bounds[type]
+        // set minimum window size on startup (in case it's tiny)
+        return Math.max(MIN_WINDOW_SIZE, size)
+    }
 }
 
 export function getMainWindow() {
@@ -251,7 +251,7 @@ function setMainListeners() {
     mainWindow.once("closed", exitApp)
 }
 
-function callClose(e: any) {
+function callClose(e: Electron.Event) {
     if (dialogClose) return
     e.preventDefault()
 
@@ -353,77 +353,10 @@ ipcMain.on(STORE, (e, msg) => {
     if (userDataPath === null) updateDataPath()
 
     // if (msg.channel === "UPDATE_PATH") updateDataPath(msg.data)
-    if (msg.channel === "SAVE") save(msg.data)
-    else if (msg.channel === "SHOWS") loadShows(msg.data)
-    else if (stores[msg.channel]) getStore(msg.channel, e)
+    // if (msg.channel === "SAVE") save(msg.data)
+    if (msg.channel === "SHOWS") loadShows(msg.data)
+    else if (stores[msg.channel as keyof typeof stores]) getStore(msg.channel, e)
 })
-
-function save(data: any) {
-    if (data.reset === true) {
-        data.SETTINGS = JSON.parse(JSON.stringify(defaultSettings))
-        data.SYNCED_SETTINGS = JSON.parse(JSON.stringify(defaultSyncedSettings))
-    }
-
-    // save to files
-    Object.entries(stores).forEach(storeData)
-    function storeData([key, store]: any) {
-        if (!data[key] || JSON.stringify(store.store) === JSON.stringify(data[key])) return
-
-        store.clear()
-        store.set(data[key])
-
-        if (data.reset === true) toApp(STORE, { channel: key, data: data[key] })
-    }
-
-    // scriptures
-    let scripturePath = getDataFolder(data.dataPath, dataFolderNames.scriptures)
-    if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
-    function saveScripture([id, value]: any) {
-        if (!value) return
-        let p: string = path.join(scripturePath, value.name + ".fsb")
-        writeFile(p, JSON.stringify([id, value]), id)
-    }
-
-    data.path = checkShowsFolder(data.path)
-    // rename shows
-    if (data.renamedShows) {
-        let renamedShows = data.renamedShows.filter(({ id }: any) => !data.deletedShows[id])
-        renameShows(renamedShows, data.path)
-    }
-
-    // let rename finish
-    setTimeout(() => {
-        // shows
-        if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
-        function saveShow([id, value]: any) {
-            if (!value) return
-            let p: string = path.join(data.path, (value.name || id) + ".show")
-            // WIP will overwrite a file with JSON data from another show 0,007% of the time (7 shows get broken when saving 1000 at the same time)
-            writeFile(p, JSON.stringify([id, value]), id)
-        }
-
-        // delete shows
-        if (data.deletedShows) data.deletedShows.forEach(deleteShow)
-        function deleteShow({ name, id }: any) {
-            if (!name || data.showsCache[id]) return
-
-            let p: string = path.join(data.path, (name || id) + ".show")
-            deleteFile(p)
-
-            // update cloud
-            currentlyDeletedShows.push(id)
-        }
-
-        // SAVED
-        if (!data.reset) {
-            setTimeout(() => {
-                toApp(STORE, { channel: "SAVE", data: { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers } })
-            }, 300)
-        }
-
-        if (data.customTriggers?.backup || data.customTriggers?.changeUserData) startBackup({ showsPath: data.path, dataPath: data.dataPath, scripturePath, customTriggers: data.customTriggers })
-    }, 700)
-}
 
 // ----- LISTENERS -----
 
@@ -440,14 +373,14 @@ ipcMain.on(AUDIO, receiveAudio)
 
 // ----- HELPERS -----
 
-// send messages to main frontend
+// send messages to main frontend (should not be used anymore)
 export const toApp = (channel: string, ...args: any[]): void => {
     if (!mainWindow || mainWindow.isDestroyed()) return
     mainWindow.webContents.send(channel, ...args)
 }
 
 // set/update global application menu
-export function setGlobalMenu(strings: any = {}) {
+export function setGlobalMenu(strings: Dictionary = {}) {
     if (isProd && isWindows) {
         // set to null as it is not used on Windows
         Menu.setApplicationMenu(null)

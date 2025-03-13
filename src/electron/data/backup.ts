@@ -5,7 +5,7 @@ import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePoi
 import { stores, updateDataPath } from "./store"
 
 // "SYNCED_SETTINGS" and "STAGE_SHOWS" has to be before "SETTINGS" and "SHOWS"
-const storesToSave = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA"]
+const storesToSave: (keyof typeof stores)[] = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA"]
 // don't upload: config.json, cache.json, history.json, DRIVE_API_KEY.json
 
 export async function startBackup({ showsPath, dataPath, scripturePath, customTriggers }: any) {
@@ -35,7 +35,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
 
     /////
 
-    async function syncStores(id: string) {
+    async function syncStores(id: keyof typeof stores) {
         let store = stores[id]
         let name = id + ".json"
 
@@ -96,7 +96,7 @@ export function restoreFiles({ showsPath }: any) {
 
     /////
 
-    function restoreStore(filePath: string, storeId: string) {
+    function restoreStore(filePath: string, storeId: keyof typeof stores) {
         let file = readFile(filePath)
         if (!stores[storeId] || !file || !isValidJSON(file)) return
 
@@ -109,7 +109,7 @@ export function restoreFiles({ showsPath }: any) {
         }
 
         stores[storeId].clear()
-        stores[storeId].set(data)
+        ;(stores[storeId] as any).set(data)
         // WIP restoring synced settings will reset settings
         toApp(STORE, { channel: storeId, data })
     }

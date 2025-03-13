@@ -1,11 +1,12 @@
-import { MAIN } from "../../types/Channels"
-import { isMac, isProd, toApp } from ".."
-import { openURL } from "./responses"
 import { app } from "electron"
+import { isMac, isProd, toApp } from ".."
+import { MAIN } from "../../types/Channels"
+import type { Dictionary } from "../../types/Settings"
+import { openURL } from "./responses"
 
 const mc = (id: string) => toApp(MAIN, { channel: "MENU", data: id })
 
-export function template(strings: any): any {
+export function template(strings: Dictionary): any {
     const appMenu = {
         label: app.name,
         submenu: [

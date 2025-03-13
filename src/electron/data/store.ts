@@ -10,6 +10,7 @@ import { STORE } from "../../types/Channels"
 import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
 import { forceCloseApp } from "../utils/responses"
+import { DEFAULT_PCO_DATA } from "../planningcenter/connect"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",
@@ -100,9 +101,9 @@ const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesB
 const cache = new Store({ name: fileNames.cache, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 let history = new Store({ name: fileNames.history, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
 let usage = new Store({ name: fileNames.usage, defaults: { all: [] }, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let accessKeys = new Store({ name: fileNames.access, defaults: {} })
+let accessKeys = new Store({ name: fileNames.access, defaults: DEFAULT_PCO_DATA! })
 
-export let stores: { [key: string]: Store<any> } = {
+export let stores = {
     SETTINGS: settings,
     SYNCED_SETTINGS: synced_settings,
     THEMES: themes,
@@ -122,7 +123,7 @@ export let stores: { [key: string]: Store<any> } = {
 
 // ----- GET STORE -----
 
-export function getStore(id: string, e: any = null) {
+export function getStore(id: keyof typeof stores, e: any = null) {
     if (!stores[id]) return null
 
     let store = stores[id].store
@@ -133,7 +134,7 @@ export function getStore(id: string, e: any = null) {
 
 // ----- CUSTOM DATA PATH -----
 
-const portableData: any = {
+const portableData: { [key: string]: { key: keyof typeof stores; defaults: object } } = {
     synced_settings: { key: "SYNCED_SETTINGS", defaults: defaultSyncedSettings },
     themes: { key: "THEMES", defaults: {} },
     projects: { key: "PROJECTS", defaults: { projects: {}, folders: {}, projectTemplates: {} } },
@@ -177,7 +178,7 @@ let error: boolean = false
 function createStoreAtNewLocation(id: string, load: boolean = false) {
     if (error) return
 
-    let key = portableData[id].key
+    let key = portableData[id].key as keyof typeof stores
     let tempData: any = {}
     if (!load) {
         try {
@@ -189,7 +190,7 @@ function createStoreAtNewLocation(id: string, load: boolean = false) {
 
     // set new stores to export
     try {
-        stores[key] = new Store({ name: fileNames[id], defaults: portableData[id].defaults || {}, cwd: userDataPath! })
+        stores[key] = new Store({ name: fileNames[id], defaults: (portableData[id].defaults || {}) as any, cwd: userDataPath! }) as any
     } catch (err) {
         error = true
         console.log("Can't create store at set location!", err)
@@ -208,5 +209,5 @@ function createStoreAtNewLocation(id: string, load: boolean = false) {
 
     // rewrite data to new location
     stores[key].clear()
-    stores[key].set(tempData)
+    ;(stores[key] as any).set(tempData)
 }
