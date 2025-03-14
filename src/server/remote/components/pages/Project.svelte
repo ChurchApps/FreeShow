@@ -27,7 +27,7 @@
                     <div class="section">
                         <p style={show.name ? "" : "opacity: 0.5;"}>{show.name || translate("main.unnamed", $dictionary)}</p>
                     </div>
-                {:else if ["image", "video", "overlay"].includes(show.type)}
+                {:else if ["image", "video", "overlay", "audio"].includes(show.type)}
                     <Button
                         on:click={() => {
                             _set("active", show)
@@ -38,15 +38,15 @@
                         bold={false}
                         border
                     >
-                        <Icon id={show.type === "overlay" ? "overlays" : show.type} right />
+                        <Icon id={show.type === "audio" ? "music" : show.type === "overlay" ? "overlays" : show.type} right />
                         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
                             <p style="margin: 3px 5px;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">{show.name || getFileName(removeExtension(show.path || show.id))}</p>
                         </span>
                     </Button>
                 {:else if (show.type || "show") !== "show"}
-                    <!-- WIP audio / player / PDF / PPT -->
+                    <!-- WIP player / PDF / PPT -->
                     <div class="item" style="display: flex;align-items: center;padding: 0.2em 0.8em;">
-                        <Icon id={show.type === "audio" ? "music" : show.type} box={show.type === "ppt" ? 50 : 24} right />
+                        <Icon id={show.type} box={show.type === "ppt" ? 50 : 24} right />
                         <p style="font-size: 0.7em;opacity: 0.5;margin: 3px 5px;text-transform: uppercase;font-size: 0.8em;">{show.type}</p>
                     </div>
                 {:else if s}

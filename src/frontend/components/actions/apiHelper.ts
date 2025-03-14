@@ -33,7 +33,7 @@ import { ondrop } from "../helpers/drop"
 import { dropActions } from "../helpers/dropActions"
 import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
-import { getMediaStyle } from "../helpers/media"
+import { getFileName, getMediaStyle, removeExtension } from "../helpers/media"
 import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId } from "../helpers/show"
@@ -43,6 +43,7 @@ import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
 import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
+import { AudioPlayer } from "../../audio/audioPlayer"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -337,6 +338,19 @@ export function playMedia(data: API_media) {
 }
 
 // AUDIO
+
+export function playAudio(data: API_media) {
+    if (get(outLocked)) return
+    AudioPlayer.start(data.path, { name: removeExtension(getFileName(data.path)) })
+}
+export function pauseAudio(data: API_media) {
+    if (get(outLocked)) return
+    AudioPlayer.pause(data.path)
+}
+export function stopAudio(data: API_media) {
+    if (get(outLocked)) return
+    AudioPlayer.stop(data.path)
+}
 
 let unmutedValue = 1
 export function updateVolumeValues(value: number | undefined | "local", changeGain: boolean = false) {

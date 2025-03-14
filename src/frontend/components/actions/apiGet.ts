@@ -67,6 +67,14 @@ export function getPlayingAudioTime() {
     return audio ? audio?.currentTime || 0 : 0
 }
 
+export function getPlayingAudioData() {
+    let audioId = Object.keys(get(playingAudio))[0]
+    let audio = get(playingAudio)[audioId]
+    if (!audio) return
+
+    return { id: audioId, name: audio.name, paused: audio.paused, isMic: audio.isMic, duration: getPlayingAudioDuration() }
+}
+
 export function getPlaylists() {
     return get(audioPlaylists)
 }

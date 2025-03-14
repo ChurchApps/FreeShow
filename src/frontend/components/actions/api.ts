@@ -18,6 +18,7 @@ import { runActionId, toggleAction } from "./actions"
 import {
     getOutput,
     getOutputGroupName,
+    getPlayingAudioData,
     getPlayingAudioDuration,
     getPlayingAudioTime,
     getPlayingPlaylist,
@@ -40,6 +41,8 @@ import {
     getShowGroups,
     gotoGroup,
     moveStageConnection,
+    pauseAudio,
+    playAudio,
     playMedia,
     rearrangeGroups,
     selectOverlayById,
@@ -53,6 +56,7 @@ import {
     setShowAPI,
     setTemplate,
     startScripture,
+    stopAudio,
     toggleLock,
     updateVolumeValues,
 } from "./apiHelper"
@@ -213,7 +217,9 @@ export const API_ACTIONS = {
     id_select_stage_layout: (data: API_id) => moveStageConnection(data.id), // BC
 
     // AUDIO
-    // play / pause playing audio
+    play_audio: (data: API_media) => playAudio(data),
+    pause_audio: (data: API_media) => pauseAudio(data),
+    stop_audio: (data: API_media) => stopAudio(data),
     // control audio time
     // start specific folder (playlist)
     // folder_select_audio: () => ,
@@ -264,6 +270,7 @@ export const API_ACTIONS = {
     get_playing_audio_duration: () => getPlayingAudioDuration(),
     get_playing_audio_time: () => getPlayingAudioTime(),
     get_playing_audio_time_left: () => getPlayingAudioDuration() - getPlayingAudioTime(),
+    get_playing_audio_data: () => getPlayingAudioData(),
 
     get_playlists: () => getPlaylists(),
     get_playlist: (data: API_id_optional) => getPlayingPlaylist(data),

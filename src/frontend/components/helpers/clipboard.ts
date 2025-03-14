@@ -60,7 +60,7 @@ import { send } from "../../utils/request"
 import { MAIN } from "../../../types/Channels"
 import { checkName } from "./show"
 
-export function copy({ id, data }: any = {}, getData: boolean = true) {
+export function copy({ id, data }: any = {}, getData: boolean = true, duplicate: boolean = false) {
     let copy: any = { id, data }
 
     if (window.getSelection()?.toString()) {
@@ -75,6 +75,10 @@ export function copy({ id, data }: any = {}, getData: boolean = true) {
 
     let copyObj = clone(copy)
     if (getData && copyActions[copy.id]) copy.data = copyActions[copy.id](copy.data)
+
+    if (duplicate) {
+        return { data: copy, index: copyObj.data?.[0]?.index }
+    }
 
     if (copy.data) clipboard.set(copy)
 
@@ -135,9 +139,9 @@ export function duplicate(data: any = {}) {
         return true
     }
 
-    let copyData = copy(data)
-    if (!copyData) return false
-    paste(null, { index: copyData.data[0]?.index })
+    let copyData = copy(data, true, true)
+    if (!copyData?.data) return false
+    paste(copyData.data, { index: copyData.index })
 
     console.log("DUPLICATED:", copyData)
     return true
@@ -438,7 +442,7 @@ const copyActions: any = {
 
 const pasteActions: any = {
     item: (data: any) => {
-        if (!data) return
+        if (!data || get(activePage) !== "edit") return
 
         if (get(activeEdit).id) {
             if (get(activeEdit).type === "overlay") {
