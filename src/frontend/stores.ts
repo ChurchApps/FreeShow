@@ -2,11 +2,12 @@
 // Here are all the global app variables
 
 import type { Family } from "css-fonts"
-import { Writable, writable } from "svelte/store"
+import { type Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
-import type { ActiveEdit, Media, MediaOptions, NumberObject, Popups, Selected, SlidesOptions } from "../types/Main"
+import type { History } from "../types/History"
+import type { ActiveEdit, Media, MediaOptions, NumberObject, OS, Popups, Selected, SlidesOptions } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Emitter, ID, MidiIn, Overlays, ShowList, Shows, ShowType, Tag, Templates, Timer, Transition } from "../types/Show"
@@ -17,11 +18,12 @@ import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
 import type { API_metronome } from "./components/actions/api"
-import type { History } from "./components/helpers/history"
 
 // ----- TEMPORARY VARIABLES -----
 
 // GENERAL
+export const os: Writable<OS> = writable({ platform: "win32", name: "", arch: "" })
+export const deviceId: Writable<string> = writable("")
 export const version: Writable<string> = writable("0.0.0")
 export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
 export const dictionary: Writable<Dictionary> = writable({})
@@ -159,10 +161,6 @@ export const disableDragging: Writable<boolean> = writable(false)
 export const activeDropId: Writable<string> = writable("")
 
 // ----- SAVED VARIABLES -----
-
-// GENERAL
-export const os: Writable<any> = writable({ platform: "", name: "Computer" }) // get os
-export const deviceId: Writable<string> = writable("")
 
 // HISTORY
 export const undoHistory: Writable<History[]> = writable([])

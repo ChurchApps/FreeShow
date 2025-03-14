@@ -11,6 +11,12 @@ import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/f
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
 import { forceCloseApp } from "../utils/responses"
 import { DEFAULT_PCO_DATA } from "../planningcenter/connect"
+import { Themes } from "../../types/Settings"
+import { StageLayouts } from "../../types/Stage"
+import { Overlays, Templates } from "../../types/Show"
+import { Event } from "../../types/Calendar"
+import { Media } from "../../types/Main"
+import { History } from "../../types/History"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",
@@ -73,35 +79,54 @@ function checkStores(dataPath: string) {
     })
 }
 
+const DEFAULTS = {
+    error_log: {} as any,
+    settings: defaultSettings,
+    synced_settings: defaultSyncedSettings,
+    themes: {} as { [key: string]: Themes },
+    projects: { projects: {}, folders: {}, projectTemplates: {} },
+    shows: {} as any,
+    stageShows: {} as StageLayouts,
+    overlays: {} as Overlays,
+    templates: {} as Templates,
+    events: {} as { [key: string]: Event },
+    driveKeys: {} as any,
+    media: {} as Media,
+    cache: {} as any,
+    history: {} as { undo: History[]; redo: History[] },
+    usage: { all: [] } as any,
+    accessKeys: DEFAULT_PCO_DATA!,
+}
+
 // ERROR LOG
-export const error_log = new Store({ name: fileNames.error_log, defaults: {}, ...storeExtraConfig })
+export const error_log = new Store({ name: fileNames.error_log, defaults: DEFAULTS.error_log, ...storeExtraConfig })
 
 // SETTINGS
-const settings = new Store({ name: fileNames.settings, defaults: defaultSettings, ...storeExtraConfig })
-let synced_settings = new Store({ name: fileNames.synced_settings, defaults: defaultSyncedSettings, ...storeExtraConfig })
-let themes = new Store({ name: fileNames.themes, defaults: {}, ...storeExtraConfig })
+const settings = new Store({ name: fileNames.settings, defaults: DEFAULTS.settings, ...storeExtraConfig })
+let synced_settings = new Store({ name: fileNames.synced_settings, defaults: DEFAULTS.synced_settings, ...storeExtraConfig })
+let themes = new Store({ name: fileNames.themes, defaults: DEFAULTS.themes, ...storeExtraConfig })
 
 // PROJECTS
-let projects = new Store({ name: fileNames.projects, defaults: { projects: {}, folders: {} }, ...storeExtraConfig })
+let projects = new Store({ name: fileNames.projects, defaults: DEFAULTS.projects, ...storeExtraConfig })
 
 // SLIDES
-let shows = new Store({ name: fileNames.shows, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let stageShows = new Store({ name: fileNames.stageShows, defaults: {}, ...storeExtraConfig })
-let overlays = new Store({ name: fileNames.overlays, defaults: {}, ...storeExtraConfig })
-let templates = new Store({ name: fileNames.templates, defaults: {}, ...storeExtraConfig })
+let shows = new Store({ name: fileNames.shows, defaults: DEFAULTS.shows, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let stageShows = new Store({ name: fileNames.stageShows, defaults: DEFAULTS.stageShows, ...storeExtraConfig })
+let overlays = new Store({ name: fileNames.overlays, defaults: DEFAULTS.overlays, ...storeExtraConfig })
+let templates = new Store({ name: fileNames.templates, defaults: DEFAULTS.templates, ...storeExtraConfig })
 
 // CALENDAR
-let events = new Store({ name: fileNames.events, defaults: {}, ...storeExtraConfig })
+let events = new Store({ name: fileNames.events, defaults: DEFAULTS.events, ...storeExtraConfig })
 
 // CLOUD
-let driveKeys = new Store({ name: fileNames.driveKeys, defaults: {}, ...storeExtraConfig })
+let driveKeys = new Store({ name: fileNames.driveKeys, defaults: DEFAULTS.driveKeys, ...storeExtraConfig })
 
 // CACHE
-const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesByDotNotation: false, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-const cache = new Store({ name: fileNames.cache, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let history = new Store({ name: fileNames.history, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let usage = new Store({ name: fileNames.usage, defaults: { all: [] }, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let accessKeys = new Store({ name: fileNames.access, defaults: DEFAULT_PCO_DATA! })
+const media = new Store({ name: fileNames.media, defaults: DEFAULTS.media, accessPropertiesByDotNotation: false, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+const cache = new Store({ name: fileNames.cache, defaults: DEFAULTS.cache, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let history = new Store({ name: fileNames.history, defaults: DEFAULTS.history, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let usage = new Store({ name: fileNames.usage, defaults: DEFAULTS.usage, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let accessKeys = new Store({ name: fileNames.access, defaults: DEFAULTS.accessKeys })
 
 export let stores = {
     SETTINGS: settings,
@@ -123,13 +148,13 @@ export let stores = {
 
 // ----- GET STORE -----
 
-export function getStore(id: keyof typeof stores, e: any = null) {
-    if (!stores[id]) return null
+export function getStore<T extends keyof typeof stores>(id: T, e: any = null): (typeof stores)[T] extends { store: infer S } ? S : null {
+    if (!stores[id]) throw new Error(`Store with key ${id} does not exist.`)
 
     let store = stores[id].store
     if (e) e.reply(STORE, { channel: id, data: store })
 
-    return store
+    return store as (typeof stores)[T] extends { store: infer S } ? S : null
 }
 
 // ----- CUSTOM DATA PATH -----

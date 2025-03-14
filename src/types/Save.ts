@@ -1,5 +1,6 @@
 import type { Bible } from "./Bible"
 import type { Event } from "./Calendar"
+import type { History } from "./History"
 import type { Media } from "./Main"
 import type { Folders, Projects } from "./Projects"
 import type { Themes } from "./Settings"
@@ -99,7 +100,7 @@ export interface SaveData {
     renamedShows: any[]
     // CACHES
     CACHE: { text: any }
-    HISTORY: { undo: any[]; redo: any[] } // History
+    HISTORY: { undo: History[]; redo: History[] }
     USAGE: any
     // SAVE INFO DATA
     closeWhenFinished: boolean

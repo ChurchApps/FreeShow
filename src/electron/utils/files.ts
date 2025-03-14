@@ -262,7 +262,7 @@ export function getPaths(): any {
 
 const tempPaths = ["temp"]
 export function getTempPaths() {
-    let paths: any = {}
+    let paths: { [key: string]: string } = {}
     tempPaths.forEach((pathId: any) => {
         paths[pathId] = app.getPath(pathId)
     })

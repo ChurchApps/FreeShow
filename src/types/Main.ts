@@ -1,3 +1,9 @@
+export interface OS {
+    platform: NodeJS.Platform
+    name: string
+    arch: string
+}
+
 export interface Option {
     name: string
     extra?: string
