@@ -89,6 +89,8 @@
     $: if (layoutAudio.length) {
         audio = {}
         layoutAudio.forEach((a: any) => {
+            if (!show.media?.[a]) return
+
             let path = show.media[a].path!
             // no need for cloud when audio can be stacked
             // let cloudId = $driveData.mediaId

@@ -1,20 +1,19 @@
 <script lang="ts">
+    import { onMount } from "svelte"
+    import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { _show } from "../../helpers/shows"
-    import { chordMove } from "../scripts/chords"
-    import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
-    import { EditboxHelper } from "./EditboxHelper"
-
-    import { onMount } from "svelte"
-    import { uid } from "uid"
     import { addToPos } from "../../helpers/mover"
+    import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import autosize, { AutosizeTypes } from "../scripts/autosize"
+    import { chordMove } from "../scripts/chords"
+    import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
+    import { EditboxHelper } from "./EditboxHelper"
 
     export let item: Item
     export let ref: {
@@ -356,6 +355,10 @@
                 let lineText = child.innerText
                 // empty line
                 if (lineText === "\n") lineText = ""
+                if (plain && !lineText && !style) {
+                    style = item.lines?.[i - 1]?.text[0]?.style || ""
+                    newLines[pos].align = newLines[pos - 1].align || ""
+                }
                 newLines[pos].text.push({ style, value: lineText })
 
                 currentStyle += style
