@@ -1,16 +1,9 @@
 import axios from "axios"
-
-export type LyricSearchResult = {
-    source: "Genius" | "Hymnary" | "Letras"
-    key: string
-    artist: string
-    title: string
-    originalQuery?: string
-}
+import type { LyricSearchResult } from "../../types/Main"
 
 const lyricsSearchCache = new Map()
 export class LyricSearch {
-    static search = async (artist: string, title: string) => {
+    static search = async (artist: string, title: string): Promise<LyricSearchResult[]> => {
         const cacheKey = artist + title
         if (lyricsSearchCache.has(cacheKey)) return lyricsSearchCache.get(cacheKey)
 
@@ -169,7 +162,7 @@ export class LyricSearch {
         var objPattern = new RegExp("(\\" + strDelimiter + "|\\r?\\n|\\r|^)" + '(?:"([^"]*(?:""[^"]*)*)"|' + '([^"\\' + strDelimiter + "\\r\\n]*))", "gi")
 
         var arrData: any[] = [[]]
-        var arrMatches = null
+        var arrMatches: RegExpExecArray | null = null
         while ((arrMatches = objPattern.exec(strData))) {
             var strMatchedDelimiter = arrMatches[1]
             if (strMatchedDelimiter.length && strMatchedDelimiter !== strDelimiter) {

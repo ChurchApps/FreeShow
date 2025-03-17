@@ -1,3 +1,5 @@
+import type { ShowRef } from "./Projects"
+
 export interface OS {
     platform: NodeJS.Platform
     name: string
@@ -131,6 +133,33 @@ export interface Subtitle {
     name: string
     vtt: string // WebVTT format
     embedded?: boolean // extracted from the video
+}
+
+export interface MainFilePaths {
+    // documents: string
+    pictures: string
+    videos: string
+    music: string
+}
+
+export type LyricSearchResult = {
+    source: "Genius" | "Hymnary" | "Letras"
+    key: string
+    artist: string
+    title: string
+    originalQuery?: string
+}
+
+export interface ErrorLog {
+    time: Date
+    os: string
+    version: string
+    active: { window: string; page: string; show: ShowRef | null; edit: ActiveEdit }
+    drawer: { active: string }
+    type: string
+    source: string
+    message: string
+    stack: string
 }
 
 export type Popups =

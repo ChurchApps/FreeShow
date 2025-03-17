@@ -41,7 +41,7 @@ function createServers() {
 }
 
 var started: boolean = false
-export function startServers({ ports, max, disabled, data }: any) {
+export function startServers({ ports, max, disabled, data }: { ports: { [key: string]: number }; max: number; disabled: { [key: string]: boolean }; data: { [key: string]: any } }) {
     if (started) closeServers()
     started = true
 

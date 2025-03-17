@@ -2,18 +2,17 @@
 // Functions to interact with local files
 
 import { app, dialog, shell } from "electron"
-import { ExifImage } from "exif"
+import { ExifData, ExifImage } from "exif"
 import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
-import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
-import type { Subtitle } from "../../types/Main"
+import { MAIN, OUTPUT, SHOW, STORE } from "../../types/Channels"
+import type { MainFilePaths, Subtitle } from "../../types/Main"
 import type { Show } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
-import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./shows"
 
@@ -246,8 +245,8 @@ export function loadFile(p: string, contentId: string = ""): any {
     return { id: contentId, content: show }
 }
 
-export function getPaths(): any {
-    let paths: any = {
+export function getPaths() {
+    let paths: MainFilePaths = {
         // documents: app.getPath("documents"),
         pictures: app.getPath("pictures"),
         videos: app.getPath("videos"),
@@ -271,13 +270,12 @@ export function getTempPaths() {
 }
 
 // READ_FOLDER
-export function getFolderContent(data: any) {
+export function getFolderContent(data: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }) {
     let folderPath: string = data.path
     let fileList: string[] = readFolder(folderPath)
 
     if (!fileList.length) {
-        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [], folderFiles: {} })
-        return
+        return { path: folderPath, files: [], filesInFolders: [], folderFiles: {} }
     }
 
     let files: any[] = []
@@ -293,13 +291,12 @@ export function getFolderContent(data: any) {
     }
 
     if (!files.length) {
-        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [], folderFiles: {} })
-        return
+        return { path: folderPath, files: [], filesInFolders: [], folderFiles: {} }
     }
 
     // get first "layer" of files inside folder for searching
     let filesInFolders: string[] = []
-    let folderFiles: any = {}
+    let folderFiles: { [key: string]: any[] } = {}
     if (data.listFilesInFolders) {
         let folders: any[] = files.filter((a) => a.folder)
         folders.forEach(getFilesInFolder)
@@ -320,19 +317,19 @@ export function getFolderContent(data: any) {
         }
     }
 
-    toApp(READ_FOLDER, { path: folderPath, files, filesInFolders, folderFiles })
+    return { path: folderPath, files, filesInFolders, folderFiles }
 }
 
-export function getSimularPaths(data: any) {
+export function getSimularPaths(data: { paths: string[] }) {
     let parentFolderPathNames = data.paths.map(getParentFolderName)
     let allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
-    allFilePaths = [...new Set(allFilePaths.flat())]
+    const filteredFilePaths = [...new Set(allFilePaths.flat())]
 
     let simularArray: any[] = []
     data.paths.forEach((path: string) => {
         let originalFileName = parse(path).name
 
-        allFilePaths.forEach((filePath: string) => {
+        filteredFilePaths.forEach((filePath: string) => {
             let name = parse(filePath).name
             if (data.paths.includes(filePath) || simularArray.find((a) => a[0].name.includes(name))) return
 
@@ -380,7 +377,7 @@ function similarity(str1: string, str2: string) {
 }
 
 // OPEN_FOLDER
-export function selectFolder(msg: { channel: string; title: string | undefined; path: string | undefined }, e: any) {
+export function selectFolder(msg: { channel: string; title: string | undefined; path: string | undefined }) {
     let folder: any = selectFolderDialog(msg.title, msg.path)
 
     if (!folder) return
@@ -389,8 +386,7 @@ export function selectFolder(msg: { channel: string; title: string | undefined; 
     if (msg.channel === "DATA_SHOWS") {
         let dataPath = folder
         let showsPath = checkShowsFolder(path.join(folder, dataFolderNames.shows))
-        e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: dataPath, showsPath } })
-        return
+        return { path: dataPath, showsPath }
     }
 
     if (msg.channel === "SHOWS") {
@@ -398,47 +394,49 @@ export function selectFolder(msg: { channel: string; title: string | undefined; 
         toApp(MAIN, { channel: "FULL_SHOWS_LIST", data: getAllShows({ path: folder }) })
     }
 
-    e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder } })
+    return { path: folder }
 }
 
 // OPEN_FILE
-export function selectFiles(msg: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }, e: any) {
+export function selectFiles(msg: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }) {
     let files: any = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
     if (!files) return
 
-    let content: any = {}
+    let content: { [key: string]: string } = {}
     if (msg.read) files.forEach(getContent)
     function getContent(path: string) {
         content[path] = readFile(path)
     }
 
-    e.reply(OPEN_FILE, { channel: msg.channel || "", data: { id: msg.id, files, content } })
+    return { id: msg.id, files, content }
 }
 
 // FILE_INFO
-export function getFileInfo(filePath: string, e: any) {
-    let stats: any = getFileStats(filePath)
-    if (stats) e.reply(FILE_INFO, stats)
+export function getFileInfo(filePath: string) {
+    let stats = getFileStats(filePath)
+    return stats
 }
 
 // READ EXIF
-export function readExifData({ id }: any, e: any) {
-    try {
-        new ExifImage({ image: id }, (err, exifData) => {
-            actionComplete(err, "Error getting EXIF data")
-            if (!err) e.reply(MAIN, { channel: "READ_EXIF", data: { id, exif: exifData } })
-        })
-    } catch (err) {
-        actionComplete(err, "Error loading EXIF image")
-    }
+export function readExifData({ id }: { id: string }): Promise<{ id: string; exif: ExifData }> {
+    return new Promise((resolve) => {
+        try {
+            new ExifImage({ image: id }, (err, exifData) => {
+                actionComplete(err, "Error getting EXIF data")
+                if (!err) resolve({ id, exif: exifData })
+            })
+        } catch (err) {
+            actionComplete(err, "Error loading EXIF image")
+        }
+    })
 }
 
 // GET MEDIA CODEC
-export function getMediaCodec(data: any) {
+export function getMediaCodec(data: { path: string }) {
     extractCodecInfo(data)
 }
 
-async function extractCodecInfo(data: any) {
+async function extractCodecInfo(data: { path: string }) {
     const MP4Box = require("mp4box")
     let arrayBuffer: any
 
@@ -470,11 +468,11 @@ function getMimeType(path: string) {
 }
 
 // get embedded subtitles/captions
-export function getMediaTracks(data: any) {
+export function getMediaTracks(data: { path: string }) {
     extractSubtitles(data)
 }
 
-async function extractSubtitles(data: any) {
+async function extractSubtitles(data: { path: string }) {
     const MP4Box = require("mp4box")
     let arrayBuffer: any
 
@@ -549,7 +547,7 @@ function formatTimestamp(timestamp: number) {
 
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
 const NESTED_SEARCH = 8 // folder levels deep
-export async function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
+export async function locateMediaFile({ fileName, splittedPath, folders, ref }: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }) {
     let matches: string[] = []
 
     await findMatches()
@@ -748,7 +746,7 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
 }
 
 export function parseShow(jsonData: string) {
-    let show = null
+    let show: [string, Show] | null = null
 
     try {
         show = JSON.parse(jsonData)

@@ -15,13 +15,13 @@ import { toApp } from ".."
 
 // https://jazz-soft.net/doc/JZZ/jzz.html#info
 // https://jazz-soft.net/doc/JZZ/midiin.html#info
-export function getMidiOutputs() {
+export function getMidiOutputs(): { name: string }[] {
     return JZZ()
         .info()
         .outputs.map((a: any) => a.name)
 }
 
-export function getMidiInputs() {
+export function getMidiInputs(): { name: string }[] {
     return JZZ()
         .info()
         .inputs.map((a: any) => a.name)

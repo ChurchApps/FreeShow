@@ -3,13 +3,15 @@ import fs from "fs"
 import path from "path"
 import { isProd, loadWindowContent, toApp } from ".."
 import { MAIN, OUTPUT } from "../../types/Channels"
+import type { Output } from "../../types/Output"
+import type { Resolution } from "../../types/Settings"
+import { OutputHelper } from "../output/OutputHelper"
 import { doesPathExist, doesPathExistAsync, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
-import { imageExtensions, videoExtensions } from "./media"
 import { captureOptions } from "../utils/windowOptions"
-import { OutputHelper } from "../output/OutputHelper"
+import { imageExtensions, videoExtensions } from "./media"
 
-export function getThumbnail(data: any) {
+export function getThumbnail(data: { input: string; size: number }) {
     let output = createThumbnail(data.input, data.size || 500)
 
     return { ...data, output }
@@ -140,7 +142,7 @@ async function captureWithCanvas(data: any) {
     generationFinished()
 }
 
-export function saveImage(data: any) {
+export function saveImage(data: { path: string; base64: string }) {
     mediaBeingCaptured = Math.max(0, mediaBeingCaptured - 1)
     // console.log("SAVE: ", data.path, data.base64?.length)
     if (!data.base64) return
@@ -193,7 +195,7 @@ function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolea
 
 ///// CAPTURE SLIDE /////
 
-export function captureSlide(data: any) {
+export function captureSlide(data: { output: { [key: string]: Output }; resolution: Resolution; listenerId?: string }) {
     const OUTPUT_ID = "capture"
     if (OutputHelper.getOutput(OUTPUT_ID)) return
 

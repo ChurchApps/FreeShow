@@ -3,9 +3,9 @@ import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
 import { stores } from "../data/store"
 import { httpsRequest } from "../utils/requests"
-import { openURL } from "../utils/responses"
 import { pcoLoadServices } from "./request"
 import { getKey } from "../utils/keys"
+import { openURL } from "../IPC/responsesMain"
 
 const app = express()
 const PCO_PORT = 5501

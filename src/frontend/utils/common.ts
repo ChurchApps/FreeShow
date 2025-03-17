@@ -27,6 +27,7 @@ import {
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
+import type { ErrorLog } from "../../types/Main"
 
 export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (stores.ts & defaults.ts)
 export const DEFAULT_DRAWER_HEIGHT = 300
@@ -146,7 +147,7 @@ export function logerror(err) {
     let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
     if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
 
-    let log = {
+    let log: ErrorLog = {
         time: new Date(),
         os: get(os).platform || "Unknown",
         version: get(version),

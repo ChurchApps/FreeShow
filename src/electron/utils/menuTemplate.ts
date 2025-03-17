@@ -2,7 +2,7 @@ import { app } from "electron"
 import { isMac, isProd, toApp } from ".."
 import { MAIN } from "../../types/Channels"
 import type { Dictionary } from "../../types/Settings"
-import { openURL } from "./responses"
+import { openURL } from "../IPC/responsesMain"
 
 const mc = (id: string) => toApp(MAIN, { channel: "MENU", data: id })
 

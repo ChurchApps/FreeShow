@@ -12,7 +12,7 @@ const connectors: any = {
 }
 
 export function getPresentationApplications() {
-    let list = connectors[os.platform()] || []
+    let list: string[] = connectors[os.platform()] || []
     return list
 }
 
