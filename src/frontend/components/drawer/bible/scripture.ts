@@ -453,6 +453,24 @@ function stripMarkdown(input: string) {
     return input
 }
 
+// hard coded custom Bible data
+const bibleData = {
+    "eea18ccd2ca05dde-01": {
+        nameLocal: "Bibel 2011 Bokmål",
+        copyright:
+            "Norwegian Bible 2011 Bokmål with Deuterocanonical Books © The Norwegian Bible Society, 2011,2018. All rights reserved worldwide. Used by permission through agreement with NBS (Norwegian Bible Society). Bibel 2011 Bokmål © Det Norske Bibelselskap. Alle rettigheter globalt. Brukt med tillatelse gjennom avtale med Bibelselskapet, 2011,2018.",
+    },
+    "7bcaa2f2e77739d5-01": {
+        nameLocal: "Bibel 2011 Nynorsk",
+        copyright:
+            "Norwegian Bible 2011 Nynorsk with Deuterocanonical Books © The Norwegian Bible Society, 2011. All rights reserved worldwide. Used by permission through agreement with NBS (Norwegian Bible Society). Bibel 2011 Nynorsk © Det Norske Bibelselskap. Alle rettar globalt. Brukt med løyve gjennom avtale med Bibelselskapet, 2011.",
+    },
+}
+// ChurchAppsApiBible
+export function customBibleData(data: any) {
+    return { ...data, ...(bibleData[data.sourceKey] || {}) }
+}
+
 // HELPERS
 
 export function setBooksCache(scriptureId: string, data: any) {

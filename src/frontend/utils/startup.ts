@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { MAIN, OUTPUT, STARTUP, STORE } from "../../types/Channels"
 import { checkStartupActions } from "../components/actions/actions"
-import { activePopup, currentWindow, dataPath, loaded, loadedState, special } from "../stores"
+import { activePopup, alertMessage, currentWindow, dataPath, language, loaded, loadedState, scriptures, special } from "../stores"
 import { startTracking } from "./analytics"
 import { wait } from "./common"
 import { setLanguage } from "./language"
@@ -52,6 +52,12 @@ async function startupMain() {
     autoBackup()
     startTracking()
     connect()
+
+    // custom alert
+    if (get(language) === "no" && !get(activePopup) && !Object.values(get(scriptures)).find((a) => ["eea18ccd2ca05dde-01", "7bcaa2f2e77739d5-01"].includes(a.id || ""))) {
+        alertMessage.set('Bibel 2011 Bokmål/Nynorsk er nå tilgjengelig som API i "Bibelen"-menyen!')
+        activePopup.set("alert")
+    }
 
     await wait(5000)
     unsavedUpdater()

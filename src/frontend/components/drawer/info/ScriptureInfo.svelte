@@ -151,6 +151,7 @@
                 book: bibles[0].bookId ?? bibles[0].book,
                 chapter: bibles[0].chapter,
                 verses: bibles[0].activeVerses,
+                attributionString,
             },
         }
 

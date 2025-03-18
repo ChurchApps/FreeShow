@@ -72,7 +72,7 @@ export function toggleOutput(id: string) {
 // transition: null,
 // TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
 export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string = "", add: boolean = false) {
-    // track usage
+    // track usage (& set attributionString)
     if (key === "slide" && data?.id) {
         let showReference = _show(data.id).get("reference")
         if (showReference?.type === "scripture") {
@@ -88,6 +88,9 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 let apiId = translation.api ? scriptureId : null
                 if (name || apiId) trackScriptureUsage(name, apiId, slide.group)
             })
+
+            // set attributionString
+            if (translation.attributionString) data.attributionString = translation.attributionString
         }
     }
 

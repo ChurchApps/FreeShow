@@ -331,7 +331,11 @@
     {/if}
 
     {#if slide?.attributionString}
-        <p class="attributionString" transition:custom={transitions.text}>{slide.attributionString}</p>
+        {#if mirror}
+            <p class="attributionString">{slide.attributionString}</p>
+        {:else}
+            <p class="attributionString" transition:custom={transitions.text}>{slide.attributionString}</p>
+        {/if}
     {/if}
 
     <!-- draw -->

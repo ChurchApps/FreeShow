@@ -14,6 +14,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
+    import { customBibleData } from "../../drawer/bible/scripture"
 
     let error: null | string = null
     let bibles: any[] = []
@@ -43,10 +44,10 @@
             })
 
         function manageResult(data) {
-            console.log("MANAGE RESULT", data)
+            // console.log("MANAGE RESULT", data)
             if (!data) return
 
-            bibles = data
+            bibles = data.map(customBibleData)
 
             // cache bibles
             let cache = { date: new Date(), bibles }
@@ -173,9 +174,9 @@
         <div class="list">
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
-                    <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
-                        <Icon id="scripture_alt" right />{bible.nameLocal}
-                        {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
+                    <Button bold={false} on:click={() => toggleScripture({ ...bible, name: bible.nameLocal || bible.name })} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
+                        <Icon id="scripture_alt" right />{bible.nameLocal || bible.name}
+                        {#if bible.description && bible.description.toLowerCase() !== "common" && !(bible.nameLocal || bible.name).includes(bible.description)}
                             <span class="description" title={bible.description}>({bible.description})</span>
                         {/if}
                     </Button>
