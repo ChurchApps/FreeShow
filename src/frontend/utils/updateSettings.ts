@@ -1,9 +1,11 @@
 import { get } from "svelte/store"
-import { MAIN, STORE } from "../../types/Channels"
+import { MAIN } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkWindowCapture, displayOutputs, setOutput } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
+import { sendMain } from "../IPC/main"
 import {
     actionTags,
     activePopup,
@@ -222,7 +224,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         else showsPath.set(v)
 
         // LOAD SHOWS FROM FOLDER
-        send(STORE, ["SHOWS"], { showsPath: v })
+        sendMain(Main.SHOWS, { showsPath: v })
     },
     dataPath: (v: any) => {
         if (!v) send(MAIN, ["DATA_PATH"])

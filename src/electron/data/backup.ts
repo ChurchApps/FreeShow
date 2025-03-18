@@ -1,6 +1,8 @@
 import path from "path"
 import { toApp } from ".."
-import { MAIN, STORE } from "../../types/Channels"
+import { MAIN } from "../../types/Channels"
+import type { Main } from "../../types/IPC/Main"
+import { sendMainMain } from "../IPC/main"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePointString, makeDir, openSystemFolder, readFile, selectFilesDialog, writeFile } from "../utils/files"
 import { stores, updateDataPath } from "./store"
 
@@ -111,7 +113,7 @@ export function restoreFiles({ showsPath }: { showsPath: string }) {
         stores[storeId].clear()
         ;(stores[storeId] as any).set(data)
         // WIP restoring synced settings will reset settings
-        toApp(STORE, { channel: storeId, data })
+        sendMainMain(storeId as Main, data)
     }
 
     function restoreShows(filePath: string) {

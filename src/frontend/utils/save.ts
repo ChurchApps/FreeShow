@@ -1,7 +1,9 @@
 import { get } from "svelte/store"
-import { MAIN, STORE } from "../../types/Channels"
+import { MAIN } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
+import { sendMain } from "../IPC/main"
 import {
     actionTags,
     activePopup,
@@ -207,7 +209,7 @@ export function save(closeWhenFinished: boolean = false, customTriggers: SaveAct
     renamedShows.set([])
 
     if (customTriggers.backup) newToast("$settings.backup_started")
-    send(STORE, ["SAVE"], allSavedData)
+    sendMain(Main.SAVE, allSavedData)
 }
 
 export function saveComplete({ closeWhenFinished, customTriggers }: any) {

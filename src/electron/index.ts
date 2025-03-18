@@ -3,13 +3,13 @@
 
 import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
-import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP, STORE } from "../types/Channels"
+import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP } from "../types/Channels"
 import type { Dictionary } from "../types/Settings"
 import { BIBLE, IMPORT } from "./../types/Channels"
 import { receiveAudio } from "./audio/receiveAudio"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
-import { config, getStore, stores, updateDataPath, userDataPath } from "./data/store"
+import { config, updateDataPath } from "./data/store"
 import { receiveMain } from "./IPC/main"
 import { catchErrors, saveRecording } from "./IPC/responsesMain"
 import { NdiReceiver } from "./ndi/NdiReceiver"
@@ -17,7 +17,7 @@ import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { closeServers } from "./servers"
 import { stopApiListener } from "./utils/api"
-import { doesPathExist, loadShows } from "./utils/files"
+import { doesPathExist } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { stopMidi } from "./utils/midi"
 import { loadScripture, loadShow, startImport } from "./utils/responses"
@@ -347,17 +347,6 @@ app.on("web-contents-created", (_e, contents) => {
     //     e.preventDefault()
     //     console.warn("Stopped attempt to open: " + navigationUrl)
     // })
-})
-
-// ----- STORE DATA -----
-
-ipcMain.on(STORE, (e, msg) => {
-    if (userDataPath === null) updateDataPath()
-
-    // if (msg.channel === "UPDATE_PATH") updateDataPath(msg.data)
-    // if (msg.channel === "SAVE") save(msg.data)
-    if (msg.channel === "SHOWS") loadShows(msg.data)
-    else if (stores[msg.channel as keyof typeof stores]) getStore(msg.channel, e)
 })
 
 // ----- LISTENERS -----

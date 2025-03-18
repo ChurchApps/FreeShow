@@ -74,7 +74,7 @@ export function deleteShows(data: any) {
     })
 
     refreshAllShows(data)
-    toApp("MAIN", { channel: "DELETE_SHOWS", data: { deleted } })
+    return { deleted }
 }
 
 export function deleteShowsNotIndexed(data: any) {
@@ -96,7 +96,7 @@ export function deleteShowsNotIndexed(data: any) {
         deleted.push(name)
     }
 
-    toApp("MAIN", { channel: "DELETE_SHOWS", data: { deleted } })
+    return { deleted }
 }
 
 export function refreshAllShows(data: any) {

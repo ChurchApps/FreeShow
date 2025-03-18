@@ -7,7 +7,6 @@ import Store from "electron-store"
 import { statSync } from "fs"
 import path from "path"
 import type { Event } from "../../types/Calendar"
-import { STORE } from "../../types/Channels"
 import type { History } from "../../types/History"
 import type { Media } from "../../types/Main"
 import type { Themes } from "../../types/Settings"
@@ -148,12 +147,10 @@ export let stores = {
 
 // ----- GET STORE -----
 
-export function getStore<T extends keyof typeof stores>(id: T, e: any = null): (typeof stores)[T] extends { store: infer S } ? S : null {
+export function getStore<T extends keyof typeof stores>(id: T): (typeof stores)[T] extends { store: infer S } ? S : null {
     if (!stores[id]) throw new Error(`Store with key ${id} does not exist.`)
 
     let store = stores[id].store
-    if (e) e.reply(STORE, { channel: id, data: store })
-
     return store as (typeof stores)[T] extends { store: infer S } ? S : null
 }
 

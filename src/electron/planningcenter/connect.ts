@@ -150,7 +150,7 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
 export function pcoDisconnect(scope: PCOScopes = "services") {
     stores.ACCESS.set(`pco_${scope}`, null)
     PCO_ACCESS = null
-    toApp(MAIN, { channel: "PCO_DISCONNECT", data: { success: true } })
+    return { success: true }
 }
 
 export function pcoStartupLoad(dataPath: string, scope: PCOScopes = "services") {

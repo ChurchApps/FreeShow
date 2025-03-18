@@ -1,10 +1,11 @@
 import { app } from "electron"
-import { isMac, isProd, toApp } from ".."
-import { MAIN } from "../../types/Channels"
+import { isMac, isProd } from ".."
+import { ToMain } from "../../types/IPC/ToMain"
 import type { Dictionary } from "../../types/Settings"
+import { sendMain } from "../IPC/main"
 import { openURL } from "../IPC/responsesMain"
 
-const mc = (id: string) => toApp(MAIN, { channel: "MENU", data: id })
+const mc = (id: string) => sendMain(ToMain.MENU, id)
 
 export function template(strings: Dictionary): any {
     const appMenu = {

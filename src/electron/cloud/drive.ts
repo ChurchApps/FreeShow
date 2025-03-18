@@ -1,8 +1,9 @@
 import { auth, drive } from "@googleapis/drive"
 import path from "path"
-import { isProd, toApp } from ".."
-import { STORE } from "../../types/Channels"
+import { isProd } from ".."
+import { Main } from "../../types/IPC/Main"
 import { stores } from "../data/store"
+import { sendMainMain } from "../IPC/main"
 import { checkShowsFolder, dataFolderNames, deleteFile, doesPathExist, getDataFolder, getFileStats, loadShows, readFileAsync, writeFile } from "../utils/files"
 import { trimShow } from "../utils/shows"
 
@@ -227,7 +228,7 @@ export async function syncDataDrive(data: any) {
             const combined = id === "PROJECTS" ? project() : combineFiles(driveContent, store.store, newest)
 
             // download
-            toApp(STORE, { channel: id, data: combined })
+            sendMainMain(id as Main, combined)
             changes.push({ type: "config", action: "download", name })
 
             // upload
@@ -252,7 +253,7 @@ export async function syncDataDrive(data: any) {
 
             if (id === "SYNCED_SETTINGS") bibles = driveContent?.scriptures
 
-            toApp(STORE, { channel: id, data: driveContent })
+            sendMainMain(id as Main, driveContent)
 
             changes.push({ type: "config", action: "download", name })
             if (DEBUG) console.log("DOWNLOADED " + name)
@@ -477,7 +478,7 @@ export async function syncDataDrive(data: any) {
             if (DEBUG) console.log("Downloading shows:", downloadCount)
             changes.push({ type: "show", action: "download", name, count: downloadCount })
             if (DEBUG) console.log("Trimmed shows:", Object.keys(shows).length)
-            if (Object.keys(shows).length) toApp(STORE, { channel: "SHOWS", data: shows })
+            if (Object.keys(shows).length) sendMainMain(Main.SHOWS, shows)
         }
         if (!uploadCount) return
         if (DEBUG) console.log("Uploading shows:", uploadCount)

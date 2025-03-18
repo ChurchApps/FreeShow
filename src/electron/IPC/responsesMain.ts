@@ -32,6 +32,7 @@ import {
     getPaths,
     getSimularPaths,
     getTempPaths,
+    loadShows,
     locateMediaFile,
     openSystemFolder,
     readExifData,
@@ -62,6 +63,7 @@ export const mainResponses: MainResponses = {
     [Main.DEVICE_ID]: () => machineIdSync(),
     [Main.IP]: () => os.networkInterfaces(),
     // STORES
+    [Main.SETTINGS]: () => getStore("SETTINGS"),
     [Main.SYNCED_SETTINGS]: () => getStore("SYNCED_SETTINGS"),
     [Main.STAGE_SHOWS]: () => getStore("STAGE_SHOWS"),
     [Main.PROJECTS]: () => getStore("PROJECTS"),
@@ -82,6 +84,10 @@ export const mainResponses: MainResponses = {
     [Main.FULLSCREEN]: () => getMainWindow()?.setFullScreen(!getMainWindow()?.isFullScreen()),
     /////////////////////////
     // MAIN
+    [Main.SHOWS]: (data) => {
+        if (userDataPath === null) updateDataPath()
+        return loadShows(data)
+    },
     [Main.AUTO_UPDATE]: () => checkForUpdates(),
     [Main.GET_SYSTEM_FONTS]: () => loadFonts(),
     [Main.URL]: (data) => openURL(data),
@@ -112,7 +118,7 @@ export const mainResponses: MainResponses = {
     [Main.MEDIA_CODEC]: (data) => getMediaCodec(data),
     [Main.MEDIA_TRACKS]: (data) => getMediaTracks(data),
     [Main.DOWNLOAD_MEDIA]: (data) => downloadMedia(data),
-    [Main.MEDIA_BASE64]: (data) => storeMedia(data),
+    // [Main.MEDIA_BASE64]: (data) => storeMedia(data),
     [Main.CAPTURE_SLIDE]: (data) => captureSlide(data),
     [Main.PDF_TO_IMAGE]: (data) => convertPDFToImages(data),
     [Main.ACCESS_CAMERA_PERMISSION]: () => getPermission("camera"),
@@ -137,9 +143,7 @@ export const mainResponses: MainResponses = {
     [Main.SEND_MIDI]: (data) => {
         sendMidi(data)
     },
-    [Main.RECEIVE_MIDI]: (data) => {
-        receiveMidi(data)
-    },
+    [Main.RECEIVE_MIDI]: (data) => receiveMidi(data),
     [Main.CLOSE_MIDI]: (data) => closeMidiInPorts(data.id),
     // LYRICS
     [Main.GET_LYRICS]: (data) => getLyrics(data),
@@ -299,15 +303,14 @@ function createLog(err: Error) {
 }
 
 // STORE MEDIA AS BASE64
-function storeMedia(files: { id: string; path: string }[]) {
-    let encodedFiles: { id: string; content: string }[] = []
-    files.forEach(({ id, path }) => {
-        let content = readFile(path, "base64")
-        encodedFiles.push({ id, content })
-    })
-
-    return encodedFiles
-}
+// function storeMedia(files: { id: string; path: string }[]) {
+//     let encodedFiles: { id: string; content: string }[] = []
+//     files.forEach(({ id, path }) => {
+//         let content = readFile(path, "base64")
+//         encodedFiles.push({ id, content })
+//     })
+//     return encodedFiles
+// }
 
 // GET STORE VALUE (used in special cases - currently only disableHardwareAcceleration)
 function getStoreValue(data: { file: "config" | keyof typeof stores; key: string }) {

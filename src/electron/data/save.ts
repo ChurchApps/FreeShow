@@ -1,12 +1,12 @@
 import path from "path"
-import { toApp } from ".."
 import type { Bible } from "../../types/Bible"
-import { STORE } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
 import type { SaveData } from "../../types/Save"
 import { currentlyDeletedShows } from "../cloud/drive"
 import { startBackup } from "../data/backup"
 import { defaultSettings, defaultSyncedSettings } from "../data/defaults"
 import { stores } from "../data/store"
+import { sendMainMain } from "../IPC/main"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, writeFile } from "../utils/files"
 import { renameShows } from "../utils/shows"
 
@@ -27,7 +27,7 @@ export function save(data: SaveData) {
         store.clear()
         store.set((data as any)[key])
 
-        if (reset) toApp(STORE, { channel: key, data: (data as any)[key] })
+        if (reset) sendMainMain(key as Main, (data as any)[key])
     }
 
     // scriptures
@@ -72,7 +72,7 @@ export function save(data: SaveData) {
         // SAVED
         if (!reset) {
             setTimeout(() => {
-                toApp(STORE, { channel: "SAVE", data: { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers } })
+                sendMainMain(Main.SAVE, { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers })
             }, 300)
         }
 

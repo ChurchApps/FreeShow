@@ -10,6 +10,9 @@
     import LocaleSwitcher from "../../settings/LocaleSwitcher.svelte"
     import { send } from "../../../utils/request"
     import Checkbox from "../../inputs/Checkbox.svelte"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain } from "../../../IPC/main"
+    import { createData } from "../../../utils/createData"
 
     // const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
 
@@ -21,7 +24,7 @@
         if (e.target.closest(".main") && !e.target.closest(".start")) return
 
         if (!$showsPath) send(MAIN, ["SHOWS_PATH"])
-        send(MAIN, ["GET_PATHS"])
+        requestMain(Main.GET_PATHS, undefined, (a) => createData(a))
         send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
 
         guideActive.set(true)

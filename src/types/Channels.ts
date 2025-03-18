@@ -1,6 +1,5 @@
 // MAIN
 export const STARTUP = "STARTUP"
-export const STORE = "STORE"
 export const MAIN = "MAIN"
 export const SHOW = "SHOW"
 export const BIBLE = "BIBLE"
@@ -20,14 +19,11 @@ export const BLACKMAGIC = "BLACKMAGIC"
 export const AUDIO = "AUDIO"
 export const API_DATA = "API_DATA"
 // FILES (FRONTEND ONLY RECEIVERS)
-export const OPEN_FILE = "OPEN_FILE"
-export const OPEN_FOLDER = "OPEN_FOLDER"
 export const READ_FOLDER = "READ_FOLDER"
 export const FILE_INFO = "FILE_INFO"
 
 export type ValidChannels =
     | "STARTUP"
-    | "STORE"
     | "MAIN"
     | "SHOW"
     | "BIBLE"
@@ -44,8 +40,6 @@ export type ValidChannels =
     | "BLACKMAGIC"
     | "AUDIO"
     | "API_DATA"
-    | "OPEN_FILE"
-    | "OPEN_FOLDER"
     | "READ_FOLDER"
     | "FILE_INFO"
 

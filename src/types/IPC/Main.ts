@@ -4,7 +4,7 @@ import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type os from "os"
 import type { stores } from "../../electron/data/store"
-import type { ErrorLog, LyricSearchResult, MainFilePaths, Media, OS } from "../Main"
+import type { ErrorLog, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
 import type { Dictionary, Resolution, Themes } from "../Settings"
@@ -27,6 +27,7 @@ export enum Main {
     DEVICE_ID = "DEVICE_ID",
     IP = "IP",
     // STORES
+    SETTINGS = "SETTINGS",
     SYNCED_SETTINGS = "SYNCED_SETTINGS",
     STAGE_SHOWS = "STAGE_SHOWS",
     PROJECTS = "PROJECTS",
@@ -49,6 +50,7 @@ export enum Main {
     SAVE = "SAVE",
     ///////////////////
     ////
+    SHOWS = "SHOWS",
     AUTO_UPDATE = "AUTO_UPDATE",
     GET_SYSTEM_FONTS = "GET_SYSTEM_FONTS",
     URL = "URL",
@@ -76,7 +78,7 @@ export enum Main {
     MEDIA_CODEC = "MEDIA_CODEC",
     MEDIA_TRACKS = "MEDIA_TRACKS",
     DOWNLOAD_MEDIA = "DOWNLOAD_MEDIA",
-    MEDIA_BASE64 = "MEDIA_BASE64",
+    // MEDIA_BASE64 = "MEDIA_BASE64",
     CAPTURE_SLIDE = "CAPTURE_SLIDE",
     PDF_TO_IMAGE = "PDF_TO_IMAGE",
     ACCESS_CAMERA_PERMISSION = "ACCESS_CAMERA_PERMISSION",
@@ -121,6 +123,7 @@ export interface MainSendPayloads {
     [Main.LOG]: any
     /////
     [Main.SAVE]: SaveData
+    [Main.SHOWS]: { showsPath: string }
     ////////////
     [Main.URL]: string
     [Main.LANGUAGE]: { lang: string; strings: Dictionary }
@@ -140,7 +143,7 @@ export interface MainSendPayloads {
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
     [Main.DOWNLOAD_MEDIA]: any[]
-    [Main.MEDIA_BASE64]: { id: string; path: string }[]
+    // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
     [Main.PDF_TO_IMAGE]: { dataPath: string; path: string }
     [Main.START_SLIDESHOW]: { path: string; program: string }
@@ -148,7 +151,7 @@ export interface MainSendPayloads {
     [Main.START]: { ports: { [key: string]: number }; max: number; disabled: { [key: string]: boolean }; data: { [key: string]: any } }
     [Main.SERVER_DATA]: { [key: string]: any }
     [Main.WEBSOCKET_START]: number | undefined
-    [Main.API_TRIGGER]: any
+    [Main.API_TRIGGER]: { action: string; returnId: string; data: any }
     [Main.EMIT_OSC]: { signal: any; data: any }
     [Main.GET_MIDI_OUTPUTS]: string[]
     [Main.GET_MIDI_INPUTS]: string[]
@@ -182,6 +185,8 @@ export interface MainReturnPayloads {
     [Main.GET_OS]: OS
     [Main.DEVICE_ID]: string
     [Main.IP]: NodeJS.Dict<os.NetworkInterfaceInfo[]>
+    ///
+    [Main.SHOWS]: { [key: string]: any }
     // STORES
     [Main.SYNCED_SETTINGS]: { [key in SaveListSyncedSettings]: any }
     [Main.STAGE_SHOWS]: StageLayouts
@@ -203,21 +208,27 @@ export interface MainReturnPayloads {
     [Main.SHOWS_PATH]: string
     [Main.DATA_PATH]: string
     [Main.GET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string; value: any }
+    [Main.DELETE_SHOWS]: { deleted: string[] }
+    [Main.DELETE_SHOWS_NI]: { deleted: string[] } | undefined
     [Main.GET_SCREENS]: Promise<{ name: string; id: string }[]>
     [Main.GET_WINDOWS]: Promise<{ name: string; id: string }[]>
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData }>
-    [Main.MEDIA_BASE64]: { id: string; content: string }[]
+    [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
+    // [Main.MEDIA_BASE64]: { id: string; content: string }[]
     [Main.SLIDESHOW_GET_APPS]: string[]
+    [Main.RECEIVE_MIDI]: Promise<{ id: string; values: any; type: "noteon" | "noteoff" } | null>
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
     [Main.GET_MIDI_INPUTS]: { name: string }[]
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
     [Main.DOES_PATH_EXIST]: { path: string; dataPath: string; exists: boolean }
+    [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
     [Main.READ_FOLDER]: { path: string; files: any[]; filesInFolders: string[]; folderFiles: { [key: string]: any[] } }
     [Main.READ_FILE]: { content: string }
-    [Main.OPEN_FOLDER]: { path: string; showsPath?: string } | undefined
-    [Main.OPEN_FILE]: { id: string; files: string[]; content: { [key: string]: string } } | undefined
+    [Main.OPEN_FOLDER]: { path: string; showsPath?: string } | void
+    [Main.OPEN_FILE]: { id: string; files: string[]; content: { [key: string]: string } } | void
+    [Main.PCO_DISCONNECT]: { success: boolean }
 }
 
 ///////////

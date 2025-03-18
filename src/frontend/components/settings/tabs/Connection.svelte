@@ -10,6 +10,8 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import { pcoSync } from "../../../utils/startup"
+    import { requestMain } from "../../../IPC/main"
+    import { Main } from "../../../../types/IPC/Main"
 
     let ip = "localhost"
     let listenerId = "IP_ADDRESS"
@@ -106,7 +108,12 @@
 
     function pcoConnect() {
         if (!$pcoConnected) send(MAIN, ["PCO_LOAD_SERVICES"], { dataPath: $dataPath })
-        else send(MAIN, ["PCO_DISCONNECT"])
+        else {
+            requestMain(Main.PCO_DISCONNECT, undefined, (a) => {
+                if (!a.success) return
+                pcoConnected.set(false)
+            })
+        }
     }
 
     function syncPCO() {

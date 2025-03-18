@@ -1,8 +1,11 @@
 import { get } from "svelte/store"
-import { MAIN, OUTPUT, STARTUP, STORE } from "../../types/Channels"
+import { MAIN, OUTPUT, STARTUP } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
 import { checkStartupActions } from "../components/actions/actions"
+import { clone } from "../components/helpers/array"
 import { getTimeFromInterval } from "../components/helpers/time"
-import { requestMainMultiple } from "../IPC/main"
+import { defaultThemes } from "../components/settings/tabs/defaultThemes"
+import { requestMain, requestMainMultiple } from "../IPC/main"
 import {
     activePopup,
     currentWindow,
@@ -39,10 +42,7 @@ import { storeSubscriber } from "./listeners"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
-import { updateSyncedSettings, updateThemeValues } from "./updateSettings"
-import { Main } from "../../types/IPC/Main"
-import { clone } from "../components/helpers/array"
-import { defaultThemes } from "../components/settings/tabs/defaultThemes"
+import { updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 
 let initialized: boolean = false
 export function startup() {
@@ -157,10 +157,8 @@ async function getStoredData() {
         },
     })
 
-    // send(STORE, ["SYNCED_SETTINGS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "USAGE", "CACHE"])
-
     await waitUntilDefined(() => get(loadedState).includes("synced_settings"))
-    send(STORE, ["SETTINGS"])
+    requestMain(Main.SETTINGS, undefined, (a) => updateSettings(a))
 }
 
 async function startupOutput() {

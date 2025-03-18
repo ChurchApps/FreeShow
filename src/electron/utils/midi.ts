@@ -1,5 +1,4 @@
 import JZZ from "jzz"
-import { toApp } from ".."
 
 // const virtualDevices: any = {}
 // export function createVirtualMidi() {
@@ -60,29 +59,32 @@ export async function sendMidi(data: any) {
 }
 
 let openedPorts: any = {}
-export async function receiveMidi(data: any) {
+export async function receiveMidi(data: any): Promise<{ id: string; values: any; type: "noteon" | "noteoff" } | null> {
     // console.log("INPUT", data.input)
-    if (!data.input) return
-    if (openedPorts[data.id]) return
+    if (!data.input) return null
+    if (openedPorts[data.id]) return null
 
-    try {
-        // connect to the input and listen for notes!
-        let port = await JZZ().openMidiIn(data.input).or("Error opening MIDI listener: Device not found or not supported!")
-        console.info("LISTENING FOR MIDI SIGNAL:", data)
+    return new Promise(async (resolve) => {
+        try {
+            // connect to the input and listen for notes!
+            let port = await JZZ().openMidiIn(data.input).or("Error opening MIDI listener: Device not found or not supported!")
+            console.info("LISTENING FOR MIDI SIGNAL:", data)
 
-        if (port.name()) openedPorts[data.id] = port
+            if (port.name()) openedPorts[data.id] = port
 
-        port.connect((msg: any) => {
-            if (!msg.toString().includes("Note")) return
+            port.connect((msg: any) => {
+                if (!msg.toString().includes("Note")) return
 
-            // console.log("CHECK IF NOTE ON/OFF", msg.toString()) // 00 00 00 -- Note Off
-            let type = msg.toString().includes("Off") ? "noteoff" : "noteon"
-            let values = { note: msg["1"], velocity: msg["2"], channel: (msg["0"] & 0x0f) + 1 }
-            toApp("MAIN", { channel: "RECEIVE_MIDI", data: { id: data.id, values, type } })
-        })
-    } catch (err) {
-        console.error(err)
-    }
+                // console.log("CHECK IF NOTE ON/OFF", msg.toString()) // 00 00 00 -- Note Off
+                let type: "noteon" | "noteoff" = msg.toString().includes("Off") ? "noteoff" : "noteon"
+                let values = { note: msg["1"], velocity: msg["2"], channel: (msg["0"] & 0x0f) + 1 }
+                resolve({ id: data.id, values, type })
+            })
+        } catch (err) {
+            console.error(err)
+            resolve(null)
+        }
+    })
 }
 
 export function stopMidi() {
