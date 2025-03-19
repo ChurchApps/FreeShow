@@ -4,11 +4,11 @@
     import { dictionary, special } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { destroy, receive, send } from "../../../../utils/request"
+    import Icon from "../../../helpers/Icon.svelte"
     import T from "../../../helpers/T.svelte"
+    import Button from "../../../inputs/Button.svelte"
     import Center from "../../../system/Center.svelte"
     import Loader from "../../Loader.svelte"
-    import Icon from "../../../helpers/Icon.svelte"
-    import Button from "../../../inputs/Button.svelte"
 
     export let query: string
 
@@ -65,12 +65,6 @@
                 loading = false
                 songs = data
             },
-        },
-        id
-    )
-    receive(
-        MAIN,
-        {
             GET_LYRICS: (data: { lyrics: string; source: string }) => {
                 loading = false
 

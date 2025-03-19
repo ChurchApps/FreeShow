@@ -1,17 +1,18 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { onMount } from "svelte"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain } from "../../../IPC/main"
     import { outLocked, outputs } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
-    import Capture from "./Capture.svelte"
     import { clearBackground } from "../../output/clear"
+    import Capture from "./Capture.svelte"
 
-    let screens: any[] = []
+    let screens: { name: string; id: string }[] = []
     export let streams: any[]
-    send(MAIN, ["GET_SCREENS"])
-    receive(MAIN, { GET_SCREENS: (d: any) => (screens = d) }, "GET_SCREENS")
-    onDestroy(() => destroy(MAIN, "GET_SCREENS"))
+
+    onMount(async () => {
+        screens = await requestMain(Main.GET_SCREENS)
+    })
 
     $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
 

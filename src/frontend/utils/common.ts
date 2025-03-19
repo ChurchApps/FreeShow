@@ -28,6 +28,8 @@ import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
 import type { ErrorLog } from "../../types/Main"
+import { sendMain } from "../IPC/main"
+import { Main } from "../../types/IPC/Main"
 
 export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (stores.ts & defaults.ts)
 export const DEFAULT_DRAWER_HEIGHT = 300
@@ -161,7 +163,7 @@ export function logerror(err) {
     }
 
     errorHasOccured.set(true) // always show close popup if this has happened (so the user can choose to not save)
-    send(MAIN, ["LOG_ERROR"], log)
+    sendMain(Main.LOG_ERROR, log)
 }
 
 // stream to OutputShow

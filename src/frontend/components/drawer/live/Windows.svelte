@@ -1,22 +1,23 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { onMount } from "svelte"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain } from "../../../IPC/main"
     import { outLocked, outputs } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
     import { clone } from "../../helpers/array"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
+    import { clearBackground } from "../../output/clear"
     import Center from "../../system/Center.svelte"
     import Capture from "./Capture.svelte"
-    import { clearBackground } from "../../output/clear"
 
     export let streams: any[]
     export let searchValue: string = ""
 
-    let windows: any[] = []
-    send(MAIN, ["GET_WINDOWS"])
-    receive(MAIN, { GET_WINDOWS: (d: any) => (windows = d) }, "GET_WINDOWS")
-    onDestroy(() => destroy(MAIN, "GET_WINDOWS"))
+    let windows: { name: string; id: string }[] = []
+
+    onMount(async () => {
+        windows = await requestMain(Main.GET_WINDOWS)
+    })
 
     // search
     $: if (windows || searchValue !== undefined) filterSearch()

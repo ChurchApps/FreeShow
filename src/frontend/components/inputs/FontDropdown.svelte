@@ -2,9 +2,9 @@
     import type { Family } from "css-fonts"
     import { createEventDispatcher, onMount } from "svelte"
     import { slide } from "svelte/transition"
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
+    import { requestMain } from "../../IPC/main"
     import { dictionary, systemFonts } from "../../stores"
-    import { awaitRequest } from "../../utils/request"
     import { formatSearch } from "../../utils/search"
     import Dropdown from "./Dropdown.svelte"
 
@@ -33,7 +33,7 @@
         else loadSystemFonts()
     })
     async function loadSystemFonts() {
-        let loadedFonts: Family[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
+        let loadedFonts = (await requestMain(Main.GET_SYSTEM_FONTS))?.fonts
         if (!loadedFonts) return
 
         systemFonts.set(loadedFonts)

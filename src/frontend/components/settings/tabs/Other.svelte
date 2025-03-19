@@ -1,8 +1,10 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onMount } from "svelte"
     import { EXPORT, MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain } from "../../../IPC/main"
     import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
-    import { awaitRequest, destroy, receive, send } from "../../../utils/request"
+    import { send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -16,8 +18,10 @@
         // getCacheSize()
         // getAudioOutputs()
         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
-        send(MAIN, ["GET_STORE_VALUE"], { file: "config", key: "disableHardwareAcceleration" })
-        send(MAIN, ["GET_EMPTY_SHOWS"], { path: $showsPath, cached: $showsCache })
+        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (a) => {
+            if (a.key === "disableHardwareAcceleration") disableHardwareAcceleration = a.value
+        })
+        requestMain(Main.GET_EMPTY_SHOWS, { path: $showsPath, cached: $showsCache }, (a) => (emptyShows = a))
         getDuplicatedShows()
     })
 
@@ -47,7 +51,7 @@
         if (key === "customUserDataLocation") {
             let existingData = false
             if (checked) {
-                existingData = (await awaitRequest(MAIN, "DOES_PATH_EXIST", { path: "data_config", dataPath: $dataPath }))?.exists
+                existingData = (await requestMain(Main.DOES_PATH_EXIST, { path: "data_config", dataPath: $dataPath }))?.exists
                 if (existingData) activePopup.set("user_data_overwrite")
             }
             if (!existingData) {
@@ -72,26 +76,6 @@
     // shows in folder
     let hiddenShows: any[] = []
     let brokenShows: number = 0
-    let listenerId = "OTHER_SETTINGS"
-    receive(
-        MAIN,
-        {
-            // this will not include newly created shows not saved yet, but it should not be an issue.
-            FULL_SHOWS_LIST: (data: any) => {
-                hiddenShows = data || []
-                let deletedShowNames = $deletedShows.map((a) => a.name + ".show")
-                hiddenShows = hiddenShows.filter((name) => !deletedShowNames.includes(name))
-            },
-            GET_STORE_VALUE: (data: any) => {
-                if (data.key === "disableHardwareAcceleration") disableHardwareAcceleration = data.value
-            },
-            GET_EMPTY_SHOWS: (data: any) => {
-                emptyShows = data
-            },
-        },
-        listenerId
-    )
-    onDestroy(() => destroy(MAIN, listenerId))
 
     $: if (hiddenShows?.length) getBrokenShows()
     function getBrokenShows() {
@@ -116,7 +100,12 @@
         send(MAIN, ["DELETE_SHOWS_NI"], { shows: $shows, path: $showsPath })
 
         setTimeout(() => {
-            send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
+            // this will not include newly created shows not saved yet, but it should not be an issue.
+            requestMain(Main.FULL_SHOWS_LIST, { path: $showsPath }, (data) => {
+                hiddenShows = data || []
+                let deletedShowNames = $deletedShows.map((a) => a.name + ".show")
+                hiddenShows = hiddenShows.filter((name) => !deletedShowNames.includes(name))
+            })
         }, 800)
     }
 

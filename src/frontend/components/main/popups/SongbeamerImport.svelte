@@ -1,16 +1,16 @@
 <script lang="ts">
-    import T from "../../helpers/T.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
-    import Button from "../../inputs/Button.svelte"
-    import Icon from "../../helpers/Icon.svelte"
-    import { translate } from "../../../utils/language";
+    import { Main } from "../../../../types/IPC/Main"
     import { Option } from "../../../../types/Main"
     import { TranslationMethod } from "../../../../types/Songbeamer"
-    import { sortObject } from "../../helpers/array"
+    import { sendMain } from "../../../IPC/main"
     import { activePopup, categories } from "../../../stores"
-    import { send } from "../../../utils/request"
-    import { IMPORT } from "../../../../types/Channels"
+    import { translate } from "../../../utils/language"
+    import { sortObject } from "../../helpers/array"
+    import Icon from "../../helpers/Icon.svelte"
+    import T from "../../helpers/T.svelte"
+    import Button from "../../inputs/Button.svelte"
+    import CombinedInput from "../../inputs/CombinedInput.svelte"
+    import Dropdown from "../../inputs/Dropdown.svelte"
 
     const encodingOptions = [
         {
@@ -27,16 +27,21 @@
 
     const songbeamerCatId: string = "songbeamer"
     let cats: any = [
-        ...sortObject(Object.keys($categories).map((key: string) => ({
-            id: key,
-            ...$categories[key],
-        })), "name").map((cat: any): Option => ({
-            id: cat.id,
-            name: (cat.default? `$:${cat.name}:$` : cat.name),
-        })),
+        ...sortObject(
+            Object.keys($categories).map((key: string) => ({
+                id: key,
+                ...$categories[key],
+            })),
+            "name"
+        ).map(
+            (cat: any): Option => ({
+                id: cat.id,
+                name: cat.default ? `$:${cat.name}:$` : cat.name,
+            })
+        ),
     ]
     let selectedCategory: Option = cats.find((el: Option) => el.id === songbeamerCatId)
-    if(!selectedCategory) {
+    if (!selectedCategory) {
         selectedCategory = {
             id: songbeamerCatId,
             name: "Songbeamer",
@@ -44,45 +49,35 @@
         cats.unshift(selectedCategory)
     }
 
-
     let selectedTranslationMethod = TranslationMethod.MultiLine
 
-
     function importListener() {
-        send(IMPORT, ["songbeamer"], {
-            encoding: selectedEncoding,
-            category: selectedCategory,
-            translation: selectedTranslationMethod,
-            format: {
-                extensions: ["sng"],
-            },
+        sendMain(Main.IMPORT, {
+            channel: "songbeamer",
+            format: { extensions: ["sng"] },
+            settings: { encoding: selectedEncoding, category: selectedCategory, translation: selectedTranslationMethod },
         })
         $activePopup = null
     }
 </script>
 
-<h4><T id="songbeamer_import.options"/></h4>
+<h4><T id="songbeamer_import.options" /></h4>
 
 <CombinedInput textWidth={30}>
     <p><T id="songbeamer_import.encoding" /></p>
-    <Dropdown value={selectedEncoding?.name} options={encodingOptions} on:click={evt => selectedEncoding = evt.detail}/>
+    <Dropdown value={selectedEncoding?.name} options={encodingOptions} on:click={(evt) => (selectedEncoding = evt.detail)} />
 </CombinedInput>
 
 <CombinedInput textWidth={30}>
     <p><T id="show.category" /></p>
-    <Dropdown options={cats} value={selectedCategory?.name} on:click={evt => selectedCategory = evt.detail} />
+    <Dropdown options={cats} value={selectedCategory?.name} on:click={(evt) => (selectedCategory = evt.detail)} />
 </CombinedInput>
 
 <h4><T id="songbeamer_import.translations" /></h4>
 
 <div class="translation-method">
     {#each Object.values(TranslationMethod) as method}
-        <Button
-            center
-            dark
-            active={method === selectedTranslationMethod}
-            on:click={() => selectedTranslationMethod = method}
-        >
+        <Button center dark active={method === selectedTranslationMethod} on:click={() => (selectedTranslationMethod = method)}>
             <T id="songbeamer_import.translation_{method}" />
         </Button>
     {/each}

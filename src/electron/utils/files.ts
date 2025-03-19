@@ -6,7 +6,7 @@ import { ExifData, ExifImage } from "exif"
 import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
-import { MAIN, OUTPUT, SHOW } from "../../types/Channels"
+import { MAIN, OUTPUT } from "../../types/Channels"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { MainFilePaths, Subtitle } from "../../types/Main"
 import type { Show } from "../../types/Show"
@@ -102,7 +102,7 @@ export function writeFile(path: string, content: string | NodeJS.ArrayBufferView
 
     fs.writeFile(path, content, (err) => {
         actionComplete(err, "Error when writing to file")
-        if (err && id) toApp(SHOW, { error: "no_write", err, id })
+        if (err && id) sendMain(ToMain.SHOW2, { error: "no_write", err, id })
     })
 }
 
@@ -132,7 +132,7 @@ export function makeDir(path: string) {
         path = fs.mkdirSync(path, { recursive: true }) || path
     } catch (err) {
         console.error("Could not create a directory to path: " + path + "! " + err)
-        toApp(MAIN, { channel: "ALERT", data: "Error: Could not create folder at: " + path + "!" })
+        sendMain(ToMain.ALERT, "Error: Could not create folder at: " + path + "!")
     }
 
     return path
@@ -161,7 +161,7 @@ export function selectFolderDialog(title: string = "", defaultPath: string = "")
 // DATA FOLDERS
 
 export function openSystemFolder(path: string) {
-    if (!doesPathExist(path)) return toApp(MAIN, { channel: "ALERT", data: "This does not exist!" })
+    if (!doesPathExist(path)) return sendMain(ToMain.ALERT, "This does not exist!")
 
     shell.openPath(path)
 }
@@ -327,7 +327,7 @@ export function getSimularPaths(data: { paths: string[] }) {
     let allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
     const filteredFilePaths = [...new Set(allFilePaths.flat())]
 
-    let simularArray: any[] = []
+    let simularArray: [{ path: string; name: string }, number][] = []
     data.paths.forEach((path: string) => {
         let originalFileName = parse(path).name
 
@@ -343,9 +343,9 @@ export function getSimularPaths(data: { paths: string[] }) {
     })
 
     simularArray = simularArray.sort((a, b) => b[1] - a[1])
-    simularArray = simularArray.slice(0, 10).map((a) => a[0])
+    const sortedSimularArray = simularArray.slice(0, 10).map((a) => a[0])
 
-    return simularArray
+    return sortedSimularArray
 }
 function getParentFolderName(path: string) {
     return parse(path).dir
@@ -437,34 +437,36 @@ export function readExifData({ id }: { id: string }): Promise<{ id: string; exif
 }
 
 // GET MEDIA CODEC
-export function getMediaCodec(data: { path: string }) {
-    extractCodecInfo(data)
+export async function getMediaCodec(data: { path: string }) {
+    return await extractCodecInfo(data)
 }
 
-async function extractCodecInfo(data: { path: string }) {
+async function extractCodecInfo(data: { path: string }): Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }> {
     const MP4Box = require("mp4box")
     let arrayBuffer: any
 
-    try {
-        arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
-    } catch (err) {
-        console.error(err)
-        toApp(MAIN, { channel: "MEDIA_CODEC", data: { ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" } })
-        return
-    }
+    return new Promise((resolve) => {
+        try {
+            arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
+        } catch (err) {
+            console.error(err)
+            resolve({ ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" })
+            return
+        }
 
-    const mp4boxfile = MP4Box.createFile()
-    mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
-    mp4boxfile.onReady = (info: any) => {
-        const codecs = info.tracks.map((track: any) => track.codec)
-        const mimeType = getMimeType(data.path)
-        const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
-        toApp(MAIN, { channel: "MEDIA_CODEC", data: { ...data, codecs, mimeType, mimeCodec } })
-    }
+        const mp4boxfile = MP4Box.createFile()
+        mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
+        mp4boxfile.onReady = (info: any) => {
+            const codecs = info.tracks.map((track: any) => track.codec)
+            const mimeType = getMimeType(data.path)
+            const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
+            resolve({ ...data, codecs, mimeType, mimeCodec })
+        }
 
-    arrayBuffer.fileStart = 0
-    mp4boxfile.appendBuffer(arrayBuffer)
-    mp4boxfile.flush()
+        arrayBuffer.fileStart = 0
+        mp4boxfile.appendBuffer(arrayBuffer)
+        mp4boxfile.flush()
+    })
 }
 
 function getMimeType(path: string) {

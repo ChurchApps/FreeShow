@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { IMPORT } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
     import type { Category } from "../../../types/Tabs"
+    import { sendMain } from "../../IPC/main"
     import {
         actionTags,
         activeActionTagFilter,
@@ -23,7 +24,6 @@
         templateCategories,
         templates,
     } from "../../stores"
-    import { send } from "../../utils/request"
     import { keysToID, sortByName, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -259,7 +259,7 @@
         </div>
     {:else if id === "calendar"}
         <div class="tabs">
-            <Button on:click={() => send(IMPORT, ["calendar"], { format: { name: "Calendar", extensions: ["ics"] } })} center title={$dictionary.actions?.import}>
+            <Button on:click={() => sendMain(Main.IMPORT, { channel: "calendar", format: { name: "Calendar", extensions: ["ics"] } })} center title={$dictionary.actions?.import}>
                 <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="actions.import" />{/if}
             </Button>

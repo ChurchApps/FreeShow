@@ -3,7 +3,7 @@
     import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
     import { uid } from "uid"
-    import { MAIN, READ_FOLDER } from "../../../../types/Channels"
+    import { MAIN } from "../../../../types/Channels"
     import {
         activeEdit,
         activeFocus,
@@ -137,24 +137,27 @@
     let folderFiles: any = {}
 
     let listenerId = uid()
-    onDestroy(() => destroy(READ_FOLDER, listenerId))
+    onDestroy(() => destroy(MAIN, listenerId))
 
     // receive files
-    window.api.receive(READ_FOLDER, receiveContent, listenerId)
+    window.api.receive(MAIN, receiveContent, listenerId)
     function receiveContent(msg: any) {
-        filesInFolders = sortFilenames(msg.filesInFolders || [])
+        if (msg.channel !== "READ_FOLDER") return
+        const data = msg.data
 
-        if (active !== "all" && msg.path !== path) return
+        filesInFolders = sortFilenames(data.filesInFolders || [])
 
-        files.push(...msg.files.filter((file: any) => file.folder || isMediaExtension(file.extension)))
+        if (active !== "all" && data.path !== path) return
+
+        files.push(...data.files.filter((file: any) => file.folder || isMediaExtension(file.extension)))
         files = sortFilenames(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
         // set valid files in folder
         folderFiles = {}
-        Object.keys(msg.folderFiles).forEach((path) => {
-            folderFiles[path] = msg.folderFiles[path].filter((file) => file.folder || isMediaExtension(file.extension))
+        Object.keys(data.folderFiles).forEach((path) => {
+            folderFiles[path] = data.folderFiles[path].filter((file) => file.folder || isMediaExtension(file.extension))
         })
 
         filterFiles()

@@ -17,13 +17,13 @@ import JZZ from "jzz"
 export function getMidiOutputs(): { name: string }[] {
     return JZZ()
         .info()
-        .outputs.map((a: any) => a.name)
+        .outputs.map((a: any) => ({ name: a.name }))
 }
 
 export function getMidiInputs(): { name: string }[] {
     return JZZ()
         .info()
-        .inputs.map((a: any) => a.name)
+        .inputs.map((a: any) => ({ name: a.name }))
 }
 
 let openedOutputPorts: any = {}

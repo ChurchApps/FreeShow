@@ -195,30 +195,32 @@ function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolea
 
 ///// CAPTURE SLIDE /////
 
-export function captureSlide(data: { output: { [key: string]: Output }; resolution: Resolution; listenerId?: string }) {
-    const OUTPUT_ID = "capture"
-    if (OutputHelper.getOutput(OUTPUT_ID)) return
+export function captureSlide(data: { output: { [key: string]: Output }; resolution: Resolution }): Promise<{ base64: string } | undefined> {
+    return new Promise((resolve) => {
+        const OUTPUT_ID = "capture"
+        if (OutputHelper.getOutput(OUTPUT_ID)) return
 
-    let window = new BrowserWindow({ ...captureOptions, width: data.resolution?.width, height: data.resolution?.height })
-    loadWindowContent(window, "output")
+        let window = new BrowserWindow({ ...captureOptions, width: data.resolution?.width, height: data.resolution?.height })
+        loadWindowContent(window, "output")
 
-    OutputHelper.setOutput(OUTPUT_ID, { window })
+        OutputHelper.setOutput(OUTPUT_ID, { window })
 
-    window.on("ready-to-show", () => {
-        // send correct output data after load
-        setTimeout(() => {
-            window.webContents.send(OUTPUT, { channel: "OUTPUTS", data: data.output })
-            // WIP mute videos
+        window.on("ready-to-show", () => {
+            // send correct output data after load
+            setTimeout(() => {
+                window.webContents.send(OUTPUT, { channel: "OUTPUTS", data: data.output })
+                // WIP mute videos
 
-            // wait for content load
-            setTimeout(async () => {
-                const page = await window.capturePage()
-                const base64 = page.toDataURL({ scaleFactor: 1 })
-                toApp(MAIN, { channel: "CAPTURE_SLIDE", data: { listenerId: data.listenerId, base64 } })
+                // wait for content load
+                setTimeout(async () => {
+                    const page = await window.capturePage()
+                    const base64 = page.toDataURL({ scaleFactor: 1 })
+                    resolve({ base64 })
 
-                window.destroy()
-                OutputHelper.deleteOutput(OUTPUT_ID)
-            }, 3000)
-        }, 1000)
+                    window.destroy()
+                    OutputHelper.deleteOutput(OUTPUT_ID)
+                }, 3000)
+            }, 1000)
+        })
     })
 }

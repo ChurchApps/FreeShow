@@ -12,6 +12,8 @@ import { isProd, toApp } from "../index"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, getTimePointString, makeDir, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
 import { getAllShows } from "../utils/shows"
 import { exportOptions } from "../utils/windowOptions"
+import { sendMain } from "../IPC/main"
+import { ToMain } from "../../types/IPC/ToMain"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions: any = {
@@ -73,13 +75,13 @@ function doneWritingFile(err: any, exportFolder: string, toMain: boolean = true)
         systemOpened = true
     } else if (err) msg = err
 
-    if (toMain) toApp(MAIN, { channel: "ALERT", data: msg })
+    if (toMain) sendMain(ToMain.ALERT, msg)
 }
 
 // ----- PDF -----
 
 const options: any = {
-    margins: {top: 0, bottom: 0, left: 0, right: 0},
+    margins: { top: 0, bottom: 0, left: 0, right: 0 },
     pageSize: "A4",
     printBackground: true,
     landscape: false,
@@ -100,7 +102,7 @@ export function generatePDF(path: string) {
 }
 
 function exportMessage(message: string = "") {
-    toApp(MAIN, { channel: "ALERT", data: message })
+    sendMain(ToMain.ALERT, message)
 
     exportWindow?.on("closed", () => (exportWindow = null))
     exportWindow?.close()
@@ -131,7 +133,7 @@ ipcMain.on(EXPORT, (_e, msg: any) => {
     if (msg.channel !== "EXPORT") return
 
     if (!msg.data?.name) return
-    toApp(MAIN, { channel: "ALERT", data: msg.data.name })
+    sendMain(ToMain.ALERT, msg.data.name)
     if (msg.data.type === "pdf") generatePDF(join(msg.data.path, msg.data.name))
 })
 
@@ -236,14 +238,14 @@ function exportAllShows(data: any) {
         if (type === "show") exportShow({ ...data, shows })
         else if (type === "txt") exportTXT({ ...data, shows })
     } else {
-        toApp(MAIN, { channel: "ALERT", data: "Exported 0 shows!" })
+        sendMain(ToMain.ALERT, "Exported 0 shows!")
     }
 }
 
 // ----- PROJECT -----
 
 export function exportProject(data: any) {
-    toApp(MAIN, { channel: "ALERT", data: "export.exporting" })
+    sendMain(ToMain.ALERT, "export.exporting")
 
     const files = data.file.files || []
     if (!files.length) {

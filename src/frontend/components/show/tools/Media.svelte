@@ -1,10 +1,12 @@
 <script lang="ts">
-    import { MAIN, OUTPUT } from "../../../../types/Channels"
+    import { OUTPUT } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain } from "../../../IPC/main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
     import { translate } from "../../../utils/language"
-    import { destroy, receive, send } from "../../../utils/request"
+    import { send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
     import { getActionName, getActionTriggerId, runAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
@@ -141,15 +143,9 @@
     function getSimularPaths() {
         if (!bgs.filter((a) => !a.path.includes("http") && !a.path.includes("data:")).length) return
 
-        send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
-
-        let listenerId = "media_simular"
-        destroy(MAIN, listenerId)
-        receive(MAIN, { GET_SIMULAR: (a) => receiveSimular(a) }, listenerId)
-        function receiveSimular(data: any[]) {
+        requestMain(Main.GET_SIMULAR, { paths: bgs.map((a) => a.path) }, (data) => {
             simularBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)
-            destroy(MAIN, listenerId)
-        }
+        })
     }
 
     let newPaths: any = {}

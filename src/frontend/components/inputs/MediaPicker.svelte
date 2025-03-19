@@ -29,9 +29,10 @@
     let dispatch = createEventDispatcher()
     window.api.receive(MAIN, fileReceived, listenerId)
     function fileReceived(msg: any) {
-        if (msg.data.id !== id || msg.channel !== "MEDIA" || !msg.data.files?.length) return
+        let data = msg.data
+        if (data.id !== id || data.channel !== "MEDIA" || !data.files?.length) return
 
-        dispatch("picked", multiple ? msg.data.files : msg.data.files[0])
+        dispatch("picked", multiple ? data.files : data.files[0])
     }
 </script>
 

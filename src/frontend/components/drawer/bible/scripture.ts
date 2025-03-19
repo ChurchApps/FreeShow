@@ -1,9 +1,10 @@
 import { get } from "svelte/store"
-import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
 import { dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
 import { getKey } from "../../../values/keys"
 import { clone, removeDuplicates } from "../../helpers/array"
+import { sendMain } from "../../../IPC/main"
+import { Main } from "../../../../types/IPC/Main"
 
 const api = "https://contentapi.churchapps.org/bibles/"
 let tempCache: any = {}
@@ -125,23 +126,26 @@ export function loadBible(active: string, index: number = 0, bible: any) {
             return
         }
 
-        window.api.send(BIBLE, { name: scripture.name, id: scripture.id || id, data: { index }, path: get(dataPath) })
+        sendMain(Main.BIBLE, { name: scripture.name, id: scripture.id || id, data: { index }, path: get(dataPath) })
     })
 
     return bible
 }
 
 export function receiveBibleContent(msg: any) {
-    if (msg.error === "not_found" || !msg.content?.[1]) return
+    if (msg.channel !== "BIBLE") return
+    const data = msg.data
 
-    const content = msg.content[1] || {}
+    if (data.error === "not_found" || !data.content?.[1]) return
+
+    const content = data.content[1] || {}
     scripturesCache.update((a) => {
-        a[msg.content[0]] = content
+        a[data.content[0]] = content
         return a
     })
 
     let bible: any = content
-    let id = msg.content[0] || msg.id
+    let id = data.content[0] || data.id
 
     bible.version = get(scriptures)[id]?.customName || content.name || get(scriptures)[id]?.name || ""
     bible.metadata = content.metadata || {}

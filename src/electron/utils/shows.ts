@@ -1,7 +1,7 @@
 import path from "path"
-import { toApp } from ".."
-import { MAIN } from "../../types/Channels"
+import { ToMain } from "../../types/IPC/ToMain"
 import type { Show } from "../../types/Show"
+import { sendMain } from "../IPC/main"
 import { deleteFile, doesPathExist, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFile } from "./files"
 
 export function getAllShows(data: any) {
@@ -121,7 +121,7 @@ export function refreshAllShows(data: any) {
     }
 
     if (!Object.keys(newShows).length) return
-    toApp("MAIN", { channel: "REFRESH_SHOWS", data: newShows })
+    sendMain(ToMain.REFRESH_SHOWS2, newShows)
 }
 
 export async function getEmptyShows(data: any) {
@@ -149,5 +149,5 @@ export async function getEmptyShows(data: any) {
         emptyShows.push({ id: show[0], name: name.replace(".show", "") })
     }
 
-    toApp(MAIN, { channel: "GET_EMPTY_SHOWS", data: emptyShows })
+    return emptyShows
 }

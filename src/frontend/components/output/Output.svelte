@@ -3,11 +3,11 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
     import type { Styles } from "../../../types/Settings"
+    import { requestMain } from "../../IPC/main"
     import { colorbars, customMessageCredits, drawSettings, drawTool, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
-    import { destroy, receive, send } from "../../utils/request"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
@@ -155,20 +155,15 @@
     // media exif metadata
     $: getExifData = metadata.media
     $: if (getExifData && background?.path) getExif()
-    function getExif() {
+    async function getExif() {
         metadata.value = ""
-        send(MAIN, ["READ_EXIF"], { id: background.path })
+
+        const data = await requestMain(Main.READ_EXIF, { id: background.path })
+        if (!metadata.media || data.id !== background?.path) return
+
+        let message = decodeExif(data)
+        metadata.value = joinMetadata(message, currentStyle.metadataDivider)
     }
-    const receiveExif: any = {
-        READ_EXIF: (data: any) => {
-            if (!metadata.media || data.id !== background?.path) return
-            let message = decodeExif(data)
-            metadata.value = joinMetadata(message, currentStyle.metadataDivider)
-        },
-    }
-    let listener = uid()
-    receive(MAIN, receiveExif, listener)
-    onDestroy(() => destroy(MAIN, listener))
 
     // ANIMATE
     let animationData: any = {}

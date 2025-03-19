@@ -1,9 +1,11 @@
 <script lang="ts">
     import { uid } from "uid"
     import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
+    import { requestMain } from "../../IPC/main"
     import { activeProject, activeRename, dictionary, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
-    import { awaitRequest, send } from "../../utils/request"
+    import { send } from "../../utils/request"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { enableSubtitle, getExtension, getFileName, removeExtension } from "../helpers/media"
@@ -210,7 +212,7 @@
 
     async function subtitlePicked(e: any) {
         let path = e.detail || ""
-        let content = (await awaitRequest(MAIN, "READ_FILE", { path }))?.content
+        let content = (await requestMain(Main.READ_FILE, { path }))?.content
         if (!content) return
 
         let extension = getExtension(path)

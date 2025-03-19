@@ -1,11 +1,13 @@
 import express from "express"
 import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
+import { ToMain } from "../../types/IPC/ToMain"
 import { stores } from "../data/store"
+import { sendMain } from "../IPC/main"
+import { openURL } from "../IPC/responsesMain"
+import { getKey } from "../utils/keys"
 import { httpsRequest } from "../utils/requests"
 import { pcoLoadServices } from "./request"
-import { getKey } from "../utils/keys"
-import { openURL } from "../IPC/responsesMain"
 
 const app = express()
 const PCO_PORT = 5501
@@ -98,7 +100,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
                     const errorPage = HTML_error.replace("{error_msg}", err.message)
                     res.send(errorPage)
 
-                    toApp(MAIN, { channel: "ALERT", data: "Could not authorize! " + err.message })
+                    sendMain(ToMain.ALERT, "Could not authorize! " + err.message)
                     return resolve(null)
                 }
 
@@ -135,7 +137,7 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
         const params = { grant_type: "refresh_token", client_id: clientId, client_secret: clientSecret, refresh_token: access.refresh_token }
         httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err: any, data: PCOAuthData) => {
             if (err || data === null) {
-                toApp(MAIN, { channel: "ALERT", data: "Could not refresh token! " + err?.message })
+                sendMain(ToMain.ALERT, "Could not refresh token! " + err?.message)
                 resolve(null)
                 return
             }

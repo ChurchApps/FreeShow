@@ -40,6 +40,7 @@ export class OutputVisibility {
             this.hideWindow(window, data.output)
 
             if (data.enabled && !data.auto) toApp(MAIN, { channel: "ALERT", data: "error.display" })
+            // if (data.enabled && !data.auto) sendMain(ToMain.ALERT, "error.display") // this will cause loading issues
             data.enabled = false
         }
 

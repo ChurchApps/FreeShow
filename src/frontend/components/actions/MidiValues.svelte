@@ -2,16 +2,18 @@
     import { createEventDispatcher, onDestroy } from "svelte"
     import { MAIN } from "../../../types/Channels"
     import { popupData } from "../../stores"
-    import { destroy, receive, send } from "../../utils/request"
+    import { destroy, receive } from "../../utils/request"
     import T from "../helpers/T.svelte"
     import Checkbox from "../inputs/Checkbox.svelte"
 
+    import { uid } from "uid"
+    import { Main } from "../../../types/IPC/Main"
+    import { requestMain } from "../../IPC/main"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import Dropdown from "../inputs/Dropdown.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
-    import { defaultMidiActionChannels, midiToNote } from "./midi"
-    import { uid } from "uid"
     import type { API_midi } from "./api"
+    import { defaultMidiActionChannels, midiToNote } from "./midi"
 
     export let value: API_midi
     export let firstActionId: string = ""
@@ -45,9 +47,21 @@
     $: if (type) requestData()
     function requestData() {
         if (type === "input") {
-            send(MAIN, ["GET_MIDI_INPUTS"])
+            requestMain(Main.GET_MIDI_INPUTS, undefined, (data) => {
+                if (!data.length) return
+                inputs = data
+                if (!midi.input) midi.input = data[0]?.name
+
+                setInitialData()
+            })
         } else {
-            send(MAIN, ["GET_MIDI_OUTPUTS"])
+            requestMain(Main.GET_MIDI_OUTPUTS, undefined, (data) => {
+                if (!data.length) return
+                outputs = data
+                if (!midi.output) midi.output = data[0]?.name
+
+                setInitialData()
+            })
         }
     }
 
@@ -63,20 +77,6 @@
     receive(
         MAIN,
         {
-            GET_MIDI_OUTPUTS: (msg) => {
-                if (!msg.length) return
-                outputs = msg.map((a) => ({ name: a }))
-                if (!midi.output) midi.output = msg[0]
-
-                setInitialData()
-            },
-            GET_MIDI_INPUTS: (msg) => {
-                if (!msg.length) return
-                inputs = msg.map((a) => ({ name: a }))
-                if (!midi.input) midi.input = msg[0]
-
-                setInitialData()
-            },
             RECEIVE_MIDI: (msg) => {
                 if (!autoValues) return
                 if (msg.id === $popupData.id && msg.type === midi.type) {

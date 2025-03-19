@@ -10,6 +10,10 @@ export enum ToMain {
     PCO_CONNECT = "PCO_CONNECT",
     PCO_PROJECTS = "PCO_PROJECTS",
     // Main
+    CLOSE2 = "CLOSE",
+    MAXIMIZED2 = "MAXIMIZED",
+    IMPORT2 = "IMPORT",
+    SHOW2 = "SHOW",
     SAVE2 = "SAVE",
     REFRESH_SHOWS2 = "REFRESH_SHOWS",
     RESTORE2 = "RESTORE",
@@ -29,6 +33,10 @@ export interface ToMainSendPayloads {
     [ToMain.PCO_CONNECT]: { success: boolean; isFirstConnection?: boolean }
     [ToMain.PCO_PROJECTS]: { shows: any; projects: any }
     ///
+    [ToMain.CLOSE2]: boolean
+    [ToMain.MAXIMIZED2]: boolean
+    [ToMain.IMPORT2]: { channel: string; data: any[] }
+    [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }
     [ToMain.SAVE2]: { closeWhenFinished: boolean; customTriggers: any }
     [ToMain.REFRESH_SHOWS2]: { [key: string]: any }
     [ToMain.RESTORE2]: { starting?: boolean; finished?: boolean }

@@ -2,6 +2,8 @@ import os from "os"
 import Slideshow from "slideshow"
 import { getMainWindow, isProd, toApp } from "../.."
 import { MAIN } from "../../../types/Channels"
+import { ToMain } from "../../../types/IPC/ToMain"
+import { sendMain } from "../../IPC/main"
 import { OutputHelper } from "../OutputHelper"
 import { OutputValues } from "../helpers/OutputValues"
 
@@ -95,10 +97,10 @@ async function initPresentation(path: string, program: string = "powerpoint") {
         currentSlideshow = new Slideshow(program, isProd)
     } catch (err) {
         if (err.includes("unsupported platform")) {
-            toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
+            sendMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
         } else {
             console.error("INIT", err)
-            toApp(MAIN, { channel: "ALERT", data: err })
+            sendMain(ToMain.ALERT, err)
         }
 
         starting = false
@@ -110,9 +112,9 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     } catch (err) {
         console.error("BOOT", err)
         if (err === "application still not running") {
-            toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
+            sendMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
         } else {
-            toApp(MAIN, { channel: "ALERT", data: err })
+            sendMain(ToMain.ALERT, err)
         }
     }
 
@@ -122,9 +124,9 @@ async function initPresentation(path: string, program: string = "powerpoint") {
         } catch (err) {
             console.error("OPEN", err)
             if (err === "Something went wrong with the presentation controller") {
-                toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
+                sendMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
             } else {
-                toApp(MAIN, { channel: "ALERT", data: err })
+                sendMain(ToMain.ALERT, err)
             }
         }
     }
@@ -136,9 +138,9 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     } catch (err) {
         console.error("START", err)
         if (err === "still no active presentation") {
-            toApp(MAIN, { channel: "ALERT", data: "Could not start presentation, please open it manually and try again!" })
+            sendMain(ToMain.ALERT, "Could not start presentation, please open it manually and try again!")
         } else {
-            toApp(MAIN, { channel: "ALERT", data: err })
+            sendMain(ToMain.ALERT, err)
         }
 
         starting = false

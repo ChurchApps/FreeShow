@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { MAIN, READ_FOLDER } from "../../../../types/Channels"
+    import { MAIN } from "../../../../types/Channels"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, effectsLibrary, labelsDisabled, media, outLocked, selectAllAudio, selected } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
@@ -18,8 +18,8 @@
     import AudioStreams from "../live/AudioStreams.svelte"
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
-    import AudioFile from "./AudioFile.svelte"
     import AudioEffect from "./AudioEffect.svelte"
+    import AudioFile from "./AudioFile.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -89,24 +89,27 @@
     let folderFiles: any = {}
 
     let listenerId = uid()
-    onDestroy(() => destroy(READ_FOLDER, listenerId))
+    onDestroy(() => destroy(MAIN, listenerId))
 
     // receive files
-    window.api.receive(READ_FOLDER, receiveContent, listenerId)
+    window.api.receive(MAIN, receiveContent, listenerId)
     function receiveContent(msg: any) {
-        filesInFolders = sortByName(msg.filesInFolders || [])
+        if (msg.channel !== "READ_FOLDER") return
+        const data = msg.data
 
-        if (active !== "all" && msg.path !== path) return
+        filesInFolders = sortByName(data.filesInFolders || [])
 
-        files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
+        if (active !== "all" && data.path !== path) return
+
+        files.push(...data.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
         files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
         // set valid files in folder
         folderFiles = {}
-        Object.keys(msg.folderFiles).forEach((path) => {
-            folderFiles[path] = msg.folderFiles[path].filter((file) => file.folder || getMediaType(file.extension) === "audio")
+        Object.keys(data.folderFiles).forEach((path) => {
+            folderFiles[path] = data.folderFiles[path].filter((file) => file.folder || getMediaType(file.extension) === "audio")
         })
 
         // remove folders with no content

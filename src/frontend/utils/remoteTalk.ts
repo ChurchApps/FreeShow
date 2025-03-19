@@ -5,7 +5,7 @@ import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
-import { BIBLE, REMOTE } from "./../../types/Channels"
+import { REMOTE } from "./../../types/Channels"
 import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
 import { sendData } from "./sendData"
 import { uid } from "uid"
@@ -16,6 +16,7 @@ import { API_ACTIONS } from "../components/actions/api"
 import type { ClientMessage } from "../../types/Socket"
 import { loadBible, receiveBibleContent } from "../components/drawer/bible/scripture"
 import { waitUntilValueIsDefined } from "./common"
+import { MAIN } from "../../types/IPC/Main"
 
 // REMOTE
 
@@ -171,11 +172,11 @@ export const receiveREMOTE: any = {
         if (!id) return
 
         let listenerId = uid()
-        window.api.receive(BIBLE, receiveBibleContent, listenerId)
+        window.api.receive(MAIN, receiveBibleContent, listenerId)
         receiveBibleContent(msg)
         loadBible(id, 0, clone(get(scriptures)[id] || {}))
         const bible = await waitUntilValueIsDefined(() => get(scripturesCache)[id])
-        destroy(BIBLE, listenerId)
+        destroy(MAIN, listenerId)
 
         msg.data.bible = bible
         return msg

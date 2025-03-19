@@ -3,14 +3,14 @@
 
 import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
-import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, SHOW, STARTUP } from "../types/Channels"
+import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, STARTUP } from "../types/Channels"
+import { ToMain } from "../types/IPC/ToMain"
 import type { Dictionary } from "../types/Settings"
-import { BIBLE, IMPORT } from "./../types/Channels"
 import { receiveAudio } from "./audio/receiveAudio"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
 import { config, updateDataPath } from "./data/store"
-import { receiveMain } from "./IPC/main"
+import { receiveMain, sendMain } from "./IPC/main"
 import { catchErrors, saveRecording } from "./IPC/responsesMain"
 import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
@@ -20,7 +20,6 @@ import { stopApiListener } from "./utils/api"
 import { doesPathExist } from "./utils/files"
 import { template } from "./utils/menuTemplate"
 import { stopMidi } from "./utils/midi"
-import { loadScripture, loadShow, startImport } from "./utils/responses"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
@@ -257,7 +256,7 @@ function callClose(e: Electron.Event) {
     if (dialogClose) return
     e.preventDefault()
 
-    toApp(MAIN, { channel: "CLOSE" })
+    sendMain(ToMain.CLOSE2, true)
 }
 
 export async function exitApp() {
@@ -305,7 +304,7 @@ export function closeMain() {
 
 export function maximizeMain() {
     let isMaximized: boolean = !!mainWindow?.isMaximized()
-    toApp(MAIN, { channel: "MAXIMIZED", data: !isMaximized })
+    sendMain(ToMain.MAXIMIZED2, !isMaximized)
 
     if (isMaximized) return mainWindow?.unmaximize()
     mainWindow?.maximize()
@@ -353,10 +352,7 @@ app.on("web-contents-created", (_e, contents) => {
 
 ipcMain.on(MAIN, receiveMain)
 ipcMain.on(OUTPUT, OutputHelper.receiveOutput)
-ipcMain.on(IMPORT, startImport)
 ipcMain.on(EXPORT, startExport)
-ipcMain.on(SHOW, loadShow)
-ipcMain.on(BIBLE, loadScripture)
 ipcMain.on(CLOUD, cloudConnect)
 ipcMain.on(RECORDER, saveRecording)
 ipcMain.on(NDI, receiveNDI)

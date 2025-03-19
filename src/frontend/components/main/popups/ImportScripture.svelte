@@ -1,10 +1,10 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { IMPORT } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
     import type { BibleCategories } from "../../../../types/Tabs"
+    import { sendMain } from "../../../IPC/main"
     import { dictionary, isDev, labelsDisabled, language, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
-    import { send } from "../../../utils/request"
     import { sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -227,7 +227,7 @@
     <br />
 
     <CombinedInput>
-        <Button on:click={() => send(IMPORT, ["BIBLE"], { format: { name: "Bible", extensions: ["xml", "json", "fsb"] } })} style="width: 100%;" center dark>
+        <Button on:click={() => sendMain(Main.IMPORT, { channel: "BIBLE", format: { name: "Bible", extensions: ["xml", "json", "fsb"] } })} style="width: 100%;" center dark>
             <Icon id="import" right />
             <T id="scripture.local" />
         </Button>

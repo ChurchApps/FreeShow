@@ -1,24 +1,23 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onMount } from "svelte"
     import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain } from "../../../IPC/main"
     import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
+    import { send } from "../../../utils/request"
+    import { pcoSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { checkWindowCapture } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import { pcoSync } from "../../../utils/startup"
-    import { requestMain } from "../../../IPC/main"
-    import { Main } from "../../../../types/IPC/Main"
 
     let ip = "localhost"
-    let listenerId = "IP_ADDRESS"
-    onMount(() => send(MAIN, ["IP"]))
-    receive(MAIN, { IP: (a: any) => getIP(a) }, listenerId)
-    // receive(MAIN, { IP: (a: any) => (ip = a["Wi-Fi"]?.filter((a: any) => a.family === "IPv4")[0].address) })
-    onDestroy(() => destroy(MAIN, listenerId))
+
+    onMount(async () => {
+        getIP(await requestMain(Main.IP))
+    })
 
     function getIP(nets: any) {
         let results: any = {}

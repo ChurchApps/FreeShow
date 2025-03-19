@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
-import { IMPORT, MAIN, OUTPUT } from "../../types/Channels"
+import { MAIN, OUTPUT } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
 import type { ShowType } from "../../types/Show"
 import type { TopViews } from "../../types/Tabs"
 import { clearAudio } from "../audio/audioFading"
@@ -15,6 +16,7 @@ import { stopSlideRecording, updateSlideRecording } from "../components/helpers/
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
 import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
+import { sendMain } from "../IPC/main"
 import {
     activeDrawerTab,
     activeEdit,
@@ -342,7 +344,7 @@ function createNew() {
     else if (selectId.includes("category_")) {
         // if (selectId.includes("media") || selectId.includes("audio")) send(MAIN, ["OPEN_FOLDER"], { channel: id, title, path })
         if (selectId.includes("scripture")) activePopup.set("import_scripture")
-        else if (selectId.includes("calendar")) send(IMPORT, ["calendar"], { format: { name: "Calendar", extensions: ["ics"] } })
+        else if (selectId.includes("calendar")) sendMain(Main.IMPORT, { channel: "calendar", format: { name: "Calendar", extensions: ["ics"] } })
         else history({ id: "UPDATE", location: { page: "drawer", id: selectId } })
     } else if (selectId === "overlay") history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
     else if (selectId === "template") history({ id: "UPDATE", location: { page: "drawer", id: "template" } })

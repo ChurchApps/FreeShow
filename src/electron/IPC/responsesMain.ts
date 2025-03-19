@@ -21,6 +21,7 @@ import { closeServers, startServers, updateServerData } from "../servers"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import {
     bundleMediaFiles,
+    checkShowsFolder,
     dataFolderNames,
     doesPathExist,
     getDataFolder,
@@ -32,12 +33,14 @@ import {
     getPaths,
     getSimularPaths,
     getTempPaths,
+    loadFile,
     loadShows,
     locateMediaFile,
     openSystemFolder,
     readExifData,
     readFile,
     selectFiles,
+    selectFilesDialog,
     selectFolder,
     writeFile,
 } from "../utils/files"
@@ -46,6 +49,7 @@ import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi 
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import checkForUpdates from "../utils/updater"
 import { sendMain } from "./main"
+import { importShow } from "../data/import"
 
 export const mainResponses: MainResponses = {
     [Main.SAVE]: async (a) => {
@@ -83,6 +87,9 @@ export const mainResponses: MainResponses = {
     [Main.MINIMIZE]: () => getMainWindow()?.minimize(),
     [Main.FULLSCREEN]: () => getMainWindow()?.setFullScreen(!getMainWindow()?.isFullScreen()),
     /////////////////////////
+    [Main.IMPORT]: (data) => startImport(data),
+    [Main.BIBLE]: (data) => loadScripture(data),
+    [Main.SHOW]: (data) => loadShow(data),
     // MAIN
     [Main.SHOWS]: (data) => {
         if (userDataPath === null) updateDataPath()
@@ -178,6 +185,40 @@ export const mainResponses: MainResponses = {
     [Main.PCO_DISCONNECT]: () => pcoDisconnect(),
 }
 
+// IMPORT
+export function startImport(data: { channel: string; format: any; settings: any }) {
+    let files: string[] = selectFilesDialog("", data.format)
+
+    let needsFileAndNoFileSelected = data.format.extensions && !files.length
+    if (needsFileAndNoFileSelected) return
+
+    importShow(data.channel, files || null, data.settings)
+}
+
+// BIBLE
+export function loadScripture(msg: { id: string; path: string; name: string; data: any }) {
+    let bibleFolder: string = getDataFolder(msg.path || "", dataFolderNames.scriptures)
+    let p: string = path.join(bibleFolder, msg.name + ".fsb")
+
+    let bible: any = loadFile(p, msg.id)
+
+    // pre v0.5.6
+    if (bible.error) p = path.join(app.getPath("documents"), "Bibles", msg.name + ".fsb")
+    bible = loadFile(p, msg.id)
+
+    if (msg.data) bible.data = msg.data
+    return bible
+}
+
+// SHOW
+export function loadShow(msg: { id: string; path: string; name: string }) {
+    let p: string = checkShowsFolder(msg.path || "")
+    p = path.join(p, (msg.name || msg.id) + ".show")
+    let show: any = loadFile(p, msg.id)
+
+    return show
+}
+
 function getOS() {
     return { platform: os.platform(), name: os.hostname(), arch: os.arch() } as OS
 }
@@ -240,7 +281,6 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
 }
 
 export function forceCloseApp() {
-    // toApp(MAIN, { channel: "ALERT", data: "actions.closing" })
     sendMain(ToMain.ALERT, "actions.closing")
     // let user read message and action finish
     setTimeout(exitApp, 2000)

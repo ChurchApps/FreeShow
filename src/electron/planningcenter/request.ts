@@ -2,8 +2,10 @@ import path from "path"
 import { uid } from "uid"
 import { toApp } from ".."
 import { MAIN } from "../../types/Channels"
+import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Slide } from "../../types/Show"
 import { downloadMedia } from "../data/downloadMedia"
+import { sendMain } from "../IPC/main"
 import { dataFolderNames, getDataFolder } from "../utils/files"
 import { httpsRequest } from "../utils/requests"
 import { PCO_API_URL, pcoConnect, type PCOScopes } from "./connect"
@@ -19,7 +21,7 @@ type PCORequestData = {
 export async function pcoRequest(data: PCORequestData): Promise<any> {
     const PCO_ACCESS = await pcoConnect(data.scope)
     if (!PCO_ACCESS) {
-        toApp(MAIN, { channel: "ALERT", data: "Not authorized at Planning Center (try logging out and in again)!" })
+        sendMain(ToMain.ALERT, "Not authorized at Planning Center (try logging out and in again)!")
         return null
     }
 
@@ -37,7 +39,7 @@ export async function pcoRequest(data: PCORequestData): Promise<any> {
             if (err) {
                 console.log(path, err)
                 let message = err.message?.includes("401") ? "Make sure you have created some 'services' in your account!" : err.message
-                toApp(MAIN, { channel: "ALERT", data: "Could not get data! " + message })
+                sendMain(ToMain.ALERT, "Could not get data! " + message)
                 return resolve(null)
             }
 
@@ -63,7 +65,7 @@ export async function pcoLoadServices(dataPath: string) {
     })
 
     if (!SERVICE_TYPES[0]?.id) return
-    toApp(MAIN, { channel: "TOAST", data: "Getting schedules from Planning Center" })
+    sendMain(ToMain.TOAST, "Getting schedules from Planning Center")
 
     let projects: any[] = []
     let shows: Show[] = []

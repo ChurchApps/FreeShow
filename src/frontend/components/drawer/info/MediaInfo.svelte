@@ -1,16 +1,16 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { FILE_INFO, MAIN } from "../../../../types/Channels"
+    import { MAIN } from "../../../../types/Channels"
     import { activeRecording, activeShow, drawerTabsData } from "../../../stores"
     import { destroy, send } from "../../../utils/request"
+    import { videoExtensions } from "../../../values/extensions"
     import { formatBytes } from "../../helpers/bytes"
     import { getExtension, getFileName, getMediaInfo, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import Date from "../../system/Date.svelte"
     import LiveInfo from "../live/LiveInfo.svelte"
     import PlayerInfo from "./PlayerInfo.svelte"
-    import { videoExtensions } from "../../../values/extensions"
 
     $: name = $activeShow?.name || ""
     $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http") && !$activeShow?.id.includes("data:")) {
@@ -27,11 +27,14 @@
     }
 
     let listenerId = uid()
-    onDestroy(() => destroy(FILE_INFO, listenerId))
+    onDestroy(() => destroy(MAIN, listenerId))
 
     let info: any = {}
-    window.api.receive(FILE_INFO, receiveContent, listenerId)
-    function receiveContent(data: any) {
+    window.api.receive(MAIN, receiveContent, listenerId)
+    function receiveContent(msg: any) {
+        if (msg.channel !== "FILE_INFO") return
+        const data = msg.data
+
         info = { ...data.stat, extension: data.extension }
         if (!name) name = removeExtension(getFileName(data.path))
     }

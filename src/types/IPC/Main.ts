@@ -4,11 +4,12 @@ import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type os from "os"
 import type { stores } from "../../electron/data/store"
+import type { Bible } from "../Bible"
 import type { ErrorLog, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
 import type { Dictionary, Resolution, Themes } from "../Settings"
-import type { Overlays, Shows, Templates } from "../Show"
+import type { Overlays, Show, Shows, Templates } from "../Show"
 import type { StageLayouts } from "../Stage"
 import type { Event } from "./../Calendar"
 import type { History } from "./../History"
@@ -47,6 +48,9 @@ export enum Main {
     MINIMIZE = "MINIMIZE",
     FULLSCREEN = "FULLSCREEN",
     /////
+    IMPORT = "IMPORT",
+    BIBLE = "BIBLE",
+    SHOW = "SHOW",
     SAVE = "SAVE",
     ///////////////////
     ////
@@ -122,13 +126,15 @@ export interface MainSendPayloads {
     // DEV
     [Main.LOG]: any
     /////
+    [Main.IMPORT]: { channel: string; format: any; settings: any }
+    [Main.BIBLE]: { id: string; path: string; name: string; data: any }
+    [Main.SHOW]: { id: string; path: string; name: string }
     [Main.SAVE]: SaveData
     [Main.SHOWS]: { showsPath: string }
     ////////////
     [Main.URL]: string
     [Main.LANGUAGE]: { lang: string; strings: Dictionary }
     [Main.LOG_ERROR]: ErrorLog
-    [Main.GET_DISPLAYS]: Display[]
     [Main.GET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string }
     [Main.SET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string; value: any }
     [Main.DELETE_SHOWS]: { shows: { id: string; name: string }[]; path: string }
@@ -203,6 +209,10 @@ export interface MainReturnPayloads {
     // WINDOW
     [Main.MAXIMIZED]: boolean
     /////////////////////
+    [Main.BIBLE]: [string, Bible]
+    [Main.SHOW]: [string, Show]
+    ///
+    [Main.GET_DISPLAYS]: Display[]
     [Main.GET_SYSTEM_FONTS]: Promise<{ fonts: Family[] }>
     [Main.GET_PATHS]: MainFilePaths
     [Main.SHOWS_PATH]: string
@@ -210,11 +220,16 @@ export interface MainReturnPayloads {
     [Main.GET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string; value: any }
     [Main.DELETE_SHOWS]: { deleted: string[] }
     [Main.DELETE_SHOWS_NI]: { deleted: string[] } | undefined
+    [Main.GET_EMPTY_SHOWS]: Promise<{ id: string; name: string }[] | undefined>
+    [Main.FULL_SHOWS_LIST]: string[]
     [Main.GET_SCREENS]: Promise<{ name: string; id: string }[]>
     [Main.GET_WINDOWS]: Promise<{ name: string; id: string }[]>
+    [Main.GET_THUMBNAIL]: { output: string; input: string; size: number }
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData }>
+    [Main.MEDIA_CODEC]: Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }>
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
+    [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | undefined>
     [Main.SLIDESHOW_GET_APPS]: string[]
     [Main.RECEIVE_MIDI]: Promise<{ id: string; values: any; type: "noteon" | "noteoff" } | null>
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
@@ -222,6 +237,7 @@ export interface MainReturnPayloads {
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
     [Main.DOES_PATH_EXIST]: { path: string; dataPath: string; exists: boolean }
+    [Main.GET_SIMULAR]: { path: string; name: string }[]
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
     [Main.READ_FOLDER]: { path: string; files: any[]; filesInFolders: string[]; folderFiles: { [key: string]: any[] } }

@@ -1,29 +1,11 @@
 import { get } from "svelte/store"
-import { CLOUD, CONTROLLER, IMPORT, NDI, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
+import { CLOUD, CONTROLLER, NDI, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { AudioAnalyser } from "../audio/audioAnalyser"
 import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
 import { clone } from "../components/helpers/array"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
-import { importBibles } from "../converters/bible"
-import { convertCalendar } from "../converters/calendar"
-import { convertChordPro } from "../converters/chordpro"
-import { convertEasyslides } from "../converters/easyslides"
-import { convertEasyWorship } from "../converters/easyworship"
-import { importShow, importSpecific } from "../converters/importHelpers"
-import { convertLessonsPresentation } from "../converters/lessonsChurch"
-import { convertOpenLP } from "../converters/openlp"
-import { convertOpenSong } from "../converters/opensong"
-import { convertPowerpoint } from "../converters/powerpoint"
-import { addToProject, importProject } from "../converters/project"
-import { convertProPresenter } from "../converters/propresenter"
-import { convertQuelea } from "../converters/quelea"
-import { convertSoftProjector } from "../converters/softprojector"
-import { convertSongbeamerFiles } from "../converters/songbeamer"
-import { convertTexts } from "../converters/txt"
-import { convertVerseVIEW } from "../converters/verseview"
-import { convertVideopsalm } from "../converters/videopsalm"
 import { receiveMain } from "../IPC/main"
 import {
     activePopup,
@@ -57,7 +39,6 @@ import {
     stageShows,
     styles,
     templates,
-    themes,
     timeFormat,
     timers,
     transitionData,
@@ -81,7 +62,6 @@ export function setupMainReceivers() {
     receiveMain()
 
     receive(OUTPUT, receiveOUTPUTasMAIN)
-    receive(IMPORT, receiveIMPORT)
     receive(NDI, receiveNDI)
     receive(CLOUD, receiveCLOUD)
 }
@@ -401,38 +381,4 @@ const receiveCLOUD = {
         // popupData.set({})
         // activePopup.set(null)
     },
-}
-
-// IMPORT
-
-const receiveIMPORT: any = {
-    // FreeShow
-    freeshow: (a: any) => importShow(a),
-    freeshow_project: (a: any) => importProject(a),
-    freeshow_template: (a: any) => importSpecific(a, templates),
-    freeshow_theme: (a: any) => importSpecific(a, themes),
-    // Text
-    txt: (a: any) => convertTexts(a),
-    chordpro: (a: any) => convertChordPro(a),
-    powerpoint: (a: any) => convertPowerpoint(a),
-    word: (a: any) => convertTexts(a),
-    // Other programs
-    propresenter: (a: any) => convertProPresenter(a),
-    easyworship: (a: any) => convertEasyWorship(a),
-    videopsalm: (a: any) => convertVideopsalm(a),
-    openlp: (a: any) => convertOpenLP(a),
-    opensong: (a: any) => convertOpenSong(a),
-    quelea: (a: any) => convertQuelea(a),
-    softprojector: (a: any) => convertSoftProjector(a),
-    songbeamer: (a: any) => convertSongbeamerFiles(a),
-    easyslides: (a: any) => convertEasyslides(a),
-    verseview: (a: any) => convertVerseVIEW(a),
-    // Media
-    pdf: (a: any) => addToProject("pdf", a),
-    powerkey: (a: any) => addToProject("ppt", a),
-    lessons: (a: any) => convertLessonsPresentation(a),
-    // Other
-    calendar: (a: any) => convertCalendar(a),
-    // Bibles
-    BIBLE: (a: any) => importBibles(a),
 }

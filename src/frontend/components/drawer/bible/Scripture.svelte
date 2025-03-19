@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { BIBLE } from "../../../../types/Channels"
+    import { MAIN } from "../../../../types/IPC/Main"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
     import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, os, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, scriptureSettings, selected } from "../../../stores"
     import { newToast } from "../../../utils/common"
@@ -181,15 +181,18 @@
     }
 
     let listenerId = uid()
-    onDestroy(() => destroy(BIBLE, listenerId))
+    onDestroy(() => destroy(MAIN, listenerId))
 
     let notLoaded: boolean = false
-    window.api.receive(BIBLE, receiveContent, listenerId)
+    window.api.receive(MAIN, receiveContent, listenerId)
     function receiveContent(msg: any) {
-        if (msg.error === "not_found") {
+        if (msg.channel !== "BIBLE") return
+        const data = msg.data
+
+        if (data.error === "not_found") {
             notLoaded = true
             notFound.update((a) => {
-                a.bible.push({ id: msg.id })
+                a.bible.push({ id: data.id })
                 return a
             })
 
@@ -197,13 +200,13 @@
         }
 
         if (!bibles) return console.error("could not find bibles")
-        let currentIndex = msg.data?.index || 0
+        let currentIndex = data.data?.index || 0
         if (!bibles[currentIndex]) return console.error("could not find bible at index")
 
         const content = receiveBibleContent(msg)
         bibles[currentIndex] = content
 
-        let id = msg.content[0] || msg.id
+        let id = data.content[0] || data.id
         books[id] = content.books as any
 
         if (typeof bookId === "string") bookId = 0

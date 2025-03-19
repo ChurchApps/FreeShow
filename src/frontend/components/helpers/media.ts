@@ -3,12 +3,14 @@
 
 import { get } from "svelte/store"
 import { MAIN } from "../../../types/Channels"
+import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Subtitle } from "../../../types/Main"
 import type { Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
+import { requestMain } from "../../IPC/main"
 import { loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
-import { awaitRequest, send } from "../../utils/request"
+import { send } from "../../utils/request"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
 import { clone } from "./array"
@@ -104,7 +106,7 @@ export async function getSlideThumbnail(data: API_slide_thumbnail) {
     if (!data.layoutId) data.layoutId = outSlide?.layout
     if (data.index === undefined) data.index = outSlide?.index
 
-    if (!data?.showId) return
+    if (!data?.showId) return ""
 
     let output = clone(get(outputs)[outputId])
     if (!output.out) output.out = {}
@@ -113,8 +115,8 @@ export async function getSlideThumbnail(data: API_slide_thumbnail) {
     let resolution: any = getOutputResolution(outputId)
     resolution = { width: resolution.width * 0.5, height: resolution.height * 0.5 }
 
-    const thumbnail = await awaitRequest(MAIN, "CAPTURE_SLIDE", { output: { [outputId]: output }, resolution })
-    return thumbnail.base64
+    const thumbnail = await requestMain(Main.CAPTURE_SLIDE, { output: { [outputId]: output }, resolution })
+    return thumbnail?.base64 || ""
 }
 
 // convert to base64
@@ -177,7 +179,7 @@ export async function getMediaInfo(path: string) {
 
     let info
     try {
-        info = await awaitRequest(MAIN, "MEDIA_CODEC", { path })
+        info = await requestMain(Main.MEDIA_CODEC, { path })
     } catch (err) {
         return {}
     }
@@ -273,11 +275,11 @@ export async function loadThumbnail(input: string, size: number) {
     let loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
-    let data = await awaitRequest(MAIN, "GET_THUMBNAIL", { input, size })
+    let data = await requestMain(Main.GET_THUMBNAIL, { input, size })
     if (!data) return ""
 
     thumbnailLoaded(data)
-    return data.output as string
+    return data.output
 }
 
 export function getThumbnailPath(input: string, size: number) {
