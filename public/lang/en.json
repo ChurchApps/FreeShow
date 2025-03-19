@@ -1166,6 +1166,7 @@
         "resolution": "Resolution",
         "aspect_ratio": "Aspect ratio",
         "output_resolution_ratio": "Use output resolution aspect ratio",
+        "font_size_ratio": "Font size ratio",
         "cropping": "Cropping",
         "frame_rate": "Frame rate",
         "device": "Device",

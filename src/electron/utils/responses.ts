@@ -227,7 +227,7 @@ async function searchLyrics({ artist, title }: any) {
 // GET_LYRICS
 async function getLyrics({ song }: any) {
     const lyrics = await LyricSearch.get(song)
-    toApp("MAIN", { channel: "GET_LYRICS", data: { lyrics, source: song.source } })
+    toApp("MAIN", { channel: "GET_LYRICS", data: { lyrics, source: song.source, title: song.title } })
 }
 
 // GET DEVICE MEDIA PERMISSION

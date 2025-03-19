@@ -162,12 +162,4 @@
     div :global(input) {
         background: var(--primary);
     }
-
-    canvas {
-        pointer-events: none;
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-    }
 </style>

@@ -595,7 +595,7 @@
             findMatches = findMatches.filter((a) => !hasNumber(a.name))
         }
 
-        let exactMatch = findMatches.find((a: any) => a.name === searchValues.bookName)
+        let exactMatch = findMatches.find((a: any) => a.name === searchValues.bookName || a.name === searchValue)
         if (!exactMatch && findMatches.length !== 1) {
             // autocomplete e.g. "First ..."
             const firstWordMatch = [...new Set(findMatches.map((a) => a.name.split(" ")[0]))]

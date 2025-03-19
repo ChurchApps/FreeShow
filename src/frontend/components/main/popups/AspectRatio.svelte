@@ -118,6 +118,13 @@
     </div>
 {/if}
 
+<CombinedInput>
+    <p><T id="settings.font_size_ratio" /></p>
+    <div class="inputs">
+        <NumberInput style="flex: 1;" value={active.fontSizeRatio ?? 100} min={10} max={500} step={10} buttons={false} on:change={(e) => setAspectRatio({ ...active, fontSizeRatio: Number(e.detail) })} />
+    </div>
+</CombinedInput>
+
 <style>
     .grid {
         display: flex;

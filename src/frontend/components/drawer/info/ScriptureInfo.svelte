@@ -188,7 +188,7 @@
             let newItem = {
                 id: bibles[0].id,
                 book: bibles[0].bookId,
-                chapter: bibles[0].api ? bibles[0].chapter : Number(bibles[0].chapter) - 1,
+                chapter: Number(bibles[0].chapter) - 1,
                 verse: sorted[0],
                 reference: `${bibles[0].book} ${bibles[0].chapter}:${sorted[0]}`,
                 text: bibles[0].verses[sorted[0]],
