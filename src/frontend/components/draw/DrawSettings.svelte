@@ -48,6 +48,7 @@
         paint: {
             color: "#ffffff",
             size: 10,
+            straight: false,
             // not saved:
             threed: false,
             dots: false,
@@ -94,7 +95,7 @@
                                         {/if}
                                         {#if key === "color"}
                                             <Color {value} on:input={(e) => change(e, key)} style="width: 100%;" />
-                                        {:else if ["glow", "hold", "rainbow", "hollow", "dots", "threed"].includes(key)}
+                                        {:else if ["glow", "hold", "rainbow", "hollow", "straight", "dots", "threed"].includes(key)}
                                             <div class="alignRight">
                                                 <Checkbox checked={value} on:change={(e) => check(e, key)} />
                                             </div>
