@@ -12,7 +12,7 @@ export function requestMainMultiple<T extends Main>(object: { [K in T]: (data: M
 
 let currentlyAwaiting: string[] = []
 // @ts-ignore
-export async function requestMain<ID extends Main, V, R = MainReturnPayloads[ID]>(id: ID, value?: MainSendValue<ID, V>, callback?: (data: R) => void) {
+export async function requestMain<ID extends Main, V, R = MainReturnPayloads[ID]>(id: ID, value?: MainSendValue<ID, V>, callback?: (data: Awaited<R>) => void) {
     let listenerId = id + uid(5)
     currentlyAwaiting.push(listenerId)
 
@@ -21,7 +21,7 @@ export async function requestMain<ID extends Main, V, R = MainReturnPayloads[ID]
     // LISTENER
     const waitingTimeout = 8000
     let timeout: NodeJS.Timeout | null = null
-    const returnData: R = await new Promise((resolve) => {
+    const returnData: Awaited<R> = await new Promise((resolve) => {
         timeout = setTimeout(() => {
             throw new Error("IPC Message Timed Out!")
         }, waitingTimeout)
@@ -46,7 +46,7 @@ export async function requestMain<ID extends Main, V, R = MainReturnPayloads[ID]
     return returnData
 }
 
-export function sendMain<ID extends Main, V>(id: ID, value?: MainSendValue<ID, V>) {
+export function sendMain<ID extends Main>(id: ID, value?: MainSendValue<ID>) {
     if (!Object.values(Main).includes(id)) throw new Error(`Invalid channel: ${id}`)
     if (!window.api) return
 
@@ -60,6 +60,6 @@ export async function receiveMain() {
         if (!mainResponses[id]) return // console.error(`No response for channel: ${id}`)
 
         const data = msg.data // MainReturnPayloads[Main]
-        mainResponses[id](data) as MainReceiveData<Main> | ToMainReceiveData<ToMain> // const response =
+        ;(mainResponses[id] as any)(data) as MainReceiveData<Main> | ToMainReceiveData<ToMain> // const response =
     })
 }

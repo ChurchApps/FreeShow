@@ -1,31 +1,33 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain, sendMain } from "../../../IPC/main"
     import { activePopup, dataPath, guideActive, showsPath, timeFormat } from "../../../stores"
+    import { createData } from "../../../utils/createData"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import FolderPicker from "../../inputs/FolderPicker.svelte"
     import LocaleSwitcher from "../../settings/LocaleSwitcher.svelte"
-    import { send } from "../../../utils/request"
-    import Checkbox from "../../inputs/Checkbox.svelte"
-    import { Main } from "../../../../types/IPC/Main"
-    import { requestMain } from "../../../IPC/main"
-    import { createData } from "../../../utils/createData"
 
     // const setAutoOutput = (e: any) => autoOutput.set(e.target.checked)
 
     onMount(() => {
-        if (!$dataPath) send(MAIN, ["DATA_PATH", "SHOWS_PATH"])
+        if (!$dataPath) {
+            sendMain(Main.DATA_PATH)
+            sendMain(Main.SHOWS_PATH)
+        }
     })
 
     function create(e: any) {
         if (e.target.closest(".main") && !e.target.closest(".start")) return
 
-        if (!$showsPath) send(MAIN, ["SHOWS_PATH"])
         requestMain(Main.GET_PATHS, undefined, (a) => createData(a))
-        send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
+
+        if ($showsPath) sendMain(Main.REFRESH_SHOWS, { path: $showsPath })
+        else sendMain(Main.SHOWS_PATH)
 
         guideActive.set(true)
         activePopup.set(null)

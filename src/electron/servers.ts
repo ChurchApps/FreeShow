@@ -2,33 +2,47 @@ import { ipcMain } from "electron"
 import express, { Response } from "express"
 import http from "http"
 import { join } from "path"
-import { Server } from "socket.io"
+import { Server, type Socket } from "socket.io"
+import type { Main, MainSendPayloads } from "../types/IPC/Main"
+import type { ServerData } from "../types/Socket"
 import { CaptureHelper } from "./capture/CaptureHelper"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
-let servers: { [key in ServerName]: any } = {
-    REMOTE: { port: 5510 },
-    STAGE: { port: 5511 },
-    CONTROLLER: { port: 5512 },
-    OUTPUT_STREAM: { port: 5513 },
-    // CAM: { port: 5513 },
+interface ServerValues {
+    port: number
+    server: http.Server
+    io: Server
+    max: number
+    connections: { [key: string]: { name: string } }
+    data: ServerData
 }
-let ioServers: { [key in ServerName]?: any } = {}
+
+const ports: { [key in ServerName]: number } = {
+    REMOTE: 5510,
+    STAGE: 5511,
+    CONTROLLER: 5512,
+    OUTPUT_STREAM: 5513,
+    // CAM: 5513,
+}
+
+let servers: { [key in ServerName]?: ServerValues } = {}
+let ioServers: { [key in ServerName]?: Server } = {}
 
 createServers()
 function createServers() {
-    let serverList = Object.keys(servers) as ServerName[]
-    serverList.forEach((id: ServerName) => {
+    let serverList = Object.keys(ports) as ServerName[]
+    serverList.forEach((id) => {
         let app = express()
         let server = http.createServer(app)
 
-        app.get("/", (_req: any, res: Response) => res.sendFile(join(__dirname, id.toLowerCase(), "index.html")))
+        app.get("/", (_req, res: Response) => res.sendFile(join(__dirname, id.toLowerCase(), "index.html")))
         app.use(express.static(join(__dirname, id.toLowerCase())))
 
         servers[id] = {
             ...servers[id],
+            port: ports[id],
             server,
             io: new Server(server),
             max: 10,
@@ -36,35 +50,35 @@ function createServers() {
             data: {},
         }
 
-        createBridge({ id, ...servers[id] })
+        createBridge(id, servers[id]!)
     })
 }
 
 var started: boolean = false
-export function startServers({ ports, max, disabled, data }: { ports: { [key: string]: number }; max: number; disabled: { [key: string]: boolean }; data: { [key: string]: any } }) {
+export function startServers({ ports, max, disabled, data }: MainSendPayloads[Main.SERVER_DATA]) {
     if (started) closeServers()
     started = true
 
     let serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {
-        if (disabled[id.toLowerCase()] !== false) return
+        if (!servers[id] || disabled[id.toLowerCase()] !== false) return
 
-        servers[id].max = max
-        if (ports[id.toLowerCase()]) servers[id].port = ports[id.toLowerCase()]
+        servers[id]!.max = max
+        if (ports[id.toLowerCase()]) servers[id]!.port = ports[id.toLowerCase()]
 
-        servers[id].data = data[id.toLowerCase()] || {}
+        servers[id]!.data = data[id.toLowerCase()] || {}
 
-        servers[id].server.listen(servers[id].port, () => console.log(id + " on: " + servers[id].port))
-        servers[id].server.once("error", (err: any) => {
-            if (err.code === "EADDRINUSE") servers[id].server.close()
+        servers[id]!.server.listen(servers[id]!.port, () => console.log(id + " on: " + servers[id]!.port))
+        servers[id]!.server.once("error", (err: Error) => {
+            if ((err as any).code === "EADDRINUSE") servers[id]!.server.close()
         })
     })
 }
 
-export function updateServerData(data: { [key: string]: any }) {
+export function updateServerData(data: { [key: string]: ServerData }) {
     let serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {
-        servers[id].data = data[id.toLowerCase()] || {}
+        servers[id]!.data = data[id.toLowerCase()] || {}
     })
 }
 
@@ -77,32 +91,32 @@ export function closeServers() {
     let serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {
         if (!servers[id]?.server) return
-        servers[id].server.close()
+        servers[id]!.server.close()
     })
 }
 
-function createBridge(server: any) {
+function createBridge(id: ServerName, server: ServerValues) {
     // RECEIVE CONNECTION FROM CLIENT
-    server.io.on("connection", (socket: any) => {
+    server.io.on("connection", (socket) => {
         if (Object.keys(server.connections).length >= server.max) {
-            server.io.emit(server.id, { channel: "ERROR", id: "overLimit", data: server.max })
+            server.io.emit(id, { channel: "ERROR", id: "overLimit", data: server.max })
             socket.disconnect()
             return
         }
 
-        initialize(server.id, socket)
+        initialize(id, socket)
     })
 
     // SEND DATA FROM APP TO CLIENT
-    ioServers[server.id as ServerName] = server.io
-    ipcMain.on(server.id, (_e, msg) => {
-        if (msg.id) server.io.to(msg.id).emit(server.id, msg)
-        else server.io.emit(server.id, msg)
+    ioServers[id] = server.io
+    ipcMain.on(id, (_e, msg) => {
+        if (msg.id) server.io.to(msg.id).emit(id, msg)
+        else server.io.emit(id, msg)
     })
 }
 
 export function toServer(id: ServerName, msg: any) {
-    ioServers[id].emit(id, msg)
+    ioServers[id]?.emit(id, msg)
 }
 
 export function getConnections(id: ServerName) {
@@ -111,13 +125,13 @@ export function getConnections(id: ServerName) {
 
 // FUNCTIONS
 
-function initialize(id: ServerName, socket: any) {
+function initialize(id: ServerName, socket: Socket) {
     let name: string = getOS(socket.handshake.headers["user-agent"] || "")
     toApp(id, { channel: "CONNECTION", id: socket.id, data: { name } })
-    servers[id].connections[socket.id] = { name }
+    servers[id]!.connections[socket.id] = { name }
 
     // SEND DATA FROM CLIENT TO APP
-    socket.on(id, async (msg: any) => {
+    socket.on(id, async (msg) => {
         if (msg.channel === "OUTPUT_FRAME") {
             const window = OutputHelper.getOutput(msg.data.outputId)?.window
             if (!window || window.isDestroyed()) return
@@ -132,9 +146,9 @@ function initialize(id: ServerName, socket: any) {
     socket.on("disconnect", () => disconnect(id, socket))
 }
 
-function disconnect(id: ServerName, socket: any) {
+function disconnect(id: ServerName, socket: Socket) {
     toApp(id, { channel: "DISCONNECT", id: socket.id })
-    delete servers[id].connections[socket.id]
+    delete servers[id]!.connections[socket.id]
 }
 
 // https://stackoverflow.com/a/59706252

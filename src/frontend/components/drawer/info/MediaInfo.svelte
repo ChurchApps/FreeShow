@@ -2,8 +2,10 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import { activeRecording, activeShow, drawerTabsData } from "../../../stores"
-    import { destroy, send } from "../../../utils/request"
+    import { destroy } from "../../../utils/request"
     import { videoExtensions } from "../../../values/extensions"
     import { formatBytes } from "../../helpers/bytes"
     import { getExtension, getFileName, getMediaInfo, removeExtension } from "../../helpers/media"
@@ -16,7 +18,7 @@
     $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http") && !$activeShow?.id.includes("data:")) {
         info = {}
         codecInfo = {}
-        send(MAIN, ["FILE_INFO"], $activeShow?.id)
+        sendMain(Main.FILE_INFO, $activeShow?.id)
         getCodecInfo()
     }
 

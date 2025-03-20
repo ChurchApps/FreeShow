@@ -2,10 +2,12 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN } from "../../../../types/Channels"
-    import { destroy, send } from "../../../utils/request"
+    import { sendMain } from "../../../IPC/main"
+    import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { getThumbnailPath, isMediaExtension, mediaSize } from "../../helpers/media"
     import Card from "../Card.svelte"
+    import { Main } from "../../../../types/IPC/Main"
 
     export let rootPath: string
     export let name: string
@@ -18,7 +20,7 @@
 
     let listenerId = uid()
     // WIP this creates one listener per individual folder...
-    $: if (folderPreview && mode === "grid" && path) send(MAIN, ["READ_FOLDER"], { path, disableThumbnails: true })
+    $: if (folderPreview && mode === "grid" && path) sendMain(Main.READ_FOLDER, { path, disableThumbnails: true })
     onDestroy(() => destroy(MAIN, listenerId))
 
     window.api.receive(MAIN, receiveContent, listenerId)

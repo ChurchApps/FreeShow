@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import type { Media, Show, Slide, SlideData } from "../../../types/Show"
+    import { sendMain } from "../../IPC/main"
     import {
         activeEdit,
         activePage,
@@ -28,7 +29,6 @@
         textEditActive,
     } from "../../stores"
     import { wait } from "../../utils/common"
-    import { send } from "../../utils/request"
     import { slideHasAction } from "../actions/actions"
     import { removeTagsAndContent } from "../drawer/bible/scripture"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
@@ -133,7 +133,7 @@
         // check for other potentially mathing mediaFolders
         if (!exists) {
             let fileName = getFileName(path)
-            send(MAIN, ["LOCATE_MEDIA_FILE"], { fileName, splittedPath: splitPath(path), folders, ref: { showId, mediaId: fileId, cloudId: checkCloud ? cloudId : "" } })
+            sendMain(Main.LOCATE_MEDIA_FILE, { fileName, splittedPath: splitPath(path), folders, ref: { showId, mediaId: fileId, cloudId: checkCloud ? cloudId : "" } })
             return
         }
 

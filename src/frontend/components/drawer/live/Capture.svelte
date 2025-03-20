@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import { outputs } from "../../../stores"
     import { findMatchingOut } from "../../helpers/output"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -60,7 +61,7 @@
                 console.log(err.name + ": " + msg)
 
                 // if (err.name === "NotReadableError") {
-                window.api.send(MAIN, { channel: "ACCESS_SCREEN_PERMISSION" })
+                sendMain(Main.ACCESS_SCREEN_PERMISSION)
                 // }
 
                 // retry

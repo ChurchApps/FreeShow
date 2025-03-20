@@ -1,5 +1,8 @@
 import { get } from "svelte/store"
-import { MAIN, OUTPUT } from "../../types/Channels"
+import { OUTPUT } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
+import type { Dictionary } from "../../types/Settings"
+import { sendMain } from "../IPC/main"
 import { currentWindow, dictionary, language } from "../stores"
 import { replace } from "./languageData"
 import { send } from "./request"
@@ -32,7 +35,7 @@ function setLanguage(locale: string = "", init: boolean = false) {
         .then((response) => response.json())
         .then(returnedFile)
 
-    async function returnedFile(messages) {
+    async function returnedFile(messages: Dictionary) {
         // replace any missing keys in dictionary with fallback english string
         if (locale !== "en") {
             let defaultStrings = await (await fetch(defaultPath)).json()
@@ -41,7 +44,8 @@ function setLanguage(locale: string = "", init: boolean = false) {
                 if (!messages[key]) messages[key] = defaultStrings[key]
                 else {
                     Object.keys(defaultStrings[key]).forEach((stringId) => {
-                        if (!messages[key][stringId]) messages[key][stringId] = defaultStrings[key][stringId]
+                        if (!messages[key]) messages[key] = defaultStrings[key] || {}
+                        if (!messages[key]![stringId]) messages[key]![stringId] = defaultStrings[key][stringId]
                     })
                 }
             })
@@ -56,7 +60,7 @@ function setLanguage(locale: string = "", init: boolean = false) {
         language.set(locale)
 
         let msg = { lang: locale, strings: messages }
-        send(MAIN, ["LANGUAGE"], msg)
+        sendMain(Main.LANGUAGE, msg)
         // remoteTalk.ts sends this
         // send(REMOTE, ["LANGUAGE"], msg)
         // wait until loaded

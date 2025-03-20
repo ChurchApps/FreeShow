@@ -1,5 +1,4 @@
 import { get } from "svelte/store"
-import { MAIN } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
 import { clone, keysToID } from "../components/helpers/array"
@@ -134,7 +133,8 @@ export function updateSettings(data: any) {
     let disabled = data.disabledServers || {}
     if (disabled.remote === undefined) disabled.remote = false
     if (disabled.stage === undefined) disabled.stage = false
-    send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled, data: get(serverData) })
+    const ports: { [key: string]: number } = data.ports || { remote: 5510, stage: 5511 }
+    sendMain(Main.START, { ports, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled, data: get(serverData) })
 
     // theme
     let currentTheme = get(themes)[data.theme]
@@ -220,14 +220,14 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         if (v) projectView.set(false)
     },
     showsPath: (v: any) => {
-        if (!v) send(MAIN, ["SHOWS_PATH"])
+        if (!v) sendMain(Main.SHOWS_PATH)
         else showsPath.set(v)
 
         // LOAD SHOWS FROM FOLDER
         sendMain(Main.SHOWS, { showsPath: v })
     },
     dataPath: (v: any) => {
-        if (!v) send(MAIN, ["DATA_PATH"])
+        if (!v) sendMain(Main.DATA_PATH)
         else dataPath.set(v)
     },
     lockedOverlays: (v: any) => {
@@ -311,13 +311,13 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
 
         if (v.enabled) {
             setTimeout(() => {
-                send(MAIN, ["WEBSOCKET_START"], get(ports).companion)
+                sendMain(Main.WEBSOCKET_START, get(ports).companion)
             }, 3000)
         }
     },
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God
-        if (v.autoUpdates !== false) send(MAIN, ["AUTO_UPDATE"])
+        if (v.autoUpdates !== false) sendMain(Main.AUTO_UPDATE)
         special.set(v)
     },
 }

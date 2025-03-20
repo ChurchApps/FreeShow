@@ -1,9 +1,12 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { MAIN } from "../../../../../types/Channels"
+    import { Main } from "../../../../../types/IPC/Main"
+    import type { LyricSearchResult } from "../../../../../types/Main"
+    import { sendMain } from "../../../../IPC/main"
     import { dictionary, special } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
-    import { destroy, receive, send } from "../../../../utils/request"
+    import { destroy, receive } from "../../../../utils/request"
     import Icon from "../../../helpers/Icon.svelte"
     import T from "../../../helpers/T.svelte"
     import Button from "../../../inputs/Button.svelte"
@@ -11,14 +14,6 @@
     import Loader from "../../Loader.svelte"
 
     export let query: string
-
-    type LyricSearchResult = {
-        source: string
-        key: string
-        artist: string
-        title: string
-        originalQuery: string
-    }
 
     let songs: LyricSearchResult[] | null = null
 
@@ -33,7 +28,7 @@
             return
         }
 
-        send(MAIN, ["SEARCH_LYRICS"], { artist, title })
+        sendMain(Main.SEARCH_LYRICS, { artist, title })
         loading = true
 
         // loadTimeout = setTimeout(() => {
@@ -43,7 +38,7 @@
     }
 
     function getLyrics(song: LyricSearchResult) {
-        send(MAIN, ["GET_LYRICS"], { song })
+        sendMain(Main.GET_LYRICS, { song })
         loading = true
     }
 

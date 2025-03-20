@@ -1,11 +1,13 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { MAIN, OUTPUT } from "../../../types/Channels"
+import { OUTPUT } from "../../../types/Channels"
+import { Main } from "../../../types/IPC/Main"
 import type { Output } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
+import { sendMain } from "../../IPC/main"
 import {
     activeRename,
     categories,
@@ -117,7 +119,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
             data = clone(inputData)
 
             if (key === "slide" && data === null && output.out?.slide?.type === "ppt") {
-                send(MAIN, ["PRESENTATION_CONTROL"], { action: "stop" })
+                sendMain(Main.PRESENTATION_CONTROL, { action: "stop" })
             }
 
             if (key === "background") {

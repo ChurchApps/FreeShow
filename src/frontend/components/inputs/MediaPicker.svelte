@@ -2,7 +2,9 @@
     import { createEventDispatcher, onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN } from "../../../types/Channels"
-    import { destroy, send } from "../../utils/request"
+    import { Main } from "../../../types/IPC/Main"
+    import { sendMain } from "../../IPC/main"
+    import { destroy } from "../../utils/request"
     import Button from "./Button.svelte"
 
     export let id: string
@@ -20,7 +22,7 @@
         }
 
         // filter: { name: "Text file", extensions: ["txt"], id: "txt" }
-        send(MAIN, ["OPEN_FILE"], { channel: "MEDIA", id, filter, multiple })
+        sendMain(Main.OPEN_FILE, { channel: "MEDIA", id, filter, multiple })
     }
 
     let listenerId = uid()

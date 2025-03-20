@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import { os, outputs } from "../../../stores"
     import { findMatchingOut } from "../../helpers/output"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -54,7 +55,7 @@
                 let msg: string = err.message
                 if (err.name === "NotReadableError") {
                     msg += "<br />Maybe it's in use by another program."
-                    window.api.send(MAIN, { channel: "ACCESS_CAMERA_PERMISSION" })
+                    sendMain(Main.ACCESS_CAMERA_PERMISSION)
                 }
                 error = err.name + ":<br />" + msg
                 loaded = true

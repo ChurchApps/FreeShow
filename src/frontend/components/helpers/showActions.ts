@@ -1,9 +1,11 @@
 import { get } from "svelte/store"
-import { MAIN, OUTPUT } from "../../../types/Channels"
+import { OUTPUT } from "../../../types/Channels"
+import { Main } from "../../../types/IPC/Main"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { AudioPlayer } from "../../audio/audioPlayer"
+import { sendMain } from "../../IPC/main"
 import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
@@ -174,7 +176,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
     // PPT
     if (slide?.type === "ppt") {
-        send(MAIN, ["PRESENTATION_CONTROL"], { action: e?.key === "PageDown" ? "last" : "next" })
+        sendMain(Main.PRESENTATION_CONTROL, { action: e?.key === "PageDown" ? "last" : "next" })
         return
     }
 
@@ -404,7 +406,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     // PPT
     if (slide?.type === "ppt") {
-        send(MAIN, ["PRESENTATION_CONTROL"], { action: e?.key === "PageUp" ? "first" : "previous" })
+        sendMain(Main.PRESENTATION_CONTROL, { action: e?.key === "PageUp" ? "first" : "previous" })
         return
     }
 
@@ -948,7 +950,7 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
 }
 
 export function sendMidi(data: any) {
-    send(MAIN, ["SEND_MIDI"], data)
+    sendMain(Main.SEND_MIDI, data)
 }
 
 export function activateTriggerSync(triggerId: string) {

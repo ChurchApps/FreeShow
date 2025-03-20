@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
     import type { Show } from "../../../types/Show"
+    import { sendMain } from "../../IPC/main"
     import { activeDrawerTab, activeShow, drawer, labelsDisabled, openScripture, scriptures, shows } from "../../stores"
-    import { send } from "../../utils/request"
     import { createSlides, getDateString, getSelectedEvents, sortDays } from "../drawer/calendar/calendar"
     import { history } from "../helpers/history"
     import { setDrawerTabData } from "../helpers/historyHelpers"
@@ -48,7 +48,7 @@
     }
 
     function openURL(url: string) {
-        send(MAIN, ["URL"], url)
+        sendMain(Main.URL, url)
     }
 
     function removeMarkdownURL(text: string) {

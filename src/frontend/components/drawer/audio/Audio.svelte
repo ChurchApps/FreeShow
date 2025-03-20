@@ -2,9 +2,11 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, effectsLibrary, labelsDisabled, media, outLocked, selectAllAudio, selected } from "../../../stores"
-    import { destroy, send } from "../../../utils/request"
+    import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
@@ -71,13 +73,13 @@
             if (active !== prevActive) {
                 prevActive = active
                 files = []
-                Object.values($audioFolders).forEach((data) => send(MAIN, ["READ_FOLDER"], { path: data.path, disableThumbnails: true }))
+                Object.values($audioFolders).forEach((data) => sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: true }))
             }
         } else if (path.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
-                send(MAIN, ["READ_FOLDER"], { path, listFilesInFolders: true, disableThumbnails: true })
+                sendMain(Main.READ_FOLDER, { path, listFilesInFolders: true, disableThumbnails: true })
             }
         } else {
             // microphones & audio_streams

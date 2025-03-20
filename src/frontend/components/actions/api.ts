@@ -1,8 +1,9 @@
-import { MAIN } from "../../../types/Channels"
+import { Main } from "../../../types/IPC/Main"
 import type { MidiValues, TransitionType } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
+import { sendMain } from "../../IPC/main"
 import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
@@ -292,7 +293,7 @@ export async function triggerAction(data: API) {
     const returnData = await API_ACTIONS[id](data)
     if (!returnId || returnData === undefined) return
 
-    send(MAIN, ["API_TRIGGER"], { ...data, returnId, data: returnData })
+    sendMain(Main.API_TRIGGER, { ...data, returnId, data: returnData })
 }
 
 export function sendDataAPI(data: any) {

@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
+    import { sendMain } from "../../IPC/main"
     import { activePopup, alertMessage, os } from "../../stores"
-    import { send } from "../../utils/request"
     import Button from "./Button.svelte"
 
     export let id: string
@@ -17,7 +17,8 @@
             activePopup.set("alert")
         }
 
-        send(MAIN, ["OPEN_FOLDER"], { channel: id, title, path })
+        if (!path) return
+        sendMain(Main.OPEN_FOLDER, { channel: id, title, path })
     }
 </script>
 

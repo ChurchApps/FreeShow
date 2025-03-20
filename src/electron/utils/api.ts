@@ -4,8 +4,8 @@ import http from "http"
 import OSC from "osc-js"
 import { Server } from "socket.io"
 import { uid } from "uid"
-import { toApp } from ".."
-import { MAIN } from "../../types/Channels"
+import { ToMain } from "../../types/IPC/ToMain"
+import { sendToMain } from "../IPC/main"
 import { waitUntilValueIsDefined } from "./helpers"
 
 const app = express()
@@ -39,7 +39,7 @@ export function startWebSocket(PORT: number | undefined) {
 
 function connected(socket: any) {
     log("Client connected.")
-    toApp(MAIN, { channel: "API", data: "connected" }) // TODO: respond with API_DATA
+    sendToMain(ToMain.API, "connected") // TODO: respond with API_DATA
 
     socket.on("disconnect", () => log("Client disconnected."))
 
@@ -179,7 +179,7 @@ async function receivedData(data: any = {}, log: any) {
     const get = data.action.startsWith("get_")
     if (get) data.returnId = uid(5)
 
-    toApp(MAIN, { channel: "API_TRIGGER", data })
+    sendToMain(ToMain.API_TRIGGER2, data)
 
     if (!data.returnId) return
 

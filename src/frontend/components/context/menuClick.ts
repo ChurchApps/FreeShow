@@ -1,9 +1,11 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { EXPORT, MAIN, OUTPUT } from "../../../types/Channels"
+import { EXPORT, OUTPUT } from "../../../types/Channels"
 import type { HistoryPages } from "../../../types/History"
+import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle } from "../../../types/Main"
 import type { Item, Slide } from "../../../types/Show"
+import { sendMain } from "../../IPC/main"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
 import {
     $,
@@ -123,7 +125,7 @@ const actions: any = {
         activePage.set("show")
         focusMode.set(!get(focusMode))
     },
-    fullscreen: () => send(MAIN, ["FULLSCREEN"]),
+    fullscreen: () => sendMain(Main.FULLSCREEN),
     // edit
     undo: () => undo(),
     redo: () => redo(),
@@ -133,7 +135,7 @@ const actions: any = {
     paste: (obj: any) => paste(null, {}, obj.contextElem),
     // view
     // help
-    docs: () => send(MAIN, ["URL"], "https://freeshow.app/docs"),
+    docs: () => sendMain(Main.URL, "https://freeshow.app/docs"),
     shortcuts: () => activePopup.set("shortcuts"),
     about: () => activePopup.set("about"),
     quick_start_guide: () => guideActive.set(true),
@@ -546,12 +548,12 @@ const actions: any = {
         }
 
         if (obj.contextElem.classList.contains("#category_media") || obj.sel.id === "category_media") {
-            send(MAIN, ["OPEN_FOLDER"], { channel: "MEDIA", title: get(dictionary).new?.folder })
+            sendMain(Main.OPEN_FOLDER, { channel: "MEDIA", title: get(dictionary).new?.folder })
             return
         }
 
         if (obj.contextElem.classList.contains("#category_audio") || obj.sel.id === "category_audio") {
-            send(MAIN, ["OPEN_FOLDER"], { channel: "AUDIO", title: get(dictionary).new?.folder })
+            sendMain(Main.OPEN_FOLDER, { channel: "AUDIO", title: get(dictionary).new?.folder })
             return
         }
     },
@@ -1028,7 +1030,7 @@ const actions: any = {
         let path = data?.path
         if (!path) return
 
-        send(MAIN, ["SYSTEM_OPEN"], path)
+        sendMain(Main.SYSTEM_OPEN, path)
     },
 
     // live

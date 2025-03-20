@@ -11,6 +11,7 @@ import type { ActiveEdit, Media, MediaOptions, NumberObject, OS, Popups, Selecte
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Emitter, ID, MidiIn, Overlays, ShowList, Shows, ShowType, Tag, Templates, Timer, Transition } from "../types/Show"
+import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
 import type { AudioChannel, Playlist } from "./../types/Audio"
@@ -286,9 +287,9 @@ export const midiIn: Writable<{ [key: string]: MidiIn }> = writable({}) // {}
 export const emitters: Writable<{ [key: string]: Emitter }> = writable({}) // {}
 
 // CONNECTIONS
-export const ports: Writable<any> = writable({ remote: 5510, stage: 5511, controller: 5512, output_stream: 5513 }) // {default}
+export const ports: Writable<{ [key: string]: number }> = writable({ remote: 5510, stage: 5511, controller: 5512, output_stream: 5513 }) // {default}
 export const disabledServers: Writable<any> = writable({ remote: false, stage: false, controller: true, output_stream: true }) // {}
-export const serverData: Writable<any> = writable({}) // {}
+export const serverData: Writable<{ [key: string]: ServerData }> = writable({}) // {}
 export const maxConnections: Writable<number> = writable(10) // 10
 export const remotePassword: Writable<string> = writable("1234") // generate 4 numbers
 export const companion: Writable<any> = writable({ enabled: false }) // {}

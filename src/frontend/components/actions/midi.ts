@@ -1,15 +1,15 @@
 import { get } from "svelte/store"
-import { MAIN } from "../../../types/Channels"
+import { Main } from "../../../types/IPC/Main"
 import type { Midi } from "../../../types/Show"
+import { sendMain } from "../../IPC/main"
 import { midiIn, shows } from "../../stores"
-import { send } from "../../utils/request"
+import { newToast } from "../../utils/common"
 import { clone } from "../helpers/array"
 import { setOutput } from "../helpers/output"
+import { loadShows } from "../helpers/setShow"
 import { updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { runAction } from "./actions"
-import { newToast } from "../../utils/common"
-import { loadShows } from "../helpers/setShow"
 
 export function midiInListen() {
     Object.entries(get(midiIn)).forEach(([id, action]: any) => {
@@ -18,7 +18,7 @@ export function midiInListen() {
 
         if (!action.shows?.length) {
             console.info("MIDI INPUT LISTENER: ", action.midi)
-            send(MAIN, ["RECEIVE_MIDI"], { id, ...action.midi })
+            sendMain(Main.RECEIVE_MIDI, { id, ...action.midi })
 
             return
         }
@@ -53,7 +53,7 @@ export function midiInListen() {
                 if (!action.midi?.input) return
 
                 console.info("MIDI INPUT LISTENER: ", action.midi)
-                send(MAIN, ["RECEIVE_MIDI"], { id, ...action.midi })
+                sendMain(Main.RECEIVE_MIDI, { id, ...action.midi })
             }
         })
     })

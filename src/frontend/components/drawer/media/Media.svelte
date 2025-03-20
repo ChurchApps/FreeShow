@@ -4,6 +4,8 @@
     import { slide } from "svelte/transition"
     import { uid } from "uid"
     import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import {
         activeEdit,
         activeFocus,
@@ -23,7 +25,7 @@
         selectAllMedia,
         selected,
     } from "../../../stores"
-    import { destroy, send } from "../../../utils/request"
+    import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName, sortFilenames } from "../../helpers/array"
@@ -118,14 +120,14 @@
                 prevActive = active
                 files = []
                 fullFilteredFiles = []
-                Object.values($mediaFolders).forEach((data) => send(MAIN, ["READ_FOLDER"], { path: data.path, disableThumbnails: $mediaOptions.mode === "list" }))
+                Object.values($mediaFolders).forEach((data) => sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: $mediaOptions.mode === "list" }))
             }
         } else if (path?.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
                 fullFilteredFiles = []
-                send(MAIN, ["READ_FOLDER"], { path, listFilesInFolders: true, disableThumbnails: $mediaOptions.mode === "list" })
+                sendMain(Main.READ_FOLDER, { path, listFilesInFolders: true, disableThumbnails: $mediaOptions.mode === "list" })
             }
         } else {
             // screens && cameras

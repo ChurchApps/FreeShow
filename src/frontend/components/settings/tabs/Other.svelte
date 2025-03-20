@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { EXPORT, MAIN } from "../../../../types/Channels"
+    import { EXPORT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
-    import { requestMain } from "../../../IPC/main"
+    import { requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
     import { send } from "../../../utils/request"
     import { save } from "../../../utils/save"
@@ -17,11 +17,13 @@
     onMount(() => {
         // getCacheSize()
         // getAudioOutputs()
-        send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
+        if ($showsPath) sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (a) => {
             if (a.key === "disableHardwareAcceleration") disableHardwareAcceleration = a.value
         })
-        requestMain(Main.GET_EMPTY_SHOWS, { path: $showsPath, cached: $showsCache }, (a) => (emptyShows = a))
+        requestMain(Main.GET_EMPTY_SHOWS, { path: $showsPath, cached: $showsCache }, (a) => {
+            if (a) emptyShows = a
+        })
         getDuplicatedShows()
     })
 
@@ -67,7 +69,7 @@
     let disableHardwareAcceleration = true
     function toggleHardwareAcceleration(e: any) {
         disableHardwareAcceleration = e.target.checked
-        send(MAIN, ["SET_STORE_VALUE"], { file: "config", key: "disableHardwareAcceleration", value: disableHardwareAcceleration })
+        sendMain(Main.SET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration", value: disableHardwareAcceleration })
 
         alertMessage.set("settings.restart_for_change")
         activePopup.set("alert")
@@ -88,16 +90,18 @@
 
     // get all shows inside current shows folder (and remove missing)
     // function refreshShows() {
-    //     send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
+    //     sendMain(Main.REFRESH_SHOWS, { path: $showsPath })
 
     //     setTimeout(() => {
-    //         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
+    //         sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
     //     }, 800)
     // }
 
     // delete shows from folder that are not indexed
     function deleteShows() {
-        send(MAIN, ["DELETE_SHOWS_NI"], { shows: $shows, path: $showsPath })
+        if (!$showsPath) return
+
+        sendMain(Main.DELETE_SHOWS_NI, { shows: $shows, path: $showsPath })
 
         setTimeout(() => {
             // this will not include newly created shows not saved yet, but it should not be an issue.
@@ -111,7 +115,9 @@
 
     let emptyShows: { id: string; name: string }[] = []
     function deleteEmptyShows() {
-        send(MAIN, ["DELETE_SHOWS"], { shows: emptyShows, path: $showsPath })
+        if (!$showsPath) return
+
+        sendMain(Main.DELETE_SHOWS, { shows: emptyShows, path: $showsPath })
         // emptyShows = []
         activePage.set("show")
     }
@@ -155,15 +161,16 @@
 
     // open log
     function openLog() {
-        send(MAIN, ["OPEN_LOG"])
+        sendMain(Main.OPEN_LOG)
     }
     function openCache() {
-        send(MAIN, ["OPEN_CACHE"])
+        sendMain(Main.OPEN_CACHE)
     }
 
     // bundle media files
     function bundleMediaFiles() {
-        send(MAIN, ["BUNDLE_MEDIA_FILES"], { showsPath: $showsPath, dataPath: $dataPath })
+        if (!$showsPath) return
+        sendMain(Main.BUNDLE_MEDIA_FILES, { showsPath: $showsPath, dataPath: $dataPath })
     }
 
     // backup
@@ -172,8 +179,10 @@
     }
 
     function restore() {
+        if (!$showsPath) return
+
         showsCache.set({})
-        send(MAIN, ["RESTORE"], { showsPath: $showsPath })
+        sendMain(Main.RESTORE, { showsPath: $showsPath })
     }
 
     const autobackupList: any = [
@@ -210,7 +219,7 @@
                 {/if}
             </p>
         </FolderPicker>
-        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $dataPath)}>
+        <Button title={$dictionary.main?.system_open} on:click={() => sendMain(Main.SYSTEM_OPEN, $dataPath)}>
             <Icon id="launch" white />
         </Button>
     </span>
@@ -231,7 +240,12 @@
                 {/if}
             </p>
         </FolderPicker>
-        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $showsPath)}>
+        <Button
+            title={$dictionary.main?.system_open}
+            on:click={() => {
+                if ($showsPath) sendMain(Main.SYSTEM_OPEN, $showsPath)
+            }}
+        >
             <Icon id="launch" white />
         </Button>
     </span>

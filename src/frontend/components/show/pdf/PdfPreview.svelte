@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import { activeShow, dataPath, labelsDisabled, outLocked, outputs, slidesOptions, styles } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
@@ -74,7 +74,7 @@
 
     function convertToImages() {
         newToast("$actions.converting")
-        send(MAIN, ["PDF_TO_IMAGE"], { dataPath: $dataPath, path: path })
+        sendMain(Main.PDF_TO_IMAGE, { dataPath: $dataPath, path: path })
     }
 
     let singlePage = false

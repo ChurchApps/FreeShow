@@ -6,14 +6,15 @@ import AdmZip from "adm-zip"
 import { BrowserWindow, ipcMain } from "electron"
 import fs from "fs"
 import { join } from "path"
-import { EXPORT, MAIN, STARTUP } from "../../types/Channels"
+import { EXPORT, STARTUP } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
+import { ToMain } from "../../types/IPC/ToMain"
 import type { Message } from "../../types/Socket"
-import { isProd, toApp } from "../index"
+import { isProd } from "../index"
+import { sendMain, sendToMain } from "../IPC/main"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, getTimePointString, makeDir, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
 import { getAllShows } from "../utils/shows"
 import { exportOptions } from "../utils/windowOptions"
-import { sendMain } from "../IPC/main"
-import { ToMain } from "../../types/IPC/ToMain"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions: any = {
@@ -29,7 +30,7 @@ export function startExport(_e: any, msg: Message) {
         dataPath = selectFolderDialog()
         if (!dataPath) return
 
-        toApp(MAIN, { channel: "DATA_PATH", data: dataPath })
+        sendMain(Main.DATA_PATH, dataPath)
     }
 
     msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
@@ -75,7 +76,7 @@ function doneWritingFile(err: any, exportFolder: string, toMain: boolean = true)
         systemOpened = true
     } else if (err) msg = err
 
-    if (toMain) sendMain(ToMain.ALERT, msg)
+    if (toMain) sendToMain(ToMain.ALERT, msg)
 }
 
 // ----- PDF -----
@@ -102,7 +103,7 @@ export function generatePDF(path: string) {
 }
 
 function exportMessage(message: string = "") {
-    sendMain(ToMain.ALERT, message)
+    sendToMain(ToMain.ALERT, message)
 
     exportWindow?.on("closed", () => (exportWindow = null))
     exportWindow?.close()
@@ -133,7 +134,7 @@ ipcMain.on(EXPORT, (_e, msg: any) => {
     if (msg.channel !== "EXPORT") return
 
     if (!msg.data?.name) return
-    sendMain(ToMain.ALERT, msg.data.name)
+    sendToMain(ToMain.ALERT, msg.data.name)
     if (msg.data.type === "pdf") generatePDF(join(msg.data.path, msg.data.name))
 })
 
@@ -238,14 +239,14 @@ function exportAllShows(data: any) {
         if (type === "show") exportShow({ ...data, shows })
         else if (type === "txt") exportTXT({ ...data, shows })
     } else {
-        sendMain(ToMain.ALERT, "Exported 0 shows!")
+        sendToMain(ToMain.ALERT, "Exported 0 shows!")
     }
 }
 
 // ----- PROJECT -----
 
 export function exportProject(data: any) {
-    sendMain(ToMain.ALERT, "export.exporting")
+    sendToMain(ToMain.ALERT, "export.exporting")
 
     const files = data.file.files || []
     if (!files.length) {

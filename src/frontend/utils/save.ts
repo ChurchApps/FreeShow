@@ -1,5 +1,4 @@
 import { get } from "svelte/store"
-import { MAIN } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
@@ -92,7 +91,6 @@ import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedS
 import { audioStreams, companion } from "./../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
-import { send } from "./request"
 
 export function save(closeWhenFinished: boolean = false, customTriggers: SaveActions = {}) {
     console.log("SAVING...")
@@ -240,7 +238,7 @@ export function initializeClosing() {
 }
 
 export function closeApp() {
-    send(MAIN, ["CLOSE"])
+    sendMain(Main.CLOSE)
 }
 
 // GET SAVED STATE

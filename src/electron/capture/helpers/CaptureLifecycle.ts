@@ -4,7 +4,7 @@ import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 
 export class CaptureLifecycle {
-    static startCapture(id: string, toggle: any = {}) {
+    static startCapture(id: string, toggle: { [key: string]: boolean } = {}) {
         const output = OutputHelper.getOutput(id)
         if (!output) return
 

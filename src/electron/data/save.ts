@@ -1,18 +1,17 @@
 import path from "path"
 import type { Bible } from "../../types/Bible"
-import { Main } from "../../types/IPC/Main"
+import type { Main } from "../../types/IPC/Main"
+import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveData } from "../../types/Save"
 import { currentlyDeletedShows } from "../cloud/drive"
 import { startBackup } from "../data/backup"
 import { defaultSettings, defaultSyncedSettings } from "../data/defaults"
 import { stores } from "../data/store"
-import { sendMainMain } from "../IPC/main"
+import { sendMain, sendToMain } from "../IPC/main"
 import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, writeFile } from "../utils/files"
 import { renameShows } from "../utils/shows"
 
 export function save(data: SaveData) {
-    console.log(data)
-
     const reset = !!data.customTriggers?.changeUserData?.reset // data.reset
     if (reset) {
         data.SETTINGS = JSON.parse(JSON.stringify(defaultSettings))
@@ -27,7 +26,7 @@ export function save(data: SaveData) {
         store.clear()
         store.set((data as any)[key])
 
-        if (reset) sendMainMain(key as Main, (data as any)[key])
+        if (reset) sendMain(key as Main, (data as any)[key])
     }
 
     // scriptures
@@ -72,7 +71,7 @@ export function save(data: SaveData) {
         // SAVED
         if (!reset) {
             setTimeout(() => {
-                sendMainMain(Main.SAVE, { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers })
+                sendToMain(ToMain.SAVE2, { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers })
             }, 300)
         }
 

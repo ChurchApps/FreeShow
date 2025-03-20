@@ -2,10 +2,10 @@ import { app } from "electron"
 import { isMac, isProd } from ".."
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Dictionary } from "../../types/Settings"
-import { sendMain } from "../IPC/main"
+import { sendToMain } from "../IPC/main"
 import { openURL } from "../IPC/responsesMain"
 
-const mc = (id: string) => sendMain(ToMain.MENU, id)
+const mc = (id: string) => sendToMain(ToMain.MENU, id)
 
 export function template(strings: Dictionary): any {
     const appMenu = {

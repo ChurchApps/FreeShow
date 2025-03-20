@@ -1,7 +1,10 @@
 import { get } from "svelte/store"
-import { MAIN, OUTPUT } from "../../types/Channels"
+import { OUTPUT } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
+import type { ErrorLog } from "../../types/Main"
 import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
 import { getActiveOutputs } from "../components/helpers/output"
+import { sendMain } from "../IPC/main"
 import {
     activeDrawerTab,
     activeEdit,
@@ -27,9 +30,6 @@ import {
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
-import type { ErrorLog } from "../../types/Main"
-import { sendMain } from "../IPC/main"
-import { Main } from "../../types/IPC/Main"
 
 export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (stores.ts & defaults.ts)
 export const DEFAULT_DRAWER_HEIGHT = 300
@@ -93,7 +93,7 @@ export function mainClick(e: any) {
     if (e.target?.closest("a.open")) {
         e.preventDefault()
         let href = e.target.getAttribute("href")
-        if (href) send(MAIN, ["URL"], href)
+        if (href) sendMain(Main.URL, href)
     }
 }
 

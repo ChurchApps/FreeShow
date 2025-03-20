@@ -48,7 +48,7 @@ import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import checkForUpdates from "../utils/updater"
-import { sendMain } from "./main"
+import { sendToMain } from "./main"
 import { importShow } from "../data/import"
 
 export const mainResponses: MainResponses = {
@@ -185,8 +185,10 @@ export const mainResponses: MainResponses = {
     [Main.PCO_DISCONNECT]: () => pcoDisconnect(),
 }
 
+//////////
+
 // IMPORT
-export function startImport(data: { channel: string; format: any; settings: any }) {
+export function startImport(data: { channel: string; format: { name: string; extensions: string[] }; settings?: any }) {
     let files: string[] = selectFilesDialog("", data.format)
 
     let needsFileAndNoFileSelected = data.format.extensions && !files.length
@@ -211,7 +213,7 @@ export function loadScripture(msg: { id: string; path: string; name: string; dat
 }
 
 // SHOW
-export function loadShow(msg: { id: string; path: string; name: string }) {
+export function loadShow(msg: { id: string; path: string | null; name: string }) {
     let p: string = checkShowsFolder(msg.path || "")
     p = path.join(p, (msg.name || msg.id) + ".show")
     let show: any = loadFile(p, msg.id)
@@ -281,7 +283,7 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
 }
 
 export function forceCloseApp() {
-    sendMain(ToMain.ALERT, "actions.closing")
+    sendToMain(ToMain.ALERT, "actions.closing")
     // let user read message and action finish
     setTimeout(exitApp, 2000)
 }

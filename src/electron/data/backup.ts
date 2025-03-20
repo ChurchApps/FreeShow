@@ -1,8 +1,7 @@
 import path from "path"
-import { toApp } from ".."
-import { MAIN } from "../../types/Channels"
 import type { Main } from "../../types/IPC/Main"
-import { sendMainMain } from "../IPC/main"
+import { ToMain } from "../../types/IPC/ToMain"
+import { sendMain, sendToMain } from "../IPC/main"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePointString, makeDir, openSystemFolder, readFile, selectFilesDialog, writeFile } from "../utils/files"
 import { stores, updateDataPath } from "./store"
 
@@ -28,7 +27,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
     // SHOWS
     await syncAllShows()
 
-    toApp(MAIN, { channel: "BACKUP", data: { finished: true, path: backupFolder } })
+    sendToMain(ToMain.BACKUP, { finished: true, path: backupFolder })
 
     if (customTriggers?.changeUserData) updateDataPath(customTriggers.changeUserData)
     else if (!customTriggers?.silent) openSystemFolder(backupFolder)
@@ -74,8 +73,8 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
 
 export function restoreFiles({ showsPath }: { showsPath: string }) {
     let files: any = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] })
-    if (!files?.length) return toApp(MAIN, { channel: "RESTORE", data: { finished: false } })
-    toApp(MAIN, { channel: "RESTORE", data: { starting: true } })
+    if (!files?.length) return sendToMain(ToMain.RESTORE2, { finished: false })
+    sendToMain(ToMain.RESTORE2, { starting: true })
 
     // don't replace certain settings
     let settings = stores.SETTINGS.store
@@ -93,7 +92,7 @@ export function restoreFiles({ showsPath }: { showsPath: string }) {
         restoreStore(path, storeId)
     })
 
-    toApp(MAIN, { channel: "RESTORE", data: { finished: true } })
+    sendToMain(ToMain.RESTORE2, { finished: true })
     return
 
     /////
@@ -113,7 +112,7 @@ export function restoreFiles({ showsPath }: { showsPath: string }) {
         stores[storeId].clear()
         ;(stores[storeId] as any).set(data)
         // WIP restoring synced settings will reset settings
-        sendMainMain(storeId as Main, data)
+        sendMain(storeId as Main, data)
     }
 
     function restoreShows(filePath: string) {

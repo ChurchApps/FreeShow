@@ -1,7 +1,7 @@
 import path from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show } from "../../types/Show"
-import { sendMain } from "../IPC/main"
+import { sendToMain } from "../IPC/main"
 import { deleteFile, doesPathExist, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFile } from "./files"
 
 export function getAllShows(data: any) {
@@ -121,7 +121,7 @@ export function refreshAllShows(data: any) {
     }
 
     if (!Object.keys(newShows).length) return
-    sendMain(ToMain.REFRESH_SHOWS2, newShows)
+    sendToMain(ToMain.REFRESH_SHOWS2, newShows)
 }
 
 export async function getEmptyShows(data: any) {

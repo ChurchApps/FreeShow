@@ -1,10 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
-    import { requestMain } from "../../../IPC/main"
+    import { requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
-    import { send } from "../../../utils/request"
     import { pcoSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -79,12 +77,12 @@
             return a
         })
 
-        if (value) send(MAIN, ["WEBSOCKET_START"], $ports.companion)
-        else send(MAIN, ["WEBSOCKET_STOP"])
+        if (value) sendMain(Main.WEBSOCKET_START, $ports.companion)
+        else sendMain(Main.WEBSOCKET_STOP)
     }
 
     function restart() {
-        send(MAIN, ["START"], { ports: $ports, max: $maxConnections, disabled: $disabledServers, data: $serverData })
+        sendMain(Main.START, { ports: $ports, max: $maxConnections, disabled: $disabledServers, data: $serverData })
     }
 
     // restart servers on toggle on/off
@@ -106,7 +104,7 @@
     // Answer / Guess / Poll
 
     function pcoConnect() {
-        if (!$pcoConnected) send(MAIN, ["PCO_LOAD_SERVICES"], { dataPath: $dataPath })
+        if (!$pcoConnected) sendMain(Main.PCO_LOAD_SERVICES, { dataPath: $dataPath })
         else {
             requestMain(Main.PCO_DISCONNECT, undefined, (a) => {
                 if (!a.success) return

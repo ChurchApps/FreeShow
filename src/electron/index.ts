@@ -4,13 +4,14 @@
 import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
 import path from "path"
 import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, STARTUP } from "../types/Channels"
+import { Main } from "../types/IPC/Main"
 import { ToMain } from "../types/IPC/ToMain"
 import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
 import { config, updateDataPath } from "./data/store"
-import { receiveMain, sendMain } from "./IPC/main"
+import { receiveMain, sendToMain, sendMain } from "./IPC/main"
 import { catchErrors, saveRecording } from "./IPC/responsesMain"
 import { NdiReceiver } from "./ndi/NdiReceiver"
 import { receiveNDI } from "./ndi/talk"
@@ -172,21 +173,21 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     let mainOutput = type === null
     if (mainOutput && RECORD_STARTUP_TIME) console.time("Main window content")
 
-    if (isProd) window.loadFile("public/index.html").catch(error)
+    if (isProd) window.loadFile("public/index.html").catch(loadingFailed)
     else {
         // load development environment
         if (mainOutput) {
             await waitForBundle()
             openDevTools(window)
         }
-        window.loadURL("http://localhost:3000").catch(error)
+        window.loadURL("http://localhost:3000").catch(loadingFailed)
     }
 
     window.webContents.on("did-finish-load", () => {
         window.webContents.send(STARTUP, { channel: "TYPE", data: type })
     })
 
-    function error(err: any) {
+    function loadingFailed(err: Error) {
         console.error("Failed to load window:", JSON.stringify(err))
         if (isLoaded && mainOutput) app.quit()
     }
@@ -256,7 +257,7 @@ function callClose(e: Electron.Event) {
     if (dialogClose) return
     e.preventDefault()
 
-    sendMain(ToMain.CLOSE2, true)
+    sendToMain(ToMain.CLOSE2, true)
 }
 
 export async function exitApp() {
@@ -304,7 +305,7 @@ export function closeMain() {
 
 export function maximizeMain() {
     let isMaximized: boolean = !!mainWindow?.isMaximized()
-    sendMain(ToMain.MAXIMIZED2, !isMaximized)
+    sendMain(Main.MAXIMIZED, !isMaximized)
 
     if (isMaximized) return mainWindow?.unmaximize()
     mainWindow?.maximize()

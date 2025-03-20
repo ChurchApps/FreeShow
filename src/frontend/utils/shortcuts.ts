@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { MAIN, OUTPUT } from "../../types/Channels"
+import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import type { ShowType } from "../../types/Show"
 import type { TopViews } from "../../types/Tabs"
@@ -120,7 +120,7 @@ const keys: any = {
     // give time so it don't clear slide
     F2: () => setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
     // default menu "togglefullscreen" role not working in production on Windows/Linux
-    F11: () => (get(os).platform !== "darwin" ? send(MAIN, ["FULLSCREEN"]) : null),
+    F11: () => (get(os).platform !== "darwin" ? sendMain(Main.FULLSCREEN) : null),
 }
 
 export function keydown(e: any) {
@@ -342,7 +342,7 @@ function createNew() {
     else if (selectId === "show")
         addSection() // project
     else if (selectId.includes("category_")) {
-        // if (selectId.includes("media") || selectId.includes("audio")) send(MAIN, ["OPEN_FOLDER"], { channel: id, title, path })
+        // if (selectId.includes("media") || selectId.includes("audio")) sendMain(Main.OPEN_FOLDER, { channel: id, title, path })
         if (selectId.includes("scripture")) activePopup.set("import_scripture")
         else if (selectId.includes("calendar")) sendMain(Main.IMPORT, { channel: "calendar", format: { name: "Calendar", extensions: ["ics"] } })
         else history({ id: "UPDATE", location: { page: "drawer", id: selectId } })

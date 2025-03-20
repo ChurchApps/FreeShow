@@ -10,6 +10,7 @@ import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
 import type { Dictionary, Resolution, Themes } from "../Settings"
 import type { Overlays, Show, Shows, Templates } from "../Show"
+import type { ServerData } from "../Socket"
 import type { StageLayouts } from "../Stage"
 import type { Event } from "./../Calendar"
 import type { History } from "./../History"
@@ -126,9 +127,9 @@ export interface MainSendPayloads {
     // DEV
     [Main.LOG]: any
     /////
-    [Main.IMPORT]: { channel: string; format: any; settings: any }
+    [Main.IMPORT]: { channel: string; format: { name: string; extensions: string[] }; settings?: any }
     [Main.BIBLE]: { id: string; path: string; name: string; data: any }
-    [Main.SHOW]: { id: string; path: string; name: string }
+    [Main.SHOW]: { id: string; path: string | null; name: string }
     [Main.SAVE]: SaveData
     [Main.SHOWS]: { showsPath: string }
     ////////////
@@ -144,7 +145,7 @@ export interface MainSendPayloads {
     [Main.FULL_SHOWS_LIST]: { path: string }
     [Main.OUTPUT]: "true" | "false"
     [Main.GET_THUMBNAIL]: { input: string; size: number }
-    [Main.SAVE_IMAGE]: { path: string; base64: string }
+    [Main.SAVE_IMAGE]: { path: string; base64?: string }
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
@@ -154,9 +155,9 @@ export interface MainSendPayloads {
     [Main.PDF_TO_IMAGE]: { dataPath: string; path: string }
     [Main.START_SLIDESHOW]: { path: string; program: string }
     [Main.PRESENTATION_CONTROL]: { action: string }
-    [Main.START]: { ports: { [key: string]: number }; max: number; disabled: { [key: string]: boolean }; data: { [key: string]: any } }
+    [Main.START]: { ports: { [key: string]: number }; max: number; disabled: { [key: string]: boolean }; data: { [key: string]: ServerData } }
     [Main.SERVER_DATA]: { [key: string]: any }
-    [Main.WEBSOCKET_START]: number | undefined
+    [Main.WEBSOCKET_START]: number
     [Main.API_TRIGGER]: { action: string; returnId: string; data: any }
     [Main.EMIT_OSC]: { signal: any; data: any }
     [Main.GET_MIDI_OUTPUTS]: string[]
@@ -169,6 +170,7 @@ export interface MainSendPayloads {
     [Main.RESTORE]: { showsPath: string }
     [Main.SYSTEM_OPEN]: string
     [Main.DOES_PATH_EXIST]: { path: string; dataPath: string }
+    [Main.UPDATE_DATA_PATH]: { reset: boolean; dataPath: string }
 
     [Main.LOCATE_MEDIA_FILE]: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
     [Main.GET_SIMULAR]: { paths: string[] }
@@ -176,7 +178,7 @@ export interface MainSendPayloads {
     [Main.FILE_INFO]: string
     [Main.READ_FOLDER]: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }
     [Main.READ_FILE]: { path: string }
-    [Main.OPEN_FOLDER]: { channel: string; title: string | undefined; path: string | undefined }
+    [Main.OPEN_FOLDER]: { channel: string; title?: string; path?: string }
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
     [Main.PCO_LOAD_SERVICES]: { dataPath: string }
     [Main.PCO_STARTUP_LOAD]: { dataPath: string }
@@ -192,6 +194,7 @@ export interface MainReturnPayloads {
     [Main.DEVICE_ID]: string
     [Main.IP]: NodeJS.Dict<os.NetworkInterfaceInfo[]>
     ///
+    // [Main.SAVE]: { closeWhenFinished: boolean; customTriggers: any } | Promise<void>
     [Main.SHOWS]: { [key: string]: any }
     // STORES
     [Main.SYNCED_SETTINGS]: { [key in SaveListSyncedSettings]: any }
@@ -249,8 +252,8 @@ export interface MainReturnPayloads {
 
 ///////////
 
-export type MainSendData<ID extends Main> = ID extends keyof MainReturnPayloads ? MainReturnPayloads[ID] : undefined
-export type MainSendValue<ID extends Main, V> = ID extends keyof MainSendPayloads ? (MainSendPayloads[ID] extends V ? V : never) : never
+export type ToMainSendValue2<ID extends Main> = ID extends keyof MainReturnPayloads ? MainReturnPayloads[ID] : never
+export type MainSendValue<ID extends Main> = ID extends keyof MainSendPayloads ? MainSendPayloads[ID] : never
 
 export type MainReceiveData<ID extends Main> = ID extends keyof MainSendPayloads ? MainSendPayloads[ID] : undefined
 export type MainReceiveValue<ID extends Main = Main> = {

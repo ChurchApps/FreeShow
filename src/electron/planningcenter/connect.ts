@@ -1,9 +1,7 @@
 import express from "express"
-import { toApp } from ".."
-import { MAIN } from "../../types/Channels"
 import { ToMain } from "../../types/IPC/ToMain"
 import { stores } from "../data/store"
-import { sendMain } from "../IPC/main"
+import { sendToMain } from "../IPC/main"
 import { openURL } from "../IPC/responsesMain"
 import { getKey } from "../utils/keys"
 import { httpsRequest } from "../utils/requests"
@@ -63,7 +61,7 @@ export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
             return PCO_ACCESS
         }
 
-        toApp(MAIN, { channel: "PCO_CONNECT", data: { success: true } })
+        sendToMain(ToMain.PCO_CONNECT, { success: true })
         if (!PCO_ACCESS) PCO_ACCESS = storedAccess
         return storedAccess
     }
@@ -100,7 +98,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
                     const errorPage = HTML_error.replace("{error_msg}", err.message)
                     res.send(errorPage)
 
-                    sendMain(ToMain.ALERT, "Could not authorize! " + err.message)
+                    sendToMain(ToMain.ALERT, "Could not authorize! " + err.message)
                     return resolve(null)
                 }
 
@@ -114,7 +112,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
                 server.close()
 
                 stores.ACCESS.set(`pco_${scope}`, data)
-                toApp(MAIN, { channel: "PCO_CONNECT", data: { success: true, isFirstConnection: true } })
+                sendToMain(ToMain.PCO_CONNECT, { success: true, isFirstConnection: true })
                 resolve(data)
             })
         })
@@ -137,13 +135,13 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
         const params = { grant_type: "refresh_token", client_id: clientId, client_secret: clientSecret, refresh_token: access.refresh_token }
         httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err: any, data: PCOAuthData) => {
             if (err || data === null) {
-                sendMain(ToMain.ALERT, "Could not refresh token! " + err?.message)
+                sendToMain(ToMain.ALERT, "Could not refresh token! " + err?.message)
                 resolve(null)
                 return
             }
 
             stores.ACCESS.set(`pco_${data.scope}`, data)
-            toApp(MAIN, { channel: "PCO_CONNECT", data: { success: true } })
+            sendToMain(ToMain.PCO_CONNECT, { success: true })
             resolve(data)
         })
     })

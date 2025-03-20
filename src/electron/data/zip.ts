@@ -1,7 +1,7 @@
 import AdmZip from "adm-zip"
 import fs from "fs"
 import { ToMain } from "../../types/IPC/ToMain"
-import { sendMain } from "../IPC/main"
+import { sendToMain } from "../IPC/main"
 import { getExtension } from "../utils/files"
 
 // https://www.npmjs.com/package/adm-zip
@@ -20,7 +20,7 @@ export function decompress(files: string[], asBuffer: boolean = false) {
             } catch (err) {
                 console.error(err)
                 if (err.message.includes("Incompatible password parameter")) {
-                    sendMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
+                    sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
                 }
                 return
             }

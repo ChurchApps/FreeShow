@@ -1,9 +1,8 @@
 import os from "os"
 import Slideshow from "slideshow"
-import { getMainWindow, isProd, toApp } from "../.."
-import { MAIN } from "../../../types/Channels"
+import { getMainWindow, isProd } from "../.."
 import { ToMain } from "../../../types/IPC/ToMain"
-import { sendMain } from "../../IPC/main"
+import { sendToMain } from "../../IPC/main"
 import { OutputHelper } from "../OutputHelper"
 import { OutputValues } from "../helpers/OutputValues"
 
@@ -97,10 +96,10 @@ async function initPresentation(path: string, program: string = "powerpoint") {
         currentSlideshow = new Slideshow(program, isProd)
     } catch (err) {
         if (err.includes("unsupported platform")) {
-            sendMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
+            sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
         } else {
             console.error("INIT", err)
-            sendMain(ToMain.ALERT, err)
+            sendToMain(ToMain.ALERT, err)
         }
 
         starting = false
@@ -112,9 +111,9 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     } catch (err) {
         console.error("BOOT", err)
         if (err === "application still not running") {
-            sendMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
+            sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
         } else {
-            sendMain(ToMain.ALERT, err)
+            sendToMain(ToMain.ALERT, err)
         }
     }
 
@@ -124,9 +123,9 @@ async function initPresentation(path: string, program: string = "powerpoint") {
         } catch (err) {
             console.error("OPEN", err)
             if (err === "Something went wrong with the presentation controller") {
-                sendMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
+                sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
             } else {
-                sendMain(ToMain.ALERT, err)
+                sendToMain(ToMain.ALERT, err)
             }
         }
     }
@@ -138,9 +137,9 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     } catch (err) {
         console.error("START", err)
         if (err === "still no active presentation") {
-            sendMain(ToMain.ALERT, "Could not start presentation, please open it manually and try again!")
+            sendToMain(ToMain.ALERT, "Could not start presentation, please open it manually and try again!")
         } else {
-            sendMain(ToMain.ALERT, err)
+            sendToMain(ToMain.ALERT, err)
         }
 
         starting = false
@@ -226,7 +225,7 @@ async function updateState() {
     }
 
     // return state
-    toApp(MAIN, { channel: "PRESENTATION_STATE", data: state })
+    sendToMain(ToMain.PRESENTATION_STATE, state)
 
     // update state every once in a while in case presentation window is in focus
     if (stateUpdater) clearTimeout(stateUpdater)

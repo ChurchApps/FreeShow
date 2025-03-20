@@ -1,11 +1,11 @@
 import { get } from "svelte/store"
-import { MAIN, OUTPUT, STARTUP } from "../../types/Channels"
+import { OUTPUT, STARTUP } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { checkStartupActions } from "../components/actions/actions"
 import { clone } from "../components/helpers/array"
 import { getTimeFromInterval } from "../components/helpers/time"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
-import { requestMain, requestMainMultiple } from "../IPC/main"
+import { requestMain, requestMainMultiple, sendMain } from "../IPC/main"
 import {
     activePopup,
     currentWindow,
@@ -112,7 +112,7 @@ function connect() {
 }
 
 export function pcoSync() {
-    send(MAIN, ["PCO_STARTUP_LOAD"], { dataPath: get(dataPath) })
+    sendMain(Main.PCO_STARTUP_LOAD, { dataPath: get(dataPath) })
 }
 
 function getMainData() {
@@ -124,7 +124,6 @@ function getMainData() {
         [Main.DEVICE_ID]: (a) => deviceId.set(a),
         [Main.MAXIMIZED]: (a) => windowState.set({ ...windowState, maximized: a }),
     })
-    // send(MAIN, ["DISPLAY"])
 }
 
 async function getStoredData() {

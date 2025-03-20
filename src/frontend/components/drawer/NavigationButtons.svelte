@@ -76,10 +76,6 @@
     {/if}
 {/key}
 
-<!-- {#if id === "scripture"}
-<a class="source" href="#void" on:click={() => window.api.send(MAIN, { channel: "URL", data: "https://scripture.api.bible/" })}> API.Bible </a>
-{/if} -->
-
 <style>
     hr {
         height: 2px;

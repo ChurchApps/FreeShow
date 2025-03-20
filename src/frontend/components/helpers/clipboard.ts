@@ -1,7 +1,9 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import { Main } from "../../../types/IPC/Main"
 import type { Folder, Project } from "../../../types/Projects"
 import type { Item } from "../../../types/Show"
+import { sendMain } from "../../IPC/main"
 import {
     activeDays,
     activeDrawerTab,
@@ -55,10 +57,8 @@ import { pasteText } from "./caretHelper"
 import { history } from "./history"
 import { getFileName, removeExtension } from "./media"
 import { loadShows } from "./setShow"
-import { _show } from "./shows"
-import { send } from "../../utils/request"
-import { MAIN } from "../../../types/Channels"
 import { checkName } from "./show"
+import { _show } from "./shows"
 
 export function copy({ id, data }: any = {}, getData: boolean = true) {
     let copy: any = { id, data }
@@ -635,7 +635,7 @@ const deleteActions = {
                 return a
             })
 
-            send(MAIN, ["CLOSE_MIDI"], { id: selData.id })
+            sendMain(Main.CLOSE_MIDI, { id: selData.id })
         })
     },
     timer: (data: any) => {

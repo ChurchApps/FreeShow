@@ -1,10 +1,12 @@
 import { BrowserWindow, NativeImage, ResizeOptions, app, nativeImage } from "electron"
 import fs from "fs"
 import path from "path"
-import { isProd, loadWindowContent, toApp } from ".."
-import { MAIN, OUTPUT } from "../../types/Channels"
+import { isProd, loadWindowContent } from ".."
+import { OUTPUT } from "../../types/Channels"
+import { ToMain } from "../../types/IPC/ToMain"
 import type { Output } from "../../types/Output"
 import type { Resolution } from "../../types/Settings"
+import { sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
 import { doesPathExist, doesPathExistAsync, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
@@ -130,7 +132,7 @@ async function captureWithCanvas(data: any) {
     }
 
     mediaBeingCaptured++
-    toApp(MAIN, { channel: "CAPTURE_CANVAS", data })
+    sendToMain(ToMain.CAPTURE_CANVAS, data)
 
     // let captureIndex = mediaBeingCaptured
     // console.time("CAPTURING: " + captureIndex + " - " + data.input)
@@ -142,7 +144,7 @@ async function captureWithCanvas(data: any) {
     generationFinished()
 }
 
-export function saveImage(data: { path: string; base64: string }) {
+export function saveImage(data: { path: string; base64?: string }) {
     mediaBeingCaptured = Math.max(0, mediaBeingCaptured - 1)
     // console.log("SAVE: ", data.path, data.base64?.length)
     if (!data.base64) return

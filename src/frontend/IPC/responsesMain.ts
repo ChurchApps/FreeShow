@@ -73,11 +73,16 @@ import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import { Main, MainReturnPayloads } from "./../../types/IPC/Main"
 
-export const mainResponses = {
+type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
+export type MainResponses = {
+    [ID in Main | ToMain]?: MainHandler<ID>
+}
+
+export const mainResponses: MainResponses = {
     // STORES
-    [ToMain.SAVE2]: (a: ToMainSendPayloads[ToMain.SAVE2]) => saveComplete(a),
-    [Main.SYNCED_SETTINGS]: (a: MainReturnPayloads[Main.SYNCED_SETTINGS]) => updateSyncedSettings(a),
-    [Main.SHOWS]: async (a: MainReturnPayloads[Main.SHOWS]) => {
+    [ToMain.SAVE2]: (a) => saveComplete(a),
+    [Main.SYNCED_SETTINGS]: (a) => updateSyncedSettings(a),
+    [Main.SHOWS]: async (a) => {
         let difference = Object.keys(a).length - Object.keys(get(shows)).length
         if (difference < 15 && Object.keys(get(shows)).length && difference > 0) {
             // get new shows & cache their content
@@ -88,37 +93,37 @@ export const mainResponses = {
 
         shows.set(a)
     },
-    [Main.STAGE_SHOWS]: (a: MainReturnPayloads[Main.STAGE_SHOWS]) => stageShows.set(a),
-    [Main.PROJECTS]: (a: MainReturnPayloads[Main.PROJECTS]) => {
+    [Main.STAGE_SHOWS]: (a) => stageShows.set(a),
+    [Main.PROJECTS]: (a) => {
         projects.set(a.projects || {})
         folders.set(a.folders || {})
         projectTemplates.set(a.projectTemplates || {})
     },
-    [Main.OVERLAYS]: (a: MainReturnPayloads[Main.OVERLAYS]) => overlays.set(a),
-    [Main.TEMPLATES]: (a: MainReturnPayloads[Main.TEMPLATES]) => templates.set(a),
-    [Main.EVENTS]: (a: MainReturnPayloads[Main.EVENTS]) => events.set(a),
-    [Main.DRIVE_API_KEY]: (a: MainReturnPayloads[Main.DRIVE_API_KEY]) => driveKeys.set(a),
-    [Main.MEDIA]: (a: MainReturnPayloads[Main.MEDIA]) => media.set(a),
-    [Main.THEMES]: (a: MainReturnPayloads[Main.THEMES]) => {
+    [Main.OVERLAYS]: (a) => overlays.set(a),
+    [Main.TEMPLATES]: (a) => templates.set(a),
+    [Main.EVENTS]: (a) => events.set(a),
+    [Main.DRIVE_API_KEY]: (a) => driveKeys.set(a),
+    [Main.MEDIA]: (a) => media.set(a),
+    [Main.THEMES]: (a) => {
         themes.set(Object.keys(a).length ? a : clone(defaultThemes))
 
         // update if themes are loaded after settings
         if (get(theme) !== "default") updateThemeValues(get(themes)[get(theme)])
     },
-    [Main.CACHE]: (a: MainReturnPayloads[Main.CACHE]) => {
+    [Main.CACHE]: (a) => {
         textCache.set(a.text || {})
     },
-    [Main.HISTORY]: (a: MainReturnPayloads[Main.HISTORY]) => {
+    [Main.HISTORY]: (a) => {
         undoHistory.set(a.undo || [])
         redoHistory.set(a.redo || [])
     },
-    [Main.USAGE]: (a: MainReturnPayloads[Main.USAGE]) => usageLog.set(a),
+    [Main.USAGE]: (a) => usageLog.set(a),
 
     // MAIN
-    [ToMain.MENU]: (a: ToMainSendPayloads[ToMain.MENU]) => menuClick(a),
-    [Main.SHOWS_PATH]: (a: MainReturnPayloads[Main.SHOWS_PATH]) => showsPath.set(a),
-    [Main.DATA_PATH]: (a: MainReturnPayloads[Main.DATA_PATH]) => dataPath.set(a),
-    [ToMain.ALERT]: (a: ToMainSendPayloads[ToMain.ALERT]) => {
+    [ToMain.MENU]: (a) => menuClick(a),
+    [Main.SHOWS_PATH]: (a) => showsPath.set(a),
+    [Main.DATA_PATH]: (a) => dataPath.set(a),
+    [ToMain.ALERT]: (a) => {
         alertMessage.set(a || "")
 
         if (a === "error.display") {
@@ -131,10 +136,10 @@ export const mainResponses = {
 
         activePopup.set("alert")
     },
-    [ToMain.TOAST]: (a: ToMainSendPayloads[ToMain.TOAST]) => newToast(a),
+    [ToMain.TOAST]: (a) => newToast(a),
     [Main.CLOSE]: () => initializeClosing(),
-    [Main.RECEIVE_MIDI]: (a: MainReturnPayloads[Main.RECEIVE_MIDI]) => receivedMidi(a),
-    [Main.DELETE_SHOWS]: (a: MainReturnPayloads[Main.DELETE_SHOWS]) => {
+    [Main.RECEIVE_MIDI]: (a) => receivedMidi(a),
+    [Main.DELETE_SHOWS]: (a) => {
         if (!a.deleted.length) {
             newToast("$toast.delete_shows_empty")
             return
@@ -143,7 +148,7 @@ export const mainResponses = {
         alertMessage.set("<h3>Deleted " + a.deleted.length + " files</h3><br>● " + a.deleted.join("<br>● "))
         activePopup.set("alert")
     },
-    [Main.REFRESH_SHOWS]: (a: ToMainSendPayloads[ToMain.REFRESH_SHOWS2]) => {
+    [ToMain.REFRESH_SHOWS2]: (a) => {
         let oldCount = Object.keys(get(shows)).length
         let newCount = Object.keys(a).length
 
@@ -153,13 +158,13 @@ export const mainResponses = {
         alertMessage.set("<h3>Updated shows</h3><br>● Old shows: " + oldCount + "<br>● New shows: " + newCount)
         activePopup.set("alert")
     },
-    [ToMain.BACKUP]: ({ finished, path }: ToMainSendPayloads[ToMain.BACKUP]) => {
+    [ToMain.BACKUP]: ({ finished, path }) => {
         if (!finished) return activePopup.set(null)
 
         console.log("Backed up to:", path)
         newToast(get(dictionary).settings?.backup_finished || "") // + ": " + path)
     },
-    [Main.RESTORE]: ({ finished, starting }: ToMainSendPayloads[ToMain.RESTORE2]) => {
+    [ToMain.RESTORE2]: ({ finished, starting }) => {
         if (!finished) return activePopup.set(null)
         if (starting) return newToast("$settings.restore_started")
 
@@ -170,7 +175,7 @@ export const mainResponses = {
 
         newToast("$settings.restore_finished")
     },
-    [Main.LOCATE_MEDIA_FILE]: (data: Awaited<MainReturnPayloads[Main.LOCATE_MEDIA_FILE]>) => {
+    [Main.LOCATE_MEDIA_FILE]: (data) => {
         if (!data) return
         let prevPath: string = ""
 
@@ -191,23 +196,23 @@ export const mainResponses = {
         // sometimes when lagging the image will be "replaced" even when it exists
         if (prevPath !== data.path) newToast("$toast.media_replaced")
     },
-    [Main.MEDIA_TRACKS]: (data: Awaited<MainReturnPayloads[Main.MEDIA_TRACKS]>) => setMediaTracks(data),
-    [Main.API_TRIGGER]: (data: ToMainSendPayloads[ToMain.API_TRIGGER2]) => triggerAction(data),
-    [ToMain.PRESENTATION_STATE]: (data: ToMainSendPayloads[ToMain.PRESENTATION_STATE]) => presentationData.set(data),
+    [Main.MEDIA_TRACKS]: (data) => setMediaTracks(data),
+    [ToMain.API_TRIGGER2]: (data) => triggerAction(data),
+    [ToMain.PRESENTATION_STATE]: (data) => presentationData.set(data),
     // TOP BAR
-    [ToMain.MAXIMIZED2]: (data: ToMainSendPayloads[ToMain.MAXIMIZED2]) => windowState.set({ ...windowState, maximized: data }),
+    [Main.MAXIMIZED]: (data) => windowState.set({ ...windowState, maximized: data }),
     // MEDIA CACHE
-    [ToMain.CAPTURE_CANVAS]: (data: ToMainSendPayloads[ToMain.CAPTURE_CANVAS]) => captureCanvas(data),
-    [ToMain.LESSONS_DONE]: (data: ToMainSendPayloads[ToMain.LESSONS_DONE]) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
-    [ToMain.IMAGES_TO_SHOW]: (data: ToMainSendPayloads[ToMain.IMAGES_TO_SHOW]) => createImageShow(data),
+    [ToMain.CAPTURE_CANVAS]: (data) => captureCanvas(data),
+    [ToMain.LESSONS_DONE]: (data) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
+    [ToMain.IMAGES_TO_SHOW]: (data) => createImageShow(data),
 
     // CONNECTION
-    [ToMain.PCO_CONNECT]: (data: ToMainSendPayloads[ToMain.PCO_CONNECT]) => {
+    [ToMain.PCO_CONNECT]: (data) => {
         if (!data.success) return
         pcoConnected.set(true)
         if (data.isFirstConnection) newToast("$main.finished")
     },
-    [ToMain.PCO_PROJECTS]: (data: ToMainSendPayloads[ToMain.PCO_PROJECTS]) => {
+    [ToMain.PCO_PROJECTS]: (data) => {
         if (!data.projects) return
 
         // CREATE CATEGORY
@@ -246,7 +251,7 @@ export const mainResponses = {
         activeProject.set(data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]?.id)
         projectView.set(false)
     },
-    [ToMain.OPEN_FOLDER2]: (a: ToMainSendPayloads[ToMain.OPEN_FOLDER2]) => {
+    [ToMain.OPEN_FOLDER2]: (a) => {
         const receiveFOLDER: any = {
             MEDIA: () => addDrawerFolder(a, "media"),
             AUDIO: () => addDrawerFolder(a, "audio"),
@@ -261,7 +266,7 @@ export const mainResponses = {
         if (!receiveFOLDER[a.channel]) return
         receiveFOLDER[a.channel]()
     },
-    [ToMain.OPEN_FILE2]: (a: ToMainSendPayloads[ToMain.OPEN_FILE2]) => {
+    [ToMain.OPEN_FILE2]: (a) => {
         const receiveFILE = {
             GOOGLE_KEYS: () => {
                 let path = a.files[0]
@@ -273,7 +278,7 @@ export const mainResponses = {
         if (!receiveFILE[a.channel]) return
         receiveFILE[a.channel]()
     },
-    [ToMain.IMPORT2]: (a: ToMainSendPayloads[ToMain.IMPORT2]) => {
+    [ToMain.IMPORT2]: (a) => {
         const data = a.data
         const receiveIMPORT: any = {
             // FreeShow

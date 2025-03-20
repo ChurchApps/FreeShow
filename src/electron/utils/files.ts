@@ -6,14 +6,15 @@ import { ExifData, ExifImage } from "exif"
 import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
-import { MAIN, OUTPUT } from "../../types/Channels"
+import { OUTPUT } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { MainFilePaths, Subtitle } from "../../types/Main"
 import type { Show } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
-import { sendMain } from "../IPC/main"
+import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./shows"
@@ -102,7 +103,7 @@ export function writeFile(path: string, content: string | NodeJS.ArrayBufferView
 
     fs.writeFile(path, content, (err) => {
         actionComplete(err, "Error when writing to file")
-        if (err && id) sendMain(ToMain.SHOW2, { error: "no_write", err, id })
+        if (err && id) sendToMain(ToMain.SHOW2, { error: "no_write", err, id })
     })
 }
 
@@ -132,7 +133,7 @@ export function makeDir(path: string) {
         path = fs.mkdirSync(path, { recursive: true }) || path
     } catch (err) {
         console.error("Could not create a directory to path: " + path + "! " + err)
-        sendMain(ToMain.ALERT, "Error: Could not create folder at: " + path + "!")
+        sendToMain(ToMain.ALERT, "Error: Could not create folder at: " + path + "!")
     }
 
     return path
@@ -161,7 +162,7 @@ export function selectFolderDialog(title: string = "", defaultPath: string = "")
 // DATA FOLDERS
 
 export function openSystemFolder(path: string) {
-    if (!doesPathExist(path)) return sendMain(ToMain.ALERT, "This does not exist!")
+    if (!doesPathExist(path)) return sendToMain(ToMain.ALERT, "This does not exist!")
 
     shell.openPath(path)
 }
@@ -179,7 +180,7 @@ export function getDocumentsFolder(p: any = null, folderName: string = "Shows", 
 export function checkShowsFolder(path: string): string {
     if (!path) {
         path = getDocumentsFolder()
-        toApp(MAIN, { channel: "SHOWS_PATH", data: path })
+        sendMain(Main.SHOWS_PATH, path)
         return path
     }
 
@@ -379,7 +380,7 @@ function similarity(str1: string, str2: string) {
 }
 
 // OPEN_FOLDER
-export function selectFolder(msg: { channel: string; title: string | undefined; path: string | undefined }) {
+export function selectFolder(msg: { channel: string; title?: string; path?: string }) {
     let folder: any = selectFolderDialog(msg.title, msg.path)
 
     if (!folder) return
@@ -388,16 +389,16 @@ export function selectFolder(msg: { channel: string; title: string | undefined; 
     if (msg.channel === "DATA_SHOWS") {
         let dataPath = folder
         let showsPath = checkShowsFolder(path.join(folder, dataFolderNames.shows))
-        sendMain(ToMain.OPEN_FOLDER2, { channel: msg.channel, path: dataPath, showsPath })
+        sendToMain(ToMain.OPEN_FOLDER2, { channel: msg.channel, path: dataPath, showsPath })
         return
     }
 
     if (msg.channel === "SHOWS") {
         loadShows({ showsPath: folder })
-        toApp(MAIN, { channel: "FULL_SHOWS_LIST", data: getAllShows({ path: folder }) })
+        sendMain(Main.FULL_SHOWS_LIST, getAllShows({ path: folder }))
     }
 
-    sendMain(ToMain.OPEN_FOLDER2, { channel: msg.channel, path: folder })
+    sendToMain(ToMain.OPEN_FOLDER2, { channel: msg.channel, path: folder })
     return
 }
 
@@ -412,7 +413,7 @@ export function selectFiles(msg: { id: string; channel: string; title?: string; 
         content[path] = readFile(path)
     }
 
-    sendMain(ToMain.OPEN_FILE2, { channel: msg.channel, id: msg.id, files, content })
+    sendToMain(ToMain.OPEN_FILE2, { channel: msg.channel, id: msg.id, files, content })
     return
 }
 

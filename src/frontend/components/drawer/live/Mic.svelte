@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
+    import { sendMain } from "../../../IPC/main"
     import { activeFocus, activeShow, focusMode, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -83,7 +84,7 @@
             .catch((err) => {
                 console.log(err)
                 if (err.name === "NotReadableError") {
-                    window.api.send(MAIN, { channel: "ACCESS_MICROPHONE_PERMISSION" })
+                    sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
                 }
 
                 // retry

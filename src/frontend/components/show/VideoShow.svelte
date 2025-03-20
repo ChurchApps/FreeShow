@@ -1,11 +1,9 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { MAIN } from "../../../types/Channels"
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
-    import { requestMain } from "../../IPC/main"
+    import { requestMain, sendMain } from "../../IPC/main"
     import { activeProject, activeRename, dictionary, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
-    import { send } from "../../utils/request"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { enableSubtitle, getExtension, getFileName, removeExtension } from "../helpers/media"
@@ -32,7 +30,7 @@
 
     $: tracks = $media[showId]?.tracks || []
     $: subtitle = $media[showId]?.subtitle || ""
-    $: if (type !== "player" && showId && $media[showId]?.tracks === undefined) send(MAIN, ["MEDIA_TRACKS"], { path: showId })
+    $: if (type !== "player" && showId && $media[showId]?.tracks === undefined) sendMain(Main.MEDIA_TRACKS, { path: showId })
 
     export let mediaStyle: MediaStyle = {}
 

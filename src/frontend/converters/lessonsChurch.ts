@@ -1,16 +1,18 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { MAIN } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
 import { ShowObj } from "../classes/Show"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { getExtension } from "../components/helpers/media"
 import { checkName, formatToFileName, getLabelId } from "../components/helpers/show"
+import { sendMain } from "../IPC/main"
 import { activeProject, activeRename, dataPath, projectView, projects, refreshSlideThumbnails } from "../stores"
 import { newToast } from "../utils/common"
-import { destroy, receive, send } from "../utils/request"
-import { createCategory, setTempShows } from "./importHelpers"
+import { destroy, receive } from "../utils/request"
 import { videoExtensions } from "../values/extensions"
+import { createCategory, setTempShows } from "./importHelpers"
 
 type File = {
     name: string
@@ -72,7 +74,7 @@ export async function convertLessonsPresentation(data: any) {
     let { mediaToDownload, lessonShow } = convertOpenLessonPlaylist(lesson)
 
     // download videos/images
-    send(MAIN, ["DOWNLOAD_MEDIA"], [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
+    sendMain(Main.DOWNLOAD_MEDIA, [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
 
     let replace: any = await receiveMessage()
     replace.forEach((r) => {

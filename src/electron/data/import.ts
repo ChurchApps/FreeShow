@@ -5,7 +5,7 @@ import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
 import WordExtractor from "word-extractor"
 import { ToMain } from "../../types/IPC/ToMain"
-import { sendMain } from "../IPC/main"
+import { sendToMain } from "../IPC/main"
 import { dataFolderNames, doesPathExist, getDataFolder, getExtension, makeDir, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
 import { detectFileType } from "./bibleDetecter"
 import { filePathHashCode } from "./thumbnails"
@@ -103,7 +103,7 @@ export async function importShow(id: any, files: string[] | null, importSettings
                 const customContent = await checkSpecial(data[i])
                 if (customContent) data[i].content = customContent
             }
-            sendMain(ToMain.IMPORT2, { channel: id, data })
+            sendToMain(ToMain.IMPORT2, { channel: id, data })
         }
         return
     }
@@ -125,7 +125,7 @@ export async function importShow(id: any, files: string[] | null, importSettings
         data = data.map((file) => ({ ...file, type: detectFileType(file.content) }))
     }
 
-    sendMain(ToMain.IMPORT2, { channel: id, data })
+    sendToMain(ToMain.IMPORT2, { channel: id, data })
 }
 
 async function readFile(filePath: string, encoding: BufferEncoding = "utf8") {
@@ -149,7 +149,7 @@ const getFileName = (filePath: string) => path.basename(filePath).slice(0, path.
 // PROJECT
 
 async function importProject(files: string[], dataPath: string) {
-    sendMain(ToMain.ALERT, "popup.importing")
+    sendToMain(ToMain.ALERT, "popup.importing")
 
     // some .project files are plain JSON and others are zip
     const zipFiles: string[] = []
@@ -212,7 +212,7 @@ async function importProject(files: string[], dataPath: string) {
     // remove folder if no files stored
     // if (!readFolder(importFolder).length) deleteFolder(importFolder)
 
-    sendMain(ToMain.IMPORT2, { channel: "freeshow_project", data })
+    sendToMain(ToMain.IMPORT2, { channel: "freeshow_project", data })
 }
 
 // PROTO

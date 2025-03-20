@@ -2,15 +2,13 @@
 // This is for media/file functions
 
 import { get } from "svelte/store"
-import { MAIN } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Subtitle } from "../../../types/Main"
 import type { Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
-import { requestMain } from "../../IPC/main"
+import { requestMain, sendMain } from "../../IPC/main"
 import { loadedMediaThumbnails, media, outputs, tempPath } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
-import { send } from "../../utils/request"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
 import { clone } from "./array"
@@ -421,7 +419,7 @@ export function captureCanvas(data: any) {
         await wait(200)
         let dataURL = canvas.toDataURL("image/png") // , jpegQuality
 
-        send(MAIN, ["SAVE_IMAGE"], { path: data.output, base64: dataURL })
+        sendMain(Main.SAVE_IMAGE, { path: data.output, base64: dataURL })
         completed = true
 
         // unload
@@ -433,7 +431,7 @@ export function captureCanvas(data: any) {
         if (completed) return
 
         completed = true
-        send(MAIN, ["SAVE_IMAGE"], { path: data.output })
+        sendMain(Main.SAVE_IMAGE, { path: data.output })
     }
 }
 

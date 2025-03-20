@@ -75,25 +75,6 @@
         })
     })
 
-    // let listenerId = "SCREENS"
-    // send(MAIN, ["GET_DISPLAYS"])
-    // // send(MAIN, ["GET_SCREENS"])
-    // receive(
-    //     MAIN,
-    //     {
-    //         SET_SCREEN: (d: any) => {
-    //             if (currentScreen.screen) return
-
-    //             outputs.update((a) => {
-    //                 a[screenId!].screen = d.id.toString()
-    //                 return a
-    //             })
-    //         },
-    //     },
-    //     listenerId
-    // )
-    // onDestroy(() => destroy(MAIN, listenerId))
-
     // const fakeScreen0 = {
     //     bounds: { x: -864 - 1536, y: -452, width: 1536, height: 1536 },
     //     id: 2528732444,
