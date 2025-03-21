@@ -78,8 +78,8 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
         console.log(`Listening for Planning Center OAuth response at port ${PCO_PORT}`)
     })
 
-    server.once("error", (err: any) => {
-        if (err.code === "EADDRINUSE") server.close()
+    server.once("error", (err: Error) => {
+        if ((err as any).code === "EADDRINUSE") server.close()
     })
 
     app.use(express.json())
@@ -92,7 +92,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
             console.log("OAuth code received!")
 
             const params = { grant_type: "authorization_code", code, client_id: clientId, client_secret: clientSecret, redirect_uri }
-            httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err: any, data: PCOAuthData) => {
+            httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err, data: PCOAuthData) => {
                 if (err) {
                     res.setHeader("Content-Type", "text/html")
                     const errorPage = HTML_error.replace("{error_msg}", err.message)
@@ -133,7 +133,7 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
         console.log("Refreshing PCO OAuth token")
 
         const params = { grant_type: "refresh_token", client_id: clientId, client_secret: clientSecret, refresh_token: access.refresh_token }
-        httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err: any, data: PCOAuthData) => {
+        httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err, data: PCOAuthData) => {
             if (err || data === null) {
                 sendToMain(ToMain.ALERT, "Could not refresh token! " + err?.message)
                 resolve(null)

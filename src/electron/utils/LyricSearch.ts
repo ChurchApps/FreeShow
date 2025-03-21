@@ -141,7 +141,7 @@ export class LyricSearch {
             result = result.replaceAll("&#39;", "'")
 
             const lines = result.split("\n")
-            const newLines: any[] = []
+            const newLines: string[] = []
             lines.pop() // remove source
             lines.forEach((line) => {
                 let contents = line.replace(/^\d+\s+/gm, "").trim() //remove leading numbers
@@ -159,18 +159,20 @@ export class LyricSearch {
     static CSVToArray(strData: string, strDelimiter: string) {
         strDelimiter = strDelimiter || ","
 
-        var objPattern = new RegExp("(\\" + strDelimiter + "|\\r?\\n|\\r|^)" + '(?:"([^"]*(?:""[^"]*)*)"|' + '([^"\\' + strDelimiter + "\\r\\n]*))", "gi")
+        const objPattern = new RegExp("(\\" + strDelimiter + "|\\r?\\n|\\r|^)" + '(?:"([^"]*(?:""[^"]*)*)"|' + '([^"\\' + strDelimiter + "\\r\\n]*))", "gi")
 
-        var arrData: any[] = [[]]
-        var arrMatches: RegExpExecArray | null = null
+        let arrData: string[][] = [[]]
+        let arrMatches: RegExpExecArray | null = null
         while ((arrMatches = objPattern.exec(strData))) {
-            var strMatchedDelimiter = arrMatches[1]
+            let strMatchedDelimiter = arrMatches[1]
             if (strMatchedDelimiter.length && strMatchedDelimiter !== strDelimiter) {
                 arrData.push([])
             }
-            var strMatchedValue
+
+            let strMatchedValue: string
             if (arrMatches[2]) strMatchedValue = arrMatches[2].replace(new RegExp('""', "g"), '"')
             else strMatchedValue = arrMatches[3]
+
             arrData[arrData.length - 1].push(strMatchedValue)
         }
         return arrData

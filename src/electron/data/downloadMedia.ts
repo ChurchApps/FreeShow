@@ -2,18 +2,19 @@ import { https } from "follow-redirects"
 import fs from "fs"
 import path from "path"
 import { ToMain } from "../../types/IPC/ToMain"
+import type { LessonFile, LessonsData } from "../../types/Main"
 import { sendToMain } from "../IPC/main"
 import { dataFolderNames, doesPathExist, getDataFolder, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 
-export function downloadMedia(lessons: any[]) {
+export function downloadMedia(lessons: LessonsData[]) {
     let replace = lessons.map(checkLesson)
 
     sendToMain(ToMain.REPLACE_MEDIA_PATHS, replace.flat())
 }
 
-function checkLesson(lesson: any) {
-    let type: keyof typeof dataFolderNames = lesson.type || "lessons"
+function checkLesson(lesson: LessonsData) {
+    let type = lesson.type || "lessons"
 
     downloadCount = 0
     failedDownloads = 0
@@ -24,15 +25,15 @@ function checkLesson(lesson: any) {
     makeDir(lessonFolder)
 
     return lesson.files
-        .map((file: any) => {
+        .map((file) => {
             let filePath = getFilePath(file)
             if (!filePath) return
 
             return downloadFile(filePath, file, lesson.showId)
         })
-        .filter((a: any) => a)
+        .filter((a) => a)
 
-    function getFilePath(file: any) {
+    function getFilePath(file: LessonFile) {
         if (type === "planningcenter") return path.join(lessonFolder, file.name)
 
         if (file.streamUrl) file.fileType = "video/mp4"
@@ -54,7 +55,7 @@ function getFileExtension(url: string, fileType: string = "") {
     return ""
 }
 
-function downloadFile(filePath: string, file: any, showId: string) {
+function downloadFile(filePath: string, file: LessonFile, showId: string) {
     let fileRef = { from: file.url, to: filePath, type: file.type }
 
     if (doesPathExist(filePath)) {
@@ -69,8 +70,9 @@ function downloadFile(filePath: string, file: any, showId: string) {
     return fileRef
 }
 
-let downloadQueue: any[] = []
-function addToDownloadQueue(file: any) {
+type DownloadFile = { path: string; file: LessonFile; showId: string }
+let downloadQueue: DownloadFile[] = []
+function addToDownloadQueue(file: DownloadFile) {
     let alreadyInQueue = downloadQueue.find((a) => a.path === file.path)
     if (alreadyInQueue) {
         downloadCount++
@@ -115,13 +117,13 @@ async function initDownload() {
     }
 
     currentlyDownloading++
-    startDownload(downloadQueue.shift())
+    startDownload(downloadQueue.shift()!)
 }
 
 let downloadCount: number = 0
 let failedDownloads: number = 0
 let errorCount: number = 0
-async function startDownload(downloading: any) {
+async function startDownload(downloading: DownloadFile) {
     // download the media
     const file = downloading.file
     let url = file.url

@@ -5,11 +5,11 @@ import type { Stats } from "fs"
 import type os from "os"
 import type { stores } from "../../electron/data/store"
 import type { Bible } from "../Bible"
-import type { ErrorLog, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
+import type { ErrorLog, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
 import type { Dictionary, Resolution, Themes } from "../Settings"
-import type { Overlays, Show, Shows, Templates } from "../Show"
+import type { Overlays, Show, Shows, Templates, TrimmedShows } from "../Show"
 import type { ServerData } from "../Socket"
 import type { StageLayouts } from "../Stage"
 import type { Event } from "./../Calendar"
@@ -139,7 +139,7 @@ export interface MainSendPayloads {
     [Main.GET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string }
     [Main.SET_STORE_VALUE]: { file: "config" | keyof typeof stores; key: string; value: any }
     [Main.DELETE_SHOWS]: { shows: { id: string; name: string }[]; path: string }
-    [Main.DELETE_SHOWS_NI]: { shows: any; path: string }
+    [Main.DELETE_SHOWS_NI]: { shows: TrimmedShows; path: string }
     [Main.REFRESH_SHOWS]: { path: string }
     [Main.GET_EMPTY_SHOWS]: { path: string; cached: Shows }
     [Main.FULL_SHOWS_LIST]: { path: string }
@@ -149,7 +149,7 @@ export interface MainSendPayloads {
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
-    [Main.DOWNLOAD_MEDIA]: any[]
+    [Main.DOWNLOAD_MEDIA]: LessonsData[]
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
     [Main.PDF_TO_IMAGE]: { dataPath: string; path: string }
@@ -212,8 +212,8 @@ export interface MainReturnPayloads {
     // WINDOW
     [Main.MAXIMIZED]: boolean
     /////////////////////
-    [Main.BIBLE]: [string, Bible]
-    [Main.SHOW]: [string, Show]
+    [Main.BIBLE]: { id: string; error?: string; content?: [string, Bible] }
+    [Main.SHOW]: { id: string; error?: string; content?: [string, Show] }
     ///
     [Main.GET_DISPLAYS]: Display[]
     [Main.GET_SYSTEM_FONTS]: Promise<{ fonts: Family[] }>
@@ -243,7 +243,7 @@ export interface MainReturnPayloads {
     [Main.GET_SIMULAR]: { path: string; name: string }[]
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
-    [Main.READ_FOLDER]: { path: string; files: any[]; filesInFolders: string[]; folderFiles: { [key: string]: any[] } }
+    [Main.READ_FOLDER]: { path: string; files: any[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
     [Main.READ_FILE]: { content: string }
     [Main.OPEN_FOLDER]: { path: string; showsPath?: string } | void
     [Main.OPEN_FILE]: { id: string; files: string[]; content: { [key: string]: string } } | void

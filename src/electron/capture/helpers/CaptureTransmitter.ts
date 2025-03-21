@@ -19,7 +19,7 @@ export type Channel = {
 }
 export class CaptureTransmitter {
     static stageWindows: string[] = []
-    static requestList: any[] = []
+    static requestList: string[] = []
     //static ndiFrameCount = 0
     static channels: { [key: string]: Channel } = {}
 
@@ -128,7 +128,7 @@ export class CaptureTransmitter {
     }
 
     // NDI
-    static sendBufferToNdi(captureId: string, image: NativeImage, { size }: any) {
+    static sendBufferToNdi(captureId: string, image: NativeImage, { size }: { size: { width: number; height: number } }) {
         const buffer = image.getBitmap()
         const ratio = image.getAspectRatio()
         //this.ndiFrameCount++
@@ -148,10 +148,10 @@ export class CaptureTransmitter {
     }
 
     static sendToRequested(msg: any) {
-        let newList: any[] = []
+        let newList: string[] = []
 
-        ;[...new Set(this.requestList)].forEach((data: any) => {
-            data = JSON.parse(data)
+        ;[...new Set(this.requestList)].forEach((dataString: string) => {
+            const data: { id: string; previewId: string } = JSON.parse(dataString)
 
             if (data.previewId !== msg.data?.id) {
                 newList.push(JSON.stringify(data))
@@ -203,7 +203,7 @@ export class CaptureTransmitter {
         toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, time: Date.now(), buffer, size } })
     }
 
-    static requestPreview(data: any) {
+    static requestPreview(data: { id: string; previewId: string }) {
         this.requestList.push(JSON.stringify(data))
     }
 

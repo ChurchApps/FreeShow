@@ -55,6 +55,22 @@ export interface Show {
     midi?: { [key: ID]: Midi }
 }
 
+export interface TrimmedShows {
+    [key: string]: TrimmedShow
+}
+export interface TrimmedShow {
+    name: string
+    category: null | ID
+    timestamps: {
+        created: number
+        modified: null | number
+        used: null | number
+    }
+    quickAccess?: any
+    private?: boolean
+    locked?: boolean
+}
+
 export interface ShowList extends Show {
     id: string
     match?: number
@@ -114,6 +130,28 @@ export interface Item {
     fromTemplate?: boolean // these will be removed if another template is applied
     // media: fit, startAt, endAt
     // tag?: string; // p, div????
+}
+
+export interface LayoutRef {
+    type: "parent" | "child"
+    layoutId: string
+    index: number
+    layoutIndex: number
+    id: string
+    children?: string[]
+    parent?: { id: string; index: number; layoutIndex: number }
+    data: SlideData
+}
+
+export interface ShowGroups {
+    [key: string]: ShowGroup
+}
+export interface ShowGroup {
+    name: string
+    color: string
+    default?: boolean
+
+    template?: string
 }
 
 export interface Timer {
@@ -213,7 +251,7 @@ export interface SlideData {
     id: ID
     disabled?: boolean
     parent?: ID // layout ref
-    children?: any // layout slide
+    children?: { [key: string]: any } // layout slide
     color?: null | string
     nextTimer?: number // next slide timer
     transition?: Transition
@@ -225,9 +263,17 @@ export interface SlideData {
     overlays?: string[]
     audio?: string[]
 
+    mics?: { id: string; name: string }[]
+    mediaTransition?: Transition
+
     actions?: {
         // ...
         slideActions?: any[]
+
+        receiveMidi?: string
+        nextAfterMedia?: boolean
+        animate?: any
+        slide_shortcut?: string
     }
     // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
     bindings?: string[] // bind slide to an output
@@ -279,6 +325,10 @@ export interface Midi {
     enabled?: boolean // should customActivation trigger
     midiEnabled?: boolean
     midi?: MidiValues
+
+    // deprecated values
+    startupEnabled?: boolean
+    specificActivation?: string
 }
 
 export interface MidiValues {
@@ -393,6 +443,17 @@ export interface OutTransition {
     // action: string
     // slide?: number
     duration: number
+}
+
+export interface SlideTimer {
+    time: number
+    paused: boolean
+    sliderTimer: NodeJS.Timeout | null
+    autoPlay: boolean
+    max: number
+    timer: any
+    remaining?: number
+    start?: number
 }
 
 export interface Tag {

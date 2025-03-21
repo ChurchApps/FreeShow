@@ -413,8 +413,8 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 }
 
 // this will get the first available stage output
-export function getStageOutputId(_updater = get(outputs)): string {
-    return keysToID(_updater).find((a) => a.stageOutput)?.id
+export function getStageOutputId(_updater = get(outputs)) {
+    return keysToID(_updater).find((a) => a.stageOutput)?.id || ""
 }
 export function getStageResolution(outputId: string = "", _updater = get(outputs)): Resolution {
     if (!outputId) outputId = getStageOutputId()
@@ -681,8 +681,8 @@ export function getCurrentMediaTransition() {
 
     let outputId = getActiveOutputs(get(outputs))[0]
     let currentOutput = get(outputs)[outputId] || {}
-    let out: any = currentOutput?.out || {}
-    let slide: any = out.slide || null
+    let out = currentOutput?.out || {}
+    let slide = out.slide || null
     let slideData = get(showsCache) && slide && slide.id !== "temp" ? _show(slide.id).layouts("active").ref()[0]?.[slide.index!]?.data : null
     let slideMediaTransition = slideData ? slideData.mediaTransition : null
 

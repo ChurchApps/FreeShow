@@ -35,7 +35,7 @@
     import { ContextMenuItem, contextMenuItems } from "./contextMenus"
     import { menuClick } from "./menuClick"
 
-    export let contextElem: any = null
+    export let contextElem: HTMLDivElement | null = null
     export let topBar: boolean = false
     export let id: string
     export let menu: ContextMenuItem = contextMenuItems[id]
@@ -44,27 +44,27 @@
     let hide: boolean = false
     let enabled: boolean = menu?.enabled ? true : false
 
-    const conditions: any = {
+    const conditions = {
         // slide views
         view_grid: () => ($slidesOptions.mode === "grid" ? (enabled = true) : ""),
         view_simple: () => ($slidesOptions.mode === "simple" ? (enabled = true) : ""),
         view_list: () => ($slidesOptions.mode === "list" ? (enabled = true) : ""),
         view_lyrics: () => ($slidesOptions.mode === "lyrics" ? (enabled = true) : ""),
         rename: () => {
-            hide = $shows[$selected.data[0]?.id]?.locked
+            hide = !!$shows[$selected.data[0]?.id]?.locked
         },
         delete: () => {
-            hide = $shows[$selected.data[0]?.id]?.locked
+            hide = !!$shows[$selected.data[0]?.id]?.locked
         },
         private: () => {
             let show = $shows[$selected.data[0]?.id]
             if (!show) return
 
-            enabled = show.private
-            hide = !enabled && show.locked
+            enabled = !!show.private
+            hide = !!(!enabled && show.locked)
         },
         use_as_archive: () => {
-            const categoryStores: any = {
+            const categoryStores = {
                 category_shows: () => $categories,
                 category_overlays: () => $overlayCategories,
                 category_templates: () => $templateCategories,
@@ -75,7 +75,7 @@
         },
         lock_show: () => {
             if (!$shows[$selected.data[0]?.id]?.locked) return
-            enabled = $shows[$selected.data[0].id].locked
+            enabled = !!$shows[$selected.data[0].id].locked
         },
         disable: () => {
             if ($selected.id === "slide" && $activeShow) {
@@ -94,7 +94,7 @@
         slide_transition: () => {
             if ($selected.id === "slide" && $activeShow) {
                 let ref = _show().layouts("active").ref()[0]
-                enabled = ref[$selected.data[0]?.index]?.data?.transition || false
+                enabled = !!(ref[$selected.data[0]?.index]?.data?.transition || false)
             }
         },
         transition: () => {
@@ -160,8 +160,8 @@
         delete_all: () => {
             if (!contextElem?.classList.value.includes("#event")) return
 
-            let group: any = $events[contextElem.id].group
-            if (group && Object.entries($events).find(([id, event]: any) => id !== contextElem.id && event.group === group)) return
+            let group = $events[contextElem.id].group
+            if (group && Object.entries($events).find(([id, event]) => id !== contextElem.id && event.group === group)) return
 
             disabled = true
         },
@@ -204,7 +204,7 @@
             disabled = alwaysOnTopState.length === previewOutputs.length
         },
         hide_from_preview: () => {
-            let outputId = contextElem.id
+            let outputId = contextElem?.id || ""
             if ($outputs[outputId]?.hideFromPreview) enabled = true
             menu.label = enabled ? "context.enable_preview" : "context.hide_from_preview"
         },
@@ -235,8 +235,8 @@
     function contextItemClick() {
         if (disabled) return
 
-        let actionItem: null | HTMLElement = contextElem?.classList.contains("_" + id) ? contextElem : contextElem?.querySelector("._" + id)
-        let sel: any = $selected
+        let actionItem: HTMLElement | null = contextElem?.classList.contains("_" + id) ? contextElem : contextElem?.querySelector("._" + id) || null
+        let sel = $selected
 
         menuClick(id, enabled, menu, contextElem, actionItem, sel)
 
@@ -253,7 +253,7 @@
         else contextActive.set(false)
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") contextItemClick()
     }
 

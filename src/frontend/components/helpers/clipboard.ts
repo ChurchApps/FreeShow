@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { Main } from "../../../types/IPC/Main"
+import type { Clipboard } from "../../../types/Main"
 import type { Folder, Project } from "../../../types/Projects"
 import type { Item } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
@@ -60,8 +61,8 @@ import { loadShows } from "./setShow"
 import { checkName } from "./show"
 import { _show } from "./shows"
 
-export function copy({ id, data }: any = {}, getData: boolean = true) {
-    let copy: any = { id, data }
+export function copy(clip: Clipboard | null = null, getData: boolean = true) {
+    let copy: Clipboard | null = clip
 
     if (window.getSelection()?.toString()) {
         navigator.clipboard.writeText(window.getSelection()!.toString())
@@ -71,7 +72,7 @@ export function copy({ id, data }: any = {}, getData: boolean = true) {
     if (get(selected).id) copy = get(selected)
     else if (get(activeEdit).items.length) copy = { id: "item", data: get(activeEdit) }
 
-    if (!copy || !copyActions[copy.id]) return
+    if (!copy?.id || !copyActions[copy.id]) return
 
     let copyObj = clone(copy)
     if (getData && copyActions[copy.id]) copy.data = copyActions[copy.id](copy.data)
@@ -85,7 +86,7 @@ export function copy({ id, data }: any = {}, getData: boolean = true) {
 }
 
 // pasting text in editbox is it's own function
-export function paste(clip: any = null, extraData: any = {}, customElem: any = null) {
+export function paste(clip: Clipboard | null = null, extraData: any = {}, customElem: any = null) {
     if (!clip) clip = get(clipboard)
     let activeElem: any = document.activeElement
 
@@ -109,33 +110,35 @@ export function paste(clip: any = null, extraData: any = {}, customElem: any = n
     console.log("PASTED:", clip)
 }
 
-export function cut(data: any = {}) {
-    let copyData = copy(data)
+export function cut(clip: Clipboard | null = null) {
+    let copyData = copy(clip)
     if (!copyData) return
     deleteAction(copyData)
 
     console.log("CUTTED:", copyData)
 }
 
-export function deleteAction({ id, data }, type: string = "delete") {
-    console.log("DELETE", id, data)
-    if (!deleteActions[id]) return false
-    let deleted: any = deleteActions[id](data, type)
+export function deleteAction(clip: Clipboard, type: string = "delete") {
+    console.log("DELETE", clip.id, clip.data)
+    if (!clip?.id) return false
+    if (!deleteActions[clip.id]) return false
 
-    console.log("DELETED:", { id, data })
+    let deleted = deleteActions[clip.id](clip.data, type)
+
+    console.log("DELETED:", clip)
     if (deleted !== false) selected.set({ id: null, data: [] })
     return true
 }
 
-export function duplicate(data: any = {}) {
-    if (duplicateActions[data.id]) {
-        duplicateActions[data.id](data.data)
+export function duplicate(clip: Clipboard | null = null) {
+    if (clip?.id && duplicateActions[clip.id]) {
+        duplicateActions[clip.id](clip.data)
 
-        console.log("DUPLICATED:", data)
+        console.log("DUPLICATED:", clip)
         return true
     }
 
-    let copyData = copy(data)
+    let copyData = copy(clip)
     if (!copyData) return false
     paste(null, { index: copyData.data[0]?.index })
 
@@ -214,7 +217,7 @@ const selectActions: any = {
 
         data.forEach(({ id }: any) => {
             ref.forEach((b, i) => {
-                if (b.type === "child" ? id === b.parent.id : id === b.id) newSelection.push({ index: i, showId: get(activeShow)?.id })
+                if (b.type === "child" ? id === b.parent?.id : id === b.id) newSelection.push({ index: i, showId: get(activeShow)?.id })
             })
         })
 

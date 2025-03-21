@@ -81,5 +81,6 @@ export function template(strings: Dictionary): any {
         ],
     }
 
+    // as Array<(Electron.MenuItemConstructorOptions) | (Electron.MenuItem)>
     return [...(isMac ? [appMenu] : []), fileMenu, editMenu, viewMenu, helpMenu]
 }

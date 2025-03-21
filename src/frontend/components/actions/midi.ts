@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
-import type { Midi } from "../../../types/Show"
+import type { Layout, Midi } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { midiIn, shows } from "../../stores"
 import { newToast } from "../../utils/common"
@@ -12,7 +12,7 @@ import { _show } from "../helpers/shows"
 import { runAction } from "./actions"
 
 export function midiInListen() {
-    Object.entries(get(midiIn)).forEach(([id, action]: any) => {
+    Object.entries(get(midiIn)).forEach(([id, action]) => {
         action = convertOldMidiToNewAction(action)
         if (!action.midi) return
 
@@ -29,14 +29,14 @@ export function midiInListen() {
             await loadShows([show.id])
 
             // check that current show actually has this MIDI receive action
-            let layouts: any[] = _show(show.id).layouts().get()
+            let layouts: Layout[] = _show(show.id).layouts().get()
             let found: boolean = false
             layouts.forEach((layout) => {
                 layout.slides.forEach((slide) => {
                     if (slide.actions?.receiveMidi === id) found = true
 
                     if (slide.children) {
-                        Object.values(slide.children).forEach((child: any) => {
+                        Object.values(slide.children).forEach((child) => {
                             if (child.actions?.receiveMidi === id) found = true
                         })
                     }
@@ -119,7 +119,7 @@ export function receivedMidi(msg) {
 
     runAction(action, { midiIndex: index })
 
-    let shows: any[] = action?.shows || []
+    let shows = action?.shows || []
     if (!shows?.length) return
 
     let slidePlayed: boolean = false

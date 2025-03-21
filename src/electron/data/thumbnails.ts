@@ -125,7 +125,7 @@ async function generate(input: string, output: string, size: string, config: Con
 let mediaBeingCaptured: number = 0
 const maxAmount = 20
 const refillMargin = maxAmount * 0.6
-async function captureWithCanvas(data: any) {
+async function captureWithCanvas(data: { input: string; output: string; size: ResizeOptions; extension: string; config: Config }) {
     if (!(await doesPathExistAsync(data.input))) {
         generationFinished()
         return

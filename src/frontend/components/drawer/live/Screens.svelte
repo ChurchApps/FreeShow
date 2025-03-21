@@ -8,7 +8,7 @@
     import Capture from "./Capture.svelte"
 
     let screens: { name: string; id: string }[] = []
-    export let streams: any[]
+    export let streams: MediaStream[]
 
     onMount(async () => {
         screens = await requestMain(Main.GET_SCREENS)

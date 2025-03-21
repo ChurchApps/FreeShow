@@ -58,7 +58,7 @@ export function updateMetronome(values: API_metronome, starting: boolean = false
 }
 
 export function stopMetronome() {
-    clearTimeout(scheduleTimeout)
+    if (scheduleTimeout) clearTimeout(scheduleTimeout)
     scheduleTimeout = null
     playingMetronome.set(false)
 
@@ -67,7 +67,7 @@ export function stopMetronome() {
 }
 
 const audioFiles = ["beat-hi", "beat-lo"]
-let audioBuffers: any = {}
+let audioBuffers: { [key: string]: AudioBuffer } = {}
 async function setAudioBuffers() {
     if (audioBuffers.hi) return
 
@@ -100,7 +100,7 @@ async function initializeMetronome() {
 }
 
 const preScheduleTime = 0.1
-let scheduleTimeout: any = null
+let scheduleTimeout: NodeJS.Timeout | null = null
 function scheduleNextNote(time = 0, beat = 1) {
     // changing tempo when active could cause many to play at once without this check
     if (scheduleTimeout) return

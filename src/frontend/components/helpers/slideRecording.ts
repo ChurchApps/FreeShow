@@ -16,7 +16,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
     let layoutRef = _show(showId).layouts([layoutId]).ref()[0]
 
     let layoutData = layoutRef[recording.sequence?.[0]?.slideRef?.index]?.data || {}
-    let audio = layoutData.audio?.[0]
+    let audio = layoutData.audio?.[0] || ""
     if (audio || audioListener) {
         let showMedia = _show(showId).get("media")
         audio = showMedia[audio]?.path

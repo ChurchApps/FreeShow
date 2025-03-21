@@ -280,7 +280,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             let duplicates: string[] = []
             let oldShows: any = {}
-            let rename: any = {}
+            let rename: { [key: string]: { name: string; oldName: string } } = {}
 
             // load shows cache (to save in undo history)
             if (deleting && showsList.length < 20) {
@@ -347,10 +347,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     deletedShows.set(get(deletedShows).filter((a) => a.id !== id))
 
                     // return if old show is modified after old show
-                    if (initializing && a[id]?.timestamps?.modified && show.timestamps?.modified && a[id].timestamps.modified > show.timestamps.modified) return
+                    const oldModified = a[id]?.timestamps?.modified || 0
+                    const newModified = show.timestamps?.modified || 0
+                    if (initializing && oldModified > newModified) return
 
                     let oldShow = a[id] ? clone(a[id]) : null
-                    if (oldShow?.timestamps) delete oldShow.timestamps.used
+                    if (oldShow?.timestamps) delete (oldShow as any).timestamps.used
 
                     a[id] = {
                         name: show.name || a[id]?.name || "",
@@ -365,7 +367,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     else if (a[id].locked) delete a[id].locked
 
                     let newShow = clone(a[id])
-                    if (newShow?.timestamps) delete newShow.timestamps.used
+                    if (newShow?.timestamps) delete (newShow as any).timestamps.used
 
                     if (initializing && !replace && oldShow && JSON.stringify(oldShow) !== JSON.stringify(newShow)) duplicates.push(show.name)
                 })
@@ -815,7 +817,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             globalGroup = parent?.globalGroup
                         }
                         if (globalGroup && get(groups)[globalGroup]?.template) {
-                            slideTemplate = clone(get(templates)[get(groups)[globalGroup]?.template]) || template
+                            slideTemplate = clone(get(templates)[get(groups)[globalGroup]?.template || ""]) || template
                             templateMode = "group"
                         }
                     }

@@ -2,7 +2,7 @@ import type { BrowserWindow } from "electron"
 import type { CaptureOptions } from "../capture/CaptureOptions"
 
 export class Output {
-    window: BrowserWindow
+    window!: BrowserWindow
     invisible?: boolean
     boundsLocked?: boolean
     //previewWindow: BrowserWindow

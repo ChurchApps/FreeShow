@@ -10,7 +10,7 @@
     import NumberInput from "../inputs/NumberInput.svelte"
     import Panel from "../system/Panel.svelte"
 
-    const defaults: any = {
+    const defaults = {
         focus: {
             color: "#000000",
             opacity: 0.8,
@@ -59,17 +59,17 @@
     const check = (e: any, key: string) => update(key, e.target.checked)
 
     const update = (key: string, value: any) => {
-        drawSettings.update((ds: any) => {
-            ds[$drawTool][key] = value
-            return ds
+        drawSettings.update((a) => {
+            a[$drawTool][key] = value
+            return a
         })
     }
 
     $: if (!Object.keys($drawSettings[$drawTool] || {}).length) reset()
     function reset() {
-        drawSettings.update((ds: any) => {
-            ds[$drawTool] = clone(defaults[$drawTool] || {})
-            return ds
+        drawSettings.update((a) => {
+            a[$drawTool] = clone(defaults[$drawTool] || {})
+            return a
         })
     }
 </script>

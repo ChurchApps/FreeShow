@@ -16,7 +16,7 @@
     import Center from "../../system/Center.svelte"
     import { bookIds, fetchBible, formatBibleText, getColorCode, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
 
-    export let active: any
+    export let active: string
     export let bibles: Bible[]
     export let searchValue: string
 

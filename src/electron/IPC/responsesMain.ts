@@ -6,9 +6,10 @@ import path from "path"
 import { closeMain, exitApp, getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
 import { Main, MainResponses } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { LyricSearchResult, OS } from "../../types/Main"
+import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
+import { importShow } from "../data/import"
 import { convertPDFToImages } from "../data/pdfToImage"
 import { save } from "../data/save"
 import { config, error_log, getStore, stores, updateDataPath, userDataPath } from "../data/store"
@@ -49,7 +50,6 @@ import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi 
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import checkForUpdates from "../utils/updater"
 import { sendToMain } from "./main"
-import { importShow } from "../data/import"
 
 export const mainResponses: MainResponses = {
     [Main.SAVE]: async (a) => {
@@ -202,13 +202,13 @@ export function loadScripture(msg: { id: string; path: string; name: string; dat
     let bibleFolder: string = getDataFolder(msg.path || "", dataFolderNames.scriptures)
     let p: string = path.join(bibleFolder, msg.name + ".fsb")
 
-    let bible: any = loadFile(p, msg.id)
+    let bible = loadFile(p, msg.id)
 
     // pre v0.5.6
     if (bible.error) p = path.join(app.getPath("documents"), "Bibles", msg.name + ".fsb")
     bible = loadFile(p, msg.id)
 
-    if (msg.data) bible.data = msg.data
+    if (msg.data) return { ...bible, data: msg.data }
     return bible
 }
 
@@ -216,7 +216,7 @@ export function loadScripture(msg: { id: string; path: string; name: string; dat
 export function loadShow(msg: { id: string; path: string | null; name: string }) {
     let p: string = checkShowsFolder(msg.path || "")
     p = path.join(p, (msg.name || msg.id) + ".show")
-    let show: any = loadFile(p, msg.id)
+    let show = loadFile(p, msg.id)
 
     return show
 }
@@ -265,14 +265,14 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
         })
     })
 
-    function addFreeShowWindows(screens: any[], sources: DesktopCapturerSource[]) {
+    function addFreeShowWindows(screens: { name: string; id: string }[], sources: DesktopCapturerSource[]) {
         const windows: BrowserWindow[] = []
-        OutputHelper.getAllOutputs().forEach(([output]: any) => {
-            output.window && windows.push(output.window)
+        OutputHelper.getAllOutputs().forEach(([_id, output]) => {
+            if (output.window) windows.push(output.window)
         })
-        Object.values({ main: mainWindow, ...windows }).forEach((window: any) => {
+        ;[mainWindow!, ...windows].forEach((window) => {
             let mediaId = window?.getMediaSourceId()
-            let windowsAlreadyExists = sources.find((a: any) => a.id === mediaId)
+            let windowsAlreadyExists = sources.find((a) => a.id === mediaId)
             if (windowsAlreadyExists) return
 
             screens.push({ name: window?.getTitle(), id: mediaId })
@@ -291,7 +291,7 @@ export function forceCloseApp() {
 // RECORDER
 // only open once per session
 let systemOpened: boolean = false
-export function saveRecording(_: any, msg: any) {
+export function saveRecording(_: Electron.IpcMainEvent, msg: any) {
     let folder: string = getDataFolder(msg.path || "", dataFolderNames.recordings)
     let p: string = path.join(folder, msg.name)
 
@@ -306,13 +306,13 @@ export function saveRecording(_: any, msg: any) {
 
 // ERROR LOGGER
 const maxLogLength = 250
-export function logError(log: any, electron: boolean = false) {
+export function logError(log: ErrorLog, electron: boolean = false) {
     if (!isProd) log.dev = true
 
-    let storedLog: any = error_log.store
-    let key = electron ? "main" : "renderer"
+    let storedLog = error_log.store
+    let key: "main" | "renderer" = electron ? "main" : "renderer"
 
-    let previousLog: any[] = storedLog[key] || []
+    let previousLog = storedLog[key] || []
     previousLog.push(log)
 
     if (previousLog.length > maxLogLength) previousLog = previousLog.slice(previousLog.length - maxLogLength)
@@ -341,7 +341,7 @@ function createLog(err: Error) {
         source: "See stack",
         message: err.message,
         stack: err.stack,
-    }
+    } as ErrorLog
 }
 
 // STORE MEDIA AS BASE64

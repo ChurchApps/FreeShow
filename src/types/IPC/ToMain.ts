@@ -37,7 +37,7 @@ export interface ToMainSendPayloads {
     [ToMain.API]: "connected"
     ///
     [ToMain.CLOSE2]: boolean
-    [ToMain.IMPORT2]: { channel: string; data: any[] }
+    [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string; name?: string; extension?: string } | string)[]; custom?: any }
     [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }
     [ToMain.SAVE2]: { closeWhenFinished: boolean; customTriggers: any }
     [ToMain.REFRESH_SHOWS2]: { [key: string]: any }

@@ -595,10 +595,8 @@ function createSlidesMultipleLanguagesPerSlide(songbeamerSlides: SongbeamerSlide
 
             let layoutParentSlideIndex = getSlideIndexFromLayout(layout, lastSlideId)
             if (layoutParentSlideIndex !== null) {
-                if (!layout[layoutParentSlideIndex].hasOwnProperty("children")) {
-                    layout[layoutParentSlideIndex].children = {}
-                }
-                layout[layoutParentSlideIndex].children[id] = {}
+                if (!layout[layoutParentSlideIndex].hasOwnProperty("children")) layout[layoutParentSlideIndex].children = {}
+                layout[layoutParentSlideIndex].children![id] = {}
             } else {
                 let slideData: SlideData = { id }
                 layout.push(slideData)
@@ -696,10 +694,8 @@ function createSlidesForLanguage(songbeamerSlides: SongbeamerSlide[], language: 
 
             let layoutParentSlideIndex = getSlideIndexFromLayout(layout, lastSlideId)
             if (layoutParentSlideIndex !== null) {
-                if (!layout[layoutParentSlideIndex].hasOwnProperty("children")) {
-                    layout[layoutParentSlideIndex].children = {}
-                }
-                layout[layoutParentSlideIndex].children[id] = {}
+                if (!layout[layoutParentSlideIndex].hasOwnProperty("children")) layout[layoutParentSlideIndex].children = {}
+                layout[layoutParentSlideIndex].children![id] = {}
             } else {
                 let slideData: SlideData = { id }
                 layout.push(slideData)

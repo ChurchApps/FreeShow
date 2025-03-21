@@ -103,7 +103,7 @@ export function fadeInAudio(path: string, crossfade: number, waitToPlay: boolean
 }
 
 const speed = 0.01
-let currentlyFading: any = {}
+let currentlyFading: { [key: string]: NodeJS.Timeout } = {}
 async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, increment: boolean = false, fadeToVolume: number = 1): Promise<boolean> {
     duration = Number(duration)
     let fadeId = (increment ? "in_" : "out_") + id
@@ -199,8 +199,8 @@ export function fadeinAllPlayingAudio() {
 }
 
 function stopFading() {
-    Object.values(currentlyFading).forEach((fadeInterval: any) => {
-        clearInterval(fadeInterval)
-        delete currentlyFading[fadeInterval]
+    Object.keys(currentlyFading).forEach((id) => {
+        clearInterval(currentlyFading[id])
+        delete currentlyFading[id]
     })
 }

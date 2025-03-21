@@ -26,8 +26,10 @@
     export let active: string | null
     export let searchValue: string = ""
 
-    let files: any[] = []
-    let scrollElem: any
+    type File = { path: string; name: string; extension?: string; folder?: boolean; favourite?: boolean; audio?: boolean }
+
+    let files: File[] = []
+    let scrollElem: HTMLElement | undefined
 
     let playlistSettings: boolean = false
 
@@ -55,7 +57,7 @@
         if (active === "favourites") {
             prevActive = active
             files = Object.entries($media)
-                .map(([path, a]: any) => {
+                .map(([path, a]) => {
                     let p = splitPath(path)
                     let name = p.name
                     return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
@@ -87,8 +89,8 @@
         }
     }
 
-    let filesInFolders: string[] = []
-    let folderFiles: any = {}
+    let filesInFolders: { id: string; name: string }[] = []
+    let folderFiles: { [key: string]: string[] } = {}
 
     let listenerId = uid()
     onDestroy(() => destroy(MAIN, listenerId))
@@ -103,8 +105,8 @@
 
         if (active !== "all" && data.path !== path) return
 
-        files.push(...data.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
-        files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        files.push(...data.files.filter((file) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
+        files = sortByName(files).sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
@@ -158,7 +160,7 @@
     }
 
     // selected will be cleared when clicked, so store them on mousedown
-    let selectedFiles: any[] = []
+    let selectedFiles: File[] = []
     function storeSelected() {
         if ($selected.id === "audio") selectedFiles = clone($selected.data)
         else selectedFiles = []

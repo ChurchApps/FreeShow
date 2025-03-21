@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import type { Item, ItemType } from "../../../../types/Show"
+import type { Item, ItemType, Slide } from "../../../../types/Show"
 import { activeEdit, activeShow, overlays, refreshEditSlide, showsCache, templates, timers } from "../../../stores"
 import { createNewTimer } from "../../drawer/timers/timers"
 import { history } from "../../helpers/history"
@@ -86,11 +86,12 @@ export function getEditSlide() {
     if (active.id) {
         if (active.type === "overlay") return get(overlays)[active.id]
         if (active.type === "template") return get(templates)[active.id]
-        return {}
+        return null
     }
 
-    let editSlideRef: any = _show().layouts("active").ref()[0]?.[active.slide ?? ""] || {}
-    return _show().get("slides")?.[editSlideRef.id]
+    const ref = _show().layouts("active").ref()[0]
+    let editSlideRef = ref?.[active.slide ?? -1]
+    return _show().get("slides")?.[editSlideRef?.id] as Slide
 }
 
 export function getEditItems(onlyActive: boolean = false) {
@@ -100,7 +101,7 @@ export function getEditItems(onlyActive: boolean = false) {
     let editSlide = clone(getEditSlide())
     if (!Array.isArray(editSlide?.items)) return []
 
-    let editItems = editSlide.items
+    let editItems = editSlide!.items
     if (onlyActive) editItems = editItems.filter((_, i) => selectedItems.includes(i))
 
     return editItems || []

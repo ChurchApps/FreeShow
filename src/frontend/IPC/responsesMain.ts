@@ -299,12 +299,12 @@ export const mainResponses: MainResponses = {
             opensong: () => convertOpenSong(data),
             quelea: () => convertQuelea(data),
             softprojector: () => convertSoftProjector(data),
-            songbeamer: () => convertSongbeamerFiles(data),
+            songbeamer: () => convertSongbeamerFiles(a.custom),
             easyslides: () => convertEasyslides(data),
             verseview: () => convertVerseVIEW(data),
             // Media
-            pdf: () => addToProject("pdf", data),
-            powerkey: () => addToProject("ppt", data),
+            pdf: () => addToProject("pdf", data as string[]),
+            powerkey: () => addToProject("ppt", data as string[]),
             lessons: () => convertLessonsPresentation(data),
             // Other
             calendar: () => convertCalendar(data),

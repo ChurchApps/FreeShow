@@ -7,7 +7,7 @@ import { getExtension } from "../utils/files"
 // https://www.npmjs.com/package/adm-zip
 
 export function decompress(files: string[], asBuffer: boolean = false) {
-    let data: any[] = []
+    let data: { content: Buffer | string; name: string; extension: string }[] = []
 
     files.forEach((file) => {
         const zip = new AdmZip(file)
@@ -19,7 +19,7 @@ export function decompress(files: string[], asBuffer: boolean = false) {
                 content = zipEntry.getData()
             } catch (err) {
                 console.error(err)
-                if (err.message.includes("Incompatible password parameter")) {
+                if ((err as Error).message.includes("Incompatible password parameter")) {
                     sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
                 }
                 return

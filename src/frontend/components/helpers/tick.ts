@@ -81,8 +81,8 @@ export function newSlideTimer(id: string, duration: number) {
 // let timeObj: any = null
 // let sliderTimer: any = null
 // let autoPlay: boolean = true
-const Timer: any = function (this: any, callback: any, delay: number, id: any) {
-    let timeout: any
+const Timer: any = function (this: any, callback: (id: string) => void, delay: number, id: string) {
+    let timeout: NodeJS.Timeout | null
     let start: number
     let remaining: number = delay
     let options: any = {}
@@ -91,7 +91,7 @@ const Timer: any = function (this: any, callback: any, delay: number, id: any) {
     // options.time = options.max - remaining / 1000
 
     this.clear = () => {
-        clearTimeout(timeout)
+        if (timeout) clearTimeout(timeout)
         clearTimeout(options.sliderTimer)
         timeout = null
         options.sliderTimer = null
@@ -103,7 +103,7 @@ const Timer: any = function (this: any, callback: any, delay: number, id: any) {
 
     this.pause = () => {
         options = get(slideTimers)[id]
-        clearTimeout(timeout)
+        if (timeout) clearTimeout(timeout)
         clearTimeout(options.sliderTimer)
         timeout = null
         options.sliderTimer = null
@@ -122,7 +122,7 @@ const Timer: any = function (this: any, callback: any, delay: number, id: any) {
         options.remaining = remaining
         options.autoPlay = true
         timeout = setTimeout(() => {
-            clearTimeout(timeout)
+            if (timeout) clearTimeout(timeout)
             timeout = null
             callback(id)
         }, remaining)
@@ -152,6 +152,8 @@ function sliderTime(id: any) {
         if (!options || !options.sliderTimer || !options.timer || options.paused) return
 
         slideTimers.update((a) => {
+            if (!options.remaining || !options.start) return a
+
             let remaining = options.remaining - (Date.now() - options.start)
             a[id].time = options.max - remaining / 1000
             a[id].time = Math.min(a[id].time, options.max)

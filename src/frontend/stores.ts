@@ -5,16 +5,16 @@ import type { Family } from "css-fonts"
 import { type Writable, writable } from "svelte/store"
 import type { Bible } from "../types/Bible"
 import type { Event } from "../types/Calendar"
-import type { Draw, DrawSettings, DrawTools } from "../types/Draw"
+import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
 import type { History } from "../types/History"
-import type { ActiveEdit, Media, MediaOptions, NumberObject, OS, Popups, Selected, SlidesOptions } from "../types/Main"
+import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Selected, SlidesOptions, Trigger, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { Emitter, ID, MidiIn, Overlays, ShowList, Shows, ShowType, Tag, Templates, Timer, Transition } from "../types/Show"
+import type { Emitter, ID, MidiIn, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
-import type { AudioChannel, Playlist } from "./../types/Audio"
+import type { AudioChannel, AudioStream, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
@@ -36,8 +36,8 @@ export const windowState: Writable<any> = writable({})
 
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
-export const clipboard: Writable<{ id: null | string; data: any[] }> = writable({ id: null, data: [] })
-export const connections: Writable<{ [key: string]: any }> = writable({})
+export const clipboard: Writable<Clipboard> = writable({ id: null, data: [] })
+export const connections: Writable<{ [key: string]: { entered?: boolean; active?: boolean } }> = writable({})
 export const activePopup: Writable<null | Popups> = writable(null)
 export const activePage: Writable<TopViews> = writable("show")
 export const contextActive: Writable<boolean> = writable(false)
@@ -92,12 +92,12 @@ export const isFadingOut: Writable<any> = writable(false)
 // DRAW
 export const drawTool: Writable<DrawTools> = writable("focus")
 export const draw: Writable<null | Draw> = writable(null)
-export const paintCache: Writable<any[]> = writable([])
+export const paintCache: Writable<DrawLine[]> = writable([])
 
 // OUTPUTS
 export const outputDisplay: Writable<boolean> = writable(false)
 export const currentOutputSettings: Writable<string | null> = writable(null)
-export const slideTimers: Writable<{ [key: string]: any }> = writable({})
+export const slideTimers: Writable<{ [key: string]: SlideTimer }> = writable({})
 export const outputCache: Writable<any> = writable(null)
 export const outputSlideCache: Writable<any> = writable({})
 export const previewBuffers: Writable<any> = writable({})
@@ -111,7 +111,7 @@ export const customMessageCredits: Writable<string> = writable("")
 export const presentationData: Writable<any> = writable({})
 export const presentationApps: Writable<null | string[]> = writable(null)
 export const colorbars: Writable<string> = writable("")
-export const overlayTimers: Writable<{ [key: string]: any }> = writable({})
+export const overlayTimers: Writable<{ [key: string]: { outputId: string; overlayId: string; timer: NodeJS.Timeout } }> = writable({})
 
 // EXPORT
 export const exportOptions: Writable<any> = writable({ pdf: { rows: 5, columns: 2, slide: true, text: true } })
@@ -147,8 +147,8 @@ export const forceClock: Writable<boolean> = writable(false)
 export const lastSavedCache: Writable<any> = writable(null)
 export const playScripture: Writable<boolean> = writable(false)
 export const openScripture: Writable<any> = writable(null)
-export const deletedShows: Writable<any[]> = writable([])
-export const renamedShows: Writable<any[]> = writable([])
+export const deletedShows: Writable<{ name: string; id: string }[]> = writable([])
+export const renamedShows: Writable<{ id: string; name: string; oldName: string }[]> = writable([])
 export const selectAllMedia: Writable<boolean> = writable(false)
 export const selectAllAudio: Writable<boolean> = writable(false)
 export const openToolsTab: Writable<string> = writable("")
@@ -170,10 +170,10 @@ export const historyCacheCount: Writable<number> = writable(250)
 export const usageLog: Writable<any> = writable({ all: [] })
 
 // SHOW
-export const shows: Writable<any> = writable({}) // {default}
+export const shows: Writable<TrimmedShows> = writable({}) // {default}
 export const showsCache: Writable<Shows> = writable({}) // {default}
 export const textCache: Writable<any> = writable({}) // {}
-export const groups: Writable<any> = writable({}) // {default}
+export const groups: Writable<ShowGroups> = writable({}) // {default}
 export const categories: Writable<Categories> = writable({}) // {default}
 export const transitionData: Writable<{ text: Transition; media: Transition }> = writable({
     text: { type: "fade", duration: 500, easing: "sine" },
@@ -193,10 +193,10 @@ export const folders: Writable<Folders> = writable({}) // {default}
 export const timers: Writable<{ [key: string]: Timer }> = writable({}) // {}
 
 // VARIABLES
-export const variables: Writable<{ [key: string]: any }> = writable({}) // {}
+export const variables: Writable<{ [key: string]: Variable }> = writable({}) // {}
 
 // TRIGGERS
-export const triggers: Writable<{ [key: string]: any }> = writable({}) // {}
+export const triggers: Writable<{ [key: string]: Trigger }> = writable({}) // {}
 
 // MEDIA
 export const media: Writable<Media> = writable({}) // {}
@@ -210,7 +210,7 @@ export const overlays: Writable<Overlays> = writable({}) // {default}
 
 // AUDIO
 export const audioFolders: Writable<Categories> = writable({}) // {default}
-export const audioStreams: Writable<{ [key: string]: any }> = writable({}) // {}
+export const audioStreams: Writable<{ [key: string]: AudioStream }> = writable({}) // {}
 export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}) // {}
 export const volume: Writable<number> = writable(1) // 1
 export const gain: Writable<number> = writable(1) // 1
@@ -398,7 +398,7 @@ export const $ = {
 
 // DEBUG STORE UPDATES
 const debugStores = false
-let updates: any = {}
+let updates: { [key: string]: number } = {}
 if (debugStores) startSubscriptions()
 function startSubscriptions() {
     Object.entries($).forEach(([key, store]) => {

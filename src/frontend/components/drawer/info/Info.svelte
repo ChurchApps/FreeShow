@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Bible } from "../../../../types/Scripture"
     import { activeRecording, activeShow, drawerTabsData, forceClock } from "../../../stores"
     import Center from "../../system/Center.svelte"
     import Clock from "../../system/Clock.svelte"
@@ -13,7 +14,7 @@
     import TemplateInfo from "./TemplateInfo.svelte"
 
     export let id: string
-    export let bibles: any
+    export let bibles: Bible[]
 </script>
 
 <div class="main context #drawer_info">

@@ -8,9 +8,9 @@ import { statSync } from "fs"
 import path from "path"
 import type { Event } from "../../types/Calendar"
 import type { History } from "../../types/History"
-import type { Media } from "../../types/Main"
+import type { ErrorLog, Media } from "../../types/Main"
 import type { Themes } from "../../types/Settings"
-import type { Overlays, Templates } from "../../types/Show"
+import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
 import { forceCloseApp } from "../IPC/responsesMain"
 import { DEFAULT_PCO_DATA } from "../planningcenter/connect"
@@ -79,12 +79,12 @@ function checkStores(dataPath: string) {
 }
 
 const DEFAULTS = {
-    error_log: {} as any,
+    error_log: {} as { renderer: ErrorLog[]; main: ErrorLog[] },
     settings: defaultSettings,
     synced_settings: defaultSyncedSettings,
     themes: {} as { [key: string]: Themes },
     projects: { projects: {}, folders: {}, projectTemplates: {} },
-    shows: {} as any,
+    shows: {} as TrimmedShows,
     stageShows: {} as StageLayouts,
     overlays: {} as Overlays,
     templates: {} as Templates,
@@ -170,7 +170,7 @@ const portableData: { [key: string]: { key: keyof typeof stores; defaults: objec
 }
 
 export let userDataPath: string | null = null
-export function updateDataPath({ reset, dataPath, load }: any = {}) {
+export function updateDataPath({ reset, dataPath, load }: { reset?: boolean; dataPath?: string; load?: boolean } = {}) {
     if (reset) return resetStoresPath()
 
     let settingsStore = settings.store || {}

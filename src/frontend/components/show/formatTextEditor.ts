@@ -137,7 +137,7 @@ export function formatText(text: string, showId: string = "") {
                     if (!newChildId) return
 
                     replacedIds[newChildId] = oldChildId
-                    newChildrenData[newChildId] = oldLayoutSlide.children[oldChildId]
+                    newChildrenData[newChildId] = oldLayoutSlide.children![oldChildId]
                 })
                 oldLayoutSlide.children = newChildrenData
             }

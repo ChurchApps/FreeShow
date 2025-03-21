@@ -26,7 +26,7 @@ export function getMidiInputs(): { name: string }[] {
         .inputs.map((a: any) => ({ name: a.name }))
 }
 
-let openedOutputPorts: any = {}
+let openedOutputPorts: { [key: string]: any } = {}
 export async function sendMidi(data: any) {
     let port: any = null
 
@@ -58,7 +58,7 @@ export async function sendMidi(data: any) {
     // port.close()
 }
 
-let openedPorts: any = {}
+let openedPorts: { [key: string]: any } = {}
 export async function receiveMidi(data: any): Promise<{ id: string; values: any; type: "noteon" | "noteoff" } | null> {
     // console.log("INPUT", data.input)
     if (!data.input) return null

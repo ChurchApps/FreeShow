@@ -12,7 +12,7 @@
         name: string
     }
     export let screen: Screen
-    export let streams: any[]
+    export let streams: MediaStream[]
     export let background: boolean = false
 
     let loaded = false

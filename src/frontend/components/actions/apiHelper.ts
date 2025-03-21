@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
+import type { Variable } from "../../../types/Main"
 import {
     activeDrawerTab,
     activeEdit,
@@ -61,7 +62,7 @@ export function gotoGroup(dataGroupId: string) {
     if (get(outLocked)) return
 
     let outputId = getActiveOutputs(get(outputs))[0]
-    let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
+    let currentOutput = get(outputs)[outputId] || null
     let outSlide = currentOutput.out?.slide
     let currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
     if (!currentShowId) return
@@ -118,7 +119,7 @@ export async function selectSlideByIndex(data: API_slide_index) {
 export function selectSlideByName(name: string) {
     let slides = _show().slides().get()
     // group numbers
-    let groupNums: any = {}
+    let groupNums: { [key: string]: number } = {}
     slides = slides
         .filter((a) => a.group)
         .map((a) => {
@@ -190,7 +191,7 @@ export function moveStageConnection(id: string) {
 }
 
 export function changeVariable(data: API_variable) {
-    let variable: any
+    let variable: Variable | undefined
     if (data.id) variable = get(variables)[data.id]
     else if (data.name) variable = sortByClosestMatch(getVariables(), data.name)[0]
     else if (data.index !== undefined) variable = sortByName(getVariables())[data.index - 1]
@@ -206,20 +207,20 @@ export function changeVariable(data: API_variable) {
         key = "number"
     } else if (data.value !== undefined) {
         value = data.value
-        if (key === "value" && typeof value !== "boolean") key = variable.type === "number" ? "number" : "text"
+        if (key === "value" && typeof value !== "boolean") key = variable.type
     } else if (key === "enabled") {
         value = !variable.enabled
     }
     if (value === undefined) return
 
-    updateVariable(value, data.id || variable.id, key)
+    updateVariable(value, data.id || variable.id || "", key)
 }
 function getVariables() {
     return keysToID(get(variables))
 }
 function updateVariable(value: any, id: string, key: string) {
     variables.update((a) => {
-        a[id][key] = value
+        if (a[id]) a[id][key] = value
         return a
     })
 }
@@ -262,7 +263,7 @@ export async function rearrangeGroups(data: API_rearrange) {
 
     let ref = _show(data.showId).layouts("active").ref()[0]
     let dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
-    let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex - pos
+    let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex! - pos
     if (isNaN(dropIndex)) dropIndex = ref.length
 
     const drag = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
@@ -372,7 +373,7 @@ function levenshteinDistance(a, b) {
     if (a.length === 0) return b.length
     if (b.length === 0) return a.length
 
-    const matrix: any[] = []
+    const matrix: number[][] = []
 
     // increment along the first column of each row
     for (let i = 0; i <= b.length; i++) matrix[i] = [i]

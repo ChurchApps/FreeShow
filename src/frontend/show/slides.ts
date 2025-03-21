@@ -720,7 +720,7 @@ export function mergeSlides(indexes: { index: number }[]) {
     // add to layout if child
     if (layoutRef[firstSlideIndex].parent) {
         let slides = newShow.layouts[activeLayoutId].slides
-        let parentIndex = layoutRef[firstSlideIndex].parent.index
+        let parentIndex = layoutRef[firstSlideIndex].parent?.index ?? -1
         layoutIndex = parentIndex + 1
         newShow.layouts[activeLayoutId].slides = [...slides.slice(0, layoutIndex), { id: firstSlideId }, ...slides.slice(layoutIndex)]
     }

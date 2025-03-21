@@ -970,7 +970,7 @@ export async function activateTrigger(triggerId: string): Promise<string> {
 }
 
 const customTriggers = {
-    http: (value: string) => {
+    http: (value: string): Promise<string> => {
         return new Promise((resolve) => {
             fetch(value, { method: "GET" })
                 .then((r) => {

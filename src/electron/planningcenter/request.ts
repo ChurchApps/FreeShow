@@ -1,7 +1,7 @@
 import path from "path"
 import { uid } from "uid"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { Show, Slide } from "../../types/Show"
+import type { Show, Slide, SlideData } from "../../types/Show"
 import { downloadMedia } from "../data/downloadMedia"
 import { sendToMain } from "../IPC/main"
 import { dataFolderNames, getDataFolder } from "../utils/files"
@@ -33,7 +33,7 @@ export async function pcoRequest(data: PCORequestData): Promise<any> {
     const headers = { Authorization: `Bearer ${PCO_ACCESS.access_token}` }
 
     return new Promise((resolve) => {
-        httpsRequest(PCO_API_URL, path, "GET", headers, {}, (err: any, result: any) => {
+        httpsRequest(PCO_API_URL, path, "GET", headers, {}, (err, result) => {
             if (err) {
                 console.log(path, err)
                 let message = err.message?.includes("401") ? "Make sure you have created some 'services' in your account!" : err.message
@@ -179,14 +179,14 @@ function getDateTitle(dateString: string) {
 const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
 function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
-    let layoutSlides: any[] = []
+    let layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
         let slideId = uid()
 
         let items = [
             {
                 style: itemStyle,
-                lines: section.lyrics.split("\n").map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
+                lines: section.lyrics.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] })),
             },
         ]
 
@@ -246,7 +246,7 @@ async function getMediaStreamUrl(endpoint: string): Promise<string> {
     const headers = { Authorization: `Bearer ${PCO_ACCESS.access_token}` }
 
     return new Promise((resolve) => {
-        httpsRequest(PCO_API_URL, path, "POST", headers, {}, (err: any, result: any) => {
+        httpsRequest(PCO_API_URL, path, "POST", headers, {}, (err, result) => {
             if (err) {
                 console.log("Could not get media stream URL:", err)
                 return resolve("")

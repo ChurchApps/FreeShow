@@ -10,7 +10,7 @@ import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { MainFilePaths, Subtitle } from "../../types/Main"
-import type { Show } from "../../types/Show"
+import type { Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
@@ -28,8 +28,8 @@ function actionComplete(err: Error | null, actionFailedMessage: string) {
 export function doesPathExist(path: string): boolean {
     try {
         return fs.existsSync(path)
-    } catch (err: any) {
-        actionComplete(err, "Error when checking path")
+    } catch (err) {
+        actionComplete(err as Error, "Error when checking path")
     }
 
     return false
@@ -38,8 +38,8 @@ export function doesPathExist(path: string): boolean {
 export function readFile(path: string, encoding: BufferEncoding = "utf8", disableLog: boolean = false): string {
     try {
         return fs.readFileSync(path, encoding)
-    } catch (err: any) {
-        if (!disableLog) actionComplete(err, "Error when reading file")
+    } catch (err) {
+        if (!disableLog) actionComplete(err as Error, "Error when reading file")
         return ""
     }
 }
@@ -47,8 +47,8 @@ export function readFile(path: string, encoding: BufferEncoding = "utf8", disabl
 export function readFolder(path: string): string[] {
     try {
         return fs.readdirSync(path)
-    } catch (err: any) {
-        actionComplete(err, "Error when reading folder")
+    } catch (err) {
+        actionComplete(err as Error, "Error when reading folder")
         return []
     }
 }
@@ -56,8 +56,8 @@ export function readFolder(path: string): string[] {
 export function deleteFolder(path: string) {
     try {
         fs.rmSync(path, { recursive: true })
-    } catch (err: any) {
-        actionComplete(err, "Error when deleting folder")
+    } catch (err) {
+        actionComplete(err as Error, "Error when deleting folder")
     }
 }
 
@@ -123,7 +123,7 @@ export function getFileStats(p: string, disableLog: boolean = false) {
         const stat: Stats = fs.statSync(p)
         return { path: p, stat, extension: path.extname(p).substring(1).toLowerCase(), folder: stat.isDirectory() }
     } catch (err) {
-        if (!disableLog) actionComplete(err, "Error when getting file stats")
+        if (!disableLog) actionComplete(err as Error, "Error when getting file stats")
         return null
     }
 }
@@ -141,17 +141,17 @@ export function makeDir(path: string) {
 
 // SELECT DIALOGS
 
-export function selectFilesDialog(title: string = "", filters: any, multiple: boolean = true): string[] {
-    let options: any = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
+export function selectFilesDialog(title: string = "", filters: Electron.FileFilter, multiple: boolean = true): string[] {
+    let options: Electron.OpenDialogSyncOptions = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
     if (title) options.title = title
-    if (multiple) options.properties.push("multiSelections")
+    if (multiple) options.properties!.push("multiSelections")
 
     let files: string[] = dialog.showOpenDialogSync(mainWindow!, options) || []
     return files
 }
 
 export function selectFolderDialog(title: string = "", defaultPath: string = ""): string {
-    let options: any = { properties: ["openDirectory"] }
+    let options: Electron.OpenDialogSyncOptions = { properties: ["openDirectory"] }
     if (title) options.title = title
     if (defaultPath) options.defaultPath = defaultPath
 
@@ -168,7 +168,7 @@ export function openSystemFolder(path: string) {
 }
 
 const appFolderName = "FreeShow"
-export function getDocumentsFolder(p: any = null, folderName: string = "Shows", createFolder: boolean = true): string {
+export function getDocumentsFolder(p: string | null = null, folderName: string = "Shows", createFolder: boolean = true): string {
     let folderPath = [app.getPath("documents"), appFolderName]
     if (folderName) folderPath.push(folderName)
     if (!p) p = path.join(...folderPath)
@@ -234,13 +234,13 @@ export function fileContentMatches(content: string | NodeJS.ArrayBufferView, pat
     return false
 }
 
-export function loadFile(p: string, contentId: string = ""): any {
+export function loadFile(p: string, contentId: string = "") {
     if (!doesPathExist(p)) return { error: "not_found", id: contentId }
 
     let content: string = readFile(p)
     if (!content) return { error: "not_found", id: contentId }
 
-    let show = parseShow(content)
+    let show = parseJSON(content)
     if (!show) return { error: "not_found", id: contentId }
 
     if (contentId && show[0] !== contentId) show[0] = contentId
@@ -265,12 +265,14 @@ export function getPaths() {
 const tempPaths = ["temp"]
 export function getTempPaths() {
     let paths: { [key: string]: string } = {}
-    tempPaths.forEach((pathId: any) => {
-        paths[pathId] = app.getPath(pathId)
+    tempPaths.forEach((pathId: string) => {
+        paths[pathId] = app.getPath(pathId as "temp")
     })
 
     return paths
 }
+
+type FileData = { path: string; stat: fs.Stats; extension: string; folder: boolean; name: string; thumbnailPath?: string }
 
 // READ_FOLDER
 export function getFolderContent(data: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }) {
@@ -281,15 +283,15 @@ export function getFolderContent(data: { path: string; disableThumbnails?: boole
         return { path: folderPath, files: [], filesInFolders: [], folderFiles: {} }
     }
 
-    let files: any[] = []
+    let files: FileData[] = []
     for (const name of fileList) {
-        let p: string = path.join(folderPath, name)
-        let stats: any = getFileStats(p)
+        let p = path.join(folderPath, name)
+        let stats = getFileStats(p)
         if (stats) files.push({ ...stats, name, thumbnailPath: !data.disableThumbnails && isMedia() ? createThumbnail(p) : "" })
 
         function isMedia() {
-            if (stats.folder) return false
-            return [...imageExtensions, ...videoExtensions].includes(stats.extension.toLowerCase())
+            if (stats!.folder) return false
+            return [...imageExtensions, ...videoExtensions].includes(stats!.extension.toLowerCase())
         }
     }
 
@@ -298,21 +300,21 @@ export function getFolderContent(data: { path: string; disableThumbnails?: boole
     }
 
     // get first "layer" of files inside folder for searching
-    let filesInFolders: string[] = []
-    let folderFiles: { [key: string]: any[] } = {}
+    let filesInFolders: FileData[] = []
+    let folderFiles: { [key: string]: FileData[] } = {}
     if (data.listFilesInFolders) {
-        let folders: any[] = files.filter((a) => a.folder)
+        let folders: FileData[] = files.filter((a) => a.folder)
         folders.forEach(getFilesInFolder)
     }
 
-    function getFilesInFolder(folder: any) {
+    function getFilesInFolder(folder: FileData) {
         let fileList: string[] = readFolder(folder.path)
         folderFiles[folder.path] = []
         if (!fileList.length) return
 
         for (const name of fileList) {
-            let p: string = path.join(folder.path, name)
-            let stats: any = getFileStats(p)
+            let p = path.join(folder.path, name)
+            let stats = getFileStats(p)
             if (!stats) return
 
             if (!stats.folder) filesInFolders.push({ ...stats, name })
@@ -381,8 +383,7 @@ function similarity(str1: string, str2: string) {
 
 // OPEN_FOLDER
 export function selectFolder(msg: { channel: string; title?: string; path?: string }) {
-    let folder: any = selectFolderDialog(msg.title, msg.path)
-
+    const folder = selectFolderDialog(msg.title, msg.path)
     if (!folder) return
 
     // only when initializing
@@ -403,8 +404,8 @@ export function selectFolder(msg: { channel: string; title?: string; path?: stri
 }
 
 // OPEN_FILE
-export function selectFiles(msg: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }) {
-    let files: any = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
+export function selectFiles(msg: { id: string; channel: string; title?: string; filter: Electron.FileFilter; multiple: boolean; read?: boolean }) {
+    const files = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
     if (!files) return
 
     let content: { [key: string]: string } = {}
@@ -432,7 +433,7 @@ export function readExifData({ id }: { id: string }): Promise<{ id: string; exif
                 if (!err) resolve({ id, exif: exifData })
             })
         } catch (err) {
-            actionComplete(err, "Error loading EXIF image")
+            actionComplete(err as Error, "Error loading EXIF image")
         }
     })
 }
@@ -444,9 +445,9 @@ export async function getMediaCodec(data: { path: string }) {
 
 async function extractCodecInfo(data: { path: string }): Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }> {
     const MP4Box = require("mp4box")
-    let arrayBuffer: any
 
     return new Promise((resolve) => {
+        let arrayBuffer: ArrayBuffer
         try {
             arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
         } catch (err) {
@@ -464,8 +465,7 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
             resolve({ ...data, codecs, mimeType, mimeCodec })
         }
 
-        arrayBuffer.fileStart = 0
-        mp4boxfile.appendBuffer(arrayBuffer)
+        mp4boxfile.appendBuffer({ ...arrayBuffer, fileStart: 0 })
         mp4boxfile.flush()
     })
 }
@@ -482,8 +482,8 @@ export function getMediaTracks(data: { path: string }) {
 
 async function extractSubtitles(data: { path: string }): Promise<{ path: string; tracks: Subtitle[] }> {
     const MP4Box = require("mp4box")
-    let arrayBuffer: any
 
+    let arrayBuffer: ArrayBuffer
     try {
         arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
     } catch (err) {
@@ -541,8 +541,7 @@ async function extractSubtitles(data: { path: string }): Promise<{ path: string;
             })
         }
 
-        arrayBuffer.fileStart = 0
-        mp4boxfile.appendBuffer(arrayBuffer)
+        mp4boxfile.appendBuffer({ ...arrayBuffer, fileStart: 0 })
         mp4boxfile.flush()
     })
 }
@@ -701,7 +700,7 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
 
 // LOAD SHOWS
 
-export function loadShows({ showsPath }: any, returnShows: boolean = false) {
+export function loadShows({ showsPath }: { showsPath: string }, returnShows: boolean = false) {
     if (!showsPath) {
         console.log("Invalid shows path, does the program have proper read/write permission?")
         return {}
@@ -716,8 +715,8 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 
-    let cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
-    let newCachedShows: any = {}
+    let cachedShows = (stores.SHOWS.store || {}) as { [key: string]: Show }
+    let newCachedShows: TrimmedShows = {}
 
     // create a map for quick lookup of cached shows by name
     let cachedShowNames = new Map<string, string>()
@@ -748,7 +747,8 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
         // some old duplicated shows might have the same id
         if (newCachedShows[id]) id = uid()
 
-        newCachedShows[id] = trimShow({ ...show[1], name })
+        const trimmedShow = trimShow({ ...show[1], name })
+        if (trimmedShow) newCachedShows[id] = trimmedShow
     }
 
     if (returnShows) return newCachedShows
@@ -761,7 +761,13 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
 }
 
 export function parseShow(jsonData: string) {
-    let show: [string, Show] | null = null
+    return parseJSON(jsonData) as [string, Show] | null
+}
+// export function parseBible(jsonData: string) {
+//     return parseJSON(jsonData) as [string, Bible] | null
+// }
+export function parseJSON(jsonData: string) {
+    let show: [string, any] | null = null
 
     try {
         show = JSON.parse(jsonData)
@@ -783,7 +789,7 @@ export function parseShow(jsonData: string) {
 // load shows by id (used for show export)
 export function getShowsFromIds(showIds: string[], showsPath: string) {
     let shows: Show[] = []
-    let cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
+    let cachedShows: TrimmedShows = stores.SHOWS.store
 
     showIds.forEach((id) => {
         let cachedShow = cachedShows[id]
@@ -804,7 +810,7 @@ export function getShowsFromIds(showIds: string[], showsPath: string) {
 // some users might have got themselves in a situation they can't get out of
 // example: enables "kiosk" mode on mac might have resulted in a black screen, and they can't find the app data location to revert it!
 // how: Place any file in your Documents/FreeShow folder that has the FIXES key in it's name (e.g. DISABLE_KIOSK_MODE), when you now start your app the fix will be triggered!
-const FIXES: any = {
+const FIXES = {
     DISABLE_KIOSK_MODE: () => {
         // wait to ensure output settings have loaded in the app!
         setTimeout(() => {
@@ -824,6 +830,6 @@ function specialCaseFixer() {
     let files: string[] = readFolder(defaultDataFolder)
     files.forEach((fileName) => {
         let matchFound = Object.keys(FIXES).find((key) => fileName.includes(key))
-        if (matchFound) FIXES[matchFound]()
+        if (matchFound) FIXES[matchFound as keyof typeof FIXES]()
     })
 }

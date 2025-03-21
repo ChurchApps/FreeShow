@@ -1,19 +1,19 @@
 import path from "path"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { Show } from "../../types/Show"
+import type { Show, Shows, TrimmedShow, TrimmedShows } from "../../types/Show"
 import { sendToMain } from "../IPC/main"
 import { deleteFile, doesPathExist, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFile } from "./files"
 
-export function getAllShows(data: any) {
+export function getAllShows(data: { path: string }) {
     if (!doesPathExist(data.path)) return []
 
     let filesInFolder: string[] = readFolder(data.path).filter((a) => a.includes(".show") && a.length > 5)
     return filesInFolder
 }
 
-export function renameShows(shows: any, path: string) {
+export function renameShows(shows: { id: string; name: string; oldName: string }[], path: string) {
     for (const show of shows) checkFile(show)
-    function checkFile(show: any) {
+    function checkFile(show: { id: string; name: string; oldName: string }) {
         let oldName = show.oldName + ".show"
         let newName = (show.name || show.id) + ".show"
 
@@ -23,7 +23,7 @@ export function renameShows(shows: any, path: string) {
 
 // WIP duplicate of setShow.ts
 export function trimShow(showCache: Show) {
-    let show: any = {}
+    let show: TrimmedShow | null = null
     if (!showCache) return show
 
     show = {
@@ -62,10 +62,10 @@ export function getShowTextContent(show: Show) {
 
 /////
 
-export function deleteShows(data: any) {
+export function deleteShows(data: { path: string; shows: { name: string; id: string }[] }) {
     let deleted: string[] = []
 
-    data.shows.forEach(({ id, name }: any) => {
+    data.shows.forEach(({ id, name }) => {
         name = (name || id) + ".show"
         let p: string = path.join(data.path, name)
 
@@ -77,9 +77,9 @@ export function deleteShows(data: any) {
     return { deleted }
 }
 
-export function deleteShowsNotIndexed(data: any) {
+export function deleteShowsNotIndexed(data: { shows: TrimmedShows; path: string }) {
     // get all names
-    let names: string[] = Object.entries(data.shows).map(([id, { name }]: any) => (name || id) + ".show")
+    let names: string[] = Object.entries(data.shows).map(([id, { name }]) => (name || id) + ".show")
 
     // list all shows in folder
     let filesInFolder: string[] = readFolder(data.path)
@@ -99,14 +99,14 @@ export function deleteShowsNotIndexed(data: any) {
     return { deleted }
 }
 
-export function refreshAllShows(data: any) {
+export function refreshAllShows(data: { path: string }) {
     if (!doesPathExist(data.path)) return
 
     // list all shows in folder
     let filesInFolder: string[] = readFolder(data.path)
     if (!filesInFolder.length) return
 
-    let newShows: any = {}
+    let newShows: TrimmedShows = {}
 
     for (const name of filesInFolder) loadFile(name)
     function loadFile(name: string) {
@@ -117,14 +117,15 @@ export function refreshAllShows(data: any) {
 
         if (!show || !show[1]) return
 
-        newShows[show[0]] = trimShow({ ...show[1], name: name.replace(".show", "") })
+        const trimmedShow = trimShow({ ...show[1], name: name.replace(".show", "") })
+        if (trimmedShow) newShows[show[0]] = trimmedShow
     }
 
     if (!Object.keys(newShows).length) return
     sendToMain(ToMain.REFRESH_SHOWS2, newShows)
 }
 
-export async function getEmptyShows(data: any) {
+export async function getEmptyShows(data: { path: string; cached: Shows }) {
     if (!doesPathExist(data.path)) return
 
     // list all shows in folder

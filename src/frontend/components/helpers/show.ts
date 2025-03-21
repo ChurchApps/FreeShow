@@ -1,10 +1,10 @@
 import { get } from "svelte/store"
-import type { Show, ShowList, Shows, Slide } from "../../../types/Show"
+import type { Show, ShowList, Shows, Slide, TrimmedShows } from "../../../types/Show"
 import { activeShow, cachedShowsData, customMetadata, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
 import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
-import { _show } from "./shows"
 import { history } from "./history"
+import { _show } from "./shows"
 
 // check if name exists and add number
 export function checkName(name: string = "", showId: string = "") {
@@ -151,7 +151,7 @@ export function newSlide(data: any): Slide {
 }
 
 // update list for drawer
-export function updateShowsList(shows: Shows) {
+export function updateShowsList(shows: TrimmedShows) {
     // sort shows in alphabeticly order & remove private shows
     let showsList = keysToID(shows)
 

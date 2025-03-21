@@ -55,7 +55,7 @@ export function sortByTimeNew<T>(array: T, key: string = "time") {
 // OBJETS
 
 // sort objects in array by name
-export function sortByName(arr: any[], key: string = "name", numberSort: boolean = true) {
+export function sortByName<T extends Record<string, any>>(arr: T[], key: keyof T = "name", numberSort: boolean = true): T[] {
     return arr
         .filter((a) => typeof a[key] === "string")
         .sort((a, b) => {
@@ -161,10 +161,9 @@ export function sortFilenames(filenames) {
 }
 
 // move keys to IDs in object and return array
-export function keysToID(object: { [key: string]: any }): any[] {
+export function keysToID<T extends Record<string, any>>(object: T): Array<T[keyof T] & { id: string }> {
     if (!object) return []
-    let newObjects: any[] = Object.entries(object).map(([id, a]) => ({ ...a, id }))
-    return newObjects
+    return Object.entries(object).map(([id, a]) => ({ ...a, id }))
 }
 
 // remove values in array object where key is value

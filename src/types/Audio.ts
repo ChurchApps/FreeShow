@@ -14,3 +14,8 @@ export interface AudioChannel {
         max?: number
     }
 }
+
+export interface AudioStream {
+    name: string
+    value: string
+}

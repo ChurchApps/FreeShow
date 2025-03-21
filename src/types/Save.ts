@@ -96,8 +96,8 @@ export interface SaveData {
     // CACHES SAVED TO MULTIPLE FILES
     showsCache: Shows
     scripturesCache: { [key: string]: Bible }
-    deletedShows: any[]
-    renamedShows: any[]
+    deletedShows: { name: string; id: string }[]
+    renamedShows: { id: string; name: string; oldName: string }[]
     // CACHES
     CACHE: { text: any }
     HISTORY: { undo: History[]; redo: History[] }

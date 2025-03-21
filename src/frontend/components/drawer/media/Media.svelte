@@ -49,7 +49,7 @@
 
     export let active: string | null
     export let searchValue: string = ""
-    export let streams: any[] = []
+    export let streams: MediaStream[] = []
 
     let files: any[] = []
 

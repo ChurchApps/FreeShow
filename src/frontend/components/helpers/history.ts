@@ -116,7 +116,7 @@ export function history(obj: History, undo: null | boolean = null) {
 
                         // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()[0]
                         if (ref.type === "parent") _show(showID).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "background", value: bgid })
-                        else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.id]).set({ key: "background", value: bgid })
+                        else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent?.index]).children([ref.id]).set({ key: "background", value: bgid })
                     }
                 }
                 break
@@ -162,7 +162,7 @@ export function history(obj: History, undo: null | boolean = null) {
                         audio.push(audioId)
 
                         if (ref.type === "parent") _show(showID).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "audio", value: audio })
-                        else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.id]).set({ key: "audio", value: audio })
+                        else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent?.index]).children([ref.id]).set({ key: "audio", value: audio })
                     }
                 }
                 break

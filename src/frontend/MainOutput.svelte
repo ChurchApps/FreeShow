@@ -22,9 +22,9 @@
 
     // enable output window dragging
     let enableOutputMove: boolean = false
-    function mousemoveOutput(e: any) {
+    function mousemoveOutput(e: MouseEvent) {
         if ($outputs[outputId]?.boundsLocked || $special.hideCursor) return
-        if (e.ctrlKey || e.metaKey || e.target.closest(".dragger")) enableOutputMove = true
+        if (e.ctrlKey || e.metaKey || e.target?.closest(".dragger")) enableOutputMove = true
         else enableOutputMove = false
     }
     $: if ($currentWindow === "output") send(OUTPUT, ["MOVE"], { enabled: enableOutputMove })

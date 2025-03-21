@@ -2,14 +2,14 @@ import { ipcMain } from "electron"
 import express from "express"
 import http from "http"
 import OSC from "osc-js"
-import { Server } from "socket.io"
+import { Server, type Socket } from "socket.io"
 import { uid } from "uid"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
 import { waitUntilValueIsDefined } from "./helpers"
 
 const app = express()
-let servers: any = {}
+let servers: { [key: string]: http.Server | OSC } = {}
 const DEFAULT_PORTS = { WebSocket: 5505, REST: 5506 }
 
 // WebSocket on 5506, REST on +1 (5506), but works with 5505 as well!
@@ -29,15 +29,15 @@ export function startWebSocket(PORT: number | undefined) {
         console.log(`WebSocket: Starting server at port ${PORT}`)
     })
 
-    server.once("error", (err: any) => {
-        if (err.code === "EADDRINUSE") server.close()
+    server.once("error", (err) => {
+        if ((err as any).code === "EADDRINUSE") server.close()
     })
 
     const io = new Server(server)
     io.on("connection", connected)
 }
 
-function connected(socket: any) {
+function connected(socket: Socket) {
     log("Client connected.")
     sendToMain(ToMain.API, "connected") // TODO: respond with API_DATA
 
@@ -141,7 +141,7 @@ export function emitOSC(msg: any) {
     // if (!OSC_SENDER) {
     const OSC_SENDER = new OSC({ plugin: new OSC.DatagramPlugin() }) // UDP
 
-    const options: any = { port: msg.signal?.port || 8080, host: msg.signal?.host || "localhost" }
+    const options = { port: msg.signal?.port || 8080, host: msg.signal?.host || "localhost" }
 
     OSC_SENDER.on("open", sendMessage)
     OSC_SENDER.open(options)
@@ -172,7 +172,7 @@ export function emitOSC(msg: any) {
 
 // DATA
 
-async function receivedData(data: any = {}, log: any) {
+async function receivedData(data: any = {}, log: (...msg: any[]) => void): Promise<any> {
     if (!data?.action) return log("Received message from client, but missing 'action' key.", true)
     log(`Received action ${data.action}`)
 
@@ -189,7 +189,7 @@ async function receivedData(data: any = {}, log: any) {
     return returnData
 }
 
-let returnDataObj: any = {}
+let returnDataObj: { [key: string]: any } = {}
 export function apiReturnData(data: any) {
     let id = data.returnId
     if (!id) return

@@ -1,3 +1,4 @@
+import type { dataFolderNames } from "../electron/utils/files"
 import type { ShowRef } from "./Projects"
 
 export interface OS {
@@ -10,7 +11,7 @@ export interface Option {
     name: string
     extra?: string
     data?: any
-    id?: string
+    id?: string | null
     icon?: string
     style?: string // css style for the item
 }
@@ -82,6 +83,23 @@ export interface Selected {
     hoverActive?: boolean
 }
 
+export interface Clipboard {
+    id: string | null
+    data?: any // []
+}
+// export interface ClipboardData {
+//     index?: number
+
+//     // ActiveEdit
+//     type?: string
+//     id?: string
+//     slide?: null | number
+//     items?: number[]
+//     showId?: string
+
+//     // [key: string]: any
+// }
+
 export interface SlidesOptions {
     columns: number
     mode: "grid" | "simple" | "list" | "lyrics" | "text"
@@ -150,6 +168,52 @@ export type LyricSearchResult = {
     originalQuery?: string
 }
 
+export interface DriveData {
+    mainFolderId: string | null
+    path: string | null
+    dataPath: string
+    method: string | null
+    closeWhenFinished: boolean
+}
+
+export interface LessonsData {
+    type?: keyof typeof dataFolderNames
+    path: string
+    showId: string
+    name: string
+    files: LessonFile[]
+}
+export interface LessonFile {
+    name: string
+    url: string
+    type: string
+    fileType: string
+    streamUrl?: string
+}
+
+export interface Variable {
+    id?: string
+    name: string
+    type: "number" | "text"
+
+    // number
+    number?: number
+    step?: number
+    default?: number
+    minValue?: number
+    maxValue?: number
+
+    // text
+    text?: string
+    enabled?: boolean
+}
+
+export interface Trigger {
+    name: string
+    type: "http"
+    value: string
+}
+
 export interface ErrorLog {
     time: Date
     os: string
@@ -160,6 +224,7 @@ export interface ErrorLog {
     source: string
     message: string
     stack: string
+    dev?: boolean
 }
 
 export type Popups =

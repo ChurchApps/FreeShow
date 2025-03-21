@@ -4,7 +4,6 @@ import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { sendMain } from "../../IPC/main"
-import { send } from "../../utils/request"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
@@ -102,7 +101,7 @@ export type API_scripture = { id: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
-export type API_camera = { name?: string; id: string; groupId?: any }
+export type API_camera = { name?: string; id: string; groupId?: string }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
     type?: TransitionType // default: "fade"
@@ -296,6 +295,6 @@ export async function triggerAction(data: API) {
     sendMain(Main.API_TRIGGER, { ...data, returnId, data: returnData })
 }
 
-export function sendDataAPI(data: any) {
-    send("API_DATA", data)
-}
+// export function sendDataAPI(data: any) {
+//     send("API_DATA", data)
+// }
