@@ -456,12 +456,13 @@ function stripMarkdown(input: string) {
 // hard coded custom Bible data
 const bibleData = {
     "eea18ccd2ca05dde-01": {
-        nameLocal: "Bibel 2011 Bokmål",
+        nameLocal: "Bibel 2011 Bokmål", // med gammeltestamentlige apokryfer
         copyright:
             "Norwegian Bible 2011 Bokmål with Deuterocanonical Books © The Norwegian Bible Society, 2011,2018. All rights reserved worldwide. Used by permission through agreement with NBS (Norwegian Bible Society). Bibel 2011 Bokmål © Det Norske Bibelselskap. Alle rettigheter globalt. Brukt med tillatelse gjennom avtale med Bibelselskapet, 2011,2018.",
     },
     "7bcaa2f2e77739d5-01": {
-        nameLocal: "Bibel 2011 Nynorsk",
+        nameLocal: "Bibel 2011 Nynorsk", // med gammeltestamentlige apokryfer
+        description: "Norwegian Bible 2011 Nynorsk with Deuterocanonical Books",
         copyright:
             "Norwegian Bible 2011 Nynorsk with Deuterocanonical Books © The Norwegian Bible Society, 2011. All rights reserved worldwide. Used by permission through agreement with NBS (Norwegian Bible Society). Bibel 2011 Nynorsk © Det Norske Bibelselskap. Alle rettar globalt. Brukt med løyve gjennom avtale med Bibelselskapet, 2011.",
     },

@@ -2,9 +2,10 @@
     import { uid } from "uid"
     import { IMPORT } from "../../../../types/Channels"
     import type { BibleCategories } from "../../../../types/Tabs"
-    import { dictionary, isDev, labelsDisabled, language, scriptures } from "../../../stores"
+    import { dictionary, labelsDisabled, language, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
     import { send } from "../../../utils/request"
+    import { customBibleData } from "../../drawer/bible/scripture"
     import { sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -14,24 +15,17 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
-    import { customBibleData } from "../../drawer/bible/scripture"
 
     let error: null | string = null
     let bibles: any[] = []
 
+    let cachedBibles = ""
     $: if (importType === "api") fetchBibles()
     async function fetchBibles() {
         // read cache
-        let cache = $isDev ? {} : JSON.parse(localStorage.getItem("scriptureApiCache2") || "{}")
-        if (cache.date) {
-            let cacheDate = new Date(cache.date).getTime()
-            let today = new Date().getTime()
-            const ONE_MONTH = 2678400000
-            // only use cache if it's newer than a month
-            if (today - cacheDate < ONE_MONTH) {
-                bibles = cache.bibles
-                if (bibles) return
-            }
+        if (cachedBibles) {
+            bibles = JSON.parse(cachedBibles)
+            return
         }
 
         const api = "https://contentapi.churchapps.org/bibles"
@@ -51,7 +45,7 @@
 
             // cache bibles
             let cache = { date: new Date(), bibles }
-            localStorage?.setItem("scriptureApiCache2", JSON.stringify(cache))
+            cachedBibles = JSON.stringify(cache)
         }
     }
 

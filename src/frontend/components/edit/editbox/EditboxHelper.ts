@@ -167,7 +167,7 @@ export class EditboxHelper {
     }
 
     static getCustomFontSize(style: string) {
-        if (!style) return
+        if (!style) return ""
         const fontSize = Number(getStyles(style, true)["font-size"] || 100)
 
         // get first output style
@@ -177,6 +177,6 @@ export class EditboxHelper {
         if (!Object.keys(outputStyle).length) return ""
 
         const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
-        return `font-size: ${fontSize * customFontSizeRatio}px;`
+        return `${style};font-size: ${fontSize * customFontSizeRatio}px;`
     }
 }
