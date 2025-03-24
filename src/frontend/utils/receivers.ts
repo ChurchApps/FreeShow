@@ -112,6 +112,7 @@ import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs, updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 import { AudioAnalyser } from "../audio/audioAnalyser"
+import { convertMediaShout } from "../converters/mediashout"
 
 export function setupMainReceivers() {
     receive(MAIN, receiveMAIN)
@@ -676,6 +677,7 @@ const receiveIMPORT: any = {
     videopsalm: (a: any) => convertVideopsalm(a),
     openlp: (a: any) => convertOpenLP(a),
     opensong: (a: any) => convertOpenSong(a),
+    mediashout: (a: any) => convertMediaShout(a),
     quelea: (a: any) => convertQuelea(a),
     softprojector: (a: any) => convertSoftProjector(a),
     songbeamer: (a: any) => convertSongbeamerFiles(a),
