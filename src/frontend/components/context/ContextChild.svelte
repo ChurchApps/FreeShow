@@ -85,7 +85,7 @@
                         <hr />
                     {:else if itemId.includes("LOAD_")}
                         {#each loadItems(itemId.slice(5, itemId.length)) as [id, menu]}
-                            {#if id === "SEPERATOR"}
+                            {#if id === "SEPERATOR" || menu === "SEPERATOR"}
                                 <hr />
                             {:else}
                                 <ContextItem {id} {contextElem} {menu} disabled={menu.disabled === true} {topBar} />

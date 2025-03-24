@@ -51,7 +51,7 @@
     }
 
     // WIP duplicate of Slides.svelte
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
         if (nextScrollTimeout) return
@@ -82,7 +82,7 @@
     // slow loader
     let currentIndex: number = 1
     $: if (path && pages) startLoading(true)
-    let loadingTimeout: any = null
+    let loadingTimeout: NodeJS.Timeout | null = null
     function startLoading(reset: boolean = false) {
         if (reset) currentIndex = 1
         if (loadingTimeout) clearTimeout(loadingTimeout)

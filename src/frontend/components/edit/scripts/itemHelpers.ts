@@ -1,26 +1,26 @@
 import { get } from "svelte/store"
 import type { Item, ItemType, Slide } from "../../../../types/Show"
 import { activeEdit, activeShow, overlays, refreshEditSlide, showsCache, templates, timers } from "../../../stores"
+import { addSlideAction } from "../../actions/actions"
 import { createNewTimer } from "../../drawer/timers/timers"
+import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
-import { addSlideAction } from "../../actions/actions"
-import { clone, keysToID, sortByName } from "../../helpers/array"
 import { boxes } from "../values/boxes"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
 
-function getDefaultStyles(type: ItemType, template: any = null) {
+function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     // Get position styles from template or use default from boxes.ts
-    const positionStyle = template?.find((a) => (a.type || "text") === type)?.style || DEFAULT_ITEM_STYLE
+    const positionStyle = templateItems?.find((a) => (a.type || "text") === type)?.style || DEFAULT_ITEM_STYLE
 
     // Get default styles from boxes configuration
     const boxDefaults = boxes[type]?.edit?.font || []
     let styleString = positionStyle
 
     // Add default font styles if they exist
-    boxDefaults.forEach((def: any) => {
+    boxDefaults.forEach((def) => {
         if (def.key && def.value) {
             styleString += `${def.key}:${def.value};`
         }
@@ -29,7 +29,7 @@ function getDefaultStyles(type: ItemType, template: any = null) {
     return styleString
 }
 
-export function addItem(type: ItemType, id: any = null, options: any = {}, value: string = "") {
+export function addItem(type: ItemType, id: string | null = null, options: any = {}, value: string = "") {
     let activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id!]?.settings?.template : null
     let template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
@@ -55,12 +55,12 @@ export function addItem(type: ItemType, id: any = null, options: any = {}, value
     else if (type === "icon" && options.color) {
         // make square and center
         let size: number = 300
-        let style: any = getStyles(newData.style)
+        let style = getStyles(newData.style)
         let top: string = Number(removeText(style.top)) + Number(removeText(style.height)) / 2 - size / 2 + "px"
         let left: string = Number(removeText(style.left)) + Number(removeText(style.width)) / 2 - size / 2 + "px"
         style = { ...style, top, left, width: size + "px", height: size + "px", color: options.color }
         let styleString: string = ""
-        Object.entries(style).forEach(([key, value]: any) => {
+        Object.entries(style).forEach(([key, value]) => {
             styleString += `${key}: ${value};`
         })
         newData.style = styleString

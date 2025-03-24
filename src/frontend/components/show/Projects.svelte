@@ -60,7 +60,7 @@
 
     let folderSorted: Tree[] = []
     function sortFolders(parent: string = "/", index: number = 0, path: string = "") {
-        let filtered = tree.filter((a: any) => a.parent === parent).map((a) => ({ ...a, index, path }))
+        let filtered = tree.filter((a) => a.parent === parent).map((a) => ({ ...a, index, path }))
         filtered.forEach((folder) => {
             folderSorted.push(folder)
             if (folder.type !== "folder") return
@@ -70,7 +70,7 @@
     }
 
     // autoscroll
-    let scrollElem: any
+    let scrollElem: HTMLElement | undefined
     let offset: number = -1
     $: itemsBefore = $drawer.height < 400 ? 5 : 1
     $: offset = autoscroll(scrollElem, Math.max(0, ($activeShow?.index || 0) - itemsBefore))
@@ -121,7 +121,7 @@
 
     $: projectActive = !$projectView && $activeProject !== null
 
-    let listScrollElem: any = null
+    let listScrollElem: HTMLElement | undefined
     let listOffset: number = -1
     $: if (listScrollElem) {
         let time = tree.length * 0.5 + 20

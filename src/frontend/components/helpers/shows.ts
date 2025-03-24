@@ -8,7 +8,7 @@ import { addToPos } from "./mover"
 
 /** Shows function */
 /** string[] | "active" */
-export function _show(id: any = "active") {
+export function _show(id: string = "active") {
     // await loadShows(ids)
     let shows = get(showsCache)
     // set id to active show

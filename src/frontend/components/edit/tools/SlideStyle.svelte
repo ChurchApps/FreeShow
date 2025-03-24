@@ -19,18 +19,20 @@
     $: groupData = $groups[globalGroup] || {}
     $: groupTemplate = groupData.template
 
-    let notesElem: any = null
+    let notesElem: HTMLElement | undefined
     $: if (notesElem && $activeTriggerFunction === "slide_notes") {
         setTimeout(() => {
+            if (!notesElem) return
+
             // focus after any textbox is focused
-            notesElem.querySelector("textarea").focus()
+            notesElem.querySelector("textarea")?.focus()
             notesElem.scrollIntoView()
 
             activeTriggerFunction.set("")
         }, 20)
     }
 
-    let settings: any = {}
+    let settings: { template?: string; color?: string } = {}
 
     $: if ($showsCache || editSlide) setValues()
     function setValues() {
@@ -43,7 +45,7 @@
     function update() {
         if (!editSlide) return
 
-        let newData: any = { style: clone(settings) }
+        let newData = { style: clone(settings) }
 
         history({
             id: "slideStyle",

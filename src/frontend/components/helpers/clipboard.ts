@@ -86,9 +86,9 @@ export function copy(clip: Clipboard | null = null, getData: boolean = true) {
 }
 
 // pasting text in editbox is it's own function
-export function paste(clip: Clipboard | null = null, extraData: any = {}, customElem: any = null) {
+export function paste(clip: Clipboard | null = null, extraData: any = {}, customElem: HTMLElement | null = null) {
     if (!clip) clip = get(clipboard)
-    let activeElem: any = document.activeElement
+    let activeElem = document.activeElement
 
     // activeElem.tagName !== "BODY"
     // if (clip.id === null || activeElem?.classList?.contains("edit")) {
@@ -147,9 +147,9 @@ export function duplicate(clip: Clipboard | null = null) {
 }
 
 export function selectAll(data: any = {}) {
-    let activeElem: any = document.activeElement
+    let activeElem = document.activeElement
     if (activeElem?.nodeName === "INPUT" || activeElem?.nodeName === "TEXTAREA") {
-        activeElem.select()
+        ;(activeElem as HTMLInputElement).select()
         return
     }
 
@@ -186,14 +186,14 @@ const getDaysInMonth = (year: number, month: number) => new Date(year, getMonthI
 
 /////
 
-const selectActions: any = {
+const selectActions = {
     show_drawer: () => {
-        let data: any = []
+        let data: string[] = []
 
         let activeTab = get(drawerTabsData).shows?.activeSubTab
         if (!activeTab) return
 
-        let showsList: string[] = Object.keys(get(shows)).filter((id: any) => !get(shows)[id].private)
+        let showsList: string[] = Object.keys(get(shows)).filter((id) => !get(shows)[id].private)
         if (!showsList.length) return
 
         if (activeTab === "all") {
@@ -215,7 +215,7 @@ const selectActions: any = {
         let newSelection: any[] = []
         let ref = _show().layouts("active").ref()[0]
 
-        data.forEach(({ id }: any) => {
+        data.forEach(({ id }) => {
             ref.forEach((b, i) => {
                 if (b.type === "child" ? id === b.parent?.id : id === b.id) newSelection.push({ index: i, showId: get(activeShow)?.id })
             })
@@ -262,7 +262,7 @@ const selectActions: any = {
         let year = dayDate.getFullYear()
         let month = dayDate.getMonth()
 
-        let daysList: any = []
+        let daysList: number[] = []
         for (let i = 1; i <= getDaysInMonth(year, month); i++) daysList.push(new Date(year, month, i).getTime())
         activeDays.set(daysList)
     },
@@ -271,7 +271,7 @@ const selectActions: any = {
         let ref = _show().layouts("active").ref()[0]
         if (!ref?.length) return
 
-        newSelection = ref.map((_: any, index: number) => ({ index, showId: get(activeShow)?.id }))
+        newSelection = ref.map((_, index) => ({ index, showId: get(activeShow)?.id }))
 
         selected.set({ id: "slide", data: newSelection })
     },
@@ -341,9 +341,9 @@ const selectActions: any = {
     audio: () => selectAllAudio.set(true),
 }
 
-const copyActions: any = {
+const copyActions = {
     item: (data: any) => {
-        // data = data.sort((a: any, b: any) => a.index - b.index)
+        // data = data.sort((a, b) => a.index - b.index)
         let items: Item[] = []
 
         if (data.id) {
@@ -366,7 +366,7 @@ const copyActions: any = {
                 .get(null, false)[0]
         }
 
-        items = items.filter((_a: any, i: number) => data.items.includes(i))
+        items = items.filter((_a, i) => data.items.includes(i))
         return [...items]
     },
     slide: (data: any, fullGroup: boolean = false) => {
@@ -379,7 +379,7 @@ const copyActions: any = {
 
         let sortedData = data.sort((a, b) => (a.index < b.index ? -1 : 1))
 
-        let ids = sortedData.map((a: any) => {
+        let ids = sortedData.map((a) => {
             // get layout
             if (a.index !== undefined) layouts.push(ref[a.index].data)
 
@@ -439,14 +439,14 @@ const copyActions: any = {
     },
 }
 
-const pasteActions: any = {
+const pasteActions = {
     item: (data: any) => {
         if (!data) return
 
         if (get(activeEdit).id) {
             if (get(activeEdit).type === "overlay") {
                 let items = clone(get(overlays)[get(activeEdit).id!].items || [])
-                data.forEach((item: any) => {
+                data.forEach((item) => {
                     items.push(clone(item))
                 })
                 history({ id: "UPDATE", newData: { key: "items", data: items }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: "overlay_items" } })
@@ -455,7 +455,7 @@ const pasteActions: any = {
 
             if (get(activeEdit).type === "template") {
                 let items = clone(get(templates)[get(activeEdit).id!].items || [])
-                data.forEach((item: any) => {
+                data.forEach((item) => {
                     items.push(clone(item))
                 })
                 history({ id: "UPDATE", newData: { key: "items", data: items }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: "template_items" } })
@@ -467,7 +467,7 @@ const pasteActions: any = {
 
         let ref = _show().layouts("active").ref()[0][get(activeEdit).slide!]
         let items: any[] = []
-        data.forEach((item: any) => {
+        data.forEach((item) => {
             items.push(clone(item))
         })
         history({ id: "UPDATE", newData: { data: items, key: "slides", keys: [ref.id], subkey: "items", index: -1 }, oldData: { id: get(activeShow)!.id }, location: { page: "edit", id: "show_key" } })
@@ -484,17 +484,17 @@ const pasteActions: any = {
         // if (data.layouts) data.layouts.reverse()
 
         // get all slide ids & child ids
-        let copiedIds: string[] = data.slides.map((a: any) => a.id)
-        // let childs: any[] = []
-        // data.forEach((slide: any) => {
+        let copiedIds: string[] = data.slides.map((a) => a.id)
+        // let childs = []
+        // data.forEach((slide) => {
         //   copiedIds.push(slide.id)
         //   if (slide.children?.length) childs.push(...slide.children)
         // })
 
         // TODO: duplicate each individual slide as their own
 
-        // let slides: any = clone(_show().get().slides)
-        // let ref: any[] = _show().layouts("active").ref()[0]
+        // let slides = clone(_show().get().slides)
+        // let ref = _show().layouts("active").ref()[0]
         let newSlides: any[] = []
 
         let layouts: any[] = []
@@ -502,7 +502,7 @@ const pasteActions: any = {
         let addedChildren: string[] = []
 
         // remove children
-        data.slides.forEach((slide: any, i: number) => {
+        data.slides.forEach((slide, i) => {
             // dont add child if it is already copied
             if (slide.group === null && addedChildren.includes(slide.id)) return
 
@@ -535,7 +535,7 @@ const pasteActions: any = {
                 // } else if (slide.group === null && !copiedIds.includes(slide.id)) {
                 //     // is child
                 //     let slideRef = ref.find((a) => a.id === slide.id)
-                //     let parent: any = slides[slideRef.parent.id]
+                //     let parent = slides[slideRef.parent.id]
                 //     slide.group = parent.group || ""
                 //     slide.color = parent.color || ""
                 //     slide.globalGroup = parent.globalGroup || ""
@@ -563,14 +563,14 @@ const pasteActions: any = {
     },
     group: (data: any) => pasteActions.slide(data),
     overlay: (data: any) => {
-        data?.forEach((slide: any) => {
+        data?.forEach((slide) => {
             let newSlide = clone(slide)
             newSlide.name += " 2"
             history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "overlay" } })
         })
     },
     template: (data: any) => {
-        data?.forEach((slide: any) => {
+        data?.forEach((slide) => {
             let newSlide = clone(slide)
             newSlide.name += " 2"
             history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "template" } })
@@ -585,7 +585,7 @@ const deleteActions = {
         let editId: string = get(activeEdit).id || ""
         if (editId) {
             // overlay / template
-            let currentItems: any[] = []
+            let currentItems: Item[] = []
             if (get(activeEdit).type === "overlay") currentItems = clone(get(overlays)[editId].items)
             if (get(activeEdit).type === "template") currentItems = clone(get(templates)[editId].items)
 
@@ -709,10 +709,10 @@ const deleteActions = {
     overlay: (data: any) => historyDelete("UPDATE", data, { updater: "overlay" }),
     template: (data: any) => historyDelete("UPDATE", data, { updater: "template" }),
     category_scripture: (data: any) => {
-        scriptures.update((a: any) => {
+        scriptures.update((a) => {
             data.forEach((id: string) => {
                 let key: string | null = null
-                Object.entries(a).forEach(([sId, value]: any) => {
+                Object.entries(a).forEach(([sId, value]) => {
                     if (value.id === id || sId === id) key = sId
                 })
 
@@ -732,7 +732,7 @@ const deleteActions = {
 
         // remove from all layouts
         let ref = _show().layouts("active").ref()[0]
-        ref.forEach((slideRef: any, i: number) => {
+        ref.forEach((slideRef, i) => {
             let actions = clone(slideRef.data.actions) || {}
             if (actions[key] !== id) return
             delete actions[key]
@@ -848,11 +848,13 @@ const deleteActions = {
     chord: (data: any) => {
         data = data[0]
 
-        let item: any = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
+        let item: Item = _show().slides([data.slideId]).items([data.itemIndex]).get()[0][0]
 
-        let newLines: any = clone(item.lines)
-        let currentChordIndex = newLines[data.index].chords.findIndex((a) => a.id === data.chord.id)
-        newLines[data.index].chords.splice(currentChordIndex, 1)
+        let newLines = clone(item.lines || [])
+        let currentChordIndex = newLines[data.index].chords?.findIndex((a) => a.id === data.chord.id) ?? -1
+        if (currentChordIndex < 0) return
+
+        newLines[data.index].chords!.splice(currentChordIndex, 1)
 
         _show()
             .slides([data.slideId])
@@ -1015,8 +1017,8 @@ function historyDelete(id, data, { updater } = { updater: "" }) {
 }
 
 async function duplicateShows(selected: any) {
-    await loadShows(selected.map(({ id }: any) => id))
-    selected.forEach(({ id }: any) => {
+    await loadShows(selected.map(({ id }) => id))
+    selected.forEach(({ id }) => {
         let show = clone(get(showsCache)[id])
         if (!show) return
 

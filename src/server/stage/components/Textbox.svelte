@@ -43,12 +43,12 @@
         loaded = true
     })
 
-    let alignElem: any
+    let alignElem: HTMLElement | undefined
 
     $: if (autoSize && loaded) calculateAutosize()
     let loopStop: any = null
     function calculateAutosize() {
-        if (loopStop) return
+        if (loopStop || !alignElem) return
         loopStop = setTimeout(() => (loopStop = null), 200)
 
         let type: AutosizeTypes = "growToFit"
@@ -117,7 +117,7 @@
         })
     }
 
-    let thisElem: any
+    let thisElem: HTMLElement | undefined
     let actionButtons: boolean = false
     function toggleActions(e: any) {
         if (e.target.closest("button")) return

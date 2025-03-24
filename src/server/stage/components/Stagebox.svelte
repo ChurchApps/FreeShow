@@ -50,7 +50,7 @@
         height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
     `
 
-    let alignElem: any
+    let alignElem: HTMLElement | undefined
     let size = 100
     $: if (alignElem && (item || $progressData)) size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size

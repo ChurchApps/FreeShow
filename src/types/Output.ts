@@ -23,6 +23,7 @@ export interface Output {
     kioskMode?: boolean
     alwaysOnTop?: boolean
     transparent?: boolean
+    allowMainScreen?: boolean // allow custom output bounds
     ndi?: boolean
     ndiData?: any
     blackmagic?: boolean
@@ -32,13 +33,15 @@ export interface Output {
     taskbar?: boolean
     style?: string
     show?: any
-    out?: {
-        refresh?: boolean
-        background?: null | OutBackground
-        slide?: null | OutSlide
-        overlays?: string[]
-        transition?: null | OutTransition
-    }
+    out?: OutData
+}
+
+export interface OutData {
+    refresh?: boolean
+    background?: null | OutBackground
+    slide?: null | OutSlide
+    overlays?: string[]
+    transition?: null | OutTransition
 }
 
 export interface Animation {

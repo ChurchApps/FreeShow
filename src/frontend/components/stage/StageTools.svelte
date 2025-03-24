@@ -109,7 +109,7 @@
 
     // KEYDOWN EVENT
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (document.activeElement?.closest(".edit")) return
 
         let stageId = $activeStage.id

@@ -13,7 +13,7 @@
     export let mediaStyle: MediaStyle = {}
     export let mirror: boolean = false
 
-    export let video: any = null
+    export let video: HTMLVideoElement | null = null
     export let videoData: any = { paused: false, muted: true, duration: 0, loop: false }
     export let videoTime: number = 0
 
@@ -23,7 +23,7 @@
     // retry on error
     let retryCount = 0
     $: if (path) retryCount = 0
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     let useAlternative: boolean = false
     function reload() {
         if (retryCount > 4) useAlternative = true

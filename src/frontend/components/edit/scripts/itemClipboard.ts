@@ -28,7 +28,7 @@ export function getBoxStyle(item: Item): StyleClipboard {
     const extraKeyValues: string[] = getSpecialBoxValues(item)
 
     let itemKeys = getItemKeys(true)
-    let newStyles: any = getStyles(style)
+    let newStyles: { [key: string]: number | string } = getStyles(style)
 
     // remove any item keys (used for other items than textbox)
     itemKeys.forEach((key) => {
@@ -44,7 +44,7 @@ export function getItemStyle(item: Item): StyleClipboard {
     if (!style) return { keys: {}, style: {} }
 
     let itemKeys = getItemKeys()
-    let newStyles: any = getStyles(style)
+    let newStyles = getStyles(style)
 
     // only keep item keys
     Object.keys(newStyles).forEach((key) => {
@@ -69,7 +69,7 @@ export function getFilterStyle(): StyleClipboard {
 
     const filterKeys = ["filterEnabled", "backdrop-filter", "filter"]
 
-    let keys: any = {}
+    let keys: { [key: string]: number | string } = {}
     filterKeys.forEach((key) => {
         keys[key] = slideData[key] || ""
     })
@@ -85,7 +85,7 @@ export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) 
     slides.forEach(updateSlideStyle)
 
     function updateSlideStyle(slide) {
-        let items: any[] = []
+        let items: number[] = []
         let values: any[] = []
 
         slide.items.forEach(updateItemStyle)
@@ -129,7 +129,7 @@ export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) 
             })
         }
 
-        function updateItemStyle(item: any, i: number) {
+        function updateItemStyle(item: Item, i: number) {
             let itemType = item.type || "text"
             if (itemType !== type) return
 
@@ -139,7 +139,7 @@ export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) 
             items.push(i)
 
             let newStyle = ""
-            Object.entries(style.style).forEach(([key, value]: any) => {
+            Object.entries(style.style).forEach(([key, value]) => {
                 newStyle += `${key}: ${value};`
             })
 
@@ -148,7 +148,7 @@ export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) 
                 let newItemStyle = ""
 
                 // add "item" style
-                Object.entries(itemStyles).forEach(([key, value]: any) => {
+                Object.entries(itemStyles).forEach(([key, value]) => {
                     if (itemKeys.includes(key)) newItemStyle += `${key}: ${value};`
                 })
 
@@ -158,10 +158,10 @@ export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) 
 
             if (!item.lines) return
 
-            let text = item.lines.map((a: any) => {
+            let text = item.lines.map((a) => {
                 if (!a.text) return
 
-                return a.text.map((a: any) => {
+                return a.text.map((a) => {
                     // don't style scripture verses
                     if (a.customType && !a.customType.includes("jw")) return a
 
@@ -203,7 +203,7 @@ export function setItemStyle(style: StyleClipboard, slides: any) {
 
             // get new style
             let newStyle = ""
-            Object.entries(style.style).forEach(([key, value]: any) => {
+            Object.entries(style.style).forEach(([key, value]) => {
                 newStyle += `${key}: ${value};`
             })
 
@@ -212,7 +212,7 @@ export function setItemStyle(style: StyleClipboard, slides: any) {
             let currentStyle = ""
 
             // get current style not for "item"
-            Object.entries(itemStyles).forEach(([key, value]: any) => {
+            Object.entries(itemStyles).forEach(([key, value]) => {
                 if (!itemKeys.includes(key)) currentStyle += `${key}: ${value};`
             })
 

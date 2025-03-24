@@ -98,7 +98,7 @@
     }
 
     let updated: string[] = []
-    let updatedTimeout: any = null
+    let updatedTimeout: NodeJS.Timeout | null = null
     function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "custom", value: any, reset: boolean = false) {
         if (!enableSpecific) {
             return { ...data, [key]: value }

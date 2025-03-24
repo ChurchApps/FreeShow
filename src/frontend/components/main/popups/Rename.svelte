@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Line, SlideData } from "../../../../types/Show"
     import { activePopup, activeShow, effectsLibrary, selected, showsCache } from "../../../stores"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -14,7 +15,7 @@
 
         if (($activeShow && $selected.id === "slide") || $selected.id === "group") {
             $selected.data.forEach((a, i) => {
-                let slide = a.id ? a : _show("active").layouts("active").ref()[0][a.index]
+                let slide = a.id ? a : _show().layouts("active").ref()[0][a.index]
                 if (slide.parent) slide = slide.parent.id
                 else slide = slide.id
                 let name: string = $showsCache[$activeShow!.id].slides[slide].group || ""
@@ -29,12 +30,12 @@
         }
     }
 
-    const renameAction: any = {
+    const renameAction = {
         slide: () => {
             // TODO: history (x3)
             $selected.data.forEach((a) => {
                 let slideId = a.id
-                let ref = _show("active").layouts("active").ref()[0][a.index]
+                let ref = _show().layouts("active").ref()[0][a.index]
                 if (!slideId) slideId = ref.id
 
                 // remove global group if active
@@ -46,7 +47,7 @@
                 if (!ref?.parent) return
                 // make child a parent
 
-                let children = _show("active").slides([ref.parent.id]).get("children")[0]
+                let children = _show().slides([ref.parent.id]).get("children")[0]
                 let offsetIndex: number = ref.parent.index - children.indexOf(ref.id)
 
                 // remove renamed child
@@ -57,20 +58,20 @@
                     location: { page: "show", id: "show_key" },
                 })
 
-                let currentLayouts = _show().layouts().get("slides")
+                let currentLayouts: SlideData[][] = _show().layouts().get("slides")
                 let layoutIds: string[] = Object.keys($showsCache[$activeShow!.id].layouts)
-                let newLayouts: any = {}
+                let newLayouts: { [key: string]: SlideData[] } = {}
 
                 currentLayouts.forEach((layout, i: number) => {
-                    let l: any[] = []
+                    let l: SlideData[] = []
 
                     // TODO: renaming multiple children with the same parent dont work properly
 
                     let added = false
-                    layout.forEach((slide: any, index: number) => {
+                    layout.forEach((slide, index: number) => {
                         l.push(slide)
 
-                        if (added || index + 1 < offsetIndex || slide.id !== ref.parent.id) return
+                        if (added || index + 1 < offsetIndex || slide.id !== ref.parent?.id) return
                         added = true
 
                         l.push({ id: ref.id, ...(slide.children?.[ref.id] || {}) })
@@ -86,15 +87,15 @@
         group: () => renameAction.slide(),
         chord: () => {
             let chord = $selected.data[0]
-            let lines = _show().slides([chord.slideId]).items([chord.itemIndex]).get("lines")[0][0]
+            let lines: Line[] = _show().slides([chord.slideId]).items([chord.itemIndex]).get("lines")[0][0]
 
             // create first
             if (!chord.chord) return
 
             let newLines = clone(lines)
             let chords = newLines[chord.index].chords
-            chords.forEach((a: any, i: number) => {
-                if (a.id === chord.chord.id) newLines[chord.index].chords[i].key = groupName
+            chords?.forEach((a, i: number) => {
+                if (a.id === chord.chord.id) newLines[chord.index].chords![i].key = groupName
             })
 
             _show()
@@ -122,14 +123,14 @@
     let groupName: string = ""
     const changeValue = (e: any) => (groupName = e.target.value)
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") {
-            element.querySelector("input").blur()
+            element?.querySelector("input")?.blur()
             rename()
         }
     }
 
-    let element: any
+    let element: HTMLElement | undefined
 </script>
 
 <svelte:window on:keydown={keydown} />

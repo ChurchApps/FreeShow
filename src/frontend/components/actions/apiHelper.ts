@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
-import type { Variable } from "../../../types/Main"
+import type { History } from "../../../types/History"
+import type { DropData, Selected, Variable } from "../../../types/Main"
 import {
     activeDrawerTab,
     activeEdit,
@@ -266,10 +267,10 @@ export async function rearrangeGroups(data: API_rearrange) {
     let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex! - pos
     if (isNaN(dropIndex)) dropIndex = ref.length
 
-    const drag = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
-    const drop = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos } // , trigger, center: false
+    const drag: Selected = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
+    const drop: DropData = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos, center: false } // , trigger, center: false
 
-    let h = dropActions.slide({ drag, drop }, {})
+    let h = dropActions.slide({ drag, drop }, { location: { page: get(activePage) } } as History)
     if (h && h.id) history(h)
 }
 

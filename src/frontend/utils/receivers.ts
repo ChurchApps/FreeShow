@@ -6,7 +6,7 @@ import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
 import { clone } from "../components/helpers/array"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
-import { receiveMain } from "../IPC/main"
+import { receiveMainGlobal } from "../IPC/main"
 import {
     activePopup,
     activeProject,
@@ -59,7 +59,7 @@ import { previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
 
 export function setupMainReceivers() {
-    receiveMain()
+    receiveMainGlobal()
 
     receive(OUTPUT, receiveOUTPUTasMAIN)
     receive(NDI, receiveNDI)

@@ -33,13 +33,13 @@
     $: if (!paused && playing.audio) startUpdater()
 
     // updater
-    let updaterInterval: any = null
+    let updaterInterval: NodeJS.Timeout | null = null
     function startUpdater() {
         if (updaterInterval) return
 
         updaterInterval = setInterval(() => {
             if (paused) {
-                clearInterval(updaterInterval)
+                if (updaterInterval) clearInterval(updaterInterval)
                 updaterInterval = null
             }
             if (sliderValue === null) currentTime = playing.audio?.currentTime || 0

@@ -1,6 +1,6 @@
 import type { EditInput } from "./boxes"
 
-const borderOptions: any[] = [
+const borderOptions = [
     { name: "$:borders.solid:$", id: "solid" },
     { name: "$:borders.dashed:$", id: "dashed" },
     { name: "$:borders.dotted:$", id: "dotted" },

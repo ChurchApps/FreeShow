@@ -5,9 +5,9 @@
     import { getStyleResolution } from "../slide/getStyleResolution"
 
     $: outputId = getActiveOutputs($outputs, true, true, true)[0]
-    // $: ref = $activeShow?.id ? _show("active").layouts("active").ref()[0] : null
+    // $: ref = $activeShow?.id ? _show().layouts("active").ref()[0] : null
     // $: currentOutput = $outputs[outputId] || {}
-    // $: Slide = currentOutput.out?.slide && ref ? _show("active").slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
+    // $: Slide = currentOutput.out?.slide && ref ? _show().slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
 
     let width: number = 0
     let height: number = 0

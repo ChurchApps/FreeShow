@@ -37,7 +37,7 @@
         })
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key !== "Enter") return
         ;(document.activeElement as any)?.blur()
     }

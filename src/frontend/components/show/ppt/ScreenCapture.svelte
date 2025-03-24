@@ -12,7 +12,7 @@
 
     // get window
 
-    let findWindowTimeout: any = null
+    let findWindowTimeout: NodeJS.Timeout | null = null
     $: if (path) requestWindows()
     function requestWindows() {
         if (findWindowTimeout) clearTimeout(findWindowTimeout)

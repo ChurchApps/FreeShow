@@ -43,7 +43,7 @@ export function joinTimeBig(time: number, showHours: boolean = true) {
     return timeValue
 }
 
-export function dateToString(date: any, full: boolean = false, d: any = {}): string {
+export function dateToString(date: string | number | Date, full: boolean = false, d: any = {}): string {
     if (!date) return ""
 
     date = new Date(date)

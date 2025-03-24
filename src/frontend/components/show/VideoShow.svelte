@@ -119,7 +119,7 @@
         if (autoPause) videoData.paused = false
         else videoTime = 0
 
-        if (subtitle) enableSubtitle(video, subtitle)
+        if (subtitle && video) enableSubtitle(video, subtitle)
     }
 
     // player
@@ -134,7 +134,7 @@
         }, 2000)
     }
 
-    let video: any
+    let video: HTMLVideoElement | undefined
     async function onPlay() {
         // autoPause = false
         if (hasLoaded) {
@@ -188,7 +188,7 @@
         setOutput("background", bg)
     }
 
-    $: if (video && mediaStyle.speed) video.playbackRate = mediaStyle.speed
+    $: if (video && mediaStyle.speed) video.playbackRate = Number(mediaStyle.speed)
 
     let edit: boolean = false
 
@@ -248,7 +248,7 @@
         })
     }
 
-    $: if (subtitle !== undefined) enableSubtitle(video, subtitle)
+    $: if (subtitle !== undefined && video) enableSubtitle(video, subtitle)
 
     // MARKER
 
@@ -298,7 +298,7 @@
     $: mediaStyleString = `width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
     $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 
-    let blurVideo: any = null
+    let blurVideo: HTMLVideoElement | undefined
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.3 || videoTime > blurVideo.currentTime + 0.3)) blurVideo.currentTime = videoTime
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused

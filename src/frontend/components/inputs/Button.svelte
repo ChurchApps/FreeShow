@@ -18,8 +18,8 @@
 
     let tooltipTime: number = 800
     let showTooltip: boolean = false
-    let timeout: any = null
-    let autoHideTimeout: any = null
+    let timeout: NodeJS.Timeout | null = null
+    let autoHideTimeout: NodeJS.Timeout | null = null
     function startTimer() {
         if (timeout || !title?.length) return
 
@@ -39,12 +39,12 @@
     $: if ($$props.disabled) hideTooltip()
     function hideTooltip() {
         showTooltip = false
-        clearTimeout(timeout)
+        if (timeout) clearTimeout(timeout)
         timeout = null
     }
 
     let tooltipStyle: string = ""
-    let mouse: any = { x: 0, y: 0 }
+    let mouse: { x: number; y: number } = { x: 0, y: 0 }
     function mousemove(e: any) {
         if (!title?.length) return
 

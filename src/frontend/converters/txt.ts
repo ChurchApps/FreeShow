@@ -3,7 +3,7 @@ import { uid } from "uid"
 import type { Item, Show } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
 import { getItemText, getSlideText } from "../components/edit/scripts/textStyle"
-import { clone, removeEmpty } from "../components/helpers/array"
+import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { checkName, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
@@ -48,7 +48,7 @@ export function convertText({ name = "", category = null, text, noFormatting = f
     // in "Text edit" spaces can be used to create empty "child" slides
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
     // text = text.replaceAll("\r", "").replaceAll("\n\n \n\n", "__BREAK__").replaceAll("\n \n", "\n\n").replaceAll("__BREAK__", "\n\n \n\n")
-    let sections: string[] = removeEmpty(text.split("\n\n"))
+    let sections = (text as string).split("\n\n").filter(Boolean)
 
     // get ccli
     let ccli: string = ""
@@ -178,7 +178,7 @@ function createSlides(labeled: any, existingSlides: any = {}, noFormatting) {
         let color: any = null
 
         let allLines: string[] = [text]
-        let lines: string[] = removeEmpty(text.split("\n"))
+        let lines = text.split("\n").filter(Boolean)
 
         // split lines into a set amount of lines
         if (Number(get(splitLines)) && lines.length > get(splitLines)) {
@@ -354,12 +354,12 @@ function fixText(text: string, formatText: boolean): string {
 
         let newText: string = ""
         const commaDividerMinLength = 22 // shouldn't be much less
-        text.split("\n").forEach((t: any) => {
+        text.split("\n").forEach((t: string) => {
             let newLineText: string = ""
 
             // commas inside line
-            let commas: string[] = removeEmpty(t.split(","))
-            commas.forEach((a: any, i: number) => {
+            let commas = t.split(",").filter(Boolean)
+            commas.forEach((a, i) => {
                 newLineText += a
 
                 if (i >= commas.length - 1) newLineText += "\n"

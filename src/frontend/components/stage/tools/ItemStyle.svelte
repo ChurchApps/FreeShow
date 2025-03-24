@@ -71,7 +71,7 @@
         }
     }
 
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
 </script>
 
 {#if item}

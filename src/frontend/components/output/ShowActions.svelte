@@ -1,15 +1,16 @@
 <script lang="ts">
+    import type { Output } from "../../../types/Output"
+    import type { LayoutRef } from "../../../types/Show"
     import { activeEdit, activePage, activePopup, activeShow, activeSlideRecording, dictionary, outLocked, showsCache } from "../../stores"
     import { previewShortcuts } from "../../utils/shortcuts"
-    import { GetLayout } from "../helpers/get"
     import Icon from "../helpers/Icon.svelte"
     import { refreshOut, setOutput } from "../helpers/output"
     import { updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
 
-    export let currentOutput: any
-    export let ref: any[]
+    export let currentOutput: Output
+    export let ref: (LayoutRef | { temp: boolean; items: any; id: string })[]
     export let linesIndex: null | number
     export let maxLines: null | number
 
@@ -24,13 +25,15 @@
     // transition
     $: slideData = $showsCache && slide && slide.id !== "temp" ? _show(slide.id).layouts("active").ref()[0]?.[slide.index!]?.data : null
     $: customTransition = slideData ? slideData.transition || slideData.mediaTransition : null
+
+    $: layoutLength = [_show().layouts("active").ref()[0] || [], [$showsCache]][0].length
 </script>
 
 <span class="group">
     <Button
         on:click={() => previewShortcuts.ArrowLeft({ preview: true })}
         title={$dictionary.preview?._previous_slide + " [Arrow Left]"}
-        disabled={$outLocked || (!$activeSlideRecording && (slide?.id === "temp" || (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)))}
+        disabled={$outLocked || (!$activeSlideRecording && (slide?.id === "temp" || (slide ? (slide.index || 0) < 1 && (linesIndex || 0) < 1 : !layoutLength)))}
         center
     >
         <Icon id="previous" size={1.2} />
@@ -38,8 +41,7 @@
     <Button
         on:click={() => previewShortcuts.ArrowRight({ preview: true, key: "ArrowRight" })}
         title={$dictionary.preview?._next_slide + " [Arrow Right]"}
-        disabled={$outLocked ||
-            (!$activeSlideRecording && (slide?.id === "temp" || (slide ? (slide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !GetLayout(null, $showsCache[$activeShow?.id || ""]?.settings?.activeLayout || null).length)))}
+        disabled={$outLocked || (!$activeSlideRecording && (slide?.id === "temp" || (slide ? (slide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !layoutLength)))}
         center
     >
         <Icon id="next" size={1.2} />
@@ -50,14 +52,14 @@
             on:click={(e) => {
                 if ($activePage === "edit" && $activeShow && $activeEdit.slide !== null && $activeEdit.slide !== undefined)
                     setOutput("slide", { id: $activeShow.id, layout: $showsCache[$activeShow.id].settings.activeLayout, index: $activeEdit.slide })
-                else if ($activeShow && GetLayout().length) {
+                else if ($activeShow && layoutLength) {
                     setOutput("slide", { id: $activeShow.id, layout: $showsCache[$activeShow.id].settings.activeLayout, index: 0 })
                     // TODO: nextSlide(null)
                 }
-                updateOut("active", $activeEdit.slide || 0, _show("active").layouts("active").ref()[0], !e.altKey)
+                updateOut("active", $activeEdit.slide || 0, _show().layouts("active").ref()[0], !e.altKey)
             }}
             title={$dictionary.preview?._start + " [Space]"}
-            disabled={$outLocked || !$activeShow || !GetLayout(null, $showsCache[$activeShow.id]?.settings?.activeLayout || null).length}
+            disabled={$outLocked || !$activeShow || !layoutLength}
             center
         >
             <Icon id="play" size={1.2} white />
@@ -72,7 +74,7 @@
         <Icon id={$outLocked ? "locked" : "unlocked"} size={1.1} />
     </Button>
     <Button on:click={() => activePopup.set("transition")} title={$dictionary.popup?.transition} center>
-        <Icon size={1.2} id="transition" white={customTransition} />
+        <Icon size={1.2} id="transition" white={!!customTransition} />
     </Button>
 </span>
 

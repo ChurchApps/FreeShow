@@ -44,7 +44,7 @@
     }
 
     $: if (currentSlide?.items !== undefined || currentOutSlide || currentLines) updateItems()
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
 
     // if anything is outputted & changing to something that's outputted
     let transitioningBetween: boolean = false

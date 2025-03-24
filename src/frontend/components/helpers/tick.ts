@@ -48,10 +48,10 @@ export function newSlideTimer(id: string, duration: number) {
         // outTransition.set(null)
 
         // get and reset active element
-        let activeElem: any = document.activeElement
+        let activeElem = document.activeElement
         if (activeElem) {
             setTimeout(() => {
-                activeElem.focus()
+                ;(activeElem as HTMLElement).focus()
             }, 10)
         }
 

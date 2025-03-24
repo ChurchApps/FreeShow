@@ -190,7 +190,7 @@
 
     $: group = slide.group
     $: if (slide.globalGroup && $groups[slide.globalGroup]) {
-        group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
+        group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] || "" : $groups[slide.globalGroup].name
         color = $groups[slide.globalGroup].color
         // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
         // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
@@ -228,7 +228,7 @@
     }
 
     // || $showsCache[active].slides
-    let textElem: any
+    let textElem: HTMLElement | undefined
     $: if (textElem && html !== previousHTML) {
         previousHTML = html
         setTimeout(() => {

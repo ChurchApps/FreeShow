@@ -40,24 +40,3 @@ export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null):
     }
     return layoutSlides
 }
-
-export const GetLayoutRef = (showID: null | ID = null, layoutID: null | ID = null): any[] => {
-    if (!showID) showID = get(activeShow)!.id
-    let currentShow: Show = get(showsCache)[showID]
-    if (!layoutID) layoutID = currentShow.settings.activeLayout
-    let layoutSlides: any[] = []
-    if (currentShow) {
-        currentShow.layouts[layoutID].slides.forEach((ls, i) => {
-            let slide: Slide = currentShow.slides[ls.id]
-            if (slide) {
-                layoutSlides.push({ type: "parent", id: ls.id, index: i })
-                if (slide.children) {
-                    slide.children.forEach((id: string, j) => {
-                        layoutSlides.push({ type: "child", id, parent: ls.id, layoutIndex: i, slideIndex: j })
-                    })
-                }
-            }
-        })
-    }
-    return layoutSlides
-}

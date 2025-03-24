@@ -16,7 +16,7 @@
     export let fileOver: boolean = false
     export let borders: "all" | "center" | "edges" = "all"
     export let triggerOnHover: boolean = false
-    let elem: any
+    let elem: HTMLElement | undefined
 
     function enter(e: any) {
         if (!selectable || $selected.hoverActive) return
@@ -37,7 +37,7 @@
     }
 
     const TRIGGER_TIMEOUT = 500
-    let triggerTimeout: any = null
+    let triggerTimeout: NodeJS.Timeout | null = null
     function triggerHoverAction() {
         if (!triggerOnHover || triggerTimeout) return
 

@@ -1,3 +1,4 @@
+import type fs from "fs"
 import type { dataFolderNames } from "../electron/utils/files"
 import type { ShowRef } from "./Projects"
 
@@ -80,7 +81,15 @@ export type SelectIds =
 export interface Selected {
     id: null | SelectIds
     data: any[]
+    showId?: string
     hoverActive?: boolean
+}
+export interface DropData {
+    id: string
+    data: any
+    trigger?: string
+    center: boolean
+    index?: number
 }
 
 export interface Clipboard {
@@ -141,6 +150,8 @@ export interface MediaStyle {
     tracks?: Subtitle[]
     subtitle?: string
     tags?: string[] // media tags
+
+    ignoreLayer?: boolean // foreground background type
 }
 
 export type AudioType = "music" | "effect"
@@ -212,6 +223,15 @@ export interface Trigger {
     name: string
     type: "http"
     value: string
+}
+
+export interface FileData {
+    path: string
+    stat: fs.Stats
+    extension: string
+    folder: boolean
+    name: string
+    thumbnailPath?: string
 }
 
 export interface ErrorLog {

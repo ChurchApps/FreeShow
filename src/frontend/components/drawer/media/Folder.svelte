@@ -1,13 +1,10 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import { uid } from "uid"
-    import { MAIN } from "../../../../types/Channels"
-    import { sendMain } from "../../../IPC/main"
-    import { destroy } from "../../../utils/request"
+    import { Main } from "../../../../types/IPC/Main"
+    import type { FileData } from "../../../../types/Main"
+    import { requestMain } from "../../../IPC/main"
     import Icon from "../../helpers/Icon.svelte"
     import { getThumbnailPath, isMediaExtension, mediaSize } from "../../helpers/media"
     import Card from "../Card.svelte"
-    import { Main } from "../../../../types/IPC/Main"
 
     export let rootPath: string
     export let name: string
@@ -15,27 +12,21 @@
     export let mode: "grid" | "list"
     export let folderPreview: boolean = false
 
-    let files: any[] = []
+    let files: FileData[] = []
     let fileCount: number = 0
 
-    let listenerId = uid()
     // WIP this creates one listener per individual folder...
-    $: if (folderPreview && mode === "grid" && path) sendMain(Main.READ_FOLDER, { path, disableThumbnails: true })
-    onDestroy(() => destroy(MAIN, listenerId))
+    $: if (folderPreview && mode === "grid" && path) {
+        requestMain(Main.READ_FOLDER, { path, disableThumbnails: true }, (data) => {
+            if (data.path !== path) return
 
-    window.api.receive(MAIN, receiveContent, listenerId)
-    function receiveContent(msg) {
-        if (msg.channel !== "READ_FOLDER") return
-
-        const data = msg.data
-        if (data.path !== path) return
-
-        fileCount = 0
-        let filtered = data.files.filter((file: any) => isMediaExtension(file.extension))
-        fileCount = filtered.length
-        files = filtered.slice(0, 4).map((a) => {
-            a.path = getThumbnailPath(a.path, mediaSize.drawerSize)
-            return a
+            fileCount = 0
+            let filtered = data.files.filter((file) => isMediaExtension(file.extension))
+            fileCount = filtered.length
+            files = filtered.slice(0, 4).map((a) => {
+                a.path = getThumbnailPath(a.path, mediaSize.drawerSize)
+                return a
+            })
         })
     }
 

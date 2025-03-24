@@ -1,6 +1,6 @@
 import type { ShowRef } from "./Projects"
 
-export type HistoryPages = "none" | "drawer" | "show" | "edit" | "calendar" | "draw" | "stage" | "settings"
+export type HistoryPages = "none" | "drawer" | "show" | "reflow" | "edit" | "calendar" | "draw" | "stage" | "settings"
 export type HistoryIDs =
     // NEW
     | "UPDATE"

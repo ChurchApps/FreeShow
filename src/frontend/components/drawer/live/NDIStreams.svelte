@@ -10,12 +10,12 @@
     import Center from "../../system/Center.svelte"
     import NDIStream from "./NDIStream.svelte"
 
-    let sources: any[] = []
+    let sources: { name: string; id: string }[] = []
 
     $: currentOutput = $outputs[getActiveOutputs()[0]] || {}
 
     let loading: boolean = true
-    const receiveNDI: any = {
+    const receiveNDI = {
         RECEIVE_LIST: (msg) => {
             loading = false
             if (!msg || sources.length) return

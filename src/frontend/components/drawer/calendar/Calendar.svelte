@@ -77,8 +77,8 @@
         }
     }
 
-    let calendarElem: any
-    let nextScrollTimeout: any = null
+    let calendarElem: HTMLElement | undefined
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (nextScrollTimeout || !calendarElem) return
 
@@ -95,6 +95,7 @@
     }
 
     function nextMonth(checkScroll: boolean = false) {
+        if (!calendarElem) return
         let scrolledToBottom = calendarElem.scrollTop + 1 + calendarElem.offsetHeight >= calendarElem.scrollHeight
         if (checkScroll && !scrolledToBottom) return
 
@@ -102,7 +103,7 @@
     }
 
     function previousMonth(checkScroll: boolean = false) {
-        let scrolledToTop = calendarElem.scrollTop === 0
+        let scrolledToTop = calendarElem?.scrollTop === 0
         if (checkScroll && !scrolledToTop) return
 
         current = new Date(year, month, 0)

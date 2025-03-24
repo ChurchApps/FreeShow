@@ -77,7 +77,6 @@ import { getItemText, getSelectionRange } from "../edit/scripts/textStyle"
 import { exportProject } from "../export/project"
 import { clone, removeDuplicates } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
-import { GetLayoutRef } from "../helpers/get"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
 import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput, toggleOutput } from "../helpers/output"
@@ -448,7 +447,7 @@ const actions = {
 
         data = data.map((a) => ({ ...a, path: a.path || a.id, ...(a.type === "video" ? videoData : {}) }))
         let activeLayout = get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout
-        let layoutLength = _show("active").layouts([activeLayout]).get()[0]?.length
+        let layoutLength = _show().layouts([activeLayout]).get()[0]?.length
         let newData = { index: layoutLength, data: slides, layout: { backgrounds: data } }
 
         history({ id: "SLIDES", newData, location: { page: get(activePage) as HistoryPages, show: get(activeShow)!, layout: activeLayout } })
@@ -730,13 +729,13 @@ const actions = {
         if (obj.sel?.id === "slide") {
             showsCache.update((a) => {
                 obj.sel!.data.forEach((b) => {
-                    let ref = GetLayoutRef()[b.index]
+                    let ref = _show().layouts("active").ref()[0]?.[b.index] || []
                     let slides = a[get(activeShow)!.id].layouts?.[a[get(activeShow)!.id]?.settings?.activeLayout]?.slides
                     if (!slides) return
 
                     if (ref.type === "child") {
-                        if (!slides[ref.layoutIndex].children) slides[ref.layoutIndex].children = {}
-                        slides[ref.layoutIndex].children![ref.id] = { ...slides[ref.layoutIndex].children![ref.id], disabled: !obj.enabled }
+                        if (!slides[ref.parent!.index].children) slides[ref.parent!.index].children = {}
+                        slides[ref.parent!.index].children![ref.id] = { ...slides[ref.parent!.index].children![ref.id], disabled: !obj.enabled }
                     } else slides[ref.index].disabled = !obj.enabled
                 })
                 return a
@@ -873,7 +872,7 @@ const actions = {
     },
 
     // change slide group
-    slide_groups: (obj: ObjData) => changeSlideGroups(obj),
+    slide_groups: (obj: ObjData) => changeSlideGroups({ sel: { data: [{ index: obj.sel?.data?.[0]?.index }] }, menu: { id: obj.menu.id! } }),
 
     actions: (obj: ObjData) => changeSlideAction(obj, obj.menu.id || ""),
     transition: () => {
@@ -1419,7 +1418,7 @@ function changeSlideAction(obj: ObjData, id: string) {
                 .map((i) => {
                     let a = ref[i]?.data?.actions || {}
                     if (!a.slideActions) a.slideActions = []
-                    a.slideActions.push({ id })
+                    a.slideActions.push({ id, triggers: [] })
 
                     existing.push(...a.slideActions.map((a) => a.triggers?.[0]))
                     return a

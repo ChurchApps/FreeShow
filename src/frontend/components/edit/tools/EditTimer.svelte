@@ -1,10 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
+    import type { Item } from "../../../../types/Show"
     import { timers } from "../../../stores"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
+    import Dropdown from "../../inputs/Dropdown.svelte"
 
-    export let item: any
+    export let item: Item
 
     const typeOrder = { counter: 1, clock: 2, event: 3 }
     $: timersList = sortByName(keysToID($timers), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])

@@ -30,7 +30,7 @@ export function history(obj: History, undo: null | boolean = null) {
 
     if (undo === null) obj.time = new Date().getTime()
 
-    let showID: any
+    let showID: string | undefined
     if (obj.location?.show?.id) showID = obj.location.show.id
     let old: any = null
     let temp: any = {}
@@ -60,14 +60,14 @@ export function history(obj: History, undo: null | boolean = null) {
                 // if (obj.newData?.style?.key === "text-style" && old.style.values?.[0]?.[0]) old.style.values = old.style.values[0]
 
                 // remove templates because slide has manual updates
-                if (!undo) removeTemplatesFromShow(showID)
+                if (!undo) removeTemplatesFromShow(showID || "")
                 break
             case "setItems":
             case "setStyle":
                 old = { style: _show(showID).slides([obj.location!.slide!]).items(obj.location!.items!).set(obj.newData.style) }
 
                 // remove templates because slide has manual updates
-                if (!undo) removeTemplatesFromShow(showID)
+                if (!undo) removeTemplatesFromShow(showID || "")
                 break
             case "slideStyle":
                 old = { style: _show(showID).slides([obj.location?.slide!]).set({ key: "settings", value: obj.newData.style }) }
@@ -87,7 +87,7 @@ export function history(obj: History, undo: null | boolean = null) {
                     _show(showID)
                         .media()
                         .get()
-                        .forEach((media: any) => {
+                        .forEach((media) => {
                             if (media.id === obj.newData.id) bgid = media.key
                         })
 
@@ -129,7 +129,7 @@ export function history(obj: History, undo: null | boolean = null) {
                     _show(showID)
                         .media()
                         .get()
-                        .forEach((media: any) => {
+                        .forEach((media) => {
                             if (media.path === obj.newData.path) audioId = media.key
                         })
                 }

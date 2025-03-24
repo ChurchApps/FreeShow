@@ -5,7 +5,7 @@ import type { Stats } from "fs"
 import type os from "os"
 import type { stores } from "../../electron/data/store"
 import type { Bible } from "../Bible"
-import type { ErrorLog, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
+import type { ErrorLog, FileData, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
 import type { Dictionary, Resolution, Themes } from "../Settings"
@@ -243,10 +243,10 @@ export interface MainReturnPayloads {
     [Main.GET_SIMULAR]: { path: string; name: string }[]
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
-    [Main.READ_FOLDER]: { path: string; files: any[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
+    [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
     [Main.READ_FILE]: { content: string }
     [Main.OPEN_FOLDER]: { path: string; showsPath?: string } | void
-    [Main.OPEN_FILE]: { id: string; files: string[]; content: { [key: string]: string } } | void
+    [Main.OPEN_FILE]: { id: string; channel: string; files: string[]; content: { [key: string]: string } } | void
     [Main.PCO_DISCONNECT]: { success: boolean }
 }
 

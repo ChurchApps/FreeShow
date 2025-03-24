@@ -18,7 +18,7 @@
 
     $: totalSlides = layout ? layout.length : 0
 
-    let scrollElem: any
+    let scrollElem: HTMLElement | undefined
     let lyricsScroll: any
     // auto scroll
     $: {

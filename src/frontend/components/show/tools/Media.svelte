@@ -38,7 +38,7 @@
         layoutActions = []
 
         if (show) {
-            let refs = _show("active").layouts().ref()
+            let refs = _show().layouts().ref()
             refs.forEach((slides: any) => {
                 layoutBackgrounds.push(...slides.map((a: any) => a.data.background).filter((a: any) => a !== undefined))
                 layoutAudio.push(

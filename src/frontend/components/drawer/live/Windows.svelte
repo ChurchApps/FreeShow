@@ -10,7 +10,7 @@
     import Center from "../../system/Center.svelte"
     import Capture from "./Capture.svelte"
 
-    export let streams: any[]
+    export let streams: MediaStream[]
     export let searchValue: string = ""
 
     let windows: { name: string; id: string }[] = []
@@ -22,7 +22,7 @@
     // search
     $: if (windows || searchValue !== undefined) filterSearch()
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
-    let fullFilteredWindows: any[] = []
+    let fullFilteredWindows: { id: string; name: string }[] = []
     function filterSearch() {
         fullFilteredWindows = clone(windows)
         if (searchValue.length > 1) fullFilteredWindows = fullFilteredWindows.filter((a) => filter(a.name).includes(searchValue))

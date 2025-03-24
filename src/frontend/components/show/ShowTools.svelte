@@ -20,7 +20,7 @@
 
     $: showId = $activeShow?.id
     $: show = $showsCache[showId || ""]
-    let currentLayout: any = null
+    let currentLayout: string | null = null
     let note: string = ""
     $: if (showId && show?.settings?.activeLayout !== currentLayout) updateNote()
 
@@ -44,7 +44,7 @@
     // || $midiIn
     $: if (show) checkMedia()
     function checkMedia() {
-        let refs = _show("active").layouts().ref()
+        let refs = _show().layouts().ref()
 
         let disableMedia = true
 

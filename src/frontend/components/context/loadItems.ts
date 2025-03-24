@@ -29,7 +29,7 @@ const loadActions = {
     // TAGS
     tag_set: () => {
         let selectedShowTags = get(shows)[get(selected).data[0]?.id]?.quickAccess?.tags || []
-        let sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
+        let sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
@@ -42,7 +42,7 @@ const loadActions = {
     },
     media_tag_set: () => {
         let selectedTags = get(media)[get(selected).data[0]?.path]?.tags || []
-        let sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        let sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
@@ -55,7 +55,7 @@ const loadActions = {
     },
     action_tag_set: () => {
         let selectedTags = get(midiIn)[get(selected).data[0]?.id]?.tags || []
-        let sortedTags = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        let sortedTags: (ContextMenuItem | "SEPERATOR")[] = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPERATOR")
         sortedTags.push(create)
@@ -119,7 +119,7 @@ const loadActions = {
         return itemActions
     },
     remove_layers: () => {
-        let layoutSlides = _show().layouts("active").ref()[0] || {}
+        let layoutSlides = _show().layouts("active").ref()[0] || []
         let layoutSlide = layoutSlides[get(selected).data[0]?.index] || {}
 
         // text content

@@ -10,12 +10,12 @@ import { clone } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
 import { formatToFileName } from "../helpers/show"
 import { _show } from "../helpers/shows"
-import type { SlideData } from "../../../types/Show"
+import type { Overlays, Shows, SlideData } from "../../../types/Show"
 
 export async function exportProject(project: Project) {
-    let shows: any = {}
+    let shows: Shows = {}
     let files: string[] = []
-    let overlays: { [key: string]: any } = {}
+    let overlays: Overlays = {}
 
     // get project
     project = clone(project)
@@ -54,10 +54,10 @@ export async function exportProject(project: Project) {
 
             // get media from "Media" items
             let slides = shows[showRef.id].slides
-            Object.values(slides).forEach(({ items }: any) => {
+            Object.values(slides).forEach(({ items }) => {
                 items.forEach((item) => {
                     if (item.type === "media") {
-                        getFile(item.src)
+                        getFile(item.src || "")
                     }
                 })
             })
@@ -131,6 +131,6 @@ export async function exportProject(project: Project) {
     }
 
     // store as base64 ?
-    // let base64: any = await toDataURL(showRef.id)
+    // let base64 = await toDataURL(showRef.id)
     // media[showRef.id] = base64
 }

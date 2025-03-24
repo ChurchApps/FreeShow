@@ -2,10 +2,9 @@
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
-    import { uid } from "uid"
     import { MAIN } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
-    import { sendMain } from "../../../IPC/main"
+    import { receiveMain, sendMain } from "../../../IPC/main"
     import {
         activeEdit,
         activeFocus,
@@ -51,7 +50,8 @@
     export let searchValue: string = ""
     export let streams: MediaStream[] = []
 
-    let files: any[] = []
+    type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean }
+    let files: File[] = []
 
     let specialTabs = ["online", "screens", "cameras"]
     let notFolders = ["all", ...specialTabs]
@@ -106,7 +106,7 @@
             prevActive = active
             files = sortByName(
                 Object.entries($media)
-                    .map(([path, a]: any) => {
+                    .map(([path, a]) => {
                         let p = splitPath(path)
                         let name = p.name
                         return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
@@ -135,24 +135,16 @@
         }
     }
 
-    let filesInFolders: string[] = []
-    let folderFiles: any = {}
+    let filesInFolders: File[] = []
+    let folderFiles: { [key: string]: string[] } = {}
 
-    let listenerId = uid()
-    onDestroy(() => destroy(MAIN, listenerId))
-
-    // receive files
-    window.api.receive(MAIN, receiveContent, listenerId)
-    function receiveContent(msg: any) {
-        if (msg.channel !== "READ_FOLDER") return
-        const data = msg.data
-
+    let listenerId = receiveMain(Main.READ_FOLDER, (data) => {
         filesInFolders = sortFilenames(data.filesInFolders || [])
 
         if (active !== "all" && data.path !== path) return
 
-        files.push(...data.files.filter((file: any) => file.folder || isMediaExtension(file.extension)))
-        files = sortFilenames(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        files.push(...(data.files.filter((file) => file.folder || isMediaExtension(file.extension)) as any))
+        files = sortFilenames(files).sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
@@ -163,9 +155,10 @@
         })
 
         filterFiles()
-    }
+    })
+    onDestroy(() => destroy(MAIN, listenerId))
 
-    let scrollElem: any
+    let scrollElem: HTMLElement | undefined
 
     // arrow selector
     let activeFile: null | number = null
@@ -178,8 +171,8 @@
     }
 
     // filter files
-    let activeView: "all" | "folder" | "image" | "video" = "all"
-    let filteredFiles: any[] = []
+    let activeView: string = "all" // keyof typeof nextActiveView
+    let filteredFiles: File[] = []
     $: if (activeView || $activeMediaTagFilter) filterFiles()
     $: if (searchValue !== undefined) filterSearch()
 
@@ -207,7 +200,7 @@
         scrollElem?.scrollTo(0, 0)
     }
 
-    function loadAllFiles(f: any[]) {
+    function loadAllFiles(f: File[]) {
         allFiles = [...f.filter((a) => !a.folder).map((a) => a.path)]
         if ($activeShow !== null && allFiles.includes($activeShow.id)) activeFile = allFiles.findIndex((a) => a === $activeShow!.id)
         else activeFile = null
@@ -216,7 +209,7 @@
 
     // search
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
-    let fullFilteredFiles: any[] = []
+    let fullFilteredFiles: File[] = []
     function filterSearch() {
         fullFilteredFiles = clone(filteredFiles)
         if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(filter(searchValue)))
@@ -225,7 +218,7 @@
         document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
     }
 
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
         if (nextScrollTimeout) return
@@ -239,7 +232,7 @@
         }, 500)
     }
 
-    const shortcuts: any = {
+    const shortcuts = {
         ArrowRight: () => {
             if ($activeEdit.items.length) return
             if (activeFile === null || activeFile < content - 1) activeFile = activeFile === null ? 0 : activeFile + 1
@@ -269,8 +262,8 @@
         else activeShow.set({ id: path, name, type })
     }
 
-    function keydown(e: any) {
-        if (e.key === "Enter" && searchValue.length > 1 && e.target.closest(".search")) {
+    function keydown(e: KeyboardEvent) {
+        if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
             if (fullFilteredFiles.length) {
                 let file = fullFilteredFiles[0]
 
@@ -282,7 +275,7 @@
             }
         }
 
-        if (e.target.closest("input") || e.target.closest(".edit") || !allFiles.length) return
+        if (e.target?.closest("input") || e.target?.closest(".edit") || !allFiles.length) return
 
         if ((e.ctrlKey || e.metaKey) && shortcuts[e.key]) {
             // e.preventDefault()
@@ -297,7 +290,7 @@
     }
 
     const slidesViews: any = { grid: "list", list: "grid" }
-    const nextActiveView: any = { all: "folder", folder: "image", image: "video", video: "all" }
+    const nextActiveView = { all: "folder", folder: "image", image: "video", video: "all" }
     $: if (notFolders.includes(active || "") && activeView === "folder") activeView = "image"
 
     let zoomOpened: boolean = false

@@ -1,11 +1,7 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import { uid } from "uid"
-    import { MAIN } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
-    import { sendMain } from "../../../IPC/main"
+    import { requestMain } from "../../../IPC/main"
     import { activeRecording, activeShow, drawerTabsData } from "../../../stores"
-    import { destroy } from "../../../utils/request"
     import { videoExtensions } from "../../../values/extensions"
     import { formatBytes } from "../../helpers/bytes"
     import { getExtension, getFileName, getMediaInfo, removeExtension } from "../../helpers/media"
@@ -15,30 +11,25 @@
     import PlayerInfo from "./PlayerInfo.svelte"
 
     $: name = $activeShow?.name || ""
+    let info: { extension?: string; [key: string]: any } = {}
+
     $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http") && !$activeShow?.id.includes("data:")) {
         info = {}
         codecInfo = {}
-        sendMain(Main.FILE_INFO, $activeShow?.id)
+
+        requestMain(Main.FILE_INFO, $activeShow?.id, (data) => {
+            if (!data) return
+            info = { ...data.stat, extension: data.extension }
+            if (!name) name = removeExtension(getFileName(data.path))
+        })
         getCodecInfo()
     }
 
-    let codecInfo: any = {}
+    let codecInfo: { codecs?: string[]; mimeType?: string; mimeCodec?: string } = {}
     async function getCodecInfo() {
         if (!videoExtensions.includes(getExtension($activeShow?.id || ""))) return
-        codecInfo = await getMediaInfo($activeShow?.id || "")
-    }
-
-    let listenerId = uid()
-    onDestroy(() => destroy(MAIN, listenerId))
-
-    let info: any = {}
-    window.api.receive(MAIN, receiveContent, listenerId)
-    function receiveContent(msg: any) {
-        if (msg.channel !== "FILE_INFO") return
-        const data = msg.data
-
-        info = { ...data.stat, extension: data.extension }
-        if (!name) name = removeExtension(getFileName(data.path))
+        const data = await getMediaInfo($activeShow?.id || "")
+        if (data) codecInfo = data
     }
 
     // $: accessed = info.atime

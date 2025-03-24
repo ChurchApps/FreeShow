@@ -11,7 +11,7 @@
     import Capture from "../live/Capture.svelte"
     import { videoExtensions } from "../../../values/extensions"
 
-    export let name: any = ""
+    export let name: string = ""
     export let path: string
     export let thumbnailPath: string = ""
     export let loadFullImage: boolean = false
@@ -24,7 +24,7 @@
     export let duration: number = 0
     export let getDuration: boolean = false
     export let ghost: boolean = false
-    export let videoElem: any = null
+    export let videoElem: HTMLVideoElement | null = null
 
     $: if (path) loaded = false
 
@@ -39,7 +39,7 @@
 
     $: customResolution = resolution || getResolution(null, { $outputs, $styles })
 
-    $: if (mediaStyle.speed && videoElem) videoElem.playbackRate = mediaStyle.speed
+    $: if (mediaStyle.speed && videoElem) videoElem.playbackRate = Number(mediaStyle.speed || 0)
 
     $: if (!videoElem) duration = 0
     function getCurrentDuration() {

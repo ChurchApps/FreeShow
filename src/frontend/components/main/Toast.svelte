@@ -7,7 +7,7 @@
     $: if (messages?.length) startTimer()
 
     const toastDuration = 4000 // ms
-    let currentTimer: any = null
+    let currentTimer: NodeJS.Timeout | null = null
 
     const clearEarly = [
         { if: "$toast.saving", when: "$toast.saved" },
@@ -17,7 +17,7 @@
     function startTimer() {
         // clear some early
         if (clearEarly.find((c) => messages[0] === c.if && messages.find((a) => a === c.when))) {
-            clearTimeout(currentTimer)
+            if (currentTimer) clearTimeout(currentTimer)
             currentTimer = null
             removeCurrent()
         }

@@ -135,7 +135,7 @@
         document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         // if (e.key === "Enter" && searchValue.length > 1 && e.target.closest(".search")) {
         //   if (fullFilteredFiles.length) {
         //     let file = fullFilteredFiles[0]
@@ -145,7 +145,7 @@
         //   }
         // }
 
-        if (e.target.closest("input") || e.target.closest(".edit")) return
+        if (e.target?.closest("input") || e.target?.closest(".edit")) return
 
         if ((e.ctrlKey || e.metaKey) && e.key === "Backspace") {
             if (rootPath === path) return

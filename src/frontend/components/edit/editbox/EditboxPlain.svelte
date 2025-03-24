@@ -30,8 +30,8 @@
     // actions
     function removeAction(action) {
         // TODO: this is a duplicate of SetTime and other places
-        let layoutRef: any[] = _show().layouts("active").ref()[0] || []
-        let slideRef: any = layoutRef[$activeEdit.slide!] || {}
+        let layoutRef = _show().layouts("active").ref()[0] || []
+        let slideRef = layoutRef[$activeEdit.slide!] || {}
         let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
 
         if ($activeEdit.id) getItems()

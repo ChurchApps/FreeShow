@@ -9,7 +9,7 @@ import { uid } from "uid"
 import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { MainFilePaths, Subtitle } from "../../types/Main"
+import type { FileData, MainFilePaths, Subtitle } from "../../types/Main"
 import type { Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { stores } from "../data/store"
@@ -271,8 +271,6 @@ export function getTempPaths() {
 
     return paths
 }
-
-type FileData = { path: string; stat: fs.Stats; extension: string; folder: boolean; name: string; thumbnailPath?: string }
 
 // READ_FOLDER
 export function getFolderContent(data: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }) {

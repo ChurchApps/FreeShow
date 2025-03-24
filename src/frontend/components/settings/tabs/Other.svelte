@@ -21,9 +21,10 @@
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (a) => {
             if (a.key === "disableHardwareAcceleration") disableHardwareAcceleration = a.value
         })
-        requestMain(Main.GET_EMPTY_SHOWS, { path: $showsPath, cached: $showsCache }, (a) => {
-            if (a) emptyShows = a
-        })
+        if ($showsPath)
+            requestMain(Main.GET_EMPTY_SHOWS, { path: $showsPath, cached: $showsCache }, (a) => {
+                if (a) emptyShows = a
+            })
         getDuplicatedShows()
     })
 
@@ -76,14 +77,14 @@
     }
 
     // shows in folder
-    let hiddenShows: any[] = []
+    let hiddenShows: string[] = []
     let brokenShows: number = 0
 
     $: if (hiddenShows?.length) getBrokenShows()
     function getBrokenShows() {
         brokenShows = 0
 
-        Object.entries($shows).forEach(([id, { name }]: any) => {
+        Object.entries($shows).forEach(([id, { name }]) => {
             if (!hiddenShows.includes(name + ".show") && !hiddenShows.includes(id + ".show")) brokenShows++
         })
     }
@@ -125,7 +126,7 @@
     let duplicatedShows: { ids: string[] }[] = []
     function getDuplicatedShows() {
         let names: { [key: string]: string[] } = {}
-        Object.entries($shows).forEach(([id, show]: any) => {
+        Object.entries($shows).forEach(([id, show]) => {
             // remove any numbers (less than 4 chars) at the end of name (but not if "1-3"|"-5" in case of scripture)
             let trimmedName = show.name
                 .toLowerCase()
@@ -185,7 +186,7 @@
         sendMain(Main.RESTORE, { showsPath: $showsPath })
     }
 
-    const autobackupList: any = [
+    const autobackupList = [
         { id: "never", name: "$:settings.never:$" },
         { id: "daily", name: "$:interval.daily:$" },
         { id: "weekly", name: "$:interval.weekly:$" },

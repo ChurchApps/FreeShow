@@ -1,7 +1,7 @@
 import { getStyles } from "./../helpers/style"
 
 const snapDistance: number = 8
-export function moveBox(e: any, mouse: any, ratio: number, active: any, lines: any[], styles: any = {}) {
+export function moveBox(e: any, mouse: any, ratio: number, active: number[], lines: any[], styles: any = {}) {
     let itemElem = mouse.e.target.closest(".item")
     if (!itemElem.closest(".slide")) return [{}, []]
 

@@ -7,28 +7,25 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
 
-    interface Screen {
-        id: string
-        name: string
-    }
-    export let screen: Screen
+    export let screen: { id: string; name: string }
     export let streams: MediaStream[]
     export let background: boolean = false
 
     let loaded = false
 
-    let canvas: any
-    let videoElem: any
+    let canvas: HTMLCanvasElement | undefined
+    let videoElem: HTMLVideoElement | undefined
 
     function ready() {
-        if (loaded || !videoElem || background) return
+        if (loaded || !videoElem || background || !canvas) return
 
         canvas.width = videoElem.offsetWidth
         canvas.height = videoElem.offsetHeight
-        canvas.getContext("2d").drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
+        canvas.getContext("2d")?.drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
         loaded = true
     }
 
+    // TS issue https://github.com/electron/electron/issues/27139
     let constraints: any = {
         video: {
             mandatory: {

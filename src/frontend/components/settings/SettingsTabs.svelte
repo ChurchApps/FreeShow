@@ -7,7 +7,7 @@
 
     const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "groups", "connection", "cloud", "theme", "other"]
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
 
         let nextTab = -1

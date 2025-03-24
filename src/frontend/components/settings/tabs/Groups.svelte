@@ -10,7 +10,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
 
-    $: g = sortByName(Object.entries($groups).map(([id, a]: any) => ({ ...a, id, name: a.default ? $dictionary.groups?.[a.name] || a.name : a.name })))
+    $: g = sortByName(Object.entries($groups).map(([id, a]) => ({ ...a, id, name: a.default ? $dictionary.groups?.[a.name] || a.name : a.name })))
 
     function changeGroup(e: any, id: string, key: string = "name") {
         // remove default tag if name is changed (used for translation)
@@ -46,7 +46,7 @@
         })
     }
 
-    const defaultGroups: any = {
+    const defaultGroups = {
         break: { name: "break", default: true, color: "#f5255e" },
         bridge: { name: "bridge", default: true, color: "#f52598", shortcut: "B" },
         chorus: { name: "chorus", default: true, color: "#f525d2", shortcut: "C" },
@@ -63,7 +63,7 @@
         //     return
         // }
 
-        let value: any = { group: "", groupColor: "#ffffff" }
+        let value = { group: "", groupColor: "#ffffff" }
         history({ id: "UPDATE", newData: { data: { name: value.group, color: value.groupColor } }, location: { page: "settings", id: "global_group" } })
         // value.group = ""
     }

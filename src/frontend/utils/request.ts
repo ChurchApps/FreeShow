@@ -30,7 +30,7 @@ export function receive(ID: ValidChannels, channels: any, id: string = "") {
 
 //     // LISTENER
 //     const waitingTimeout = 8000
-//     let timeout: any = null
+//     let timeout: NodeJS.Timeout | null = null
 //     const returnData: any = await new Promise((resolve) => {
 //         timeout = setTimeout(() => resolve(null), waitingTimeout)
 

@@ -48,23 +48,23 @@ export function formatText(text: string, showId: string = "") {
 
     let newLayoutSlides: SlideData[] = []
 
-    let doneGroupedSlides: any[] = []
-    groupedNewSlides.forEach(({ text, slides }: any) => {
+    let doneGroupedSlides: { text: string; slides: Slide[] }[] = []
+    groupedNewSlides.forEach(({ text, slides }) => {
         let matchFound: boolean = false
 
         // check matching from existing slides (both old and new)
-        ;[...groupedOldSlides, ...doneGroupedSlides].forEach((old: any) => {
+        ;[...groupedOldSlides, ...doneGroupedSlides].forEach((old) => {
             if (matchFound) return
             if (old.text !== text) return
 
             matchFound = true
 
-            let id = old.slides[0].id
+            let id = old.slides[0].id || ""
             newLayoutSlides.push({ id })
 
             // set changed children
             if (old.slides.length !== slides.length) {
-                newSlides[id] = slides.shift()
+                newSlides[id] = slides.shift()!
 
                 if (slides.length) {
                     // children
@@ -87,14 +87,14 @@ export function formatText(text: string, showId: string = "") {
         slides.forEach((_slide, i) => {
             if (i > 0) {
                 slides[i].id = uid()
-                children.push(slides[i].id)
+                children.push(slides[i].id!)
             }
         })
         slides[0].id = uid()
         if (children.length) slides[0].children = children
 
         slides.forEach((slide) => {
-            newSlides[slide.id] = slide
+            newSlides[slide.id || ""] = slide
         })
 
         newLayoutSlides.push({ id: slides[0].id })
@@ -117,7 +117,7 @@ export function formatText(text: string, showId: string = "") {
     })
 
     // add back layout data
-    let replacedIds: any = {}
+    let replacedIds: { [key: string]: string } = {}
     newLayoutSlides.forEach(({ id }, i) => {
         if (!oldLayoutSlides.length) return
 
@@ -131,7 +131,7 @@ export function formatText(text: string, showId: string = "") {
 
             // find children data
             if (oldLayoutSlide.children) {
-                let newChildrenData: any = {}
+                let newChildrenData: { [key: string]: any } = {}
                 oldSlideChildren.forEach((oldChildId, i) => {
                     let newChildId = newSlides[id].children?.[i]
                     if (!newChildId) return
@@ -262,9 +262,9 @@ export function formatText(text: string, showId: string = "") {
     history({ id: "UPDATE", newData: { data: show }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
 }
 
-function getSlide(slideText): Slide {
+function getSlide(slideText: string): Slide {
     let slideLines: string[] = slideText.split("\n")
-    let group: any = null
+    let group: string | null = null
 
     let firstLine = slideLines[0]
     let textboxKey = firstLine.match(textboxRegex)
@@ -354,7 +354,7 @@ export function getLine(text: string, chords: Chords[]): Line {
 }
 
 function groupSlides(slides: Slide[]) {
-    let slideGroups: any[] = []
+    let slideGroups: { text: string; slides: Slide[] }[] = []
     let currentIndex: number = -1
 
     slides.forEach((slide, i) => {

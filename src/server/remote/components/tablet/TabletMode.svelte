@@ -47,11 +47,11 @@
 
     // SHOW
 
-    let scrollElem: any
+    let scrollElem: HTMLElement | undefined
     // auto scroll
     $: {
         if (scrollElem && $outSlide !== null && slideView === "lyrics") {
-            let offset = scrollElem.children[$outSlide]?.offsetTop - scrollElem.offsetTop - 5
+            let offset = (scrollElem.children[$outSlide] as HTMLElement)?.offsetTop - scrollElem.offsetTop - 5
             scrollElem.scrollTo(0, offset)
         }
     }

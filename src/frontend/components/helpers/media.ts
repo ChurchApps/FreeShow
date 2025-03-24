@@ -119,12 +119,12 @@ export async function getSlideThumbnail(data: API_slide_thumbnail) {
 
 // convert to base64
 async function toDataURL(url: string): Promise<string> {
-    return new Promise((resolve: any) => {
+    return new Promise((resolve) => {
         var xhr = new XMLHttpRequest()
 
         xhr.onload = () => {
             var reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result?.toString())
+            reader.onloadend = () => resolve((reader.result || "").toString())
             reader.readAsDataURL(xhr.response)
         }
         xhr.onerror = () => resolve("")
@@ -168,21 +168,21 @@ export function checkMedia(src: string): Promise<boolean> {
     })
 }
 
-export async function getMediaInfo(path: string) {
-    if (typeof path !== "string") return {}
-    if (path.includes("http") || path.includes("data:")) return {}
+export async function getMediaInfo(path: string): Promise<{ codecs: string[]; mimeType: string; mimeCodec: string } | null> {
+    let info: { path?: string; codecs: string[]; mimeType: string; mimeCodec: string } | null = null
+    if (typeof path !== "string") return info
+    if (path.includes("http") || path.includes("data:")) return info
 
     const cachedInfo = get(media)[path]?.info
     if (cachedInfo?.codecs?.length) return cachedInfo
 
-    let info
     try {
         info = await requestMain(Main.MEDIA_CODEC, { path })
     } catch (err) {
-        return {}
+        return info
     }
 
-    if (!info) return {}
+    if (!info) return info
 
     delete info.path
     media.update((a) => {
@@ -322,7 +322,7 @@ export function thumbnailLoaded(data: { input: string; output: string; size: num
     })
 }
 
-function getThumbnailId(data: any) {
+function getThumbnailId(data: { input: string; size: number }) {
     return `${data.input}-${data.size}`
 }
 
@@ -361,31 +361,33 @@ export async function checkThatMediaExists(path: string, iteration: number = 1):
 
 // const jpegQuality = 90 // 0-100
 let capturing: string[] = []
-let retries: any = {}
-export function captureCanvas(data: any) {
+let retries: { [key: string]: number } = {}
+export function captureCanvas(data: { input: string; output: string; size: any; extension: string; config: any; seek?: number }) {
     let completed: boolean = false
     if (capturing.includes(data.output)) return exit()
     capturing.push(data.output)
 
     let canvas = document.createElement("canvas")
 
-    let isImage: boolean = imageExtensions.includes(data.extension)
-    let mediaElem: any = document.createElement(isImage ? "img" : "video")
+    let isImage = imageExtensions.includes(data.extension)
+    let mediaElem = document.createElement(isImage ? "img" : "video")
 
     mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {
-        let mediaSize = isImage ? { width: mediaElem.naturalWidth, height: mediaElem.naturalHeight } : { width: mediaElem.videoWidth, height: mediaElem.videoHeight }
+        let mediaSize = isImage
+            ? { width: (mediaElem as HTMLImageElement).naturalWidth, height: (mediaElem as HTMLImageElement).naturalHeight }
+            : { width: (mediaElem as HTMLVideoElement).videoWidth, height: (mediaElem as HTMLVideoElement).videoHeight }
         let newSize = getNewSize(mediaSize, data.size || {})
         canvas.width = newSize.width
         canvas.height = newSize.height
 
         // seek video
         if (!isImage) {
-            mediaElem.currentTime = mediaElem.duration * (data.seek ?? 0.5)
+            ;(mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
             await wait(400)
         }
 
         // wait until loaded
-        let hasLoaded = await waitUntilValueIsDefined(() => (isImage ? mediaElem.complete : mediaElem.readyState === 4), 20)
+        let hasLoaded = await waitUntilValueIsDefined(() => (isImage ? (mediaElem as HTMLImageElement).complete : (mediaElem as HTMLVideoElement).readyState === 4), 20)
         if (!hasLoaded) return exit()
 
         captureCanvasData(mediaElem, mediaSize)
@@ -400,7 +402,7 @@ export function captureCanvas(data: any) {
         retries[data.input]++
 
         if (retries[data.input] > 2) return exit()
-        else setTimeout(() => (isImage ? "" : mediaElem.load()), 3000)
+        else setTimeout(() => (isImage ? "" : (mediaElem as HTMLVideoElement).load()), 3000)
     })
 
     mediaElem.src = encodeFilePath(data.input)

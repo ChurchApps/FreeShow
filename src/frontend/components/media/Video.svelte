@@ -5,16 +5,16 @@
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
 
     export let path: string
-    export let video: any = null
+    export let video: HTMLVideoElement | null = null
     export let videoData: any
-    export let videoTime: any
+    export let videoTime: number
     export let startAt: number = 0
 
     export let mediaStyle: MediaStyle = {}
     export let animationStyle: string = ""
     export let mirror: boolean = false
 
-    let dispatch: any = createEventDispatcher()
+    let dispatch = createEventDispatcher()
 
     let hasLoaded: boolean = false
     function loaded() {
@@ -28,7 +28,7 @@
 
     // custom end time
     $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0
-    let endInterval: any = null
+    let endInterval: NodeJS.Timeout | null = null
     $: if (endTime && !mirror && !endInterval) endInterval = setInterval(checkIfEnded, 1000 * playbackRate)
     function checkIfEnded() {
         if (!videoTime || !endTime) return
@@ -63,11 +63,11 @@
     $: tracks = $media[path]?.tracks || []
     $: if (video && subtitle !== undefined) updateSubtitles()
     // don't change rapidly
-    let subtitleChange: any = null
+    let subtitleChange: NodeJS.Timeout | null = null
     function updateSubtitles() {
         if (subtitleChange) clearTimeout(subtitleChange)
         subtitleChange = setTimeout(() => {
-            if (subtitle !== undefined) enableSubtitle(video, subtitle)
+            if (subtitle !== undefined && video) enableSubtitle(video, subtitle)
             subtitleChange = null
         }, 20)
     }
@@ -75,7 +75,7 @@
     $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
     $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 
-    let blurVideo: any = null
+    let blurVideo: HTMLVideoElement | null = null
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.1 || videoTime > blurVideo.currentTime + 0.1)) blurVideo.currentTime = videoTime
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused

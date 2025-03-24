@@ -5,12 +5,12 @@
 
     export let lines: [string, number][]
     export let mouse: any
-    export let newStyles: any
+    export let newStyles: { [key: string]: string | number }
     export let ratio: number
-    export let active: any
+    export let active: number[]
     export let isStage: boolean = false
 
-    let styles: any = {}
+    let styles: { [key: string]: string | number } = {}
     function mousemove(e: any) {
         if (!mouse || mouse.rightClick) return
 
@@ -54,8 +54,8 @@
         // finalize values
         Object.keys(styles).forEach((key) => {
             if (styles[key] === undefined || styles[key].toString().includes("px") || styles[key].toString().includes("deg")) return
-            if (key === "width" || key === "height") styles[key] = Math.max(16 / ratio, styles[key])
-            styles[key] = styles[key].toFixed(2) + "px"
+            if (key === "width" || key === "height") styles[key] = Math.max(16 / ratio, Number(styles[key]))
+            styles[key] = Number(styles[key]).toFixed(2) + "px"
         })
 
         newStyles = styles

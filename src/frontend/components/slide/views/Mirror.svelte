@@ -35,7 +35,7 @@
         if (!nextSlide && showId === ref.showId) return
 
         let slideIndex = item.mirror.useSlideIndex !== false ? index : item.mirror.index || 0
-        let layoutRef = _show(showId).layouts("active").ref()[0] || {}
+        let layoutRef = _show(showId).layouts("active").ref()[0] || []
 
         if (nextSlide) {
             slideIndex = index + 1

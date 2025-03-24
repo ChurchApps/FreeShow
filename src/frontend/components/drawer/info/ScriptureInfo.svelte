@@ -232,15 +232,15 @@
     }
 
     // show on enter
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key !== "Enter") return
-        if (e.target.closest(".search")) {
+        if (e.target?.closest(".search")) {
             showVerse()
             return
         }
 
         if (!e.ctrlKey && !e.metaKey) return
-        if (e.target.closest("input") || e.target.closest(".edit")) return
+        if (e.target?.closest("input") || e.target?.closest(".edit")) return
 
         showVerse()
     }

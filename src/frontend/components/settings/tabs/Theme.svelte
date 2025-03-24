@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
+    import type { Themes } from "../../../../types/Settings"
     import { dictionary, outputs, selected, theme, themes } from "../../../stores"
     import { translate } from "../../../utils/language"
     import { updateThemeValues } from "../../../utils/updateSettings"
@@ -38,9 +39,9 @@
 
     $: themeNames = getThemesArray($themes)
 
-    function getThemesArray(themes: any) {
+    function getThemesArray(themes: { [key: string]: Themes }) {
         let names: any[] = []
-        Object.entries(themes).forEach(([id, obj]: any) => {
+        Object.entries(themes).forEach(([id, obj]) => {
             names.push({ name: obj.default ? `$:themes.${obj.name}:$` : obj.name, id, default: obj.default })
         })
         return names.sort((a, b) =>
@@ -59,8 +60,8 @@
             if (!value) return
 
             // duplicate
-            let thisTheme: any = clone($themes[themeId])
-            let data: any = {
+            let thisTheme = clone($themes[themeId])
+            let data = {
                 ...thisTheme,
                 default: false,
                 name: (key === "name" ? value : thisTheme.name) + " 2",

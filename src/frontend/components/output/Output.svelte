@@ -5,6 +5,7 @@
     import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
     import type { Styles } from "../../../types/Settings"
+    import type { LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
     import { requestMain } from "../../IPC/main"
     import { colorbars, customMessageCredits, drawSettings, drawTool, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
@@ -23,6 +24,7 @@
     import PdfOutput from "./layers/PdfOutput.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
     import Window from "./Window.svelte"
+    import { OutData } from "../../../types/Output"
 
     export let outputId: string = ""
     export let style = ""
@@ -42,10 +44,10 @@
 
     // layers
     let layers: string[] = []
-    let out: any = {}
-    let slide: any = null
-    let background: any = null
-    let clonedOverlays: any = {}
+    let out: OutData = {}
+    let slide: OutSlide | null = null
+    let background: OutBackground | null = null
+    let clonedOverlays: TOverlays | null = null
 
     // don't update when layer content changes, only when refreshing or adding/removing layer
     // currentOutput is set to refresh state when changed in preview
@@ -63,13 +65,13 @@
     $: if (outputId || refreshOutput) updateOutData()
     function updateOutData(type: string = "") {
         if (!type || type === "slide") {
-            let noLineCurrent = clone(slide || {})
-            delete noLineCurrent.line
-            let noLineNew = clone(out?.slide || {})
-            delete noLineNew.line
+            let noLineCurrent = clone(slide)
+            if (noLineCurrent) delete noLineCurrent.line
+            let noLineNew = clone(out?.slide)
+            if (noLineNew) delete noLineNew.line
 
             // don't refresh if changing lines on another slide & content is unchanged
-            if (!refreshOutput && !out?.slide?.type && lines[currentLineId]?.start === null && JSON.stringify(noLineCurrent) === JSON.stringify(noLineNew)) return
+            if (!refreshOutput && !out?.slide?.type && lines[currentLineId || ""]?.start === null && JSON.stringify(noLineCurrent) === JSON.stringify(noLineNew)) return
 
             // WIP option to turn off "content refresh" if slide content is identical to previous content ?
 
@@ -90,13 +92,13 @@
     let storedOverlayIds: string = ""
     let storedOverlays: string = ""
     $: if (JSON.stringify(overlayIds) !== storedOverlayIds) updateOutData("overlays")
-    $: outOverlays = out.overlays?.filter((id) => !clonedOverlays[id]?.placeUnderSlide)
-    $: outUnderlays = out.overlays?.filter((id) => clonedOverlays[id]?.placeUnderSlide)
+    $: outOverlays = out.overlays?.filter((id) => !clonedOverlays?.[id]?.placeUnderSlide) || []
+    $: outUnderlays = out.overlays?.filter((id) => clonedOverlays?.[id]?.placeUnderSlide) || []
 
     // layout & slide data
-    let currentLayout: any[] = []
-    let slideData: any = null
-    let currentSlide: any = null
+    let currentLayout: LayoutRef[] = []
+    let slideData: SlideData | null = null
+    let currentSlide: Slide | null = null
 
     $: updateSlideData(slide, outputId)
     function updateSlideData(slide, _outputChanged) {
@@ -138,19 +140,19 @@
         if (currentSlide) setTemplateItems()
         getStyleTemplateData()
     }
-    const setTemplateItems = () => (currentSlide.items = setTemplateStyle(slide, currentStyle, currentSlide.items))
-    let styleTemplate: any = {}
-    const getStyleTemplateData = () => (styleTemplate = getStyleTemplate(slide, currentStyle))
-    $: templateBackground = styleTemplate.settings?.backgroundPath || ""
+    const setTemplateItems = () => (currentSlide!.items = setTemplateStyle(slide!, currentStyle, currentSlide!.items))
+    let styleTemplate: Template | null = null
+    const getStyleTemplateData = () => (styleTemplate = getStyleTemplate(slide!, currentStyle))
+    $: templateBackground = styleTemplate?.settings?.backgroundPath || ""
 
     // lines
-    let lines: any = {}
+    let lines: { [key: string]: { start: number | null; end: number | null } } = {}
     $: currentLineId = slide?.id
-    $: if (currentLineId) lines[currentLineId] = getOutputLines(slide, currentStyle.lines)
+    $: if (currentLineId) lines[currentLineId] = getOutputLines(slide!, currentStyle.lines)
 
     // metadata
     let metadata: OutputMetadata = {}
-    $: metadata = getMetadata(metadata, $showsCache[slide?.id], currentStyle, $templates, slide)
+    $: metadata = getMetadata(metadata, $showsCache[slide?.id || ""], currentStyle, $templates, slide)
 
     // media exif metadata
     $: getExifData = metadata.media
@@ -158,7 +160,7 @@
     async function getExif() {
         metadata.value = ""
 
-        const data = await requestMain(Main.READ_EXIF, { id: background.path })
+        const data = await requestMain(Main.READ_EXIF, { id: background?.path || "" })
         if (!metadata.media || data.id !== background?.path) return
 
         let message = decodeExif(data)
@@ -225,8 +227,8 @@
 
     // values
     $: isKeyOutput = currentOutput.isKeyOutput
-    $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : styleTemplate.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || "black"
-    $: messageText = $showsCache[slide?.id]?.message?.text?.replaceAll("\n", "<br>") || ""
+    $: backgroundColor = isKeyOutput ? "black" : currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || "black"
+    $: messageText = $showsCache[slide?.id || ""]?.message?.text?.replaceAll("\n", "<br>") || ""
     $: metadataValue = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && slide?.index === 0) || (metadata.display?.includes("last") && slide?.index === currentLayout.length - 1))
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }

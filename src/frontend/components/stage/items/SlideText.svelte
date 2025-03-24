@@ -59,7 +59,7 @@
     let items2: any[] = []
 
     const waitDuration = 200 // approximate auto size time
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     $: if (items) preloadItems()
     function preloadItems() {
         // don't update if exact same (not needed)

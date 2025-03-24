@@ -18,7 +18,7 @@
     let songs: LyricSearchResult[] | null = null
 
     let loading = false
-    // let loadTimeout: any = null
+    // let loadTimeout: NodeJS.Timeout | null = null
     onMount(searchLyrics)
     function searchLyrics() {
         let artist = ""

@@ -140,7 +140,7 @@
 
     // AUTO SIZE
 
-    let itemElem: any
+    let itemElem: HTMLElement | undefined
 
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
@@ -204,7 +204,7 @@
 
         let textQuery = ""
         if ((item.type || "text") === "text") {
-            elem = elem.querySelector(".align")
+            elem = elem.querySelector(".align") as HTMLElement
             textQuery = ".lines .break span"
         } else {
             type = "growToFit"

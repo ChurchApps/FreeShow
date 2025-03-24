@@ -1,12 +1,10 @@
 import { get } from "svelte/store"
-import { uid } from "uid"
 import type { Show } from "../../../types/Show"
 import type { ShowObj } from "../../classes/Show"
 import { fixShowIssues } from "../../converters/importHelpers"
-import { sendMain } from "../../IPC/main"
+import { destroyMain, receiveMain, sendMain } from "../../IPC/main"
 import { cachedShowsData, categories, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
-import { destroy } from "../../utils/request"
-import { MAIN, Main } from "./../../../types/IPC/Main"
+import { Main } from "./../../../types/IPC/Main"
 import { getShowCacheId, updateCachedShow } from "./show"
 
 export function setShow(id: string, value: "delete" | Show): Show {
@@ -108,19 +106,14 @@ export async function loadShows(s: string[]) {
         if (s.length - count) console.info(`LOADING ${s.length - count} SHOW(S)`)
 
         // RECEIVE
-        let listenerId = uid()
-        window.api.receive(MAIN, receiveShow, listenerId)
-        function receiveShow(msg: any) {
-            if (msg.channel !== "SHOW") return
-            const data = msg.data
-
+        let listenerId = receiveMain(Main.SHOW, (data) => {
             if (!s.includes(data.id)) return
             count++
 
             // prevent receiving multiple times
             if (count >= s.length + 1) return
 
-            if (data.error) {
+            if (data.error || !data.content) {
                 notFound.update((a) => {
                     a.show.push(data.id)
                     return a
@@ -139,7 +132,7 @@ export async function loadShows(s: string[]) {
             }
 
             if (count >= s.length) setTimeout(finished, 50)
-        }
+        })
         if (count >= s.length) finished()
 
         function finished() {
@@ -149,14 +142,14 @@ export async function loadShows(s: string[]) {
                 }, 100)
             }
 
-            destroy(MAIN, listenerId)
+            destroyMain(listenerId)
             resolve("loaded")
         }
     })
 }
 
-let updateTimeout: any = null
-let tempCache: any = {}
+let updateTimeout: NodeJS.Timeout | null = null
+let tempCache: { [key: string]: string } = {}
 export function saveTextCache(id: string, show: Show) {
     // don't cache scripture/calendar shows text or archived categories
     if (!show?.slides || show.reference?.type || get(categories)[show.category || ""]?.isArchive) return

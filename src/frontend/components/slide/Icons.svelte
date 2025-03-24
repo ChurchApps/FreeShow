@@ -42,12 +42,12 @@
     function mute() {
         if (currentShow.locked) return
 
-        _show("active").media([layoutSlide.background]).set({ key: "muted", value: false })
+        _show().media([layoutSlide.background]).set({ key: "muted", value: false })
     }
     function removeLoop() {
         if (currentShow.locked) return
 
-        _show("active").media([layoutSlide.background]).set({ key: "loop", value: false })
+        _show().media([layoutSlide.background]).set({ key: "loop", value: false })
     }
 
     function resetTimer() {
@@ -75,7 +75,7 @@
         })
     }
 
-    $: audio = layoutSlide.audio?.length ? _show("active").get()?.media?.[layoutSlide.audio[0]] || {} : {}
+    $: audio = layoutSlide.audio?.length ? _show().get()?.media?.[layoutSlide.audio[0]] || {} : {}
     $: audioPath = audio.path
     // no need for cloud when audio can be stacked
     // $: cloudId = $driveData.mediaId

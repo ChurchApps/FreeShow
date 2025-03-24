@@ -123,7 +123,7 @@ const keys: any = {
     F11: () => (get(os).platform !== "darwin" ? sendMain(Main.FULLSCREEN) : null),
 }
 
-export function keydown(e: any) {
+export function keydown(e: KeyboardEvent) {
     if (get(currentWindow) === "output") {
         let currentOut = get(outputs)[Object.keys(get(outputs))[0]]?.out || {}
         let contentDisplayed = currentOut.slide?.id || currentOut.background?.path || currentOut.background?.id || currentOut.overlays?.length
@@ -143,8 +143,8 @@ export function keydown(e: any) {
 
     if (e.ctrlKey || e.metaKey) {
         let drawerMenus: any[] = Object.keys(drawerTabs)
-        if (document.activeElement === document.body && Object.keys(drawerMenus).includes((e.key - 1).toString())) {
-            activeDrawerTab.set(drawerMenus[e.key - 1])
+        if (document.activeElement === document.body && Object.keys(drawerMenus).includes((Number(e.key) - 1).toString())) {
+            activeDrawerTab.set(drawerMenus[Number(e.key) - 1])
             // open drawer
             if (get(drawer).height < 300) drawer.set({ height: get(drawer).stored || 300, stored: null })
             return
@@ -182,8 +182,8 @@ export function keydown(e: any) {
     if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
 
     // change tab with number keys
-    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((e.key - 1).toString())) {
-        let menu = menus[e.key - 1]
+    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((Number(e.key) - 1).toString())) {
+        let menu = menus[Number(e.key) - 1]
         activePage.set(menu)
 
         // open edit

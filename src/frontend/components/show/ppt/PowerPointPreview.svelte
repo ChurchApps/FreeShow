@@ -36,7 +36,7 @@
         setTimeout(() => (opening ? (retry = true) : ""), 8000)
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if ($outLocked || !$presentationApps?.length) return
 
         if (e.key === " ") {

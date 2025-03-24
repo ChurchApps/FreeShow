@@ -69,7 +69,7 @@
         }
     }
 
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
 
     const typeOrder = { counter: 1, clock: 2, event: 3 }
     let timersList: any[] = sortByName(keysToID(clone($timers)), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])

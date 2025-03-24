@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Item, Slide } from "../../../types/Show"
+import type { Item, Slide, SlideData, Template } from "../../../types/Show"
 import { removeItemValues, splitItemInTwo } from "../../show/slides"
 import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, projects, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
@@ -437,7 +437,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             let { showId, layout } = data.remember || {}
             if (!showId || !layout) return
-            let ref: any[] = _show(showId).layouts([layout]).ref()[0] || []
+            let ref = _show(showId).layouts([layout]).ref()[0] || []
             if (!deleting) data.index = data.index ?? ref.length
             let index = data.index
 
@@ -526,7 +526,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                         if (layoutSlideRef.id !== id) return layoutSlideRef
 
                                         // clone layout data
-                                        let newChildren: any = clone(layoutSlideRef.children || {})
+                                        let newChildren = clone(layoutSlideRef.children || {})
                                         let newLayoutRef = { id: firstChildId, ...newChildren[firstChildId], children: {} }
                                         delete newChildren[firstChildId]
                                         newLayoutRef.children = newChildren
@@ -553,7 +553,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     _show(showId).slides([id]).add([slideData], isParent)
 
                     // layout
-                    let layoutValue: any = data.layouts?.[i] || {}
+                    let layoutValue = data.layouts?.[i] || {}
                     layoutValue.id = id
 
                     // TODO: add media to show if it doesent have it
@@ -730,7 +730,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let show = get(showsCache)[data.remember.showId]
             if (!show) return
             let previousShow: string = JSON.stringify(show)
-            let slides: any = show.slides || {}
+            let slides = show.slides || {}
 
             let ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0]
             let slideId: string = data.indexes ? ref[data.indexes[0]]?.id : ""
@@ -797,8 +797,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 show = get(showsCache)[data.remember.showId]
             }
 
-            function updateSlidesWithTemplate(template: any) {
-                Object.entries(slides).forEach(([id, slide]: any) => {
+            function updateSlidesWithTemplate(template: Template) {
+                Object.entries(slides).forEach(([id, slide]) => {
                     if ((slideId && slideId !== id) || !slide) return
 
                     // show template
@@ -836,7 +836,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         // WIP text style (font size) won't update first time
                     }
 
-                    let changeOverflowItems = slide.settings?.template || createItems
+                    let changeOverflowItems = !!(slide.settings?.template || createItems)
                     let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false, createItems)
 
                     // remove items if not in template (and textbox is empty)
@@ -912,21 +912,21 @@ export const historyActions = ({ obj, undo = null }: any) => {
             else obj.newData = clone(data)
 
             function updateLayoutSlides() {
-                showsCache.update((a: any) => {
+                showsCache.update((a) => {
                     if (!a[data.remember.showId]) return a
-                    let layoutSlides = a[data.remember.showId].layouts?.[data.remember.layout].slides || []
+                    let layoutSlides: SlideData[] = a[data.remember.showId].layouts?.[data.remember.layout].slides || []
 
                     let currentIndex = -1
-                    layoutSlides.forEach((l: any, i: number) => {
+                    layoutSlides.forEach((l, i) => {
                         currentIndex++
                         l = updateValues(l, currentIndex)
 
-                        let children: string[] = a[data.remember.showId].slides[l.id]?.children
+                        let children = a[data.remember.showId].slides[l.id]?.children
                         if (!children?.length) return
                         if (!l.children) l.children = {}
                         children.forEach((child) => {
                             currentIndex++
-                            l.children[child] = updateValues(l.children[child] || {}, currentIndex)
+                            l.children![child] = updateValues(l.children![child] || {}, currentIndex)
                         })
 
                         a[data.remember.showId].layouts[data.remember.layout].slides[i] = l
@@ -990,7 +990,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
         },
     }
 
-    // function initialize(value: any, { key, index = null }: any) {
+    // function initialize(value, { key, index = null }) {
     //     if (!initializing) return
     //     if (index !== null) {
     //         obj.oldData[index][key] = value
@@ -1001,7 +1001,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
     //     // obj.oldData = clone(obj.oldData)
     // }
 
-    // function setKeyOrData({ data, key, value, index = null }, object: any) {
+    // function setKeyOrData({ data, key, value, index = null }, object) {
     //     if (key) {
     //         initialize(object[key], { key: "value", index })
     //         object[key] = value

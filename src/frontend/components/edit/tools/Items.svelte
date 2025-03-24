@@ -36,29 +36,29 @@
     ]
 
     const getIdentifier = {
-        text: (item: any) => {
+        text: (item: Item) => {
             let text = getItemText(item)
             return text.slice(0, 10)
         },
-        list: (item: any) => {
-            let text = item.list.items?.[0]?.text || ""
+        list: (item: Item) => {
+            let text = item.list?.items?.[0]?.text || ""
             return text.slice(0, 10)
         },
-        media: (item: any) => {
+        media: (item: Item) => {
             let path = item.src
-            return getFileName(path)
+            return getFileName(path || "")
         },
-        timer: (item: any) => {
+        timer: (item: Item) => {
             if (!item.timerId) return ""
             let timerName = $timers[item.timerId]?.name || ""
             return timerName
         },
         clock: () => "",
-        mirror: (item: any) => {
-            let showName = $showsCache[item.mirror.show]?.name || ""
+        mirror: (item: Item) => {
+            let showName = $showsCache[item.mirror?.show || ""]?.name || ""
             return showName
         },
-        variable: (item: any) => {
+        variable: (item: Item) => {
             let name = $variables[item.variable?.id]?.name || ""
             return name
         },
@@ -67,7 +67,7 @@
     export let allSlideItems: Item[]
     $: invertedItemList = Array.isArray(allSlideItems) ? clone(allSlideItems).reverse() : []
 
-    const getType = (item: any) => (item.type as ItemType) || "text"
+    const getType = (item: Item) => (item.type as ItemType) || "text"
 
     $: sortedItems = sortItemsByType(invertedItemList)
 </script>

@@ -1,4 +1,4 @@
-export const defaultThemes: any = {
+export const defaultThemes = {
     default: {
         name: "default",
         default: true,

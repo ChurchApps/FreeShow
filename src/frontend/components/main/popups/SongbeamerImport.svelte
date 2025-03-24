@@ -54,7 +54,7 @@
     function importListener() {
         sendMain(Main.IMPORT, {
             channel: "songbeamer",
-            format: { extensions: ["sng"] },
+            format: { name: "Songbeamer", extensions: ["sng"] },
             settings: { encoding: selectedEncoding, category: selectedCategory, translation: selectedTranslationMethod },
         })
         $activePopup = null

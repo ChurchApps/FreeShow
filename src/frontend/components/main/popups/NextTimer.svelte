@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import type { LayoutRef } from "../../../../types/Show"
     import { activePopup, activeShow, popupData, showsCache } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -11,7 +12,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
 
     let value = $popupData.value || 0
-    let layoutRef: any[] = _show().layouts("active").ref()[0]
+    let layoutRef = _show().layouts("active").ref()[0]
     let allActiveSlides = layoutRef.filter((a) => !a.data.disabled)
     let indexes = $popupData.indexes || layoutRef.map((_, i) => i)
     let allSlides: boolean = !$popupData.indexes?.length
@@ -30,14 +31,14 @@
 
         if (allSlides) {
             // remove existing go to start if just one applied to any slide
-            let goToStartRefs: any[] = allActiveSlides.reduce((value, ref) => (ref.data?.end ? [...value, ref] : value), [])
+            let goToStartRefs = allActiveSlides.reduce((value, ref) => (ref.data?.end ? [...value, ref] : value), [] as LayoutRef[])
             if (goToStartRefs.length === 1) {
                 let showId = $activeShow?.id || ""
                 let layoutId = _show().get("settings.activeLayout")
                 showsCache.update((a) => {
                     let ref = goToStartRefs[0]
                     if (ref.type === "parent") delete a[showId].layouts[layoutId]?.slides?.[ref.index]?.end
-                    else delete a[showId].layouts[layoutId]?.slides?.[ref.parent.index]?.children?.[ref.id]?.end
+                    else delete a[showId].layouts[layoutId]?.slides?.[ref.parent?.index ?? -1]?.children?.[ref.id]?.end
                     return a
                 })
             }

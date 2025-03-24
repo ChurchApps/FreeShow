@@ -3,6 +3,7 @@
     import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
     import type { MediaStyle } from "../../../../types/Main"
+    import type { Styles } from "../../../../types/Settings"
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { allOutputs, currentWindow, media, outputs, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
@@ -21,7 +22,7 @@
     export let data: OutBackground
     export let transition: Transition
     export let fadingOut: boolean = false
-    export let currentStyle: any = {}
+    export let currentStyle: Styles | null = null
     export let animationStyle: string = ""
     export let duration: number = 0
     export let mirror: boolean = false
@@ -34,11 +35,11 @@
     $: if (type === "video" || type === "image") type = "media"
 
     let mediaStyle: MediaStyle = {}
-    $: if (data) mediaStyle = getMediaStyle(data, currentStyle)
+    $: if (data && currentStyle) mediaStyle = getMediaStyle(data, currentStyle)
 
     // VIDEO
 
-    let videoData: any = { duration: 0, paused: true, muted: true, loop: styleBackground }
+    let videoData = { duration: 0, paused: true, muted: true, loop: styleBackground }
     let videoTime: number = 0
 
     // let videoDuration = 0
@@ -83,7 +84,7 @@
     $: if (!mirror && !fadingOut) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
     $: if (!mirror && !fadingOut) sendVideoTime(videoTime)
 
-    let sendingTimeout: any = null
+    let sendingTimeout: NodeJS.Timeout | null = null
     let timeUpdateTimeout = 220
     function sendVideoTime(time: number) {
         if (sendingTimeout) return
@@ -194,7 +195,7 @@
     })
 
     // analyse video audio
-    let video: any = null
+    let video: HTMLVideoElement | undefined
     let previousPath = id
     async function analyseVideo() {
         if (previousPath && previousPath !== id) {

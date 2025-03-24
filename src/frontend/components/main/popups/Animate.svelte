@@ -14,7 +14,7 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
 
-    export const easings: any[] = [
+    const easings = [
         { id: "linear", name: "$:easings.linear:$" },
         { id: "ease", name: "$:easings.ease:$" },
         { id: "ease-in", name: "$:easings.ease-in:$" },

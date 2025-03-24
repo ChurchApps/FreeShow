@@ -63,7 +63,7 @@
         }
     }
 
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
 
     $: stageShowId = stageId || $activeStage.id
     $: show = $stageShows[stageShowId || ""] || {}
@@ -93,7 +93,7 @@
     let zoom = 1
 
     // shortcut
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
         if (!edit || nextScrollTimeout) return

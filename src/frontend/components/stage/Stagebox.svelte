@@ -61,7 +61,7 @@
         }
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (!edit) return
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
@@ -101,7 +101,7 @@
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide || (next ? $outputSlideCache[stageOutputId] || null : null)
 
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     $: if (stageOutputId && ($allOutputs || $outputs)) startTimeout()
     function startTimeout() {
         if (timeout) clearTimeout(timeout)

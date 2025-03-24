@@ -106,7 +106,7 @@ export function focusArea(e: any) {
 }
 
 // auto save
-let autosaveTimeout: any = null
+let autosaveTimeout: NodeJS.Timeout | null = null
 export function startAutosave() {
     if (get(currentWindow)) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
@@ -212,7 +212,7 @@ export function togglePanels() {
 }
 
 // trigger functions in .svelte files (used to trigger big and old functions still in .svelte files)
-let triggerTimeout: any = null
+let triggerTimeout: NodeJS.Timeout | null = null
 export function triggerFunction(id: string) {
     activeTriggerFunction.set(id)
 

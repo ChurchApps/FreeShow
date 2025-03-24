@@ -56,7 +56,7 @@
     let active: boolean = false
     let self: HTMLDivElement
 
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (nextScrollTimeout) return
 
@@ -93,7 +93,7 @@
     let searchValue: string = ""
     $: if (active) searchValue = ""
     // "invisible" search
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (!active) return
 
         if (e.key === "Backspace") {

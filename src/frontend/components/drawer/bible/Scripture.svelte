@@ -362,7 +362,7 @@
     // search
     const updateSearchValue = (v: string) => (searchValue = v)
 
-    // let mainElem: any = null
+    // let mainElem: HTMLElement | undefined = null
     let autoComplete: boolean = false
     // $: if (searchValue) autoComplete = true
 
@@ -717,7 +717,7 @@
         return currentVerses
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Escape") {
             resetContentSearch()
             return
@@ -828,9 +828,9 @@
     $: verseRange = sortedVerses.length ? joinRange(sortedVerses) : ""
 
     // autoscroll
-    let booksScrollElem: any
-    let chaptersScrollElem: any
-    let versesScrollElem: any
+    let booksScrollElem: HTMLElement | undefined
+    let chaptersScrollElem: HTMLElement | undefined
+    let versesScrollElem: HTMLElement | undefined
     $: if (active && bookId) setTimeout(() => scrollToActive(booksScrollElem))
     $: if (active && chapterId) setTimeout(() => scrollToActive(chaptersScrollElem))
     $: if (active && activeVerses?.length < 5) setTimeout(() => scrollToActive(versesScrollElem))

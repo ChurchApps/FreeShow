@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import type { Show, ShowList, Shows, Slide, TrimmedShows } from "../../../types/Show"
+import type { Item, Show, ShowList, Shows, Slide, TrimmedShow, TrimmedShows } from "../../../types/Show"
 import { activeShow, cachedShowsData, customMetadata, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList, stageShows } from "../../stores"
 import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
@@ -12,7 +12,7 @@ export function checkName(name: string = "", showId: string = "") {
     name = formatToFileName(name)
 
     let number = 1
-    while (Object.entries(get(shows)).find(([id, a]: any) => (!showId || showId !== id) && a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
+    while (Object.entries(get(shows)).find(([id, a]) => (!showId || showId !== id) && a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
 
     // add number if existing name, and trim away spaces from the start/end
     return (number > 1 ? name + " " + number : name).trim()
@@ -57,7 +57,7 @@ export function getGlobalGroup(group: string, returnInputIfNull: boolean = false
     if (matchingName) return matchingName
 
     // find group based on language
-    let globalGroup: any = ""
+    let globalGroup: string = ""
     Object.entries(get(dictionary).groups || {}).forEach(([id, name]) => {
         if (name.toLowerCase() === groupId) globalGroup = id
     })
@@ -99,14 +99,14 @@ export function getGroupName({ show, showId }: { show: Show; showId: string }, s
 
 // mirror & events
 export function getListOfShows(removeCurrent: boolean = false) {
-    let list: any[] = Object.entries(get(shows)).map(([id, show]: any) => ({ id, name: show.name }))
+    let list = Object.entries(get(shows)).map(([id, show]) => ({ id, name: show.name }))
     if (removeCurrent) list = list.filter((a) => a.id !== get(activeShow)?.id)
     list = sortByName(list)
     return list
 }
 
 export function getStageList() {
-    return Object.entries(clone(get(stageShows))).map(([id, stage]: any) => ({ id, name: stage.name }))
+    return Object.entries(clone(get(stageShows))).map(([id, stage]) => ({ id, name: stage.name }))
 }
 
 // meta
@@ -139,7 +139,7 @@ export const metadataDisplayValues = [
 ]
 
 // create new slides
-export function newSlide(data: any): Slide {
+export function newSlide(data: { items?: Item[]; notes?: string }): Slide {
     return {
         group: null,
         color: null,
@@ -157,7 +157,7 @@ export function updateShowsList(shows: TrimmedShows) {
 
     let sortType = get(sorted).shows?.type || "name"
     // sort by name regardless if many shows have the same date
-    let sortedShows: any[] = []
+    let sortedShows: (TrimmedShow & { id: string })[] = []
     if (sortType === "created") {
         sortedShows = showsList.sort((a, b) => b.timestamps?.created - a.timestamps?.created)
     } else if (sortType === "modified") {
@@ -235,9 +235,9 @@ export function updateCachedShow(id: string, show: Show, layoutId: string = "") 
     }
 
     // create groups
-    let addedGroups: any = {}
-    let showGroups: any[] = showSlides.map(createGroups)
-    function createGroups(slide) {
+    let addedGroups: { [key: string]: number } = {}
+    let showGroups = showSlides.map(createGroups)
+    function createGroups(slide: Slide & { id: string }) {
         // update if global group
         if (slide.globalGroup && get(groups)[slide.globalGroup]) {
             let oldGroup = clone({ group: slide.group, color: slide.color })

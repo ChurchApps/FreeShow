@@ -1,23 +1,25 @@
 <script lang="ts">
+    import type { Output } from "../../../../types/Output"
+    import type { LayoutRef } from "../../../../types/Show"
     import { activeFocus, activeShow, focusMode, presentationData, showsCache } from "../../../stores"
     import T from "../../helpers/T.svelte"
 
-    export let currentOutput: any
-    export let ref: any[]
+    export let currentOutput: Output
+    export let ref: LayoutRef[]
     export let linesIndex: null | number
     export let maxLines: null | number
 
     $: slide = currentOutput?.out?.slide
 
-    $: name = slide?.name || $showsCache[slide?.id]?.name || "—"
+    $: name = slide?.name || $showsCache[slide?.id || ""]?.name || "—"
     $: length = ref?.length || 0
 
     function openShow() {
         if (!slide || slide.id === "temp") return
 
         if (slide?.layout && $showsCache[slide!.id]) {
-            showsCache.update((a: any) => {
-                a[slide!.id].settings.activeLayout = slide?.layout
+            showsCache.update((a) => {
+                a[slide!.id].settings.activeLayout = slide?.layout!
                 return a
             })
         }

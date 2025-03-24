@@ -36,9 +36,9 @@
         return ["background"]
     }
 
-    let numberKeyTimeout: any = null
+    let numberKeyTimeout: NodeJS.Timeout | null = null
     let previousNumberKey: string = ""
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if ($guideActive || $activePopup === "assign_shortcut") return
         if ((e.ctrlKey || e.metaKey || e.altKey) && previewCtrlShortcuts[e.key]) {
             e.preventDefault()
@@ -46,7 +46,7 @@
         }
 
         const functionKey = /^F(?:[1-9]|1[0-9]|2[0-4])$/
-        if ((e.target.closest("input") || e.target.closest(".edit")) && !functionKey.test(e.key)) return
+        if ((e.target?.closest("input") || e.target?.closest(".edit")) && !functionKey.test(e.key)) return
 
         // start action with custom shortcut key
         // /^[A-Z]{1}$/i.test(e.key) &&
@@ -58,7 +58,7 @@
         // group shortcuts
         if ($activeShow && !e.ctrlKey && !e.metaKey && !$outLocked) {
             // play slide with custom shortcut key
-            let layoutRef: any[] = _show().layouts("active").ref()[0] || []
+            let layoutRef = _show().layouts("active").ref()[0] || []
             let slideShortcutMatch = layoutRef.findIndex((ref) => ref.data?.actions?.slide_shortcut?.key === e.key)
             if (slideShortcutMatch > -1 && !e.altKey && !e.shiftKey) {
                 playSlideAtIndex(slideShortcutMatch)
@@ -74,7 +74,7 @@
             }
 
             // play slide with number keys
-            if ($special.numberKeys && e.key !== " " && !isNaN(e.key)) {
+            if ($special.numberKeys && e.key !== " " && !isNaN(e.key as any)) {
                 previousNumberKey += e.key
 
                 if (numberKeyTimeout) clearTimeout(numberKeyTimeout)
@@ -92,7 +92,7 @@
             // play slide based on first text letter
             if ($special.autoLetterShortcut) {
                 const isSpecial = [".", ",", "-", "+", "/", "*", "<", ">", "|", "\\", "¨", "'"].includes(e.key)
-                if (e.key.trim().length === 1 && isNaN(e.key) && !isSpecial) {
+                if (e.key.trim().length === 1 && isNaN(e.key as any) && !isSpecial) {
                     const firstLetterMatch = layoutRef.findIndex((ref) => {
                         const slide = _show().get("slides")?.[ref.id]
                         const slideText = formatSearch(getSlideText(slide)).replace(/\d+/g, "").trim()
@@ -137,7 +137,7 @@
         if (!showGroups.length) return
 
         let globalGroupIds: string[] = []
-        Object.entries($groups).forEach(([groupId, group]: any) => {
+        Object.entries($groups).forEach(([groupId, group]) => {
             if (!group.shortcut || group.shortcut.toLowerCase() !== e.key.toLowerCase()) return
             showGroups.forEach((slide) => {
                 if (slide.globalGroup === groupId) globalGroupIds.push(slide.id)
@@ -148,12 +148,12 @@
     }
 
     function playSlideAtIndex(index: number) {
-        let slideRef: any = _show("active").layouts("active").ref()[0]
+        let slideRef = _show().layouts("active").ref()[0]
         if (index === -1) index = slideRef.length - 1
         if (!slideRef[index]) return
 
         updateOut("active", index, slideRef)
-        setOutput("slide", { id: $activeShow?.id, layout: _show("active").get("settings.activeLayout"), index, line: 0 })
+        setOutput("slide", { id: $activeShow?.id, layout: _show().get("settings.activeLayout"), index, line: 0 })
     }
 
     // active menu
@@ -186,7 +186,7 @@
     // slide timer
     let timer: any = {}
     $: timer = outputId && $slideTimers[outputId] ? $slideTimers[outputId] : {}
-    $: Object.entries($outputs).forEach(([id, output]: any) => {
+    $: Object.entries($outputs).forEach(([id, output]) => {
         if ((Object.keys($outputs)?.length > 1 && !output.enabled) || output.keyOutput || output.stageOutput) return
         if (!output.out?.transition || $slideTimers[id]?.timer) return
 
@@ -198,7 +198,7 @@
     // LINES
 
     $: outSlide = currentOutput.out?.slide
-    $: ref = outSlide ? (outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]) : []
+    $: ref = outSlide ? (outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems, id: "" }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]) : []
     let linesIndex: null | number = null
     let maxLines: null | number = null
     $: amountOfLinesToShow = getFewestOutputLines($outputs)
