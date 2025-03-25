@@ -3,8 +3,9 @@
     import { Main } from "../../../../types/IPC/Main"
     import type { BibleCategories } from "../../../../types/Tabs"
     import { sendMain } from "../../../IPC/main"
-    import { dictionary, isDev, labelsDisabled, language, scriptures } from "../../../stores"
+    import { dictionary, labelsDisabled, language, scriptures } from "../../../stores"
     import { replace } from "../../../utils/languageData"
+    import { customBibleData } from "../../drawer/bible/scripture"
     import { sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -18,19 +19,13 @@
     let error: null | string = null
     let bibles: any[] = []
 
+    let cachedBibles = ""
     $: if (importType === "api") fetchBibles()
     async function fetchBibles() {
         // read cache
-        let cache = $isDev ? {} : JSON.parse(localStorage.getItem("scriptureApiCache2") || "{}")
-        if (cache.date) {
-            let cacheDate = new Date(cache.date).getTime()
-            let today = new Date().getTime()
-            const ONE_MONTH = 2678400000
-            // only use cache if it's newer than a month
-            if (today - cacheDate < ONE_MONTH) {
-                bibles = cache.bibles
-                if (bibles) return
-            }
+        if (cachedBibles) {
+            bibles = JSON.parse(cachedBibles)
+            return
         }
 
         const api = "https://contentapi.churchapps.org/bibles"
@@ -43,14 +38,14 @@
             })
 
         function manageResult(data) {
-            console.log("MANAGE RESULT", data)
+            // console.log("MANAGE RESULT", data)
             if (!data) return
 
-            bibles = data
+            bibles = data.map(customBibleData)
 
             // cache bibles
             let cache = { date: new Date(), bibles }
-            localStorage?.setItem("scriptureApiCache2", JSON.stringify(cache))
+            cachedBibles = JSON.stringify(cache)
         }
     }
 
@@ -173,9 +168,9 @@
         <div class="list">
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
-                    <Button bold={false} on:click={() => toggleScripture(bible)} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
-                        <Icon id="scripture_alt" right />{bible.nameLocal}
-                        {#if bible.description && bible.description.toLowerCase() !== "common" && !bible.nameLocal.includes(bible.description)}
+                    <Button bold={false} on:click={() => toggleScripture({ ...bible, name: bible.nameLocal || bible.name })} active={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
+                        <Icon id="scripture_alt" right />{bible.nameLocal || bible.name}
+                        {#if bible.description && bible.description.toLowerCase() !== "common" && !(bible.nameLocal || bible.name).includes(bible.description)}
                             <span class="description" title={bible.description}>({bible.description})</span>
                         {/if}
                     </Button>

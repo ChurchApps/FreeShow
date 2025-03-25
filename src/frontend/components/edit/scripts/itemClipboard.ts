@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import type { Item, ItemType } from "../../../../types/Show"
 import { activeEdit, activeShow, showsCache } from "../../../stores"
+import { wait } from "../../../utils/common"
 import { clone } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { _show } from "../../helpers/shows"
@@ -80,10 +81,15 @@ export function getFilterStyle(): StyleClipboard {
 
 // PASTE //
 
-export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) {
+export async function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) {
     const itemKeys = getItemKeys(true)
 
-    slides.forEach(updateSlideStyle)
+    for (let i = 0; i < slides.length; i++) {
+        updateSlideStyle(slides[i])
+
+        // prevent lag when updating many slides
+        await wait(10)
+    }
 
     function updateSlideStyle(slide) {
         let items: number[] = []
@@ -177,10 +183,15 @@ export function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) 
     }
 }
 
-export function setItemStyle(style: StyleClipboard, slides: any) {
+export async function setItemStyle(style: StyleClipboard, slides: any) {
     const itemKeys = getItemKeys()
 
-    slides.forEach(updateSlideStyle)
+    for (let i = 0; i < slides.length; i++) {
+        updateSlideStyle(slides[i])
+
+        // prevent lag when updating many slides
+        await wait(10)
+    }
 
     function updateSlideStyle(slide) {
         let values: string[] = []
@@ -224,8 +235,13 @@ export function setItemStyle(style: StyleClipboard, slides: any) {
     }
 }
 
-export function setSlideStyle(style: StyleClipboard, slides: any) {
-    slides.forEach(updateSlideStyle)
+export async function setSlideStyle(style: StyleClipboard, slides: any) {
+    for (let i = 0; i < slides.length; i++) {
+        updateSlideStyle(slides[i])
+
+        // prevent lag when updating many slides
+        await wait(10)
+    }
 
     function updateSlideStyle(slide) {
         let oldData = { style: slide.settings }

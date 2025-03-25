@@ -329,6 +329,9 @@
     {#if !$focusMode && Slide}
         <div class="actions" style="width: 100%;gap: 10px;">
             <div class="leftActions">
+                {#if !chordsMode}
+                    <div class="notes" style="font-size: 0.8em;">{$showsCache[currentShow]?.name}</div>
+                {/if}
                 {#if chordsMode}
                     <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
                         <p><T id="popup.choose_chord" /></p>
@@ -340,7 +343,7 @@
                         </Button>
                     {/each}
                 {:else if Slide?.notes}
-                    <div class="notes">
+                    <div class="notes" style="opacity: 0.8;">
                         <Icon id="notes" right white />
                         {@html Slide.notes.replaceAll("\n", "&nbsp;")}
                     </div>
@@ -448,6 +451,8 @@
         padding: 0 8px;
         display: flex;
         align-items: center;
+
+        white-space: nowrap;
     }
 
     /* fixed height for consistent heights */

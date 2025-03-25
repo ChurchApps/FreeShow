@@ -15,12 +15,14 @@
     $: resolution = getOutputResolution(outputId, $outputs, true)
     let ratio: number = 0
 
-    let parent: HTMLElement | undefined
+    let initial: ["x" | "y", number] = ["y", 0]
+    let parent: any
     function onMouseMove(e: any) {
         let slide = e.target.closest(".slide")
 
         if ((!e.buttons && $drawSettings[$drawTool]?.hold) || e.target.closest(".parent") !== parent || !slide) {
             draw.set(null)
+            initial = ["y", 0]
             return
         }
 
@@ -28,6 +30,14 @@
 
         let x = (e.clientX - slide.offsetLeft - (centerElem?.offsetLeft || 0)) / ratio
         let y = (e.clientY - slide.offsetTop - (centerElem?.offsetTop || 0)) / ratio
+
+        // straight
+        let mode: "x" | "y" = e.shiftKey ? "x" : "y"
+        if (!initial[1] || initial[0] !== mode) initial = [mode, mode === "x" ? x : y]
+        if ($drawSettings[$drawTool]?.straight) {
+            if (mode === "x") x = initial[1]
+            else y = initial[1]
+        }
 
         if ($drawTool === "pointer" || $drawTool === "focus") {
             let size = $drawSettings[$drawTool]?.size

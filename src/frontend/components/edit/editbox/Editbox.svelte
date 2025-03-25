@@ -169,8 +169,14 @@ bind:offsetWidth={width} -->
         outline: 5px solid rgb(255 255 255 / 0.2);
         transition: background-color 0.3s;
         /* cursor: text; */
+
+        /* media items */
+        overflow: hidden;
     }
-    .item:global(.selected .align) {
+    .item.selected {
+        overflow: visible;
+    }
+    .item.selected :global(.align) {
         outline: 5px solid var(--secondary-opacity);
         overflow: visible !important;
     }

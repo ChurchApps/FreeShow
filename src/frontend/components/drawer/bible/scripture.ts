@@ -454,6 +454,17 @@ function stripMarkdown(input: string) {
     return input
 }
 
+// hard coded custom Bible data
+const bibleData = {
+    "eea18ccd2ca05dde-01": {
+        nameLocal: "Bibel 2011 Bokmål", // med gammeltestamentlige apokryfer
+    },
+}
+// ChurchAppsApiBible
+export function customBibleData(data: any) {
+    return { ...data, ...(bibleData[data.sourceKey] || {}) }
+}
+
 // HELPERS
 
 export function setBooksCache(scriptureId: string, data: any) {

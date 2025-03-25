@@ -4,6 +4,7 @@
 import { get } from "svelte/store"
 import { EXPORT } from "../../../types/Channels"
 import type { Project, ProjectShowRef } from "../../../types/Projects"
+import type { SlideData } from "../../../types/Show"
 import { dataPath, folders, media, overlays as overlayStores, showsCache, special } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
@@ -128,9 +129,12 @@ export async function exportProject(project: Project) {
         if (!get(overlayStores)[id] || overlays[id]) return
 
         overlays[id] = clone(get(overlayStores)[id])
-    }
 
-    // store as base64 ?
-    // let base64 = await toDataURL(showRef.id)
-    // media[showRef.id] = base64
+        // get media data from overlay "Media" items
+        get(overlayStores)[id].items.forEach((item) => {
+            if (item.type === "media" && item.src) {
+                getFile(item.src)
+            }
+        })
+    }
 }

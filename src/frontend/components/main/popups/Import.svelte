@@ -48,6 +48,7 @@
         },
         { name: "OpenLP/OpenLyrics", extensions: ["xml", "sqlite"], id: "openlp" },
         { name: "OpenSong", extensions: [], id: "opensong" },
+        { name: "MediaShout", extensions: ["ssc", "xml"], id: "mediashout" }, // SSC (Songs5.mdb)
         { name: "Quelea", extensions: ["xml", "qsp"], id: "quelea" },
         { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
         { name: "Songbeamer", id: "songbeamer", popup: "songbeamer_import" },

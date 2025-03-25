@@ -41,16 +41,21 @@ export class LyricSearch {
 
     //Would greatly prefer to just load via url or id, but the api fails often with these methods (malformed json)
     private static getGenius = async (song: LyricSearchResult) => {
-        const client = this.getGeniusClient()
-        const songs = await client.songs.search(song.originalQuery || "")
-        let result = ""
-        for (let i = 0; i < songs.length; i++) {
-            if (songs[i].id.toString() === song.key) {
-                result = await songs[i].lyrics()
-                break
+        try {
+            const client = this.getGeniusClient()
+            const songs = await client.songs.search(song.originalQuery || "")
+            let result = ""
+            for (let i = 0; i < songs.length; i++) {
+                if (songs[i].id.toString() === song.key) {
+                    result = await songs[i].lyrics()
+                    break
+                }
             }
+            return result
+        } catch (err) {
+            console.log(err)
+            return ""
         }
-        return result
     }
 
     private static convertGenuisToResult = (geniusResult: any, originalQuery: string) => {

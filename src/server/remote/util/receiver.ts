@@ -125,4 +125,11 @@ export const receiver = {
     "API:get_cleared": (data: any) => {
         _set("isCleared", data)
     },
+
+    "API:get_playing_audio_data": (data: any) => {
+        _set("playingAudioData", data)
+    },
+    "API:get_playing_audio_time": (data: any) => {
+        _set("playingAudioTime", data)
+    },
 }

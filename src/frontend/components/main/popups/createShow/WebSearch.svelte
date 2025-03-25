@@ -69,7 +69,7 @@
             return
         }
 
-        setValue(data.lyrics)
+        setValue(data)
         newToast($dictionary.toast?.lyrics_copied + " " + data.source + "!")
     })
     onDestroy(() => {
@@ -88,8 +88,8 @@
     }
 
     let dispatch = createEventDispatcher()
-    function setValue(lyrics: string) {
-        dispatch("update", lyrics)
+    function setValue(data: any) {
+        dispatch("update", data)
     }
 
     function blockArtist(artist: string) {

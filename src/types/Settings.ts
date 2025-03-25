@@ -41,6 +41,7 @@ export interface Resolution {
 export interface AspectRatio extends Resolution {
     outputResolutionAsRatio?: boolean
     alignPosition?: "center" | "start" | "end"
+    fontSizeRatio?: number
 }
 export interface Cropping {
     top: number

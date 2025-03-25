@@ -47,6 +47,9 @@ export let textCache: Writable<any> = writable({})
 export let groupsCache: Writable<any> = writable({})
 export let scriptureCache: Writable<any> = writable({})
 
+export let playingAudioData: Writable<any> = writable({})
+export let playingAudioTime: Writable<number> = writable(0)
+
 /////
 
 export const _ = {
@@ -77,6 +80,8 @@ export const _ = {
     textCache,
     groupsCache,
     scriptureCache,
+    playingAudioData,
+    playingAudioTime,
 }
 
 /////

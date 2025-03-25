@@ -159,6 +159,21 @@
 
     let customTypeRatio = 1
 
+    function getCustomFontSize(style: string, outputStyle: any) {
+        const fontSize = Number(getStyles(style, true)["font-size"] || 100)
+
+        // get first output style
+        if (!Object.keys(outputStyle).length) {
+            const outputId = getActiveOutputs()[0]
+            const currentOutput = $outputs[outputId] || {}
+            outputStyle = $styles[currentOutput.style || ""] || {}
+        }
+        if (!Object.keys(outputStyle).length) return ""
+
+        const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
+        return `font-size: ${fontSize * customFontSizeRatio}px;`
+    }
+
     let loopStop: NodeJS.Timeout | null = null
     let newCall: boolean = false
     function calculateAutosize() {
@@ -382,7 +397,9 @@
                                 <span
                                     style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
                                         ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;`
-                                        : ''}"
+                                        : style
+                                          ? getCustomFontSize(text.style, outputStyle)
+                                          : ''}"
                                 >
                                     {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { ...ref, slideIndex }, updateDynamic) : value}
                                 </span>

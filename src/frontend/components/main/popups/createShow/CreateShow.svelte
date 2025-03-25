@@ -83,13 +83,18 @@
     // WEB SEARCH
 
     function updateLyrics(e: any) {
-        let lyrics = e.detail || ""
-        if (!lyrics) {
+        let data = e.detail || {}
+        if (!data.lyrics) {
             selectedOption = ""
             return
         }
 
-        values.text = lyrics
+        // if name is lowercase, replace it
+        if (data.title && values.name.toLowerCase() === values.name) {
+            values.name = data.title
+        }
+
+        values.text = data.lyrics
         selectedOption = "text"
     }
 

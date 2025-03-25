@@ -33,11 +33,38 @@
 
     const renameAction = {
         slide: () => {
-            // TODO: history (x3)
+            const ref = _show().layouts("active").ref()[0]
+
+            // get selected ids
+            let ids: string[] = []
             $selected.data.forEach((a) => {
-                let slideId = a.id
-                let ref = getLayoutRef()[a.index]
-                if (!slideId) slideId = ref.id
+                const id = a.id || ref[a.index]?.id
+                ids.push(id)
+            })
+
+            // remove duplicates
+            ids = [...new Set(ids)]
+
+            // remove children if parent is selected
+            ids.map((id) => {
+                const slide = _show().slides([id]).get()[0]
+                if (slide.children?.length) ids = ids.filter((id) => !slide.children.includes(id))
+            })
+
+            // get slide refs
+            let refs: any[] = []
+            ids.forEach((id) => {
+                refs.push(ref.find((a) => a.id === id))
+            })
+
+            // sort by last index first
+            refs = refs.sort((a, b) => b.layoutIndex - a.layoutIndex)
+
+            // WIP index might become incorrect when multiple slides are renamed at once (if index changes)
+
+            // TODO: history (x3)
+            refs.forEach((ref) => {
+                const slideId = ref.id
 
                 // remove global group if active
                 if ($activeShow && $showsCache[$activeShow.id].slides[slideId].globalGroup)
@@ -64,9 +91,7 @@
                 let newLayouts: { [key: string]: SlideData[] } = {}
 
                 currentLayouts.forEach((layout, i: number) => {
-                    let l: SlideData[] = []
-
-                    // TODO: renaming multiple children with the same parent dont work properly
+                    let l: any[] = []
 
                     let added = false
                     layout.forEach((slide, index: number) => {

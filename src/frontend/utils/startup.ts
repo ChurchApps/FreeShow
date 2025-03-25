@@ -8,6 +8,7 @@ import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { requestMain, requestMainMultiple, sendMain } from "../IPC/main"
 import {
     activePopup,
+    alertMessage,
     currentWindow,
     dataPath,
     deviceId,
@@ -15,8 +16,10 @@ import {
     events,
     folders,
     isDev,
+    language,
     loaded,
     loadedState,
+    scriptures,
     media,
     os,
     overlays,
@@ -85,6 +88,12 @@ async function startupMain() {
     autoBackup()
     startTracking()
     connect()
+
+    // custom alert
+    if (get(language) === "no" && !get(activePopup) && !Object.values(get(scriptures)).find((a) => ["eea18ccd2ca05dde-01", "7bcaa2f2e77739d5-01"].includes(a.id || ""))) {
+        alertMessage.set('Bibel 2011 Bokmål/Nynorsk er nå tilgjengelig som API i "Bibelen"-menyen!')
+        activePopup.set("alert")
+    }
 
     await wait(5000)
     unsavedUpdater()

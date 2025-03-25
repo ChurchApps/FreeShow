@@ -61,7 +61,7 @@ import { loadShows } from "./setShow"
 import { checkName, getLayoutRef } from "./show"
 import { _show } from "./shows"
 
-export function copy(clip: Clipboard | null = null, getData: boolean = true) {
+export function copy(clip: Clipboard | null = null, getData: boolean = true, duplicate: boolean = false) {
     let copy: Clipboard | null = clip
 
     if (window.getSelection()?.toString()) {
@@ -76,6 +76,10 @@ export function copy(clip: Clipboard | null = null, getData: boolean = true) {
 
     let copyObj = clone(copy)
     if (getData && copyActions[copy.id]) copy.data = copyActions[copy.id](copy.data)
+
+    if (duplicate) {
+        return { data: copy, index: copyObj.data?.[0]?.index }
+    }
 
     if (copy.data) clipboard.set(copy)
 
@@ -138,9 +142,9 @@ export function duplicate(clip: Clipboard | null = null) {
         return true
     }
 
-    let copyData = copy(clip)
-    if (!copyData) return false
-    paste(null, { index: copyData.data[0]?.index })
+    let copyData = copy(clip, true, true)
+    if (!copyData?.data) return false
+    paste(copyData.data, { index: (copyData as any).index })
 
     console.log("DUPLICATED:", copyData)
     return true
@@ -441,7 +445,7 @@ const copyActions = {
 
 const pasteActions = {
     item: (data: any) => {
-        if (!data) return
+        if (!data || get(activePage) !== "edit") return
 
         if (get(activeEdit).id) {
             if (get(activeEdit).type === "overlay") {

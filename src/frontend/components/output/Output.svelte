@@ -114,7 +114,7 @@
 
         // don't refresh content unless it changes
         let newCurrentSlide = getCurrentSlide()
-        if (JSON.stringify(newCurrentSlide) !== JSON.stringify(currentSlide)) currentSlide = newCurrentSlide
+        if (JSON.stringify(formatSlide(newCurrentSlide)) !== JSON.stringify(currentSlide)) currentSlide = newCurrentSlide
 
         function getCurrentSlide() {
             if (!slide && !outputId) return null
@@ -123,6 +123,14 @@
 
             let slideId: string = currentLayout[slide?.index]?.id || ""
             return clone(_show(slide.id).slides([slideId]).get()[0] || {})
+        }
+
+        // add template item keys to not update item when no changes is made (when custom style template is set)
+        function formatSlide(currentSlide) {
+            if (!currentSlide) return null
+            let newSlide = clone(currentSlide)
+            newSlide.items = setTemplateStyle(slide, currentStyle, newSlide.items)
+            return newSlide
         }
     }
 
@@ -321,7 +329,11 @@
     {/if}
 
     {#if slide?.attributionString}
-        <p class="attributionString" transition:custom={transitions.text}>{slide.attributionString}</p>
+        {#if mirror}
+            <p class="attributionString">{slide.attributionString}</p>
+        {:else}
+            <p class="attributionString" transition:custom={transitions.text}>{slide.attributionString}</p>
+        {/if}
     {/if}
 
     <!-- draw -->

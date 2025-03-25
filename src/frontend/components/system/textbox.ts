@@ -23,6 +23,8 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
     else snapBox()
 
     function snapBox() {
+        if (!itemElem.closest(".slide")) return
+
         let slideWidth = Math.round(itemElem.closest(".slide").offsetWidth / ratio)
         let slideHeight = Math.round(itemElem.closest(".slide").offsetHeight / ratio)
 
@@ -34,7 +36,7 @@ export function moveBox(e: any, mouse: any, ratio: number, active: (number | str
         let yItems = isResizing ? [directionId.includes("s") ? itemElem.offsetHeight : 0] : [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
 
         // get other items pos
-        ;[...itemElem.closest(".slide").querySelectorAll(".item")].filter((a) => !a.closest(".preview")).forEach(getItemLines)
+        ;[...(itemElem.closest(".slide").querySelectorAll(".item") || [])].filter((a) => !a.closest(".preview")).forEach(getItemLines)
 
         function getItemLines(item: HTMLElement, i: number) {
             let id: number | string = i

@@ -75,7 +75,7 @@ export function toggleOutput(id: string) {
 // transition: null,
 // TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
 export function setOutput(key: string, data: any, toggle: boolean = false, outputId: string = "", add: boolean = false) {
-    // track usage
+    // track usage (& set attributionString)
     if (key === "slide" && data?.id) {
         let showReference = _show(data.id).get("reference")
         if (showReference?.type === "scripture") {
@@ -91,6 +91,9 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 let apiId = translation.api ? scriptureId : null
                 if (name || apiId) trackScriptureUsage(name, apiId, slide.group)
             })
+
+            // set attributionString
+            if (translation.attributionString) data.attributionString = translation.attributionString
         }
     }
 
@@ -419,13 +422,23 @@ export function getStageOutputId(_updater = get(outputs)) {
 }
 export function getStageResolution(outputId: string = "", _updater = get(outputs)): Resolution {
     if (!outputId) outputId = getStageOutputId()
-    return _updater[outputId]?.bounds || { width: 1920, height: 1080 }
+    return clone(_updater[outputId]?.bounds || DEFAULT_BOUNDS)
 }
 
 // calculate actual output resolution based on style aspect ratio
+const DEFAULT_BOUNDS = { width: 1920, height: 1080 }
 export function getOutputResolution(outputId: string, _updater = get(outputs), scaled: boolean = false) {
     let currentOutput = _updater[outputId]
-    let outputRes = clone(currentOutput?.bounds || { width: 1920, height: 1080 })
+    let outputRes = clone(currentOutput?.bounds || DEFAULT_BOUNDS)
+
+    // set the width OR height based on the relative size
+    let outputAspectRatio = outputRes.width / outputRes.height
+    if (outputRes.width < outputRes.height) {
+        outputRes.width = Math.round(DEFAULT_BOUNDS.height * outputAspectRatio)
+    } else {
+        outputRes.height = Math.round(DEFAULT_BOUNDS.width / outputAspectRatio)
+    }
+
     if (!scaled) return outputRes
 
     let styleRatio = getResolution(null, null, false, outputId)
