@@ -2,6 +2,7 @@
     import { createEventDispatcher } from "svelte"
     import { uid } from "uid"
     import type { Item } from "../../../../types/Show"
+    import type { StageItem } from "../../../../types/Stage"
     import { activePopup, dictionary, popupData, storedEditMenuState, variables } from "../../../stores"
     import { mediaExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
@@ -29,7 +30,7 @@
 
     export let edits: { [key: string]: EditInput[] }
     export let defaultEdits: { [key: string]: EditInput[] } = {}
-    export let item: Item | null = null
+    export let item: Item | StageItem | null = null
     export let styles: { [key: string]: string } = {}
     export let lineAlignStyle: { [key: string]: string } = {}
     export let alignStyle: { [key: string]: string } = {}

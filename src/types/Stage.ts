@@ -31,17 +31,30 @@ export interface StageLayout {
 }
 
 export interface StageItem {
-    enabled: boolean
-    chords?: boolean
-    chordsData?: any
-    auto?: boolean
+    type?: string // ItemType ++
+    enabled?: boolean
+    label?: string // sending translated label to stage
+
+    // style
     style: string
     align: string
     alignX?: string
-    label?: string // sending translated label to stage
-    tracker?: any // slide tracker data
+    filter?: any // not in use at the moment
+
+    // textbox
+    chords?: boolean
+    chordsData?: any
+    auto?: boolean
+
+    // slide text
+    slideOffset?: number
+    includeMedia?: boolean
+    keepStyle?: boolean
     lineCount?: number // max lines to show in next slide preview
     invertItems?: boolean // invert items if more than one (used for e.g. scripture refs)
+
+    // other items
+    tracker?: any // slide tracker data
     timer?: any // timer options
     clock?: any // clock options
 }

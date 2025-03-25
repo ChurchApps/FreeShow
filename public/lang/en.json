@@ -865,6 +865,9 @@
         "sub_indexes": "Sub indexes",
         "size": "Size",
         "max_lines": "Max lines",
+        "slide_offset": "Slide offset",
+        "includeMedia": "Include media",
+        "keepStyle": "Keep style",
         "invert_items": "Invert items",
         "list": "List",
         "chords": "Chords",
@@ -956,7 +959,10 @@
         "slide_tracker": "Progress",
         "visualizer": "Visualizer",
         "captions": "Captions",
-        "icon": "Icon"
+        "icon": "Icon",
+        "slide_text": "Slide text",
+        "slide_notes": "Slide notes",
+        "current_output": "Current output"
     },
     "borders": {
         "solid": "Solid",

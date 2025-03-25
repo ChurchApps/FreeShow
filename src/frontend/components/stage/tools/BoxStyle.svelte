@@ -2,7 +2,7 @@
     import { activeStage, stageShows, theme, themes } from "../../../stores"
     import { addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
-    import { type EditInput, trackerEdits } from "../../edit/values/boxes"
+    import { type EditInput, setBoxInputValue, trackerEdits } from "../../edit/values/boxes"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -11,31 +11,37 @@
     import { updateStageShow } from "../stage"
     import { textEdits } from "../values/text"
 
-    $: items = $activeStage.items
+    $: activeItemIds = $activeStage.items || []
+    $: activeItemId = activeItemIds[0]
     $: stageItems = $stageShows[$activeStage.id!].items
-    $: item = items ? stageItems[items[0]] : null
+    $: item = activeItemId ? stageItems[activeItemId] : null
 
     let edits: { [key: string]: EditInput[] } = {}
     $: if (item) {
         edits = clone(textEdits)
 
         // custom input values
-        if (items[0].includes("slide") && !items[0].includes("text") && !items[0].includes("notes") && !items[0].includes("tracker")) edits = { chords: edits.chords }
-        else if (items[0].includes("slide_text")) {
-            if (items[0].includes("next_slide_text")) edits.default.push({ name: "max_lines", id: "lineCount", input: "number", value: 0 })
+        if (activeItemId.includes("slide") && !activeItemId.includes("text") && !activeItemId.includes("notes") && !activeItemId.includes("tracker")) edits = { chords: edits.chords }
+        else if (item.type === "slide_text" || activeItemId.includes("slide_text")) {
             // WIP only show this if current output has more than one item:
+            edits.default.push({ name: "slide_offset", id: "slideOffset", input: "number", value: 0, values: { min: -50, max: 50 } })
+            // set to hidden instead?
+            if (item.type === "slide_text" ? true : activeItemId.includes("next_slide_text")) edits.default.push({ name: "max_lines", id: "lineCount", input: "number", value: 0 })
+
+            edits.default.push({ name: "includeMedia", id: "includeMedia", input: "checkbox", value: false })
+            edits.default.push({ name: "keepStyle", id: "keepStyle", input: "checkbox", value: false }) // hide all style values if this is enabled!!
             edits.default.push({ name: "invert_items", id: "invertItems", input: "checkbox", value: false })
-        } else if (items[0].includes("tracker")) {
+        } else if (item.type === "slide_tracker" || activeItemId.includes("tracker")) {
             let newEdits = clone(textEdits)
             delete newEdits.default
             delete newEdits.align
             delete newEdits.chords
             edits = { default: trackerEdits, font: edits.default, ...newEdits }
-        } else if (items[0].includes("clock")) {
+        } else if (item.type === "clock" || activeItemId.includes("clock")) {
             edits.default.push({ name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: true })
             edits.default.push({ name: "sort.date", id: "clock.show_date", input: "checkbox", value: false })
-        } else if (items[0].includes("timer")) edits.default.push({ name: "timer.hours", id: "timer.showHours", input: "checkbox", value: item.timer?.showHours !== false })
-        else if (items[0].includes("output")) edits = {}
+        } else if (item.type === "timer" || activeItemId.includes("timer")) edits.default.push({ name: "timer.hours", id: "timer.showHours", input: "checkbox", value: item.timer?.showHours !== false })
+        else if (item.type === "current_output" || activeItemId.includes("output")) edits = {}
     }
 
     let data: { [key: string]: any } = {}
@@ -44,25 +50,28 @@
     // $: if (edits) updateAuto(item?.auto || true)
     $: if (item) updateAuto(item?.auto ?? true)
     $: if (edits.chords) {
-        edits.chords[0].value = item?.chords
-        edits.chords[1].hidden = !item?.chords
-        edits.chords[2].hidden = !item?.chords
+        setBoxInputValue(edits, "chords", "chords", "value", item?.chords)
+        setBoxInputValue(edits, "chords", "chordsData.color", "hidden", !item?.chords)
+        setBoxInputValue(edits, "chords", "chordsData.size", "hidden", !item?.chords)
 
-        if (item?.chordsData?.color) edits.chords[1].value = item.chordsData.color
-        if (item?.chordsData?.size) edits.chords[2].value = item.chordsData.size
+        if (item?.chordsData?.color) setBoxInputValue(edits, "chords", "chordsData.color", "value", item.chordsData.color)
+        if (item?.chordsData?.size) setBoxInputValue(edits, "chords", "chordsData.size", "value", item.chordsData.size)
     }
-    $: if (items[0]?.includes("tracker") && item?.tracker && edits.default?.[0]?.id === "tracker.type") {
-        if (item.tracker.type) edits.default[0].value = item.tracker.type
-        edits.default[1].value = item.tracker.accent || $themes[$theme]?.colors?.secondary || "#F0008C"
+    $: if (item?.tracker && (item.type === "slide_tracker" || activeItemId?.includes("tracker"))) {
+        if (item.tracker.type) setBoxInputValue(edits, "default", "tracker.type", "value", item.tracker.type)
+        setBoxInputValue(edits, "default", "tracker.accent", "value", item.tracker.accent || $themes[$theme]?.colors?.secondary || "#F0008C")
+
+        setBoxInputValue(edits, "default", "tracker.childProgress", "hidden", item?.tracker?.type !== "group")
+        setBoxInputValue(edits, "default", "tracker.oneLetter", "hidden", item?.tracker?.type !== "group")
     }
-    $: if (item && items[0]?.includes("next_slide_text") && edits.default[5]) {
-        edits.default[5].value = item.lineCount || 0
+    $: if (item && (item.type === "slide_text" || activeItemId?.includes("next_slide_text"))) {
+        setBoxInputValue(edits, "default", "lineCount", "value", item.lineCount || 0)
     }
-    $: if (item && items[0]?.includes("slide_text") && edits.default[6]) {
-        edits.default[6].value = !!item.invertItems
-    }
-    $: if (items[0]?.includes("slide_tracker") && edits?.default?.[2]) {
-        edits.default[2].hidden = item?.tracker?.type !== "group"
+    $: if (item && (item.type === "slide_text" || activeItemId?.includes("slide_text"))) {
+        setBoxInputValue(edits, "default", "slideOffset", "value", item.slideOffset || 0)
+        setBoxInputValue(edits, "default", "includeMedia", "value", !!item.includeMedia)
+        setBoxInputValue(edits, "default", "keepStyle", "value", !!item.keepStyle)
+        setBoxInputValue(edits, "default", "invertItems", "value", !!item.invertItems)
     }
 
     // CSS
@@ -104,7 +113,12 @@
             newValue[splitted[1]] = value
             value = newValue
         }
-        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: input.id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
+        history({
+            id: "UPDATE",
+            newData: { data: value, key: "items", subkey: input.id, keys: activeItemIds },
+            oldData: { id: $activeStage.id },
+            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") },
+        })
     }
 
     function updateAlign(input) {
@@ -113,7 +127,7 @@
 
         let value = input.value
 
-        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
+        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: id, keys: activeItemIds }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") } })
     }
 
     function updateStyle(e: any) {
@@ -132,7 +146,12 @@
 
         if (!value) return
 
-        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: "style", keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
+        history({
+            id: "UPDATE",
+            newData: { data: value, key: "items", subkey: "style", keys: activeItemIds },
+            oldData: { id: $activeStage.id },
+            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") },
+        })
 
         if (!timeout) {
             updateStageShow()

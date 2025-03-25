@@ -41,11 +41,13 @@ export type EditInput = {
     placeholder?: string
 }
 
-export function setBoxInputValue(box: BoxContent, sectionId: string, inputId: string, key: keyof EditInput, value: any) {
-    if (!sectionId) sectionId = "default"
-    if (!box?.edit?.[sectionId]) return
+export function setBoxInputValue(box: BoxContent | { [key: string]: EditInput[] }, sectionId: string, inputId: string, key: keyof EditInput, value: any) {
+    const newBox = (box.edit ? box : { edit: box, icon: "" }) as BoxContent
 
-    const section = box.edit[sectionId]
+    if (!sectionId) sectionId = "default"
+    if (!newBox?.edit?.[sectionId]) return
+
+    const section = newBox.edit[sectionId]
     const keyIndex = section.findIndex((a) => (a.id === "style" ? a.key === inputId : a.id === inputId))
     if (keyIndex < 0) return
 
