@@ -69,7 +69,7 @@ export class BlackmagicManager {
         //         } as any,
         //     ]
         // }
-
+        
         let deviceInfo: any = macadam.getDeviceInfo()
         if (typeof deviceInfo === "object") deviceInfo = Object.values(deviceInfo)
         return deviceInfo
