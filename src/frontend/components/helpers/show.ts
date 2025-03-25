@@ -139,7 +139,7 @@ export const metadataDisplayValues = [
 ]
 
 // create new slides
-export function newSlide(data: { items?: Item[]; notes?: string }): Slide {
+export function newSlide(data: { items?: Item[]; group?: string; globalGroup?: string; notes?: string }): Slide {
     return {
         group: null,
         color: null,

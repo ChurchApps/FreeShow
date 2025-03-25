@@ -4,14 +4,13 @@
 import { get } from "svelte/store"
 import { EXPORT } from "../../../types/Channels"
 import type { Project, ProjectShowRef } from "../../../types/Projects"
-import type { SlideData } from "../../../types/Show"
+import type { Overlays, Shows, SlideData } from "../../../types/Show"
 import { dataPath, folders, media, overlays as overlayStores, showsCache, special } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
 import { formatToFileName } from "../helpers/show"
 import { _show } from "../helpers/shows"
-import type { Overlays, Shows, SlideData } from "../../../types/Show"
 
 export async function exportProject(project: Project) {
     let shows: Shows = {}
@@ -137,4 +136,8 @@ export async function exportProject(project: Project) {
             }
         })
     }
+
+    // store as base64 ?
+    // let base64 = await toDataURL(showRef.id)
+    // media[showRef.id] = base64
 }

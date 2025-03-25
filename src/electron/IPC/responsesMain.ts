@@ -242,7 +242,7 @@ async function searchLyrics({ artist, title }: { artist: string; title: string }
 
 async function getLyrics({ song }: { song: LyricSearchResult }) {
     const lyrics = await LyricSearch.get(song)
-    return { lyrics, source: song.source }
+    return { lyrics, source: song.source, title: song.title }
 }
 
 // GET DEVICE MEDIA PERMISSION

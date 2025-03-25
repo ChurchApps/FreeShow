@@ -237,7 +237,7 @@ export interface MainReturnPayloads {
     [Main.RECEIVE_MIDI]: Promise<{ id: string; values: any; type: "noteon" | "noteoff" } | null>
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
     [Main.GET_MIDI_INPUTS]: { name: string }[]
-    [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string }>
+    [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
     [Main.DOES_PATH_EXIST]: { path: string; dataPath: string; exists: boolean }
     [Main.GET_SIMULAR]: { path: string; name: string }[]

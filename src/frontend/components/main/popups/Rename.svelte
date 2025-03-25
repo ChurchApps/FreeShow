@@ -33,7 +33,7 @@
 
     const renameAction = {
         slide: () => {
-            const ref = _show().layouts("active").ref()[0]
+            const ref = getLayoutRef()
 
             // get selected ids
             let ids: string[] = []
@@ -91,7 +91,7 @@
                 let newLayouts: { [key: string]: SlideData[] } = {}
 
                 currentLayouts.forEach((layout, i: number) => {
-                    let l: any[] = []
+                    let l: SlideData[] = []
 
                     let added = false
                     layout.forEach((slide, index: number) => {

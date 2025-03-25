@@ -57,7 +57,6 @@ import { closeApp, save } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
-import { convertMediaShout } from "../converters/mediashout"
 
 export function setupMainReceivers() {
     receiveMainGlobal()

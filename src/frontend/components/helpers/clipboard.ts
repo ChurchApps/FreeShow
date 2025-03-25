@@ -78,7 +78,7 @@ export function copy(clip: Clipboard | null = null, getData: boolean = true, dup
     if (getData && copyActions[copy.id]) copy.data = copyActions[copy.id](copy.data)
 
     if (duplicate) {
-        return { data: copy, index: copyObj.data?.[0]?.index }
+        return { id: null, data: copy, index: copyObj.data?.[0]?.index }
     }
 
     if (copy.data) clipboard.set(copy)
@@ -122,7 +122,7 @@ export function cut(clip: Clipboard | null = null) {
     console.log("CUTTED:", copyData)
 }
 
-export function deleteAction(clip: Clipboard, type: string = "delete") {
+export function deleteAction(clip: Clipboard | { id: null; data: Clipboard; index: any }, type: string = "delete") {
     console.log("DELETE", clip.id, clip.data)
     if (!clip?.id) return false
     if (!deleteActions[clip.id]) return false

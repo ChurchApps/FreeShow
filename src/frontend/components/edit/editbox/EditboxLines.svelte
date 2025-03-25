@@ -7,6 +7,7 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { addToPos } from "../../helpers/mover"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import autosize, { AutosizeTypes } from "../scripts/autosize"
@@ -14,7 +15,6 @@
     import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
     import { EditboxHelper } from "./EditboxHelper"
-    import { getLayoutRef } from "../../helpers/show"
 
     export let item: Item
     export let ref: {

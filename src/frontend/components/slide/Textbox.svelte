@@ -159,16 +159,16 @@
 
     let customTypeRatio = 1
 
-    function getCustomFontSize(style: string, outputStyle: any) {
+    function getCustomFontSize(style: string, outputStyle: Styles | null) {
         const fontSize = Number(getStyles(style, true)["font-size"] || 100)
 
         // get first output style
-        if (!Object.keys(outputStyle).length) {
+        if (!outputStyle) {
             const outputId = getActiveOutputs()[0]
             const currentOutput = $outputs[outputId] || {}
-            outputStyle = $styles[currentOutput.style || ""] || {}
+            outputStyle = $styles[currentOutput.style || ""] || null
         }
-        if (!Object.keys(outputStyle).length) return ""
+        if (!outputStyle) return ""
 
         const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
         return `font-size: ${fontSize * customFontSizeRatio}px;`

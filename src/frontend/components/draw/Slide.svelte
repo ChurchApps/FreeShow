@@ -16,7 +16,7 @@
     let ratio: number = 0
 
     let initial: ["x" | "y", number] = ["y", 0]
-    let parent: any
+    let parent: HTMLElement | undefined
     function onMouseMove(e: any) {
         let slide = e.target.closest(".slide")
 
