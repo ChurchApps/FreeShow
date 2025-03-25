@@ -8,6 +8,7 @@ import { history } from "../../helpers/history"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
 import { boxes } from "../values/boxes"
+import { getLayoutRef } from "../../helpers/show"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
 
@@ -68,10 +69,10 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
         newData.customSvg = options.path
     }
 
-    console.log(newData)
+    // console.log("NEW ITEM", newData)
 
     if (!get(activeEdit).id) {
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         let slideId = ref[get(activeEdit).slide!]?.id
         history({ id: "UPDATE", newData: { data: newData, key: "slides", keys: [slideId], subkey: "items", index: -1 }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key" } })
     } else {
@@ -89,7 +90,7 @@ export function getEditSlide() {
         return null
     }
 
-    const ref = _show().layouts("active").ref()[0]
+    const ref = getLayoutRef()
     let editSlideRef = ref?.[active.slide ?? -1]
     return _show().get("slides")?.[editSlideRef?.id] as Slide
 }
@@ -123,7 +124,7 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     if (!items?.length || items.length < 2) return
 
     if (!get(activeEdit).id) {
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         let slideId = ref[get(activeEdit).slide!]?.id
         history({ id: "UPDATE", newData: { data: items, key: "slides", dataIsArray: true, keys: [slideId], subkey: "items" }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key", override: "rearrange_items" } })
     } else {

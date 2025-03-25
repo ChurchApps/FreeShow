@@ -6,6 +6,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Icon from "../../helpers/Icon.svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     let id = $popupData.id
     let index = $popupData.index
@@ -15,7 +16,7 @@
     let trigger = $popupData.trigger
     let existingShortcuts = $popupData.existingShortcuts || []
 
-    let layoutRef = mode === "slide_shortcut" ? _show().layouts("active").ref()[0] || [] : []
+    let layoutRef = mode === "slide_shortcut" ? getLayoutRef() : []
     let actions = mode === "slide_shortcut" ? layoutRef[index].data?.actions || {} : {}
     let currentShortcut = mode === "slide_shortcut" ? (actions.slide_shortcut || {}).key : value
 

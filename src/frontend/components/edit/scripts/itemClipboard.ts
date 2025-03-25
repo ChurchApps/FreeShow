@@ -7,6 +7,7 @@ import { _show } from "../../helpers/shows"
 import { getStyles } from "../../helpers/style"
 import { boxes } from "../values/boxes"
 import { itemEdits } from "../values/item"
+import { getLayoutRef } from "../../helpers/show"
 
 type StyleClipboard = {
     keys: { [key: string]: any }
@@ -55,7 +56,7 @@ export function getItemStyle(item: Item): StyleClipboard {
 }
 
 export function getSlideStyle(): StyleClipboard {
-    let ref = _show().layouts("active").ref()[0]
+    let ref = getLayoutRef()
     let settings = _show()
         .slides([ref[get(activeEdit).slide!].id])
         .get("settings")[0]
@@ -64,7 +65,7 @@ export function getSlideStyle(): StyleClipboard {
 }
 
 export function getFilterStyle(): StyleClipboard {
-    let ref = _show().layouts("active").ref()[0]
+    let ref = getLayoutRef()
     let slideData = ref[get(activeEdit).slide!].data
 
     const filterKeys = ["filterEnabled", "backdrop-filter", "filter"]

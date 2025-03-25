@@ -22,10 +22,11 @@
     import Editbox from "../editbox/Editbox.svelte"
     import { getUsedChords } from "../scripts/chords"
     import { setCaretAtEnd } from "../scripts/textStyle"
+    import { getLayoutRef } from "../../helpers/show"
 
     $: currentShow = $activeShow?.id || $activeEdit.showId || ""
     $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show(currentShow).slides().get().length) activeEdit.set({ slide: 0, items: [], showId: currentShow })
-    $: ref = currentShow && $showsCache[currentShow] ? _show(currentShow).layouts("active").ref()[0] || [] : []
+    $: ref = currentShow && $showsCache[currentShow] ? getLayoutRef(currentShow) : []
     $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show(currentShow).slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
 
     let lines: [string, number][] = []

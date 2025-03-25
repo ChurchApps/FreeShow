@@ -52,11 +52,6 @@ import checkForUpdates from "../utils/updater"
 import { sendToMain } from "./main"
 
 export const mainResponses: MainResponses = {
-    [Main.SAVE]: async (a) => {
-        if (userDataPath === null) updateDataPath()
-        save(a)
-    },
-    ////////
     // DEV
     [Main.LOG]: (data) => console.log(data),
     [Main.IS_DEV]: () => !isProd,
@@ -87,6 +82,10 @@ export const mainResponses: MainResponses = {
     [Main.MINIMIZE]: () => getMainWindow()?.minimize(),
     [Main.FULLSCREEN]: () => getMainWindow()?.setFullScreen(!getMainWindow()?.isFullScreen()),
     /////////////////////////
+    [Main.SAVE]: async (a) => {
+        if (userDataPath === null) updateDataPath()
+        save(a)
+    },
     [Main.IMPORT]: (data) => startImport(data),
     [Main.BIBLE]: (data) => loadScripture(data),
     [Main.SHOW]: (data) => loadShow(data),

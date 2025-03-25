@@ -67,7 +67,7 @@
             let defaultStyle: string = ""
 
             // split text/item styles
-            Object.entries(styles).forEach(([key, value]: any) => {
+            Object.entries(styles).forEach(([key, value]) => {
                 if (Object.keys(defaultItemStyle).includes(key) && active === "item") defaultStyle += `${key}: ${defaultItemStyle[key]};`
                 else if (!itemKeys.includes(key)) textStyle += `${key}: ${value};`
                 else itemStyle += `${key}: ${value};`

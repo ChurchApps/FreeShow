@@ -1,3 +1,5 @@
+import type { TrimmedShows } from "../Show"
+
 export enum ToMain {
     ALERT = "ALERT",
     TOAST = "TOAST",
@@ -40,7 +42,7 @@ export interface ToMainSendPayloads {
     [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string; name?: string; extension?: string } | string)[]; custom?: any }
     [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }
     [ToMain.SAVE2]: { closeWhenFinished: boolean; customTriggers: any }
-    [ToMain.REFRESH_SHOWS2]: { [key: string]: any }
+    [ToMain.REFRESH_SHOWS2]: TrimmedShows
     [ToMain.RESTORE2]: { starting?: boolean; finished?: boolean }
     [ToMain.API_TRIGGER2]: { action: string; returnId: string; data: any }
     [ToMain.OPEN_FOLDER2]: { channel: string; path: string; showsPath?: string }

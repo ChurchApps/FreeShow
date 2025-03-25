@@ -10,6 +10,7 @@
     import { _show } from "../../helpers/shows"
     import Center from "../../system/Center.svelte"
     import { onMount } from "svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     const DEFAULT_STREAM = { name: "", value: "" }
 
@@ -42,7 +43,7 @@
         streamId = e.detail.id
         // let stream = $audioStreams[streamId]
 
-        let ref = _show().layouts("active").ref()[0][slideIndex]
+        let ref = getLayoutRef()[slideIndex]
         let data = ref?.data?.actions || {}
 
         // TODO: is this correct?

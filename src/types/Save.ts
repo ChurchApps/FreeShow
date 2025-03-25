@@ -4,7 +4,7 @@ import type { History } from "./History"
 import type { Media } from "./Main"
 import type { Folders, Projects } from "./Projects"
 import type { Themes } from "./Settings"
-import type { Overlays, Shows, Templates } from "./Show"
+import type { Overlays, Shows, Templates, TrimmedShows } from "./Show"
 import type { StageLayouts } from "./Stage"
 
 export type SaveList = SaveListSettings | SaveListSyncedSettings | "themes" | "events" | "templates" | "overlays" | "driveKeys"
@@ -83,7 +83,7 @@ export interface SaveData {
     SETTINGS: { [key in SaveListSettings]: any }
     SYNCED_SETTINGS: { [key in SaveListSyncedSettings]: any }
     // SHOWS
-    SHOWS: any
+    SHOWS: TrimmedShows
     STAGE_SHOWS: StageLayouts
     // STORES
     PROJECTS: { projects: Projects; folders: Folders; projectTemplates: Projects }

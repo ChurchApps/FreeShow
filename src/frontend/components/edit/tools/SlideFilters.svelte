@@ -2,6 +2,7 @@
     import { activeEdit, activeShow, showsCache } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getFilters } from "../../helpers/style"
     import { addFilterString } from "../scripts/textStyle"
@@ -13,7 +14,7 @@
     // get slide filters
     $: currentShow = $activeShow?.id || ""
     $: currentSlide = $activeEdit.slide || 0
-    $: ref = $showsCache[currentShow] ? _show(currentShow).layouts("active").ref()[0] : {}
+    $: ref = $showsCache[currentShow] ? getLayoutRef(currentShow) : {}
 
     $: currentSlideData = ref?.[currentSlide]?.data || null
 

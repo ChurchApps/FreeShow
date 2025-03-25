@@ -13,6 +13,7 @@ import { removeExtension } from "../helpers/media"
 import { getDynamicIds } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
+import { getLayoutRef } from "../helpers/show"
 
 const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
@@ -72,7 +73,7 @@ const loadActions = {
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
     slide_groups: (items: ContextMenuItem[]) => {
         let selectedIndex = get(selected).data[0]?.index
-        let slideRef = _show().layouts("active").ref()[0]?.[selectedIndex] || {}
+        let slideRef = getLayoutRef()?.[selectedIndex] || {}
         let currentSlide = _show().get("slides")[slideRef.id]
         if (!currentSlide) return []
 
@@ -85,7 +86,7 @@ const loadActions = {
         return sortItemsByLabel(items)
     },
     actions: () => {
-        let slideRef = _show().layouts("active").ref()[0]?.[get(selected).data[0]?.index]
+        let slideRef = getLayoutRef()?.[get(selected).data[0]?.index]
         let currentActions = slideRef?.data?.actions
 
         let slideActions = [
@@ -119,7 +120,7 @@ const loadActions = {
         return itemActions
     },
     remove_layers: () => {
-        let layoutSlides = _show().layouts("active").ref()[0] || []
+        let layoutSlides = getLayoutRef()
         let layoutSlide = layoutSlides[get(selected).data[0]?.index] || {}
 
         // text content
@@ -244,7 +245,7 @@ const loadActions = {
             currentBindings = editItems[0]?.bindings || []
         } else {
             let selectedIndex = get(selected).data[0]?.index
-            let currentSlide = _show().layouts("active").ref()[0]?.[selectedIndex] || {}
+            let currentSlide = getLayoutRef()?.[selectedIndex] || {}
             currentBindings = currentSlide.data?.bindings || []
         }
 

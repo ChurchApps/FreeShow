@@ -6,12 +6,13 @@
     import { _show } from "../../helpers/shows"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     let action = $popupData.action
     let type = $activeEdit.type
     let indexes: number[] = $activeEdit.items
 
-    let layoutRef = _show().layouts("active").ref()[0] || []
+    let layoutRef = getLayoutRef()
     let slideRef = layoutRef[$activeEdit.slide!] || {}
     let slideItems: Item[] = _show().get("slides")?.[slideRef.id]?.items || []
 

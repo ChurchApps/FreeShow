@@ -1,15 +1,16 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
+    import { Unsubscriber } from "svelte/store"
     import { uid } from "uid"
-    import { Recording } from "../../../../types/Show"
+    import type { Recording } from "../../../../types/Show"
     import { activeSlideRecording, dictionary, labelsDisabled, outputs, showsCache, special } from "../../../stores"
     import { newToast } from "../../../utils/common"
+    import { addSlideAction } from "../../actions/actions"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs } from "../../helpers/output"
-    import { getGroupName } from "../../helpers/show"
-    import { _show } from "../../helpers/shows"
+    import { getGroupName, getLayoutRef } from "../../helpers/show"
     import { playRecording, stopSlideRecording } from "../../helpers/slideRecording"
     import T from "../../helpers/T.svelte"
     import { joinTime, secondsToTime } from "../../helpers/time"
@@ -17,7 +18,6 @@
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
-    import { addSlideAction } from "../../actions/actions"
 
     export let showId: string
 
@@ -25,7 +25,7 @@
     $: activeLayout = show.settings.activeLayout
     $: showLayout = show.layouts[activeLayout] || {}
     $: showSlides = show.slides
-    $: layoutRef = [_show(showId).layouts("active").ref()[0], show][0]
+    $: layoutRef = getLayoutRef(showId, show)
     $: layoutSequence = layoutRef.map(({ id }) => id).join("")
 
     let recordingData: Recording | null = null
@@ -39,8 +39,8 @@
     $: hasChanged = recordingData?.layoutAtRecording !== layoutSequence
 
     let started: boolean = false
-    let outputListenerUnsubscribe: any = null
-    let currentSequence: any[] = []
+    let outputListenerUnsubscribe: Unsubscriber | null = null
+    let currentSequence: { time: number; slideRef: { id: string; index: any } }[] = []
     function toggleRecording() {
         if (started) {
             stopRecording()
@@ -53,10 +53,10 @@
         // LISTEN
         let firstOutputId = getActiveOutputs()[0]
         outputListenerUnsubscribe = outputs.subscribe((a) => {
-            let outSlide: any = a[firstOutputId]?.out?.slide
+            let outSlide = a[firstOutputId]?.out?.slide
             // clear output to stop recording
             if (started && currentSequence.length && !outSlide) return stopRecording()
-            if (!outSlide || outSlide.layout !== activeLayout) return
+            if (!outSlide || outSlide.layout !== activeLayout || outSlide.index === undefined) return
 
             if (!currentSequence.length) newToast("$toast.recording_started")
 
@@ -173,7 +173,7 @@
     }
 
     function groupName({ index }) {
-        let layoutSlide = layoutRef[index]
+        let layoutSlide: any = layoutRef[index]
         if (!layoutSlide) return ""
 
         let childIndex = -1

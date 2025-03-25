@@ -50,6 +50,7 @@ import { getExtension, getFileName, removeExtension } from "./media"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
+import { getLayoutRef } from "./show"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let forceKey = e.ctrlKey || e.metaKey
@@ -550,7 +551,7 @@ export function addOutput(onlyFirst: boolean = false) {
 
     outputs.update((output) => {
         let id = uid()
-        if (get(themes)[get(theme)]?.colors?.secondary) defaultOutput.color = get(themes)[get(theme)]?.colors?.secondary
+        if (get(themes)[get(theme)]?.colors?.secondary) defaultOutput.color = get(themes)[get(theme)].colors.secondary!
         output[id] = clone(defaultOutput)
 
         // set name
@@ -683,7 +684,7 @@ export function getCurrentMediaTransition() {
     let currentOutput = get(outputs)[outputId] || {}
     let out = currentOutput?.out || {}
     let slide = out.slide || null
-    let slideData = get(showsCache) && slide && slide.id !== "temp" ? _show(slide.id).layouts("active").ref()[0]?.[slide.index!]?.data : null
+    let slideData = get(showsCache) && slide && slide.id !== "temp" ? getLayoutRef(slide.id)[slide.index!]?.data : null
     let slideMediaTransition = slideData ? slideData.mediaTransition : null
 
     return slideMediaTransition || transition

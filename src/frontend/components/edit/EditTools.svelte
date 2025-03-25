@@ -1,11 +1,12 @@
 <script lang="ts">
-    import type { Item, LayoutRef, Slide } from "../../../types/Show"
+    import type { Item, Slide } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
     import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
+    import { getLayoutRef } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import Button from "../inputs/Button.svelte"
@@ -69,7 +70,7 @@
         tabs.item.disabled = false
     }
 
-    $: ref = [$showsCache, _show().layouts("active").ref()[0] || []][1] as LayoutRef[]
+    $: ref = getLayoutRef("active", $showsCache)
 
     $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
 
@@ -162,7 +163,7 @@
             return
         }
 
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         let slide = ref[$activeEdit.slide!].id
         if (!slide) return
 
@@ -274,7 +275,7 @@
                 return
             }
 
-            let ref = _show().layouts("active").ref()[0] || []
+            let ref = getLayoutRef()
             let slideId = ref[$activeEdit.slide ?? ""]?.id
 
             history({

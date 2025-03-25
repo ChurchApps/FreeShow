@@ -81,7 +81,7 @@ import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
 import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput, toggleOutput } from "../helpers/output"
 import { select } from "../helpers/select"
-import { removeTemplatesFromShow, updateShowsList } from "../helpers/show"
+import { getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { dynamicValueText, sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
@@ -729,7 +729,7 @@ const actions = {
         if (obj.sel?.id === "slide") {
             showsCache.update((a) => {
                 obj.sel!.data.forEach((b) => {
-                    let ref = _show().layouts("active").ref()[0]?.[b.index] || []
+                    let ref = getLayoutRef()?.[b.index] || {}
                     let slides = a[get(activeShow)!.id].layouts?.[a[get(activeShow)!.id]?.settings?.activeLayout]?.slides
                     if (!slides) return
 
@@ -908,7 +908,7 @@ const actions = {
         let indexes: number[] = obj.sel.data.map(({ index }) => index)
         let newData: any = null
 
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         let layoutSlide = ref[slide]?.data || {}
 
         if (type === "image") {
@@ -1120,7 +1120,7 @@ const actions = {
     selectAll: (obj: ObjData) => selectAll(obj.sel),
 
     bind_slide: (obj: ObjData) => {
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         let outputId = obj.menu.id || ""
 
         let indexes: number[] = obj.sel?.data.map(({ index }) => index) || []
@@ -1167,7 +1167,7 @@ const actions = {
         }
 
         let slideIndex: number = get(activeEdit).slide || 0
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         let slideRef = ref[slideIndex]
 
         let itemValues = _show().slides([slideRef.id]).items(items).get("bindings")[0]
@@ -1228,7 +1228,7 @@ const actions = {
         }
 
         let showId = get(activeShow)?.id || ""
-        let ref = _show(showId).layouts("active").ref()[0]
+        let ref = getLayoutRef(showId)
         let slideId = ref[edit.slide || 0]?.id || ""
 
         showsCache.update((a) => {
@@ -1273,7 +1273,7 @@ const actions = {
     },
     cut_in_half: (obj: ObjData) => {
         if (obj.sel?.id === "slide") {
-            let oldLayoutRef = clone(_show().layouts("active").ref()[0])
+            let oldLayoutRef = clone(getLayoutRef())
             let previousSpiltIds: string[] = []
 
             // go backwards to prevent wrong index when splitted
@@ -1301,7 +1301,7 @@ const actions = {
             let textItemIndex: number = get(activeEdit).items[0] ?? -1
             if (textItemIndex < 0) return
 
-            let slideRef = _show().layouts("active").ref()[0][editSlideIndex]
+            let slideRef = getLayoutRef()[editSlideIndex]
             if (!slideRef) return
             splitItemInTwo(slideRef, textItemIndex)
         }
@@ -1375,7 +1375,7 @@ const actions = {
 
 function changeSlideAction(obj: ObjData, id: string) {
     let layoutSlide: number = obj.sel?.data[0]?.index || 0
-    let ref = _show().layouts("active").ref()[0]
+    let ref = getLayoutRef()
     if (!ref[layoutSlide]) return
 
     // ONLY ONE
@@ -1480,7 +1480,7 @@ function changeSlideAction(obj: ObjData, id: string) {
 }
 
 export function removeGroup(data: any[]) {
-    let ref = _show().layouts("active").ref()[0]
+    let ref = getLayoutRef()
     let firstSlideId = ref[0].id
 
     let removeSlideIds: string[] = []
@@ -1546,7 +1546,7 @@ export function removeGroup(data: any[]) {
 }
 
 export function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
-    let ref = _show().layouts("active").ref()[0]
+    let ref = getLayoutRef()
     let parents: any[] = []
     let childs: any[] = []
 
@@ -1611,7 +1611,7 @@ export function format(id: string, obj: ObjData, data: any = null) {
         return
     }
 
-    let ref = _show().layouts("active").ref()[0]
+    let ref = getLayoutRef()
     if (obj.sel?.id?.includes("slide")) {
         slideIds = obj.sel.data.map((a) => ref[a.index].id)
     } else {

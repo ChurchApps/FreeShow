@@ -132,10 +132,7 @@ export function loadBible(active: string, index: number = 0, bible: any) {
     return bible
 }
 
-export function receiveBibleContent(msg: any) {
-    if (msg.channel !== "BIBLE") return
-    const data = msg.data
-
+export function receiveBibleContent(data: any) {
     if (data.error === "not_found" || !data.content?.[1]) return
 
     const content = data.content[1] || {}

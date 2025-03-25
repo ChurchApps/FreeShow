@@ -5,7 +5,7 @@
     import { getStyleResolution } from "../slide/getStyleResolution"
 
     $: outputId = getActiveOutputs($outputs, true, true, true)[0]
-    // $: ref = $activeShow?.id ? _show().layouts("active").ref()[0] : null
+    // $: ref = $activeShow?.id ? getLayoutRef() : null
     // $: currentOutput = $outputs[outputId] || {}
     // $: Slide = currentOutput.out?.slide && ref ? _show().slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
 

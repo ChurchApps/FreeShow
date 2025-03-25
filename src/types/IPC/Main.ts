@@ -195,7 +195,7 @@ export interface MainReturnPayloads {
     [Main.IP]: NodeJS.Dict<os.NetworkInterfaceInfo[]>
     ///
     // [Main.SAVE]: { closeWhenFinished: boolean; customTriggers: any } | Promise<void>
-    [Main.SHOWS]: { [key: string]: any }
+    [Main.SHOWS]: TrimmedShows
     // STORES
     [Main.SYNCED_SETTINGS]: { [key in SaveListSyncedSettings]: any }
     [Main.STAGE_SHOWS]: StageLayouts
@@ -212,7 +212,7 @@ export interface MainReturnPayloads {
     // WINDOW
     [Main.MAXIMIZED]: boolean
     /////////////////////
-    [Main.BIBLE]: { id: string; error?: string; content?: [string, Bible] }
+    [Main.BIBLE]: { id: string; error?: string; content?: [string, Bible]; data?: { index?: number } }
     [Main.SHOW]: { id: string; error?: string; content?: [string, Show] }
     ///
     [Main.GET_DISPLAYS]: Display[]
@@ -245,8 +245,6 @@ export interface MainReturnPayloads {
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
     [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
     [Main.READ_FILE]: { content: string }
-    [Main.OPEN_FOLDER]: { path: string; showsPath?: string } | void
-    [Main.OPEN_FILE]: { id: string; channel: string; files: string[]; content: { [key: string]: string } } | void
     [Main.PCO_DISCONNECT]: { success: boolean }
 }
 

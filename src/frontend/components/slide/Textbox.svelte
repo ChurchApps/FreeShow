@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import type { Styles } from "../../../types/Settings"
     import type { Item } from "../../../types/Show"
     import { currentWindow, outputs, overlays, showsCache, slidesOptions, styles, templates, variables, volume } from "../../stores"
     import Cam from "../drawer/live/Cam.svelte"
@@ -41,7 +42,7 @@
     export let dynamicValues: boolean = true
     export let isStage: boolean = false
     export let customFontSize: number | null = null
-    export let outputStyle: any = {}
+    export let outputStyle: Styles | null = null
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
@@ -76,7 +77,7 @@
     // timer updater
     let today = new Date()
     let loaded = false
-    let dateInterval: any = null
+    let dateInterval: NodeJS.Timeout | null = null
     onMount(() => {
         setTimeout(() => (loaded = true), 100)
 
@@ -151,14 +152,14 @@
     // let outputTemplateAutoSize = false
     $: outputSlide = $outputs[getActiveOutputs()[0]]?.out?.slide
     $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
-    $: if ($currentWindow === "output" && outputStyle.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
+    $: if ($currentWindow === "output" && outputStyle?.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
     // else outputTemplateAutoSize = false
 
     // $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
 
     let customTypeRatio = 1
 
-    let loopStop: any = null
+    let loopStop: NodeJS.Timeout | null = null
     let newCall: boolean = false
     function calculateAutosize() {
         if (isStage && !stageAutoSize) return
@@ -267,7 +268,7 @@
 
                 let letters = value.split("")
                 letters.forEach((letter) => {
-                    let chordIndex = chords.findIndex((a: any) => a.pos === index)
+                    let chordIndex = chords.findIndex((a) => a.pos === index)
                     if (chordIndex >= 0) {
                         html += `<span class="chord">${chords[chordIndex].key}</span>`
                         chords.splice(chordIndex, 1)
@@ -281,7 +282,7 @@
                 })
             })
 
-            chords.forEach((chord: any, i: number) => {
+            chords.forEach((chord, i) => {
                 html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
             })
 

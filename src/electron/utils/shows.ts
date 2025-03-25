@@ -126,11 +126,11 @@ export function refreshAllShows(data: { path: string }) {
 }
 
 export async function getEmptyShows(data: { path: string; cached: Shows }) {
-    if (!doesPathExist(data.path)) return
+    if (!doesPathExist(data.path)) return []
 
     // list all shows in folder
     let filesInFolder: string[] = await readFolderAsync(data.path)
-    if (!filesInFolder.length || filesInFolder.length > 1000) return
+    if (!filesInFolder.length || filesInFolder.length > 1000) return []
 
     let emptyShows: { id: string; name: string }[] = []
 

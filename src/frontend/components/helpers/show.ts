@@ -87,7 +87,7 @@ export function getGroupName({ show, showId }: { show: Show; showId: string }, s
     name += currentGroupNumber
 
     // same group - count
-    let layoutRef = _show(showId).layouts("active").ref()[0]
+    let layoutRef = getLayoutRef(showId)
     let allGroupLayoutSlides = layoutRef.filter((a) => a.id === slideID)
     let currentGroupLayoutIndex = allGroupLayoutSlides.findIndex((a) => a.layoutIndex === layoutIndex)
     let currentLayoutNumberHTML = allGroupLayoutSlides.length > 1 ? '<span class="group_count">' + (currentGroupLayoutIndex + 1) + "</span>" : ""
@@ -302,4 +302,8 @@ export function removeTemplatesFromShow(showId: string, enableHistory: boolean =
         })
         return a
     })
+}
+
+export function getLayoutRef(showId: string = "active", _updater?: Shows | Show) {
+    return _show(showId).layouts("active").ref()[0] || []
 }

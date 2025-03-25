@@ -4,6 +4,7 @@
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -15,7 +16,7 @@
 
         if (($activeShow && $selected.id === "slide") || $selected.id === "group") {
             $selected.data.forEach((a, i) => {
-                let slide = a.id ? a : _show().layouts("active").ref()[0][a.index]
+                let slide = a.id ? a : getLayoutRef()[a.index]
                 if (slide.parent) slide = slide.parent.id
                 else slide = slide.id
                 let name: string = $showsCache[$activeShow!.id].slides[slide].group || ""
@@ -35,7 +36,7 @@
             // TODO: history (x3)
             $selected.data.forEach((a) => {
                 let slideId = a.id
-                let ref = _show().layouts("active").ref()[0][a.index]
+                let ref = getLayoutRef()[a.index]
                 if (!slideId) slideId = ref.id
 
                 // remove global group if active

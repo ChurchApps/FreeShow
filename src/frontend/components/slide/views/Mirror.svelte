@@ -5,6 +5,7 @@
     import { send } from "../../../utils/request"
     import { clone } from "../../helpers/array"
     import { loadShows } from "../../helpers/setShow"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import Stagebox from "../../stage/Stagebox.svelte"
@@ -35,7 +36,7 @@
         if (!nextSlide && showId === ref.showId) return
 
         let slideIndex = item.mirror.useSlideIndex !== false ? index : item.mirror.index || 0
-        let layoutRef = _show(showId).layouts("active").ref()[0] || []
+        let layoutRef = getLayoutRef(showId)
 
         if (nextSlide) {
             slideIndex = index + 1

@@ -1,12 +1,10 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { MAIN } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
-    import { sendMain } from "../../../IPC/main"
+    import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, effectsLibrary, labelsDisabled, media, outLocked, selectAllAudio, selected } from "../../../stores"
-    import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
@@ -92,15 +90,7 @@
     let filesInFolders: { id: string; name: string }[] = []
     let folderFiles: { [key: string]: string[] } = {}
 
-    let listenerId = uid()
-    onDestroy(() => destroy(MAIN, listenerId))
-
-    // receive files
-    window.api.receive(MAIN, receiveContent, listenerId)
-    function receiveContent(msg: any) {
-        if (msg.channel !== "READ_FOLDER") return
-        const data = msg.data
-
+    let listenerId = receiveMain(Main.READ_FOLDER, (data) => {
         filesInFolders = sortByName(data.filesInFolders || [])
 
         if (active !== "all" && data.path !== path) return
@@ -121,7 +111,8 @@
 
         // filterFiles()
         scrollElem?.scrollTo(0, 0)
-    }
+    })
+    onDestroy(() => destroyMain(listenerId))
 
     // search
     $: if (searchValue !== undefined || files) filterSearch()

@@ -5,7 +5,7 @@
     import T from "../../helpers/T.svelte"
 
     export let currentOutput: Output
-    export let ref: LayoutRef[]
+    export let ref: LayoutRef[] | { temp: boolean; items: any; id: string }[]
     export let linesIndex: null | number
     export let maxLines: null | number
 

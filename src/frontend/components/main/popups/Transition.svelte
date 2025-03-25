@@ -15,6 +15,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     // VALUES
 
@@ -147,7 +148,7 @@
     let isStyle: boolean = $popupData.action === "style_transition"
     let popupDataId: string = $popupData.id
     let isSlide: boolean = $selected.id === "slide"
-    let ref = isSlide || isItem ? _show().layouts("active").ref()[0] : []
+    let ref = isSlide || isItem ? getLayoutRef() : []
 
     onMount(() => {
         popupData.set({})

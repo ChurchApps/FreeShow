@@ -393,8 +393,8 @@ export function selectFolder(msg: { channel: string; title?: string; path?: stri
     }
 
     if (msg.channel === "SHOWS") {
-        loadShows({ showsPath: folder })
         sendMain(Main.FULL_SHOWS_LIST, getAllShows({ path: folder }))
+        sendMain(Main.SHOWS, loadShows({ showsPath: folder }))
     }
 
     sendToMain(ToMain.OPEN_FOLDER2, { channel: msg.channel, path: folder })

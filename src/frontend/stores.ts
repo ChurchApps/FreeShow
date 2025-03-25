@@ -37,7 +37,7 @@ export const windowState: Writable<any> = writable({})
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
 export const clipboard: Writable<Clipboard> = writable({ id: null, data: [] })
-export const connections: Writable<{ [key: string]: { entered?: boolean; active?: boolean } }> = writable({})
+export const connections: Writable<{ [key: string]: { [key: string]: { entered?: boolean; active?: string } } }> = writable({})
 export const activePopup: Writable<null | Popups> = writable(null)
 export const activePage: Writable<TopViews> = writable("show")
 export const contextActive: Writable<boolean> = writable(false)

@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { ToMain, ToMainSendPayloads } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
+import type { Show } from "../../types/Show"
 import { triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
@@ -219,7 +220,7 @@ export const mainResponses: MainResponses = {
         createCategory("Planning Center")
 
         // CREATE SHOWS
-        let tempShows: any[] = []
+        let tempShows: { id: string; show: Show }[] = []
         data.shows.forEach((show) => {
             let id = show.id
             delete show.id
@@ -252,7 +253,7 @@ export const mainResponses: MainResponses = {
         projectView.set(false)
     },
     [ToMain.OPEN_FOLDER2]: (a) => {
-        const receiveFOLDER: any = {
+        const receiveFOLDER = {
             MEDIA: () => addDrawerFolder(a, "media"),
             AUDIO: () => addDrawerFolder(a, "audio"),
             SHOWS: () => showsPath.set(a.path),
@@ -279,13 +280,27 @@ export const mainResponses: MainResponses = {
         receiveFILE[a.channel]()
     },
     [ToMain.IMPORT2]: (a) => {
-        const data = a.data
-        const receiveIMPORT: any = {
+        const mainData = a.data
+
+        const receiveFilePathIMPORT = {
+            // Media
+            pdf: () => addToProject("pdf", mainData as string[]),
+            powerkey: () => addToProject("ppt", mainData as string[]),
+        }
+        if (mainData.find((a) => typeof a === "string")) {
+            if (!receiveFilePathIMPORT[a.channel]) return
+            receiveFilePathIMPORT[a.channel]()
+            return
+        }
+
+        const data = mainData as { content: string; name?: string; extension?: string }[]
+
+        const receiveIMPORT = {
             // FreeShow
             freeshow: () => importShow(data),
             freeshow_project: () => importProject(data),
-            freeshow_template: () => importSpecific(a, templates),
-            freeshow_theme: () => importSpecific(a, themes),
+            freeshow_template: () => importSpecific(data, templates),
+            freeshow_theme: () => importSpecific(data, themes),
             // Text
             txt: () => convertTexts(data),
             chordpro: () => convertChordPro(data),
@@ -303,8 +318,6 @@ export const mainResponses: MainResponses = {
             easyslides: () => convertEasyslides(data),
             verseview: () => convertVerseVIEW(data),
             // Media
-            pdf: () => addToProject("pdf", data as string[]),
-            powerkey: () => addToProject("ppt", data as string[]),
             lessons: () => convertLessonsPresentation(data),
             // Other
             calendar: () => convertCalendar(data),

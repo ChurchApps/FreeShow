@@ -109,7 +109,7 @@
             return
         }
 
-        currentLayout = clone(_show(slide.id).layouts([slide.layout]).ref()?.[0] || [])
+        currentLayout = clone(_show(slide.id).layouts([slide.layout]).ref()[0] || [])
         slideData = currentLayout[slide?.index]?.data || null
 
         // don't refresh content unless it changes
@@ -276,7 +276,7 @@
     {/if}
 
     <!-- "underlays" -->
-    {#if layers.includes("overlays")}
+    {#if layers.includes("overlays") && clonedOverlays}
         <!-- && outUnderlays?.length -->
         <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outUnderlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
     {/if}
@@ -314,9 +314,10 @@
         {/if}
 
         <!-- overlays -->
-        <!-- {#if outOverlays?.length} -->
-        <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
-        <!-- {/if} -->
+        <!-- outOverlays?.length -->
+        {#if clonedOverlays}
+            <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
+        {/if}
     {/if}
 
     {#if slide?.attributionString}

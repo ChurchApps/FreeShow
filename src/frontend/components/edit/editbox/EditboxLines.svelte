@@ -15,6 +15,7 @@
     import { getStyles } from "../../helpers/style"
     import autosize, { AutosizeTypes } from "../scripts/autosize"
     import EditboxChords from "./EditboxChords.svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     export let item: Item
     export let ref: {
@@ -158,7 +159,7 @@
         if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
         let editItemIndex: number = $activeEdit.items[0] ?? Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) ?? 0
 
-        let layoutRef = _show().layouts("active").ref()[0]
+        let layoutRef = getLayoutRef()
         let slideRef = layoutRef[editIndex]
         if (!slideRef) return
 
@@ -609,6 +610,7 @@
             <div
                 bind:this={textElem}
                 on:mousemove={(e) => {
+                    if (!textElem) return
                     let newLines = chordMove(e, { textElem, item })
                     if (newLines) item.lines = newLines
                 }}

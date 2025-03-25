@@ -12,7 +12,7 @@
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
 
-    export let currentOutput: Output
+    export let currentOutput: Output | null
     export let outputId: string
     export let big: boolean = false
 

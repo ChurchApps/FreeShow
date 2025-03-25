@@ -1,14 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
-    import { MAIN } from "../../../types/Channels"
     import { popupData } from "../../stores"
-    import { destroy, receive } from "../../utils/request"
     import T from "../helpers/T.svelte"
     import Checkbox from "../inputs/Checkbox.svelte"
 
-    import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
-    import { requestMain } from "../../IPC/main"
+    import { destroyMain, receiveMain, requestMain } from "../../IPC/main"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import Dropdown from "../inputs/Dropdown.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
@@ -73,21 +70,14 @@
         setTimeout(() => setValues("note", 0), 50)
     }
 
-    let id = uid()
-    receive(
-        MAIN,
-        {
-            RECEIVE_MIDI: (msg) => {
-                if (!autoValues) return
-                if (msg.id === $popupData.id && msg.type === midi.type) {
-                    midi.values = msg.values
-                    if (firstActionId.includes("index_")) midi.values.velocity = -1
-                }
-            },
-        },
-        id
-    )
-    onDestroy(() => destroy(MAIN, id))
+    let listenerId = receiveMain(Main.RECEIVE_MIDI, (data) => {
+        if (!autoValues || !data) return
+        if (data.id === $popupData.id && data.type === midi.type) {
+            midi.values = data.values
+            if (firstActionId.includes("index_")) midi.values.velocity = -1
+        }
+    })
+    onDestroy(() => destroyMain(listenerId))
 
     let autoValues: boolean = false
     function toggleAutoValues(e: any) {

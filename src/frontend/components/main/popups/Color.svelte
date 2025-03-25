@@ -7,13 +7,14 @@
     import Button from "../../inputs/Button.svelte"
     import Color from "../../inputs/Color.svelte"
     import T from "../../helpers/T.svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     let value: string = "#FFFFFF"
     $: console.log(value)
     onMount(() => {
         if ($selected.id === "slide") {
             let firstSelected = $selected.data[0]
-            let ref: any = _show().layouts("active").ref()[0][firstSelected.index]
+            let ref: any = getLayoutRef()[firstSelected.index]
             if (ref.type === "child") ref = ref.parent
             value = _show().slides([ref.id]).get("color")[0] || ""
         } else if ($selected.id === "group") {
@@ -28,7 +29,7 @@
     const actions = {
         slide: () => {
             $selected.data.forEach((a) => {
-                let ref: any = a.id ? { id: a.id } : _show().layouts("active").ref()[0][a.index]
+                let ref: any = a.id ? { id: a.id } : getLayoutRef()[a.index]
                 if (ref.type === "child") ref = ref.parent
                 console.log(ref)
 

@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Popups } from "../../../../types/Main"
+    import type { StageItem } from "../../../../types/Stage"
     import type { DrawerTabIds } from "../../../../types/Tabs"
     import { activeDrawerTab, activePage, activePopup, activeStage, drawer, drawerTabsData, outputs, stageShows, timers, variables } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
@@ -30,8 +31,8 @@
     $: stageShow = $stageShows[$activeStage.id || ""] || {}
     $: stageOutputId = stageShow?.settings?.output || getActiveOutputs($outputs, true, true)[0]
 
-    let enabledItems: any
-    $: enabledItems = stageShow.items || []
+    let enabledItems: { [key: string]: StageItem }
+    $: enabledItems = stageShow.items || {}
     function click(item: string) {
         if (!$activeStage.id) return
 
@@ -72,8 +73,8 @@
     let timeout: NodeJS.Timeout | null = null
 
     const typeOrder = { counter: 1, clock: 2, event: 3 }
-    let timersList: any[] = sortByName(keysToID(clone($timers)), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
-    let variablesList: any[] = sortByName(keysToID($variables))
+    let timersList = sortByName(keysToID(clone($timers)), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
+    let variablesList = sortByName(keysToID($variables))
 
     const drawerPages: { [key: string]: DrawerTabIds } = {
         timer: "functions",

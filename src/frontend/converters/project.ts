@@ -1,16 +1,16 @@
 import { get } from "svelte/store"
-import type { ShowType } from "../../types/Show"
+import type { Show, ShowType } from "../../types/Show"
 import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
 import { activeProject, activeShow, folders, projects, overlays as overlayStores, media as mediaStores, alertMessage, activePopup } from "../stores"
 
-export function importProject(files: any) {
-    files.forEach(({ content }: any) => {
+export function importProject(files: { content: string; name?: string; extension?: string }[]) {
+    files.forEach(({ content }) => {
         let { project, parentFolder, shows, overlays, media } = JSON.parse(content)
 
         // find any parent folder with the same name as previous parent, or place at root
-        if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]: any) => folder.name === parentFolder)?.[0] || "/"
+        if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]) => folder.name === parentFolder)?.[0] || "/"
 
         // add overlays
         if (overlays) {
@@ -34,7 +34,7 @@ export function importProject(files: any) {
         }
 
         // create shows
-        let newShows: any[] = []
+        let newShows: { id: string; show: Show }[] = []
         Object.entries(shows).forEach(([id, show]: any) => {
             if (!show) return
             newShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
@@ -59,7 +59,7 @@ export function addToProject(type: ShowType, filePaths: string[]) {
 
     let projectShows = get(projects)[currentProject]?.shows || []
 
-    let newProjectItems = filePaths.map((filePath: any) => {
+    let newProjectItems = filePaths.map((filePath) => {
         let name: string = getFileName(filePath)
         if (!type) type = getMediaType(getExtension(filePath))
 

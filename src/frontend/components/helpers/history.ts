@@ -98,7 +98,7 @@ export function history(obj: History, undo: null | boolean = null) {
                         .slides([[obj.location!.layoutSlide!]])
                         .remove("background")
                 } else {
-                    let ref = _show(showID).layouts([obj.location!.layout!]).ref()?.[0]?.[obj.location!.layoutSlide!]
+                    let ref = _show(showID).layouts([obj.location!.layout!]).ref()[0]?.[obj.location!.layoutSlide!]
                     if (ref) {
                         let cloudId = get(driveData).mediaId
                         if (ref.data.background && cloudId && cloudId !== "default") {

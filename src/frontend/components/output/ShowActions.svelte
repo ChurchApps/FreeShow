@@ -5,6 +5,7 @@
     import { previewShortcuts } from "../../utils/shortcuts"
     import Icon from "../helpers/Icon.svelte"
     import { refreshOut, setOutput } from "../helpers/output"
+    import { getLayoutRef } from "../helpers/show"
     import { updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
@@ -23,10 +24,10 @@
     $: showIsNotOutputtedSlide = newEditSlide || !slide || slide.id !== $activeShow?.id || !$activeShow || slide.layout !== $showsCache[$activeShow.id]?.settings?.activeLayout
 
     // transition
-    $: slideData = $showsCache && slide && slide.id !== "temp" ? _show(slide.id).layouts("active").ref()[0]?.[slide.index!]?.data : null
+    $: slideData = $showsCache && slide && slide.id !== "temp" ? getLayoutRef(slide.id)[slide.index!]?.data : null
     $: customTransition = slideData ? slideData.transition || slideData.mediaTransition : null
 
-    $: layoutLength = [_show().layouts("active").ref()[0] || [], [$showsCache]][0].length
+    $: layoutLength = getLayoutRef("active", $showsCache).length
 </script>
 
 <span class="group">
@@ -56,7 +57,7 @@
                     setOutput("slide", { id: $activeShow.id, layout: $showsCache[$activeShow.id].settings.activeLayout, index: 0 })
                     // TODO: nextSlide(null)
                 }
-                updateOut("active", $activeEdit.slide || 0, _show().layouts("active").ref()[0], !e.altKey)
+                updateOut("active", $activeEdit.slide || 0, getLayoutRef(), !e.altKey)
             }}
             title={$dictionary.preview?._start + " [Space]"}
             disabled={$outLocked || !$activeShow || !layoutLength}

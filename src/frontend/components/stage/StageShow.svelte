@@ -24,7 +24,7 @@
 
     let lines: [string, number][] = []
     let mouse: any = null
-    let newStyles: any = {}
+    let newStyles: { [key: string]: number | string } = {}
     $: active = $activeStage.items
 
     let ratio: number = 1
@@ -38,12 +38,12 @@
     $: if ($activeStage.id === null && Object.keys($stageShows).length) activeStage.set({ id: sortByName(keysToID($stageShows))[0]?.id, items: [] })
 
     function setStyles() {
-        let items: any = $stageShows[$activeStage.id!].items
-        let newData: any = {}
+        let items = $stageShows[$activeStage.id!].items
+        let newData: { [key: string]: string } = {}
 
         active.forEach((id) => {
-            let styles: any = getStyles(items[id].style)
-            Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
+            let styles = getStyles(items[id].style)
+            Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
 
             let textStyles: string = ""
             Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
@@ -70,7 +70,7 @@
 
     // get video time
     $: if ($currentWindow === "output" && Object.keys(show.items || {}).find((id) => id.includes("video"))) requestVideoData()
-    let interval: any = null
+    let interval: NodeJS.Timeout | null = null
     function requestVideoData() {
         if (interval) return
         interval = setInterval(() => send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId }), 1000) // , stageId

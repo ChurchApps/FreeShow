@@ -2,9 +2,8 @@
     import VirtualList from "@sveltejs/svelte-virtual-list"
     import { onDestroy } from "svelte"
     import { slide } from "svelte/transition"
-    import { MAIN } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
-    import { receiveMain, sendMain } from "../../../IPC/main"
+    import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
     import {
         activeEdit,
         activeFocus,
@@ -24,7 +23,6 @@
         selectAllMedia,
         selected,
     } from "../../../stores"
-    import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName, sortFilenames } from "../../helpers/array"
@@ -156,7 +154,7 @@
 
         filterFiles()
     })
-    onDestroy(() => destroy(MAIN, listenerId))
+    onDestroy(() => destroyMain(listenerId))
 
     let scrollElem: HTMLElement | undefined
 

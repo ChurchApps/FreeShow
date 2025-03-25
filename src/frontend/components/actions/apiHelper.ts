@@ -38,7 +38,7 @@ import { setDrawerTabData } from "../helpers/historyHelpers"
 import { getMediaStyle } from "../helpers/media"
 import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
 import { loadShows, setShow } from "../helpers/setShow"
-import { getLabelId } from "../helpers/show"
+import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { getPlainEditorText } from "../show/getTextEditor"
@@ -68,7 +68,7 @@ export function gotoGroup(dataGroupId: string) {
     let currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
     if (!currentShowId) return
 
-    let showRef = _show(currentShowId).layouts("active").ref()[0] || []
+    let showRef = getLayoutRef(currentShowId)
     let groupIds = showRef.map((a) => a.id)
     let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
     if (!showGroups.length) return
@@ -136,7 +136,7 @@ export function selectSlideByName(name: string) {
     let sortedSlides = sortByClosestMatch(slides, getLabelId(name, false), "group")
     if (!sortedSlides[0]) return
 
-    let showRef = _show().layouts("active").ref()[0]
+    let showRef = getLayoutRef()
     if (!showRef) return newToast("$toast.midi_no_show")
 
     let index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
@@ -262,7 +262,7 @@ export async function rearrangeGroups(data: API_rearrange) {
     let trigger = data.to > data.from ? "end" : ""
     let pos = trigger === "end" ? 1 : 0
 
-    let ref = _show(data.showId).layouts("active").ref()[0]
+    let ref = getLayoutRef(data.showId)
     let dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
     let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex! - pos
     if (isNaN(dropIndex)) dropIndex = ref.length

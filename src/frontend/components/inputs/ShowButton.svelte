@@ -7,7 +7,7 @@
     import { getFileName, getMediaStyle, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
-    import { checkName } from "../helpers/show"
+    import { checkName, getLayoutRef } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
@@ -116,7 +116,7 @@
         let currentOutput = $outputs[outputId] || {}
 
         if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
-            let layoutRef = _show().layouts("active").ref()[0] || []
+            let layoutRef = getLayoutRef()
             let firstEnabledIndex: number = layoutRef.findIndex((a) => !a.data.disabled) || 0
             updateOut("active", firstEnabledIndex, layoutRef, !e.altKey)
 

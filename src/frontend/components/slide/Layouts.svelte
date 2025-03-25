@@ -44,13 +44,16 @@
         )
     }
 
-    function addLayout(e: any): any {
-        if (!e.ctrlKey && !e.metaKey) return duplicate({ id: "layout" })
+    function addLayout(e: any) {
+        if (!e.ctrlKey && !e.metaKey) {
+            duplicate({ id: "layout" })
+            return
+        }
 
         history({ id: "UPDATE", newData: { key: "layouts", subkey: uid() }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
     }
 
-    const slidesViews: any = { grid: "simple", simple: "list", list: "lyrics", lyrics: "grid" }
+    const slidesViews = { grid: "simple", simple: "list", list: "lyrics", lyrics: "grid" }
 
     function changeName(e: any) {
         let currentLayout = e.detail?.id?.slice("layout_".length)
@@ -76,7 +79,7 @@
         }
     }
 
-    let edit: boolean = false
+    let edit: string | boolean = false
 
     let zoomOpened: boolean = false
     function mousedown(e: any) {

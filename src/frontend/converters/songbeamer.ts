@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Chords, ID, Item, Layout, Line, Slide, SlideData } from "../../types/Show"
+import type { Chords, ID, Item, Layout, Line, Show, Slide, SlideData } from "../../types/Show"
 import { TranslationMethod } from "../../types/Songbeamer"
 import { ShowObj } from "../classes/Show"
 import { history } from "../components/helpers/history"
@@ -69,7 +69,8 @@ export function convertSongbeamerFiles({ files = [], category = "Songbeamer", tr
         encoding,
         translationMethod,
     }
-    let tempShows: { id: string; show: ShowObj }[] = []
+
+    let tempShows: { id: string; show: Show }[] = []
     files.forEach(({ name, content }) => {
         if (content.substring(0, 3) === BOM8) {
             content = content.substring(3)
@@ -77,7 +78,7 @@ export function convertSongbeamerFiles({ files = [], category = "Songbeamer", tr
         if (content.charAt(0) === BOM16) {
             content = content.substring(1)
         }
-        let show: ShowObj = convertSongbeamerFileToShow(name, content, settings)
+        let show = convertSongbeamerFileToShow(name, content, settings)
         tempShows.push({
             id: uid(),
             show: show,
@@ -86,7 +87,7 @@ export function convertSongbeamerFiles({ files = [], category = "Songbeamer", tr
     setTempShows(tempShows)
 }
 
-function convertSongbeamerFileToShow(name: string, text: string, settings: ImportSettings): ShowObj {
+function convertSongbeamerFileToShow(name: string, text: string, settings: ImportSettings) {
     let categoryId: string | null = null
     if (get(categories)[settings.category]) {
         categoryId = settings.category
@@ -142,7 +143,7 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
         }
     }
 
-    return show
+    return show as Show
 }
 
 function getTags(tags: string[]) {

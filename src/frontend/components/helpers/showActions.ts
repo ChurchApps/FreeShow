@@ -46,7 +46,7 @@ import { clone } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
-import { initializeMetadata } from "./show"
+import { getLayoutRef, initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
@@ -229,13 +229,13 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     // go to beginning if live mode & ctrl | no output | last slide active
     let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
     if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || get(showsCache)[currentShow.id]?.settings.activeLayout !== slide.layout)))) {
-        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow.id] || !_show(currentShow.id).layouts("active").ref()[0]?.length) return goToNextProjectItem()
+        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) return goToNextProjectItem()
 
         let id = loop ? slide?.id : currentShow.id
         if (!id) return
 
         // layout = GetLayout()
-        layout = _show(id).layouts("active").ref()[0]
+        layout = getLayoutRef(id)
         if (!layout?.filter((a) => !a.data.disabled).length) return
 
         index = 0
@@ -458,7 +458,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     // if (!hasLinesEnded && isFirstSlide) isFirstSlide = false
     if (activeShowLayout !== slide?.layout && hasLinesEnded && (index < 0 || isFirstSlide)) {
         slide = null
-        layout = _show().layouts("active").ref()[0]
+        layout = getLayoutRef()
         activeLayout = activeShowLayout
         index = (layout?.length || 0) - 1
     }
@@ -812,7 +812,7 @@ export async function startShow(showId: string) {
     let activeLayout = get(showsCache)[showId].settings?.activeLayout || ""
 
     // slideClick() - Slides.svelte
-    let slideRef = _show(showId).layouts("active").ref()[0]
+    let slideRef = getLayoutRef(showId)
     if (!slideRef[0]) return
 
     setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })

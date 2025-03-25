@@ -1,7 +1,7 @@
 <script lang="ts">
     import { dictionary, groups, outputs } from "../../../stores"
     import { getActiveOutputs } from "../../helpers/output"
-    import { getGroupName } from "../../helpers/show"
+    import { getGroupName, getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
 
     export let tracker: any
@@ -15,7 +15,7 @@
     $: currentSlideOut = $outputs[outputId]?.out?.slide || null
     $: currentShowId = currentSlideOut?.id || ""
     $: currentShowSlide = currentSlideOut?.index ?? -1
-    $: currentLayoutRef = _show(currentShowId).layouts("active").ref()[0] || []
+    $: currentLayoutRef = getLayoutRef(currentShowId)
     $: currentShowSlides = _show(currentShowId).get("slides") || {}
     $: slidesLength = currentLayoutRef.length || 0
 

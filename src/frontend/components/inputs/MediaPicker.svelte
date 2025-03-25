@@ -1,9 +1,8 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
-    import { MAIN } from "../../../types/Channels"
     import { Main } from "../../../types/IPC/Main"
-    import { receiveMain, sendMain } from "../../IPC/main"
-    import { destroy } from "../../utils/request"
+    import { ToMain } from "../../../types/IPC/ToMain"
+    import { destroyMain, receiveToMain, sendMain } from "../../IPC/main"
     import Button from "./Button.svelte"
 
     export let id: string
@@ -25,12 +24,12 @@
     }
 
     let dispatch = createEventDispatcher()
-    let listenerId = receiveMain(Main.OPEN_FILE, (data) => {
-        if (!data || data.id !== id || data.channel !== "MEDIA" || !data.files?.length) return
+    let listenerId = receiveToMain(ToMain.OPEN_FILE2, (data) => {
+        if (data.id !== id || data.channel !== "MEDIA" || !data.files?.length) return
 
         dispatch("picked", multiple ? data.files : data.files[0])
     })
-    onDestroy(() => destroy(MAIN, listenerId))
+    onDestroy(() => destroyMain(listenerId))
 </script>
 
 <Button {title} style={$$props.style || null} on:click={pick} {center} {dark} bold={!title}>

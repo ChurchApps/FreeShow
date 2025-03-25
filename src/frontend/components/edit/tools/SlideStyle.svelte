@@ -3,6 +3,7 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -12,7 +13,7 @@
 
     // TODO: templates / overlays
 
-    $: slideId = _show().layouts("active").ref()[0]?.[$activeEdit.slide || 0]?.id
+    $: slideId = getLayoutRef()[$activeEdit.slide || 0]?.id
     $: editSlide = $showsCache && $activeEdit.slide !== null && slideId ? _show().slides([slideId]).get()[0] : null
 
     $: globalGroup = _show().get("slides")[slideId]?.globalGroup || ""

@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
-    import type { Media, Show, Slide, SlideData } from "../../../types/Show"
+    import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { sendMain } from "../../IPC/main"
     import {
         activeEdit,
@@ -49,12 +49,12 @@
     export let showId: string
     export let slide: Slide
     export let layoutSlide: SlideData
-    export let layoutSlides: any[] = []
+    export let layoutSlides: SlideData[] = []
     export let show: Show
     export let color: string | null = slide.color
     export let index: number
     export let columns: number = 1
-    export let output: any = null
+    export let output: { color: string; line: number; maxLines: number; cached: boolean } | null = null
     export let active: boolean = false
     export let focused: boolean = false
     export let list: boolean = false
@@ -116,7 +116,7 @@
         })
     }
 
-    async function locateFile(fileId: string, path: string, folders: string[], mediaObj: any) {
+    async function locateFile(fileId: string, path: string, folders: string[], mediaObj: Media) {
         if (!path) return
 
         if (checkCloud) {
@@ -201,22 +201,24 @@
     // quick edit
     let html: string = ""
     let previousHTML: string = ""
-    let longest: any = null
+    let longest: number | null = null
 
     onMount(() => {
-        let texts: any[] = slide.items?.map((item) => getItemText(item))
+        let texts = slide.items?.map((item) => getItemText(item))
         if (!texts) return
-        let prev: any = null
+        let prev: number | null = null
         texts.forEach((a, i) => {
             if (!prev || a.length > prev) {
                 prev = a.length
                 longest = i
             }
         })
-        if (longest !== null) update()
+        update()
     })
 
     function update() {
+        if (longest === null) return
+
         // html = `<div class="align" style="${item.align}">`
         html = ""
         slide.items[longest]?.lines?.forEach((line) => {
@@ -233,7 +235,7 @@
         previousHTML = html
         setTimeout(() => {
             showsCache.update((a) => {
-                let lines = a[showId].slides[layoutSlide.id].items[longest]?.lines || []
+                let lines = a[showId].slides[layoutSlide.id].items[longest ?? -1]?.lines || []
                 let textItems = getItems(textElem.children)
                 if (textItems.length) {
                     lines.forEach((line) => {
@@ -245,9 +247,9 @@
         }, 10)
     }
 
-    function getItems(children: any): any[] {
-        let textItems: any[] = []
-        new Array(...children).forEach((child: any) => {
+    function getItems(children: HTMLCollection) {
+        let textItems: string[] = []
+        new Array(...children).forEach((child) => {
             if (child.innerHTML) textItems.push(child.innerHTML)
         })
         return textItems
@@ -258,11 +260,11 @@
         timer = []
         if (Array.isArray(slide.items)) slide.items.forEach(checkItem)
     }
-    function checkItem(item: any) {
+    function checkItem(item: Item) {
         if (item?.type !== "timer") return
 
         $activeTimers.forEach((a, i) => {
-            if (a.showId === showId && a.slideId === layoutSlide.id && a.id === item.timer.id) timer.push(i)
+            if (a.showId === showId && a.slideId === layoutSlide.id && a.id === item.timer?.id) timer.push(i)
         })
     }
 

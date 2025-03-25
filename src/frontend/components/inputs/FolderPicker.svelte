@@ -5,8 +5,8 @@
     import Button from "./Button.svelte"
 
     export let id: string
-    export let title: string | undefined = undefined
-    export let path: string | null = null
+    export let title: string | undefined
+    export let path: string | undefined
     export let style: string = ""
     export let center: boolean = true
 
@@ -17,7 +17,6 @@
             activePopup.set("alert")
         }
 
-        if (!path) return
         sendMain(Main.OPEN_FOLDER, { channel: id, title, path })
     }
 </script>

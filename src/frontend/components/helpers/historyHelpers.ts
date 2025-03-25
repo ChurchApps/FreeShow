@@ -546,7 +546,7 @@ function updateTransparentColors(id: string) {
             let transparentColors: any[] = converts[subId]
 
             transparentColors.forEach(({ id: colorId, opacity }: any) => {
-                let rgba: string | null = makeTransparent(color, opacity)
+                let rgba = makeTransparent(color, opacity)
 
                 a[id].colors[colorId] = rgba
             })

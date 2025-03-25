@@ -7,7 +7,7 @@
     export let mouse: any
     export let newStyles: { [key: string]: string | number }
     export let ratio: number
-    export let active: number[]
+    export let active: (number | string)[]
     export let isStage: boolean = false
 
     let styles: { [key: string]: string | number } = {}
@@ -34,10 +34,16 @@
             let radius = getRadius(e, mouse, ratio)
             styles = { "border-radius": `${radius.toFixed(2)}px;` }
         } else if (moveCondition) {
-            ;[styles, lines] = moveBox(e, mouse, ratio, active, lines)
+            const moved = moveBox(e, mouse, ratio, active, lines)
+            styles = moved.styles
+            lines = moved.lines
         } else if (mouse.e.target.closest(".square")) {
             styles = resizeBox(e, mouse, square, ratio)
-            if (!e.altKey) [styles, lines] = moveBox(e, mouse, ratio, active, lines, styles)
+            if (!e.altKey) {
+                const moved = moveBox(e, mouse, ratio, active, lines, styles)
+                styles = moved.styles
+                lines = moved.lines
+            }
         }
 
         // percentage scale

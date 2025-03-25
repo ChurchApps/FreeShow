@@ -17,13 +17,13 @@
 
     $: layoutSlides = $showsCache[showId]?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
     function countGroupsInLayout(slideId) {
-        let count = layoutSlides.reduce((count: number, slide: any) => (slide.id === slideId ? count + 1 : count), 0)
+        let count = layoutSlides.reduce((count, slide) => (slide.id === slideId ? count + 1 : count), 0)
         return count
     }
 
-    $: globalGroups = Object.entries($groups).map(([id, group]: any) => {
+    $: globalGroups = Object.entries($groups).map(([id, group]) => {
         let name = group.name
-        if (group.default) name = $dictionary.groups?.[group.name]
+        if (group.default) name = $dictionary.groups?.[group.name] || ""
         return { id, group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
     })
 

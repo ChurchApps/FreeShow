@@ -487,7 +487,7 @@
                         <MediaPicker id={"item_" + sessionId} title={typeof input.value === "string" ? input.value : ""} style="width: 100%;" filter={{ name: "Media files", extensions: mediaExtensions }} on:picked={(e) => valueChange(e, input)}>
                             <span style="display: flex;align-items: center;max-width: 100%;">
                                 <Icon id="image" right />
-                                {#if typeof input.value === "string"}
+                                {#if input.value && typeof input.value === "string"}
                                     <p style="padding: 0;opacity: 1;">{getFileName(input.value)}</p>
                                 {:else}
                                     <p style="padding: 0;"><T id="edit.choose_media" /></p>

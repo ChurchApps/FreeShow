@@ -58,7 +58,7 @@ import { pasteText } from "./caretHelper"
 import { history } from "./history"
 import { getFileName, removeExtension } from "./media"
 import { loadShows } from "./setShow"
-import { checkName } from "./show"
+import { checkName, getLayoutRef } from "./show"
 import { _show } from "./shows"
 
 export function copy(clip: Clipboard | null = null, getData: boolean = true) {
@@ -213,7 +213,7 @@ const selectActions = {
     },
     group: (data: any) => {
         let newSelection: any[] = []
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
 
         data.forEach(({ id }) => {
             ref.forEach((b, i) => {
@@ -228,7 +228,7 @@ const selectActions = {
         let itemCount: number = 0
 
         if (!get(activeEdit).type || get(activeEdit).type === "show") {
-            let ref = _show().layouts("active").ref()[0]
+            let ref = getLayoutRef()
             let editSlide = ref[get(activeEdit).slide!]
             let items = _show().slides([editSlide.id]).get()[0].items
             console.log(_show().slides([editSlide.id]).get())
@@ -268,7 +268,7 @@ const selectActions = {
     },
     slide: () => {
         let newSelection: any[] = []
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         if (!ref?.length) return
 
         newSelection = ref.map((_, index) => ({ index, showId: get(activeShow)?.id }))
@@ -370,7 +370,7 @@ const copyActions = {
         return [...items]
     },
     slide: (data: any, fullGroup: boolean = false) => {
-        let ref = _show().layouts("active").ref()?.[0]
+        let ref = getLayoutRef()
         let layouts: any[] = []
         let media: any = {}
 
@@ -465,7 +465,7 @@ const pasteActions = {
             return
         }
 
-        let ref = _show().layouts("active").ref()[0][get(activeEdit).slide!]
+        let ref = getLayoutRef()[get(activeEdit).slide!]
         let items: any[] = []
         data.forEach((item) => {
             items.push(clone(item))
@@ -494,7 +494,7 @@ const pasteActions = {
         // TODO: duplicate each individual slide as their own
 
         // let slides = clone(_show().get().slides)
-        // let ref = _show().layouts("active").ref()[0]
+        // let ref = getLayoutRef()
         let newSlides: any[] = []
 
         let layouts: any[] = []
@@ -605,7 +605,7 @@ const deleteActions = {
         }
 
         let layout = data.layout || _show().get("settings.activeLayout")
-        let slide = data.slideId || _show().layouts("active").ref()[0][data.slide].id
+        let slide = data.slideId || getLayoutRef()[data.slide].id
         history({
             id: "deleteItem",
             location: {
@@ -731,7 +731,7 @@ const deleteActions = {
         let key = data.type === "in" ? "receiveMidi" : "sendMidi"
 
         // remove from all layouts
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         ref.forEach((slideRef, i) => {
             let actions = clone(slideRef.data.actions) || {}
             if (actions[key] !== id) return

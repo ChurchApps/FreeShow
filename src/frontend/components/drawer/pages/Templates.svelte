@@ -17,6 +17,7 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import TemplateSlide from "./TemplateSlide.svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     export let active: string | null
     export let searchValue: string = ""
@@ -90,7 +91,7 @@
                             }
 
                             // one selected slides
-                            let ref = _show().layouts("active").ref()[0]
+                            let ref = getLayoutRef()
                             if ($selected.id === "slide" && $selected.data.length < ref.length) {
                                 $selected.data.forEach(({ index, showId }) => {
                                     let slideId = ref[index]?.id

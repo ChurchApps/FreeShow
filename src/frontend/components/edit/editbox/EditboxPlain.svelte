@@ -11,6 +11,7 @@
     import { history } from "../../helpers/history"
     import { isoLanguages } from "../../main/popups/localization/isoLanguages"
     import { getStyles } from "../../helpers/style"
+    import { getLayoutRef } from "../../helpers/show"
 
     export let item: Item
     export let index: number
@@ -30,7 +31,7 @@
     // actions
     function removeAction(action) {
         // TODO: this is a duplicate of SetTime and other places
-        let layoutRef = _show().layouts("active").ref()[0] || []
+        let layoutRef = getLayoutRef()
         let slideRef = layoutRef[$activeEdit.slide!] || {}
         let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
 

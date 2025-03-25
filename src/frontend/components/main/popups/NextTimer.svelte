@@ -10,9 +10,10 @@
     import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     let value = $popupData.value || 0
-    let layoutRef = _show().layouts("active").ref()[0]
+    let layoutRef = getLayoutRef()
     let allActiveSlides = layoutRef.filter((a) => !a.data.disabled)
     let indexes = $popupData.indexes || layoutRef.map((_, i) => i)
     let allSlides: boolean = !$popupData.indexes?.length

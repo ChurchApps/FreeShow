@@ -35,7 +35,7 @@ import { clone, removeDuplicates } from "./array"
 import { history, historyAwait } from "./history"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
-import { checkName } from "./show"
+import { checkName, getLayoutRef } from "./show"
 import { getVariableNameId } from "./showActions"
 import { _show } from "./shows"
 
@@ -182,7 +182,7 @@ export const dropActions = {
                 // history({ id: "UPDATE", newData: { data: templateId, key: "settings", keys: ["template"] }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_key" } })
                 // history({ id: "SLIDES", newData: { index: drop.index, replace: { settings: isParent } } })
 
-                let ref = _show().layouts("active").ref()[0]
+                let ref = getLayoutRef()
                 let slideId = ref[drop.index!].id
                 let slideSettings = _show().slides([slideId]).get("settings")
                 let oldData = { style: clone(slideSettings) }
@@ -303,7 +303,7 @@ export const dropActions = {
         if (drag.id !== "slide") return
 
         drag.data.forEach(({ index }) => {
-            let ref = _show().layouts("active").ref()[0][index]
+            let ref = getLayoutRef()[index]
             let slides: Slide[] = _show().get().slides
             let slide = ref.type === "child" ? slides[ref.parent!.id] : slides[ref.id]
             let activeTab: string | null = get(drawerTabsData)[get(activeDrawerTab)]?.activeSubTab
@@ -496,7 +496,7 @@ const slideDrop = {
         if (drop.trigger?.includes("end")) drop.index--
         let layoutSlide = drop.index
 
-        let oldMics = _show().layouts("active").ref()[0][layoutSlide]?.data?.mics || []
+        let oldMics = getLayoutRef()[layoutSlide]?.data?.mics || []
         let mics = drag.data
         // remove duplicates
         oldMics.forEach((oldMic) => {
@@ -509,7 +509,7 @@ const slideDrop = {
     slide: ({ drag, drop }: Data, history: History) => {
         let showId = drag.showId || drag.data[0]?.showId || get(activeShow)?.id || ""
         history.id = "slide"
-        let ref = _show(showId).layouts("active").ref()[0] || []
+        let ref = getLayoutRef(showId)
 
         let slides: { [key: string]: Slide } = _show(showId).get().slides
         let oldLayout = _show(showId).layouts("active").get()[0].slides
@@ -577,7 +577,7 @@ const slideDrop = {
         return history
     },
     global_group: ({ drag, drop }: Data, history: History) => {
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         if (!drag.data[0].slide) return
 
         if (drop.center) {
@@ -621,7 +621,7 @@ const slideDrop = {
     overlay: ({ drag, drop }: Data, history: History) => {
         history.id = "SHOW_LAYOUT"
 
-        let ref = _show().layouts("active").ref()[0][drop.index!]
+        let ref = getLayoutRef()[drop.index!]
         if (!ref) {
             // create slide from overlay if dropping not on a slide
             let slides: Slide[] = []
@@ -654,7 +654,7 @@ const slideDrop = {
         newSlides = newSlides.reverse()
 
         // WIP duplicate of global_group
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
 
         history.id = "slide"
 
@@ -771,7 +771,7 @@ const slideDrop = {
         // WIP not in use:
         history.id = "SHOW_LAYOUT"
 
-        let ref = _show().layouts("active").ref()[0][drop.index!]
+        let ref = getLayoutRef()[drop.index!]
         let data: any = ref?.data?.actions || {}
         let key = drag.data[0].type === "in" ? "receiveMidi" : "sendMidi"
         data[key] = drag.data[0].id
@@ -782,7 +782,7 @@ const slideDrop = {
     action: ({ drag, drop }: Data, history: History) => {
         history.id = "SHOW_LAYOUT"
 
-        let ref = _show().layouts("active").ref()[0][drop.index!]
+        let ref = getLayoutRef()[drop.index!]
         let data: any = ref?.data?.actions || {}
 
         let slideActions = data.slideActions || []
@@ -822,7 +822,7 @@ const slideDrop = {
 // HELPERS
 
 function createSlideAction(triggerId: string, slideIndex: number, data: any, removeExisting: boolean = false) {
-    let ref = _show().layouts("active").ref()[0][slideIndex]
+    let ref = getLayoutRef()[slideIndex]
     if (!ref) return
     let actions: any = ref.data?.actions || {}
     let slideActions: any[] = actions.slideActions || []

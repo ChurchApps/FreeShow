@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
+import type { Themes } from "../../types/Settings"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkWindowCapture, displayOutputs, setOutput } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -192,11 +193,11 @@ export function restartOutputs(id: string = "") {
     }, 2200)
 }
 
-export function updateThemeValues(themes: any) {
+export function updateThemeValues(themes: Themes) {
     if (!themes) return
 
-    Object.entries(themes.colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
-    Object.entries(themes.font).forEach(([key, value]: any) => {
+    Object.entries(themes.colors).forEach(([key, value]) => document.documentElement.style.setProperty("--" + key, value))
+    Object.entries(themes.font).forEach(([key, value]) => {
         if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
         document.documentElement.style.setProperty("--font-" + key, value)
     })
@@ -205,7 +206,7 @@ export function updateThemeValues(themes: any) {
     if (!themes.border) themes.border = {}
     // set to 0 if nothing is set
     if (themes.border?.radius === undefined) themes.border.radius = "0"
-    Object.entries(themes.border).forEach(([key, value]: any) => document.documentElement.style.setProperty("--border-" + key, value))
+    Object.entries(themes.border).forEach(([key, value]) => document.documentElement.style.setProperty("--border-" + key, value))
 }
 
 const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = {

@@ -30,6 +30,7 @@
     import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
+    import { getLayoutRef } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { ContextMenuItem, contextMenuItems } from "./contextMenus"
@@ -79,7 +80,7 @@
         },
         disable: () => {
             if ($selected.id === "slide" && $activeShow) {
-                let ref = _show().layouts("active").ref()[0]
+                let ref = getLayoutRef()
                 enabled = ref[$selected.data[0]?.index]?.data?.disabled || false
             } else if ($selected.id === "stage") {
                 enabled = $stageShows[$selected.data[0]?.id]?.disabled
@@ -93,13 +94,13 @@
         },
         slide_transition: () => {
             if ($selected.id === "slide" && $activeShow) {
-                let ref = _show().layouts("active").ref()[0]
+                let ref = getLayoutRef()
                 enabled = !!(ref[$selected.data[0]?.index]?.data?.transition || false)
             }
         },
         transition: () => {
             if ($activeShow && $showsCache[$activeShow.id] && $activeEdit.items.length) {
-                let ref = _show().layouts("active").ref()[0]
+                let ref = getLayoutRef()
                 let slideId = ref[$activeEdit.slide || 0]?.id
                 let item = $showsCache[$activeShow.id].slides?.[slideId]?.items?.[$activeEdit.items[0]] || {}
                 enabled = item.actions?.transition
@@ -107,14 +108,14 @@
                 // console.log($activeShow, $activeEdit)
 
                 // $showsCache[$activeShow.id].slides?.[$activeEdit.]?.
-                // let ref = _show().layouts("active").ref()[0]
+                // let ref = getLayoutRef()
                 // enabled = ref[$selected.data[0]?.index]?.data?.transition || false
             }
         },
         remove_group: () => {
             if ($selected.id !== "slide") return
 
-            let ref = _show().layouts("active").ref()[0]
+            let ref = getLayoutRef()
             const getCurrentSlide = (index) => ref.find((a) => a.layoutIndex === index)
             let parentSlide = $selected.data.find((a) => a.index && getCurrentSlide(a.index)?.type === "parent")
 

@@ -5,6 +5,7 @@ import { getActiveOutputs } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import type { API_id_optional, API_slide } from "./api"
+import { getLayoutRef } from "../helpers/show"
 
 export function getShows() {
     return get(shows) as Shows
@@ -17,7 +18,7 @@ export async function getShow({ id }: { id: string }) {
 
 export async function getShowLayout({ id }: { id: string }) {
     await loadShows([id])
-    return _show(id).layouts("active").ref()[0]
+    return getLayoutRef(id)
 }
 
 export function getProjects() {

@@ -10,6 +10,7 @@
     import { _show } from "../../helpers/shows"
     import Center from "../../system/Center.svelte"
     import { onMount } from "svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     // const types = [
     //     { id: "http", name: "HTTP" },
@@ -45,7 +46,7 @@
     function changeTrigger(e: any) {
         triggerId = e.detail.id
 
-        let ref = _show().layouts("active").ref()[0][slideIndex]
+        let ref = getLayoutRef()[slideIndex]
         let data = ref?.data?.actions || {}
         data.trigger = triggerId
 

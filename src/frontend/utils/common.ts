@@ -81,9 +81,9 @@ export function hideDisplay(ctrlKey: boolean = true) {
     if (!ctrlKey) return
     outputDisplay.set(false)
 
-    let outputsList: any[] = getActiveOutputs(get(allOutputs), false)
+    let outputsList = getActiveOutputs(get(allOutputs), false)
     outputsList.forEach((id) => {
-        let output: any = { id, ...get(allOutputs)[id] }
+        let output = { id, ...get(allOutputs)[id] }
         send(OUTPUT, ["DISPLAY"], { enabled: false, output })
     })
 }

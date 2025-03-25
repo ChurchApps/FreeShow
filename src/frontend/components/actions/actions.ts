@@ -9,6 +9,7 @@ import { convertOldMidiToNewAction } from "./midi"
 import { getActiveOutputs } from "../helpers/output"
 import { newToast, wait } from "../../utils/common"
 import { actionData } from "./actionData"
+import { getLayoutRef } from "../helpers/show"
 
 export function runActionId(id: string) {
     runAction(get(midiIn)[id])
@@ -129,7 +130,7 @@ export function customActionActivation(id: string) {
 export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}, allowMultiple: boolean = false) {
     if (slideIndex < 0) return
 
-    let ref = _show().layouts("active").ref()[0]
+    let ref = getLayoutRef()
     if (!ref[slideIndex]) return
 
     let actions = clone(ref[slideIndex].data?.actions) || {}

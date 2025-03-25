@@ -7,6 +7,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getActiveOutputs, isOutCleared, outputSlideHasContent, setOutput } from "../../helpers/output"
+    import { getLayoutRef } from "../../helpers/show"
     import { getFewestOutputLines, getItemWithMostLines, playNextGroup, updateOut } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import { newSlideTimer } from "../../helpers/tick"
@@ -28,7 +29,7 @@
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
     $: backgroundOutputId = allActiveOutputs.find((id) => getLayersFromId(id).includes("background")) || outputId
-    $: currentBgOutput = backgroundOutputId ? $outputs[backgroundOutputId] || {} : {}
+    $: currentBgOutput = backgroundOutputId ? $outputs[backgroundOutputId] || null : null
 
     function getLayersFromId(id: string) {
         const layers = $styles[$outputs[id]?.style || ""]?.layers
@@ -58,7 +59,7 @@
         // group shortcuts
         if ($activeShow && !e.ctrlKey && !e.metaKey && !$outLocked) {
             // play slide with custom shortcut key
-            let layoutRef = _show().layouts("active").ref()[0] || []
+            let layoutRef = getLayoutRef()
             let slideShortcutMatch = layoutRef.findIndex((ref) => ref.data?.actions?.slide_shortcut?.key === e.key)
             if (slideShortcutMatch > -1 && !e.altKey && !e.shiftKey) {
                 playSlideAtIndex(slideShortcutMatch)
@@ -131,7 +132,7 @@
         let currentShowId = outSlide?.id || ($activeShow !== null ? ($activeShow.type === undefined || $activeShow.type === "show" ? $activeShow.id : null) : null)
         if (!currentShowId) return
 
-        let showRef = _show(currentShowId).layouts("active").ref()[0] || []
+        let showRef = getLayoutRef(currentShowId)
         let groupIds = showRef.map((a) => a.id)
         let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
         if (!showGroups.length) return
@@ -148,7 +149,7 @@
     }
 
     function playSlideAtIndex(index: number) {
-        let slideRef = _show().layouts("active").ref()[0]
+        let slideRef = getLayoutRef()
         if (index === -1) index = slideRef.length - 1
         if (!slideRef[index]) return
 

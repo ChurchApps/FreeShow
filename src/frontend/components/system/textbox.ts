@@ -1,9 +1,9 @@
 import { getStyles } from "./../helpers/style"
 
 const snapDistance: number = 8
-export function moveBox(e: any, mouse: any, ratio: number, active: number[], lines: any[], styles: any = {}) {
+export function moveBox(e: any, mouse: any, ratio: number, active: (number | string)[], lines: [string, number][], styles: { [key: string]: string | number } = {}) {
     let itemElem = mouse.e.target.closest(".item")
-    if (!itemElem.closest(".slide")) return [{}, []]
+    if (!itemElem.closest(".slide")) return { styles: {}, lines: [] }
 
     let isResizing = Object.keys(styles).length > 0
     let squareElem = mouse.e.target.closest(".square")
@@ -36,8 +36,8 @@ export function moveBox(e: any, mouse: any, ratio: number, active: number[], lin
         // get other items pos
         ;[...itemElem.closest(".slide").querySelectorAll(".item")].filter((a) => !a.closest(".preview")).forEach(getItemLines)
 
-        function getItemLines(item: any, i: number) {
-            let id = i
+        function getItemLines(item: HTMLElement, i: number) {
+            let id: number | string = i
             if (item.id) id = item.id
             if (active.includes(id)) return
 
@@ -57,7 +57,7 @@ export function moveBox(e: any, mouse: any, ratio: number, active: number[], lin
         checkMatch([slideHeight / 2], [itemElem.offsetHeight / 2], "yc", (snapDistance * 2) / ratio, true)
     }
 
-    function checkMatch(allLines: number[], items: any[], id: string, margin: any, isCenter: boolean = false) {
+    function checkMatch(allLines: number[], items: number[], id: string, margin: number, isCenter: boolean = false) {
         const side = id.includes("x") ? "left" : "top"
 
         const mousePos =
@@ -70,7 +70,7 @@ export function moveBox(e: any, mouse: any, ratio: number, active: number[], lin
 
         allLines.forEach((linePos: number) => {
             let mouseMatch = mousePos > linePos - margin && mousePos < linePos + margin
-            let boxMatch: undefined | number = items.find((i: any) => boxPos > linePos - i - margin && boxPos < linePos - i + margin)
+            let boxMatch: undefined | number = items.find((i) => boxPos > linePos - i - margin && boxPos < linePos - i + margin)
 
             // snapping resize
             if (isResizing && !isCenter && mouseMatch === true) {
@@ -100,13 +100,13 @@ export function moveBox(e: any, mouse: any, ratio: number, active: number[], lin
                 .replaceAll(",", "")
                 .includes(id + linePos)
             if (boxMatch !== undefined && !linesInclude) lines = [...lines, [id, linePos]]
-            else if (boxMatch === undefined && linesInclude) lines = lines.filter((m: any) => m.join("") !== id + linePos)
+            else if (boxMatch === undefined && linesInclude) lines = lines.filter((m) => m.join("") !== id + linePos)
         })
     }
 
     // WIP remove duplicate lines (both x and same coords (or less than very simular))
 
-    return [styles, lines]
+    return { styles, lines }
 }
 
 // const maxSize = 16

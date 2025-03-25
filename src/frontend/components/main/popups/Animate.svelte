@@ -13,6 +13,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     const easings = [
         { id: "linear", name: "$:easings.linear:$" },
@@ -73,7 +74,7 @@
     function updateAnimation() {
         if (!loaded) return
 
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         let actions = clone(ref[$popupData.indexes[0]]?.data?.actions) || {}
 
         actions.animate = animation

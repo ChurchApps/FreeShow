@@ -2,7 +2,7 @@
     import { activeStage, stageShows, theme, themes } from "../../../stores"
     import { addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
-    import { trackerEdits } from "../../edit/values/boxes"
+    import { type EditInput, trackerEdits } from "../../edit/values/boxes"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -15,7 +15,7 @@
     $: stageItems = $stageShows[$activeStage.id!].items
     $: item = items ? stageItems[items[0]] : null
 
-    let edits: any = {}
+    let edits: { [key: string]: EditInput[] } = {}
     $: if (item) {
         edits = clone(textEdits)
 

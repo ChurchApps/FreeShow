@@ -1,11 +1,10 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import { uid } from "uid"
-    import { MAIN } from "../../../../types/IPC/Main"
+    import { Main } from "../../../../types/IPC/Main"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
+    import { destroyMain, receiveMain } from "../../../IPC/main"
     import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, os, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, scriptureSettings, selected } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, removeDuplicates } from "../../helpers/array"
@@ -180,15 +179,8 @@
         return verses
     }
 
-    let listenerId = uid()
-    onDestroy(() => destroy(MAIN, listenerId))
-
     let notLoaded: boolean = false
-    window.api.receive(MAIN, receiveContent, listenerId)
-    function receiveContent(msg: any) {
-        if (msg.channel !== "BIBLE") return
-        const data = msg.data
-
+    let listenerId = receiveMain(Main.BIBLE, (data) => {
         if (data.error === "not_found") {
             notLoaded = true
             notFound.update((a) => {
@@ -203,15 +195,16 @@
         let currentIndex = data.data?.index || 0
         if (!bibles[currentIndex]) return console.error("could not find bible at index")
 
-        const content = receiveBibleContent(msg)
+        const content = receiveBibleContent(data)
         bibles[currentIndex] = content
 
-        let id = data.content[0] || data.id
+        let id = data.content?.[0] || data.id
         books[id] = content.books as any
 
         if (typeof bookId === "string") bookId = 0
         if (books[id][cachedRef?.bookId]) bookId = cachedRef?.bookId
-    }
+    })
+    onDestroy(() => destroyMain(listenerId))
 
     $: if (active) getBible()
     $: if (books[firstBibleId]?.length && bookId !== undefined) getBook()

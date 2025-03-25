@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { EXPORT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
-    import { requestMain, sendMain } from "../../../IPC/main"
+    import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
     import { send } from "../../../utils/request"
     import { save } from "../../../utils/save"
@@ -106,13 +106,16 @@
 
         setTimeout(() => {
             // this will not include newly created shows not saved yet, but it should not be an issue.
-            requestMain(Main.FULL_SHOWS_LIST, { path: $showsPath }, (data) => {
-                hiddenShows = data || []
-                let deletedShowNames = $deletedShows.map((a) => a.name + ".show")
-                hiddenShows = hiddenShows.filter((name) => !deletedShowNames.includes(name))
-            })
+            sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
         }, 800)
     }
+
+    let listenerId = receiveMain(Main.FULL_SHOWS_LIST, (data) => {
+        hiddenShows = data || []
+        let deletedShowNames = $deletedShows.map((a) => a.name + ".show")
+        hiddenShows = hiddenShows.filter((name) => !deletedShowNames.includes(name))
+    })
+    onDestroy(() => destroyMain(listenerId))
 
     let emptyShows: { id: string; name: string }[] = []
     function deleteEmptyShows() {

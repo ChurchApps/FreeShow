@@ -7,7 +7,7 @@
     import { clone } from "../../helpers/array"
     import { hexToRgb, splitRgb } from "../../helpers/color"
     import { history } from "../../helpers/history"
-    import { getListOfShows, getStageList } from "../../helpers/show"
+    import { getLayoutRef, getListOfShows, getStageList } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import { MAX_FONT_SIZE } from "../scripts/autosize"
@@ -309,7 +309,7 @@
                 }
             }
 
-            let slideId = _show().layouts("active").ref()[0][$activeEdit.slide!].id
+            let slideId = getLayoutRef()[$activeEdit.slide!]?.id
             let slide = clone(_show().slides([slideId]).get()[0]) as Slide
 
             return slide.items[allItems[0]]
@@ -337,7 +337,7 @@
         history({
             id: "setItems",
             newData: { style: { key: input.id, values: [value] } },
-            location: { page: "edit", show: $activeShow!, slide: _show().layouts("active").ref()[0][$activeEdit.slide!].id, items: allItems },
+            location: { page: "edit", show: $activeShow!, slide: getLayoutRef()[$activeEdit.slide!]?.id, items: allItems },
         })
 
         // update values
@@ -393,7 +393,7 @@
         /////
 
         // this is only for show slides
-        let ref = _show().layouts("active").ref()[0] || []
+        let ref = getLayoutRef()
         let slides: string[] = [ref[$activeEdit.slide ?? ""]?.id || "other"]
         let slideItems: number[][] = [allItems]
         let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}

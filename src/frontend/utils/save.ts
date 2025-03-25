@@ -1,5 +1,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
+import type { Projects } from "../../types/Projects"
+import type { Shows } from "../../types/Show"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { sendMain } from "../IPC/main"
@@ -210,9 +212,9 @@ export function save(closeWhenFinished: boolean = false, customTriggers: SaveAct
     sendMain(Main.SAVE, allSavedData)
 }
 
-export function saveComplete({ closeWhenFinished, customTriggers }: any) {
+export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
     if (!closeWhenFinished) {
-        if ((!customTriggers.autosave || !get(saved)) && !customTriggers?.backup) newToast("$toast.saved")
+        if ((!customTriggers?.autosave || !get(saved)) && !customTriggers?.backup) newToast("$toast.saved")
 
         saved.set(true)
         console.log("SAVED!")
@@ -245,7 +247,7 @@ export function closeApp() {
 
 let initialized: boolean = false
 export function unsavedUpdater() {
-    let cachedValues: any = {}
+    let cachedValues: { [key: string]: string } = {}
     let s = { ...saveList, folders, projects, showsCache, stageShows }
 
     Object.keys(s).forEach((id) => {
@@ -275,21 +277,21 @@ export function unsavedUpdater() {
 }
 
 const customSavedListener = {
-    showsCache: (data: any) => {
+    showsCache: (data: Shows) => {
         Object.keys(data).forEach((id) => {
             if (!data[id]?.slides) return
 
-            delete data[id].timestamps
-            delete data[id].settings
+            delete (data[id] as any).timestamps
+            delete (data[id] as any).settings
 
-            Object.values(data[id].slides).forEach((slide: any) => {
+            Object.values(data[id].slides).forEach((slide) => {
                 delete slide.id
             })
         })
 
         return data
     },
-    projects: (data: any) => {
+    projects: (data: Projects) => {
         removeDeleted(keysToID(data)).forEach((a) => {
             data[a.id].shows.map((show) => {
                 delete show.layout

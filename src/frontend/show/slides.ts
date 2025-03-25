@@ -8,9 +8,10 @@ import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/
 import { addToPos } from "../components/helpers/mover"
 import { _show } from "../components/helpers/shows"
 import { activeEdit, activeShow, refreshEditSlide } from "../stores"
+import { getLayoutRef } from "../components/helpers/show"
 
 export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; menu: { id: string } }) {
-    let ref = _show().layouts("active").ref()[0]
+    let ref = getLayoutRef()
 
     // get selected slides in ascending order
     let selectedSlides: number[] = sortObjectNumbers(obj.sel.data, "index").map(({ index }) => index)
@@ -666,7 +667,7 @@ function splitTextContentInHalf(text: string) {
 }
 
 export function mergeSlides(indexes: { index: number }[]) {
-    let layoutRef = _show().layouts("active").ref()[0]
+    let layoutRef = getLayoutRef()
 
     let allMergedSlideIds: string[] = []
     let firstSlideIndex = indexes[0].index
@@ -788,7 +789,7 @@ export function mergeTextboxes(customSlideIndex: number = -1) {
     let editSlideIndex: number = customSlideIndex < 0 ? (get(activeEdit).slide ?? -1) : customSlideIndex
     if (editSlideIndex < 0) return
 
-    let slideRef = _show().layouts("active").ref()[0][editSlideIndex] || {}
+    let slideRef = getLayoutRef()[editSlideIndex] || {}
     let slide: Slide = clone(
         _show()
             .slides([slideRef.id || ""])

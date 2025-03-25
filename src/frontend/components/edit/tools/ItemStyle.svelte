@@ -12,6 +12,7 @@
     import EditValues from "./EditValues.svelte"
     import { setBoxInputValue } from "../values/boxes"
     import { percentageToAspectRatio, stylePosToPercentage } from "../../helpers/output"
+    import { getLayoutRef } from "../../helpers/show"
 
     export let allSlideItems: Item[]
     export let item: Item | null
@@ -79,7 +80,7 @@
 
         /////
 
-        let ref = _show().layouts("active").ref()[0] || []
+        let ref = getLayoutRef()
         let slides: string[] = [ref[$activeEdit.slide ?? ""]?.id]
         let slideItems: number[][] = [allItems]
         let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
