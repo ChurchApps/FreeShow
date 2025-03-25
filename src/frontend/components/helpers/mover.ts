@@ -1,13 +1,18 @@
-export function getIndexes(array: any[]): number[] {
-    return array.map((a) => a.index).sort((a: any, b: any) => b - a)
+export function getIndexes<T>(array: T): number[] {
+    if (!Array.isArray(array)) return []
+    return array.map((a) => a.index).sort((a, b) => b - a)
 }
 
-export function mover(array: any[], selected: number[], pos: number): any[] {
-    let moved: any[] = [],
-        newArray: any[] = [],
+export function mover<T>(array: T, selected: number[], pos: number) {
+    if (!Array.isArray(array)) return array
+
+    let moved = [] as T,
+        newArray = [] as T,
         newPos: number = pos || 0
 
     array.forEach((a, i) => {
+        if (!Array.isArray(moved) || !Array.isArray(newArray)) return
+
         if (selected.includes(i)) {
             if (i < pos) newPos--
             moved.push(a)
@@ -17,6 +22,7 @@ export function mover(array: any[], selected: number[], pos: number): any[] {
     return addToPos(newArray, moved, newPos)
 }
 
-export function addToPos(array: any[], newArrays: any[], pos: number): any[] {
-    return [...array.slice(0, pos), ...newArrays, ...array.slice(pos, array.length)]
+export function addToPos<T>(array: T, newArrays: T, pos: number) {
+    if (!Array.isArray(array) || !Array.isArray(newArrays)) return array
+    return [...array.slice(0, pos), ...newArrays, ...array.slice(pos, array.length)] as T
 }

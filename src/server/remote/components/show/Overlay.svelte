@@ -13,7 +13,7 @@
 
     $: console.log(overlays, id, overlays[id]?.items, currentItems)
 
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     function updateItems() {
         show = false
 

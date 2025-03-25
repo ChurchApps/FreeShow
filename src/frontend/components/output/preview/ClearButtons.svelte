@@ -15,7 +15,7 @@
     $: if (allCleared) autoChange = true
 
     let enableRestore: boolean = false
-    let restoreTimeout: any = null
+    let restoreTimeout: NodeJS.Timeout | null = null
     $: if ($outputCache) {
         enableRestore = false
         if (restoreTimeout) clearTimeout(restoreTimeout)
@@ -28,7 +28,7 @@
 
     // ACTIONS
 
-    const clearActions: any = {
+    const clearActions = {
         background: () => clearBackground(),
         slide: () => clearSlide(),
         overlays: () => clearOverlays(),

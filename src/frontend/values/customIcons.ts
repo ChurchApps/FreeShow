@@ -1,4 +1,4 @@
-export const customIcons: any = {
+export const customIcons = {
     circle: '<path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2z"/>',
     triangle: '<path d="M0 0h24v24H0z" fill="none"/><path d="M1 21h22L12 2"/>',
     square: '<g><rect fill="none" height="24" width="24"/></g><g><g><rect height="18" width="18" x="3" y="3"/></g></g>',
@@ -148,7 +148,7 @@ export const customIcons: any = {
 }
 
 // : {[key in keyof typeof customIcons]: string}
-export const customIconsColors: any = {
+export const customIconsColors = {
     circle: "#91bcff",
     triangle: "#91bcff",
     square: "#91bcff",

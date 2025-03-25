@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
+    import type { StageItem, StageLayout } from "../../../types/Stage"
     import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import autosize from "../edit/scripts/autosize"
@@ -19,8 +20,8 @@
     import { getCustomStageLabel } from "./stage"
 
     export let id: string
-    export let item: any
-    export let show: any = null
+    export let item: StageItem
+    export let show: StageLayout | null = null
     export let ratio: number
     export let edit: boolean = false
     $: currentShow = show === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : show
@@ -61,7 +62,7 @@
         }
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (!edit) return
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
@@ -101,7 +102,7 @@
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide || (next ? $outputSlideCache[stageOutputId] || null : null)
 
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     $: if (stageOutputId && ($allOutputs || $outputs)) startTimeout()
     function startTimeout() {
         if (timeout) clearTimeout(timeout)
@@ -149,7 +150,7 @@
         return style
     }
 
-    let video: any
+    let video: HTMLVideoElement | undefined
     function loaded() {
         if (!video) return
         video.pause()

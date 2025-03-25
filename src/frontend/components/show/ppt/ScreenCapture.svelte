@@ -1,8 +1,7 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain } from "../../../IPC/main"
     import { activeProject, outLocked, outputs, presentationData, projects, special } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
@@ -13,16 +12,14 @@
 
     // get window
 
-    let findWindowTimeout: any = null
+    let findWindowTimeout: NodeJS.Timeout | null = null
     $: if (path) requestWindows()
     function requestWindows() {
         if (findWindowTimeout) clearTimeout(findWindowTimeout)
         // give time for presentation window to start
         // this is needed if the window is being opened thile the presentation mode has already been active
         findWindowTimeout = setTimeout(
-            () => {
-                send(MAIN, ["GET_WINDOWS"])
-            },
+            () => requestMain(Main.GET_WINDOWS, undefined, receiveWindows),
             $presentationData?.id === path ? 1800 : 0 // 800 should be enough if the window is opened, but it might be closed
         )
     }
@@ -30,47 +27,40 @@
     let chooseWindow: any[] = []
     let chosenWindow: any = null
 
-    receive(
-        MAIN,
-        {
-            GET_WINDOWS: (a: any) => {
-                chosenWindow = null
+    function receiveWindows(a: any) {
+        chosenWindow = null
 
-                let savedScreen = $projects[$activeProject || ""].shows.find((a) => a.id === path)?.data?.screenName
-                if (savedScreen) {
-                    let window = a.find((a) => a.name === savedScreen)
-                    if (window) {
-                        selectWindow(window)
-                        return
-                    }
-                }
+        let savedScreen = $projects[$activeProject || ""].shows.find((a) => a.id === path)?.data?.screenName
+        if (savedScreen) {
+            let window = a.find((a) => a.name === savedScreen)
+            if (window) {
+                selectWindow(window)
+                return
+            }
+        }
 
-                let fileName = getFileName(path)
-                let appName = ($special.presentationApp || "PowerPoint").split(" ")[0]
+        let fileName = getFileName(path)
+        let appName = ($special.presentationApp || "PowerPoint").split(" ")[0]
 
-                let windows = a.filter((a) => a.name.includes(appName) && a.name.includes(fileName) && !a.name.includes(fileName + " - " + appName))
-                if (!windows.length) windows = a.filter((a) => a.name.includes(removeExtension(fileName)) && a.name.includes(appName))
-                if (!windows.length) windows = a.filter((a) => a.name.toLowerCase().includes(appName.toLowerCase()) || a.name.toLowerCase().includes(removeExtension(fileName).toLowerCase()))
+        let windows = a.filter((a) => a.name.includes(appName) && a.name.includes(fileName) && !a.name.includes(fileName + " - " + appName))
+        if (!windows.length) windows = a.filter((a) => a.name.includes(removeExtension(fileName)) && a.name.includes(appName))
+        if (!windows.length) windows = a.filter((a) => a.name.toLowerCase().includes(appName.toLowerCase()) || a.name.toLowerCase().includes(removeExtension(fileName).toLowerCase()))
 
-                if (windows.length === 1) {
-                    selectWindow(windows[0])
-                } else if (windows.length > 1) {
-                    chooseWindow = windows
-                } else {
-                    chooseWindow = windows
+        if (windows.length === 1) {
+            selectWindow(windows[0])
+        } else if (windows.length > 1) {
+            chooseWindow = windows
+        } else {
+            chooseWindow = windows
 
-                    if (findWindowTimeout) clearTimeout(findWindowTimeout)
-                    if (!chosenWindow) {
-                        findWindowTimeout = setTimeout(() => {
-                            send(MAIN, ["GET_WINDOWS"])
-                        }, 800)
-                    }
-                }
-            },
-        },
-        "GET_WINDOWS_PPT"
-    )
-    onDestroy(() => destroy(MAIN, "GET_WINDOWS_PPT"))
+            if (findWindowTimeout) clearTimeout(findWindowTimeout)
+            if (!chosenWindow) {
+                findWindowTimeout = setTimeout(() => {
+                    requestMain(Main.GET_WINDOWS, undefined, receiveWindows)
+                }, 800)
+            }
+        }
+    }
 
     function selectWindow(screenData: any, save: boolean = false) {
         if (findWindowTimeout) clearTimeout(findWindowTimeout)

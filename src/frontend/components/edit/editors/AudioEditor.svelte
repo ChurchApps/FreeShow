@@ -10,11 +10,11 @@
 
         const bars = containerElem.querySelectorAll(".wave-bar")
         bars.forEach((bar) => {
-            bar.style.height = "0"
+            ;(bar as HTMLElement).style.height = "0"
         })
     }
 
-    let containerElem: any
+    let containerElem: HTMLElement | undefined
     $: if (containerElem) createWaveform(containerElem, path)
 </script>
 

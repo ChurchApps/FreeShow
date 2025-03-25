@@ -1,25 +1,25 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
     import { ShowRef } from "../../../../types/Projects"
+    import { requestMain, sendMain } from "../../../IPC/main"
     import { activeShow, dictionary, os, outLocked, outputs, presentationApps, presentationData, special } from "../../../stores"
-    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, getOutputContent, setOutput } from "../../helpers/output"
+    import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import { clearBackground, clearSlide } from "../../output/clear"
     import Center from "../../system/Center.svelte"
     import ScreenCapture from "./ScreenCapture.svelte"
-    import T from "../../helpers/T.svelte"
 
     export let show: ShowRef
 
     // WIP use savedScreen = $projects[$activeProject || ""].shows.find((a) => a.id === path)?.data?.screenName to determine if it is active or not
 
     onMount(() => {
-        send(MAIN, ["SLIDESHOW_GET_APPS"])
+        requestMain(Main.SLIDESHOW_GET_APPS, undefined, (a) => presentationApps.set(a))
     })
 
     let opening: boolean = false
@@ -30,18 +30,18 @@
         reset()
         opening = true
 
-        send(MAIN, ["START_SLIDESHOW"], { path: show.id, program: $special.presentationApp || "PowerPoint" })
+        sendMain(Main.START_SLIDESHOW, { path: show.id, program: $special.presentationApp || "PowerPoint" })
         clearSlide()
 
         setTimeout(() => (opening ? (retry = true) : ""), 8000)
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if ($outLocked || !$presentationApps?.length) return
 
         if (e.key === " ") {
             e.preventDefault()
-            if (outSlide?.id === show.id) send(MAIN, ["PRESENTATION_CONTROL"], { action: "next" })
+            if (outSlide?.id === show.id) sendMain(Main.PRESENTATION_CONTROL, { action: "next" })
             else if (!opening) newPresentation()
         }
     }
@@ -62,7 +62,7 @@
     }
 
     onDestroy(() => {
-        if ($activeShow?.type !== "ppt") send(MAIN, ["PRESENTATION_CONTROL"], { action: "stop" })
+        if ($activeShow?.type !== "ppt") sendMain(Main.PRESENTATION_CONTROL, { action: "stop" })
     })
 
     $: if (show.id) reset()

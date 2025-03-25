@@ -5,6 +5,7 @@
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import { getExtension, getFileName, getMediaType } from "../helpers/media"
+    import { getLayoutRef } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
     import Center from "../system/Center.svelte"
@@ -18,7 +19,7 @@
 
         // check that current edit slide exists
         if ($activeEdit?.slide !== null && $activeEdit?.slide !== undefined) {
-            let ref = _show().layouts("active").ref()[0]
+            let ref = getLayoutRef()
             if (ref[$activeEdit?.slide]) index = $activeEdit.slide + 1
         }
 

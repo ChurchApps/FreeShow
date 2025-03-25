@@ -1,22 +1,23 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition"
+    import type { Popups } from "../../../types/Main"
     import { activePopup, dictionary, os } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
+    import { popups } from "../../utils/popup"
     import { disablePopupClose } from "../../utils/shortcuts"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
-    import { popups } from "../../utils/popup"
 
     function mousedown(e: any) {
-        if (disablePopupClose.includes(popupId)) return
+        if (popupId && disablePopupClose.includes(popupId)) return
 
         if (e.target.classList.contains("popup")) activePopup.set(null)
     }
 
     // prevent svelte transition lock
-    let popupId: any = null
-    let popupTimeout: any = null
+    let popupId: Popups | null = null
+    let popupTimeout: NodeJS.Timeout | null = null
     $: if ($activePopup !== undefined) updatePopup()
     function updatePopup() {
         if (popupTimeout) return

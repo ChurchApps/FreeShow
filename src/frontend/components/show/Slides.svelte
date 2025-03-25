@@ -42,18 +42,18 @@
         })
     }
 
-    let scrollElem: any
+    let scrollElem: HTMLElement | undefined
     let offset: number = -1
     $: {
         let output = $outputs[activeOutputs[0]] || {}
         if (loaded && scrollElem && showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
             let columns = $slidesOptions.mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
             let index = Math.max(0, (output.out.slide.index || 0) - columns)
-            offset = (scrollElem.querySelector(".grid")?.children[index]?.offsetTop || 5) - 5
+            offset = ((scrollElem.querySelector(".grid")?.children[index] as HTMLElement)?.offsetTop || 5) - 5
         }
     }
 
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel({ detail }: any) {
         let e: any = detail.event
         if (!e.ctrlKey && !e.metaKey) return
@@ -75,7 +75,7 @@
 
         customActionActivation("slide_click")
 
-        let slideRef: any = _show(showId).layouts([activeLayout]).ref()[0]
+        let slideRef = _show(showId).layouts([activeLayout]).ref()[0]
 
         let data = slideRef[index]?.data
         checkActionTrigger(data, index)
@@ -83,11 +83,11 @@
         setTimeout(() => {
             // get line
             let outputId = getActiveOutputs($outputs, true, true, true)[0]
-            let currentOutput: any = $outputs[outputId] || {}
-            let outSlide = currentOutput.out?.slide || {}
+            let currentOutput = $outputs[outputId] || {}
+            let outSlide = currentOutput.out?.slide || null
             let amountOfLinesToShow = getFewestOutputLines()
             let line = 0
-            if (outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && amountOfLinesToShow > 0) {
+            if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && amountOfLinesToShow > 0) {
                 line = (outSlide.line || 0) + amountOfLinesToShow
 
                 let showSlide = _show(showId).slides([slideRef[index]?.id]).get()[0]
@@ -183,7 +183,7 @@
     }
 
     let altKeyPressed: boolean = false
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.altKey) {
             e.preventDefault()
             altKeyPressed = true
@@ -200,11 +200,11 @@
     $: {
         activeSlides = []
         activeOutputs.forEach((a) => {
-            let currentOutput: any = $outputs[a]
+            let currentOutput = $outputs[a]
             if (!currentOutput || currentOutput.stageOutput) return
 
             // let currentStyle = $styles[currentOutput?.style || ""] || {}
-            let outSlide: any = currentOutput.out?.slide || $outputSlideCache[a] || {}
+            let outSlide = currentOutput.out?.slide || $outputSlideCache[a] || {}
 
             if (activeSlides[outSlide.index] || outSlide.id !== showId || outSlide.layout !== activeLayout) return
 
@@ -214,7 +214,7 @@
             let lineIndex = 0
             let maxLines = 0
             if (amountOfLinesToShow > 0) {
-                let ref = a?.id === "temp" ? [{ temp: true, items: outSlide.tempItems }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
+                let ref = outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems, id: "" }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
                 let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()[0] : null
                 let slideLines = showSlide ? getItemWithMostLines(showSlide) : null
 
@@ -246,7 +246,7 @@
     // lazy loader
 
     let lazyLoader: number = 1
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | true | null = null
     let loaded: boolean = false
 
     // reset loading when changing view modes
@@ -262,7 +262,7 @@
     // let showLessonsAlert: boolean = false
     let lessonsFailed: number = 0
     // let currentTries: number = 0
-    let lessonsTimeout: any = null
+    let lessonsTimeout: NodeJS.Timeout | null = null
 
     $: if (isLessons && $lessonsLoaded) startLazyLoader()
 
@@ -342,7 +342,7 @@
 
     function checkImage(src: string) {
         let isVideo = videoExtensions.includes(getExtension(src))
-        let media: any = new Image()
+        let media: HTMLImageElement | HTMLVideoElement = new Image()
         if (isVideo) media = document.createElement("video")
 
         return new Promise((resolve) => {

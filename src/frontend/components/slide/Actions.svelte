@@ -50,7 +50,7 @@
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data, indexes: [index] } })
     }
 
-    const actionsList: any = [
+    const actionsList = [
         { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward" },
         { id: "animate", title: $dictionary.popup?.animate, icon: "stars" },
         { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play" },

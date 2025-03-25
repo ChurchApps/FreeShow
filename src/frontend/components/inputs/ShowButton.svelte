@@ -7,7 +7,7 @@
     import { getFileName, getMediaStyle, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
-    import { checkName } from "../helpers/show"
+    import { checkName, getLayoutRef } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
@@ -113,21 +113,21 @@
         if (editActive || $outLocked || e.target.closest("input")) return
 
         let outputId: string = getActiveOutputs($outputs, false, true, true)[0]
-        let currentOutput: any = $outputs[outputId] || {}
+        let currentOutput = $outputs[outputId] || {}
 
         if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
-            let layoutRef = _show("active").layouts("active").ref()[0] || []
+            let layoutRef = getLayoutRef()
             let firstEnabledIndex: number = layoutRef.findIndex((a) => !a.data.disabled) || 0
             updateOut("active", firstEnabledIndex, layoutRef, !e.altKey)
 
-            let slide: any = currentOutput.out?.slide || null
+            let slide = currentOutput.out?.slide || null
             if (slide?.id === id && slide?.index === firstEnabledIndex && slide?.layout === $showsCache[id].settings.activeLayout) return
 
             setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: firstEnabledIndex })
         } else if (type === "image" || type === "video") {
-            let outputStyle = $styles[currentOutput.style]
+            let outputStyle = $styles[currentOutput.style || ""]
             let mediaStyle: MediaStyle = getMediaStyle($media[id], outputStyle)
-            let out: any = { path: id, muted: show.muted || false, loop: show.loop || false, startAt: 0, type: type, ...mediaStyle }
+            let out = { path: id, muted: show.muted || false, loop: show.loop || false, startAt: 0, type: type, ...mediaStyle }
 
             // remove active slide
             if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === out.path)) setOutput("slide", null)
@@ -144,7 +144,7 @@
         // WIP this does not update in the shows drawer before refresh (if checkName updates the name)
     }
 
-    let activeOutput: any = null
+    let activeOutput: string | null = null
     $: if ($outputs) activeOutput = findMatchingOut(id)
 </script>
 

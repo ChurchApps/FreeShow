@@ -7,6 +7,7 @@
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { addToPos } from "../../helpers/mover"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import autosize, { AutosizeTypes } from "../scripts/autosize"
@@ -28,7 +29,7 @@
     export let chordsAction: string = ""
     export let isLocked: boolean = false
 
-    let textElem: any
+    let textElem: HTMLElement | undefined
     let html: string = ""
     let previousHTML: string = ""
     let currentStyle: string = ""
@@ -106,7 +107,7 @@
         }, 10)
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Enter" && e.shiftKey) {
             // by default the browser contenteditable will add a <br> instead of our custom <span class="break"> when pressing SHIFT
             // so just prevent shift break!
@@ -115,7 +116,7 @@
         }
 
         // TODO: get working in list view
-        if (e.key === "Enter" && (e.target.closest(".item") || e.target.closest(".quickEdit"))) {
+        if (e.key === "Enter" && (e.target?.closest(".item") || e.target?.closest(".quickEdit"))) {
             // incorrect editbox
             if (e.target.closest(".quickEdit") && Number(e.target.closest(".quickEdit").getAttribute("data-index")) !== editIndex) return
             if (!e.target.closest(".quickEdit") && !$activeEdit.items.includes(index)) return
@@ -157,8 +158,8 @@
         if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
         let editItemIndex: number = $activeEdit.items[0] ?? Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) ?? 0
 
-        let layoutRef = _show().layouts("active").ref()[0]
-        let slideRef: any = layoutRef[editIndex]
+        let layoutRef = getLayoutRef()
+        let slideRef = layoutRef[editIndex]
         if (!slideRef) return
 
         // create new slide
@@ -180,13 +181,13 @@
         updateLines(firstLines)
 
         // set child
-        let parentId = slideRef.type === "child" ? slideRef.parent.id : slideRef.id
+        let parentId = slideRef.type === "child" ? slideRef.parent!.id : slideRef.id
         let children = _show().slides([parentId]).get("children")[0] || []
         let slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
         children = addToPos(children, [id], slideIndex)
         _show().slides([parentId]).set({ key: "children", value: children })
 
-        let parentIndex = slideRef.type === "child" ? slideRef.parent.layoutIndex : slideRef.layoutIndex
+        let parentIndex = slideRef.type === "child" ? slideRef.parent!.layoutIndex : slideRef.layoutIndex
         let parentsBefore = layoutRef.filter((a, i) => i < parentIndex && a.id === parentId)?.length
         let newIndex = $activeEdit.slide! + (parentsBefore + 1)
 
@@ -199,8 +200,8 @@
         activeEdit.set({ slide: newIndex, items: [0], showId: $activeShow?.id })
         setTimeout(() => {
             // timeout because elem is refreshed first
-            const elem: any = document.querySelector(".editItem")?.querySelector(".edit")
-            if (elem) elem.focus()
+            const elem = document.querySelector(".editItem")?.querySelector(".edit")
+            if (elem) (elem as HTMLElement).focus()
 
             // set caret at the end
             let sel = getSelectionRange()
@@ -261,11 +262,11 @@
     // text change
     let textChanged = false
     let previousText: string = ""
-    let changedTimeout: any = null
+    let changedTimeout: NodeJS.Timeout | null = null
     $: if (html && textElem?.innerText !== previousText) checkText()
     function checkText() {
         textChanged = true
-        previousText = textElem?.innerText
+        previousText = textElem?.innerText || ""
         if (changedTimeout) clearTimeout(changedTimeout)
         changedTimeout = setTimeout(() => (textChanged = false), 500)
     }
@@ -273,7 +274,7 @@
     // typing
     let isTyping: boolean = false
     $: if (isAuto && textChanged) checkTyping()
-    let typingTimeout: any = null
+    let typingTimeout: NodeJS.Timeout | null = null
     function checkTyping() {
         if (!loaded) return
         isTyping = true
@@ -294,8 +295,8 @@
     $: if (isAuto || textFit || itemFontSize || textChanged) getCustomAutoSize()
 
     let autoSize: number = 0
-    let alignElem: any
-    let loopStop: any = null
+    let alignElem: HTMLElement | undefined
+    let loopStop: NodeJS.Timeout | null = null
     function getCustomAutoSize() {
         if (isTyping || !loaded || !alignElem || !item.auto) return
 
@@ -324,19 +325,19 @@
         currentStyle = ""
         let updateHTML: boolean = false
 
-        new Array(...textElem.children).forEach((line: any, i: number) => {
+        new Array(...textElem.children).forEach((line, i) => {
             let align: string = plain ? item.lines?.[i]?.align || "" : line.getAttribute("style") || ""
             pos++
             currentStyle += align
 
-            let newLine: any = { align, text: [] }
+            let newLine = { align, text: [] as any[] }
             let lineChords: any[] = []
 
             newLines.push(newLine)
 
             // WIP backspace a line into a line with different styling will merge both and apply the first style to both (HTML issue)
 
-            new Array(...line.childNodes).forEach((child: any, j: number) => {
+            new Array(...line.childNodes).forEach((child: any, j) => {
                 if (child.nodeName === "#text") {
                     // add "floating" text to previous node (e.g. pressing backspace at the start of a line)
                     let lastNode = newLines[pos].text.length - 1
@@ -482,7 +483,7 @@
         return text.trim()
     }
 
-    function textElemKeydown(e: any) {
+    function textElemKeydown(e: KeyboardEvent) {
         if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault()
             navigator.clipboard.readText().then((clipText: string) => {
@@ -612,6 +613,7 @@
             <div
                 bind:this={textElem}
                 on:mousemove={(e) => {
+                    if (!textElem) return
                     let newLines = chordMove(e, { textElem, item })
                     if (newLines) item.lines = newLines
                 }}

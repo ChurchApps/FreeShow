@@ -1,11 +1,13 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { MAIN, OUTPUT } from "../../../types/Channels"
-import type { Output } from "../../../types/Output"
+import { OUTPUT } from "../../../types/Channels"
+import { Main } from "../../../types/IPC/Main"
+import type { Output, Outputs } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
-import type { Item, Layout, Media, OutSlide, Show, Slide, Template, TemplateSettings, Transition } from "../../../types/Show"
+import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, Templates, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
+import { sendMain } from "../../IPC/main"
 import {
     activeRename,
     categories,
@@ -48,12 +50,13 @@ import { getExtension, getFileName, removeExtension } from "./media"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
+import { getLayoutRef } from "./show"
 
 export function displayOutputs(e: any = {}, auto: boolean = false) {
     let forceKey = e.ctrlKey || e.metaKey
 
     // sort so display order can be changed! (needs app restart)
-    let enabledOutputs: any[] = sortObject(sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id }))), "stageOutput")
+    let enabledOutputs = sortObject(sortByName(getActiveOutputs(get(outputs), false).map((id) => ({ ...get(outputs)[id], id }))), "stageOutput")
 
     enabledOutputs.forEach((output) => {
         let autoPosition = enabledOutputs.length === 1
@@ -94,7 +97,7 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
         }
     }
 
-    outputs.update((a: any) => {
+    outputs.update((a) => {
         let bindings = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0]?.[data.index]?.data?.bindings || [] : []
         let allOutputs = bindings.length ? bindings : getActiveOutputs()
         let outs = outputId ? [outputId] : allOutputs
@@ -114,13 +117,13 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 
         let toggleState = false
         outs.forEach((id: string, i: number) => {
-            let output: any = a[id]
+            let output = a[id]
             if (!output.out) a[id].out = {}
-            if (!output.out?.[key]) a[id].out[key] = key === "overlays" ? [] : null
+            if (!output.out?.[key]) a[id].out![key] = key === "overlays" ? [] : null
             data = clone(inputData)
 
             if (key === "slide" && data === null && output.out?.slide?.type === "ppt") {
-                send(MAIN, ["PRESENTATION_CONTROL"], { action: "stop" })
+                sendMain(Main.PRESENTATION_CONTROL, { action: "stop" })
             }
 
             if (key === "background") {
@@ -207,7 +210,7 @@ function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
     data.muted = data.muted || false
     if (mute) data.muted = true
 
-    let videoData: any = { muted: data.muted, loop: data.loop || false }
+    let videoData = { muted: data.muted, loop: data.loop || false }
 
     if (id === videoOutputId) {
         let muteAudio = get(special).muteAudioWhenVideoPlays
@@ -287,35 +290,35 @@ export function clearOverlayTimer(outputId: string, overlayId: string) {
 
 ///
 
-let sortedOutputs: any[] = []
-export function getActiveOutputs(updater: any = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {
+let sortedOutputs: (Output & { id: string })[] = []
+export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive: boolean = true, removeKeyOutput: boolean = false, removeStageOutput: boolean = false) {
     // WIP cache outputs
     // if (JSON.stringify(sortedOutputs.map(({ id }) => id)) !== JSON.stringify(Object.keys(updater))) {
     //     sortedOutputs = sortByName(keysToID(updater || {}))
     // }
     sortedOutputs = sortByName(keysToID(updater || {}))
 
-    let enabled: any[] = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true) && (removeStageOutput ? !a.stageOutput : true))
+    let enabled = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !a.isKeyOutput : true) && (removeStageOutput ? !a.stageOutput : true))
 
     if (hasToBeActive && enabled.filter((a) => a.active === true).length) enabled = enabled.filter((a) => a.active === true)
 
-    enabled = enabled.map((a) => a.id)
+    let enabledIds = enabled.map((a) => a.id)
 
-    if (!enabled.length) {
+    if (!enabledIds.length) {
         if (!sortedOutputs.length && get(currentWindow) === null) addOutput(true)
-        if (sortedOutputs[0]) enabled = [sortedOutputs[0].id]
+        if (sortedOutputs[0]) enabledIds = [sortedOutputs[0].id]
     }
 
-    return enabled
+    return enabledIds
 }
 
-export function findMatchingOut(id: string, updater: any = get(outputs)): string | null {
+export function findMatchingOut(id: string, updater: Outputs = get(outputs)): string | null {
     let match: string | null = null
 
     // TODO: more than one active
 
     getActiveOutputs(updater, false, true, true).forEach((outputId: string) => {
-        let output: any = updater[outputId]
+        let output = updater[outputId]
         if (match === null && output.enabled) {
             // TODO: index & layout: $outSlide?.index === i && $outSlide?.id === $activeShow?.id && $outSlide?.layout === activeLayout
             // slides (edit) + slides
@@ -348,19 +351,19 @@ export function refreshOut(refresh: boolean = true) {
 }
 
 // outputs is just for updates
-export function isOutCleared(key: string | null = null, updater: any = get(outputs), checkLocked: boolean = false) {
+export function isOutCleared(key: string | null = null, updater: Outputs = get(outputs), checkLocked: boolean = false) {
     let cleared: boolean = true
     let outputIds = getActiveOutputs(updater, true, true, true)
 
     outputIds.forEach((id: string) => {
-        let output: any = updater[id]
+        let output = updater[id]
         let keys: string[] = key ? [key] : Object.keys(output.out || {})
         keys.forEach((key: string) => {
             // TODO:
             if (output.out?.[key]) {
                 if (key === "overlays") {
-                    if (checkLocked && output.out.overlays.length) cleared = false
-                    else if (!checkLocked && output.out.overlays.filter((id: string) => !get(overlays)[id]?.locked).length) cleared = false
+                    if (checkLocked && output.out.overlays?.length) cleared = false
+                    else if (!checkLocked && output.out.overlays?.filter((id: string) => !get(overlays)[id]?.locked).length) cleared = false
                 } else if (output.out[key] !== null) cleared = false
             }
         })
@@ -405,8 +408,8 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 
     if (currentOutput?.stageOutput) return currentOutput.bounds
 
-    let style: any = currentOutput?.style ? get(styles)[currentOutput?.style] || {} : {}
-    let styleRatio = style.aspectRatio || style.resolution
+    let style = currentOutput?.style ? get(styles)[currentOutput?.style] || null : null
+    let styleRatio: any = style?.aspectRatio || style?.resolution
 
     let ratio = styleRatio?.outputResolutionAsRatio ? currentOutput?.bounds : styleRatio
 
@@ -414,8 +417,8 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 }
 
 // this will get the first available stage output
-export function getStageOutputId(_updater = get(outputs)): string {
-    return keysToID(_updater).find((a) => a.stageOutput)?.id
+export function getStageOutputId(_updater = get(outputs)) {
+    return keysToID(_updater).find((a) => a.stageOutput)?.id || ""
 }
 export function getStageResolution(outputId: string = "", _updater = get(outputs)): Resolution {
     if (!outputId) outputId = getStageOutputId()
@@ -452,10 +455,10 @@ export function getOutputResolution(outputId: string, _updater = get(outputs), s
 }
 
 export function stylePosToPercentage(styles: { [key: string]: any }) {
-    if (styles.left) styles.left = (styles.left / 1920) * 100
-    if (styles.top) styles.top = (styles.top / 1080) * 100
-    if (styles.width) styles.width = (styles.width / 1920) * 100
-    if (styles.height) styles.height = (styles.height / 1080) * 100
+    if (styles.left) styles.left = (Number(styles.left) / 1920) * 100
+    if (styles.top) styles.top = (Number(styles.top) / 1080) * 100
+    if (styles.width) styles.width = (Number(styles.width) / 1920) * 100
+    if (styles.height) styles.height = (Number(styles.height) / 1080) * 100
 
     return styles
 }
@@ -497,7 +500,7 @@ export function checkWindowCapture(startup: boolean = false) {
 // NDI | OutputShow | Stage CurrentOutput
 export function shouldBeCaptured(outputId: string, startup: boolean = false) {
     let output = get(outputs)[outputId]
-    let captures: any = {
+    let captures = {
         ndi: !!output.ndi,
         server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getActiveOutputs(get(outputs), false, true, true)[0]) === outputId),
         stage: stageHasOutput(outputId),
@@ -561,12 +564,12 @@ export function addOutput(onlyFirst: boolean = false) {
 
     outputs.update((output) => {
         let id = uid()
-        if (get(themes)[get(theme)]?.colors?.secondary) defaultOutput.color = get(themes)[get(theme)]?.colors?.secondary
+        if (get(themes)[get(theme)]?.colors?.secondary) defaultOutput.color = get(themes)[get(theme)].colors.secondary!
         output[id] = clone(defaultOutput)
 
         // set name
         let n = 0
-        while (Object.values(output).find((a: any) => a.name === output[id].name + (n ? " " + n : ""))) n++
+        while (Object.values(output).find((a) => a.name === output[id].name + (n ? " " + n : ""))) n++
         if (n) output[id].name = output[id].name + " " + n
         if (onlyFirst) output[id].name = get(dictionary).theme?.primary || "Primary"
 
@@ -692,9 +695,9 @@ export function getCurrentMediaTransition() {
 
     let outputId = getActiveOutputs(get(outputs))[0]
     let currentOutput = get(outputs)[outputId] || {}
-    let out: any = currentOutput?.out || {}
-    let slide: any = out.slide || null
-    let slideData = get(showsCache) && slide && slide.id !== "temp" ? _show(slide.id).layouts("active").ref()[0]?.[slide.index!]?.data : null
+    let out = currentOutput?.out || {}
+    let slide = out.slide || null
+    let slideData = get(showsCache) && slide && slide.id !== "temp" ? getLayoutRef(slide.id)[slide.index!]?.data : null
     let slideMediaTransition = slideData ? slideData.mediaTransition : null
 
     return slideMediaTransition || transition
@@ -756,11 +759,11 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             ),
         ] as string[]
 
-        item.lines?.forEach((line: any, j: number) => {
+        item.lines?.forEach((line, j) => {
             let templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
 
             line.align = templateLine?.align || ""
-            line.text?.forEach((text: any, k: number) => {
+            line.text?.forEach((text, k) => {
                 let templateText = templateLine?.text?.[k] || templateLine?.text?.[0]
                 if (!text.customType?.includes("disableTemplate")) {
                     let style = templateText?.style || ""
@@ -801,7 +804,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         }
     })
 
-    // let remainingTextTemplateItems: any[] = []
+    // let remainingTextTemplateItems = []
     if (addOverflowTemplateItems) {
         sortedTemplateItems.text = removeTextValue(sortedTemplateItems.text || [])
         // remainingTextTemplateItems = templateItems.filter((a) => (a.type || "text") === "text")
@@ -847,7 +850,7 @@ export function updateLayoutsFromTemplate(
     template: Template,
     oldTemplate: Template,
     layoutId: string,
-    slideRef: any,
+    slideRef: LayoutRef,
     templateMode: "global" | "group" | "slide",
     removeOverflow: boolean = false
 ) {
@@ -969,7 +972,7 @@ export function getCurrentStyle(styles: { [key: string]: Styles }, styleId: stri
     return styles[styleId] || defaultStyle
 }
 
-export function getOutputTransitions(slideData: any, styleTransition: any, transitionData: any, disableTransitions: boolean) {
+export function getOutputTransitions(slideData: SlideData | null, styleTransition: any, transitionData: any, disableTransitions: boolean) {
     let transitions: { [key: string]: Transition } = {}
 
     if (disableTransitions) {
@@ -995,7 +998,7 @@ export function getOutputTransitions(slideData: any, styleTransition: any, trans
     return clone(transitions)
 }
 
-export function getStyleTemplate(outSlide: any, currentStyle: any) {
+export function getStyleTemplate(outSlide: OutSlide, currentStyle: Styles | undefined) {
     if (!currentStyle) return {} as Template
 
     // scripture
@@ -1011,28 +1014,30 @@ export function getStyleTemplate(outSlide: any, currentStyle: any) {
     return template
 }
 
-export function slideHasAutoSizeItem(slide: any) {
+export function slideHasAutoSizeItem(slide: Slide | Template) {
     return slide?.items?.find((a) => a.auto)
 }
 
-export function setTemplateStyle(outSlide: any, currentStyle: any, items: Item[]) {
+export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[]) {
     let isDrawerScripture = outSlide?.id === "temp"
     let slideItems = isDrawerScripture ? outSlide.tempItems : items
 
     let template = getStyleTemplate(outSlide, currentStyle)
     let templateItems = template.items || []
 
-    let newItems = mergeWithTemplate(slideItems, templateItems, true) || []
+    let newItems = mergeWithTemplate(slideItems || [], templateItems, true) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     return newItems
 }
 
-export function getOutputLines(outSlide: any, styleLines: any = 0) {
+export function getOutputLines(outSlide: OutSlide, styleLines: number = 0) {
     if (!outSlide?.id || outSlide.id === "temp") return { start: null, end: null } // , index: 0, max: 0
 
     let ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
-    let showSlide = _show(outSlide.id).slides([ref?.[outSlide.index]?.id]).get()[0]
+    let showSlide = _show(outSlide.id)
+        .slides([ref?.[outSlide.index ?? -1]?.id])
+        .get()[0]
     let maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
     if (!maxLines) return { start: null, end: null } // , index: 0, max: 0
 
@@ -1071,7 +1076,7 @@ export interface OutputMetadata {
 }
 const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
 const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
-export function getMetadata(oldMetadata: any, show: Show | undefined, currentStyle: any, templatesUpdater = get(templates), outSlide: any) {
+export function getMetadata(oldMetadata: any, show: Show | undefined, currentStyle: Styles, templatesUpdater = get(templates), outSlide: OutSlide | null) {
     let metadata: OutputMetadata = { style: getTemplateStyle("metadata", templatesUpdater) || defaultMetadataStyle }
 
     if (!show) return metadata
@@ -1095,6 +1100,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
         }
 
         if (metadataTemplateValue.includes("{")) {
+            if (!outSlide) return
             let ref = { showId: outSlide.id, layoutId: outSlide.layout, slideIndex: outSlide.index }
             metadata.value = replaceDynamicValues(metadataTemplateValue, ref)
             return
@@ -1106,7 +1112,7 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
         metadata.value = joinMetadata(metadata.message, currentStyle.metadataDivider)
     }
 
-    let messageTemplate = overrideOutput ? show.message?.template : currentStyle.messageTemplate || "message"
+    let messageTemplate = overrideOutput ? show.message?.template || "" : currentStyle.messageTemplate || "message"
     metadata.messageStyle = getTemplateStyle(messageTemplate!, templatesUpdater) || defaultMessageStyle
     metadata.messageTransition = templatesUpdater[messageTemplate]?.items?.[0]?.actions?.transition || null
 
@@ -1118,7 +1124,7 @@ export function joinMetadata(message: { [key: string]: string }, divider = "; ")
         .join(divider)
 }
 
-function getTemplateStyle(templateId: string, templates: any) {
+function getTemplateStyle(templateId: string, templates: Templates) {
     if (!templateId) return
     let template = templates[templateId]
     if (!template) return
@@ -1161,7 +1167,7 @@ export function decodeExif(data: any) {
     return message
 }
 
-export function getSlideFilter(slideData: any) {
+export function getSlideFilter(slideData: SlideData | null) {
     let slideFilter: string = ""
 
     if (!slideData) return slideFilter

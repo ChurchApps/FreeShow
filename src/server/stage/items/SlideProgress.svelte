@@ -15,8 +15,8 @@
     $: currentShowSlide = progress?.currentShowSlide ?? -1
     $: slidesLength = progress.slidesLength || 0
 
-    let progressElem: any = null
-    $: column = progressElem?.offsetWidth < progressElem?.offsetHeight
+    let progressElem: HTMLElement | undefined
+    $: column = (progressElem?.offsetWidth || 0) < (progressElem?.offsetHeight || 0)
 </script>
 
 <div class="progress" bind:this={progressElem} class:barBG={type === "bar"} style={accent ? "--accent: " + accent : ""}>

@@ -1,8 +1,10 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { EXPORT, MAIN } from "../../../../types/Channels"
+    import { EXPORT } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, alertMessage, alertUpdates, dataPath, deletedShows, dictionary, popupData, shows, showsCache, showsPath, special, usageLog } from "../../../stores"
-    import { awaitRequest, destroy, receive, send } from "../../../utils/request"
+    import { send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -15,9 +17,14 @@
     onMount(() => {
         // getCacheSize()
         // getAudioOutputs()
-        send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
-        send(MAIN, ["GET_STORE_VALUE"], { file: "config", key: "disableHardwareAcceleration" })
-        send(MAIN, ["GET_EMPTY_SHOWS"], { path: $showsPath, cached: $showsCache })
+        if ($showsPath) sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
+        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (a) => {
+            if (a.key === "disableHardwareAcceleration") disableHardwareAcceleration = a.value
+        })
+        if ($showsPath)
+            requestMain(Main.GET_EMPTY_SHOWS, { path: $showsPath, cached: $showsCache }, (a) => {
+                if (a) emptyShows = a
+            })
         getDuplicatedShows()
     })
 
@@ -47,7 +54,7 @@
         if (key === "customUserDataLocation") {
             let existingData = false
             if (checked) {
-                existingData = (await awaitRequest(MAIN, "DOES_PATH_EXIST", { path: "data_config", dataPath: $dataPath }))?.exists
+                existingData = (await requestMain(Main.DOES_PATH_EXIST, { path: "data_config", dataPath: $dataPath }))?.exists
                 if (existingData) activePopup.set("user_data_overwrite")
             }
             if (!existingData) {
@@ -63,66 +70,58 @@
     let disableHardwareAcceleration = true
     function toggleHardwareAcceleration(e: any) {
         disableHardwareAcceleration = e.target.checked
-        send(MAIN, ["SET_STORE_VALUE"], { file: "config", key: "disableHardwareAcceleration", value: disableHardwareAcceleration })
+        sendMain(Main.SET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration", value: disableHardwareAcceleration })
 
         alertMessage.set("settings.restart_for_change")
         activePopup.set("alert")
     }
 
     // shows in folder
-    let hiddenShows: any[] = []
+    let hiddenShows: string[] = []
     let brokenShows: number = 0
-    let listenerId = "OTHER_SETTINGS"
-    receive(
-        MAIN,
-        {
-            // this will not include newly created shows not saved yet, but it should not be an issue.
-            FULL_SHOWS_LIST: (data: any) => {
-                hiddenShows = data || []
-                let deletedShowNames = $deletedShows.map((a) => a.name + ".show")
-                hiddenShows = hiddenShows.filter((name) => !deletedShowNames.includes(name))
-            },
-            GET_STORE_VALUE: (data: any) => {
-                if (data.key === "disableHardwareAcceleration") disableHardwareAcceleration = data.value
-            },
-            GET_EMPTY_SHOWS: (data: any) => {
-                emptyShows = data
-            },
-        },
-        listenerId
-    )
-    onDestroy(() => destroy(MAIN, listenerId))
 
     $: if (hiddenShows?.length) getBrokenShows()
     function getBrokenShows() {
         brokenShows = 0
 
-        Object.entries($shows).forEach(([id, { name }]: any) => {
+        Object.entries($shows).forEach(([id, { name }]) => {
             if (!hiddenShows.includes(name + ".show") && !hiddenShows.includes(id + ".show")) brokenShows++
         })
     }
 
     // get all shows inside current shows folder (and remove missing)
     // function refreshShows() {
-    //     send(MAIN, ["REFRESH_SHOWS"], { path: $showsPath })
+    //     sendMain(Main.REFRESH_SHOWS, { path: $showsPath })
 
     //     setTimeout(() => {
-    //         send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
+    //         sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
     //     }, 800)
     // }
 
     // delete shows from folder that are not indexed
     function deleteShows() {
-        send(MAIN, ["DELETE_SHOWS_NI"], { shows: $shows, path: $showsPath })
+        if (!$showsPath) return
+
+        sendMain(Main.DELETE_SHOWS_NI, { shows: $shows, path: $showsPath })
 
         setTimeout(() => {
-            send(MAIN, ["FULL_SHOWS_LIST"], { path: $showsPath })
+            // this will not include newly created shows not saved yet, but it should not be an issue.
+            sendMain(Main.FULL_SHOWS_LIST, { path: $showsPath })
         }, 800)
     }
 
+    let listenerId = receiveMain(Main.FULL_SHOWS_LIST, (data) => {
+        hiddenShows = data || []
+        let deletedShowNames = $deletedShows.map((a) => a.name + ".show")
+        hiddenShows = hiddenShows.filter((name) => !deletedShowNames.includes(name))
+    })
+    onDestroy(() => destroyMain(listenerId))
+
     let emptyShows: { id: string; name: string }[] = []
     function deleteEmptyShows() {
-        send(MAIN, ["DELETE_SHOWS"], { shows: emptyShows, path: $showsPath })
+        if (!$showsPath) return
+
+        sendMain(Main.DELETE_SHOWS, { shows: emptyShows, path: $showsPath })
         // emptyShows = []
         activePage.set("show")
     }
@@ -130,7 +129,7 @@
     let duplicatedShows: { ids: string[] }[] = []
     function getDuplicatedShows() {
         let names: { [key: string]: string[] } = {}
-        Object.entries($shows).forEach(([id, show]: any) => {
+        Object.entries($shows).forEach(([id, show]) => {
             // remove any numbers (less than 4 chars) at the end of name (but not if "1-3"|"-5" in case of scripture)
             let trimmedName = show.name
                 .toLowerCase()
@@ -166,15 +165,16 @@
 
     // open log
     function openLog() {
-        send(MAIN, ["OPEN_LOG"])
+        sendMain(Main.OPEN_LOG)
     }
     function openCache() {
-        send(MAIN, ["OPEN_CACHE"])
+        sendMain(Main.OPEN_CACHE)
     }
 
     // bundle media files
     function bundleMediaFiles() {
-        send(MAIN, ["BUNDLE_MEDIA_FILES"], { showsPath: $showsPath, dataPath: $dataPath })
+        if (!$showsPath) return
+        sendMain(Main.BUNDLE_MEDIA_FILES, { showsPath: $showsPath, dataPath: $dataPath })
     }
 
     // backup
@@ -183,11 +183,13 @@
     }
 
     function restore() {
+        if (!$showsPath) return
+
         showsCache.set({})
-        send(MAIN, ["RESTORE"], { showsPath: $showsPath })
+        sendMain(Main.RESTORE, { showsPath: $showsPath })
     }
 
-    const autobackupList: any = [
+    const autobackupList = [
         { id: "never", name: "$:settings.never:$" },
         { id: "daily", name: "$:interval.daily:$" },
         { id: "weekly", name: "$:interval.weekly:$" },
@@ -221,7 +223,7 @@
                 {/if}
             </p>
         </FolderPicker>
-        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $dataPath)}>
+        <Button title={$dictionary.main?.system_open} on:click={() => sendMain(Main.SYSTEM_OPEN, $dataPath)}>
             <Icon id="launch" white />
         </Button>
     </span>
@@ -242,7 +244,12 @@
                 {/if}
             </p>
         </FolderPicker>
-        <Button title={$dictionary.main?.system_open} on:click={() => send(MAIN, ["SYSTEM_OPEN"], $showsPath)}>
+        <Button
+            title={$dictionary.main?.system_open}
+            on:click={() => {
+                if ($showsPath) sendMain(Main.SYSTEM_OPEN, $showsPath)
+            }}
+        >
             <Icon id="launch" white />
         </Button>
     </span>

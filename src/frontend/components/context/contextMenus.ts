@@ -9,6 +9,8 @@ export interface ContextMenuItem {
     enabled?: boolean
     disabled?: boolean
     external?: boolean
+
+    type?: string // remove layers
 }
 
 export const contextMenuItems: { [key: string]: ContextMenuItem } = {

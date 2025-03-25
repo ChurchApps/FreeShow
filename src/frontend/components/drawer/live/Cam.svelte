@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import { os, outputs } from "../../../stores"
     import { findMatchingOut } from "../../helpers/output"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -18,11 +19,11 @@
     let loaded: boolean = false
     // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
 
-    let videoElem: any
+    let videoElem: HTMLVideoElement | undefined
 
     // https://stackoverflow.com/questions/33761770/what-constraints-should-i-pass-to-getusermedia-in-order-to-get-two-video-media
     // https://blog.addpipe.com/getusermedia-video-constraints/
-    let constraints: any = {
+    let constraints = {
         video: {
             deviceId: { exact: cam.id },
             groupId: cam.group,
@@ -54,7 +55,7 @@
                 let msg: string = err.message
                 if (err.name === "NotReadableError") {
                     msg += "<br />Maybe it's in use by another program."
-                    window.api.send(MAIN, { channel: "ACCESS_CAMERA_PERMISSION" })
+                    sendMain(Main.ACCESS_CAMERA_PERMISSION)
                 }
                 error = err.name + ":<br />" + msg
                 loaded = true
@@ -66,7 +67,7 @@
 
     onDestroy(() => {
         if (!videoElem) return
-        videoElem.srcObject?.getTracks()?.forEach((track: any) => track.stop())
+        ;(videoElem.srcObject as MediaStream)?.getTracks()?.forEach((track) => track.stop())
         videoElem.srcObject = null
     })
 </script>

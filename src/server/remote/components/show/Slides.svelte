@@ -18,14 +18,14 @@
     $: layoutSlides = GetLayout($activeShow, $activeShow?.settings?.activeLayout)
 
     // auto scroll
-    export let scrollElem: any
+    export let scrollElem: HTMLElement | undefined
     let lastScrollId = "-1"
     $: {
         if (scrollElem?.querySelector(".grid") && outSlide !== null && $outShow?.id === $activeShow.id) {
             let index = Math.max(0, outSlide)
             if ($outShow.id + index !== lastScrollId) {
                 lastScrollId = $outShow.id + index
-                let offset = scrollElem.querySelector(".grid").children[index]?.offsetTop - scrollElem.offsetTop - 4 - 50
+                let offset = (scrollElem.querySelector(".grid")?.children[index] as HTMLElement)?.offsetTop - scrollElem.offsetTop - 4 - 50
                 scrollElem.scrollTo(0, offset)
             }
         }

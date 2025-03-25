@@ -1,18 +1,19 @@
 import { BrowserWindow, Rectangle, screen } from "electron"
 import { mainWindow, toApp } from "../.."
 import { MAIN, OUTPUT } from "../../../types/Channels"
+import type { Output } from "../../../types/Output"
 import { OutputHelper } from "../OutputHelper"
 import { OutputBounds } from "./OutputBounds"
 
 export class OutputVisibility {
-    static displayOutput(data: any) {
-        let window: BrowserWindow = OutputHelper.getOutput(data.output?.id)?.window
+    static displayOutput(data: { output: Output; enabled?: "toggle" | boolean; force?: boolean; autoPosition?: boolean; auto?: boolean; one?: boolean }) {
+        let window: BrowserWindow = OutputHelper.getOutput(data.output?.id || "")?.window
 
         if (!window || window.isDestroyed()) {
             if (!data.output) return
 
             OutputHelper.Lifecycle.createOutput(data.output)
-            window = OutputHelper.getOutput(data.output?.id)?.window
+            window = OutputHelper.getOutput(data.output?.id || "")?.window
             if (!window || window.isDestroyed()) return
         }
 
@@ -22,7 +23,7 @@ export class OutputVisibility {
         /////
 
         if (data.output?.invisible) {
-            if (window.isVisible()) this.hideWindow(window, null)
+            if (window.isVisible()) this.hideWindow(window)
             // if just one output, send a message explaining why the button does not turn on?
             return
         }
@@ -35,11 +36,12 @@ export class OutputVisibility {
         if (data.enabled && bounds && (data.force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
             this.showWindow(window)
 
-            if (bounds) OutputHelper.Bounds.updateBounds(data.output)
+            if (bounds) OutputHelper.Bounds.updateBounds({ id: data.output.id!, bounds: data.output.bounds })
         } else {
             this.hideWindow(window, data.output)
 
             if (data.enabled && !data.auto) toApp(MAIN, { channel: "ALERT", data: "error.display" })
+            // if (data.enabled && !data.auto) sendToMain(ToMain.ALERT, "error.display") // this will cause loading issues
             data.enabled = false
         }
 
@@ -93,7 +95,7 @@ export class OutputVisibility {
         window.moveTop()
     }
 
-    static hideWindow(window: BrowserWindow, data: any) {
+    static hideWindow(window: BrowserWindow, data: Output | null = null) {
         if (!window || window.isDestroyed()) return
 
         OutputBounds.disableWindowMoveListener()
@@ -104,7 +106,7 @@ export class OutputVisibility {
         if (!data) return
 
         // this is only needed if the output is being captured!! (has to reset for capture to work when window is hidden)
-        let captureEnabled = Object.values(OutputHelper.getOutput(data.id)?.captureOptions?.options || {}).find((a) => a === true)
+        let captureEnabled = Object.values(OutputHelper.getOutput(data.id!)?.captureOptions?.options || {}).find((a) => a === true)
         if (!captureEnabled) return
 
         console.log("RESTARTING OUTPUT:", data.id)

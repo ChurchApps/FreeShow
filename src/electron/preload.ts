@@ -14,7 +14,7 @@ const LOG_MESSAGES: boolean = process.env.NODE_ENV !== "production"
 const filteredChannelsData: string[] = ["AUDIO_MAIN", "VIZUALISER_DATA", "STREAM", "BUFFER", "REQUEST_STREAM", "MAIN_TIME", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM"]
 const filteredChannels: ValidChannels[] = ["AUDIO"]
 
-let storedReceivers: any = {}
+let storedReceivers: { [key: string]: (e: IpcRendererEvent, args: any) => void } = {}
 
 contextBridge.exposeInMainWorld("api", {
     send: (channel: ValidChannels, data: any) => {
@@ -27,11 +27,11 @@ contextBridge.exposeInMainWorld("api", {
         // setTimeout(() => (lastChannel = ""), maxInterval)
     },
     receive: (channel: ValidChannels, func: any, id: string = "") => {
-        const receiver = (_e: IpcRendererEvent, ...args: any[]) => {
-            if (!appLoaded && channel === "STORE" && args[0]?.channel === "SHOWS") setTimeout(() => (appLoaded = true), 3000)
+        const receiver = (_e: IpcRendererEvent, args: any) => {
+            if (!appLoaded && channel === "MAIN" && args[0]?.channel === "SHOWS") setTimeout(() => (appLoaded = true), 3000)
             if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(args[0]?.channel)) console.log("TO CLIENT [" + channel + "]: ", ...args)
 
-            func(...args)
+            func(args, id)
         }
 
         ipcRenderer.on(channel, receiver)

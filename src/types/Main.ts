@@ -1,8 +1,18 @@
+import type fs from "fs"
+import type { dataFolderNames } from "../electron/utils/files"
+import type { ShowRef } from "./Projects"
+
+export interface OS {
+    platform: NodeJS.Platform
+    name: string
+    arch: string
+}
+
 export interface Option {
     name: string
     extra?: string
     data?: any
-    id?: string
+    id?: string | null
     icon?: string
     style?: string // css style for the item
 }
@@ -71,8 +81,33 @@ export type SelectIds =
 export interface Selected {
     id: null | SelectIds
     data: any[]
+    showId?: string
     hoverActive?: boolean
 }
+export interface DropData {
+    id: string
+    data: any
+    trigger?: string
+    center: boolean
+    index?: number
+}
+
+export interface Clipboard {
+    id: string | null
+    data?: any // []
+}
+// export interface ClipboardData {
+//     index?: number
+
+//     // ActiveEdit
+//     type?: string
+//     id?: string
+//     slide?: null | number
+//     items?: number[]
+//     showId?: string
+
+//     // [key: string]: any
+// }
 
 export interface SlidesOptions {
     columns: number
@@ -115,6 +150,8 @@ export interface MediaStyle {
     tracks?: Subtitle[]
     subtitle?: string
     tags?: string[] // media tags
+
+    ignoreLayer?: boolean // foreground background type
 }
 
 export type AudioType = "music" | "effect"
@@ -125,6 +162,89 @@ export interface Subtitle {
     name: string
     vtt: string // WebVTT format
     embedded?: boolean // extracted from the video
+}
+
+export interface MainFilePaths {
+    // documents: string
+    pictures: string
+    videos: string
+    music: string
+}
+
+export type LyricSearchResult = {
+    source: "Genius" | "Hymnary" | "Letras"
+    key: string
+    artist: string
+    title: string
+    originalQuery?: string
+}
+
+export interface DriveData {
+    mainFolderId: string | null
+    path: string | null
+    dataPath: string
+    method: string | null
+    closeWhenFinished: boolean
+}
+
+export interface LessonsData {
+    type?: keyof typeof dataFolderNames
+    path: string
+    showId: string
+    name: string
+    files: LessonFile[]
+}
+export interface LessonFile {
+    name: string
+    url: string
+    type: string
+    fileType: string
+    streamUrl?: string
+}
+
+export interface Variable {
+    id?: string
+    name: string
+    type: "number" | "text"
+
+    // number
+    number?: number
+    step?: number
+    default?: number
+    minValue?: number
+    maxValue?: number
+
+    // text
+    text?: string
+    enabled?: boolean
+}
+
+export interface Trigger {
+    name: string
+    type: "http"
+    value: string
+}
+
+export interface FileData {
+    path: string
+    stat: fs.Stats
+    extension: string
+    folder: boolean
+    name: string
+    thumbnailPath?: string
+}
+
+export interface ErrorLog {
+    time: Date
+    os: string
+    version: string
+    active: { window: string; page: string; show: ShowRef | null; edit: ActiveEdit }
+    drawer: { active: string }
+    type: string
+    source: string
+    message: string
+    stack: string
+    dev?: boolean
 }
 
 export type Popups =

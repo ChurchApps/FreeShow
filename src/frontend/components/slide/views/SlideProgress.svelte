@@ -1,7 +1,7 @@
 <script lang="ts">
     import { dictionary, groups, outputs } from "../../../stores"
     import { getActiveOutputs } from "../../helpers/output"
-    import { getGroupName } from "../../helpers/show"
+    import { getGroupName, getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
 
     export let tracker: any
@@ -15,7 +15,7 @@
     $: currentSlideOut = $outputs[outputId]?.out?.slide || null
     $: currentShowId = currentSlideOut?.id || ""
     $: currentShowSlide = currentSlideOut?.index ?? -1
-    $: currentLayoutRef = _show(currentShowId).layouts("active").ref()[0] || []
+    $: currentLayoutRef = getLayoutRef(currentShowId)
     $: currentShowSlides = _show(currentShowId).get("slides") || {}
     $: slidesLength = currentLayoutRef.length || 0
 
@@ -39,8 +39,8 @@
         return { name: name || "—", index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
     })
 
-    let progressElem: any = null
-    $: column = progressElem?.offsetWidth < progressElem?.offsetHeight
+    let progressElem: HTMLElement | undefined
+    $: column = (progressElem?.offsetWidth || 0) < (progressElem?.offsetHeight || 0)
 </script>
 
 <div class="progress" bind:this={progressElem} class:barBG={type === "bar"} style={accent ? "--accent: " + accent : ""}>
@@ -58,7 +58,7 @@
                     {@const nextSlide = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide + 1)}
 
                     <div class="group" class:active={group.index === layoutGroups.find((_, i) => i === currentShowSlide)?.index}>
-                        {group.name}{#if tracker.childProgress && (activeGroup?.child || nextSlide?.child)}<span style="opacity: 0.8;font-size: 0.7em;">.{activeGroup.child + 1}</span>{/if}
+                        {group.name}{#if tracker.childProgress && (activeGroup?.child || nextSlide?.child)}<span style="opacity: 0.8;font-size: 0.7em;">.{(activeGroup?.child || -1) + 1}</span>{/if}
                     </div>
                 {/if}
             {/each}

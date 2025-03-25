@@ -35,7 +35,7 @@
     onDestroy(() => clearInterval(interval))
 
     $: if (item && itemElem) calculateAutosize()
-    let loopStop: any = null
+    let loopStop: NodeJS.Timeout | null = null
     function calculateAutosize() {
         if (loopStop) return
         loopStop = setTimeout(() => {

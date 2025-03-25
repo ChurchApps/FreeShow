@@ -1,6 +1,8 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
+    import type { Output } from "../../../../types/Output"
+    import type { MediaType, ShowType } from "../../../../types/Show"
     import { activeFocus, activeShow, dictionary, focusMode, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
@@ -10,7 +12,7 @@
     import Button from "../../inputs/Button.svelte"
     import VideoSlider from "../VideoSlider.svelte"
 
-    export let currentOutput: any
+    export let currentOutput: Output | null
     export let outputId: string
     export let big: boolean = false
 
@@ -18,7 +20,7 @@
 
     let videoTime: number = 0
     $: updateVideoTime($videosTime[outputId])
-    let timeJustUpdated: any = null
+    let timeJustUpdated: NodeJS.Timeout | null = null
     function updateVideoTime(time: number = 0) {
         if (timeJustUpdated) clearTimeout(timeJustUpdated)
         timeJustUpdated = setTimeout(() => (timeJustUpdated = null), 900)
@@ -26,7 +28,7 @@
     }
 
     // custom time update (for player videos)
-    let timeInterval: any = null
+    let timeInterval: NodeJS.Timeout | null = null
     onMount(() => {
         if ($videosTime[outputId]) videoTime = $videosTime[outputId]
         timeInterval = setInterval(() => {
@@ -45,7 +47,7 @@
     $: background = currentOutput?.out?.background
     $: path = background?.path || background?.id
     $: type = background?.type || "image"
-    if (path && !type) type = getMediaType(getExtension(path))
+    if (path && !type) type = getMediaType(getExtension(path)) as MediaType
 
     let mediaName: string = ""
     $: outName = path && path.includes(".") && !path.includes("base64") ? splitPath(path).name : ""
@@ -65,15 +67,15 @@
     }
 
     function openPreview() {
-        if (!background) return
+        if (!background || !path) return
 
-        if ($focusMode) activeFocus.set({ id: path, type })
-        else activeShow.set({ id: path, type })
+        if ($focusMode) activeFocus.set({ id: path, type: type as ShowType })
+        else activeShow.set({ id: path, type: type as ShowType })
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key !== " ") return
-        if ($focusMode || e.target.closest(".edit") || e.target.closest("input")) return
+        if ($focusMode || e.target?.closest(".edit") || e.target?.closest("input")) return
 
         let show = $activeShow
         if (show && (show.type === "show" || show.type === undefined)) return

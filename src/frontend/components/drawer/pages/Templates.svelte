@@ -1,36 +1,38 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import type { Template } from "../../../../types/Show"
     import { activePopup, activeShow, alertMessage, dictionary, labelsDisabled, mediaOptions, outputs, selected, showsCache, styles, templateCategories, templates } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import { getResolution } from "../../helpers/output"
+    import { deselect } from "../../helpers/select"
+    import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import Loader from "../../main/Loader.svelte"
     import Actions from "../../slide/Actions.svelte"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import TemplateSlide from "./TemplateSlide.svelte"
-    import Loader from "../../main/Loader.svelte"
-    import { _show } from "../../helpers/shows"
-    import { deselect } from "../../helpers/select"
+    import { getLayoutRef } from "../../helpers/show"
 
     export let active: string | null
     export let searchValue: string = ""
 
     $: resolution = getResolution(null, { $outputs, $styles }) // $templates[active || ""]?.settings?.resolution
-    let filteredTemplates: any
+    let filteredTemplates: (Template & { id: string })[] = []
 
     $: activeTemplate = ($activeShow && $activeShow.type === undefined) || $activeShow?.type === "show" ? $showsCache[$activeShow.id]?.settings?.template : null
 
-    let fullFilteredTemplates: any[] = []
+    let fullFilteredTemplates: (Template & { id: string })[] = []
     $: if ($templates || active || $templateCategories) updateTemplates()
 
     function updateTemplates() {
         filteredTemplates = sortByName(
-            keysToID(clone($templates)).filter((s: any) => (active === "all" && !$templateCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category])))
+            keysToID(clone($templates)).filter((s) => (active === "all" && !$templateCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category])))
         )
 
         filterSearch()
@@ -44,7 +46,7 @@
         if (searchValue.length > 1) fullFilteredTemplates = fullFilteredTemplates.filter((a) => filter(a.name).includes(filter(searchValue)))
     }
 
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
         if (nextScrollTimeout) return
@@ -89,7 +91,7 @@
                             }
 
                             // one selected slides
-                            let ref = _show().layouts("active").ref()[0]
+                            let ref = getLayoutRef()
                             if ($selected.id === "slide" && $selected.data.length < ref.length) {
                                 $selected.data.forEach(({ index, showId }) => {
                                     let slideId = ref[index]?.id

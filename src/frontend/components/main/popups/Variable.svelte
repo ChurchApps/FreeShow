@@ -89,7 +89,7 @@
 
     <CombinedInput textWidth={30}>
         <p><T id="inputs.name" /></p>
-        <TextInput disabled={existing && currentVariable.name} value={currentVariable.name} on:change={(e) => updateValue(e, "name")} autofocus={!currentVariable.name} />
+        <TextInput disabled={!!(existing && currentVariable.name)} value={currentVariable.name} on:change={(e) => updateValue(e, "name")} autofocus={!currentVariable.name} />
     </CombinedInput>
 
     {#if currentVariable.type === "number"}

@@ -18,7 +18,7 @@
     $: paused = playing.paused !== false
 
     let currentTime: number = 0
-    let duration: any = 0
+    let duration: number = 0
     $: if (path) getDuration()
     async function getDuration() {
         duration = 0
@@ -30,13 +30,13 @@
     $: if (!paused && path) startUpdater()
 
     // updater
-    let updaterInterval: any = null
+    let updaterInterval: NodeJS.Timeout | null = null
     function startUpdater() {
         if (updaterInterval) return
 
         updaterInterval = setInterval(() => {
             if (paused) {
-                clearInterval(updaterInterval)
+                if (updaterInterval) clearInterval(updaterInterval)
                 updaterInterval = null
             }
             if (sliderValue === null) currentTime = AudioPlayer.getTime(path)
@@ -69,15 +69,15 @@
         sliderValue = e.target.value
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         // if (e.target.closest("input") || e.target.closest(".edit")) return
         if ($outLocked || isMic || $focusMode || document.activeElement !== document.body) return
 
         if (e.key === " ") AudioPlayer.start(path, { name }, { pauseIfPlaying: true, startAt: currentTime })
     }
 
-    let mediaElem: any = null
-    let canvas: any = null
+    let mediaElem: HTMLElement | undefined
+    let canvas: HTMLCanvasElement | undefined
     $: if ($playingAudio[path]?.paused === false && canvas) renderVisualiser()
 
     let isRendering: boolean = false
@@ -87,7 +87,7 @@
         if (!canvas || !analysers.length) return
         if (isRendering) return
 
-        const WIDTH = mediaElem.clientWidth || window.innerWidth
+        const WIDTH = mediaElem?.clientWidth || window.innerWidth
         const HEIGHT = 80
 
         canvas.width = WIDTH
@@ -111,7 +111,7 @@
         function renderFrame() {
             // || ($playingAudio[path]?.paused !== false && allBars === 0)
             if (!$playingAudio[path]) {
-                ctx.clearRect(0, 0, WIDTH, HEIGHT)
+                ctx!.clearRect(0, 0, WIDTH, HEIGHT)
                 isRendering = false
                 return
             }
@@ -121,7 +121,7 @@
             // update frequency data for all analysers
             analysers.forEach((analyser, i) => analyser.getByteFrequencyData(dataArrays[i]))
 
-            ctx.clearRect(0, 0, WIDTH, HEIGHT)
+            ctx!.clearRect(0, 0, WIDTH, HEIGHT)
 
             let x = 0
 
@@ -142,8 +142,8 @@
                 const g = 5
                 const b = 150
 
-                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
-                ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight)
+                ctx!.fillStyle = `rgb(${r}, ${g}, ${b})`
+                ctx!.fillRect(x, HEIGHT - barHeight, barWidth, barHeight)
 
                 x += barWidth + padding
             }

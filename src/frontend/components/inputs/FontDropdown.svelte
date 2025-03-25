@@ -2,9 +2,9 @@
     import type { Family } from "css-fonts"
     import { createEventDispatcher, onMount } from "svelte"
     import { slide } from "svelte/transition"
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
+    import { requestMain } from "../../IPC/main"
     import { dictionary, systemFonts } from "../../stores"
-    import { awaitRequest } from "../../utils/request"
     import { formatSearch } from "../../utils/search"
     import Dropdown from "./Dropdown.svelte"
 
@@ -33,7 +33,7 @@
         else loadSystemFonts()
     })
     async function loadSystemFonts() {
-        let loadedFonts: Family[] = (await awaitRequest(MAIN, "GET_SYSTEM_FONTS"))?.fonts
+        let loadedFonts = (await requestMain(Main.GET_SYSTEM_FONTS))?.fonts
         if (!loadedFonts) return
 
         systemFonts.set(loadedFonts)
@@ -56,7 +56,7 @@
     let active: boolean = false
     let self: HTMLDivElement
 
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (nextScrollTimeout) return
 
@@ -93,7 +93,7 @@
     let searchValue: string = ""
     $: if (active) searchValue = ""
     // "invisible" search
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (!active) return
 
         if (e.key === "Backspace") {

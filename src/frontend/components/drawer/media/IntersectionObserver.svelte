@@ -8,7 +8,7 @@
     export let right: number = 0
 
     let intersecting: boolean = false
-    let container: any
+    let container: HTMLDivElement
 
     onMount(() => {
         if (typeof IntersectionObserver === "undefined") return false

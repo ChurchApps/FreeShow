@@ -22,7 +22,7 @@
     export let edit: boolean = false
     let lines: [string, number][] = []
     let mouse: any = null
-    export let newStyles: any = {}
+    export let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
 
     // $: currentOutput = $outputs[getActiveOutputs()[0]]

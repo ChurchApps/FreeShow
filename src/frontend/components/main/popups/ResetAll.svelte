@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { STORE } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import { activeEdit, activePage, activePopup, activeShow, deletedShows, drawSettings, renamedShows, scripturesCache, showsCache, showsPath } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -7,29 +8,26 @@
     import { clearAll } from "../../output/clear"
 
     function reset() {
-        window.api.send(STORE, {
-            channel: "SAVE",
-            data: {
-                reset: true,
-                // SETTINGS
-                SETTINGS: {},
-                SYNCED_SETTINGS: {},
-                // SHOWS
-                SHOWS: {},
-                STAGE_SHOWS: {},
-                // STORES
-                PROJECTS: { projects: {}, folders: {}, projectTemplates: {} },
-                OVERLAYS: {},
-                TEMPLATES: {},
-                EVENTS: {},
-                MEDIA: {},
-                THEMES: {},
-                DRIVE_API_KEY: {},
-                CACHE: { media: {}, text: {} },
-                HISTORY: { undo: [], redo: [] },
-                USAGE: { all: [] },
-            },
-        })
+        sendMain(Main.SAVE, {
+            reset: true,
+            // SETTINGS
+            SETTINGS: {},
+            SYNCED_SETTINGS: {},
+            // SHOWS
+            SHOWS: {},
+            STAGE_SHOWS: {},
+            // STORES
+            PROJECTS: { projects: {}, folders: {}, projectTemplates: {} },
+            OVERLAYS: {},
+            TEMPLATES: {},
+            EVENTS: {},
+            MEDIA: {},
+            THEMES: {},
+            DRIVE_API_KEY: {},
+            CACHE: { media: {}, text: {} },
+            HISTORY: { undo: [], redo: [] },
+            USAGE: { all: [] },
+        } as any)
 
         clearAll()
         drawSettings.set({})

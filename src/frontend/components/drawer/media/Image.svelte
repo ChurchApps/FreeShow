@@ -7,7 +7,7 @@
     export let transition: boolean = true
 
     let loaded: boolean = false
-    let image: any = null
+    let image: HTMLImageElement | null = null
 
     onMount(() => {
         // double check loaded

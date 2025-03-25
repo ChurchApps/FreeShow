@@ -14,11 +14,11 @@ export class NdiReceiver {
     static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
     static receiverTimeout = -1 // 5000 // looks like this timeout exits the app even if the request is successful (if video() is called rapidly)
-    static NDI_RECEIVERS: any = {}
+    static NDI_RECEIVERS: { [key: string]: { frameRate: number; interval?: NodeJS.Timeout } } = {}
 
     private static findSourcesInterval: NodeJS.Timeout | null = null
-    static async findStreamsNDI(): Promise<any> {
-        if (this.ndiDisabled) return
+    static async findStreamsNDI(): Promise<{ name: string; urlAddress: string }[]> {
+        if (this.ndiDisabled) return []
         const grandiose = require("grandiose")
 
         if (this.findSourcesInterval) clearInterval(this.findSourcesInterval)
@@ -44,8 +44,8 @@ export class NdiReceiver {
         })
     }
 
-    static allActiveReceivers: any = {}
-    static async receiveStreamFrameNDI({ source }: any) {
+    static allActiveReceivers: { [key: string]: any } = {}
+    static async receiveStreamFrameNDI({ source }: { source: { name: string; urlAddress: string; id: string } }) {
         if (this.ndiDisabled) return
         const grandiose = require("grandiose")
 
@@ -75,7 +75,7 @@ export class NdiReceiver {
     }
 
     static sendToOutputs: string[] = []
-    static async captureStreamNDI({ source, outputId }: any) {
+    static async captureStreamNDI({ source, outputId }: { source: { name: string; urlAddress: string; id: string }; outputId: string }) {
         if (this.ndiDisabled) return
         const grandiose = require("grandiose")
 
@@ -111,7 +111,7 @@ export class NdiReceiver {
         }, this.NDI_RECEIVERS[source.id].frameRate)
     }
 
-    static stopReceiversNDI(data: any = null) {
+    static stopReceiversNDI(data: { id: string; outputId?: string } | null = null) {
         if (data?.id) {
             if (data.outputId) this.sendToOutputs.splice(this.sendToOutputs.indexOf(data.outputId), 1)
             else this.sendToOutputs = [] // error
@@ -124,7 +124,7 @@ export class NdiReceiver {
             return
         }
 
-        Object.values(this.NDI_RECEIVERS).forEach(({ interval }: any) => {
+        Object.values(this.NDI_RECEIVERS).forEach(({ interval }) => {
             clearInterval(interval)
         })
         this.NDI_RECEIVERS = {}

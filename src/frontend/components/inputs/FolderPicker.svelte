@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
+    import { sendMain } from "../../IPC/main"
     import { activePopup, alertMessage, os } from "../../stores"
-    import { send } from "../../utils/request"
     import Button from "./Button.svelte"
 
     export let id: string
-    export let title: string | undefined = undefined
-    export let path: string | null = null
+    export let title: string | undefined
+    export let path: string | undefined
     export let style: string = ""
     export let center: boolean = true
 
@@ -17,7 +17,7 @@
             activePopup.set("alert")
         }
 
-        send(MAIN, ["OPEN_FOLDER"], { channel: id, title, path })
+        sendMain(Main.OPEN_FOLDER, { channel: id, title, path })
     }
 </script>
 

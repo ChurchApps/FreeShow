@@ -25,14 +25,14 @@
         // store text if popup is closed
         if (key === "text") quickTextCache.set(values.text)
     }
-    let values: any = {
+    let values = {
         text: $quickTextCache.length > 20 ? $quickTextCache : "",
         name: "",
     }
 
     // CATEGORY
 
-    const cats: any = [
+    const cats = [
         // { id: "", name: "—" }, // unlabeled
         ...sortObject(
             Object.keys($categories).map((key: string) => ({
@@ -40,7 +40,7 @@
                 ...$categories[key],
             })),
             "name"
-        ).map((cat: any) => ({
+        ).map((cat) => ({
             id: cat.id,
             name: cat.default ? `$:${cat.name}:$` : cat.name,
         })),
@@ -48,11 +48,11 @@
 
     let selectedCategory: any = cats[0]
     // get the selected category
-    if ($drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab]) selectedCategory = cats.find((a: any) => a.id === $drawerTabsData.shows.activeSubTab)
+    if ($drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab]) selectedCategory = cats.find((a) => a.id === $drawerTabsData.shows.activeSubTab)
     // get the category from the active show
-    else if ($shows[$activeShow?.id || ""]?.category) selectedCategory = cats.find((a: any) => a.id === $shows[$activeShow?.id || ""]?.category)
+    else if ($shows[$activeShow?.id || ""]?.category) selectedCategory = cats.find((a) => a.id === $shows[$activeShow?.id || ""]?.category)
     // set to "Songs" if it exists & nothing else if selected
-    else if ($categories.song) selectedCategory = cats.find((a: any) => a.id === "song")
+    else if ($categories.song) selectedCategory = cats.find((a) => a.id === "song")
     // otherwise set to first category
     else if (cats.length > 1) selectedCategory = cats[1]
 
@@ -74,7 +74,7 @@
 
             // look for existing shows with the same title
             if (values.name) {
-                const exists = Object.values($shows).find((a: any) => a?.name?.toLowerCase() === values.name.toLowerCase())
+                const exists = Object.values($shows).find((a) => a?.name?.toLowerCase() === values.name.toLowerCase())
                 if (exists) newToast("$create_show.exists")
             }
         }
@@ -106,7 +106,7 @@
         let text = values.text
         if (typeof text !== "string") text = ""
 
-        let sections = text.split("\n\n").filter((a: any) => a.length)
+        let sections = text.split("\n\n").filter((a) => a.length)
 
         // let metaData: string = ""
         // if (sections[1] && sections[0]?.split("\n").length < 3) metaData = sections.splice(0, 1)[0]
@@ -127,7 +127,7 @@
 
     // SHORTCUTS
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (!e.ctrlKey && !e.metaKey) return
 
         if (e.key === "f") {

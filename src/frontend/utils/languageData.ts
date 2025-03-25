@@ -1,4 +1,4 @@
-export const languages: any = {
+export const languages = {
     // language_identifier: "Language name in original language", // Language name in English
     en: "English", // English
     en_GB: "English (British)", // English (British)
@@ -28,7 +28,7 @@ export const languages: any = {
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
 // Language identifier: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
 // Region: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
-export const replace: any = {
+export const replace = {
     // language_identifier: ["browser language/region code"],
     en: ["en", "en-US", "en-AU"],
     en_GB: ["en-GB"],
@@ -55,7 +55,7 @@ export const replace: any = {
     fi: ["fi"],
 }
 
-export const languageFlags: any = {
+export const languageFlags = {
     en: "🇺🇸",
     en_GB: "🇬🇧",
     en_ZM: "🇿🇲",

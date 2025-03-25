@@ -1,7 +1,43 @@
 import { get } from "svelte/store"
-import { MAIN, OUTPUT, STARTUP, STORE } from "../../types/Channels"
+import { OUTPUT, STARTUP } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
 import { checkStartupActions } from "../components/actions/actions"
-import { activePopup, alertMessage, currentWindow, dataPath, language, loaded, loadedState, scriptures, special } from "../stores"
+import { clone } from "../components/helpers/array"
+import { getTimeFromInterval } from "../components/helpers/time"
+import { defaultThemes } from "../components/settings/tabs/defaultThemes"
+import { requestMain, requestMainMultiple, sendMain } from "../IPC/main"
+import {
+    activePopup,
+    alertMessage,
+    currentWindow,
+    dataPath,
+    deviceId,
+    driveKeys,
+    events,
+    folders,
+    isDev,
+    language,
+    loaded,
+    loadedState,
+    media,
+    os,
+    overlays,
+    projects,
+    projectTemplates,
+    redoHistory,
+    scriptures,
+    special,
+    stageShows,
+    templates,
+    tempPath,
+    textCache,
+    theme,
+    themes,
+    undoHistory,
+    usageLog,
+    version,
+    windowState,
+} from "../stores"
 import { startTracking } from "./analytics"
 import { wait } from "./common"
 import { setLanguage } from "./language"
@@ -9,7 +45,7 @@ import { storeSubscriber } from "./listeners"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
-import { getTimeFromInterval } from "../components/helpers/time"
+import { updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 
 let initialized: boolean = false
 export function startup() {
@@ -85,18 +121,52 @@ function connect() {
 }
 
 export function pcoSync() {
-    send(MAIN, ["PCO_STARTUP_LOAD"], { dataPath: get(dataPath) })
+    sendMain(Main.PCO_STARTUP_LOAD, { dataPath: get(dataPath) })
 }
 
 function getMainData() {
-    send(MAIN, ["VERSION", "IS_DEV", "GET_OS", "GET_TEMP_PATHS", "DEVICE_ID", "MAXIMIZED", "DISPLAY"])
+    requestMainMultiple({
+        [Main.VERSION]: (a) => version.set(a),
+        [Main.IS_DEV]: (a) => isDev.set(a),
+        [Main.GET_OS]: (a) => os.set(a),
+        [Main.GET_TEMP_PATHS]: (a) => tempPath.set(a.temp),
+        [Main.DEVICE_ID]: (a) => deviceId.set(a),
+        [Main.MAXIMIZED]: (a) => windowState.set({ ...windowState, maximized: a }),
+    })
 }
 
 async function getStoredData() {
-    send(STORE, ["SYNCED_SETTINGS", "STAGE_SHOWS", "PROJECTS", "OVERLAYS", "TEMPLATES", "EVENTS", "MEDIA", "THEMES", "DRIVE_API_KEY", "HISTORY", "USAGE", "CACHE"])
+    requestMainMultiple({
+        [Main.SYNCED_SETTINGS]: (a) => updateSyncedSettings(a),
+        [Main.STAGE_SHOWS]: (a) => stageShows.set(a),
+        [Main.PROJECTS]: (a) => {
+            projects.set(a.projects || {})
+            folders.set(a.folders || {})
+            projectTemplates.set(a.projectTemplates || {})
+        },
+        [Main.OVERLAYS]: (a) => overlays.set(a),
+        [Main.TEMPLATES]: (a) => templates.set(a),
+        [Main.EVENTS]: (a) => events.set(a),
+        [Main.MEDIA]: (a) => media.set(a),
+        [Main.THEMES]: (a) => {
+            themes.set(Object.keys(a).length ? a : clone(defaultThemes))
+
+            // update if themes are loaded after settings
+            if (get(theme) !== "default") updateThemeValues(get(themes)[get(theme)])
+        },
+        [Main.DRIVE_API_KEY]: (a) => driveKeys.set(a),
+        [Main.HISTORY]: (a) => {
+            undoHistory.set(a.undo || [])
+            redoHistory.set(a.redo || [])
+        },
+        [Main.USAGE]: (a) => usageLog.set(a),
+        [Main.CACHE]: (a) => {
+            textCache.set(a.text || {})
+        },
+    })
 
     await waitUntilDefined(() => get(loadedState).includes("synced_settings"))
-    send(STORE, ["SETTINGS"])
+    requestMain(Main.SETTINGS, undefined, (a) => updateSettings(a))
 }
 
 async function startupOutput() {

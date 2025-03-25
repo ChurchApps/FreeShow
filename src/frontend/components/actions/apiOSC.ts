@@ -1,5 +1,5 @@
-import { MAIN } from "../../../types/Channels"
-import { send } from "../../utils/request"
+import { Main } from "../../../types/IPC/Main"
+import { sendMain } from "../../IPC/main"
 
 // Examples: /show/<id>/start | /slide/next | /clear/all
 const oscActions = {
@@ -84,5 +84,5 @@ function parsePath(path) {
 
 export type OSC_SIGNAL = { url?: string; port?: string }
 export function emitOSC(signal: OSC_SIGNAL, data: string) {
-    send(MAIN, ["EMIT_OSC"], { signal, data })
+    sendMain(Main.EMIT_OSC, { signal, data })
 }

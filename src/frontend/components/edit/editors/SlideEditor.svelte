@@ -22,15 +22,16 @@
     import Editbox from "../editbox/Editbox.svelte"
     import { getUsedChords } from "../scripts/chords"
     import { setCaretAtEnd } from "../scripts/textStyle"
+    import { getLayoutRef } from "../../helpers/show"
 
     $: currentShow = $activeShow?.id || $activeEdit.showId || ""
     $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show(currentShow).slides().get().length) activeEdit.set({ slide: 0, items: [], showId: currentShow })
-    $: ref = currentShow && $showsCache[currentShow] ? _show(currentShow).layouts("active").ref()[0] : null
+    $: ref = currentShow && $showsCache[currentShow] ? getLayoutRef(currentShow) : []
     $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show(currentShow).slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
 
     let lines: [string, number][] = []
     let mouse: any = null
-    let newStyles: any = {}
+    let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
 
     let width: number = 0
@@ -42,7 +43,7 @@
 
     $: layoutSlide = ref?.[$activeEdit.slide!]?.data || {}
     // get backgruond
-    $: bgId = layoutSlide.background
+    $: bgId = layoutSlide.background || null
     let loadFullImage = false // true
 
     // get ghost background
@@ -83,8 +84,8 @@
     }
 
     // const CHANGE_POS_TIME = 2000
-    // let changePosTimeout: any = null
-    let updateTimeout: any = null
+    // let changePosTimeout = null
+    let updateTimeout: NodeJS.Timeout | null = null
     function updateStyles() {
         // || changePosTimeout
         if (!Object.keys(newStyles).length) return
@@ -96,14 +97,14 @@
         // }, CHANGE_POS_TIME)
 
         let items = $showsCache[currentShow].slides[ref[$activeEdit.slide!]?.id].items
-        let values: any[] = []
+        let values: string[] = []
         active.forEach((id) => {
             let item = items[id]
             if (item) {
-                let styles: any = getStyles(item.style)
+                let styles = getStyles(item.style)
                 let textStyles: string = ""
 
-                Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
+                Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
                 Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
                 values.push(textStyles)
@@ -142,7 +143,7 @@
     }
 
     let altKeyPressed: boolean = false
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.altKey) {
             e.preventDefault()
             altKeyPressed = true
@@ -156,7 +157,7 @@
     let zoom = 1
 
     // shortcut
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
         if (nextScrollTimeout) return
@@ -219,10 +220,10 @@
             // set focus to textbox if only one
             if (Slide?.items.length === 1 && !$activeEdit.items.length && $activeTriggerFunction !== "slide_notes") {
                 activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
-                const elem: any = document.querySelector(".editItem")?.querySelector(".edit")
+                const elem = document.querySelector(".editItem")?.querySelector(".edit")
                 if (elem) {
                     elem.addEventListener("focus", () => setCaretAtEnd(elem))
-                    elem.focus()
+                    ;(elem as HTMLElement).focus()
                 }
             }
         })
@@ -235,7 +236,7 @@
     // $: if (!ratioTimeout && changedTimes > 2) startTimeout()
     // $: if (ratio && hideOverflow && !ratioTimeout && changedTimes > 1) hideOverflow = false
 
-    // let ratioTimeout: any = null
+    // let ratioTimeout = null
     // function startTimeout() {
     //     ratioTimeout = setTimeout(() => {
     //         if (changedTimes > 5) hideOverflow = true

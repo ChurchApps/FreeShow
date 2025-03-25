@@ -11,7 +11,7 @@
     // AUTO SIZE
 
     let fontSize: number = 0
-    let itemElem: any
+    let itemElem: Element | null = null
 
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
@@ -59,7 +59,7 @@
             if (item.type === "slide_tracker") textQuery = ".progress div"
         }
 
-        fontSize = autosize(elem, { type, textQuery, defaultFontSize, maxFontSize })
+        fontSize = autosize(elem as HTMLElement, { type, textQuery, defaultFontSize, maxFontSize })
     }
 
     function getCustomStyle(style: string) {

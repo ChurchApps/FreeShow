@@ -1,11 +1,12 @@
 import type { Item } from "../../../types/Show"
 import { getSlideText } from "../edit/scripts/textStyle"
 import { clone } from "../helpers/array"
+import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import { getTextboxes } from "./formatTextEditor"
 
 export function getPlainEditorText(id: string = "active") {
-    let ref = _show(id).layouts("active").ref()[0] || []
+    let ref = getLayoutRef(id)
     let slides = _show(id).get("slides")
 
     // slide data for editing (WIP unused)

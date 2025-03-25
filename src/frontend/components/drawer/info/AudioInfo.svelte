@@ -35,7 +35,7 @@
     }
 
     // WIP add once electron is updated to >24
-    // let audioOutputs: any = []
+    // let audioOutputs = []
     // async function getAudioOutputs() {
     //     const devices = await navigator.mediaDevices.enumerateDevices()
     //     let outputs = devices.filter((device) => device.kind === "audiooutput")
@@ -51,7 +51,7 @@
     $: if (metronomeActive) active = "metronome"
 
     // audio outputs
-    let audioOutputs: any[] = []
+    let audioOutputs: { id: string; name: string }[] = []
     onMount(() => {
         navigator.mediaDevices
             .enumerateDevices()

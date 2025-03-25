@@ -1,16 +1,17 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { get } from "svelte/store"
+    import { uid } from "uid"
+    import type { Tag } from "../../../../types/Show"
     import { actionTags, activeActionTagFilter, activeMediaTagFilter, activeTagFilter, dictionary, globalTags, mediaTags, popupData } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-    import Center from "../../system/Center.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import { uid } from "uid"
-    import { onMount } from "svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
+    import Center from "../../system/Center.svelte"
 
     const store = {
         show: () => globalTags,
@@ -19,7 +20,7 @@
     }
 
     let type: string = $popupData.type || "show"
-    let tags: any[] = []
+    let tags: (Tag & { id: string })[] = []
 
     let emptyTag: boolean = false
     onMount(getTags)

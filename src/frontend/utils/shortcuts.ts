@@ -1,7 +1,8 @@
 import { get } from "svelte/store"
-import { IMPORT, MAIN, OUTPUT } from "../../types/Channels"
+import { OUTPUT } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
 import type { ShowType } from "../../types/Show"
-import type { TopViews } from "../../types/Tabs"
+import type { DrawerTabIds, TopViews } from "../../types/Tabs"
 import { clearAudio } from "../audio/audioFading"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { menuClick } from "../components/context/menuClick"
@@ -15,6 +16,7 @@ import { stopSlideRecording, updateSlideRecording } from "../components/helpers/
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
 import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
+import { sendMain } from "../IPC/main"
 import {
     activeDrawerTab,
     activeEdit,
@@ -51,7 +53,7 @@ import { save } from "./save"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
-const ctrlKeys: any = {
+const ctrlKeys = {
     a: () => selectAll(),
     c: () => copy(),
     v: () => paste(),
@@ -59,7 +61,7 @@ const ctrlKeys: any = {
     d: () => setTimeout(() => duplicate(get(selected))),
     x: () => cut(),
     e: () => activePopup.set("export"),
-    i: (e: any) => (e.altKey ? importFromClipboard() : activePopup.set("import")),
+    i: (e: KeyboardEvent) => (e.altKey ? importFromClipboard() : activePopup.set("import")),
     n: () => createNew(),
     h: () => activePopup.set("history"),
     m: () => volume.set(get(volume) ? 0 : 1),
@@ -72,12 +74,12 @@ const ctrlKeys: any = {
     "?": () => activePopup.set("shortcuts"),
 }
 
-const shiftCtrlKeys: any = {
+const shiftCtrlKeys = {
     f: () => menuClick("focus_mode"),
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]
-const keys: any = {
+const keys = {
     Escape: () => {
         // hide quick search
         if (get(quickSearchActive)) {
@@ -118,10 +120,10 @@ const keys: any = {
     // give time so it don't clear slide
     F2: () => setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
     // default menu "togglefullscreen" role not working in production on Windows/Linux
-    F11: () => (get(os).platform !== "darwin" ? send(MAIN, ["FULLSCREEN"]) : null),
+    F11: () => (get(os).platform !== "darwin" ? sendMain(Main.FULLSCREEN) : null),
 }
 
-export function keydown(e: any) {
+export function keydown(e: KeyboardEvent) {
     if (get(currentWindow) === "output") {
         let currentOut = get(outputs)[Object.keys(get(outputs))[0]]?.out || {}
         let contentDisplayed = currentOut.slide?.id || currentOut.background?.path || currentOut.background?.id || currentOut.overlays?.length
@@ -140,9 +142,9 @@ export function keydown(e: any) {
     if (document.activeElement?.nodeName === "BUTTON") (document.activeElement as any).blur()
 
     if (e.ctrlKey || e.metaKey) {
-        let drawerMenus: any[] = Object.keys(drawerTabs)
-        if (document.activeElement === document.body && Object.keys(drawerMenus).includes((e.key - 1).toString())) {
-            activeDrawerTab.set(drawerMenus[e.key - 1])
+        let drawerMenus = Object.keys(drawerTabs) as DrawerTabIds[]
+        if (document.activeElement === document.body && Object.keys(drawerMenus).includes((Number(e.key) - 1).toString())) {
+            activeDrawerTab.set(drawerMenus[Number(e.key) - 1])
             // open drawer
             if (get(drawer).height < 300) drawer.set({ height: get(drawer).stored || 300, stored: null })
             return
@@ -180,8 +182,8 @@ export function keydown(e: any) {
     if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
 
     // change tab with number keys
-    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((e.key - 1).toString())) {
-        let menu = menus[e.key - 1]
+    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((Number(e.key) - 1).toString())) {
+        let menu = menus[Number(e.key) - 1]
         activePage.set(menu)
 
         // open edit
@@ -198,14 +200,14 @@ export function keydown(e: any) {
 
 ///// PREVIEW /////
 
-export const previewCtrlShortcuts: any = {
+export const previewCtrlShortcuts = {
     l: () => outLocked.set(!get(outLocked)),
     r: () => {
         if (!get(outLocked)) refreshOut()
     },
 }
 
-export const previewShortcuts: any = {
+export const previewShortcuts = {
     // presenter controller keys
     Escape: () => {
         // WIP if (allCleared) fullscreen = false
@@ -236,7 +238,7 @@ export const previewShortcuts: any = {
         if (!get(special).disablePresenterControllerKeys) nextSlideIndividual(null)
         else setOutput("transition", null)
     },
-    PageDown: (e: any) => {
+    PageDown: (e: KeyboardEvent) => {
         let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""] && get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide?.type !== "ppt") return
         if (get(special).disablePresenterControllerKeys) return
@@ -244,7 +246,7 @@ export const previewShortcuts: any = {
         e.preventDefault()
         nextSlideIndividual(e)
     },
-    PageUp: (e: any) => {
+    PageUp: (e: KeyboardEvent) => {
         let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""] && get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide?.type !== "ppt") return
         if (get(special).disablePresenterControllerKeys) return
@@ -259,7 +261,7 @@ export const previewShortcuts: any = {
         if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
         if (get(activeSlideRecording)) return updateSlideRecording("next")
 
-        let currentShow: any = get(focusMode) ? get(activeFocus) : get(activeShow)
+        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) {
             let out = get(outputs)[getActiveOutputs()[0]]?.out
             if (!out?.slide) {
@@ -283,8 +285,8 @@ export const previewShortcuts: any = {
 
         previousSlideIndividual(e)
     },
-    " ": (e: any) => {
-        let currentShow: any = get(focusMode) ? get(activeFocus) : get(activeShow)
+    " ": (e: KeyboardEvent) => {
+        let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (currentShow?.type === "ppt") return
         if (currentShow?.type === "pdf") {
             e.preventDefault()
@@ -300,8 +302,8 @@ export const previewShortcuts: any = {
 
         let allActiveOutputs = getActiveOutputs(get(outputs), true, true, true)
         let outputId = allActiveOutputs[0]
-        let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
-        let outSlide = currentOutput.out?.slide || get(outputSlideCache)[outputId] || {}
+        let currentOutput = outputId ? get(outputs)[outputId] || null : null
+        let outSlide = currentOutput?.out?.slide || get(outputSlideCache)[outputId] || {}
 
         e.preventDefault()
         if (outSlide.id !== currentShow?.id || (currentShow && outSlide.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) {
@@ -313,7 +315,7 @@ export const previewShortcuts: any = {
             else nextSlideIndividual(e)
         }
     },
-    Home: (e: any) => {
+    Home: (e: KeyboardEvent) => {
         let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) return
         if (get(special).disablePresenterControllerKeys) return
@@ -321,7 +323,7 @@ export const previewShortcuts: any = {
         e.preventDefault()
         nextSlideIndividual(e, true)
     },
-    End: (e: any) => {
+    End: (e: KeyboardEvent) => {
         let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) return
         if (get(special).disablePresenterControllerKeys) return
@@ -340,9 +342,9 @@ function createNew() {
     else if (selectId === "show")
         addSection() // project
     else if (selectId.includes("category_")) {
-        // if (selectId.includes("media") || selectId.includes("audio")) send(MAIN, ["OPEN_FOLDER"], { channel: id, title, path })
+        // if (selectId.includes("media") || selectId.includes("audio")) sendMain(Main.OPEN_FOLDER, { channel: id, title, path })
         if (selectId.includes("scripture")) activePopup.set("import_scripture")
-        else if (selectId.includes("calendar")) send(IMPORT, ["calendar"], { format: { name: "Calendar", extensions: ["ics"] } })
+        else if (selectId.includes("calendar")) sendMain(Main.IMPORT, { channel: "calendar", format: { name: "Calendar", extensions: ["ics"] } })
         else history({ id: "UPDATE", location: { page: "drawer", id: selectId } })
     } else if (selectId === "overlay") history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
     else if (selectId === "template") history({ id: "UPDATE", location: { page: "drawer", id: "template" } })
@@ -365,12 +367,12 @@ function playMedia(e: Event) {
     e.preventDefault()
 
     let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
-    let currentOutput: any = get(outputs)[outputId] || {}
+    let currentOutput = get(outputs)[outputId] || {}
 
     if (currentOutput.out?.background?.path === item.id) return
 
     if (type === "video" || type === "image" || type === "player") {
-        let outputStyle = get(styles)[currentOutput.style]
+        let outputStyle = get(styles)[currentOutput.style || ""]
         let mediaStyle = getMediaStyle(get(media)[item.id], outputStyle)
         setOutput("background", { type, path: item.id, muted: false, loop: false, ...mediaStyle })
     } else if (type === "audio") {

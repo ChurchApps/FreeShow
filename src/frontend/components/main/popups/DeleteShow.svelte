@@ -13,7 +13,7 @@
         activePopup.set(null)
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") deleteSelected()
     }
 </script>

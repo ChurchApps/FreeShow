@@ -106,7 +106,7 @@
     $: activeLayers = currentStyle.layers || clone(defaultLayers)
 
     // text divider
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") {
             currentStyle.metadataDivider = (currentStyle.metadataDivider || "; ") + "<br>"
             updateStyle(currentStyle.metadataDivider, "metadataDivider")

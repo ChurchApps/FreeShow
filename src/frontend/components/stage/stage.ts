@@ -5,8 +5,8 @@ import { arrayToObject, filterObjectArray } from "../../utils/sendData"
 import { translate } from "../../utils/language"
 
 export function updateStageShow() {
-    Object.entries(get(connections).STAGE || {}).forEach(([id, stage]: any) => {
-        let show = arrayToObject(filterObjectArray([get(stageShows)[stage.active]], ["disabled", "name", "settings", "items"]))[0]
+    Object.entries(get(connections).STAGE || {}).forEach(([id, stage]) => {
+        let show = arrayToObject(filterObjectArray([get(stageShows)[stage.active || ""]], ["disabled", "name", "settings", "items"]))[0]
         if (!show.disabled) window.api.send(STAGE, { channel: "SHOW", id, data: show })
     })
 }

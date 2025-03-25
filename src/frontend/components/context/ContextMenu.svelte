@@ -7,7 +7,7 @@
     import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
     import { quickLoadItems } from "./loadItems"
 
-    let contextElem: any = null
+    let contextElem: HTMLDivElement | null = null
     let activeMenu: string[] = []
     let x: number = 0
     let y: number = 0
@@ -16,7 +16,7 @@
 
     function onContextMenu(e: MouseEvent) {
         let target: any = e.target
-        if (!target || closingMenu) return
+        if (!target || closingMenuTimeout) return
 
         let input = ["text", "textarea"].includes(target.type) && !target.closest(".numberInput")
         if ((!input && (target.closest(".contextMenu") || $activePopup)) || target.closest(".nocontext")) {
@@ -30,7 +30,7 @@
         translate = 0
 
         contextElem = target.closest(".context") || document.body
-        let id: string | null = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) : null
+        let id: string | null = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) || null : null
 
         // don't show drawer context menu in search input
         if (id === "#drawer_top" && input) id = null
@@ -62,7 +62,7 @@
 
     function combineMenus(id: string) {
         let menus = id.slice(1, id.length).split("__")
-        let menu: any[] = []
+        let menu: string[] = []
 
         menus.forEach((c2: string, i: number) => {
             if (contextMenuLayouts[c2]) menu.push(...contextMenuLayouts[c2])
@@ -77,10 +77,10 @@
     }
 
     // prevent duplicated menus (due to Svelte transition bug)
-    let closingMenu: any = null
+    let closingMenuTimeout: NodeJS.Timeout | null = null
     $: if ($contextActive === false) startCloseTimer()
     function startCloseTimer() {
-        closingMenu = setTimeout(() => (closingMenu = null), 70)
+        closingMenuTimeout = setTimeout(() => (closingMenuTimeout = null), 70)
     }
 
     // preload data (to check if some of the buttons can be hidden)

@@ -5,9 +5,9 @@
     import { getStyleResolution } from "../slide/getStyleResolution"
 
     $: outputId = getActiveOutputs($outputs, true, true, true)[0]
-    // $: ref = $activeShow?.id ? _show("active").layouts("active").ref()[0] : null
+    // $: ref = $activeShow?.id ? getLayoutRef() : null
     // $: currentOutput = $outputs[outputId] || {}
-    // $: Slide = currentOutput.out?.slide && ref ? _show("active").slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
+    // $: Slide = currentOutput.out?.slide && ref ? _show().slides([ref[currentOutput.out.slide.index!]?.id]).get()[0] : null
 
     let width: number = 0
     let height: number = 0
@@ -16,7 +16,7 @@
     let ratio: number = 0
 
     let initial: ["x" | "y", number] = ["y", 0]
-    let parent: any
+    let parent: HTMLElement | undefined
     function onMouseMove(e: any) {
         let slide = e.target.closest(".slide")
 

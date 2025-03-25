@@ -30,8 +30,8 @@
         dispatch("change", newVaule !== null ? newVaule.toFixed(decimals) : value)
     }
 
-    let timeout: any = null
-    let interval: any = null
+    let timeout: NodeJS.Timeout | null = null
+    let interval: NodeJS.Timeout | null = null
     function mousedown(e: any) {
         if (disableHold || !e.target.closest("button")) return
 
@@ -61,7 +61,7 @@
         if (interval) clearInterval(interval)
     })
 
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (disabled || nextScrollTimeout) return
         if (!e.ctrlKey && !e.metaKey) return
@@ -82,8 +82,8 @@
 
 <svelte:window
     on:mouseup={() => {
-        clearTimeout(timeout)
-        clearInterval(interval)
+        if (timeout) clearTimeout(timeout)
+        if (interval) clearInterval(interval)
         timeout = null
         interval = null
     }}

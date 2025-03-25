@@ -14,7 +14,7 @@
 
     let confirm: boolean = false
     let disableClick: boolean = false
-    let cancelConfirmTimeout: any = null
+    let cancelConfirmTimeout: NodeJS.Timeout | null = null
     function toggleOutput(e: any) {
         if (cancelConfirmTimeout) clearTimeout(cancelConfirmTimeout)
 

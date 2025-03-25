@@ -7,7 +7,7 @@ import { activeDays, calendarAddShow, dictionary, events, showsCache } from "../
 import { getItemText } from "../../edit/scripts/textStyle"
 import { clone, removeDuplicates, sortByTime } from "../../helpers/array"
 import { loadShows } from "../../helpers/setShow"
-import { checkName } from "../../helpers/show"
+import { checkName, getLayoutRef } from "../../helpers/show"
 import { _show } from "../../helpers/shows"
 
 export const MILLISECONDS_IN_A_DAY = 86400000
@@ -114,7 +114,7 @@ export async function createSlides(currentEvents: any[], showId: string = "") {
         if (!show) return
 
         let _calendarShow = clone(_show(includeShowId).get())
-        let showLayoutRef = clone(_show(includeShowId).layouts("active").ref()[0])
+        let showLayoutRef = clone(getLayoutRef(includeShowId))
         let showSlides = _calendarShow.slides
         showMedia = _calendarShow.media || {}
 

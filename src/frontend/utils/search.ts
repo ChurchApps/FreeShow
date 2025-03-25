@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import type { ShowList } from "../../types/Show"
 import { sortObjectNumbers } from "../components/helpers/array"
-import { categories, drawerTabsData, textCache } from "../stores"
 import { similarity } from "../converters/txt"
+import { categories, drawerTabsData, textCache } from "../stores"
 
 const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
 export function formatSearch(value: string, removeSpaces: boolean = false) {
@@ -12,13 +12,13 @@ export function formatSearch(value: string, removeSpaces: boolean = false) {
     return newValue
 }
 
-export function showSearch(searchValue: string, shows: any) {
+export function showSearch(searchValue: string, shows: ShowList[]) {
     let newShows: ShowList[] = []
 
     // fix invalid regular expression
     searchValue = searchValue.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1")
 
-    shows.forEach((s: any) => {
+    shows.forEach((s) => {
         // don't search show if archived
         const isArchived = get(categories)[s.category || ""]?.isArchive
         if (isArchived && get(drawerTabsData).shows?.activeSubTab !== s.category) return
@@ -35,7 +35,7 @@ export function showSearch(searchValue: string, shows: any) {
     return newShows
 }
 
-export function showSearchFilter(searchValue: string, show: any) {
+export function showSearchFilter(searchValue: string, show: ShowList) {
     // WIP tag search?
 
     // Priority 0: Number Exact Match

@@ -14,9 +14,11 @@
 
     $: if ($playingAudio[path]) startUpdater()
     else stop()
-    onDestroy(() => clearInterval(updaterInterval))
+    onDestroy(() => {
+        if (updaterInterval) clearInterval(updaterInterval)
+    })
 
-    let updaterInterval: any = null
+    let updaterInterval: NodeJS.Timeout | null = null
     function startUpdater() {
         if (updaterInterval) return
 

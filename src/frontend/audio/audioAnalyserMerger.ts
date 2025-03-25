@@ -30,7 +30,7 @@ export class AudioAnalyserMerger {
         audioChannels.set([])
     }
 
-    private static timeout: any = null
+    private static timeout: NodeJS.Timeout | null = null
     private static previousMerge = 0
     private static updateInterval = 50
     private static timeoutNext() {
@@ -70,7 +70,7 @@ export class AudioAnalyserMerger {
     }
 
     private static mergeAnalysers() {
-        let merged: any[] = []
+        let merged: number[][] = []
 
         const channels = this.channels
         channels.main = AudioAnalyser.getChannelsVolume()

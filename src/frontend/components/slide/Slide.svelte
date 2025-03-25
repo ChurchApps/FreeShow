@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
-    import type { Media, Show, Slide, SlideData } from "../../../types/Show"
+    import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
+    import { sendMain } from "../../IPC/main"
     import {
         activeEdit,
         activePage,
@@ -28,7 +29,6 @@
         textEditActive,
     } from "../../stores"
     import { wait } from "../../utils/common"
-    import { send } from "../../utils/request"
     import { slideHasAction } from "../actions/actions"
     import { removeTagsAndContent } from "../drawer/bible/scripture"
     import MediaLoader from "../drawer/media/MediaLoader.svelte"
@@ -49,12 +49,12 @@
     export let showId: string
     export let slide: Slide
     export let layoutSlide: SlideData
-    export let layoutSlides: any[] = []
+    export let layoutSlides: SlideData[] = []
     export let show: Show
     export let color: string | null = slide.color
     export let index: number
     export let columns: number = 1
-    export let output: any = null
+    export let output: { color: string; line: number; maxLines: number; cached: boolean } | null = null
     export let active: boolean = false
     export let focused: boolean = false
     export let list: boolean = false
@@ -116,7 +116,7 @@
         })
     }
 
-    async function locateFile(fileId: string, path: string, folders: string[], mediaObj: any) {
+    async function locateFile(fileId: string, path: string, folders: string[], mediaObj: Media) {
         if (!path) return
 
         if (checkCloud) {
@@ -133,7 +133,7 @@
         // check for other potentially mathing mediaFolders
         if (!exists) {
             let fileName = getFileName(path)
-            send(MAIN, ["LOCATE_MEDIA_FILE"], { fileName, splittedPath: splitPath(path), folders, ref: { showId, mediaId: fileId, cloudId: checkCloud ? cloudId : "" } })
+            sendMain(Main.LOCATE_MEDIA_FILE, { fileName, splittedPath: splitPath(path), folders, ref: { showId, mediaId: fileId, cloudId: checkCloud ? cloudId : "" } })
             return
         }
 
@@ -190,7 +190,7 @@
 
     $: group = slide.group
     $: if (slide.globalGroup && $groups[slide.globalGroup]) {
-        group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] : $groups[slide.globalGroup].name
+        group = $groups[slide.globalGroup].default ? $dictionary.groups?.[$groups[slide.globalGroup].name] || "" : $groups[slide.globalGroup].name
         color = $groups[slide.globalGroup].color
         // history({ id: "UPDATE", save: false, newData: { data: group, key: "slides", keys: [layoutSlide.id], subkey: "group" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
         // history({ id: "UPDATE", save: false, newData: { data: color, key: "slides", keys: [layoutSlide.id], subkey: "color" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
@@ -201,22 +201,24 @@
     // quick edit
     let html: string = ""
     let previousHTML: string = ""
-    let longest: any = null
+    let longest: number | null = null
 
     onMount(() => {
-        let texts: any[] = slide.items?.map((item) => getItemText(item))
+        let texts = slide.items?.map((item) => getItemText(item))
         if (!texts) return
-        let prev: any = null
+        let prev: number | null = null
         texts.forEach((a, i) => {
             if (!prev || a.length > prev) {
                 prev = a.length
                 longest = i
             }
         })
-        if (longest !== null) update()
+        update()
     })
 
     function update() {
+        if (longest === null) return
+
         // html = `<div class="align" style="${item.align}">`
         html = ""
         slide.items[longest]?.lines?.forEach((line) => {
@@ -228,12 +230,12 @@
     }
 
     // || $showsCache[active].slides
-    let textElem: any
+    let textElem: HTMLElement | undefined
     $: if (textElem && html !== previousHTML) {
         previousHTML = html
         setTimeout(() => {
             showsCache.update((a) => {
-                let lines = a[showId].slides[layoutSlide.id].items[longest]?.lines || []
+                let lines = a[showId].slides[layoutSlide.id].items[longest ?? -1]?.lines || []
                 let textItems = getItems(textElem.children)
                 if (textItems.length) {
                     lines.forEach((line) => {
@@ -245,9 +247,9 @@
         }, 10)
     }
 
-    function getItems(children: any): any[] {
-        let textItems: any[] = []
-        new Array(...children).forEach((child: any) => {
+    function getItems(children: HTMLCollection) {
+        let textItems: string[] = []
+        new Array(...children).forEach((child) => {
             if (child.innerHTML) textItems.push(child.innerHTML)
         })
         return textItems
@@ -258,11 +260,11 @@
         timer = []
         if (Array.isArray(slide.items)) slide.items.forEach(checkItem)
     }
-    function checkItem(item: any) {
+    function checkItem(item: Item) {
         if (item?.type !== "timer") return
 
         $activeTimers.forEach((a, i) => {
-            if (a.showId === showId && a.slideId === layoutSlide.id && a.id === item.timer.id) timer.push(i)
+            if (a.showId === showId && a.slideId === layoutSlide.id && a.id === item.timer?.id) timer.push(i)
         })
     }
 

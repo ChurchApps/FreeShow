@@ -1,16 +1,17 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { MAIN } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
+import { ToMain } from "../../types/IPC/ToMain"
 import { ShowObj } from "../classes/Show"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { getExtension } from "../components/helpers/media"
 import { checkName, formatToFileName, getLabelId } from "../components/helpers/show"
+import { destroyMain, receiveToMain, sendMain } from "../IPC/main"
 import { activeProject, activeRename, dataPath, projectView, projects, refreshSlideThumbnails } from "../stores"
 import { newToast } from "../utils/common"
-import { destroy, receive, send } from "../utils/request"
-import { createCategory, setTempShows } from "./importHelpers"
 import { videoExtensions } from "../values/extensions"
+import { createCategory, setTempShows } from "./importHelpers"
 
 type File = {
     name: string
@@ -72,9 +73,9 @@ export async function convertLessonsPresentation(data: any) {
     let { mediaToDownload, lessonShow } = convertOpenLessonPlaylist(lesson)
 
     // download videos/images
-    send(MAIN, ["DOWNLOAD_MEDIA"], [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
+    sendMain(Main.DOWNLOAD_MEDIA, [{ path: get(dataPath), name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
 
-    let replace: any = await receiveMessage()
+    let replace = await receiveMessage()
     replace.forEach((r) => {
         replacer[r.from] = r.to
     })
@@ -178,29 +179,22 @@ function convertOlfLessonToOlpType(lesson: OlfLesson) {
     }
 }
 
-async function receiveMessage() {
-    return new Promise((resolve, reject) => {
-        let listenerId = uid()
-
+async function receiveMessage(): Promise<any[]> {
+    return new Promise((resolve) => {
         // 5 seconds
         setTimeout(() => {
             removeListener()
-            reject("Timed out!")
+            console.warn("Timed out!")
+            resolve([])
         }, 5000)
 
-        receive(
-            MAIN,
-            {
-                REPLACE_MEDIA_PATHS: (msg) => {
-                    removeListener()
-                    resolve(msg)
-                },
-            },
-            listenerId
-        )
+        let listenerId = receiveToMain(ToMain.REPLACE_MEDIA_PATHS, (data) => {
+            removeListener()
+            resolve(data)
+        })
 
         function removeListener() {
-            destroy(MAIN, listenerId)
+            destroyMain(listenerId)
         }
     })
 }

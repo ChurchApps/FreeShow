@@ -1,4 +1,4 @@
-import { BrowserWindow } from "electron"
+import { BrowserWindow, type Rectangle } from "electron"
 import { screenIdentifyOptions } from "../../utils/windowOptions"
 
 export class OutputIdentify {
@@ -6,11 +6,11 @@ export class OutputIdentify {
     private static identifyActive: boolean = false
     private static IDENTIFY_TIMEOUT: number = 3000
 
-    static identifyScreens(screens: any[]) {
+    static identifyScreens(screens: { bounds: Rectangle }[]) {
         if (this.identifyActive) return
         this.identifyActive = true
 
-        let activeWindows: any[] = screens.map(this.createIdentifyScreen)
+        let activeWindows: BrowserWindow[] = screens.map(this.createIdentifyScreen)
 
         setTimeout(() => {
             activeWindows.forEach((window) => {
@@ -20,8 +20,8 @@ export class OutputIdentify {
         }, this.IDENTIFY_TIMEOUT)
     }
 
-    private static createIdentifyScreen(screen: any, i: number) {
-        let window: BrowserWindow | null = new BrowserWindow(screenIdentifyOptions)
+    private static createIdentifyScreen(screen: { bounds: Rectangle }, i: number) {
+        const window = new BrowserWindow(screenIdentifyOptions)
         window.setBounds(screen.bounds)
         window.loadFile("public/identify.html")
 

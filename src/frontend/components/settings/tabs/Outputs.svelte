@@ -3,10 +3,15 @@
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
     import { Option } from "../../../../types/Main"
+    import type { Output } from "../../../../types/Output"
+    import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { activePopup, currentOutputSettings, dictionary, ndiData, os, outputDisplay, outputs, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { newToast } from "../../../utils/common"
+    import { waitForPopupData } from "../../../utils/popup"
     import { destroy, receive, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import { addOutput, enableStageOutput, getActiveOutputs, keyOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -14,15 +19,11 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { newToast } from "../../../utils/common"
-    import { keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { waitForPopupData } from "../../../utils/popup"
-    import { AudioAnalyser } from "../../../audio/audioAnalyser"
 
-    let outputsList: any[] = []
+    let outputsList: Output[] = []
     $: outputsList = sortObject(sortByName(keysToID($outputs).filter((a) => !a.isKeyOutput)), "stageOutput")
 
-    $: if (outputsList.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(outputsList.find((a) => a.enabled)?.id || outputsList[0].id)
+    $: if (outputsList.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(outputsList.find((a) => a.enabled)?.id || outputsList[0].id || "")
 
     let currentOutput: any = {}
     $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
@@ -145,7 +146,7 @@
         return [{ id: null, name: "—" }, ...sortedList]
     }
 
-    let stageLayouts = sortByName(keysToID($stageShows)).map((a) => ({ ...a, name: a.name || $dictionary.main?.unnamed }))
+    let stageLayouts = sortByName(keysToID($stageShows)).map((a) => ({ ...a, name: a.name || $dictionary.main?.unnamed || "" }))
 
     // ndi
     function updateNdiData(e: any, key: string) {
@@ -168,7 +169,7 @@
         }
     }
 
-    const framerates: any = [
+    const framerates = [
         { id: 10, name: "10 fps" },
         { id: 12, name: "12 fps" },
         { id: 24, name: "24 fps" },
@@ -414,7 +415,7 @@
 
     <CombinedInput>
         <p><T id="settings.frame_rate" /></p>
-        <Dropdown value={framerates.find((a) => a.id === currentOutput.ndiData?.framerate)?.name || "30 fps"} options={framerates} on:click={(e) => updateNdiData(e, "framerate")} />
+        <Dropdown value={framerates.find((a) => a.id === currentOutput.ndiData?.framerate)?.name || "30 fps"} options={framerates.map((a) => ({ ...a, id: a.id.toString() }))} on:click={(e) => updateNdiData(e, "framerate")} />
     </CombinedInput>
 {/if}
 
@@ -496,7 +497,7 @@
                         class="context #output_screen{output.stageOutput ? '_stage' : ''}"
                         {active}
                         style="width: 100%;outline-offset: -4px;border-bottom: 2px solid {output.color};"
-                        on:click={() => currentOutputSettings.set(output.id)}
+                        on:click={() => currentOutputSettings.set(output.id || "")}
                         bold={false}
                         center
                     >

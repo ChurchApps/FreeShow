@@ -39,8 +39,8 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     let boxWidth = boxElem.clientWidth
     let boxHeight = boxElem.clientHeight
 
-    let textChildren: HTMLElement[] = []
-    if (textQuery) textChildren = boxElem.querySelectorAll(textQuery)
+    let textChildren: HTMLElement[] | HTMLCollection = []
+    if (textQuery) textChildren = boxElem.querySelectorAll(textQuery) as any
     if (!textChildren.length) textChildren = boxElem.children.length ? boxElem.children : [boxElem]
 
     let fontSize = defaultFontSize // maxFontSize * 0.5
@@ -65,7 +65,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     return finish(Math.min(maxFontSize, lowestValue))
 
     function finish(value: number) {
-        boxElem.remove()
+        boxElem!.remove()
         return value
     }
 
@@ -88,7 +88,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     }
 
     function textIsBiggerThanBox() {
-        return boxElem.scrollWidth > boxWidth || boxElem.scrollHeight > boxHeight
+        return boxElem!.scrollWidth > boxWidth || boxElem!.scrollHeight > boxHeight
     }
 
     function addStyleToElemText(fontSize: number) {
@@ -101,12 +101,12 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     }
 
     function virtualElem(elem: HTMLElement) {
-        const cloned: any = elem.cloneNode(true)
+        const cloned = elem.cloneNode(true) as HTMLElement
         if (!cloned) return null
 
         cloned.style.pointerEvents = "none"
         cloned.style.position = "absolute"
-        cloned.style.opacity = 0
+        cloned.style.opacity = "0"
         // overflow = hidden...
 
         // "include" paddings
@@ -115,13 +115,13 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         let newHeight = elem.clientHeight - parseFloat(computedStyle.paddingBottom) - parseFloat(computedStyle.paddingTop)
         cloned.style.width = `${newWidth}px`
         cloned.style.height = `${newHeight}px`
-        cloned.style.padding = 0
+        cloned.style.padding = "0"
 
         // "align-items: flex-end;" does not work with auto size
         cloned.style.alignItems = "center"
 
         for (let elemHide of cloned.querySelectorAll(".hideFromAutosize")) {
-            elemHide.style.display = "none"
+            ;(elemHide as HTMLElement).style.display = "none"
         }
 
         elem.after(cloned)

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Category } from "../../../../types/Tabs"
     import { activeFocus, activeShow, focusMode, outLocked, outputs, playerVideos } from "../../../stores"
     import { clone, sortByName } from "../../helpers/array"
     import { findMatchingOut, setOutput } from "../../helpers/output"
@@ -8,25 +9,25 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
 
-    export let active: any
+    export let active: string
     export let searchValue: string = ""
 
     $: videos = sortByName(
         Object.entries($playerVideos)
-            .map(([id, video]: any) => ({ rid: id, ...video }))
+            .map(([id, video]) => ({ rid: id, ...video }))
             .filter((a) => a.type === active)
     )
 
     // search
     $: if (videos || searchValue !== undefined) filterSearch()
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
-    let fullFilteredVideos: any[] = []
+    let fullFilteredVideos: (Category & { rid: string })[] = []
     function filterSearch() {
         fullFilteredVideos = clone(videos)
         if (searchValue.length > 1) fullFilteredVideos = fullFilteredVideos.filter((a) => filter(a.name).includes(searchValue))
     }
 
-    let loaded: any = {}
+    let loaded: { [key: string]: boolean } = {}
 
     // thumbnail
     // https://stackoverflow.com/a/20542029
@@ -76,7 +77,7 @@
             }}
         >
             <SelectElem id="player" data={video.rid} style="width: 100%;" draggable>
-                <img src={getThumbnail(video.id)} style="width: 100%;height: 100%;aspect-ratio: 19/9;object-fit: cover;" on:load={() => (loaded[video.rid] = true)} />
+                <img src={getThumbnail(video.id || "")} style="width: 100%;height: 100%;aspect-ratio: 19/9;object-fit: cover;" on:load={() => (loaded[video.rid] = true)} />
             </SelectElem>
         </Card>
     {/each}

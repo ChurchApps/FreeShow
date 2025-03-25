@@ -1,7 +1,10 @@
 import { get } from "svelte/store"
-import { MAIN, OUTPUT } from "../../types/Channels"
+import { OUTPUT } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
+import type { ErrorLog } from "../../types/Main"
 import { keysToID, removeDuplicates, sortByName } from "../components/helpers/array"
 import { getActiveOutputs } from "../components/helpers/output"
+import { sendMain } from "../IPC/main"
 import {
     activeDrawerTab,
     activeEdit,
@@ -78,9 +81,9 @@ export function hideDisplay(ctrlKey: boolean = true) {
     if (!ctrlKey) return
     outputDisplay.set(false)
 
-    let outputsList: any[] = getActiveOutputs(get(allOutputs), false)
+    let outputsList = getActiveOutputs(get(allOutputs), false)
     outputsList.forEach((id) => {
-        let output: any = { id, ...get(allOutputs)[id] }
+        let output = { id, ...get(allOutputs)[id] }
         send(OUTPUT, ["DISPLAY"], { enabled: false, output })
     })
 }
@@ -90,7 +93,7 @@ export function mainClick(e: any) {
     if (e.target?.closest("a.open")) {
         e.preventDefault()
         let href = e.target.getAttribute("href")
-        if (href) send(MAIN, ["URL"], href)
+        if (href) sendMain(Main.URL, href)
     }
 }
 
@@ -103,7 +106,7 @@ export function focusArea(e: any) {
 }
 
 // auto save
-let autosaveTimeout: any = null
+let autosaveTimeout: NodeJS.Timeout | null = null
 export function startAutosave() {
     if (get(currentWindow)) return
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
@@ -146,7 +149,7 @@ export function logerror(err) {
     let msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
     if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
 
-    let log = {
+    let log: ErrorLog = {
         time: new Date(),
         os: get(os).platform || "Unknown",
         version: get(version),
@@ -160,7 +163,7 @@ export function logerror(err) {
     }
 
     errorHasOccured.set(true) // always show close popup if this has happened (so the user can choose to not save)
-    send(MAIN, ["LOG_ERROR"], log)
+    sendMain(Main.LOG_ERROR, log)
 }
 
 // stream to OutputShow
@@ -209,7 +212,7 @@ export function togglePanels() {
 }
 
 // trigger functions in .svelte files (used to trigger big and old functions still in .svelte files)
-let triggerTimeout: any = null
+let triggerTimeout: NodeJS.Timeout | null = null
 export function triggerFunction(id: string) {
     activeTriggerFunction.set(id)
 

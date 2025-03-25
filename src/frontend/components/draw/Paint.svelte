@@ -1,13 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import type { Draw, DrawLine } from "../../../types/Draw"
     import { draw, drawSettings, paintCache } from "../../stores"
 
-    export let settings: any = {}
+    export let settings: { [key: string]: any } = {}
 
-    let canvas: any = null
-    let ctx: any = null
+    let canvas: HTMLCanvasElement | null = null
+    let ctx: CanvasRenderingContext2D | null = null
 
-    let lines: any[] = []
+    let lines: DrawLine[] = []
 
     onMount(() => {
         if (canvas) ctx = canvas.getContext("2d")
@@ -21,8 +22,8 @@
         if (!ctx) return
 
         for (var i = 1; i < lines.length; i++) {
-            let previous: any = lines[i - 1]
-            let current: any = lines[i]
+            let previous = lines[i - 1]
+            let current = lines[i]
             if (current !== "mouseup") {
                 if (previous === "mouseup") previous = current
 
@@ -48,15 +49,15 @@
         paintCache.set([])
 
         setTimeout(() => {
-            drawSettings.update((ds: any) => {
-                if (ds.paint?.clear) delete ds.paint.clear
-                return ds
+            drawSettings.update((a) => {
+                if (a.paint?.clear) delete a.paint.clear
+                return a
             })
         }, 100)
     }
 
     let drawStop: boolean = false
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     $: if (settings.dots) startTimeout()
     function startTimeout() {
         drawStop = false
@@ -72,7 +73,7 @@
 
     $: if (mouseDown && $draw && !drawStop) drawLine()
     function drawLine() {
-        if (!$draw || !previousPos) return
+        if (!$draw || !previousPos || !ctx) return
 
         // ctx.beginPath()
         ctx.moveTo(previousPos.x, previousPos.y)
@@ -95,7 +96,7 @@
         paintCache.set(lines)
     }
 
-    let previousPos: any = null
+    let previousPos: Draw | null = null
     let mouseDown: boolean = false
     $: {
         if ($draw !== null && !mouseDown) mouseDown = true

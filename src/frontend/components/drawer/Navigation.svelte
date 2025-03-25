@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { IMPORT } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
     import type { Category } from "../../../types/Tabs"
+    import { sendMain } from "../../IPC/main"
     import {
         actionTags,
         activeActionTagFilter,
@@ -23,7 +24,6 @@
         templateCategories,
         templates,
     } from "../../stores"
-    import { send } from "../../utils/request"
     import { keysToID, sortByName, sortObject } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -36,9 +36,9 @@
     export let id: "shows" | "media" | "overlays" | "audio" | "effects" | "scripture" | "calendar" | "functions" | "templates" | "timers"
 
     $: activeSubTab = $drawerTabsData[id]?.activeSubTab
-    $: unlabeledShows = !!Object.values($shows).filter((a: any) => a && !a.private && (a.category === null || !$categories[a.category])).length
-    $: unlabeledOverlays = !!Object.values($overlays).filter((a: any) => a.category === null || !$overlayCategories[a.category]).length
-    $: unlabeledTemplates = !!Object.values($templates).filter((a: any) => a.category === null || !$templateCategories[a.category]).length
+    $: unlabeledShows = !!Object.values($shows).filter((a) => a && !a.private && (a.category === null || !$categories[a.category])).length
+    $: unlabeledOverlays = !!Object.values($overlays).filter((a) => a.category === null || !$overlayCategories[a.category]).length
+    $: unlabeledTemplates = !!Object.values($templates).filter((a) => a.category === null || !$templateCategories[a.category]).length
 
     interface Button extends Category {
         id: string
@@ -168,10 +168,10 @@
 
     const getBibleVersions = () =>
         keysToID($scriptures)
-            .map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" }))
-            .sort((a: any, b: any) => (b.customName || b.name).localeCompare(a.customName || a.name))
-            .sort((a: any, b: any) => (a.api === true && b.api !== true ? 1 : -1))
-            .sort((a: any, b: any) => (a.collection !== undefined && b.collection === undefined ? -1 : 1))
+            .map((a) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" }))
+            .sort((a, b) => (b.customName || b.name).localeCompare(a.customName || a.name))
+            .sort((a, b) => (a.api === true && b.api !== true ? 1 : -1))
+            .sort((a, b) => (a.collection !== undefined && b.collection === undefined ? -1 : 1))
 
     function getAudioPlaylists(playlistUpdater): Button[] {
         if (!Object.keys(playlistUpdater).length) return []
@@ -206,7 +206,7 @@
         }
     }
 
-    let selectId: any = "category"
+    let selectId: string = "category"
     $: selectId = "category_" + id
 
     const dropAreas: (typeof id)[] = ["shows", "media", "audio", "overlays", "templates"]
@@ -259,7 +259,7 @@
         </div>
     {:else if id === "calendar"}
         <div class="tabs">
-            <Button on:click={() => send(IMPORT, ["calendar"], { format: { name: "Calendar", extensions: ["ics"] } })} center title={$dictionary.actions?.import}>
+            <Button on:click={() => sendMain(Main.IMPORT, { channel: "calendar", format: { name: "Calendar", extensions: ["ics"] } })} center title={$dictionary.actions?.import}>
                 <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="actions.import" />{/if}
             </Button>

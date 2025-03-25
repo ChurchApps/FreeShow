@@ -1,14 +1,14 @@
 <script lang="ts">
     import { tick } from "svelte"
-    import { IMPORT } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
     import { Popups } from "../../../../types/Main"
     import { importFromClipboard } from "../../../converters/importHelpers"
+    import { sendMain } from "../../../IPC/main"
     import { activePopup, alertMessage, dataPath, os } from "../../../stores"
-    import { send } from "../../../utils/request"
+    import { translate } from "../../../utils/language"
+    import { presentationExtensions } from "../../../values/extensions"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-    import { presentationExtensions } from "../../../values/extensions"
-    import { translate } from "../../../utils/language"
 
     const freeshow_formats = [
         { name: "$formats.show", extensions: ["show", "json"], id: "freeshow" },
@@ -29,7 +29,7 @@
             id: "powerpoint",
             tutorial:
                 "This will import the plain text as a show." +
-                ($os === "linux" ? "" : " If you would like to use a PowerPoint/Keynote presentation with FreeShow, please choose the media import option, or drag and drop it into your project.") +
+                ($os.platform === "linux" ? "" : " If you would like to use a PowerPoint/Keynote presentation with FreeShow, please choose the media import option, or drag and drop it into your project.") +
                 " Or you can import directly as PDF or images if you don't need animations.",
         },
         { name: "Word", extensions: ["doc", "docx"], id: "word" },
@@ -80,7 +80,7 @@
             style="flex: 1;min-height: 50px;"
             on:click={() => {
                 let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
-                send(IMPORT, [format.id], { path: $dataPath, format: { ...format, name } })
+                sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
                 displayTutorial(format)
             }}
             center
@@ -111,7 +111,7 @@
                     })
                 } else if (format.extensions) {
                     let name = format.name.startsWith("$") ? translate(format.name.slice(1)) : format.name
-                    send(IMPORT, [format.id], { path: $dataPath, format: { ...format, name } })
+                    sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name }, settings: { path: $dataPath } })
                     displayTutorial(format)
                 } else if (format.id === "clipboard") {
                     importFromClipboard()
@@ -139,7 +139,7 @@
         <Button
             style="width: 20%;flex-direction: column;min-height: 160px;"
             on:click={() => {
-                send(IMPORT, [format.id], { format })
+                sendMain(Main.IMPORT, { channel: format.id, format })
                 displayTutorial(format)
             }}
             bold={false}

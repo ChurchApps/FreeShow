@@ -1,6 +1,7 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
+    import { sendMain } from "../../IPC/main"
     import { saved, topContextActive, windowState } from "../../stores"
     import { initializeClosing } from "../../utils/save"
     import ContextChild from "../context/ContextChild.svelte"
@@ -71,10 +72,10 @@
         {/each}
     </div>
     <div class="window">
-        <Button on:click={() => window.api.send(MAIN, { channel: "MINIMIZE" })} center>
+        <Button on:click={() => sendMain(Main.MINIMIZE)} center>
             <Icon id="remove" size={1.2} white />
         </Button>
-        <Button on:click={() => window.api.send(MAIN, { channel: "MAXIMIZE" })} style="transform: rotate(180deg);" center>
+        <Button on:click={() => sendMain(Main.MAXIMIZE)} style="transform: rotate(180deg);" center>
             <Icon id={maximized ? "maximized" : "unmaximized"} size={maximized ? 0.8 : 0.9} white />
         </Button>
         <Button id="close" on:click={initializeClosing} center>

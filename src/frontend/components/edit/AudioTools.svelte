@@ -12,10 +12,10 @@
     $: audioId = $activeEdit.id || $activeShow!.id
     $: currentMedia = $media[audioId] || {}
 
-    let edits: any = clone(audioEdits.media?.edit)
+    let edits = clone(audioEdits.media?.edit)
 
     // set values
-    $: if (currentMedia) {
+    $: if (currentMedia && edits) {
         edits.default[0].value = currentMedia?.audioType || ""
     }
 
@@ -29,7 +29,7 @@
     export function valueChanged(input: any) {
         if (!audioId) return
 
-        let value: any = input.value
+        let value = input.value
         if (value?.id !== undefined) value = value.id
 
         updateStore("media", { keys: [audioId, input.id], value })

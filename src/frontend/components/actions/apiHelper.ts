@@ -1,5 +1,7 @@
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
+import type { History } from "../../../types/History"
+import type { DropData, Selected, Variable } from "../../../types/Main"
 import {
     activeDrawerTab,
     activeEdit,
@@ -36,7 +38,7 @@ import { setDrawerTabData } from "../helpers/historyHelpers"
 import { getFileName, getMediaStyle, removeExtension } from "../helpers/media"
 import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
 import { loadShows, setShow } from "../helpers/setShow"
-import { getLabelId } from "../helpers/show"
+import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { getPlainEditorText } from "../show/getTextEditor"
@@ -62,12 +64,12 @@ export function gotoGroup(dataGroupId: string) {
     if (get(outLocked)) return
 
     let outputId = getActiveOutputs(get(outputs))[0]
-    let currentOutput: any = outputId ? get(outputs)[outputId] || {} : {}
+    let currentOutput = get(outputs)[outputId] || null
     let outSlide = currentOutput.out?.slide
     let currentShowId = outSlide?.id || (get(activeShow) !== null ? (get(activeShow)!.type === undefined || get(activeShow)!.type === "show" ? get(activeShow)!.id : null) : null)
     if (!currentShowId) return
 
-    let showRef = _show(currentShowId).layouts("active").ref()[0] || []
+    let showRef = getLayoutRef(currentShowId)
     let groupIds = showRef.map((a) => a.id)
     let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
     if (!showGroups.length) return
@@ -119,7 +121,7 @@ export async function selectSlideByIndex(data: API_slide_index) {
 export function selectSlideByName(name: string) {
     let slides = _show().slides().get()
     // group numbers
-    let groupNums: any = {}
+    let groupNums: { [key: string]: number } = {}
     slides = slides
         .filter((a) => a.group)
         .map((a) => {
@@ -135,7 +137,7 @@ export function selectSlideByName(name: string) {
     let sortedSlides = sortByClosestMatch(slides, getLabelId(name, false), "group")
     if (!sortedSlides[0]) return
 
-    let showRef = _show().layouts("active").ref()[0]
+    let showRef = getLayoutRef()
     if (!showRef) return newToast("$toast.midi_no_show")
 
     let index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
@@ -191,7 +193,7 @@ export function moveStageConnection(id: string) {
 }
 
 export function changeVariable(data: API_variable) {
-    let variable: any
+    let variable: Variable | undefined
     if (data.id) variable = get(variables)[data.id]
     else if (data.name) variable = sortByClosestMatch(getVariables(), data.name)[0]
     else if (data.index !== undefined) variable = sortByName(getVariables())[data.index - 1]
@@ -207,20 +209,20 @@ export function changeVariable(data: API_variable) {
         key = "number"
     } else if (data.value !== undefined) {
         value = data.value
-        if (key === "value" && typeof value !== "boolean") key = variable.type === "number" ? "number" : "text"
+        if (key === "value" && typeof value !== "boolean") key = variable.type
     } else if (key === "enabled") {
         value = !variable.enabled
     }
     if (value === undefined) return
 
-    updateVariable(value, data.id || variable.id, key)
+    updateVariable(value, data.id || variable.id || "", key)
 }
 function getVariables() {
     return keysToID(get(variables))
 }
 function updateVariable(value: any, id: string, key: string) {
     variables.update((a) => {
-        a[id][key] = value
+        if (a[id]) a[id][key] = value
         return a
     })
 }
@@ -261,15 +263,15 @@ export async function rearrangeGroups(data: API_rearrange) {
     let trigger = data.to > data.from ? "end" : ""
     let pos = trigger === "end" ? 1 : 0
 
-    let ref = _show(data.showId).layouts("active").ref()[0]
+    let ref = getLayoutRef(data.showId)
     let dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
-    let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex - pos
+    let dropIndex = ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex! - pos
     if (isNaN(dropIndex)) dropIndex = ref.length
 
-    const drag = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
-    const drop = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos } // , trigger, center: false
+    const drag: Selected = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
+    const drop: DropData = { id: "slides", data: { index: dropIndex }, index: dropIndex + pos, center: false } // , trigger, center: false
 
-    let h = dropActions.slide({ drag, drop }, {})
+    let h = dropActions.slide({ drag, drop }, { location: { page: get(activePage) } } as History)
     if (h && h.id) history(h)
 }
 
@@ -386,7 +388,7 @@ function levenshteinDistance(a, b) {
     if (a.length === 0) return b.length
     if (b.length === 0) return a.length
 
-    const matrix: any[] = []
+    const matrix: number[][] = []
 
     // increment along the first column of each row
     for (let i = 0; i <= b.length; i++) matrix[i] = [i]

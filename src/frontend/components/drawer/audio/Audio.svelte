@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { MAIN, READ_FOLDER } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, effectsLibrary, labelsDisabled, media, outLocked, selectAllAudio, selected } from "../../../stores"
-    import { destroy, send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
@@ -18,14 +18,16 @@
     import AudioStreams from "../live/AudioStreams.svelte"
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
-    import AudioFile from "./AudioFile.svelte"
     import AudioEffect from "./AudioEffect.svelte"
+    import AudioFile from "./AudioFile.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
 
-    let files: any[] = []
-    let scrollElem: any
+    type File = { path: string; name: string; extension?: string; folder?: boolean; favourite?: boolean; audio?: boolean }
+
+    let files: File[] = []
+    let scrollElem: HTMLElement | undefined
 
     let playlistSettings: boolean = false
 
@@ -53,7 +55,7 @@
         if (active === "favourites") {
             prevActive = active
             files = Object.entries($media)
-                .map(([path, a]: any) => {
+                .map(([path, a]) => {
                     let p = splitPath(path)
                     let name = p.name
                     return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
@@ -71,13 +73,13 @@
             if (active !== prevActive) {
                 prevActive = active
                 files = []
-                Object.values($audioFolders).forEach((data) => send(MAIN, ["READ_FOLDER"], { path: data.path, disableThumbnails: true }))
+                Object.values($audioFolders).forEach((data) => sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: true }))
             }
         } else if (path.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
-                send(MAIN, ["READ_FOLDER"], { path, listFilesInFolders: true, disableThumbnails: true })
+                sendMain(Main.READ_FOLDER, { path, listFilesInFolders: true, disableThumbnails: true })
             }
         } else {
             // microphones & audio_streams
@@ -85,28 +87,23 @@
         }
     }
 
-    let filesInFolders: string[] = []
-    let folderFiles: any = {}
+    let filesInFolders: { id: string; name: string }[] = []
+    let folderFiles: { [key: string]: string[] } = {}
 
-    let listenerId = uid()
-    onDestroy(() => destroy(READ_FOLDER, listenerId))
+    let listenerId = receiveMain(Main.READ_FOLDER, (data) => {
+        filesInFolders = sortByName(data.filesInFolders || [])
 
-    // receive files
-    window.api.receive(READ_FOLDER, receiveContent, listenerId)
-    function receiveContent(msg: any) {
-        filesInFolders = sortByName(msg.filesInFolders || [])
+        if (active !== "all" && data.path !== path) return
 
-        if (active !== "all" && msg.path !== path) return
-
-        files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
-        files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        files.push(...data.files.filter((file) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
+        files = sortByName(files).sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
         // set valid files in folder
         folderFiles = {}
-        Object.keys(msg.folderFiles).forEach((path) => {
-            folderFiles[path] = msg.folderFiles[path].filter((file) => file.folder || getMediaType(file.extension) === "audio")
+        Object.keys(data.folderFiles).forEach((path) => {
+            folderFiles[path] = data.folderFiles[path].filter((file) => file.folder || getMediaType(file.extension) === "audio")
         })
 
         // remove folders with no content
@@ -114,7 +111,8 @@
 
         // filterFiles()
         scrollElem?.scrollTo(0, 0)
-    }
+    })
+    onDestroy(() => destroyMain(listenerId))
 
     // search
     $: if (searchValue !== undefined || files) filterSearch()
@@ -128,7 +126,7 @@
         document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         // if (e.key === "Enter" && searchValue.length > 1 && e.target.closest(".search")) {
         //   if (fullFilteredFiles.length) {
         //     let file = fullFilteredFiles[0]
@@ -138,7 +136,7 @@
         //   }
         // }
 
-        if (e.target.closest("input") || e.target.closest(".edit")) return
+        if (e.target?.closest("input") || e.target?.closest(".edit")) return
 
         if ((e.ctrlKey || e.metaKey) && e.key === "Backspace") {
             if (rootPath === path) return
@@ -153,7 +151,7 @@
     }
 
     // selected will be cleared when clicked, so store them on mousedown
-    let selectedFiles: any[] = []
+    let selectedFiles: File[] = []
     function storeSelected() {
         if ($selected.id === "audio") selectedFiles = clone($selected.data)
         else selectedFiles = []

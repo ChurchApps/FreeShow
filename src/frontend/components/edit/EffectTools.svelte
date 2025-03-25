@@ -21,7 +21,7 @@
     $: currentEffect = effects[effectId]
 
     let edits: any = {}
-    // let filterEdits: any = clone(currentEffect.edit)
+    // let filterEdits = clone(currentEffect.edit)
     $: if (currentEffect) edits = clone(currentEffect?.edit)
     $: console.log(edits)
 
@@ -42,9 +42,9 @@
     //     // update filters
     //     let filters = getFilters(currenteffect.filter)
     //     let defaultFilters = effectFilters.effect?.edit?.default || []
-    //     filterEdits.default.forEach((filter: any) => {
+    //     filterEdits.default.forEach((filter) => {
     //         let value = filters[filter.key] ?? defaultFilters.find((a) => a.key === filter.key)?.value
-    //         let index = filterEdits.default.findIndex((a: any) => a.key === filter.key)
+    //         let index = filterEdits.default.findIndex((a) => a.key === filter.key)
     //         filterEdits.default[index].value = value
     //     })
     // }
@@ -58,7 +58,7 @@
     //     deleteKeys.forEach((key) => removeStore("effect", { keys: [effectId, key] }))
 
     //     // update output
-    //     let currentOutput: any = $outputs[getActiveOutputs()[0]]
+    //     let currentOutput = $outputs[getActiveOutputs()[0]]
     //     let bg = currentOutput?.out?.background
     //     if (!bg) return
     //     deleteKeys.forEach((key) => delete bg[key])
@@ -68,14 +68,14 @@
     export function valueChanged(input: any) {
         if (!effectId) return
 
-        let value: any = input.value
+        let value = input.value
         console.log(value)
         // if (input.id === "filter") value = addFilterString(currenteffect?.filter || "", [input.key, value])
 
         // updateStore("effect", { keys: [effectId, input.id], value })
 
         // // update output filters
-        // let currentOutput: any = $outputs[getActiveOutputs()[0]]
+        // let currentOutput = $outputs[getActiveOutputs()[0]]
         // if (!currentOutput.out?.background || currentOutput.out?.background?.path !== effectId) return
         // let bg = currentOutput.out.background
         // bg[input.id] = value

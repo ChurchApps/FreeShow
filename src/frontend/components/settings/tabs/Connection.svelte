@@ -1,22 +1,21 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { onMount } from "svelte"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, activeShow, companion, connections, dataPath, disabledServers, maxConnections, outputs, pcoConnected, popupData, ports, remotePassword, serverData } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
+    import { pcoSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { checkWindowCapture } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import { pcoSync } from "../../../utils/startup"
 
     let ip = "localhost"
-    let listenerId = "IP_ADDRESS"
-    onMount(() => send(MAIN, ["IP"]))
-    receive(MAIN, { IP: (a: any) => getIP(a) }, listenerId)
-    // receive(MAIN, { IP: (a: any) => (ip = a["Wi-Fi"]?.filter((a: any) => a.family === "IPv4")[0].address) })
-    onDestroy(() => destroy(MAIN, listenerId))
+
+    onMount(async () => {
+        getIP(await requestMain(Main.IP))
+    })
 
     function getIP(nets: any) {
         let results: any = {}
@@ -78,12 +77,12 @@
             return a
         })
 
-        if (value) send(MAIN, ["WEBSOCKET_START"], $ports.companion)
-        else send(MAIN, ["WEBSOCKET_STOP"])
+        if (value) sendMain(Main.WEBSOCKET_START, $ports.companion)
+        else sendMain(Main.WEBSOCKET_STOP)
     }
 
     function restart() {
-        send(MAIN, ["START"], { ports: $ports, max: $maxConnections, disabled: $disabledServers, data: $serverData })
+        sendMain(Main.START, { ports: $ports, max: $maxConnections, disabled: $disabledServers, data: $serverData })
     }
 
     // restart servers on toggle on/off
@@ -105,8 +104,13 @@
     // Answer / Guess / Poll
 
     function pcoConnect() {
-        if (!$pcoConnected) send(MAIN, ["PCO_LOAD_SERVICES"], { dataPath: $dataPath })
-        else send(MAIN, ["PCO_DISCONNECT"])
+        if (!$pcoConnected) sendMain(Main.PCO_LOAD_SERVICES, { dataPath: $dataPath })
+        else {
+            requestMain(Main.PCO_DISCONNECT, undefined, (a) => {
+                if (!a.success) return
+                pcoConnected.set(false)
+            })
+        }
     }
 
     function syncPCO() {

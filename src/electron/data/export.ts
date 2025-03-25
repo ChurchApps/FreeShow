@@ -6,20 +6,24 @@ import AdmZip from "adm-zip"
 import { BrowserWindow, ipcMain } from "electron"
 import fs from "fs"
 import { join } from "path"
-import { EXPORT, MAIN, STARTUP } from "../../types/Channels"
+import { EXPORT, STARTUP } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
+import { ToMain } from "../../types/IPC/ToMain"
+import type { Show, Slide } from "../../types/Show"
 import type { Message } from "../../types/Socket"
-import { isProd, toApp } from "../index"
+import { isProd } from "../index"
+import { sendMain, sendToMain } from "../IPC/main"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getShowsFromIds, getTimePointString, makeDir, openSystemFolder, parseShow, readFile, selectFolderDialog } from "../utils/files"
 import { getAllShows } from "../utils/shows"
 import { exportOptions } from "../utils/windowOptions"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
-const customJSONExtensions: any = {
+const customJSONExtensions = {
     TEMPLATE: ".fstemplate",
     THEME: ".fstheme",
 }
 
-export function startExport(_e: any, msg: Message) {
+export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
     if (!msg.data) return
     let dataPath: string = msg.data.path
 
@@ -27,12 +31,12 @@ export function startExport(_e: any, msg: Message) {
         dataPath = selectFolderDialog()
         if (!dataPath) return
 
-        toApp(MAIN, { channel: "DATA_PATH", data: dataPath })
+        sendMain(Main.DATA_PATH, dataPath)
     }
 
     msg.data.path = getDataFolder(dataPath, dataFolderNames.exports)
 
-    let customExt = customJSONExtensions[msg.channel]
+    let customExt = customJSONExtensions[msg.channel as keyof typeof customJSONExtensions]
     if (customExt) {
         exportJSON(msg.data.content, customExt, msg.data.path)
         return
@@ -64,23 +68,23 @@ export function startExport(_e: any, msg: Message) {
 
 // only open once per session
 let systemOpened: boolean = false
-function doneWritingFile(err: any, exportFolder: string, toMain: boolean = true) {
+function doneWritingFile(err: NodeJS.ErrnoException | null, exportFolder: string, toMain: boolean = true) {
     let msg: string = "export.exported"
 
     // open export location in system when completed
     if (!err && !systemOpened) {
         openSystemFolder(exportFolder)
         systemOpened = true
-    } else if (err) msg = err
+    } else if (err) msg = err.toString()
 
-    if (toMain) toApp(MAIN, { channel: "ALERT", data: msg })
+    if (toMain) sendToMain(ToMain.ALERT, msg)
 }
 
 // ----- PDF -----
 
-const options: any = {
-    margins: {top: 0, bottom: 0, left: 0, right: 0},
-    pageSize: "A4",
+const options = {
+    margins: { top: 0, bottom: 0, left: 0, right: 0 },
+    pageSize: "A4" as "A4",
     printBackground: true,
     landscape: false,
 }
@@ -88,25 +92,25 @@ const options: any = {
 export function generatePDF(path: string) {
     exportWindow?.webContents.printToPDF(options).then(savePdf).catch(exportMessage)
 
-    function savePdf(data: any) {
+    function savePdf(data: Buffer) {
         writeFile(path, ".pdf", data, undefined, doneWritingFile)
     }
 
-    function doneWritingFile(err: any) {
-        if (err) return exportMessage(err)
+    function doneWritingFile(err: NodeJS.ErrnoException | null) {
+        if (err) return exportMessage(err.toString())
 
-        exportWindow.webContents.send(EXPORT, { channel: "NEXT" })
+        exportWindow?.webContents.send(EXPORT, { channel: "NEXT" })
     }
 }
 
 function exportMessage(message: string = "") {
-    toApp(MAIN, { channel: "ALERT", data: message })
+    sendToMain(ToMain.ALERT, message)
 
     exportWindow?.on("closed", () => (exportWindow = null))
     exportWindow?.close()
 }
 
-let exportWindow: any = null
+let exportWindow: BrowserWindow | null = null
 export function createPDFWindow(data: any) {
     exportWindow = new BrowserWindow(exportOptions)
 
@@ -116,8 +120,8 @@ export function createPDFWindow(data: any) {
 
     exportWindow.webContents.once("did-finish-load", windowLoaded)
     function windowLoaded() {
-        exportWindow.webContents.send(STARTUP, { channel: "TYPE", data: "pdf" })
-        exportWindow.webContents.send(EXPORT, { channel: "PDF", data })
+        exportWindow?.webContents.send(STARTUP, { channel: "TYPE", data: "pdf" })
+        exportWindow?.webContents.send(EXPORT, { channel: "PDF", data })
     }
 }
 
@@ -125,51 +129,51 @@ ipcMain.on(EXPORT, (_e, msg: any) => {
     if (!msg.data?.path) return
 
     if (msg.channel === "DONE") {
-        doneWritingFile(false, msg.data.path)
+        doneWritingFile(null, msg.data.path)
         return
     }
     if (msg.channel !== "EXPORT") return
 
     if (!msg.data?.name) return
-    toApp(MAIN, { channel: "ALERT", data: msg.data.name })
+    sendToMain(ToMain.ALERT, msg.data.name)
     if (msg.data.type === "pdf") generatePDF(join(msg.data.path, msg.data.name))
 })
 
 // ----- JSON -----
 
 export function exportJSON(content: any, extension: string, path: string) {
-    writeFile(join(path, content.name || "Unnamed"), extension, JSON.stringify(content, null, 4), "utf-8", (err: any) => doneWritingFile(err, path))
+    writeFile(join(path, content.name || "Unnamed"), extension, JSON.stringify(content, null, 4), "utf-8", (err) => doneWritingFile(err, path))
 }
 
 export function exportJSONFile(content: any, path: string, name: string) {
-    writeFile(join(path, name), ".json", JSON.stringify(content, null, 4), "utf-8", (err: any) => doneWritingFile(err, path))
+    writeFile(join(path, name), ".json", JSON.stringify(content, null, 4), "utf-8", (err) => doneWritingFile(err, path))
 }
 
 // ----- SHOW -----
 
-export function exportShow(data: any) {
-    data.shows.forEach((show: any, i: number) => {
+export function exportShow(data: { path: string; shows: Show[] }) {
+    data.shows.forEach((show, i) => {
         let id = show.id
         delete show.id
 
-        writeFile(join(data.path, show.name || id), ".show", JSON.stringify([id, show]), "utf-8", (err: any) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
+        writeFile(join(data.path, show.name || id!), ".show", JSON.stringify([id, show]), "utf-8", (err) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
     })
 }
 
 // ----- TXT -----
 
-export function exportTXT(data: any) {
-    data.shows.forEach((show: any, i: number) => {
-        writeFile(join(data.path, show.name || show.id), ".txt", getSlidesText(show), "utf-8", (err: any) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
+export function exportTXT(data: { path: string; shows: Show[] }) {
+    data.shows.forEach((show, i) => {
+        writeFile(join(data.path, show.name || show.id!), ".txt", getSlidesText(show), "utf-8", (err) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
     })
 }
 
 // WIP do this in frontend
-function getSlidesText(show: any) {
+function getSlidesText(show: Show) {
     let text: string = ""
 
-    let slides: any[] = []
-    show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide: any) => {
+    let slides: Slide[] = []
+    show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide) => {
         let slide = show.slides[layoutSlide.id]
         if (!slide) return
 
@@ -185,13 +189,13 @@ function getSlidesText(show: any) {
     slides.forEach((slide) => {
         if (slide.group) text += "[" + slide.group + "]\n"
 
-        slide.items.forEach((item: any) => {
+        slide.items.forEach((item) => {
             if (!item.lines) return
 
-            item.lines.forEach((line: any) => {
+            item.lines.forEach((line) => {
                 if (!line.text) return
 
-                line.text.forEach((t: any) => {
+                line.text.forEach((t) => {
                     text += t.value
                 })
                 text += "\n"
@@ -211,19 +215,19 @@ function getSlidesText(show: any) {
 
 // ----- ALL SHOWS -----
 
-function exportAllShows(data: any) {
+function exportAllShows(data: { type: string; showsPath: string; path: string }) {
     let type = data.type
 
     const supportedTypes = ["txt", "show"]
     if (!supportedTypes.includes(type)) return
 
     let allShows: string[] = getAllShows({ path: data.showsPath })
-    let shows: any[] = []
+    let shows: Show[] = []
     for (let i = 0; i < allShows.length; i++) {
         const showName: string = allShows[i]
         const showFilePath = join(data.showsPath, showName)
         // WIP override existing instead of creating new?
-        const showContent: any = parseShow(readFile(showFilePath))
+        const showContent = parseShow(readFile(showFilePath))
 
         if (showContent?.[1]) shows.push({ ...showContent[1], id: showContent[0] })
     }
@@ -236,19 +240,19 @@ function exportAllShows(data: any) {
         if (type === "show") exportShow({ ...data, shows })
         else if (type === "txt") exportTXT({ ...data, shows })
     } else {
-        toApp(MAIN, { channel: "ALERT", data: "Exported 0 shows!" })
+        sendToMain(ToMain.ALERT, "Exported 0 shows!")
     }
 }
 
 // ----- PROJECT -----
 
-export function exportProject(data: any) {
-    toApp(MAIN, { channel: "ALERT", data: "export.exporting" })
+export function exportProject(data: { type: "project"; path: string; name: string; file: any }) {
+    sendToMain(ToMain.ALERT, "export.exporting")
 
-    const files = data.file.files || []
+    const files: string[] = data.file.files || []
     if (!files.length) {
         // export as plain JSON
-        writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", (err: any) => doneWritingFile(err, data.path))
+        writeFile(join(data.path, data.name), ".project", JSON.stringify(data.file), "utf-8", (err) => doneWritingFile(err, data.path))
         return
     }
 
@@ -256,7 +260,7 @@ export function exportProject(data: any) {
     const zip = new AdmZip()
 
     // copy files
-    files.forEach((path: string) => {
+    files.forEach((path) => {
         try {
             // file might not exist
             zip.addLocalFile(path)
@@ -270,12 +274,12 @@ export function exportProject(data: any) {
 
     const outputPath = join(data.path, data.name)
     let p = getUniquePath(outputPath, ".project")
-    zip.writeZip(p, (err: any) => doneWritingFile(err, data.path))
+    zip.writeZip(p, (err) => doneWritingFile(err, data.path))
 }
 
 // ----- HELPERS -----
 
-function writeFile(path: string, extension: string, data: any, options: any = undefined, callback: any) {
+function writeFile(path: string, extension: string, data: string | Buffer, options: any = undefined, callback: (err: NodeJS.ErrnoException | null) => void) {
     let p = getUniquePath(path, extension)
     fs.writeFile(p, data, options, callback)
 }

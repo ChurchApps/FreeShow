@@ -1,18 +1,20 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import type { Item } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, popupData, templates } from "../../../stores"
     import { history } from "../../helpers/history"
     import { _show } from "../../helpers/shows"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     let action = $popupData.action
     let type = $activeEdit.type
     let indexes: number[] = $activeEdit.items
 
-    let layoutRef: any[] = _show().layouts("active").ref()[0] || []
-    let slideRef: any = layoutRef[$activeEdit.slide!] || {}
-    let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
+    let layoutRef = getLayoutRef()
+    let slideRef = layoutRef[$activeEdit.slide!] || {}
+    let slideItems: Item[] = _show().get("slides")?.[slideRef.id]?.items || []
 
     if ($activeEdit.id) getItems()
     function getItems() {
@@ -33,7 +35,7 @@
         value = e?.detail ?? e
         if (value) value = Number(value)
 
-        slideItems.forEach((_: any, i: number) => {
+        slideItems.forEach((_, i: number) => {
             if (!indexes.includes(i)) return
 
             if (!slideItems[i].actions) slideItems[i].actions = {}

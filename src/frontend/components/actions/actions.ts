@@ -9,6 +9,7 @@ import { convertOldMidiToNewAction } from "./midi"
 import { getActiveOutputs } from "../helpers/output"
 import { newToast, wait } from "../../utils/common"
 import { actionData } from "./actionData"
+import { getLayoutRef } from "../helpers/show"
 
 export function runActionId(id: string) {
     runAction(get(midiIn)[id])
@@ -58,10 +59,10 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
         }
 
         if (actionId === "start_slide_timers" && slideIndex > -1) {
-            let outputRef: any = get(outputs)[getActiveOutputs()[0]]?.out?.slide || {}
-            let showId = outputRef.id || "active"
+            let outputRef = get(outputs)[getActiveOutputs()[0]]?.out?.slide
+            let showId = outputRef?.id || "active"
             let layoutRef = _show(showId)
-                .layouts(outputRef.layout ? [outputRef.layout] : "active")
+                .layouts(outputRef?.layout ? [outputRef.layout] : "active")
                 .ref()[0]
             if (layoutRef) {
                 let overlayIds = layoutRef[slideIndex].data?.overlays
@@ -95,7 +96,7 @@ export function checkStartupActions() {
     // WIP only for v1.1.7 (can be removed)
     midiIn.update((a) => {
         Object.keys(a).forEach((actionId) => {
-            let action: any = a[actionId]
+            let action = a[actionId]
             if (action.startupEnabled && !action.customActivation) {
                 delete action.startupEnabled
                 action.customActivation = "startup"
@@ -110,7 +111,7 @@ export function checkStartupActions() {
 export function customActionActivation(id: string) {
     let actionTriggered = false
     Object.keys(get(midiIn)).forEach((actionId) => {
-        let action: any = get(midiIn)[actionId]
+        let action = get(midiIn)[actionId]
         let customActivation = id.split("___")[0]
         let specificActivation = id.split("___")[1]
 
@@ -129,14 +130,14 @@ export function customActionActivation(id: string) {
 export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}, allowMultiple: boolean = false) {
     if (slideIndex < 0) return
 
-    let ref = _show().layouts("active").ref()[0]
+    let ref = getLayoutRef()
     if (!ref[slideIndex]) return
 
     let actions = clone(ref[slideIndex].data?.actions) || {}
 
     let id = uid()
     if (!actions.slideActions) actions.slideActions = []
-    let actionValues: any = {}
+    let actionValues: { [key: string]: any } = {}
     if (actionValue) actionValues[actionId] = actionValue
 
     let action = { id, triggers: [actionId], actionValues }

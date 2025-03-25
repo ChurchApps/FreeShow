@@ -1,11 +1,13 @@
-import { MAIN } from "../../types/Channels"
-import { isMac, isProd, toApp } from ".."
-import { openURL } from "./responses"
 import { app } from "electron"
+import { isMac, isProd } from ".."
+import { ToMain } from "../../types/IPC/ToMain"
+import type { Dictionary } from "../../types/Settings"
+import { sendToMain } from "../IPC/main"
+import { openURL } from "../IPC/responsesMain"
 
-const mc = (id: string) => toApp(MAIN, { channel: "MENU", data: id })
+const mc = (id: string) => sendToMain(ToMain.MENU, id)
 
-export function template(strings: any): any {
+export function template(strings: Dictionary): any {
     const appMenu = {
         label: app.name,
         submenu: [
@@ -79,5 +81,6 @@ export function template(strings: any): any {
         ],
     }
 
+    // as Array<(Electron.MenuItemConstructorOptions) | (Electron.MenuItem)>
     return [...(isMac ? [appMenu] : []), fileMenu, editMenu, viewMenu, helpMenu]
 }

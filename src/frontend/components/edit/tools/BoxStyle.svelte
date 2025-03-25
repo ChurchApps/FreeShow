@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import type { Item, ItemType } from "../../../../types/Show"
+    import type { Item, ItemType, Slide } from "../../../../types/Show"
     import { activeEdit, activeShow, overlays, selected, showsCache, templates, theme, themes } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { hexToRgb, splitRgb } from "../../helpers/color"
     import { history } from "../../helpers/history"
-    import { getListOfShows, getStageList } from "../../helpers/show"
+    import { getLayoutRef, getListOfShows, getStageList } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import { MAX_FONT_SIZE } from "../scripts/autosize"
@@ -34,8 +34,8 @@
         // set focus to textbox if only one without content
         if (allSlideItems.length === 1 && item && !getItemText(item).length && !$activeEdit.items.length) {
             activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
-            const elem: any = document.querySelector(".editItem")?.querySelector(".edit")
-            if (elem) elem.focus()
+            const elem = document.querySelector(".editItem")?.querySelector(".edit")
+            if (elem) (elem as HTMLElement).focus()
         }
     })
 
@@ -44,13 +44,13 @@
             if (e.target.closest(".menus") || e.target.closest(".popup") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
         }
 
-        let sel: any = window.getSelection()
+        let sel = window.getSelection()
 
-        if (sel.type === "None") selection = null
+        if (sel?.type === "None") selection = null
         else selection = getSelectionRange() // range
     }
 
-    function keyup(e: any) {
+    function keyup(e: KeyboardEvent) {
         if (e.key.includes("Arrow") || e.key.toUpperCase() === "A") getTextSelection(e)
     }
 
@@ -59,7 +59,7 @@
         i: () => ({ id: "style", key: "font-style", value: "italic" }),
         u: () => ({ id: "style", key: "text-decoration", value: "underline" }),
     }
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (!selection || (!e.ctrlKey && !e.metaKey) || !formatting[e.key]) return
         e.preventDefault()
 
@@ -86,8 +86,8 @@
     const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera", "variable", "web", "slide_tracker"]
 
     const setBox = () => clone(boxes[id])
-    let box: any = setBox()
-    $: if ($activeEdit.id || $activeShow?.id || $activeEdit.slide) box = setBox()
+    let box = setBox()!
+    $: if ($activeEdit.id || $activeShow?.id || $activeEdit.slide) box = setBox()!
 
     // get item values
     $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : item?.style || ""
@@ -95,7 +95,7 @@
     $: if (style !== undefined) styles = getStyles(style, true)
 
     $: if (box?.edit?.CSS) {
-        if (box.edit.CSS[0].id !== "text") box.edit.CSS[0].value = getItemValue(box.edit.CSS[0].id)
+        if (box.edit.CSS[0].id !== "text") box.edit.CSS[0].value = getItemValue(box.edit.CSS[0].id || "")
         else if (style) box.edit.CSS[0].value = style
     }
 
@@ -293,7 +293,7 @@
         // set nested value
         if (input.id.includes(".")) {
             let splitted = input.id.split(".")
-            let item: any = getSelectedItem()
+            let item = getSelectedItem()
 
             input.id = splitted[0]
             value = item[splitted[0]] || {}
@@ -309,8 +309,8 @@
                 }
             }
 
-            let slideId = _show().layouts("active").ref()[0][$activeEdit.slide!].id
-            let slide = clone(_show().slides([slideId]).get()[0])
+            let slideId = getLayoutRef()[$activeEdit.slide!]?.id
+            let slide = clone(_show().slides([slideId]).get()[0]) as Slide
 
             return slide.items[allItems[0]]
         }
@@ -337,7 +337,7 @@
         history({
             id: "setItems",
             newData: { style: { key: input.id, values: [value] } },
-            location: { page: "edit", show: $activeShow!, slide: _show().layouts("active").ref()[0][$activeEdit.slide!].id, items: allItems },
+            location: { page: "edit", show: $activeShow!, slide: getLayoutRef()[$activeEdit.slide!]?.id, items: allItems },
         })
 
         // update values
@@ -393,7 +393,7 @@
         /////
 
         // this is only for show slides
-        let ref: any[] = _show().layouts("active").ref()[0] || {}
+        let ref = getLayoutRef()
         let slides: string[] = [ref[$activeEdit.slide ?? ""]?.id || "other"]
         let slideItems: number[][] = [allItems]
         let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
@@ -424,14 +424,14 @@
         // WIP get relative value
         // ItemStyle.svelte
 
-        let values: any = {}
+        let values: { [key: string]: any[] } = {}
         slides.forEach((slide, i) => {
             if (!slideItems[i].length) return
             values[slide] = []
             slideItems[i].forEach((i) => getNewItemValues(clone(showSlides[slide]?.items?.[i] || allSlideItems[i]), slide))
         })
 
-        function getNewItemValues(currentSlideItem: any, slideId: string) {
+        function getNewItemValues(currentSlideItem: Item, slideId: string) {
             if (!currentSlideItem) return
 
             let selected = selection
@@ -480,7 +480,7 @@
         // update layout
         if ($activeEdit.id) {
             // overlay / template
-            let currentItems: any[] = []
+            let currentItems: Item[] = []
             if ($activeEdit.type === "overlay") currentItems = clone($overlays[$activeEdit.id!].items)
             if ($activeEdit.type === "template") currentItems = clone($templates[$activeEdit.id!].items)
             // only selected
@@ -497,9 +497,8 @@
                 if (input.key === "align-items") currentItems[i].align = currentValue
                 else if (currentType !== "text") currentItems[i].style = currentValue
                 else {
-                    let lines: any = currentItems[i].lines
-                    console.log(clone(lines), clone(currentValue), clone(currentItems))
-                    lines?.forEach((_a: any, j: number) => {
+                    let lines = currentItems[i].lines
+                    lines?.forEach((_a, j) => {
                         currentItems[i].lines![j][aligns ? "align" : "text"] = currentValue[j]
                     })
                 }

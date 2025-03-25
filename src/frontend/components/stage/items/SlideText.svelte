@@ -1,22 +1,24 @@
 <script lang="ts">
-    import type { Line } from "../../../../types/Show"
+    import type { Item, Line, OutSlide } from "../../../../types/Show"
+    import type { StageItem } from "../../../../types/Stage"
     import { showsCache } from "../../../stores"
     import { getItemText } from "../../edit/scripts/textStyle"
     import { clone } from "../../helpers/array"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Main from "../../system/Main.svelte"
 
-    export let currentSlide: any
+    export let currentSlide: OutSlide
     export let next: boolean = false
     export let chords: boolean = false
     export let style: boolean = false
     export let textStyle: string = ""
     export let autoSize: boolean = false
     export let fontSize: number = 0
-    export let stageItem: any
+    export let stageItem: StageItem
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
@@ -24,42 +26,42 @@
     }
 
     $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
-    $: showRef = currentSlide ? _show(currentSlide.id).layouts("active").ref()[0] : []
-    $: while (next && showRef && showRef[index]?.data?.disabled && index <= showRef.length) index++
+    $: showRef = currentSlide ? getLayoutRef(currentSlide.id) : []
+    $: while (next && showRef && index !== null && showRef[index]?.data?.disabled && index <= showRef.length) index++
     $: slideId = index !== null && showRef ? showRef[index!]?.id || null : null
     $: slide = currentSlide?.id === "temp" && !next ? { items: currentSlide.tempItems } : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null
 
     $: reversedItems = stageItem?.invertItems ? clone(slide?.items || []) : clone(slide?.items || []).reverse()
     $: items = style ? clone(slide?.items || []) : combineSlideItems(reversedItems)
 
-    function combineSlideItems(items: any[]) {
-        let oneItem: any = null // merge all textbox items into one
+    function combineSlideItems(items: Item[]) {
+        let oneItem: Item | null = null // merge all textbox items into one
         if (!items.length) return []
 
         items
             .filter((item) => (item.type || "text") === "text" && (!item.bindings?.length || item.bindings.includes("stage")))
-            .forEach((item: any) => {
+            .forEach((item) => {
                 let text = getItemText(item)
                 if (text.length) {
                     if (!oneItem) oneItem = item
                     else {
                         let EMPTY_LINE: Line = { align: "", text: [{ style: "", value: "" }] }
-                        oneItem.lines.push(EMPTY_LINE, ...item.lines)
+                        oneItem.lines!.push(EMPTY_LINE, ...(item.lines || []))
                     }
                 }
             })
 
-        return oneItem ? [oneItem] : []
+        return oneItem ? [oneItem as Item] : []
     }
 
     // PRE LOAD SLIDE ITEMS (AUTO SIZE)
 
     let firstActive: boolean = false
-    let items1: any[] = []
-    let items2: any[] = []
+    let items1: Item[] = []
+    let items2: Item[] = []
 
     const waitDuration = 200 // approximate auto size time
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     $: if (items) preloadItems()
     function preloadItems() {
         // don't update if exact same (not needed)

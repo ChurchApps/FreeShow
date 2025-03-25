@@ -4,9 +4,9 @@ import type { Transition } from "./Show"
 export interface Themes {
     name: string
     default?: boolean
-    font: any
-    colors: any
-    border?: any
+    font: { family: string; size: string }
+    colors: { [key: string]: string | null }
+    border?: { radius?: string }
 }
 
 type StyleLayers = "background" | "slide" | "overlays"

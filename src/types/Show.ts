@@ -55,7 +55,23 @@ export interface Show {
     midi?: { [key: ID]: Midi }
 }
 
-export interface ShowList extends Show {
+export interface TrimmedShows {
+    [key: string]: TrimmedShow
+}
+export interface TrimmedShow {
+    name: string
+    category: null | ID
+    timestamps: {
+        created: number
+        modified: null | number
+        used: null | number
+    }
+    quickAccess?: any
+    private?: boolean
+    locked?: boolean
+}
+
+export interface ShowList extends TrimmedShow {
     id: string
     match?: number
 }
@@ -114,6 +130,34 @@ export interface Item {
     fromTemplate?: boolean // these will be removed if another template is applied
     // media: fit, startAt, endAt
     // tag?: string; // p, div????
+}
+
+export interface LayoutRef {
+    type: "parent" | "child"
+    layoutId: string
+    index: number
+    layoutIndex: number
+    id: string
+    children?: string[]
+    parent?: { id: string; index: number; layoutIndex: number }
+    data: SlideData
+
+    // slides.ts mover
+    clone?: boolean
+    newType?: "parent" | "child"
+    replacesParent?: boolean
+}
+
+export interface ShowGroups {
+    [key: string]: ShowGroup
+}
+export interface ShowGroup {
+    name: string
+    color: string
+    default?: boolean
+
+    template?: string
+    shortcut?: string
 }
 
 export interface Timer {
@@ -213,7 +257,7 @@ export interface SlideData {
     id: ID
     disabled?: boolean
     parent?: ID // layout ref
-    children?: any // layout slide
+    children?: { [key: string]: any } // layout slide
     color?: null | string
     nextTimer?: number // next slide timer
     transition?: Transition
@@ -225,12 +269,37 @@ export interface SlideData {
     overlays?: string[]
     audio?: string[]
 
+    mics?: { id: string; name: string }[]
+    mediaTransition?: Transition
+    remove?: boolean // slides.ts remove parent
+
     actions?: {
-        // ...
-        slideActions?: any[]
+        slideActions?: SlideAction[]
+
+        receiveMidi?: string
+        nextAfterMedia?: boolean
+        animate?: any
+        slide_shortcut?: { key: string }
+        startShow?: { id: string }
+
+        clearBackground?: boolean
+        clearOverlays?: boolean
+        clearAudio?: boolean
+        stopTimers?: boolean
+        trigger?: string
+        audioStream?: string
+        outputStyle?: string
+        startTimer?: boolean
     }
     // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
     bindings?: string[] // bind slide to an output
+}
+
+export interface SlideAction {
+    id: string
+    name?: string
+    triggers: string[]
+    actionValues?: { [key: string]: any }
 }
 
 export interface Transition {
@@ -279,6 +348,10 @@ export interface Midi {
     enabled?: boolean // should customActivation trigger
     midiEnabled?: boolean
     midi?: MidiValues
+
+    // deprecated values
+    startupEnabled?: boolean
+    specificActivation?: string
 }
 
 export interface MidiValues {
@@ -372,6 +445,8 @@ export interface OutBackground {
     flippedY?: boolean
     title?: string // player
     cameraGroup?: string // camera
+
+    ignoreLayer?: boolean // foreground background type
 }
 
 export interface OutSlide {
@@ -387,12 +462,26 @@ export interface OutSlide {
     pages?: number // PDF
     viewport?: { width: number; height: number } // PDF
     screen?: { id: string; name?: string } // PPT
+
+    translations?: number // scripture translations count (for style template)
+    attributionString?: string // scripture custom attributionString
 }
 
 export interface OutTransition {
     // action: string
     // slide?: number
     duration: number
+}
+
+export interface SlideTimer {
+    time: number
+    paused: boolean
+    sliderTimer: NodeJS.Timeout | null
+    autoPlay: boolean
+    max: number
+    timer: any
+    remaining?: number
+    start?: number
 }
 
 export interface Tag {

@@ -29,7 +29,7 @@
         await wait(timeout)
         if (timeIndex !== stepIndex) return
 
-        let elem: any = document.querySelector(query)
+        let elem = document.querySelector(query)
         if (!elem) {
             console.log("Could not find element for step", stepIndex)
             stepIndex++
@@ -54,7 +54,7 @@
         stepIndex++
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (!active) return
 
         if (e.key === "Escape") {

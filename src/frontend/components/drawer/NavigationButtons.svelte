@@ -8,19 +8,19 @@
 
     export let buttons
     export let id: string
-    export let selectId: SelectIds
+    export let selectId: string
 
-    const categoryStores: any = {
+    const categoryStores = {
         shows: () => $categories,
         overlays: () => $overlayCategories,
         templates: () => $templateCategories,
     }
 
-    let length: any = {}
+    let length: { [key: string]: number } = {}
     if (id) length = {}
     $: {
         let list: any[] = []
-        if (id === "shows") list = Object.values($shows).filter((a: any) => !a?.private)
+        if (id === "shows") list = Object.values($shows).filter((a) => !a?.private)
         else if (id === "overlays") list = Object.values($overlays)
         else if (id === "templates") list = Object.values($templates)
 
@@ -75,10 +75,6 @@
         </Center>
     {/if}
 {/key}
-
-<!-- {#if id === "scripture"}
-<a class="source" href="#void" on:click={() => window.api.send(MAIN, { channel: "URL", data: "https://scripture.api.bible/" })}> API.Bible </a>
-{/if} -->
 
 <style>
     hr {

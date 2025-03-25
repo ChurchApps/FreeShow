@@ -49,7 +49,7 @@
         activePopup.set("select_show")
     }
 
-    let cameras: any[] = []
+    let cameras: { name: string; id: string; groupId: string }[] = []
     if (inputId === "camera") getCameras()
     function getCameras() {
         navigator.mediaDevices?.enumerateDevices()?.then((devices) => {

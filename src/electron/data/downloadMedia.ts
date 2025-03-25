@@ -1,38 +1,39 @@
 import { https } from "follow-redirects"
 import fs from "fs"
 import path from "path"
-import { toApp } from ".."
-import { MAIN } from "../../types/Channels"
+import { ToMain } from "../../types/IPC/ToMain"
+import type { LessonFile, LessonsData } from "../../types/Main"
+import { sendToMain } from "../IPC/main"
 import { dataFolderNames, doesPathExist, getDataFolder, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 
-export function downloadMedia(lessons: any[]) {
+export function downloadMedia(lessons: LessonsData[]) {
     let replace = lessons.map(checkLesson)
 
-    toApp(MAIN, { channel: "REPLACE_MEDIA_PATHS", data: replace.flat() })
+    sendToMain(ToMain.REPLACE_MEDIA_PATHS, replace.flat())
 }
 
-function checkLesson(lesson: any) {
-    let type: keyof typeof dataFolderNames = lesson.type || "lessons"
+function checkLesson(lesson: LessonsData) {
+    let type = lesson.type || "lessons"
 
     downloadCount = 0
     failedDownloads = 0
-    toApp(MAIN, { channel: "LESSONS_DONE", data: { showId: lesson.showId, status: { finished: 0, failed: 0 } } })
+    sendToMain(ToMain.LESSONS_DONE, { showId: lesson.showId, status: { finished: 0, failed: 0 } })
 
     const lessonsFolder = getDataFolder(lesson.path, dataFolderNames[type])
     const lessonFolder = path.join(lessonsFolder, lesson.name)
     makeDir(lessonFolder)
 
     return lesson.files
-        .map((file: any) => {
+        .map((file) => {
             let filePath = getFilePath(file)
             if (!filePath) return
 
             return downloadFile(filePath, file, lesson.showId)
         })
-        .filter((a: any) => a)
+        .filter((a) => a)
 
-    function getFilePath(file: any) {
+    function getFilePath(file: LessonFile) {
         if (type === "planningcenter") return path.join(lessonFolder, file.name)
 
         if (file.streamUrl) file.fileType = "video/mp4"
@@ -54,13 +55,13 @@ function getFileExtension(url: string, fileType: string = "") {
     return ""
 }
 
-function downloadFile(filePath: string, file: any, showId: string) {
+function downloadFile(filePath: string, file: LessonFile, showId: string) {
     let fileRef = { from: file.url, to: filePath, type: file.type }
 
     if (doesPathExist(filePath)) {
         // console.log(filePath + " exists!")
         downloadCount++
-        toApp(MAIN, { channel: "LESSONS_DONE", data: { showId, status: { finished: downloadCount, failed: failedDownloads } } })
+        sendToMain(ToMain.LESSONS_DONE, { showId, status: { finished: downloadCount, failed: failedDownloads } })
         return fileRef
     }
 
@@ -69,8 +70,9 @@ function downloadFile(filePath: string, file: any, showId: string) {
     return fileRef
 }
 
-let downloadQueue: any[] = []
-function addToDownloadQueue(file: any) {
+type DownloadFile = { path: string; file: LessonFile; showId: string }
+let downloadQueue: DownloadFile[] = []
+function addToDownloadQueue(file: DownloadFile) {
     let alreadyInQueue = downloadQueue.find((a) => a.path === file.path)
     if (alreadyInQueue) {
         downloadCount++
@@ -115,13 +117,13 @@ async function initDownload() {
     }
 
     currentlyDownloading++
-    startDownload(downloadQueue.shift())
+    startDownload(downloadQueue.shift()!)
 }
 
 let downloadCount: number = 0
 let failedDownloads: number = 0
 let errorCount: number = 0
-async function startDownload(downloading: any) {
+async function startDownload(downloading: DownloadFile) {
     // download the media
     const file = downloading.file
     let url = file.url
@@ -139,7 +141,7 @@ async function startDownload(downloading: any) {
 
                 console.error(`Failed to download file, status code: ${res.statusCode}`)
                 failedDownloads++
-                toApp(MAIN, { channel: "LESSONS_DONE", data: { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } } })
+                sendToMain(ToMain.LESSONS_DONE, { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } })
 
                 next()
                 return
@@ -165,7 +167,7 @@ async function startDownload(downloading: any) {
                 fileStream.close()
                 downloadCount++
                 console.error(`Finished downloading file: ${file.name}`)
-                toApp(MAIN, { channel: "LESSONS_DONE", data: { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } } })
+                sendToMain(ToMain.LESSONS_DONE, { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } })
 
                 next()
             })
@@ -186,7 +188,7 @@ async function startDownload(downloading: any) {
     function retry() {
         if (errorCount > 5) {
             failedDownloads++
-            toApp(MAIN, { channel: "LESSONS_DONE", data: { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } } })
+            sendToMain(ToMain.LESSONS_DONE, { showId: downloading.showId, status: { finished: downloadCount, failed: failedDownloads } })
 
             next()
             return

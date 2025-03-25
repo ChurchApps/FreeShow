@@ -21,9 +21,9 @@
 
     let selectedIndex: number = 0
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         // CTRL + G or F8
-        if (((e.ctrlKey || e.metKey) && e.key === "g") || e.key === "F8") {
+        if (((e.ctrlKey || e.metaKey) && e.key === "g") || e.key === "F8") {
             // refocus on search bar?
             quickSearchActive.set(true)
             return

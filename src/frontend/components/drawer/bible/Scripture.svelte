@@ -1,11 +1,10 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import { uid } from "uid"
-    import { BIBLE } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
+    import { destroyMain, receiveMain } from "../../../IPC/main"
     import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, os, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, scriptureSettings, selected } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, removeDuplicates } from "../../helpers/array"
@@ -16,7 +15,7 @@
     import Center from "../../system/Center.svelte"
     import { bookIds, fetchBible, formatBibleText, getColorCode, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
 
-    export let active: any
+    export let active: string
     export let bibles: Bible[]
     export let searchValue: string
 
@@ -180,16 +179,12 @@
         return verses
     }
 
-    let listenerId = uid()
-    onDestroy(() => destroy(BIBLE, listenerId))
-
     let notLoaded: boolean = false
-    window.api.receive(BIBLE, receiveContent, listenerId)
-    function receiveContent(msg: any) {
-        if (msg.error === "not_found") {
+    let listenerId = receiveMain(Main.BIBLE, (data) => {
+        if (data.error === "not_found") {
             notLoaded = true
             notFound.update((a) => {
-                a.bible.push({ id: msg.id })
+                a.bible.push({ id: data.id })
                 return a
             })
 
@@ -197,18 +192,19 @@
         }
 
         if (!bibles) return console.error("could not find bibles")
-        let currentIndex = msg.data?.index || 0
+        let currentIndex = data.data?.index || 0
         if (!bibles[currentIndex]) return console.error("could not find bible at index")
 
-        const content = receiveBibleContent(msg)
+        const content = receiveBibleContent(data)
         bibles[currentIndex] = content
 
-        let id = msg.content[0] || msg.id
+        let id = data.content?.[0] || data.id
         books[id] = content.books as any
 
         if (typeof bookId === "string") bookId = 0
         if (books[id][cachedRef?.bookId]) bookId = cachedRef?.bookId
-    }
+    })
+    onDestroy(() => destroyMain(listenerId))
 
     $: if (active) getBible()
     $: if (books[firstBibleId]?.length && bookId !== undefined) getBook()
@@ -359,7 +355,7 @@
     // search
     const updateSearchValue = (v: string) => (searchValue = v)
 
-    // let mainElem: any = null
+    // let mainElem: HTMLElement | undefined = null
     let autoComplete: boolean = false
     // $: if (searchValue) autoComplete = true
 
@@ -714,7 +710,7 @@
         return currentVerses
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Escape") {
             resetContentSearch()
             return
@@ -825,9 +821,9 @@
     $: verseRange = sortedVerses.length ? joinRange(sortedVerses) : ""
 
     // autoscroll
-    let booksScrollElem: any
-    let chaptersScrollElem: any
-    let versesScrollElem: any
+    let booksScrollElem: HTMLElement | undefined
+    let chaptersScrollElem: HTMLElement | undefined
+    let versesScrollElem: HTMLElement | undefined
     $: if (active && bookId) setTimeout(() => scrollToActive(booksScrollElem))
     $: if (active && chapterId) setTimeout(() => scrollToActive(chaptersScrollElem))
     $: if (active && activeVerses?.length < 5) setTimeout(() => scrollToActive(versesScrollElem))

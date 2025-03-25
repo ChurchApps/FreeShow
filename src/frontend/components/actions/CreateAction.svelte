@@ -27,8 +27,8 @@
     export let choosePopup: boolean = false
 
     let dispatch = createEventDispatcher()
-    function changeAction(e: any) {
-        dispatch("change", e)
+    function changeAction(data: any) {
+        dispatch("change", data)
         pickAction = false
     }
 
@@ -157,7 +157,7 @@
         previousSearchValue = searchValue
     }
 
-    function chooseAction(e: any) {
+    function chooseAction(e: KeyboardEvent) {
         if (e.key !== "Enter" || !searchValue.length || !searchedActions.length) return
         changeAction({ ...searchedActions[0], index: full ? undefined : 0 })
     }

@@ -1,15 +1,17 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import { MAIN, OUTPUT } from "../../../types/Channels"
+    import { onMount } from "svelte"
+    import { OUTPUT } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
+    import { requestMain } from "../../IPC/main"
     import { activePopup, alertMessage, currentOutputSettings, dictionary, outputDisplay, outputs, styles } from "../../stores"
-    import { destroy, receive, send } from "../../utils/request"
+    import { send } from "../../utils/request"
+    import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
-    import { clone, keysToID, sortByName } from "../helpers/array"
+    import Checkbox from "../inputs/Checkbox.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
-    import Checkbox from "../inputs/Checkbox.svelte"
 
     export let activateOutput: boolean = false
 
@@ -40,56 +42,38 @@
     let totalScreensWidth: number = 0
     let totalScreensHeight: number = 0
 
-    let listenerId = "SCREENS"
-    send(MAIN, ["GET_DISPLAYS"])
-    // send(MAIN, ["GET_SCREENS"])
-    receive(
-        MAIN,
-        {
-            GET_DISPLAYS: (d: any) => {
-                let sortedScreens = d.sort(sortScreensByPosition)
-                screens = sortedScreens.sort(internalFirst)
+    onMount(async () => {
+        const displays = await requestMain(Main.GET_DISPLAYS)
+        let sortedScreens = displays.sort(sortScreensByPosition)
+        screens = sortedScreens.sort(internalFirst)
 
-                // get min/max bounds
-                minPosX = null
-                minPosY = null
-                let maxPosX: null | number = null
-                let maxPosY: null | number = null
-                clone(screens).forEach(({ bounds }) => {
-                    if (minPosX === null || bounds.x < minPosX) minPosX = bounds.x
-                    if (minPosY === null || bounds.y < minPosY) minPosY = bounds.y
-                    if (maxPosX === null || bounds.x + bounds.width > maxPosX) maxPosX = bounds.x + bounds.width
-                    if (maxPosY === null || bounds.y + bounds.height > maxPosY) maxPosY = bounds.y + bounds.height
-                })
+        // get min/max bounds
+        minPosX = null
+        minPosY = null
+        let maxPosX: null | number = null
+        let maxPosY: null | number = null
+        clone(screens).forEach(({ bounds }) => {
+            if (minPosX === null || bounds.x < minPosX) minPosX = bounds.x
+            if (minPosY === null || bounds.y < minPosY) minPosY = bounds.y
+            if (maxPosX === null || bounds.x + bounds.width > maxPosX) maxPosX = bounds.x + bounds.width
+            if (maxPosY === null || bounds.y + bounds.height > maxPosY) maxPosY = bounds.y + bounds.height
+        })
 
-                totalScreensWidth = maxPosX !== null && minPosX !== null ? (maxPosX - minPosX) / 2 : 0
-                totalScreensHeight = maxPosY !== null && minPosY !== null ? (maxPosY - minPosY) / 2 : 0
+        totalScreensWidth = maxPosX !== null && minPosX !== null ? (maxPosX - minPosX) / 2 : 0
+        totalScreensHeight = maxPosY !== null && minPosY !== null ? (maxPosY - minPosY) / 2 : 0
 
-                // don't overlap buttons (& allow scroll bars to work)
-                totalScreensWidth = Math.min(totalScreensWidth, 4800)
-                totalScreensHeight = Math.min(totalScreensHeight, 1000)
+        // don't overlap buttons (& allow scroll bars to work)
+        totalScreensWidth = Math.min(totalScreensWidth, 4800)
+        totalScreensHeight = Math.min(totalScreensHeight, 1000)
 
-                // make all values start at 0
-                screens.forEach((a, i) => {
-                    screens[i].previewBounds = {
-                        x: a.bounds.x - (minPosX || 0),
-                        y: a.bounds.y - (minPosY || 0),
-                    }
-                })
-            },
-            SET_SCREEN: (d: any) => {
-                if (currentScreen.screen) return
-
-                outputs.update((a) => {
-                    a[screenId!].screen = d.id.toString()
-                    return a
-                })
-            },
-            // GET_SCREENS: (d: any) => (screens = d),
-        },
-        listenerId
-    )
-    onDestroy(() => destroy(MAIN, listenerId))
+        // make all values start at 0
+        screens.forEach((a, i) => {
+            screens[i].previewBounds = {
+                x: a.bounds.x - (minPosX || 0),
+                y: a.bounds.y - (minPosY || 0),
+            }
+        })
+    })
 
     // const fakeScreen0 = {
     //     bounds: { x: -864 - 1536, y: -452, width: 1536, height: 1536 },

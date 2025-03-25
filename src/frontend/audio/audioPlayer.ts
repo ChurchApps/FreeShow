@@ -205,7 +205,7 @@ export class AudioPlayer {
 
     private static stopStream(stream: MediaStream | undefined) {
         if (!stream) return
-        stream.getAudioTracks().forEach((track: any) => track.stop())
+        stream.getAudioTracks().forEach((track) => track.stop())
     }
 
     private static togglePausedState(id: string) {

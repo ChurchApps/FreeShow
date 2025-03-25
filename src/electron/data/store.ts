@@ -6,10 +6,16 @@ import { app } from "electron"
 import Store from "electron-store"
 import { statSync } from "fs"
 import path from "path"
-import { STORE } from "../../types/Channels"
+import type { Event } from "../../types/Calendar"
+import type { History } from "../../types/History"
+import type { ErrorLog, Media } from "../../types/Main"
+import type { Themes } from "../../types/Settings"
+import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
+import type { StageLayouts } from "../../types/Stage"
+import { forceCloseApp } from "../IPC/responsesMain"
+import { DEFAULT_PCO_DATA } from "../planningcenter/connect"
 import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
-import { forceCloseApp } from "../utils/responses"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",
@@ -72,37 +78,56 @@ function checkStores(dataPath: string) {
     })
 }
 
+const DEFAULTS = {
+    error_log: {} as { renderer: ErrorLog[]; main: ErrorLog[] },
+    settings: defaultSettings,
+    synced_settings: defaultSyncedSettings,
+    themes: {} as { [key: string]: Themes },
+    projects: { projects: {}, folders: {}, projectTemplates: {} },
+    shows: {} as TrimmedShows,
+    stageShows: {} as StageLayouts,
+    overlays: {} as Overlays,
+    templates: {} as Templates,
+    events: {} as { [key: string]: Event },
+    driveKeys: {} as any,
+    media: {} as Media,
+    cache: {} as any,
+    history: {} as { undo: History[]; redo: History[] },
+    usage: { all: [] } as any,
+    accessKeys: DEFAULT_PCO_DATA!,
+}
+
 // ERROR LOG
-export const error_log = new Store({ name: fileNames.error_log, defaults: {}, ...storeExtraConfig })
+export const error_log = new Store({ name: fileNames.error_log, defaults: DEFAULTS.error_log, ...storeExtraConfig })
 
 // SETTINGS
-const settings = new Store({ name: fileNames.settings, defaults: defaultSettings, ...storeExtraConfig })
-let synced_settings = new Store({ name: fileNames.synced_settings, defaults: defaultSyncedSettings, ...storeExtraConfig })
-let themes = new Store({ name: fileNames.themes, defaults: {}, ...storeExtraConfig })
+const settings = new Store({ name: fileNames.settings, defaults: DEFAULTS.settings, ...storeExtraConfig })
+let synced_settings = new Store({ name: fileNames.synced_settings, defaults: DEFAULTS.synced_settings, ...storeExtraConfig })
+let themes = new Store({ name: fileNames.themes, defaults: DEFAULTS.themes, ...storeExtraConfig })
 
 // PROJECTS
-let projects = new Store({ name: fileNames.projects, defaults: { projects: {}, folders: {} }, ...storeExtraConfig })
+let projects = new Store({ name: fileNames.projects, defaults: DEFAULTS.projects, ...storeExtraConfig })
 
 // SLIDES
-let shows = new Store({ name: fileNames.shows, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let stageShows = new Store({ name: fileNames.stageShows, defaults: {}, ...storeExtraConfig })
-let overlays = new Store({ name: fileNames.overlays, defaults: {}, ...storeExtraConfig })
-let templates = new Store({ name: fileNames.templates, defaults: {}, ...storeExtraConfig })
+let shows = new Store({ name: fileNames.shows, defaults: DEFAULTS.shows, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let stageShows = new Store({ name: fileNames.stageShows, defaults: DEFAULTS.stageShows, ...storeExtraConfig })
+let overlays = new Store({ name: fileNames.overlays, defaults: DEFAULTS.overlays, ...storeExtraConfig })
+let templates = new Store({ name: fileNames.templates, defaults: DEFAULTS.templates, ...storeExtraConfig })
 
 // CALENDAR
-let events = new Store({ name: fileNames.events, defaults: {}, ...storeExtraConfig })
+let events = new Store({ name: fileNames.events, defaults: DEFAULTS.events, ...storeExtraConfig })
 
 // CLOUD
-let driveKeys = new Store({ name: fileNames.driveKeys, defaults: {}, ...storeExtraConfig })
+let driveKeys = new Store({ name: fileNames.driveKeys, defaults: DEFAULTS.driveKeys, ...storeExtraConfig })
 
 // CACHE
-const media = new Store({ name: fileNames.media, defaults: {}, accessPropertiesByDotNotation: false, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-const cache = new Store({ name: fileNames.cache, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let history = new Store({ name: fileNames.history, defaults: {}, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let usage = new Store({ name: fileNames.usage, defaults: { all: [] }, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
-let accessKeys = new Store({ name: fileNames.access, defaults: {} })
+const media = new Store({ name: fileNames.media, defaults: DEFAULTS.media, accessPropertiesByDotNotation: false, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+const cache = new Store({ name: fileNames.cache, defaults: DEFAULTS.cache, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let history = new Store({ name: fileNames.history, defaults: DEFAULTS.history, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let usage = new Store({ name: fileNames.usage, defaults: DEFAULTS.usage, serialize: (v) => JSON.stringify(v), ...storeExtraConfig })
+let accessKeys = new Store({ name: fileNames.access, defaults: DEFAULTS.accessKeys })
 
-export let stores: { [key: string]: Store<any> } = {
+export let stores = {
     SETTINGS: settings,
     SYNCED_SETTINGS: synced_settings,
     THEMES: themes,
@@ -122,18 +147,16 @@ export let stores: { [key: string]: Store<any> } = {
 
 // ----- GET STORE -----
 
-export function getStore(id: string, e: any = null) {
-    if (!stores[id]) return null
+export function getStore<T extends keyof typeof stores>(id: T): (typeof stores)[T] extends { store: infer S } ? S : null {
+    if (!stores[id]) throw new Error(`Store with key ${id} does not exist.`)
 
     let store = stores[id].store
-    if (e) e.reply(STORE, { channel: id, data: store })
-
-    return store
+    return store as (typeof stores)[T] extends { store: infer S } ? S : null
 }
 
 // ----- CUSTOM DATA PATH -----
 
-const portableData: any = {
+const portableData: { [key: string]: { key: keyof typeof stores; defaults: object } } = {
     synced_settings: { key: "SYNCED_SETTINGS", defaults: defaultSyncedSettings },
     themes: { key: "THEMES", defaults: {} },
     projects: { key: "PROJECTS", defaults: { projects: {}, folders: {}, projectTemplates: {} } },
@@ -147,7 +170,7 @@ const portableData: any = {
 }
 
 export let userDataPath: string | null = null
-export function updateDataPath({ reset, dataPath, load }: any = {}) {
+export function updateDataPath({ reset, dataPath, load }: { reset?: boolean; dataPath?: string; load?: boolean } = {}) {
     if (reset) return resetStoresPath()
 
     let settingsStore = settings.store || {}
@@ -177,7 +200,7 @@ let error: boolean = false
 function createStoreAtNewLocation(id: string, load: boolean = false) {
     if (error) return
 
-    let key = portableData[id].key
+    let key = portableData[id].key as keyof typeof stores
     let tempData: any = {}
     if (!load) {
         try {
@@ -189,7 +212,7 @@ function createStoreAtNewLocation(id: string, load: boolean = false) {
 
     // set new stores to export
     try {
-        stores[key] = new Store({ name: fileNames[id], defaults: portableData[id].defaults || {}, cwd: userDataPath! })
+        stores[key] = new Store({ name: fileNames[id], defaults: (portableData[id].defaults || {}) as any, cwd: userDataPath! }) as any
     } catch (err) {
         error = true
         console.log("Can't create store at set location!", err)
@@ -208,5 +231,5 @@ function createStoreAtNewLocation(id: string, load: boolean = false) {
 
     // rewrite data to new location
     stores[key].clear()
-    stores[key].set(tempData)
+    ;(stores[key] as any).set(tempData)
 }

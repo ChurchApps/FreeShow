@@ -1,7 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { uid } from "uid"
+    import type { Item } from "../../../../types/Show"
     import { activePopup, dictionary, popupData, storedEditMenuState, variables } from "../../../stores"
+    import { mediaExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID } from "../../helpers/array"
@@ -17,24 +19,24 @@
     import IconButton from "../../inputs/IconButton.svelte"
     import MediaPicker from "../../inputs/MediaPicker.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
+    import Slider from "../../inputs/Slider.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import TimeInput from "../../inputs/TimeInput.svelte"
     import Notes from "../../show/tools/Notes.svelte"
     import { getOriginalValue, removeExtension } from "../scripts/edit"
+    import type { EditInput } from "../values/boxes"
     import EditTimer from "./EditTimer.svelte"
-    import { mediaExtensions } from "../../../values/extensions"
-    import Slider from "../../inputs/Slider.svelte"
 
-    export let edits: any
-    export let defaultEdits: any = {}
-    export let item: any = null
-    export let styles: any = {}
-    export let lineAlignStyle: any = {}
-    export let alignStyle: any = {}
+    export let edits: { [key: string]: EditInput[] }
+    export let defaultEdits: { [key: string]: EditInput[] } = {}
+    export let item: Item | null = null
+    export let styles: { [key: string]: string } = {}
+    export let lineAlignStyle: { [key: string]: string } = {}
+    export let alignStyle: { [key: string]: string } = {}
     export let noClosing: boolean = false
     export let sessionId: string = ""
 
-    const inputs: any = {
+    const inputs = {
         fontDropdown: FontDropdown,
         color: Color,
         number: NumberInput,
@@ -46,7 +48,7 @@
     }
 
     let dispatch = createEventDispatcher()
-    function valueChange(e: any, input: any, inputUpdate: boolean = false) {
+    function valueChange(e: any, input: EditInput, inputUpdate: boolean = false) {
         if (inputUpdate && input.input === "text") return
 
         let value = e.detail ?? e.target?.value ?? null
@@ -54,7 +56,7 @@
         if (input.input === "checkbox") value = e.target?.checked
         else if (input.input === "dropdown" || input.input === "selectVariable") value = value?.id || ""
         else if (input.input === "number") value = Number(value)
-        else if (input.input === "multiselect") {
+        else if (input.input === "multiselect" && Array.isArray(input.value)) {
             if (input.value.includes(value)) value = input.value.filter((a) => a !== value)
             else value = [...input.value, value]
         }
@@ -66,31 +68,31 @@
 
         // the changed value is part af a larger string
         if (input.valueIndex !== undefined) {
-            let inset = input.key.includes("inset_")
-            if (inset) input.key = input.key.substring(6)
+            let inset = input.key?.includes("inset_")
+            if (inset) input.key = input.key?.substring(6)
 
-            let actualValue = styles[input.key] || getOriginalValue(clone(edits), (inset ? "inset_" : "") + input.key)
+            let actualValue = styles[input.key || ""] || getOriginalValue(clone(edits), (inset ? "inset_" : "") + input.key)
 
             // replace rgb() because it has spaces
             if (input.input === "color") {
                 let rgbIndex: number = actualValue.indexOf("rgb")
                 if (rgbIndex > 5) actualValue = actualValue.slice(0, rgbIndex) + "#000000"
             }
-            actualValue = actualValue.split(" ")
+            let splittedValue = actualValue.split(" ")
 
-            if (inset && !actualValue.includes("inset")) actualValue.unshift("inset")
-            actualValue[input.valueIndex] = value
+            if (inset && !splittedValue.includes("inset")) splittedValue.unshift("inset")
+            splittedValue[input.valueIndex] = value
 
-            value = actualValue.join(" ")
+            value = splittedValue.join(" ")
 
             // update current styles value (to properly set/reset)
-            styles[input.key] = value
+            styles[input.key || ""] = value
         }
 
         dispatch("change", { ...input, value })
     }
 
-    const lineInputs: any = {
+    const lineInputs = {
         "font-style": [
             { id: "style", icon: "bold", toggle: true, key: "font-weight", value: "bold" },
             { id: "style", icon: "italic", toggle: true, key: "font-style", value: "italic" },
@@ -110,8 +112,10 @@
         ],
     }
 
-    function toggle(input: any) {
-        let value: string = styles[input.key] || ""
+    function toggle(input: EditInput) {
+        if (typeof input.value !== "string") return
+
+        let value: string = styles[input.key || ""] || ""
 
         let exists: number = value.indexOf(input.value)
         if (exists > -1) value = value.slice(0, exists) + value.substring(exists + input.value.length)
@@ -121,27 +125,27 @@
         dispatch("change", { ...input, value })
     }
 
-    function getValue(input: any, _updater: any) {
+    function getValue(input: EditInput, _updater: any) {
         // if (input.id === "auto" && isAuto) return true
         if (input.id?.includes(".")) input.value = getItemValue(input)
 
-        if (input.valueIndex !== undefined && styles[input.key]) return removeExtension(styles[input.key].split(" ")[input.valueIndex], input.extension)
-        if (input.input === "dropdown") return input.values.options.find((a: any) => a.id === getKeyValue(input))?.name || "—"
+        if (input.valueIndex !== undefined && styles[input.key || ""]) return removeExtension(styles[input.key!].split(" ")[input.valueIndex], input.extension)
+        if (input.input === "dropdown") return input.values.options.find((a) => a.id === getKeyValue(input))?.name || "—"
         if (input.input === "checkbox") return !!input.value // closed
-        if (input.id === "filter" || input.id === "backdrop-filter") return item?.filter ? getFilters(item.filter || "")[input.key] || input.value : input.value
+        if (input.id === "filter" || input.id === "backdrop-filter") return item?.filter ? getFilters(item.filter || "")[input.key || ""] || input.value : input.value
 
-        return styles[input.key] || input.value
+        return styles[input.key || ""] || input.value
     }
 
-    function getItemValue(input: any) {
+    function getItemValue(input: EditInput) {
         // get nested value
-        let splitted = input.id.split(".")
-        let value = item[splitted[0]]?.[splitted[1]]
+        let splitted = input.id?.split(".") || []
+        let value = item?.[splitted[0]]?.[splitted[1]]
         return value !== undefined ? value : input.value
     }
 
-    function getKeyValue(input: any): string {
-        if (!item || !item[input.id]) return input.value
+    function getKeyValue(input: EditInput) {
+        if (!item || !input.id || !item[input.id]) return input.value
         if (input.key) {
             if (item[input.id][input.key]) return item[input.id][input.key]
             if (!styles[input.key]) return input.value
@@ -151,10 +155,10 @@
     }
 
     // $: if (input.input === "CSS" && item) getStyleString()
-    function getStyleString(input: any) {
+    function getStyleString(input: EditInput) {
         let style = ""
-        if (input.id === "item") style = item?.style
-        else style = input.value // "text" / custom
+        if (input.id === "item") style = item?.style || ""
+        else if (typeof input.value === "string") style = input.value // "text" / custom
 
         if (!style) return ""
 
@@ -174,6 +178,13 @@
 
         changedInput.value = $popupData.value
         valueChange({ detail: changedInput.value }, changedInput)
+    }
+
+    function openPopup(input: EditInput, section: string) {
+        activePopup.set(input.popup || (input.id as any) || null)
+        let data = { id: input.id, section, value: input.value, type: "" }
+        if (input.id === "list.items") data.type = (edits[section].find((a) => a.id === "list.style")?.value || "") as string
+        popupData.set(data)
     }
 
     // CLOSED STYLES
@@ -243,7 +254,7 @@
 
     const ALWAYS_CLOSED = ["CSS", "position"]
 
-    function checkIsClosed(id: string, _updater = null) {
+    function checkIsClosed(id: string, _updater: any = null) {
         if (noClosing) return false
         if (ALWAYS_CLOSED.includes(id)) return true
 
@@ -271,7 +282,7 @@
         })
 
         // check if value has changed
-        let differentValue = currentEdit.find((currentInput: any, i: number) => {
+        let differentValue = currentEdit.find((currentInput, i) => {
             let defaultInput = defaultEdit[i]
             let currentValue = getValue(currentInput, {})
             let defaultValue = defaultInput.value
@@ -317,7 +328,7 @@
             let input = currentEdit[i]
             if (!input) return
 
-            let newValue = Object.entries(closedVal).find(([styleId, _value]: any) => {
+            let newValue: any = Object.entries(closedVal).find(([styleId, _value]) => {
                 let dataId: string = styleId.split("_")[0]
                 let key: string | undefined = styleId.split("_")[1]
                 let valueIndex: string | undefined = styleId.split("_")[2]
@@ -362,7 +373,7 @@
 
             if (lineInputs[input.input]) {
                 input = lineInputs[input.input]?.[0] || {}
-                defaultEdit[i] = { value: "center" }
+                defaultEdit[i] = { ...defaultEdit[i], value: "center" }
             }
 
             // TODO: remove value instead of setting to default...
@@ -440,7 +451,9 @@
             {/if}
             {#each edits[section] as input}
                 {#if input.input === "editTimer"}
-                    <EditTimer {item} on:change={(e) => valueChange(e, input)} />
+                    {#if item}
+                        <EditTimer {item} on:change={(e) => valueChange(e, input)} />
+                    {/if}
                 {:else if input.input === "selectVariable"}
                     <CombinedInput>
                         <p title={$dictionary.items?.variable}><T id="items.variable" /></p>
@@ -456,18 +469,8 @@
                     {/if}
                 {:else if input.input === "popup"}
                     <CombinedInput>
-                        <Button
-                            style="width: 100%;"
-                            on:click={() => {
-                                activePopup.set(input.popup || input.id)
-                                let data = { id: input.id, section, value: input.value, type: "" }
-                                if (input.id === "list.items") data.type = edits[section].find((a) => a.id === "list.style")?.value
-                                popupData.set(data)
-                            }}
-                            dark
-                            center
-                        >
-                            <Icon id={input.icon || input.id} right />
+                        <Button style="width: 100%;" on:click={() => openPopup(input, section)} dark center>
+                            <Icon id={input.icon || input.id || ""} right />
                             {#key input.name}
                                 <p style="padding: 0;flex: initial;width: fit-content;min-width: unset;{input.name?.includes('.') || !input.name?.includes(' ') ? '' : 'opacity: 1;'}">
                                     {#if input.name?.includes(" ")}
@@ -481,10 +484,10 @@
                     </CombinedInput>
                 {:else if input.input === "media"}
                     <CombinedInput>
-                        <MediaPicker id={"item_" + sessionId} title={input.value} style="width: 100%;" filter={{ name: "Media files", extensions: mediaExtensions }} on:picked={(e) => valueChange(e, input)}>
+                        <MediaPicker id={"item_" + sessionId} title={typeof input.value === "string" ? input.value : ""} style="width: 100%;" filter={{ name: "Media files", extensions: mediaExtensions }} on:picked={(e) => valueChange(e, input)}>
                             <span style="display: flex;align-items: center;max-width: 100%;">
                                 <Icon id="image" right />
-                                {#if input.value}
+                                {#if input.value && typeof input.value === "string"}
                                     <p style="padding: 0;opacity: 1;">{getFileName(input.value)}</p>
                                 {:else}
                                     <p style="padding: 0;"><T id="edit.choose_media" /></p>
@@ -497,7 +500,7 @@
                         {#each input.values as option}
                             <Button
                                 on:click={() => valueChange({ detail: option.id }, input)}
-                                style={input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                                style={typeof input.value === "string" && input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
                                 bold={false}
                                 center
                                 dark
@@ -531,13 +534,13 @@
                     {@const value = getValue(input, { styles, item })}
                     {#if !input.hidden}
                         <CombinedInput>
-                            <p title={$dictionary[input.name.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name.includes(".") ? input.name.split(".")[1] : input.name]}>
+                            <p title={$dictionary[input.name?.includes(".") ? input.name.split(".")[0] : "edit"]?.[input.name?.includes(".") ? input.name.split(".")[1] : input.name || ""]}>
                                 {#key input.name}
-                                    <T id={input.name.includes(".") ? input.name : "edit." + input.name} />
+                                    <T id={input.name?.includes(".") ? input.name : "edit." + input.name} />
                                 {/key}
                             </p>
                             <div class="alignRight">
-                                <Checkbox {...input.values || {}} checked={item?.[input.id] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
+                                <Checkbox {...input.values || {}} checked={item?.[input.id || ""] || value || false} disabled={input.disabled && edits[section].find((a) => a.id === input.disabled)?.value} on:change={(e) => valueChange(e, input)} />
                             </div>
                         </CombinedInput>
                     {/if}

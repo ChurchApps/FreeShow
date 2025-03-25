@@ -1,11 +1,12 @@
 <script lang="ts">
+    import type { Output } from "../../../../types/Output"
     import { dictionary, slideTimers } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { getActiveOutputs } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import Slider from "../../inputs/Slider.svelte"
 
-    export let currentOutput: any
+    export let currentOutput: Output
     export let timer: any
 
     // $: if (!currentOutput?.out?.transition) {

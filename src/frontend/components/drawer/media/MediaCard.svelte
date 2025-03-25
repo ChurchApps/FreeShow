@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
+    import type { ShowType } from "../../../../types/Show"
     import { activeShow, customMessageCredits, dictionary, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,7 +15,7 @@
     export let name: string
     export let path: string
     export let credits: any = {}
-    export let type: any
+    export let type: ShowType
     export let active: string | null
     export let shiftRange: any[] = []
     export let thumbnailPath: string = ""
@@ -26,7 +27,7 @@
     export let allFiles: string[]
 
     let loaded: boolean = true
-    let videoElem: any
+    let videoElem: HTMLVideoElement | undefined
     let hover: boolean = false
     let duration: number = 0
 
@@ -56,7 +57,7 @@
         }
     }
 
-    // let enterTimeout: any = null
+    // let enterTimeout = null
     function mouseenter(e: any) {
         const mediaGrid = document.querySelector(".grid")?.querySelector(".grid")
         if (!mediaGrid) return
@@ -127,7 +128,7 @@
     $: icon = type === "video" ? "movie" : "image"
     $: tags = $media[path]?.tags || []
 
-    let iconClicked: any = null
+    let iconClicked: NodeJS.Timeout | null = null
     function removeStyle(key: string) {
         iconClicked = setTimeout(() => (iconClicked = null), 50)
 
