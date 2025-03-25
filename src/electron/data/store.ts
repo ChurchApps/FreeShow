@@ -12,10 +12,10 @@ import type { ErrorLog, Media } from "../../types/Main"
 import type { Themes } from "../../types/Settings"
 import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
-import { forceCloseApp } from "../IPC/responsesMain"
 import { DEFAULT_PCO_DATA } from "../planningcenter/connect"
 import { dataFolderNames, deleteFile, doesPathExist, readFile } from "../utils/files"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
+import { forceCloseApp } from "../utils/close"
 
 const fileNames: { [key: string]: string } = {
     error_log: "error_log",

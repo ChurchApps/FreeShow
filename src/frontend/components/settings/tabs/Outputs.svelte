@@ -25,17 +25,18 @@
 
     $: if (outputsList.length && (!$currentOutputSettings || !$outputs[$currentOutputSettings])) currentOutputSettings.set(outputsList.find((a) => a.enabled)?.id || outputsList[0].id || "")
 
-    let currentOutput: any = {}
+    let currentOutput: Output | null = null
     $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...$outputs[$currentOutputSettings] }
 
-    $: if (currentOutput.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
+    $: if (currentOutput?.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
 
     const autoRevert: string[] = ["kioskMode"] // changing these settings could break some things in some cases
     const revertTime: number = 5 // seconds
     let reverted: string[] = []
 
     function updateOutput(key: string, value: any, outputId: string = "") {
-        if (!outputId) outputId = currentOutput.id
+        if (!outputId) outputId = currentOutput?.id!
+        if (!outputId) return
 
         // auto revert special values
         if (autoRevert.includes(key) && value && !reverted.includes(key)) {
@@ -150,7 +151,7 @@
 
     // ndi
     function updateNdiData(e: any, key: string) {
-        let id = currentOutput.id
+        let id = currentOutput?.id
         if (!id) return
 
         let newData = $outputs[id]?.ndiData
@@ -183,7 +184,7 @@
     // blackmagic
     let blackmagicDevices: Option[] = []
     function updateBlackmagicData(e: any, key: string) {
-        let id = currentOutput.id
+        let id = currentOutput?.id
         if (!id) return
 
         let newData = $outputs[id]?.blackmagicData
@@ -207,7 +208,7 @@
                     updateBlackmagicData(displayModes.find((a) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
                 }
             } else if (key === "displayMode") {
-                let device = blackmagicDevices.find((a) => a.id === currentOutput.blackmagicData?.deviceId)
+                let device = blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)
                 if (!device) return
 
                 let displayModes = device.data?.displayModes || []
@@ -226,11 +227,11 @@
 
                 // allow data to update first
                 setTimeout(() => {
-                    send(OUTPUT, ["SET_VALUE"], { id: currentOutput.id, key: "blackmagic", value: currentOutput })
+                    send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
             } else if (key === "pixelFormat") {
                 setTimeout(() => {
-                    send(OUTPUT, ["SET_VALUE"], { id: currentOutput.id, key: "blackmagic", value: currentOutput })
+                    send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
             }
         })
@@ -249,7 +250,7 @@
     const receiveBMD = {
         GET_DEVICES: (data) => {
             blackmagicDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
-            if (blackmagicDevices.length && !currentOutput.blackmagicData?.deviceId) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
+            if (blackmagicDevices.length && !currentOutput?.blackmagicData?.deviceId) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
         },
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
@@ -284,13 +285,13 @@
 
 <!-- main -->
 
-{#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput.enabled || currentOutput.stageOutput}
+{#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
     <CombinedInput>
         <p><T id="settings.enabled" /></p>
         <div class="alignRight">
             <Checkbox
-                checked={currentOutput.enabled}
-                disabled={!currentOutput.stageOutput && currentOutput.enabled && activeOutputs.length < 2}
+                checked={currentOutput?.enabled}
+                disabled={!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2}
                 on:change={(e) => {
                     toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
                     setTimeout(() => {
@@ -309,7 +310,7 @@
 {/if}
 
 <!-- WIP probably not needed! -->
-{#if currentOutput.keyOutput}
+{#if currentOutput?.keyOutput}
     <CombinedInput>
         <p><T id="settings.enable_key_output" /></p>
         <div class="alignRight">
@@ -317,7 +318,7 @@
                 checked={!!currentOutput.keyOutput}
                 disabled={currentOutput.ndi || currentOutput.blackmagic}
                 on:change={(e) => {
-                    let outputId = isChecked(e) ? "key_" + uid(5) : currentOutput.keyOutput
+                    let outputId = isChecked(e) ? "key_" + uid(5) : currentOutput?.keyOutput || ""
                     let keyValue = isChecked(e) ? outputId : null
                     updateOutput("keyOutput", keyValue)
                     keyOutput(outputId, !isChecked(e))
@@ -327,15 +328,15 @@
     </CombinedInput>
 {/if}
 
-{#if currentOutput.stageOutput}
+{#if currentOutput?.stageOutput}
     <CombinedInput>
         <p><T id="stage.stage_layout" /></p>
-        <Dropdown options={stageLayouts} value={stageLayouts.find((a) => a.id === currentOutput.stageOutput)?.name || "—"} on:click={(e) => (e.detail?.id ? updateOutput("stageOutput", e.detail.id) : "")} />
+        <Dropdown options={stageLayouts} value={stageLayouts.find((a) => a.id === currentOutput?.stageOutput)?.name || "—"} on:click={(e) => (e.detail?.id ? updateOutput("stageOutput", e.detail.id) : "")} />
     </CombinedInput>
 {:else}
     <CombinedInput>
         <p><T id="settings.active_style" /></p>
-        <Dropdown options={stylesList} value={$styles[currentOutput.style]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
+        <Dropdown options={stylesList} value={$styles[currentOutput?.style || ""]?.name || "—"} on:click={(e) => updateOutput("style", e.detail.id)} />
     </CombinedInput>
 {/if}
 
@@ -349,11 +350,16 @@
 </div> -->
 <CombinedInput>
     <p><T id="settings.output_screen" /></p>
-    <Button disabled={currentOutput.invisible} on:click={() => activePopup.set("choose_screen")}>
-        <Icon id={currentOutput.boundsLocked ? "locked" : "screen"} style="margin-left: 0.5em;" right />
+    <Button on:click={() => activePopup.set(currentOutput?.invisible ? "change_output_values" : "choose_screen")}>
+        <Icon id={currentOutput?.boundsLocked ? "locked" : "screen"} style="margin-left: 0.5em;" right />
         <p>
-            <T id="popup.choose_screen" />
-            {#if currentOutput.bounds?.width}
+            {#if currentOutput?.invisible}
+                <T id="popup.change_output_values" />
+            {:else}
+                <T id="popup.choose_screen" />
+            {/if}
+
+            {#if currentOutput?.bounds?.width}
                 <span style="display: flex;align-items: center;padding: 0 8px;opacity: 0.5;font-size: 0.9em;">({currentOutput.bounds.width}x{currentOutput.bounds.height})</span>
             {/if}
         </p>
@@ -377,7 +383,7 @@
 <CombinedInput>
     <p><T id="settings.always_on_top" /></p>
     <div class="alignRight">
-        <Checkbox disabled={currentOutput.invisible} checked={currentOutput.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
+        <Checkbox disabled={currentOutput?.invisible} checked={currentOutput?.alwaysOnTop !== false} on:change={(e) => updateOutput("alwaysOnTop", isChecked(e))} />
     </div>
 </CombinedInput>
 
@@ -386,7 +392,7 @@
     <CombinedInput>
         <p><T id="settings.kiosk_mode" /></p>
         <div class="alignRight">
-            <Checkbox checked={currentOutput.kioskMode === true} on:change={(e) => updateOutput("kioskMode", isChecked(e))} />
+            <Checkbox checked={currentOutput?.kioskMode === true} on:change={(e) => updateOutput("kioskMode", isChecked(e))} />
         </div>
     </CombinedInput>
 {/if}
@@ -398,14 +404,14 @@
     <p>
         <T id="actions.enable" /> NDI®
         {#if ndiNotSupported}(Device architecture not supported){/if}
-        <span class="connections">{$ndiData[currentOutput.id || ""]?.connections || ""}</span>
+        <span class="connections">{$ndiData[currentOutput?.id || ""]?.connections || ""}</span>
     </p>
     <div class="alignRight">
-        <Checkbox disabled={ndiNotSupported} checked={currentOutput.ndi} on:change={(e) => updateOutput("ndi", isChecked(e))} />
+        <Checkbox disabled={ndiNotSupported} checked={currentOutput?.ndi} on:change={(e) => updateOutput("ndi", isChecked(e))} />
     </div>
 </CombinedInput>
 
-{#if currentOutput.ndi}
+{#if currentOutput?.ndi}
     <CombinedInput>
         <p><T id="preview.audio" /></p>
         <div class="alignRight">
@@ -415,7 +421,7 @@
 
     <CombinedInput>
         <p><T id="settings.frame_rate" /></p>
-        <Dropdown value={framerates.find((a) => a.id === currentOutput.ndiData?.framerate)?.name || "30 fps"} options={framerates.map((a) => ({ ...a, id: a.id.toString() }))} on:click={(e) => updateNdiData(e, "framerate")} />
+        <Dropdown value={framerates.find((a) => a.id === currentOutput?.ndiData?.framerate)?.name || "30 fps"} options={framerates.map((a) => ({ ...a, id: a.id.toString() }))} on:click={(e) => updateNdiData(e, "framerate")} />
     </CombinedInput>
 {/if}
 
@@ -430,17 +436,17 @@
     </div>
 </CombinedInput> -->
 
-{#if currentOutput.blackmagic}
+{#if currentOutput?.blackmagic}
     <CombinedInput>
         <p><T id="settings.device" /></p>
-        <Dropdown value={blackmagicDevices.find((a) => a.id === currentOutput.blackmagicData?.deviceId)?.name || "—"} options={blackmagicDevices} on:click={(e) => updateBlackmagicData(e, "deviceId")} />
+        <Dropdown value={blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)?.name || "—"} options={blackmagicDevices} on:click={(e) => updateBlackmagicData(e, "deviceId")} />
     </CombinedInput>
 
     {#if currentOutput.blackmagicData?.deviceId}
         <CombinedInput>
             <p><T id="settings.display_mode" /></p>
             <Dropdown
-                value={currentOutput.blackmagicData?.displayModes?.find((a) => a.name === currentOutput.blackmagicData?.displayMode)?.name || "—"}
+                value={currentOutput.blackmagicData?.displayModes?.find((a) => a.name === currentOutput?.blackmagicData?.displayMode)?.name || "—"}
                 options={currentOutput.blackmagicData?.displayModes || []}
                 on:click={(e) => updateBlackmagicData(e, "displayMode")}
             />
@@ -449,7 +455,7 @@
         <CombinedInput>
             <p><T id="settings.pixel_format" /></p>
             <Dropdown
-                value={currentOutput.blackmagicData?.pixelFormats?.find((a) => a.name === currentOutput.blackmagicData?.pixelFormat)?.name || "—"}
+                value={currentOutput.blackmagicData?.pixelFormats?.find((a) => a.name === currentOutput?.blackmagicData?.pixelFormat)?.name || "—"}
                 options={currentOutput.blackmagicData?.pixelFormats || []}
                 on:click={(e) => updateBlackmagicData(e, "pixelFormat")}
             />
@@ -466,7 +472,7 @@
 
 <br />
 
-{#if currentOutput.ndi || currentOutput.blackmagic}
+{#if currentOutput?.ndi || currentOutput?.blackmagic}
     <CombinedInput>
         <p><T id="settings.transparent" /></p>
         <div class="alignRight">

@@ -38,22 +38,26 @@
     const isChecked = (e: any) => e.target.checked
 </script>
 
-<Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => activePopup.set("choose_screen")}>
-    <Icon id="back" size={2} white />
-</Button>
+{#if !currentOutput?.invisible}
+    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => activePopup.set("choose_screen")}>
+        <Icon id="back" size={2} white />
+    </Button>
+{/if}
 
 <div style="min-width: 650px;">
-    {#if !$special.hideCursor}
-        <p class="tip"><T id="settings.manual_drag_hint" /></p>
-    {/if}
+    {#if !currentOutput?.invisible}
+        {#if !$special.hideCursor}
+            <p class="tip"><T id="settings.manual_drag_hint" /></p>
+        {/if}
 
-    <CombinedInput>
-        <!-- This also makes the output never "auto position" itself if there is just 1 output and 1 extra screen -->
-        <p style="flex: 2;"><T id="settings.allow_main_screen" /></p>
-        <div class="alignRight">
-            <Checkbox checked={currentOutput?.allowMainScreen === true} on:change={(e) => updateOutput("allowMainScreen", isChecked(e))} />
-        </div>
-    </CombinedInput>
+        <CombinedInput>
+            <!-- This also makes the output never "auto position" itself if there is just 1 output and 1 extra screen -->
+            <p style="flex: 2;"><T id="settings.allow_main_screen" /></p>
+            <div class="alignRight">
+                <Checkbox checked={currentOutput?.allowMainScreen === true} on:change={(e) => updateOutput("allowMainScreen", isChecked(e))} />
+            </div>
+        </CombinedInput>
+    {/if}
 
     {#if currentOutput?.keyOutput}
         <Button on:click={() => getCurrentOutput(currentOutput?.keyOutput || "")} style="width: 100%;" dark center>
@@ -63,7 +67,7 @@
     {/if}
 </div>
 
-{#if currentOutput?.allowMainScreen === true}
+{#if currentOutput?.allowMainScreen === true || currentOutput?.invisible}
     <h3><T id="settings.position" /></h3>
     <CombinedInput>
         <p style="width: 80px;"><T id="edit.x" /></p>
@@ -139,11 +143,13 @@
     </CombinedInput>
 {/if}
 
-<!-- disabled={currentOutput?.allowMainScreen} -->
-<Button on:click={() => displayOutputs({ ctrlKey: true })} style="width: 100%;margin-top: 10px;" dark center>
-    <Icon id="outputs" right />
-    <p><T id="context.force_outputs" /></p>
-</Button>
+{#if !currentOutput?.invisible}
+    <!-- disabled={currentOutput?.allowMainScreen} -->
+    <Button on:click={() => displayOutputs({ ctrlKey: true })} style="width: 100%;margin-top: 10px;" dark center>
+        <Icon id="outputs" right />
+        <p><T id="context.force_outputs" /></p>
+    </Button>
+{/if}
 
 <style>
     .tip {

@@ -97,6 +97,9 @@ async function startupMain() {
 
     await wait(5000)
     unsavedUpdater()
+
+    // CHECK LISTENERS
+    // console.log(window.api.getListeners())
 }
 
 function autoBackup() {

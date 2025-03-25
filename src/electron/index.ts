@@ -2,25 +2,20 @@
 // This is the electron entry point
 
 import { BrowserWindow, Menu, Rectangle, app, ipcMain, screen } from "electron"
-import path from "path"
 import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
-import { ToMain } from "../types/IPC/ToMain"
 import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
 import { config, updateDataPath } from "./data/store"
-import { receiveMain, sendToMain, sendMain } from "./IPC/main"
-import { catchErrors, saveRecording } from "./IPC/responsesMain"
-import { NdiReceiver } from "./ndi/NdiReceiver"
+import { receiveMain, sendMain } from "./IPC/main"
+import { saveRecording } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
-import { closeServers } from "./servers"
-import { stopApiListener } from "./utils/api"
-import { doesPathExist } from "./utils/files"
+import { callClose, exitApp } from "./utils/close"
+import { mainWindowInitialize, openDevTools, waitForBundle } from "./utils/init"
 import { template } from "./utils/menuTemplate"
-import { stopMidi } from "./utils/midi"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
@@ -74,37 +69,6 @@ function startApp() {
     createMain()
 }
 
-function initialize() {
-    // midi
-    // createVirtualMidi()
-
-    // express
-    require("./servers")
-
-    // set app title to app name
-    if (isWindows) app.setAppUserModelId(app.name)
-
-    if (!isProd) return
-
-    catchErrors()
-}
-
-// get LOADED message from frontend
-let isLoaded: boolean = false
-ipcMain.once("LOADED", mainWindowLoaded)
-function mainWindowLoaded() {
-    if (RECORD_STARTUP_TIME) console.timeEnd("Main window content")
-    isLoaded = true
-
-    initialize()
-
-    if (config.get("maximized")) maximizeMain()
-    mainWindow?.show()
-    loadingWindow?.close()
-
-    if (RECORD_STARTUP_TIME) console.timeEnd("Full startup")
-}
-
 // ----- LOADING WINDOW -----
 
 let loadingWindow: BrowserWindow | null = null
@@ -117,7 +81,6 @@ function createLoading() {
 // ----- MAIN WINDOW -----
 
 export let mainWindow: BrowserWindow | null = null
-export let dialogClose: boolean = false // is unsaved
 const MIN_WINDOW_SIZE = 200
 const DEFAULT_WINDOW_SIZE = { width: 800, height: 600 }
 function createMain() {
@@ -142,9 +105,7 @@ function createMain() {
     // macos min size
     mainWindow.setMinimumSize(MIN_WINDOW_SIZE, MIN_WINDOW_SIZE)
 
-    // this is to debug any weird positioning
-    // console.log("Main Window Bounds:", mainWindow.getBounds())
-
+    if (RECORD_STARTUP_TIME) console.time("Main window content")
     loadWindowContent(mainWindow)
     setMainListeners()
 
@@ -157,21 +118,22 @@ function createMain() {
     }
 }
 
-export function getMainWindow() {
-    if (!mainWindow || mainWindow.isDestroyed()) return null
-    return mainWindow
-}
+let isLoaded: boolean = false
+function mainWindowLoaded() {
+    if (RECORD_STARTUP_TIME) console.timeEnd("Main window content")
+    isLoaded = true
 
-function openDevTools(window: BrowserWindow) {
-    console.log('Opening DevTools... ("[ERROR:CONSOLE] Request Autofill" can be ignored)')
-    window.webContents.openDevTools()
-    // ERROR:CONSOLE(1)] "Request Autofill.enable failed. - can be ignored:
-    // https://github.com/electron/electron/issues/41614
+    mainWindowInitialize()
+    if (config.get("maximized")) maximizeMain()
+
+    mainWindow?.show()
+    loadingWindow?.close()
+
+    if (RECORD_STARTUP_TIME) console.timeEnd("Full startup")
 }
 
 export async function loadWindowContent(window: BrowserWindow, type: null | "output" = null) {
     let mainOutput = type === null
-    if (mainOutput && RECORD_STARTUP_TIME) console.time("Main window content")
 
     if (isProd) window.loadFile("public/index.html").catch(loadingFailed)
     else {
@@ -193,114 +155,26 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     }
 }
 
-// wait until the main Rollup bundle exists before loading
-function waitForBundle() {
-    const BUNDLE_PATH = path.resolve(__dirname, "..", "..", "public/build/bundle.js")
-    const CHECK_INTERVAL = 2 // every 2 seconds
-    const MAX_SECONDS = 120
-    let tries = 0
+export function getMainWindow() {
+    if (!mainWindow || mainWindow.isDestroyed()) return null
+    return mainWindow
+}
 
-    return new Promise((resolve) => {
-        const interval = setInterval(() => {
-            if (doesPathExist(BUNDLE_PATH)) {
-                console.log("Main bundle created! Loading interface...")
-                clearInterval(interval)
-                resolve(true)
-            }
-
-            tries += CHECK_INTERVAL / MAX_SECONDS
-            if (tries >= 1) {
-                clearInterval(interval)
-                app.quit()
-                throw new Error("Could not load app content. Please check console for any errors!")
-            }
-        }, CHECK_INTERVAL * 1000)
-    })
+export function resetMainWindow() {
+    mainWindow = null
 }
 
 function setMainListeners() {
     if (!mainWindow) return
 
-    /*
-    mainWindow.on("minimize", () => {
-        OutputHelper.Visibility.hideAllPreviews()
-    })
-    mainWindow.on("restore", () => {
-        setTimeout(() => {
-            OutputHelper.Visibility.showAllPreviews()
-        }, 100)
-    })*/
+    mainWindow.on("maximize", () => config.set("maximized", true))
+    mainWindow.on("unmaximize", () => config.set("maximized", false))
 
-    mainWindow.on("maximize", () => {
-        //OutputHelper.Bounds.updatePreviewBounds()
-        config.set("maximized", true)
-    })
-    mainWindow.on("unmaximize", () => {
-        //OutputHelper.Bounds.updatePreviewBounds()
-        config.set("maximized", false)
-    })
-
-    mainWindow.on("resize", () => {
-        //OutputHelper.Bounds.updatePreviewBounds()
-        config.set("bounds", mainWindow?.getBounds())
-    })
-    mainWindow.on("move", () => {
-        //OutputHelper.Bounds.updatePreviewBounds()
-        config.set("bounds", mainWindow?.getBounds())
-    })
+    mainWindow.on("resize", () => config.set("bounds", mainWindow?.getBounds()))
+    mainWindow.on("move", () => config.set("bounds", mainWindow?.getBounds()))
 
     mainWindow.on("close", callClose)
     mainWindow.once("closed", exitApp)
-}
-
-function callClose(e: Electron.Event) {
-    if (dialogClose) return
-    e.preventDefault()
-
-    sendToMain(ToMain.CLOSE2, true)
-}
-
-export async function exitApp() {
-    console.log("Closing app!")
-
-    dialogClose = false
-
-    await OutputHelper.Lifecycle.closeAllOutputs()
-    NdiReceiver.stopReceiversNDI()
-
-    closeServers()
-    stopApiListener()
-
-    stopMidi()
-
-    // relaunch does not work very well as it launched new processes
-    // if (!isProd) {
-    //     console.log("Dev mode active - Relaunching...")
-    //     app.relaunch()
-    // } else {
-    // this has to be called to actually remove the process!
-    // https://stackoverflow.com/a/43520274
-    mainWindow?.removeAllListeners("close")
-    ipcMain.removeAllListeners()
-    // }
-
-    mainWindow = null
-
-    try {
-        app.quit()
-
-        // shouldn't need to use exit!
-        setTimeout(() => {
-            app.exit()
-        }, 500)
-    } catch (err) {
-        console.error("Failed closing app:", err)
-    }
-}
-
-export function closeMain() {
-    dialogClose = true
-    mainWindow?.close()
 }
 
 export function maximizeMain() {
@@ -309,62 +183,6 @@ export function maximizeMain() {
 
     if (isMaximized) return mainWindow?.unmaximize()
     mainWindow?.maximize()
-}
-
-// ----- GLOBAL LISTENERS -----
-
-// WIP: Mac ctrl+Q
-// let quit = false
-// app.on("before-quit", () => (quit = true))
-// macOS: do not quit the application directly after the user close the last window, instead wait for Command + Q (or equivalent).
-// https://stackoverflow.com/a/45156004
-// https://stackoverflow.com/a/58823019
-
-// quit app when all windows have been closed
-// this is never called on mac, because of the "will-quit" listener
-app.on("window-all-closed", () => {
-    app.quit()
-})
-
-// close app completely on mac
-app.on("will-quit", () => {
-    if (isMac) app.exit()
-})
-
-app.on("web-contents-created", (_e, contents) => {
-    contents.on("will-attach-webview", (_event, webPreferences, _params) => {
-        // remove preload scripts if unused or verify their location is legitimate
-        delete webPreferences.preload
-    })
-
-    // disallow in app web redirects
-    // contents.on("will-navigate", (e, navigationUrl) => {
-    //     // allow Hot Module Replacement in dev mode
-    //     const parsedURL = new URL(navigationUrl)
-    //     if (!isProd && parsedURL.host === "localhost:3000") return
-
-    //     // >>> allow navigating on website items! <<<
-    //     e.preventDefault()
-    //     console.warn("Stopped attempt to open: " + navigationUrl)
-    // })
-})
-
-// ----- LISTENERS -----
-
-ipcMain.on(MAIN, receiveMain)
-ipcMain.on(OUTPUT, OutputHelper.receiveOutput)
-ipcMain.on(EXPORT, startExport)
-ipcMain.on(CLOUD, cloudConnect)
-ipcMain.on(RECORDER, saveRecording)
-ipcMain.on(NDI, receiveNDI)
-ipcMain.on(AUDIO, receiveAudio)
-
-// ----- HELPERS -----
-
-// send messages to main frontend (should not be used anymore)
-export const toApp = (channel: string, ...args: any[]): void => {
-    if (!mainWindow || mainWindow.isDestroyed()) return
-    mainWindow.webContents.send(channel, ...args)
 }
 
 // set/update global application menu
@@ -377,4 +195,40 @@ export function setGlobalMenu(strings: Dictionary = {}) {
 
     const menu: Menu = Menu.buildFromTemplate(template(strings))
     Menu.setApplicationMenu(menu)
+}
+
+// ----- GLOBAL LISTENERS -----
+
+// quit app when all windows have been closed
+app.on("window-all-closed", () => {
+    app.quit()
+})
+
+// close app completely on mac
+app.on("will-quit", () => {
+    if (isMac) app.exit()
+})
+
+app.on("web-contents-created", (_e, contents) => {
+    contents.on("will-attach-webview", (_event, webPreferences, _params) => {
+        // remove unused preload scripts
+        delete webPreferences.preload
+    })
+})
+
+// ----- LISTENERS -----
+
+ipcMain.once("LOADED", mainWindowLoaded)
+ipcMain.on(MAIN, receiveMain)
+ipcMain.on(OUTPUT, OutputHelper.receiveOutput)
+ipcMain.on(EXPORT, startExport)
+ipcMain.on(CLOUD, cloudConnect)
+ipcMain.on(RECORDER, saveRecording)
+ipcMain.on(NDI, receiveNDI)
+ipcMain.on(AUDIO, receiveAudio)
+
+// send messages to main frontend (should not be used anymore - use sendMain() instead)
+export const toApp = (channel: string, ...args: any[]): void => {
+    if (!mainWindow || mainWindow.isDestroyed()) return
+    mainWindow.webContents.send(channel, ...args)
 }

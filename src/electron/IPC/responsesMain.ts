@@ -3,9 +3,8 @@ import { app, BrowserWindow, desktopCapturer, DesktopCapturerSource, screen, she
 import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
-import { closeMain, exitApp, getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
+import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
 import { Main, MainResponses } from "../../types/IPC/Main"
-import { ToMain } from "../../types/IPC/ToMain"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
@@ -20,6 +19,7 @@ import { pcoDisconnect, pcoStartupLoad } from "../planningcenter/connect"
 import { pcoLoadServices } from "../planningcenter/request"
 import { closeServers, startServers, updateServerData } from "../servers"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
+import { closeMain, forceCloseApp } from "../utils/close"
 import {
     bundleMediaFiles,
     checkShowsFolder,
@@ -49,7 +49,6 @@ import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import checkForUpdates from "../utils/updater"
-import { sendToMain } from "./main"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -279,12 +278,6 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
 
         return screens
     }
-}
-
-export function forceCloseApp() {
-    sendToMain(ToMain.ALERT, "actions.closing")
-    // let user read message and action finish
-    setTimeout(exitApp, 2000)
 }
 
 // RECORDER

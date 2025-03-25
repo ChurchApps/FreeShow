@@ -386,7 +386,7 @@
     <p><T id="settings.override_with_template" /></p>
     <Button
         on:click={() => {
-            popupData.set({ action: "select_template", active: currentStyle.template || "", trigger: (id) => updateStyle(id, "template") })
+            popupData.set({ action: "select_template", doubleClick: true, active: currentStyle.template || "", trigger: (id) => updateStyle(id, "template") })
             activePopup.set("select_template")
         }}
         bold={!currentStyle.template}
@@ -420,6 +420,7 @@
         on:click={() => {
             popupData.set({
                 action: "select_template",
+                doubleClick: true,
                 active: currentStyle.templateScripture || "",
                 types: scriptureTemplateTypes,
                 values: scriptureTemplateTypes.map((a) => currentStyle["templateScripture" + a.id] || ""),
@@ -493,7 +494,7 @@
         <p><T id="meta.meta_template" /></p>
         <Button
             on:click={() => {
-                popupData.set({ action: "select_template", active: currentStyle.metadataTemplate || "metadata", trigger: (id) => updateStyle(id, "metadataTemplate") })
+                popupData.set({ action: "select_template", doubleClick: true, active: currentStyle.metadataTemplate || "metadata", trigger: (id) => updateStyle(id, "metadataTemplate") })
                 activePopup.set("select_template")
             }}
             bold={false}
@@ -524,7 +525,7 @@
     <p><T id="meta.message_template" /></p>
     <Button
         on:click={() => {
-            popupData.set({ action: "select_template", active: currentStyle.messageTemplate || "message", trigger: (id) => updateStyle(id, "messageTemplate") })
+            popupData.set({ action: "select_template", doubleClick: true, active: currentStyle.messageTemplate || "message", trigger: (id) => updateStyle(id, "messageTemplate") })
             activePopup.set("select_template")
         }}
         bold={false}

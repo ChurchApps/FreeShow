@@ -81,7 +81,7 @@
 
                         <span style="justify-content: center;padding: 5px;width: 100%;">
                             <Icon id={variable.type} right />
-                            <p>
+                            <p title={variable.name}>
                                 {#if variable.name?.length}
                                     {variable.name}
                                 {:else}

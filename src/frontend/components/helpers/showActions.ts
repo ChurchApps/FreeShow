@@ -127,7 +127,6 @@ export function swichProjectItem(pos: number, id: string) {
 export function getItemWithMostLines(slide: Slide) {
     let amount: number = 0
     slide.items?.forEach((item) => {
-        console.log(item.lines)
         let lines: number = item.lines?.filter((a) => a.text.filter((a) => a.value.length)?.length)?.length || 0
         if (lines > amount) amount = lines
     })
@@ -625,7 +624,6 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
 
     function activateActions(outputId: string) {
         let background = data.background || null
-        console.log("BG", background)
 
         // get ghost background
         if (!background) {

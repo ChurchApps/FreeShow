@@ -43,6 +43,9 @@ contextBridge.exposeInMainWorld("api", {
         ipcRenderer.removeListener(channel, storedReceivers[id])
         delete storedReceivers[id]
     },
+    getListeners: () => {
+        return ipcRenderer.eventNames().map((channel) => [channel.toString(), ipcRenderer.listenerCount(channel)])
+    },
     // https://www.electronjs.org/blog/electron-32-0#breaking-changes
     showFilePath(file: File) {
         return webUtils.getPathForFile(file)

@@ -58,17 +58,20 @@
     }
 
     function selectTemplate(template: any) {
+        if ($popupData.action !== "select_template") return
+
+        let previousValue = value
         // update before closing
         value = template.id
 
         setTimeout(() => {
-            if ($popupData.action !== "select_template") return
-
             if ($popupData.trigger) {
                 $popupData.trigger(value, selectedType)
                 // } else {
                 //     popupData.set({ ...$popupData, templateId: value })
             }
+
+            if ($popupData.doubleClick && previousValue !== template.id) return
 
             if (!$popupData.revert) setTimeout(() => popupData.set({}), 500) // revert after closing
             activePopup.set($popupData.revert || null)
