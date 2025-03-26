@@ -1,4 +1,5 @@
 import type { Resolution } from "./Settings"
+import type { Line } from "./Show"
 
 export interface ActiveStage {
     id: null | string
@@ -42,8 +43,7 @@ export interface StageItem {
     filter?: any // not in use at the moment
 
     // textbox
-    chords?: boolean
-    chordsData?: any
+    chords?: { enabled?: boolean; color?: string; size?: number }
     auto?: boolean
 
     // slide text
@@ -53,7 +53,12 @@ export interface StageItem {
     lineCount?: number // max lines to show in next slide preview
     invertItems?: boolean // invert items if more than one (used for e.g. scripture refs)
 
+    // textbox
+    lines?: Line[]
+
     // other items
+    variable?: { id: string } // variable data
+    device?: { name: string } // camera data
     tracker?: any // slide tracker data
     timer?: any // timer options
     clock?: any // clock options

@@ -36,6 +36,7 @@
     export let alignStyle: { [key: string]: string } = {}
     export let noClosing: boolean = false
     export let sessionId: string = ""
+    export let isStage: boolean = false
 
     const inputs = {
         fontDropdown: FontDropdown,
@@ -223,8 +224,7 @@
             "list.enabled": true,
         },
         chords: {
-            "chords.enabled": true, // normal slide
-            chords: true, // stage
+            "chords.enabled": true,
         },
         // media
         filters: {
@@ -453,7 +453,7 @@
             {#each edits[section] as input}
                 {#if input.input === "editTimer"}
                     {#if item}
-                        <EditTimer {item} on:change={(e) => valueChange(e, input)} />
+                        <EditTimer {item} on:change={(e) => valueChange(e, input)} {isStage} />
                     {/if}
                 {:else if input.input === "selectVariable"}
                     <CombinedInput>
@@ -562,7 +562,7 @@
                                 {...input.values || {}}
                                 {value}
                                 fontStyleValue={input.styleValue || ""}
-                                disabled={input.disabled && (item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value)}
+                                disabled={typeof input.disabled === "string" ? item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value : input.disabled}
                                 enableNoColor={input.enableNoColor}
                                 disableHold
                                 on:click={(e) => valueChange(e, input)}

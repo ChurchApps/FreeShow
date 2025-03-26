@@ -12,7 +12,7 @@
     import Main from "../../system/Main.svelte"
 
     export let currentSlide: OutSlide
-    export let next: boolean = false
+    export let slideOffset: number = 0
     export let chords: boolean = false
     export let style: boolean = false
     export let textStyle: string = ""
@@ -25,11 +25,30 @@
         id: string
     }
 
-    $: index = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index + (next ? 1 : 0) : null
     $: showRef = currentSlide ? getLayoutRef(currentSlide.id) : []
-    $: while (next && showRef && index !== null && showRef[index]?.data?.disabled && index <= showRef.length) index++
-    $: slideId = index !== null && showRef ? showRef[index!]?.id || null : null
-    $: slide = currentSlide?.id === "temp" && !next ? { items: currentSlide.tempItems } : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null
+
+    // GET CORRECT INDEX OFFSET, EXCLUDING DISABLED SLIDES
+    $: slideIndex = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index : null
+    $: if (slideOffset > 0 && slideIndex !== null && showRef) {
+        let layoutOffset = slideIndex
+        let offsetFromCurrentExcludingDisabled = 0
+        while (offsetFromCurrentExcludingDisabled < slideOffset && layoutOffset <= showRef.length) {
+            layoutOffset++
+            if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled++
+        }
+        slideIndex = layoutOffset
+    } else if (slideOffset < 0 && slideIndex !== null && showRef) {
+        let layoutOffset = slideIndex
+        let offsetFromCurrentExcludingDisabled = 0
+        while (offsetFromCurrentExcludingDisabled > slideOffset && layoutOffset >= 0) {
+            layoutOffset--
+            if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled--
+        }
+        slideIndex = layoutOffset
+    }
+
+    $: slideId = slideIndex !== null && showRef ? showRef[slideIndex]?.id || null : null
+    $: slide = currentSlide?.id === "temp" && slideOffset !== 0 ? { items: currentSlide.tempItems } : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null
 
     $: reversedItems = stageItem?.invertItems ? clone(slide?.items || []) : clone(slide?.items || []).reverse()
     $: items = style ? clone(slide?.items || []) : combineSlideItems(reversedItems)
@@ -92,13 +111,37 @@
             <Zoomed background="transparent" style={getStyleResolution(resolution, width, height, "fit")} center>
                 <div class:loading={items1 && !firstActive}>
                     {#each items1 as item}
-                        <Textbox {item} {style} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(next && stageItem.lineCount)} stageAutoSize={item.auto && autoSize} {fontSize} addDefaultItemStyle={style} isStage />
+                        <Textbox
+                            {item}
+                            {style}
+                            customStyle={textStyle}
+                            {stageItem}
+                            {chords}
+                            {ref}
+                            maxLines={Number(slideOffset !== 0 && stageItem.lineCount)}
+                            maxLinesInvert={slideOffset < 0}
+                            stageAutoSize={item.auto && autoSize}
+                            {fontSize}
+                            isStage
+                        />
                         <!-- (style ? item.auto && item.textFit === "growToFit" : item.auto) -->
                     {/each}
                 </div>
                 <div class:loading={items2 && firstActive}>
                     {#each items2 as item}
-                        <Textbox {item} {style} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(next && stageItem.lineCount)} stageAutoSize={item.auto && autoSize} {fontSize} addDefaultItemStyle={style} isStage />
+                        <Textbox
+                            {item}
+                            {style}
+                            customStyle={textStyle}
+                            {stageItem}
+                            {chords}
+                            {ref}
+                            maxLines={Number(slideOffset !== 0 && stageItem.lineCount)}
+                            maxLinesInvert={slideOffset < 0}
+                            stageAutoSize={item.auto && autoSize}
+                            {fontSize}
+                            isStage
+                        />
                     {/each}
                     <!-- (style ? item.auto && (item.textFit || "shrinkToFit") === "growToFit" : item.auto) -->
                 </div>
@@ -108,12 +151,12 @@
 {:else}
     <div class:loading={items1 && !firstActive}>
         {#each items1 as item}
-            <Textbox {item} {style} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(next && stageItem.lineCount)} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} isStage />
+            <Textbox {item} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={autoSize} {fontSize} isStage />
         {/each}
     </div>
     <div class:loading={items2 && firstActive}>
         {#each items2 as item}
-            <Textbox {item} {style} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(next && stageItem.lineCount)} stageAutoSize={autoSize} {fontSize} addDefaultItemStyle={style} isStage />
+            <Textbox {item} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={autoSize} {fontSize} isStage />
         {/each}
     </div>
 {/if}

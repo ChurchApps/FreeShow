@@ -13,9 +13,12 @@
     import Center from "../../system/Center.svelte"
     import { updateStageShow } from "../stage"
 
-    $: items = $activeStage.items
-    $: stageItems = $stageShows[$activeStage.id!].items
-    $: item = items ? stageItems[items[0]] : null
+    let activeItemIds: string[] = []
+    $: activeItemIds = $activeStage.items?.length ? $activeStage.items : Object.keys(stageItems)
+    $: stageItems = $stageShows[$activeStage.id!]?.items || {}
+    $: activeItemId = activeItemIds[0] || ""
+
+    $: item = activeItemId ? stageItems[activeItemId] : null
 
     let data: { [key: string]: any } = {}
     $: if (item?.style || item === null) updateData()
@@ -60,7 +63,12 @@
 
         if (!value) return
 
-        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: "style", keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_style", override: $activeStage.id + items.join("") } })
+        history({
+            id: "UPDATE",
+            newData: { data: value, key: "items", subkey: "style", keys: activeItemIds },
+            oldData: { id: $activeStage.id },
+            location: { page: "stage", id: "stage_item_style", override: $activeStage.id + activeItemIds.join("") },
+        })
 
         if (!timeout) {
             updateStageShow()

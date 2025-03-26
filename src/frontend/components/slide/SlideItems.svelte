@@ -101,14 +101,15 @@
         <Cam cam={item.device} item style="object-fit: {item.fit || 'contain'};filter: {item.filter};transform: scale({item.flipped ? '-1' : '1'}, {item.flippedY ? '-1' : '1'});" />
     {/if}
 {:else if item?.type === "timer"}
-    <Timer {item} id={item.timerId || ""} {today} style={item.auto === false ? "" : `font-size: ${fontSize}px;`} />
+    <Timer {item} id={item.timer?.id || item.timerId || ""} {today} style={item.auto === false ? "" : `font-size: ${fontSize}px;`} />
 {:else if item?.type === "clock"}
     <Clock autoSize={fontSize} style={false} {...item.clock} />
 {:else if item?.type === "events"}
     <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
 {:else if item?.type === "variable"}
     <!-- moved to textbox in 1.3.3 -->
-    <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${fontSize}px;`} ref={{ ...ref, slideIndex }} />
+    <!-- used by stage item -->
+    <Variable {item} style={item?.style?.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${fontSize}px;`} ref={{ ...ref, slideIndex }} hideText={ref.type === "stage" && !!$currentWindow} />
 {:else if item?.type === "web"}
     <Website src={item?.web?.src || ""} navigation={!item?.web?.noNavigation} clickable={$currentWindow === "output"} {ratio} />
 {:else if item?.type === "mirror"}

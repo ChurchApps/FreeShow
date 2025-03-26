@@ -3,7 +3,7 @@ import { getStyles } from "./../helpers/style"
 const snapDistance: number = 8
 export function moveBox(e: any, mouse: any, ratio: number, active: (number | string)[], lines: [string, number][], styles: { [key: string]: string | number } = {}) {
     let itemElem = mouse.e.target.closest(".item")
-    if (!itemElem.closest(".slide")) return { styles: {}, lines: [] }
+    if (!itemElem?.closest(".slide")) return { styles: {}, lines: [] }
 
     let isResizing = Object.keys(styles).length > 0
     let squareElem = mouse.e.target.closest(".square")

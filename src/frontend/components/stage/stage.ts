@@ -14,6 +14,11 @@ export function updateStageShow() {
 }
 
 export function getCustomStageLabel(itemId: string, _updater: any = null): string {
+    if (!itemId.includes("#")) {
+        return translate(`items.${itemId}`)
+    }
+
+    // < 1.4.0
     if (itemId.includes("global_timers") && !itemId.includes("first_active_timer")) return get(timers)[getStageItemId(itemId)]?.name || ""
     if (itemId.includes("variables")) return get(variables)[getStageItemId(itemId)]?.name || ""
 
@@ -30,16 +35,9 @@ export function stageItemToItem(item: StageItem) {
     }
     if (!item) return newItem
 
-    newItem = {
-        ...newItem,
-        align: item.align,
-        auto: item.auto,
-        chords: { enabled: item.chords, ...item.chordsData },
-    }
+    // type, align, auto, src, timer, clock, tracker, variable, etc.
+    if (item.chords) newItem.chords = typeof item.chords === "boolean" ? { enabled: item.chords, ...((item as any).chordsData || {}) } : item.chords
+    // if (item.clock) newItem.clock = { seconds: true, ...item.clock }
 
-    if (item.timer) newItem.timer = item.timer
-    if (item.clock) newItem.clock = item.clock
-    if (item.tracker) newItem.tracker = item.tracker
-
-    return newItem
+    return { ...item, ...newItem } as Item
 }

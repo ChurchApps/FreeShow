@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
     import type { TabsObj } from "../../../types/Tabs"
     import { activeStage, stageShows } from "../../stores"
     import { getItemKeys } from "../edit/scripts/itemClipboard"
+    import { addStyleString } from "../edit/scripts/textStyle"
+    import { boxes } from "../edit/values/boxes"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getResolution } from "../helpers/output"
@@ -14,13 +15,6 @@
     import Items from "./tools/Items.svelte"
     import ItemStyle from "./tools/ItemStyle.svelte"
     import SlideStyle from "./tools/SlideStyle.svelte"
-    import { addStyleString } from "../edit/scripts/textStyle"
-
-    // $: allSlideItems = $activeStage.id !== null ? $stageShows[$activeStage?.id!].items : []
-    // // select active items or all items
-    // $: items = $activeStage.items.length ? $activeStage.items : allSlideItems
-    // // select last item
-    // $: item = items.length ? items[items.length - 1] : null
 
     const tabs: TabsObj = {
         text: { name: "items.text", icon: "text", disabled: true },
@@ -29,18 +23,35 @@
         slide: { name: "tools.slide", icon: "options", overflow: true },
     }
 
-    let active: string = $activeStage.items.length ? "item" : "items"
+    let selectedItemIds: string[] = []
+    $: selectedItemIds = $activeStage.items || []
+    $: stageItems = $stageShows[$activeStage.id!]?.items || {}
+    $: activeItemId = selectedItemIds[0] || Object.keys(stageItems)[0] || ""
 
-    const unsubscribe = activeStage.subscribe((as) => {
-        if (as.items.length && active === "items") {
-            tabs.text.disabled = tabs.item.disabled = false
-            active = "text"
-        } else if (!as.items.length) {
-            tabs.text.disabled = tabs.item.disabled = true
-            if (active === "item" || active === "text") active = "items"
+    $: item = activeItemId ? stageItems[activeItemId] : null
+
+    let active: string = selectedItemIds.length ? "item" : "items"
+    $: type = item?.type || "text"
+    $: if (type === "slide_text" || type === "slide_notes" || type === "current_output") type = "text"
+    $: tabs.text.name = "items." + type
+    $: tabs.text.icon = boxes[type]?.icon || "text"
+
+    $: if (item !== undefined) updateTabs()
+    function updateTabs() {
+        if (item?.type === "current_output") {
+            tabs.text.disabled = true
+            if (active === "text") active = "items"
+            return
         }
-    })
-    onDestroy(unsubscribe)
+
+        if (activeItemId && active === "items") {
+            tabs.text.disabled = tabs.item.disabled = false
+            if ($activeStage.items?.length) active = "text"
+        } else if (!activeItemId) {
+            tabs.text.disabled = tabs.item.disabled = true
+            if (!$activeStage.items?.length && (active === "item" || active === "text")) active = "items"
+        }
+    }
 
     function resetStageStyle() {
         let resolution = getResolution()
@@ -79,7 +90,7 @@
 
         if (active === "text") {
             // this will not reset text css style
-            const resetData = { auto: true, chords: false, chordsData: {} }
+            const resetData = { auto: true, chords: {}, timer: {}, clock: {}, tracker: {}, variable: {}, device: {} }
             Object.entries(resetData).forEach(([subkey, data]) => {
                 history({
                     id: "UPDATE",

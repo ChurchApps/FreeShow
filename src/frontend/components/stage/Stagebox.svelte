@@ -3,13 +3,14 @@
     import type { StageItem, StageLayout } from "../../../types/Stage"
     import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
+    import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
     import { keysToID, sortByName } from "../helpers/array"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import Media from "../output/layers/Media.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
-    import SlideItems from "../slide/SlideItems.svelte"
+    import Textbox from "../slide/Textbox.svelte"
     import SlideProgress from "../slide/views/SlideProgress.svelte"
     import Timer from "../slide/views/Timer.svelte"
     import Variable from "../slide/views/Variable.svelte"
@@ -29,7 +30,7 @@
     $: currentShow = show === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : show
 
     // WIP make offset work with custom values
-    $: slideOffset = item.type ? item.slideOffset || 0 : id.includes("next") ? 1 : 0
+    $: slideOffset = item.type ? Number(item.slideOffset || 0) : id.includes("next") ? 1 : 0
 
     export let mouse: any = null
     function mousedown(e: any) {
@@ -71,7 +72,10 @@
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
             // TODO: history??
-            $stageShows[$activeStage.id!].items[id].enabled = false
+            stageShows.update((a) => {
+                delete a[$activeStage.id!].items[id]
+                return a
+            })
             activeStage.set({ id: $activeStage.id, items: [] })
         }
     }
@@ -114,7 +118,7 @@
     }
     let currentBackground: any
     async function getCurrentBackground() {
-        if (!id.includes("slide")) return
+        if (item.type ? !item.includeMedia : !id.includes("slide")) return
 
         let currentOutputs = $currentWindow ? $allOutputs : $outputs
         let bg = await sendBackgroundToStage(stageOutputId, currentOutputs, true)
@@ -127,9 +131,10 @@
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 
     let firstTimerId: string = ""
-    $: if (id.includes("first_active_timer")) {
+    $: if (!item.timer?.id || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
         if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
+        if (firstTimerId) item.timer = { ...(item.timer || {}), id: firstTimerId }
     }
 
     let itemStyle: string = ""
@@ -176,72 +181,91 @@
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}
-        <div class="label">{getCustomStageLabel(id, $dictionary)}</div>
+        <div class="label">{getCustomStageLabel(item.type || id, $dictionary)}</div>
     {/if}
     {#if edit}
         <Movebox {ratio} itemStyle={item.style} active={$activeStage.items.includes(id)} />
     {/if}
 
-    {#if item.type === "current_output" || id.includes("current_output")}
-        <span style="pointer-events: none;">
-            {#if id.includes("_alpha") && currentOutput.keyOutput}
-                <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
-            {:else}
-                <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
-            {/if}
-        </span>
-    {:else if (item.type === "slide_text" && item.includeMedia) || id.includes("slide")}
-        <span style="pointer-events: none;">
-            {#if (item.type ? item.includeMedia : !id.includes("_text")) && currentBackground}
-                {@const slideBackground = slideOffset !== 0 ? currentBackground.next : currentBackground}
-                {#if typeof slideBackground?.path === "string"}
-                    <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
-                        <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
-                    </div>
-                {/if}
-            {/if}
-
-            <!-- refresh to update auto sizes -->
-            <!-- refresh auto size if changing stage layout with #key made item unmovable .. -->
-            {#key currentSlide?.id || currentSlide?.index}
-                <SlideText {currentSlide} next={slideOffset !== 0} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} style={item.type ? item.keepStyle : false} />
-            {/key}
-        </span>
-    {:else if item.type === "slide_notes" || id.includes("notes")}
-        <SlideNotes {currentSlide} next={slideOffset !== 0} autoSize={item.auto !== false ? autoSize : fontSize} />
-    {:else if item.type}
-        <SlideItems item={stageItemToItem(item)} ref={{ type: "stage", id }} />
-    {:else}
-        <!-- OLD CODE -->
-        <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};">
-            <div>
-                {#if id.includes("slide_tracker")}
-                    <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
-                {:else if id.includes("clock")}
-                    <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
-                {:else if id.includes("video")}
-                    <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
-                {:else if id.includes("first_active_timer")}
-                    <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
-                {:else if id.includes("timers")}
-                    {#if $timers[id.split("#")[1]]}
-                        <Timer item={stageItemToItem(item)} id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
-                    {/if}
-                {:else if id.includes("variables")}
-                    {#if $variables[id.split("#")[1]]}
-                        <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" ref={{ type: "stage", id }} hideText={!!$currentWindow} />
-                    {/if}
+    <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};{item.type !== 'slide_text' || item.keepStyle ? 'height: 100%;' : ''}">
+        <span style="pointer-events: none;width: 100%;height: 100%;">
+            {#if item.type === "current_output" || id.includes("current_output")}
+                {#if id.includes("_alpha") && currentOutput.keyOutput}
+                    <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
                 {:else}
-                    {id}
+                    <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
                 {/if}
-            </div>
-        </div>
-    {/if}
+            {:else if item.type === "slide_text" || id.includes("slide")}
+                {#if (item.type ? item.includeMedia : !id.includes("_text")) && currentBackground}
+                    {@const slideBackground = slideOffset !== 0 ? currentBackground.next : currentBackground}
+                    {#if typeof slideBackground?.path === "string"}
+                        <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
+                            <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
+                        </div>
+                    {/if}
+                {/if}
+
+                <!-- refresh to update auto sizes -->
+                <!-- refresh auto size if changing stage layout with #key made item unmovable .. -->
+                {#key currentSlide?.id || currentSlide?.index}
+                    <SlideText
+                        {currentSlide}
+                        {slideOffset}
+                        stageItem={item}
+                        chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled}
+                        ref={{ type: "stage", id }}
+                        autoSize={item.auto !== false}
+                        {fontSize}
+                        {textStyle}
+                        style={item.type ? item.keepStyle : false}
+                    />
+                {/key}
+            {:else if item.type === "slide_notes" || id.includes("notes")}
+                <SlideNotes {currentSlide} {slideOffset} autoSize={item.auto !== false ? autoSize : fontSize} />
+            {:else if item.type === "text"}
+                {#if edit}
+                    <span style="pointer-events: initial;">
+                        <EditboxLines item={stageItemToItem(item)} ref={{ type: "stage", id }} index={-1} />
+                    </span>
+                {:else}
+                    <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} isStage />
+                {/if}
+            {:else if item.type}
+                <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} isStage />
+                <!-- <SlideItems item={stageItemToItem(item)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} /> -->
+            {:else}
+                <!-- OLD CODE -->
+                <div>
+                    {#if id.includes("slide_tracker")}
+                        <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
+                    {:else if id.includes("clock")}
+                        <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
+                    {:else if id.includes("video")}
+                        <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
+                    {:else if id.includes("first_active_timer")}
+                        <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                    {:else if id.includes("timers")}
+                        {#if $timers[id.split("#")[1]]}
+                            <Timer item={stageItemToItem(item)} id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                        {/if}
+                    {:else if id.includes("variables")}
+                        {#if $variables[id.split("#")[1]]}
+                            <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" ref={{ type: "stage", id }} hideText={!!$currentWindow} />
+                        {/if}
+                    {:else}
+                        {id}
+                    {/if}
+                </div>
+            {/if}
+        </span>
+    </div>
 </div>
 
 <style>
     .stage_item {
+        /* inital values */
         font-family: Arial, Helvetica, sans-serif;
+        text-shadow: 2px 2px 10px #000000;
 
         border-width: 0;
         border-style: solid;
@@ -258,10 +282,11 @@
     .stage_item.selected {
         outline: 5px solid var(--secondary);
         overflow: visible;
+        z-index: 4;
     }
 
     .align {
-        height: 100%;
+        /* height: 100%; */
         display: flex;
         text-align: center;
         align-items: center;

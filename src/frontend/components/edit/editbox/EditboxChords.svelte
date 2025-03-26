@@ -10,7 +10,7 @@
     export let autoSize: number
     export let index: number
     export let ref: {
-        type?: "show" | "overlay" | "template"
+        type?: "show" | "overlay" | "template" | "stage"
         showId?: string
         id: string
     }

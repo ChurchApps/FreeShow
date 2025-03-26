@@ -2,6 +2,7 @@
     import Zoomed from "./Zoomed.svelte"
     import Stagebox from "./Stagebox.svelte"
     import { getStyleResolution } from "../../common/util/getStyleResolution"
+    import { clone } from "../../common/util/helpers"
 
     interface Show {
         settings: any
@@ -32,7 +33,7 @@
             {#each Object.entries(show.items) as [id, item]}
                 {#if item.enabled}
                     {#key show}
-                        <Stagebox {show} {id} {item} {slides} {socketId} {socket} {stream} {background} />
+                        <Stagebox {show} {id} item={clone(item)} {slides} {socketId} {socket} {stream} {background} />
                     {/key}
                 {/if}
             {/each}

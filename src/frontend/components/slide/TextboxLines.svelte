@@ -34,6 +34,7 @@
     export let fontSize: number = 0
     export let customTypeRatio: number = 1
     export let maxLines: number = 0 // stage next item preview
+    export let maxLinesInvert: boolean = false // stage next item preview (last lines)
 
     $: lines = clone(item?.lines || [])
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -168,7 +169,7 @@
         updateDynamic++
     }, 1000)
 
-    $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chordsData?.size || item?.chords?.size || 50 : "undefined"}px;--chord-color: ${stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
+    $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50 : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
 </script>
 
 <div
@@ -185,7 +186,7 @@
         style="{style && lineGap ? `gap: ${lineGap}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}"
     >
         {#each lines as line, i}
-            {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || i < maxLines)}
+            {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
                 {#if chords && chordLines[i]}
                     <div class:first={i === 0} class="break chords" class:stageChords={!!stageItem}>
                         {@html chordLines[i]}

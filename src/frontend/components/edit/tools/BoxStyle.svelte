@@ -167,6 +167,7 @@
     $: if (id === "timer" && item) {
         setBoxInputValue(box, "default", "timer.circleMask", "hidden", item.timer?.viewType !== "circle")
         setBoxInputValue(box, "default", "timer.showHours", "value", item.timer?.showHours !== false)
+        setBoxInputValue(box, "default", "timer.showHours", "hidden", (item.timer?.viewType || "time") !== "time")
         setBoxInputValue(box, "font", "auto", "value", item.auto ?? true)
     }
     $: if (id === "clock" && item) {

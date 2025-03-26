@@ -24,7 +24,6 @@
     export let key: boolean = false
     export let disableListTransition: boolean = false
     export let smallFontSize: boolean = false
-    export let addDefaultItemStyle: boolean = false
     export let animationStyle: any = {}
     export let dynamicValues: boolean = true
     export let isStage: boolean = false
@@ -46,6 +45,7 @@
     export let stageAutoSize: boolean = false
     export let fontSize: number = 0
     export let maxLines: number = 0 // stage next item preview
+    export let maxLinesInvert: boolean = false // stage next item preview (last lines)
 
     $: lines = clone(item?.lines)
     $: if (linesStart !== null && linesEnd !== null && lines?.length) {
@@ -78,9 +78,14 @@
     $: if (!outputId) customOutputId = getActiveOutputs($outputs, true, true, true)[0]
 
     function getCustomStyle(style: string, outputId: string = "", _updater: any = null) {
-        if (outputId && !isMirrorItem) {
+        if (outputId && !isMirrorItem && !isStage) {
             let outputResolution = getOutputResolution(outputId, $outputs, true)
             style = percentageStylePos(style, outputResolution)
+        }
+
+        // reset position styles
+        if (isStage) {
+            style += "left: 0;top: 0;width: 100%;height: 100%;"
         }
 
         if (!key) return style
@@ -228,44 +233,15 @@
 
     // CHORDS
 
-    let chordLines: string[] = []
+    let chordLines: any[] = []
     $: if (chords && (item.lines || fontSize)) createChordLines()
     function createChordLines() {
         chordLines = []
         if (!Array.isArray(item?.lines)) return
 
-        item.lines.forEach((line, i) => {
+        item.lines.forEach((line) => {
             if (!line.chords?.length || !line.text) return
-
-            let chords = clone(line.chords || [])
-
-            let html = ""
-            let index = 0
-            line.text.forEach((text) => {
-                let value = text.value.trim().replaceAll("\n", "") || ""
-
-                let letters = value.split("")
-                letters.forEach((letter) => {
-                    let chordIndex = chords.findIndex((a) => a.pos === index)
-                    if (chordIndex >= 0) {
-                        html += `<span class="chord">${chords[chordIndex].key}</span>`
-                        chords.splice(chordIndex, 1)
-                    }
-
-                    // let size = fontSizeValue
-                    let size = fontSize || 0
-                    html += `<span class="invisible" style="${style ? getCustomStyle(text.style) : ""}${size ? `font-size: ${size}px;` : ""}">${letter}</span>`
-
-                    index++
-                })
-            })
-
-            chords.forEach((chord, i) => {
-                html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
-            })
-
-            if (!html) return
-            chordLines[i] = html
+            chordLines.push(line.chords)
         })
     }
 
@@ -303,7 +279,7 @@
     style="{style ? getCustomStyle(item?.style, customOutputId, { $styles }) : null};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
     class:white={key && !lines?.length}
     class:key
-    class:addDefaultItemStyle
+    class:isStage
     class:isDisabledVariable
     class:chords={chordLines.length}
     bind:this={itemElem}
@@ -330,6 +306,7 @@
             {fontSize}
             {customTypeRatio}
             {maxLines}
+            {maxLinesInvert}
         />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} />
@@ -346,6 +323,10 @@
             filter 500ms,
             backdrop-filter 500ms;
     }
+    .item.isStage {
+        width: 100%;
+        height: 100%;
+    }
 
     .white {
         /* filter: brightness(30); */
@@ -358,23 +339,6 @@
     /* .height {
         height: 1em;
     } */
-
-    /* stage current slide */
-    .item.addDefaultItemStyle {
-        color: white;
-        font-size: 100px;
-        font-family: unset;
-        line-height: 1.1;
-        -webkit-text-stroke-color: #000000;
-        text-shadow: 2px 2px 10px #000000;
-
-        border-style: solid;
-        border-width: 0px;
-        border-color: #ffffff;
-
-        height: 150px;
-        width: 400px;
-    }
 
     .item.isDisabledVariable {
         display: none;

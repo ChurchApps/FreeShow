@@ -28,7 +28,7 @@ export type EditInput = {
     value?: string | number | boolean | any[]
     extension?: string
     hidden?: boolean
-    disabled?: string
+    disabled?: string | boolean
     valueIndex?: number
     values?: any
     popup?: string
