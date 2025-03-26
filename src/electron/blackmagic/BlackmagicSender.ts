@@ -22,23 +22,49 @@ export class BlackmagicSender {
             scheduledFrames: number;
             pixelFormat: string;
             displayMode: string;
-            monitoringInterval?: NodeJS.Timeout;
-            forcedResolution?: {
+            isStarted: boolean;
+            targetDimensions?: {
                 width: number;
                 height: number;
-            }
+            };
+            // New properties for simplified converter
+            sourceWidth?: number;
+            sourceHeight?: number;
+            converter?: (buffer: Buffer) => Buffer;
+            // Existing optional properties
+            conversionCache?: {
+                sourceWidth: number;
+                sourceHeight: number;
+                converter: (frame: Buffer) => Buffer;
+            };
+            monitoringInterval?: NodeJS.Timeout;
+            lastLogTime: number;
+            audioChannels?: number;
+            emptyBufferCount?: number;
+            scheduleFailCount?: number;
         }
     } = {}
-    static devicePixelMode: "BGRA" | "ARGB" = "BGRA"
     
+    static devicePixelMode: "BGRA" | "ARGB" = os.endianness() === "BE" ? "ARGB" : "BGRA";
     static framePromises: { [key: string]: { [time: number]: Promise<any> } } = {};
+    static isPaused: { [key: string]: boolean } = {};
+    static frameSkipCounter: { [key: string]: number } = {};
 
-    // set audioChannels to 0 to disable audio
-    static async initialize(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels: number = 2) {
-        console.log("Blackmagic - creating sender: " + outputId)
-        console.log(`Initializing Blackmagic sender with mode: ${displayModeName}, format: ${pixelFormat}`);
+   // set audioChannels to 0 to disable audio
+    static async initialize(outputId: string, deviceIndex: number, displayModeName: string, 
+                           pixelFormat: string, enableKeying: boolean, audioChannels: number = 2) {
+        console.log(`Initializing Blackmagic sender [${outputId}] - Mode: ${displayModeName}, Format: ${pixelFormat}`);
 
         if (this.playbackData[outputId]) this.stop(outputId);
+
+        // Get target dimensions and cache them
+        const targetDimensions = this.getTargetDimensions(displayModeName);
+        
+        this.frameSkipCounter[outputId] = 0;
+        this.isPaused[outputId] = false;
+        
+        // Always use at least 2 audio channels to ensure proper audio support
+        const actualAudioChannels = Math.max(2, audioChannels || 2);
 
         this.playbackData[outputId] = {
             playback: await macadam.playback({
@@ -46,7 +72,7 @@ export class BlackmagicSender {
                 displayMode: BlackmagicManager.getDisplayMode(displayModeName),
                 pixelFormat: BlackmagicManager.getPixelFormat(pixelFormat),
                 enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
-                channels: audioChannels ? 0 : 0, // WIP send audio!
+                channels: actualAudioChannels,
                 sampleRate: macadam.bmdAudioSampleRate48kHz,
                 sampleType: macadam.bmdAudioSampleType16bitInteger,
                 startTimecode: "01:00:00:00",
@@ -54,159 +80,84 @@ export class BlackmagicSender {
             scheduledFrames: 0,
             pixelFormat: pixelFormat,
             displayMode: displayModeName,
+            isStarted: false,
+            targetDimensions,
+            lastLogTime: 0,
+            audioChannels: actualAudioChannels
         }
 
-        this.devicePixelMode = os.endianness() === "BE" ? "ARGB" : "BGRA";
+        this.framePromises[outputId] = {};
+        
+        console.log(`Sender initialized with target dimensions: ${targetDimensions.width}x${targetDimensions.height}`);
+        return true;
     }
 
-    //static scheduleFrame(outputId: string, videoFrame: Buffer, _audioFrame: Buffer | null, framerate: number = 1000, size: Size) {
-    //    if (!this.playbackData[outputId]) return;
-//
-    //    if (videoFrame.length === 0 || size.width === 0 || size.height === 0) {
-    //        console.warn("Skipping empty frame");
-    //        return;
-    //    }
-//
-    //    // Initialize promises tracking for this output if needed
-    //    if (!this.framePromises[outputId]) {
-    //        this.framePromises[outputId] = {};
-    //    }
-//
-    //    // Check if we have too many pending frames (adjust buffer size as needed)
-    //    const MAX_BUFFERED_FRAMES = 5;
-    //    const pendingFrames = Object.keys(this.framePromises[outputId]).length;
-//
-    //    if (pendingFrames >= MAX_BUFFERED_FRAMES) {
-    //        console.log(`Throttling: Already have ${pendingFrames} frames pending for output ${outputId}`);
-    //        return; // Skip this frame to avoid building up too many
-    //    }
-//
-    //    console.log(`Scheduling frame: Input buffer size: ${videoFrame.length}, Format: ${this.playbackData[outputId].pixelFormat}, Size: ${size.width}x${size.height}`);
-//
-    //    videoFrame = this.convertVideoFrameFormat(videoFrame, this.playbackData[outputId].pixelFormat, size, outputId);
-//
-    //    // Get current scheduled time
-    //    const currentTime = this.playbackData[outputId].scheduledFrames * framerate;
-//
-    //    // Schedule the frame
-    //    this.playbackData[outputId].playback.schedule({
-    //        video: videoFrame,
-    //        // audio: audioFrame,
-    //        sampleFrameCount: 1920,
-    //        time: currentTime
-    //    });
-//
-    //    // Store the promise for this frame time
-    //    this.framePromises[outputId][currentTime] = this.playbackData[outputId].playback.played(currentTime)
-    //        .then(() => {
-    //            // Clean up the promise when done
-    //            delete this.framePromises[outputId][currentTime];
-    //            console.log(`Frame at time ${currentTime} successfully played and cleaned up`);
-    //        })
-    //        .catch(err => {
-    //            delete this.framePromises[outputId][currentTime];
-    //            console.error(`Error with frame at time ${currentTime}:`, err);
-    //        });
-//
-    //    this.playbackData[outputId].scheduledFrames++;
-    //    this.sendFrame(outputId);
-    //}
-//
-    //static async sendFrame(outputId: string) {
-    //    if (!this.playbackData[outputId]) return;
-//
-    //    const data = this.playbackData[outputId];
-//
-    //    // Start playback when we have buffered 3 frames
-    //    if (data.scheduledFrames === 3) {
-    //        console.log("Starting BlackMagic playback");
-    //        data.playback.start({ startTime: 0 });
-    //    }
-//
-    //    // Don't need additional waiting logic here since we're managing each frame individually
-    //}
-
-   static scheduleFrame(outputId: string, videoFrame: Buffer, _audioFrame: Buffer | null, framerate: number = 1000, size: Size) {
+    static scheduleFrame(outputId: string, videoFrame: Buffer, audioFrame: Buffer | null, 
+                     framerate: number = 1000, size: Size) {
     if (!this.playbackData[outputId]) return;
-
+    
+    const data = this.playbackData[outputId];
+    
+    // Skip empty frames
     if (videoFrame.length === 0 || size.width === 0 || size.height === 0) {
-        console.warn("Skipping empty frame");
         return;
     }
 
-    // Initialize promises tracking for this output if needed
-    if (!this.framePromises[outputId]) {
-        this.framePromises[outputId] = {};
-    }
-
-    // Check buffer health
     try {
-        const bufferedFrames = this.playbackData[outputId].playback.bufferedFrames();
-        
-        // Optimize buffer parameters even more
-        const TARGET_BUFFER = 60; // Increase target buffer for extra smoothness
-        const MIN_BUFFER = 10;     // Raise minimum buffer to prevent jitter
-        
-        // Critical buffer management
-        if (bufferedFrames < MIN_BUFFER) {
-            console.log(`CRITICAL: Buffer low (${bufferedFrames}), prioritizing frame`);
-            // When critically low, process every frame at highest priority
-        } else if (bufferedFrames >= TARGET_BUFFER) {
-            // If buffer is very healthy, we can be more aggressive about skipping frames
-            // Skip frames based on buffer level to maintain balance
-            if (this.playbackData[outputId].scheduledFrames % 2 === 1) {
-                return;
-            }
-        } else if (bufferedFrames >= TARGET_BUFFER * 0.75) {
-            // If buffer is fairly healthy, skip occasional frames
-            if (this.playbackData[outputId].scheduledFrames % 3 === 1) {
-                return;
-            }
+        // Simple buffer check - we just want to know if we should start playback
+        let bufferedFrames = 0;
+        try {
+            bufferedFrames = data.playback.bufferedFrames();
+        } catch (err) {
+            console.error(`Error checking buffer: ${err.message}`);
+            return; // Skip this frame if we can't check buffer
         }
         
-        // Less frequent logging to reduce overhead
-        if (this.playbackData[outputId].scheduledFrames % 10 === 0) {
-            console.log(`Buffer health: ${bufferedFrames}/${TARGET_BUFFER} frames`);
-        }
-    } catch (err) {
-        console.error("Error checking buffer:", err);
-    }
-
-    // Get current scheduled time
-    const currentTime = this.playbackData[outputId].scheduledFrames * framerate;
-    
-    // Convert the frame - minimize logging for better performance
-    videoFrame = this.convertVideoFrameFormat(videoFrame, this.playbackData[outputId].pixelFormat, size, outputId);
-
-    // Schedule the frame
-    this.playbackData[outputId].playback.schedule({
-        video: videoFrame,
-        // audio: audioFrame,
-        sampleFrameCount: 1920,
-        time: currentTime
-    });
-
-    // Store the promise for this frame time
-    this.framePromises[outputId][currentTime] = this.playbackData[outputId].playback.played(currentTime)
-        .then(() => {
-            // Clean up the promise when done
-            delete this.framePromises[outputId][currentTime];
-            
-            // Extremely minimal logging - only once every ~10 seconds
-            if (currentTime % (framerate * 60) === 0) {
-                console.log(`Frame at time ${currentTime} successfully played`);
-            }
-        })
-        .catch((err: Error) => {
-            delete this.framePromises[outputId][currentTime];
-            console.error(`Error with frame at time ${currentTime}:`, err);
-            console.error(`Error with frame at time ${currentTime}:`, err);
+        // Use the existing convertVideoFrameFormat function for simplicity
+        const convertedFrame = this.convertVideoFrameFormat(
+            videoFrame, 
+            data.pixelFormat, 
+            size, 
+            outputId
+        );
+        
+        // Generate silent audio if needed
+        const audioData = audioFrame || this.generateSilentAudio(2);  // Always use 2 channels for simplicity
+        
+        // Get current scheduled time
+        const currentTime = data.scheduledFrames * framerate;
+        
+        // Schedule frame
+        data.playback.schedule({
+            video: convertedFrame,
+            audio: audioData,
+            sampleFrameCount: 1920,
+            time: currentTime
         });
-
-    this.playbackData[outputId].scheduledFrames++;
-    this.sendFrame(outputId);
+        
+        // Increment frame counter
+        data.scheduledFrames++;
+        
+        // Simple startup logic - start after buffering 10 frames
+        if (!data.isStarted && bufferedFrames >= 10) {
+            try {
+                console.log("Starting BlackMagic playback");
+                data.playback.start({ startTime: 0 });
+                data.isStarted = true;
+            } catch (err) {
+                if (err.message !== "Already started") {
+                    console.error(`Error starting playback: ${err.message}`);
+                } else {
+                    data.isStarted = true;
+                }
+            }
+        }
+        
+    } catch (err) {
+        console.error(`Error in scheduleFrame: ${err.message}`);
+    }
 }
-
+    
 static async sendFrame(outputId: string) {
     if (!this.playbackData[outputId]) return;
 
@@ -220,41 +171,7 @@ static async sendFrame(outputId: string) {
     }
 }
 
-   
-
-    static startPerformanceMonitoring(outputId: string) {
-        if (!this.playbackData[outputId]) return;
-
-        // Monitor every 5 seconds
-        const monitoringInterval = setInterval(() => {
-            if (!this.playbackData[outputId]) {
-                clearInterval(monitoringInterval);
-                return;
-            }
-
-            try {
-                // Use synchronous calls for these methods
-                const bufferedFrames = this.playbackData[outputId].playback.bufferedFrames();
-                const hwTime = this.playbackData[outputId].playback.hardwareTime();
-                const scheduledTime = this.playbackData[outputId].playback.scheduledTime();
-
-                console.log("--- Performance Status ---");
-                console.log(`Buffered frames: ${bufferedFrames}`);
-                console.log(`Hardware time: ${JSON.stringify(hwTime)}`);
-                console.log(`Scheduled time: ${JSON.stringify(scheduledTime)}`);
-                console.log(`Pending promises: ${Object.keys(this.framePromises[outputId] || {}).length}`);
-                console.log(`Total scheduled frames: ${this.playbackData[outputId].scheduledFrames}`);
-                console.log("-------------------------");
-            } catch (err) {
-                console.error("Error in performance monitoring:", err);
-            }
-        }, 5000);
-
-        // Store the interval for cleanup
-        this.playbackData[outputId].monitoringInterval = monitoringInterval;
-    }
-    
-    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, outputId: string) {
+   static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, outputId: string) {
         // Get target dimensions from display mode
         const currentMode = this.playbackData[outputId];
         const targetDims = currentMode?.displayMode ?
@@ -303,6 +220,119 @@ static async sendFrame(outputId: string) {
 
         return frame
     }
+    
+   static startPerformanceMonitoring(outputId: string) {
+    if (!this.playbackData[outputId]) return;
+
+    // Monitor every 10 seconds to reduce overhead
+    const monitoringInterval = setInterval(() => {
+        if (!this.playbackData[outputId]) {
+            clearInterval(monitoringInterval);
+            return;
+        }
+
+        try {
+            const bufferedFrames = this.playbackData[outputId].playback.bufferedFrames();
+            const hwTime = this.playbackData[outputId].playback.hardwareTime();
+            const scheduledTime = this.playbackData[outputId].playback.scheduledTime();
+
+            console.log("--- Performance Status ---");
+            console.log(`Buffered frames: ${bufferedFrames}`);
+            console.log(`Hardware time: ${JSON.stringify(hwTime)}`);
+            console.log(`Scheduled time: ${JSON.stringify(scheduledTime)}`);
+            console.log(`Pending promises: ${Object.keys(this.framePromises[outputId] || {}).length}`);
+            console.log(`Total scheduled frames: ${this.playbackData[outputId].scheduledFrames}`);
+            
+            // Check for drift and implement recovery if needed
+            if (hwTime && scheduledTime) {
+                const hwFrameTime = hwTime.hardwareTime;
+                const scheduledFrameTime = scheduledTime.streamTime;
+                const drift = Math.abs(hwFrameTime - scheduledFrameTime);
+                
+                // More aggressive drift threshold (reduced from 10000 to 5000)
+                //if (drift > 5000) {
+                //    console.warn(`Significant timing drift detected: ${drift} units`);
+                //    
+                //    // For extreme drift (over 1 million), perform a hard reset
+                //    if (drift > 1000000) {
+                //        this.performHardReset(outputId, hwFrameTime);
+                //    } else {
+                //        this.recoverFromDrift(outputId, hwFrameTime);
+                //    }
+                //}
+                if (drift > 5000) {
+                    console.warn(`Timing drift detected: ${drift} units`);
+                    this.recoverPlayback(outputId, hwFrameTime);
+                }
+            }
+            
+            // Check for persistently empty buffer and take action if needed
+            if (bufferedFrames === 0) {
+                this.playbackData[outputId].emptyBufferCount = 
+                    (this.playbackData[outputId].emptyBufferCount || 0) + 1;
+
+                if ((this.playbackData[outputId].emptyBufferCount || 0) >= 2) {
+                    console.warn("Empty buffer detected, attempting recovery");
+                    this.recoverPlayback(outputId, hwTime?.hardwareTime || 0);
+                }
+            } else {
+                // Reset empty buffer counter
+                this.playbackData[outputId].emptyBufferCount = 0;
+            }
+            
+            console.log("-------------------------");
+        } catch (err) {
+            console.error("Error in performance monitoring:", err);
+        }
+    }, 10000);  // Extended interval to 10 seconds
+
+    this.playbackData[outputId].monitoringInterval = monitoringInterval;
+}
+    
+    
+    
+    static recoverFromDrift(outputId: string, currentHwTime: number) {
+        if (!this.playbackData[outputId]) return;
+
+        console.log("Attempting drift recovery...");
+
+        try {
+            // Temporarily pause frame scheduling
+            this.isPaused[outputId] = true;
+
+            // Clear existing frame promises
+            this.framePromises[outputId] = {};
+
+            // Reset scheduling counter to current hardware time
+            this.playbackData[outputId].scheduledFrames = Math.floor(currentHwTime / 1000) + 5;
+
+            // Reset the start flag to rebuild buffer
+            this.playbackData[outputId].isStarted = false;
+
+            console.log(`Scheduling reset to frame: ${this.playbackData[outputId].scheduledFrames}`);
+
+            // Resume after short delay
+            setTimeout(() => {
+                this.isPaused[outputId] = false;
+                console.log("Frame scheduling resumed after drift recovery");
+            }, 500);
+        } catch (err) {
+            console.error("Error during drift recovery:", err);
+            // Ensure we don't leave scheduling paused
+            this.isPaused[outputId] = false;
+        }
+    }
+    
+    // Generate silent audio buffer (16-bit stereo)
+    static generateSilentAudio(channels: number = 2): Buffer {
+        // 1920 samples is a common buffer size for 48kHz audio at various framerates
+        // Each sample is 2 bytes (16-bit) per channel
+        const sampleCount = 1920;
+        const bufferSize = sampleCount * 2 * channels;
+        
+        // Create buffer filled with zeros (silence)
+        return Buffer.alloc(bufferSize);
+    }
 
     // Add this helper method to get dimensions from display mode
     static getTargetDimensions(displayMode: string): {
@@ -349,42 +379,103 @@ static async sendFrame(outputId: string) {
         };
     }
     
-    // And update stop method for cleanup:
-    static stop(outputId: string) {
+    static pauseOutput(outputId: string) {
         if (!this.playbackData[outputId]) return;
+        console.log(`Pausing output: ${outputId}`);
+        this.isPaused[outputId] = true;
+    }
+    
+    static resumeOutput(outputId: string) {
+        if (!this.playbackData[outputId]) return;
+        console.log(`Resuming output: ${outputId}`);
+        this.isPaused[outputId] = false;
+    }
+    
+    static recoverPlayback(outputId: string, currentHwTime: number) {
+    if (!this.playbackData[outputId]) return;
+    
+    console.log("Performing soft recovery...");
+    
+    // Pause scheduling temporarily
+    this.isPaused[outputId] = true;
+    
+    // Clear existing frame promises
+    this.framePromises[outputId] = {};
+    
+    try {
+        const data = this.playbackData[outputId];
+        
+        // Reset counters and state
+        data.scheduledFrames = Math.floor(currentHwTime / 1000) + 5;
+        data.isStarted = false;
+        data.emptyBufferCount = 0;
+        
+        // Try to restart playback after a brief delay
+        setTimeout(() => {
+            try {
+                if (this.playbackData[outputId]) {
+                    // Resume scheduling
+                    this.isPaused[outputId] = false;
+                    console.log("Soft recovery completed, scheduling resumed");
+                }
+            } catch (err) {
+                console.error("Error resuming after recovery:", err);
+                this.isPaused[outputId] = false;
+            }
+        }, 500);
+    } catch (err) {
+        console.error("Error during soft recovery:", err);
+        this.isPaused[outputId] = false;
+    }
+}
 
-        console.log("Blackmagic - stopping sender: " + outputId);
+  static stop(outputId: string) {
+    if (!this.playbackData[outputId]) return;
 
-        // Clear monitoring interval if it exists
-        if (this.playbackData[outputId].monitoringInterval) {
-            clearInterval(this.playbackData[outputId].monitoringInterval);
+    console.log(`Stopping Blackmagic sender: ${outputId}`);
+
+    // Set paused flag first to prevent new frames being scheduled
+    this.isPaused[outputId] = true;
+
+    // Clear monitoring interval
+    if (this.playbackData[outputId].monitoringInterval) {
+        clearInterval(this.playbackData[outputId].monitoringInterval);
+    }
+
+    try {
+        // Stop playback with safe check
+        try {
+            this.playbackData[outputId].playback.stop();
+        } catch (err) {
+            // Already stopped is an expected condition, not a true error
+            if (err.message !== "Already stopped") {
+                console.error(`Error stopping playback: ${err.message}`);
+            }
         }
-
-        this.playbackData[outputId].playback.stop();
-
+        
         // Clean up frame promises
         if (this.framePromises[outputId]) {
             delete this.framePromises[outputId];
         }
-
+        
+        // Clean up counters
+        delete this.frameSkipCounter[outputId];
+        
+        // Finally remove the playback data
         delete this.playbackData[outputId];
+        
+        console.log(`Sender ${outputId} successfully stopped and cleaned up`);
+    } catch (err) {
+        console.error(`Error stopping sender ${outputId}:`, err);
+        // Still clean up even if there's an error
+        delete this.playbackData[outputId];
+        delete this.framePromises[outputId];
+        delete this.frameSkipCounter[outputId];
     }
-
-    //static stop(outputId: string) {
-    //    if (!this.playbackData[outputId]) return;
-//
-    //    console.log("Blackmagic - stopping sender: " + outputId);
-    //    this.playbackData[outputId].playback.stop();
-//
-    //    // Clean up frame promises
-    //    if (this.framePromises[outputId]) {
-    //        delete this.framePromises[outputId];
-    //    }
-//
-    //    delete this.playbackData[outputId];
-    //}
+}
     
     static stopAll() {
-        Object.keys(this.playbackData).forEach(stop)
+        Object.keys(this.playbackData).forEach(id => this.stop(id));
+        console.log("All Blackmagic senders stopped");
     }
 }
