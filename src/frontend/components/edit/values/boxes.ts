@@ -293,7 +293,7 @@ export const boxes: Box = {
         edit: {
             default: [
                 { name: "choose_camera", id: "device", input: "popup", popup: "choose_camera", icon: "camera" },
-                { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
+                { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions.filter((a) => a.id !== "blur") } },
                 { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
                 { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false },
             ],

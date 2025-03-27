@@ -19,6 +19,7 @@ import {
     activeRecording,
     activeRename,
     activeShow,
+    activeStage,
     activeTagFilter,
     activeTimers,
     audioFolders,
@@ -239,6 +240,10 @@ const actions = {
         // delete slide item using context menu, or menubar action
         if (obj.contextElem?.classList.value.includes("#edit_box") || (!obj.sel?.id && get(activeEdit).slide !== undefined && get(activeEdit).items.length)) {
             deleteAction({ id: "item", data: { slide: get(activeEdit).slide } })
+            return
+        }
+        if (obj.contextElem?.classList.value.includes("#stage_item")) {
+            deleteAction({ id: "stage_item", data: { id: get(activeStage).id } })
             return
         }
         if (obj.contextElem?.classList.value.includes("#event")) {
@@ -1200,7 +1205,8 @@ const actions = {
             return
         }
 
-        if (!obj.contextElem?.classList.contains("editItem")) return
+        let isStage = !!obj.contextElem?.classList.contains("stage_item")
+        if (!obj.contextElem?.classList.contains("editItem") && !isStage) return
 
         let sel = getSelectionRange()
         let lineIndex = sel.findIndex((a) => a?.start !== undefined)
@@ -1208,6 +1214,19 @@ const actions = {
 
         let edit = get(activeEdit)
         let caret = { line: lineIndex || 0, pos: sel[lineIndex]?.start || 0 }
+
+        if (isStage) {
+            let activeItemId = get(activeStage)?.items[0]
+            if (!get(stageShows)[get(activeStage).id!] || !activeItemId) return
+
+            stageShows.update((a) => {
+                a[get(activeStage).id!].items[activeItemId] = updateItemText(a[get(activeStage).id!]?.items[activeItemId])
+                return a
+            })
+
+            refreshEditSlide.set(true)
+            return
+        }
 
         if (edit.id) {
             if (edit.type === "overlay") {
@@ -1243,7 +1262,10 @@ const actions = {
         function updateItemText(items) {
             let replaced = false
 
-            items[edit.items?.[0]]?.lines?.[caret.line].text.forEach((text) => {
+            let lines = items[edit.items?.[0]]?.lines || []
+            if (isStage) lines = items?.lines || []
+
+            lines[caret.line].text.forEach((text) => {
                 if (replaced) return
 
                 let value = text.value

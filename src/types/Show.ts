@@ -454,6 +454,8 @@ export interface OutSlide {
     layout?: ID
     index?: number
     tempItems?: Item[]
+    previousSlides?: Item[][]
+    nextSlides?: Item[][]
     line?: number
     // layout: ID ?
     name?: string // mostly used for PDFs

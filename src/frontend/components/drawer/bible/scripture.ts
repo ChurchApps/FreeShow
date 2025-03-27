@@ -212,7 +212,7 @@ export const textKeys = {
     showVersion: "[version]",
     showVerse: "[reference]",
 }
-export function getSlides({ bibles, sorted }, onlyOne: boolean = false) {
+export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableReference: boolean = false) {
     let slides: any[][] = [[]]
 
     let template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
@@ -238,6 +238,9 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false) {
             let slideArr: any = slides[slideIndex][bibleIndex]
             if (!slideArr?.lines[0]?.text) return
 
+            let text: string = bible.verses[s] || ""
+            if (!text) return
+
             let lineIndex: number = 0
             // verses on individual lines
             if (get(scriptureSettings).versesOnIndividualLines) {
@@ -257,8 +260,6 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false) {
                     customType: "disableTemplate", // dont let template style verse numbers
                 })
             }
-
-            let text: string = bible.verses[s] || ""
 
             // custom Jesus red to JSON format: !{}!
             text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
@@ -323,7 +324,7 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false) {
             // if (bibleIndex + 1 < bibles.length) return
             if (onlyOne || (i + 1) % get(scriptureSettings).versesPerSlide > 0) return
 
-            if (bibleIndex + 1 >= bibles.length) {
+            if (!disableReference && bibleIndex + 1 >= bibles.length) {
                 let range: any[] = onlyOne ? sorted : sorted.slice(i - get(scriptureSettings).versesPerSlide + 1, i + 1)
                 if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
                 let indexes = [bibles.length]
@@ -340,7 +341,7 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false) {
         })
 
         // add remaining
-        if (bibleIndex + 1 >= bibles.length) {
+        if (!disableReference && bibleIndex + 1 >= bibles.length) {
             let remainder = onlyOne ? sorted.length : sorted.length % get(scriptureSettings).versesPerSlide
             let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
             if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted

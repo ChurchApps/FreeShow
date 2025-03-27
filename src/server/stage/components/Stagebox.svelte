@@ -115,6 +115,7 @@
     <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};{item.type !== 'slide_text' || item.keepStyle ? 'height: 100%;' : ''}">
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
+                <!-- width gets squished when resized -->
                 <PreviewCanvas alpha={id.includes("_alpha")} id={show?.settings?.output} {socket} capture={stream[id.includes("_alpha") ? "alpha" : "default"]} />
             {:else if item.type === "slide_text" || id.includes("slide")}
                 {@const slideBackground = slideOffset !== 0 ? background.next : background}
@@ -131,7 +132,8 @@
             {:else if item.type === "text"}
                 <Textbox {item} showId={id} />
             {:else if item.type}
-                <SlideItems item={stageItemToItem(item)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} />
+                <Textbox {item} showId={id} fontSize={item.auto !== false ? autoSize : fontSize} />
+                <!-- <SlideItems item={stageItemToItem(item)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} /> -->
             {:else}
                 <!-- OLD CODE -->
                 <div>

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { StageItem, StageLayout } from "../../../types/Stage"
-    import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, stageShows, timers, variables } from "../../stores"
+    import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, refreshEditSlide, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
@@ -20,6 +20,7 @@
     import SlideText from "./items/SlideText.svelte"
     import VideoTime from "./items/VideoTime.svelte"
     import { getCustomStageLabel, stageItemToItem } from "./stage"
+    import SlideItems from "../slide/SlideItems.svelte"
 
     export let id: string
     export let item: StageItem
@@ -29,7 +30,6 @@
 
     $: currentShow = show === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : show
 
-    // WIP make offset work with custom values
     $: slideOffset = item.type ? Number(item.slideOffset || 0) : id.includes("next") ? 1 : 0
 
     export let mouse: any = null
@@ -76,12 +76,12 @@
                 delete a[$activeStage.id!].items[id]
                 return a
             })
-            activeStage.set({ id: $activeStage.id, items: [] })
+            activeStage.set({ ...$activeStage, items: [] })
         }
     }
 
     function deselect(e: any) {
-        if (e.target.closest(".stageTools")) return
+        if (e.target.closest(".stageTools") || e.target.closest(".contextMenu")) return
 
         if ((edit && !e.ctrlKey && !e.metaKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
             activeStage.update((ae) => {
@@ -165,13 +165,19 @@
         video.pause()
         video.currentTime = video.duration / 2
     }
+
+    $: if ($refreshEditSlide) {
+        setTimeout(() => {
+            refreshEditSlide.set(false)
+        }, 100)
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
 
 <div
     {id}
-    class="stage_item item"
+    class="stage_item item {edit ? `context #${item.type === 'text' ? 'stage_text_item' : 'stage_item'}` : ''}"
     class:border={currentShow?.settings?.labels}
     class:outline={edit}
     class:selected={edit && $activeStage.items.includes(id)}
@@ -197,7 +203,8 @@
                 {/if}
             {:else if item.type === "slide_text" || id.includes("slide")}
                 {#if (item.type ? item.includeMedia : !id.includes("_text")) && currentBackground}
-                    {@const slideBackground = slideOffset !== 0 ? currentBackground.next : currentBackground}
+                    {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : null}
+                    <!-- WIP this only includes "next" slide background -->
                     {#if typeof slideBackground?.path === "string"}
                         <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
                             <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
@@ -224,15 +231,16 @@
                 <SlideNotes {currentSlide} {slideOffset} autoSize={item.auto !== false ? autoSize : fontSize} />
             {:else if item.type === "text"}
                 {#if edit}
-                    <span style="pointer-events: initial;">
-                        <EditboxLines item={stageItemToItem(item)} ref={{ type: "stage", id }} index={-1} />
-                    </span>
+                    {#key $refreshEditSlide}
+                        <span class="edit_item" style="pointer-events: initial;--font-size: {fontSize}px;">
+                            <EditboxLines item={stageItemToItem(item)} ref={{ type: "stage", id }} index={-1} />
+                        </span>
+                    {/key}
                 {:else}
-                    <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} isStage />
+                    <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} {fontSize} isStage />
                 {/if}
             {:else if item.type}
-                <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} isStage />
-                <!-- <SlideItems item={stageItemToItem(item)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} /> -->
+                <SlideItems item={stageItemToItem(item)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} />
             {:else}
                 <!-- OLD CODE -->
                 <div>
@@ -266,6 +274,9 @@
         /* inital values */
         font-family: Arial, Helvetica, sans-serif;
         text-shadow: 2px 2px 10px #000000;
+
+        /* overflow is not hidden on stage display */
+        /* overflow: hidden; */
 
         border-width: 0;
         border-style: solid;
@@ -334,7 +345,22 @@
     .align :global(.item .align) {
         align-items: var(--align);
     }
-    .align :global(.item .align .lines) {
+    .align .edit_item {
+        height: 100%;
+        display: flex;
+        align-items: var(--align);
+    }
+    .align .edit_item :global(.align) {
+        height: auto;
+        width: 100%;
+    }
+
+    .align :global(.item .align .lines),
+    .align .edit_item :global(.align .edit) {
         text-align: var(--text-align);
+    }
+
+    .align .edit_item :global(.align .edit span) {
+        font-size: var(--font-size);
     }
 </style>

@@ -63,9 +63,18 @@
 
         if (!value) return
 
+        // only update changed value
+        let styles: { [key: string]: string } = {}
+        activeItemIds.forEach((itemId) => {
+            let item = stageItems[itemId]
+            if (!item) return
+
+            styles[itemId] = addStyleString(item.style, [input.key, input.value])
+        })
+
         history({
             id: "UPDATE",
-            newData: { data: value, key: "items", subkey: "style", keys: activeItemIds },
+            newData: { data: styles, key: "items", subkey: "style", keys: Object.keys(styles) },
             oldData: { id: $activeStage.id },
             location: { page: "stage", id: "stage_item_style", override: $activeStage.id + activeItemIds.join("") },
         })

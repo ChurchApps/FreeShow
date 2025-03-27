@@ -12,7 +12,7 @@
     const dynamicItems: ItemRef[] = [
         { id: "slide_text", icon: "text" },
         { id: "slide_notes", icon: "notes" },
-        { id: "current_output", icon: "screen", maxAmount: 1 }, // TODO: max one!
+        { id: "current_output", icon: "screen", maxAmount: 1 },
     ]
 
     const normalItems: ItemRef[] = [
@@ -77,6 +77,10 @@
 
         <div class="grid">
             {#each dynamicItems as item}
+                {#if item.id === "current_output"}
+                    <hr class="divider" />
+                {/if}
+
                 <IconButton style="min-width: 100%;" name title={$dictionary.items?.[item.name || item.id]} icon={item.icon || item.id} disabled={item.maxAmount && sortedItems[item.id]?.length >= item.maxAmount} on:click={() => addItem(item.id)} />
             {/each}
         </div>
@@ -138,11 +142,5 @@
 
     .main :global(button.active) {
         font-weight: 600;
-    }
-
-    .overflow {
-        text-overflow: ellipsis;
-        overflow: hidden;
-        /* white-space: nowrap; */
     }
 </style>

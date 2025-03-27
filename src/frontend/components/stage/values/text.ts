@@ -5,6 +5,7 @@ export const slideTextEdits: EditInput[] = [
     { name: "max_lines", id: "lineCount", input: "number", value: 0 },
     { name: "includeMedia", id: "includeMedia", input: "checkbox", value: false },
     { name: "keepStyle", id: "keepStyle", input: "checkbox", value: false },
+    { name: "item_number", id: "itemNumber", input: "number", value: 0 },
     { name: "invert_items", id: "invertItems", input: "checkbox", value: false },
 ]
 

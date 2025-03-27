@@ -51,6 +51,7 @@ export interface StageItem {
     includeMedia?: boolean
     keepStyle?: boolean
     lineCount?: number // max lines to show in next slide preview
+    itemNumber?: number // only show a certain item index (0 will show all items)
     invertItems?: boolean // invert items if more than one (used for e.g. scripture refs)
 
     // textbox

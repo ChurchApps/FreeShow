@@ -59,6 +59,8 @@
             delete newEdits.default
             delete newEdits.chords
             edits = { default: slideNotesEdit, font: edits.default, ...newEdits }
+        } else if (item.type === "text") {
+            removeInput(edits.default, "auto")
         } else if (item.type === "variable") {
             let newEdits = clone(edits)
             delete newEdits.default
@@ -68,34 +70,6 @@
             // show seconds by default on stage
             setBoxInputValue(edits, "default", "clock.seconds", "value", true)
         }
-
-        // WIP clock / timer
-        // custom input values
-        // // if (activeItemId.includes("slide") && !activeItemId.includes("text") && !activeItemId.includes("notes") && !activeItemId.includes("tracker")) edits = { chords: edits.chords }
-        // if (item.type === "slide_text" || activeItemId.includes("slide_text")) {
-        //     // WIP only show this if current output has more than one item:
-        //     // edits.default.push({ name: "slide_offset", id: "slideOffset", input: "number", value: 0, values: { min: -50, max: 50 } })
-        //     // // set to hidden instead?
-        //     // if (item.type === "slide_text" ? true : activeItemId.includes("next_slide_text")) edits.default.push({ name: "max_lines", id: "lineCount", input: "number", value: 0 })
-
-        //     // edits.default.push({ name: "includeMedia", id: "includeMedia", input: "checkbox", value: false })
-        //     // edits.default.push({ name: "keepStyle", id: "keepStyle", input: "checkbox", value: false }) // hide all style values if this is enabled!!
-        //     // edits.default.push({ name: "invert_items", id: "invertItems", input: "checkbox", value: false })
-
-        //     let newEdits = clone(textEdits)
-        //     delete newEdits.default
-        //     edits = { default: clone(slideTextEdits), font: edits.default, ...newEdits }
-        // } else if (item.type === "slide_tracker" || activeItemId.includes("tracker")) {
-        //     let newEdits = clone(textEdits)
-        //     delete newEdits.default
-        //     delete newEdits.align
-        //     delete newEdits.chords
-        //     edits = { default: clone(trackerEdits), font: edits.default, ...newEdits }
-        // } else if (item.type === "clock" || activeItemId.includes("clock")) {
-        //     edits.default.push({ name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: true })
-        //     edits.default.push({ name: "sort.date", id: "clock.show_date", input: "checkbox", value: false })
-        // } else if (item.type === "timer" || activeItemId.includes("timer")) edits.default.push({ name: "timer.hours", id: "timer.showHours", input: "checkbox", value: item.timer?.showHours !== false })
-        // // else if (item.type === "current_output" || activeItemId.includes("output")) edits = {}
 
         defaultEdits = clone(edits)
     }
@@ -114,7 +88,7 @@
     $: if (item && type === "text") {
         let sectionId = edits.font ? "font" : "default"
         setBoxInputValue(edits, sectionId, "font-family", "styleValue", data["font"] || "")
-        setBoxInputValue(edits, sectionId, "font-size", "disabled", item.auto !== false)
+        setBoxInputValue(edits, sectionId, "font-size", "disabled", item.type !== "text" && item.auto !== false)
         // setBoxInputValue(edits, sectionId, "textFit", "hidden", item?.auto !== false)
     }
     $: if (item && item.type === "slide_notes") {
@@ -128,7 +102,9 @@
 
         setBoxInputValue(edits, "default", "includeMedia", "value", !!item.includeMedia)
         setBoxInputValue(edits, "default", "keepStyle", "value", !!item.keepStyle)
+        setBoxInputValue(edits, "default", "itemNumber", "value", Number(item.itemNumber || 0))
         setBoxInputValue(edits, "default", "invertItems", "value", !!item.invertItems)
+        setBoxInputValue(edits, "default", "invertItems", "hidden", Number(item.itemNumber || 0) !== 0)
     }
 
     $: if (edits.chords) {
@@ -154,7 +130,6 @@
     }
     $: if (item?.type === "camera") {
         if (item.device?.name) setBoxInputValue(edits, "default", "device", "name", item.device.name)
-        // WIP this does not update name when chosen
     }
 
     $: if (item?.type === "timer" && item) {
@@ -234,6 +209,8 @@
         })
     }
 
+    // WIP textbox lines does not update only selected text
+
     function updateStyle(e: any) {
         let input = e.detail
 
@@ -250,9 +227,21 @@
 
         if (!value) return
 
+        // only update items with same type
+        let updateType = item?.type
+
+        // only update changed value
+        let styles: { [key: string]: string } = {}
+        activeItemIds.forEach((itemId) => {
+            let item = stageItems[itemId]
+            if (!item || (!$activeStage.items?.length && item.type !== updateType)) return
+
+            styles[itemId] = addStyleString(item.style, [input.key, input.value])
+        })
+
         history({
             id: "UPDATE",
-            newData: { data: value, key: "items", subkey: "style", keys: activeItemIds },
+            newData: { data: styles, key: "items", subkey: "style", keys: Object.keys(styles) },
             oldData: { id: $activeStage.id },
             location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") },
         })

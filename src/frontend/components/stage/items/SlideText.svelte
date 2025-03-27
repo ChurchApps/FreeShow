@@ -48,9 +48,21 @@
     }
 
     $: slideId = slideIndex !== null && showRef ? showRef[slideIndex]?.id || null : null
-    $: slide = currentSlide?.id === "temp" && slideOffset !== 0 ? { items: currentSlide.tempItems } : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null
+    $: slide = currentSlide?.id === "temp" ? getTempSlides(slideOffset) : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null
 
-    $: reversedItems = stageItem?.invertItems ? clone(slide?.items || []) : clone(slide?.items || []).reverse()
+    function getTempSlides(slideOffset: number) {
+        if (slideOffset < 0) {
+            let includeLength = (currentSlide.previousSlides || [])?.length
+            return { items: currentSlide.previousSlides?.[includeLength - (slideOffset + 1 + includeLength)] }
+        }
+        if (slideOffset > 0) {
+            return { items: currentSlide.nextSlides?.[slideOffset - 1] }
+        }
+        return { items: currentSlide.tempItems }
+    }
+
+    $: itemNumber = Number(stageItem?.itemNumber || 0)
+    $: reversedItems = !itemNumber && stageItem?.invertItems ? clone(slide?.items || []) : clone(slide?.items || []).reverse()
     $: items = style ? clone(slide?.items || []) : combineSlideItems(reversedItems)
 
     function combineSlideItems(items: Item[]) {
@@ -59,9 +71,11 @@
 
         items
             .filter((item) => (item.type || "text") === "text" && (!item.bindings?.length || item.bindings.includes("stage")))
-            .forEach((item) => {
+            .forEach((item, i) => {
+                if (itemNumber && itemNumber - 1 !== i) return
+
                 let text = getItemText(item)
-                if (text.length) {
+                if (itemNumber || text.length) {
                     if (!oneItem) oneItem = item
                     else {
                         let EMPTY_LINE: Line = { align: "", text: [{ style: "", value: "" }] }
@@ -110,38 +124,18 @@
         <Main let:resolution let:width let:height>
             <Zoomed background="transparent" style={getStyleResolution(resolution, width, height, "fit")} center>
                 <div class:loading={items1 && !firstActive}>
-                    {#each items1 as item}
-                        <Textbox
-                            {item}
-                            {style}
-                            customStyle={textStyle}
-                            {stageItem}
-                            {chords}
-                            {ref}
-                            maxLines={Number(slideOffset !== 0 && stageItem.lineCount)}
-                            maxLinesInvert={slideOffset < 0}
-                            stageAutoSize={item.auto && autoSize}
-                            {fontSize}
-                            isStage
-                        />
+                    {#each items1 as item, i}
+                        {#if !itemNumber || itemNumber - 1 === i}
+                            <Textbox {item} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={item.auto && autoSize} {fontSize} isStage />
+                        {/if}
                         <!-- (style ? item.auto && item.textFit === "growToFit" : item.auto) -->
                     {/each}
                 </div>
                 <div class:loading={items2 && firstActive}>
-                    {#each items2 as item}
-                        <Textbox
-                            {item}
-                            {style}
-                            customStyle={textStyle}
-                            {stageItem}
-                            {chords}
-                            {ref}
-                            maxLines={Number(slideOffset !== 0 && stageItem.lineCount)}
-                            maxLinesInvert={slideOffset < 0}
-                            stageAutoSize={item.auto && autoSize}
-                            {fontSize}
-                            isStage
-                        />
+                    {#each items2 as item, i}
+                        {#if !itemNumber || itemNumber - 1 === i}
+                            <Textbox {item} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={item.auto && autoSize} {fontSize} isStage />
+                        {/if}
                     {/each}
                     <!-- (style ? item.auto && (item.textFit || "shrinkToFit") === "growToFit" : item.auto) -->
                 </div>
@@ -151,12 +145,12 @@
 {:else}
     <div class:loading={items1 && !firstActive}>
         {#each items1 as item}
-            <Textbox {item} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={autoSize} {fontSize} isStage />
+            <Textbox {item} style={false} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={autoSize} {fontSize} isStage />
         {/each}
     </div>
     <div class:loading={items2 && firstActive}>
         {#each items2 as item}
-            <Textbox {item} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={autoSize} {fontSize} isStage />
+            <Textbox {item} style={false} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={autoSize} {fontSize} isStage />
         {/each}
     </div>
 {/if}

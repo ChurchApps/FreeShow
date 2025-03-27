@@ -501,7 +501,7 @@
                         {#each input.values as option}
                             <Button
                                 on:click={() => valueChange({ detail: option.id }, input)}
-                                style={typeof input.value === "string" && input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                                style={Array.isArray(input.value) && input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
                                 bold={false}
                                 center
                                 dark
