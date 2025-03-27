@@ -28,7 +28,26 @@
         let value = e?.target?.value ?? e
         if (!value) return
 
+        // update current number if default is changed
         if (key === "default" && Number(currentVariable.number || 0) === Number(currentVariable.default || 0)) currentVariable.number = Number(value)
+
+        if (key === "minValue") {
+            if (Number(currentVariable.default || 0) < value) updateValue(value, "default")
+            if (max < value) updateValue(value, "maxValue")
+        }
+        if (key === "maxValue") {
+            if (Number(currentVariable.default || 0) > value) updateValue(value, "default")
+            if (min > value) updateValue(value, "minValue")
+        }
+
+        // can't have the same name as existing
+        if (key === "name") {
+            let existing
+            do {
+                existing = Object.entries($variables).find(([id, a]) => id !== variableId && value.toLowerCase() === a.name.toLowerCase())
+                if (existing) value += " 2"
+            } while (existing)
+        }
 
         currentVariable[key] = value
 
@@ -37,6 +56,13 @@
             return a
         })
     }
+
+    const minAbsolute = -10000000
+    const maxAbsolute = 10000000
+    const minDefault = 0
+    const maxDefault = 1000
+    $: min = Number(currentVariable.minValue ?? minDefault)
+    $: max = Number(currentVariable.maxValue ?? maxDefault)
 </script>
 
 {#if !existing && !chosenType}
@@ -63,14 +89,43 @@
 
     <CombinedInput textWidth={30}>
         <p><T id="inputs.name" /></p>
-        <TextInput disabled={existing && currentVariable.name} value={currentVariable.name} on:change={(e) => updateValue(e, "name")} autofocus={!currentVariable.name} />
+        <TextInput disabled={!!(existing && currentVariable.name)} value={currentVariable.name} on:change={(e) => updateValue(e, "name")} autofocus={!currentVariable.name} />
     </CombinedInput>
 
     {#if currentVariable.type === "number"}
         <CombinedInput textWidth={30}>
             <p><T id="variables.default_value" /></p>
-            <NumberInput value={currentVariable.default || 0} step={1} decimals={1} fixed={Number(currentVariable.default).toString().includes(".") ? 1 : 0} on:change={(e) => updateValue(e.detail, "default")} buttons={false} />
+            <NumberInput value={currentVariable.default || 0} step={1} decimals={1} {min} {max} fixed={Number(currentVariable.default).toString().includes(".") ? 1 : 0} on:change={(e) => updateValue(e.detail, "default")} buttons={false} />
         </CombinedInput>
+
+        <CombinedInput textWidth={30}>
+            <p><T id="variables.minimum" /></p>
+            <NumberInput
+                value={currentVariable.minValue ?? minDefault}
+                step={1}
+                decimals={1}
+                min={minAbsolute}
+                max={maxAbsolute}
+                fixed={Number(currentVariable.default).toString().includes(".") ? 1 : 0}
+                on:change={(e) => updateValue(e.detail, "minValue")}
+                buttons={false}
+            />
+        </CombinedInput>
+        <CombinedInput textWidth={30}>
+            <p><T id="variables.maximum" /></p>
+            <NumberInput
+                value={currentVariable.maxValue ?? maxDefault}
+                step={1}
+                decimals={1}
+                min={minAbsolute}
+                max={maxAbsolute}
+                fixed={Number(currentVariable.default).toString().includes(".") ? 1 : 0}
+                on:change={(e) => updateValue(e.detail, "maxValue")}
+                buttons={false}
+            />
+        </CombinedInput>
+
+        <!-- WIP custom step sizes "1,8:2,10:2" ?? -->
     {/if}
 {/if}
 

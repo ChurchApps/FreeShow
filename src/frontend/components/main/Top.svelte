@@ -14,7 +14,7 @@
 
     let confirm: boolean = false
     let disableClick: boolean = false
-    let cancelConfirmTimeout: any = null
+    let cancelConfirmTimeout: NodeJS.Timeout | null = null
     function toggleOutput(e: any) {
         if (cancelConfirmTimeout) clearTimeout(cancelConfirmTimeout)
 
@@ -66,6 +66,7 @@
         <TopButton id="draw" red={$drawTool === "fill" || $drawTool === "zoom" || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
         <TopButton id="settings" hideLabel />
         <Button
+            id="output_window_button"
             title={($outputDisplay ? (confirm ? $dictionary.menu?.again_confirm : $dictionary.menu?._title_display_stop) : $dictionary.menu?._title_display) + " [Ctrl+O]"}
             style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"}
             on:click={toggleOutput}

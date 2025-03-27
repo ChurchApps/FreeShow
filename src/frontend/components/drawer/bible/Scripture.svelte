@@ -1,11 +1,10 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import { uid } from "uid"
-    import { BIBLE } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
     import type { Bible, Book, Chapter, Verse, VerseText } from "../../../../types/Scripture"
-    import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, os, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, selected } from "../../../stores"
+    import { destroyMain, receiveMain } from "../../../IPC/main"
+    import { activeEdit, activeScripture, activeTriggerFunction, dictionary, notFound, openScripture, os, outLocked, outputs, playScripture, resized, scriptureHistory, scriptures, scripturesCache, scriptureSettings, selected } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { destroy } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, removeDuplicates } from "../../helpers/array"
@@ -14,15 +13,39 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { bookIds, fetchBible, formatBibleText, getColorCode, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache } from "./scripture"
+    import { bookIds, fetchBible, formatBibleText, getColorCode, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
 
-    export let active: any
+    export let active: string
     export let bibles: Bible[]
     export let searchValue: string
 
     let books: { [key: string]: Book[] } = {}
     let chapters: { [key: string]: Chapter[] } = {}
     let verses: { [key: string]: { [key: string]: string } } = {}
+
+    let splittedVerses: { [key: string]: { [key: string]: string } } = {}
+    $: if ($scriptureSettings.longVersesChars) updateSplitted()
+    function updateSplitted() {
+        if (!$scriptureSettings.splitLongVerses) {
+            splittedVerses = verses
+            return
+        }
+
+        const chars = Number($scriptureSettings.longVersesChars || 100)
+        const newVerses: { [key: string]: string } = {}
+        Object.keys(verses?.[firstBibleId] || {}).forEach((verseKey) => {
+            let verse = verses[firstBibleId][verseKey]
+            let newVerseStrings = splitText(verse, chars)
+
+            for (let i = 0; i < newVerseStrings.length; i++) {
+                const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
+                // WIP object keys are sorted incorrectly, should use array!!
+                newVerses[verseKey + key] = newVerseStrings[i]
+            }
+        })
+
+        splittedVerses[firstBibleId] = newVerses
+    }
 
     let cachedRef: any = {}
     if ($activeScripture) cachedRef = $activeScripture[bibles[0]?.api ? "api" : "bible"] || {}
@@ -156,16 +179,12 @@
         return verses
     }
 
-    let listenerId = uid()
-    onDestroy(() => destroy(BIBLE, listenerId))
-
     let notLoaded: boolean = false
-    window.api.receive(BIBLE, receiveContent, listenerId)
-    function receiveContent(msg: any) {
-        if (msg.error === "not_found") {
+    let listenerId = receiveMain(Main.BIBLE, (data) => {
+        if (data.error === "not_found") {
             notLoaded = true
             notFound.update((a) => {
-                a.bible.push({ id: msg.id })
+                a.bible.push({ id: data.id })
                 return a
             })
 
@@ -173,18 +192,19 @@
         }
 
         if (!bibles) return console.error("could not find bibles")
-        let currentIndex = msg.data?.index || 0
+        let currentIndex = data.data?.index || 0
         if (!bibles[currentIndex]) return console.error("could not find bible at index")
 
-        const content = receiveBibleContent(msg)
+        const content = receiveBibleContent(data)
         bibles[currentIndex] = content
 
-        let id = msg.content[0] || msg.id
+        let id = data.content?.[0] || data.id
         books[id] = content.books as any
 
         if (typeof bookId === "string") bookId = 0
         if (books[id][cachedRef?.bookId]) bookId = cachedRef?.bookId
-    }
+    })
+    onDestroy(() => destroyMain(listenerId))
 
     $: if (active) getBible()
     $: if (books[firstBibleId]?.length && bookId !== undefined) getBook()
@@ -272,6 +292,8 @@
 
             selectFirstVerse(id, i)
         })
+
+        updateSplitted()
     }
 
     let loaded: boolean = false
@@ -333,7 +355,7 @@
     // search
     const updateSearchValue = (v: string) => (searchValue = v)
 
-    // let mainElem: any = null
+    // let mainElem: HTMLElement | undefined = null
     let autoComplete: boolean = false
     // $: if (searchValue) autoComplete = true
 
@@ -569,7 +591,7 @@
             findMatches = findMatches.filter((a) => !hasNumber(a.name))
         }
 
-        let exactMatch = findMatches.find((a: any) => a.name === searchValues.bookName)
+        let exactMatch = findMatches.find((a: any) => a.name === searchValues.bookName || formatBookSearch(a.name) === formatBookSearch(searchValue))
         if (!exactMatch && findMatches.length !== 1) {
             // autocomplete e.g. "First ..."
             const firstWordMatch = [...new Set(findMatches.map((a) => a.name.split(" ")[0]))]
@@ -688,7 +710,7 @@
         return currentVerses
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Escape") {
             resetContentSearch()
             return
@@ -799,9 +821,9 @@
     $: verseRange = sortedVerses.length ? joinRange(sortedVerses) : ""
 
     // autoscroll
-    let booksScrollElem: any
-    let chaptersScrollElem: any
-    let versesScrollElem: any
+    let booksScrollElem: HTMLElement | undefined
+    let chaptersScrollElem: HTMLElement | undefined
+    let versesScrollElem: HTMLElement | undefined
     $: if (active && bookId) setTimeout(() => scrollToActive(booksScrollElem))
     $: if (active && chapterId) setTimeout(() => scrollToActive(chaptersScrollElem))
     $: if (active && activeVerses?.length < 5) setTimeout(() => scrollToActive(versesScrollElem))
@@ -951,9 +973,13 @@
                             <Loader />
                         {/if}
                     </div>
-                    <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(verses[firstBibleId] || {}).length}>
-                        {#if Object.keys(verses[firstBibleId] || {}).length}
-                            {#each Object.keys(verses[firstBibleId] || {}) as id}
+                    <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(splittedVerses[firstBibleId] || {}).length}>
+                        {#if Object.keys(splittedVerses[firstBibleId] || {}).length}
+                            {#each Object.keys(splittedVerses[firstBibleId] || {}) as id2}
+                                {@const splitted = id2.split("_")}
+                                {@const id = splitted[0]}
+                                {@const subverse = Number(splitted[1] || 0)}
+
                                 <!-- custom drag -->
                                 <span
                                     class:showAllText={$resized.rightPanelDrawer <= 5}
@@ -971,6 +997,7 @@
                                     title={$dictionary.tooltip?.scripture}
                                 >
                                     {id}
+                                    {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{subverse}</span>{/if}
                                 </span>
                             {/each}
                         {:else}
@@ -1028,9 +1055,13 @@
                     <Loader />
                 {/if}
             </div>
-            <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(verses[firstBibleId] || {}).length}>
-                {#if Object.keys(verses[firstBibleId] || {}).length}
-                    {#each Object.entries(verses[firstBibleId] || {}) as [id, content]}
+            <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(splittedVerses[firstBibleId] || {}).length}>
+                {#if Object.keys(splittedVerses[firstBibleId] || {}).length}
+                    {#each Object.entries(splittedVerses[firstBibleId] || {}) as [id2, content]}
+                        {@const splitted = id2.split("_")}
+                        {@const id = splitted[0]}
+                        {@const subverse = Number(splitted[1] || 0)}
+
                         <!-- custom drag -->
                         <p
                             class:showAllText={$resized.rightPanelDrawer <= 5}
@@ -1047,7 +1078,11 @@
                             class:active={activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}
                         >
-                            <span class="v">{id}</span>{@html formatBibleText(content.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
+                            <span class="v">
+                                {id}
+                                {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{subverse}</span>{/if}
+                            </span>
+                            {@html formatBibleText(content.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
                     {/each}
                     {#if bibles[0].copyright || bibles[0].metadata?.copyright}

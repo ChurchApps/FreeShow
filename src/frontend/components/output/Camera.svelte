@@ -3,7 +3,7 @@
 
     export let id: string
     export let groupId: string
-    let videoElem: any
+    let videoElem: HTMLVideoElement | undefined
 
     $: constraints = {
         video: {
@@ -27,14 +27,13 @@
     function stopStream() {
         if (!videoElem) return
 
-        console.log(videoElem.srcObject, videoElem.srcObject?.getTracks()) // WIP
-        videoElem.srcObject?.getTracks()?.forEach((track: any) => track.stop())
+        ;(videoElem.srcObject as MediaStream)?.getTracks()?.forEach((track) => track.stop())
         videoElem.srcObject = null
     }
 
     let dispatch = createEventDispatcher()
     function loaded() {
-        videoElem.play()
+        videoElem?.play()
         dispatch("loaded", true)
     }
 </script>

@@ -23,7 +23,7 @@
 
     let self: HTMLDivElement
 
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (disabled || arrow || nextScrollTimeout) return
         e.preventDefault()

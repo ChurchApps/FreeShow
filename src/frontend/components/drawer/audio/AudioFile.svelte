@@ -39,11 +39,15 @@
         }}
     >
         <span style="max-width: 90%;">
-            <Icon
-                id={$playingAudio[path]?.paused === true ? "play" : $playingAudio[path]?.paused === false ? "pause" : $media[path]?.favourite === true && active !== "favourites" ? "star" : "music"}
-                white={$playingAudio[path]?.paused === true || (!$playingAudio[path] && ($media[path]?.favourite !== true || active === "favourites"))}
-                right
-            />
+            {#await AudioPlayer.getDuration(path)}
+                <Icon id="music" white right />
+            {:then duration}
+                <Icon
+                    id={$playingAudio[path]?.paused === true ? "play" : $playingAudio[path]?.paused === false ? "pause" : $media[path]?.favourite === true && active !== "favourites" ? "star" : AudioPlayer.getAudioType(path, duration)}
+                    white={$playingAudio[path]?.paused === true || (!$playingAudio[path] && ($media[path]?.favourite !== true || active === "favourites"))}
+                    right
+                />
+            {/await}
             <p>{name.slice(0, name.lastIndexOf("."))}</p>
         </span>
         <span style="opacity: 0.8;">

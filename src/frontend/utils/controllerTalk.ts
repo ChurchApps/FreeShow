@@ -5,7 +5,7 @@ import { clearAll, clearSlide } from "../components/output/clear"
 import { outputs, paintCache, serverData } from "../stores"
 import { draw, drawSettings, drawTool } from "./../stores"
 
-let justCleared: any = null
+let justCleared: NodeJS.Timeout | null = null
 export const receiveCONTROLLER = {
     ACTION: ({ data }) => {
         const actions = {
@@ -64,13 +64,13 @@ export const receiveCONTROLLER = {
 function clearPainting() {
     paintCache.set([])
 
-    drawSettings.update((a: any) => {
+    drawSettings.update((a) => {
         if (!a.paint) a.paint = { color: "#ffffff", size: 10, threed: false, dots: false, hold: true }
         a.paint.clear = true
         return a
     })
     setTimeout(() => {
-        drawSettings.update((a: any) => {
+        drawSettings.update((a) => {
             delete a.paint.clear
             return a
         })

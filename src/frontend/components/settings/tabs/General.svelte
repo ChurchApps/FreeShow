@@ -29,7 +29,7 @@
         })
     }
 
-    const autosaveList: any = [
+    const autosaveList = [
         { id: "never", name: "$:settings.never:$" },
         { id: "2min", name: "2 $:settings.minutes:$" },
         { id: "5min", name: "5 $:settings.minutes:$" },

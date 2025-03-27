@@ -1,16 +1,19 @@
 import path from "path"
-import { toApp } from ".."
-import { MAIN, STORE } from "../../types/Channels"
+import type { Main } from "../../types/IPC/Main"
+import { ToMain } from "../../types/IPC/ToMain"
+import type { SaveActions } from "../../types/Save"
+import type { Show, Shows, TrimmedShow, TrimmedShows } from "../../types/Show"
+import { sendMain, sendToMain } from "../IPC/main"
 import { createFolder, dataFolderNames, doesPathExist, getDataFolder, getTimePointString, makeDir, openSystemFolder, readFile, selectFilesDialog, writeFile } from "../utils/files"
 import { stores, updateDataPath } from "./store"
 
 // "SYNCED_SETTINGS" and "STAGE_SHOWS" has to be before "SETTINGS" and "SHOWS"
-const storesToSave = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA"]
+const storesToSave: (keyof typeof stores)[] = ["SYNCED_SETTINGS", "STAGE_SHOWS", "SHOWS", "EVENTS", "OVERLAYS", "PROJECTS", "SETTINGS", "TEMPLATES", "THEMES", "MEDIA"]
 // don't upload: config.json, cache.json, history.json, DRIVE_API_KEY.json
 
-export async function startBackup({ showsPath, dataPath, scripturePath, customTriggers }: any) {
-    let shows: any = null
-    // let bibles: any = null
+export async function startBackup({ showsPath, dataPath, scripturePath, customTriggers }: { showsPath: string; dataPath: string; scripturePath: string; customTriggers: SaveActions }) {
+    let shows: TrimmedShows | null = null
+    // let bibles = null
     console.log(scripturePath)
 
     let backupPath: string = getDataFolder(dataPath, dataFolderNames.backups)
@@ -26,7 +29,7 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
     // SHOWS
     await syncAllShows()
 
-    toApp(MAIN, { channel: "BACKUP", data: { finished: true, path: backupFolder } })
+    sendToMain(ToMain.BACKUP, { finished: true, path: backupFolder })
 
     if (customTriggers?.changeUserData) updateDataPath(customTriggers.changeUserData)
     else if (!customTriggers?.silent) openSystemFolder(backupFolder)
@@ -35,11 +38,11 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
 
     /////
 
-    async function syncStores(id: string) {
+    async function syncStores(id: keyof typeof stores) {
         let store = stores[id]
         let name = id + ".json"
 
-        if (id === "SHOWS") shows = store.store
+        if (id === "SHOWS") shows = store.store as TrimmedShows
         // else if (id === "SYNCED_SETTINGS") bibles = store.store?.scriptures
 
         let content: string = JSON.stringify(store.store)
@@ -51,10 +54,10 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
         if (!shows || !showsPath) return
 
         let name: string = "SHOWS_CONTENT.json"
-        let allShows: any = {}
+        let allShows: Shows = {}
 
         await Promise.all(Object.entries(shows).map(checkShow))
-        async function checkShow([id, show]: any) {
+        async function checkShow([id, show]: [string, TrimmedShow]) {
             let name = (show.name || id) + ".show"
             let localShowPath = path.join(showsPath, name)
 
@@ -70,10 +73,10 @@ export async function startBackup({ showsPath, dataPath, scripturePath, customTr
 
 // RESTORE
 
-export function restoreFiles({ showsPath }: any) {
-    let files: any = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] })
-    if (!files?.length) return toApp(MAIN, { channel: "RESTORE", data: { finished: false } })
-    toApp(MAIN, { channel: "RESTORE", data: { starting: true } })
+export function restoreFiles({ showsPath }: { showsPath: string }) {
+    let files = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] })
+    if (!files?.length) return sendToMain(ToMain.RESTORE2, { finished: false })
+    sendToMain(ToMain.RESTORE2, { starting: true })
 
     // don't replace certain settings
     let settings = stores.SETTINGS.store
@@ -91,12 +94,12 @@ export function restoreFiles({ showsPath }: any) {
         restoreStore(path, storeId)
     })
 
-    toApp(MAIN, { channel: "RESTORE", data: { finished: true } })
+    sendToMain(ToMain.RESTORE2, { finished: true })
     return
 
     /////
 
-    function restoreStore(filePath: string, storeId: string) {
+    function restoreStore(filePath: string, storeId: keyof typeof stores) {
         let file = readFile(filePath)
         if (!stores[storeId] || !file || !isValidJSON(file)) return
 
@@ -109,22 +112,22 @@ export function restoreFiles({ showsPath }: any) {
         }
 
         stores[storeId].clear()
-        stores[storeId].set(data)
+        ;(stores[storeId] as any).set(data)
         // WIP restoring synced settings will reset settings
-        toApp(STORE, { channel: storeId, data })
+        sendMain(storeId as Main, data)
     }
 
     function restoreShows(filePath: string) {
         let file = readFile(filePath)
         if (!file || !isValidJSON(file)) return
 
-        let shows = JSON.parse(file)
+        let shows: Shows = JSON.parse(file)
 
         // create Shows folder if it does not exist
         if (!doesPathExist(showsPath)) makeDir(showsPath)
 
         Object.entries(shows).forEach(saveShow)
-        function saveShow([id, value]: any) {
+        function saveShow([id, value]: [string, Show]) {
             if (!value) return
             let p: string = path.resolve(showsPath, (value.name || id) + ".show")
             writeFile(p, JSON.stringify([id, value]), id)

@@ -24,7 +24,7 @@ export class OutputLifecycle {
 
         OutputHelper.setOutput(id, { window: outputWindow, invisible: output.invisible, boundsLocked: output.boundsLocked })
         //OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
-        OutputHelper.Bounds.updateBounds(output)
+        OutputHelper.Bounds.updateBounds({ id: output.id!, bounds: output.bounds })
 
         //OutputHelper.Bounds.updatePreviewBounds()
 
@@ -43,7 +43,7 @@ export class OutputLifecycle {
     }
 
     /*
-    private static createPreviewWindow(options: any) {
+    private static createPreviewWindow(options) {
         const mainBounds = mainWindow?.getBounds()
 
         options = { ...outputOptions, ...options }
@@ -98,7 +98,7 @@ export class OutputLifecycle {
         return window
     }
 
-    static async removeOutput(id: string, reopen: any = null) {
+    static async removeOutput(id: string, reopen: Output | null = null) {
         await CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
 
@@ -141,7 +141,7 @@ export class OutputLifecycle {
         // Building the app does not like this for some reason:
         // Argument of type '"move"' is not assignable to parameter of type '"will-resize"'.
         // @ts-ignore
-        window.on("move", (e: any) => {
+        window.on("move", (e: Electron.Event) => {
             if (!OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds || OutputHelper.getOutput(id).boundsLocked) return e.preventDefault()
 
             let bounds = window.getBounds()
@@ -149,7 +149,7 @@ export class OutputLifecycle {
         })
 
         // @ts-ignore
-        window.on("resize", (e: any) => {
+        window.on("resize", (e: Electron.Event) => {
             if (OutputHelper.Bounds.moveEnabled || OutputHelper.Bounds.updatingBounds || OutputHelper.getOutput(id).boundsLocked) return e.preventDefault()
 
             let bounds = window.getBounds()
@@ -158,6 +158,6 @@ export class OutputLifecycle {
     }
 
     static async closeAllOutputs() {
-        await Promise.all(OutputHelper.getKeys().map(this.removeOutput))
+        await Promise.all(OutputHelper.getKeys().map((id) => this.removeOutput(id)))
     }
 }

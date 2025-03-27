@@ -1,39 +1,35 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import { uid } from "uid"
-    import { FILE_INFO, MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain } from "../../../IPC/main"
     import { activeRecording, activeShow, drawerTabsData } from "../../../stores"
-    import { destroy, send } from "../../../utils/request"
+    import { videoExtensions } from "../../../values/extensions"
     import { formatBytes } from "../../helpers/bytes"
     import { getExtension, getFileName, getMediaInfo, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import Date from "../../system/Date.svelte"
     import LiveInfo from "../live/LiveInfo.svelte"
     import PlayerInfo from "./PlayerInfo.svelte"
-    import { videoExtensions } from "../../../values/extensions"
 
     $: name = $activeShow?.name || ""
+    let info: { extension?: string; [key: string]: any } = {}
+
     $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http") && !$activeShow?.id.includes("data:")) {
         info = {}
         codecInfo = {}
-        send(MAIN, ["FILE_INFO"], $activeShow?.id)
+
+        requestMain(Main.FILE_INFO, $activeShow?.id, (data) => {
+            if (!data) return
+            info = { ...data.stat, extension: data.extension }
+            if (!name) name = removeExtension(getFileName(data.path))
+        })
         getCodecInfo()
     }
 
-    let codecInfo: any = {}
+    let codecInfo: { codecs?: string[]; mimeType?: string; mimeCodec?: string } = {}
     async function getCodecInfo() {
         if (!videoExtensions.includes(getExtension($activeShow?.id || ""))) return
-        codecInfo = await getMediaInfo($activeShow?.id || "")
-    }
-
-    let listenerId = uid()
-    onDestroy(() => destroy(FILE_INFO, listenerId))
-
-    let info: any = {}
-    window.api.receive(FILE_INFO, receiveContent, listenerId)
-    function receiveContent(data: any) {
-        info = { ...data.stat, extension: data.extension }
-        if (!name) name = removeExtension(getFileName(data.path))
+        const data = await getMediaInfo($activeShow?.id || "")
+        if (data) codecInfo = data
     }
 
     // $: accessed = info.atime
@@ -47,7 +43,7 @@
     <PlayerInfo />
 {:else}
     <main style="overflow-y: auto;">
-        <h2 style="text-align: center;padding: 0 5px;" title={name}>
+        <h2 style="text-align: center;padding: 10px;" title={name}>
             {#if name.length}
                 {name}
             {:else}
@@ -89,16 +85,18 @@
                 <span>-</span>
             {/if}
         </p>
-        {#if codecInfo.codecs || codecInfo.mimeType}
+        {#if codecInfo.codecs}
             <p>
                 <span class="title"><T id="info.codecs" /></span>
                 <span>{codecInfo.codecs?.join(", ") || "—"}</span>
             </p>
+        {/if}
+        <!-- {#if codecInfo.mimeType}
             <p>
                 <span class="title"><T id="info.mimeType" /></span>
                 <span>{codecInfo.mimeType || "—"}</span>
             </p>
-        {/if}
+        {/if} -->
     </main>
 {/if}
 

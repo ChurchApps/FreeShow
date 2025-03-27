@@ -12,6 +12,8 @@
     import Show from "./pages/Show.svelte"
     import Shows from "./pages/Shows.svelte"
     import Slide from "./pages/Slide.svelte"
+    import AudioPreview from "./show/AudioPreview.svelte"
+    import OverlayPreview from "./show/OverlayPreview.svelte"
     import TabletMode from "./tablet/TabletMode.svelte"
 
     $: tab = $activeTab
@@ -36,8 +38,8 @@
     }
 
     // keyboard shortcuts
-    function keydown(e: any) {
-        if (e.target?.closest("textarea") || e.target?.closest("input")) return
+    function keydown(e: KeyboardEvent) {
+        if ((e.target as HTMLElement)?.closest("textarea") || (e.target as HTMLElement)?.closest("input")) return
 
         if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
 
@@ -80,6 +82,10 @@
                 <Show />
             {:else if $active.type === "image" || $active.type === "video"}
                 <Media />
+            {:else if $active.type === "audio"}
+                <AudioPreview active={$active} />
+            {:else if $active.type === "overlay"}
+                <OverlayPreview show={$active} />
             {:else}
                 <p style="text-transform: capitalize;">{$active.type}</p>
             {/if}

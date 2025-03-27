@@ -8,6 +8,7 @@
     import SlideEditor from "./editors/SlideEditor.svelte"
     import TemplateEditor from "./editors/TemplateEditor.svelte"
     import TextEditor from "../show/TextEditor.svelte"
+    import AudioEditor from "./editors/AudioEditor.svelte"
 
     $: if ($refreshEditSlide) {
         setTimeout(() => {
@@ -39,7 +40,7 @@
     {:else if $activeEdit.type === "media"}
         <MediaEditor />
     {:else if $activeEdit.type === "audio"}
-        <!--  -->
+        <AudioEditor />
     {:else if $activeEdit.slide !== undefined && $activeEdit.slide !== null}
         {#if $textEditActive && !$focusMode}
             <TextEditor currentShow={$showsCache[$activeShow?.id || ""]} />

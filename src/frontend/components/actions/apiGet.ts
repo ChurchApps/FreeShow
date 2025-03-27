@@ -5,6 +5,7 @@ import { getActiveOutputs } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import type { API_id_optional, API_slide } from "./api"
+import { getLayoutRef } from "../helpers/show"
 
 export function getShows() {
     return get(shows) as Shows
@@ -17,7 +18,7 @@ export async function getShow({ id }: { id: string }) {
 
 export async function getShowLayout({ id }: { id: string }) {
     await loadShows([id])
-    return _show(id).layouts("active").ref()[0]
+    return getLayoutRef(id)
 }
 
 export function getProjects() {
@@ -65,6 +66,14 @@ export function getPlayingAudioDuration() {
 export function getPlayingAudioTime() {
     let audio = Object.values(get(playingAudio))[0]?.audio
     return audio ? audio?.currentTime || 0 : 0
+}
+
+export function getPlayingAudioData() {
+    let audioId = Object.keys(get(playingAudio))[0]
+    let audio = get(playingAudio)[audioId]
+    if (!audio) return
+
+    return { id: audioId, name: audio.name, paused: audio.paused, isMic: audio.isMic, duration: getPlayingAudioDuration() }
 }
 
 export function getPlaylists() {

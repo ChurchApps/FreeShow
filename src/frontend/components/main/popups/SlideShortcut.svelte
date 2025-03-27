@@ -6,6 +6,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Icon from "../../helpers/Icon.svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     let id = $popupData.id
     let index = $popupData.index
@@ -15,7 +16,7 @@
     let trigger = $popupData.trigger
     let existingShortcuts = $popupData.existingShortcuts || []
 
-    let layoutRef: any[] = mode === "slide_shortcut" ? _show().layouts("active").ref()[0] || [] : []
+    let layoutRef = mode === "slide_shortcut" ? getLayoutRef() : []
     let actions = mode === "slide_shortcut" ? layoutRef[index].data?.actions || {} : {}
     let currentShortcut = mode === "slide_shortcut" ? (actions.slide_shortcut || {}).key : value
 
@@ -25,9 +26,9 @@
         if (mode !== "slide_shortcut" && mode !== "global_group" && mode !== "action") activePopup.set(null)
     })
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return
-        if (e.key.trim().length !== 1 || !isNaN(e.key)) return
+        if (e.key.trim().length !== 1 || !isNaN(e.key as any)) return
 
         const isSpecial = [".", ",", "-", "+", "/", "*", "<", ">", "|", "\\", "¨", "'"].includes(e.key)
         if (isSpecial) return

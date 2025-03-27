@@ -61,7 +61,7 @@ export function storeSubscriber() {
         send(OUTPUT, ["SHOWS_DATA"], data)
     })
 
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     showsCache.subscribe((data) => {
         send(OUTPUT, ["SHOWS"], data)
 
@@ -113,6 +113,7 @@ export function storeSubscriber() {
     })
     overlays.subscribe((data) => {
         send(OUTPUT, ["OVERLAYS"], data)
+        send(REMOTE, ["OVERLAYS"], data)
     })
 
     events.subscribe((data) => {

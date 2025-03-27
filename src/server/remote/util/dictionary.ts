@@ -48,4 +48,7 @@ export const DEFAULT_DICTIONARY = {
     clear: {
         all: "Clear all",
     },
+    media: {
+        play: "Play",
+    },
 }

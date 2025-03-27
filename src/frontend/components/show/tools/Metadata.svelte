@@ -11,7 +11,6 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Panel from "../../system/Panel.svelte"
-    import Tags from "../Tags.svelte"
     import Notes from "./Notes.svelte"
 
     $: currentShow = $showsCache[$activeShow!.id]
@@ -301,10 +300,10 @@
         {/if}
     </div>
 
-    <h5><T id="meta.tags" /></h5>
+    <!-- <h5><T id="meta.tags" /></h5>
     <div class="tags" style="display: flex;flex-direction: column;">
         <Tags />
-    </div>
+    </div> -->
 </Panel>
 
 <style>
@@ -325,9 +324,9 @@
         gap: 0;
     }
 
+    /* .tags */
     .message,
-    .styling,
-    .tags {
+    .styling {
         padding: 10px;
     }
 

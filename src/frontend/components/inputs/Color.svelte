@@ -6,7 +6,7 @@
     import T from "../helpers/T.svelte"
     import { defaultColors, getContrast } from "../helpers/color"
 
-    export let value: any = "#FFF"
+    export let value: string = "#FFF"
     export let visible: boolean = false
     export let enableNoColor: boolean = false
     export let showDisabled: boolean = false

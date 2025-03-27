@@ -180,7 +180,7 @@
         })
     }
 
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     $: {
         if (clicked) {
             if (timeout !== null) clearTimeout(timeout)

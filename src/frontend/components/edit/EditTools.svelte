@@ -1,11 +1,12 @@
 <script lang="ts">
-    import type { Item } from "../../../types/Show"
+    import type { Item, Slide } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
     import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, dictionary, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
+    import { getLayoutRef } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import Button from "../inputs/Button.svelte"
@@ -45,7 +46,7 @@
 
     $: if ($activeTriggerFunction === "slide_notes") active = "slide"
 
-    let slides: any[] = []
+    let slides: Slide[] = []
     $: if (allSlideItems && (($activeEdit?.id && editSlideSelected) || showIsActive))
         slides = _show($activeEdit?.id || $activeShow?.id)
             .slides()
@@ -69,7 +70,7 @@
         tabs.item.disabled = false
     }
 
-    $: ref = [$showsCache, _show().layouts("active").ref()[0] || {}][1]
+    $: ref = getLayoutRef("active", $showsCache)
 
     $: if (editSlideSelected && activeIsShow && ref.length <= $activeEdit.slide! && ref.length > 0) activeEdit.set({ slide: 0, items: [], showId: $activeShow?.id })
 
@@ -120,7 +121,7 @@
         if ($activeEdit.type === "overlay") slides = [$overlays[$activeEdit.id!]]
         else if ($activeEdit.type === "template") slides = [$templates[$activeEdit.id!]]
         else {
-            let activeSlides: any[] = []
+            let activeSlides: string[] = []
             // all slides
             if (applyToAll) activeSlides = []
             // selected slides
@@ -162,7 +163,7 @@
             return
         }
 
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         let slide = ref[$activeEdit.slide!].id
         if (!slide) return
 
@@ -240,7 +241,7 @@
         // WIP refresh edit tools after resetting
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (document.activeElement?.closest(".edit")) return
 
         // move items with arrow keys
@@ -274,7 +275,7 @@
                 return
             }
 
-            let ref: any[] = _show("active").layouts("active").ref()[0] || {}
+            let ref = getLayoutRef()
             let slideId = ref[$activeEdit.slide ?? ""]?.id
 
             history({

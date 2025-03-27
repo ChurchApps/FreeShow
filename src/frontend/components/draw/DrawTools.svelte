@@ -7,7 +7,7 @@
 
     const tools: DrawTools[] = ["focus", "pointer", "particles", "zoom", "fill", "paint"]
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
 
         let nextTab = -1

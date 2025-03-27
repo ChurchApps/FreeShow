@@ -13,7 +13,7 @@
     import T from "../../helpers/T.svelte"
     import { clone, convertToOptions } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { updateCachedShows } from "../../helpers/show"
+    import { getLayoutRef, updateCachedShows } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -40,7 +40,7 @@
             // old
             let showMidi = _show().get("midi")?.[id]
             if (mode === "slide" && ($popupData.index !== undefined || $popupData.indexes?.length)) {
-                let ref = _show().layouts("active").ref()[0] || []
+                let ref = getLayoutRef()
                 let layoutSlide = ref[$popupData.index ?? $popupData.indexes[0]] || {}
                 let slideActions = layoutSlide.data?.actions?.slideActions || []
                 let existingAction = slideActions.find((a) => a.id === id)
@@ -60,7 +60,7 @@
     // saveSlide(true)
     onDestroy(removeEmptyAction)
     function removeEmptyAction(actionId = "") {
-        let ref = _show().layouts("active").ref()[0] || []
+        let ref = getLayoutRef()
         let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
         if (!indexes) return
 
@@ -95,7 +95,7 @@
         if (mode !== "slide" || ($popupData.index === undefined && !$popupData.indexes?.length) || existingSearched) return
         existingSearched = true
 
-        let ref = _show().layouts("active").ref()[0] || []
+        let ref = getLayoutRef()
         let layoutSlide = ref[$popupData.index ?? $popupData.indexes[0]] || {}
         let slideActions = layoutSlide.data?.actions?.slideActions || []
         // find any action with the same value, but different id
@@ -243,7 +243,7 @@
     }
 
     function saveSlide(remove: boolean = false) {
-        let ref = _show().layouts("active").ref()[0]
+        let ref = getLayoutRef()
         let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
         if (!Array.isArray(indexes)) return
 
@@ -301,6 +301,12 @@
     let actionActivationSelector: boolean = false
     let activationMenuOpened: boolean = false
 
+    // function nameKeydown(e: any) {
+    //     if (e.key === "Enter" && !action?.triggers?.length) {
+    //         // WIP enter to open choose list
+    //     }
+    // }
+
     // pre 1.3.9
     $: if (action?.midiEnabled && !customActivation) {
         updateValue("customActivation", "midi_signal_received")
@@ -357,6 +363,7 @@
                 full
             />
         {:else if mode !== "slide_midi"}
+            <!-- on:keydown={nameKeydown} -->
             <CombinedInput textWidth={38}>
                 <p><T id="midi.name" /></p>
                 {#key action.name}
@@ -376,7 +383,7 @@
                             ...$popupData,
                             id,
                             mode: "action",
-                            revert: "action",
+                            revert: $activePopup,
                             value: action.keypressActivate,
                             existingShortcuts,
                         })
@@ -444,7 +451,7 @@
                 {/if}
 
                 {#if customActionActivations.find((a) => a.id === customActivation)?.inputs}
-                    <Button class="submenu_open" on:click={() => (activationMenuOpened = !activationMenuOpened)}>
+                    <Button style="padding: 0 8.5px !important" class="submenu_open" on:click={() => (activationMenuOpened = !activationMenuOpened)}>
                         {#if activationMenuOpened}
                             <Icon class="submenu_open" id="arrow_down" size={1.4} style="fill: var(--secondary);" />
                         {:else}

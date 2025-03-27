@@ -1,11 +1,11 @@
 import express from "express"
-import { toApp } from ".."
-import { MAIN } from "../../types/Channels"
+import { ToMain } from "../../types/IPC/ToMain"
 import { stores } from "../data/store"
-import { httpsRequest } from "../utils/requests"
-import { openURL } from "../utils/responses"
-import { pcoLoadServices } from "./request"
+import { sendToMain } from "../IPC/main"
+import { openURL } from "../IPC/responsesMain"
 import { getKey } from "../utils/keys"
+import { httpsRequest } from "../utils/requests"
+import { pcoLoadServices } from "./request"
 
 const app = express()
 const PCO_PORT = 5501
@@ -23,6 +23,15 @@ type PCOAuthData = {
     expires_in: number
     scope: PCOScopes
 } | null
+
+export const DEFAULT_PCO_DATA: PCOAuthData = {
+    access_token: "",
+    refresh_token: "",
+    token_type: "Bearer",
+    created_at: 0,
+    expires_in: 0,
+    scope: "services",
+}
 
 const HTML_success = `
     <head>
@@ -46,13 +55,13 @@ const HTML_error = `
 let PCO_ACCESS: PCOAuthData = null
 export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
     let storedAccess = PCO_ACCESS || stores.ACCESS.get(`pco_${scope}`)
-    if (storedAccess) {
+    if (storedAccess?.created_at) {
         if (hasExpired(storedAccess)) {
             PCO_ACCESS = await refreshToken(storedAccess)
             return PCO_ACCESS
         }
 
-        toApp(MAIN, { channel: "PCO_CONNECT", data: { success: true } })
+        sendToMain(ToMain.PCO_CONNECT, { success: true })
         if (!PCO_ACCESS) PCO_ACCESS = storedAccess
         return storedAccess
     }
@@ -69,8 +78,8 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
         console.log(`Listening for Planning Center OAuth response at port ${PCO_PORT}`)
     })
 
-    server.once("error", (err: any) => {
-        if (err.code === "EADDRINUSE") server.close()
+    server.once("error", (err: Error) => {
+        if ((err as any).code === "EADDRINUSE") server.close()
     })
 
     app.use(express.json())
@@ -83,13 +92,13 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
             console.log("OAuth code received!")
 
             const params = { grant_type: "authorization_code", code, client_id: clientId, client_secret: clientSecret, redirect_uri }
-            httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err: any, data: PCOAuthData) => {
+            httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err, data: PCOAuthData) => {
                 if (err) {
                     res.setHeader("Content-Type", "text/html")
                     const errorPage = HTML_error.replace("{error_msg}", err.message)
                     res.send(errorPage)
 
-                    toApp(MAIN, { channel: "ALERT", data: "Could not authorize! " + err.message })
+                    sendToMain(ToMain.ALERT, "Could not authorize! " + err.message)
                     return resolve(null)
                 }
 
@@ -103,7 +112,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
                 server.close()
 
                 stores.ACCESS.set(`pco_${scope}`, data)
-                toApp(MAIN, { channel: "PCO_CONNECT", data: { success: true, isFirstConnection: true } })
+                sendToMain(ToMain.PCO_CONNECT, { success: true, isFirstConnection: true })
                 resolve(data)
             })
         })
@@ -124,15 +133,15 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
         console.log("Refreshing PCO OAuth token")
 
         const params = { grant_type: "refresh_token", client_id: clientId, client_secret: clientSecret, refresh_token: access.refresh_token }
-        httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err: any, data: PCOAuthData) => {
+        httpsRequest(PCO_API_URL, "/oauth/token", "POST", {}, params, (err, data: PCOAuthData) => {
             if (err || data === null) {
-                toApp(MAIN, { channel: "ALERT", data: "Could not refresh token! " + err?.message })
+                sendToMain(ToMain.ALERT, "Could not refresh token! " + err?.message)
                 resolve(null)
                 return
             }
 
             stores.ACCESS.set(`pco_${data.scope}`, data)
-            toApp(MAIN, { channel: "PCO_CONNECT", data: { success: true } })
+            sendToMain(ToMain.PCO_CONNECT, { success: true })
             resolve(data)
         })
     })
@@ -141,7 +150,7 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
 export function pcoDisconnect(scope: PCOScopes = "services") {
     stores.ACCESS.set(`pco_${scope}`, null)
     PCO_ACCESS = null
-    toApp(MAIN, { channel: "PCO_DISCONNECT", data: { success: true } })
+    return { success: true }
 }
 
 export function pcoStartupLoad(dataPath: string, scope: PCOScopes = "services") {

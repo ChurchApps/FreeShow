@@ -1,10 +1,11 @@
 import { get } from "svelte/store"
 import { STAGE } from "../../types/Channels"
+import type { OutSlide } from "../../types/Show"
 import type { ClientMessage } from "../../types/Socket"
 import { clone } from "../components/helpers/array"
 import { getBase64Path } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
-import { getGroupName } from "../components/helpers/show"
+import { getGroupName, getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
 import { dictionary, events, groups, media, outputs, outputSlideCache, previewBuffers, stageShows, timeFormat, timers, variables, videosData, videosTime } from "../stores"
@@ -15,7 +16,7 @@ import { arrayToObject, filterObjectArray, sendData } from "./sendData"
 // WIP loading different paths, might cause returned base64 to be different than it should if previous thumbnail finishes after
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
     let currentOutput = updater[outputId]?.out
-    let next = await getNextBackground(currentOutput?.slide, returnPath)
+    let next = await getNextBackground(currentOutput?.slide || null, returnPath)
     let path = currentOutput?.background?.path || ""
     if (typeof path !== "string") path = ""
 
@@ -38,13 +39,23 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
     return
 }
 
-async function getNextBackground(currentOutputSlide: any, returnPath = false) {
+async function getNextBackground(currentOutputSlide: OutSlide | null, returnPath = false) {
     if (!currentOutputSlide?.id) return {}
 
-    let layout: any[] = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
-    if (!layout) return {}
+    let showRef = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
+    if (!showRef) return {}
 
-    let nextLayout = layout[(currentOutputSlide.index || 0) + 1]
+    // GET CORRECT INDEX OFFSET, EXCLUDING DISABLED SLIDES
+    const slideOffset = 1
+    let layoutOffset = currentOutputSlide.index || 0
+    let offsetFromCurrentExcludingDisabled = 0
+    while (offsetFromCurrentExcludingDisabled < slideOffset && layoutOffset <= showRef.length) {
+        layoutOffset++
+        if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled++
+    }
+    const slideIndex = layoutOffset
+
+    let nextLayout = showRef[slideIndex]
     if (!nextLayout) return {}
 
     let bgId = nextLayout.data.background || ""
@@ -58,7 +69,7 @@ async function getNextBackground(currentOutputSlide: any, returnPath = false) {
     return { path: base64path, filePath: path, mediaStyle: get(media)[path] || {} }
 }
 
-export const receiveSTAGE: any = {
+export const receiveSTAGE = {
     SHOWS: (msg: ClientMessage) => {
         msg.data = turnIntoBoolean(
             filterObjectArray(get(stageShows), ["disabled", "name", "password"]).filter((a: any) => !a.disabled),
@@ -105,8 +116,8 @@ export const receiveSTAGE: any = {
         if (!stageId && Object.keys(get(connections).STAGE || {}).length === 1) stageId = (Object.values(get(connections).STAGE)[0] as any).active
         let show = get(stageShows)[stageId] || {}
         let outputId = show.settings?.output || getActiveOutputs()[0]
-        let currentOutput: any = get(outputs)[outputId]
-        let outSlide: any = currentOutput?.out?.slide || null
+        let currentOutput = get(outputs)[outputId]
+        let outSlide = currentOutput?.out?.slide || null
         let outCached: any = get(outputSlideCache)[outputId]
         let out: any = outSlide || outCached
         msg.data = []
@@ -123,7 +134,7 @@ export const receiveSTAGE: any = {
             return msg
         }
 
-        let ref: any[] = _show(out.id).layouts([out.layout]).ref()[0]
+        let ref = _show(out.id).layouts([out.layout]).ref()[0]
         let slides: any = _show(out.id).get()?.slides
 
         if (!ref?.[out.index!]) return
@@ -152,7 +163,7 @@ export const receiveSTAGE: any = {
         let currentSlideOut = get(outputs)[outputId]?.out?.slide || null
         let currentShowId = currentSlideOut?.id || ""
         let currentShowSlide = currentSlideOut?.index ?? -1
-        let currentLayoutRef = _show(currentShowId).layouts("active").ref()[0] || []
+        let currentLayoutRef = getLayoutRef(currentShowId)
         let currentShowSlides = _show(currentShowId).get("slides") || {}
         let slidesLength = currentLayoutRef.length || 0
 

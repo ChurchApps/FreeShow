@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { Transition } from "../../../../types/Show"
+    import type { Overlays, Transition } from "../../../../types/Show"
     import Overlay from "./Overlay.svelte"
 
     export let outputId: string
 
-    export let overlays: any
+    export let overlays: Overlays
     export let activeOverlays: string[]
     export let transition: Transition
 
@@ -19,7 +19,7 @@
     let clearingOverlays: string[] = []
 
     $: if (activeOverlays !== undefined) updateOverlays()
-    let clearingTimeout: any = null
+    let clearingTimeout: NodeJS.Timeout | null = null
     function updateOverlays() {
         ;[...activeOverlays, ...outputtedOverlays].forEach((id) => {
             if (clearingOverlays.includes(id)) return

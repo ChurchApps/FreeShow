@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { MAIN } from "../../../types/Channels"
-    import { send } from "../../utils/request"
+    import { Main } from "../../../types/IPC/Main"
+    import { sendMain } from "../../IPC/main"
 
     export let url: string
 
     function openURL() {
-        send(MAIN, ["URL"], url)
+        sendMain(Main.URL, url)
     }
 </script>
 

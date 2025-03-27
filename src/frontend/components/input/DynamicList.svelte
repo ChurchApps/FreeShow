@@ -16,6 +16,7 @@
     export let allowOpen: boolean = true
     export let addDisabled: boolean = false
     export let nothingText: boolean = true
+    export let textWidth: number = 50
 
     let dispatch = createEventDispatcher()
     function openItem(id: string) {
@@ -32,7 +33,7 @@
 
 {#if items.length}
     {#each items as item}
-        <CombinedInput>
+        <CombinedInput {textWidth}>
             {#if allowOpen}
                 <Button style="width: 100%;" title={$dictionary.titlebar?.edit} on:click={() => openItem(item.id)} bold={false}>
                     <slot {item} />

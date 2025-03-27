@@ -1,21 +1,24 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
+import { Main } from "../../types/IPC/Main"
+import type { Show } from "../../types/Show"
+import type { ClientMessage } from "../../types/Socket"
+import { API_ACTIONS } from "../components/actions/api"
+import { loadBible, receiveBibleContent } from "../components/drawer/bible/scripture"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { getBase64Path, getThumbnailPath, mediaSize } from "../components/helpers/media"
 import { getActiveOutputs, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
+import { getLayoutRef } from "../components/helpers/show"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
-import { BIBLE, REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
-import { sendData } from "./sendData"
-import { uid } from "uid"
 import { clearAll } from "../components/output/clear"
-import { destroy, send } from "./request"
-import type { Show } from "../../types/Show"
-import { API_ACTIONS } from "../components/actions/api"
-import type { ClientMessage } from "../../types/Socket"
-import { loadBible, receiveBibleContent } from "../components/drawer/bible/scripture"
+import { destroyMain, receiveMain } from "../IPC/main"
+import { REMOTE } from "./../../types/Channels"
+import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
 import { waitUntilValueIsDefined } from "./common"
+import { send } from "./request"
+import { sendData } from "./sendData"
 
 // REMOTE
 
@@ -110,7 +113,7 @@ export const receiveREMOTE: any = {
             id = msg.data.id
             await loadShows([id])
 
-            let layout = _show(id).layouts("active").ref()[0] || []
+            let layout = getLayoutRef(id)
             if (msg.data.index < layout.length && msg.data.index >= 0) {
                 if (!msg.data.layout) msg.data.layout = _show(id).get("settings.activeLayout")
                 updateOut(msg.data.id, msg.data.index, _show(msg.data.id).layouts([msg.data.layout]).ref()[0])
@@ -122,7 +125,7 @@ export const receiveREMOTE: any = {
             id = out.id
             console.log(msg.data)
 
-            let layout = _show(id).layouts("active").ref()[0]
+            let layout = getLayoutRef(id)
             if (msg.data < layout.length && msg.data >= 0) {
                 let newOutSlide: any = { ...out, index: msg.data }
                 setOutput("slide", newOutSlide)
@@ -153,19 +156,27 @@ export const receiveREMOTE: any = {
         return msg
     },
     PROJECTS: (msg: any) => {
-        msg.data = removeDeleted(keysToID(get(projects)))
+        msg.data = removeDeleted(keysToID(clone(get(projects))))
+
+        // get names
+        msg.data.forEach((project) => {
+            project.shows.forEach((show) => {
+                if (show.type === "overlay") show.name = get(overlays)[show.id]?.name || get(dictionary).main?.unnamed
+            })
+
+            return project
+        })
+
         return msg
     },
     GET_SCRIPTURE: async (msg: ClientMessage) => {
         let id = msg.data?.id
         if (!id) return
 
-        let listenerId = uid()
-        window.api.receive(BIBLE, receiveBibleContent, listenerId)
-        receiveBibleContent(msg)
+        let listenerId = receiveMain(Main.BIBLE, receiveBibleContent)
         loadBible(id, 0, clone(get(scriptures)[id] || {}))
         const bible = await waitUntilValueIsDefined(() => get(scripturesCache)[id])
-        destroy(BIBLE, listenerId)
+        destroyMain(listenerId)
 
         msg.data.bible = bible
         return msg
@@ -208,6 +219,7 @@ export function initializeRemote(id: string) {
     }
     send(REMOTE, ["OUT"], out)
 
+    send(REMOTE, ["OVERLAYS"], get(overlays))
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
 }
 

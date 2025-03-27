@@ -5,7 +5,7 @@
     import { ContextMenuItem, contextMenuItems } from "./contextMenus"
     import { loadItems } from "./loadItems"
 
-    export let contextElem: any = null
+    export let contextElem: HTMLDivElement | null = null
     export let topBar: boolean = false
     export let id: string
     export let menu: ContextMenuItem = contextMenuItems[id]
@@ -16,7 +16,7 @@
 
     let open: boolean = false
     let elem: HTMLDivElement
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     let duration: number = 200
 
     function onMouseOver(e: any) {
@@ -57,7 +57,7 @@
         if (e.target?.closest(".submenu") === null) open = true
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") open = !open
     }
 </script>
@@ -85,7 +85,7 @@
                         <hr />
                     {:else if itemId.includes("LOAD_")}
                         {#each loadItems(itemId.slice(5, itemId.length)) as [id, menu]}
-                            {#if id === "SEPERATOR"}
+                            {#if id === "SEPERATOR" || menu === "SEPERATOR"}
                                 <hr />
                             {:else}
                                 <ContextItem {id} {contextElem} {menu} disabled={menu.disabled === true} {topBar} />

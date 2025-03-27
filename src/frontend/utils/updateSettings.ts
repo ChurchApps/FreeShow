@@ -1,9 +1,11 @@
 import { get } from "svelte/store"
-import { MAIN, STORE } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
+import type { Themes } from "../../types/Settings"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkWindowCapture, displayOutputs, setOutput } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
+import { sendMain } from "../IPC/main"
 import {
     actionTags,
     activePopup,
@@ -25,6 +27,7 @@ import {
     drawer,
     drawerTabsData,
     driveData,
+    effectsLibrary,
     emitters,
     formatNewShow,
     fullColors,
@@ -131,7 +134,8 @@ export function updateSettings(data: any) {
     let disabled = data.disabledServers || {}
     if (disabled.remote === undefined) disabled.remote = false
     if (disabled.stage === undefined) disabled.stage = false
-    send(MAIN, ["START"], { ports: data.ports || { remote: 5510, stage: 5511 }, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled, data: get(serverData) })
+    const ports: { [key: string]: number } = data.ports || { remote: 5510, stage: 5511 }
+    sendMain(Main.START, { ports, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled, data: get(serverData) })
 
     // theme
     let currentTheme = get(themes)[data.theme]
@@ -189,11 +193,11 @@ export function restartOutputs(id: string = "") {
     }, 2200)
 }
 
-export function updateThemeValues(themes: any) {
+export function updateThemeValues(themes: Themes) {
     if (!themes) return
 
-    Object.entries(themes.colors).forEach(([key, value]: any) => document.documentElement.style.setProperty("--" + key, value))
-    Object.entries(themes.font).forEach(([key, value]: any) => {
+    Object.entries(themes.colors).forEach(([key, value]) => document.documentElement.style.setProperty("--" + key, value))
+    Object.entries(themes.font).forEach(([key, value]) => {
         if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
         document.documentElement.style.setProperty("--font-" + key, value)
     })
@@ -202,7 +206,7 @@ export function updateThemeValues(themes: any) {
     if (!themes.border) themes.border = {}
     // set to 0 if nothing is set
     if (themes.border?.radius === undefined) themes.border.radius = "0"
-    Object.entries(themes.border).forEach(([key, value]: any) => document.documentElement.style.setProperty("--border-" + key, value))
+    Object.entries(themes.border).forEach(([key, value]) => document.documentElement.style.setProperty("--border-" + key, value))
 }
 
 const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = {
@@ -217,14 +221,14 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         if (v) projectView.set(false)
     },
     showsPath: (v: any) => {
-        if (!v) send(MAIN, ["SHOWS_PATH"])
+        if (!v) sendMain(Main.SHOWS_PATH)
         else showsPath.set(v)
 
         // LOAD SHOWS FROM FOLDER
-        send(STORE, ["SHOWS"], { showsPath: v })
+        sendMain(Main.SHOWS, { showsPath: v })
     },
     dataPath: (v: any) => {
-        if (!v) send(MAIN, ["DATA_PATH"])
+        if (!v) sendMain(Main.DATA_PATH)
         else dataPath.set(v)
     },
     lockedOverlays: (v: any) => {
@@ -300,6 +304,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
     metronome: (v: any) => metronome.set(v),
+    effectsLibrary: (v: any) => effectsLibrary.set(v),
     globalTags: (v: any) => globalTags.set(v),
     customMetadata: (v: any) => customMetadata.set(v),
     companion: (v: any) => {
@@ -307,13 +312,13 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
 
         if (v.enabled) {
             setTimeout(() => {
-                send(MAIN, ["WEBSOCKET_START"], get(ports).companion)
+                sendMain(Main.WEBSOCKET_START, get(ports).companion)
             }, 3000)
         }
     },
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God
-        if (v.autoUpdates !== false) send(MAIN, ["AUTO_UPDATE"])
+        if (v.autoUpdates !== false) sendMain(Main.AUTO_UPDATE)
         special.set(v)
     },
 }

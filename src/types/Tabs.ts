@@ -36,6 +36,7 @@ export interface TabsObj {
         disabled?: boolean
         remove?: boolean
         overflow?: boolean
+        tooltip?: string // custom tooltip
     }
 }
 

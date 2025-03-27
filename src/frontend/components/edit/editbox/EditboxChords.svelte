@@ -10,7 +10,7 @@
     export let autoSize: number
     export let index: number
     export let ref: {
-        type?: "show" | "overlay" | "template"
+        type?: "show" | "overlay" | "template" | "stage"
         showId?: string
         id: string
     }
@@ -19,7 +19,7 @@
 
     // CHORDS
 
-    let chordButtons: any[] = []
+    let chordButtons: { item: Item; showRef: any; itemIndex: number; chord: any; lineIndex: number }[] = []
     async function chordClick(e: any) {
         let add = e.target.closest(".add")
         if (add) {
@@ -78,7 +78,7 @@
 
                 let letters = value.split("")
                 letters.forEach((letter) => {
-                    let chordIndex = chords.findIndex((a: any) => a.pos === currentIndex)
+                    let chordIndex = chords.findIndex((a) => a.pos === currentIndex)
                     if (chordIndex >= 0) {
                         let chord = chords[chordIndex]
                         chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
@@ -99,7 +99,7 @@
 
             if (!html) html += `<span class="invisible add"><br></span>`
 
-            chords.forEach((chord: any, ci: number) => {
+            chords.forEach((chord, ci) => {
                 chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
                 let buttonIndex = chordButtons.length - 1
                 html += `<span id="${buttonIndex}" class="context #chord chord button" style="transform: translate(${60 * (ci + 1)}px, -80%);">${chord.key}</span>`

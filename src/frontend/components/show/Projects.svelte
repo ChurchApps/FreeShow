@@ -1,9 +1,10 @@
 <script lang="ts">
     import type { Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, labelsDisabled, midiIn, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import { activeFocus, activeProject, activeShow, dictionary, drawer, focusMode, folders, fullColors, labelsDisabled, midiIn, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
     import { getActionIcon } from "../actions/actions"
     import { keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
+    import { getContrast } from "../helpers/color"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
@@ -60,7 +61,7 @@
 
     let folderSorted: Tree[] = []
     function sortFolders(parent: string = "/", index: number = 0, path: string = "") {
-        let filtered = tree.filter((a: any) => a.parent === parent).map((a) => ({ ...a, index, path }))
+        let filtered = tree.filter((a) => a.parent === parent).map((a) => ({ ...a, index, path }))
         filtered.forEach((folder) => {
             folderSorted.push(folder)
             if (folder.type !== "folder") return
@@ -70,7 +71,7 @@
     }
 
     // autoscroll
-    let scrollElem: any
+    let scrollElem: HTMLElement | undefined
     let offset: number = -1
     $: itemsBefore = $drawer.height < 400 ? 5 : 1
     $: offset = autoscroll(scrollElem, Math.max(0, ($activeShow?.index || 0) - itemsBefore))
@@ -121,7 +122,7 @@
 
     $: projectActive = !$projectView && $activeProject !== null
 
-    let listScrollElem: any = null
+    let listScrollElem: HTMLElement | undefined
     let listOffset: number = -1
     $: if (listScrollElem) {
         let time = tree.length * 0.5 + 20
@@ -207,19 +208,21 @@
 
         <div id="projectsButtons" class="tabs">
             <Button
+                style="flex: 0;padding: 0.2em 1.3em;"
                 on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/" } }, location: { page: "show", id: "project_folder" } })}
                 center
                 title={$dictionary.new?.folder}
             >
-                <Icon id="folder" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<p><T id="new.folder" /></p>{/if}
+                <Icon id="folder" white />
             </Button>
+            <div class="seperator"></div>
             <Button
+                style="flex: 1;"
                 on:click={() => history({ id: "UPDATE", newData: { replace: { parent: $folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/" } }, location: { page: "show", id: "project" } })}
                 center
                 title={$dictionary.new?.project}
             >
-                <Icon id="project" right={!$labelsDisabled} />
+                <Icon id="add" right={!$labelsDisabled} />
                 {#if !$labelsDisabled}<p><T id="new.project" /></p>{/if}
             </Button>
         </div>
@@ -235,7 +238,7 @@
                                     <Button
                                         active={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
                                         class="section context #project_section__project {show.color ? 'color-border' : ''}"
-                                        style="--border-color: {show.color};"
+                                        style="font-weight: bold;{$fullColors ? `background-color: ${show.color};color: ${getContrast(show.color || '')};` : `--border-color: ${show.color};color: ${show.color};`}"
                                         on:click={() => {
                                             if ($focusMode) activeFocus.set({ id: show.id, index, type: show.type })
                                             else activeShow.set({ ...show, index })
@@ -354,5 +357,11 @@
     #projectArea :global(button.color-border) {
         border-bottom: 2px solid var(--border-color);
         outline-color: var(--border-color);
+    }
+
+    .seperator {
+        width: 1px;
+        height: 100%;
+        background-color: var(--primary);
     }
 </style>

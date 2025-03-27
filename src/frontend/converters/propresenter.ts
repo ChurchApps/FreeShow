@@ -309,10 +309,13 @@ function getSlideItems(slide: any): any[] {
 
     itemStrings.forEach((content: any) => {
         if (!content) return
+        if (Array.isArray(content)) content = content[0]
+
         let text = decodeBase64(content["#text"] || content)
         // console.log(text)
 
-        if (content["@rvXMLIvarName"] && content["@rvXMLIvarName"] !== "RTFData") return
+        const type = content["@rvXMLIvarName"]
+        if (type && type !== "RTFData" && type !== "PlainText") return
         // text = convertFromRTFToPlain(text)
         text = decodeHex(text)
         // console.log(text)
@@ -400,6 +403,8 @@ const latin1 = {
 }
 
 function decodeBase64(text: string) {
+    if (typeof text !== "string") return ""
+
     let b = 0,
         l = 0,
         r = ""

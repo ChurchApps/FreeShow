@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import type { Overlay } from "../../../../types/Show"
     import { activePage, activeShow, dictionary, focusMode, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -21,21 +22,21 @@
 
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    let filteredOverlays: any[] = []
+    let filteredOverlays: (Overlay & { id: string })[] = []
     $: filteredOverlays = sortByName(
-        keysToID($overlays).filter((s: any) => (active === "all" && !$overlayCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$overlayCategories[s.category])))
+        keysToID($overlays).filter((s) => (active === "all" && !$overlayCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$overlayCategories[s.category])))
     )
 
     // search
     $: if (filteredOverlays || searchValue !== undefined) filterSearch()
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
-    let fullFilteredOverlays: any[] = []
+    let fullFilteredOverlays: (Overlay & { id: string })[] = []
     function filterSearch() {
         fullFilteredOverlays = clone(filteredOverlays)
         if (searchValue.length > 1) fullFilteredOverlays = fullFilteredOverlays.filter((a) => filter(a.name || "").includes(filter(searchValue)))
     }
 
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
         if (nextScrollTimeout) return
@@ -71,7 +72,6 @@
                         label={overlay.name}
                         renameId="overlay_{overlay.id}"
                         color={overlay.color}
-                        icon={overlay.placeUnderSlide ? "under" : overlay.locked ? "locked" : null}
                         {resolution}
                         showPlayOnHover
                         on:click={(e) => {
@@ -93,7 +93,7 @@
                         <OverlayActions columns={$mediaOptions.columns} overlayId={overlay.id} />
 
                         <SelectElem id="overlay" data={overlay.id} fill draggable>
-                            <Zoomed {resolution} background={overlay.items.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={overlay.items.length}>
+                            <Zoomed {resolution} background={overlay.items.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items.length}>
                                 {#each overlay.items as item}
                                     <Textbox {item} ref={{ type: "overlay", id: overlay.id }} />
                                 {/each}

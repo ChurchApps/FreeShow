@@ -1,4 +1,4 @@
-export const drawerTabs: any = {
+export const drawerTabs = {
     shows: { name: "tabs.shows", icon: "shows" },
     media: { name: "tabs.media", icon: "media" },
     audio: { name: "tabs.audio", icon: "audio" },

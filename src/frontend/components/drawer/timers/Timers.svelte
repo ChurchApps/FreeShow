@@ -63,6 +63,8 @@
     <div class="timers">
         {#each filteredTimers as timer, i}
             {@const title = timer.type === filteredTimers[i - 1]?.type ? "" : timer.type}
+            {@const isPlaying = timer.type !== "counter" || $activeTimers.find((a) => a.id === timer.id && a.paused !== true)}
+
             {#if i === 0 && list.length}
                 <h5><T id="remote.project" /></h5>
             {:else if title && i > 0}
@@ -74,7 +76,7 @@
                 <div class:outline={$activeTimers.find((a) => a.id === timer.id)} class:project={list.includes(timer.id)} class="context #global_timer" style="display: flex;justify-content: space-between;padding: 3px;">
                     <div style="display: flex;width: 50%;">
                         <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={$activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? $dictionary.media?.pause : $dictionary.media?.play}>
-                            <Icon id={timer.type !== "counter" || $activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? "pause" : "play"} />
+                            <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
                         </Button>
                         <p style="align-self: center;padding: 0 5px;min-width: 100px;" title={timer.name}>
                             {#if timer.name}

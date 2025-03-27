@@ -102,7 +102,9 @@ export function convertVideopsalm(data: any) {
         if (content.length) {
             content = content.replaceAll("{\n", "{").replaceAll("}\n", "}").replaceAll("\n", "<br>").replaceAll("FontStyle", "Font")
             content = content.split("Style:").map(removeStyle).join("Style:")
+            content = content.split("Text:").map(fixText).join("Text:")
             content = content.split(":").map(fixJSON).join(":")
+            content = content.replaceAll("[[==]]", "") // get back keywords inside text
             content = content.replaceAll("\t", "").replaceAll("\v", "").replaceAll("\r", "").replaceAll("\f", "").replaceAll(',<br>"', ',"').replaceAll("﻿", "") // remove this invisible character
 
             content = parseContent(content)
@@ -208,16 +210,39 @@ function removeStyle(s) {
     return s
 }
 
+function fixText(s: string, i: number) {
+    if (i === 0) return s
+    let openingIndex = s.indexOf('"') + 1
+    let closingIndex = s.indexOf('"', openingIndex)
+    if (openingIndex < 0 || closingIndex < 0) return s
+
+    let textContent = s.slice(openingIndex, closingIndex)
+    let keyword: string | undefined = ""
+    while ((keyword = keys.find((keyword) => textContent.includes(keyword)))) {
+        let index = textContent.indexOf(keyword)
+        // obfusticate keyword
+        keyword = keyword.slice(0, 1) + "[[==]]" + keyword.slice(1)
+        textContent = textContent.slice(0, index) + textContent.slice(index + keyword.length)
+    }
+
+    s = s.slice(0, openingIndex) + textContent + s.slice(closingIndex)
+    return s
+}
+
 function fixJSON(s: string) {
     let index = s.length - 1
     while (s[index]?.match(/[a-z0-9]/i) !== null && index > -1) index--
     let word: string = s.slice(index + 1, s.length)
     let notKey = index < 0 || index >= s.length - 1 || !keys.includes(word)
     if (word === "ID" && !notKey && !s.includes("{ID") && !s.includes(",ID")) notKey = true
+
+    // if content includes keyword
     if (!notKey && keys.includes(word) && s.indexOf('"' + word) === 0 && s.indexOf(word, 3) < 0) {
         // ,{Author:"Author:",Copyright:"Copyright:",
         notKey = true
     }
+    // if (!notKey && word !== "ID" && s.indexOf('"') > 1) notKey = true
+
     return notKey ? s : s.slice(0, index + 1) + '"' + word + '"'
 }
 

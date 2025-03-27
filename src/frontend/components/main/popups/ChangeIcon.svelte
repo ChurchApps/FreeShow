@@ -6,7 +6,7 @@
     import Button from "../../inputs/Button.svelte"
     import { customIcons, customIconsColors } from "../../../values/customIcons"
 
-    const names: any = {
+    const names = {
         category_shows: (icon: string) => categories.update((a) => changeIcon(a, icon)),
         category_media: (icon: string) => mediaFolders.update((a) => changeIcon(a, icon)),
         category_overlays: (icon: string) => overlayCategories.update((a) => changeIcon(a, icon)),

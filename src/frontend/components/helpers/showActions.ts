@@ -1,14 +1,17 @@
 import { get } from "svelte/store"
-import { MAIN, OUTPUT } from "../../../types/Channels"
-import type { OutSlide, Slide } from "../../../types/Show"
+import { OUTPUT } from "../../../types/Channels"
+import { Main } from "../../../types/IPC/Main"
+import type { ProjectShowRef } from "../../../types/Projects"
+import type { LayoutRef, OutSlide, Show, Slide, SlideAction, SlideData } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { AudioPlayer } from "../../audio/audioPlayer"
+import { sendMain } from "../../IPC/main"
 import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { clearOverlays, clearSlide, clearTimers } from "../output/clear"
+import { clearOverlays, clearTimers } from "../output/clear"
 import {
     activeEdit,
     activeFocus,
@@ -43,22 +46,22 @@ import { clone } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
-import { initializeMetadata } from "./show"
+import { getLayoutRef, initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
 
-const getProjectIndex: any = {
-    next: (index: number | null, shows: any) => {
+const getProjectIndex = {
+    next: (index: number | null, shows: ProjectShowRef[]) => {
         // change active show in project
         if (index === null) return 0
-        index = shows.findIndex((_a: any, i: number) => i - 1 === index)
+        index = shows.findIndex((_a, i) => i - 1 === index)
         return index === null || index < 0 ? null : index
     },
-    previous: (index: number | null, shows: any) => {
+    previous: (index: number | null, shows: ProjectShowRef[]) => {
         // change active show in project
         if (index === null) return shows.length - 1
-        index = shows.findIndex((_a: any, i: number) => i + 1 === index)
+        index = shows.findIndex((_a, i) => i + 1 === index)
         return index === null || index < 0 ? null : index
     },
 }
@@ -124,7 +127,6 @@ export function swichProjectItem(pos: number, id: string) {
 export function getItemWithMostLines(slide: Slide) {
     let amount: number = 0
     slide.items?.forEach((item) => {
-        console.log(item.lines)
         let lines: number = item.lines?.filter((a) => a.text.filter((a) => a.value.length)?.length)?.length || 0
         if (lines > amount) amount = lines
     })
@@ -165,7 +167,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
     let outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
-    let currentOutput: any = get(outputs)[outputId] || {}
+    let currentOutput = get(outputs)[outputId] || {}
     let slide: null | OutSlide = currentOutput.out?.slide || null
     if (!slide) {
         let cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
@@ -174,7 +176,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
     // PPT
     if (slide?.type === "ppt") {
-        send(MAIN, ["PRESENTATION_CONTROL"], { action: e?.key === "PageDown" ? "last" : "next" })
+        sendMain(Main.PRESENTATION_CONTROL, { action: e?.key === "PageDown" ? "last" : "next" })
         return
     }
 
@@ -187,11 +189,11 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     }
 
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
-    let layout: any[] = _show(slide ? slide.id : "active")
+    let layout = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
     let slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.end : false
+    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.data?.end : false
 
     // open next project item if previous has been opened and next is still active when going forward
     let isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
@@ -208,7 +210,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     // lines
     let amountOfLinesToShow: number = getFewestOutputLines()
     let linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
-    let showSlide: any = slide?.index !== undefined ? _show(slide.id).slides([layout?.[slideIndex]?.id]).get()[0] : null
+    let showSlide: Slide | null = slide?.index !== undefined ? _show(slide.id).slides([layout?.[slideIndex]?.id]).get()[0] : null
     let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
     let hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : linesIndex + amountOfLinesToShow >= slideLines
     if (isLastSlide && !hasLinesEnded) isLastSlide = false
@@ -226,13 +228,13 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
     // go to beginning if live mode & ctrl | no output | last slide active
     let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
     if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || get(showsCache)[currentShow.id]?.settings.activeLayout !== slide.layout)))) {
-        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow.id] || !_show(currentShow.id).layouts("active").ref()[0]?.length) return goToNextProjectItem()
+        if (get(activeShow)?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) return goToNextProjectItem()
 
         let id = loop ? slide?.id : currentShow.id
         if (!id) return
 
         // layout = GetLayout()
-        layout = _show(id).layouts("active").ref()[0]
+        layout = getLayoutRef(id)
         if (!layout?.filter((a) => !a.data.disabled).length) return
 
         index = 0
@@ -250,7 +252,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 
     if (!slide || slide.id === "temp") return
 
-    let newSlideOut: any = { ...slide, line: 0 }
+    let newSlideOut = { ...slide, line: 0 }
     if (!hasLinesEnded) {
         index = slideIndex
         if (amountOfLinesToShow && linesIndex !== null) newSlideOut.line = linesIndex + amountOfLinesToShow
@@ -258,7 +260,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
         // TODO: Check for loop to beginning slide...
         index = getNextEnabled(slideIndex, end, customOutputId)
     }
-    newSlideOut.index = index
+    if (index !== null) newSlideOut.index = index
 
     // go to next show if end
     if (index === null && currentShow?.id === slide?.id && get(showsCache)[currentShow?.id || ""]?.settings.activeLayout === slide.layout) {
@@ -287,7 +289,7 @@ const triggerActionsBeforeOutput = {
 function shouldTriggerBefore(action: any) {
     return action.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
 }
-export function checkActionTrigger(layoutData: any, slideIndex: number = 0) {
+export function checkActionTrigger(layoutData: SlideData, slideIndex: number = 0) {
     layoutData?.actions?.slideActions?.forEach((a) => {
         if (shouldTriggerBefore(a)) runAction(a, { slideIndex })
     })
@@ -311,7 +313,7 @@ async function goToNextShowInProject(slide, customOutputId) {
     let nextShow = currentProject.shows[nextShowInProjectIndex]
     await loadShows([nextShow.id])
     let activeLayout = nextShow.layout || _show(nextShow.id).get("settings.activeLayout")
-    let layout: any[] = _show(nextShow.id).layouts([activeLayout]).ref()[0]
+    let layout = _show(nextShow.id).layouts([activeLayout]).ref()[0]
 
     // let hasNextAfterMediaAction = layout[slide.index].data.actions?.nextAfterMedia
     // if (!hasNextAfterMediaAction) return
@@ -327,7 +329,7 @@ async function goToNextShowInProject(slide, customOutputId) {
 }
 
 // only let "first" output change project item if multiple outputs
-let changeProjectItemTimeout: any = null
+let changeProjectItemTimeout: NodeJS.Timeout | null = null
 
 export function goToNextProjectItem(key: string = "") {
     if (changeProjectItemTimeout) return
@@ -395,8 +397,8 @@ export function previousSlide(e: any, customOutputId?: string) {
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
     let outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
-    let currentOutput: any = get(outputs)[outputId] || {}
-    let slide: null | OutSlide = currentOutput.out?.slide || null
+    let currentOutput = get(outputs)[outputId] || {}
+    let slide = currentOutput.out?.slide || null
     if (!slide) {
         let cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
         if (cachedSlide && cachedSlide?.id === get(activeShow)?.id && cachedSlide?.layout === get(showsCache)[get(activeShow)?.id || ""]?.settings?.activeLayout) slide = cachedSlide
@@ -404,7 +406,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     // PPT
     if (slide?.type === "ppt") {
-        send(MAIN, ["PRESENTATION_CONTROL"], { action: e?.key === "PageUp" ? "first" : "previous" })
+        sendMain(Main.PRESENTATION_CONTROL, { action: e?.key === "PageUp" ? "first" : "previous" })
         return
     }
 
@@ -416,7 +418,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     }
 
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
-    let layout: any[] = _show(slide ? slide.id : "active")
+    let layout = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
     let activeLayout: string = _show(slide ? slide.id : "active").get("settings.activeLayout")
@@ -437,10 +439,11 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     // open previous project item if next has been opened and previous is still active when going back
     let slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.end : false
-    let showSlide: any = _show(slide ? slide.id : "active")
-        .slides([layout[index]?.id])
-        .get()[0]
+    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.data?.end : false
+    let showSlide: Slide | null =
+        _show(slide ? slide.id : "active")
+            .slides([layout[index]?.id])
+            .get()[0] || null
     let isLastLine = slide?.line === undefined || !amountOfLinesToShow || !showSlide || slide.line >= Math.ceil(getItemWithMostLines(showSlide) / amountOfLinesToShow) - 1
     let previousProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(get(activeShow)?.index ?? -2) - 1]?.id
     let isNextProjectItem = slide?.id === previousProjectItem && isLastSlide && isLastLine
@@ -454,7 +457,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     // if (!hasLinesEnded && isFirstSlide) isFirstSlide = false
     if (activeShowLayout !== slide?.layout && hasLinesEnded && (index < 0 || isFirstSlide)) {
         slide = null
-        layout = _show("active").layouts("active").ref()[0]
+        layout = getLayoutRef()
         activeLayout = activeShowLayout
         index = (layout?.length || 0) - 1
     }
@@ -472,9 +475,10 @@ export function previousSlide(e: any, customOutputId?: string) {
         while (layout[index].data.disabled || notBound(layout[index], customOutputId)) index--
 
         // get slide line
-        let showSlide: any = _show(slide ? slide.id : "active")
-            .slides([layout[index].id])
-            .get()[0]
+        let showSlide: Slide | null =
+            _show(slide ? slide.id : "active")
+                .slides([layout[index].id])
+                .get()[0] || null
         let slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
         if (amountOfLinesToShow) {
             let maxIndex = slideLines ? amountOfLinesToShow * Math.ceil(slideLines / amountOfLinesToShow) : 0
@@ -518,9 +522,9 @@ function getNextEnabled(index: null | number, end: boolean = false, customOutput
     index++
 
     let outputId = customOutputId || getActiveOutputs(get(outputs), true, true, true)[0]
-    let currentOutput: any = get(outputs)[outputId] || {}
-    let slide: null | OutSlide = currentOutput.out?.slide || null
-    let layout: any[] = _show(slide ? slide.id : "active")
+    let currentOutput = get(outputs)[outputId] || {}
+    let slide = currentOutput.out?.slide || null
+    let layout = _show(slide ? slide.id : "active")
         .layouts(slide ? [slide.layout] : "active")
         .ref()[0]
 
@@ -544,14 +548,14 @@ export function randomSlide() {
     if (document.activeElement instanceof window.HTMLElement) document.activeElement.blur()
 
     let outputId = getActiveOutputs(get(outputs), true, true, true)[0]
-    let currentOutput: any = get(outputs)[outputId] || {}
-    let slide: null | OutSlide = currentOutput.out?.slide || null
+    let currentOutput = get(outputs)[outputId] || {}
+    let slide = currentOutput.out?.slide || null
     let currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
     let showId = slide?.id || currentShow?.id
     if (!showId) return
 
     let layoutId = slide?.layout || _show(showId).get("settings.activeLayout")
-    let layout: any[] = _show(showId).layouts([layoutId]).ref()[0]
+    let layout = _show(showId).layouts([layoutId]).ref()[0]
 
     let slideCount = layout.length || 0
     if (slideCount < 2) return
@@ -577,7 +581,7 @@ function randomNumber(end: number) {
     return Math.floor(Math.random() * end)
 }
 
-export function updateOut(showId: string, index: number, layout: any, extra: boolean = true, outputId: string = "", actionTimeout: number = 10) {
+export function updateOut(showId: string, index: number, layout: LayoutRef[], extra: boolean = true, outputId: string = "", actionTimeout: number = 10) {
     if (get(activePage) !== "edit") activeEdit.set({ slide: index, items: [] })
 
     _show(showId).set({ key: "timestamps.used", value: new Date().getTime() })
@@ -588,7 +592,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     if (!extra || !data) return
 
     // trigger start show action first
-    let startShowId = data.actions?.startShow?.id || data.actions?.slideActions?.actionValues?.start_show?.id
+    let startShowId = data.actions?.startShow?.id || data.actions?.slideActions?.find((a) => a.actionValues?.start_show)?.id
     if (startShowId) {
         startShow(startShowId)
         return
@@ -599,7 +603,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
     // WIP custom next slide timer duration (has to be changed on slide click & in preview as well)
     // let outputWithLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line !== undefined)
-    // let outSlide: any = get(outputs)[outputWithLine]?.out?.slide || {}
+    // let outSlide = get(outputs)[outputWithLine]?.out?.slide || {}
     // let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([layout[index].id]).get()[0] : null
     // let slideLines = showSlide ? getItemWithMostLines(showSlide) : null
     // let outputWithLines = getOutputWithLines() || 0
@@ -619,8 +623,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
     outputIds.map(activateActions)
 
     function activateActions(outputId: string) {
-        let background = data.background
-        console.log("BG", background)
+        let background = data.background || null
 
         // get ghost background
         if (!background) {
@@ -654,9 +657,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
                 let loop = bg.loop !== false
                 let muted = bg.muted !== false
 
-                if (mediaStyle.videoType === "foreground") clearSlide()
-
-                let bgData: any = {
+                let bgData = {
                     name,
                     type,
                     path: bgPath,
@@ -675,7 +676,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 
         // mics
         if (data.mics) {
-            data.mics.forEach((mic: any) => {
+            data.mics.forEach((mic) => {
                 AudioMicrophone.start(mic.id, { name: mic.name })
             })
         }
@@ -684,7 +685,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         if (data.audio) {
             // let clear action trigger first
             setTimeout(() => {
-                data.audio.forEach((audio: string) => {
+                data.audio?.forEach((audio: string) => {
                     let a = clone(_show(showId).get("media")[audio])
                     let cloudId = get(driveData).mediaId
                     if (cloudId && cloudId !== "default") a.path = a.cloud?.[cloudId] || a.path
@@ -726,13 +727,13 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
         // if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
         if (data.actions.outputStyle) changeOutputStyle(data.actions)
-        if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id, overlayIds: data.overlays })
+        if (data.actions.startTimer) playSlideTimers({ showId: showId, slideId: layout[index].id, overlayIds: data.overlays || [] })
     }
 
     if (data.actions?.slideActions?.length) {
         // let values update
         setTimeout(() => {
-            playSlideActions(data.actions.slideActions, outputIds, index)
+            playSlideActions(data.actions!.slideActions!, outputIds, index)
         }, actionTimeout)
     } else playOutputStyleTemplateActions(outputIds)
 
@@ -752,7 +753,7 @@ export function updateOut(showId: string, index: number, layout: any, extra: boo
 }
 
 const runPerOutput = ["clear_background", "clear_overlays"]
-function playSlideActions(actions: any[], outputIds: string[] = [], slideIndex: number = -1) {
+function playSlideActions(actions: SlideAction[], outputIds: string[] = [], slideIndex: number = -1) {
     actions = clone(actions)
 
     // run these actions on each active output
@@ -809,7 +810,7 @@ export async function startShow(showId: string) {
     let activeLayout = get(showsCache)[showId].settings?.activeLayout || ""
 
     // slideClick() - Slides.svelte
-    let slideRef: any = _show(showId).layouts("active").ref()[0]
+    let slideRef = getLayoutRef(showId)
     if (!slideRef[0]) return
 
     setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
@@ -888,13 +889,13 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     if (!outputId) outputId = getActiveOutputs(get(outputs), true, true, true)[0]
     if (!outputId) return false
 
-    let currentOutput: any = get(outputs)[outputId]
+    let currentOutput = get(outputs)[outputId]
     if (!currentOutput) return false
 
     let slideOut = currentOutput.out?.slide
     if (!slideOut) return false
 
-    let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0]?.[slideOut.index]
+    let layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0]?.[slideOut.index ?? -1]
     if (!layoutSlide) return false
 
     // check that current slide has the ended media!
@@ -925,17 +926,19 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
     return true
 }
 
-export function playSlideTimers({ showId = "active", slideId = "", overlayIds = [] }) {
+export function playSlideTimers({ showId = "active", slideId = "", overlayIds = [] as string[] }) {
     if (!slideId) {
-        let outputRef: any = get(outputs)[getActiveOutputs(get(outputs), false, true, true)[0]]?.out?.slide || {}
-        showId = outputRef.id
+        let outSlide: OutSlide | null = get(outputs)[getActiveOutputs(get(outputs), false, true, true)[0]]?.out?.slide || null
+        if (!outSlide) return
 
-        let layoutRef = _show(showId).layouts([outputRef.layout]).ref()[0]
+        showId = outSlide.id || ""
+
+        let layoutRef = _show(showId).layouts([outSlide.layout]).ref()[0]
         if (!layoutRef) return
-        slideId = layoutRef[outputRef.index]?.id || ""
+        slideId = layoutRef[outSlide.index ?? -1]?.id || ""
     }
 
-    let showSlides: any = _show(showId).get("slides") || {}
+    let showSlides: { [key: string]: Slide } = _show(showId).get("slides") || {}
     let slide = showSlides[slideId]
     if (!slide) return
 
@@ -950,7 +953,7 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
 }
 
 export function sendMidi(data: any) {
-    send(MAIN, ["SEND_MIDI"], data)
+    sendMain(Main.SEND_MIDI, data)
 }
 
 export function activateTriggerSync(triggerId: string) {
@@ -970,7 +973,7 @@ export async function activateTrigger(triggerId: string): Promise<string> {
 }
 
 const customTriggers = {
-    http: (value: string) => {
+    http: (value: string): Promise<string> => {
         return new Promise((resolve) => {
             fetch(value, { method: "GET" })
                 .then((r) => {
@@ -993,7 +996,8 @@ export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds() {
     let mainValues = Object.keys(dynamicValues)
     let metaValues = Object.keys(initializeMetadata({})).map((id) => `meta_` + id)
-    let variableValues = Object.values(get(variables)).map(({ name }) => `variable_` + getVariableNameId(name))
+    const variablesList = Object.values(get(variables)).filter((a) => a?.name)
+    let variableValues = variablesList.map(({ name }) => `variable_` + getVariableNameId(name))
 
     return [...mainValues, ...metaValues, ...variableValues]
 }
@@ -1024,18 +1028,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     return text
 
-    function getDynamicValue(id, show) {
-        if (id.includes("meta_")) {
-            let key = id.slice(5)
-            return show?.meta?.[key] || ""
-        }
-
+    function getDynamicValue(id: string, show: Show): string {
+        // VARIABLE
         if (id.includes("variable_")) {
             let nameId = id.slice(9)
             let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
             if (!variable) return ""
 
-            if (variable.type === "number") return Number(variable.number || 0)
+            if (variable.type === "number") return Number(variable.number || 0).toString()
 
             if (variable.enabled === false) return ""
             if (variable.text?.includes(id)) return variable.text || ""
@@ -1049,14 +1049,20 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         }
 
         if (!showId) {
-            let outSlide: any = get(outputs)[outputId]?.out?.slide || {}
+            let outSlide: OutSlide | null = get(outputs)[outputId]?.out?.slide || null
             // if (!outSlide?.id) return ""
 
-            showId = outSlide.id
-            layoutId = outSlide.layout
-            slideIndex = outSlide.index ?? -2
+            showId = outSlide?.id
+            layoutId = outSlide?.layout
+            slideIndex = outSlide?.index ?? -2
             show = _show(showId).get() || {}
             // if (!show) return
+        }
+
+        // META
+        if (id.includes("meta_")) {
+            let key = id.slice(5)
+            return show?.meta?.[key] || ""
         }
 
         let activeLayout = layoutId ? [layoutId] : "active"
@@ -1066,11 +1072,11 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         let videoTime: number = get(videosTime)[outputId] || 0
         let videoDuration: number = get(videosData)[outputId]?.duration || 0
 
-        let projectIndex = get(projects)[get(activeProject) || ""]?.shows.findIndex((a) => a.id === showId)
+        let projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId)
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         let projectRef = { id: get(activeProject) || "", index: projectIndex }
 
-        return dynamicValues[id]({ show, ref, slideIndex, layout, projectRef, videoTime, videoDuration })
+        return (dynamicValues[id]({ show, ref, slideIndex, layout, projectRef, videoTime, videoDuration }) ?? "").toString()
     }
 }
 
@@ -1085,12 +1091,12 @@ const dynamicValues = {
 
     // show
     show_name: ({ show }) => show.name || "",
-    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows[projectRef.index + 1]?.id]?.name || "",
+    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.[projectRef.index + 1]?.id]?.name || "",
 
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
 
-    slide_number: ({ slideIndex }) => Number(slideIndex || 0) + 1,
+    slide_number: ({ slideIndex }) => (Number(slideIndex || 0) + 1).toString(),
     slide_group: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.group || "",
     slide_group_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.group || "",
     slide_notes: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.notes || "",

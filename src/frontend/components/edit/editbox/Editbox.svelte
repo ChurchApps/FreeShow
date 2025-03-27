@@ -22,7 +22,7 @@
     export let chordsMode: boolean = false
     export let chordsAction: string = ""
 
-    let itemElem: any
+    let itemElem: HTMLElement | undefined
 
     export let mouse: any = {}
     function mousedown(e: any) {
@@ -80,7 +80,7 @@
     $: layout = active && $showsCache[active] ? $showsCache[active].settings.activeLayout : ""
     // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Escape") {
             ;(document.activeElement as HTMLElement).blur()
             window.getSelection()?.removeAllRanges()
@@ -169,8 +169,14 @@ bind:offsetWidth={width} -->
         outline: 5px solid rgb(255 255 255 / 0.2);
         transition: background-color 0.3s;
         /* cursor: text; */
+
+        /* media items */
+        overflow: hidden;
     }
-    .item:global(.selected .align) {
+    .item.selected {
+        overflow: visible;
+    }
+    .item.selected :global(.align) {
         outline: 5px solid var(--secondary-opacity);
         overflow: visible !important;
     }

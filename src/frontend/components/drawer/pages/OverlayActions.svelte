@@ -19,9 +19,13 @@
         })
     }
 
-    const actionsList: any = [{ id: "displayDuration", title: $dictionary.popup?.display_duration, icon: "clock" }]
+    const actionsList = [
+        { id: "locked", title: $dictionary.context?.lock_to_output, icon: "locked" },
+        { id: "placeUnderSlide", title: $dictionary.context?.place_under_slide, icon: "under" },
+        { id: "displayDuration", title: $dictionary.popup?.display_duration, icon: "clock" },
+    ]
 
-    $: zoom = 4 / columns
+    $: zoom = 5 / columns
 </script>
 
 <div class="icons" style="zoom: {zoom};">
@@ -33,8 +37,8 @@
                         <Icon id={action.icon} size={0.9} white />
                     </Button>
                 </div>
-                {#if !isNaN(overlay[action.id])}
-                    <span><p>{overlay[action.id]}s</p></span>
+                {#if action.id === "displayDuration" && !isNaN(overlay[action.id] || 0)}
+                    <span><p>{overlay[action.id] || 0}s</p></span>
                 {/if}
             </div>
         {/if}

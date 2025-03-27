@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import type { SelectIds } from "../../../types/Main"
+import type { Selected, SelectIds } from "../../../types/Main"
 import { selected } from "../../stores"
 import { removeDuplicates } from "./array"
 
@@ -12,8 +12,8 @@ export function select(id: SelectIds, data: any) {
     })
 }
 
-export function getSelected(hasToBeId: SelectIds | null, index: null | number = null, updater: any = get(selected)) {
-    let sel: any = updater
+export function getSelected(hasToBeId: SelectIds | null, index: null | number = null, updater: Selected = get(selected)) {
+    let sel = updater
     if (hasToBeId && sel.id !== hasToBeId) return null
     if (index === null) return sel.data
     return sel.data[index]

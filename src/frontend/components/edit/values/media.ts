@@ -87,3 +87,27 @@ export const mediaFilters: Box = {
         },
     },
 }
+
+export const audioEdits: Box = {
+    media: {
+        name: "",
+        icon: "",
+        edit: {
+            default: [
+                {
+                    name: "clock.type",
+                    id: "audioType",
+                    input: "dropdown",
+                    value: "",
+                    values: {
+                        options: [
+                            { id: "", name: "$:example.default:$" },
+                            { id: "music", name: "$:audio.type_music:$" },
+                            { id: "effect", name: "$:audio.type_effect:$" },
+                        ],
+                    },
+                },
+            ],
+        },
+    },
+}

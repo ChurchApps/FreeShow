@@ -1,4 +1,6 @@
 import { get } from "svelte/store"
+import type { History } from "../../../types/History"
+import type { DropData, SelectIds } from "../../../types/Main"
 import { activePage, selected } from "../../stores"
 import { dropActions } from "./dropActions"
 import { history } from "./history"
@@ -6,7 +8,7 @@ import { deselect } from "./select"
 
 export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation" | "audio_playlist"
 
-const areas: { [key in DropAreas | string]: string[] } = {
+const areas = {
     all_slides: ["template"],
     slides: ["media", "audio", "overlay", "sound", "screen", "camera", "microphone", "scripture", "trigger", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
@@ -17,25 +19,25 @@ const areas: { [key in DropAreas | string]: string[] } = {
     edit: ["media", "global_timer", "variable"],
     // media_drawer: ["file"],
 }
-const areaChildren: { [key in DropAreas | string]: string[] } = {
+const areaChildren = {
     projects: ["folder", "project"],
-    project: ["show", "media", "audio", "show_drawer", "player"],
+    project: ["show", "media", "audio", "show_drawer", "player", "action"],
     slides: ["slide", "group", "global_group", "screen", "camera", "microphone", "media", "audio", "show"],
     all_slides: [],
     navigation: ["show", "show_drawer", "media", "audio", "overlay", "template"],
     audio_playlist: ["audio"],
 }
 
-export function validateDrop(id: string, selected: any, children: boolean = false): boolean {
+export function validateDrop(id: string, selected: SelectIds | null, children: boolean = false): boolean {
     return areas[id]?.includes(selected) || (children && areaChildren[id]?.includes(selected))
 }
 
 export function ondrop(e: any, id: string) {
     // let data: string = e.dataTransfer.getData("text")
-    let h: any = { id: null, location: { page: get(activePage) } }
+    let h = { id: null, location: { page: get(activePage) } }
     let sel = get(selected)
 
-    let elem: any = null
+    let elem: HTMLElement | null = null
     if (e !== null) {
         // if (id === "project" || sel.id === "slide" || sel.id === "group" || sel.id === "global_group" || sel.id === "media") elem = e.target.closest(".selectElem")
         if (id === "project" || id === "projects" || id === "slides" || id === "all_slides" || id === "navigation" || id === "templates" || id === "audio_playlist") elem = e.target.closest(".selectElem")
@@ -49,14 +51,16 @@ export function ondrop(e: any, id: string) {
     if (trigger?.includes("center")) center = true
     if (index !== undefined && trigger?.includes("end") && areaChildren[id]?.includes(sel.id || "")) index++
 
+    const dropdata: DropData = { id, data, trigger, center, index }
+
     console.log("DRAG: ", sel)
-    console.log("DROP: ", id, data, trigger, center, index)
+    console.log("DROP: ", dropdata)
 
     if (dropActions[id]) {
-        let dropData: any = { drag: sel, drop: { id, data, trigger, center, index } }
+        let dropData = { drag: sel, drop: dropdata }
 
-        h = dropActions[id](dropData, h)
-        if (h && h.id) history(h)
+        const hist = dropActions[id](dropData, h) as History | undefined
+        if (hist && hist.id) history(hist)
         deselect()
         return
     }

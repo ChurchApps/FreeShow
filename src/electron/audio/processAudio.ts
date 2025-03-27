@@ -1,3 +1,4 @@
+import type { OpusEncoder } from "@discordjs/opus"
 import { NdiSender } from "../ndi/NdiSender"
 import { getServerData, toServer } from "../servers"
 
@@ -5,7 +6,7 @@ import { getServerData, toServer } from "../servers"
 const channelCount = 2
 const sampleRate = 48000 // Hz
 
-let opusEncoder: any = null
+let opusEncoder: OpusEncoder | null = null
 try {
     const { OpusEncoder } = require("@discordjs/opus")
     opusEncoder = new OpusEncoder(sampleRate, channelCount)
@@ -33,7 +34,7 @@ export async function processAudio(buffer: Buffer) {
     sendAudioToOutputServer(buffer, { sampleRate, channelCount })
 }
 
-export function sendAudioToOutputServer(buffer: Buffer, { sampleRate, channelCount }: any) {
+export function sendAudioToOutputServer(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
     if (!getServerData("OUTPUT_STREAM").sendAudio) return
 
     toServer("OUTPUT_STREAM", { channel: "AUDIO_BUFFER", data: { buffer, sampleRate, channelCount } })

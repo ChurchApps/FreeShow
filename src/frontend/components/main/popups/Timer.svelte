@@ -237,7 +237,7 @@
         <CombinedInput style="margin-top: 10px;" textWidth={50}>
             <p><T id="timer.clock" /></p>
             <!-- <Date value={to} on:change={(e) => (to = e.detail)} />x -->
-            <input type="time" bind:value={timer.time} />
+            <input type="time" step="2" bind:value={timer.time} />
         </CombinedInput>
 
         <CombinedInput textWidth={50}>

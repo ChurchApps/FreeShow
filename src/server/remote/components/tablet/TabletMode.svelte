@@ -15,7 +15,9 @@
     import Scripture from "../pages/Scripture.svelte"
     import Shows from "../pages/Shows.svelte"
     import TextEdit from "../pages/TextEdit.svelte"
+    import AudioPreview from "../show/AudioPreview.svelte"
     import Clear from "../show/Clear.svelte"
+    import OverlayPreview from "../show/OverlayPreview.svelte"
     import Slide from "../show/Slide.svelte"
     import Slides from "../show/Slides.svelte"
 
@@ -46,11 +48,11 @@
 
     // SHOW
 
-    let scrollElem: any
+    let scrollElem: HTMLElement | undefined
     // auto scroll
     $: {
         if (scrollElem && $outSlide !== null && slideView === "lyrics") {
-            let offset = scrollElem.children[$outSlide]?.offsetTop - scrollElem.offsetTop - 5
+            let offset = (scrollElem.children[$outSlide] as HTMLElement)?.offsetTop - scrollElem.offsetTop - 5
             scrollElem.scrollTo(0, offset)
         }
     }
@@ -240,6 +242,10 @@
         {/if}
     {:else if $active.type === "image" || $active.type === "video"}
         <Media tablet />
+    {:else if $active.type === "audio"}
+        <AudioPreview active={$active} />
+    {:else if $active.type === "overlay"}
+        <OverlayPreview show={$active} />
     {:else}
         <p style="text-transform: capitalize;">{$active.type}</p>
     {/if}

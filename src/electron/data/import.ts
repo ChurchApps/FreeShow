@@ -1,19 +1,24 @@
 import path, { join } from "path"
+// @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
 import PPTX2Json from "pptx2json"
 import protobufjs from "protobufjs"
+// @ts-ignore
 import SqliteToJson from "sqlite-to-json"
 import sqlite3 from "sqlite3"
+// @ts-ignore
 import WordExtractor from "word-extractor"
-import { toApp } from ".."
-import { IMPORT, MAIN } from "../../types/Channels"
+import { ToMain } from "../../types/IPC/ToMain"
+import { sendToMain } from "../IPC/main"
 import { dataFolderNames, doesPathExist, getDataFolder, getExtension, makeDir, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
 import { detectFileType } from "./bibleDetecter"
 import { filePathHashCode } from "./thumbnails"
 import { decompress, isZip } from "./zip"
 
-const specialImports: any = {
+type FileData = { content: Buffer | string; name?: string; extension?: string }
+
+const specialImports = {
     powerpoint: async (files: string[]) => {
-        let data: any[] = []
+        let data: FileData[] = []
 
         // https://www.npmjs.com/package/pptx2json
         const pptx2json = new PPTX2Json()
@@ -25,7 +30,7 @@ const specialImports: any = {
         return data
     },
     word: async (files: string[]) => {
-        let data: any[] = []
+        let data: FileData[] = []
 
         // https://www.npmjs.com/package/word-extractor
         const extractor = new WordExtractor()
@@ -39,7 +44,7 @@ const specialImports: any = {
     pdf: (files: string[]) => files,
     powerkey: (files: string[]) => files,
     sqlite: async (files: string[]) => {
-        let data: any[] = []
+        let data: FileData[] = []
 
         await Promise.all(files.map(sqlToFile))
 
@@ -49,7 +54,7 @@ const specialImports: any = {
             })
 
             return new Promise((resolve) => {
-                exporter.all((err: any, all: any) => {
+                exporter.all((err: Error, all: any) => {
                     if (err) {
                         console.log(err)
                         return
@@ -63,27 +68,16 @@ const specialImports: any = {
 
         return data
     },
-    songbeamer: async (files: string[], data: any) => {
-        let encoding = data.encoding.id
-        let fileContents = await Promise.all(files.map(async (file) => await readFile(file, encoding)))
-        return {
-            files: fileContents,
-            length: fileContents.length,
-            encoding,
-            category: data.category.id,
-            translationMethod: data.translation,
-        }
-    },
 }
 
 // protobufjs (.pro) import can't handle close to 1000 files at once
 const BATCH_SIZE = 500
 
-export async function importShow(id: any, files: string[] | null, importSettings: any) {
+export async function importShow(id: string, files: string[] | null, importSettings: any) {
     if (!files?.length) return
 
     let importId = id
-    let data: any[] = []
+    let data: (FileData | string)[] = []
 
     let sqliteFile = id === "openlp" && files.find((a) => a.endsWith(".sqlite"))
     if (sqliteFile) files = files.filter((a) => a.endsWith(".sqlite"))
@@ -94,21 +88,36 @@ export async function importShow(id: any, files: string[] | null, importSettings
         return
     }
 
+    if (id === "songbeamer") {
+        let encoding = importSettings.encoding.id
+        let fileContents = await Promise.all(files.map(async (file) => await readFile(file, encoding)))
+        const custom = {
+            files: fileContents,
+            length: fileContents.length,
+            encoding,
+            category: importSettings.category.id,
+            translationMethod: importSettings.translation,
+        }
+
+        sendToMain(ToMain.IMPORT2, { channel: id, data: [], custom })
+        return
+    }
+
     const zip = ["zip", "probundle", "vpc", "qsp"]
     let zipFiles = files.filter((a) => zip.includes(a.slice(a.lastIndexOf(".") + 1).toLowerCase()))
     if (zipFiles.length) {
         data = decompress(zipFiles)
         if (data.length) {
             for (let i = 0; i < data.length; i++) {
-                const customContent = await checkSpecial(data[i])
-                if (customContent) data[i].content = customContent
+                const customContent = await checkSpecial(data[i] as FileData)
+                if (customContent) (data[i] as FileData).content = customContent
             }
-            toApp(IMPORT, { channel: id, data })
+            sendToMain(ToMain.IMPORT2, { channel: id, data })
         }
         return
     }
 
-    if (specialImports[importId]) data = await specialImports[importId](files, importSettings)
+    if (importId in specialImports) data = await specialImports[importId as keyof typeof specialImports](files)
     else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
         for (let i = 0; i < files.length; i += BATCH_SIZE) {
@@ -122,10 +131,10 @@ export async function importShow(id: any, files: string[] | null, importSettings
 
     // auto detect version
     if (id === "BIBLE") {
-        data = data.map((file) => ({ ...file, type: detectFileType(file.content) }))
+        data = (data as FileData[]).map((file) => ({ ...file, type: detectFileType(file.content as string) }))
     }
 
-    toApp(IMPORT, { channel: id, data })
+    sendToMain(ToMain.IMPORT2, { channel: id, data })
 }
 
 async function readFile(filePath: string, encoding: BufferEncoding = "utf8") {
@@ -138,7 +147,7 @@ async function readFile(filePath: string, encoding: BufferEncoding = "utf8") {
         if (extension === "pro") content = await decodeProto(filePath)
         else content = await readFileAsync(filePath, encoding)
     } catch (err) {
-        console.error("Error reading file:", err.stack)
+        console.error("Error reading file:", (err as Error).stack)
     }
 
     return { content, name, extension }
@@ -149,7 +158,7 @@ const getFileName = (filePath: string) => path.basename(filePath).slice(0, path.
 // PROJECT
 
 async function importProject(files: string[], dataPath: string) {
-    toApp(MAIN, { channel: "ALERT", data: "popup.importing" })
+    sendToMain(ToMain.ALERT, "popup.importing")
 
     // some .project files are plain JSON and others are zip
     const zipFiles: string[] = []
@@ -162,7 +171,7 @@ async function importProject(files: string[], dataPath: string) {
         })
     )
 
-    const data = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
+    const data: FileData[] = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
 
     const importDataPath = getDataFolder(dataPath, dataFolderNames.imports)
     const importFolder = path.join(importDataPath, "Projects")
@@ -173,9 +182,12 @@ async function importProject(files: string[], dataPath: string) {
     if (!doesPathExist(importFolder)) makeDir(importFolder)
 
     zipFiles.forEach((zipFile) => {
-        let zipData = decompress([zipFile], true)
+        let zipData: FileData[] = decompress([zipFile], true)
         const dataFile = zipData.find((a) => a.name === "data.json")
-        const dataContent = JSON.parse(dataFile.content)
+        if (!dataFile) return
+
+        let content = dataFile.content as string
+        const dataContent = JSON.parse(content)
 
         // write files
         let replacedMedia: { [key: string]: string } = {}
@@ -203,16 +215,17 @@ async function importProject(files: string[], dataPath: string) {
         Object.entries(replacedMedia).forEach(([oldPath, newPath]) => {
             oldPath = oldPath.replace(/\\/g, "\\\\")
             newPath = newPath.replace(/\\/g, "\\\\")
-            dataFile.content = dataFile.content.replaceAll(oldPath, newPath)
+            content = content.replaceAll(oldPath, newPath)
         })
 
+        dataFile.content = content
         data.push(dataFile)
     })
 
     // remove folder if no files stored
     // if (!readFolder(importFolder).length) deleteFolder(importFolder)
 
-    toApp(IMPORT, { channel: "freeshow_project", data })
+    sendToMain(ToMain.IMPORT2, { channel: "freeshow_project", data })
 }
 
 // PROTO
@@ -232,7 +245,7 @@ async function decodeProto(filePath: string, fileContent: Buffer | null = null) 
     return JSON.stringify(message)
 }
 
-async function checkSpecial(file: any) {
-    if (file.extension === "pro") return await decodeProto("", file.content)
+async function checkSpecial(file: FileData) {
+    if (file.extension === "pro" && typeof file.content !== "string") return await decodeProto("", file.content)
     return
 }

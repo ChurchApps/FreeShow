@@ -47,7 +47,7 @@
     }
 
     // custom style
-    let webElem: any = null
+    let webElem: any
     $: if (webElem) webElem.addEventListener("dom-ready", overlayReady)
     function overlayReady() {
         let customStyle = captionData.style

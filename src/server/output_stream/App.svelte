@@ -7,7 +7,7 @@
     let socket = io()
 
     // FPS
-    let secondsTimeout: any = null
+    let secondsTimeout: NodeJS.Timeout | null = null
     let count = 0
     let fps = 0
     let start = 0
@@ -119,7 +119,7 @@
 
     // button
     let clicked: boolean = false
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     function click() {
         clicked = true
         if (timeout) clearTimeout(timeout)

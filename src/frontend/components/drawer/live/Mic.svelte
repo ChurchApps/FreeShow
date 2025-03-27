@@ -1,12 +1,13 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
+    import { sendMain } from "../../../IPC/main"
     import { activeFocus, activeShow, focusMode, playingAudio } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
 
-    export let mic: any
+    export let mic: { id: string; name: string }
 
     // https://dobrian.github.io/cmp/topics/sample-recording-and-playback-with-web-audio-api/1.loading-and-playing-sound-files.html
 
@@ -29,13 +30,13 @@
 
     let soundLevel: number = 0
 
-    let audioStream: any
-    let context: any
-    let source: any
-    // let gainNode: any
-    let audio: any
+    let audioStream: MediaStream | undefined
+    let context: AudioContext | undefined
+    let source: MediaStreamAudioSourceNode | undefined
+    // let gainNode
+    let audio: HTMLAudioElement | undefined
 
-    const handleSuccess = function (stream: any) {
+    const handleSuccess = function (stream: MediaStream) {
         audioStream = stream
         context = new AudioContext()
         source = context.createMediaStreamSource(stream)
@@ -83,7 +84,7 @@
             .catch((err) => {
                 console.log(err)
                 if (err.name === "NotReadableError") {
-                    window.api.send(MAIN, { channel: "ACCESS_MICROPHONE_PERMISSION" })
+                    sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
                 }
 
                 // retry
@@ -92,7 +93,7 @@
     }
 
     onDestroy(() => {
-        audioStream?.getAudioTracks().forEach((track: any) => track.stop())
+        audioStream?.getAudioTracks().forEach((track) => track.stop())
     })
 
     $: muted = !$playingAudio[mic.id]

@@ -6,7 +6,7 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
         let newText: any[] = []
         let pos: number = 0
         if (selection[i]?.start !== undefined) {
-            line.text?.forEach((text: any) => {
+            line.text?.forEach((text) => {
                 const length: number = text.value.length
                 let from = 0
                 let to = length
@@ -142,7 +142,7 @@ export function getSelectionRange(): { start: number; end: number }[] {
 
     if (!parent?.closest(".edit")) return sel
 
-    new Array(...parent.childNodes).forEach((br: any, line: number) => {
+    new Array(...parent.childNodes).forEach((br, line: number) => {
         if (!sel[line]) sel[line] = {}
         let count: number = 0
 
@@ -187,13 +187,15 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
     let style: string = ""
     ;(pos || lines).forEach((_a: any, i: number) => {
         let currentPos: number = 0
-        lines[i]?.text?.some((text): any => {
+        lines[i]?.text?.some((text) => {
             // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
             if (pos?.[i] && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
                 style = text.style
                 return true
             }
+
             currentPos += text.value.length
+            return false
         })
     })
 
@@ -208,7 +210,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
 // get item align at selected pos
 export function getLastLineAlign(item: Item, selection: any): string {
     let last: string = ""
-    item?.lines!.forEach((line: any, i: number) => {
+    item?.lines!.forEach((line, i) => {
         if (!selection || selection[i]?.start !== undefined) last = line.align
     })
     return last
@@ -273,9 +275,9 @@ export function getItemChords(item: Item): string {
     return text
 }
 
-export function getLineText(line: any): string {
+export function getLineText(line: Line): string {
     let text: string = ""
-    line?.text?.forEach((content: any) => {
+    line?.text?.forEach((content) => {
         text += content.value
     })
     return text
@@ -413,7 +415,7 @@ export function createRange2(node: any, selection: { start: number; end: number 
             let br = node.children[i]
             let pos: null | number = 0
             if (br.childNodes.length) {
-                new Array(...br.childNodes).forEach((text: any) => {
+                new Array(...br.childNodes).forEach((text) => {
                     pos += text.innerText.length
                     if (!started && pos !== null && pos >= a.start) {
                         started = true
@@ -438,9 +440,9 @@ export function setCurrentCursorPosition(element: any, pos: number) {
 
         // pos = 90
         // pos = 142
-        let range: any = createRange(element, pos)
+        let range = createRange(element, pos)
 
-        // let range: any = createRange(element.childNodes[0], 5)
+        // let range = createRange(element.childNodes[0], 5)
 
         if (range) {
             range.collapse(false)

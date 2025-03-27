@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
 
-    export let scrollElem: any = null
+    export let scrollElem: Element | null = null
     export let timeout: number = 0
     export let smoothTimeout: number = 800
     export let offset: number = -1
@@ -21,22 +21,22 @@
 
         // set this to make it scroll (because of dropping when scrolled)
         if (elem.querySelector(".droparea")) elem = elem.querySelector(".droparea")
-        if (elem.querySelector(".droparea")) elem = elem.querySelector(".droparea")
-        elem.setAttribute("style", (elem.getAttribute("style") || "") + behaviour)
+        if (elem?.querySelector(".droparea")) elem = elem.querySelector(".droparea")
+        elem?.setAttribute("style", (elem.getAttribute("style") || "") + behaviour)
 
         t = setTimeout(() => {
             if (!t) return
-            elem.scrollTo(0, offset)
+            elem?.scrollTo(0, offset)
             t = null
         }, timeout)
 
         // make sure its scrolled
-        if (index > 5 || offset === elem.scrollTop) return
+        if (index > 5 || offset === elem?.scrollTop) return
         index++
         if (st) return
         st = setTimeout(() => {
             if (!st) return
-            if (offset !== elem.scrollTop) scroll(index)
+            if (offset !== elem?.scrollTop) scroll(index)
             st = null
         }, timeout + 400)
     }

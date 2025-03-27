@@ -14,7 +14,7 @@ import util from "./vingester-util"
 export class NdiSender {
     static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
-    static NDI: any = {}
+    static NDI: { [key: string]: { name: string; status?: string; previousStatus?: string; sender?: any; timer?: NodeJS.Timeout; sendAudio?: boolean } } = {}
 
     static stopSenderNDI(id: string) {
         if (!this.NDI[id]?.timer) return
@@ -133,8 +133,8 @@ export class NdiSender {
     }
 
     static bytesForFloat32 = 4
-    static sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: any) {
-        if (this.ndiDisabled || !Object.values(this.NDI).find((a: any) => a?.sendAudio)) return
+    static sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
+        if (this.ndiDisabled || !Object.values(this.NDI).find((a) => a?.sendAudio)) return
         const grandiose = require("grandiose")
 
         const ndiAudioBuffer = convertPCMtoPlanarFloat32(buffer, channelCount)
@@ -156,11 +156,11 @@ export class NdiSender {
             data: ndiAudioBuffer,
         }
 
-        Object.values(this.NDI).forEach((sender: any) => {
-            if (!sender?.sendAudio || !sender?.sender) return
+        Object.values(this.NDI).forEach((data) => {
+            if (!data?.sendAudio || !data?.sender) return
 
             try {
-                sender.sender.audio(frame)
+                data.sender.audio(frame)
             } catch (err) {
                 console.log("Error sending NDI audio frame:", err)
             }

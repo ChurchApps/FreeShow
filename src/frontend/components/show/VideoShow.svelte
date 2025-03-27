@@ -1,9 +1,9 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
+    import { requestMain, sendMain } from "../../IPC/main"
     import { activeProject, activeRename, dictionary, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
-    import { awaitRequest, send } from "../../utils/request"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { enableSubtitle, getExtension, getFileName, removeExtension } from "../helpers/media"
@@ -30,7 +30,7 @@
 
     $: tracks = $media[showId]?.tracks || []
     $: subtitle = $media[showId]?.subtitle || ""
-    $: if (type !== "player" && showId && $media[showId]?.tracks === undefined) send(MAIN, ["MEDIA_TRACKS"], { path: showId })
+    $: if (type !== "player" && showId && $media[showId]?.tracks === undefined) sendMain(Main.MEDIA_TRACKS, { path: showId })
 
     export let mediaStyle: MediaStyle = {}
 
@@ -119,7 +119,7 @@
         if (autoPause) videoData.paused = false
         else videoTime = 0
 
-        if (subtitle) enableSubtitle(video, subtitle)
+        if (subtitle && video) enableSubtitle(video, subtitle)
     }
 
     // player
@@ -134,7 +134,7 @@
         }, 2000)
     }
 
-    let video: any
+    let video: HTMLVideoElement | undefined
     async function onPlay() {
         // autoPause = false
         if (hasLoaded) {
@@ -188,7 +188,7 @@
         setOutput("background", bg)
     }
 
-    $: if (video && mediaStyle.speed) video.playbackRate = mediaStyle.speed
+    $: if (video && mediaStyle.speed) video.playbackRate = Number(mediaStyle.speed)
 
     let edit: boolean = false
 
@@ -210,7 +210,7 @@
 
     async function subtitlePicked(e: any) {
         let path = e.detail || ""
-        let content = (await awaitRequest(MAIN, "READ_FILE", { path }))?.content
+        let content = (await requestMain(Main.READ_FILE, { path }))?.content
         if (!content) return
 
         let extension = getExtension(path)
@@ -248,7 +248,7 @@
         })
     }
 
-    $: if (subtitle !== undefined) enableSubtitle(video, subtitle)
+    $: if (subtitle !== undefined && video) enableSubtitle(video, subtitle)
 
     // MARKER
 
@@ -298,7 +298,7 @@
     $: mediaStyleString = `width: 100%;height: 100%;filter: ${mediaStyle.filter || ""};object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
     $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 
-    let blurVideo: any = null
+    let blurVideo: HTMLVideoElement | undefined
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.3 || videoTime > blurVideo.currentTime + 0.3)) blurVideo.currentTime = videoTime
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused

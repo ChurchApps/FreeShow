@@ -4,6 +4,7 @@
     import DrawTools from "./components/draw/DrawTools.svelte"
     import Slide from "./components/draw/Slide.svelte"
     import Drawer from "./components/drawer/Drawer.svelte"
+    import AudioTools from "./components/edit/AudioTools.svelte"
     import EditTools from "./components/edit/EditTools.svelte"
     import Editor from "./components/edit/Editor.svelte"
     import EffectTools from "./components/edit/EffectTools.svelte"
@@ -88,7 +89,7 @@
                     {#if $activeEdit.type === "media"}
                         <MediaTools />
                     {:else if $activeEdit.type === "audio"}
-                        <!-- Audio tools -->
+                        <AudioTools />
                     {:else if $activeEdit.type === "effect"}
                         <EffectTools />
                     {:else if $activeEdit.type === "overlay" || $activeEdit.type === "template" || $showsCache[$activeShow?.id || ""]}

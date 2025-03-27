@@ -6,9 +6,9 @@
     import StageShow from "../../stage/StageShow.svelte"
     import Output from "../Output.svelte"
 
-    export let fullscreen: any = false
-    export let disableTransitions: any = false
-    export let disabled: any = false
+    export let fullscreen: boolean = false
+    export let disableTransitions: boolean = false
+    export let disabled: boolean = false
     export let outputId: string = ""
     export let style: string = ""
 

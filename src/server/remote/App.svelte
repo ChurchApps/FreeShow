@@ -103,5 +103,12 @@ height: 100vh; */
             font-weight: 600;
             font-size: 0.9em;
         }
+
+        /* CHECKERED */
+
+        .checkered {
+            /* background-color: var(--transparent); */
+            background: repeating-conic-gradient(rgba(70, 70, 80, 0.1) 0% 25%, transparent 0% 50%) 50% / 26px 26px;
+        }
     </style>
 </svelte:head>

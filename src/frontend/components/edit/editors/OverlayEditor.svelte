@@ -26,7 +26,7 @@
 
     let lines: [string, number][] = []
     let mouse: any = null
-    let newStyles: any = {}
+    let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
 
     let width: number = 0
@@ -44,13 +44,13 @@
         if (!Object.keys(newStyles).length) return
 
         let items = Slide.items
-        let values: any[] = []
+        let values: string[] = []
         active.forEach((id) => {
             let item = items[id]
-            let styles: any = getStyles(item.style)
+            let styles = getStyles(item.style)
             let textStyles: string = ""
 
-            Object.entries(newStyles).forEach(([key, value]: any) => (styles[key] = value))
+            Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
             Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
             // TODO: move multiple!
@@ -66,7 +66,7 @@
     let zoom = 1
 
     // shortcut
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
         if (nextScrollTimeout) return

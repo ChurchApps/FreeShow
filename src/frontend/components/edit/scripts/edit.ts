@@ -2,17 +2,17 @@ import { hexToRgb, splitRgb } from "../../helpers/color"
 import type { EditInput } from "../values/boxes"
 
 export function getOriginalValue(boxEdit: { [key: string]: EditInput[] }, key: string): string {
-    let values: any[] = []
-    Object.values(boxEdit).forEach((inputs: any[]) => {
-        inputs.forEach((input: any) => {
+    let values: EditInput[] = []
+    Object.values(boxEdit).forEach((inputs) => {
+        inputs.forEach((input) => {
             if (input.key === key) values.push(input)
         })
     })
 
     if (!values.length) return ""
-    if (values.length === 1) return values[0].value
+    if (values.length === 1) return (values[0].value || "").toString()
     return values
-        .sort((a: any, b: any) => (a.valueIndex > b.valueIndex ? 1 : -1))
+        .sort((a, b) => ((a.valueIndex || 0) > (b.valueIndex || 0) ? 1 : -1))
         .map((a) => a.value + (a.extension || ""))
         .join(" ")
 }
@@ -22,7 +22,7 @@ export function removeExtension(value: string | number | boolean, extension: str
     return value.replace(/[^0-9.-]/g, "")
 }
 
-// export function editValue(id: "box" | "media", key: string, value: any) {
+// export function editValue(id: "box" | "media", key: string, value) {
 
 // }
 

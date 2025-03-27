@@ -17,6 +17,7 @@ interface Window {
         send: (channel: string, data?: any) => void
         receive: (channel: string, func: any, id?: string) => void
         removeListener: (channel: string, id: string) => void
+        getListeners: () => [string, number][]
         showFilePath: (file: File) => string
     }
 }

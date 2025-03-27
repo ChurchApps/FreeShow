@@ -10,7 +10,7 @@
     import NumberInput from "../inputs/NumberInput.svelte"
     import Panel from "../system/Panel.svelte"
 
-    const defaults: any = {
+    const defaults = {
         focus: {
             color: "#000000",
             opacity: 0.8,
@@ -48,6 +48,7 @@
         paint: {
             color: "#ffffff",
             size: 10,
+            straight: false,
             // not saved:
             threed: false,
             dots: false,
@@ -59,17 +60,17 @@
     const check = (e: any, key: string) => update(key, e.target.checked)
 
     const update = (key: string, value: any) => {
-        drawSettings.update((ds: any) => {
-            ds[$drawTool][key] = value
-            return ds
+        drawSettings.update((a) => {
+            a[$drawTool][key] = value
+            return a
         })
     }
 
     $: if (!Object.keys($drawSettings[$drawTool] || {}).length) reset()
     function reset() {
-        drawSettings.update((ds: any) => {
-            ds[$drawTool] = clone(defaults[$drawTool] || {})
-            return ds
+        drawSettings.update((a) => {
+            a[$drawTool] = clone(defaults[$drawTool] || {})
+            return a
         })
     }
 </script>
@@ -94,7 +95,7 @@
                                         {/if}
                                         {#if key === "color"}
                                             <Color {value} on:input={(e) => change(e, key)} style="width: 100%;" />
-                                        {:else if ["glow", "hold", "rainbow", "hollow", "dots", "threed"].includes(key)}
+                                        {:else if ["glow", "hold", "rainbow", "hollow", "straight", "dots", "threed"].includes(key)}
                                             <div class="alignRight">
                                                 <Checkbox checked={value} on:change={(e) => check(e, key)} />
                                             </div>

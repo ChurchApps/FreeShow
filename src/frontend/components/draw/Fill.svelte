@@ -1,5 +1,5 @@
 <script lang="ts">
-    export let settings: any
+    export let settings: { [key: string]: any }
 
     // RAINBOW
 
@@ -10,7 +10,7 @@
     let g = 0
     let b = 0
 
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     function generate() {
         if (r <= 255 && g == 0 && b == 0) r++
         if (r == 255 && b == 0 && g <= 255) g++

@@ -2,40 +2,81 @@
     import { activeStage, stageShows, theme, themes } from "../../../stores"
     import { addStyleString } from "../../edit/scripts/textStyle"
     import EditValues from "../../edit/tools/EditValues.svelte"
-    import { trackerEdits } from "../../edit/values/boxes"
-    import T from "../../helpers/T.svelte"
+    import { boxes, type EditInput, setBoxInputValue } from "../../edit/values/boxes"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getStyles } from "../../helpers/style"
-    import Center from "../../system/Center.svelte"
     import { updateStageShow } from "../stage"
-    import { textEdits } from "../values/text"
+    import { slideNotesEdit, slideTextEdits, variableEdits } from "../values/text"
 
-    $: items = $activeStage.items
-    $: stageItems = $stageShows[$activeStage.id!].items
-    $: item = items ? stageItems[items[0]] : null
+    let activeItemIds: string[] = []
+    $: activeItemIds = $activeStage.items?.length ? $activeStage.items : Object.keys(stageItems)
+    $: stageItems = $stageShows[$activeStage.id!]?.items || {}
+    $: activeItemId = activeItemIds[0] || ""
 
-    let edits: any = {}
-    $: if (item) {
-        edits = clone(textEdits)
+    $: item = activeItemId ? stageItems[activeItemId] : null
 
-        // custom input values
-        if (items[0].includes("slide") && !items[0].includes("text") && !items[0].includes("notes") && !items[0].includes("tracker")) edits = { chords: edits.chords }
-        else if (items[0].includes("slide_text")) {
-            if (items[0].includes("next_slide_text")) edits.default.push({ name: "max_lines", id: "lineCount", input: "number", value: 0 })
-            // WIP only show this if current output has more than one item:
-            edits.default.push({ name: "invert_items", id: "invertItems", input: "checkbox", value: false })
-        } else if (items[0].includes("tracker")) {
-            let newEdits = clone(textEdits)
+    $: type = item?.type || ""
+    $: {
+        if (activeItemId.includes("tracker")) type = "slide_tracker"
+        else if (item?.type === "slide_text" || item?.type === "slide_notes" || item?.type === "variable" || activeItemId.includes("text") || activeItemId.includes("slide") || activeItemId.includes("notes") || activeItemId.includes("variable"))
+            type = "text"
+        else if (activeItemId.includes("clock")) type = "clock"
+        else if (activeItemId.includes("timer")) type = "timer"
+    }
+
+    let edits: { [key: string]: EditInput[] } = {}
+    let defaultEdits = edits
+    $: if (item) initEdits()
+    function initEdits() {
+        if (!item) return
+
+        edits = clone(boxes[type]?.edit || {})
+
+        if (type === "text") {
+            setBoxInputValue(edits, "default", "font-family", "value", "Arial")
+            removeInput(edits.default, "textFit")
+            removeInput(edits.text, "nowrap")
+            removeInput(edits.lines, "specialStyle.lineBg")
+            removeInput(edits.lines, "specialStyle.opacity")
+            delete edits.list
+            delete edits.special
+        }
+
+        if (item.type === "slide_text" || activeItemId.includes("slide_text")) {
+            let newEdits = clone(edits)
             delete newEdits.default
-            delete newEdits.align
+
+            if (item.keepStyle) {
+                let textEdits = clone(slideTextEdits)
+                removeInput(textEdits, "invertItems")
+                edits = { default: textEdits }
+            } else {
+                edits = { default: clone(slideTextEdits), font: edits.default, ...newEdits }
+            }
+        } else if (item.type === "slide_notes") {
+            let newEdits = clone(edits)
+            delete newEdits.default
             delete newEdits.chords
-            edits = { default: trackerEdits, font: edits.default, ...newEdits }
-        } else if (items[0].includes("clock")) {
-            edits.default.push({ name: "clock.seconds", id: "clock.seconds", input: "checkbox", value: true })
-            edits.default.push({ name: "sort.date", id: "clock.show_date", input: "checkbox", value: false })
-        } else if (items[0].includes("timer")) edits.default.push({ name: "timer.hours", id: "timer.showHours", input: "checkbox", value: item.timer?.showHours !== false })
-        else if (items[0].includes("output")) edits = {}
+            edits = { default: slideNotesEdit, font: edits.default, ...newEdits }
+        } else if (item.type === "text") {
+            removeInput(edits.default, "auto")
+        } else if (item.type === "variable") {
+            let newEdits = clone(edits)
+            delete newEdits.default
+            delete newEdits.chords
+            edits = { default: variableEdits, font: edits.default, ...newEdits }
+        } else if (item.type === "clock") {
+            // show seconds by default on stage
+            setBoxInputValue(edits, "default", "clock.seconds", "value", true)
+        }
+
+        defaultEdits = clone(edits)
+    }
+
+    function removeInput(edits: any, id: string) {
+        let index = edits.findIndex((a) => a.id === id || a.input === id)
+        if (index > -1) edits.splice(index, 1)
     }
 
     let data: { [key: string]: any } = {}
@@ -43,26 +84,68 @@
 
     // $: if (edits) updateAuto(item?.auto || true)
     $: if (item) updateAuto(item?.auto ?? true)
-    $: if (edits.chords) {
-        edits.chords[0].value = item?.chords
-        edits.chords[1].hidden = !item?.chords
-        edits.chords[2].hidden = !item?.chords
 
-        if (item?.chordsData?.color) edits.chords[1].value = item.chordsData.color
-        if (item?.chordsData?.size) edits.chords[2].value = item.chordsData.size
+    $: if (item && type === "text") {
+        let sectionId = edits.font ? "font" : "default"
+        setBoxInputValue(edits, sectionId, "font-family", "styleValue", data["font"] || "")
+        setBoxInputValue(edits, sectionId, "font-size", "disabled", item.type !== "text" && item.auto !== false)
+        // setBoxInputValue(edits, sectionId, "textFit", "hidden", item?.auto !== false)
     }
-    $: if (items[0]?.includes("tracker") && item?.tracker && edits.default?.[0]?.id === "tracker.type") {
-        if (item.tracker.type) edits.default[0].value = item.tracker.type
-        edits.default[1].value = item.tracker.accent || $themes[$theme]?.colors?.secondary || "#F0008C"
+    $: if (item && item.type === "slide_notes") {
+        setBoxInputValue(edits, "default", "slideOffset", "value", item.slideOffset || 0)
     }
-    $: if (item && items[0]?.includes("next_slide_text") && edits.default[5]) {
-        edits.default[5].value = item.lineCount || 0
+    $: if (item && (item.type === "slide_text" || activeItemId?.includes("slide_text"))) {
+        setBoxInputValue(edits, "default", "slideOffset", "value", item.slideOffset || 0)
+
+        setBoxInputValue(edits, "default", "lineCount", "value", item.lineCount || 0)
+        setBoxInputValue(edits, "default", "lineCount", "hidden", Number(item.slideOffset || 0) === 0)
+
+        setBoxInputValue(edits, "default", "includeMedia", "value", !!item.includeMedia)
+        setBoxInputValue(edits, "default", "keepStyle", "value", !!item.keepStyle)
+        setBoxInputValue(edits, "default", "itemNumber", "value", Number(item.itemNumber || 0))
+        setBoxInputValue(edits, "default", "invertItems", "value", !!item.invertItems)
+        setBoxInputValue(edits, "default", "invertItems", "hidden", Number(item.itemNumber || 0) !== 0)
     }
-    $: if (item && items[0]?.includes("slide_text") && edits.default[6]) {
-        edits.default[6].value = !!item.invertItems
+
+    $: if (edits.chords) {
+        let enabled = typeof item?.chords === "boolean" ? item?.chords : !!item?.chords?.enabled
+        setBoxInputValue(edits, "chords", "chords.enabled", "value", enabled)
+        setBoxInputValue(edits, "chords", "chords.color", "hidden", !enabled)
+        setBoxInputValue(edits, "chords", "chords.size", "hidden", !enabled)
+
+        let data = (typeof item?.chords === "boolean" ? (item as any)?.chordsData : item?.chords) || {}
+        if (data.color) setBoxInputValue(edits, "chords", "chords.color", "value", data.color)
+        if (data.size) setBoxInputValue(edits, "chords", "chords.size", "value", data.size)
     }
-    $: if (items[0]?.includes("slide_tracker") && edits?.default?.[2]) {
-        edits.default[2].hidden = item?.tracker?.type !== "group"
+    $: if (item?.type === "slide_tracker" || activeItemId?.includes("tracker")) {
+        if (item?.tracker?.type) setBoxInputValue(edits, "default", "tracker.type", "value", item.tracker.type)
+        setBoxInputValue(edits, "default", "tracker.accent", "value", item?.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C")
+
+        setBoxInputValue(edits, "default", "tracker.childProgress", "hidden", item?.tracker?.type !== "group")
+        setBoxInputValue(edits, "default", "tracker.oneLetter", "hidden", item?.tracker?.type !== "group")
+    }
+
+    $: if (item?.type === "variable") {
+        setBoxInputValue(edits, "default", "variable.id", "value", item.variable?.id)
+    }
+    $: if (item?.type === "camera") {
+        if (item.device?.name) setBoxInputValue(edits, "default", "device", "name", item.device.name)
+    }
+
+    $: if (item?.type === "timer" && item) {
+        setBoxInputValue(edits, "default", "timer.circleMask", "hidden", item.timer?.viewType !== "circle")
+        setBoxInputValue(edits, "default", "timer.showHours", "value", item.timer?.showHours !== false)
+        setBoxInputValue(edits, "default", "timer.showHours", "hidden", (item.timer?.viewType || "time") !== "time")
+        setBoxInputValue(edits, "font", "auto", "value", item.auto ?? true)
+    }
+    $: if (item?.type === "clock" && item) {
+        const clockType = item.clock?.type || "digital"
+        const dateFormat = item.clock?.dateFormat || "none"
+
+        setBoxInputValue(edits, "default", "clock.dateFormat", "hidden", clockType !== "digital")
+        setBoxInputValue(edits, "default", "clock.showTime", "hidden", clockType !== "digital" || dateFormat === "none")
+        setBoxInputValue(edits, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && item.clock?.showTime === false && dateFormat !== "none"))
+        setBoxInputValue(edits, "default", "clock.customFormat", "hidden", clockType !== "custom")
     }
 
     // CSS
@@ -104,7 +187,12 @@
             newValue[splitted[1]] = value
             value = newValue
         }
-        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: input.id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
+        history({
+            id: "UPDATE",
+            newData: { data: value, key: "items", subkey: input.id, keys: activeItemIds },
+            oldData: { id: $activeStage.id },
+            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") },
+        })
     }
 
     function updateAlign(input) {
@@ -113,8 +201,15 @@
 
         let value = input.value
 
-        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: id, keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
+        history({
+            id: "UPDATE",
+            newData: { data: value, key: "items", subkey: id, keys: activeItemIds },
+            oldData: { id: $activeStage.id },
+            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") },
+        })
     }
+
+    // WIP textbox lines does not update only selected text
 
     function updateStyle(e: any) {
         let input = e.detail
@@ -132,7 +227,24 @@
 
         if (!value) return
 
-        history({ id: "UPDATE", newData: { data: value, key: "items", subkey: "style", keys: items }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage_item_content", override: $activeStage.id + items.join("") } })
+        // only update items with same type
+        let updateType = item?.type
+
+        // only update changed value
+        let styles: { [key: string]: string } = {}
+        activeItemIds.forEach((itemId) => {
+            let item = stageItems[itemId]
+            if (!item || (!$activeStage.items?.length && item.type !== updateType)) return
+
+            styles[itemId] = addStyleString(item.style, [input.key, input.value])
+        })
+
+        history({
+            id: "UPDATE",
+            newData: { data: styles, key: "items", subkey: "style", keys: Object.keys(styles) },
+            oldData: { id: $activeStage.id },
+            location: { page: "stage", id: "stage_item_content", override: $activeStage.id + activeItemIds.join("") },
+        })
 
         if (!timeout) {
             updateStageShow()
@@ -143,13 +255,15 @@
         }
     }
 
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
 </script>
 
-{#if item}
-    <EditValues {edits} defaultEdits={clone(textEdits)} {alignStyle} {lineAlignStyle} styles={data} {item} on:change={updateStyle} />
-{:else}
+<!-- {#if item} -->
+<!-- {#key edits} -->
+<EditValues {edits} {defaultEdits} {alignStyle} {lineAlignStyle} styles={data} {item} on:change={updateStyle} isStage />
+<!-- {/key} -->
+<!-- {:else}
     <Center faded>
         <T id="empty.items" />
     </Center>
-{/if}
+{/if} -->

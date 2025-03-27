@@ -1,33 +1,31 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import { outputs } from "../../../stores"
     import { findMatchingOut } from "../../helpers/output"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
 
-    interface Screen {
-        id: string
-        name: string
-    }
-    export let screen: Screen
-    export let streams: any[]
+    export let screen: { id: string; name: string }
+    export let streams: MediaStream[]
     export let background: boolean = false
 
     let loaded = false
 
-    let canvas: any
-    let videoElem: any
+    let canvas: HTMLCanvasElement | undefined
+    let videoElem: HTMLVideoElement | undefined
 
     function ready() {
-        if (loaded || !videoElem || background) return
+        if (loaded || !videoElem || background || !canvas) return
 
         canvas.width = videoElem.offsetWidth
         canvas.height = videoElem.offsetHeight
-        canvas.getContext("2d").drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
+        canvas.getContext("2d")?.drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
         loaded = true
     }
 
+    // TS issue https://github.com/electron/electron/issues/27139
     let constraints: any = {
         video: {
             mandatory: {
@@ -60,7 +58,7 @@
                 console.log(err.name + ": " + msg)
 
                 // if (err.name === "NotReadableError") {
-                window.api.send(MAIN, { channel: "ACCESS_SCREEN_PERMISSION" })
+                sendMain(Main.ACCESS_SCREEN_PERMISSION)
                 // }
 
                 // retry

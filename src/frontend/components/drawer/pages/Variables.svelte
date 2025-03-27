@@ -40,8 +40,8 @@
     $: numberVariables = sortedVariables.filter((a) => a.type === "number")
     $: otherVariables = sortedVariables.filter((a) => a.type !== "number")
 
-    const min = -10000000
-    const max = 10000000
+    const minDefault = 0
+    const maxDefault = 1000
 </script>
 
 <svelte:window on:mouseup={() => disableDragging.set(false)} on:mousedown={mousedown} />
@@ -53,6 +53,8 @@
                 {@const number = Number(variable.number) || 0}
                 {@const stepSize = Number(variable.step) || 1}
                 {@const defaultValue = Number(variable.default) || 0}
+                {@const min = Number(variable.minValue ?? minDefault)}
+                {@const max = Number(variable.maxValue ?? maxDefault)}
 
                 <SelectElem style="width: calc(25% - 5px);" id="variable" data={variable} draggable>
                     <div class="variable numberBox context #variable">
@@ -77,9 +79,9 @@
                             />
                         </div>
 
-                        <span style="justify-content: center;padding: 5px;">
+                        <span style="justify-content: center;padding: 5px;width: 100%;">
                             <Icon id={variable.type} right />
-                            <p>
+                            <p title={variable.name}>
                                 {#if variable.name?.length}
                                     {variable.name}
                                 {:else}
@@ -89,10 +91,10 @@
                         </span>
 
                         <div class="buttons">
-                            <Button id="decrement" title={$dictionary.actions?.increment} on:click={() => updateVariable(number - 1 * stepSize, variable.id, "number")} center style={"flex: 1;"} disabled={number <= min} dark>
+                            <Button id="decrement" title={$dictionary.actions?.decrement} on:click={() => updateVariable(Math.max(min, number - 1 * stepSize), variable.id, "number")} center style={"flex: 1;"} disabled={number <= min} dark>
                                 <Icon id="remove" size={2.8} white />
                             </Button>
-                            <Button id="increment" title={$dictionary.actions?.decrement} on:click={() => updateVariable(number + 1 * stepSize, variable.id, "number")} center style={"flex: 1;"} disabled={number >= max} dark>
+                            <Button id="increment" title={$dictionary.actions?.increment} on:click={() => updateVariable(Math.min(max, number + 1 * stepSize), variable.id, "number")} center style={"flex: 1;"} disabled={number >= max} dark>
                                 <Icon id="add" size={2.8} white />
                             </Button>
                         </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Selected } from "../../../types/Main"
     import { activePopup, selected } from "../../stores"
     import { customIcons } from "../../values/customIcons"
     import icons from "../../values/icons"
@@ -10,7 +11,7 @@
     export let fill: boolean = false
     export let custom: boolean = false
     export let select: boolean = false
-    export let selectData: any = null
+    export let selectData: Selected | null = null
     export let box: number = 24
 
     $: width = size + "rem"

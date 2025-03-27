@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import { activePopup, alertMessage } from "../../../stores"
-    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -20,9 +20,9 @@
 
     function click(e: any) {
         if (e.target.closest(".website")) {
-            send(MAIN, ["URL"], "https://freeshow.app/?download")
+            sendMain(Main.URL, "https://freeshow.app/?download")
         } else if (e.target.closest("a#bible-converter")) {
-            send(MAIN, ["URL"], "https://github.com/vassbo/bible-converter")
+            sendMain(Main.URL, "https://github.com/vassbo/bible-converter")
         }
     }
 </script>

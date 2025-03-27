@@ -1,9 +1,10 @@
 <script lang="ts">
+    import type { Output } from "../../../../types/Output"
     import { outLocked, overlays } from "../../../stores"
     import { setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
 
-    export let currentOutput: any
+    export let currentOutput: Output
 
     // $: if (!currentOutput?.out?.overlays?.length) {
     //   // get all overlays
@@ -11,14 +12,14 @@
     //   currentOutput = outs.find((output) => output.out?.overlays)
     // }
 
-    $: activeOverlays = currentOutput?.out?.overlays?.map((id: any) => ({ id, ...$overlays[id] }))
+    $: activeOverlays = currentOutput?.out?.overlays?.map((id) => ({ id, ...$overlays[id] })) || []
 
     function removeOverlay(id: string) {
-        if ($outLocked) return
+        if ($outLocked || !currentOutput.out?.overlays) return
 
         setOutput(
             "overlays",
-            currentOutput.out.overlays.filter((a: any) => a !== id)
+            currentOutput.out.overlays.filter((a) => a !== id)
         )
     }
 

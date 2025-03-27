@@ -69,9 +69,9 @@
         })
     }
 
-    let padElem: any = null
+    let padElem: HTMLElement | undefined
     function mousemove(e: any) {
-        if (!mouseDown) return
+        if (!mouseDown || !padElem) return
 
         var elemRect = padElem.getBoundingClientRect()
         var x = (e.pageX ?? e.targetTouches[0].pageX) - elemRect.left
@@ -96,7 +96,7 @@
     }
 
     // keyboard shortcuts
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
 
         if ([" ", "ArrowRight", "PageDown"].includes(e.key)) sendAction("next")

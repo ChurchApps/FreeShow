@@ -2,18 +2,20 @@
 // Functions to interact with local files
 
 import { app, dialog, shell } from "electron"
-import { ExifImage } from "exif"
+import { ExifData, ExifImage } from "exif"
 import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
-import { FILE_INFO, MAIN, OPEN_FOLDER, OUTPUT, READ_FOLDER, SHOW, STORE } from "../../types/Channels"
-import type { Subtitle } from "../../types/Main"
-import type { Show } from "../../types/Show"
+import { OUTPUT } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
+import { ToMain } from "../../types/IPC/ToMain"
+import type { FileData, MainFilePaths, Subtitle } from "../../types/Main"
+import type { Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { stores } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
+import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
-import { OPEN_FILE } from "./../../types/Channels"
 import { mainWindow, toApp } from "./../index"
 import { getAllShows, trimShow } from "./shows"
 
@@ -26,8 +28,8 @@ function actionComplete(err: Error | null, actionFailedMessage: string) {
 export function doesPathExist(path: string): boolean {
     try {
         return fs.existsSync(path)
-    } catch (err: any) {
-        actionComplete(err, "Error when checking path")
+    } catch (err) {
+        actionComplete(err as Error, "Error when checking path")
     }
 
     return false
@@ -36,8 +38,8 @@ export function doesPathExist(path: string): boolean {
 export function readFile(path: string, encoding: BufferEncoding = "utf8", disableLog: boolean = false): string {
     try {
         return fs.readFileSync(path, encoding)
-    } catch (err: any) {
-        if (!disableLog) actionComplete(err, "Error when reading file")
+    } catch (err) {
+        if (!disableLog) actionComplete(err as Error, "Error when reading file")
         return ""
     }
 }
@@ -45,8 +47,8 @@ export function readFile(path: string, encoding: BufferEncoding = "utf8", disabl
 export function readFolder(path: string): string[] {
     try {
         return fs.readdirSync(path)
-    } catch (err: any) {
-        actionComplete(err, "Error when reading folder")
+    } catch (err) {
+        actionComplete(err as Error, "Error when reading folder")
         return []
     }
 }
@@ -54,8 +56,8 @@ export function readFolder(path: string): string[] {
 export function deleteFolder(path: string) {
     try {
         fs.rmSync(path, { recursive: true })
-    } catch (err: any) {
-        actionComplete(err, "Error when deleting folder")
+    } catch (err) {
+        actionComplete(err as Error, "Error when deleting folder")
     }
 }
 
@@ -101,7 +103,7 @@ export function writeFile(path: string, content: string | NodeJS.ArrayBufferView
 
     fs.writeFile(path, content, (err) => {
         actionComplete(err, "Error when writing to file")
-        if (err && id) toApp(SHOW, { error: "no_write", err, id })
+        if (err && id) sendToMain(ToMain.SHOW2, { error: "no_write", err, id })
     })
 }
 
@@ -121,7 +123,7 @@ export function getFileStats(p: string, disableLog: boolean = false) {
         const stat: Stats = fs.statSync(p)
         return { path: p, stat, extension: path.extname(p).substring(1).toLowerCase(), folder: stat.isDirectory() }
     } catch (err) {
-        if (!disableLog) actionComplete(err, "Error when getting file stats")
+        if (!disableLog) actionComplete(err as Error, "Error when getting file stats")
         return null
     }
 }
@@ -131,7 +133,7 @@ export function makeDir(path: string) {
         path = fs.mkdirSync(path, { recursive: true }) || path
     } catch (err) {
         console.error("Could not create a directory to path: " + path + "! " + err)
-        toApp(MAIN, { channel: "ALERT", data: "Error: Could not create folder at: " + path + "!" })
+        sendToMain(ToMain.ALERT, "Error: Could not create folder at: " + path + "!")
     }
 
     return path
@@ -139,17 +141,17 @@ export function makeDir(path: string) {
 
 // SELECT DIALOGS
 
-export function selectFilesDialog(title: string = "", filters: any, multiple: boolean = true): string[] {
-    let options: any = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
+export function selectFilesDialog(title: string = "", filters: Electron.FileFilter, multiple: boolean = true): string[] {
+    let options: Electron.OpenDialogSyncOptions = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
     if (title) options.title = title
-    if (multiple) options.properties.push("multiSelections")
+    if (multiple) options.properties!.push("multiSelections")
 
     let files: string[] = dialog.showOpenDialogSync(mainWindow!, options) || []
     return files
 }
 
 export function selectFolderDialog(title: string = "", defaultPath: string = ""): string {
-    let options: any = { properties: ["openDirectory"] }
+    let options: Electron.OpenDialogSyncOptions = { properties: ["openDirectory"] }
     if (title) options.title = title
     if (defaultPath) options.defaultPath = defaultPath
 
@@ -160,13 +162,13 @@ export function selectFolderDialog(title: string = "", defaultPath: string = "")
 // DATA FOLDERS
 
 export function openSystemFolder(path: string) {
-    if (!doesPathExist(path)) return toApp(MAIN, { channel: "ALERT", data: "This does not exist!" })
+    if (!doesPathExist(path)) return sendToMain(ToMain.ALERT, "This does not exist!")
 
     shell.openPath(path)
 }
 
 const appFolderName = "FreeShow"
-export function getDocumentsFolder(p: any = null, folderName: string = "Shows", createFolder: boolean = true): string {
+export function getDocumentsFolder(p: string | null = null, folderName: string = "Shows", createFolder: boolean = true): string {
     let folderPath = [app.getPath("documents"), appFolderName]
     if (folderName) folderPath.push(folderName)
     if (!p) p = path.join(...folderPath)
@@ -178,7 +180,7 @@ export function getDocumentsFolder(p: any = null, folderName: string = "Shows", 
 export function checkShowsFolder(path: string): string {
     if (!path) {
         path = getDocumentsFolder()
-        toApp(MAIN, { channel: "SHOWS_PATH", data: path })
+        sendMain(Main.SHOWS_PATH, path)
         return path
     }
 
@@ -232,13 +234,13 @@ export function fileContentMatches(content: string | NodeJS.ArrayBufferView, pat
     return false
 }
 
-export function loadFile(p: string, contentId: string = ""): any {
+export function loadFile(p: string, contentId: string = "") {
     if (!doesPathExist(p)) return { error: "not_found", id: contentId }
 
     let content: string = readFile(p)
     if (!content) return { error: "not_found", id: contentId }
 
-    let show = parseShow(content)
+    let show = parseJSON(content)
     if (!show) return { error: "not_found", id: contentId }
 
     if (contentId && show[0] !== contentId) show[0] = contentId
@@ -246,8 +248,8 @@ export function loadFile(p: string, contentId: string = ""): any {
     return { id: contentId, content: show }
 }
 
-export function getPaths(): any {
-    let paths: any = {
+export function getPaths() {
+    let paths: MainFilePaths = {
         // documents: app.getPath("documents"),
         pictures: app.getPath("pictures"),
         videos: app.getPath("videos"),
@@ -262,57 +264,55 @@ export function getPaths(): any {
 
 const tempPaths = ["temp"]
 export function getTempPaths() {
-    let paths: any = {}
-    tempPaths.forEach((pathId: any) => {
-        paths[pathId] = app.getPath(pathId)
+    let paths: { [key: string]: string } = {}
+    tempPaths.forEach((pathId: string) => {
+        paths[pathId] = app.getPath(pathId as "temp")
     })
 
     return paths
 }
 
 // READ_FOLDER
-export function getFolderContent(data: any) {
+export function getFolderContent(data: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }) {
     let folderPath: string = data.path
     let fileList: string[] = readFolder(folderPath)
 
     if (!fileList.length) {
-        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [], folderFiles: {} })
-        return
+        return { path: folderPath, files: [], filesInFolders: [], folderFiles: {} }
     }
 
-    let files: any[] = []
+    let files: FileData[] = []
     for (const name of fileList) {
-        let p: string = path.join(folderPath, name)
-        let stats: any = getFileStats(p)
+        let p = path.join(folderPath, name)
+        let stats = getFileStats(p)
         if (stats) files.push({ ...stats, name, thumbnailPath: !data.disableThumbnails && isMedia() ? createThumbnail(p) : "" })
 
         function isMedia() {
-            if (stats.folder) return false
-            return [...imageExtensions, ...videoExtensions].includes(stats.extension.toLowerCase())
+            if (stats!.folder) return false
+            return [...imageExtensions, ...videoExtensions].includes(stats!.extension.toLowerCase())
         }
     }
 
     if (!files.length) {
-        toApp(READ_FOLDER, { path: folderPath, files: [], filesInFolders: [], folderFiles: {} })
-        return
+        return { path: folderPath, files: [], filesInFolders: [], folderFiles: {} }
     }
 
     // get first "layer" of files inside folder for searching
-    let filesInFolders: string[] = []
-    let folderFiles: any = {}
+    let filesInFolders: FileData[] = []
+    let folderFiles: { [key: string]: FileData[] } = {}
     if (data.listFilesInFolders) {
-        let folders: any[] = files.filter((a) => a.folder)
+        let folders: FileData[] = files.filter((a) => a.folder)
         folders.forEach(getFilesInFolder)
     }
 
-    function getFilesInFolder(folder: any) {
+    function getFilesInFolder(folder: FileData) {
         let fileList: string[] = readFolder(folder.path)
         folderFiles[folder.path] = []
         if (!fileList.length) return
 
         for (const name of fileList) {
-            let p: string = path.join(folder.path, name)
-            let stats: any = getFileStats(p)
+            let p = path.join(folder.path, name)
+            let stats = getFileStats(p)
             if (!stats) return
 
             if (!stats.folder) filesInFolders.push({ ...stats, name })
@@ -320,19 +320,19 @@ export function getFolderContent(data: any) {
         }
     }
 
-    toApp(READ_FOLDER, { path: folderPath, files, filesInFolders, folderFiles })
+    return { path: folderPath, files, filesInFolders, folderFiles }
 }
 
-export function getSimularPaths(data: any) {
+export function getSimularPaths(data: { paths: string[] }) {
     let parentFolderPathNames = data.paths.map(getParentFolderName)
     let allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
-    allFilePaths = [...new Set(allFilePaths.flat())]
+    const filteredFilePaths = [...new Set(allFilePaths.flat())]
 
-    let simularArray: any[] = []
+    let simularArray: [{ path: string; name: string }, number][] = []
     data.paths.forEach((path: string) => {
         let originalFileName = parse(path).name
 
-        allFilePaths.forEach((filePath: string) => {
+        filteredFilePaths.forEach((filePath: string) => {
             let name = parse(filePath).name
             if (data.paths.includes(filePath) || simularArray.find((a) => a[0].name.includes(name))) return
 
@@ -344,9 +344,9 @@ export function getSimularPaths(data: any) {
     })
 
     simularArray = simularArray.sort((a, b) => b[1] - a[1])
-    simularArray = simularArray.slice(0, 10).map((a) => a[0])
+    const sortedSimularArray = simularArray.slice(0, 10).map((a) => a[0])
 
-    return simularArray
+    return sortedSimularArray
 }
 function getParentFolderName(path: string) {
     return parse(path).dir
@@ -380,88 +380,92 @@ function similarity(str1: string, str2: string) {
 }
 
 // OPEN_FOLDER
-export function selectFolder(msg: { channel: string; title: string | undefined; path: string | undefined }, e: any) {
-    let folder: any = selectFolderDialog(msg.title, msg.path)
-
+export function selectFolder(msg: { channel: string; title?: string; path?: string }) {
+    const folder = selectFolderDialog(msg.title, msg.path)
     if (!folder) return
 
     // only when initializing
     if (msg.channel === "DATA_SHOWS") {
         let dataPath = folder
         let showsPath = checkShowsFolder(path.join(folder, dataFolderNames.shows))
-        e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: dataPath, showsPath } })
+        sendToMain(ToMain.OPEN_FOLDER2, { channel: msg.channel, path: dataPath, showsPath })
         return
     }
 
     if (msg.channel === "SHOWS") {
-        loadShows({ showsPath: folder })
-        toApp(MAIN, { channel: "FULL_SHOWS_LIST", data: getAllShows({ path: folder }) })
+        sendMain(Main.FULL_SHOWS_LIST, getAllShows({ path: folder }))
+        sendMain(Main.SHOWS, loadShows({ showsPath: folder }))
     }
 
-    e.reply(OPEN_FOLDER, { channel: msg.channel, data: { path: folder } })
+    sendToMain(ToMain.OPEN_FOLDER2, { channel: msg.channel, path: folder })
+    return
 }
 
 // OPEN_FILE
-export function selectFiles(msg: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }, e: any) {
-    let files: any = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
+export function selectFiles(msg: { id: string; channel: string; title?: string; filter: Electron.FileFilter; multiple: boolean; read?: boolean }) {
+    const files = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
     if (!files) return
 
-    let content: any = {}
+    let content: { [key: string]: string } = {}
     if (msg.read) files.forEach(getContent)
     function getContent(path: string) {
         content[path] = readFile(path)
     }
 
-    e.reply(OPEN_FILE, { channel: msg.channel || "", data: { id: msg.id, files, content } })
+    sendToMain(ToMain.OPEN_FILE2, { channel: msg.channel, id: msg.id, files, content })
+    return
 }
 
 // FILE_INFO
-export function getFileInfo(filePath: string, e: any) {
-    let stats: any = getFileStats(filePath)
-    if (stats) e.reply(FILE_INFO, stats)
+export function getFileInfo(filePath: string) {
+    let stats = getFileStats(filePath)
+    return stats
 }
 
 // READ EXIF
-export function readExifData({ id }: any, e: any) {
-    try {
-        new ExifImage({ image: id }, (err, exifData) => {
-            actionComplete(err, "Error getting EXIF data")
-            if (!err) e.reply(MAIN, { channel: "READ_EXIF", data: { id, exif: exifData } })
-        })
-    } catch (err) {
-        actionComplete(err, "Error loading EXIF image")
-    }
+export function readExifData({ id }: { id: string }): Promise<{ id: string; exif: ExifData }> {
+    return new Promise((resolve) => {
+        try {
+            new ExifImage({ image: id }, (err, exifData) => {
+                actionComplete(err, "Error getting EXIF data")
+                if (!err) resolve({ id, exif: exifData })
+            })
+        } catch (err) {
+            actionComplete(err as Error, "Error loading EXIF image")
+        }
+    })
 }
 
 // GET MEDIA CODEC
-export function getMediaCodec(data: any) {
-    extractCodecInfo(data)
+export async function getMediaCodec(data: { path: string }) {
+    return await extractCodecInfo(data)
 }
 
-async function extractCodecInfo(data: any) {
+async function extractCodecInfo(data: { path: string }): Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }> {
     const MP4Box = require("mp4box")
-    let arrayBuffer: any
 
-    try {
-        arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
-    } catch (err) {
-        console.error(err)
-        toApp(MAIN, { channel: "MEDIA_CODEC", data: { ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" } })
-        return
-    }
+    return new Promise((resolve) => {
+        let arrayBuffer: ArrayBuffer
+        try {
+            arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
 
-    const mp4boxfile = MP4Box.createFile()
-    mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
-    mp4boxfile.onReady = (info: any) => {
-        const codecs = info.tracks.map((track: any) => track.codec)
-        const mimeType = getMimeType(data.path)
-        const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
-        toApp(MAIN, { channel: "MEDIA_CODEC", data: { ...data, codecs, mimeType, mimeCodec } })
-    }
+            const mp4boxfile = MP4Box.createFile()
+            mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
+            mp4boxfile.onReady = (info: any) => {
+                const codecs = info.tracks.map((track: any) => track.codec)
+                const mimeType = getMimeType(data.path)
+                const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
+                resolve({ ...data, codecs, mimeType, mimeCodec })
+            }
 
-    arrayBuffer.fileStart = 0
-    mp4boxfile.appendBuffer(arrayBuffer)
-    mp4boxfile.flush()
+            mp4boxfile.appendBuffer({ ...arrayBuffer, fileStart: 0 })
+            mp4boxfile.flush()
+        } catch (err) {
+            console.error("MP4Box error catch:", err)
+            resolve({ ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" })
+            return
+        }
+    })
 }
 
 function getMimeType(path: string) {
@@ -470,68 +474,74 @@ function getMimeType(path: string) {
 }
 
 // get embedded subtitles/captions
-export function getMediaTracks(data: any) {
-    extractSubtitles(data)
+export function getMediaTracks(data: { path: string }) {
+    return extractSubtitles(data)
 }
 
-async function extractSubtitles(data: any) {
+async function extractSubtitles(data: { path: string }): Promise<{ path: string; tracks: Subtitle[] }> {
     const MP4Box = require("mp4box")
-    let arrayBuffer: any
 
+    let arrayBuffer: ArrayBuffer
     try {
         arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
     } catch (err) {
         console.error(err)
-        toApp(MAIN, { channel: "MEDIA_TRACKS", data: { ...data, tracks: [] } })
-        return
+        return { ...data, tracks: [] }
     }
 
-    const mp4boxfile = MP4Box.createFile()
-    mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
-    mp4boxfile.onReady = (info: any) => {
-        let tracks: Subtitle[] = []
-        let trackCount: number = 0
-        let completed: number = 0
-        info.tracks.forEach((track: any) => {
-            if (track.type !== "subtitles" && track.type !== "text") return
-            trackCount++
+    return new Promise((resolve) => {
+        const mp4boxfile = MP4Box.createFile()
+        mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
+        mp4boxfile.onReady = (info: any) => {
+            let tracks: Subtitle[] = []
+            let trackCount: number = 0
+            let completed: number = 0
+            info.tracks.forEach((track: any) => {
+                if (track.type !== "subtitles" && track.type !== "text") {
+                    resolve({ ...data, tracks: [] })
+                    return
+                }
+                trackCount++
 
-            // console.log(`Found subtitle track ID ${track.id}, language: ${track.language}`)
-            const vttLines = ["WEBVTT\n"]
-            const timescale = track.timescale
+                // console.log(`Found subtitle track ID ${track.id}, language: ${track.language}`)
+                const vttLines = ["WEBVTT\n"]
+                const timescale = track.timescale
 
-            mp4boxfile.setExtractionOptions(track.id, null, { nbSamples: track.nb_samples })
-            mp4boxfile.start()
+                mp4boxfile.setExtractionOptions(track.id, null, { nbSamples: track.nb_samples })
+                mp4boxfile.start()
 
-            mp4boxfile.onSamples = (_id: number, _user: any, samples: any[]) => {
-                let index = 1
-                samples.forEach((sample) => {
-                    const utf8Decoder = new TextDecoder("utf-8")
-                    let subtitleText = utf8Decoder.decode(sample.data).trim()
-                    // remove any non-printable characters (excluding line breaks)
-                    subtitleText = subtitleText.replace(/[^\x20-\x7E\n\r]+/g, "")
-                    if (!subtitleText) return
+                mp4boxfile.onSamples = (_id: number, _user: any, samples: any[]) => {
+                    let index = 1
+                    samples.forEach((sample) => {
+                        const utf8Decoder = new TextDecoder("utf-8")
+                        let subtitleText = utf8Decoder.decode(sample.data).trim()
+                        // remove any non-printable characters (excluding line breaks)
+                        subtitleText = subtitleText.replace(/[^\x20-\x7E\n\r]+/g, "")
+                        if (!subtitleText) {
+                            resolve({ ...data, tracks: [] })
+                            return
+                        }
 
-                    const startTime = formatTimestamp((sample.cts / timescale) * 1000)
-                    const endTime = formatTimestamp(((sample.cts + sample.duration) / timescale) * 1000)
+                        const startTime = formatTimestamp((sample.cts / timescale) * 1000)
+                        const endTime = formatTimestamp(((sample.cts + sample.duration) / timescale) * 1000)
 
-                    vttLines.push(`${index}`)
-                    vttLines.push(`${startTime} --> ${endTime}`)
-                    vttLines.push(`${subtitleText}\n`)
+                        vttLines.push(`${index}`)
+                        vttLines.push(`${startTime} --> ${endTime}`)
+                        vttLines.push(`${subtitleText}\n`)
 
-                    index++
-                })
+                        index++
+                    })
 
-                completed++
-                if (vttLines.length > 1) tracks.push({ lang: track.language?.slice(0, 2), name: track.language || "", vtt: vttLines.join("\n"), embedded: true })
-                if (completed === trackCount) toApp(MAIN, { channel: "MEDIA_TRACKS", data: { ...data, tracks } })
-            }
-        })
-    }
+                    completed++
+                    if (vttLines.length > 1) tracks.push({ lang: track.language?.slice(0, 2), name: track.language || "", vtt: vttLines.join("\n"), embedded: true })
+                    if (completed === trackCount) resolve({ ...data, tracks })
+                }
+            })
+        }
 
-    arrayBuffer.fileStart = 0
-    mp4boxfile.appendBuffer(arrayBuffer)
-    mp4boxfile.flush()
+        mp4boxfile.appendBuffer({ ...arrayBuffer, fileStart: 0 })
+        mp4boxfile.flush()
+    })
 }
 
 // format timestamp in WebVTT format (HH:MM:SS.mmm)
@@ -549,13 +559,13 @@ function formatTimestamp(timestamp: number) {
 
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
 const NESTED_SEARCH = 8 // folder levels deep
-export async function locateMediaFile({ fileName, splittedPath, folders, ref }: any) {
+export async function locateMediaFile({ fileName, splittedPath, folders, ref }: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }) {
     let matches: string[] = []
 
     await findMatches()
     if (!matches.length) return
 
-    toApp(MAIN, { channel: "LOCATE_MEDIA_FILE", data: { path: matches[0], ref } })
+    return { path: matches[0], ref }
 
     async function findMatches() {
         for (const folderPath of folders) {
@@ -688,7 +698,7 @@ export function bundleMediaFiles({ showsPath, dataPath }: { showsPath: string; d
 
 // LOAD SHOWS
 
-export function loadShows({ showsPath }: any, returnShows: boolean = false) {
+export function loadShows({ showsPath }: { showsPath: string }, returnShows: boolean = false) {
     if (!showsPath) {
         console.log("Invalid shows path, does the program have proper read/write permission?")
         return {}
@@ -703,8 +713,8 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 
-    let cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
-    let newCachedShows: any = {}
+    let cachedShows = (stores.SHOWS.store || {}) as { [key: string]: Show }
+    let newCachedShows: TrimmedShows = {}
 
     // create a map for quick lookup of cached shows by name
     let cachedShowNames = new Map<string, string>()
@@ -735,7 +745,8 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
         // some old duplicated shows might have the same id
         if (newCachedShows[id]) id = uid()
 
-        newCachedShows[id] = trimShow({ ...show[1], name })
+        const trimmedShow = trimShow({ ...show[1], name })
+        if (trimmedShow) newCachedShows[id] = trimmedShow
     }
 
     if (returnShows) return newCachedShows
@@ -744,11 +755,17 @@ export function loadShows({ showsPath }: any, returnShows: boolean = false) {
     stores.SHOWS.clear()
     stores.SHOWS.set(newCachedShows)
 
-    toApp(STORE, { channel: "SHOWS", data: newCachedShows })
+    return newCachedShows
 }
 
 export function parseShow(jsonData: string) {
-    let show = null
+    return parseJSON(jsonData) as [string, Show] | null
+}
+// export function parseBible(jsonData: string) {
+//     return parseJSON(jsonData) as [string, Bible] | null
+// }
+export function parseJSON(jsonData: string) {
+    let show: [string, any] | null = null
 
     try {
         show = JSON.parse(jsonData)
@@ -770,7 +787,7 @@ export function parseShow(jsonData: string) {
 // load shows by id (used for show export)
 export function getShowsFromIds(showIds: string[], showsPath: string) {
     let shows: Show[] = []
-    let cachedShows: { [key: string]: any } = stores.SHOWS.store || {}
+    let cachedShows: TrimmedShows = stores.SHOWS.store
 
     showIds.forEach((id) => {
         let cachedShow = cachedShows[id]
@@ -791,7 +808,7 @@ export function getShowsFromIds(showIds: string[], showsPath: string) {
 // some users might have got themselves in a situation they can't get out of
 // example: enables "kiosk" mode on mac might have resulted in a black screen, and they can't find the app data location to revert it!
 // how: Place any file in your Documents/FreeShow folder that has the FIXES key in it's name (e.g. DISABLE_KIOSK_MODE), when you now start your app the fix will be triggered!
-const FIXES: any = {
+const FIXES = {
     DISABLE_KIOSK_MODE: () => {
         // wait to ensure output settings have loaded in the app!
         setTimeout(() => {
@@ -811,6 +828,6 @@ function specialCaseFixer() {
     let files: string[] = readFolder(defaultDataFolder)
     files.forEach((fileName) => {
         let matchFound = Object.keys(FIXES).find((key) => fileName.includes(key))
-        if (matchFound) FIXES[matchFound]()
+        if (matchFound) FIXES[matchFound as keyof typeof FIXES]()
     })
 }
