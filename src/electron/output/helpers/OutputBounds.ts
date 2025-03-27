@@ -1,4 +1,4 @@
-import { screen, type BrowserWindow } from "electron"
+import { screen, type BrowserWindow, type Rectangle } from "electron"
 import { toApp } from "../.."
 import { OUTPUT } from "../../../types/Channels"
 import { OutputHelper } from "../OutputHelper"
@@ -8,7 +8,7 @@ export class OutputBounds {
 
     static moveEnabled: boolean = false
     static updatingBounds: boolean = false
-    private static boundsTimeout: any = null
+    private static boundsTimeout: NodeJS.Timeout | null = null
 
     static disableWindowMoveListener() {
         this.updatingBounds = true
@@ -20,7 +20,7 @@ export class OutputBounds {
         }, 1000)
     }
 
-    static updateBounds(data: any) {
+    static updateBounds(data: { id: string; bounds: Rectangle }) {
         let window: BrowserWindow = OutputHelper.getOutput(data.id)?.window
         if (!window || window.isDestroyed()) return
 

@@ -9,19 +9,19 @@ export function createChord(pos: number, key: string, id: string = uid(5)): Chor
     return { id, pos, key }
 }
 
-export function addChords(item, showRef, itemIndex, line = 0, pos = 0, key = keys[0]) {
-    let newLines: any = clone(item.lines)
+export function addChords(item: Item, showRef, itemIndex, line = 0, pos = 0, key = keys[0]) {
+    let newLines = clone(item.lines || [])
     if (!newLines[line].chords) newLines[line].chords = []
     let id = uid(5)
 
     // get first empty
-    newLines[line].chords
-        .sort((a, b) => a.pos - b.pos)
+    newLines[line]
+        .chords!.sort((a, b) => a.pos - b.pos)
         .forEach((chord) => {
             if (chord.pos === pos) pos++
         })
 
-    newLines[line].chords.push(createChord(pos, key || keys[0], id))
+    newLines[line].chords!.push(createChord(pos, key || keys[0], id))
 
     _show(showRef.showId)
         .slides([showRef.id])
@@ -31,14 +31,16 @@ export function addChords(item, showRef, itemIndex, line = 0, pos = 0, key = key
     selected.set({ id: "chord", data: [{ chord: { id }, index: line, slideId: showRef.id, itemIndex }] })
 }
 
-export function changeKey({ item, showRef, itemIndex, chord, lineIndex }) {
+export function changeKey({ item, showRef, itemIndex, chord, lineIndex }: { item: Item; showRef: any; itemIndex: number; chord: any; lineIndex: number }) {
     let nextKeyIndex = keys.findIndex((a) => a === chord.key) + 1
     if (nextKeyIndex >= keys.length) nextKeyIndex = 0
     let nextKey = keys[nextKeyIndex]
 
-    let newLines: any = [...item.lines!]
-    let currentChordIndex = newLines[lineIndex].chords.findIndex((a) => a.id === chord.id)
-    newLines[lineIndex].chords[currentChordIndex].key = nextKey
+    let newLines = [...item.lines!]
+    let currentChordIndex = newLines[lineIndex].chords?.findIndex((a) => a.id === chord.id) ?? -1
+    if (currentChordIndex < 0) return
+
+    newLines[lineIndex].chords![currentChordIndex].key = nextKey
 
     _show(showRef.showId)
         .slides([showRef.id])
@@ -71,7 +73,7 @@ export function chordUp({ showRef, itemIndex, item }) {
     }
 }
 
-export function chordMove(e: any, { textElem, item }) {
+export function chordMove(e: any, { textElem, item }: { textElem: HTMLElement; item: Item }) {
     if (chordDrag === null) return
 
     // let elemBox = textElem.getBoundingClientRect();
@@ -80,8 +82,8 @@ export function chordMove(e: any, { textElem, item }) {
     let mouse = { x: e.offsetX, y: e.offsetY + e.target.offsetTop }
 
     // get closest line
-    let lines = [...textElem.children]
-    let closestLine: any = { index: 0, elem: lines[0] }
+    let lines = [...textElem.children] as HTMLElement[]
+    let closestLine = { index: 0, elem: lines[0] }
     lines.forEach((lineElem, i) => {
         let currentLine = { index: i, elem: lineElem }
         let top = lineElem.offsetTop
@@ -92,7 +94,7 @@ export function chordMove(e: any, { textElem, item }) {
     })
     if (!closestLine.elem) return
 
-    let lineElems = [...textElem.children[closestLine.index].children]
+    let lineElems = [...textElem.children[closestLine.index].children] as HTMLElement[]
     let totalLineWidth = lineElems.reduce((value, elem) => (value += elem.offsetWidth), 0)
     let lineLetters = item.lines![closestLine.index].text?.reduce((value, text) => (value += text.value.length), 0)
     if (!lineLetters) return
@@ -109,19 +111,19 @@ export function chordMove(e: any, { textElem, item }) {
     console.log(pos)
     if (pos > lineLetters) return
 
-    let newLines: any = [...item.lines!]
-    let currentChordIndex = newLines[chordDrag.index].chords.findIndex((a) => a.id === chordDrag.chord.id)
+    let newLines = [...item.lines!]
+    let currentChordIndex = newLines[chordDrag.index].chords?.findIndex((a) => a.id === chordDrag.chord.id) ?? -1
     if (currentChordIndex < 0) return
 
     if (chordDrag.index !== closestLine.index) {
         // remove from current line
-        newLines[chordDrag.index].chords.splice(currentChordIndex, 1)
+        newLines[chordDrag.index].chords!.splice(currentChordIndex, 1)
         chordDrag.index = closestLine.index
         // add to new line
         if (!newLines[chordDrag.index].chords) newLines[chordDrag.index].chords = []
-        newLines[chordDrag.index].chords.push({ ...chordDrag.chord, pos })
+        newLines[chordDrag.index].chords!.push({ ...chordDrag.chord, pos })
     } else {
-        newLines[chordDrag.index].chords[currentChordIndex].pos = pos
+        newLines[chordDrag.index].chords![currentChordIndex].pos = pos
     }
     return newLines
 }

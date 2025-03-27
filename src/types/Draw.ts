@@ -13,3 +13,12 @@ export interface DrawSettings {
         [key: string]: any
     }
 }
+
+export type DrawLine =
+    | {
+          x: number
+          y: number
+          size: number
+          color: string
+      }
+    | "mouseup"

@@ -11,6 +11,7 @@ type AudioClearOptions = {
     clearPlaylist?: boolean
     playlistCrossfade?: boolean
     commonClear?: boolean
+    clearTime?: number // effects
 }
 
 export let clearing: string[] = []
@@ -34,7 +35,7 @@ export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
         return
     }
 
-    const clearTime = options.playlistCrossfade ? 0 : (get(special).audio_fade_duration ?? 1.5)
+    const clearTime = options.playlistCrossfade ? 0 : (options.clearTime ?? get(special).audio_fade_duration ?? 1.5)
     const clearIds = path ? [path] : Object.keys(get(playingAudio))
     clearIds.forEach(clear)
 
@@ -69,7 +70,8 @@ export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
 let currentlyCrossfadingOut: string[] = []
 export function fadeOutAudio(crossfade: number = 0) {
     Object.entries(get(playingAudio)).forEach(async ([path, { audio }]) => {
-        if (currentlyCrossfadingOut.includes(path)) return
+        const type = AudioPlayer.getAudioType(path, audio.duration)
+        if (type === "effect" || currentlyCrossfadingOut.includes(path)) return
         currentlyCrossfadingOut.push(path)
 
         let faded = await fadeAudio(path, audio, crossfade)
@@ -83,7 +85,7 @@ export function fadeOutAudio(crossfade: number = 0) {
 }
 // if no "path" is provided it will fade out/clear all audio
 let currentlyCrossfadingIn: string[] = []
-export function fadeInAudio(path: string, crossfade: number, waitToPlay: boolean = false) {
+export function fadeInAudio(path: string, crossfade: number, waitToPlay: boolean = false, fadeToVolume: number = 1) {
     if (!path || currentlyCrossfadingIn.includes(path) || currentlyCrossfadingOut.includes(path)) return
 
     currentlyCrossfadingIn.push(path)
@@ -95,14 +97,14 @@ export function fadeInAudio(path: string, crossfade: number, waitToPlay: boolean
             return
         }
 
-        await fadeAudio(path, playing, waitToPlay ? crossfade * 0.4 : crossfade, true)
+        await fadeAudio(path, playing, waitToPlay ? crossfade * 0.4 : crossfade, true, fadeToVolume)
         currentlyCrossfadingIn.splice(currentlyCrossfadingIn.indexOf(path), 1)
     }, waitTime)
 }
 
 const speed = 0.01
-let currentlyFading: any = {}
-async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, increment: boolean = false): Promise<boolean> {
+let currentlyFading: { [key: string]: NodeJS.Timeout } = {}
+async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, increment: boolean = false, fadeToVolume: number = 1): Promise<boolean> {
     duration = Number(duration)
     let fadeId = (increment ? "in_" : "out_") + id
     if (!audio || !duration || currentlyFading[fadeId]) return true
@@ -111,7 +113,12 @@ async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, incr
 
     let currentSpeed = speed
     if (duration < 1) currentSpeed *= 10
+
     let time = duration * 1000 * currentSpeed
+
+    // get speed relative to current volume level
+    if (increment) currentSpeed *= fadeToVolume / 1
+    else currentSpeed *= audio.volume / 1
 
     // WIP non linear easing
 
@@ -124,11 +131,11 @@ async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, incr
             if (forceClear || (increment && currentlyCrossfadingOut.includes(id))) return finished()
 
             if (increment) {
-                audio.volume = Math.min(1, Number((audio.volume + currentSpeed).toFixed(3)))
-                if (audio.volume === 1) finished()
+                audio.volume = Math.min(fadeToVolume, Number((audio.volume + currentSpeed).toFixed(3)))
+                if (audio.volume >= fadeToVolume) finished()
             } else {
                 audio.volume = Math.max(0, Number((audio.volume - currentSpeed).toFixed(3)))
-                if (audio.volume === 0) finished()
+                if (audio.volume <= 0) finished()
             }
         }, time)
 
@@ -192,8 +199,8 @@ export function fadeinAllPlayingAudio() {
 }
 
 function stopFading() {
-    Object.values(currentlyFading).forEach((fadeInterval: any) => {
-        clearInterval(fadeInterval)
-        delete currentlyFading[fadeInterval]
+    Object.keys(currentlyFading).forEach((id) => {
+        clearInterval(currentlyFading[id])
+        delete currentlyFading[id]
     })
 }

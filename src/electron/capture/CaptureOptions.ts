@@ -3,8 +3,8 @@ import type { BrowserWindow } from "electron"
 export type CaptureOptions = {
     id: string
     window: BrowserWindow
-    frameSubscription: any
+    frameSubscription: NodeJS.Timeout | null
     displayFrequency: number
-    options: any
-    framerates: any
+    options: { [key: string]: boolean }
+    framerates: { [key: string]: number }
 }

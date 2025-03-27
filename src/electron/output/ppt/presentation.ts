@@ -1,18 +1,19 @@
 import os from "os"
 import Slideshow from "slideshow"
-import { getMainWindow, isProd, toApp } from "../.."
-import { MAIN } from "../../../types/Channels"
+import { getMainWindow, isProd } from "../.."
+import { ToMain } from "../../../types/IPC/ToMain"
+import { sendToMain } from "../../IPC/main"
 import { OutputHelper } from "../OutputHelper"
 import { OutputValues } from "../helpers/OutputValues"
 
 // from "slideshow" - "connector.js"
-const connectors: any = {
+const connectors = {
     darwin: ["Keynote", "Keynote 5", "Keynote 6", "PowerPoint"], // , "PowerPoint 2011", "PowerPoint 2016"
     win32: ["PowerPoint"], // , "PowerPoint 2010", "PowerPoint 2013"
 }
 
 export function getPresentationApplications() {
-    let list = connectors[os.platform()] || []
+    let list: string[] = (connectors as any)[os.platform()] || []
     return list
 }
 
@@ -94,11 +95,11 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     try {
         currentSlideshow = new Slideshow(program, isProd)
     } catch (err) {
-        if (err.includes("unsupported platform")) {
-            toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
+        if ((err as Error).message.includes("unsupported platform")) {
+            sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
         } else {
             console.error("INIT", err)
-            toApp(MAIN, { channel: "ALERT", data: err })
+            sendToMain(ToMain.ALERT, (err as Error).toString())
         }
 
         starting = false
@@ -110,9 +111,9 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     } catch (err) {
         console.error("BOOT", err)
         if (err === "application still not running") {
-            toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
+            sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
         } else {
-            toApp(MAIN, { channel: "ALERT", data: err })
+            sendToMain(ToMain.ALERT, (err as Error).toString())
         }
     }
 
@@ -122,9 +123,9 @@ async function initPresentation(path: string, program: string = "powerpoint") {
         } catch (err) {
             console.error("OPEN", err)
             if (err === "Something went wrong with the presentation controller") {
-                toApp(MAIN, { channel: "ALERT", data: "Presentation app could not start, try opening it manually!" })
+                sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
             } else {
-                toApp(MAIN, { channel: "ALERT", data: err })
+                sendToMain(ToMain.ALERT, (err as Error).toString())
             }
         }
     }
@@ -136,9 +137,9 @@ async function initPresentation(path: string, program: string = "powerpoint") {
     } catch (err) {
         console.error("START", err)
         if (err === "still no active presentation") {
-            toApp(MAIN, { channel: "ALERT", data: "Could not start presentation, please open it manually and try again!" })
+            sendToMain(ToMain.ALERT, "Could not start presentation, please open it manually and try again!")
         } else {
-            toApp(MAIN, { channel: "ALERT", data: err })
+            sendToMain(ToMain.ALERT, (err as Error).toString())
         }
 
         starting = false
@@ -153,12 +154,12 @@ async function initPresentation(path: string, program: string = "powerpoint") {
 }
 
 // prevent rapid changes
-let navigationTimeout: any = null
+let navigationTimeout: NodeJS.Timeout | null = null
 let navigationWait = 100
-const presentationActions: any = {
+const presentationActions = {
     next: () => {
         if (navigationTimeout) return
-        if (stat.position >= stat.slides) return
+        if (stat && stat.position >= stat.slides) return
 
         currentSlideshow!.next()
 
@@ -192,7 +193,7 @@ export function presentationControl(data: { action: string }) {
     if (!currentSlideshow) return
 
     try {
-        if (presentationActions[data.action]) presentationActions[data.action]()
+        if (data.action in presentationActions) presentationActions[data.action as keyof typeof presentationActions]()
         else console.log("MISSING PRESENTATION CONTROL")
     } catch (err) {
         console.error("Could not execute action:", err)
@@ -201,12 +202,12 @@ export function presentationControl(data: { action: string }) {
     setTimeout(updateState)
 }
 
-let stateUpdater: any = null
-let stat: any = {}
+let stateUpdater: NodeJS.Timeout | null = null
+let stat: null | { state: string; position: number; slides: number } = null
 async function updateState() {
     if (!currentSlideshow) return
     if (stateUpdater) clearTimeout(stateUpdater)
-    let state: any = { id: openedPresentation }
+    let state: { id: string; stat: any; info: any } = { id: openedPresentation, stat: {}, info: {} }
 
     try {
         state.stat = await currentSlideshow?.stat()
@@ -224,7 +225,7 @@ async function updateState() {
     }
 
     // return state
-    toApp(MAIN, { channel: "PRESENTATION_STATE", data: state })
+    sendToMain(ToMain.PRESENTATION_STATE, state)
 
     // update state every once in a while in case presentation window is in focus
     if (stateUpdater) clearTimeout(stateUpdater)

@@ -1,29 +1,22 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
-    import { MAIN } from "../../../../../types/Channels"
+    import { Main } from "../../../../../types/IPC/Main"
+    import type { LyricSearchResult } from "../../../../../types/Main"
+    import { destroyMain, receiveMain, sendMain } from "../../../../IPC/main"
     import { dictionary, special } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
-    import { destroy, receive, send } from "../../../../utils/request"
+    import Icon from "../../../helpers/Icon.svelte"
     import T from "../../../helpers/T.svelte"
+    import Button from "../../../inputs/Button.svelte"
     import Center from "../../../system/Center.svelte"
     import Loader from "../../Loader.svelte"
-    import Icon from "../../../helpers/Icon.svelte"
-    import Button from "../../../inputs/Button.svelte"
 
     export let query: string
-
-    type LyricSearchResult = {
-        source: string
-        key: string
-        artist: string
-        title: string
-        originalQuery: string
-    }
 
     let songs: LyricSearchResult[] | null = null
 
     let loading = false
-    // let loadTimeout: any = null
+    // let loadTimeout: NodeJS.Timeout | null = null
     onMount(searchLyrics)
     function searchLyrics() {
         let artist = ""
@@ -33,7 +26,7 @@
             return
         }
 
-        send(MAIN, ["SEARCH_LYRICS"], { artist, title })
+        sendMain(Main.SEARCH_LYRICS, { artist, title })
         loading = true
 
         // loadTimeout = setTimeout(() => {
@@ -43,56 +36,46 @@
     }
 
     function getLyrics(song: LyricSearchResult) {
-        send(MAIN, ["GET_LYRICS"], { song })
+        sendMain(Main.GET_LYRICS, { song })
         loading = true
     }
 
     // encode using btoa()
     const blockedWords = ["ZnVjaw==", "Yml0Y2g=", "bmlnZ2E="]
     const blockedArtists = ["R2hvc3Q=", "R2VuZXNpcw==", "QUMvREM=", "RGlzdHVyYmVk", "Qm9iIFJpdmVycw==", "Q2FyeSBBbm4gSGVhcnN0"]
-    let id = "CREATE_SHOW"
-    receive(
-        MAIN,
-        {
-            SEARCH_LYRICS: (data: LyricSearchResult[]) => {
-                data = filterBadArtists(data)
+    let listenerIdSearch = receiveMain(Main.SEARCH_LYRICS, (data) => {
+        data = filterBadArtists(data)
 
-                if (!data.length) {
-                    newToast("$empty.search")
-                    setValue("")
-                }
+        if (!data.length) {
+            newToast("$empty.search")
+            setValue("")
+        }
 
-                loading = false
-                songs = data
-            },
-        },
-        id
-    )
-    receive(
-        MAIN,
-        {
-            GET_LYRICS: (data: { lyrics: string; source: string }) => {
-                loading = false
+        loading = false
+        songs = data
+    })
+    let listenerIdLyrics = receiveMain(Main.GET_LYRICS, (data) => {
+        loading = false
 
-                // filter out songs with bad words
-                blockedWords.forEach((eWord) => {
-                    let word = atob(eWord)
-                    if (data.lyrics.includes(word)) data.lyrics = ""
-                })
+        // filter out songs with bad words
+        blockedWords.forEach((eWord) => {
+            let word = atob(eWord)
+            if (data.lyrics.includes(word)) data.lyrics = ""
+        })
 
-                if (!data.lyrics) {
-                    newToast("$toast.lyrics_undefined")
-                    setValue("")
-                    return
-                }
+        if (!data.lyrics) {
+            newToast("$toast.lyrics_undefined")
+            setValue("")
+            return
+        }
 
-                setValue(data.lyrics)
-                newToast($dictionary.toast?.lyrics_copied + " " + data.source + "!")
-            },
-        },
-        id
-    )
-    onDestroy(() => destroy(MAIN, id))
+        setValue(data)
+        newToast($dictionary.toast?.lyrics_copied + " " + data.source + "!")
+    })
+    onDestroy(() => {
+        destroyMain(listenerIdSearch)
+        destroyMain(listenerIdLyrics)
+    })
 
     function filterBadArtists(data: LyricSearchResult[]) {
         return data.filter(
@@ -105,8 +88,8 @@
     }
 
     let dispatch = createEventDispatcher()
-    function setValue(lyrics: string) {
-        dispatch("update", lyrics)
+    function setValue(data: any) {
+        dispatch("update", data)
     }
 
     function blockArtist(artist: string) {

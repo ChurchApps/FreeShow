@@ -11,7 +11,7 @@
     let active: string | null = $popupData.active
     $: if (active) popupData.set({})
 
-    let data: any = { name: "", id: "" }
+    let data = { name: "", id: "" }
     function add() {
         if (!data.id.length) {
             newToast("$toast.no_video_id")
@@ -46,7 +46,7 @@
         data[key] = e.target.value
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") {
             ;(document.activeElement as any).blur()
             add()

@@ -1,5 +1,9 @@
+import { get } from "svelte/store"
 import type { Item, Line } from "../../../../types/Show"
+import { outputs, styles } from "../../../stores"
 import { clone } from "../../helpers/array"
+import { getActiveOutputs } from "../../helpers/output"
+import { getStyles } from "../../helpers/style"
 
 export class EditboxHelper {
     //Compare text of all the new lines to determine if it's truly a modification or just an index change.
@@ -145,7 +149,7 @@ export class EditboxHelper {
                 textIndex = textEnd
 
                 let listStyle = "" // item.list?.enabled ? ";display: list-item;" : ""
-                let style = a.style || listStyle ? 'style="' + a.style + listStyle + '"' : ""
+                let style = a.style || listStyle ? 'style="' + this.getCustomFontSize(a.style) + listStyle + '"' : ""
                 let value = a.value?.replaceAll("\n", "<br>") || "<br>"
                 if (value === " ") value = "&nbsp;"
 
@@ -160,5 +164,19 @@ export class EditboxHelper {
     static getTextStyle(lineText: any) {
         let style = lineText.style || ""
         return style
+    }
+
+    static getCustomFontSize(style: string) {
+        if (!style) return ""
+        const fontSize = Number(getStyles(style, true)["font-size"] || 100)
+
+        // get first output style
+        const outputId = getActiveOutputs()[0]
+        const currentOutput = get(outputs)[outputId] || {}
+        const outputStyle = get(styles)[currentOutput.style || ""] || {}
+        if (!Object.keys(outputStyle).length) return ""
+
+        const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
+        return `${style};font-size: ${fontSize * customFontSizeRatio}px;`
     }
 }

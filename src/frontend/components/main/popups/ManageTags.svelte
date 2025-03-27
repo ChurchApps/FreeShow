@@ -1,24 +1,26 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { get } from "svelte/store"
-    import { actionTags, activeActionTagFilter, activeMediaTagFilter, dictionary, mediaTags, popupData } from "../../../stores"
+    import { uid } from "uid"
+    import type { Tag } from "../../../../types/Show"
+    import { actionTags, activeActionTagFilter, activeMediaTagFilter, activeTagFilter, dictionary, globalTags, mediaTags, popupData } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-    import Center from "../../system/Center.svelte"
-    import TextInput from "../../inputs/TextInput.svelte"
     import Color from "../../inputs/Color.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import { uid } from "uid"
-    import { onMount } from "svelte"
+    import TextInput from "../../inputs/TextInput.svelte"
+    import Center from "../../system/Center.svelte"
 
     const store = {
+        show: () => globalTags,
         media: () => mediaTags,
         action: () => actionTags,
     }
 
-    let type: string = $popupData.type || "media"
-    let tags: any[] = []
+    let type: string = $popupData.type || "show"
+    let tags: (Tag & { id: string })[] = []
 
     let emptyTag: boolean = false
     onMount(getTags)
@@ -44,7 +46,8 @@
             delete a[tagId]
             return a
         })
-        if (type === "media") activeMediaTagFilter.set([])
+        if (type === "show") activeTagFilter.set([])
+        else if (type === "media") activeMediaTagFilter.set([])
         else if (type === "action") activeActionTagFilter.set([])
 
         getTags()

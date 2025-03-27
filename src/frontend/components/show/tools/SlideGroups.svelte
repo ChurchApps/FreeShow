@@ -12,28 +12,35 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import { getSlideGroups } from "./groups"
 
-    $: showGroups = getSlideGroups($activeShow!.id, $showsCache, $cachedShowsData)
+    $: showId = $activeShow?.id || ""
+    $: showGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
 
-    $: layoutSlides = $showsCache[$activeShow!.id]?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
+    $: layoutSlides = $showsCache[showId]?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
     function countGroupsInLayout(slideId) {
-        let count = layoutSlides.reduce((count: number, slide: any) => (slide.id === slideId ? count + 1 : count), 0)
+        let count = layoutSlides.reduce((count, slide) => (slide.id === slideId ? count + 1 : count), 0)
         return count
     }
 
-    $: globalGroups = Object.entries($groups).map(([id, group]: any) => {
+    $: globalGroups = Object.entries($groups).map(([id, group]) => {
         let name = group.name
-        if (group.default) name = $dictionary.groups?.[group.name]
+        if (group.default) name = $dictionary.groups?.[group.name] || ""
         return { id, group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
     })
 
     $: sortedGroups = sortByName(globalGroups, "group")
 
-    $: isLocked = $showsCache[$activeShow?.id || ""]?.locked
+    $: isLocked = $showsCache[showId]?.locked
+
+    $: displayGlobalGroups = $globalGroupViewEnabled
+    $: if (showId) updateGroupView()
+    function updateGroupView() {
+        displayGlobalGroups = !showGroups.length ? true : $globalGroupViewEnabled
+    }
 </script>
 
 <div style="display: flex;padding: 10px;height: 100%;overflow-y: auto;align-items: flex-start;">
-    <div class="main" style="{showGroups.length ? '' : 'height: 100%;'}{$globalGroupViewEnabled ? 'width: 50%;' : ''}">
-        {#if $globalGroupViewEnabled}
+    <div class="main" style="{showGroups.length ? '' : 'height: 100%;'}{displayGlobalGroups ? 'width: 50%;' : ''}">
+        {#if displayGlobalGroups}
             <h4><T id="groups.current" /></h4>
         {/if}
         {#if showGroups.length}
@@ -72,10 +79,10 @@
         {/if}
     </div>
 
-    {#if $globalGroupViewEnabled}
+    {#if displayGlobalGroups}
         <div class="seperator" />
 
-        <div class="main" style={$globalGroupViewEnabled ? "width: 50%;" : ""}>
+        <div class="main" style={displayGlobalGroups ? "width: 50%;" : ""}>
             <h4><T id="groups.global" /></h4>
             {#if sortedGroups.length}
                 {#each sortedGroups as slide}
@@ -115,7 +122,7 @@
 
 <div class="bottom">
     <Button style="width: 100%;" on:click={() => globalGroupViewEnabled.set(!$globalGroupViewEnabled)} dark center>
-        <Icon id="groups" right={!$labelsDisabled} white={$globalGroupViewEnabled} />
+        <Icon id="groups" right={!$labelsDisabled} white={displayGlobalGroups} />
         {#if !$labelsDisabled}<T id="groups.toggle_global_group" />{/if}
     </Button>
 </div>

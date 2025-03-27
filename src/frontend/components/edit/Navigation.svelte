@@ -5,6 +5,7 @@
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import { getExtension, getFileName, getMediaType } from "../helpers/media"
+    import { getLayoutRef } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import Button from "../inputs/Button.svelte"
     import Center from "../system/Center.svelte"
@@ -18,7 +19,7 @@
 
         // check that current edit slide exists
         if ($activeEdit?.slide !== null && $activeEdit?.slide !== undefined) {
-            let ref = _show().layouts("active").ref()[0]
+            let ref = getLayoutRef()
             if (ref[$activeEdit?.slide]) index = $activeEdit.slide + 1
         }
 
@@ -29,6 +30,7 @@
     const names = {
         show: (id: string) => _show(id).get("name"),
         media: (id: string) => getFileName(id),
+        audio: (id: string) => getFileName(id),
         overlay: (id: string) => $overlays[id]?.name || "",
         template: (id: string) => $templates[id]?.name || "",
     }
@@ -45,8 +47,9 @@
             let type = edit.edit.type || "show"
             edit.icon = type === "show" ? "slide" : type // showIcon
             if (edit.icon === "media") edit.icon = getMediaType(getExtension(edit.id))
-            if (edit.icon === "template") edit.icon = "templates"
-            if (edit.icon === "overlay") edit.icon = "overlays"
+            else if (edit.icon === "audio") edit.icon = "music"
+            else if (edit.icon === "template") edit.icon = "templates"
+            else if (edit.icon === "overlay") edit.icon = "overlays"
 
             if (!names[type]) return a
             edit.name = names[type](edit.id)
@@ -103,7 +106,7 @@
                         style="width: 100%;"
                         on:click={() => {
                             activeEdit.set(edited.edit)
-                            refreshEditSlide.set(true)
+                            if (edited.edit?.type !== "audio") refreshEditSlide.set(true)
                             if (edited.show) {
                                 if ($focusMode) activeEdit.set({ items: [], slide: edited.show.index, type: "show", showId: edited.show.id })
                                 else activeShow.set(edited.show)

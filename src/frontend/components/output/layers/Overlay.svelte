@@ -16,10 +16,10 @@
     let currentItems: Item[] = []
     let show: boolean = false
 
-    $: if (overlays[id].items !== undefined) updateItems()
+    $: if (overlays[id]?.items !== undefined) updateItems()
 
     // WIP simular to SlideContent.svelte
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     function updateItems() {
         show = false
 

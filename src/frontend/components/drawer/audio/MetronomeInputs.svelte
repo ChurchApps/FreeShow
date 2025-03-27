@@ -9,7 +9,7 @@
     import NumberInput from "../../inputs/NumberInput.svelte"
 
     export let values: API_metronome = {}
-    export let audioOutputs: any[] = []
+    export let audioOutputs: { id: string; name: string }[] = []
     export let volume: boolean = true
 
     let dispatch = createEventDispatcher()

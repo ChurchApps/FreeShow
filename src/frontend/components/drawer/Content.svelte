@@ -1,31 +1,31 @@
 <script lang="ts">
+    import type { Bible } from "../../../types/Scripture"
     import { drawerTabsData } from "../../stores"
+    import Audio from "./audio/Audio.svelte"
+    import Scripture from "./bible/Scripture.svelte"
     import Calendar from "./calendar/Calendar.svelte"
+    import Effects from "./effects/Effects.svelte"
+    import Media from "./media/Media.svelte"
+    import Actions from "./pages/Actions.svelte"
     import Overlays from "./pages/Overlays.svelte"
     import Shows from "./pages/Shows.svelte"
     import Templates from "./pages/Templates.svelte"
     import Triggers from "./pages/Triggers.svelte"
     import Variables from "./pages/Variables.svelte"
-    import Audio from "./audio/Audio.svelte"
-    import Scripture from "./bible/Scripture.svelte"
-    import Effects from "./effects/Effects.svelte"
-    import Media from "./media/Media.svelte"
     import Timers from "./timers/Timers.svelte"
-    import Actions from "./pages/Actions.svelte"
 
     export let id: string
-    export let bibles: any
+    export let bibles: Bible[]
     export let searchValue: string
     export let firstMatch: null | string
     $: active = $drawerTabsData[id]?.activeSubTab || null
 
-    let streams: any = []
+    let streams: MediaStream[] = []
     $: if (id !== "media" || active) stopStreams()
 
     function stopStreams() {
-        streams.forEach((stream: any) => {
-            stream.getTracks().forEach((track: any) => {
-                console.log(track)
+        streams.forEach((stream) => {
+            stream.getTracks().forEach((track) => {
                 track.enabled = false
                 track.stop()
             })

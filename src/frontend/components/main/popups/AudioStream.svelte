@@ -10,6 +10,7 @@
     import { _show } from "../../helpers/shows"
     import Center from "../../system/Center.svelte"
     import { onMount } from "svelte"
+    import { getLayoutRef } from "../../helpers/show"
 
     const DEFAULT_STREAM = { name: "", value: "" }
 
@@ -23,7 +24,7 @@
     let streamId = existing ? $selected.data[0].id : uid()
     let currentStream = clone($audioStreams[streamId] || DEFAULT_STREAM)
 
-    let globalList = Object.entries($audioStreams).map(([id, a]: any) => ({ ...a, id }))
+    let globalList = Object.entries($audioStreams).map(([id, a]) => ({ ...a, id }))
     let sortedStreams = sortByName(globalList)
 
     function updateValue(e: any, key: string) {
@@ -40,11 +41,13 @@
 
     function changeStream(e: any) {
         streamId = e.detail.id
-        let stream = $audioStreams[streamId]
+        // let stream = $audioStreams[streamId]
 
-        let ref: any = _show().layouts("active").ref()[0][slideIndex]
-        let data: any = ref?.data?.actions || {}
-        data.audioStream = stream
+        let ref = getLayoutRef()[slideIndex]
+        let data = ref?.data?.actions || {}
+
+        // TODO: is this correct?
+        data.audioStream = streamId
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data, indexes: [slideIndex] }, location: { page: "show", override: "audio_stream" } })
     }

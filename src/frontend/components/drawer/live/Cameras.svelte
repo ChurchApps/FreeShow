@@ -5,7 +5,7 @@
     import Cam from "./Cam.svelte"
     import { sortByName } from "../../helpers/array"
 
-    let cams: any[] = []
+    let cams: { name: string; id: string; group: string }[] = []
     navigator.mediaDevices?.enumerateDevices()?.then((devices) => {
         if (!devices) return
 

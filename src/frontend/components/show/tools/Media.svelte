@@ -1,10 +1,13 @@
 <script lang="ts">
-    import { MAIN, OUTPUT } from "../../../../types/Channels"
+    import { OUTPUT } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import type { Media, MediaType, SlideAction } from "../../../../types/Show"
+    import { requestMain } from "../../../IPC/main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { activeShow, dictionary, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
     import { translate } from "../../../utils/language"
-    import { destroy, receive, send } from "../../../utils/request"
+    import { send } from "../../../utils/request"
     import { actionData } from "../../actions/actionData"
     import { getActionName, getActionTriggerId, runAction } from "../../actions/actions"
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
@@ -24,10 +27,10 @@
     $: outputId = getActiveOutputs($outputs, false, true, true)[0]
     $: outputStyle = getCurrentStyle($styles, $outputs[outputId]?.style)
 
-    let layoutBackgrounds: any[] = []
-    let layoutAudio: any[] = []
-    let layoutMics: any[] = []
-    let layoutActions: any[] = []
+    let layoutBackgrounds: string[] = []
+    let layoutAudio: string[] = []
+    let layoutMics: { id: string; name: string }[] = []
+    let layoutActions: SlideAction[] = []
 
     $: {
         layoutBackgrounds = []
@@ -36,38 +39,35 @@
         layoutActions = []
 
         if (show) {
-            let refs = _show("active").layouts().ref()
-            refs.forEach((slides: any) => {
-                layoutBackgrounds.push(...slides.map((a: any) => a.data.background).filter((a: any) => a !== undefined))
+            let refs = _show().layouts().ref()
+            refs.forEach((slides) => {
+                layoutBackgrounds.push(...slides.map((a) => a.data.background).filter((a) => a !== undefined))
                 layoutAudio.push(
                     ...slides
-                        .map((a: any) => a.data.audio)
-                        .filter((a: any) => a !== undefined)
+                        .map((a) => a.data.audio)
+                        .filter((a) => a !== undefined)
                         .flat()
                 )
                 layoutMics.push(
                     ...slides
-                        .map((a: any) => a.data.mics)
-                        .filter((a: any) => a !== undefined)
+                        .map((a) => a.data.mics)
+                        .filter((a) => a !== undefined)
                         .flat()
                 )
                 layoutActions.push(
                     ...slides
-                        .map((a: any) => a.data.actions?.slideActions)
-                        .filter((a: any) => a !== undefined)
+                        .map((a) => a.data.actions?.slideActions)
+                        .filter((a) => a !== undefined)
                         .flat()
                 )
             })
         }
     }
 
-    let backgrounds: any = {}
-    let bgs: any = []
-
+    let bgs: (Media & { count: number })[] = []
     $: if (layoutBackgrounds.length) {
-        backgrounds = {}
-        bgs = []
-        layoutBackgrounds.forEach((a: any) => {
+        let tempBackgrounds: { [key: string]: Media & { count: number } } = {}
+        layoutBackgrounds.forEach((a) => {
             if (!show.media?.[a]) return
 
             let path: string = show.media[a].path || show.media[a].id || ""
@@ -75,49 +75,50 @@
             if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
 
             const extension = getExtension(path)
-            let type = getMediaType(extension)
+            let type = getMediaType(extension) as MediaType
 
             let pathId = path.slice(0, 150)
-            if (backgrounds[pathId]) backgrounds[pathId].count++
-            else backgrounds[pathId] = { id: a, name: "—", ...show.media[a], path, type, count: 1 }
+            if (tempBackgrounds[pathId]) tempBackgrounds[pathId].count++
+            else tempBackgrounds[pathId] = { id: a, name: "—", ...show.media[a], path, type, count: 1 }
         })
-        Object.values(backgrounds).forEach((a) => bgs.push(a))
-        bgs = sortByName(bgs)
+        bgs = sortByName(Object.values(tempBackgrounds))
     } else bgs = []
 
-    let audio: any = []
+    let audio: (Media & { count: number })[] = []
     $: if (layoutAudio.length) {
-        audio = {}
-        layoutAudio.forEach((a: any) => {
+        let tempAudio: { [key: string]: Media & { count: number } } = {}
+        layoutAudio.forEach((a) => {
+            if (!show.media?.[a]) return
+
             let path = show.media[a].path!
             // no need for cloud when audio can be stacked
             // let cloudId = $driveData.mediaId
             // if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
 
-            let type = "audio"
+            let type: MediaType = "audio"
 
-            if (audio[path]) audio[path].count++
-            else audio[path] = { id: a, ...show.media[a], path, type, count: 1 }
+            if (tempAudio[path]) tempAudio[path].count++
+            else tempAudio[path] = { id: a, ...show.media[a], path, type, count: 1 }
         })
 
-        audio = Object.values(audio)
+        audio = Object.values(tempAudio)
     } else audio = []
 
-    let mics: any = []
+    let mics: { id: string; name: string; count: number }[] = []
     $: if (layoutMics.length) {
-        mics = {}
-        layoutMics.forEach((a: any) => {
+        let tempMics: { [key: string]: { id: string; name: string; count: number } } = {}
+        layoutMics.forEach((a) => {
             let id = a.id
 
-            if (mics[id]) mics[id].count++
-            else mics[id] = { ...a, count: 1 }
+            if (tempMics[id]) tempMics[id].count++
+            else tempMics[id] = { ...a, count: 1 }
         })
 
-        mics = Object.values(mics)
+        mics = Object.values(tempMics)
     } else mics = []
 
     function setBG(id: string, key: string, value: boolean) {
-        showsCache.update((a: any) => {
+        showsCache.update((a) => {
             let bgs = a[$activeShow!.id].media
             if (value) delete bgs[id][key]
             else bgs[id][key] = value
@@ -125,7 +126,7 @@
         })
     }
 
-    let actions: any[] = []
+    let actions: SlideAction[] = []
     $: if (layoutActions.length) {
         actions = []
         layoutActions.forEach((action) => {
@@ -136,30 +137,25 @@
         })
     } else actions = []
 
-    let simularBgs: any[] = []
+    let simularBgs: { path: string; name: string }[] = []
     $: if (bgs.length) getSimularPaths()
     function getSimularPaths() {
-        if (!bgs.filter((a) => !a.path.includes("http") && !a.path.includes("data:")).length) return
+        if (!bgs.filter((a) => !a.path?.includes("http") && !a.path?.includes("data:")).length) return
 
-        send(MAIN, ["GET_SIMULAR"], { paths: bgs.map((a) => a.path) })
-
-        let listenerId = "media_simular"
-        destroy(MAIN, listenerId)
-        receive(MAIN, { GET_SIMULAR: (a) => receiveSimular(a) }, listenerId)
-        function receiveSimular(data: any[]) {
+        requestMain(Main.GET_SIMULAR, { paths: bgs.map((a) => a.path || "") }, (data) => {
             simularBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)
-            destroy(MAIN, listenerId)
-        }
+        })
     }
 
-    let newPaths: any = {}
+    let newPaths: { [key: string]: string } = {}
     $: if (bgs) loadBackgrounds()
     function loadBackgrounds() {
         bgs.forEach(async (background) => {
-            let newBgPath = await loadThumbnail(background.path, mediaSize.small)
+            let path = background.path || ""
+            let newBgPath = await loadThumbnail(path, mediaSize.small)
 
-            if (newBgPath) newPaths[background.path] = newBgPath
-            else newPaths[background.path] = background.path
+            if (newBgPath) newPaths[path] = newBgPath
+            else newPaths[path] = path
         })
     }
 </script>
@@ -170,11 +166,11 @@
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
                 <!-- TODO: cameras -->
-                {@const mediaStyle = getMediaStyle($media[background.path], outputStyle)}
-                {@const bgPath = newPaths[background.path] || ""}
+                {@const mediaStyle = getMediaStyle($media[background.path || ""], outputStyle)}
+                {@const bgPath = newPaths[background.path || ""] || ""}
 
                 <SelectElem id="media" data={{ ...background }} draggable>
-                    <div class="media_item item context #show_media" class:active={findMatchingOut(background.path, $outputs)}>
+                    <div class="media_item item context #show_media" class:active={findMatchingOut(background.path || "", $outputs)}>
                         <HoverButton
                             style="flex: 2;height: 50px;max-width: 100px;"
                             icon="play"
@@ -187,7 +183,7 @@
                             }}
                             title={$dictionary.media?.play}
                         >
-                            <MediaLoader name={background.name} path={background.path} thumbnailPath={bgPath} type={background.type} {mediaStyle} />
+                            <MediaLoader name={background.name} path={background.path || ""} thumbnailPath={bgPath} type={background.type} {mediaStyle} />
                         </HoverButton>
 
                         <p title={background.path}>{background.name}</p>
@@ -201,12 +197,12 @@
                                 style="flex: 0;padding: 14px 5px;"
                                 center
                                 title={background.muted !== false ? $dictionary.actions?.unmute : $dictionary.actions?.mute}
-                                on:click={() => setBG(background.id, "muted", background.muted === false)}
+                                on:click={() => setBG(background.id || "", "muted", background.muted === false)}
                                 dark
                             >
                                 <Icon id={background.muted !== false ? "muted" : "volume"} white={background.muted !== false} size={1.2} />
                             </Button>
-                            <Button style="flex: 0;padding: 14px 5px;" center title={$dictionary.media?._loop} on:click={() => setBG(background.id, "loop", background.loop === false)} dark>
+                            <Button style="flex: 0;padding: 14px 5px;" center title={$dictionary.media?._loop} on:click={() => setBG(background.id || "", "loop", background.loop === false)} dark>
                                 <Icon id="loop" white={background.loop === false} size={1.2} />
                             </Button>
                         {/if}
@@ -252,15 +248,15 @@
                         class="context #show_audio"
                         on:click={() => {
                             if ($outLocked) return
-                            AudioPlayer.start(file.path, { name: file.name })
+                            AudioPlayer.start(file.path || "", { name: file.name || "" })
                         }}
-                        outline={!!$playingAudio[file.path]}
+                        outline={!!$playingAudio[file.path || ""]}
                         style="padding: 8px;width: 100%;"
                         title={file.path}
                         bold={false}
                     >
-                        <Icon id={$playingAudio[file.path]?.paused === true ? "play" : $playingAudio[file.path]?.paused === false ? "pause" : "music"} size={1.2} right />
-                        <p style="width: 100%;text-align: left;">{file.name.includes(".") ? file.name.slice(0, file.name.lastIndexOf(".")) : file.name}</p>
+                        <Icon id={$playingAudio[file.path || ""]?.paused === true ? "play" : $playingAudio[file.path || ""]?.paused === false ? "pause" : "music"} size={1.2} right />
+                        <p style="width: 100%;text-align: left;">{file.name?.includes(".") ? file.name.slice(0, file.name.lastIndexOf(".")) : file.name}</p>
 
                         {#if file.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{file.count}</span>

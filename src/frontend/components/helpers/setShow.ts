@@ -1,12 +1,11 @@
 import { get } from "svelte/store"
-import { SHOW } from "../../../types/Channels"
 import type { Show } from "../../../types/Show"
-import { cachedShowsData, categories, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
-import { getShowCacheId, updateCachedShow } from "./show"
-import { uid } from "uid"
-import { destroy } from "../../utils/request"
-import { fixShowIssues } from "../../converters/importHelpers"
 import type { ShowObj } from "../../classes/Show"
+import { fixShowIssues } from "../../converters/importHelpers"
+import { destroyMain, receiveMain, sendMain } from "../../IPC/main"
+import { cachedShowsData, categories, notFound, saved, shows, showsCache, showsPath, textCache } from "../../stores"
+import { Main } from "./../../../types/IPC/Main"
+import { getShowCacheId, updateCachedShow } from "./show"
 
 export function setShow(id: string, value: "delete" | Show): Show {
     let previousValue: Show
@@ -100,42 +99,40 @@ export async function loadShows(s: string[]) {
                 })
                 // resolve("not_found")
             } else if (!get(showsCache)[id]) {
-                window.api.send(SHOW, { path: get(showsPath), name: get(shows)[id].name, id })
+                sendMain(Main.SHOW, { path: get(showsPath), name: get(shows)[id].name, id })
             } else count++
             // } else resolve("already_loaded")
         })
-        if (s.length - count) console.info(`LOADING ${s.length - count} SHOW(S)`)
+        // if (s.length - count) console.info(`LOADING ${s.length - count} SHOW(S)`)
 
         // RECEIVE
-        let listenerId = uid()
-        window.api.receive(SHOW, receiveShow, listenerId)
-        function receiveShow(msg: any) {
-            if (!s.includes(msg.id)) return
+        let listenerId = receiveMain(Main.SHOW, (data) => {
+            if (!s.includes(data.id)) return
             count++
 
             // prevent receiving multiple times
             if (count >= s.length + 1) return
 
-            if (msg.error) {
+            if (data.error || !data.content) {
                 notFound.update((a) => {
-                    a.show.push(msg.id)
+                    a.show.push(data.id)
                     return a
                 })
                 // resolve("not_found")
-            } else if (!get(showsCache)[msg.id]) {
-                if (get(notFound).show.includes(msg.id)) {
+            } else if (!get(showsCache)[data.id]) {
+                if (get(notFound).show.includes(data.id)) {
                     notFound.update((a) => {
-                        a.show.splice(a.show.indexOf(msg.id), 1)
+                        a.show.splice(a.show.indexOf(data.id), 1)
                         return a
                     })
                 }
 
-                let show = fixShowIssues(msg.content[1])
-                setShow(msg.id || msg.content[0], show)
+                let show = fixShowIssues(data.content[1])
+                setShow(data.id || data.content[0], show)
             }
 
             if (count >= s.length) setTimeout(finished, 50)
-        }
+        })
         if (count >= s.length) finished()
 
         function finished() {
@@ -145,14 +142,14 @@ export async function loadShows(s: string[]) {
                 }, 100)
             }
 
-            destroy(SHOW, listenerId)
+            destroyMain(listenerId)
             resolve("loaded")
         }
     })
 }
 
-let updateTimeout: any = null
-let tempCache: any = {}
+let updateTimeout: NodeJS.Timeout | null = null
+let tempCache: { [key: string]: string } = {}
 export function saveTextCache(id: string, show: Show) {
     // don't cache scripture/calendar shows text or archived categories
     if (!show?.slides || show.reference?.type || get(categories)[show.category || ""]?.isArchive) return

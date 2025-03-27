@@ -1,7 +1,9 @@
 <script lang="ts">
     import qrcode from "qrcode-generator"
     import { onMount } from "svelte"
+    import { Main } from "../../../../types/IPC/Main"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
+    import { sendMain } from "../../../IPC/main"
     import { activePopup, dictionary, maxConnections, outputs, popupData, ports, remotePassword, serverData } from "../../../stores"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -13,8 +15,6 @@
     import Link from "../../inputs/Link.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
-    import { send } from "../../../utils/request"
-    import { MAIN } from "../../../../types/Channels"
 
     let id: keyof typeof defaultPorts = "stage"
     let ip = "localhost"
@@ -88,7 +88,7 @@
             return a
         })
 
-        send(MAIN, ["SERVER_DATA"], $serverData)
+        sendMain(Main.SERVER_DATA, $serverData)
     }
 
     // $: enableOutputSelector = ($serverData?.output_stream?.outputId && $outputs[$serverData.output_stream.outputId]) || getActiveOutputs($outputs, false, true).length > 1

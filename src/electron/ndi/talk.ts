@@ -4,27 +4,27 @@ import { CaptureHelper } from "../capture/CaptureHelper"
 import { NdiReceiver } from "./NdiReceiver"
 import { NdiSender } from "./NdiSender"
 
-export async function receiveNDI(e: any, msg: Message) {
-    let data: any = {}
-    if (ndiResponses[msg.channel]) data = await ndiResponses[msg.channel](msg.data, e)
+export async function receiveNDI(e: Electron.IpcMainEvent, msg: Message) {
+    let data
+    if (msg.channel in ndiResponses) data = await ndiResponses[msg.channel as keyof typeof ndiResponses](msg.data)
 
     if (data !== undefined) e.reply(NDI, { channel: msg.channel, data: JSON.stringify(data) })
 }
 
-export const ndiResponses: any = {
+export const ndiResponses = {
     RECEIVE_LIST: async () => await NdiReceiver.findStreamsNDI(),
-    RECEIVE_STREAM: (data: any) => NdiReceiver.receiveStreamFrameNDI(data),
-    CAPTURE_STREAM: (data: any) => NdiReceiver.captureStreamNDI(data),
-    CAPTURE_DESTROY: (data: any) => NdiReceiver.stopReceiversNDI(data),
+    RECEIVE_STREAM: (data: { source: { name: string; urlAddress: string; id: string } }) => NdiReceiver.receiveStreamFrameNDI(data),
+    CAPTURE_STREAM: (data: { source: { name: string; urlAddress: string; id: string }; outputId: string }) => NdiReceiver.captureStreamNDI(data),
+    CAPTURE_DESTROY: (data: { id: string; outputId?: string }) => NdiReceiver.stopReceiversNDI(data),
 
-    NDI_DATA: (data: any) => setDataNDI(data),
+    NDI_DATA: (data: { id: string; framerate?: number; audio?: boolean }) => setDataNDI(data),
 
     // SEND_CREATE: (outputId: string) => createSenderNDI(outputId),
-    // SEND_DESTORY: (data: any) => stopSenderNDI(data.outputId),
-    // SEND_CAPTURE: (data: any) => startCapture(data.outputId),
+    // SEND_DESTORY: (data) => stopSenderNDI(data.outputId),
+    // SEND_CAPTURE: (data) => startCapture(data.outputId),
 }
 
-export function setDataNDI(data: any) {
+export function setDataNDI(data: { id: string; framerate?: number; audio?: boolean }) {
     if (!data?.id) return
 
     if (data.framerate) {

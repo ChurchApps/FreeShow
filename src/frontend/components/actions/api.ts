@@ -1,9 +1,9 @@
-import { MAIN } from "../../../types/Channels"
+import { Main } from "../../../types/IPC/Main"
 import type { MidiValues, TransitionType } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { send } from "../../utils/request"
+import { sendMain } from "../../IPC/main"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
@@ -18,6 +18,7 @@ import { runActionId, toggleAction } from "./actions"
 import {
     getOutput,
     getOutputGroupName,
+    getPlayingAudioData,
     getPlayingAudioDuration,
     getPlayingAudioTime,
     getPlayingPlaylist,
@@ -40,6 +41,8 @@ import {
     getShowGroups,
     gotoGroup,
     moveStageConnection,
+    pauseAudio,
+    playAudio,
     playMedia,
     rearrangeGroups,
     selectOverlayById,
@@ -53,6 +56,7 @@ import {
     setShowAPI,
     setTemplate,
     startScripture,
+    stopAudio,
     toggleLock,
     updateVolumeValues,
 } from "./apiHelper"
@@ -101,7 +105,7 @@ export type API_scripture = { id: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
-export type API_camera = { name?: string; id: string; groupId?: any }
+export type API_camera = { name?: string; id: string; groupId?: string }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
     type?: TransitionType // default: "fade"
@@ -173,7 +177,7 @@ export const API_ACTIONS = {
 
     // CLEAR
     restore_output: () => restoreOutput(), // BC
-    clear_all: () => clearAll(), // BC
+    clear_all: () => clearAll(true), // BC
     clear_background: () => clearBackground(), // BC
     clear_slide: () => clearSlide(), // BC
     clear_overlays: () => clearOverlays(), // BC
@@ -213,7 +217,9 @@ export const API_ACTIONS = {
     id_select_stage_layout: (data: API_id) => moveStageConnection(data.id), // BC
 
     // AUDIO
-    // play / pause playing audio
+    play_audio: (data: API_media) => playAudio(data),
+    pause_audio: (data: API_media) => pauseAudio(data),
+    stop_audio: (data: API_media) => stopAudio(data),
     // control audio time
     // start specific folder (playlist)
     // folder_select_audio: () => ,
@@ -264,6 +270,7 @@ export const API_ACTIONS = {
     get_playing_audio_duration: () => getPlayingAudioDuration(),
     get_playing_audio_time: () => getPlayingAudioTime(),
     get_playing_audio_time_left: () => getPlayingAudioDuration() - getPlayingAudioTime(),
+    get_playing_audio_data: () => getPlayingAudioData(),
 
     get_playlists: () => getPlaylists(),
     get_playlist: (data: API_id_optional) => getPlayingPlaylist(data),
@@ -292,9 +299,9 @@ export async function triggerAction(data: API) {
     const returnData = await API_ACTIONS[id](data)
     if (!returnId || returnData === undefined) return
 
-    send(MAIN, ["API_TRIGGER"], { ...data, returnId, data: returnData })
+    sendMain(Main.API_TRIGGER, { ...data, returnId, data: returnData })
 }
 
-export function sendDataAPI(data: any) {
-    send("API_DATA", data)
-}
+// export function sendDataAPI(data: any) {
+//     send("API_DATA", data)
+// }

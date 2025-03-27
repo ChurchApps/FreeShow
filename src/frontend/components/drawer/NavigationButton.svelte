@@ -6,9 +6,9 @@
     import Button from "../inputs/Button.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
 
-    export let id: any
+    export let id: string
     export let category: any
-    export let length: any
+    export let length: { [key: string]: number }
     export let categoryId: string = ""
     export let isSubmenu: boolean = false
 
@@ -25,18 +25,18 @@
         if (category.openTrigger) category.openTrigger(tabID)
     }
 
-    const nameCategories: any = {
-        shows: (c: any) => categories.update((a) => setName(a, c)),
-        media: (c: any) => mediaFolders.update((a) => setName(a, c)),
-        audio: (c: any) => audioFolders.update((a) => setName(a, c)),
-        playlist: (c: any) => audioPlaylists.update((a) => setName(a, c)),
-        overlays: (c: any) => overlayCategories.update((a) => setName(a, c)),
-        templates: (c: any) => templateCategories.update((a) => setName(a, c)),
-        scripture: (c: any) => scriptures.update((a) => setName(a, c, "customName")),
+    const nameCategories = {
+        shows: (c: { id: string; name: string }) => categories.update((a) => setName(a, c)),
+        media: (c: { id: string; name: string }) => mediaFolders.update((a) => setName(a, c)),
+        audio: (c: { id: string; name: string }) => audioFolders.update((a) => setName(a, c)),
+        playlist: (c: { id: string; name: string }) => audioPlaylists.update((a) => setName(a, c)),
+        overlays: (c: { id: string; name: string }) => overlayCategories.update((a) => setName(a, c)),
+        templates: (c: { id: string; name: string }) => templateCategories.update((a) => setName(a, c)),
+        scripture: (c: { id: string; name: string }) => scriptures.update((a) => setName(a, c, "customName")),
     }
-    const setName = (a: any, { name, id }: any, nameKey: string = "name") => {
+    const setName = <T,>(a: T, { name, id }, nameKey: string = "name"): T => {
         // api scriptures
-        if (!a[id]) id = Object.entries(a).find(([_, a]: any) => a.id === id)?.[0]
+        if (!a[id]) id = Object.entries(a as any).find(([_, a]: any) => a.id === id)?.[0]
         if (!a[id]) return a
 
         if (a[id].default) delete a[id].default
@@ -53,14 +53,15 @@
 
     let editActive: boolean = false
 
-    $: red = id === "scripture" && $notFound.bible.find((a: any) => a.id === category.id)
+    $: red = id === "scripture" && $notFound.bible.find((a) => a.id === category.id)
 
-    const defaultFolders = ["all", "unlabeled", "favourites", "online", "screens", "cameras", "microphones", "audio_streams"]
+    const defaultFolders = ["all", "unlabeled", "favourites", "effects_library", "online", "screens", "cameras", "microphones", "audio_streams"]
     const tabsWithCategories = ["shows", "media", "audio", "overlays", "templates", "scripture"]
 </script>
 
+<!-- #category_${id}_button__category_${id} -->
 <Button
-    class={!tabsWithCategories.includes(id) || defaultFolders.includes(category.id) ? "" : $audioPlaylists[category.id] ? "context #playlist" : `context #category_${id}_button__category_${id}`}
+    class={!tabsWithCategories.includes(id) || defaultFolders.includes(category.id) ? "" : $audioPlaylists[category.id] ? "context #playlist" : `context #category_${id}_button`}
     active={category.id === $drawerTabsData[id]?.[isSubmenu ? "activeSubmenu" : "activeSubTab"]}
     {red}
     on:click={(e) => {
@@ -74,7 +75,7 @@
         <Icon
             id={category.icon || "noIcon"}
             custom={["shows", "overlays", "templates"].includes(id) && ![undefined, "noIcon", "all", "variable", "trigger"].includes(category.icon)}
-            select={["shows", "overlays", "templates"].includes(id) && !["all", "unlabeled", "favourites", "variables", "triggers"].includes(category.id)}
+            select={["shows", "overlays", "templates"].includes(id) && !["all", "unlabeled", "favourites", "effects_library", "variables", "triggers"].includes(category.id)}
             selectData={{ id: "category_" + id, data: [category.id] }}
             size={isSubmenu ? 0.8 : 1}
             right

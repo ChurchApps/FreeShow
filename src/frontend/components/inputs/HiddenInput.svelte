@@ -32,7 +32,7 @@
         // prevVal = value
     } else if ($activeRename === null) edit = false
 
-    let timeout: any
+    let timeout: NodeJS.Timeout | null = null
     function mousedown(e: any) {
         if (e.target === nameElem && allowEdit) {
             timeout = setTimeout(() => {
@@ -46,6 +46,10 @@
 
         edit = false
         activeRename.set(null)
+    }
+
+    function stopTimeout() {
+        if (timeout) clearTimeout(timeout)
     }
 
     function keydown(e) {
@@ -104,7 +108,7 @@
     }
 </script>
 
-<svelte:window on:mousedown={mousedown} on:mouseup={() => clearTimeout(timeout)} on:dragstart={() => clearTimeout(timeout)} on:keydown={keydown} />
+<svelte:window on:mousedown={mousedown} on:mouseup={stopTimeout} on:dragstart={stopTimeout} on:keydown={keydown} />
 <!-- on:contextmenu={click} -->
 
 {#if edit === id && allowEdit}

@@ -1,9 +1,11 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { SelectIds } from "../../../types/Main"
+    import type { Media, Slide } from "../../../types/Show"
     import { activeDropId, activeRename, activeShow, disableDragging, os, selected } from "../../stores"
     import { arrayHasData, clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
+    import { getLayoutRef } from "../helpers/show"
 
     export let id: SelectIds
     export let data: any
@@ -16,7 +18,7 @@
     export let fileOver: boolean = false
     export let borders: "all" | "center" | "edges" = "all"
     export let triggerOnHover: boolean = false
-    let elem: any
+    let elem: HTMLElement | undefined
 
     function enter(e: any) {
         if (!selectable || $selected.hoverActive) return
@@ -37,7 +39,7 @@
     }
 
     const TRIGGER_TIMEOUT = 500
-    let triggerTimeout: any = null
+    let triggerTimeout: NodeJS.Timeout | null = null
     function triggerHoverAction() {
         if (!triggerOnHover || triggerTimeout) return
 
@@ -50,12 +52,12 @@
         }, TRIGGER_TIMEOUT)
     }
 
-    const triggerHoverActions: any = {
+    const triggerHoverActions = {
         show: () => {
             if (($selected.id === "slide" || $selected.id === "group" || $selected.id === "global_group") && (data.type || "show") === "show") {
                 // copy slide data
                 if (($selected.id === "slide" || $selected.id === "group") && !$selected.hoverActive) {
-                    let slides: any[] = convertDataToSlide(clone($selected.data))
+                    let slides = convertDataToSlide(clone($selected.data))
                     selected.set({ ...$selected, hoverActive: true })
 
                     // select after show is opened (because a slide is selected in the new show)
@@ -71,16 +73,16 @@
     }
 
     function convertDataToSlide(slideRef: { index?: number; id?: string }[]) {
-        let currentSlides = _show().get("slides")
-        let currentMedia = _show().get("media") || {}
-        let currentLayoutRef = _show().layouts("active").ref()[0]
+        let currentSlides: { [key: string]: Slide } = _show().get("slides")
+        let currentMedia: Media = _show().get("media") || {}
+        let currentLayoutRef = getLayoutRef()
 
         let slideData = slideRef.map(({ index, id }) => {
             let layout
             if (id) layout = currentLayoutRef.find((a) => a.id === id) || {}
             else if (index !== undefined) layout = currentLayoutRef[index] || {}
 
-            let layoutMedia: any = {}
+            let layoutMedia: { [key: string]: Media } = {}
             if (layout.data?.background) layoutMedia[layout.data.background] = currentMedia[layout.data?.background]
             if (layout.data?.audio) {
                 layout.data.audio.forEach((audioId) => {
@@ -194,7 +196,7 @@
                 if (!selectMultiple || rightClick) return
 
                 // remove currently selected
-                newData = $selected.data.filter((a: any) => JSON.stringify(a) !== JSON.stringify(data))
+                newData = $selected.data.filter((a) => JSON.stringify(a) !== JSON.stringify(data))
             } else if (selectMultiple) {
                 // && $selected.id === id
                 newData = [...$selected.data, data]

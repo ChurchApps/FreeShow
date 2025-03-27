@@ -31,7 +31,7 @@
     function update() {
         if (!template) return
 
-        let newData: any = { key: "settings", data: clone(settings) }
+        let newData = { key: "settings", data: clone(settings) }
 
         history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
     }

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
+    import type { Media, Slide, SlideData } from "../../../types/Show"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeShow, activeTimers, dictionary, outputs, shows } from "../../stores"
     import { send } from "../../utils/request"
@@ -12,12 +13,12 @@
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "../inputs/Button.svelte"
 
-    export let slide: any
-    export let timer: any
-    export let layoutSlide: any
-    export let background: any
+    export let slide: Slide
+    export let timer: number[]
+    export let layoutSlide: SlideData
+    export let background: Media | null
     export let backgroundCount: number = 0
-    export let duration: any
+    export let duration: number
     export let columns: number
     export let index: number
     export let style: string
@@ -27,7 +28,7 @@
     $: muted = background?.muted !== false
     $: looping = background?.loop !== false
 
-    $: nextTimer = (layoutSlide.nextTimer || 0) > 0 ? (layoutSlide.nextTimer > 59 ? joinTime(secondsToTime(layoutSlide.nextTimer)) : layoutSlide.nextTimer + "s") : null
+    $: nextTimer = (layoutSlide.nextTimer || 0) > 0 ? (layoutSlide.nextTimer! > 59 ? joinTime(secondsToTime(layoutSlide.nextTimer!)) : layoutSlide.nextTimer + "s") : null
     $: transition = layoutSlide?.transition || layoutSlide?.mediaTransition
 
     $: currentShow = $shows[$activeShow?.id || ""] || {}
@@ -42,12 +43,16 @@
     function mute() {
         if (currentShow.locked) return
 
-        _show("active").media([layoutSlide.background]).set({ key: "muted", value: false })
+        _show()
+            .media([layoutSlide.background || ""])
+            .set({ key: "muted", value: false })
     }
     function removeLoop() {
         if (currentShow.locked) return
 
-        _show("active").media([layoutSlide.background]).set({ key: "loop", value: false })
+        _show()
+            .media([layoutSlide.background || ""])
+            .set({ key: "loop", value: false })
     }
 
     function resetTimer() {
@@ -65,7 +70,7 @@
 
         let settings = clone(slide.settings)
         delete settings[key]
-        let newData: any = { style: settings }
+        let newData = { style: settings }
 
         history({
             id: "slideStyle",
@@ -75,7 +80,7 @@
         })
     }
 
-    $: audio = layoutSlide.audio?.length ? _show("active").get()?.media?.[layoutSlide.audio[0]] || {} : {}
+    $: audio = layoutSlide.audio?.length ? _show().get()?.media?.[layoutSlide.audio[0]] || {} : {}
     $: audioPath = audio.path
     // no need for cloud when audio can be stacked
     // $: cloudId = $driveData.mediaId
@@ -165,7 +170,7 @@
         <div>
             <div class="button">
                 <Button style="padding: 3px;" redHover title={$dictionary.remove?.background} {zoom} on:click={() => removeLayout("background")}>
-                    <Icon id={["camera", "screen"].includes(background.type) ? background.type : background.path?.includes("http") ? "web" : "image"} size={0.9} white />
+                    <Icon id={["camera", "screen"].includes(background.type || "") ? background.type || "" : background.path?.includes("http") ? "web" : "image"} size={0.9} white />
                 </Button>
             </div>
             {#if videoDuration}

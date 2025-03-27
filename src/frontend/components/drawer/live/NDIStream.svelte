@@ -15,7 +15,7 @@
     export let background: boolean = false
     export let mirror: boolean = false
 
-    let canvas: any
+    let canvas: HTMLCanvasElement | undefined
 
     onMount(() => {
         if (background) {
@@ -35,11 +35,11 @@
         canvas.height = HEIGHT
 
         const imageData = new ImageData(new Uint8ClampedArray(frame.data), WIDTH, HEIGHT)
-        ctx.putImageData(imageData, 0, 0)
+        ctx?.putImageData(imageData, 0, 0)
     }
 
-    const receiveNDI: any = {
-        RECEIVE_STREAM: (data) => {
+    const receiveNDI = {
+        RECEIVE_STREAM: (data: { id: string; frame: any; time: number }) => {
             if (data.id !== screen.id) return
             loaded = true
 

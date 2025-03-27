@@ -87,7 +87,7 @@
     let editActive: boolean = false
 </script>
 
-<button {id} on:click={open} on:dblclick={dblclick} data-parent={parent} class={recentlyUsed ? "" : `context #project_${template ? "template" : "button__projects"}`} title={template ? $dictionary.actions?.project_template_tip : ""} class:active>
+<button {id} on:click={open} on:dblclick={dblclick} data-parent={parent} class={recentlyUsed ? "" : `context #project_${template ? "template" : "button"}`} title={template ? $dictionary.actions?.project_template_tip : ""} class:active>
     <Icon id={template ? "templates" : "project"} right />
     <HiddenInput value={name} id={"project_" + id} on:edit={edit} bind:edit={editActive} allowEdit={!recentlyUsed} />
 </button>

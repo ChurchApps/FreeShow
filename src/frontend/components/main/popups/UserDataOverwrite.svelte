@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { MAIN } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import { activePopup, dataPath, special } from "../../../stores"
-    import { send } from "../../../utils/request"
     import { save } from "../../../utils/save"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -9,7 +9,7 @@
 
     function setMethod(method: "existing" | "overwrite") {
         if (method === "existing") {
-            send(MAIN, ["UPDATE_DATA_PATH"], { reset: false, dataPath: $dataPath })
+            sendMain(Main.UPDATE_DATA_PATH, { reset: false, dataPath: $dataPath })
         } else {
             save(false, { backup: true, changeUserData: { reset: false, dataPath: $dataPath } })
         }

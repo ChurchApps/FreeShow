@@ -12,13 +12,14 @@
     import EditValues from "./EditValues.svelte"
     import { setBoxInputValue } from "../values/boxes"
     import { percentageToAspectRatio, stylePosToPercentage } from "../../helpers/output"
+    import { getLayoutRef } from "../../helpers/show"
 
     export let allSlideItems: Item[]
     export let item: Item | null
 
     let itemEditValues = clone(itemEdits)
 
-    let data: { [key: string]: any } = {}
+    let data: { [key: string]: string } = {}
 
     $: if (item?.style || item === null) updateData()
     function updateData() {
@@ -44,9 +45,9 @@
         // update backdrop filters
         let backdropFilters = getFilters(itemBackFilters || "")
         let defaultBackdropFilters = itemEditValues.backdrop_filters || []
-        itemEditValues.backdrop_filters.forEach((filter: any) => {
-            let value = backdropFilters[filter.key] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value
-            let index = itemEditValues.backdrop_filters.findIndex((a: any) => a.key === filter.key)
+        itemEditValues.backdrop_filters.forEach((filter) => {
+            let value = backdropFilters[filter.key || ""] ?? defaultBackdropFilters.find((a) => a.key === filter.key)?.value
+            let index = itemEditValues.backdrop_filters.findIndex((a) => a.key === filter.key)
             itemEditValues.backdrop_filters[index].value = value
         })
     }
@@ -56,8 +57,6 @@
     function updateStyle(e: any) {
         let input = e.detail
         input = percentageToAspectRatio(input)
-
-        console.log(input)
 
         if (input.id === "backdrop-filter" || input.id === "transform") {
             let oldString = input.id === "backdrop-filter" ? itemBackFilters : data[input.id]
@@ -81,7 +80,7 @@
 
         /////
 
-        let ref: any[] = _show("active").layouts("active").ref()[0] || {}
+        let ref = getLayoutRef()
         let slides: string[] = [ref[$activeEdit.slide ?? ""]?.id]
         let slideItems: number[][] = [allItems]
         let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
@@ -106,7 +105,7 @@
 
         /////
 
-        let values: any = {}
+        let values: { [key: string]: string[] } = {}
 
         // get relative value
         let relativeValue = 0

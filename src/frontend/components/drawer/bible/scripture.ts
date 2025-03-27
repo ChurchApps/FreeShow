@@ -1,9 +1,10 @@
 import { get } from "svelte/store"
-import { BIBLE } from "../../../../types/Channels"
 import type { StringObject } from "../../../../types/Main"
 import { dataPath, scriptureSettings, scriptures, scripturesCache, templates } from "../../../stores"
 import { getKey } from "../../../values/keys"
 import { clone, removeDuplicates } from "../../helpers/array"
+import { sendMain } from "../../../IPC/main"
+import { Main } from "../../../../types/IPC/Main"
 
 const api = "https://contentapi.churchapps.org/bibles/"
 let tempCache: any = {}
@@ -125,23 +126,23 @@ export function loadBible(active: string, index: number = 0, bible: any) {
             return
         }
 
-        window.api.send(BIBLE, { name: scripture.name, id: scripture.id || id, data: { index }, path: get(dataPath) })
+        sendMain(Main.BIBLE, { name: scripture.name, id: scripture.id || id, data: { index }, path: get(dataPath) })
     })
 
     return bible
 }
 
-export function receiveBibleContent(msg: any) {
-    if (msg.error === "not_found" || !msg.content?.[1]) return
+export function receiveBibleContent(data: any) {
+    if (data.error === "not_found" || !data.content?.[1]) return
 
-    const content = msg.content[1] || {}
+    const content = data.content[1] || {}
     scripturesCache.update((a) => {
-        a[msg.content[0]] = content
+        a[data.content[0]] = content
         return a
     })
 
     let bible: any = content
-    let id = msg.content[0] || msg.id
+    let id = data.content[0] || data.id
 
     bible.version = get(scriptures)[id]?.customName || content.name || get(scriptures)[id]?.name || ""
     bible.metadata = content.metadata || {}
@@ -172,11 +173,46 @@ export function joinRange(array: string[]) {
     return range
 }
 
+export function splitText(value: string, maxLength: number) {
+    let splitted: string[] = []
+
+    // for (let i = 0; i < value.length; i += maxLength) {
+    //     let string = value.substring(i, i + maxLength)
+    //     // merge short strings
+    //     if (string.length < 10) splitted[splitted.length - 1] += string
+    //     else splitted.push(string)
+    // }
+
+    let start = 0
+    while (start < value.length) {
+        // find the next possible break point
+        let end = start + maxLength
+        if (end < value.length) {
+            let spaceIndex = value.lastIndexOf(" ", end)
+            if (spaceIndex > start) {
+                end = spaceIndex // adjust to the last space within range
+            }
+        }
+
+        let string = value.substring(start, end).trim()
+        splitted.push(string)
+
+        start = end + 1
+    }
+
+    // merge short strings
+    if (splitted.length > 1 && splitted[splitted.length - 1].length < 20) {
+        splitted[splitted.length - 2] += " " + splitted.pop()
+    }
+
+    return splitted
+}
+
 export const textKeys = {
     showVersion: "[version]",
     showVerse: "[reference]",
 }
-export function getSlides({ bibles, sorted }) {
+export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableReference: boolean = false) {
     let slides: any[][] = [[]]
 
     let template = clone(get(templates)[get(scriptureSettings).template]?.items || [])
@@ -202,6 +238,9 @@ export function getSlides({ bibles, sorted }) {
             let slideArr: any = slides[slideIndex][bibleIndex]
             if (!slideArr?.lines[0]?.text) return
 
+            let text: string = bible.verses[s] || ""
+            if (!text) return
+
             let lineIndex: number = 0
             // verses on individual lines
             if (get(scriptureSettings).versesOnIndividualLines) {
@@ -221,8 +260,6 @@ export function getSlides({ bibles, sorted }) {
                     customType: "disableTemplate", // dont let template style verse numbers
                 })
             }
-
-            let text: string = bible.verses[s] || ""
 
             // custom Jesus red to JSON format: !{}!
             text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
@@ -285,10 +322,10 @@ export function getSlides({ bibles, sorted }) {
             slideArr.lines![lineIndex].text.push(...textArray)
 
             // if (bibleIndex + 1 < bibles.length) return
-            if ((i + 1) % get(scriptureSettings).versesPerSlide > 0) return
+            if (onlyOne || (i + 1) % get(scriptureSettings).versesPerSlide > 0) return
 
-            if (bibleIndex + 1 >= bibles.length) {
-                let range: any[] = sorted.slice(i - get(scriptureSettings).versesPerSlide + 1, i + 1)
+            if (!disableReference && bibleIndex + 1 >= bibles.length) {
+                let range: any[] = onlyOne ? sorted : sorted.slice(i - get(scriptureSettings).versesPerSlide + 1, i + 1)
                 if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
                 let indexes = [bibles.length]
                 if (combineWithText) indexes = [...Array(bibles.length)].map((_, i) => i)
@@ -304,8 +341,8 @@ export function getSlides({ bibles, sorted }) {
         })
 
         // add remaining
-        if (bibleIndex + 1 >= bibles.length) {
-            let remainder = sorted.length % get(scriptureSettings).versesPerSlide
+        if (!disableReference && bibleIndex + 1 >= bibles.length) {
+            let remainder = onlyOne ? sorted.length : sorted.length % get(scriptureSettings).versesPerSlide
             let range: any[] = sorted.slice(sorted.length - remainder, sorted.length)
             if (get(scriptureSettings).splitReference === false || get(scriptureSettings).firstSlideReference) range = sorted
             let indexes = [bibles.length]
@@ -362,8 +399,8 @@ export function getSlides({ bibles, sorted }) {
         const referenceDivider = get(scriptureSettings).referenceDivider || ":"
         let text = customText
         if (!showVersion && !showVerse) return
-        if (showVersion) text = text.replaceAll(textKeys.showVersion, versions)
-        if (showVerse) text = text.replaceAll(textKeys.showVerse, books + " " + bibles[0].chapter + referenceDivider + range)
+        text = text.replaceAll(textKeys.showVersion, showVersion ? versions : "")
+        text = text.replaceAll(textKeys.showVerse, showVerse ? books + " " + bibles[0].chapter + referenceDivider + range : "")
 
         text.split("\n").forEach((line) => {
             if (!line.trim()) return
@@ -416,6 +453,17 @@ function stripMarkdown(input: string) {
     input = input.replace(/¶/g, "")
 
     return input
+}
+
+// hard coded custom Bible data
+const bibleData = {
+    "eea18ccd2ca05dde-01": {
+        nameLocal: "Bibel 2011 Bokmål", // med gammeltestamentlige apokryfer
+    },
+}
+// ChurchAppsApiBible
+export function customBibleData(data: any) {
+    return { ...data, ...(bibleData[data.sourceKey] || {}) }
 }
 
 // HELPERS

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { dictionary, guideActive } from "../../stores"
+    import { dictionary, guideActive, os } from "../../stores"
     import { wait } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -29,7 +29,7 @@
         await wait(timeout)
         if (timeIndex !== stepIndex) return
 
-        let elem: any = document.querySelector(query)
+        let elem = document.querySelector(query)
         if (!elem) {
             console.log("Could not find element for step", stepIndex)
             stepIndex++
@@ -40,10 +40,12 @@
         const width = window.innerWidth
         flip = bounds.x > width * 0.7
 
-        console.log(elem, bounds)
-        currentStyle = `left: ${bounds.x}px;top: ${Math.max(70, bounds.y)}px;width: ${bounds.width}px;height: ${bounds.height}px;`
-        if (flip) currentTextStyle = `max-width: ${bounds.right}px;`
-        else currentTextStyle = `max-width: ${width - bounds.left}px;`
+        let top = ""
+        if (bounds.y + bounds.height <= 25 + 40) top = `top: ${bounds.y + bounds.height}px;` + ($os.platform === "win32" ? "transform: translateY(-25px);" : "")
+
+        currentStyle = `left: ${bounds.x}px;top: ${Math.max(top ? 0 : 70, bounds.y)}px;width: ${bounds.width}px;height: ${bounds.height}px;`
+        if (flip) currentTextStyle = `max-width: ${bounds.right}px;${top}`
+        else currentTextStyle = `max-width: ${width - bounds.left}px;${top}`
     }
 
     function mousedown(e: any) {
@@ -52,7 +54,7 @@
         stepIndex++
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (!active) return
 
         if (e.key === "Escape") {
@@ -117,7 +119,8 @@
 
         /* pointer-events: none; */
 
-        color: #eee;
+        /* color: #eee; */
+        color: var(--text);
     }
 
     .focus {

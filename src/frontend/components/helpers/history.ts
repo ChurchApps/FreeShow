@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
+import type { History } from "../../../types/History"
 import { activePage, driveData, historyCacheCount, undoHistory } from "../../stores"
-import type { ShowRef } from "./../../../types/Projects"
 import { redoHistory } from "./../../stores"
 import { clone } from "./array"
 import { historyActions } from "./historyActions"
@@ -8,53 +8,6 @@ import { deselect } from "./select"
 import { loadShows } from "./setShow"
 import { _show } from "./shows"
 import { removeTemplatesFromShow } from "./show"
-
-export type HistoryPages = "none" | "drawer" | "show" | "edit" | "calendar" | "draw" | "stage" | "settings"
-export type HistoryIDs =
-    // NEW
-    | "UPDATE"
-    | "SHOWS"
-    | "SLIDES"
-    | "TEMPLATE"
-    | "SHOW_LAYOUT"
-    | "SHOW_ITEMS"
-
-    // TODO: remove/update these:
-    // edit
-    | "textStyle"
-    | "textAlign"
-    | "deleteItem"
-    | "setItems"
-    | "setStyle"
-    | "slideStyle"
-    // show
-    | "slide"
-    | "showMedia"
-    | "showAudio"
-
-export interface History {
-    id: HistoryIDs
-    oldData?: any
-    newData?: any
-    save?: boolean
-    time?: number
-    location?: {
-        page: HistoryPages
-        id?: string
-        override?: boolean | string
-        project?: null | string
-        folder?: string
-        show?: ShowRef
-        shows?: any[]
-        layout?: string
-        layouts?: string[]
-        layoutSlide?: number
-        slide?: string
-        items?: any[]
-        theme?: string
-        lines?: number[]
-    }
-}
 
 // override previous history
 const override = ["textAlign", "textStyle", "deleteItem", "setItems", "setStyle", "slideStyle", "STAGE"]
@@ -77,7 +30,7 @@ export function history(obj: History, undo: null | boolean = null) {
 
     if (undo === null) obj.time = new Date().getTime()
 
-    let showID: any
+    let showID: string | undefined
     if (obj.location?.show?.id) showID = obj.location.show.id
     let old: any = null
     let temp: any = {}
@@ -107,14 +60,14 @@ export function history(obj: History, undo: null | boolean = null) {
                 // if (obj.newData?.style?.key === "text-style" && old.style.values?.[0]?.[0]) old.style.values = old.style.values[0]
 
                 // remove templates because slide has manual updates
-                if (!undo) removeTemplatesFromShow(showID)
+                if (!undo) removeTemplatesFromShow(showID || "")
                 break
             case "setItems":
             case "setStyle":
                 old = { style: _show(showID).slides([obj.location!.slide!]).items(obj.location!.items!).set(obj.newData.style) }
 
                 // remove templates because slide has manual updates
-                if (!undo) removeTemplatesFromShow(showID)
+                if (!undo) removeTemplatesFromShow(showID || "")
                 break
             case "slideStyle":
                 old = { style: _show(showID).slides([obj.location?.slide!]).set({ key: "settings", value: obj.newData.style }) }
@@ -134,7 +87,7 @@ export function history(obj: History, undo: null | boolean = null) {
                     _show(showID)
                         .media()
                         .get()
-                        .forEach((media: any) => {
+                        .forEach((media) => {
                             if (media.id === obj.newData.id) bgid = media.key
                         })
 
@@ -145,7 +98,7 @@ export function history(obj: History, undo: null | boolean = null) {
                         .slides([[obj.location!.layoutSlide!]])
                         .remove("background")
                 } else {
-                    let ref = _show(showID).layouts([obj.location!.layout!]).ref()?.[0]?.[obj.location!.layoutSlide!]
+                    let ref = _show(showID).layouts([obj.location!.layout!]).ref()[0]?.[obj.location!.layoutSlide!]
                     if (ref) {
                         let cloudId = get(driveData).mediaId
                         if (ref.data.background && cloudId && cloudId !== "default") {
@@ -163,7 +116,7 @@ export function history(obj: History, undo: null | boolean = null) {
 
                         // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()[0]
                         if (ref.type === "parent") _show(showID).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "background", value: bgid })
-                        else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.id]).set({ key: "background", value: bgid })
+                        else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent?.index]).children([ref.id]).set({ key: "background", value: bgid })
                     }
                 }
                 break
@@ -176,7 +129,7 @@ export function history(obj: History, undo: null | boolean = null) {
                     _show(showID)
                         .media()
                         .get()
-                        .forEach((media: any) => {
+                        .forEach((media) => {
                             if (media.path === obj.newData.path) audioId = media.key
                         })
                 }
@@ -209,7 +162,7 @@ export function history(obj: History, undo: null | boolean = null) {
                         audio.push(audioId)
 
                         if (ref.type === "parent") _show(showID).layouts([obj.location!.layout!]).slides([ref.index]).set({ key: "audio", value: audio })
-                        else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent.index]).children([ref.id]).set({ key: "audio", value: audio })
+                        else _show(showID).layouts([obj.location!.layout!]).slides([ref.parent?.index]).children([ref.id]).set({ key: "audio", value: audio })
                     }
                 }
                 break

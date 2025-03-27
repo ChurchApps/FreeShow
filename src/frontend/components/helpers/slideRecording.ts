@@ -1,4 +1,4 @@
-import { get } from "svelte/store"
+import { get, Unsubscriber } from "svelte/store"
 import type { Recording } from "../../../types/Show"
 import { activeShow, activeSlideRecording, outLocked, outputs, playingAudio } from "../../stores"
 import { getActiveOutputs, setOutput } from "./output"
@@ -16,7 +16,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
     let layoutRef = _show(showId).layouts([layoutId]).ref()[0]
 
     let layoutData = layoutRef[recording.sequence?.[0]?.slideRef?.index]?.data || {}
-    let audio = layoutData.audio?.[0]
+    let audio = layoutData.audio?.[0] || ""
     if (audio || audioListener) {
         let showMedia = _show(showId).get("media")
         audio = showMedia[audio]?.path
@@ -75,7 +75,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
     }
 }
 
-let audioListener: any = null
+let audioListener: Unsubscriber | null = null
 let audioPathListener: string = ""
 function startAudioListener(path: string) {
     audioPathListener = path

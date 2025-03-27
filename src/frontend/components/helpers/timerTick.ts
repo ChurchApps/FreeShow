@@ -17,7 +17,7 @@ const INTERVAL = 1000
 const TEN_SECONDS = 1000 * 10
 const ONE_MINUTE = 1000 * 60
 
-let timeout: any = null
+let timeout: NodeJS.Timeout | null = null
 let customInterval = INTERVAL
 export function startTimer() {
     if (get(currentWindow)) return
@@ -118,10 +118,9 @@ function convertShowToAction() {
     if (updated) events.set(allEvents)
 }
 
-let actionTimeout: any = null
+let actionTimeout: NodeJS.Timeout | null = null
 export function startEventTimer() {
     if (actionTimeout) return
-    actionTimeout = true
 
     convertShowToAction()
 
@@ -187,7 +186,7 @@ function convertEventAction(action) {
 
 // TOWARDS A TIME/EVENT
 
-let timerCheckTimeout: any = null
+let timerCheckTimeout: NodeJS.Timeout | null = null
 export function checkTimers() {
     if (timerCheckTimeout) clearTimeout(timerCheckTimeout)
 

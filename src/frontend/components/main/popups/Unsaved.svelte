@@ -11,7 +11,7 @@
         y: () => ($saved ? saveComplete({ closeWhenFinished: true }) : save(true)),
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (actions[e.key]) {
             e.preventDefault()
             actions[e.key]()

@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
-import { MAIN } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
+import { sendMain } from "../IPC/main"
 import { outLocked } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
 
@@ -27,7 +28,7 @@ export class AudioMicrophone {
             .catch((err) => {
                 console.log(err)
                 if (err.name === "NotReadableError") {
-                    window.api.send(MAIN, { channel: "ACCESS_MICROPHONE_PERMISSION" })
+                    sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
                 }
             })
     }

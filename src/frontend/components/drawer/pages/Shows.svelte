@@ -22,9 +22,9 @@
     $: showsSorted = $sortedShowsList
 
     let filteredShows: ShowList[] = []
-    let filteredStored: any
+    let filteredStored: ShowList[] = []
     $: filteredStored = filteredShows =
-        active === "all" ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive) : showsSorted.filter((s: any) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
+        active === "all" ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive) : showsSorted.filter((s) => active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category])))
 
     export let firstMatch: null | any = null
     export let resetSearchList: boolean = false
@@ -56,7 +56,7 @@
     }
 
     // reduce lag by only refreshing full list when not typing for 200 ms
-    let isTyping: any = null
+    let isTyping: NodeJS.Timeout | null = null
     $: if (searchValue) typing()
     function typing() {
         if (isTyping) clearTimeout(isTyping)
@@ -76,15 +76,15 @@
     if (id) {
     }
     // $: if (id === "shows" && $activeShow !== null && ($activeShow.type || "show") === "show") {
-    //     let scrollElem: any = document.querySelector("svelte-virtual-list-viewport")
+    //     let scrollElem = document.querySelector("svelte-virtual-list-viewport")
     //     if (scrollElem) {
     //         let elemTop = scrollElem.querySelector("#show_" + $activeShow.id)?.closest("svelte-virtual-list-row")?.offsetTop || 0
     //         scrollElem.scrollTo(0, elemTop - scrollElem.offsetTop)
     //     }
     // }
 
-    function keydown(e: any) {
-        if (e.target.closest(".search")) {
+    function keydown(e: KeyboardEvent) {
+        if (e.target?.closest(".search")) {
             // get preview of shows
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 e.preventDefault()
@@ -99,10 +99,10 @@
             return
         }
 
-        if (e.target.closest("input") || e.target.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows?.length) return
+        if (e.target?.closest("input") || e.target?.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows?.length) return
         if ($activeEdit.items.length) return
 
-        let id: any = null
+        let id: string = ""
         if (e.key === "ArrowRight") {
             if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[0].id
             else {

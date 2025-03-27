@@ -12,13 +12,13 @@
     $: currentShow = $showsCache[showId]
     $: layoutSlides = $cachedShowsData[getShowCacheId(showId, currentShow)]?.layout || []
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.altKey) {
             e.preventDefault()
             altKeyPressed = true
         }
 
-        if (e.target instanceof HTMLTextAreaElement || e.target.closest(".edit")) return
+        if (e.target instanceof HTMLTextAreaElement || e.target?.closest(".edit")) return
         if ($activeEdit.items.length) return
 
         if (e.key === "ArrowDown") {
@@ -44,18 +44,18 @@
         }
     }
 
-    let scrollElem: any
+    let scrollElem: HTMLElement | undefined
     let offset: number = -1
     $: {
         if (loaded && $activeEdit.slide !== null && $activeEdit.slide !== undefined) {
             let index = $activeEdit.slide - 1
             setTimeout(() => {
-                if (index >= 0 && scrollElem) offset = scrollElem.querySelector(".grid")?.children?.[index]?.offsetTop || 5 - 5
+                if (index >= 0 && scrollElem) offset = (scrollElem.querySelector(".grid")?.children?.[index] as HTMLElement)?.offsetTop || 5 - 5
             }, 10)
         }
     }
 
-    let nextScrollTimeout: any = null
+    let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
         if (nextScrollTimeout) return
@@ -78,7 +78,7 @@
     // lazy loader
 
     let lazyLoader: number = 1
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     let loaded: boolean = false
 
     // reset loading when changing view modes

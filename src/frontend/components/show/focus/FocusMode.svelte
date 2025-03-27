@@ -25,7 +25,7 @@
         }, 100)
     }
 
-    let listElem: any = null
+    let listElem: HTMLElement | undefined
     let fromTop: number = 0 // 25px on Windows
 
     $: active = $activeFocus
@@ -39,7 +39,7 @@
 
         let id = "id_" + getId(active.id) + "_" + index
         let elem = listElem.querySelector("#" + id)
-        let elemTop = elem?.offsetTop || 0
+        let elemTop = (elem as HTMLElement)?.offsetTop || 0
 
         // smooth scrolling time
         if (scrollingToActive) clearTimeout(scrollingToActive)
@@ -53,10 +53,10 @@
 
     $: if (listElem) setScrollListener()
     function setScrollListener() {
-        if (!listElem.closest(".center")) return
+        if (!listElem?.closest(".center")) return
 
-        fromTop = listElem.children[0]?.offsetTop || 0
-        listElem.closest(".center").onscroll = (e) => scrolling(e)
+        fromTop = (listElem.children[0] as HTMLElement)?.offsetTop || 0
+        if (listElem.closest(".center")) (listElem.closest(".center") as HTMLElement).onscroll = (e) => scrolling(e)
     }
 
     $: sidebarClosed = $resized.leftPanel < 5
@@ -77,7 +77,7 @@
         let focusedId = ""
         let names = listElem.querySelectorAll(".name")
         ;[...names].forEach((a) => {
-            let top = a.offsetTop - fromTop
+            let top = (a as HTMLElement).offsetTop - fromTop
             if (top <= scrollTop) focusedId = a.id
         })
 

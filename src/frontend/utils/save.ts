@@ -1,7 +1,10 @@
 import { get } from "svelte/store"
-import { MAIN, STORE } from "../../types/Channels"
+import { Main } from "../../types/IPC/Main"
+import type { Projects } from "../../types/Projects"
+import type { Shows } from "../../types/Show"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
+import { sendMain } from "../IPC/main"
 import {
     actionTags,
     activePopup,
@@ -23,6 +26,7 @@ import {
     drawerTabsData,
     driveData,
     driveKeys,
+    effectsLibrary,
     emitters,
     errorHasOccured,
     events,
@@ -85,13 +89,12 @@ import {
     videoMarkers,
     volume,
 } from "../stores"
-import type { SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
+import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
-import { send } from "./request"
 
-export function save(closeWhenFinished: boolean = false, customTriggers: { backup?: boolean; silent?: boolean; changeUserData?: any; autosave?: boolean } = {}) {
+export function save(closeWhenFinished: boolean = false, customTriggers: SaveActions = {}) {
     console.log("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
         newToast("$toast.saving")
@@ -141,6 +144,7 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         driveData: get(driveData),
         calendarAddShow: get(calendarAddShow),
         metronome: get(metronome),
+        effectsLibrary: get(effectsLibrary),
         special: get(special),
     }
 
@@ -170,8 +174,8 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         customMetadata: get(customMetadata),
     }
 
-    let allSavedData: any = {
-        path: get(showsPath),
+    let allSavedData: SaveData = {
+        path: get(showsPath) || "",
         dataPath: get(dataPath),
         // SETTINGS
         SETTINGS: settings,
@@ -192,29 +196,25 @@ export function save(closeWhenFinished: boolean = false, customTriggers: { backu
         scripturesCache: clone(get(scripturesCache)),
         deletedShows: clone(get(deletedShows)),
         renamedShows: clone(get(renamedShows)),
+        // CACHES
+        CACHE: { text: get(textCache) },
+        HISTORY: { undo: get(undoHistory), redo: get(redoHistory) },
+        USAGE: get(usageLog),
+        // SAVE INFO DATA
+        closeWhenFinished,
+        customTriggers,
     }
 
     deletedShows.set([])
     renamedShows.set([])
 
-    // CACHES
-    allSavedData = {
-        ...allSavedData,
-        CACHE: { text: get(textCache) },
-        HISTORY: { undo: get(undoHistory), redo: get(redoHistory) },
-        USAGE: get(usageLog),
-    }
-
-    allSavedData.closeWhenFinished = closeWhenFinished
-    allSavedData.customTriggers = customTriggers
-
     if (customTriggers.backup) newToast("$settings.backup_started")
-    send(STORE, ["SAVE"], allSavedData)
+    sendMain(Main.SAVE, allSavedData)
 }
 
-export function saveComplete({ closeWhenFinished, customTriggers }: any) {
+export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
     if (!closeWhenFinished) {
-        if ((!customTriggers.autosave || !get(saved)) && !customTriggers?.backup) newToast("$toast.saved")
+        if ((!customTriggers?.autosave || !get(saved)) && !customTriggers?.backup) newToast("$toast.saved")
 
         saved.set(true)
         console.log("SAVED!")
@@ -240,14 +240,14 @@ export function initializeClosing() {
 }
 
 export function closeApp() {
-    send(MAIN, ["CLOSE"])
+    sendMain(Main.CLOSE)
 }
 
 // GET SAVED STATE
 
 let initialized: boolean = false
 export function unsavedUpdater() {
-    let cachedValues: any = {}
+    let cachedValues: { [key: string]: string } = {}
     let s = { ...saveList, folders, projects, showsCache, stageShows }
 
     Object.keys(s).forEach((id) => {
@@ -277,21 +277,21 @@ export function unsavedUpdater() {
 }
 
 const customSavedListener = {
-    showsCache: (data: any) => {
+    showsCache: (data: Shows) => {
         Object.keys(data).forEach((id) => {
             if (!data[id]?.slides) return
 
-            delete data[id].timestamps
-            delete data[id].settings
+            delete (data[id] as any).timestamps
+            delete (data[id] as any).settings
 
-            Object.values(data[id].slides).forEach((slide: any) => {
+            Object.values(data[id].slides).forEach((slide) => {
                 delete slide.id
             })
         })
 
         return data
     },
-    projects: (data: any) => {
+    projects: (data: Projects) => {
         removeDeleted(keysToID(data)).forEach((a) => {
             data[a.id].shows.map((show) => {
                 delete show.layout
@@ -366,6 +366,7 @@ const saveList: { [key in SaveList]: any } = {
     driveData: driveData,
     calendarAddShow: null,
     metronome: null,
+    effectsLibrary: null,
     special: special,
     companion: null,
     globalTags: globalTags,

@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
+    import type { ShowType } from "../../../../types/Show"
     import { activeShow, customMessageCredits, dictionary, media, mediaOptions, mediaTags, outLocked, outputs, photoApiCredits, styles } from "../../../stores"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,7 +15,7 @@
     export let name: string
     export let path: string
     export let credits: any = {}
-    export let type: any
+    export let type: ShowType
     export let active: string | null
     export let shiftRange: any[] = []
     export let thumbnailPath: string = ""
@@ -26,7 +27,7 @@
     export let allFiles: string[]
 
     let loaded: boolean = true
-    let videoElem: any
+    let videoElem: HTMLVideoElement | undefined
     let hover: boolean = false
     let duration: number = 0
 
@@ -56,7 +57,7 @@
         }
     }
 
-    // let enterTimeout: any = null
+    // let enterTimeout = null
     function mouseenter(e: any) {
         const mediaGrid = document.querySelector(".grid")?.querySelector(".grid")
         if (!mediaGrid) return
@@ -123,25 +124,26 @@
     let resolution = { width: 16, height: 9 }
     // $: resolution = getResolution(null, { $outputs, $styles })
 
-    $: icon = active !== "favourites" && $media[path]?.favourite === true ? "star" : type === "video" ? "movie" : "image"
+    $: isFavourite = $media[path]?.favourite === true
+    $: icon = type === "video" ? "movie" : "image"
     $: tags = $media[path]?.tags || []
 
-    let iconClicked: any = null
+    let iconClicked: NodeJS.Timeout | null = null
     function removeStyle(key: string) {
         iconClicked = setTimeout(() => (iconClicked = null), 50)
 
         media.update((a) => {
             if (!a[path]) return a
 
-            if (key === "type") {
-                delete a[path].videoType
-            } else if (key === "filters") {
+            if (key === "filters") {
                 delete a[path].fit
                 delete a[path].flipped
                 delete a[path].flippedY
                 delete a[path].filter
             } else if (key === "tags") {
                 a[path].tags = []
+            } else {
+                delete a[path][key]
             }
 
             return a
@@ -174,10 +176,19 @@
     >
         <!-- icons -->
         <div class="icons">
+            {#if isFavourite && active !== "favourites"}
+                <div style="max-width: 100%;">
+                    <div class="button">
+                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("favourite")}>
+                            <Icon id="star" size={0.9} white />
+                        </Button>
+                    </div>
+                </div>
+            {/if}
             {#if mediaStyle.videoType}
                 <div style="max-width: 100%;">
                     <div class="button">
-                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("type")}>
+                        <Button style="padding: 3px;" redHover title={$dictionary.actions?.remove} on:click={() => removeStyle("videoType")}>
                             <Icon id={mediaStyle.videoType === "background" ? "muted" : mediaStyle.videoType === "foreground" ? "volume" : ""} size={0.9} white />
                         </Button>
                     </div>

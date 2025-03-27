@@ -1,8 +1,7 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import { uid } from "uid"
-    import { MAIN, READ_FOLDER } from "../../../../types/Channels"
-    import { destroy, send } from "../../../utils/request"
+    import { Main } from "../../../../types/IPC/Main"
+    import type { FileData } from "../../../../types/Main"
+    import { requestMain } from "../../../IPC/main"
     import Icon from "../../helpers/Icon.svelte"
     import { getThumbnailPath, isMediaExtension, mediaSize } from "../../helpers/media"
     import Card from "../Card.svelte"
@@ -13,24 +12,21 @@
     export let mode: "grid" | "list"
     export let folderPreview: boolean = false
 
-    let files: any[] = []
+    let files: FileData[] = []
     let fileCount: number = 0
 
-    let listenerId = uid()
     // WIP this creates one listener per individual folder...
-    $: if (folderPreview && mode === "grid" && path) send(MAIN, ["READ_FOLDER"], { path, disableThumbnails: true })
-    onDestroy(() => destroy(READ_FOLDER, listenerId))
+    $: if (folderPreview && mode === "grid" && path) {
+        requestMain(Main.READ_FOLDER, { path, disableThumbnails: true }, (data) => {
+            if (data.path !== path) return
 
-    window.api.receive(READ_FOLDER, receiveContent, listenerId)
-    function receiveContent(msg) {
-        if (msg.path !== path) return
-
-        fileCount = 0
-        let filtered = msg.files.filter((file: any) => isMediaExtension(file.extension))
-        fileCount = filtered.length
-        files = filtered.slice(0, 4).map((a) => {
-            a.path = getThumbnailPath(a.path, mediaSize.drawerSize)
-            return a
+            fileCount = 0
+            let filtered = data.files.filter((file) => isMediaExtension(file.extension))
+            fileCount = filtered.length
+            files = filtered.slice(0, 4).map((a) => {
+                a.path = getThumbnailPath(a.path, mediaSize.drawerSize)
+                return a
+            })
         })
     }
 

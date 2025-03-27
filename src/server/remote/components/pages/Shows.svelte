@@ -84,13 +84,13 @@
     // }
 
     // shows list
-    let searchElem: any = null
+    let searchElem: HTMLInputElement | undefined
     function openShow(id: string) {
         send("SHOW", id)
 
         if ($quickPlay) {
             send("API:index_select_slide", { showId: id, index: 0 })
-            searchElem.select()
+            searchElem?.select()
         } else {
             _set("activeTab", "show")
         }

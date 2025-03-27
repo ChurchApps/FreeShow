@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
+import type { MainFilePaths } from "../../types/Main"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { setShow } from "../components/helpers/setShow"
 import { audioFolders, dictionary, folders, mediaFolders, overlays, projects, remotePassword, shows, templates } from "../stores"
 import { stageShows, templateCategories } from "./../stores"
 import { save } from "./save"
-import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
-export function createData(paths: any) {
+export function createData(paths: MainFilePaths) {
     if (!get(shows).default) {
         createDefaultShow()
     }

@@ -14,7 +14,7 @@
 
     $: sortedStageSlides = sortByName(keysToID($stageShows))
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
         if ($activeStage.items.length) return
 

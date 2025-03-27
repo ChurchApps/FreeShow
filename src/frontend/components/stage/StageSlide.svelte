@@ -1,6 +1,7 @@
 <script lang="ts">
     import { StageLayout } from "../../../types/Stage"
     import { outputs, stageShows } from "../../stores"
+    import { clone } from "../helpers/array"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
@@ -34,7 +35,7 @@
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} disableStyle center bind:ratio>
                     {#each Object.entries(layout.items) as [id, item]}
                         {#if item.enabled !== false}
-                            <Stagebox {id} {item} {ratio} show={layout} />
+                            <Stagebox {id} item={clone(item)} {ratio} show={layout} />
                         {/if}
                     {/each}
                 </Zoomed>

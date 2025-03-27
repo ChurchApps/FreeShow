@@ -1,10 +1,11 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import type { Show } from "../../types/Show"
+import type { Category } from "../../types/Tabs"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
 import { activeDrawerTab, activePopup, activeProject, activeRename, categories, drawerTabsData, shows } from "../stores"
 import { newToast } from "../utils/common"
-import type { Category } from "../../types/Tabs"
 import { convertText } from "./txt"
 
 export function createCategory(name: string, icon: string = "song", { isDefault, isArchive }: { isDefault?: boolean; isArchive?: boolean } = {}) {
@@ -12,7 +13,7 @@ export function createCategory(name: string, icon: string = "song", { isDefault,
     let selectedCategory = get(drawerTabsData).shows?.activeSubTab || ""
     console.log(selectedCategory)
     if (get(activeDrawerTab) === "shows" && selectedCategory !== "all" && selectedCategory !== "unlabeled") {
-        let categoryCount = Object.values(get(shows)).reduce((count: number, show: any) => (count += show.category === selectedCategory ? 1 : 0), 0)
+        let categoryCount = Object.values(get(shows)).reduce((count, show) => (count += show.category === selectedCategory ? 1 : 0), 0)
         if (!categoryCount) return selectedCategory
     }
 
@@ -32,7 +33,7 @@ export function createCategory(name: string, icon: string = "song", { isDefault,
     return id
 }
 
-export function setTempShows(tempShows: any[]) {
+export function setTempShows(tempShows: { id: string; show: Show }[]) {
     if (tempShows.length === 1) {
         history({ id: "UPDATE", newData: { data: tempShows[0].show, remember: { project: get(activeProject) } }, oldData: { id: tempShows[0].id }, location: { page: "show", id: "show" } })
     } else {
@@ -43,10 +44,10 @@ export function setTempShows(tempShows: any[]) {
     newToast("$main.finished")
 }
 
-export function importShow(files: any[]) {
-    let tempShows: any[] = []
+export function importShow(files: { content: string; name?: string; extension?: string }[]) {
+    let tempShows: { id: string; show: Show }[] = []
 
-    files.forEach(({ content, name }: any) => {
+    files.forEach(({ content, name }) => {
         let id, show
 
         try {
@@ -89,7 +90,7 @@ export function importFromClipboard() {
 
 // SPECIFIC FORMATS
 
-export function importSpecific(data: any, store: any) {
+export function importSpecific(data: { content: string; name?: string; extension?: string }[], store: any) {
     data.forEach(({ content }) => {
         content = JSON.parse(content)
 

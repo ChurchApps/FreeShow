@@ -31,7 +31,7 @@
 {:else if active === $photoApiCredits.type}
     {#if $photoApiCredits.photo}
         <main style="overflow-y: auto;">
-            <h2 style="text-align: center;padding: 0 5px;" title={$photoApiCredits.photo}>
+            <h2 style="text-align: center;padding: 10px;" title={$photoApiCredits.photo}>
                 {$photoApiCredits.photo}
             </h2>
             <p>

@@ -33,7 +33,7 @@ export const actionData = {
 
     // OVERLAYS
     // SECTION: "tabs.overlays",
-    id_select_overlay: { name: "actions.id_select_overlay", icon: "overlays", input: "id" },
+    id_select_overlay: { canAddMultiple: true, name: "actions.id_select_overlay", icon: "overlays", input: "id" },
 
     // OUTPUT
     lock_output: { SECTION: "guide_title.output", name: "actions.toggle_output_lock", icon: "locked", input: "bolval" },

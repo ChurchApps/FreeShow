@@ -1,5 +1,5 @@
 import { setError, translate } from "./helpers"
-import { _, _get, _set, _update, scriptures } from "./stores"
+import { _, _get, _set, _update, overlays, scriptures } from "./stores"
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
@@ -105,6 +105,9 @@ export const receiver = {
         if (!data) return
         _update("scriptureCache", data.id, data.bible)
     },
+    OVERLAYS: (data: any) => {
+        overlays.set(data)
+    },
 
     /////
 
@@ -121,5 +124,12 @@ export const receiver = {
     },
     "API:get_cleared": (data: any) => {
         _set("isCleared", data)
+    },
+
+    "API:get_playing_audio_data": (data: any) => {
+        _set("playingAudioData", data)
+    },
+    "API:get_playing_audio_time": (data: any) => {
+        _set("playingAudioTime", data)
     },
 }

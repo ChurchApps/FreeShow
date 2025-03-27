@@ -102,9 +102,9 @@ export const _updaters = {
 
             // remove active show index
             if (get(activeShow) !== null) {
-                activeShow.update((as: any) => {
-                    as.index = null
-                    return as
+                activeShow.update((a) => {
+                    delete a!.index
+                    return a
                 })
             }
 
@@ -546,7 +546,7 @@ function updateTransparentColors(id: string) {
             let transparentColors: any[] = converts[subId]
 
             transparentColors.forEach(({ id: colorId, opacity }: any) => {
-                let rgba: string | null = makeTransparent(color, opacity)
+                let rgba = makeTransparent(color, opacity)
 
                 a[id].colors[colorId] = rgba
             })
@@ -555,7 +555,7 @@ function updateTransparentColors(id: string) {
         return a
     })
 }
-const converts: any = {
+const converts = {
     secondary: [{ id: "secondary-opacity", opacity: 0.5 }],
     text: [
         { id: "hover", opacity: 0.05 },
@@ -613,7 +613,7 @@ export function getProjectName() {
 function clearOverlayOutput(slideId: string) {
     if (!isOutCleared("overlays")) {
         outputs.update((a) => {
-            Object.entries(a).forEach(([id, output]: any) => {
+            Object.entries(a).forEach(([id, output]) => {
                 if (output.out?.overlays?.includes(slideId)) {
                     a[id].out!.overlays = a[id].out!.overlays!.filter((a) => a !== slideId)
                 }

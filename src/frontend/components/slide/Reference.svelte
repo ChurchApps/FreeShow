@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { MAIN } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
     import type { Show } from "../../../types/Show"
+    import { sendMain } from "../../IPC/main"
     import { activeDrawerTab, activeShow, drawer, labelsDisabled, openScripture, scriptures, shows } from "../../stores"
-    import { send } from "../../utils/request"
     import { createSlides, getDateString, getSelectedEvents, sortDays } from "../drawer/calendar/calendar"
     import { history } from "../helpers/history"
     import { setDrawerTabData } from "../helpers/historyHelpers"
@@ -15,7 +15,7 @@
     $: data = show.reference?.data || {}
 
     async function updateCalendar() {
-        let currentEvents: any[] = getSelectedEvents(data.days)
+        let currentEvents = getSelectedEvents(data.days)
 
         let showId: string = $activeShow?.id || ""
         let slidesData = await createSlides(currentEvents, showId)
@@ -34,7 +34,7 @@
         let collection = data.collection
         if (!collection) return
 
-        let scriptureId = $scriptures[collection] ? collection : Object.values($scriptures).find((a: any) => a.id === collection)
+        let scriptureId = $scriptures[collection] ? collection : Object.values($scriptures).find((a) => a.id === collection)
         if (!scriptureId) return
 
         openScripture.set(show.reference!.data)
@@ -48,7 +48,7 @@
     }
 
     function openURL(url: string) {
-        send(MAIN, ["URL"], url)
+        sendMain(Main.URL, url)
     }
 
     function removeMarkdownURL(text: string) {

@@ -1,10 +1,11 @@
 <script lang="ts">
+    import type { Draw } from "../../../types/Draw"
     import { draw } from "../../stores"
 
-    export let settings: any = {}
+    export let settings: { [key: string]: any } = {}
 
-    let drawTimeout: any = null
-    let particles: any[] = []
+    let drawTimeout: NodeJS.Timeout | null = null
+    let particles: (Draw & { size: number })[] = []
 
     $: if ($draw) drawParticle()
     function drawParticle() {

@@ -15,10 +15,13 @@ type AudioMetadata = {
 }
 type AudioOptions = {
     pauseIfPlaying?: boolean
+    stopIfPlaying?: boolean // effects
+    clearTime?: number // effects
     playMultiple?: boolean
     startAt?: number
-    crossfade?: number
-    playlistCrossfade?: boolean
+    crossfade?: number // playlist
+    playlistCrossfade?: boolean // playlist
+    volume?: number // playlist
 }
 export type AudioData = {
     name: string
@@ -39,9 +42,19 @@ export class AudioPlayer {
     static async start(path: string, metadata: AudioMetadata, options: AudioOptions = {}) {
         if (get(outLocked) || clearing.includes(path)) return
 
+        // get type
+        const duration = await this.getDuration(path)
+        const type = this.getAudioType(path, duration)
+        if (type === "effect") options = { ...options, playMultiple: true }
+
         if (this.audioExists(path)) {
             if (options.pauseIfPlaying === false) {
                 updateAudioStore(path, "currentTime", 0)
+                return
+            }
+            if (options.stopIfPlaying) {
+                if (options.clearTime) clearAudio(path, { clearTime: options.clearTime })
+                else AudioPlayer.stop(path)
                 return
             }
 
@@ -57,6 +70,8 @@ export class AudioPlayer {
         // another audio might have been started while awaiting (if played rapidly)
         if (!audio || this.audioExists(path)) return
 
+        let volume = AudioPlayer.getVolume() * (options.volume || 1)
+        audio.volume = volume
         if ((options.startAt || 0) > 0) audio.currentTime = options.startAt || 0
 
         playingAudio.update((a) => {
@@ -73,7 +88,7 @@ export class AudioPlayer {
         if (audioPlaying && options.crossfade) {
             audio.volume = 0
             waitToPlay = options.crossfade * 0.6
-            fadeInAudio(path, options.crossfade, !!waitToPlay)
+            fadeInAudio(path, options.crossfade, !!waitToPlay, volume)
         }
 
         this.initAudio(path, waitToPlay)
@@ -190,7 +205,7 @@ export class AudioPlayer {
 
     private static stopStream(stream: MediaStream | undefined) {
         if (!stream) return
-        stream.getAudioTracks().forEach((track: any) => track.stop())
+        stream.getAudioTracks().forEach((track) => track.stop())
     }
 
     private static togglePausedState(id: string) {
@@ -202,7 +217,14 @@ export class AudioPlayer {
     static updateVolume(id: string | null = null) {
         const ids = id ? [id] : Object.keys(get(playingAudio))
         ids.forEach((id) => {
-            updateAudioStore(id, "volume", this.getVolume(id))
+            let newVolume = this.getVolume(id)
+
+            // check playlist volume
+            if (AudioPlaylist.getPlayingPath() === id) {
+                newVolume *= AudioPlaylist.getActivePlaylist()?.volume || 1
+            }
+
+            updateAudioStore(id, "volume", newVolume)
         })
 
         AudioAnalyser.setGain(this.getGain())
@@ -268,11 +290,17 @@ export class AudioPlayer {
         return this.getAudio(id)?.currentTime || 0
     }
 
+    private static storedDurations: Map<string, number> = new Map()
     static async getDuration(id: string) {
+        if (this.storedDurations.has(id)) return this.storedDurations.get(id)!
+
         const audio = this.getAudio(id) || (await loadAudioFile(id))
-        const duration = audio?.duration || 0
+        let duration = audio?.duration || 0
         // audio streams does not end and have Infinite duration
-        return duration === Infinity ? 0 : duration
+        if (duration === Infinity) duration = 0
+
+        this.storedDurations.set(id, duration)
+        return duration
     }
 
     static getVolume(id: string | null = null) {
@@ -282,6 +310,10 @@ export class AudioPlayer {
 
     static getGain() {
         return get(special).allowGaining ? get(gain) || 1 : 1
+    }
+
+    static getAudioType(path: string, duration: number) {
+        return get(media)[path]?.audioType || (duration < 30 ? "effect" : "music")
     }
 
     // STATE

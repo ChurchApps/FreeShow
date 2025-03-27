@@ -16,10 +16,10 @@
 
     // RENAME!! (duplicate of NavigationButton.svelte)
 
-    const nameCategories: any = {
-        overlay: (c: any) => overlays.update((a) => setName(a, c)),
-        template: (c: any) => templates.update((a) => setName(a, c)),
-        player: (c: any) => playerVideos.update((a) => setName(a, c)),
+    const nameCategories = {
+        overlay: (c: { name: string; id: string }) => overlays.update((a) => setName(a, c)),
+        template: (c: { name: string; id: string }) => templates.update((a) => setName(a, c)),
+        player: (c: { name: string; id: string }) => playerVideos.update((a) => setName(a, c)),
     }
     const setName = (a: any, { name, id }: any, nameKey: string = "name") => {
         if (!a[id]) return a

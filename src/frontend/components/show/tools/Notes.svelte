@@ -11,7 +11,7 @@
 
     const TIME = 100
     let dispatch = createEventDispatcher()
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
 
     function input() {
         if (timeout !== null) return

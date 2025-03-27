@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Styles } from "../../../../types/Settings"
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { clone } from "../../helpers/array"
     import BackgroundMedia from "./BackgroundMedia.svelte"
@@ -6,7 +7,7 @@
     export let data: OutBackground
     export let outputId: string
     export let transition: Transition
-    export let currentStyle: any = {}
+    export let currentStyle: Styles | null = null
     export let slideFilter: string = ""
 
     export let ratio: number = 1
@@ -29,8 +30,8 @@
     // WIP changing quicly between media might make it not receive updates
 
     let loading: boolean = false
-    let timeout: any = null
-    let tooRapid: any = null
+    let timeout: NodeJS.Timeout | null = null
+    let tooRapid: NodeJS.Timeout | null = null
     let tryAgain: boolean = false
     $: if (data) createBackground()
     function createBackground() {

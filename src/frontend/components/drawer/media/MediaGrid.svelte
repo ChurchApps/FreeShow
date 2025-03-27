@@ -4,7 +4,7 @@
 
     let cardHeight: number = 0
 
-    let customCard: any
+    let customCard: HTMLDivElement | undefined
     let ready: boolean = false
     $: if (customCard && columns) initialize()
     function initialize() {
@@ -79,7 +79,7 @@
     }
 
     const createTimeout = 500 / columns
-    let timeout: any = null
+    let timeout: NodeJS.Timeout | null = null
     function slowlyChange(type: "last" | "first", steps: number = columns - 1) {
         if (steps < 1) return
         else if (timeout) clearTimeout(timeout)

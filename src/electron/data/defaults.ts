@@ -1,8 +1,8 @@
 import type { SaveListSettings, SaveListSyncedSettings } from "../../types/Save"
 
-export const defaultConfig: any = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 }, disableHardwareAcceleration: true }
+export const defaultConfig = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 }, disableHardwareAcceleration: true }
 
-export const defaultGroups: any = {
+export const defaultGroups = {
     break: { name: "break", default: true, color: "#f5255e" },
     bridge: { name: "bridge", default: true, color: "#f52598", shortcut: "B" },
     chorus: { name: "chorus", default: true, color: "#f525d2", shortcut: "C" },
@@ -72,6 +72,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },
     calendarAddShow: "",
     metronome: {},
+    effectsLibrary: [],
     special: {},
 }
 

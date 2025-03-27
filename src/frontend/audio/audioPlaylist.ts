@@ -131,7 +131,7 @@ export class AudioPlaylist {
         })
 
         // if (crossfade) isCrossfading = true
-        AudioPlayer.start(nextSong, { name: "" }, { pauseIfPlaying: false, crossfade: data.crossfade, playlistCrossfade: true })
+        AudioPlayer.start(nextSong, { name: "" }, { pauseIfPlaying: false, crossfade: data.crossfade, playlistCrossfade: true, volume: playlist.volume || 1 })
 
         function getSongs(): string[] {
             if (previousPath && get(activePlaylist)?.songs) return get(activePlaylist).songs

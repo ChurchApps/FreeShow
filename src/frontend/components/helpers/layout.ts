@@ -1,23 +1,24 @@
 import { uid } from "uid"
 import { clone } from "./array"
 import { _show } from "./shows"
+import type { Slide, SlideData } from "../../../types/Show"
 
 export function getCurrentLayout() {
-    let slides: any = clone(_show("active").get().slides)
-    let layout: any[] = _show("active").layouts("active").get()[0].slides
+    let slides: { [key: string]: Slide } = clone(_show().get().slides)
+    let layout: SlideData[] = _show().layouts("active").get()[0].slides
     return clone({ slides, layout })
 }
 
-export function cloneSlide(currentLayout: any, oldSlideId: string, newSlideId: string, keepChildren: boolean = true) {
-    let newSlide: any = clone(currentLayout.slides[oldSlideId])
+export function cloneSlide(currentLayout: { slides: { [key: string]: Slide }; layout: SlideData[] }, oldSlideId: string, newSlideId: string, keepChildren: boolean = true) {
+    let newSlide = clone(currentLayout.slides[oldSlideId])
 
     // cloning a parent means that all its children must be cloned too
     if (newSlide.children) {
         if (keepChildren) {
             // clone children
-            let clonedChildren: any[] = []
+            let clonedChildren: string[] = []
             newSlide.children.forEach((childId: string) => {
-                let newChild: any = clone(currentLayout.slides[childId])
+                let newChild = clone(currentLayout.slides[childId])
                 let newChildId: string = uid()
                 currentLayout.slides[newChildId] = newChild
                 clonedChildren.push(newChildId)
@@ -32,11 +33,11 @@ export function cloneSlide(currentLayout: any, oldSlideId: string, newSlideId: s
     return currentLayout
 }
 
-export function addParents(currentLayout: any, parents: { id: string; data: any; pos: number }[]) {
+export function addParents(currentLayout: { slides: { [key: string]: Slide }; layout: SlideData[] }, parents: { id: string; data: SlideData; pos: number }[]) {
     parents
-        .sort((a: any, b: any) => (a.pos < b.pos ? 1 : -1))
-        .forEach(({ id, data, pos }: any) => {
-            currentLayout.layout = [...currentLayout.layout.slice(0, pos), { id, ...data }, ...currentLayout.layout.slice(pos, currentLayout.layout.length)]
+        .sort((a, b) => (a.pos < b.pos ? 1 : -1))
+        .forEach(({ id, data, pos }) => {
+            currentLayout.layout = [...currentLayout.layout.slice(0, pos), { ...data, id }, ...currentLayout.layout.slice(pos, currentLayout.layout.length)]
         })
     return currentLayout
 }

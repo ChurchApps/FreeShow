@@ -20,16 +20,19 @@
     export let style: boolean = false
     export let textStyle: string = ""
 
-    $: reversedItems = stageItem?.invertItems ? JSON.parse(JSON.stringify(slide?.items || [])) : JSON.parse(JSON.stringify(slide?.items || [])).reverse()
+    $: itemNumber = Number(stageItem?.itemNumber || 0)
+    $: reversedItems = !itemNumber && stageItem?.invertItems ? JSON.parse(JSON.stringify(slide?.items || [])) : JSON.parse(JSON.stringify(slide?.items || [])).reverse()
     $: items = style ? slide?.items || [] : combineSlideItems()
 
     function combineSlideItems() {
         let oneItem: any = null
         if (!slide?.items) return []
+
         reversedItems
             .filter((item: any) => (!item.type || item.type === "text") && (!item.bindings?.length || item.bindings.includes("stage")))
-            .forEach((item: any) => {
-                if (!item.lines || !item.lines.find((a: any) => a?.text?.[0]?.value?.length)) return
+            .forEach((item: any, i: number) => {
+                if (itemNumber && itemNumber - 1 !== i) return
+                if (!itemNumber && (!item.lines || !item.lines.find((a: any) => a?.text?.[0]?.value?.length))) return
 
                 if (!oneItem) oneItem = item
                 else {
@@ -46,8 +49,10 @@
     {#if style}
         <Main let:width let:height>
             <Zoomed {show} style={getStyleResolution(resolution, width, height, "fit")} center>
-                {#each items as item}
-                    <Textbox showId={slide.showId} {item} {style} customStyle={textStyle} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} autoSize={item.auto && autoSize} {fontSize} {autoStage} />
+                {#each items as item, i}
+                    {#if !itemNumber || itemNumber - 1 === i}
+                        <Textbox showId={slide.showId} {item} {style} customStyle={textStyle} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} autoSize={item.auto && autoSize} {fontSize} {autoStage} />
+                    {/if}
                 {/each}
             </Zoomed>
         </Main>

@@ -45,11 +45,11 @@
 
     $: if (list && actionId === "start_show" && !value?.id) openSelectShow()
     function openSelectShow() {
-        popupData.set({ ...$popupData, action: "select_show", revert: "action", active: value?.id, actionIndex })
+        popupData.set({ ...$popupData, action: "select_show", revert: $activePopup, active: value?.id, actionIndex })
         activePopup.set("select_show")
     }
 
-    let cameras: any[] = []
+    let cameras: { name: string; id: string; groupId: string }[] = []
     if (inputId === "camera") getCameras()
     function getCameras() {
         navigator.mediaDevices?.enumerateDevices()?.then((devices) => {

@@ -1,7 +1,9 @@
 import { get } from "svelte/store"
+import type { OutSlide } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import {
     activeEdit,
+    activePage,
     activePopup,
     activeStage,
     contextActive,
@@ -29,7 +31,7 @@ import { stopSlideRecording } from "../helpers/slideRecording"
 
 export function clearAll(button: boolean = false) {
     if (get(outLocked)) return
-    if (!button && (get(activePopup) || (get(selected).id && get(selected).id !== "scripture") || get(activeEdit).items.length || get(activeStage).items.length || get(contextActive) || get(topContextActive))) return
+    if (!button && (get(activePopup) || (get(selected).id && get(selected).id !== "scripture") || (get(activePage) === "edit" && get(activeEdit).items.length) || get(activeStage).items.length || get(contextActive) || get(topContextActive))) return
 
     // reset slide cache on Escape
     outputSlideCache.set({})
@@ -106,11 +108,11 @@ export function clearBackground(outputId: string = "") {
 export function clearSlide(clearAll: boolean = false) {
     if (!clearAll) {
         // store position
-        let slideCache: any = {}
+        let slideCache: { [key: string]: OutSlide } = {}
         let outputIds: string[] = getActiveOutputs()
         outputIds.forEach((outputId) => {
-            let slide: any = get(outputs)[outputId]?.out?.slide || {}
-            if (!slide.id) return
+            let slide = get(outputs)[outputId]?.out?.slide || null
+            if (!slide?.id || slide.index === undefined) return
 
             // only store if not last slide
             let layoutRef = _show(slide.id).layouts([slide.layout]).ref()[0] || []

@@ -1,6 +1,6 @@
 import type { EditInput } from "./boxes"
 
-const borderOptions: any[] = [
+const borderOptions = [
     { name: "$:borders.solid:$", id: "solid" },
     { name: "$:borders.dashed:$", id: "dashed" },
     { name: "$:borders.dotted:$", id: "dotted" },
@@ -22,8 +22,8 @@ export const itemEdits: { [key: string]: EditInput[] } = {
     position: [
         { name: "x", id: "style", key: "left", input: "number", value: 0, values: { min: -200, max: 200, decimals: 2 }, extension: "px", relative: true },
         { name: "y", id: "style", key: "top", input: "number", value: 0, values: { min: -200, max: 200, decimals: 2 }, extension: "px", relative: true },
-        { name: "width", id: "style", key: "width", input: "number", value: 0, values: { min: -200, max: 200, decimals: 2 }, extension: "px", relative: true },
-        { name: "height", id: "style", key: "height", input: "number", value: 0, values: { min: -200, max: 200, decimals: 2 }, extension: "px", relative: true },
+        { name: "width", id: "style", key: "width", input: "number", value: 0, values: { min: 2, max: 200, decimals: 2 }, extension: "px", relative: true },
+        { name: "height", id: "style", key: "height", input: "number", value: 0, values: { min: 2, max: 200, decimals: 2 }, extension: "px", relative: true },
     ],
     transform: [
         { name: "rotation", id: "transform", key: "rotate", input: "number", value: 0, values: { max: 360 }, extension: "deg" },

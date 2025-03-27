@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { MAIN, READ_FOLDER } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import { destroyMain, receiveMain, sendMain } from "../../../IPC/main"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
-    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, labelsDisabled, media, outLocked } from "../../../stores"
-    import { destroy, send } from "../../../utils/request"
+    import { activePlaylist, activeRename, audioFolders, audioPlaylists, dictionary, drawerTabsData, effectsLibrary, labelsDisabled, media, outLocked, selectAllAudio, selected } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
@@ -18,19 +18,22 @@
     import AudioStreams from "../live/AudioStreams.svelte"
     import Microphones from "../live/Microphones.svelte"
     import Folder from "../media/Folder.svelte"
+    import AudioEffect from "./AudioEffect.svelte"
     import AudioFile from "./AudioFile.svelte"
 
     export let active: string | null
     export let searchValue: string = ""
 
-    let files: any[] = []
-    let scrollElem: any
+    type File = { path: string; name: string; extension?: string; folder?: boolean; favourite?: boolean; audio?: boolean }
+
+    let files: File[] = []
+    let scrollElem: HTMLElement | undefined
 
     let playlistSettings: boolean = false
 
     $: playlist = active && $audioPlaylists[active]
 
-    $: isDefault = ["all", "favourites", "microphones", "audio_streams"].includes(active || "")
+    $: isDefault = ["all", "favourites", "effects_library", "microphones", "audio_streams"].includes(active || "")
     $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path! || "" : ""
     $: path = isDefault || playlist ? "" : rootPath
     $: name =
@@ -38,11 +41,13 @@
             ? "category.all"
             : active === "favourites"
               ? "category.favourites"
-              : rootPath === path
-                ? active !== "microphones" && active !== "audio_streams" && active !== null
-                    ? $audioFolders[active]?.name || ""
-                    : ""
-                : splitPath(path).name
+              : active === "effects_library"
+                ? "category.sound_effects"
+                : rootPath === path
+                  ? active !== "microphones" && active !== "audio_streams" && active !== null
+                      ? $audioFolders[active]?.name || ""
+                      : ""
+                  : splitPath(path).name
 
     // get list of files & folders
     let prevActive: null | string = null
@@ -50,7 +55,7 @@
         if (active === "favourites") {
             prevActive = active
             files = Object.entries($media)
-                .map(([path, a]: any) => {
+                .map(([path, a]) => {
                     let p = splitPath(path)
                     let name = p.name
                     return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
@@ -59,17 +64,22 @@
 
             // filterFiles()
             scrollElem?.scrollTo(0, 0)
+        } else if (active === "effects_library") {
+            prevActive = active
+            files = clone($effectsLibrary)
+
+            scrollElem?.scrollTo(0, 0)
         } else if (active === "all") {
             if (active !== prevActive) {
                 prevActive = active
                 files = []
-                Object.values($audioFolders).forEach((data) => send(MAIN, ["READ_FOLDER"], { path: data.path, disableThumbnails: true }))
+                Object.values($audioFolders).forEach((data) => sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: true }))
             }
         } else if (path.length) {
             if (path !== prevActive) {
                 prevActive = path
                 files = []
-                send(MAIN, ["READ_FOLDER"], { path, listFilesInFolders: true, disableThumbnails: true })
+                sendMain(Main.READ_FOLDER, { path, listFilesInFolders: true, disableThumbnails: true })
             }
         } else {
             // microphones & audio_streams
@@ -77,28 +87,23 @@
         }
     }
 
-    let filesInFolders: string[] = []
-    let folderFiles: any = {}
+    let filesInFolders: { id: string; name: string }[] = []
+    let folderFiles: { [key: string]: string[] } = {}
 
-    let listenerId = uid()
-    onDestroy(() => destroy(READ_FOLDER, listenerId))
+    let listenerId = receiveMain(Main.READ_FOLDER, (data) => {
+        filesInFolders = sortByName(data.filesInFolders || [])
 
-    // receive files
-    window.api.receive(READ_FOLDER, receiveContent, listenerId)
-    function receiveContent(msg: any) {
-        filesInFolders = sortByName(msg.filesInFolders || [])
+        if (active !== "all" && data.path !== path) return
 
-        if (active !== "all" && msg.path !== path) return
-
-        files.push(...msg.files.filter((file: any) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
-        files = sortByName(files).sort((a: any, b: any) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        files.push(...data.files.filter((file) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
+        files = sortByName(files).sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
         files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
 
         // set valid files in folder
         folderFiles = {}
-        Object.keys(msg.folderFiles).forEach((path) => {
-            folderFiles[path] = msg.folderFiles[path].filter((file) => file.folder || getMediaType(file.extension) === "audio")
+        Object.keys(data.folderFiles).forEach((path) => {
+            folderFiles[path] = data.folderFiles[path].filter((file) => file.folder || getMediaType(file.extension) === "audio")
         })
 
         // remove folders with no content
@@ -106,7 +111,8 @@
 
         // filterFiles()
         scrollElem?.scrollTo(0, 0)
-    }
+    })
+    onDestroy(() => destroyMain(listenerId))
 
     // search
     $: if (searchValue !== undefined || files) filterSearch()
@@ -120,7 +126,7 @@
         document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
     }
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         // if (e.key === "Enter" && searchValue.length > 1 && e.target.closest(".search")) {
         //   if (fullFilteredFiles.length) {
         //     let file = fullFilteredFiles[0]
@@ -130,7 +136,7 @@
         //   }
         // }
 
-        if (e.target.closest("input") || e.target.closest(".edit")) return
+        if (e.target?.closest("input") || e.target?.closest(".edit")) return
 
         if ((e.ctrlKey || e.metaKey) && e.key === "Backspace") {
             if (rootPath === path) return
@@ -144,10 +150,21 @@
         path = folder.length > rootPath.length ? folder : rootPath
     }
 
-    function createPlaylist() {
+    // selected will be cleared when clicked, so store them on mousedown
+    let selectedFiles: File[] = []
+    function storeSelected() {
+        if ($selected.id === "audio") selectedFiles = clone($selected.data)
+        else selectedFiles = []
+    }
+
+    function createPlaylist(e) {
         let playlistName = ""
-        let empty = isDefault || !fullFilteredFiles.filter((a) => !a.folder)?.length
-        if (!isDefault) {
+        let files = fullFilteredFiles.filter((a) => !a.folder)
+        if (selectedFiles.length) files = selectedFiles
+
+        if (e.ctrlKey || e.metaKey) {
+            files = []
+        } else if (!isDefault) {
             playlistName = name
             if (name.includes(".")) playlistName = $dictionary.category?.[name.slice(name.indexOf(".") + 1)] || ""
         }
@@ -156,7 +173,7 @@
         audioPlaylists.update((a) => {
             a[playlistId] = {
                 name: playlistName,
-                songs: empty ? [] : fullFilteredFiles.filter((a) => !a.folder).map((a) => a.path),
+                songs: files.map((a) => a.path),
             }
 
             return a
@@ -167,65 +184,24 @@
             return a
         })
 
-        if (empty) {
+        if (!playlistName || !files.length) {
             activeRename.set("category_audio_" + playlistId)
         }
     }
 
-    // function playAudio(file: any) {
-    //   if ($playingAudio[file.path]) {
-    //     playingAudio.update((a) => {
-    //       let paused = a[file.path].paused
-    //       a[file.path].paused = !paused
-    //       if (paused) a[file.path].audio.play()
-    //       else a[file.path].audio.pause()
-    //       return a
-    //     })
-    //     return
-    //   }
+    // select all
+    $: if ($selectAllAudio) selectAll()
+    function selectAll() {
+        let data = (playlist ? playlist.songs : fullFilteredFiles)
+            .filter((a) => (playlist ? true : a.extension))
+            .map((file, index) => {
+                if (playlist) return { path: file, name: getFileName(file), index }
+                return { path: file.path, name: file.name, index: -1 }
+            })
 
-    //   let audio = new Audio(file.path)
-    //   playingAudio.update((a) => {
-    //     a[file.path] = {
-    //       name: file.name.slice(0, file.name.lastIndexOf(".")),
-    //       paused: false,
-    //       audio,
-    //     }
-    //     return a
-    //   })
-
-    //   audioSource.set(audio)
-    //   analyse()
-    //   audio.play()
-    // }
-
-    // ANALYSER
-    // let analyser: any = null
-    // let interval: any = null
-    // $: if (analyser) startInterval()
-
-    // function startInterval() {
-    //   interval = setInterval(() => {
-    //     audioChannels.set(audioAnalyser(analyser))
-    //   }, 100)
-    // }
-
-    // async function analyse() {
-    //   console.log(0)
-    //   // https://stackoverflow.com/questions/20769261/how-to-get-video-elements-current-level-of-loudness
-    //   let ac = new AudioContext()
-    //   let source = ac.createMediaElementSource($audioSource)
-
-    //   analyser = ac.createAnalyser() //we create an analyser
-    //   analyser.smoothingTimeConstant = 0.9
-    //   analyser.fftSize = 512 //the total samples are half the fft size.
-
-    //   source.connect(analyser)
-    //   analyser.connect(ac.destination)
-
-    //   if (interval) clearInterval(interval)
-    //   startInterval()
-    // }
+        selected.set({ id: "audio", data })
+        selectAllAudio.set(false)
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -240,6 +216,11 @@
             <CombinedInput>
                 <p><T id="settings.audio_crossfade" /></p>
                 <NumberInput value={playlist?.crossfade || 0} max={30} step={0.5} decimals={1} fixed={1} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
+            </CombinedInput>
+
+            <CombinedInput>
+                <p><T id="settings.playlist_volume" /></p>
+                <NumberInput value={playlist?.volume || 1} min={0.01} max={1} decimals={2} step={0.01} inputMultiplier={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail)} />
             </CombinedInput>
 
             <!-- <CombinedInput>
@@ -258,6 +239,12 @@
                     </Center>
                 {/if}
             </DropArea>
+        {:else if active === "effects_library"}
+            <div class="effects">
+                {#each fullFilteredFiles as file}
+                    <AudioEffect path={file.path} name={file.name} />
+                {/each}
+            </div>
         {:else if fullFilteredFiles.length}
             {#key rootPath}
                 {#key path}
@@ -278,8 +265,8 @@
     </div>
 </div>
 
-{#if active !== "microphones" && active !== "audio_streams"}
-    <div class="tabs" style="display: flex;align-items: center;">
+{#if active !== "microphones" && active !== "audio_streams" && active !== "effects_library"}
+    <div class="tabs" style="display: flex;align-items: center;" on:mousedown={storeSelected}>
         {#if isDefault}
             <span style="padding: 0.2em;opacity: 0;">.</span>
         {:else if playlist}
@@ -374,6 +361,21 @@
     }
     .grid :global(.selectElem:not(.isSelected):nth-child(even)) {
         background-color: rgb(0 0 20 / 0.08);
+    }
+
+    .effects {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 5px;
+
+        height: 100%;
+        margin: 10px;
+    }
+    .effects :global(.selectElem button) {
+        background-color: var(--primary-darkest);
+        /* transition: 0.2s outline; */
     }
 
     .seperator {

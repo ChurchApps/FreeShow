@@ -1,6 +1,6 @@
 import https from "https"
 
-export function httpsRequest(hostname: string, path: string, method: "POST" | "GET", headers: object = {}, content: object = {}, cb: (err: any, result?: any) => void) {
+export function httpsRequest(hostname: string, path: string, method: "POST" | "GET", headers: object = {}, content: object = {}, cb: (err: Error | null, result?: any) => void) {
     const dataString = Object.keys(content).length ? JSON.stringify(content) : ""
     const options = {
         hostname: hostname.replace(/^https?:\/\//, ""),
@@ -40,7 +40,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
                     cb(null, parsedData)
                 } catch (err) {
                     console.error("Error parsing response JSON:", err)
-                    cb(err, null)
+                    cb(err as Error, null)
                 }
             })
 

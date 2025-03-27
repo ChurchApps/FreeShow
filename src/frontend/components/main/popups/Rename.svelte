@@ -1,8 +1,10 @@
 <script lang="ts">
-    import { activePopup, activeShow, selected, showsCache } from "../../../stores"
+    import type { Line, SlideData } from "../../../../types/Show"
+    import { activePopup, activeShow, effectsLibrary, selected, showsCache } from "../../../stores"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
+    import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -14,7 +16,7 @@
 
         if (($activeShow && $selected.id === "slide") || $selected.id === "group") {
             $selected.data.forEach((a, i) => {
-                let slide = a.id ? a : _show("active").layouts("active").ref()[0][a.index]
+                let slide = a.id ? a : getLayoutRef()[a.index]
                 if (slide.parent) slide = slide.parent.id
                 else slide = slide.id
                 let name: string = $showsCache[$activeShow!.id].slides[slide].group || ""
@@ -24,16 +26,45 @@
             list = removeDuplicates(list)
         } else if ($selected.id === "chord") {
             groupName = $selected.data?.[0]?.chord?.key || ""
+        } else if ($selected.data?.[0]?.name) {
+            groupName = $selected.data[0].name
         }
     }
 
-    const renameAction: any = {
+    const renameAction = {
         slide: () => {
-            // TODO: history (x3)
+            const ref = getLayoutRef()
+
+            // get selected ids
+            let ids: string[] = []
             $selected.data.forEach((a) => {
-                let slideId = a.id
-                let ref = _show("active").layouts("active").ref()[0][a.index]
-                if (!slideId) slideId = ref.id
+                const id = a.id || ref[a.index]?.id
+                ids.push(id)
+            })
+
+            // remove duplicates
+            ids = [...new Set(ids)]
+
+            // remove children if parent is selected
+            ids.map((id) => {
+                const slide = _show().slides([id]).get()[0]
+                if (slide.children?.length) ids = ids.filter((id) => !slide.children.includes(id))
+            })
+
+            // get slide refs
+            let refs: any[] = []
+            ids.forEach((id) => {
+                refs.push(ref.find((a) => a.id === id))
+            })
+
+            // sort by last index first
+            refs = refs.sort((a, b) => b.layoutIndex - a.layoutIndex)
+
+            // WIP index might become incorrect when multiple slides are renamed at once (if index changes)
+
+            // TODO: history (x3)
+            refs.forEach((ref) => {
+                const slideId = ref.id
 
                 // remove global group if active
                 if ($activeShow && $showsCache[$activeShow.id].slides[slideId].globalGroup)
@@ -44,7 +75,7 @@
                 if (!ref?.parent) return
                 // make child a parent
 
-                let children = _show("active").slides([ref.parent.id]).get("children")[0]
+                let children = _show().slides([ref.parent.id]).get("children")[0]
                 let offsetIndex: number = ref.parent.index - children.indexOf(ref.id)
 
                 // remove renamed child
@@ -55,20 +86,18 @@
                     location: { page: "show", id: "show_key" },
                 })
 
-                let currentLayouts = _show().layouts().get("slides")
+                let currentLayouts: SlideData[][] = _show().layouts().get("slides")
                 let layoutIds: string[] = Object.keys($showsCache[$activeShow!.id].layouts)
-                let newLayouts: any = {}
+                let newLayouts: { [key: string]: SlideData[] } = {}
 
                 currentLayouts.forEach((layout, i: number) => {
-                    let l: any[] = []
-
-                    // TODO: renaming multiple children with the same parent dont work properly
+                    let l: SlideData[] = []
 
                     let added = false
-                    layout.forEach((slide: any, index: number) => {
+                    layout.forEach((slide, index: number) => {
                         l.push(slide)
 
-                        if (added || index + 1 < offsetIndex || slide.id !== ref.parent.id) return
+                        if (added || index + 1 < offsetIndex || slide.id !== ref.parent?.id) return
                         added = true
 
                         l.push({ id: ref.id, ...(slide.children?.[ref.id] || {}) })
@@ -84,21 +113,29 @@
         group: () => renameAction.slide(),
         chord: () => {
             let chord = $selected.data[0]
-            let lines = _show().slides([chord.slideId]).items([chord.itemIndex]).get("lines")[0][0]
+            let lines: Line[] = _show().slides([chord.slideId]).items([chord.itemIndex]).get("lines")[0][0]
 
             // create first
             if (!chord.chord) return
 
             let newLines = clone(lines)
             let chords = newLines[chord.index].chords
-            chords.forEach((a: any, i: number) => {
-                if (a.id === chord.chord.id) newLines[chord.index].chords[i].key = groupName
+            chords?.forEach((a, i: number) => {
+                if (a.id === chord.chord.id) newLines[chord.index].chords![i].key = groupName
             })
 
             _show()
                 .slides([chord.slideId])
                 .items([chord.itemIndex])
                 .set({ key: "lines", values: [newLines] })
+        },
+        audio_effect: () => {
+            let selectedPath = $selected.data?.[0]?.path
+            effectsLibrary.update((a) => {
+                let index = a.findIndex((a) => a.path === selectedPath)
+                if (index > -1) a[index].name = groupName
+                return a
+            })
         },
     }
 
@@ -112,14 +149,14 @@
     let groupName: string = ""
     const changeValue = (e: any) => (groupName = e.target.value)
 
-    function keydown(e: any) {
+    function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") {
-            element.querySelector("input").blur()
+            element?.querySelector("input")?.blur()
             rename()
         }
     }
 
-    let element: any
+    let element: HTMLElement | undefined
 </script>
 
 <svelte:window on:keydown={keydown} />

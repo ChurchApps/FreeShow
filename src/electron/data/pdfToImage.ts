@@ -1,8 +1,8 @@
 import { writeFileSync } from "fs"
 import path from "path"
 import pdf from "pdf2img-electron"
-import { toApp } from ".."
-import { MAIN } from "../../types/Channels"
+import { ToMain } from "../../types/IPC/ToMain"
+import { sendToMain } from "../IPC/main"
 import { dataFolderNames, makeDir } from "../utils/files"
 
 // this should not return a promise to "responses.ts"
@@ -37,5 +37,5 @@ async function PDFtoIMG(data: { dataPath: string; path: string }) {
         writeFileSync(p, image)
     }
 
-    if (images.length) toApp(MAIN, { channel: "IMAGES_TO_SHOW", data: { images, name: PDF.name } })
+    if (images.length) sendToMain(ToMain.IMAGES_TO_SHOW, { images, name: PDF.name })
 }

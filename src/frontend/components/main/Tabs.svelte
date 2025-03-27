@@ -44,7 +44,7 @@
                 }}
                 active={active === id}
                 disabled={tab.disabled}
-                title={$dictionary.tooltip?.[id]}
+                title={tab.tooltip || $dictionary.tooltip?.[id]}
                 style="padding: 0.3em 0.5em;{$$props.style || ''}"
                 dark
                 center
@@ -67,7 +67,7 @@
                 active = Object.keys(tabs)[firstOverflowIndex]
                 setTimeout(() => (overflowHidden = false))
             }}
-            title={$dictionary.tooltip?.options}
+            title={$dictionary.tooltip?.options?.replace(".", "")}
             style="flex: 0;padding: 0.2em;"
             dark
             center

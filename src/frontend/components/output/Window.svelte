@@ -3,7 +3,7 @@
 
     export let id: string
 
-    let videoElem: any
+    let videoElem: HTMLVideoElement | undefined
 
     let constraints: any = {
         video: {
@@ -39,7 +39,7 @@
     function stopStream() {
         if (!videoElem) return
 
-        videoElem.srcObject?.getTracks()?.forEach((track: any) => track.stop())
+        ;(videoElem.srcObject as MediaStream)?.getTracks()?.forEach((track) => track.stop())
         videoElem.srcObject = null
     }
 

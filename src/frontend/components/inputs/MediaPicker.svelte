@@ -1,9 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
-    import { MAIN, OPEN_FILE } from "../../../types/Channels"
+    import { Main } from "../../../types/IPC/Main"
+    import { ToMain } from "../../../types/IPC/ToMain"
+    import { destroyMain, receiveToMain, sendMain } from "../../IPC/main"
     import Button from "./Button.svelte"
-    import { uid } from "uid"
-    import { destroy, send } from "../../utils/request"
 
     export let id: string
     export let filter: any
@@ -20,19 +20,16 @@
         }
 
         // filter: { name: "Text file", extensions: ["txt"], id: "txt" }
-        send(MAIN, ["OPEN_FILE"], { channel: "MEDIA", id, filter, multiple })
+        sendMain(Main.OPEN_FILE, { channel: "MEDIA", id, filter, multiple })
     }
-
-    let listenerId = uid()
-    onDestroy(() => destroy(OPEN_FILE, listenerId))
 
     let dispatch = createEventDispatcher()
-    window.api.receive(OPEN_FILE, fileReceived, listenerId)
-    function fileReceived(msg: any) {
-        if (msg.data.id !== id || msg.channel !== "MEDIA" || !msg.data.files?.length) return
+    let listenerId = receiveToMain(ToMain.OPEN_FILE2, (data) => {
+        if (data.id !== id || data.channel !== "MEDIA" || !data.files?.length) return
 
-        dispatch("picked", multiple ? msg.data.files : msg.data.files[0])
-    }
+        dispatch("picked", multiple ? data.files : data.files[0])
+    })
+    onDestroy(() => destroyMain(listenerId))
 </script>
 
 <Button {title} style={$$props.style || null} on:click={pick} {center} {dark} bold={!title}>

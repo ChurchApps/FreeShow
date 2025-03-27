@@ -25,12 +25,12 @@
     $: mediaId = $activeEdit.id || $activeShow!.id
     $: currentMedia = $media[mediaId] || {}
 
-    let edits: any = clone(mediaEdits.media?.edit)
-    let filterEdits: any = clone(mediaFilters.media?.edit)
+    let edits = clone(mediaEdits.media?.edit)!
+    let filterEdits = clone(mediaFilters.media?.edit)!
 
     $: isVideo = getMediaType(getExtension(mediaId)) === "video"
     $: if (isVideo) addVideoOptions()
-    else edits = clone(mediaEdits.media?.edit)
+    else edits = clone(mediaEdits.media?.edit)!
     function addVideoOptions() {
         if (!edits) return
 
@@ -69,9 +69,9 @@
         // update filters
         let filters = getFilters(currentMedia.filter || "")
         let defaultFilters = mediaFilters.media?.edit?.default || []
-        filterEdits.default.forEach((filter: any) => {
-            let value = filters[filter.key] ?? defaultFilters.find((a) => a.key === filter.key)?.value
-            let index = filterEdits.default.findIndex((a: any) => a.key === filter.key)
+        filterEdits.default.forEach((filter) => {
+            let value = filters[filter.key || ""] ?? defaultFilters.find((a) => a.key === filter.key)?.value
+            let index = filterEdits.default.findIndex((a) => a.key === filter.key)
             filterEdits.default[index].value = value
         })
     }
@@ -95,14 +95,14 @@
     export function valueChanged(input: any) {
         if (!mediaId) return
 
-        let value: any = input.value
+        let value = input.value
         if (value?.id !== undefined) value = value.id
         if (input.id === "filter") value = addFilterString(currentMedia?.filter || "", [input.key, value])
 
         updateStore("media", { keys: [mediaId, input.id], value })
 
         // update output filters
-        let currentOutput: any = $outputs[getActiveOutputs()[0]] || {}
+        let currentOutput = $outputs[getActiveOutputs()[0]] || {}
         if (!currentOutput.out?.background || currentOutput.out?.background?.path !== mediaId) return
 
         let bg = currentOutput.out.background

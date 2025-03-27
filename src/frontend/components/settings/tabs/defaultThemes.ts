@@ -1,4 +1,6 @@
-export const defaultThemes: any = {
+import type { Themes } from "../../../../types/Settings"
+
+export const defaultThemes: { [key: string]: Themes } = {
     default: {
         name: "default",
         default: true,

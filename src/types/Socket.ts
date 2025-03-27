@@ -19,8 +19,7 @@ export interface ClientMessage {
 type DeviceID = string
 type ClientChannels = "API" | "CONNECTION" | "DISCONNECT" | "ERROR" | "DATA" | "PASSWORD" | "ACCESS" | "SWITCH" | "SHOWS" | "SHOWS_CACHE" | "SHOW" | "SLIDES" | "PROJECTS" | "OUT" | "BACKGROUND"
 
-export interface MainData {
-    channel: MainChannels
-    data?: any
+export interface ServerData {
+    outputId?: string
+    sendAudio?: boolean
 }
-type MainChannels = "GET_OS" | "VERSION" | "OUTPUT" | "DISPLAY" | "GET_PATHS" | "MENU" | "SHOWS_PATH"

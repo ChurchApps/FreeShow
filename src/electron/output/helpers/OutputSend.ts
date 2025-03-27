@@ -1,11 +1,12 @@
 import { OUTPUT, ValidChannels } from "../../../types/Channels"
+import type { Output } from "../Output"
 import { OutputHelper } from "../OutputHelper"
 
 export class OutputSend {
     static sendToOutputWindow(msg: any) {
         OutputHelper.getAllOutputs().forEach(sendToWindow)
 
-        function sendToWindow([id, output]: any) {
+        function sendToWindow([id, output]: [string, Output]) {
             if ((msg.data?.id && msg.data.id !== id) || !output?.window || output.window.isDestroyed()) return
 
             let tempMsg: any = JSON.parse(JSON.stringify(msg))

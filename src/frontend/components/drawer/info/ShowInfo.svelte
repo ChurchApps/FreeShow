@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Line } from "../../../../types/Show"
     import { activeShow, activeTagFilter, categories, globalTags, shows, showsCache, templates } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -15,15 +16,15 @@
     $: used = show?.timestamps?.used || null
 
     let words: number = 0
-    let allLines: any[]
+    let allLines: Line[][]
     $: if (fullShow) allLines = _show($activeShow!.id).slides().items().lines().get()
     $: if (allLines) getWords()
 
     function getWords() {
         words = 0
-        allLines.forEach((lines: any) => {
-            lines.forEach((line: any) => {
-                line?.text?.forEach((text: any) => (words += text.value.split(" ").length))
+        allLines.forEach((lines) => {
+            lines.forEach((line) => {
+                line?.text?.forEach((text) => (words += text.value.split(" ").length))
             })
         })
     }

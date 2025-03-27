@@ -1,10 +1,12 @@
 <script lang="ts">
     import type { Bible } from "../../../types/Scripture"
+    import type { DrawerTabIds } from "../../../types/Tabs"
     import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, selected } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
+    import { keysToID } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { selectTextOnFocus } from "../helpers/inputActions"
@@ -43,7 +45,7 @@
         else if ($activePage === "edit") drawerOpenedInEdit.set(true)
     }
 
-    function getHeight(height: any) {
+    function getHeight(height: number) {
         if (height < minHeight * 2) return minHeight
         if (height > maxHeight) return maxHeight
         move = true
@@ -89,12 +91,12 @@
         if (!e.target.closest(".top")) move = false
     }
 
-    function openDrawerTab(tab: any) {
+    function openDrawerTab(tab: { id: string; name: string; icon: string }) {
         if ($activeDrawerTab === tab.id) return
 
         // allow click event first
         setTimeout(() => {
-            activeDrawerTab.set(tab.id)
+            activeDrawerTab.set(tab.id as DrawerTabIds)
 
             // remove focus for search function to work
             setTimeout(() => (document.activeElement as any)?.blur(), 10)
@@ -120,8 +122,8 @@
     let bibles: Bible[] = []
 
     let firstMatch: null | any = null
-    let searchElem: any
-    function keydown(e: any) {
+    let searchElem: HTMLInputElement | undefined
+    function keydown(e: KeyboardEvent) {
         if ((e.ctrlKey || e.metaKey) && e.key === "f") {
             if ($activePopup === "show") return
             searchActive = false
@@ -152,7 +154,7 @@
 
     $: if ($activeShow?.type === undefined || $activeShow?.type === "show") previousShow.set(JSON.stringify($activeShow))
 
-    $: tabs = Object.entries(drawerTabs).map(([id, tab]: any) => ({ id, ...tab }))
+    $: tabs = keysToID(drawerTabs)
 
     let searchActive: boolean = false
     $: if (searchActive) {
@@ -288,6 +290,10 @@
     .right.row :global(.scroll.split .border) {
         border-right: 2px solid var(--primary-lighter);
         overflow-y: auto;
+    }
+    /* scripture preview */
+    .right.row :global(.scroll.split .zoomed) {
+        flex: 1;
     }
 
     @media screen and (max-width: 750px) {

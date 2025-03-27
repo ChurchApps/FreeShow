@@ -26,8 +26,9 @@
         history({ id: "SHOW_LAYOUT", save, newData: { key: "actions", data, indexes: [index] } })
     }
 
-    function deleteSlideAction(id: string) {
+    function deleteSlideAction(e: any, id: string) {
         if (currentShow.locked) return
+        e.preventDefault()
 
         let slideActions = clone(actions.slideActions)
         let actionIndex = slideActions.findIndex((a) => a.id === id || a.triggers?.[0] === id)
@@ -49,7 +50,7 @@
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data, indexes: [index] } })
     }
 
-    const actionsList: any = [
+    const actionsList = [
         { id: "nextAfterMedia", title: $dictionary.actions?.next_after_media, icon: "forward" },
         { id: "animate", title: $dictionary.popup?.animate, icon: "stars" },
         { id: "receiveMidi", title: $dictionary.actions?.play_on_midi, icon: "play" },
@@ -93,9 +94,9 @@
                 <Button
                     style="padding: 3px;"
                     redHover
-                    title="{$dictionary.actions?.remove}: {translate(customData.name)}{action.name !== translate(customData.name) ? ` (${action.name})` : ''}"
+                    title="{$dictionary.actions?.remove}: {translate(customData.name)}{action.name && action.name !== translate(customData.name) ? ` (${action.name})` : ''}"
                     {zoom}
-                    on:click={() => deleteSlideAction(action.id || actionId)}
+                    on:click={(e) => deleteSlideAction(e, action.id || actionId)}
                 >
                     {#if customName}<p>{customName}</p>{/if}
                     <Icon id={customData.icon || "actions"} size={0.9} white />
