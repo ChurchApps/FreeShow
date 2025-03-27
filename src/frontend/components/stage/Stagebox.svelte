@@ -1,14 +1,16 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { StageItem, StageLayout } from "../../../types/Stage"
-    import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, stageShows, timers, variables } from "../../stores"
+    import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, refreshEditSlide, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
+    import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
     import { keysToID, sortByName } from "../helpers/array"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import Media from "../output/layers/Media.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
+    import Textbox from "../slide/Textbox.svelte"
     import SlideProgress from "../slide/views/SlideProgress.svelte"
     import Timer from "../slide/views/Timer.svelte"
     import Variable from "../slide/views/Variable.svelte"
@@ -17,15 +19,18 @@
     import SlideNotes from "./items/SlideNotes.svelte"
     import SlideText from "./items/SlideText.svelte"
     import VideoTime from "./items/VideoTime.svelte"
-    import { getCustomStageLabel } from "./stage"
+    import { getCustomStageLabel, stageItemToItem } from "./stage"
+    import SlideItems from "../slide/SlideItems.svelte"
 
     export let id: string
     export let item: StageItem
     export let show: StageLayout | null = null
     export let ratio: number
     export let edit: boolean = false
+
     $: currentShow = show === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : show
-    $: next = id.includes("next")
+
+    $: slideOffset = item.type ? Number(item.slideOffset || 0) : id.includes("next") ? 1 : 0
 
     export let mouse: any = null
     function mousedown(e: any) {
@@ -67,13 +72,16 @@
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
             // TODO: history??
-            $stageShows[$activeStage.id!].items[id].enabled = false
-            activeStage.set({ id: $activeStage.id, items: [] })
+            stageShows.update((a) => {
+                delete a[$activeStage.id!].items[id]
+                return a
+            })
+            activeStage.set({ ...$activeStage, items: [] })
         }
     }
 
     function deselect(e: any) {
-        if (e.target.closest(".stageTools")) return
+        if (e.target.closest(".stageTools") || e.target.closest(".contextMenu")) return
 
         if ((edit && !e.ctrlKey && !e.metaKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
             activeStage.update((ae) => {
@@ -100,7 +108,7 @@
     // SLIDE
     $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($currentWindow === "output" ? $allOutputs : $outputs, false, true, true)[0]
     $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
-    $: currentSlide = currentOutput.out?.slide || (next ? $outputSlideCache[stageOutputId] || null : null)
+    $: currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? $outputSlideCache[stageOutputId] || null : null)
 
     let timeout: NodeJS.Timeout | null = null
     $: if (stageOutputId && ($allOutputs || $outputs)) startTimeout()
@@ -110,7 +118,7 @@
     }
     let currentBackground: any
     async function getCurrentBackground() {
-        if (!id.includes("slide")) return
+        if (item.type ? !item.includeMedia : !id.includes("slide")) return
 
         let currentOutputs = $currentWindow ? $allOutputs : $outputs
         let bg = await sendBackgroundToStage(stageOutputId, currentOutputs, true)
@@ -123,9 +131,10 @@
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 
     let firstTimerId: string = ""
-    $: if (id.includes("first_active_timer")) {
+    $: if (!item.timer?.id || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
         if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
+        if (firstTimerId) item.timer = { ...(item.timer || {}), id: firstTimerId }
     }
 
     let itemStyle: string = ""
@@ -156,13 +165,19 @@
         video.pause()
         video.currentTime = video.duration / 2
     }
+
+    $: if ($refreshEditSlide) {
+        setTimeout(() => {
+            refreshEditSlide.set(false)
+        }, 100)
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
 
 <div
     {id}
-    class="stage_item item"
+    class="stage_item item {edit ? `context #${item.type === 'text' ? 'stage_text_item' : 'stage_item'}` : ''}"
     class:border={currentShow?.settings?.labels}
     class:outline={edit}
     class:selected={edit && $activeStage.items.includes(id)}
@@ -172,73 +187,96 @@
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}
-        <div class="label">{getCustomStageLabel(id, $dictionary)}</div>
+        <div class="label">{getCustomStageLabel(item.type || id, $dictionary)}</div>
     {/if}
     {#if edit}
         <Movebox {ratio} itemStyle={item.style} active={$activeStage.items.includes(id)} />
     {/if}
 
-    {#if id.includes("current_output")}
-        <span style="pointer-events: none;">
-            {#if id.includes("_alpha") && currentOutput.keyOutput}
-                <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
+    <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};{item.type !== 'slide_text' || item.keepStyle ? 'height: 100%;' : ''}">
+        <span style="pointer-events: none;width: 100%;height: 100%;">
+            {#if item.type === "current_output" || id.includes("current_output")}
+                {#if id.includes("_alpha") && currentOutput.keyOutput}
+                    <PreviewCanvas capture={$previewBuffers[currentOutput.keyOutput || ""]} id={currentOutput.keyOutput} fullscreen />
+                {:else}
+                    <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
+                {/if}
+            {:else if item.type === "slide_text" || id.includes("slide")}
+                {#if (item.type ? item.includeMedia : !id.includes("_text")) && currentBackground}
+                    {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : null}
+                    <!-- WIP this only includes "next" slide background -->
+                    {#if typeof slideBackground?.path === "string"}
+                        <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
+                            <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
+                        </div>
+                    {/if}
+                {/if}
+
+                <!-- refresh to update auto sizes -->
+                <!-- refresh auto size if changing stage layout with #key made item unmovable .. -->
+                {#key currentSlide?.id || currentSlide?.index}
+                    <SlideText
+                        {currentSlide}
+                        {slideOffset}
+                        stageItem={item}
+                        chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled}
+                        ref={{ type: "stage", id }}
+                        autoSize={item.auto !== false}
+                        {fontSize}
+                        {textStyle}
+                        style={item.type ? item.keepStyle : false}
+                    />
+                {/key}
+            {:else if item.type === "slide_notes" || id.includes("notes")}
+                <SlideNotes {currentSlide} {slideOffset} autoSize={item.auto !== false ? autoSize : fontSize} />
+            {:else if item.type === "text"}
+                {#if edit}
+                    {#key $refreshEditSlide}
+                        <span class="edit_item" style="pointer-events: initial;--font-size: {fontSize}px;">
+                            <EditboxLines item={stageItemToItem(item)} ref={{ type: "stage", id }} index={-1} />
+                        </span>
+                    {/key}
+                {:else}
+                    <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} {fontSize} isStage />
+                {/if}
+            {:else if item.type}
+                <SlideItems item={stageItemToItem(item)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} />
             {:else}
-                <PreviewCanvas capture={$previewBuffers[stageOutputId]} id={stageOutputId} fullscreen />
+                <!-- OLD CODE -->
+                <div>
+                    {#if id.includes("slide_tracker")}
+                        <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
+                    {:else if id.includes("clock")}
+                        <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
+                    {:else if id.includes("video")}
+                        <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
+                    {:else if id.includes("first_active_timer")}
+                        <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                    {:else if id.includes("timers")}
+                        {#if $timers[id.split("#")[1]]}
+                            <Timer item={stageItemToItem(item)} id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                        {/if}
+                    {:else if id.includes("variables")}
+                        {#if $variables[id.split("#")[1]]}
+                            <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" ref={{ type: "stage", id }} hideText={!!$currentWindow} />
+                        {/if}
+                    {:else}
+                        {id}
+                    {/if}
+                </div>
             {/if}
         </span>
-    {:else}
-        <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};">
-            <div>
-                {#if id.includes("slide_tracker")}
-                    <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />
-                {:else if id.includes("notes")}
-                    <SlideNotes {currentSlide} {next} autoSize={item.auto !== false ? autoSize : fontSize} />
-                {:else if id.includes("slide_text")}
-                    <!-- refresh auto size if changing stage layout - this made item unmovable -->
-                    <!-- {#key item} -->
-                    <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} />
-                    <!-- {/key} -->
-                {:else if id.includes("slide")}
-                    <span style="pointer-events: none;">
-                        {#if currentBackground}
-                            {@const slideBackground = next ? currentBackground.next : currentBackground}
-                            {#if typeof slideBackground?.path === "string"}
-                                <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
-                                    <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
-                                </div>
-                            {/if}
-                        {/if}
-
-                        <!-- refresh to update auto sizes -->
-                        {#key currentSlide?.id || currentSlide?.index}
-                            <SlideText {currentSlide} {next} stageItem={item} chords={item.chords} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} style />
-                        {/key}
-                    </span>
-                {:else if id.includes("clock")}
-                    <Clock style={false} autoSize={item.auto !== false ? autoSize : fontSize} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
-                {:else if id.includes("video")}
-                    <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
-                {:else if id.includes("first_active_timer")}
-                    <Timer {item} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
-                {:else if id.includes("timers")}
-                    {#if $timers[id.split("#")[1]]}
-                        <Timer {item} id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
-                    {/if}
-                {:else if id.includes("variables")}
-                    {#if $variables[id.split("#")[1]]}
-                        <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" ref={{ type: "stage", id }} hideText={!!$currentWindow} />
-                    {/if}
-                {:else}
-                    {id}
-                {/if}
-            </div>
-        </div>
-    {/if}
+    </div>
 </div>
 
 <style>
     .stage_item {
+        /* inital values */
         font-family: Arial, Helvetica, sans-serif;
+        text-shadow: 2px 2px 10px #000000;
+
+        /* overflow is not hidden on stage display */
+        /* overflow: hidden; */
 
         border-width: 0;
         border-style: solid;
@@ -255,10 +293,11 @@
     .stage_item.selected {
         outline: 5px solid var(--secondary);
         overflow: visible;
+        z-index: 4;
     }
 
     .align {
-        height: 100%;
+        /* height: 100%; */
         display: flex;
         text-align: center;
         align-items: center;
@@ -306,7 +345,22 @@
     .align :global(.item .align) {
         align-items: var(--align);
     }
-    .align :global(.item .align .lines) {
+    .align .edit_item {
+        height: 100%;
+        display: flex;
+        align-items: var(--align);
+    }
+    .align .edit_item :global(.align) {
+        height: auto;
+        width: 100%;
+    }
+
+    .align :global(.item .align .lines),
+    .align .edit_item :global(.align .edit) {
         text-align: var(--text-align);
+    }
+
+    .align .edit_item :global(.align .edit span) {
+        font-size: var(--font-size);
     }
 </style>

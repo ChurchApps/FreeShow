@@ -865,6 +865,18 @@ const deleteActions = {
             .items([data.itemIndex])
             .set({ key: "lines", values: [newLines] })
     },
+    stage_item: (data: any) => {
+        let activeItems = get(activeStage).items || []
+        if (!data.id || !activeItems.length) return
+
+        stageShows.update((a) => {
+            activeItems.forEach((itemId) => {
+                delete a[data.id].items[itemId]
+            })
+            return a
+        })
+        activeStage.set({ ...get(activeStage), items: [] })
+    },
 }
 
 const duplicateActions = {

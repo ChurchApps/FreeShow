@@ -42,10 +42,20 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
 async function getNextBackground(currentOutputSlide: OutSlide | null, returnPath = false) {
     if (!currentOutputSlide?.id) return {}
 
-    let layout = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
-    if (!layout) return {}
+    let showRef = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
+    if (!showRef) return {}
 
-    let nextLayout = layout[(currentOutputSlide.index || 0) + 1]
+    // GET CORRECT INDEX OFFSET, EXCLUDING DISABLED SLIDES
+    const slideOffset = 1
+    let layoutOffset = currentOutputSlide.index || 0
+    let offsetFromCurrentExcludingDisabled = 0
+    while (offsetFromCurrentExcludingDisabled < slideOffset && layoutOffset <= showRef.length) {
+        layoutOffset++
+        if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled++
+    }
+    const slideIndex = layoutOffset
+
+    let nextLayout = showRef[slideIndex]
     if (!nextLayout) return {}
 
     let bgId = nextLayout.data.background || ""

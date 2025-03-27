@@ -9,7 +9,7 @@
     import { slideFilters } from "../values/filters"
     import EditValues from "./EditValues.svelte"
 
-    let edits = clone(slideFilters.media?.edit)
+    let edits = clone(slideFilters.media?.edit || {})
 
     // get slide filters
     $: currentShow = $activeShow?.id || ""
@@ -19,7 +19,7 @@
     $: currentSlideData = ref?.[currentSlide]?.data || null
 
     // update
-    $: if (currentSlideData !== null && edits) {
+    $: if (currentSlideData !== null) {
         edits.default[0].value = currentSlideData.filterEnabled || ["background"]
 
         // update filters
@@ -60,6 +60,4 @@
     }
 </script>
 
-{#if edits}
-    <EditValues {edits} noClosing on:change={(e) => valueChanged(e.detail)} />
-{/if}
+<EditValues {edits} noClosing on:change={(e) => valueChanged(e.detail)} />

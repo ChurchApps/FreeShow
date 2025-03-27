@@ -4,7 +4,7 @@
     import { OUTPUT } from "../../../types/Channels"
     import { activeStage, currentWindow, dictionary, outputs, stageShows } from "../../stores"
     import { send } from "../../utils/request"
-    import { keysToID, sortByName } from "../helpers/array"
+    import { clone, keysToID, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getStyles } from "../helpers/style"
@@ -134,8 +134,8 @@
                 {/if}
                 <!-- {#key Slide} -->
                 {#each Object.entries(show.items || {}) as [id, item]}
-                    {#if item.enabled}
-                        <Stagebox {edit} show={edit ? null : show} {id} {item} {ratio} bind:mouse />
+                    {#if item.type || item.enabled}
+                        <Stagebox {edit} show={edit ? null : show} {id} item={clone(item)} {ratio} bind:mouse />
                     {/if}
                 {/each}
                 <!-- {/key} -->

@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, redoHistory, refreshListBoxes, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, stageShows, templates } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -18,7 +18,7 @@
 
     export let item: Item
     export let ref: {
-        type?: "show" | "overlay" | "template"
+        type?: "show" | "overlay" | "template" | "stage"
         showId?: string
         id: string
     }
@@ -153,6 +153,7 @@
     }
 
     function cutInTwo({ e, sel, lines, currentIndex, textPos, start }) {
+        if (ref.type !== "show") return
         let { firstLines, secondLines } = EditboxHelper.cutLinesInTwo({ sel, lines, currentIndex, textPos, start })
 
         if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
@@ -218,7 +219,13 @@
 
         if ($activeEdit.type === "overlay") overlays.update(setNewLines)
         else if ($activeEdit.type === "template") templates.update(setNewLines)
-        else if (ref.id) {
+        else if (ref.type === "stage") {
+            stageShows.update((a) => {
+                if (!a[$activeStage.id!]?.items?.[ref.id]) return a
+                a[$activeStage.id!].items[ref.id].lines = newLines
+                return a
+            })
+        } else if (ref.id) {
             // dont override history when undoing
             let lastRedo = $redoHistory[$redoHistory.length - 1]
             if (lastRedo?.id === "SHOW_ITEMS") {

@@ -1,33 +1,21 @@
 import type { EditInput } from "../../edit/values/boxes"
 
-export const textEdits: { [key: string]: EditInput[] } = {
-    default: [
-        { name: "family", id: "style", key: "font-family", input: "fontDropdown", value: "Arial" },
-        { name: "color", id: "style", key: "color", input: "color", value: "#FFFFFF" },
-        { name: "size", id: "style", key: "font-size", input: "number", value: 100, extension: "px", disabled: "auto" },
-        { name: "auto_size", id: "auto", input: "checkbox", value: true },
-        { input: "font-style" },
-    ],
-    align: [{ input: "align-x" }], // , { input: "align-y" }
-    text: [
-        { name: "line_spacing", id: "style", key: "line-height", input: "number", value: 1.1, values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, extension: "em" },
-        { name: "letter_spacing", id: "style", key: "letter-spacing", input: "number", value: 0, values: { max: 100, min: -1000 }, extension: "px" },
-        { name: "word_spacing", id: "style", key: "word-spacing", input: "number", value: 0, values: { min: -100 }, extension: "px" },
-    ],
-    outline: [
-        { name: "color", id: "style", key: "-webkit-text-stroke-color", input: "color", value: "#000000" },
-        { name: "width", id: "style", key: "-webkit-text-stroke-width", input: "number", value: 0, values: { max: 100 }, extension: "px" },
-    ],
-    shadow: [
-        { name: "color", id: "style", key: "text-shadow", valueIndex: 3, input: "color", value: "#000000" },
-        { name: "offsetX", id: "style", key: "text-shadow", valueIndex: 0, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-        { name: "offsetY", id: "style", key: "text-shadow", valueIndex: 1, input: "number", value: 2, values: { min: -1000 }, extension: "px" },
-        { name: "blur", id: "style", key: "text-shadow", valueIndex: 2, input: "number", value: 10, extension: "px" },
-    ],
-    chords: [
-        { name: "chords", id: "chords", input: "checkbox", value: false },
-        { name: "color", id: "chordsData.color", input: "color", value: "#FF851B", hidden: true },
-        { name: "size", id: "chordsData.size", input: "number", value: 50, hidden: true },
-    ],
-    CSS: [{ id: "CSS", input: "CSS" }],
-}
+export const slideTextEdits: EditInput[] = [
+    { name: "slide_offset", id: "slideOffset", input: "number", value: 0, values: { min: -10, max: 20 } },
+    { name: "max_lines", id: "lineCount", input: "number", value: 0 },
+    { name: "includeMedia", id: "includeMedia", input: "checkbox", value: false },
+    { name: "keepStyle", id: "keepStyle", input: "checkbox", value: false },
+    { name: "item_number", id: "itemNumber", input: "number", value: 0 },
+    { name: "invert_items", id: "invertItems", input: "checkbox", value: false },
+]
+
+export const slideNotesEdit: EditInput[] = [{ name: "slide_offset", id: "slideOffset", input: "number", value: 0, values: { min: -10, max: 20 } }]
+
+export const variableEdits: EditInput[] = [
+    {
+        name: "popup.variable",
+        input: "selectVariable",
+        id: "variable.id",
+        value: "",
+    },
+]

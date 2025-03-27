@@ -122,7 +122,7 @@ export interface Item {
     tracker?: any // slide progress tracker item data
     bindings?: string[] // bind item to stage or an output
     actions?: any // showTime | hideTime
-    chords?: any
+    chords?: { enabled?: boolean; color?: string; size?: number }
     scrolling?: Scrolling
     visualizer?: any
     captions?: any
@@ -454,6 +454,8 @@ export interface OutSlide {
     layout?: ID
     index?: number
     tempItems?: Item[]
+    previousSlides?: Item[][]
+    nextSlides?: Item[][]
     line?: number
     // layout: ID ?
     name?: string // mostly used for PDFs

@@ -206,7 +206,7 @@
         if (!outputIsScripture) customActionActivation("scripture_start")
 
         let tempItems: Item[] = slides[0] || []
-        setOutput("slide", { id: "temp", tempItems, attributionString, translations: bibles.length })
+        setOutput("slide", { id: "temp", tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: bibles.length })
 
         // track
         let reference = `${bibles[0].book} ${bibles[0].chapter}:${verseRange}`
@@ -225,6 +225,30 @@
 
         let mediaStyle = getMediaStyle($media[templateBackground], currentStyle)
         setOutput("background", { path: templateBackground, loop: true, muted: true, ...mediaStyle })
+    }
+
+    const includeCount = 3
+    function getPreviousSlides() {
+        let lowestIndex = Number(sorted.sort((a, b) => Number(a) - Number(b))[0])
+
+        let slides: any[] = []
+        for (let i = 1; i <= includeCount; i++) {
+            let verseIndex = lowestIndex - i
+            slides.push(getSlides({ bibles, sorted: [verseIndex] }, true, true)[0])
+        }
+
+        return slides
+    }
+    function getNextSlides() {
+        let highestIndex = Number(sorted.sort((a, b) => Number(b) - Number(a))[0])
+
+        let slides: any[] = []
+        for (let i = 1; i <= includeCount; i++) {
+            let verseIndex = highestIndex + i
+            slides.push(getSlides({ bibles, sorted: [verseIndex] }, true, true)[0])
+        }
+
+        return slides
     }
 
     $: if ($playScripture) {

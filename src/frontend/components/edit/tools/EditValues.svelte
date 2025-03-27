@@ -2,6 +2,7 @@
     import { createEventDispatcher } from "svelte"
     import { uid } from "uid"
     import type { Item } from "../../../../types/Show"
+    import type { StageItem } from "../../../../types/Stage"
     import { activePopup, dictionary, popupData, storedEditMenuState, variables } from "../../../stores"
     import { mediaExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
@@ -29,12 +30,13 @@
 
     export let edits: { [key: string]: EditInput[] }
     export let defaultEdits: { [key: string]: EditInput[] } = {}
-    export let item: Item | null = null
+    export let item: Item | StageItem | null = null
     export let styles: { [key: string]: string } = {}
     export let lineAlignStyle: { [key: string]: string } = {}
     export let alignStyle: { [key: string]: string } = {}
     export let noClosing: boolean = false
     export let sessionId: string = ""
+    export let isStage: boolean = false
 
     const inputs = {
         fontDropdown: FontDropdown,
@@ -222,8 +224,7 @@
             "list.enabled": true,
         },
         chords: {
-            "chords.enabled": true, // normal slide
-            chords: true, // stage
+            "chords.enabled": true,
         },
         // media
         filters: {
@@ -452,7 +453,7 @@
             {#each edits[section] as input}
                 {#if input.input === "editTimer"}
                     {#if item}
-                        <EditTimer {item} on:change={(e) => valueChange(e, input)} />
+                        <EditTimer {item} on:change={(e) => valueChange(e, input)} {isStage} />
                     {/if}
                 {:else if input.input === "selectVariable"}
                     <CombinedInput>
@@ -500,7 +501,7 @@
                         {#each input.values as option}
                             <Button
                                 on:click={() => valueChange({ detail: option.id }, input)}
-                                style={typeof input.value === "string" && input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
+                                style={Array.isArray(input.value) && input.value.includes(option.id) ? "flex: 1;border-bottom: 2px solid var(--secondary) !important;" : "flex: 1;border-bottom: 2px solid var(--primary-lighter);"}
                                 bold={false}
                                 center
                                 dark
@@ -561,7 +562,7 @@
                                 {...input.values || {}}
                                 {value}
                                 fontStyleValue={input.styleValue || ""}
-                                disabled={input.disabled && (item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value)}
+                                disabled={typeof input.disabled === "string" ? item?.[input.disabled] || edits[section].find((a) => a.id === input.disabled)?.value : input.disabled}
                                 enableNoColor={input.enableNoColor}
                                 disableHold
                                 on:click={(e) => valueChange(e, input)}

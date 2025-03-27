@@ -514,9 +514,15 @@ export function shouldBeCaptured(outputId: string, startup: boolean = false) {
 function stageHasOutput(outputId: string) {
     return !!Object.keys(get(stageShows)).find((stageId) => {
         let stageLayout = get(stageShows)[stageId]
-        let outputItem = stageLayout.items?.["output#current_output"]
+        let outputItem = stageLayout.items ? stageLayout.items["output#current_output"] : undefined
 
-        if (!outputItem?.enabled) return false
+        if (!outputItem) {
+            outputItem = Object.values(stageLayout.items).find((a) => a.type === "current_output")
+            if (!outputItem) return false
+        } else if (!outputItem?.enabled) {
+            return false
+        }
+
         return (stageLayout.settings?.output || outputId) === outputId
 
         // WIP check that this stage layout is not disabled & used in a output or (web enabled (disabledServers) + has connection)!

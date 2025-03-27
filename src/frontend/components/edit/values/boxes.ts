@@ -28,7 +28,7 @@ export type EditInput = {
     value?: string | number | boolean | any[]
     extension?: string
     hidden?: boolean
-    disabled?: string
+    disabled?: string | boolean
     valueIndex?: number
     values?: any
     popup?: string
@@ -41,11 +41,13 @@ export type EditInput = {
     placeholder?: string
 }
 
-export function setBoxInputValue(box: BoxContent, sectionId: string, inputId: string, key: keyof EditInput, value: any) {
-    if (!sectionId) sectionId = "default"
-    if (!box?.edit?.[sectionId]) return
+export function setBoxInputValue(box: BoxContent | { [key: string]: EditInput[] }, sectionId: string, inputId: string, key: keyof EditInput, value: any) {
+    const newBox = (box.edit ? box : { edit: box, icon: "" }) as BoxContent
 
-    const section = box.edit[sectionId]
+    if (!sectionId) sectionId = "default"
+    if (!newBox?.edit?.[sectionId]) return
+
+    const section = newBox.edit[sectionId]
     const keyIndex = section.findIndex((a) => (a.id === "style" ? a.key === inputId : a.id === inputId))
     if (keyIndex < 0) return
 
@@ -291,7 +293,7 @@ export const boxes: Box = {
         edit: {
             default: [
                 { name: "choose_camera", id: "device", input: "popup", popup: "choose_camera", icon: "camera" },
-                { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions } },
+                { name: "media.fit", id: "fit", input: "dropdown", value: "contain", values: { options: mediaFitOptions.filter((a) => a.id !== "blur") } },
                 { name: "media.flip_horizontally", id: "flipped", input: "checkbox", value: false },
                 { name: "media.flip_vertically", id: "flippedY", input: "checkbox", value: false },
             ],
