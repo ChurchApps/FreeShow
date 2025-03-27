@@ -158,7 +158,7 @@
                 </span>
 
                 <Button disabled={currentShow.locked} on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
-                    <Icon size={1.3} id="add" />
+                    <Icon id="add" />
                 </Button>
             {/if}
         </span>
@@ -176,7 +176,7 @@
             <!-- left aligned to prevent accidental clicks -->
             <span style="width: 100%;">
                 <Button disabled={!layoutSlides.length || currentShow.locked} on:click={addLayout} style="white-space: nowrap;" title={$dictionary.show?.new_layout} center>
-                    <Icon size={1.3} id="add" right={!$labelsDisabled} />
+                    <Icon id="add" right={!$labelsDisabled} />
                     {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
                 </Button>
             </span>

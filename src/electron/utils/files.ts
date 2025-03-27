@@ -448,23 +448,23 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
         let arrayBuffer: ArrayBuffer
         try {
             arrayBuffer = new Uint8Array(fs.readFileSync(data.path)).buffer
+
+            const mp4boxfile = MP4Box.createFile()
+            mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
+            mp4boxfile.onReady = (info: any) => {
+                const codecs = info.tracks.map((track: any) => track.codec)
+                const mimeType = getMimeType(data.path)
+                const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
+                resolve({ ...data, codecs, mimeType, mimeCodec })
+            }
+
+            mp4boxfile.appendBuffer({ ...arrayBuffer, fileStart: 0 })
+            mp4boxfile.flush()
         } catch (err) {
-            console.error(err)
+            console.error("MP4Box error catch:", err)
             resolve({ ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" })
             return
         }
-
-        const mp4boxfile = MP4Box.createFile()
-        mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
-        mp4boxfile.onReady = (info: any) => {
-            const codecs = info.tracks.map((track: any) => track.codec)
-            const mimeType = getMimeType(data.path)
-            const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
-            resolve({ ...data, codecs, mimeType, mimeCodec })
-        }
-
-        mp4boxfile.appendBuffer({ ...arrayBuffer, fileStart: 0 })
-        mp4boxfile.flush()
     })
 }
 

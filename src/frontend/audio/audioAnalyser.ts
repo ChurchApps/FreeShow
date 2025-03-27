@@ -50,10 +50,13 @@ export class AudioAnalyser {
 
         if (get(currentWindow) !== "output") return
 
-        if (!this.shouldAnalyse()) {
-            AudioAnalyserMerger.stop()
-            send(OUTPUT, ["AUDIO_MAIN"], { id: Object.keys(get(outputs))[0], stop: true })
-        }
+        // wait for audio to clear before checking
+        setTimeout(() => {
+            if (!this.shouldAnalyse()) {
+                AudioAnalyserMerger.stop()
+                send(OUTPUT, ["AUDIO_MAIN"], { id: Object.keys(get(outputs))[0], stop: true })
+            }
+        })
     }
 
     static shouldAnalyse() {

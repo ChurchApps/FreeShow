@@ -188,24 +188,33 @@
     $: if ($currentWindow === "output" && video) analyseVideo()
 
     onDestroy(() => {
-        if ($currentWindow !== "output" || !id) return
+        if ($currentWindow !== "output" || !previousPath) return
 
-        playingVideos.set([])
-        AudioAnalyser.detach(id)
+        AudioAnalyser.detach(previousPath)
+
+        // playingVideos.set([])
+        playingVideos.update((a) => {
+            let videoIndex = a.findIndex((a) => a.id === previousPath)
+            if (videoIndex > -1) a.splice(videoIndex, 1)
+            return a
+        })
     })
 
     // analyse video audio
     let video: HTMLVideoElement | undefined
+    // previousPath is probably not needed as component is unmounted on new path
     let previousPath = id
     async function analyseVideo() {
+        if (fadingOut || $playingVideos[0]?.id === id) return
         if (previousPath && previousPath !== id) {
-            AudioAnalyser.detach(id)
+            AudioAnalyser.detach(previousPath)
         }
         if (!video) return
 
         playingVideos.set([{ id, video }])
         AudioAnalyser.attach(id, video)
         AudioAnalyser.recorderActivate()
+        previousPath = id
     }
 </script>
 

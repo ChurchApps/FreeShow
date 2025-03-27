@@ -32,16 +32,16 @@ export class AudioAnalyserMerger {
 
     private static timeout: NodeJS.Timeout | null = null
     private static previousMerge = 0
-    private static updateInterval = 50
+    private static updateInterval = 80
     private static timeoutNext() {
         if (this.timeout) return
         let timeSinceLast = Date.now() - this.previousMerge
         if (timeSinceLast > this.updateInterval + 100 && timeSinceLast < this.updateInterval + 200) {
             // wait if lagging behind
-            setTimeout(() => {
+            this.timeout = setTimeout(() => {
                 this.timeout = null
                 this.timeoutNext()
-            }, 100)
+            }, 150)
             return
         }
 
