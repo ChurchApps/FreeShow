@@ -10,6 +10,7 @@
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Capture from "../live/Capture.svelte"
     import { videoExtensions } from "../../../values/extensions"
+    import NdiStream from "../live/NDIStream.svelte"
 
     export let name: string = ""
     export let path: string
@@ -110,6 +111,8 @@
             </div>
         {:else if type === "screen"}
             <Capture screen={{ id: path, name }} streams={[]} background />
+        {:else if type === "ndi"}
+            <NdiStream screen={{ id: path, name }} background />
         {:else if readyToLoad}
             {#if ghost && !thumbnailPath}
                 <!-- show nothing if ghost without thumbnail -->

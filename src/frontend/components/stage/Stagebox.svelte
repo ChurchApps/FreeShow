@@ -5,11 +5,12 @@
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
-    import { keysToID, sortByName } from "../helpers/array"
+    import { clone, keysToID, sortByName } from "../helpers/array"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import Media from "../output/layers/Media.svelte"
     import PreviewCanvas from "../output/preview/PreviewCanvas.svelte"
+    import SlideItems from "../slide/SlideItems.svelte"
     import Textbox from "../slide/Textbox.svelte"
     import SlideProgress from "../slide/views/SlideProgress.svelte"
     import Timer from "../slide/views/Timer.svelte"
@@ -20,12 +21,12 @@
     import SlideText from "./items/SlideText.svelte"
     import VideoTime from "./items/VideoTime.svelte"
     import { getCustomStageLabel, stageItemToItem } from "./stage"
-    import SlideItems from "../slide/SlideItems.svelte"
 
     export let id: string
     export let item: StageItem
     export let show: StageLayout | null = null
     export let ratio: number
+    export let preview: boolean = false
     export let edit: boolean = false
 
     $: currentShow = show === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : show
@@ -134,8 +135,7 @@
     $: if (!item.timer?.id || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
         if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
-        if (firstTimerId) item.timer = { ...(item.timer || {}), id: firstTimerId }
-    }
+    } else firstTimerId = ""
 
     let itemStyle: string = ""
     let textStyle: string = ""
@@ -171,6 +171,8 @@
             refreshEditSlide.set(false)
         }, 100)
     }
+
+    $: newItem = clone({ ...item, timer: { ...(item.timer || {}), id: firstTimerId || item.timer?.id } })
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -187,7 +189,7 @@
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id}
-        <div class="label">{getCustomStageLabel(item.type || id, $dictionary)}</div>
+        <div class="label">{getCustomStageLabel(item.type || id, item, $dictionary)}</div>
     {/if}
     {#if edit}
         <Movebox {ratio} itemStyle={item.style} active={$activeStage.items.includes(id)} />
@@ -240,7 +242,7 @@
                     <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} {fontSize} isStage />
                 {/if}
             {:else if item.type}
-                <SlideItems item={stageItemToItem(item)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} />
+                <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} {preview} />
             {:else}
                 <!-- OLD CODE -->
                 <div>

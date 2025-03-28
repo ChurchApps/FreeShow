@@ -4,9 +4,10 @@
     import { OUTPUT } from "../../../types/Channels"
     import { activeStage, currentWindow, dictionary, outputs, stageShows } from "../../stores"
     import { send } from "../../utils/request"
-    import { clone, keysToID, sortByName } from "../helpers/array"
+    import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
+    import { getStageOutputId, getStageResolution } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -16,10 +17,10 @@
     import Snaplines from "../system/Snaplines.svelte"
     import { updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
-    import { getStageOutputId, getStageResolution } from "../helpers/output"
 
     export let outputId: string = ""
     export let stageId: string = ""
+    export let preview: boolean = false
     export let edit: boolean = true
 
     let lines: [string, number][] = []
@@ -34,8 +35,6 @@
             if (Object.keys(newStyles).length) setStyles()
         } else newStyles = {}
     }
-
-    $: if ($activeStage.id === null && Object.keys($stageShows).length) activeStage.set({ id: sortByName(keysToID($stageShows))[0]?.id, items: [] })
 
     function setStyles() {
         let items = $stageShows[$activeStage.id!].items
@@ -135,7 +134,7 @@
                 <!-- {#key Slide} -->
                 {#each Object.entries(show.items || {}) as [id, item]}
                     {#if item.type || item.enabled}
-                        <Stagebox {edit} show={edit ? null : show} {id} item={clone(item)} {ratio} bind:mouse />
+                        <Stagebox {edit} show={edit ? null : show} {id} item={clone(item)} {ratio} {preview} bind:mouse />
                     {/if}
                 {/each}
                 <!-- {/key} -->

@@ -12,7 +12,7 @@ import { changeStageOutputLayout, displayOutputs, startCamera, toggleOutput } fr
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
-import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
+import { clearAll, clearBackground, clearDrawing, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { formatText } from "../show/formatTextEditor"
 import { runActionId, toggleAction } from "./actions"
 import {
@@ -183,6 +183,7 @@ export const API_ACTIONS = {
     clear_overlays: () => clearOverlays(), // BC
     clear_audio: () => clearAudio(), // BC
     clear_next_timer: () => clearTimers(), // BC
+    clear_drawing: () => clearDrawing(),
 
     // MEDIA (Backgrounds)
     start_camera: (data: API_camera) => startCamera(data),

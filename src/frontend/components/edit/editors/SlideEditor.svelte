@@ -206,7 +206,7 @@
     }
 
     $: slideFilter = ""
-    $: if (!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
+    $: if (!Array.isArray(layoutSlide.filterEnabled) || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
     else slideFilter = ""
     function getSlideFilter() {
         slideFilter = ""

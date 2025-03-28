@@ -103,7 +103,7 @@
 
     // slide
 
-    $: activeLayers = currentStyle.layers || clone(defaultLayers)
+    $: activeLayers = Array.isArray(currentStyle.layers) ? currentStyle.layers : clone(defaultLayers)
 
     // text divider
     function keydown(e: KeyboardEvent) {

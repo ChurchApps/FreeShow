@@ -5,6 +5,7 @@
     import { destroy, receive, send } from "../../../utils/request"
     import { findMatchingOut } from "../../helpers/output"
     import Card from "../Card.svelte"
+    import SelectElem from "../../system/SelectElem.svelte"
 
     interface Screen {
         id: string
@@ -64,9 +65,9 @@
 {:else}
     <!-- class="context #live_card" -->
     <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="ndi" white showPlayOnHover>
-        <!-- <SelectElem style="display: flex;" id="ndi" data={{ id: screen.id, type: "ndi", name: screen.name }} draggable> -->
-        <canvas bind:this={canvas} />
-        <!-- </SelectElem> -->
+        <SelectElem style="display: flex;" id="ndi" data={{ id: screen.id, type: "ndi", name: screen.name }} draggable>
+            <canvas bind:this={canvas} />
+        </SelectElem>
     </Card>
 {/if}
 

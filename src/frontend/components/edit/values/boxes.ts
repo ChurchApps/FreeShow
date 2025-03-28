@@ -303,7 +303,7 @@ export const boxes: Box = {
         icon: "timer",
         edit: {
             default: [
-                { id: "timerId", input: "editTimer" },
+                { id: "timer.id", input: "editTimer" },
                 {
                     name: "clock.type",
                     input: "dropdown",

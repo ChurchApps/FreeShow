@@ -282,7 +282,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 const triggerActionsBeforeOutput = {
     change_output_style: (actionValue: any) => {
         const layers = get(styles)[actionValue?.outputStyle]?.layers
-        if (layers === undefined) return false
+        if (!Array.isArray(layers)) return false
         return !layers.includes("background")
     },
 }

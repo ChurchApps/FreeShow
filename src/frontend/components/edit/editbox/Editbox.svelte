@@ -3,8 +3,8 @@
     import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, variables } from "../../../stores"
     import { deleteAction } from "../../helpers/clipboard"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../../helpers/output"
+    import SlideItems from "../../slide/SlideItems.svelte"
     import EditboxLines from "./EditboxLines.svelte"
-    import EditboxOther from "./EditboxOther.svelte"
     import EditboxPlain from "./EditboxPlain.svelte"
 
     export let item: Item
@@ -129,7 +129,7 @@
         return style
     }
 
-    $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
+    $: isDisabledVariable = item.type === "variable" && $variables[item.variable?.id]?.enabled === false
     // SHOW IS LOCKED FOR EDITING
     $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked
 </script>
@@ -148,7 +148,7 @@ bind:offsetWidth={width} -->
     class:isDisabledVariable
     style={plain
         ? "width: 100%;"
-        : `${getCustomStyle(item?.style || "", customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? "filter: " + filter + ";" : ""}${
+        : `${getCustomStyle(item.style || "", customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? "filter: " + filter + ";" : ""}${
               backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""
           }`}
     data-index={index}
@@ -157,10 +157,10 @@ bind:offsetWidth={width} -->
     {#if !plain}
         <EditboxPlain {item} {index} {ratio} />
     {/if}
-    {#if item?.lines}
+    {#if item.lines}
         <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} {isLocked} />
     {:else}
-        <EditboxOther {item} {ratio} {ref} {itemElem} />
+        <SlideItems {item} {ratio} {ref} {itemElem} slideIndex={$activeEdit.slide || 0} edit />
     {/if}
 </div>
 

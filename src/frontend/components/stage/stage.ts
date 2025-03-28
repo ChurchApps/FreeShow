@@ -13,9 +13,12 @@ export function updateStageShow() {
     })
 }
 
-export function getCustomStageLabel(itemId: string, _updater: any = null): string {
+export function getCustomStageLabel(itemId: string, item: StageItem, _updater: any = null): string {
     if (!itemId.includes("#")) {
-        return translate(`items.${itemId}`)
+        let name = ""
+        if (itemId === "variable") name = get(variables)[item.variable?.id!]?.name
+        if (itemId === "timer") name = get(timers)[item.timer?.id]?.name
+        return name || translate(`items.${itemId}`)
     }
 
     // < 1.4.0

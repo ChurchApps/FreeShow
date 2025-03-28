@@ -17,17 +17,17 @@ const filteredChannels: ValidChannels[] = ["AUDIO"]
 let storedReceivers: { [key: string]: (e: IpcRendererEvent, args: any) => void } = {}
 
 contextBridge.exposeInMainWorld("api", {
-    send: (channel: ValidChannels, data: any) => {
+    send: (channel: ValidChannels, data: any, id?: string) => {
         if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(data?.channel)) console.log("TO ELECTRON [" + channel + "]: ", data)
         // if (useTimeout.includes(channel) && data.channel === lastChannel && data.id) return
 
-        ipcRenderer.send(channel, data)
+        ipcRenderer.send(channel, data, id)
 
         // lastChannel = data.channel
         // setTimeout(() => (lastChannel = ""), maxInterval)
     },
-    receive: (channel: ValidChannels, func: any, id: string = "") => {
-        const receiver = (_e: IpcRendererEvent, args: any) => {
+    receive: (channel: ValidChannels, func: any, id?: string) => {
+        const receiver = (_e: IpcRendererEvent, args: any, id?: string) => {
             if (!appLoaded && channel === "MAIN" && args[0]?.channel === "SHOWS") setTimeout(() => (appLoaded = true), 3000)
             if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(args[0]?.channel)) console.log("TO CLIENT [" + channel + "]: ", ...args)
 

@@ -5,7 +5,7 @@
     import { getResolution } from "./components/helpers/output"
     import Output from "./components/output/Output.svelte"
     import { getStyleResolution } from "./components/slide/getStyleResolution"
-    import StageShow from "./components/stage/StageShow.svelte"
+    import StageLayout from "./components/stage/StageLayout.svelte"
     import { currentWindow, outputs, special, styles } from "./stores"
     import { hideDisplay } from "./utils/common"
     import { send } from "./utils/request"
@@ -57,7 +57,7 @@
     {/if}
 
     {#if $outputs[outputId]?.stageOutput}
-        <StageShow {outputId} stageId={$outputs[outputId].stageOutput} edit={false} />
+        <StageLayout {outputId} stageId={$outputs[outputId].stageOutput} edit={false} />
     {:else if loaded}
         <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
     {/if}

@@ -7,7 +7,7 @@
     import { mediaExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, keysToID } from "../../helpers/array"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import { getFileName } from "../../helpers/media"
     import { getFilters } from "../../helpers/style"
     import Button from "../../inputs/Button.svelte"
@@ -24,7 +24,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import TimeInput from "../../inputs/TimeInput.svelte"
     import Notes from "../../show/tools/Notes.svelte"
-    import { getOriginalValue, removeExtension } from "../scripts/edit"
+    import { getOriginalValue, openDrawer, removeExtension } from "../scripts/edit"
     import type { EditInput } from "../values/boxes"
     import EditTimer from "./EditTimer.svelte"
 
@@ -456,9 +456,17 @@
                         <EditTimer {item} on:change={(e) => valueChange(e, input)} {isStage} />
                     {/if}
                 {:else if input.input === "selectVariable"}
+                    {@const variablesList = sortByName(keysToID($variables)).map((a) => ({ ...a, name: a.name || a.id }))}
                     <CombinedInput>
-                        <p title={$dictionary.items?.variable}><T id="items.variable" /></p>
-                        <Dropdown value={Object.entries($variables).find(([id]) => id === input.value)?.[1]?.name || "—"} options={keysToID($variables)} on:click={(e) => valueChange(e, input)} />
+                        {#if variablesList.length}
+                            <!-- <p title={$dictionary.items?.variable}><T id="items.variable" /></p> -->
+                            <Dropdown style="width: 100%;" value={variablesList.find((a) => a.id === input.value)?.name || "—"} options={variablesList} on:click={(e) => valueChange(e, input)} />
+                        {:else}
+                            <Button on:click={() => openDrawer("variables")} style="width: 100%;" center>
+                                <Icon id="add" right />
+                                <T id="new.variable" />
+                            </Button>
+                        {/if}
                     </CombinedInput>
                 {:else if input.input === "tip"}
                     {#if !input.hidden || (input.disabled === "clock" && item?.clock?.type === "custom")}

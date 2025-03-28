@@ -242,6 +242,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_overlay: ["remove"],
     project_pdf: ["remove"], // "rename",
     project_ppt: ["remove"], // "rename",
+    project_screen: ["remove"],
+    project_ndi: ["remove"],
+    project_camera: ["remove"],
     shows: ["newSlide", "selectAll"],
     // TIMER
     // timer: ["edit", "SEPERATOR", "play"], // , "reset"

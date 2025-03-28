@@ -32,7 +32,7 @@
     onDestroy(() => clearInterval(dynamicInterval))
 </script>
 
-<div class="align autoFontSize" style="{style}{item?.align || ''}" on:dblclick={openInDrawer}>
+<div class="align autoFontSize" style="{style}{item?.align || ''}" class:hidden={variable.enabled === false} on:dblclick={openInDrawer}>
     <div class="line">
         {#if variable.type === "number"}
             {Number(variable.number || 0)}
@@ -51,6 +51,10 @@
         align-items: center;
 
         text-align: center;
+    }
+
+    .align.hidden {
+        opacity: 0.2;
     }
 
     .line {
