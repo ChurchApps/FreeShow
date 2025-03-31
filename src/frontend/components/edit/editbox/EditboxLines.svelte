@@ -87,7 +87,7 @@
 
     function getStyle() {
         if (!plain && $activeEdit.slide === null) return
-        let result = EditboxHelper.getSyleHtml(item, plain, currentStyle)
+        let result = EditboxHelper.getStyleHtml(item, plain, currentStyle)
         html = result.html
         currentStyle = result.currentStyle
         previousHTML = html
@@ -153,7 +153,7 @@
     }
 
     function cutInTwo({ e, sel, lines, currentIndex, textPos, start }) {
-        if (ref.type !== "show") return
+        if ((ref.type || "show") !== "show") return
         let { firstLines, secondLines } = EditboxHelper.cutLinesInTwo({ sel, lines, currentIndex, textPos, start })
 
         if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
@@ -367,6 +367,11 @@
                     style = item.lines?.[i - 1]?.text[0]?.style || ""
                     newLines[pos].align = newLines[pos - 1].align || ""
                 }
+
+                // remove custom font size
+                let customIndex = style.indexOf("--custom")
+                if (customIndex > -1) style = style.slice(0, customIndex)
+
                 newLines[pos].text.push({ style, value: lineText })
 
                 currentStyle += style

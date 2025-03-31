@@ -16,9 +16,16 @@ export function updateStageShow() {
 export function getCustomStageLabel(itemId: string, item: StageItem, _updater: any = null): string {
     if (!itemId.includes("#")) {
         let name = ""
+
         if (itemId === "variable") name = get(variables)[item.variable?.id!]?.name
-        if (itemId === "timer") name = get(timers)[item.timer?.id]?.name
-        return name || translate(`items.${itemId}`)
+        else if (itemId === "timer") name = get(timers)[item.timer?.id]?.name
+
+        name = name || translate(`items.${itemId}`)
+
+        const slideOffset = Number(item.slideOffset || 0)
+        if ((itemId === "slide_text" || itemId === "slide_notes") && slideOffset) name += ` ${slideOffset > 0 ? "+" : ""}${slideOffset}`
+
+        return name
     }
 
     // < 1.4.0
