@@ -74,8 +74,7 @@
             let cloudId = $driveData.mediaId
             if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
 
-            const extension = getExtension(path)
-            let type = getMediaType(extension) as MediaType
+            let type = (show.media[a].type || getMediaType(getExtension(path))) as MediaType
 
             let pathId = path.slice(0, 150)
             if (tempBackgrounds[pathId]) tempBackgrounds[pathId].count++

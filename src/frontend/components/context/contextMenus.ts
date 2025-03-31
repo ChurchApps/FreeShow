@@ -112,7 +112,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // ITEM
     item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
     transition: { label: "popup.transition", icon: "transition" },
-    dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
+    dynamic_values: { label: "actions.dynamic_values", icon: "star" },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "SEPERATOR", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     rearrange: { label: "actions.rearrange", icon: "rearrange", items: ["to_front", "forward", "backward", "to_back"] },
@@ -281,7 +281,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_text_item: ["dynamic_values", "SEPERATOR", "delete"],
 
     // EDIT
-    edit_box: ["item_actions", "dynamic_values", "item_bind_to", "format", "rearrange", "transition", "SEPERATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)
+    edit_box: ["dynamic_values", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPERATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)
     items_list_item: ["to_front", "forward", "backward", "to_back"],
 
     // CALENDAR

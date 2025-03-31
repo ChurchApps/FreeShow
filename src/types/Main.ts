@@ -285,6 +285,7 @@ export type Popups =
     | "change_output_values"
     | "set_time"
     | "assign_shortcut"
+    | "dynamic_values"
     | "animate"
     | "translate"
     | "next_timer"

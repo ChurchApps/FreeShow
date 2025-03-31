@@ -57,6 +57,7 @@ import AspectRatio from "../components/main/popups/AspectRatio.svelte"
 import ManageMetadata from "../components/main/popups/ManageMetadata.svelte"
 import MaxLines from "../components/main/popups/MaxLines.svelte"
 import ScriptureShow from "../components/main/popups/ScriptureShow.svelte"
+import DynamicValues from "../components/main/popups/DynamicValues.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -95,6 +96,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     change_output_values: ChangeOutputValues,
     set_time: SetTime,
     assign_shortcut: SlideShortcut,
+    dynamic_values: DynamicValues,
     animate: Animate,
     translate: Translate,
     next_timer: NextTimer,

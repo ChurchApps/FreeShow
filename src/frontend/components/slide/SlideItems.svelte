@@ -105,6 +105,5 @@
     <ListView list={item.list} disableTransition={edit || disableListTransition} />
 {:else if item.type === "variable"}
     <!-- moved to textbox in 1.3.3 -->
-    <!-- used by stage item -->
     <Variable {item} style={variableStyleString} ref={{ ...ref, slideIndex }} hideText={edit ? false : (ref.type === "stage" && !!$currentWindow) || preview} {edit} />
 {/if}

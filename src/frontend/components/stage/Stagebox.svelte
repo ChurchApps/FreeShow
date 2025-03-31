@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { StageItem, StageLayout } from "../../../types/Stage"
-    import { activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, refreshEditSlide, stageShows, timers, variables } from "../../stores"
+    import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, previewBuffers, refreshEditSlide, stageShows, timers, variables } from "../../stores"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
@@ -82,7 +82,7 @@
     }
 
     function deselect(e: any) {
-        if (e.target.closest(".stageTools") || e.target.closest(".contextMenu")) return
+        if (e.target.closest(".stageTools") || e.target.closest(".contextMenu") || $activePopup) return
 
         if ((edit && !e.ctrlKey && !e.metaKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
             activeStage.update((ae) => {

@@ -10,10 +10,9 @@ import { getSlideText } from "../edit/scripts/textStyle"
 import { chordTypes, keys } from "../edit/values/chords"
 import { clone, keysToID, sortByName, sortObject } from "../helpers/array"
 import { removeExtension } from "../helpers/media"
-import { getDynamicIds } from "../helpers/showActions"
+import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import type { ContextMenuItem } from "./contextMenus"
-import { getLayoutRef } from "../helpers/show"
 
 const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
@@ -259,25 +258,6 @@ const loadActions = {
         return contextOutputList
     },
     bind_item: () => loadActions.bind_slide([], true),
-    dynamic_values: () => {
-        let values = getDynamicIds().map((id) => ({ id, label: id, translate: false }))
-        let firstShowIndex = values.findIndex((a) => a.id.includes("show_"))
-        let firstVideoIndex = values.findIndex((a) => a.id.includes("video_"))
-        let firstMetaIndex = values.findIndex((a) => a.id.includes("meta_"))
-        let firstVarIndex = values.findIndex((a) => a.id.includes("variable_"))
-
-        return [
-            ...values.slice(0, firstShowIndex),
-            "SEPERATOR",
-            ...values.slice(firstShowIndex, firstVideoIndex),
-            "SEPERATOR",
-            ...values.slice(firstVideoIndex, firstMetaIndex),
-            "SEPERATOR",
-            ...values.slice(firstMetaIndex, firstVarIndex),
-            "SEPERATOR",
-            ...values.slice(firstVarIndex),
-        ]
-    },
 }
 
 function setContextData(key: string, data: boolean | string | number) {

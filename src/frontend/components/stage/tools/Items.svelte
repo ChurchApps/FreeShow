@@ -11,13 +11,13 @@
     type ItemRef = { id: string; icon?: string; name?: string; maxAmount?: number }
     const dynamicItems: ItemRef[] = [
         { id: "slide_text", icon: "text" },
-        { id: "slide_notes", icon: "notes" },
+        // { id: "slide_notes", icon: "notes" }, // added as dynamic value in textbox
         { id: "current_output", icon: "screen", maxAmount: 1 },
     ]
 
     const normalItems: ItemRef[] = [
         { id: "text" }, // video time/countdown ... (preset with dynamic values)
-        { id: "variable" },
+        // { id: "variable" }, // added as dynamic value in textbox
         { id: "slide_tracker", icon: "percentage" },
         { id: "media", icon: "image" },
         { id: "camera" },
@@ -90,9 +90,10 @@
         <h6><T id="tools.items" /></h6>
 
         <div class="grid normal">
-            {#each normalItems as item, i}
+            {#each normalItems as item}
+                <!-- i === 0 ? "min-width: 100%;" :  -->
                 <IconButton
-                    style={i === 0 ? "min-width: 100%;" : $labelsDisabled ? "" : "justify-content: start;padding-left: 15px;"}
+                    style={$labelsDisabled ? "" : "justify-content: start;padding-left: 15px;"}
                     name
                     title={$dictionary.items?.[item.name || item.id]}
                     icon={item.icon || item.id}
@@ -100,9 +101,7 @@
                     on:click={() => addItem(item.id)}
                 />
 
-                {#if i === 0}
-                    <hr class="divider" />
-                {/if}
+                <!-- {#if i === 0}<hr class="divider" />{/if} -->
             {/each}
         </div>
     </Panel>

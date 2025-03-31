@@ -20,7 +20,7 @@
         text: { name: "items.text", icon: "text", disabled: true },
         item: { name: "tools.item", icon: "item", disabled: true },
         items: { name: "tools.items", icon: "items" },
-        slide: { name: "tools.slide", icon: "options", overflow: true },
+        slide: { name: "edit.options", icon: "options", overflow: true }, // tools.slide
     }
 
     let selectedItemIds: string[] = []

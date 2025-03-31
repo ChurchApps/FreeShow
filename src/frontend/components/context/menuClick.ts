@@ -83,7 +83,7 @@ import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension
 import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput, toggleOutput } from "../helpers/output"
 import { select } from "../helpers/select"
 import { getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
-import { dynamicValueText, sendMidi } from "../helpers/showActions"
+import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
@@ -1194,93 +1194,13 @@ const actions = {
         // _show().slides([slideID!]).set({ key: "items", value: items })
     },
     dynamic_values: (obj: ObjData) => {
-        let id = obj.menu.id || ""
-
-        if (obj.contextElem?.classList.contains("#meta_message")) {
-            let message = _show().get("message") || {}
-            let data = { ...message, text: (message.text || "") + `{${id}}` }
-            let override = "show#" + get(activeShow)!.id + "_message"
-
-            history({ id: "UPDATE", newData: { data, key: "message" }, oldData: { id: get(activeShow)!.id }, location: { page: "show", id: "show_key", override } })
-            return
-        }
-
-        let isStage = !!obj.contextElem?.classList.contains("stage_item")
-        if (!obj.contextElem?.classList.contains("editItem") && !isStage) return
-
         let sel = getSelectionRange()
         let lineIndex = sel.findIndex((a) => a?.start !== undefined)
         if (lineIndex < 0) lineIndex = 0
+        const caret = { line: lineIndex || 0, pos: sel[lineIndex]?.start || 0 }
 
-        let edit = get(activeEdit)
-        let caret = { line: lineIndex || 0, pos: sel[lineIndex]?.start || 0 }
-
-        if (isStage) {
-            let activeItemId = get(activeStage)?.items[0]
-            if (!get(stageShows)[get(activeStage).id!] || !activeItemId) return
-
-            stageShows.update((a) => {
-                a[get(activeStage).id!].items[activeItemId] = updateItemText(a[get(activeStage).id!]?.items[activeItemId])
-                return a
-            })
-
-            refreshEditSlide.set(true)
-            return
-        }
-
-        if (edit.id) {
-            if (edit.type === "overlay") {
-                overlays.update((a) => {
-                    a[edit.id!].items = updateItemText(a[edit.id!].items)
-                    return a
-                })
-            } else if (edit.type === "template") {
-                templates.update((a) => {
-                    a[edit.id!].items = updateItemText(a[edit.id!].items)
-                    console.log(a[edit.id!].items)
-                    return a
-                })
-            }
-
-            refreshEditSlide.set(true)
-            return
-        }
-
-        let showId = get(activeShow)?.id || ""
-        let ref = getLayoutRef(showId)
-        let slideId = ref[edit.slide || 0]?.id || ""
-
-        showsCache.update((a) => {
-            if (!a[showId]?.slides?.[slideId]) return a
-
-            a[showId].slides[slideId].items = updateItemText(a[showId].slides[slideId].items)
-            return a
-        })
-
-        refreshEditSlide.set(true)
-
-        function updateItemText(items) {
-            let replaced = false
-
-            let lines = items[edit.items?.[0]]?.lines || []
-            if (isStage) lines = items?.lines || []
-
-            lines[caret.line].text.forEach((text) => {
-                if (replaced) return
-
-                let value = text.value
-                if (value.length < caret.pos) {
-                    caret.pos -= value.length
-                    return
-                }
-
-                let newValue = value.slice(0, caret.pos) + dynamicValueText(id) + value.slice(caret.pos)
-                text.value = newValue
-                replaced = true
-            })
-
-            return items
-        }
+        popupData.set({ obj, caret })
+        activePopup.set("dynamic_values")
     },
     to_front: () => rearrangeItems("to_front"),
     forward: () => rearrangeItems("forward"),
