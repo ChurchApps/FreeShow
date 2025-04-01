@@ -139,7 +139,7 @@ export class BlackmagicSender {
         data.scheduledFrames++;
         
         // Simple startup logic - start after buffering 10 frames
-        if (!data.isStarted && bufferedFrames >= 10) {
+        if (!data.isStarted && bufferedFrames >= 15) {
             try {
                 console.log("Starting BlackMagic playback");
                 data.playback.start({ startTime: 0 });
@@ -164,7 +164,7 @@ static async sendFrame(outputId: string) {
     const data = this.playbackData[outputId];
     
     // Start playback with an even larger initial buffer
-    if (data.scheduledFrames === 15) { // Further increased initial buffer
+    if (data.scheduledFrames === 30) { // Further increased initial buffer
         console.log("Starting BlackMagic playback");
         data.playback.start({ startTime: 0 });
         this.startPerformanceMonitoring(outputId);
@@ -179,11 +179,11 @@ static async sendFrame(outputId: string) {
 
         // Reduced logging - only log significant dimension changes
         if (targetDims && (targetDims.width !== size.width || targetDims.height !== size.height)) {
-            console.log(`Converting format: ${format}, from ${size.width}x${size.height} to ${targetDims.width}x${targetDims.height}`);
+            //console.log(`Converting format: ${format}, from ${size.width}x${size.height} to ${targetDims.width}x${targetDims.height}`);
         }
 
 
-        console.log(`Converting format: ${format}, from ${size.width}x${size.height} to ${targetDims?.width}x${targetDims?.height}`);
+        //console.log(`Converting format: ${format}, from ${size.width}x${size.height} to ${targetDims?.width}x${targetDims?.height}`);
 
         // bmdPixelFormats: YUV, ARGB, BGRA, RGB, RGBLE, RGBXLE, RGBX
         if (format.includes("ARGB")) {
@@ -372,7 +372,7 @@ static async sendFrame(outputId: string) {
         }
 
         // Default to 1080p if mode is not recognized
-        console.warn(`Unrecognized display mode: ${displayMode}, defaulting to 1080p`);
+        //console.warn(`Unrecognized display mode: ${displayMode}, defaulting to 1080p`);
         return {
             width: 1920,
             height: 1080
@@ -381,20 +381,20 @@ static async sendFrame(outputId: string) {
     
     static pauseOutput(outputId: string) {
         if (!this.playbackData[outputId]) return;
-        console.log(`Pausing output: ${outputId}`);
+        //console.log(`Pausing output: ${outputId}`);
         this.isPaused[outputId] = true;
     }
     
     static resumeOutput(outputId: string) {
         if (!this.playbackData[outputId]) return;
-        console.log(`Resuming output: ${outputId}`);
+        //console.log(`Resuming output: ${outputId}`);
         this.isPaused[outputId] = false;
     }
     
     static recoverPlayback(outputId: string, currentHwTime: number) {
     if (!this.playbackData[outputId]) return;
     
-    console.log("Performing soft recovery...");
+    //console.log("Performing soft recovery...");
     
     // Pause scheduling temporarily
     this.isPaused[outputId] = true;
