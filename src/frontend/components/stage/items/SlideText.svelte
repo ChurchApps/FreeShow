@@ -29,6 +29,7 @@
 
     // GET CORRECT INDEX OFFSET, EXCLUDING DISABLED SLIDES
     $: slideIndex = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index : null
+    let customOffset: number | null = null
     $: if (slideOffset > 0 && slideIndex !== null && showRef) {
         let layoutOffset = slideIndex
         let offsetFromCurrentExcludingDisabled = 0
@@ -36,7 +37,7 @@
             layoutOffset++
             if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled++
         }
-        slideIndex = layoutOffset
+        customOffset = layoutOffset
     } else if (slideOffset < 0 && slideIndex !== null && showRef) {
         let layoutOffset = slideIndex
         let offsetFromCurrentExcludingDisabled = 0
@@ -44,10 +45,10 @@
             layoutOffset--
             if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled--
         }
-        slideIndex = layoutOffset
+        customOffset = layoutOffset
     }
 
-    $: slideId = slideIndex !== null && showRef ? showRef[slideIndex]?.id || null : null
+    $: slideId = (customOffset !== null || slideIndex !== null) && showRef ? showRef[(customOffset ?? slideIndex)!]?.id || null : null
     $: slide = currentSlide?.id === "temp" ? getTempSlides(slideOffset) : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null
 
     function getTempSlides(slideOffset: number) {

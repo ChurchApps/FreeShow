@@ -9,7 +9,7 @@ import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, displayOutputs, startCamera, toggleOutput } from "../helpers/output"
-import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
+import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearDrawing, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
@@ -106,6 +106,7 @@ export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
 export type API_camera = { name?: string; id: string; groupId?: string }
+export type API_dynamic_value = { value: string; ref?: any }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
     type?: TransitionType // default: "fade"
@@ -264,6 +265,7 @@ export const API_ACTIONS = {
 
     get_output: (data: API_id_optional) => getOutput(data),
     get_output_group_name: () => getOutputGroupName(),
+    get_dynamic_value: (data: API_dynamic_value) => replaceDynamicValues(data.value, data.ref || {}),
 
     get_playing_video_duration: () => getPlayingVideoDuration(),
     get_playing_video_time: () => getPlayingVideoTime(),

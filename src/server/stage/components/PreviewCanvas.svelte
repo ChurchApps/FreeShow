@@ -1,14 +1,16 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
+    import { send } from "../util/socket"
 
-    export let id: string
+    export let id: string | undefined
     export let alpha: boolean
-    export let socket: any
     export let capture: any
 
-    onMount(() => {
-        socket.emit("STAGE", { id: socket.id, channel: "REQUEST_STREAM", data: { outputId: id, alpha } })
-    })
+    // REQUEST EVERY 500ms
+    const streamInterval = setInterval(() => {
+        send("REQUEST_STREAM", { outputId: id, alpha })
+    }, 500)
+    onDestroy(() => clearInterval(streamInterval))
 
     // export let capture: any
     // export let fullscreen: any = false

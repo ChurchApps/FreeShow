@@ -268,7 +268,8 @@ function getSlide(slideText: string): Slide {
 
     let firstLine = slideLines[0]
     let textboxKey = firstLine.match(textboxRegex)
-    if (!textboxKey && firstLine.indexOf("[") === 0 && firstLine.indexOf("]") >= 0) {
+    let firstBracketEnd = firstLine.indexOf("]")
+    if (!textboxKey && firstLine.indexOf("[") === 0 && firstBracketEnd === firstLine.trim().length - 1) {
         group = firstLine.slice(firstLine.indexOf("[") + 1, firstLine.indexOf("]"))
         slideLines.splice(0, 1)
     }

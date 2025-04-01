@@ -134,7 +134,7 @@
                 <!-- {#key Slide} -->
                 {#each Object.entries(show.items || {}) as [id, item]}
                     {#if item.type || item.enabled}
-                        <Stagebox {edit} show={edit ? null : show} {id} item={clone(item)} {ratio} {preview} bind:mouse />
+                        <Stagebox {edit} stageLayout={edit ? null : show} {id} item={clone(item)} {ratio} {preview} bind:mouse />
                     {/if}
                 {/each}
                 <!-- {/key} -->

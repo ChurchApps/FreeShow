@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { progressData } from "../store"
+    import { progressData } from "../util/stores"
 
     export let tracker: any
     export let autoSize: number = 0

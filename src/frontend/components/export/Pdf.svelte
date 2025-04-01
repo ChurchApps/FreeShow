@@ -1,12 +1,13 @@
 <script lang="ts">
     import { EXPORT } from "../../../types/Channels"
+    import type { Show } from "../../../types/Show"
     import { currentWindow } from "../../stores"
     import { send } from "../../utils/request"
     import Media from "../output/layers/Media.svelte"
     import Textbox from "../slide/Textbox.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
 
-    export let shows: any[] = []
+    export let shows: Show[] = []
     export let options: any = {}
     export let path: string = ""
 
@@ -28,7 +29,7 @@
 
     // WIP get ref...
     function getRefs() {
-        shows.forEach((show) => {
+        shows.forEach((show: any) => {
             let a: any[] = []
 
             show.layouts?.[show.settings?.activeLayout]?.slides?.forEach((layoutSlide: any) => {
@@ -46,9 +47,9 @@
                 })
             })
 
-            layoutSlides[show.id] = a
-            show.meta = Object.values(show.meta || {})
-                .filter((a: any) => a.length)
+            layoutSlides[show.id!] = a
+            show.meta = Object.values((show.meta || {}) as { [key: string]: string })
+                .filter((a) => a.length)
                 .join("; ")
         })
 
@@ -65,10 +66,10 @@
         )
     }
 
-    $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id].length / options.grid[1] / (options.text && options.slides ? 1 : options.slides ? options.grid[0] : 1.5)) : 0
+    $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id!].length / options.grid[1] / (options.text && options.slides ? 1 : options.slides ? options.grid[0] : 1.5)) : 0
 
     // dynamic counter
-    function getGroupName(show: any, group: string, slideID: string) {
+    function getGroupName(show: Show, group: string, slideID: string) {
         let name = group
         if (name) {
             let added: any = {}
@@ -90,7 +91,7 @@
                 <h1>{shows[index].name}</h1>
             </div>
         {/if}
-        {#each layoutSlides[shows[index].id] as slide, i}
+        {#each layoutSlides[shows[index].id || ""] as slide, i}
             <div class="slide" class:padding={options.text ? i === 0 : i < options.grid[0]} style={options.slides ? `height: calc(842pt / ${options.grid[1]} - 0.1px);` + (options.text ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
                 <!-- TODO: different slide heights! -->
                 <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
@@ -110,7 +111,7 @@
                             {#if shows[index].media?.[slide.data?.background]?.path}
                                 <div class="media" style="height: 100%;zoom: {1 / ratio};">
                                     <!-- {filter} {flipped} {fit} -->
-                                    <Media path={shows[index].media[slide.data.background].path} mirror />
+                                    <Media path={shows[index].media[slide.data.background].path || ""} mirror />
                                 </div>
                             {/if}
 
@@ -140,7 +141,7 @@
                 </div>
             {/if}
         {/each}
-        {#if options.pageNumbers && (layoutSlides[shows[index].id].length - 1) / (options.text ? 1 : options.grid[0]) / pages < pages}
+        {#if options.pageNumbers && (layoutSlides[shows[index].id || ""].length - 1) / (options.text ? 1 : options.grid[0]) / pages < pages}
             <div class="page" style="top: calc(842pt * {pages - 0.012} - 30px);">
                 {pages}/{pages}
             </div>

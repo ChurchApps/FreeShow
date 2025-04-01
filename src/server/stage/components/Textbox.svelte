@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import type { Item } from "../../../types/Show"
     import Clock from "../items/Clock.svelte"
     import ListView from "./ListView.svelte"
@@ -7,6 +7,8 @@
     import Icon from "../../common/components/Icon.svelte"
     import { getStyles } from "../../common/util/style"
     import autosize, { type AutosizeTypes } from "../../common/util/autosize"
+    import { variables } from "../util/stores"
+    import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
 
     export let showId: string
     export let item: Item
@@ -71,8 +73,9 @@
     $: if (chords && item.lines) createChordLines()
     function createChordLines() {
         chordLines = []
+        if (!Array.isArray(item?.lines)) return
 
-        item.lines?.forEach((line, i) => {
+        item.lines.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
             let chords = JSON.parse(JSON.stringify(line.chords || []))
@@ -139,6 +142,15 @@
         }, 20)
     }
 
+    function getCustomStyle(style: string) {
+        if (!style) return
+
+        // reset position styles
+        style += "left: 0;top: 0;width: 100%;height: 100%;"
+
+        return style
+    }
+
     // CHORDS TRANSPOSE
 
     let defaultChords: any = {}
@@ -201,13 +213,21 @@
         return transposedRootNote + (bassNote || "") + chordQuality
     }
 
-    $: chordsStyle = `--chord-size: ${chordLines.length ? stageItem?.chordsData?.size || 80 : "undefined"}px;--chord-color: ${stageItem?.chordsData?.color || "#FF851B"};`
+    // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
+    let updateDynamic = 0
+    $: if ($variables) updateDynamic++
+    const dynamicInterval = setInterval(() => {
+        updateDynamic++
+    }, 1000)
+    onDestroy(() => clearInterval(dynamicInterval))
+
+    $: chordsStyle = `--chord-size: ${chordLines.length ? (stageItem?.chords?.size || stageItem?.chordsData?.size || 60) * 0.65 : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || "#FF851B"};`
 </script>
 
 <svelte:window on:click={closeActions} />
 
 <!-- bind:offsetHeight={height} -->
-<div bind:this={thisElem} class="item" style={style ? itemStyle : null} class:chords={chordLines.length} on:click={toggleActions}>
+<div bind:this={thisElem} class="item" style={style ? getCustomStyle(itemStyle) : null} class:chords={chordLines.length} on:click={toggleActions}>
     <!-- can have more actions here if needed -->
     {#if actionButtons && (chordLines.length || false)}
         <div class="actions">
@@ -235,7 +255,14 @@
                         {/if}
                         <div class="break" style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}">
                             {#each line.text || [] as text}
-                                <span style="{style ? text.style + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html text.value?.replaceAll("\n", "<br>") || "<br>"}</span>
+                                {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
+                                {#key updateDynamic}
+                                    {#await replaceDynamicValues(value)}
+                                        <span style="{style ? text.style + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html getDynamicValue(value)}</span>
+                                    {:then newValue}
+                                        <span style="{style ? text.style + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html newValue}</span>
+                                    {/await}
+                                {/key}
                             {/each}
                         </div>
                     {/if}
@@ -292,6 +319,9 @@
 
         height: 150px;
         width: 400px;
+
+        /* click event */
+        pointer-events: initial;
     }
 
     .actions {
@@ -306,6 +336,10 @@
         padding: 5px 10px;
         font-size: 0.8em;
         z-index: 5;
+
+        /* reset */
+        color: var(--text);
+        font-weight: initial;
     }
 
     .flex {

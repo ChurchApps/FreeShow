@@ -69,7 +69,8 @@ function getItems(items: Item[]) {
             // chords (from last in line to first)
             let sortedChords = line.chords?.sort((a, b) => b.pos - a.pos) || []
             sortedChords.forEach((chord) => {
-                if (tempText[chord.pos]) tempText = tempText.slice(0, chord.pos) + `[${chord.key}]` + tempText.slice(chord.pos)
+                while (!tempText[chord.pos]) tempText += " "
+                tempText = tempText.slice(0, chord.pos) + `[${chord.key}]` + tempText.slice(chord.pos)
             })
 
             if (tempText.length) {

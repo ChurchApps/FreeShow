@@ -327,13 +327,13 @@
         {/if}
     </div>
 
-    {#if !$focusMode && Slide}
+    {#if !$focusMode}
         <div class="actions" style="width: 100%;gap: 10px;">
             <div class="leftActions">
                 {#if !chordsMode}
                     <div class="notes" style="font-size: 0.8em;">{currentShow?.name}</div>
                 {/if}
-                {#if chordsMode}
+                {#if chordsMode && Slide}
                     <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
                         <p><T id="popup.choose_chord" /></p>
                     </Button>
@@ -353,7 +353,7 @@
 
             <div class="actions" style="height: 100%;justify-content: right;">
                 <!-- no need to add chords on scripture/events -->
-                {#if !currentShow.reference?.type}
+                {#if !currentShow.reference?.type && Slide}
                     <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
                         <Icon id="chords" white={!slideChords.length} right={!$labelsDisabled} />
                         {#if !$labelsDisabled}<T id="edit.chords" />{/if}
@@ -361,7 +361,9 @@
                 {/if}
 
                 {#if !$focusMode}
-                    <div class="seperator" />
+                    {#if Slide}
+                        <div class="seperator" />
+                    {/if}
 
                     <Button on:click={() => textEditActive.set(true)}>
                         <Icon id="text" right={!$labelsDisabled} />

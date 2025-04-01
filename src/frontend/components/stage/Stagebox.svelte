@@ -24,12 +24,12 @@
 
     export let id: string
     export let item: StageItem
-    export let show: StageLayout | null = null
+    export let stageLayout: StageLayout | null = null
     export let ratio: number
     export let preview: boolean = false
     export let edit: boolean = false
 
-    $: currentShow = show === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : show
+    $: currentShow = stageLayout === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : stageLayout
 
     $: slideOffset = item.type ? Number(item.slideOffset || 0) : id.includes("next") ? 1 : 0
 
@@ -296,6 +296,10 @@
         outline: 5px solid var(--secondary);
         overflow: visible;
         z-index: 4;
+    }
+    .stage_item.selected :global(.item),
+    .stage_item.selected :global(.item .align) {
+        overflow: visible;
     }
 
     .align {

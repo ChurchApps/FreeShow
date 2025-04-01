@@ -1,85 +1,73 @@
 import { get, Writable, writable } from "svelte/store"
+import type { Output } from "../../../types/Output"
 import type { Dictionary } from "../../../types/Settings"
-import type { Overlays, TrimmedShow } from "../../../types/Show"
-import type { BibleCategories } from "../../../types/Tabs"
+import type { Overlays, Shows, TrimmedShow } from "../../../types/Show"
+import type { StageLayout } from "../../../types/Stage"
 import { clone } from "../../common/util/helpers"
 import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
-import type { ProjectShowRef } from "./../../../types/Projects"
 import { DEFAULT_DICTIONARY } from "./dictionary"
 
 export let dictionary: Writable<Dictionary> = writable(clone(DEFAULT_DICTIONARY))
 
 export let errors: Writable<string[]> = writable([])
 
-export let password = writable({
-    required: true,
-    remember: false,
-    stored: "",
-})
-
 export let isConnected = writable(false)
-export let quickPlay = writable(false)
-export let activeTab = writable("shows")
-export let outputMode: Writable<"slide" | "lyrics"> = writable("slide")
+export let layouts: Writable<{ id: string; name: string; password: boolean }[] | null> = writable(null)
+export let selectedLayout = writable("")
+export let stageLayout: Writable<StageLayout | null> = writable(null)
 
-export let active: Writable<ProjectShowRef> = writable({ id: "", type: "show" })
-export let activeShow: Writable<any> = writable(null)
+export let output: Writable<Output | null> = writable(null)
+export let background: Writable<any> = writable({})
+export let stream: Writable<any> = writable({})
+// export let videoTime: Writable<number> = writable(0)
+
+export let showsCache: Writable<Shows> = writable({})
+
 export let shows: Writable<TrimmedShow[]> = writable([])
 export let outSlide: Writable<any> = writable(null)
 export let outLayout: Writable<any> = writable(null)
-export let styleRes: Writable<any> = writable(null) // this is actually aspect ratio
 export let outShow: Writable<any> = writable(null)
 export let layout: Writable<any[] | null> = writable(null)
-export let isCleared = writable({ all: true, background: true, slide: true, overlays: true, audio: true, slideTimers: true })
 
-export let projectsOpened: Writable<boolean> = writable(false)
-export let activeProject: Writable<any> = writable(null)
-export let folders: Writable<any> = writable(null)
-export let openedFolders: Writable<any[]> = writable([])
-export let projects: Writable<any[]> = writable([])
-export let project: Writable<string> = writable("")
-
-export let scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
 export let overlays: Writable<Overlays> = writable({})
 
 export let mediaCache: Writable<any> = writable({})
-export let textCache: Writable<any> = writable({})
-export let groupsCache: Writable<any> = writable({})
-export let scriptureCache: Writable<any> = writable({})
 
 export let playingAudioData: Writable<any> = writable({})
 export let playingAudioTime: Writable<number> = writable(0)
+
+///
+
+export let events: Writable<any> = writable({})
+export let timers: Writable<any> = writable({})
+export let variables: Writable<any> = writable({})
+export let activeTimers: Writable<any[]> = writable([])
+export let timeFormat: Writable<"12" | "24"> = writable("24")
+export let progressData: Writable<any> = writable({})
 
 /////
 
 export const _ = {
     dictionary,
     errors,
-    password,
+
     isConnected,
-    quickPlay,
-    activeTab,
-    outputMode,
-    active,
-    activeShow,
+    layouts,
+    selectedLayout,
+    stageLayout,
+
+    output,
+    background,
+    stream,
+
+    showsCache,
+
     shows,
     outSlide,
     outLayout,
-    styleRes,
     outShow,
     layout,
-    isCleared,
-    projectsOpened,
-    activeProject,
-    folders,
-    openedFolders,
-    projects,
-    project,
-    scriptures,
     mediaCache,
-    textCache,
-    groupsCache,
-    scriptureCache,
     playingAudioData,
     playingAudioTime,
 }
