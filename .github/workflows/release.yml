@@ -19,6 +19,17 @@ jobs:
               with:
                   node-version: 20
 
+            - name: Install Windows Signing Dependencies
+              run: |
+                  pwsh -Command "& {
+                    Install-PackageProvider -Name NuGet -Force;
+                    Start-Sleep -Seconds 5;
+                    Install-Module -Name Microsoft.PowerShell.Security -Force -Scope CurrentUser -AllowClobber;
+                    Install-Package Microsoft.Windows.SDK.BuildTools -ProviderName NuGet -Scope CurrentUser -Force;
+                    Install-Package Microsoft.Trusted.Signing.Client -ProviderName NuGet -Scope CurrentUser -Force;
+                    Install-Package sign -ProviderName NuGet -Scope CurrentUser -Force
+                  }"
+
             - name: Install dependencies
               # npm ci is better, but requires package-lock.json file
               run: npm install
