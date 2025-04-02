@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { variables } from "../store"
+    import { variables } from "../util/stores"
 
     export let id: string = ""
     export let style: string = ""

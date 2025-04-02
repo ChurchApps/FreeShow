@@ -303,9 +303,9 @@ export class AudioPlayer {
         return duration
     }
 
-    static getVolume(id: string | null = null) {
-        if (!id) return get(volume)
-        return get(volume) * (get(media)[id]?.volume || 1)
+    static getVolume(id: string | null = null, _updater = get(volume)) {
+        if (!id) return _updater
+        return _updater * (get(media)[id]?.volume || 1)
     }
 
     static getGain() {

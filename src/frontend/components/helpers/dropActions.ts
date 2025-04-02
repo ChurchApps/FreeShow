@@ -45,7 +45,7 @@ function getId(drag: Selected): string {
     const extension: string = getExtension(drag.data[0].name)
     if (drag.id === "files" && getMediaType(extension) === "audio") return "audio"
     if (drag.id === "show" && drag.data[0].type === "audio") return "audio"
-    if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0].type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera" || drag.id === "screen") return "media"
+    if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0].type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera" || drag.id === "screen" || drag.id === "ndi") return "media"
     // if (drag.id === "audio") return "audio"
     // if (drag.id === "global_group") return "global_group"
     return drag.id || id
@@ -152,6 +152,8 @@ export const dropActions = {
             data = data.map((a) => ({ id: a, type: "overlay" }))
         } else if (drag.id === "player") {
             data = data.map((a) => ({ id: a, type: "player" }))
+        } else if (drag.id === "camera") {
+            data = data.map((a) => ({ id: a.id, name: a.name, type: "camera", data: { groupId: a.cameraGroup } }))
         } else if (drag.id === "scripture") {
             return createScriptureShow(drag, drop)
         }
@@ -419,6 +421,7 @@ const slideDrop = {
             })
         } else if (drag.id === "camera") data[0].type = "camera"
         else if (drag.id === "screen") data[0].type = "screen"
+        else if (drag.id === "ndi") data[0].type = "ndi"
         else if (!data[0].name) data[0].name = data[0].path
 
         let center = drop.center

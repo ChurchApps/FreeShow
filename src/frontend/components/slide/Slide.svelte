@@ -274,6 +274,7 @@
     $: currentOutput = $outputs[getActiveOutputs()[0]]
     $: transparentOutput = !!currentOutput?.transparent
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
+    $: layers = Array.isArray(currentStyle.layers) ? currentStyle.layers : ["background"]
 
     let colorStyle: string = ""
     let style: string = ""
@@ -288,7 +289,7 @@
     }
 
     $: slideFilter = ""
-    $: if (!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
+    $: if (!Array.isArray(layoutSlide.filterEnabled) || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
     else slideFilter = ""
     function getSlideFilter() {
         slideFilter = ""
@@ -374,7 +375,7 @@
                     relative={viewMode === "lyrics" && !noQuickEdit}
                 >
                     <!-- backgrounds -->
-                    {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit)}
+                    {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit) && (background || layers.includes("background"))}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
                                 <MediaLoader name={$dictionary.error?.load} ghost={!background} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />

@@ -22,7 +22,10 @@
     }
 
     function change() {
-        dispatch("change", value)
+        // timeout so textarea value can update on context paste
+        setTimeout(() => {
+            dispatch("change", value)
+        })
     }
 </script>
 

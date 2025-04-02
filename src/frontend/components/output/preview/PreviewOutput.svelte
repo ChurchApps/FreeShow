@@ -3,7 +3,7 @@
     //import { currentWindow, outputs, styles } from "../../../stores"
     import { getResolution } from "../../helpers/output"
     import { getStyleResolution } from "../../slide/getStyleResolution"
-    import StageShow from "../../stage/StageShow.svelte"
+    import StageLayout from "../../stage/StageLayout.svelte"
     import Output from "../Output.svelte"
 
     export let fullscreen: boolean = false
@@ -22,7 +22,7 @@
 <!-- class:fullscreen={fullscreen && !stageOutput} -->
 <div class="center previewOutput" id={outputId} class:disabled style={style + ("; aspect-ratio: " + resolution.width + "/" + resolution.height + ";")} bind:offsetWidth={width} bind:offsetHeight={height}>
     {#if stageOutput}
-        <StageShow {outputId} stageId={stageOutput} edit={false} />
+        <StageLayout {outputId} stageId={stageOutput} preview={!disableTransitions} edit={false} />
     {:else}
         <Output {outputId} style={getStyleResolution(resolution, fullscreen ? width : resolution.width, fullscreen ? height : resolution.height, "fit")} mirror preview={!disableTransitions} />
     {/if}

@@ -27,6 +27,7 @@ export const actionData = {
     clear_overlays: { slideId: "clearOverlays", name: "clear.overlays", icon: "overlays", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_audio: { slideId: "clearAudio", name: "clear.audio", icon: "audio", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_next_timer: { name: "clear.nextTimer", icon: "timer", red: true, incompatible: ["restore_output", "clear_all"] },
+    clear_drawing: { name: "clear.drawing", icon: "paint", red: true },
 
     // MEDIA
     start_camera: { SECTION: "tabs.media", name: "actions.start_camera", icon: "camera", input: "camera" },

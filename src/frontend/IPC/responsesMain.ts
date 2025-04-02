@@ -71,7 +71,7 @@ import {
 import { newToast } from "../utils/common"
 import { validateKeys } from "../utils/drive"
 import { initializeClosing, saveComplete } from "../utils/save"
-import { updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
+import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import { Main, MainReturnPayloads } from "./../../types/IPC/Main"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
@@ -82,6 +82,7 @@ export type MainResponses = {
 export const mainResponses: MainResponses = {
     // STORES
     [ToMain.SAVE2]: (a) => saveComplete(a),
+    [Main.SETTINGS]: (a) => updateSettings(a),
     [Main.SYNCED_SETTINGS]: (a) => updateSyncedSettings(a),
     [Main.SHOWS]: async (a) => {
         let difference = Object.keys(a).length - Object.keys(get(shows)).length
@@ -103,7 +104,6 @@ export const mainResponses: MainResponses = {
     [Main.OVERLAYS]: (a) => overlays.set(a),
     [Main.TEMPLATES]: (a) => templates.set(a),
     [Main.EVENTS]: (a) => events.set(a),
-    [Main.DRIVE_API_KEY]: (a) => driveKeys.set(a),
     [Main.MEDIA]: (a) => media.set(a),
     [Main.THEMES]: (a) => {
         themes.set(Object.keys(a).length ? a : clone(defaultThemes))
@@ -111,12 +111,13 @@ export const mainResponses: MainResponses = {
         // update if themes are loaded after settings
         if (get(theme) !== "default") updateThemeValues(get(themes)[get(theme)])
     },
-    [Main.CACHE]: (a) => {
-        textCache.set(a.text || {})
-    },
+    [Main.DRIVE_API_KEY]: (a) => driveKeys.set(a),
     [Main.HISTORY]: (a) => {
         undoHistory.set(a.undo || [])
         redoHistory.set(a.redo || [])
+    },
+    [Main.CACHE]: (a) => {
+        textCache.set(a.text || {})
     },
     [Main.USAGE]: (a) => usageLog.set(a),
 

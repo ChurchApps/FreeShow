@@ -246,7 +246,8 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     alertUpdates: (v: any) => {
         alertUpdates.set(v !== false)
-        checkForUpdates(get(version))
+        // make sure "special" is set before checking
+        setTimeout(() => checkForUpdates(get(version)), 50)
     },
     autoOutput: (v: any) => autoOutput.set(v),
     maxConnections: (v: any) => maxConnections.set(v),

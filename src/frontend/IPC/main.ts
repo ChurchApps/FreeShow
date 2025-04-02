@@ -6,7 +6,7 @@ import { mainResponses } from "./responsesMain"
 // @ts-ignore // T extends keyof typeof Main
 export function requestMainMultiple<T extends Main>(object: { [K in T]: (data: MainReturnPayloads[K]) => void }) {
     Object.keys(object).forEach((id) => {
-        requestMain(id as Main, undefined, object[id])
+        requestMain(id as T, undefined, object[id])
     })
 }
 
@@ -16,7 +16,7 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
     let listenerId = id + uid(5)
     currentlyAwaiting.push(listenerId)
 
-    sendMain(id, value)
+    sendMain(id, value, listenerId)
 
     // LISTENER
     const waitingTimeout = 15000
@@ -46,11 +46,15 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
     return returnData
 }
 
-export function sendMain<ID extends Main>(id: ID, value?: MainSendValue<ID>) {
+export function sendMainMultiple<T extends Main>(keys: T[]) {
+    keys.forEach((id) => sendMain(id))
+}
+
+export function sendMain<ID extends Main>(id: ID, value?: MainSendValue<ID>, listenerId?: string) {
     if (!Object.values(Main).includes(id)) throw new Error(`Invalid channel: ${id}`)
     if (!window.api) return
 
-    window.api.send(MAIN, { channel: id, data: value })
+    window.api.send(MAIN, { channel: id, data: value }, listenerId)
 }
 
 export async function receiveMainGlobal() {

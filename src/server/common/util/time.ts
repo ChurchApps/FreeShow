@@ -1,4 +1,9 @@
+import { get } from "svelte/store"
 import type { Time } from "../../../types/Main"
+import type { Timer } from "../../../types/Show"
+import { activeTimers, events } from "../../stage/util/stores"
+
+export const padString = (a: number) => a.toString().padStart(2, "0")
 
 export function secondsToTime(seconds: number): Time {
     // turn to positive (timers have custom negative placed before)
@@ -23,6 +28,20 @@ export function joinTime(time: Time, ms: boolean = false): string {
     if (Number(time.h)) arr.unshift(time.h)
     if (ms) arr.push(time.ms)
     return arr.join(":")
+}
+
+export function joinTimeBig(time: number, showHours: boolean = true) {
+    let allTimes: any = secondsToTime(time)
+
+    let days = allTimes.d === 0 ? "" : allTimes.d + ", "
+    let hours = showHours ? (allTimes.h === "00" ? "" : allTimes.h) : ""
+    let minutes = padString(Number(allTimes.m) + (showHours ? 0 : Number(allTimes.h) * 60))
+    let timeValue = days + [hours, minutes, allTimes.s].join(":")
+    while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
+
+    timeValue = timeValue.replace(" :", " ")
+
+    return timeValue
 }
 
 export function dateToString(date: Date, full: boolean = false): string {
@@ -50,4 +69,25 @@ export function dateToString(date: Date, full: boolean = false): string {
 
     // TODO: get format (DD.MM.YY) | YYYY-MM-DD | MM/DD/YYYY
     return string
+}
+
+// TIMER
+
+export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers)) {
+    let currentTime: number = 0
+
+    if (timer.type === "counter") {
+        currentTime = updater.filter((a) => a.id === ref.id)[0]?.currentTime
+        if (typeof currentTime !== "number") currentTime = timer.start!
+    } else if (timer.type === "clock") {
+        let todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
+        currentTime = (todayTime.getTime() - today.getTime()) / 1000
+    } else if (timer.type === "event") {
+        let eventTime = new Date(get(events)[timer.event!]?.from)?.getTime() || 0
+        currentTime = (eventTime - today.getTime()) / 1000
+    }
+
+    if (currentTime < 0 && !timer.overflow) currentTime = 0
+
+    return currentTime
 }

@@ -22,6 +22,7 @@
         popupData,
         selectAllMedia,
         selected,
+        sorted,
     } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -48,7 +49,7 @@
     export let searchValue: string = ""
     export let streams: MediaStream[] = []
 
-    type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean }
+    type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean; stat?: any }
     let files: File[] = []
 
     let specialTabs = ["online", "screens", "cameras"]
@@ -216,6 +217,21 @@
         document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
     }
 
+    let sortedFiles: File[] = []
+    $: if (fullFilteredFiles && $sorted) sortFiles()
+    function sortFiles() {
+        let type = $sorted.media?.type || "name"
+
+        let files = clone(fullFilteredFiles)
+
+        if (searchValue.length > 1 || type === "name") files = files
+        else if (type === "name_des") files = files.reverse()
+        else if (type === "created") files = files.sort((a, b) => b.stat?.birthtimeMs - a.stat?.birthtimeMs)
+        else if (type === "modified") files = files.sort((a, b) => b.stat?.mtimeMs - a.stat?.mtimeMs)
+
+        sortedFiles = files.sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+    }
+
     let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
         if (!e.ctrlKey && !e.metaKey) return
@@ -303,7 +319,7 @@
     // select all
     $: if ($selectAllMedia) selectAll()
     function selectAll() {
-        let data = fullFilteredFiles
+        let data = sortedFiles
             .filter((a) => a.extension)
             .map((file) => {
                 let type = getMediaType(file.extension)
@@ -396,13 +412,13 @@
                     }}
                 />
             </div>
-        {:else if fullFilteredFiles.length}
+        {:else if sortedFiles.length}
             <div class="context #media" style="display: contents;">
-                {#key fullFilteredFiles}
+                {#key sortedFiles}
                     {#if $mediaOptions.mode === "grid"}
-                        <MediaGrid items={fullFilteredFiles} columns={$mediaOptions.columns} let:item>
+                        <MediaGrid items={sortedFiles} columns={$mediaOptions.columns} let:item>
                             {#if item.folder}
-                                <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={fullFilteredFiles.length < 20} />
+                                <Folder bind:rootPath={path} name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={sortedFiles.length < 20} />
                             {:else}
                                 <Media
                                     credits={item.credits || {}}
@@ -410,7 +426,7 @@
                                     path={item.path}
                                     thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)}
                                     type={getMediaType(item.extension)}
-                                    shiftRange={fullFilteredFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
+                                    shiftRange={sortedFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
                                     bind:activeFile
                                     {allFiles}
                                     {active}
@@ -418,7 +434,7 @@
                             {/if}
                         </MediaGrid>
                     {:else}
-                        <VirtualList items={fullFilteredFiles} let:item={file}>
+                        <VirtualList items={sortedFiles} let:item={file}>
                             {#if file.folder}
                                 <Folder bind:rootPath={path} name={file.name} path={file.path} mode={$mediaOptions.mode} />
                             {:else}
@@ -428,7 +444,7 @@
                                     name={file.name || ""}
                                     path={file.path}
                                     type={getMediaType(file.extension)}
-                                    shiftRange={fullFilteredFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
+                                    shiftRange={sortedFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
                                     bind:activeFile
                                     {allFiles}
                                     {active}

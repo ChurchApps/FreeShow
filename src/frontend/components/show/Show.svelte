@@ -1,7 +1,12 @@
 <script lang="ts">
-    import { activeShow } from "../../stores"
+    import { activeShow, dictionary, outLocked } from "../../stores"
+    import Capture from "../drawer/live/Capture.svelte"
+    import NdiStream from "../drawer/live/NDIStream.svelte"
     import { createGlobalTimerFromLocalTimer } from "../drawer/timers/timers"
+    import { setOutput } from "../helpers/output"
+    import HoverButton from "../inputs/HoverButton.svelte"
     import Splash from "../main/Splash.svelte"
+    import Camera from "../output/Camera.svelte"
     import Layouts from "../slide/Layouts.svelte"
     import AudioPreview from "./AudioPreview.svelte"
     import MediaPreview from "./media/MediaPreview.svelte"
@@ -31,6 +36,39 @@
             <PdfPreview {show} />
         {:else if show.type === "ppt"}
             <PowerPointPreview {show} />
+        {:else if show.type === "camera"}
+            <HoverButton
+                icon="play"
+                size={10}
+                on:click={() => {
+                    if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
+                }}
+                title={$dictionary.media?.play}
+            >
+                <Camera id={show.id} groupId={show.data?.groupId} class="media" />
+            </HoverButton>
+        {:else if show.type === "screen"}
+            <HoverButton
+                icon="play"
+                size={10}
+                on:click={() => {
+                    if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
+                }}
+                title={$dictionary.media?.play}
+            >
+                <Capture screen={{ id: show.id, name: show.name || "" }} streams={[]} background />
+            </HoverButton>
+        {:else if show.type === "ndi"}
+            <HoverButton
+                icon="play"
+                size={10}
+                on:click={() => {
+                    if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
+                }}
+                title={$dictionary.media?.play}
+            >
+                <NdiStream screen={{ id: show.id, name: show.name || "" }} background />
+            </HoverButton>
         {:else if (show.type || "show") === "show"}
             <Slides showId={$activeShow?.id || ""} />
             <Layouts />

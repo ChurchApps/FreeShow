@@ -74,8 +74,7 @@
             let cloudId = $driveData.mediaId
             if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
 
-            const extension = getExtension(path)
-            let type = getMediaType(extension) as MediaType
+            let type = (show.media[a].type || getMediaType(getExtension(path))) as MediaType
 
             let pathId = path.slice(0, 150)
             if (tempBackgrounds[pathId]) tempBackgrounds[pathId].count++
@@ -243,6 +242,7 @@
         {#if audio.length}
             <h5><T id="preview.audio" /></h5>
             {#each audio as file}
+                {@const outline = !!$playingAudio[file.path || ""]}
                 <SelectElem id="audio" data={{ path: file.path, name: file.name }} draggable>
                     <Button
                         class="context #show_audio"
@@ -250,7 +250,7 @@
                             if ($outLocked) return
                             AudioPlayer.start(file.path || "", { name: file.name || "" })
                         }}
-                        outline={!!$playingAudio[file.path || ""]}
+                        {outline}
                         style="padding: 8px;width: 100%;"
                         title={file.path}
                         bold={false}

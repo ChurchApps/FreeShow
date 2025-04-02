@@ -99,11 +99,15 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
 
     outputs.update((a) => {
         let bindings = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0]?.[data.index]?.data?.bindings || [] : []
-        let allOutputs = bindings.length ? bindings : getActiveOutputs()
-        let outs = outputId ? [outputId] : allOutputs
+        let allOutputIds = bindings.length ? bindings : getActiveOutputs()
+        let outs = outputId ? [outputId] : allOutputIds
         let inputData = clone(data)
 
-        let firstOutputWithBackground = allOutputs.findIndex((id) => !a[id]?.isKeyOutput && !a[id]?.stageOutput && (get(styles)[get(outputs)[id]?.style || ""]?.layers || ["background"]).includes("background"))
+        let firstOutputWithBackground = allOutputIds.findIndex((id) => {
+            let layers = get(styles)[get(outputs)[id]?.style || ""]?.layers
+            if (!Array.isArray(layers)) layers = ["background"]
+            return !a[id]?.isKeyOutput && !a[id]?.stageOutput && layers.includes("background")
+        })
         firstOutputWithBackground = Math.max(0, firstOutputWithBackground)
 
         // reset slide cache (after update)
@@ -131,8 +135,8 @@ export function setOutput(key: string, data: any, toggle: boolean = false, outpu
                 let slideContent = getOutputContent(id)
                 if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
 
-                let index = allOutputs.findIndex((outId) => outId === id)
-                data = changeOutputBackground(data, { output, id, mute: allOutputs.length > 1 && index !== firstOutputWithBackground, videoOutputId: allOutputs[firstOutputWithBackground] })
+                let index = allOutputIds.findIndex((outId) => outId === id)
+                data = changeOutputBackground(data, { output, id, mute: allOutputIds.length > 1 && index !== firstOutputWithBackground, videoOutputId: allOutputIds[firstOutputWithBackground] })
             }
 
             let outData = a[id].out?.[key] || null
@@ -516,11 +520,9 @@ function stageHasOutput(outputId: string) {
         let stageLayout = get(stageShows)[stageId]
         let outputItem = stageLayout.items ? stageLayout.items["output#current_output"] : undefined
 
-        if (!outputItem) {
+        if (!outputItem?.enabled) {
             outputItem = Object.values(stageLayout.items).find((a) => a.type === "current_output")
             if (!outputItem) return false
-        } else if (!outputItem?.enabled) {
-            return false
         }
 
         return (stageLayout.settings?.output || outputId) === outputId
@@ -1177,7 +1179,7 @@ export function getSlideFilter(slideData: SlideData | null) {
     let slideFilter: string = ""
 
     if (!slideData) return slideFilter
-    if (slideData.filterEnabled && !slideData.filterEnabled?.includes("background")) return slideFilter
+    if (Array.isArray(slideData.filterEnabled) && !slideData.filterEnabled?.includes("background")) return slideFilter
 
     if (slideData.filter) slideFilter += "filter: " + slideData.filter + ";"
     if (slideData["backdrop-filter"]) slideFilter += "backdrop-filter: " + slideData["backdrop-filter"] + ";"

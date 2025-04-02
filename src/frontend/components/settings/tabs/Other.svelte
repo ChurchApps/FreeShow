@@ -234,7 +234,7 @@
     <span class="path" title={$showsPath || ""}>
         <!-- <p style="font-size: 0.9em;opacity: 0.7;">{$showsPath}</p> -->
         <!-- title={$dictionary.inputs?.change_folder} -->
-        <FolderPicker style="width: 100%;" id="SHOWS" center={false} path={$showsPath}>
+        <FolderPicker style="width: 100%;" id="SHOWS" center={false} path={$showsPath || ""}>
             <Icon id="folder" style="margin-left: 0.5em;" right />
             <p>
                 {#if $showsPath}

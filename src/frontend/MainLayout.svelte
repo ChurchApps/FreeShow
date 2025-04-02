@@ -18,8 +18,8 @@
     import Show from "./components/show/Show.svelte"
     import ShowTools from "./components/show/ShowTools.svelte"
     import FocusMode from "./components/show/focus/FocusMode.svelte"
-    import Shows from "./components/stage/Shows.svelte"
-    import StageShow from "./components/stage/StageShow.svelte"
+    import StageLayouts from "./components/stage/StageLayouts.svelte"
+    import StageShow from "./components/stage/StageLayout.svelte"
     import StageTools from "./components/stage/StageTools.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
     import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os, showsCache, textEditActive } from "./stores"
@@ -51,7 +51,7 @@
                 {:else if page === "edit"}
                     <Navigation />
                 {:else if page === "stage"}
-                    <Shows />
+                    <StageLayouts />
                 {:else if page === "draw"}
                     <DrawTools />
                 {:else if page === "settings"}

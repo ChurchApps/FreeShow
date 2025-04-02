@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeStage, labelsDisabled, stageShows } from "../../stores"
+    import { activeStage, labelsDisabled, outputs, stageShows } from "../../stores"
     import { keysToID, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -13,6 +13,13 @@
     }
 
     $: sortedStageSlides = sortByName(keysToID($stageShows))
+
+    $: if ($activeStage.id === null && Object.keys($stageShows).length) setActiveStage()
+    function setActiveStage() {
+        let activeStageOutput = Object.values($outputs).find((a) => a.enabled && a.stageOutput)?.stageOutput
+        let firstStageLayout = activeStageOutput || sortedStageSlides[0]?.id
+        activeStage.set({ id: firstStageLayout, items: [] })
+    }
 
     function keydown(e: KeyboardEvent) {
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return

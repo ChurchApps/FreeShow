@@ -34,8 +34,8 @@
             <SelectElem id="stage" data={{ id }}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} disableStyle center bind:ratio>
                     {#each Object.entries(layout.items) as [id, item]}
-                        {#if item.enabled !== false}
-                            <Stagebox {id} item={clone(item)} {ratio} show={layout} />
+                        {#if item.type || item.enabled !== false}
+                            <Stagebox {id} item={clone(item)} {ratio} stageLayout={layout} />
                         {/if}
                     {/each}
                 </Zoomed>
