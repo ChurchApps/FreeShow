@@ -97,7 +97,4 @@
 
         white-space: nowrap;
     }
-    .colored {
-        color: var(--secondary);
-    }
 </style>

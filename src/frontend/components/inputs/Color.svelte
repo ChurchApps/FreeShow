@@ -65,7 +65,11 @@
         <div class="picker" class:visible class:clipRight>
             <div class="colors">
                 {#each colors as color}
-                    <div class="pickColor" class:disabled={$special.disabledColors?.includes(color.value)} class:active={value === color.value} title={color.name} style="background-color: {color.value};" on:click={() => change(color.value, true)} />
+                    <div class="pickColor" class:disabled={$special.disabledColors?.includes(color.value)} class:active={value === color.value} title={color.name} style="background-color: {color.value};" on:click={() => change(color.value, true)}>
+                        <div class="hover" class:visible={!custom && $special.disabledColors?.includes(color.value)}>
+                            <Icon id={custom ? "delete" : "disable"} white style="fill: {getContrast(color.value)};" />
+                        </div>
+                    </div>
                 {/each}
             </div>
 
@@ -217,7 +221,21 @@
     }
     .pickColor.disabled {
         opacity: 0.5;
-        filter: blur(3px);
+        /* filter: blur(3px); */
+    }
+
+    .pickColor .hover {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+    }
+    .pickColor .hover:not(.visible) {
+        display: none;
+    }
+    .pickColor:hover .hover {
+        display: flex;
     }
 
     .noColor {

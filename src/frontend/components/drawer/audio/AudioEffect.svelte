@@ -37,12 +37,14 @@
         if (updaterInterval) clearInterval(updaterInterval)
         updaterInterval = null
     }
+
+    $: outline = !!$playingAudio[path]
 </script>
 
 <SelectElem id="audio_effect" data={{ path, name }} style="width: calc(20% - 5px);">
     <Button
         class="context #audio_effect_button"
-        outline={!!$playingAudio[path]}
+        {outline}
         active={$activeShow?.id === path}
         border
         style="width: 100%;height: 100px;border: 2px solid var(--primary-lighter);"

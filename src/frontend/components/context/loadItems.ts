@@ -70,6 +70,7 @@ const loadActions = {
 
     sort_shows: (items: ContextMenuItem[]) => sortItems(items, "shows"),
     sort_projects: (items: ContextMenuItem[]) => sortItems(items, "projects"),
+    sort_media: (items: ContextMenuItem[]) => sortItems(items, "media"),
     slide_groups: (items: ContextMenuItem[]) => {
         let selectedIndex = get(selected).data[0]?.index
         let slideRef = getLayoutRef()?.[selectedIndex] || {}
@@ -267,7 +268,7 @@ function setContextData(key: string, data: boolean | string | number) {
     })
 }
 
-function sortItems(items: ContextMenuItem[], id: "projects" | "shows") {
+function sortItems(items: ContextMenuItem[], id: "shows" | "projects" | "media") {
     let type = get(sorted)[id]?.type || "name"
 
     items = [

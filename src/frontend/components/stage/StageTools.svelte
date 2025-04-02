@@ -1,12 +1,12 @@
 <script lang="ts">
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeStage, stageShows } from "../../stores"
+    import { activeStage, outputs, stageShows } from "../../stores"
     import { getItemKeys } from "../edit/scripts/itemClipboard"
     import { addStyleString } from "../edit/scripts/textStyle"
     import { boxes } from "../edit/values/boxes"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getResolution } from "../helpers/output"
+    import { getStageOutputId, getStageResolution } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
@@ -54,7 +54,8 @@
     }
 
     function resetStageStyle() {
-        let resolution = getResolution()
+        let stageOutputId = getStageOutputId($outputs)
+        let resolution = getStageResolution(stageOutputId, $outputs)
         let defaultItemStyle = {
             width: `${resolution.width / 2}px`,
             height: `${resolution.height / 2}px`,

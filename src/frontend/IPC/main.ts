@@ -6,7 +6,7 @@ import { mainResponses } from "./responsesMain"
 // @ts-ignore // T extends keyof typeof Main
 export function requestMainMultiple<T extends Main>(object: { [K in T]: (data: MainReturnPayloads[K]) => void }) {
     Object.keys(object).forEach((id) => {
-        requestMain(id as Main, undefined, object[id])
+        requestMain(id as T, undefined, object[id])
     })
 }
 
@@ -44,6 +44,10 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
 
     if (callback) callback(returnData)
     return returnData
+}
+
+export function sendMainMultiple<T extends Main>(keys: T[]) {
+    keys.forEach((id) => sendMain(id))
 }
 
 export function sendMain<ID extends Main>(id: ID, value?: MainSendValue<ID>, listenerId?: string) {

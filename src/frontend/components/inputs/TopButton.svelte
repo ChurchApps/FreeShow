@@ -13,7 +13,8 @@
 
     const keys = { show: 1, edit: 2, stage: 3, draw: 4, settings: 5 }
 
-    $: title = $dictionary.menu?.["_title_" + id] + ($special.numberKeys ? "" : ` [${keys[id] || ""}]`)
+    $: numberKeys = !!$special.numberKeys
+    $: title = $dictionary.menu?.["_title_" + id] + (numberKeys ? "" : ` [${keys[id] || ""}]`)
 
     function openPage() {
         activePage.set(id)

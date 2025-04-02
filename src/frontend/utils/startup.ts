@@ -2,42 +2,9 @@ import { get } from "svelte/store"
 import { OUTPUT, STARTUP } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { checkStartupActions } from "../components/actions/actions"
-import { clone } from "../components/helpers/array"
 import { getTimeFromInterval } from "../components/helpers/time"
-import { defaultThemes } from "../components/settings/tabs/defaultThemes"
-import { requestMain, requestMainMultiple, sendMain } from "../IPC/main"
-import {
-    activePopup,
-    alertMessage,
-    currentWindow,
-    dataPath,
-    deviceId,
-    driveKeys,
-    events,
-    folders,
-    isDev,
-    language,
-    loaded,
-    loadedState,
-    media,
-    os,
-    overlays,
-    projects,
-    projectTemplates,
-    redoHistory,
-    scriptures,
-    special,
-    stageShows,
-    templates,
-    tempPath,
-    textCache,
-    theme,
-    themes,
-    undoHistory,
-    usageLog,
-    version,
-    windowState,
-} from "../stores"
+import { requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
+import { activePopup, alertMessage, currentWindow, dataPath, deviceId, isDev, language, loaded, loadedState, os, scriptures, special, tempPath, version, windowState } from "../stores"
 import { startTracking } from "./analytics"
 import { wait } from "./common"
 import { setLanguage } from "./language"
@@ -45,7 +12,6 @@ import { storeSubscriber } from "./listeners"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
-import { updateSettings, updateSyncedSettings, updateThemeValues } from "./updateSettings"
 
 let initialized: boolean = false
 export function startup() {
@@ -91,7 +57,7 @@ async function startupMain() {
 
     // custom alert
     if (get(language) === "no" && !get(activePopup) && !Object.values(get(scriptures)).find((a) => ["eea18ccd2ca05dde-01", "7bcaa2f2e77739d5-01"].includes(a.id || ""))) {
-        alertMessage.set('Bibel 2011 Bokmål/Nynorsk er nå tilgjengelig som API i "Bibelen"-menyen!')
+        alertMessage.set('Bibel 2011 Bokmål/Nynorsk er nå tilgjengelig som API i "Bibel"-menyen!')
         activePopup.set("alert")
     }
 
@@ -139,37 +105,10 @@ function getMainData() {
 }
 
 async function getStoredData() {
-    requestMainMultiple({
-        [Main.SYNCED_SETTINGS]: (a) => updateSyncedSettings(a),
-        [Main.STAGE_SHOWS]: (a) => stageShows.set(a),
-        [Main.PROJECTS]: (a) => {
-            projects.set(a.projects || {})
-            folders.set(a.folders || {})
-            projectTemplates.set(a.projectTemplates || {})
-        },
-        [Main.OVERLAYS]: (a) => overlays.set(a),
-        [Main.TEMPLATES]: (a) => templates.set(a),
-        [Main.EVENTS]: (a) => events.set(a),
-        [Main.MEDIA]: (a) => media.set(a),
-        [Main.THEMES]: (a) => {
-            themes.set(Object.keys(a).length ? a : clone(defaultThemes))
-
-            // update if themes are loaded after settings
-            if (get(theme) !== "default") updateThemeValues(get(themes)[get(theme)])
-        },
-        [Main.DRIVE_API_KEY]: (a) => driveKeys.set(a),
-        [Main.HISTORY]: (a) => {
-            undoHistory.set(a.undo || [])
-            redoHistory.set(a.redo || [])
-        },
-        [Main.USAGE]: (a) => usageLog.set(a),
-        [Main.CACHE]: (a) => {
-            textCache.set(a.text || {})
-        },
-    })
+    sendMainMultiple([Main.SYNCED_SETTINGS, Main.STAGE_SHOWS, Main.PROJECTS, Main.OVERLAYS, Main.TEMPLATES, Main.EVENTS, Main.MEDIA, Main.THEMES, Main.DRIVE_API_KEY, Main.HISTORY, Main.CACHE, Main.USAGE])
 
     await waitUntilDefined(() => get(loadedState).includes("synced_settings"))
-    requestMain(Main.SETTINGS, undefined, (a) => updateSettings(a))
+    sendMain(Main.SETTINGS)
 }
 
 async function startupOutput() {

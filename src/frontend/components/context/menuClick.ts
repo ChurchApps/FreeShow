@@ -170,6 +170,7 @@ const actions = {
     },
     sort_shows: (obj: ObjData) => sort(obj, "shows"),
     sort_projects: (obj: ObjData) => sort(obj, "projects"),
+    sort_media: (obj: ObjData) => sort(obj, "media"),
     remove: (obj: ObjData) => {
         if (obj.sel && deleteAction(obj.sel)) return
 

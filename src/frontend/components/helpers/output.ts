@@ -520,11 +520,9 @@ function stageHasOutput(outputId: string) {
         let stageLayout = get(stageShows)[stageId]
         let outputItem = stageLayout.items ? stageLayout.items["output#current_output"] : undefined
 
-        if (!outputItem) {
+        if (!outputItem?.enabled) {
             outputItem = Object.values(stageLayout.items).find((a) => a.type === "current_output")
             if (!outputItem) return false
-        } else if (!outputItem?.enabled) {
-            return false
         }
 
         return (stageLayout.settings?.output || outputId) === outputId
