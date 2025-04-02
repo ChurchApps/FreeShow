@@ -68,41 +68,43 @@
 </div>
 
 {#if currentOutput?.allowMainScreen === true || currentOutput?.invisible}
-    <h3><T id="settings.position" /></h3>
-    <CombinedInput>
-        <p style="width: 80px;"><T id="edit.x" /></p>
-        <NumberInput
-            value={currentOutput?.bounds?.x || 0}
-            min={-10000}
-            max={100000}
-            on:change={(e) => {
-                updateOutput("bounds", { ...currentOutput?.bounds, x: Number(e.detail) })
-                updateOutput("screen", null)
-                setTimeout(() => {
-                    send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
-                }, 10)
-            }}
-            style="background-color: var(--primary-darker);"
-            outline
-        />
-    </CombinedInput>
-    <CombinedInput>
-        <p style="width: 80px;"><T id="edit.y" /></p>
-        <NumberInput
-            value={currentOutput?.bounds?.y || 0}
-            min={-10000}
-            max={100000}
-            on:change={(e) => {
-                updateOutput("bounds", { ...currentOutput?.bounds, y: Number(e.detail) })
-                updateOutput("screen", null)
-                setTimeout(() => {
-                    send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
-                }, 10)
-            }}
-            style="background-color: var(--primary-darker);"
-            outline
-        />
-    </CombinedInput>
+    {#if !currentOutput?.invisible}
+        <h3><T id="settings.position" /></h3>
+        <CombinedInput>
+            <p style="width: 80px;"><T id="edit.x" /></p>
+            <NumberInput
+                value={currentOutput?.bounds?.x || 0}
+                min={-10000}
+                max={100000}
+                on:change={(e) => {
+                    updateOutput("bounds", { ...currentOutput?.bounds, x: Number(e.detail) })
+                    updateOutput("screen", null)
+                    setTimeout(() => {
+                        send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
+                    }, 10)
+                }}
+                style="background-color: var(--primary-darker);"
+                outline
+            />
+        </CombinedInput>
+        <CombinedInput>
+            <p style="width: 80px;"><T id="edit.y" /></p>
+            <NumberInput
+                value={currentOutput?.bounds?.y || 0}
+                min={-10000}
+                max={100000}
+                on:change={(e) => {
+                    updateOutput("bounds", { ...currentOutput?.bounds, y: Number(e.detail) })
+                    updateOutput("screen", null)
+                    setTimeout(() => {
+                        send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput)
+                    }, 10)
+                }}
+                style="background-color: var(--primary-darker);"
+                outline
+            />
+        </CombinedInput>
+    {/if}
 
     <h3><T id="edit.size" /></h3>
     <CombinedInput>

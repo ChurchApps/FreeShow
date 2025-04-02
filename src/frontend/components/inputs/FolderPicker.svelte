@@ -5,7 +5,7 @@
     import Button from "./Button.svelte"
 
     export let id: string
-    export let title: string | undefined
+    export let title: string | undefined = undefined
     export let path: string | undefined
     export let style: string = ""
     export let center: boolean = true

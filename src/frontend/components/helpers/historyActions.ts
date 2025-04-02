@@ -493,7 +493,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (deleting) {
                     // update layout
                     showsCache.update((a) => {
-                        if (!a[showId]) return a
+                        if (!a[showId]?.layouts?.[layout]) return a
 
                         let slides = a[showId].layouts[layout].slides
                         let newSlides = clone(slides).filter((a, i) => (slideIndex !== undefined ? i !== slideIndex : a.id !== id))

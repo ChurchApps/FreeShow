@@ -68,7 +68,8 @@ export function storeSubscriber() {
         if (timeout) clearTimeout(timeout)
         timeout = setTimeout(() => {
             // STAGE
-            sendData(STAGE, { channel: "SLIDES" })
+            // sendData(STAGE, { channel: "SLIDES" })
+            sendData(STAGE, { channel: "SHOW_DATA" })
 
             // REMOTE
 
@@ -138,7 +139,8 @@ export function storeSubscriber() {
         })
 
         // STAGE
-        sendData(STAGE, { channel: "SLIDES" }, true)
+        sendData(STAGE, { channel: "OUT" })
+        // sendData(STAGE, { channel: "SLIDES" }, true)
         // send(STAGE, ["OUTPUTS"], data)
         // sendBackgroundToStage(a)
     })
@@ -153,8 +155,8 @@ export function storeSubscriber() {
 
         // STAGE
         data = arrayToObject(filterObjectArray(data, ["disabled", "name", "settings", "items"]).filter((a: any) => a.disabled === false))
-        timedout(STAGE, { channel: "SHOW", data }, () =>
-            eachConnection(STAGE, "SHOW", (connection) => {
+        timedout(STAGE, { channel: "LAYOUT", data }, () =>
+            eachConnection(STAGE, "LAYOUT", (connection) => {
                 if (!connection.active) return
 
                 let currentData = data[connection.active]

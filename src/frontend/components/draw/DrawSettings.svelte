@@ -8,6 +8,7 @@
     import Color from "../inputs/Color.svelte"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
+    import { clearDrawing } from "../output/clear"
     import Panel from "../system/Panel.svelte"
 
     const defaults = {
@@ -120,7 +121,7 @@
 
     <div class="bottom">
         {#if $drawTool === "paint"}
-            <Button style="flex: 1;padding: 10px;" on:click={() => update("clear", true)} disabled={!$paintCache?.length} red={!!$paintCache?.length} dark center>
+            <Button style="flex: 1;padding: 10px;" on:click={clearDrawing} disabled={!$paintCache?.length} red={!!$paintCache?.length} dark center>
                 <Icon id="clear" size={2} right />
                 <T id="clear.drawing" />
             </Button>

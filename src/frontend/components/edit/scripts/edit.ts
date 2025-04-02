@@ -1,3 +1,7 @@
+import { get } from "svelte/store"
+import type { Popups } from "../../../../types/Main"
+import type { DrawerTabIds } from "../../../../types/Tabs"
+import { activeDrawerTab, activePage, activePopup, drawer, drawerTabsData } from "../../../stores"
 import { hexToRgb, splitRgb } from "../../helpers/color"
 import type { EditInput } from "../values/boxes"
 
@@ -62,4 +66,35 @@ export function getBackgroundOpacity(itemEditValues, data) {
     itemEditValues.default[boIndex].value = rgb.a
 
     return itemEditValues
+}
+
+const drawerPages: { [key: string]: DrawerTabIds } = {
+    timer: "functions",
+    variables: "functions",
+}
+export function openDrawer(id: string) {
+    activePage.set("show")
+
+    // set sub tab
+    let drawerPageId = drawerPages[id]
+    if (!drawerPageId) return
+
+    drawerTabsData.update((a) => {
+        if (!a[drawerPageId]) a[drawerPageId] = { enabled: true, activeSubTab: null }
+        a[drawerPageId].activeSubTab = id
+
+        return a
+    })
+
+    activeDrawerTab.set(drawerPageId)
+
+    // open drawer
+    if (get(drawer).height <= 40) {
+        drawer.set({ height: 300, stored: get(drawer).height })
+    }
+
+    // create new popup
+    let popupId = id
+    if (popupId === "variables") popupId = "variable"
+    activePopup.set(popupId as Popups)
 }

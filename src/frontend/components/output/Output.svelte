@@ -53,7 +53,7 @@
     // currentOutput is set to refresh state when changed in preview
     $: if (currentOutput && JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) setNewLayers()
     function setNewLayers() {
-        layers = clone(currentStyle.layers || defaultLayers)
+        layers = clone(Array.isArray(currentStyle.layers) ? currentStyle.layers : defaultLayers)
         if (!Array.isArray(layers)) layers = []
     }
     $: if (JSON.stringify(out) !== JSON.stringify(currentOutput?.out || {})) out = clone(currentOutput?.out || {})

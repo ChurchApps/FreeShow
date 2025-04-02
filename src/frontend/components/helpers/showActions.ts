@@ -282,7 +282,7 @@ export function nextSlide(e: any, start: boolean = false, end: boolean = false, 
 const triggerActionsBeforeOutput = {
     change_output_style: (actionValue: any) => {
         const layers = get(styles)[actionValue?.outputStyle]?.layers
-        if (layers === undefined) return false
+        if (!Array.isArray(layers)) return false
         return !layers.includes("background")
     },
 }
@@ -1054,7 +1054,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
             showId = outSlide?.id
             layoutId = outSlide?.layout
-            slideIndex = outSlide?.index ?? -2
+            slideIndex = outSlide?.index ?? -1
             show = _show(showId).get() || {}
             // if (!show) return
         }
@@ -1066,8 +1066,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         }
 
         let activeLayout = layoutId ? [layoutId] : "active"
-        let ref = _show(showId).layouts(activeLayout).ref()[0]
-        let layout = _show(showId).layouts(activeLayout).get()[0]
+        let ref = _show(showId).layouts(activeLayout).ref()[0] || []
+        let layout = _show(showId).layouts(activeLayout).get()[0] || {}
 
         let videoTime: number = get(videosTime)[outputId] || 0
         let videoDuration: number = get(videosData)[outputId]?.duration || 0
@@ -1104,8 +1104,8 @@ const dynamicValues = {
 
     // media
     video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),
+    video_countdown: ({ videoTime, videoDuration }) => joinTime(secondsToTime(videoDuration > 0 ? videoDuration - videoTime : 0)),
     video_duration: ({ videoDuration }) => joinTime(secondsToTime(videoDuration)),
-    video_countdown: ({ videoTime, videoDuration }) => joinTime(secondsToTime(videoDuration - videoTime)),
 }
 
 export function getVariableNameId(name: string) {

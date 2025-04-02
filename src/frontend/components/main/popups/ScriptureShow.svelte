@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeTriggerFunction, popupData, scriptureSettings } from "../../../stores"
+    import { activePopup, popupData, scriptureSettings } from "../../../stores"
+    import { triggerFunction } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -22,7 +23,7 @@
     }
 
     function createShow() {
-        activeTriggerFunction.set("scripture_newShow_popup")
+        triggerFunction("scripture_newShow_popup")
         activePopup.set(null)
     }
 </script>

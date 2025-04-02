@@ -84,7 +84,7 @@ export class EditboxHelper {
                         })
                     secondLines[secondLines.length - 1].text.push({
                         style: text.style,
-                        value: text.value.slice(pos, text.value.length),
+                        value: text.value.slice(pos > 0 ? pos : 0, text.value.length),
                     })
                 } else {
                     firstLines[firstLines.length - 1].text.push({
@@ -120,7 +120,7 @@ export class EditboxHelper {
         return { firstLines, secondLines }
     }
 
-    static getSyleHtml(item: Item, plain: boolean, currentStyle: string) {
+    static getStyleHtml(item: Item, plain: boolean, currentStyle: string) {
         currentStyle = ""
         let html = ""
         let firstTextStyleArchive: string = ""
@@ -177,6 +177,11 @@ export class EditboxHelper {
         if (!Object.keys(outputStyle).length) return ""
 
         const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
-        return `${style};font-size: ${fontSize * customFontSizeRatio}px;`
+
+        // remove custom font size
+        // let customIndex = style.indexOf("--custom")
+        // if (customIndex > -1) style = style.slice(0, customIndex)
+
+        return `${style};--custom:true;font-size: ${fontSize * customFontSizeRatio}px;`
     }
 }

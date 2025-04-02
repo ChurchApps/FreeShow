@@ -24,10 +24,11 @@
     import { setCaretAtEnd } from "../scripts/textStyle"
     import { getLayoutRef } from "../../helpers/show"
 
-    $: currentShow = $activeShow?.id || $activeEdit.showId || ""
-    $: if (currentShow && $showsCache[currentShow] && $activeEdit.slide === null && _show(currentShow).slides().get().length) activeEdit.set({ slide: 0, items: [], showId: currentShow })
-    $: ref = currentShow && $showsCache[currentShow] ? getLayoutRef(currentShow) : []
-    $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show(currentShow).slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
+    $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
+    $: currentShow = $showsCache[currentShowId]
+    $: if (currentShowId && currentShow && $activeEdit.slide === null && _show(currentShowId).slides().get().length) activeEdit.set({ slide: 0, items: [], showId: currentShowId })
+    $: ref = currentShowId && currentShow ? getLayoutRef(currentShowId) : []
+    $: Slide = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? _show(currentShowId).slides([ref[$activeEdit.slide!]?.id]).get()[0] : null
 
     let lines: [string, number][] = []
     let mouse: any = null
@@ -52,12 +53,12 @@
             if (i <= $activeEdit.slide! && !a.data.disabled) {
                 if (slideHasAction(a.data?.actions, "clear_background")) bgId = null
                 else if (a.data.background) bgId = a.data.background
-                if (a.data.background && currentShow && $showsCache[currentShow].media[a.data.background]?.loop === false) bgId = null
+                if (a.data.background && currentShowId && currentShow.media[a.data.background]?.loop === false) bgId = null
             }
         })
     }
 
-    $: background = bgId && currentShow ? $showsCache[currentShow].media[bgId] : null
+    $: background = bgId && currentShowId ? currentShow.media[bgId] : null
     $: cloudId = $driveData.mediaId
     $: backgroundPath = cloudId && cloudId !== "default" && background ? background.cloud?.[cloudId] || background.path || "" : background?.path || ""
     // $: slideOverlays = layoutSlide.overlays || []
@@ -96,7 +97,7 @@
         //     updateStyles()
         // }, CHANGE_POS_TIME)
 
-        let items = $showsCache[currentShow].slides[ref[$activeEdit.slide!]?.id].items
+        let items = currentShow.slides[ref[$activeEdit.slide!]?.id].items
         let values: string[] = []
         active.forEach((id) => {
             let item = items[id]
@@ -116,7 +117,7 @@
 
         let historyShow = $activeShow
         // focus mode
-        if (!historyShow && currentShow) historyShow = { type: "show", id: currentShow, index: $activeEdit.slide || 0 }
+        if (!historyShow && currentShowId) historyShow = { type: "show", id: currentShowId, index: $activeEdit.slide || 0 }
         else if (!historyShow) return
 
         history({
@@ -132,9 +133,9 @@
 
         function resetAutoSize() {
             showsCache.update((a) => {
-                if (!a[currentShow]?.slides?.[slideId]?.items?.[activeItems[0] || 0]?.autoFontSize) return a
+                if (!a[currentShowId]?.slides?.[slideId]?.items?.[activeItems[0] || 0]?.autoFontSize) return a
 
-                delete a[currentShow].slides[slideId].items[activeItems[0] || 0].autoFontSize
+                delete a[currentShowId].slides[slideId].items[activeItems[0] || 0].autoFontSize
                 return a
             })
 
@@ -184,7 +185,7 @@
     // CHORDS
     let usedChords: string[] = []
     $: slideChords = Slide ? getUsedChords(Slide) : []
-    $: allChords = Object.values($showsCache[currentShow]?.slides || {})
+    $: allChords = Object.values(currentShow?.slides || {})
         .map(getUsedChords)
         .flat()
     // combine and remove duplicates
@@ -206,7 +207,7 @@
     }
 
     $: slideFilter = ""
-    $: if (!layoutSlide.filterEnabled || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
+    $: if (!Array.isArray(layoutSlide.filterEnabled) || layoutSlide.filterEnabled?.includes("background")) getSlideFilter()
     else slideFilter = ""
     function getSlideFilter() {
         slideFilter = ""
@@ -298,7 +299,7 @@
                     </div>
 
                     <!-- edit -->
-                    {#if !$showsCache[currentShow || ""]?.locked}
+                    {#if !$showsCache[currentShowId || ""]?.locked}
                         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                     {/if}
 
@@ -310,7 +311,7 @@
                                 {item}
                                 {chordsMode}
                                 {chordsAction}
-                                ref={{ showId: currentShow, id: Slide.id }}
+                                ref={{ showId: currentShowId, id: Slide.id }}
                                 {index}
                                 {ratio}
                                 bind:mouse
@@ -326,13 +327,13 @@
         {/if}
     </div>
 
-    {#if !$focusMode && Slide}
+    {#if !$focusMode}
         <div class="actions" style="width: 100%;gap: 10px;">
             <div class="leftActions">
                 {#if !chordsMode}
-                    <div class="notes" style="font-size: 0.8em;">{$showsCache[currentShow]?.name}</div>
+                    <div class="notes" style="font-size: 0.8em;">{currentShow?.name}</div>
                 {/if}
-                {#if chordsMode}
+                {#if chordsMode && Slide}
                     <Button outline={!chordsAction} on:click={setDefaultChordsAction}>
                         <p><T id="popup.choose_chord" /></p>
                     </Button>
@@ -351,13 +352,18 @@
             </div>
 
             <div class="actions" style="height: 100%;justify-content: right;">
-                <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
-                    <Icon id="chords" white={!slideChords.length} right={!$labelsDisabled} />
-                    {#if !$labelsDisabled}<T id="edit.chords" />{/if}
-                </Button>
+                <!-- no need to add chords on scripture/events -->
+                {#if !currentShow.reference?.type && Slide}
+                    <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
+                        <Icon id="chords" white={!slideChords.length} right={!$labelsDisabled} />
+                        {#if !$labelsDisabled}<T id="edit.chords" />{/if}
+                    </Button>
+                {/if}
 
                 {#if !$focusMode}
-                    <div class="seperator" />
+                    {#if Slide}
+                        <div class="seperator" />
+                    {/if}
 
                     <Button on:click={() => textEditActive.set(true)}>
                         <Icon id="text" right={!$labelsDisabled} />

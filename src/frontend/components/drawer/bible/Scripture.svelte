@@ -270,6 +270,7 @@
                 verses[id] = {}
                 await loadAPIBible(id, "verses", i)
                 await loadAPIBible(id, "versesText", i)
+                if (selectAll) selectAllVerses()
             } else if (chapters[id][chapterId]) {
                 let content: any = {}
                 bibles[i].chapter = (chapters[id][chapterId] as any).number || 0
@@ -372,7 +373,10 @@
     let storedSearch = ""
     $: if (tempDisableInputs && searchValue) updateSearchValue(storedSearch)
 
+    let selectAll = false
     function updateSearch() {
+        selectAll = false
+
         if (tempDisableInputs) return
         // if (!autoComplete) return
         if (searchValue.length < 2) {
@@ -415,7 +419,12 @@
         if (splittedEnd.length === 1 && searchValue.endsWith(" ")) updateSearchValue(searchValue.trim())
 
         searchValues.verses = findVerse({ splittedEnd })
-        if (!searchValues.verses.length) return selectAllVerses()
+        if (!searchValues.verses.length) {
+            // wait for chapter verses to load
+            setTimeout(selectAllVerses)
+            selectAll = true
+            return
+        }
         if (bibles[0].activeVerses !== searchValues.verses) {
             activeVerses = removeDuplicates(searchValues.verses)
             activeVerses = activeVerses.map((a) => a.toString())
@@ -447,6 +456,8 @@
     }
 
     function mouseup(e: any) {
+        selectAll = false
+
         // || contentSearch.length
         if (e.target.closest(".drawer")) return
         resetContentSearch()
@@ -753,6 +764,7 @@
         Object.keys(verses[firstBibleId]).forEach((id) => {
             currentVerses.push(id)
         })
+        console.log("SELECT ALL", currentVerses, verses, firstBibleId)
 
         activeVerses = currentVerses
         updateActiveVerses()

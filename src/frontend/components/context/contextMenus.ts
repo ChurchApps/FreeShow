@@ -80,6 +80,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // SORT
     sort_shows_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_shows"] },
     sort_projects_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_projects"] },
+    sort_media_by: { label: "sort.sort_by", icon: "sort", items: ["LOAD_sort_media"] },
     // SHOWS
     addToProject: { label: "context.addToProject", icon: "project" },
     lock_show: { label: "context.lockForChanges", icon: "lock" },
@@ -112,7 +113,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // ITEM
     item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
     transition: { label: "popup.transition", icon: "transition" },
-    dynamic_values: { label: "actions.dynamic_values", icon: "star", items: ["LOAD_dynamic_values"] },
+    dynamic_values: { label: "actions.dynamic_values", icon: "star" },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "SEPERATOR", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     rearrange: { label: "actions.rearrange", icon: "rearrange", items: ["to_front", "forward", "backward", "to_back"] },
@@ -208,8 +209,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     midi: ["play", "SEPERATOR", "edit", "delete"],
     // , "addToShow"
     // show_in_explorer!!
-    media: ["manage_media_tags", "media_tag_filter"],
-    media_card: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "favourite", "SEPERATOR", "media_tag_set", "media_tag_filter", "SEPERATOR", "system_open"],
+    media: ["manage_media_tags", "media_tag_filter", "sort_media_by"],
+    media_card: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "favourite", "SEPERATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPERATOR", "system_open"],
     // "addToFirstSlide",
     overlay_card: ["edit", "preview", "SEPERATOR", "display_duration", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
     // "addToShow",
@@ -242,6 +243,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_overlay: ["remove"],
     project_pdf: ["remove"], // "rename",
     project_ppt: ["remove"], // "rename",
+    project_screen: ["remove"],
+    project_ndi: ["remove"],
+    project_camera: ["remove"],
     shows: ["newSlide", "selectAll"],
     // TIMER
     // timer: ["edit", "SEPERATOR", "play"], // , "reset"
@@ -278,7 +282,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_text_item: ["dynamic_values", "SEPERATOR", "delete"],
 
     // EDIT
-    edit_box: ["item_actions", "dynamic_values", "item_bind_to", "format", "rearrange", "transition", "SEPERATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)
+    edit_box: ["dynamic_values", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPERATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)
     items_list_item: ["to_front", "forward", "backward", "to_back"],
 
     // CALENDAR

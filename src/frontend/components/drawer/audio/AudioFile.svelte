@@ -14,12 +14,14 @@
     export let playlist: boolean = false
     export let index: number = -1
     export let fileOver: boolean = false
+
+    $: outline = !!$playingAudio[path]
 </script>
 
 <SelectElem id="audio" data={{ path, name, index }} {fileOver} borders={playlist ? "edges" : "all"} trigger={playlist ? "column" : null} draggable>
     <Button
         class="context #audio_button{playlist ? '_playlist' : ''}"
-        outline={!!$playingAudio[path]}
+        {outline}
         active={$activeShow?.id === path}
         border
         style="width: 100%;"

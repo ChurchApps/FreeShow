@@ -426,6 +426,7 @@
         "choose_chord": "Choose chord",
         "set_time": "Set time",
         "assign_shortcut": "Assign shortcut",
+        "dynamic_values": "Dynamic values",
         "animate": "Animate",
         "translate": "Localization",
         "next_timer": "Next slide timer",
@@ -1079,6 +1080,10 @@
     },
     "stage": {
         "stage_layout": "Stage layout",
+        "current_slide_text": "Current slide text",
+        "current_slide": "Current slide",
+        "next_slide_text": "Next slide text",
+        "next_slide": "Next slide",
         "output": "Output",
         "video_time": "Video time",
         "video_countdown": "Video countdown",

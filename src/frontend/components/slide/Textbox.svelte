@@ -68,7 +68,6 @@
         setTimeout(() => (loaded = true), 100)
     })
     onDestroy(() => {
-        clearInterval(dynamicInterval)
         if (dateInterval) clearInterval(dateInterval)
     })
 
@@ -265,18 +264,14 @@
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
     let paddingCorrection = ""
     $: paddingCorrection = getPaddingCorrection(stageItem)
-
-    // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
-    let updateDynamic = 0
-    $: if ($variables) updateDynamic++
-    const dynamicInterval = setInterval(() => {
-        updateDynamic++
-    }, 1000)
 </script>
 
+<!-- lyrics view must have "width: 100%;height: 100%;" set -->
 <div
     class="item"
-    style="{style ? getCustomStyle(item?.style, customOutputId, { $styles }) : null};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}{animationStyle.item || ''}"
+    style="{style ? getCustomStyle(item?.style, customOutputId, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter
+        ? 'backdrop-filter: ' + backdropFilter + ';'
+        : ''}{animationStyle.item || ''}"
     class:white={key && !lines?.length}
     class:key
     class:isStage

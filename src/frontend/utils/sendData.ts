@@ -5,6 +5,7 @@ import { connections, currentWindow } from "../stores"
 import { receiveCONTROLLER } from "./controllerTalk"
 import { receiveREMOTE } from "./remoteTalk"
 import { receiveSTAGE } from "./stageTalk"
+import { API_ACTIONS } from "../components/actions/api"
 
 export function filterObjectArray(object: any, keys: string[], filter: null | string = null) {
     return Object.entries(object)
@@ -35,8 +36,18 @@ export function client(id: Clients, msg: ClientMessage) {
     } else sendData(id, msg)
 }
 
+export function setConnectedState(type: string, connectionId: string, key: string = "active", value: string | boolean) {
+    connections.update((a) => {
+        if (!a[type]) a[type] = {}
+        if (!a[type][connectionId]) a[type][connectionId] = {}
+        a[type][connectionId][key] = value
+        return a
+    })
+}
+
 // send data to client
 export async function sendData(id: Clients, msg: ClientMessage, check: boolean = false) {
+    console.log(id, msg)
     if (get(currentWindow) !== null) return
 
     let channel = msg.channel
@@ -45,12 +56,28 @@ export async function sendData(id: Clients, msg: ClientMessage, check: boolean =
         channel = "API"
     }
 
-    if (id === REMOTE) {
+    let connectionId = msg.id
+    if (!connectionId) connectionId = Object.keys(get(connections)[id] || {})[0]
+
+    if (channel === "API") {
+        if (!msg.data) msg.data = {}
+        const id = msg.api || ""
+        const data = await API_ACTIONS[id]?.(msg.data)
+
+        if (id === "get_thumbnail") msg.data.thumbnail = data
+        else msg.data = data
+
+        msg.send = true
+        if (data === undefined) msg.data = null
+    } else if (id === REMOTE) {
         if (!receiveREMOTE[channel]) return console.log("UNKNOWN CHANNEL:", channel)
         msg = await receiveREMOTE[channel](msg)
     } else if (id === STAGE) {
         if (!receiveSTAGE[channel]) return console.log("UNKNOWN CHANNEL:", channel)
-        msg = receiveSTAGE[channel](msg)
+        msg.data = receiveSTAGE[channel](msg.data, connectionId)
+
+        if (msg.data === undefined) msg.data = null
+        if (msg.data?.channel === "ERROR") msg = { ...msg, channel: "ERROR", data: msg.data?.data }
     } else if (id === CONTROLLER) {
         if (!receiveCONTROLLER[channel]) return console.log("UNKNOWN CHANNEL:", channel)
         msg = receiveCONTROLLER[channel](msg)

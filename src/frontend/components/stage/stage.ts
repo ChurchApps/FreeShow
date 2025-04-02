@@ -9,13 +9,23 @@ import { connections, stageShows, timers, variables } from "./../../stores"
 export function updateStageShow() {
     Object.entries(get(connections).STAGE || {}).forEach(([id, stage]) => {
         let show = arrayToObject(filterObjectArray([get(stageShows)[stage.active || ""]], ["disabled", "name", "settings", "items"]))[0]
-        if (!show.disabled) window.api.send(STAGE, { channel: "SHOW", id, data: show })
+        if (!show.disabled) window.api.send(STAGE, { channel: "LAYOUT", id, data: show })
     })
 }
 
-export function getCustomStageLabel(itemId: string, _updater: any = null): string {
+export function getCustomStageLabel(itemId: string, item: StageItem, _updater: any = null): string {
     if (!itemId.includes("#")) {
-        return translate(`items.${itemId}`)
+        let name = ""
+
+        if (itemId === "variable") name = get(variables)[item.variable?.id!]?.name
+        else if (itemId === "timer") name = get(timers)[item.timer?.id]?.name
+
+        name = name || translate(`items.${itemId}`)
+
+        const slideOffset = Number(item.slideOffset || 0)
+        if ((itemId === "slide_text" || itemId === "slide_notes") && slideOffset) name += ` ${slideOffset > 0 ? "+" : ""}${slideOffset}`
+
+        return name
     }
 
     // < 1.4.0

@@ -185,7 +185,8 @@
 
     // AUDIO
 
-    $: if ($currentWindow === "output" && video) analyseVideo()
+    $: videoExists = !!video
+    $: if ($currentWindow === "output" && videoExists) analyseVideo()
 
     onDestroy(() => {
         if ($currentWindow !== "output" || !previousPath) return

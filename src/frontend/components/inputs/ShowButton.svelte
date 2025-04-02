@@ -9,13 +9,12 @@
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
-    import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Button from "./Button.svelte"
     import HiddenInput from "./HiddenInput.svelte"
 
     export let id: string
-    export let show: any = {}
+    export let show: any // ShowList | ShowRef
     export let data: null | string = null
     export let index: null | number = null
     $: type = show.type || "show"
@@ -146,13 +145,15 @@
 
     let activeOutput: string | null = null
     $: if ($outputs) activeOutput = findMatchingOut(id)
+
+    $: outline = activeOutput !== null || !!$playingAudio[id]
 </script>
 
 <div id="show_{id}" class="main">
-    <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} outline={activeOutput !== null || !!$playingAudio[id]} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
+    <Button on:click={click} on:dblclick={doubleClick} {active} outlineColor={activeOutput} {outline} class="context {$$props.class}" {style} bold={false} border red={$notFound.show?.includes(id)}>
         <span style="display: flex;align-items: center;flex: 1;overflow: hidden;">
-            {#if icon}
-                <Icon id={iconID || "noIcon"} {custom} box={iconID === "ppt" ? 50 : 24} right />
+            {#if icon || show.locked}
+                <Icon id={iconID ? iconID : show.locked ? "locked" : "noIcon"} {custom} box={iconID === "ppt" ? 50 : 24} right />
             {/if}
 
             {#if show.quickAccess?.number}

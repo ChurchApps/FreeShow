@@ -3,7 +3,6 @@ import { uid } from "uid"
 import { Main } from "../../types/IPC/Main"
 import type { Show } from "../../types/Show"
 import type { ClientMessage } from "../../types/Socket"
-import { API_ACTIONS } from "../components/actions/api"
 import { loadBible, receiveBibleContent } from "../components/drawer/bible/scripture"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { getBase64Path, getThumbnailPath, mediaSize } from "../components/helpers/media"
@@ -15,10 +14,10 @@ import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { destroyMain, receiveMain } from "../IPC/main"
 import { REMOTE } from "./../../types/Channels"
-import { activeProject, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
+import { activeProject, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlays, projects, remotePassword, scriptures, scripturesCache, shows, showsCache, styles } from "./../stores"
 import { waitUntilValueIsDefined } from "./common"
 import { send } from "./request"
-import { sendData } from "./sendData"
+import { sendData, setConnectedState } from "./sendData"
 
 // REMOTE
 
@@ -32,12 +31,7 @@ export const receiveREMOTE: any = {
         }
         if (msg.data.password) return msg
 
-        connections.update((a: any) => {
-            if (!a.REMOTE) a.REMOTE = {}
-            if (!a.REMOTE[msg.id]) a.REMOTE[msg.id] = {}
-            a.REMOTE[msg.id].entered = true
-            return a
-        })
+        setConnectedState("REMOTE", msg.id, "entered", true)
 
         // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
         msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
@@ -50,12 +44,7 @@ export const receiveREMOTE: any = {
 
         send(REMOTE, ["LANGUAGE"], { lang: get(language), strings: get(dictionary) })
 
-        connections.update((a: any) => {
-            if (!a.REMOTE) a.REMOTE = {}
-            if (!a.REMOTE[msg.id]) a.REMOTE[msg.id] = {}
-            a.REMOTE[msg.id].entered = true
-            return a
-        })
+        setConnectedState("REMOTE", msg.id, "entered", true)
 
         // msg = { id: msg.id, channel: "SHOWS_CACHE", data: filterObjectArray(get(showsCache), ["name", "private", "category", "timestamps"]) }
         msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
@@ -73,12 +62,7 @@ export const receiveREMOTE: any = {
         console.log(msg)
 
         if (msg.id) {
-            connections.update((a) => {
-                if (!a.REMOTE) a.REMOTE = {}
-                if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
-                a.REMOTE[msg.id!].active = showID
-                return a
-            })
+            setConnectedState("REMOTE", msg.id, "active", showID)
         }
 
         loadingShow = showID
@@ -145,12 +129,7 @@ export const receiveREMOTE: any = {
             if (currentOut !== currentId) return
         }
         if (id.length && msg.id) {
-            connections.update((a) => {
-                if (!a.REMOTE) a.REMOTE = {}
-                if (!a.REMOTE[msg.id!]) a.REMOTE[msg.id!] = {}
-                a.REMOTE[msg.id!].active = id
-                return a
-            })
+            setConnectedState("REMOTE", msg.id, "active", id)
         }
 
         return msg
@@ -180,20 +159,6 @@ export const receiveREMOTE: any = {
 
         msg.data.bible = bible
         return msg
-    },
-    API: async (msg: ClientMessage) => {
-        if (!msg.data) msg.data = {}
-        const id = msg.api || ""
-        const data = await API_ACTIONS[id]?.(msg.data)
-
-        if (id === "get_thumbnail") {
-            msg.data.thumbnail = data
-        } else {
-            msg.data = data
-        }
-
-        msg.send = true
-        return data !== undefined ? msg : null
     },
 }
 

@@ -8,6 +8,7 @@ import {
     activeStage,
     contextActive,
     customMessageCredits,
+    drawSettings,
     lockedOverlays,
     outLocked,
     outputCache,
@@ -162,5 +163,13 @@ export function clearTimers(outputId: string = "") {
                 clearOverlayTimer(a.outputId, a.overlayId)
             }
         })
+    })
+}
+
+export function clearDrawing() {
+    drawSettings.update((a) => {
+        if (!a.paint) return a
+        a.paint.clear = true
+        return a
     })
 }
