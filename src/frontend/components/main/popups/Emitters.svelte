@@ -130,7 +130,7 @@
 </script>
 
 {#if editTemplate && template}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (editTemplate = "")}>
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editTemplate = "")}>
         <Icon id="back" size={2} white />
     </Button>
 
@@ -154,7 +154,7 @@
         </div>
     {/if}
 {:else if editEmitter && emitter}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (editEmitter = "")}>
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editEmitter = "")}>
         <Icon id="back" size={2} white />
     </Button>
 

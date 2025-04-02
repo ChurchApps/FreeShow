@@ -42,7 +42,7 @@
                     {/if}
 
                     {#if popupId !== "alert" && !disablePopupClose.includes(popupId)}
-                        <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 40px;" title={$dictionary.actions?.close} on:click={() => activePopup.set(null)}>
+                        <Button style="position: absolute;right: 0;top: 0;height: 100%;min-height: 40px;border-top-right-radius: 4px;" title={$dictionary.actions?.close} on:click={() => activePopup.set(null)}>
                             <Icon id="close" size={2} />
                         </Button>
                     {/if}
@@ -90,7 +90,10 @@
     .card {
         position: relative;
         background-color: var(--primary);
-        border-radius: var(--border-radius);
+
+        /* border-radius: var(--border-radius); */
+        border-radius: 4px;
+
         overflow-y: auto;
         /* overflow-x: hidden; */
 
@@ -111,4 +114,13 @@
         width: fit-content;
         max-height: 150px;
     } */
+
+    .card :global(.popup-back) {
+        position: absolute;
+        left: 0;
+        top: 0;
+        min-height: 58px;
+
+        border-top-left-radius: 4px;
+    }
 </style>

@@ -82,7 +82,7 @@
     </div>
 {:else}
     {#if !existing}
-        <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (chosenType = "")}>
+        <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (chosenType = "")}>
             <Icon id="back" size={2} white />
         </Button>
     {/if}
