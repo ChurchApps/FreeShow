@@ -45,6 +45,7 @@ export interface StageItem {
     // textbox
     chords?: { enabled?: boolean; color?: string; size?: number }
     auto?: boolean
+    button?: { press?: string; release?: string } // click actions
 
     // slide text
     slideOffset?: number

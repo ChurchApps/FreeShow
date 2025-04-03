@@ -155,6 +155,11 @@ function webServer(id, options = {}) {
                 targets: webFiles(id),
             }),
         ],
+        onwarn: (warning, warn) => {
+            // hide false Svelte "Circular dependencies" warnings
+            if (warning.code === "CIRCULAR_DEPENDENCY") return
+            warn(warning)
+        },
     }
 }
 

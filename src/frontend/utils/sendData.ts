@@ -47,7 +47,7 @@ export function setConnectedState(type: string, connectionId: string, key: strin
 
 // send data to client
 export async function sendData(id: Clients, msg: ClientMessage, check: boolean = false) {
-    console.log(id, msg)
+    // console.log(id, msg)
     if (get(currentWindow) !== null) return
 
     let channel = msg.channel

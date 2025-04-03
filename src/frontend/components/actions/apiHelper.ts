@@ -105,6 +105,15 @@ export function selectProjectByIndex(index: number) {
     activeProject.set(selectedProject.id)
 }
 
+export function selectProjectByName(value: string) {
+    const projectsList = sortByName(removeDeleted(keysToID(get(projects))))
+    let sortedProjects = sortByClosestMatch(projectsList, value)
+    let projectId = sortedProjects[0]?.id
+    if (!projectId) return
+
+    activeProject.set(projectId)
+}
+
 export async function selectSlideByIndex(data: API_slide_index) {
     if (data.showId) await loadShows([data.showId])
 

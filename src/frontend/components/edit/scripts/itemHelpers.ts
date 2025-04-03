@@ -53,6 +53,18 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     else if (type === "slide_tracker") newData.auto = true
     else if (type === "web") newData.web = { url: "" }
     else if (type === "captions") newData.captions = {}
+    // else if (type === "button") {
+    //     // make square, colored, rounded and center
+    //     let size: number = 300
+    //     let style = getStyles(newData.style)
+    //     let top: string = Number(removeText(style.top)) + Number(removeText(style.height)) / 2 - size / 2 + "px"
+    //     let left: string = Number(removeText(style.left)) + Number(removeText(style.width)) / 2 - size / 2 + "px"
+    //     style = { ...style, top, left, width: size + "px", height: size + "px", "border-radius": "500px", "background-color": "#ff4136" }
+    //     let styleString: string = ""
+    //     Object.entries(style).forEach(([key, value]) => {
+    //         styleString += `${key}: ${value};`
+    //     })
+    //     newData.style = styleString }
     else if (type === "icon" && options.color) {
         // make square and center
         let size: number = 300

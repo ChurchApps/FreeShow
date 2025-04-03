@@ -50,6 +50,7 @@ import {
     selectOverlayByName,
     selectProjectById,
     selectProjectByIndex,
+    selectProjectByName,
     selectShowByName,
     selectSlideByIndex,
     selectSlideByName,
@@ -153,6 +154,7 @@ export const API_ACTIONS = {
     // PROJECT
     id_select_project: (data: API_id) => selectProjectById(data.id),
     index_select_project: (data: API_index) => selectProjectByIndex(data.index), // BC
+    name_select_project: (data: API_strval) => selectProjectByName(data.value),
     next_project_item: () => selectProjectShow("next"), // BC
     previous_project_item: () => selectProjectShow("previous"), // BC
     index_select_project_item: (data: API_index) => selectProjectShow(data.index), // BC

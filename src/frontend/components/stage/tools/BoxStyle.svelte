@@ -40,7 +40,8 @@
             removeInput(edits.lines, "specialStyle.lineBg")
             removeInput(edits.lines, "specialStyle.opacity")
             delete edits.list
-            delete edits.special
+            removeInput(edits.special, "scrolling.type")
+            removeInput(edits.special, "scrolling.speed")
         }
 
         if (item.type === "slide_text" || activeItemId.includes("slide_text")) {
@@ -90,6 +91,9 @@
         setBoxInputValue(edits, sectionId, "font-family", "styleValue", data["font"] || "")
         setBoxInputValue(edits, sectionId, "font-size", "disabled", item.type !== "text" && item.auto !== false)
         // setBoxInputValue(edits, sectionId, "textFit", "hidden", item?.auto !== false)
+
+        setBoxInputValue(edits, "special", "button.press", "value", item?.button?.press || "")
+        setBoxInputValue(edits, "special", "button.release", "value", item?.button?.release || "")
     }
     $: if (item && item.type === "slide_notes") {
         setBoxInputValue(edits, "default", "slideOffset", "value", item.slideOffset || 0)

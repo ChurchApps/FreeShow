@@ -24,6 +24,7 @@ import {
     events,
     gain,
     media,
+    midiIn,
     ndiData,
     outputDisplay,
     outputs,
@@ -57,6 +58,7 @@ import { closeApp, save } from "./save"
 import { client } from "./sendData"
 import { previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
+import { runAction } from "../components/actions/actions"
 
 export function setupMainReceivers() {
     receiveMainGlobal()
@@ -91,6 +93,7 @@ const receiveOUTPUTasMAIN: any = {
     OUTPUTS: (a: any) => outputs.set(a),
     RESTART: ({ id }) => restartOutputs(id),
     DISPLAY: (a: any) => outputDisplay.set(a.enabled),
+    ACTION_MAIN: (a: { id: string }) => runAction(get(midiIn)[a.id]),
     AUDIO_MAIN: async (data: any) => {
         if (!data.id) return
 

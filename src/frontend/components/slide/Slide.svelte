@@ -694,6 +694,7 @@
         padding: 10px;
         flex: 1;
 
+        overflow: auto;
         z-index: 2;
     }
     .quickEdit :global(.editItem) {

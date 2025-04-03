@@ -73,6 +73,7 @@ import { validateKeys } from "../utils/drive"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import { Main, MainReturnPayloads } from "./../../types/IPC/Main"
+import { convertCSV } from "../converters/csv"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -305,6 +306,7 @@ export const mainResponses: MainResponses = {
             // Text
             txt: () => convertTexts(data),
             chordpro: () => convertChordPro(data),
+            csv: () => convertCSV(data),
             powerpoint: () => convertPowerpoint(data),
             word: () => convertTexts(data),
             // Other programs

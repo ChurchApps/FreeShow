@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import type { Item } from "../../../../types/Show"
     import type { StageItem } from "../../../../types/Stage"
-    import { activePopup, dictionary, popupData, storedEditMenuState, variables } from "../../../stores"
+    import { activePopup, dictionary, midiIn, popupData, storedEditMenuState, variables } from "../../../stores"
     import { mediaExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -56,7 +56,7 @@
         let value = e.detail ?? e.target?.value ?? null
 
         if (input.input === "checkbox") value = e.target?.checked
-        else if (input.input === "dropdown" || input.input === "selectVariable") value = value?.id || ""
+        else if (input.input === "dropdown" || input.input === "selectVariable" || input.input === "action") value = value?.id || ""
         else if (input.input === "number") value = Number(value)
         else if (input.input === "multiselect" && Array.isArray(input.value)) {
             if (input.value.includes(value)) value = input.value.filter((a) => a !== value)
@@ -64,7 +64,7 @@
         }
 
         // closed update
-        if (!value && e.detail !== undefined) value = e.detail
+        if (!value && value !== "" && e.detail !== undefined) value = e.detail
 
         if (input.extension) value += input.extension
 
@@ -416,6 +416,13 @@
             return a
         })
     }
+
+    $: actionOptions = [
+        { id: "", name: "—" },
+        ...Object.entries($midiIn)
+            .map(([id, a]) => ({ id, name: a.name }))
+            .sort((a, b) => a.name?.localeCompare(b.name)),
+    ]
 </script>
 
 {#each Object.keys(edits || {}) as section, i}
@@ -490,6 +497,11 @@
                                 </p>
                             {/key}
                         </Button>
+                    </CombinedInput>
+                {:else if input.input === "action"}
+                    <CombinedInput>
+                        <p><T id="edit.{input.name}" /></p>
+                        <Dropdown options={actionOptions} value={actionOptions.find((a) => a.id === input.value)?.name || "—"} on:click={(e) => valueChange(e, input)} />
                     </CombinedInput>
                 {:else if input.input === "media"}
                     <CombinedInput>

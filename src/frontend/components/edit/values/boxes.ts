@@ -209,6 +209,8 @@ export const boxes: Box = {
                     },
                 },
                 { name: "scrolling_speed", id: "scrolling.speed", input: "number", value: 30, values: { min: 1, max: 100 } },
+                { name: "press_action", id: "button.press", input: "action", value: "" },
+                { name: "release_action", id: "button.release", input: "action", value: "" },
             ],
             CSS: [{ id: "text", input: "CSS" }],
         },

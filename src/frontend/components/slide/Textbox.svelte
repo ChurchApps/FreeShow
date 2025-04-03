@@ -1,8 +1,10 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
     import type { Item } from "../../../types/Show"
     import { currentWindow, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
+    import { send } from "../../utils/request"
     import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
@@ -264,6 +266,20 @@
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
     let paddingCorrection = ""
     $: paddingCorrection = getPaddingCorrection(stageItem)
+
+    function press() {
+        if ($currentWindow !== "output") return
+        if (!item.button?.press) return
+
+        send(OUTPUT, ["ACTION_MAIN"], { id: item.button.press })
+    }
+
+    function release() {
+        if ($currentWindow !== "output") return
+        if (!item.button?.release) return
+
+        send(OUTPUT, ["ACTION_MAIN"], { id: item.button.release })
+    }
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
@@ -278,6 +294,8 @@
     class:isDisabledVariable
     class:chords={chordLines.length}
     bind:this={itemElem}
+    on:mousedown={press}
+    on:mouseup={release}
 >
     {#if lines}
         <TextboxLines
@@ -321,6 +339,9 @@
     .item.isStage {
         width: 100%;
         height: 100%;
+
+        /* click events */
+        pointer-events: initial;
     }
 
     .white {

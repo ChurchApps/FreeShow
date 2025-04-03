@@ -937,6 +937,8 @@
         "bottom_top": "Bottom to top",
         "left_right": "Left to right",
         "right_left": "Right to left",
+        "press_action": "Press action",
+        "release_action": "Release action",
         "max_events": "Max events",
         "start_days_from_today": "Start at days from today",
         "just_one_day": "Just one day",

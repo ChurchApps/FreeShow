@@ -111,6 +111,15 @@
         </div>
     {/if}
 
+    <!-- button -->
+    {#if item?.button?.press || item?.button?.release}
+        <div title={$dictionary.popup?.action} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+            <span style="padding: 5px;z-index: 3;font-size: 0;">
+                <Icon id="button" white />
+            </span>
+        </div>
+    {/if}
+
     <!-- bindings -->
     {#if item?.bindings?.length}
         <div title={$dictionary.actions?.remove_binding} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">

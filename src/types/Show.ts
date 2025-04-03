@@ -124,6 +124,7 @@ export interface Item {
     actions?: any // showTime | hideTime
     chords?: { enabled?: boolean; color?: string; size?: number }
     scrolling?: Scrolling
+    button?: { press?: string; release?: string } // click actions
     visualizer?: any
     captions?: any
     language?: string // used to store auto localized text
@@ -494,7 +495,7 @@ export interface Tag {
 // types
 
 export type ID = string
-export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "events" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
+export type ItemType = "text" | "list" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" // "shape" | "video" | "media" | "camera"
 export type ShowType = "show" | "image" | "video" | "audio" | "player" | "section" | "overlay" | "pdf" | "ppt" | "screen" | "ndi" | "camera" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "screen" | "ndi" | "camera" | "player" | "audio"
