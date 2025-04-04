@@ -28,8 +28,8 @@ contextBridge.exposeInMainWorld("api", {
     },
     receive: (channel: ValidChannels, func: any, id?: string) => {
         const receiver = (_e: IpcRendererEvent, args: any, id?: string) => {
-            if (!appLoaded && channel === "MAIN" && args[0]?.channel === "SHOWS") setTimeout(() => (appLoaded = true), 3000)
-            if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(args[0]?.channel)) console.log("TO CLIENT [" + channel + "]: ", ...args)
+            if (!appLoaded && channel === "MAIN" && args?.channel === "SHOWS") setTimeout(() => (appLoaded = true), 3000)
+            if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(args?.channel)) console.log("TO CLIENT [" + channel + "]: ", args)
 
             func(args, id)
         }

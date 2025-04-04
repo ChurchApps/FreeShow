@@ -339,11 +339,13 @@
         let pos: number = -1
         currentStyle = ""
         let updateHTML: boolean = false
+        let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
 
         new Array(...textElem.children).forEach((line, i) => {
             let align: string = plain ? item.lines?.[i]?.align || "" : line.getAttribute("style") || ""
+            align = align.replaceAll(lineBg, "") + ";"
             pos++
-            currentStyle += align
+            currentStyle += align + lineBg
 
             let newLine = { align, text: [] as any[] }
             let lineChords: any[] = []

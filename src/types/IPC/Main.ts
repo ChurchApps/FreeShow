@@ -210,6 +210,7 @@ export interface MainReturnPayloads {
     [Main.USAGE]: any
     [Main.CACHE]: any
     // WINDOW
+    [Main.CLOSE]: boolean | void
     [Main.MAXIMIZED]: boolean
     /////////////////////
     [Main.BIBLE]: { id: string; error?: string; content?: [string, Bible]; data?: { index?: number } }

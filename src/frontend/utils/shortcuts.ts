@@ -124,6 +124,9 @@ const keys = {
 }
 
 export function keydown(e: KeyboardEvent) {
+    // don't prevent close event
+    if (e.key === "F4" && e.altKey) return
+
     if (get(currentWindow) === "output") {
         let currentOut = get(outputs)[Object.keys(get(outputs))[0]]?.out || {}
         let contentDisplayed = currentOut.slide?.id || currentOut.background?.path || currentOut.background?.id || currentOut.overlays?.length
