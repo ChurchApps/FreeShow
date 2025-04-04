@@ -49,6 +49,7 @@ import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import checkForUpdates from "../utils/updater"
+import { correctSpelling } from "../utils/spellcheck"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -80,6 +81,7 @@ export const mainResponses: MainResponses = {
     [Main.MAXIMIZED]: () => !!getMainWindow()?.isMaximized(),
     [Main.MINIMIZE]: () => getMainWindow()?.minimize(),
     [Main.FULLSCREEN]: () => getMainWindow()?.setFullScreen(!getMainWindow()?.isFullScreen()),
+    [Main.SPELLCHECK]: (a) => correctSpelling(a),
     /////////////////////////
     [Main.SAVE]: async (a) => {
         if (userDataPath === null) updateDataPath()

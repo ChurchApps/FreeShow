@@ -54,6 +54,7 @@ export enum Main {
     SHOW = "SHOW",
     SAVE = "SAVE",
     ///////////////////
+    SPELLCHECK = "SPELLCHECK",
     ////
     SHOWS = "SHOWS",
     AUTO_UPDATE = "AUTO_UPDATE",
@@ -133,6 +134,7 @@ export interface MainSendPayloads {
     [Main.SAVE]: SaveData
     [Main.SHOWS]: { showsPath: string }
     ////////////
+    [Main.SPELLCHECK]: { addToDictionary?: string; fixSpelling?: string }
     [Main.URL]: string
     [Main.LANGUAGE]: { lang: string; strings: Dictionary }
     [Main.LOG_ERROR]: ErrorLog

@@ -17,6 +17,7 @@ import { callClose, exitApp } from "./utils/close"
 import { mainWindowInitialize, openDevTools, waitForBundle } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { spellcheck } from "./utils/spellcheck"
 
 // ----- STARTUP -----
 
@@ -175,6 +176,8 @@ function setMainListeners() {
 
     mainWindow.on("close", callClose)
     mainWindow.once("closed", exitApp)
+
+    mainWindow.webContents.on("context-menu", (_, p) => spellcheck(p))
 }
 
 export function maximizeMain() {

@@ -24,7 +24,6 @@ import {
     activeTimers,
     audioFolders,
     categories,
-    contextActive,
     currentOutputSettings,
     currentWindow,
     dataPath,
@@ -67,6 +66,7 @@ import {
 import { hideDisplay, newToast, triggerFunction } from "../../utils/common"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
+import { closeContextMenu } from "../../utils/shortcuts"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { moveStageConnection } from "../actions/apiHelper"
 import { getShortBibleName } from "../drawer/bible/scripture"
@@ -289,7 +289,7 @@ const actions = {
 
     // TAGS
     manage_show_tags: () => {
-        contextActive.set(false)
+        closeContextMenu()
         popupData.set({ type: "show" })
         activePopup.set("manage_tags")
     },
@@ -341,7 +341,7 @@ const actions = {
         activeTagFilter.set(activeTags || [])
     },
     manage_media_tags: () => {
-        contextActive.set(false)
+        closeContextMenu
         popupData.set({ type: "media" })
         activePopup.set("manage_tags")
     },
@@ -382,7 +382,7 @@ const actions = {
         activeMediaTagFilter.set(activeTags || [])
     },
     manage_action_tags: () => {
-        contextActive.set(false)
+        closeContextMenu
         popupData.set({ type: "action" })
         activePopup.set("manage_tags")
     },

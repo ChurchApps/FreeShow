@@ -59,6 +59,7 @@ import {
     shows,
     showsCache,
     showsPath,
+    spellcheck,
     stageShows,
     templates,
     textCache,
@@ -140,6 +141,7 @@ export const mainResponses: MainResponses = {
         activePopup.set("alert")
     },
     [ToMain.TOAST]: (a) => newToast(a),
+    [ToMain.SPELL_CHECK]: (a) => spellcheck.set(a),
     [Main.CLOSE]: () => initializeClosing(),
     [Main.RECEIVE_MIDI]: (a) => receivedMidi(a),
     [Main.DELETE_SHOWS]: (a) => {

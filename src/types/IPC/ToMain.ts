@@ -4,6 +4,7 @@ export enum ToMain {
     ALERT = "ALERT",
     TOAST = "TOAST",
     MENU = "MENU",
+    SPELL_CHECK = "SPELL_CHECK",
     BACKUP = "BACKUP",
     PRESENTATION_STATE = "PRESENTATION_STATE",
     CAPTURE_CANVAS = "CAPTURE_CANVAS",
@@ -14,7 +15,6 @@ export enum ToMain {
     PCO_PROJECTS = "PCO_PROJECTS",
     API = "API",
     // Main
-    CLOSE2 = "CLOSE2",
     IMPORT2 = "IMPORT2",
     SHOW2 = "SHOW2",
     SAVE2 = "SAVE2",
@@ -28,6 +28,7 @@ export interface ToMainSendPayloads {
     [ToMain.ALERT]: string
     [ToMain.TOAST]: string
     [ToMain.MENU]: string
+    [ToMain.SPELL_CHECK]: { misspelled: string; suggestions: string[] }
     [ToMain.BACKUP]: { finished: boolean; path: string }
     [ToMain.PRESENTATION_STATE]: { id: string; stat: any; info: any }
     [ToMain.CAPTURE_CANVAS]: { input: string; output: string; size: any; extension: string; config: any }
@@ -38,7 +39,6 @@ export interface ToMainSendPayloads {
     [ToMain.PCO_PROJECTS]: { shows: any; projects: any }
     [ToMain.API]: "connected"
     ///
-    [ToMain.CLOSE2]: boolean
     [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string; name?: string; extension?: string } | string)[]; custom?: any }
     [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }
     [ToMain.SAVE2]: { closeWhenFinished: boolean; customTriggers: any }

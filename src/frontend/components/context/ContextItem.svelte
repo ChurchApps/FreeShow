@@ -5,7 +5,6 @@
         activeRecording,
         activeShow,
         categories,
-        contextActive,
         effectsLibrary,
         events,
         forceClock,
@@ -27,6 +26,7 @@
         topContextActive,
         undoHistory,
     } from "../../stores"
+    import { closeContextMenu } from "../../utils/shortcuts"
     import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
@@ -251,7 +251,7 @@
         }
 
         if (topBar) topContextActive.set(false)
-        else contextActive.set(false)
+        else closeContextMenu()
     }
 
     function keydown(e: KeyboardEvent) {

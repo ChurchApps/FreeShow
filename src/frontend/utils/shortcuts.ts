@@ -41,6 +41,7 @@ import {
     selected,
     showsCache,
     special,
+    spellcheck,
     styles,
     topContextActive,
     volume,
@@ -91,7 +92,7 @@ const keys = {
         if (get(contextActive) || get(topContextActive)) {
             // timeout so output does not clear
             setTimeout(() => {
-                contextActive.set(false)
+                closeContextMenu()
                 topContextActive.set(false)
             }, 20)
             return
@@ -334,6 +335,11 @@ export const previewShortcuts = {
         e.preventDefault()
         nextSlideIndividual(e, false, true)
     },
+}
+
+export function closeContextMenu() {
+    contextActive.set(false)
+    spellcheck.set(null)
 }
 
 // CTRL + N

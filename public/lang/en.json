@@ -800,6 +800,8 @@
         "columns": "Columns"
     },
     "context": {
+        "to_dictionary": "Add to dictionary",
+        "correct": "Replace with this word",
         "enabledTabs": "Toggle tabs",
         "setTag": "Set tag",
         "filterByTags": "Filter by tags",
