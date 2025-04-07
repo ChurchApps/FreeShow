@@ -19,6 +19,11 @@
             sendMain(Main.DATA_PATH)
             sendMain(Main.SHOWS_PATH)
         }
+
+        // check time format (based on browser language)
+        const locale = navigator.language
+        const use12Hour = Intl.DateTimeFormat(locale, { hour: "numeric" }).resolvedOptions().hour12
+        if (use12Hour === true) timeFormat.set("12")
     })
 
     function create(e: any) {

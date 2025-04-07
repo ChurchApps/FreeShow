@@ -163,7 +163,7 @@
     <span class="tabs">
         {#if projectActive || recentlyUsedList.length}
             {#if !$focusMode}
-                <Button style="flex: 1" on:click={back} active={$projectView} center dark title={$dictionary.remote?.projects}>
+                <Button style="flex: 1;padding: 0.3em 0.5em;" on:click={back} active={$projectView} center dark title={$dictionary.remote?.projects}>
                     <Icon id="back" size={1.2} />
                 </Button>
                 <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={$dictionary.remote?.project + ": " + ($projects[$activeProject || ""]?.name || "")}>
