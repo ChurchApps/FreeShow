@@ -59,7 +59,8 @@
         "files": [
             "build/electron/**/*",
             "build/types/**/*",
-            "public/**/*"
+            "public/**/*",
+            "!node_modules/@napi-rs"
         ],
         "extraResources": [
             {
@@ -200,7 +201,7 @@
         "node-machine-id": "^1.1.12",
         "osc-js": "^2.4.1",
         "pcm-convert": "^1.6.5",
-        "pdf2img-electron": "^1.2.3",
+        "pdfjs-dist": "^5.1.91",
         "pptx2json": "^0.0.10",
         "protobufjs": "^7.2.3",
         "qrcode-generator": "^1.4.4",

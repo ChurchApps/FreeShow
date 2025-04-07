@@ -86,7 +86,6 @@ export enum Main {
     DOWNLOAD_MEDIA = "DOWNLOAD_MEDIA",
     // MEDIA_BASE64 = "MEDIA_BASE64",
     CAPTURE_SLIDE = "CAPTURE_SLIDE",
-    PDF_TO_IMAGE = "PDF_TO_IMAGE",
     ACCESS_CAMERA_PERMISSION = "ACCESS_CAMERA_PERMISSION",
     ACCESS_MICROPHONE_PERMISSION = "ACCESS_MICROPHONE_PERMISSION",
     ACCESS_SCREEN_PERMISSION = "ACCESS_SCREEN_PERMISSION",
@@ -154,7 +153,6 @@ export interface MainSendPayloads {
     [Main.DOWNLOAD_MEDIA]: LessonsData[]
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
-    [Main.PDF_TO_IMAGE]: { dataPath: string; path: string }
     [Main.START_SLIDESHOW]: { path: string; program: string }
     [Main.PRESENTATION_CONTROL]: { action: string }
     [Main.START]: { ports: { [key: string]: number }; max: number; disabled: { [key: string]: boolean }; data: { [key: string]: ServerData } }

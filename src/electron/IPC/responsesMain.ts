@@ -9,7 +9,6 @@ import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
-import { convertPDFToImages } from "../data/pdfToImage"
 import { save } from "../data/save"
 import { config, error_log, getStore, stores, updateDataPath, userDataPath } from "../data/store"
 import { captureSlide, getThumbnail, getThumbnailFolderPath, saveImage } from "../data/thumbnails"
@@ -127,7 +126,6 @@ export const mainResponses: MainResponses = {
     [Main.DOWNLOAD_MEDIA]: (data) => downloadMedia(data),
     // [Main.MEDIA_BASE64]: (data) => storeMedia(data),
     [Main.CAPTURE_SLIDE]: (data) => captureSlide(data),
-    [Main.PDF_TO_IMAGE]: (data) => convertPDFToImages(data),
     [Main.ACCESS_CAMERA_PERMISSION]: () => getPermission("camera"),
     [Main.ACCESS_MICROPHONE_PERMISSION]: () => getPermission("microphone"),
     [Main.ACCESS_SCREEN_PERMISSION]: () => getPermission("screen"),
