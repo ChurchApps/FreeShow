@@ -78,7 +78,7 @@
 
     // close if not existing
     $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null) // projectView.set(true)
-    // get pos if clicked in drawer
+    // get pos if clicked in drawer, or position moved
     $: if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject]?.shows?.[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
 
     function findShowInProject() {

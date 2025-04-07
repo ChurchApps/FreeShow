@@ -179,6 +179,7 @@ const receiveOUTPUTasMAIN: any = {
             previewShortcuts[data.key]({ ...data, preventDefault: () => "" })
         }
     },
+    MAIN_SHOWS_DATA: () => send(OUTPUT, ["SHOWS_DATA"], get(shows)),
 }
 
 let previousOutputs: string = ""

@@ -1076,7 +1076,13 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         let projectRef = { id: get(activeProject) || "", index: projectIndex }
 
-        return (dynamicValues[id]({ show, ref, slideIndex, layout, projectRef, videoTime, videoDuration }) ?? "").toString()
+        const value = (dynamicValues[id]({ show, ref, slideIndex, layout, projectRef, videoTime, videoDuration }) ?? "").toString()
+
+        if (id === "show_name_next" && !value && get(currentWindow) === "output") {
+            send(OUTPUT, ["MAIN_SHOWS_DATA"])
+        }
+
+        return value
     }
 }
 

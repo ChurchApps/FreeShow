@@ -157,20 +157,43 @@ export function joinRange(array: string[]) {
     let range: string = ""
 
     array.forEach((a: string, i: number) => {
-        if (Number(a) - 1 === prev) {
-            if (i + 1 === array.length) range += "-" + a
+        let splitted = a.toString().split("_")
+        const id = splitted[0]
+        const subverse = Number(splitted[1] || 0)
+        const v = id + (subverse ? getVersePartLetter(subverse) : "")
+
+        if (Number(id) - 1 === prev) {
+            if (i + 1 === array.length) range += "-" + v
         } else {
             if (range.length) {
                 if (prev !== Number(range[range.length - 1])) range += "-" + prev
                 range += "+"
             }
-            range += a
+            range += v
         }
 
-        prev = Number(a)
+        prev = Number(id)
     })
 
     return range
+}
+
+export function getSplittedVerses(verses: { [key: string]: string }) {
+    if (!get(scriptureSettings).splitLongVerses) return verses || {}
+
+    const chars = Number(get(scriptureSettings).longVersesChars || 100)
+    const newVerses: { [key: string | number]: string } = {}
+    Object.keys(verses || {}).forEach((verseKey) => {
+        let verse = verses[verseKey]
+        let newVerseStrings = splitText(verse, chars)
+
+        for (let i = 0; i < newVerseStrings.length; i++) {
+            const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
+            newVerses[verseKey + key] = newVerseStrings[i]
+        }
+    })
+
+    return newVerses
 }
 
 export function splitText(value: string, maxLength: number) {
@@ -208,6 +231,10 @@ export function splitText(value: string, maxLength: number) {
     return splitted
 }
 
+export function getVersePartLetter(subverse: number) {
+    return (Number(subverse) + 9).toString(36)
+}
+
 export const textKeys = {
     showVersion: "[version]",
     showVerse: "[reference]",
@@ -233,12 +260,14 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
         let slideIndex: number = 0
         slides[slideIndex].push(clone(emptyItem))
 
+        const verses = getSplittedVerses(bible.verses)
+
         let verseLine = 0
         sorted.forEach((s: any, i: number) => {
             let slideArr: any = slides[slideIndex][bibleIndex]
             if (!slideArr?.lines[0]?.text) return
 
-            let text: string = bible.verses[s] || ""
+            let text: string = verses[s] || bible.verses[s] || ""
             if (!text) return
 
             let lineIndex: number = 0
@@ -249,13 +278,19 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
                 if (!slideArr.lines![lineIndex]) slideArr.lines![lineIndex] = { text: [], align: alignStyle }
             }
 
+            // verse number
             if (get(scriptureSettings).verseNumbers) {
                 let size = get(scriptureSettings).numberSize || 50
                 if (i === 0) size *= 1.2
                 let verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
 
+                let splitted = s.toString().split("_")
+                const id = splitted[0]
+                const subverse = Number(splitted[1] || 0)
+                const value = id + (subverse ? getVersePartLetter(subverse) : "") + " "
+
                 slideArr.lines![lineIndex].text.push({
-                    value: s + " ",
+                    value,
                     style: verseNumberStyle,
                     customType: "disableTemplate", // dont let template style verse numbers
                 })

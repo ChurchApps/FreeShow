@@ -139,7 +139,7 @@
             {:else if item.type === "slide_notes" || id.includes("notes")}
                 <SlideNotes {currentSlide} {slideOffset} autoSize={item.auto !== false ? autoSize : fontSize} />
             {:else if item.type === "text"}
-                <Textbox {item} showId={id} autoSize={false} {fontSize} />
+                <Textbox {item} showId={id} autoSize={item.auto} {fontSize} />
                 <!-- STAGE VV -->
             {:else if item.type === "slide_tracker" || id.includes("slide_tracker")}
                 <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} />

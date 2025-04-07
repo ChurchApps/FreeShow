@@ -6,7 +6,7 @@
 
     export let id: string
     export let title: string | undefined = undefined
-    export let path: string | undefined
+    export let path: string | undefined = undefined
     export let style: string = ""
     export let center: boolean = true
 

@@ -60,7 +60,7 @@
 {:else if type === "pdf"}
     <PdfPreview {show} />
 {:else}
-    <Slides showId={show.id} layout={show.layout} />
+    <Slides showId={show.id} layout={show.layout} projectIndex={show.index} />
 
     <!-- WIP change layout??? -->
     <!-- <Layouts /> -->

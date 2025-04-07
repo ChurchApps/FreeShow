@@ -25,7 +25,8 @@ export function convertEasyslides(data: any) {
     // set timeout to allow popup to open
     setTimeout(() => {
         data?.forEach(({ content }: any) => {
-            const songs = xml2json(content).EasiSlides?.Item || []
+            const json = xml2json(content)
+            const songs = json.Easyslides?.Item || json.EasiSlides?.Item || []
             songs.forEach(convertSong)
         })
 
@@ -39,7 +40,7 @@ export function convertEasyslides(data: any) {
 
         let { slides, layout }: any = createSlides(song)
 
-        show.meta = { number: song.SongNumber }
+        if (Number(song.SongNumber)) show.meta = { number: song.SongNumber }
         if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
         show.slides = slides

@@ -13,9 +13,9 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { bookIds, fetchBible, formatBibleText, getColorCode, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
+    import { bookIds, fetchBible, formatBibleText, getColorCode, getVersePartLetter, joinRange, loadBible, receiveBibleContent, searchBibleAPI, setBooksCache, splitText } from "./scripture"
 
-    export let active: string
+    export let active: string | null
     export let bibles: Bible[]
     export let searchValue: string
 
@@ -23,24 +23,23 @@
     let chapters: { [key: string]: Chapter[] } = {}
     let verses: { [key: string]: { [key: string]: string } } = {}
 
-    let splittedVerses: { [key: string]: { [key: string]: string } } = {}
-    $: if ($scriptureSettings.longVersesChars) updateSplitted()
+    let splittedVerses: { [key: string]: { id: string; text: string }[] } = {}
+    $: if (bibles[0]?.verses || $scriptureSettings.longVersesChars) updateSplitted()
     function updateSplitted() {
         if (!$scriptureSettings.splitLongVerses) {
-            splittedVerses = verses
+            splittedVerses[firstBibleId] = Object.entries(verses?.[firstBibleId] || {}).map(([id, text]) => ({ id: id.toString(), text }))
             return
         }
 
         const chars = Number($scriptureSettings.longVersesChars || 100)
-        const newVerses: { [key: string]: string } = {}
+        const newVerses: { id: string; text: string }[] = []
         Object.keys(verses?.[firstBibleId] || {}).forEach((verseKey) => {
             let verse = verses[firstBibleId][verseKey]
             let newVerseStrings = splitText(verse, chars)
 
             for (let i = 0; i < newVerseStrings.length; i++) {
                 const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
-                // WIP object keys are sorted incorrectly, should use array!!
-                newVerses[verseKey + key] = newVerseStrings[i]
+                newVerses.push({ id: verseKey + key, text: newVerseStrings[i] })
             }
         })
 
@@ -90,10 +89,10 @@
     }
 
     function createBiblesList() {
-        let selectedScriptureData = $scriptures[active]
+        let selectedScriptureData = $scriptures[active || ""]
         if (!selectedScriptureData) return
 
-        let versions: string[] = [selectedScriptureData.id || active]
+        let versions: string[] = [selectedScriptureData.id || active || ""]
         if (selectedScriptureData.collection?.versions) versions = selectedScriptureData.collection.versions
         firstBibleId = versions[0]
 
@@ -103,7 +102,7 @@
     }
 
     function getBibleId(index: number, bible: any = null) {
-        let selectedScriptureData = $scriptures[active]
+        let selectedScriptureData = $scriptures[active || ""]
         let bibleId = selectedScriptureData?.collection?.versions?.[index] || selectedScriptureData?.id || bible?.id || active
         return bibleId
     }
@@ -333,16 +332,15 @@
             } else activeVerses = [...activeVerses, id]
         } else if (e.shiftKey && activeVerses.length) {
             let found = false
-            let arr: any = verses[firstBibleId]
-            let sorted = activeVerses.sort((a, b) => Number(a) - Number(b))[0]
+            let sorted = activeVerses.sort((a, b) => currentVerses.findIndex((v) => v.id === a) - currentVerses.findIndex((v) => v.id === b))[0]
             let first = id
             let last = sorted
-            if (Number(id) > Number(sorted)) {
+            if (currentVerses.findIndex((v) => v.id === id) > currentVerses.findIndex((v) => v.id === sorted)) {
                 first = last
                 last = id
             }
 
-            Object.keys(arr).forEach((id: any) => {
+            currentVerses.forEach(({ id }) => {
                 if (id === first) found = true
                 if (found && !activeVerses.includes(id)) activeVerses.push(id)
                 if (id === last) found = false
@@ -760,25 +758,26 @@
 
     $: if ($activeTriggerFunction === "scripture_selectAll") selectAllVerses()
     function selectAllVerses() {
-        let currentVerses: string[] = []
-        Object.keys(verses[firstBibleId]).forEach((id) => {
-            currentVerses.push(id)
-        })
-        console.log("SELECT ALL", currentVerses, verses, firstBibleId)
+        // let selection: string[] = currentVerses.map(a => a.id)
+        let selection: string[] = Object.keys(verses[firstBibleId])
+        // console.log("SELECT ALL", selection, verses, firstBibleId)
 
-        activeVerses = currentVerses
+        activeVerses = selection
         updateActiveVerses()
     }
 
     function moveSelection(moveLeft: boolean) {
+        if (!currentVerses.length) return
         if (!activeVerses.length) {
-            activeVerses = [moveLeft ? Object.keys(verses[firstBibleId] || []).length.toString() : "1"]
+            activeVerses = [moveLeft ? currentVerses[currentVerses.length - 1].id : currentVerses[0].id]
             bibles[0].activeVerses = activeVerses
             return
         }
 
-        let currentIndex: number = Number(moveLeft ? activeVerses[0] : activeVerses.at(-1))
-        let changeChapter = moveLeft ? currentIndex <= 1 : currentIndex >= Object.keys(verses[firstBibleId]).length
+        activeVerses = activeVerses.sort((a, b) => currentVerses.findIndex((v) => v.id === a) - currentVerses.findIndex((v) => v.id === b))
+        let currentId = (moveLeft ? activeVerses[0] : activeVerses.at(-1))?.toString()
+        let currentIndex = currentVerses.findIndex((a) => a.id === currentId)
+        let changeChapter = moveLeft ? currentIndex <= 0 : currentIndex >= currentVerses.length - 1
         if (changeChapter) {
             // find current chapter
             let notApi = typeof chapterId === "number"
@@ -788,33 +787,57 @@
             else chapterIndex++
 
             let newChapter: any = chapters[firstBibleId][chapterIndex]
-            if (!newChapter) return
+            // this does not work with API
+            if (!newChapter?.verses) return
 
             // set new chapter
             let newChapterId = notApi ? chapterIndex : newChapter.keyName
             chapterId = newChapterId
 
+            // get new chapter verses (duplicate of split verses function)
+            const chars = Number($scriptureSettings.longVersesChars || 100)
+            const newVerses: { id: string; text: string }[] = []
+            newChapter.verses.forEach((verseData) => {
+                let verse = verseData.text
+                let newVerseStrings = splitText(verse, chars)
+
+                for (let i = 0; i < newVerseStrings.length; i++) {
+                    const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
+                    newVerses.push({ id: verseData.number + key, text: newVerseStrings[i] })
+                }
+            })
+            splittedVerses[firstBibleId] = newVerses
+            currentVerses = newVerses
+
             // select verses
-            if (moveLeft) currentIndex = (newChapter.verses?.length ?? 150) + 1
-            else currentIndex = 0
-
-            // WIP: auto scroll to verses
+            if (moveLeft) currentIndex = currentVerses.length
+            else currentIndex = -1
         }
 
-        let newSelection: string[] = []
-        ;[...Array(activeVerses.length)].map((_, i: number) => {
-            let newIndex: number = moveLeft ? currentIndex - i - 1 : currentIndex + i + 1
-            if (moveLeft ? newIndex > 0 : newIndex <= Object.keys(verses[firstBibleId] || []).length) newSelection.push(newIndex.toString())
-        })
-        if (newSelection.length) {
-            activeVerses = newSelection.sort((a: any, b: any) => a - b)
-            bibles[0].activeVerses = activeVerses
-        }
+        const activeCount = activeVerses.length
 
-        if (!outputIsScripture) return
+        // chapter change first
         setTimeout(() => {
-            playScripture.set(true)
-        }, 10)
+            let newSelection: string[] = []
+            ;[...Array(activeCount)].map((_, i: number) => {
+                let newIndex: number = moveLeft ? currentIndex - i - 1 : currentIndex + i + 1
+                if ((moveLeft ? newIndex > -1 : newIndex <= currentVerses.length) && currentVerses[newIndex]) newSelection.push(currentVerses[newIndex].id)
+            })
+
+            if (newSelection.length) {
+                activeVerses = newSelection.sort((a, b) => currentVerses.findIndex((v) => v.id === a) - currentVerses.findIndex((v) => v.id === b))
+                bibles[0].activeVerses = activeVerses
+            }
+
+            if (!outputIsScripture) return
+            // selection first
+            setTimeout(
+                () => {
+                    playScripture.set(true)
+                },
+                changeChapter && bibles[0].api ? 500 : 10
+            )
+        })
     }
 
     $: outputIsScripture = $outputs[getActiveOutputs()[0]]?.out?.slide?.id === "temp"
@@ -870,6 +893,8 @@
     let history: boolean = false
 
     $: currentHistory = clone($scriptureHistory.filter((a) => a.id === bibles[0]?.id)).reverse()
+
+    $: currentVerses = splittedVerses[firstBibleId] || []
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />
@@ -922,12 +947,15 @@
                             on:dblclick={() => {
                                 bookId = verse.book
                                 chapterId = verse.chapter
-                                selectVerse({}, verse.verse)
-                                setTimeout(() => playOrClearScripture(true), verse.api ? 500 : 10)
+                                // wait for chapter
+                                setTimeout(() => {
+                                    selectVerse({}, verse.verse)
+                                    setTimeout(() => playOrClearScripture(true), verse.api ? 500 : 10)
+                                })
                             }}
                             title={formatBibleText(verse.text)}
                         >
-                            <span style="width: 250px;text-align: left;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
+                            <span style="width: 250px;text-align: left;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text?.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
                     {/each}
                 </div>
@@ -987,29 +1015,30 @@
                     </div>
                     <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(splittedVerses[firstBibleId] || {}).length}>
                         {#if Object.keys(splittedVerses[firstBibleId] || {}).length}
-                            {#each Object.keys(splittedVerses[firstBibleId] || {}) as id2}
-                                {@const splitted = id2.split("_")}
+                            {#each currentVerses as content}
+                                {@const splitted = content.id.split("_")}
                                 {@const id = splitted[0]}
                                 {@const subverse = Number(splitted[1] || 0)}
 
                                 <!-- custom drag -->
                                 <span
                                     class:showAllText={$resized.rightPanelDrawer <= 5}
-                                    {id}
+                                    id={content.id}
                                     draggable="true"
-                                    on:mouseup={(e) => selectVerse(e, id)}
+                                    on:mouseup={(e) => selectVerse(e, content.id)}
                                     on:mousedown={(e) => {
                                         if (e.ctrlKey || e.metaKey || e.shiftKey) return
-                                        if (!activeVerses.includes(id)) activeVerses = [id]
+                                        if (!activeVerses.includes(content.id)) activeVerses = [content.id]
                                         updateActiveVerses()
                                     }}
                                     on:dblclick={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? false : playOrClearScripture(true))}
                                     on:click={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? playOrClearScripture(true) : false)}
-                                    class:active={activeVerses.includes(id)}
+                                    class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
                                     title={$dictionary.tooltip?.scripture}
                                 >
                                     {id}
-                                    {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{subverse}</span>{/if}
+                                    <!-- WIP style position not very good -->
+                                    {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{getVersePartLetter(subverse)}</span>{/if}
                                 </span>
                             {/each}
                         {:else}
@@ -1069,32 +1098,32 @@
             </div>
             <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!Object.keys(splittedVerses[firstBibleId] || {}).length}>
                 {#if Object.keys(splittedVerses[firstBibleId] || {}).length}
-                    {#each Object.entries(splittedVerses[firstBibleId] || {}) as [id2, content]}
-                        {@const splitted = id2.split("_")}
+                    {#each currentVerses as content}
+                        {@const splitted = content.id.split("_")}
                         {@const id = splitted[0]}
                         {@const subverse = Number(splitted[1] || 0)}
 
                         <!-- custom drag -->
                         <p
                             class:showAllText={$resized.rightPanelDrawer <= 5}
-                            {id}
+                            id={content.id}
                             draggable="true"
-                            on:mouseup={(e) => selectVerse(e, id)}
+                            on:mouseup={(e) => selectVerse(e, content.id)}
                             on:mousedown={(e) => {
                                 if (e.ctrlKey || e.metaKey || e.shiftKey) return
-                                if (!activeVerses.includes(id)) activeVerses = [id]
+                                if (!activeVerses.includes(content.id)) activeVerses = [content.id]
                                 updateActiveVerses()
                             }}
                             on:dblclick={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? false : playOrClearScripture(true))}
                             on:click={(e) => (outputIsScripture && !e.ctrlKey && !e.metaKey ? playOrClearScripture(true) : false)}
-                            class:active={activeVerses.includes(id)}
+                            class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}
                         >
                             <span class="v">
                                 {id}
-                                {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{subverse}</span>{/if}
+                                {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{getVersePartLetter(subverse)}</span>{/if}
                             </span>
-                            {@html formatBibleText(content.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
+                            {@html formatBibleText(content.text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>'))}
                         </p>
                     {/each}
                     {#if bibles[0].copyright || bibles[0].metadata?.copyright}
@@ -1142,12 +1171,12 @@
         </Button>
 
         <div class="seperator" />
-        <Button on:click={() => (gridMode = !gridMode)} title={$dictionary.show?.[gridMode ? "grid" : "list"]}>
+        <Button disabled={history} on:click={() => (gridMode = !gridMode)} title={$dictionary.show?.[gridMode ? "grid" : "list"]}>
             <Icon size={1.3} id={gridMode ? "grid" : "list"} white />
         </Button>
 
         <div class="seperator" />
-        <Button disabled={!currentHistory.length} active={history} on:click={() => (history = !history)} title={$dictionary.popup?.history}>
+        <Button disabled={!currentHistory.length && !history} active={history} on:click={() => (history = !history)} title={$dictionary.popup?.history}>
             <Icon size={1.2} id="history" white={!currentHistory.length} />
         </Button>
 

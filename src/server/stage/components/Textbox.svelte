@@ -44,11 +44,15 @@
     let loaded = false
     onMount(() => {
         loaded = true
+
+        // update on first load
+        setTimeout(calculateAutosize, 400)
     })
 
     let alignElem: HTMLElement | undefined
 
     $: if (autoSize && loaded) calculateAutosize()
+    $: if ($variables) setTimeout(calculateAutosize, 50)
     let loopStop: any = null
     function calculateAutosize() {
         if (loopStop || !alignElem) return

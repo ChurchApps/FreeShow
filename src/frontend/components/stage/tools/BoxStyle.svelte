@@ -60,8 +60,8 @@
             delete newEdits.default
             delete newEdits.chords
             edits = { default: slideNotesEdit, font: edits.default, ...newEdits }
-        } else if (item.type === "text") {
-            removeInput(edits.default, "auto")
+            // } else if (item.type === "text") {
+            //     removeInput(edits.default, "auto")
         } else if (item.type === "variable") {
             let newEdits = clone(edits)
             delete newEdits.default
@@ -89,7 +89,7 @@
     $: if (item && type === "text") {
         let sectionId = edits.font ? "font" : "default"
         setBoxInputValue(edits, sectionId, "font-family", "styleValue", data["font"] || "")
-        setBoxInputValue(edits, sectionId, "font-size", "disabled", item.type !== "text" && item.auto !== false)
+        setBoxInputValue(edits, sectionId, "font-size", "disabled", item.type === "text" ? item.auto === true : item.auto !== false)
         // setBoxInputValue(edits, sectionId, "textFit", "hidden", item?.auto !== false)
 
         setBoxInputValue(edits, "special", "button.press", "value", item?.button?.press || "")
@@ -109,6 +109,9 @@
         setBoxInputValue(edits, "default", "itemNumber", "value", Number(item.itemNumber || 0))
         setBoxInputValue(edits, "default", "invertItems", "value", !!item.invertItems)
         setBoxInputValue(edits, "default", "invertItems", "hidden", Number(item.itemNumber || 0) !== 0)
+    }
+    $: if (item && item.type === "text") {
+        setBoxInputValue(edits, "default", "auto", "value", !!item.auto)
     }
 
     $: if (edits.chords) {

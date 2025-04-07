@@ -38,7 +38,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let deleting: boolean = id !== undefined
 
             data = clone(deleting ? obj.oldData : data) || {}
-            console.log(data)
 
             let key = data.key
             let subkey = data.subkey
@@ -349,7 +348,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // return if old show is modified after old show
                     const oldModified = a[id]?.timestamps?.modified || 0
                     const newModified = show.timestamps?.modified || 0
-                    if (initializing && oldModified > newModified) return
+                    if (initializing && newModified && oldModified > newModified) return
 
                     let oldShow = a[id] ? clone(a[id]) : null
                     if (oldShow?.timestamps) delete (oldShow as any).timestamps.used

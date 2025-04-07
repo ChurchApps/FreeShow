@@ -239,7 +239,7 @@
                         </span>
                     {/key}
                 {:else}
-                    <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} {fontSize} isStage />
+                    <Textbox item={stageItemToItem(item)} ref={{ type: "stage", id }} {fontSize} stageAutoSize={item.auto} isStage />
                 {/if}
             {:else if item.type}
                 <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false ? autoSize : fontSize} {preview} />

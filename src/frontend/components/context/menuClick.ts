@@ -28,6 +28,7 @@ import {
     currentWindow,
     dataPath,
     dictionary,
+    drawer,
     drawerTabsData,
     effectsLibrary,
     eventEdit,
@@ -127,6 +128,11 @@ const actions = {
         previousShow.set(null)
         activeShow.set(null)
         showRecentlyUsedProjects.set(false)
+
+        // close drawer
+        const minDrawerHeight = 40
+        let drawerIsOpened = get(drawer).height > minDrawerHeight
+        if (drawerIsOpened) drawer.set({ height: minDrawerHeight, stored: get(drawer).height })
 
         let firstItem = project.shows[0]
         if (firstItem) activeFocus.set({ id: firstItem.id, index: 0, type: firstItem.type })

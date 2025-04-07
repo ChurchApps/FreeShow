@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, dictionary, outLocked } from "../../stores"
+    import { activeProject, activeShow, dictionary, outLocked, projects } from "../../stores"
     import Capture from "../drawer/live/Capture.svelte"
     import NdiStream from "../drawer/live/NDIStream.svelte"
     import { createGlobalTimerFromLocalTimer } from "../drawer/timers/timers"
@@ -20,6 +20,9 @@
 
     // check for timer & create global
     $: if (show?.id) createGlobalTimerFromLocalTimer(show?.id)
+
+    $: position = $projects[$activeProject || ""]?.shows.findIndex((a) => a.id === show?.id)
+    $: if (show?.type === "section") console.log(position, show)
 </script>
 
 <div id="showArea" class="main">
@@ -29,7 +32,10 @@
         {:else if show.type === "audio"}
             <AudioPreview active={$activeShow} />
         {:else if show.type === "section"}
-            <Section section={show} />
+            {#key position !== undefined}
+                <!-- update content when moving position in project -->
+                <Section section={show} />
+            {/key}
         {:else if show.type === "overlay"}
             <OverlayPreview {show} />
         {:else if show.type === "pdf"}
