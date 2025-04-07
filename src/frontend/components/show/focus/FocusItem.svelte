@@ -58,7 +58,9 @@
         <OverlayPreview {show} />
     </div>
 {:else if type === "pdf"}
-    <PdfPreview {show} />
+    {#key show}
+        <PdfPreview {show} />
+    {/key}
 {:else}
     <Slides showId={show.id} layout={show.layout} projectIndex={show.index} />
 

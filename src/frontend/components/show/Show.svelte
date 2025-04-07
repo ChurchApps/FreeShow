@@ -39,7 +39,9 @@
         {:else if show.type === "overlay"}
             <OverlayPreview {show} />
         {:else if show.type === "pdf"}
-            <PdfPreview {show} />
+            {#key show}
+                <PdfPreview {show} />
+            {/key}
         {:else if show.type === "ppt"}
             <PowerPointPreview {show} />
         {:else if show.type === "camera"}
