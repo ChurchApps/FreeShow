@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as pdfjsLib from "pdfjs-dist"
     import { slide } from "svelte/transition"
-    import { dictionary, outLocked, outputs, slidesOptions } from "../../../stores"
+    import { dictionary, outLocked, outputs, slidesOptions, styles } from "../../../stores"
     import { wait } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
@@ -9,13 +9,16 @@
     import Button from "../../inputs/Button.svelte"
     import { clearBackground } from "../../output/clear"
     import { onMount } from "svelte"
+    import Loader from "../../main/Loader.svelte"
 
     export let show
     $: path = show.id
 
-    let viewports: { width: number; height: number }[] = []
-
     $: activeOutput = getActiveOutputs($outputs, false, true, true)[0]
+
+    $: currentOutput = $outputs[activeOutput]
+    $: transparentOutput = !!currentOutput?.transparent
+    $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     // set active if output
     let active: number = -1
@@ -30,7 +33,7 @@
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
         let name = show.name || removeExtension(getFileName(path))
-        setOutput("slide", { type: "pdf", id: path, page, pages: pageCount, viewport: viewports[page], name })
+        setOutput("slide", { type: "pdf", id: path, page, pages: pageCount, name })
 
         clearBackground()
     }
@@ -65,9 +68,14 @@
         zoomOpened = false
     }
 
+    let loading = true
     onMount(loadPages)
     async function loadPages() {
-        if (!path) return
+        loading = true
+        if (!path) {
+            loading = false
+            return
+        }
 
         const pdfDoc = await pdfjsLib.getDocument(path).promise
         pageCount = pdfDoc.numPages
@@ -86,6 +94,9 @@
             canvas!.width = viewport.width
 
             await page.render({ canvasContext: context, viewport }).promise
+
+            // display when the first page has loaded
+            loading = false
         }
     }
 </script>
@@ -95,11 +106,17 @@
 <div class="grid" on:wheel={wheel}>
     {#each { length: pageCount } as _page, i}
         <div class="main" class:active={active === i} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pageCount > 1 ? $slidesOptions.columns : 1)}%;">
-            <div class="slide" tabindex={0} on:click={(e) => outputPdf(e, i)}>
+            <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} on:click={(e) => outputPdf(e, i)}>
                 <canvas bind:this={canvases[i]} />
             </div>
         </div>
     {/each}
+
+    {#if loading}
+        <div class="load">
+            <Loader />
+        </div>
+    {/if}
 </div>
 
 <div class="actionbar">
@@ -137,7 +154,23 @@
         border: none;
     }
 
+    .load {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        background-color: var(--primary-darker);
+    }
+
     .grid {
+        position: relative;
+
         display: flex;
         flex-wrap: wrap;
         align-content: flex-start;

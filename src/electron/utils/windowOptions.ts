@@ -10,7 +10,6 @@ export const loadingOptions: BrowserWindowConstructorOptions = {
     width: 500,
     height: 300,
     icon: "public/icon.png",
-    backgroundColor: "#292c36",
     transparent: true,
     alwaysOnTop: true,
     resizable: false,

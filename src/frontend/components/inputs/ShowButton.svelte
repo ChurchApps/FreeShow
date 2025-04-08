@@ -1,4 +1,5 @@
 <script lang="ts">
+    import * as pdfjsLib from "pdfjs-dist"
     import type { MediaStyle } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, styles } from "../../stores"
@@ -10,6 +11,7 @@
     import { checkName, getLayoutRef } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
     import { joinTime, secondsToTime } from "../helpers/time"
+    import { clearBackground } from "../output/clear"
     import Button from "./Button.svelte"
     import HiddenInput from "./HiddenInput.svelte"
 
@@ -108,7 +110,7 @@
         if ($activePage === "edit") refreshEditSlide.set(true)
     }
 
-    function doubleClick(e: any) {
+    async function doubleClick(e: any) {
         if (editActive || $outLocked || e.target.closest("input")) return
 
         let outputId: string = getActiveOutputs($outputs, false, true, true)[0]
@@ -132,6 +134,12 @@
             if ($activeProject && $projects[$activeProject].shows.find((a) => a.id === out.path)) setOutput("slide", null)
 
             setOutput("background", out)
+        } else if (type === "pdf") {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+            const pdfDoc = await pdfjsLib.getDocument(id).promise
+            let name = show.name || removeExtension(getFileName(id))
+            setOutput("slide", { type: "pdf", id, page: 0, pages: pdfDoc.numPages, name })
+            clearBackground()
         } else if (type === "audio") AudioPlayer.start(id, { name: show.name })
         else if (type === "overlay") setOutput("overlays", show.id, false, "", true)
         else if (type === "player") setOutput("background", { id, type: "player" })

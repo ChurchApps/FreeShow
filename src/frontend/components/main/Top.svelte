@@ -10,7 +10,7 @@
     export let isWindows: boolean = false
 
     // && !$editHistory.length
-    $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? $shows[$activeShow?.id || ""]?.locked : !$activeShow?.id
+    $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? $shows[$activeShow?.id || ""]?.locked : $activeShow?.type === "pdf" || !$activeShow?.id
 
     let confirm: boolean = false
     let disableClick: boolean = false

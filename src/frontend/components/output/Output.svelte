@@ -257,7 +257,7 @@
 <Zoomed
     id={outputId}
     background={backgroundColor}
-    checkered={preview && backgroundColor === "transparent"}
+    checkered={(preview || mirror) && backgroundColor === "transparent"}
     backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)}
     align={alignPosition}
     center

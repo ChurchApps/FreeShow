@@ -1,3 +1,4 @@
+import * as pdfjsLib from "pdfjs-dist"
 import { get } from "svelte/store"
 import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
@@ -11,7 +12,7 @@ import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { clearOverlays, clearTimers } from "../output/clear"
+import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
 import {
     activeEdit,
     activeFocus,
@@ -505,15 +506,19 @@ function notBound(ref, outputId: string | undefined) {
     return outputId && ref?.data?.bindings?.length && !ref?.data?.bindings.includes(outputId)
 }
 
-function playPdf(slide: null | OutSlide, nextPage: number) {
-    let viewports = get(activeShow)?.data?.viewports || []
-    let pages = slide?.pages || viewports.length
+async function playPdf(slide: null | OutSlide, nextPage: number) {
+    let data = slide || get(activeShow)
+    if (!data?.id) return
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+    const pdfDoc = await pdfjsLib.getDocument(data.id).promise
+    const pages = pdfDoc.numPages
     if (nextPage > pages - 1) return
 
-    let data = slide || get(activeShow)
     let name = data?.name || get(projects)[get(activeProject) || ""]?.shows[get(activeShow)?.index || 0]?.name
 
-    setOutput("slide", { type: "pdf", id: data?.id, page: nextPage, pages, viewport: slide?.viewport || viewports[nextPage], name })
+    setOutput("slide", { type: "pdf", id: data.id, page: nextPage, pages, name })
+    clearBackground()
 }
 
 function getNextEnabled(index: null | number, end: boolean = false, customOutputId: string = ""): null | number {

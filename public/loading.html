@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -9,10 +9,16 @@
         <link rel="stylesheet" href="global.css" />
 
         <style>
+            :root {
+                --radius: 5px;
+            }
+
             main {
                 background-color: var(--primary);
                 width: 100%;
                 height: 100%;
+                border-radius: var(--radius);
+
                 display: flex;
                 flex-direction: column;
                 gap: 10px;
@@ -26,12 +32,18 @@
             }
 
             .loader {
+                --margin: 1.5px; /* calc(var(--radius) / 2); */
+                background-color: var(--primary-lighter);
+                margin: 0 var(--margin);
+                border-top-left-radius: 40px;
+                border-top-right-radius: 40px;
+
                 position: absolute;
                 top: 0;
-                width: 100%;
-                overflow: hidden;
+                width: calc(100% - (var(--margin) * 2));
                 height: 3px;
-                background-color: var(--primary-lighter);
+
+                overflow: hidden;
             }
 
             .loader span:before {

@@ -463,7 +463,6 @@ export interface OutSlide {
     type?: ShowType // mostly used for PDFs
     page?: number // PDF
     pages?: number // PDF
-    viewport?: { width: number; height: number } // PDF
     screen?: { id: string; name?: string } // PPT
 
     translations?: number // scripture translations count (for style template)
