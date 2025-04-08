@@ -4,6 +4,7 @@
     import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
     import Tabs from "../../../common/components/Tabs.svelte"
+    import { getGroupName } from "../../../common/util/show"
     import { translate } from "../../util/helpers"
     import { GetLayout, getNextSlide, next, nextSlide, previous } from "../../util/output"
     import { send } from "../../util/socket"
@@ -20,6 +21,8 @@
     import OverlayPreview from "../show/OverlayPreview.svelte"
     import Slide from "../show/Slide.svelte"
     import Slides from "../show/Slides.svelte"
+
+    $: outNumber = $outSlide ?? -1
 
     let transition: any = { type: "fade", duration: 500 }
 
@@ -51,9 +54,9 @@
     let scrollElem: HTMLElement | undefined
     // auto scroll
     $: {
-        if (scrollElem && $outSlide !== null && slideView === "lyrics") {
-            let offset = (scrollElem.children[$outSlide] as HTMLElement)?.offsetTop - scrollElem.offsetTop - 5
-            scrollElem.scrollTo(0, offset)
+        if (scrollElem && outNumber !== null && slideView === "lyrics") {
+            let offset = (scrollElem.children[outNumber] as HTMLElement)?.offsetTop - scrollElem.offsetTop - 5
+            scrollElem.scrollTo(0, offset - 50)
         }
     }
 
@@ -74,7 +77,7 @@
     }
 
     function changeLayout(layoutId: string) {
-        send("API:change_layout", { showId: $activeShow.id, layoutId })
+        send("API:change_layout", { showId: $activeShow?.id, layoutId })
     }
 
     $: previousId = ""
@@ -93,10 +96,10 @@
 
     let editOpened: boolean = false
     let textValue = ""
-    $: if (editOpened && $textCache[$activeShow?.id]) setText()
+    $: if (editOpened && $textCache[$activeShow?.id || ""]) setText()
     else textValue = ""
     function setText() {
-        textValue = $textCache[$activeShow?.id]
+        textValue = $textCache[$activeShow?.id || ""]
     }
     function done() {
         if (addGroups) {
@@ -111,26 +114,39 @@
         }
 
         editOpened = false
-        if ($textCache[$activeShow?.id] === textValue) return
+        if ($textCache[$activeShow?.id || ""] === textValue) return
 
         send("API:set_plain_text", { id: $activeShow?.id, value: textValue })
     }
+
+    function getName(group: string, layoutSlideId: string, index: number) {
+        const name = $activeShow ? getGroupName({ show: $activeShow, showId: $activeShow?.id || "" }, layoutSlideId, group, index, true) : ""
+        return name || "—"
+    }
+
+    // FULLSCREEN
+
+    let isFullscreen: boolean = false
+    function toggleFullscreen() {
+        isFullscreen = !isFullscreen
+    }
 </script>
 
-<div class="left">
-    <div class="flex">
-        {#if activeTab === "shows"}
-            <Shows tablet />
-        {:else if activeTab === "scripture"}
-            <!-- tablet -->
-            <Scripture />
-        {:else if activeTab === "project"}
-            <Project />
-        {/if}
-    </div>
+{#if !isFullscreen}
+    <div class="left">
+        <div class="flex">
+            {#if activeTab === "shows"}
+                <Shows tablet />
+            {:else if activeTab === "scripture"}
+                <Scripture tablet />
+            {:else if activeTab === "project"}
+                <Project />
+            {/if}
+        </div>
 
-    <Tabs {tabs} bind:active={activeTab} disabled={tabsDisabled} on:double={double} icons />
-</div>
+        <Tabs {tabs} bind:active={activeTab} disabled={tabsDisabled} on:double={double} icons />
+    </div>
+{/if}
 
 <div class="center">
     {#if ($active.type || "show") === "show"}
@@ -167,7 +183,7 @@
                         {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
                             {#if !layoutSlide.disabled}
                                 <span
-                                    style="padding: 5px;{$outShow?.id === $activeShow.id && $outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}"
+                                    style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}"
                                     on:click={() => {
                                         send("API:index_select_slide", { showId: $activeShow.id, index: i, layoutId: $activeShow.settings.activeLayout })
                                         _set("outShow", $activeShow)
@@ -175,7 +191,7 @@
                                 >
                                     <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
                                         <span style="left: 0;position: absolute;">{i + 1}</span>
-                                        <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : $activeShow.slides[layoutSlide.id].group || "—"}</span>
+                                        <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
                                     </span>
                                     {#each $activeShow.slides[layoutSlide.id].items as item}
                                         {#if item.lines}
@@ -200,42 +216,46 @@
                             {dictionary}
                             {scrollElem}
                             on:click={(e) => {
-                                send("API:index_select_slide", { showId: $activeShow.id, index: e.detail, layoutId: $activeShow.settings.activeLayout })
+                                let index = e.detail
+                                send("API:index_select_slide", { showId: $activeShow.id, index, layoutId: $activeShow.settings.activeLayout })
                                 _set("outShow", $activeShow)
+                                _set("outSlide", index)
                             }}
-                            outSlide={$outSlide}
+                            outSlide={outNumber}
                             columns={3}
                         />
                     {/if}
                 </div>
 
-                <!-- TODO: change layout -->
-                <div class="layouts">
-                    <div style="display: flex;">
-                        {#each Object.keys($activeShow.layouts || {}) as id}
-                            {@const layout = $activeShow.layouts[id]}
-                            <Button on:click={() => changeLayout(id)} active={$activeShow.settings?.activeLayout === id}>
-                                {layout.name}
+                {#if !isFullscreen}
+                    <!-- TODO: change layout -->
+                    <div class="layouts">
+                        <div style="display: flex;">
+                            {#each Object.keys($activeShow.layouts || {}) as id}
+                                {@const layout = $activeShow.layouts[id]}
+                                <Button on:click={() => changeLayout(id)} active={$activeShow.settings?.activeLayout === id}>
+                                    {layout.name}
+                                </Button>
+                            {/each}
+                        </div>
+
+                        <div class="buttons">
+                            <Button class="context #slideViews" on:click={() => (slideView = slidesViews[slideView])}>
+                                <Icon size={1.3} id={slideView} white />
                             </Button>
-                        {/each}
+
+                            <Button on:click={() => (groupsOpened = true)} center dark>
+                                <Icon id="groups" right />
+                                {translate("tools.groups", $dictionary)}
+                            </Button>
+
+                            <Button on:click={() => (editOpened = true)} center dark>
+                                <Icon id="edit" right />
+                                {translate("titlebar.edit", $dictionary)}
+                            </Button>
+                        </div>
                     </div>
-
-                    <div class="buttons">
-                        <Button class="context #slideViews" on:click={() => (slideView = slidesViews[slideView])}>
-                            <Icon size={1.3} id={slideView} white />
-                        </Button>
-
-                        <Button on:click={() => (groupsOpened = true)} center dark>
-                            <Icon id="groups" right />
-                            {translate("tools.groups", $dictionary)}
-                        </Button>
-
-                        <Button on:click={() => (editOpened = true)} center dark>
-                            <Icon id="edit" right />
-                            {translate("titlebar.edit", $dictionary)}
-                        </Button>
-                    </div>
-                </div>
+                {/if}
             {/if}
         {:else}
             <Center faded>{translate("empty.show", $dictionary)}</Center>
@@ -251,45 +271,53 @@
     {/if}
 </div>
 
-<div class="right" style="jutsify-content: space-between;">
-    {#if !$isCleared.all}
-        <div class="top flex">
-            {#if outShow && layout}
-                <!-- <h2>{outShow.name}</h2> -->
-                <div class="outSlides">
-                    <Slide outSlide={$outSlide} {transition} preview />
+{#if !isFullscreen}
+    <div class="right" style="jutsify-content: space-between;">
+        {#if !$isCleared.all}
+            <div class="top flex">
+                {#if $outShow && layout}
+                    <!-- <h2>{$outShow.name}</h2> -->
+                    <div class="outSlides">
+                        <Slide outSlide={outNumber} {transition} preview />
+                    </div>
+                {/if}
+
+                <div class="buttons">
+                    {#key outNumber}
+                        <Clear outSlide={outNumber} tablet />
+                    {/key}
                 </div>
-            {/if}
 
-            <div class="buttons">
-                {#key $outSlide}
-                    <Clear outSlide={$outSlide} tablet />
-                {/key}
-            </div>
-
-            {#if outShow && layout}
-                <div class="buttons" style="display: flex;width: 100%;">
-                    <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
-                    <Button style="flex: 1;" on:click={previous} disabled={$outSlide <= 0} center><Icon size={1.8} id="previous" /></Button>
-                    <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{$outSlide + 1}/{totalSlides}</span>
-                    <Button style="flex: 1;" on:click={next} disabled={$outSlide + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
-                    <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
-                </div>
-            {/if}
-        </div>
-
-        {#if outShow && layout}
-            <div class="outSlides">
-                {#if nextSlide(layout, $outSlide) && getNextSlide($outShow, $outSlide, $outLayout)}
-                    <Slide outSlide={nextSlide(layout, $outSlide) || 0} {transition} preview />
-                {:else}
-                    <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;padding: 20px 0;">{translate("remote.end", $dictionary)}</div>
+                {#if $outShow && layout}
+                    <div class="buttons" style="display: flex;width: 100%;">
+                        <!-- <Button style="flex: 1;" center><Icon id="previousFull" /></Button> -->
+                        <Button style="flex: 1;" on:click={previous} disabled={outNumber <= 0} center><Icon size={1.8} id="previous" /></Button>
+                        <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.8em;">{outNumber + 1}/{totalSlides}</span>
+                        <Button style="flex: 1;" on:click={next} disabled={outNumber + 1 >= totalSlides} center><Icon size={1.8} id="next" /></Button>
+                        <!-- <Button style="flex: 1;" center><Icon id="nextFull" /></Button> -->
+                    </div>
                 {/if}
             </div>
+
+            {#if $outShow && layout}
+                <div class="outSlides">
+                    {#if $outShow && $outLayout && nextSlide(layout, outNumber) && getNextSlide($outShow, outNumber, $outLayout)}
+                        <Slide outSlide={nextSlide(layout, outNumber) || 0} {transition} preview />
+                    {:else}
+                        <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;padding: 20px 0;">{translate("remote.end", $dictionary)}</div>
+                    {/if}
+                </div>
+            {/if}
+        {:else}
+            <Center faded>{translate("remote.no_output", $dictionary)}</Center>
         {/if}
-    {:else}
-        <Center faded>{translate("remote.no_output", $dictionary)}</Center>
-    {/if}
+    </div>
+{/if}
+
+<div class="fullscreen">
+    <button on:click={toggleFullscreen}>
+        <Icon id={isFullscreen ? "exitFullscreen" : "fullscreen"} size={2.2} white />
+    </button>
 </div>
 
 <style>
@@ -349,5 +377,33 @@
     .outSlides {
         display: flex;
         width: 100%;
+    }
+
+    /* fullscreen */
+    .fullscreen {
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+    }
+
+    .fullscreen button {
+        width: 60px;
+        height: 60px;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        /* background-color: white; */
+        background-color: rgb(255 255 255 / 0.2);
+        color: var(--text);
+
+        padding: 10px;
+        border-radius: 50%;
+        border: 2px solid black;
+    }
+    .fullscreen button:hover,
+    .fullscreen button:active {
+        background-color: var(--primary-lighter);
     }
 </style>

@@ -33,7 +33,7 @@
     <MediaOutput {...$outBackground} {transition} bind:video bind:videoData />
   {/if} -->
         <div class="background" style="zoom: {1 / ratio}">
-            {#if $outShow.media?.[layout?.background || ""]}
+            {#if $outShow?.media?.[layout?.background || ""]}
                 <img src={$outShow.media[layout.background || ""].path} />
             {/if}
         </div>

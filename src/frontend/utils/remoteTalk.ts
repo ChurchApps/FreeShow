@@ -107,7 +107,6 @@ export const receiveREMOTE: any = {
             return
         } else if (msg.data !== null && msg.data !== undefined && out) {
             id = out.id
-            console.log(msg.data)
 
             let layout = getLayoutRef(id)
             if (msg.data < layout.length && msg.data >= 0) {
@@ -115,6 +114,8 @@ export const receiveREMOTE: any = {
                 setOutput("slide", newOutSlide)
             }
             msg.data = null
+        } else if (out?.id === "temp") {
+            msg.data = out
         } else {
             let styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : null
             msg.data = { slide: out ? out.index : null, layout: out?.layout || null, styleRes }

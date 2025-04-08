@@ -11,6 +11,8 @@
 
     let transition: any = { type: "fade", duration: 500 }
 
+    $: slideNum = $outSlide ?? -1
+
     $: layout = $outShow ? GetLayout($outShow, $outLayout) : null
     $: _set("layout", layout)
 
@@ -31,9 +33,9 @@
         <Lyrics />
     {:else}
         <div on:click={click} class="outSlides">
-            <Slide outSlide={$outSlide} {transition} />
-            {#if nextSlide(layout, $outSlide) && getNextSlide($outShow, $outSlide, $outLayout)}
-                <Slide outSlide={nextSlide(layout, $outSlide) || 0} {transition} />
+            <Slide outSlide={slideNum} {transition} />
+            {#if $outLayout && nextSlide(layout, slideNum) && getNextSlide($outShow, slideNum, $outLayout)}
+                <Slide outSlide={nextSlide(layout, slideNum) || 0} {transition} />
             {:else}
                 <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;">{translate("remote.end", $dictionary)}</div>
             {/if}
@@ -41,11 +43,11 @@
     {/if}
 
     <div class="buttons" style="display: flex;width: 100%;">
-        <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.6em;padding: 6px;">{$outSlide + 1}/{totalSlides}</span>
+        <span style="flex: 3;align-self: center;text-align: center;opacity: 0.8;font-size: 0.6em;padding: 6px;">{slideNum + 1}/{totalSlides}</span>
     </div>
 
     <div class="buttons">
-        <Clear outSlide={$outSlide} on:clear={() => _set("activeTab", "show")} />
+        <Clear outSlide={slideNum} on:clear={() => _set("activeTab", "show")} />
     </div>
 
     <div class="modes">

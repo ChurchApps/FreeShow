@@ -4,6 +4,7 @@ import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { sendMain } from "../../IPC/main"
+import { triggerFunction } from "../../utils/common"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
@@ -205,6 +206,8 @@ export const API_ACTIONS = {
 
     // SCRIPTURE
     start_scripture: (data: API_scripture) => startScripture(data),
+    scripture_next: () => triggerFunction("scripture_next"),
+    scripture_previous: () => triggerFunction("scripture_previous"),
 
     // OUTPUT
     lock_output: (data: API_boolval) => toggleLock(data.value), // BC

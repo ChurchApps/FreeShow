@@ -766,6 +766,8 @@
         updateActiveVerses()
     }
 
+    $: if ($activeTriggerFunction === "scripture_next") moveSelection(false)
+    $: if ($activeTriggerFunction === "scripture_previous") moveSelection(true)
     function moveSelection(moveLeft: boolean) {
         if (!currentVerses.length) return
         if (!activeVerses.length) {

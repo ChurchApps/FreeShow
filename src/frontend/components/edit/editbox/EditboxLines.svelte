@@ -322,6 +322,10 @@
         let defaultFontSize = itemFontSize
         let maxFontSize
 
+        if (ref.type === "stage") {
+            type = "growToFit"
+        }
+
         if (type === "growToFit") {
             defaultFontSize = 100
             maxFontSize = itemFontSize

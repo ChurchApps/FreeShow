@@ -236,7 +236,7 @@
 
     const includeCount = 3
     function getPreviousSlides() {
-        let lowestIndex = Number(sorted.sort((a, b) => Number(a) - Number(b))[0])
+        let lowestIndex = getVerseId(sorted.sort((a, b) => getVerseId(a) - getVerseId(b))[0])
 
         let slides: any[] = []
         for (let i = 1; i <= includeCount; i++) {
@@ -247,7 +247,7 @@
         return slides
     }
     function getNextSlides() {
-        let highestIndex = Number(sorted.sort((a, b) => Number(b) - Number(a))[0])
+        let highestIndex = getVerseId(sorted.sort((a, b) => getVerseId(b) - getVerseId(a))[0])
 
         let slides: any[] = []
         for (let i = 1; i <= includeCount; i++) {
@@ -256,6 +256,10 @@
         }
 
         return slides
+    }
+
+    function getVerseId(verseRef: string) {
+        return Number(verseRef.toString().split("_")[0])
     }
 
     $: if ($playScripture) {

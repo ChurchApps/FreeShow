@@ -1,4 +1,4 @@
-import type { Slide, SlideData } from "../../../types/Show"
+import type { Show, Slide, SlideData } from "../../../types/Show"
 import { send } from "./socket"
 import { _get, _set } from "./stores"
 
@@ -6,7 +6,7 @@ export function next() {
     if (!_get("layout")) {
         if (_get("activeTab") === "show" && _get("activeShow")) {
             // play slide
-            send("API:index_select_slide", { showId: _get("activeShow").id, index: 0, layoutId: _get("activeShow").settings.activeLayout })
+            send("API:index_select_slide", { showId: _get("activeShow")?.id, index: 0, layoutId: _get("activeShow")?.settings.activeLayout })
             _set("outShow", _get("activeShow"))
         }
         return
@@ -15,11 +15,11 @@ export function next() {
     // WIP don't play next when reached end!
 
     let index = nextSlide(_get("layout"), _get("outSlide") ?? -1)
-    if (index !== null) send("API:index_select_slide", { showId: _get("outShow").id, index, layoutId: _get("outShow").settings.activeLayout })
+    if (index !== null) send("API:index_select_slide", { showId: _get("outShow")?.id, index, layoutId: _get("outShow")?.settings.activeLayout })
     else {
         // go to next show in project
         let currentProjectShows = _get("projects").find((a) => a.id === _get("project"))?.shows || []
-        let currentProjectShowIndex = currentProjectShows.findIndex((showRef: any) => showRef.id === _get("outShow").id)
+        let currentProjectShowIndex = currentProjectShows.findIndex((showRef: any) => showRef.id === _get("outShow")?.id)
 
         let newIndex = currentProjectShowIndex + 1
         let newProjectShow: any = { type: "." }
@@ -40,12 +40,12 @@ export function previous() {
 
     // WIP go to previous show & play last slide
 
-    let index = nextSlide(_get("layout"), _get("outSlide") ?? _get("layout")?.length, true)
-    if (index !== null) send("API:index_select_slide", { showId: _get("outShow").id, index, layoutId: _get("outShow").settings.activeLayout })
+    let index = nextSlide(_get("layout"), _get("outSlide") ?? _get("layout")?.length ?? -1, true)
+    if (index !== null) send("API:index_select_slide", { showId: _get("outShow")?.id, index, layoutId: _get("outShow")?.settings.activeLayout })
     else {
         // go to preview show in project
         let currentProjectShows = _get("projects").find((a) => a.id === _get("project"))?.shows || []
-        let currentProjectShowIndex = currentProjectShows.findIndex((showRef: any) => showRef.id === _get("outShow").id)
+        let currentProjectShowIndex = currentProjectShows.findIndex((showRef: any) => showRef.id === _get("outShow")?.id)
 
         let newIndex = currentProjectShowIndex - 1
         let newProjectShow: any = { type: "." }
@@ -72,13 +72,13 @@ export function nextSlide(layout: any, currentSlide: number, previous: boolean =
     return layout![index] && !layout![index].disabled ? index : null
 }
 
-export const getNextSlide = (show: any, slideIndex: number, layout: string = show.settings.activeLayout): Slide => {
+export const getNextSlide = (show: Show, slideIndex: number, layout: string = show.settings.activeLayout): Slide | null => {
     let index = nextSlide(GetLayout(show, layout), slideIndex)
 
     return index === null ? null : show.slides[GetLayout(show, layout)[slideIndex]?.id]
 }
 
-export const GetLayout = (show: any, layout: string): SlideData[] => {
+export const GetLayout = (show: Show | null, layout: string | null): SlideData[] => {
     let layoutSlides: SlideData[] = []
     if (show && layout) {
         show.layouts?.[layout]?.slides.forEach((ls: any) => {

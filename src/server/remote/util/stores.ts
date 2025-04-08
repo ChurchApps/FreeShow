@@ -1,6 +1,6 @@
 import { get, Writable, writable } from "svelte/store"
 import type { Dictionary } from "../../../types/Settings"
-import type { Overlays, TrimmedShow } from "../../../types/Show"
+import type { Overlays, Show, TrimmedShow } from "../../../types/Show"
 import type { BibleCategories } from "../../../types/Tabs"
 import { clone } from "../../common/util/helpers"
 import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
@@ -23,12 +23,12 @@ export let activeTab = writable("shows")
 export let outputMode: Writable<"slide" | "lyrics"> = writable("slide")
 
 export let active: Writable<ProjectShowRef> = writable({ id: "", type: "show" })
-export let activeShow: Writable<any> = writable(null)
+export let activeShow: Writable<Show | null> = writable(null)
 export let shows: Writable<TrimmedShow[]> = writable([])
-export let outSlide: Writable<any> = writable(null)
-export let outLayout: Writable<any> = writable(null)
+export let outSlide: Writable<number | null> = writable(null)
+export let outLayout: Writable<string | null> = writable(null)
 export let styleRes: Writable<any> = writable(null) // this is actually aspect ratio
-export let outShow: Writable<any> = writable(null)
+export let outShow: Writable<Show | null> = writable(null)
 export let layout: Writable<any[] | null> = writable(null)
 export let isCleared = writable({ all: true, background: true, slide: true, overlays: true, audio: true, slideTimers: true })
 
