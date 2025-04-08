@@ -12,6 +12,7 @@ import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
+import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
 import {
     activeEdit,
@@ -1053,15 +1054,13 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
         }
 
-        if (!showId) {
-            let outSlide: OutSlide | null = get(outputs)[outputId]?.out?.slide || null
-            // if (!outSlide?.id) return ""
+        let outSlide: OutSlide | null = get(outputs)[outputId]?.out?.slide || null
 
+        if (!showId) {
             showId = outSlide?.id
             layoutId = outSlide?.layout
             slideIndex = outSlide?.index ?? -1
             show = _show(showId).get() || {}
-            // if (!show) return
         }
 
         // META
@@ -1081,7 +1080,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         let projectRef = { id: get(activeProject) || "", index: projectIndex }
 
-        const value = (dynamicValues[id]({ show, ref, slideIndex, layout, projectRef, videoTime, videoDuration }) ?? "").toString()
+        const value = (dynamicValues[id]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration }) ?? "").toString()
 
         if (id === "show_name_next" && !value && get(currentWindow) === "output") {
             send(OUTPUT, ["MAIN_SHOWS_DATA"])
@@ -1112,6 +1111,10 @@ const dynamicValues = {
     slide_group_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.group || "",
     slide_notes: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.notes || "",
     slide_notes_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
+
+    // text
+    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
+    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
 
     // media
     video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),

@@ -85,7 +85,9 @@
                 }
             })
 
-        return oneItem ? [oneItem as Item] : []
+        if (!oneItem) return []
+        // WIP remove "empty" items
+        return [oneItem as Item]
     }
 
     // PRE LOAD SLIDE ITEMS (AUTO SIZE)

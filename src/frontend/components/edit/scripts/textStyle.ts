@@ -216,6 +216,34 @@ export function getLastLineAlign(item: Item, selection: any): string {
     return last
 }
 
+export function getTextLines(slide: Slide | { items: Item[] }) {
+    let lines: string[] = []
+    if (!slide?.items) return lines
+
+    slide.items.forEach((item, i) => {
+        if (!getItemText(item)?.length) return
+        if (i > 0) lines.push("")
+
+        let fullText = ""
+        item.lines?.forEach((line) => {
+            if (!Array.isArray(line?.text)) return
+
+            let lineText = ""
+            line.text.forEach((content) => {
+                // remove any dynamic values
+                lineText += content.value.replace(/\{[^}]*\}/g, "")
+            })
+
+            if (lineText.length) lines.push(lineText)
+            fullText += lineText
+        })
+
+        if (!fullText.length) lines.pop()
+    })
+
+    return lines
+}
+
 // get text of slides
 export function getSlidesText(slides: { [key: string]: Slide }) {
     return Object.values(slides).reduce((value, slide) => (value += getSlideText(slide)), "")

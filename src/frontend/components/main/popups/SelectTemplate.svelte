@@ -57,7 +57,7 @@
         previousSearchValue = searchValue
     }
 
-    function selectTemplate(template: any) {
+    function selectTemplate(template: any, keyboard: boolean = false) {
         if ($popupData.action !== "select_template") return
 
         let previousValue = value
@@ -71,7 +71,7 @@
                 //     popupData.set({ ...$popupData, templateId: value })
             }
 
-            if ($popupData.doubleClick && previousValue !== template.id) return
+            if ($popupData.doubleClick && !keyboard && previousValue !== template.id) return
 
             if (!$popupData.revert) setTimeout(() => popupData.set({}), 500) // revert after closing
             activePopup.set($popupData.revert || null)
@@ -82,7 +82,7 @@
 
     function chooseTemplate(e: any) {
         if (e.key !== "Enter" || !searchValue.length || !searchedTemplates.length) return
-        selectTemplate(searchedTemplates[0])
+        selectTemplate(searchedTemplates[0], true)
     }
 
     // open drawer tab instantly before content has loaded

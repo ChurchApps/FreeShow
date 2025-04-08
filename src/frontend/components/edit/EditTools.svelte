@@ -92,10 +92,10 @@
     $: itemType = active === "text" ? item?.type || "text" : ""
     $: type = `${active}${itemType}`
     function copyStyle() {
-        const style = getCurrentStyle(item)
+        const styles = items.map((item) => getCurrentStyle(item))
 
         copyPasteEdit.update((a) => {
-            a[type] = style
+            a[type] = styles
             return a
         })
 
@@ -113,8 +113,8 @@
     // PASTE
 
     function pasteStyle(applyToAll: boolean = false, applyToFollowing: boolean = false) {
-        let style = $copyPasteEdit[type]
-        if (!style) return
+        let styles = $copyPasteEdit[type]
+        if (!Array.isArray(styles)) return
 
         // get selected slide(s)
         let slides: any[] = []
@@ -136,16 +136,16 @@
 
         setNewStyle()
         function setNewStyle() {
-            if (active === "text") return setBoxStyle(style, slides, itemType as any)
-            if (active === "item") return setItemStyle(style, slides)
-            if (active === "slide") return setSlideStyle(style, slides)
+            if (active === "text") return setBoxStyle(styles, slides, itemType as any)
+            if (active === "item") return setItemStyle(styles, slides)
+            if (active === "slide") return setSlideStyle(styles[0], slides)
             if (active === "filters") {
                 let indexes: number[] = []
                 if (applyToFollowing) indexes = ref.map((_, i) => i).filter((a) => a >= $activeEdit.slide!)
                 else if (applyToAll) indexes = ref.map((_, i) => i)
                 else indexes = [$activeEdit.slide!]
 
-                return setFilterStyle(style, indexes)
+                return setFilterStyle(styles[0], indexes)
             }
         }
     }
