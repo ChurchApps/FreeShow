@@ -328,6 +328,7 @@ export const dropActions = {
         } else if (drag.id === "variable") {
             drag.data.forEach((a) => {
                 let name = getVariableNameId(a.name || "")
+                if (!name) return
                 addItem("text", null, {}, `{variable_${name}}`)
             })
         }

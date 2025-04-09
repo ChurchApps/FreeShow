@@ -1,7 +1,8 @@
 <script lang="ts">
     import { Main } from "../../../../types/IPC/Main"
+    import type { SaveData } from "../../../../types/Save"
     import { sendMain } from "../../../IPC/main"
-    import { activeEdit, activePage, activePopup, activeShow, deletedShows, drawSettings, renamedShows, scripturesCache, showsCache, showsPath } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, dataPath, deletedShows, drawSettings, renamedShows, scripturesCache, showsCache, showsPath } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -9,7 +10,8 @@
 
     function reset() {
         sendMain(Main.SAVE, {
-            reset: true,
+            path: $showsPath || "",
+            dataPath: $dataPath,
             // SETTINGS
             SETTINGS: {},
             SYNCED_SETTINGS: {},
@@ -27,7 +29,10 @@
             CACHE: { media: {}, text: {} },
             HISTORY: { undo: [], redo: [] },
             USAGE: { all: [] },
-        } as any)
+            // SAVE DATA
+            closeWhenFinished: false,
+            customTriggers: { changeUserData: { reset: true } },
+        } as SaveData)
 
         clearAll()
         drawSettings.set({})

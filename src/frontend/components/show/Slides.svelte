@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
+    import { activeFocus, activePage, activePopup, alertMessage, cachedShowsData, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special } from "../../stores"
     import { videoExtensions } from "../../values/extensions"
     import { customActionActivation } from "../actions/actions"
     import { history } from "../helpers/history"
@@ -20,6 +20,7 @@
 
     export let showId: string
     export let layout: string = ""
+    export let projectIndex: number = -1
 
     $: currentShow = $showsCache[showId]
     $: activeLayout = layout || $showsCache[showId]?.settings?.activeLayout
@@ -104,6 +105,13 @@
             // force update output if index is the same as previous
             if (activeSlides[index]) refreshOut()
         })
+
+        // WIP focus mode does not auto scroll on arrow navigation when many slides (that overflow view area)
+        // always auto scroll in focus mode (if not very many slides)
+        if ($focusMode && projectIndex > -1 && index < 10) {
+            activeFocus.set({ id: showId, index: projectIndex, type: "show" })
+            return
+        }
 
         // don't auto scroll if clicking with mouse!
         disableAutoScroll = true

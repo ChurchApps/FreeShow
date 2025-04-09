@@ -1,11 +1,13 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { activePage, activePopup, contextActive, contextData, os } from "../../stores"
+    import { activePage, activePopup, contextActive, contextData, os, spellcheck } from "../../stores"
+    import { closeContextMenu } from "../../utils/shortcuts"
     import { getEditItems } from "../edit/scripts/itemHelpers"
     import ContextChild from "./ContextChild.svelte"
     import ContextItem from "./ContextItem.svelte"
     import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
     import { quickLoadItems } from "./loadItems"
+    import SpellCheckMenu from "./SpellCheckMenu.svelte"
 
     let contextElem: HTMLDivElement | null = null
     let activeMenu: string[] = []
@@ -15,12 +17,14 @@
     let translate = 0
 
     function onContextMenu(e: MouseEvent) {
+        spellcheck.set(null)
+
         let target: any = e.target
         if (!target || closingMenuTimeout) return
 
         let input = ["text", "textarea"].includes(target.type) && !target.closest(".numberInput")
         if ((!input && (target.closest(".contextMenu") || $activePopup)) || target.closest(".nocontext")) {
-            contextActive.set(false)
+            closeContextMenu()
             return
         }
 
@@ -73,7 +77,7 @@
     }
 
     const click = (e: MouseEvent) => {
-        if (!e.target?.closest(".contextMenu")) contextActive.set(false)
+        if (!e.target?.closest(".contextMenu")) closeContextMenu()
     }
 
     // prevent duplicated menus (due to Svelte transition bug)
@@ -126,6 +130,8 @@
 {#if $contextActive}
     <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);" class:top transition:fade={{ duration: 60 }}>
         {#key activeMenu}
+            <SpellCheckMenu />
+
             {#each activeMenu as id}
                 {#if id === "SEPERATOR"}
                     <hr />
@@ -146,11 +152,19 @@
     .contextMenu {
         position: fixed;
         min-width: 250px;
-        background-color: var(--primary);
-        border-radius: var(--border-radius);
         box-shadow: 1px 1px 3px 2px rgb(0 0 0 / 0.2);
         padding: 5px 0;
         z-index: 5001;
+
+        /* border-radius: var(--border-radius); */
+        border-radius: 3px;
+
+        background-color: var(--primary);
+        /* get rgb from theme primary color... */
+        /* background-color: rgb(41 44 54 / 0.8); */
+        /* background: rgba(41, 44, 54, 0.98);
+         background: linear-gradient(150deg, rgba(41, 44, 54, 0.98) 0%, rgba(41, 49, 59, 0.95) 100%); */
+        /* backdrop-filter: blur(3px); */
     }
 
     .top {

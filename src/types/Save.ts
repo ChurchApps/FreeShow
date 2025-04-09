@@ -80,8 +80,8 @@ export interface SaveData {
     path: string
     dataPath: string
     // SETTINGS
-    SETTINGS: { [key in SaveListSettings]: any }
-    SYNCED_SETTINGS: { [key in SaveListSyncedSettings]: any }
+    SETTINGS: { [key in SaveListSettings]: any } | {}
+    SYNCED_SETTINGS: { [key in SaveListSyncedSettings]: any } | {}
     // SHOWS
     SHOWS: TrimmedShows
     STAGE_SHOWS: StageLayouts
@@ -94,10 +94,10 @@ export interface SaveData {
     THEMES: { [key: string]: Themes }
     DRIVE_API_KEY: any
     // CACHES SAVED TO MULTIPLE FILES
-    showsCache: Shows
-    scripturesCache: { [key: string]: Bible }
-    deletedShows: { name: string; id: string }[]
-    renamedShows: { id: string; name: string; oldName: string }[]
+    showsCache?: Shows
+    scripturesCache?: { [key: string]: Bible }
+    deletedShows?: { name: string; id: string }[]
+    renamedShows?: { id: string; name: string; oldName: string }[]
     // CACHES
     CACHE: { text: any }
     HISTORY: { undo: History[]; redo: History[] }
@@ -106,4 +106,4 @@ export interface SaveData {
     closeWhenFinished: boolean
     customTriggers: SaveActions
 }
-export type SaveActions = { backup?: boolean; silent?: boolean; changeUserData?: any; autosave?: boolean }
+export type SaveActions = { backup?: boolean; silent?: boolean; changeUserData?: any; autosave?: boolean; reset?: boolean }

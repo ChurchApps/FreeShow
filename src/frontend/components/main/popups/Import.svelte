@@ -19,9 +19,10 @@
         // { name: "Scripture", id: "scripture" }, // scripture drawer tab
     ]
 
-    const text_formats: { popup?: Popups; [key: string]: any }[] = [
-        { name: "$formats.clipboard", id: "clipboard" },
+    const text_formats: { name: string; extensions: string[]; id: string; tutorial?: string; popup?: Popups }[] = [
+        { name: "$formats.clipboard", extensions: [], id: "clipboard" },
         { name: "$formats.text", extensions: ["txt"], id: "txt" },
+        { name: "CSV", extensions: ["csv"], id: "csv" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
         {
             name: "PowerPoint",
@@ -51,7 +52,7 @@
         { name: "MediaShout", extensions: ["ssc", "xml"], id: "mediashout" }, // SSC (Songs5.mdb)
         { name: "Quelea", extensions: ["xml", "qsp"], id: "quelea" },
         { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
-        { name: "Songbeamer", id: "songbeamer", popup: "songbeamer_import" },
+        { name: "Songbeamer", id: "songbeamer", extensions: [], popup: "songbeamer_import" },
         { name: "Easyslides", extensions: ["xml"], id: "easyslides" },
         { name: "VerseVIEW", extensions: ["xml"], id: "verseview" },
     ]
@@ -100,8 +101,9 @@
 <h3><T id="settings.text_import" /></h3>
 <div style="margin-bottom: 20px;">
     {#each text_formats as format}
+        <!-- width: 20%; -->
         <Button
-            style="width: 20%;flex-direction: column;min-height: 160px;"
+            style="width: calc(100% / 6);flex-direction: column;min-height: 160px;"
             on:click={() => {
                 if (format.popup) {
                     tick().then(() => {

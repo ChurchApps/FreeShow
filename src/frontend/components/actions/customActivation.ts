@@ -23,3 +23,9 @@ export const customActionActivations = [
     { id: "audio_playlist_ended", name: "$:actions.activate_audio_playlist_ended:$" },
     { id: "midi_signal_received", name: "$:midi.activate:$", inputs: true },
 ]
+
+// WIP Custom activations
+// background_start
+// slide_start
+// overlay_start
+// overlay_cleared

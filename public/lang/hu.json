@@ -478,7 +478,7 @@
         "less_than_minute": "kevesebb mint egy perc múlva.",
         "less_than_seconds": "kevesebb, mint {} másodperc múlva.",
         "now": "most!",
-        "template_applied_globally": "This template is already applied to the show globally.",
+        "template_applied_globally": "Ez a sablon már globálisan alkalmazva van a bemutatóra.",
         "unsupported_video": "Nem támogatott videó!",
         "no_video_id": "Nincs videóazonosító",
         "no_name": "Nincs név",
@@ -1420,12 +1420,12 @@
         "create_show_button": "Kattintson erre egy új bemutató (dal, prezentáció stb.) létrehozásához.",
         "create_show_popup": "Töltse ki a bemutató főbb adatait, a név alapján automatikusan megkeresheti a dalszövegeket az interneten, vagy kézzel is beillesztheti a dalszövegeket.",
         "show": "A bemutató a fő prezentáció, kattintson bármelyik diára a bemutatáshoz, és használja a nyílbillentyűket a navigáláshoz. Médiafájlokat is húzhat és dobhat egy diára, hogy háttérként legyenek beállítva.",
-        "media": "You can add media content with drag and drop, from the drawer or from your computer, into a show or a project.",
+        "media": "Egy műsorhoz vagy projekthez médiatartalmat húzással és ejtéssel adhat hozzá a szerkesztőből vagy a számítógépről .",
         "show_slide": "Miután egy diára kattintott, az megjelenik a kimeneten, és a jobb oldalon egy előnézetet lát, itt talál néhány extra műveletet is, például a videó szüneteltetését.",
-        "output_window": "Click this button to open an output window on a secondary screen.",
+        "output_window": "Erre a gombra kattintva egy kimeneti ablakot nyithat meg egy másodlagos képernyőn.",
         "output_clear": "Törölje le az egyes kimeneti rétegeket vagy a kimenet összes rétegét.",
         "edit": "Nyissa meg a diaszerkesztést egy kattintással felül.",
-        "end": "Feel free to look on the web if you need help with other features."
+        "end": "Nézzen szét a weben, ha segítségre van szüksége más funkciókkal kapcsolatban."
     },
     "songbeamer_import": {
         "options": "Beállítások",

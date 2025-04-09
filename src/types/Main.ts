@@ -206,7 +206,7 @@ export interface LessonFile {
 export interface Variable {
     id?: string
     name: string
-    type: "number" | "text"
+    type: "number" | "random_number" | "text"
 
     // number
     number?: number
@@ -214,6 +214,12 @@ export interface Variable {
     default?: number
     minValue?: number
     maxValue?: number
+
+    // random number
+    animate?: boolean
+    sets?: { name: string; minValue?: number; maxValue?: number }[]
+    setName?: string // chosen random set
+    setLog?: { name: string; number: number }[]
 
     // text
     text?: string

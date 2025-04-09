@@ -146,6 +146,7 @@ bind:offsetWidth={width} -->
     class={plain ? "editItem" : `editItem item ${isLocked ? "" : "context #edit_box"}`}
     class:selected={$activeEdit.items.includes(index)}
     class:isDisabledVariable
+    class:chords={chordsMode}
     style={plain
         ? "width: 100%;"
         : `${getCustomStyle(item.style || "", customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? "filter: " + filter + ";" : ""}${
@@ -179,6 +180,10 @@ bind:offsetWidth={width} -->
     .item.selected :global(.align) {
         outline: 5px solid var(--secondary-opacity);
         overflow: visible !important;
+    }
+
+    .item.chords {
+        overflow: visible;
     }
 
     .item.isDisabledVariable {

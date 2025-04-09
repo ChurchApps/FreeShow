@@ -134,6 +134,7 @@ export const storedEditMenuState: Writable<any> = writable({})
 export const copyPasteEdit: Writable<any> = writable({})
 export const textEditActive: Writable<boolean> = writable(false)
 export const textEditZoom: Writable<number> = writable(10)
+export const spellcheck: Writable<{ misspelled: string; suggestions: string[] } | null> = writable(null)
 
 // OTHER
 export const notFound: Writable<any> = writable({ show: [], bible: [] })
@@ -160,6 +161,7 @@ export const photoApiCredits: Writable<any> = writable({})
 export const errorHasOccured: Writable<boolean> = writable(false)
 export const disableDragging: Writable<boolean> = writable(false)
 export const activeDropId: Writable<string> = writable("")
+export const randomNumberVariable: Writable<{ [key: string]: boolean }> = writable({})
 
 // ----- SAVED VARIABLES -----
 

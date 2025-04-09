@@ -49,7 +49,7 @@
 </script>
 
 {#if back}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => activePopup.set(back)}>
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(back)}>
         <Icon id="back" size={2} white />
     </Button>
 {/if}

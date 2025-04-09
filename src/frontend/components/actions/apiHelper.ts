@@ -46,6 +46,7 @@ import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
 import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
 import { AudioPlayer } from "../../audio/audioPlayer"
+import { setRandomValue } from "../helpers/randomValue"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -103,6 +104,15 @@ export function selectProjectByIndex(index: number) {
     }
 
     activeProject.set(selectedProject.id)
+}
+
+export function selectProjectByName(value: string) {
+    const projectsList = sortByName(removeDeleted(keysToID(get(projects))))
+    let sortedProjects = sortByClosestMatch(projectsList, value)
+    let projectId = sortedProjects[0]?.id
+    if (!projectId) return
+
+    activeProject.set(projectId)
 }
 
 export async function selectSlideByIndex(data: API_slide_index) {
@@ -199,8 +209,22 @@ export function changeVariable(data: API_variable) {
     else if (data.index !== undefined) variable = sortByName(getVariables())[data.index - 1]
     if (!variable) return
 
+    const id = data.id || variable.id || ""
+
+    let key = data.key
+    if (variable.type === "random_number" && !key) key = "randomize"
+    else if (!key) key = "enabled"
+
+    if (key === "randomize") {
+        setRandomValue(id)
+        return
+    } else if (key === "reset") {
+        updateVariable(0, id, "number")
+        updateVariable("", id, "setName")
+        return
+    }
+
     let value
-    let key = data.key || "enabled"
     if (data.variableAction || variable.type === "number") {
         value = Number(variable.number || variable.default || 0)
         if (data.variableAction === "increment" || key === "increment") value += Number(data.value || variable.step || 1)
@@ -215,7 +239,7 @@ export function changeVariable(data: API_variable) {
     }
     if (value === undefined) return
 
-    updateVariable(value, data.id || variable.id || "", key)
+    updateVariable(value, id, key)
 }
 function getVariables() {
     return keysToID(get(variables))

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { getGroupName } from "../../../common/util/show"
+    import { activeShow } from "../../util/stores"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
 
@@ -18,8 +20,7 @@
     // $: slideResolution = slide?.settings?.resolution
     $: newResolution = isCustomRes ? resolution : { width: 1920, height: 1080 }
 
-    // WIP NAME
-    // $: name = getGroupName({ show, showId }, layoutSlide.id, slide.group, index)
+    $: name = $activeShow ? getGroupName({ show: $activeShow, showId: $activeShow.id || "" }, layoutSlide.id, slide.group, index) || slide.group || "" : ""
 </script>
 
 <!-- TODO: disabled -->
@@ -44,9 +45,9 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {newResolution.width * zoom}px;" -->
 
-        <div class="label" title={slide.group === null ? "" : slide.group || "—"} style={`color: ${color};border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
+        <div class="label" title={slide.group === null ? "" : name || "—"} style={`color: ${color};border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
             <span style="position: absolute;display: contents;">{index + 1}</span>
-            <span class="text">{slide.group === null ? "" : slide.group || "—"}</span>
+            <span class="text">{slide.group === null ? "" : name || "—"}</span>
         </div>
     </div>
 </div>

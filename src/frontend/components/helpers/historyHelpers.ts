@@ -224,6 +224,11 @@ export const _updaters = {
             // let index = get(projects)[id].shows.findIndex((ref) => ref.id === data.id)
             // if (index < 0) return
 
+            // WIP set name / notes when moved while active
+            // if (get(activeShow)?.id === data.data.id)
+            // let sectionData = clone(get(projects)[get(activeProject) || ""]?.shows[data.index])
+            // ...data.data
+
             activeShow.set({ id: data.data.id, index: data.index, type: "section" })
 
             // focus on section title input

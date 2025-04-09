@@ -53,12 +53,12 @@
             if (i <= $activeEdit.slide! && !a.data.disabled) {
                 if (slideHasAction(a.data?.actions, "clear_background")) bgId = null
                 else if (a.data.background) bgId = a.data.background
-                if (a.data.background && currentShowId && currentShow.media[a.data.background]?.loop === false) bgId = null
+                if (a.data.background && currentShowId && currentShow?.media[a.data.background]?.loop === false) bgId = null
             }
         })
     }
 
-    $: background = bgId && currentShowId ? currentShow.media[bgId] : null
+    $: background = bgId && currentShowId ? currentShow?.media[bgId] : null
     $: cloudId = $driveData.mediaId
     $: backgroundPath = cloudId && cloudId !== "default" && background ? background.cloud?.[cloudId] || background.path || "" : background?.path || ""
     // $: slideOverlays = layoutSlide.overlays || []
@@ -97,7 +97,7 @@
         //     updateStyles()
         // }, CHANGE_POS_TIME)
 
-        let items = currentShow.slides[ref[$activeEdit.slide!]?.id].items
+        let items = currentShow?.slides[ref[$activeEdit.slide!]?.id].items
         let values: string[] = []
         active.forEach((id) => {
             let item = items[id]
@@ -353,7 +353,7 @@
 
             <div class="actions" style="height: 100%;justify-content: right;">
                 <!-- no need to add chords on scripture/events -->
-                {#if !currentShow.reference?.type && Slide}
+                {#if !currentShow?.reference?.type && Slide}
                     <Button class={chordsMode ? "chordsActive" : ""} on:click={toggleChords} title={$dictionary.edit?.chords}>
                         <Icon id="chords" white={!slideChords.length} right={!$labelsDisabled} />
                         {#if !$labelsDisabled}<T id="edit.chords" />{/if}

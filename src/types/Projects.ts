@@ -24,7 +24,7 @@ export interface ProjectShowRef extends ShowRef {
     notes?: string
     color?: string // section color
     icon?: string // focus mode
-    data?: any // pdf viewports / section settings
+    data?: any // section settings
     scheduleLength?: number // currently only from PCO import
 }
 

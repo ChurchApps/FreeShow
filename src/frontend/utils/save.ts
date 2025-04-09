@@ -209,7 +209,8 @@ export function save(closeWhenFinished: boolean = false, customTriggers: SaveAct
     renamedShows.set([])
 
     if (customTriggers.backup) newToast("$settings.backup_started")
-    sendMain(Main.SAVE, allSavedData)
+    // trigger toast before saving
+    setTimeout(() => sendMain(Main.SAVE, allSavedData))
 }
 
 export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {

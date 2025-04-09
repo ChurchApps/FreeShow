@@ -26,7 +26,7 @@ export function initSocket() {
     socket.on("REMOTE", (msg) => {
         let key = msg.channel as ReceiverKey
         if (!receiver[key]) {
-            console.log("Unhandled message:", msg)
+            if (msg.data !== null) console.log("Unhandled message:", msg)
             return
         }
 

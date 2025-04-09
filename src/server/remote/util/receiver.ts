@@ -1,3 +1,4 @@
+import type { Item, Show } from "../../../types/Show"
 import { setError, translate } from "./helpers"
 import { _, _get, _set, _update, overlays, scriptures } from "./stores"
 
@@ -52,6 +53,18 @@ export const receiver = {
     },
     OUT: (data: any) => {
         if (!_get("isConnected")) return
+
+        // scripture
+        if (data.id === "temp") {
+            _set("outSlide", 0)
+            _set("outLayout", "default")
+            const show = getShowFromItems(data.tempItems, data.nextSlides[0])
+            _set("outShow", show)
+
+            _update("isCleared", "all", false)
+            _update("isCleared", "slide", false)
+            return
+        }
 
         // clear
         if (data.slide === undefined) return
@@ -132,4 +145,41 @@ export const receiver = {
     "API:get_playing_audio_time": (data: any) => {
         _set("playingAudioTime", data)
     },
+}
+
+function getShowFromItems(items: Item[], nextSlideItems: Item[] | undefined) {
+    const show: Show = {
+        name: "",
+        settings: {
+            activeLayout: "default",
+            template: null,
+        },
+        category: null,
+        timestamps: { created: 0, modified: null, used: null },
+        meta: {},
+        media: {},
+        slides: {
+            one: {
+                group: "",
+                color: "",
+                settings: {},
+                notes: "",
+                items: items,
+            },
+        },
+        layouts: { default: { name: "", notes: "", slides: [{ id: "one" }] } },
+    }
+
+    if (nextSlideItems) {
+        show.slides.two = {
+            group: "",
+            color: "",
+            settings: {},
+            notes: "",
+            items: nextSlideItems,
+        }
+        show.layouts.default.slides.push({ id: "two" })
+    }
+
+    return show
 }

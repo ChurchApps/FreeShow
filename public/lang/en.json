@@ -800,6 +800,8 @@
         "columns": "Columns"
     },
     "context": {
+        "to_dictionary": "Add to dictionary",
+        "correct": "Replace with this word",
         "enabledTabs": "Toggle tabs",
         "setTag": "Set tag",
         "filterByTags": "Filter by tags",
@@ -937,6 +939,8 @@
         "bottom_top": "Bottom to top",
         "left_right": "Left to right",
         "right_left": "Right to left",
+        "press_action": "Press action",
+        "release_action": "Release action",
         "max_events": "Max events",
         "start_days_from_today": "Start at days from today",
         "just_one_day": "Just one day",
@@ -1343,10 +1347,12 @@
     },
     "variables": {
         "number": "Number",
+        "random_number": "Random number",
         "text": "Text",
         "step": "Step",
         "default_value": "Default value",
         "value": "Value",
+        "randomize": "Randomize",
         "set_state": "Set state",
         "minimum": "Minimum",
         "maximum": "Maximum"

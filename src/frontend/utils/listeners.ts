@@ -57,8 +57,8 @@ export function storeSubscriber() {
         // temporary cache shows data
         updateShowsList(data)
 
-        // dynamic values
-        send(OUTPUT, ["SHOWS_DATA"], data)
+        // dynamic values // this causes performance issues
+        // send(OUTPUT, ["SHOWS_DATA"], data)
     })
 
     let timeout: NodeJS.Timeout | null = null

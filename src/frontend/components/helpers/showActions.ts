@@ -1,3 +1,4 @@
+import * as pdfjsLib from "pdfjs-dist"
 import { get } from "svelte/store"
 import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
@@ -11,7 +12,8 @@ import { send } from "../../utils/request"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { playPauseGlobal } from "../drawer/timers/timers"
-import { clearOverlays, clearTimers } from "../output/clear"
+import { getTextLines } from "../edit/scripts/textStyle"
+import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
 import {
     activeEdit,
     activeFocus,
@@ -50,6 +52,7 @@ import { getLayoutRef, initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
+import { getSetChars } from "./randomValue"
 
 const getProjectIndex = {
     next: (index: number | null, shows: ProjectShowRef[]) => {
@@ -505,15 +508,19 @@ function notBound(ref, outputId: string | undefined) {
     return outputId && ref?.data?.bindings?.length && !ref?.data?.bindings.includes(outputId)
 }
 
-function playPdf(slide: null | OutSlide, nextPage: number) {
-    let viewports = get(activeShow)?.data?.viewports || []
-    let pages = slide?.pages || viewports.length
+async function playPdf(slide: null | OutSlide, nextPage: number) {
+    let data = slide || get(activeShow)
+    if (!data?.id) return
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+    const pdfDoc = await pdfjsLib.getDocument(data.id).promise
+    const pages = pdfDoc.numPages
     if (nextPage > pages - 1) return
 
-    let data = slide || get(activeShow)
     let name = data?.name || get(projects)[get(activeProject) || ""]?.shows[get(activeShow)?.index || 0]?.name
 
-    setOutput("slide", { type: "pdf", id: data?.id, page: nextPage, pages, viewport: slide?.viewport || viewports[nextPage], name })
+    setOutput("slide", { type: "pdf", id: data.id, page: nextPage, pages, name })
+    clearBackground()
 }
 
 function getNextEnabled(index: null | number, end: boolean = false, customOutputId: string = ""): null | number {
@@ -996,10 +1003,13 @@ export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds() {
     let mainValues = Object.keys(dynamicValues)
     let metaValues = Object.keys(initializeMetadata({})).map((id) => `meta_` + id)
+
+    // WIP sort by type & name
     const variablesList = Object.values(get(variables)).filter((a) => a?.name)
     let variableValues = variablesList.map(({ name }) => `variable_` + getVariableNameId(name))
+    let variableSetNameValues = variablesList.filter((a) => a.type === "random_number").map(({ name }) => `variable_set_` + getVariableNameId(name))
 
-    return [...mainValues, ...metaValues, ...variableValues]
+    return [...mainValues, ...metaValues, ...variableValues, ...variableSetNameValues]
 }
 
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater: number = 0) {
@@ -1030,12 +1040,21 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     function getDynamicValue(id: string, show: Show): string {
         // VARIABLE
+        if (id.includes("variable_set_")) {
+            let nameId = id.slice(13)
+            let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+            if (variable?.type !== "random_number") return ""
+
+            return variable.setName || ""
+        }
+
         if (id.includes("variable_")) {
             let nameId = id.slice(9)
             let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
             if (!variable) return ""
 
             if (variable.type === "number") return Number(variable.number || 0).toString()
+            if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
 
             if (variable.enabled === false) return ""
             if (variable.text?.includes(id)) return variable.text || ""
@@ -1048,15 +1067,13 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
         }
 
-        if (!showId) {
-            let outSlide: OutSlide | null = get(outputs)[outputId]?.out?.slide || null
-            // if (!outSlide?.id) return ""
+        let outSlide: OutSlide | null = get(outputs)[outputId]?.out?.slide || null
 
+        if (!showId) {
             showId = outSlide?.id
             layoutId = outSlide?.layout
             slideIndex = outSlide?.index ?? -1
             show = _show(showId).get() || {}
-            // if (!show) return
         }
 
         // META
@@ -1076,7 +1093,13 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         let projectRef = { id: get(activeProject) || "", index: projectIndex }
 
-        return (dynamicValues[id]({ show, ref, slideIndex, layout, projectRef, videoTime, videoDuration }) ?? "").toString()
+        const value = (dynamicValues[id]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration }) ?? "").toString()
+
+        if (id === "show_name_next" && !value && get(currentWindow) === "output") {
+            send(OUTPUT, ["MAIN_SHOWS_DATA"])
+        }
+
+        return value
     }
 }
 
@@ -1101,6 +1124,10 @@ const dynamicValues = {
     slide_group_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.group || "",
     slide_notes: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.notes || "",
     slide_notes_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
+
+    // text
+    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
+    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
 
     // media
     video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),

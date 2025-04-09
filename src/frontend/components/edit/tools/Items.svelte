@@ -29,6 +29,7 @@
         // { id: "table" },
         { id: "camera" },
         { id: "slide_tracker", icon: "percentage" },
+        // { id: "button" },
         { id: "events", icon: "calendar" },
         { id: "mirror" },
         { id: "visualizer", maxAmount: 1 },

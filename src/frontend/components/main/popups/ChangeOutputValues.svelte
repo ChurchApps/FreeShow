@@ -39,7 +39,7 @@
 </script>
 
 {#if !currentOutput?.invisible}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => activePopup.set("choose_screen")}>
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set("choose_screen")}>
         <Icon id="back" size={2} white />
     </Button>
 {/if}

@@ -41,6 +41,7 @@ import {
     selected,
     showsCache,
     special,
+    spellcheck,
     styles,
     topContextActive,
     volume,
@@ -91,7 +92,7 @@ const keys = {
         if (get(contextActive) || get(topContextActive)) {
             // timeout so output does not clear
             setTimeout(() => {
-                contextActive.set(false)
+                closeContextMenu()
                 topContextActive.set(false)
             }, 20)
             return
@@ -124,6 +125,9 @@ const keys = {
 }
 
 export function keydown(e: KeyboardEvent) {
+    // don't prevent close event
+    if (e.key === "F4" && e.altKey) return
+
     if (get(currentWindow) === "output") {
         let currentOut = get(outputs)[Object.keys(get(outputs))[0]]?.out || {}
         let contentDisplayed = currentOut.slide?.id || currentOut.background?.path || currentOut.background?.id || currentOut.overlays?.length
@@ -331,6 +335,11 @@ export const previewShortcuts = {
         e.preventDefault()
         nextSlideIndividual(e, false, true)
     },
+}
+
+export function closeContextMenu() {
+    contextActive.set(false)
+    spellcheck.set(null)
 }
 
 // CTRL + N

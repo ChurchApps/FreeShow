@@ -13,18 +13,30 @@
 
 <h2 class="header">{translate("remote.projects", $dictionary)}</h2>
 
-{#if sortedProjects.length}
-    <!-- <Projects {folders} {projects} activeProject={project} bind:activeShow {openedFolders} /> -->
-    {#each sortedProjects as project}
-        <ProjectButton
-            active={$activeProject?.id === project.id}
-            name={project.name}
-            on:click={() => {
-                _set("activeProject", project)
-                dispatch("open")
-            }}
-        />
-    {/each}
-{:else}
-    <Center faded>{translate("empty.project_select", $dictionary)}</Center>
-{/if}
+<div class="scroll">
+    {#if sortedProjects.length}
+        <!-- <Projects {folders} {projects} activeProject={project} bind:activeShow {openedFolders} /> -->
+        {#each sortedProjects as project}
+            <ProjectButton
+                active={$activeProject?.id === project.id}
+                name={project.name}
+                on:click={() => {
+                    _set("activeProject", project)
+                    dispatch("open")
+                }}
+            />
+        {/each}
+    {:else}
+        <Center faded>{translate("empty.project_select", $dictionary)}</Center>
+    {/if}
+</div>
+
+<style>
+    .scroll {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>

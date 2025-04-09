@@ -69,6 +69,15 @@
         color: var(--color);
     }
 
+    .group p {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        padding-right: 25px;
+        padding-left: 10px;
+    }
+
     .group .icon {
         position: absolute;
         right: 12px;

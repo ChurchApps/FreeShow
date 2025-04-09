@@ -25,7 +25,17 @@
             sendMain(Main.URL, "https://github.com/vassbo/bible-converter")
         }
     }
+
+    function keydown(e: KeyboardEvent) {
+        if (e.key === "Enter") close()
+    }
+
+    function close() {
+        activePopup.set(null)
+    }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <p on:click={click}>
     {#key msg}
@@ -44,7 +54,7 @@
 
 <br />
 
-<Button on:click={() => activePopup.set(null)} center dark>
+<Button on:click={close} center dark>
     <Icon id="check" size={1.2} />
 </Button>
 

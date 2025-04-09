@@ -65,7 +65,7 @@
 <svelte:window on:keydown={keydown} />
 
 {#if revert}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)}>
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => activePopup.set(revert)}>
         <Icon id="back" size={2} white />
     </Button>
 {/if}

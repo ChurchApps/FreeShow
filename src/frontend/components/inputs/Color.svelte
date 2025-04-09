@@ -66,9 +66,11 @@
             <div class="colors">
                 {#each colors as color}
                     <div class="pickColor" class:disabled={$special.disabledColors?.includes(color.value)} class:active={value === color.value} title={color.name} style="background-color: {color.value};" on:click={() => change(color.value, true)}>
-                        <div class="hover" class:visible={!custom && $special.disabledColors?.includes(color.value)}>
-                            <Icon id={custom ? "delete" : "disable"} white style="fill: {getContrast(color.value)};" />
-                        </div>
+                        {#if showDisabled || custom}
+                            <div class="hover" class:visible={!custom && $special.disabledColors?.includes(color.value)}>
+                                <Icon id={custom ? "delete" : "disable"} white style="fill: {getContrast(color.value)};" />
+                            </div>
+                        {/if}
                     </div>
                 {/each}
             </div>
