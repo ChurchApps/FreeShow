@@ -161,6 +161,7 @@ export const photoApiCredits: Writable<any> = writable({})
 export const errorHasOccured: Writable<boolean> = writable(false)
 export const disableDragging: Writable<boolean> = writable(false)
 export const activeDropId: Writable<string> = writable("")
+export const randomNumberVariable: Writable<{ [key: string]: boolean }> = writable({})
 
 // ----- SAVED VARIABLES -----
 

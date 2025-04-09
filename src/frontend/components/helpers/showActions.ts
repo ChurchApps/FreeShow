@@ -52,6 +52,7 @@ import { getLayoutRef, initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
+import { getSetChars } from "./randomValue"
 
 const getProjectIndex = {
     next: (index: number | null, shows: ProjectShowRef[]) => {
@@ -1002,10 +1003,13 @@ export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds() {
     let mainValues = Object.keys(dynamicValues)
     let metaValues = Object.keys(initializeMetadata({})).map((id) => `meta_` + id)
+
+    // WIP sort by type & name
     const variablesList = Object.values(get(variables)).filter((a) => a?.name)
     let variableValues = variablesList.map(({ name }) => `variable_` + getVariableNameId(name))
+    let variableSetNameValues = variablesList.filter((a) => a.type === "random_number").map(({ name }) => `variable_set_` + getVariableNameId(name))
 
-    return [...mainValues, ...metaValues, ...variableValues]
+    return [...mainValues, ...metaValues, ...variableValues, ...variableSetNameValues]
 }
 
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater: number = 0) {
@@ -1036,12 +1040,21 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     function getDynamicValue(id: string, show: Show): string {
         // VARIABLE
+        if (id.includes("variable_set_")) {
+            let nameId = id.slice(13)
+            let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
+            if (variable?.type !== "random_number") return ""
+
+            return variable.setName || ""
+        }
+
         if (id.includes("variable_")) {
             let nameId = id.slice(9)
             let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
             if (!variable) return ""
 
             if (variable.type === "number") return Number(variable.number || 0).toString()
+            if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
 
             if (variable.enabled === false) return ""
             if (variable.text?.includes(id)) return variable.text || ""

@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { activePopup, dictionary, disableDragging, labelsDisabled, variables } from "../../../stores"
+    import { activePopup, dictionary, disableDragging, labelsDisabled, randomNumberVariable, variables } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
+    import { getSetChars, setRandomValue } from "../../helpers/randomValue"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Checkbox from "../../inputs/Checkbox.svelte"
@@ -34,11 +35,13 @@
 
     const typeNames = {
         number: "variables.number",
+        randomNumber: "variables.random_number",
         text: "variables.text",
     }
 
     $: numberVariables = sortedVariables.filter((a) => a.type === "number")
-    $: otherVariables = sortedVariables.filter((a) => a.type !== "number")
+    $: randomNumberVariables = sortedVariables.filter((a) => a.type === "random_number")
+    $: otherVariables = sortedVariables.filter((a) => a.type !== "number" && a.type !== "random_number")
 
     const minDefault = 0
     const maxDefault = 1000
@@ -48,7 +51,7 @@
 
 <div class="variables">
     {#if sortedVariables.length}
-        <div class="row" style={otherVariables.length ? "" : "height: calc(100% - 10px);align-items: center;"}>
+        <div class="row" style={randomNumberVariables.length + otherVariables.length ? "" : "height: calc(100% - 10px);align-items: center;"}>
             {#each numberVariables as variable}
                 {@const number = Number(variable.number) || 0}
                 {@const stepSize = Number(variable.step) || 1}
@@ -91,10 +94,10 @@
                         </span>
 
                         <div class="buttons">
-                            <Button id="decrement" title={$dictionary.actions?.decrement} on:click={() => updateVariable(Math.max(min, number - 1 * stepSize), variable.id, "number")} center style={"flex: 1;"} disabled={number <= min} dark>
+                            <Button id="decrement" title={$dictionary.actions?.decrement} on:click={() => updateVariable(Math.max(min, number - 1 * stepSize), variable.id, "number")} center style="flex: 1;" disabled={number <= min} dark>
                                 <Icon id="remove" size={2.8} white />
                             </Button>
-                            <Button id="increment" title={$dictionary.actions?.increment} on:click={() => updateVariable(Math.min(max, number + 1 * stepSize), variable.id, "number")} center style={"flex: 1;"} disabled={number >= max} dark>
+                            <Button id="increment" title={$dictionary.actions?.increment} on:click={() => updateVariable(Math.min(max, number + 1 * stepSize), variable.id, "number")} center style="flex: 1;" disabled={number >= max} dark>
                                 <Icon id="add" size={2.8} white />
                             </Button>
                         </div>
@@ -129,7 +132,61 @@
             {/each}
         </div>
 
-        {#if numberVariables.length && otherVariables.length}
+        {#if numberVariables.length && randomNumberVariables.length}
+            <h5><T id={typeNames.randomNumber} /></h5>
+        {/if}
+
+        <div class="row" style={numberVariables.length + otherVariables.length ? "" : "height: calc(100% - 10px);align-items: center;"}>
+            {#each randomNumberVariables as variable}
+                {@const number = Number(variable.number) || 0}
+
+                <SelectElem style="min-width: calc(25% - 5px);" id="variable" data={variable} draggable>
+                    <div class="variable numberBox context #variable">
+                        <div class="reset">
+                            <Button
+                                disabled={$randomNumberVariable[variable.id]}
+                                title={$dictionary.actions?.reset}
+                                on:click={() => {
+                                    updateVariable(0, variable.id, "number")
+                                    updateVariable("", variable.id, "setName")
+                                }}
+                            >
+                                <Icon id="reset" />
+                            </Button>
+                        </div>
+
+                        <div class="bigNumber">
+                            {number.toString().padStart(getSetChars(variable.sets), "0")}
+                        </div>
+
+                        {#if (variable.sets?.length || 0) > 1}
+                            <span style="justify-content: center;padding: 5px;width: 100%;">
+                                <p>{variable.setName || "—"}</p>
+                            </span>
+                        {/if}
+
+                        <span style="justify-content: center;padding: 5px;width: 100%;">
+                            <Icon id="unknown" right />
+                            <p title={variable.name}>
+                                {#if variable.name?.length}
+                                    {variable.name}
+                                {:else}
+                                    <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+                                {/if}
+                            </p>
+                        </span>
+
+                        <div class="buttons">
+                            <Button disabled={$randomNumberVariable[variable.id]} id="randomize" title={$dictionary.variables?.randomize} on:click={() => setRandomValue(variable.id)} center style="flex: 1;" dark>
+                                <Icon id="shuffle_play" size={2.8} white />
+                            </Button>
+                        </div>
+                    </div>
+                </SelectElem>
+            {/each}
+        </div>
+
+        {#if numberVariables.length + randomNumberVariables.length && otherVariables.length}
             <h5><T id={typeNames.text} /></h5>
         {/if}
 

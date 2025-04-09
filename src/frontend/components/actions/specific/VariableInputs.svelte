@@ -31,6 +31,11 @@
         { id: "decrement", name: "$:actions.decrement:$" },
     ]
 
+    const variableRandomNumberModes = [
+        { id: "randomize", name: "$:variables.randomize:$" },
+        { id: "reset", name: "$:actions.reset:$" },
+    ]
+
     let dispatch = createEventDispatcher()
     function updateValue(key: string, e) {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -55,6 +60,8 @@
             <Dropdown style="width: 100%;" value={variableTextModes.find((a) => a.id === (value?.key || "enabled"))?.name || "—"} options={variableTextModes} on:click={(e) => updateValue("key", e.detail?.id)} />
         {:else if variable?.type === "number"}
             <Dropdown style="width: 100%;" value={variableNumberModes.find((a) => a.id === (value?.key || "value"))?.name || "—"} options={variableNumberModes} on:click={(e) => updateValue("key", e.detail?.id)} />
+        {:else if variable?.type === "random_number"}
+            <Dropdown style="width: 100%;" value={variableRandomNumberModes.find((a) => a.id === (value?.key || "randomize"))?.name || "—"} options={variableRandomNumberModes} on:click={(e) => updateValue("key", e.detail?.id)} />
         {/if}
     </CombinedInput>
 
@@ -66,7 +73,7 @@
                 <TextInput value={isNaN(value?.value) ? value?.value || "" : ""} on:change={(e) => updateValue("value", e)} />
             {/if}
         </CombinedInput>
-    {:else}
+    {:else if variable?.type === "text"}
         <CombinedInput>
             {#if value?.value === undefined}<p style="opacity: 0.8;font-size: 0.8em;"><T id="actions.toggle_checkbox_tip" /></p>{/if}
             <div class="alignRight" style="width: 100%;">

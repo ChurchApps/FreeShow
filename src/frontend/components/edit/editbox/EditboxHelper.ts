@@ -176,7 +176,7 @@ export class EditboxHelper {
         const outputId = getActiveOutputs()[0]
         const currentOutput = get(outputs)[outputId] || {}
         const outputStyle = get(styles)[currentOutput.style || ""] || {}
-        if (!Object.keys(outputStyle).length) return ""
+        if (!Object.keys(outputStyle).length) return style
 
         const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
 

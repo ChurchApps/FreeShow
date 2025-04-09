@@ -79,7 +79,7 @@ function autoBackup() {
     if (now - lastBackup > minTimeToBackup) {
         special.update((a) => {
             // subtract one hour from time to keep it relatively the same with each backup
-            a.autoBackupPrevious = now - 3600
+            a.autoBackupPrevious = now - 3600000
             return a
         })
         save(false, { backup: true, silent: true })

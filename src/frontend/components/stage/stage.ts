@@ -23,7 +23,9 @@ export function getCustomStageLabel(itemId: string, item: StageItem, _updater: a
         name = name || translate(`items.${itemId}`)
 
         const slideOffset = Number(item.slideOffset || 0)
-        if ((itemId === "slide_text" || itemId === "slide_notes") && slideOffset) name += ` ${slideOffset > 0 ? "+" : ""}${slideOffset}`
+        if (itemId === "slide_text" && slideOffset === 0) name = translate("stage.current_slide_text") || name
+        else if (itemId === "slide_text" && slideOffset === 1) name = translate("stage.next_slide_text") || name + " +1"
+        else if ((itemId === "slide_text" || itemId === "slide_notes") && slideOffset) name += ` ${slideOffset > 0 ? "+" : ""}${slideOffset}`
 
         return name
     }

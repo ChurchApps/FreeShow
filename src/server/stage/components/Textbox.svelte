@@ -248,6 +248,7 @@
     class:clicked={item.button?.press || item.button?.release}
     style={style ? getCustomStyle(itemStyle) : null}
     class:chords={chordLines.length}
+    class:clickable={item.button?.press || item.button?.release}
     on:click={toggleActions}
     on:pointerdown={press}
     on:pointerup={release}
@@ -346,6 +347,13 @@
 
         /* click event */
         pointer-events: initial;
+    }
+
+    .clickable {
+        cursor: pointer;
+    }
+    .clickable:active {
+        filter: brightness(0.8);
     }
 
     .actions {

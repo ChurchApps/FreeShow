@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { MainFilePaths } from "../../types/Main"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { setShow } from "../components/helpers/setShow"
-import { audioFolders, dictionary, folders, mediaFolders, overlays, projects, remotePassword, shows, templates } from "../stores"
+import { audioFolders, dictionary, folders, mediaFolders, outputs, overlays, projects, remotePassword, shows, templates, variables } from "../stores"
 import { stageShows, templateCategories } from "./../stores"
 import { save } from "./save"
 
@@ -18,13 +18,15 @@ export function createData(paths: MainFilePaths) {
             password: "",
             settings: {},
             items: {
-                "slide#current_slide_text": {
-                    enabled: true,
+                textCurrent: {
+                    type: "slide_text",
                     style: "width:1870px;height:680px;left:25px;top:25px;font-family: Arial;font-weight:bold;",
                     align: "",
                 },
-                "slide#next_slide_text": {
-                    enabled: true,
+                textNext: {
+                    type: "slide_text",
+                    slideOffset: 1,
+                    lineCount: 2,
                     style: "width:1870px;height:330px;left:25px;top:725px;font-family: Arial;font-weight:bold;color:#aaaaaa;",
                     align: "",
                 },
@@ -61,6 +63,20 @@ export function createData(paths: MainFilePaths) {
     })
 
     remotePassword.set(randomNumber(1000, 9999).toString())
+
+    // translate names set in defaults.ts
+    if (get(outputs).default?.name === "Primary") {
+        outputs.update((a) => {
+            a.default.name = get(dictionary).theme?.primary || "Primary"
+            return a
+        })
+    }
+    if (get(variables).default?.name === "Counter") {
+        variables.update((a) => {
+            a.default.name = get(dictionary).variables?.number || "Counter"
+            return a
+        })
+    }
 
     save()
 }

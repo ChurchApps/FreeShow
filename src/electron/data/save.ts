@@ -12,7 +12,7 @@ import { checkShowsFolder, dataFolderNames, deleteFile, getDataFolder, writeFile
 import { renameShows } from "../utils/shows"
 
 export function save(data: SaveData) {
-    const reset = !!data.customTriggers?.changeUserData?.reset // data.reset
+    const reset = !!data.customTriggers?.changeUserData?.reset
     if (reset) {
         data.SETTINGS = JSON.parse(JSON.stringify(defaultSettings))
         data.SYNCED_SETTINGS = JSON.parse(JSON.stringify(defaultSyncedSettings))
@@ -41,7 +41,7 @@ export function save(data: SaveData) {
     data.path = checkShowsFolder(data.path)
     // rename shows
     if (data.renamedShows) {
-        let renamedShows = data.renamedShows.filter(({ id }: { id: string }) => !data.deletedShows.find((a) => a.id === id))
+        let renamedShows = data.renamedShows.filter(({ id }: { id: string }) => !data.deletedShows?.find((a) => a.id === id))
         renameShows(renamedShows, data.path)
     }
 
@@ -59,7 +59,7 @@ export function save(data: SaveData) {
         // delete shows
         if (data.deletedShows) data.deletedShows.forEach(deleteShow)
         function deleteShow({ name, id }: { name: string; id: string }) {
-            if (!name || data.showsCache[id]) return
+            if (!name || data.showsCache?.[id]) return
 
             let p: string = path.join(data.path, (name || id) + ".show")
             deleteFile(p)

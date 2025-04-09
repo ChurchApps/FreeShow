@@ -120,7 +120,7 @@ export type API_variable = {
     name?: string
     index?: number
     // no values will toggle on/off:
-    key?: "text" | "number" | "value" | "enabled" | "step" | "name" | "type" | "increment" | "decrement" // default: "enabled"
+    key?: "text" | "number" | "random_number" | "value" | "enabled" | "step" | "name" | "type" | "increment" | "decrement" | "randomize" | "reset" // default: "enabled"
     value?: string | number | boolean
     variableAction?: "increment" | "decrement"
 }

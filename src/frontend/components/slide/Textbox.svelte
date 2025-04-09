@@ -294,6 +294,7 @@
     class:isStage
     class:isDisabledVariable
     class:chords={chordLines.length}
+    class:clickable={$currentWindow === "output" && (item.button?.press || item.button?.release)}
     bind:this={itemElem}
     on:mousedown={press}
     on:mouseup={release}
@@ -332,6 +333,9 @@
         /* WIP this is for scrolling, but hides overflow text even on scroll */
         overflow: hidden;
 
+        /* click events */
+        pointer-events: initial;
+
         /* WIP custom time based on transition duration */
         transition:
             filter 500ms,
@@ -340,9 +344,13 @@
     .item.isStage {
         width: 100%;
         height: 100%;
+    }
 
-        /* click events */
-        pointer-events: initial;
+    .clickable {
+        cursor: pointer;
+    }
+    .clickable:active {
+        filter: brightness(0.8);
     }
 
     .white {
