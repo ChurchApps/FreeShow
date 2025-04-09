@@ -128,9 +128,9 @@ export class EditboxHelper {
         let listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : ""
 
         item?.lines?.forEach((line, i) => {
-            let align = line.align.replaceAll(lineBg, "")
+            let align = line.align.replaceAll(lineBg, "") + ";"
             currentStyle += align + lineBg // + line.chords?.map((a) => a.key)
-            let style = align || lineBg || listStyle ? 'style="' + align + ";" + lineBg + listStyle + '"' : ""
+            let style = align || lineBg || listStyle ? 'style="' + align + lineBg + listStyle + '"' : ""
             html += `<div class="break" ${plain ? "" : style}>`
 
             // fix removing all text in a line
@@ -158,6 +158,8 @@ export class EditboxHelper {
             })
             html += "</div>"
         })
+
+        // currentStyle = currentStyle.replaceAll(";;", ";")
         return { html, currentStyle }
     }
 
@@ -174,7 +176,7 @@ export class EditboxHelper {
         const outputId = getActiveOutputs()[0]
         const currentOutput = get(outputs)[outputId] || {}
         const outputStyle = get(styles)[currentOutput.style || ""] || {}
-        if (!Object.keys(outputStyle).length) return ""
+        if (!Object.keys(outputStyle).length) return style
 
         const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
 

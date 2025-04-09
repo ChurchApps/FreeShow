@@ -176,7 +176,7 @@
         {/each}
     </div>
 {:else}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (selectedOption = "")}>
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (selectedOption = "")}>
         <Icon id="back" size={2} white />
     </Button>
 {/if}
@@ -265,6 +265,8 @@
         flex-direction: column;
         justify-content: center;
         flex: 1;
+
+        /* border-radius: 3px; */
     }
     .choose p {
         display: flex;

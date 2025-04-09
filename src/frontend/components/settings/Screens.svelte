@@ -211,7 +211,7 @@
 </script>
 
 {#if editCropping}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (editCropping = false)}>
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editCropping = false)}>
         <Icon id="back" size={2} white />
     </Button>
 
@@ -250,7 +250,7 @@
         </div>
     </div>
 {:else if editEdgeBlending}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (editEdgeBlending = false)}>
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (editEdgeBlending = false)}>
         <Icon id="back" size={2} white />
     </Button>
 

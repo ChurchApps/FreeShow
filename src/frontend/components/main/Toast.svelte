@@ -74,5 +74,7 @@
 
         /* line-break: anywhere; */
         overflow-x: auto;
+
+        border-top-left-radius: 3px;
     }
 </style>

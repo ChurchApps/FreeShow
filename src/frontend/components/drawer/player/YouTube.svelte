@@ -168,6 +168,10 @@
 </div>
 
 <style>
+    .main {
+        pointer-events: initial;
+    }
+
     .main,
     .main :global(.yt),
     .main :global(iframe) {

@@ -1,8 +1,10 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
     import type { Item } from "../../../types/Show"
     import { currentWindow, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
+    import { send } from "../../utils/request"
     import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
@@ -128,6 +130,7 @@
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
     $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || chordLines || stageItem)) calculateAutosize()
+    $: if ($variables) setTimeout(calculateAutosize)
 
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = _show(ref.showId).get("settings.template")
@@ -264,6 +267,20 @@
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
     let paddingCorrection = ""
     $: paddingCorrection = getPaddingCorrection(stageItem)
+
+    function press() {
+        if ($currentWindow !== "output") return
+        if (!item.button?.press) return
+
+        send(OUTPUT, ["ACTION_MAIN"], { id: item.button.press })
+    }
+
+    function release() {
+        if ($currentWindow !== "output") return
+        if (!item.button?.release) return
+
+        send(OUTPUT, ["ACTION_MAIN"], { id: item.button.release })
+    }
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
@@ -277,7 +294,10 @@
     class:isStage
     class:isDisabledVariable
     class:chords={chordLines.length}
+    class:clickable={$currentWindow === "output" && (item.button?.press || item.button?.release)}
     bind:this={itemElem}
+    on:mousedown={press}
+    on:mouseup={release}
 >
     {#if lines}
         <TextboxLines
@@ -313,6 +333,9 @@
         /* WIP this is for scrolling, but hides overflow text even on scroll */
         overflow: hidden;
 
+        /* click events */
+        pointer-events: initial;
+
         /* WIP custom time based on transition duration */
         transition:
             filter 500ms,
@@ -321,6 +344,13 @@
     .item.isStage {
         width: 100%;
         height: 100%;
+    }
+
+    .clickable {
+        cursor: pointer;
+    }
+    .clickable:active {
+        filter: brightness(0.8);
     }
 
     .white {

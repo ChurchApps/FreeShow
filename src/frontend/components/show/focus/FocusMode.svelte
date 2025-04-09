@@ -108,7 +108,7 @@
                     <Icon id={item.icon || "noIcon"} custom={(item.type || "show") === "show"} white right />
                     <p>{item.name}</p>
                 </div>
-                <FocusItem show={item} />
+                <FocusItem show={{ ...item, index: i }} />
             {/each}
         </div>
 

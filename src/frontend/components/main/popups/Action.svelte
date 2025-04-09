@@ -319,7 +319,7 @@
         <CreateAction mainId={id} actionId={action.triggers?.[0] || ""} existingActions={action.triggers || []} actionValue={action.actionValues?.[action.triggers?.[0] || ""]} on:change={changeAction} list />
     {:else}
         {#if actionActivationSelector}
-            <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (actionActivationSelector = false)}>
+            <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionActivationSelector = false)}>
                 <Icon id="back" size={2} white />
             </Button>
 
@@ -346,7 +346,7 @@
             </div>
             <!-- <Dropdown options={customActivations} value={customActivations.find((a) => a.id === customActivation)?.name || "—"} on:click={(e) => updateValue("customActivation", e.detail.id)} /> -->
         {:else if actionSelector !== null}
-            <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (actionSelector = null)}>
+            <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (actionSelector = null)}>
                 <Icon id="back" size={2} white />
             </Button>
 

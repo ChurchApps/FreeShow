@@ -7,10 +7,11 @@ import { getActiveOutputs } from "../components/helpers/output"
 import { getGroupName, getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { dictionary, events, groups, media, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
+import { dictionary, events, groups, media, midiIn, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
 import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendData, setConnectedState } from "./sendData"
+import { runAction } from "../components/actions/actions"
 
 // WIP loading different paths, might cause returned base64 to be different than it should if previous thumbnail finishes after
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
@@ -177,6 +178,10 @@ export const receiveSTAGE = {
         data.stream = get(previewBuffers)[id]
 
         return data
+    },
+
+    RUN_ACTION: (a: { id: string }) => {
+        runAction(get(midiIn)[a.id])
     },
 
     // REQUEST_VIDEO_DATA: (data: any) => {

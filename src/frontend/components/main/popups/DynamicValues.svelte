@@ -20,7 +20,7 @@
     const values = getValues()
 
     function getValues() {
-        const seperators = ["variable_", "time_", "show_", "video_", "meta_"]
+        const seperators = ["variable_", "time_", "show_", "slide_text_", "video_", "meta_"]
 
         let list = getDynamicIds().map((id) => ({ id }))
         let newList: { [key: string]: typeof list } = {}
@@ -41,6 +41,7 @@
     function getTitle(id: string) {
         if (id === "time_") return "timer.time"
         if (id === "show_") return "guide_title.show"
+        if (id === "slide_text_") return "edit.text"
         if (id === "video_") return "edit.video"
         if (id === "meta_") return "tools.metadata"
         if (id === "variable_") return "items.variable"
@@ -215,7 +216,7 @@
                         {@const preview = replaceDynamicValues(`{${value.id}}`, ref, updateDynamic)}
                         <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} on:click={(e) => applyValue(e, value.id)}>
                             <p class="preview">
-                                {#if preview}{preview}{:else}—{/if}
+                                {#if preview}{@html preview}{:else}—{/if}
                             </p>
 
                             <p style="display: inline-flex;">

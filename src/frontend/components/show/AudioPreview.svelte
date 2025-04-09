@@ -45,6 +45,7 @@
 
     onDestroy(() => {
         if (updaterInterval) clearInterval(updaterInterval)
+        if (rendering) cancelAnimationFrame(rendering)
     })
 
     function setTime(e: any) {
@@ -82,6 +83,7 @@
 
     let isRendering: boolean = false
     let analysers: AnalyserNode[] = []
+    let rendering: number = 0
     function renderVisualiser() {
         analysers = AudioAnalyser.getAnalysers()
         if (!canvas || !analysers.length) return
@@ -116,7 +118,7 @@
                 return
             }
 
-            requestAnimationFrame(renderFrame)
+            rendering = requestAnimationFrame(renderFrame)
 
             // update frequency data for all analysers
             analysers.forEach((analyser, i) => analyser.getByteFrequencyData(dataArrays[i]))

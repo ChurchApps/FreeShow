@@ -81,7 +81,7 @@ export function getFilterStyle(): StyleClipboard {
 
 // PASTE //
 
-export async function setBoxStyle(style: StyleClipboard, slides: any, type: ItemType) {
+export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: ItemType) {
     const itemKeys = getItemKeys(true)
 
     for (let i = 0; i < slides.length; i++) {
@@ -98,6 +98,8 @@ export async function setBoxStyle(style: StyleClipboard, slides: any, type: Item
         slide.items.forEach(updateItemStyle)
 
         if (!items.length || !values.length) return
+
+        const style = styles[0]
 
         // item keys
         Object.keys(style.keys).forEach((key) => {
@@ -145,6 +147,8 @@ export async function setBoxStyle(style: StyleClipboard, slides: any, type: Item
 
             items.push(i)
 
+            const style = styles[i] || styles[0]
+
             let newStyle = ""
             Object.entries(style.style).forEach(([key, value]) => {
                 newStyle += `${key}: ${value};`
@@ -183,7 +187,9 @@ export async function setBoxStyle(style: StyleClipboard, slides: any, type: Item
     }
 }
 
-export async function setItemStyle(style: StyleClipboard, slides: any) {
+export async function setItemStyle(styles: StyleClipboard[], slides: any) {
+    // TODO: pasting to multiple items will move around the text lines content
+
     const itemKeys = getItemKeys()
 
     for (let i = 0; i < slides.length; i++) {
@@ -213,6 +219,8 @@ export async function setItemStyle(style: StyleClipboard, slides: any) {
 
             items.push(i)
 
+            const style = styles[i] || styles[0]
+
             // get new style
             let newStyle = ""
             Object.entries(style.style).forEach(([key, value]) => {
@@ -227,8 +235,6 @@ export async function setItemStyle(style: StyleClipboard, slides: any) {
             Object.entries(itemStyles).forEach(([key, value]) => {
                 if (!itemKeys.includes(key)) currentStyle += `${key}: ${value};`
             })
-
-            console.log(style, newStyle, currentStyle)
 
             values.push(currentStyle + newStyle)
         }

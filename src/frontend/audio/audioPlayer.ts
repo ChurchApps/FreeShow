@@ -119,31 +119,31 @@ export class AudioPlayer {
 
     private static async createAudio(path: string): Promise<HTMLAudioElement | null> {
         const audio = new Audio(encodeFilePath(path))
-        return new Promise((resolve) => {
-            let done: boolean = false
-            audio.addEventListener("canplay", () => {
-                done = true
-                resolve(audio)
-            })
-            audio.addEventListener("error", (err) => {
-                if (done) return
-                console.error("Could not get audio:", path, err)
-                this.stop(path)
-                resolve(null)
-            })
-        })
+        return await this.waitForAudio(path, audio)
     }
 
     private static async createAudioFromStream(id: string, stream: MediaStream): Promise<HTMLAudioElement | null> {
         const audio = new Audio()
         audio.srcObject = stream
+        return await this.waitForAudio(id, audio)
+    }
+
+    private static waitForAudio(pathOrId: string, audio: HTMLAudioElement): Promise<HTMLAudioElement | null> {
         return new Promise((resolve) => {
-            audio.addEventListener("canplay", () => resolve(audio))
-            audio.addEventListener("error", (err) => {
+            audio.addEventListener("canplay", loaded, { once: true })
+            audio.addEventListener("error", error, { once: true })
+
+            let resolved = false
+            function loaded() {
+                resolved = true
+                resolve(audio)
+            }
+            function error(err: ErrorEvent) {
+                if (resolved) return
                 console.error("Could not get audio:", err)
-                this.stop(id)
+                AudioPlayer.stop(pathOrId)
                 resolve(null)
-            })
+            }
         })
     }
 
@@ -346,10 +346,19 @@ function updateAudioStore(id: string, key: string, value: any) {
 export async function loadAudioFile(path: string): Promise<HTMLAudioElement | null> {
     return new Promise((resolve) => {
         const audio = new Audio(encodeFilePath(path))
-        audio.addEventListener("canplaythrough", () => resolve(audio))
-        audio.addEventListener("error", (err) => {
+
+        audio.addEventListener("canplaythrough", loaded, { once: true })
+        audio.addEventListener("error", error, { once: true })
+
+        let resolved = false
+        function loaded() {
+            resolved = true
+            resolve(audio)
+        }
+        function error(err: ErrorEvent) {
+            if (resolved) return
             console.error("Could not get audio:", err)
             resolve(null)
-        })
+        }
     })
 }

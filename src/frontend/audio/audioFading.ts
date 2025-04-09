@@ -21,7 +21,7 @@ export function clearAudio(path: string = "", options: AudioClearOptions = {}) {
     if (options.clearPlaylist && (!path || AudioPlaylist.getPlayingPath() === path)) activePlaylist.set(null)
 
     // stop playing metronome
-    if (options.clearPlaylist && !path) stopMetronome()
+    if (options.clearPlaylist !== false && !path) stopMetronome()
 
     if (clearing.includes(path)) {
         if (!options.commonClear) return

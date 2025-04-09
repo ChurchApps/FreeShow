@@ -7,7 +7,7 @@
     import { activeShow, outShow, styleRes } from "../../util/stores"
     import Slide from "./ShowSlide.svelte"
 
-    export let outSlide: number
+    export let outSlide: number | null
     export let dictionary: any
     export let columns: number = 2
     let resolution: Resolution = $styleRes || { width: 1920, height: 1080 }
@@ -15,16 +15,16 @@
     // $: id = $activeShow!.id
     // $: currentShow = $shows[$activeShow!.id]
     // $: layoutSlides = [$shows[$activeShow!.id].layouts[$shows[$activeShow!.id].settings.activeLayout].slides, GetLayout($activeShow!.id)][1]
-    $: layoutSlides = GetLayout($activeShow, $activeShow?.settings?.activeLayout)
+    $: layoutSlides = GetLayout($activeShow, $activeShow?.settings?.activeLayout || "")
 
     // auto scroll
     export let scrollElem: HTMLElement | undefined
     let lastScrollId = "-1"
     $: {
-        if (scrollElem?.querySelector(".grid") && outSlide !== null && $outShow?.id === $activeShow.id) {
+        if (scrollElem?.querySelector(".grid") && outSlide !== null && $outShow?.id === $activeShow?.id) {
             let index = Math.max(0, outSlide)
-            if ($outShow.id + index !== lastScrollId) {
-                lastScrollId = $outShow.id + index
+            if (($outShow?.id || "") + index !== lastScrollId) {
+                lastScrollId = ($outShow?.id || "") + index
                 let offset = (scrollElem.querySelector(".grid")?.children[index] as HTMLElement)?.offsetTop - scrollElem.offsetTop - 4 - 50
                 scrollElem.scrollTo(0, offset)
             }
@@ -76,12 +76,12 @@
             {#each layoutSlides as slide, i}
                 <Slide
                     {resolution}
-                    media={$activeShow.media}
+                    media={$activeShow?.media}
                     layoutSlide={slide}
-                    slide={$activeShow.slides[slide.id]}
+                    slide={$activeShow?.slides[slide.id]}
                     index={i}
                     color={slide.color}
-                    active={outSlide === i && $outShow?.id === $activeShow.id}
+                    active={outSlide === i && $outShow?.id === $activeShow?.id}
                     {columns}
                     on:click={() => {
                         // if (!$outLocked && !e.ctrlKey) {

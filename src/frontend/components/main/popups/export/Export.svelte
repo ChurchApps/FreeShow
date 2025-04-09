@@ -115,7 +115,7 @@
         {/each}
     </div>
 {:else if !exportFormat}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (exportType = "")}>
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportType = "")}>
         <Icon id="back" size={2} white />
     </Button>
 
@@ -137,7 +137,7 @@
         {/each}
     </div>
 {:else}
-    <Button style="position: absolute;left: 0;top: 0;min-height: 58px;" title={$dictionary.actions?.back} on:click={() => (exportFormat = "")}>
+    <Button class="popup-back" title={$dictionary.actions?.back} on:click={() => (exportFormat = "")}>
         <Icon id="back" size={2} white />
     </Button>
 

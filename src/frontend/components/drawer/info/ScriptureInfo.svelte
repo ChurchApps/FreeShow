@@ -22,10 +22,12 @@
     import Notes from "../../show/tools/Notes.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
-    import { getShortBibleName, getSlides, joinRange, textKeys } from "../bible/scripture"
+    import { getShortBibleName, getSlides, getSplittedVerses, getVersePartLetter, joinRange, textKeys } from "../bible/scripture"
 
     export let bibles: Bible[]
-    $: sorted = bibles[0]?.activeVerses?.sort((a, b) => Number(a) - Number(b)) || []
+
+    // WIP sorting does not work with splitted verses
+    $: sorted = (bibles[0]?.activeVerses || []).sort((a, b) => Number(a) - Number(b))
 
     let verseRange = ""
     $: {
@@ -165,7 +167,7 @@
         let id = e.target.id
         update(id, val)
 
-        // if (id === "splitLongVerses") longVersesMenuOpened = val
+        if (id === "splitLongVerses") longVersesMenuOpened = val
         if (id === "verseNumbers") verseMenuOpened = val
         if (id === "redJesus") redMenuOpened = val
         if (id === "showVerse" || id === "showVersion") referenceMenuOpened = showVersion || $scriptureSettings.showVerse ? (val ? true : referenceMenuOpened) : false
@@ -181,7 +183,12 @@
     }
 
     function showVerse() {
-        if ($outLocked || !bibles[0]) return
+        if ($outLocked || !bibles[0] || !sorted[0]) return
+
+        let splitted = sorted[0].toString().split("_")
+        const id = splitted[0]
+        const subverse = Number(splitted[1] || 0)
+        const value = id + (subverse ? getVersePartLetter(subverse) : "") + " "
 
         // add to scripture history
         scriptureHistory.update((a) => {
@@ -190,8 +197,8 @@
                 book: bibles[0].bookId,
                 chapter: Number(bibles[0].chapter) - 1,
                 verse: sorted[0],
-                reference: `${bibles[0].book} ${bibles[0].chapter}:${sorted[0]}`,
-                text: bibles[0].verses[sorted[0]],
+                reference: `${bibles[0].book} ${bibles[0].chapter}:${value}`,
+                text: getSplittedVerses(bibles[0].verses)[sorted[0]] || bibles[0].verses[sorted[0]] || "",
             }
             // WIP multiple verses, play from another version
 
@@ -229,7 +236,7 @@
 
     const includeCount = 3
     function getPreviousSlides() {
-        let lowestIndex = Number(sorted.sort((a, b) => Number(a) - Number(b))[0])
+        let lowestIndex = getVerseId(sorted.sort((a, b) => getVerseId(a) - getVerseId(b))[0])
 
         let slides: any[] = []
         for (let i = 1; i <= includeCount; i++) {
@@ -240,7 +247,7 @@
         return slides
     }
     function getNextSlides() {
-        let highestIndex = Number(sorted.sort((a, b) => Number(b) - Number(a))[0])
+        let highestIndex = getVerseId(sorted.sort((a, b) => getVerseId(b) - getVerseId(a))[0])
 
         let slides: any[] = []
         for (let i = 1; i <= includeCount; i++) {
@@ -249,6 +256,10 @@
         }
 
         return slides
+    }
+
+    function getVerseId(verseRef: string) {
+        return Number(verseRef.toString().split("_")[0])
     }
 
     $: if ($playScripture) {
@@ -320,7 +331,7 @@
 
     $: attributionString = [...new Set(bibles.map((a) => a?.attributionString).filter(Boolean))].join(" / ")
 
-    // let longVersesMenuOpened: boolean = false
+    let longVersesMenuOpened: boolean = false
     let verseMenuOpened: boolean = false
     let redMenuOpened: boolean = false
     let referenceMenuOpened: boolean = false
@@ -383,7 +394,7 @@
         <!-- {/if} -->
 
         <!-- Long verses -->
-        <!-- <CombinedInput>
+        <CombinedInput>
             <p style="flex: 1;"><T id="scripture.divide_long_verses" /></p>
             <div class="alignRight">
                 <Checkbox id="splitLongVerses" checked={$scriptureSettings.splitLongVerses} on:change={checked} />
@@ -403,7 +414,7 @@
                 <p><T id="edit.size" /></p>
                 <NumberInput value={$scriptureSettings.longVersesChars || 100} min={50} on:change={(e) => update("longVersesChars", e.detail)} />
             </CombinedInput>
-        {/if} -->
+        {/if}
 
         <!-- Verse numbers -->
         <CombinedInput>

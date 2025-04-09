@@ -1,36 +1,24 @@
 <script lang="ts">
-    import { Main } from "../../../../types/IPC/Main"
-    import { sendMain } from "../../../IPC/main"
-    import { activeShow, dataPath, labelsDisabled, outLocked, outputs, slidesOptions, styles } from "../../../stores"
-    import { newToast } from "../../../utils/common"
+    import * as pdfjsLib from "pdfjs-dist"
+    import { slide } from "svelte/transition"
+    import { dictionary, outLocked, outputs, slidesOptions, styles } from "../../../stores"
+    import { wait } from "../../../utils/common"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput } from "../../helpers/output"
-    import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
-    import HoverButton from "../../inputs/HoverButton.svelte"
     import { clearBackground } from "../../output/clear"
-    import { getViewportSizes } from "./pdfData"
+    import { onMount } from "svelte"
+    import Loader from "../../main/Loader.svelte"
 
     export let show
     $: path = show.id
 
-    let viewports: { width: number; height: number }[] = []
-    let pages = 0
-    $: if (path) getPdfPages()
-
-    async function getPdfPages() {
-        viewports = []
-        pages = 0
-
-        viewports = await getViewportSizes(path)
-        if ($activeShow) activeShow.set({ ...$activeShow, data: { viewports } })
-
-        // pages = await getPages(path)
-        pages = viewports.length
-    }
-
     $: activeOutput = getActiveOutputs($outputs, false, true, true)[0]
+
+    $: currentOutput = $outputs[activeOutput]
+    $: transparentOutput = !!currentOutput?.transparent
+    $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     // set active if output
     let active: number = -1
@@ -45,7 +33,7 @@
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
         let name = show.name || removeExtension(getFileName(path))
-        setOutput("slide", { type: "pdf", id: path, page, pages, viewport: viewports[page], name })
+        setOutput("slide", { type: "pdf", id: path, page, pages: pageCount, name })
 
         clearBackground()
     }
@@ -65,64 +53,69 @@
         }, 500)
     }
 
-    // output style
-    $: currentOutput = $outputs[activeOutput] || {}
-    $: currentStyle = $styles[currentOutput.style || ""] || {}
+    /////
 
-    // add extra padding to aspect ratio to ensure page is properly sized (if portrait mode)
-    const EXTRA_RATIO = 100 // 45
+    // pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
 
-    function convertToImages() {
-        newToast("$actions.converting")
-        sendMain(Main.PDF_TO_IMAGE, { dataPath: $dataPath, path: path })
+    let pageCount: number = 0
+    let canvases: (HTMLCanvasElement | undefined)[] = []
+
+    let zoomOpened: boolean = false
+    function mousedown(e: any) {
+        if (e.target.closest(".zoom_container") || e.target.closest("button")) return
+
+        zoomOpened = false
     }
 
-    let singlePage = false
+    let loading = true
+    onMount(loadPages)
+    async function loadPages() {
+        loading = true
+        if (!path) {
+            loading = false
+            return
+        }
 
-    // slow loader
-    let currentIndex: number = 1
-    $: if (path && pages) startLoading(true)
-    let loadingTimeout: NodeJS.Timeout | null = null
-    function startLoading(reset: boolean = false) {
-        if (reset) currentIndex = 1
-        if (loadingTimeout) clearTimeout(loadingTimeout)
-        loadingTimeout = setTimeout(() => {
-            currentIndex++
-            if (currentIndex < pages) startLoading()
-        }, 500)
+        const pdfDoc = await pdfjsLib.getDocument(path).promise
+        pageCount = pdfDoc.numPages
+
+        // Wait for canvases to bind
+        await wait(10)
+
+        for (let i = 0; i < pageCount; i++) {
+            const page = await pdfDoc.getPage(i + 1)
+            const viewport = page.getViewport({ scale: 1.5 })
+            const canvas = canvases[i]
+            const context = canvas?.getContext("2d")
+            if (!context) break
+
+            canvas!.height = viewport.height
+            canvas!.width = viewport.width
+
+            await page.render({ canvasContext: context, viewport }).promise
+
+            // display when the first page has loaded
+            loading = false
+        }
     }
 </script>
 
-<!-- SHOW FULL PREVIEW: -->
-<!-- https://stackoverflow.com/a/64490933/10803046 -->
-<!-- <iframe src="{path}#toolbar=1" frameborder="0"></iframe> -->
+<svelte:window on:mousedown={mousedown} />
 
 <div class="grid" on:wheel={wheel}>
-    {#if singlePage}
-        <HoverButton icon="play" on:click={() => outputPdf({}, 0)}>
-            <iframe src="{path}#toolbar=0&view=fit" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no" style="height: 100%;width: 100%;aspect-ratio: initial;pointer-events: initial;"></iframe>
-        </HoverButton>
-    {:else}
-        {#each [...Array(pages)] as _, page}
-            {#if page < currentIndex}
-                <div class="main" class:active={active === page} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pages > 1 ? $slidesOptions.columns : 1)}%;">
-                    <div class="slide" tabindex={0} on:click={(e) => outputPdf(e, page)}>
-                        {#if viewports[page]}
-                            <!-- 16 / 9 < -->
-                            <div
-                                class="center"
-                                class:wide={(viewports[page].width + EXTRA_RATIO) / viewports[page].height < viewports[page].width / viewports[page].height}
-                                style="aspect-ratio: {viewports[page].width / viewports[page].height};--background: {currentStyle.background || 'black'};"
-                            ></div>
-                        {/if}
+    {#each { length: pageCount } as _page, i}
+        <div class="main" class:active={active === i} style="{output?.color ? 'outline: 2px solid ' + output.color + ';' : ''}width: {100 / (pageCount > 1 ? $slidesOptions.columns : 1)}%;">
+            <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} on:click={(e) => outputPdf(e, i)}>
+                <canvas bind:this={canvases[i]} />
+            </div>
+        </div>
+    {/each}
 
-                        {#key $slidesOptions.columns}
-                            <iframe src="{path}#toolbar=0&view=fit&page={page + 1}" class:hideScrollbar={pages > 1} frameborder="0" scrolling="no" style="aspect-ratio: {viewports[page]?.width + EXTRA_RATIO} / {viewports[page]?.height};"></iframe>
-                        {/key}
-                    </div>
-                </div>
-            {/if}
-        {/each}
+    {#if loading}
+        <div class="load">
+            <Loader />
+        </div>
     {/if}
 </div>
 
@@ -131,36 +124,53 @@
         <p>PDF</p>
 
         <div class="buttons">
-            <Button on:click={() => (singlePage = !singlePage)} active={singlePage} style="white-space: nowrap;">
-                <Icon id="pdf" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<T id="actions.pdf_single_page" />{/if}
+            <Button on:click={() => (zoomOpened = !zoomOpened)} title={$dictionary.actions?.zoom}>
+                <Icon size={1.3} id="zoomIn" white />
             </Button>
-
-            <Button on:click={convertToImages} style="white-space: nowrap;">
-                <Icon id="image" right={!$labelsDisabled} />
-                {#if !$labelsDisabled}<T id="actions.convert_to_images" />{/if}
-            </Button>
-
-            <!-- WIP: zoom menu etc. (Layouts.svelte) -->
+            {#if zoomOpened}
+                <div class="zoom_container" transition:slide={{ duration: 150 }}>
+                    <Button style="padding: 0 !important;" on:click={() => slidesOptions.set({ ...$slidesOptions, columns: 4 })} bold={false} center>
+                        <p class="text" title={$dictionary.actions?.resetZoom}>{(100 / $slidesOptions.columns).toFixed()}%</p>
+                    </Button>
+                    <Button disabled={$slidesOptions.columns <= 2} on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.max(2, $slidesOptions.columns - 1) })} title={$dictionary.actions?.zoomIn} center>
+                        <Icon size={1.3} id="add" white />
+                    </Button>
+                    <Button disabled={$slidesOptions.columns >= 10} on:click={() => slidesOptions.set({ ...$slidesOptions, columns: Math.min(10, $slidesOptions.columns + 1) })} title={$dictionary.actions?.zoomOut} center>
+                        <Icon size={1.3} id="remove" white />
+                    </Button>
+                </div>
+            {/if}
         </div>
     </div>
 </div>
 
 <style>
-    iframe {
+    canvas {
         width: 100%;
-        /* height: 100%; */
-        aspect-ratio: 16 / 9;
-
+        height: 100%;
+        object-fit: contain;
         pointer-events: none;
+
+        border: none;
     }
 
-    iframe.hideScrollbar {
-        /* do this to hide scrollbar until the url parameter to hide is supported */
-        width: calc(100% + 18px);
+    .load {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        background-color: var(--primary-darker);
     }
 
     .grid {
+        position: relative;
+
         display: flex;
         flex-wrap: wrap;
         align-content: flex-start;
@@ -196,31 +206,17 @@
 
         position: relative;
 
-        /* display: flex; */
         overflow: hidden;
+
+        aspect-ratio: 16 / 9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .main.active {
         outline: 2px solid var(--secondary);
         outline-offset: -1px;
-    }
-
-    /* cover grey areas with black */
-    /* WIP better border fill (pdf2img-electron render.ts:windowLoaded()) */
-    .center {
-        height: calc(100% - 12px);
-
-        position: absolute;
-        left: 50%;
-        top: 3px;
-        transform: translateX(-50%);
-
-        outline-offset: 0;
-        outline: 800px solid var(--background);
-    }
-    .center.wide {
-        height: initial;
-        width: calc(100% - 12px);
     }
 
     /* action bar */
@@ -248,7 +244,6 @@
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        overflow: hidden;
     }
 
     .actionbar p {
@@ -257,6 +252,27 @@
     }
 
     .actionbar div.buttons {
+        position: relative;
         width: initial;
+
+        display: flex;
+        align-items: center;
+    }
+
+    /* zoom */
+    .zoom_container {
+        position: absolute;
+        right: 0;
+        top: 0;
+        transform: translateY(-100%);
+        overflow: hidden;
+
+        flex-direction: column;
+        width: auto;
+        /* border-left: 3px solid var(--primary-lighter); */
+
+        z-index: 2;
+
+        background-color: var(--primary-darkest);
     }
 </style>

@@ -95,7 +95,7 @@
             Object.entries(resetData).forEach(([subkey, data]) => {
                 history({
                     id: "UPDATE",
-                    newData: { data, key: "items", subkey, keys: $activeStage.items },
+                    newData: { data, key: "items", subkey, keys: activeItems },
                     oldData: { id: stageId },
                     location: { page: "stage", id: "stage_item_content", override: stageId + "_reset_text" },
                 })

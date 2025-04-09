@@ -59,6 +59,7 @@ import {
     shows,
     showsCache,
     showsPath,
+    spellcheck,
     stageShows,
     templates,
     textCache,
@@ -73,6 +74,7 @@ import { validateKeys } from "../utils/drive"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import { Main, MainReturnPayloads } from "./../../types/IPC/Main"
+import { convertCSV } from "../converters/csv"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -139,6 +141,7 @@ export const mainResponses: MainResponses = {
         activePopup.set("alert")
     },
     [ToMain.TOAST]: (a) => newToast(a),
+    [ToMain.SPELL_CHECK]: (a) => spellcheck.set(a),
     [Main.CLOSE]: () => initializeClosing(),
     [Main.RECEIVE_MIDI]: (a) => receivedMidi(a),
     [Main.DELETE_SHOWS]: (a) => {
@@ -305,6 +308,7 @@ export const mainResponses: MainResponses = {
             // Text
             txt: () => convertTexts(data),
             chordpro: () => convertChordPro(data),
+            csv: () => convertCSV(data),
             powerpoint: () => convertPowerpoint(data),
             word: () => convertTexts(data),
             // Other programs

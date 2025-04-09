@@ -29,9 +29,17 @@
         .sort((a: any, b: any) => (a.collection !== undefined && b.collection === undefined ? -1 : 1))
 
     let depth = 0
+
+    function next() {
+        // WIP change preview index
+        send("API:scripture_next")
+    }
+    function previous() {
+        send("API:scripture_previous")
+    }
 </script>
 
-<h2 class="header">
+<h2 class="header" style="display: inline;">
     {#if openedScripture}
         {$scriptures[openedScripture]?.customName || $scriptures[openedScripture]?.name || ""}
     {:else}
@@ -42,19 +50,26 @@
 {#if openedScripture}
     <div class="bible">
         {#if $scriptureCache[openedScripture]}
-            <ScriptureContent scripture={$scriptureCache[openedScripture]} {tablet} bind:depth />
+            <!-- {tablet} -->
+            <ScriptureContent scripture={$scriptureCache[openedScripture]} bind:depth />
         {:else}
             <Loading />
         {/if}
     </div>
 
-    {#if $isCleared.all}
+    {#if $isCleared.all && depth}
         <Button on:click={() => (depth ? depth-- : openScripture(""))} style="width: 100%;" center dark>
             <Icon id="back" right />
             {translate("actions.back", $dictionary)}
         </Button>
-    {:else}
-        <Clear />
+    {:else if !$isCleared.all}
+        <div class="buttons" style="display: flex;width: 100%;background-color: var(--primary-darker);">
+            <Button style="flex: 1;" on:click={previous} center><Icon size={1.8} id="previous" /></Button>
+            <Button style="flex: 1;" on:click={next} center><Icon size={1.8} id="next" /></Button>
+        </div>
+        {#if !tablet}
+            <Clear />
+        {/if}
     {/if}
 {:else if sortedBibles.length}
     {#each sortedBibles as scripture}

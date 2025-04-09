@@ -4,6 +4,7 @@ import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { sendMain } from "../../IPC/main"
+import { triggerFunction } from "../../utils/common"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
@@ -50,6 +51,7 @@ import {
     selectOverlayByName,
     selectProjectById,
     selectProjectByIndex,
+    selectProjectByName,
     selectShowByName,
     selectSlideByIndex,
     selectSlideByName,
@@ -118,7 +120,7 @@ export type API_variable = {
     name?: string
     index?: number
     // no values will toggle on/off:
-    key?: "text" | "number" | "value" | "enabled" | "step" | "name" | "type" | "increment" | "decrement" // default: "enabled"
+    key?: "text" | "number" | "random_number" | "value" | "enabled" | "step" | "name" | "type" | "increment" | "decrement" | "randomize" | "reset" // default: "enabled"
     value?: string | number | boolean
     variableAction?: "increment" | "decrement"
 }
@@ -153,6 +155,7 @@ export const API_ACTIONS = {
     // PROJECT
     id_select_project: (data: API_id) => selectProjectById(data.id),
     index_select_project: (data: API_index) => selectProjectByIndex(data.index), // BC
+    name_select_project: (data: API_strval) => selectProjectByName(data.value),
     next_project_item: () => selectProjectShow("next"), // BC
     previous_project_item: () => selectProjectShow("previous"), // BC
     index_select_project_item: (data: API_index) => selectProjectShow(data.index), // BC
@@ -203,6 +206,8 @@ export const API_ACTIONS = {
 
     // SCRIPTURE
     start_scripture: (data: API_scripture) => startScripture(data),
+    scripture_next: () => triggerFunction("scripture_next"),
+    scripture_previous: () => triggerFunction("scripture_previous"),
 
     // OUTPUT
     lock_output: (data: API_boolval) => toggleLock(data.value), // BC

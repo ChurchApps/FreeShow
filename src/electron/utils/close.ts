@@ -1,7 +1,8 @@
 import { app, ipcMain } from "electron"
 import { mainWindow, resetMainWindow } from ".."
+import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
-import { sendToMain } from "../IPC/main"
+import { sendMain, sendToMain } from "../IPC/main"
 import { NdiReceiver } from "../ndi/NdiReceiver"
 import { OutputHelper } from "../output/OutputHelper"
 import { closeServers } from "../servers"
@@ -13,7 +14,7 @@ export function callClose(e: Electron.Event) {
     if (dialogClose) return
     e.preventDefault()
 
-    sendToMain(ToMain.CLOSE2, true)
+    sendMain(Main.CLOSE, true)
 }
 
 export async function exitApp() {

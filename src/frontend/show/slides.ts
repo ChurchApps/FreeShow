@@ -409,10 +409,13 @@ function changeParent(slides: { [key: string]: Slide }, parentId: string, slideR
 
 export function removeItemValues(items: Item[]) {
     return items.map((item) => {
-        if (!item.lines?.length) return item
+        if (!item.lines?.[0]) return item
 
         item.lines = [item.lines[0]]
         item.lines[0].text = [{ style: item.lines[0].text[0]?.style || "", value: "" }]
+
+        delete item.lines[0].chords
+
         return item
     })
 }

@@ -9,6 +9,7 @@
     import autosize, { type AutosizeTypes } from "../../common/util/autosize"
     import { variables } from "../util/stores"
     import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
+    import { send } from "../util/socket"
 
     export let showId: string
     export let item: Item
@@ -43,11 +44,15 @@
     let loaded = false
     onMount(() => {
         loaded = true
+
+        // update on first load
+        setTimeout(calculateAutosize, 400)
     })
 
     let alignElem: HTMLElement | undefined
 
     $: if (autoSize && loaded) calculateAutosize()
+    $: if ($variables) setTimeout(calculateAutosize, 50)
     let loopStop: any = null
     function calculateAutosize() {
         if (loopStop || !alignElem) return
@@ -222,12 +227,32 @@
     onDestroy(() => clearInterval(dynamicInterval))
 
     $: chordsStyle = `--chord-size: ${chordLines.length ? (stageItem?.chords?.size || stageItem?.chordsData?.size || 60) * 0.65 : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || "#FF851B"};`
+
+    function press() {
+        if (!item.button?.press) return
+        send("RUN_ACTION", { id: item.button.press })
+    }
+
+    function release() {
+        if (!item.button?.release) return
+        send("RUN_ACTION", { id: item.button.release })
+    }
 </script>
 
 <svelte:window on:click={closeActions} />
 
 <!-- bind:offsetHeight={height} -->
-<div bind:this={thisElem} class="item" style={style ? getCustomStyle(itemStyle) : null} class:chords={chordLines.length} on:click={toggleActions}>
+<div
+    bind:this={thisElem}
+    class="item"
+    class:clicked={item.button?.press || item.button?.release}
+    style={style ? getCustomStyle(itemStyle) : null}
+    class:chords={chordLines.length}
+    class:clickable={item.button?.press || item.button?.release}
+    on:click={toggleActions}
+    on:pointerdown={press}
+    on:pointerup={release}
+>
     <!-- can have more actions here if needed -->
     {#if actionButtons && (chordLines.length || false)}
         <div class="actions">
@@ -322,6 +347,13 @@
 
         /* click event */
         pointer-events: initial;
+    }
+
+    .clickable {
+        cursor: pointer;
+    }
+    .clickable:active {
+        filter: brightness(0.8);
     }
 
     .actions {

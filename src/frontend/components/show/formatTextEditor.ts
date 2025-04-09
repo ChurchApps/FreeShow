@@ -44,8 +44,6 @@ export function formatText(text: string, showId: string = "") {
     let groupedNewSlides = groupSlides(slides)
     // console.log(groupedOldSlides, groupedNewSlides)
 
-    // TODO: renaming existing groups!
-
     let newLayoutSlides: SlideData[] = []
 
     let doneGroupedSlides: { text: string; slides: Slide[] }[] = []
@@ -105,7 +103,7 @@ export function formatText(text: string, showId: string = "") {
 
     // add back all slides without text
     let newLayoutSlideIds: string[] = newLayoutSlides.map(({ id }) => id)
-    oldLayoutSlideIds.forEach((slideId) => {
+    oldLayoutSlideIds.forEach((slideId, i) => {
         if (newLayoutSlideIds.includes(slideId)) return
         let slide = show.slides[slideId]
         if (!slide) return
@@ -113,7 +111,13 @@ export function formatText(text: string, showId: string = "") {
         let textboxes = getTextboxesIndexes(slide.items)
         if (textboxes.length) return
 
-        newLayoutSlides.push({ id: slideId })
+        const layoutData = { id: slideId }
+
+        if (i < newLayoutSlides.length) {
+            newLayoutSlides = [...newLayoutSlides.slice(0, i), layoutData, ...newLayoutSlides.slice(i)]
+        } else {
+            newLayoutSlides.push(layoutData)
+        }
     })
 
     // add back layout data
@@ -364,7 +368,7 @@ function groupSlides(slides: Slide[]) {
             slide.globalGroup = "verse"
         }
         if (slide.group) currentIndex++
-        if (!slideGroups[currentIndex]) slideGroups[currentIndex] = { text: "", slides: [] }
+        if (!slideGroups[currentIndex]) slideGroups[currentIndex] = { text: slide.group || "", slides: [] }
         slideGroups[currentIndex].slides.push(slide)
 
         let textItems = getTextboxes(slide.items)

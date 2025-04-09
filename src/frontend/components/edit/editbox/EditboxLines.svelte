@@ -60,7 +60,7 @@
         let s = ""
         let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
         clone(item?.lines)?.forEach((line) => {
-            let align = line.align.replaceAll(lineBg, "")
+            let align = line.align.replaceAll(lineBg, "") + ";"
             s += align + lineBg // + line.chords?.map((a) => a.key)
             console.assert(Array.isArray(line?.text), "Text is not an array!")
             line?.text?.forEach((a) => {
@@ -213,9 +213,9 @@
 
     let HISTORY_UPDATE_KEY = 0
     let updates: number = 0
-    function updateLines(newLines: Line[]) {
+    function updateLines(newLines: Line[] = []) {
         // updateItem = true
-        if (!newLines) newLines = getNewLines()
+        if (!newLines?.length) newLines = getNewLines()
 
         if ($activeEdit.type === "overlay") overlays.update(setNewLines)
         else if ($activeEdit.type === "template") templates.update(setNewLines)
@@ -249,6 +249,14 @@
             let itemRef = ref.showId + ref.id + "_" + index + "_" + HISTORY_UPDATE_KEY
 
             // WIP I guess this (undo/redo) is also controlled by the default text input method..
+
+            // fix lineBg style
+            const lineBgStyle = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
+            if (lineBgStyle) {
+                newLines.forEach((line) => {
+                    line.align = (line.align || "").replace(lineBgStyle, "")
+                })
+            }
 
             history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index] }, location: { page: "none", override: itemRef } })
 
@@ -314,6 +322,10 @@
         let defaultFontSize = itemFontSize
         let maxFontSize
 
+        if (ref.type === "stage") {
+            type = "growToFit"
+        }
+
         if (type === "growToFit") {
             defaultFontSize = 100
             maxFontSize = itemFontSize
@@ -331,11 +343,13 @@
         let pos: number = -1
         currentStyle = ""
         let updateHTML: boolean = false
+        let lineBg = item.specialStyle?.lineBg ? `background-color: ${item.specialStyle.lineBg};` : ""
 
         new Array(...textElem.children).forEach((line, i) => {
             let align: string = plain ? item.lines?.[i]?.align || "" : line.getAttribute("style") || ""
+            align = align.replaceAll(lineBg, "") + ";"
             pos++
-            currentStyle += align
+            currentStyle += align + lineBg
 
             let newLine = { align, text: [] as any[] }
             let lineChords: any[] = []
@@ -604,7 +618,7 @@
 
 {#if item?.lines}
     <!-- TODO: remove align..... -->
-    <div bind:this={alignElem} class="align" class:plain style={plain ? null : item.align || null}>
+    <div bind:this={alignElem} class="align" class:chords={chordsMode} class:plain style={plain ? null : item.align || null}>
         {#if item.lines?.length < 2 && !item.lines?.[0]?.text?.[0]?.value?.length}
             <span class="placeholder">
                 <p>
@@ -657,6 +671,9 @@
 
         line-height: 1.5em;
         text-shadow: none;
+    }
+    .align.chords {
+        overflow: visible !important;
     }
 
     .edit:global(.invisible) {

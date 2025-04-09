@@ -155,6 +155,8 @@
 
         // special
         setBoxInputValue(box, "special", "scrolling.type", "value", item?.scrolling?.type || "none")
+        setBoxInputValue(box, "special", "button.press", "value", item?.button?.press || "")
+        setBoxInputValue(box, "special", "button.release", "value", item?.button?.release || "")
     }
     $: if (id === "media" && item) {
         setBoxInputValue(box, "default", "src", "value", item.src || "")

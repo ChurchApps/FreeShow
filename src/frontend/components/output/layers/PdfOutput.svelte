@@ -1,4 +1,5 @@
 <script lang="ts">
+    import * as pdfjsLib from "pdfjs-dist"
     import type { Transition } from "../../../../types/Show"
     import OutputTransition from "../transitions/OutputTransition.svelte"
 
@@ -6,73 +7,49 @@
     export let currentStyle
     export let transition: Transition
 
-    let loaded = false
     $: path = slide.id
-    $: if (path) loaded = false
+    $: console.log(currentStyle)
 
-    function onload() {
-        // give PDF a bit of time to load after "page" has loaded
-        // WIP maybe not very accurate
-        let timeout = Math.floor(Math.ceil(slide.viewport.width * slide.viewport.height) * 0.0012)
-        timeout = Math.min(timeout, 3000)
-        setTimeout(() => (loaded = true), timeout)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+
+    let canvasElem: HTMLCanvasElement | undefined
+
+    $: pageNum = slide.page + 1
+    $: canvasElemExists = !!canvasElem
+    $: if (path && canvasElemExists) loadPage(pageNum)
+
+    let docs: { [key: string]: pdfjsLib.PDFDocumentProxy } = {}
+    async function loadPage(pageNumber: number) {
+        if (!canvasElem) return
+
+        if (!docs[path]) docs[path] = await pdfjsLib.getDocument(path).promise
+        const page = await docs[path].getPage(pageNumber)
+
+        const context = canvasElem.getContext("2d")
+        if (!context) return
+
+        const viewport = page.getViewport({ scale: 4 })
+        canvasElem.height = viewport.height
+        canvasElem.width = viewport.width
+
+        page.render({ canvasContext: context, viewport })
     }
+
+    let update = 0
+    $: if (pageNum || path) update++
 </script>
 
-<!-- Native Chromium PDF Viewer -->
-{#key slide.page}
+{#key update}
     <OutputTransition {transition} inTransition={transition.in} outTransition={transition.out}>
-        {#if slide.viewport}
-            <div class="center" class:wide={16 / 9 < slide.viewport.width / slide.viewport.height} style="aspect-ratio: {slide.viewport.width / slide.viewport.height};--background: {currentStyle.background || 'black'};"></div>
-        {/if}
-
-        <iframe src="{path}#toolbar=0&view=fit&page={slide.page + 1}" class:hideScrollbar={slide.pages > 1} frameborder="0" scrolling="no" on:load={onload}></iframe>
-
-        {#if !loaded}
-            <div class="fill" style="--background: {currentStyle.background || 'black'};"></div>
-        {/if}
+        <canvas bind:this={canvasElem} />
     </OutputTransition>
 {/key}
 
 <style>
-    iframe {
+    canvas {
         width: 100%;
         height: 100%;
-
+        object-fit: contain;
         pointer-events: none;
-    }
-
-    iframe.hideScrollbar {
-        /* do this to hide scrollbar until the url parameter to hide is supported */
-        width: calc(100% + 18px);
-    }
-
-    /* cover grey areas with black */
-    .center {
-        height: calc(100% - 5px - 4px);
-
-        position: absolute;
-        left: 50%;
-        top: 2px;
-        transform: translateX(-50%);
-
-        outline-offset: 0;
-        outline: 800px solid var(--background);
-    }
-    .center.wide {
-        height: initial;
-        width: calc(100% - 5px - 4px);
-    }
-
-    .fill {
-        width: 100%;
-        height: 100%;
-
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-
-        background-color: var(--background);
     }
 </style>
