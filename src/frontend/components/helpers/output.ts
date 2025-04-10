@@ -945,6 +945,10 @@ export function isEmptyOrSpecial(item: Item) {
     return false
 }
 
+export function isEmpty(item: Item) {
+    return !getItemText(item).length
+}
+
 export function sortItemsByType(items: Item[]) {
     let sortedItems: { [key: string]: Item[] } = {}
 

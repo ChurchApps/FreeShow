@@ -1,5 +1,6 @@
 import type { Item, Show } from "../../../types/Show"
 import { setError, translate } from "./helpers"
+import { send } from "./socket"
 import { _, _get, _set, _update, overlays, scriptures } from "./stores"
 
 export type ReceiverKey = keyof typeof receiver
@@ -81,6 +82,10 @@ export const receiver = {
             _set("outShow", _get("activeShow"))
         }
     },
+    OUT_DATA: (data: any) => {
+        _set("outData", data)
+        send("API:get_cleared")
+    },
     FOLDERS: (data: any) => {
         if (!_get("isConnected")) return
 
@@ -144,6 +149,10 @@ export const receiver = {
     },
     "API:get_playing_audio_time": (data: any) => {
         _set("playingAudioTime", data)
+    },
+
+    "API:get_pdf_thumbnails": (data: { path: string; pages: string[] }) => {
+        _update("pdfPages", data.path, data.pages)
     },
 }
 

@@ -1,3 +1,4 @@
+import * as pdfjsLib from "pdfjs-dist"
 import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
@@ -35,7 +36,7 @@ import { ondrop } from "../helpers/drop"
 import { dropActions } from "../helpers/dropActions"
 import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
-import { getFileName, getMediaStyle, removeExtension } from "../helpers/media"
+import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
 import { getActiveOutputs, getCurrentStyle, isOutCleared, setOutput } from "../helpers/output"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId, getLayoutRef } from "../helpers/show"
@@ -47,6 +48,7 @@ import { activeShow } from "./../../stores"
 import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { setRandomValue } from "../helpers/randomValue"
+import { clearBackground } from "../output/clear"
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -219,8 +221,7 @@ export function changeVariable(data: API_variable) {
         setRandomValue(id)
         return
     } else if (key === "reset") {
-        updateVariable(0, id, "number")
-        updateVariable("", id, "setName")
+        resetVariable(id)
         return
     }
 
@@ -249,6 +250,11 @@ function updateVariable(value: any, id: string, key: string) {
         if (a[id]) a[id][key] = value
         return a
     })
+}
+export function resetVariable(id: string) {
+    updateVariable(0, id, "number")
+    updateVariable("", id, "setName")
+    updateVariable([], id, "setLog")
 }
 
 // SHOW
@@ -354,6 +360,15 @@ export function startScripture(data: API_scripture) {
 export function playMedia(data: API_media) {
     if (get(outLocked)) return
 
+    const extension = getMediaType(getExtension(data.path))
+
+    if (extension === "pdf") {
+        let name = removeExtension(getFileName(data.path))
+        setOutput("slide", { type: "pdf", id: data.path, page: data.index || 0, pages: data.data?.pageCount ?? 1, name })
+        clearBackground()
+        return
+    }
+
     let outputId = getActiveOutputs(get(outputs))[0]
     let currentOutput = get(outputs)[outputId] || {}
     let currentStyle = getCurrentStyle(get(styles), currentOutput.style)
@@ -430,4 +445,31 @@ function levenshteinDistance(a, b) {
     }
 
     return matrix[b.length][a.length]
+}
+
+// PDF
+
+export async function getPDFThumbnails({ path }: API_media) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+    const pdfDoc = await pdfjsLib.getDocument(path).promise
+    const pageCount = pdfDoc.numPages
+
+    const canvas = document.createElement("canvas")
+    const context = canvas.getContext("2d")
+    if (!context) return []
+
+    let pages: string[] = []
+    for (let i = 0; i < pageCount; i++) {
+        const page = await pdfDoc.getPage(i + 1)
+        const viewport = page.getViewport({ scale: 1.5 })
+
+        canvas.height = viewport.height
+        canvas.width = viewport.width
+
+        await page.render({ canvasContext: context, viewport }).promise
+        const base64 = canvas.toDataURL("image/jpeg")
+        pages.push(base64)
+    }
+
+    return { path, pages }
 }

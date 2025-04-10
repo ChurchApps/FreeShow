@@ -1,4 +1,5 @@
 import { get, Writable, writable } from "svelte/store"
+import type { OutData } from "../../../types/Output"
 import type { Dictionary } from "../../../types/Settings"
 import type { Overlays, Show, TrimmedShow } from "../../../types/Show"
 import type { BibleCategories } from "../../../types/Tabs"
@@ -25,6 +26,7 @@ export let outputMode: Writable<"slide" | "lyrics"> = writable("slide")
 export let active: Writable<ProjectShowRef> = writable({ id: "", type: "show" })
 export let activeShow: Writable<Show | null> = writable(null)
 export let shows: Writable<TrimmedShow[]> = writable([])
+export let outData: Writable<OutData> = writable({})
 export let outSlide: Writable<number | null> = writable(null)
 export let outLayout: Writable<string | null> = writable(null)
 export let styleRes: Writable<any> = writable(null) // this is actually aspect ratio
@@ -50,6 +52,8 @@ export let scriptureCache: Writable<any> = writable({})
 export let playingAudioData: Writable<any> = writable({})
 export let playingAudioTime: Writable<number> = writable(0)
 
+export let pdfPages: Writable<{ [key: string]: string[] }> = writable({})
+
 /////
 
 export const _ = {
@@ -63,6 +67,7 @@ export const _ = {
     active,
     activeShow,
     shows,
+    outData,
     outSlide,
     outLayout,
     styleRes,
@@ -82,6 +87,7 @@ export const _ = {
     scriptureCache,
     playingAudioData,
     playingAudioTime,
+    pdfPages,
 }
 
 /////

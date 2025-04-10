@@ -1007,7 +1007,7 @@ export function getDynamicIds() {
     // WIP sort by type & name
     const variablesList = Object.values(get(variables)).filter((a) => a?.name)
     let variableValues = variablesList.map(({ name }) => `variable_` + getVariableNameId(name))
-    let variableSetNameValues = variablesList.filter((a) => a.type === "random_number").map(({ name }) => `variable_set_` + getVariableNameId(name))
+    let variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_` + getVariableNameId(name))
 
     return [...mainValues, ...metaValues, ...variableValues, ...variableSetNameValues]
 }

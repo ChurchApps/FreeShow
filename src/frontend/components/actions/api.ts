@@ -38,6 +38,7 @@ import {
     changeShowLayout,
     changeVariable,
     getClearedState,
+    getPDFThumbnails,
     getPlainText,
     getShowGroups,
     gotoGroup,
@@ -102,7 +103,7 @@ export type API_rearrange = { showId: string; from: number; to: number }
 export type API_group = { showId: string; groupId: string }
 export type API_layout = { showId: string; layoutId: string }
 export type API_slide_thumbnail = { showId?: string; layoutId?: string; index?: number }
-export type API_media = { path: string }
+export type API_media = { path: string; index?: number; data?: any }
 export type API_scripture = { id: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
@@ -286,6 +287,7 @@ export const API_ACTIONS = {
 
     get_thumbnail: (data: API_media) => getThumbnail(data),
     get_slide_thumbnail: (data: API_slide_thumbnail) => getSlideThumbnail(data),
+    get_pdf_thumbnails: (data: API_media) => getPDFThumbnails(data),
     get_cleared: () => getClearedState(),
 }
 

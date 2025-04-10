@@ -203,7 +203,7 @@
         </CombinedInput>
         <!-- {/if} -->
 
-        {#if currentVariable.setLog}
+        {#if currentVariable.setLog?.length}
             <HRule title="popup.history" />
 
             <div class="log" style="overflow: auto;max-height: 250px;">

@@ -243,6 +243,8 @@
     $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
     $: backgroundData = templateBackground ? templateBackgroundData : background
 
+    $: overlaysActive = !!(layers.includes("overlays") && clonedOverlays)
+
     // draw zoom
     $: drawZoom = $drawTool === "zoom" ? ($drawSettings.zoom?.size || 200) / 100 : 1
 
@@ -284,7 +286,7 @@
     {/if}
 
     <!-- "underlays" -->
-    {#if layers.includes("overlays") && clonedOverlays}
+    {#if overlaysActive}
         <!-- && outUnderlays?.length -->
         <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outUnderlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
     {/if}
@@ -323,7 +325,7 @@
 
         <!-- overlays -->
         <!-- outOverlays?.length -->
-        {#if clonedOverlays}
+        {#if overlaysActive}
             <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {isKeyOutput} {mirror} />
         {/if}
     {/if}

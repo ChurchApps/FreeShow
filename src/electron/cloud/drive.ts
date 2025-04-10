@@ -160,18 +160,21 @@ export async function uploadFile(data: any, updateId: string = "") {
 //     return response
 // }
 
+// drive_v3.Schema$File | null
 export async function downloadFile(fileId: string): Promise<any> {
-    if (!driveClient || !fileId) return
+    if (!driveClient || !fileId) return null
 
     // https://developers.google.com/drive/api/guides/manage-downloads#node.js
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         driveClient!.files.get({ fileId: fileId, alt: "media" }, (err, res) => {
             if (err) {
-                reject(err)
-                return console.error("The API returned an error: " + err)
+                console.error("The API returned an error: " + err)
+                resolve(null)
+                return
             }
-            resolve(res?.data)
+
+            resolve(res?.data || null)
         })
     })
 }
@@ -230,16 +233,16 @@ export async function syncDataDrive(data: DriveData) {
 
         let driveContent = await downloadFile(driveFileId)
         let storeContent: string = JSON.stringify(storeData)
-        let matchingContent: boolean = driveContent && JSON.stringify(driveContent) === storeContent
+        let matchingContent: boolean = !!driveContent && JSON.stringify(driveContent) === storeContent
 
         if (matchingContent) return
 
         // combine
         if (data.method !== "upload" && data.method !== "download" && driveFile && storeContent && combineLocations.includes(id)) {
             const project = () => ({
-                projects: combineFiles(driveContent.projects, storeData.projects, newest),
-                folders: combineFiles(driveContent.folders, storeData.folders, newest),
-                projectTemplates: combineFiles(driveContent.projectTemplates, storeData.projectTemplates, newest),
+                projects: combineFiles(driveContent?.projects, storeData.projects, newest),
+                folders: combineFiles(driveContent?.folders, storeData.folders, newest),
+                projectTemplates: combineFiles(driveContent?.projectTemplates, storeData.projectTemplates, newest),
             })
             const combined = id === "PROJECTS" ? project() : combineFiles(driveContent, storeData, newest)
 
@@ -333,7 +336,7 @@ export async function syncDataDrive(data: DriveData) {
 
             let driveContent = await downloadFile(driveFileId)
 
-            let matchingContent: boolean = driveContent && JSON.stringify(driveContent) === localFile
+            let matchingContent: boolean = !!driveContent && JSON.stringify(driveContent) === localFile
             if (matchingContent) return
 
             // download
@@ -411,7 +414,7 @@ export async function syncDataDrive(data: DriveData) {
 
             // double check with content timestamp
             if (newest === "cloud" && cloudContent && localContent) {
-                let actualDrivetime = driveContent[id].timestamps?.modified || 0
+                let actualDrivetime = driveContent?.[id]?.timestamps?.modified || 0
                 if (actualDrivetime && actualDrivetime < lastLocalTimestamp) {
                     newest = "local"
                     // DEBUG:
@@ -421,10 +424,11 @@ export async function syncDataDrive(data: DriveData) {
                 }
             }
 
-            if ((newest === "cloud" || data.method === "download") && cloudContent) {
+            const isDeleted = currentlyDeletedShows.includes(id) || driveContent?.[id]?.deleted
+            if ((newest === "cloud" || data.method === "download" || isDeleted) && cloudContent) {
                 // deleted locally
                 if (currentlyDeletedShows.includes(id)) {
-                    allShows[id] = { deleted: true, name: driveContent[id]?.name || "" }
+                    allShows[id] = { deleted: true, name: driveContent![id].name || "" }
 
                     delete shows[id]
                     uploadCount++
@@ -433,17 +437,17 @@ export async function syncDataDrive(data: DriveData) {
                     return
                 }
 
-                allShows[id] = driveContent[id]
+                allShows[id] = driveContent![id]
 
                 // if a show is deleted, synced and undone it can't be restored unless a duplicate is created with new ID!
                 // but it can be restored when deleted before it's synced
                 // deleted in cloud
-                if (driveContent[id].deleted === true) {
+                if (driveContent![id].deleted === true) {
                     let p: string = path.join(showsPath, name)
                     if (doesPathExist(p)) {
                         deleteFile(p)
                         downloadCount++
-                        if (DEBUG) console.log("Show has been deleted locally:", driveContent[id]?.name || "")
+                        if (DEBUG) console.log("Show has been deleted locally:", driveContent![id]?.name || "")
                     }
 
                     delete shows[id]
@@ -452,7 +456,7 @@ export async function syncDataDrive(data: DriveData) {
                 }
             } else if (localContent) {
                 try {
-                    allShows[id] = JSON.parse(localContent)[1]
+                    if (!isDeleted) allShows[id] = JSON.parse(localContent)[1]
                 } catch (err) {
                     console.log(`Could not parse show ${name}.`, err)
                     return

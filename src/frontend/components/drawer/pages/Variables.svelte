@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activePopup, dictionary, disableDragging, labelsDisabled, randomNumberVariable, variables } from "../../../stores"
+    import { resetVariable } from "../../actions/apiHelper"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import { getSetChars, setRandomValue } from "../../helpers/randomValue"
@@ -143,14 +144,7 @@
                 <SelectElem style="min-width: calc(25% - 5px);" id="variable" data={variable} draggable>
                     <div class="variable numberBox context #variable">
                         <div class="reset">
-                            <Button
-                                disabled={$randomNumberVariable[variable.id]}
-                                title={$dictionary.actions?.reset}
-                                on:click={() => {
-                                    updateVariable(0, variable.id, "number")
-                                    updateVariable("", variable.id, "setName")
-                                }}
-                            >
+                            <Button disabled={$randomNumberVariable[variable.id]} title={$dictionary.actions?.reset} on:click={() => resetVariable(variable.id)}>
                                 <Icon id="reset" />
                             </Button>
                         </div>

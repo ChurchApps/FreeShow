@@ -5,7 +5,7 @@
     import Icon from "../../../common/components/Icon.svelte"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared } from "../../util/stores"
+    import { dictionary, isCleared, outData } from "../../util/stores"
 
     export let tablet: boolean = false
     export let locked: boolean = false
@@ -22,26 +22,30 @@
         send("API:get_cleared")
         dispatch("clear")
     }
+
+    $: type = $outData?.slide?.type
 </script>
 
 <div class="clear" class:tablet>
     {#if moreOptions || tablet}
         <div class="more" style="display: flex;" in:slide={{ duration: tablet ? 0 : 300 }}>
             <!-- WIP get state -->
-            <Button
-                disabled={locked || $isCleared.background}
-                on:click={() => {
-                    if (locked) return
+            {#if type !== "pdf"}
+                <Button
+                    disabled={locked || $isCleared.background}
+                    on:click={() => {
+                        if (locked) return
 
-                    clear("API:clear_background")
-                    // outBackground = null
-                }}
-                red
-                dark
-                center
-            >
-                <Icon id="background" size={1.2} />
-            </Button>
+                        clear("API:clear_background")
+                        // outBackground = null
+                    }}
+                    red
+                    dark
+                    center
+                >
+                    <Icon id="background" size={1.2} />
+                </Button>
+            {/if}
 
             <Button
                 disabled={locked || !(outSlide || !$isCleared.slide)}
@@ -55,7 +59,7 @@
                 dark
                 center
             >
-                <Icon id="slide" size={1.2} />
+                <Icon id={type === "pdf" ? "background" : "slide"} size={1.2} />
             </Button>
 
             <Button

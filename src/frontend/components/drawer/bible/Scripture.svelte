@@ -1121,7 +1121,7 @@
                             class:active={activeVerses.includes(content.id) || activeVerses.includes(id)}
                             title={$dictionary.tooltip?.scripture}
                         >
-                            <span class="v">
+                            <span class="v" style="white-space: nowrap;">
                                 {id}
                                 {#if subverse}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{getVersePartLetter(subverse)}</span>{/if}
                             </span>

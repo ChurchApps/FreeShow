@@ -1,7 +1,9 @@
 <script lang="ts">
     import { EXPORT } from "../../../../../types/Channels"
+    import { Main } from "../../../../../types/IPC/Main"
     import type { Project } from "../../../../../types/Projects"
     import { Show } from "../../../../../types/Show"
+    import { sendMain } from "../../../../IPC/main"
     import { activePopup, activeProject, dataPath, dictionary, projects, showsCache, showsPath, special } from "../../../../stores"
     import { send } from "../../../../utils/request"
     import { exportProject } from "../../../export/project"
@@ -14,7 +16,7 @@
     import CombinedInput from "../../../inputs/CombinedInput.svelte"
     import Center from "../../../system/Center.svelte"
     import Loader from "../../Loader.svelte"
-    import { exportFormats, exportTypes, getActiveShowId, getShowIdsFromType } from "./exportHelper"
+    import { convertShowSlidesToImages, exportFormats, exportTypes, getActiveShowId, getShowIdsFromType } from "./exportHelper"
     import PdfExport from "./PdfExport.svelte"
 
     let previewShow: Show | null = null
@@ -25,8 +27,8 @@
     let exportFormat: string = ""
 
     const excludedFormats = {
-        project: ["show", "txt"],
-        all_shows: ["project", "pdf"],
+        project: ["show", "txt", "image"],
+        all_shows: ["project", "pdf", "image"],
     }
     function filterFormats(exportFormats) {
         return clone(exportFormats).filter((a) => !(excludedFormats[exportType] || []).find((id) => id === a.id))
@@ -37,6 +39,7 @@
         txt: "txt",
         pdf: "pdf",
         project: "zip",
+        image: "jpg",
     }
 
     $: typeName = exportTypes.find((a) => a.id === exportType)?.name || ""
@@ -63,6 +66,8 @@
     }
 
     async function exportClick() {
+        if (loading) return
+
         if (exportType === "all_shows") {
             loading = true
             send(EXPORT, ["ALL_SHOWS"], { type: exportFormat, path: $dataPath, showsPath: $showsPath })
@@ -85,6 +90,16 @@
 
             loading = true
             await exportProject(project)
+        } else if (exportFormat === "image") {
+            // only first selected show
+            loading = true
+            const showName = $showsCache[showIds[0]]?.name
+            const images = await convertShowSlidesToImages(showIds[0])
+            images.forEach((base64, i) => {
+                if (!base64) return
+                sendMain(Main.SAVE_IMAGE, { path: $dataPath, base64, filePath: ["Images", showName, `${i + 1}.jpg`], format: "jpg" })
+            })
+            loading = false
         } else {
             send(EXPORT, ["GENERATE"], { type: exportFormat, path: $dataPath, showsPath: $showsPath, showIds, options: exportFormat === "pdf" ? pdfOptions : {} })
         }
