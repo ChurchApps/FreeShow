@@ -349,6 +349,7 @@ export interface Midi {
     enabled?: boolean // should customActivation trigger
     midiEnabled?: boolean
     midi?: MidiValues
+    hid?: HidValue
 
     // deprecated values
     startupEnabled?: boolean
@@ -364,6 +365,11 @@ export interface MidiValues {
         velocity: number
         channel: number
     }
+}
+
+export interface HidValue {
+    deviceId: string
+    inputId: string | null
 }
 
 export interface MidiIn extends Midi {

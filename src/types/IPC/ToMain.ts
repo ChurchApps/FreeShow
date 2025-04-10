@@ -14,6 +14,8 @@ export enum ToMain {
     PCO_CONNECT = "PCO_CONNECT",
     PCO_PROJECTS = "PCO_PROJECTS",
     API = "API",
+    // HID
+    HID_DATA = "HID_DATA",
     // Main
     IMPORT2 = "IMPORT2",
     SHOW2 = "SHOW2",
@@ -38,6 +40,8 @@ export interface ToMainSendPayloads {
     [ToMain.PCO_CONNECT]: { success: boolean; isFirstConnection?: boolean }
     [ToMain.PCO_PROJECTS]: { shows: any; projects: any }
     [ToMain.API]: "connected"
+    // HID
+    [ToMain.HID_DATA]: any
     ///
     [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string; name?: string; extension?: string } | string)[]; custom?: any }
     [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }

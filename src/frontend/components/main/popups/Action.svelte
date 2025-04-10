@@ -20,6 +20,7 @@
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
+    import HidValues from "../../actions/HidValues.svelte"
 
     $: id = $popupData.id || ""
     $: mode = $popupData.mode || ""
@@ -473,6 +474,8 @@
                     </CombinedInput>
                 {:else if customActivation === "midi_signal_received"}
                     <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide={mode === "slide_midi"} simple />
+                {:else if customActivation === "activate_hid_input"}
+                    <HidValues hidValue={clone(action.hid)} on:change={(e) => updateValue("hid", e)} />
                 {/if}
             {/if}
         {/if}

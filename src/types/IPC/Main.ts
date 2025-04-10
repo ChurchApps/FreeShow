@@ -2,6 +2,7 @@ import type { Family } from "css-fonts"
 import type { Display } from "electron"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
+import type { Device } from "node-hid"
 import type os from "os"
 import type { stores } from "../../electron/data/store"
 import type { Bible } from "../Bible"
@@ -121,6 +122,10 @@ export enum Main {
     PCO_LOAD_SERVICES = "PCO_LOAD_SERVICES",
     PCO_STARTUP_LOAD = "PCO_STARTUP_LOAD",
     PCO_DISCONNECT = "PCO_DISCONNECT",
+    // HID
+    HID_DEVICES = "HID_DEVICES",
+    HID_AWAIT_INPUT = "HID_AWAIT_INPUT",
+    HID_CLOSE = "HID_CLOSE",
 }
 
 export interface MainSendPayloads {
@@ -182,6 +187,9 @@ export interface MainSendPayloads {
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
     [Main.PCO_LOAD_SERVICES]: { dataPath: string }
     [Main.PCO_STARTUP_LOAD]: { dataPath: string }
+    // HID
+    [Main.HID_AWAIT_INPUT]: { path: string }
+    [Main.HID_CLOSE]: { path: string }
 }
 
 export interface MainReturnPayloads {
@@ -247,6 +255,8 @@ export interface MainReturnPayloads {
     [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
     [Main.READ_FILE]: { content: string }
     [Main.PCO_DISCONNECT]: { success: boolean }
+    // HID
+    [Main.HID_DEVICES]: Promise<Device[]>
 }
 
 ///////////

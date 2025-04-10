@@ -8,6 +8,7 @@ import { Main, MainResponses } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { restoreFiles } from "../data/backup"
 import { downloadMedia } from "../data/downloadMedia"
+import { getHidDevices, hidAwaitInput, hidClose } from "../data/hid"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
 import { config, error_log, getStore, stores, updateDataPath, userDataPath } from "../data/store"
@@ -47,8 +48,8 @@ import {
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
-import checkForUpdates from "../utils/updater"
 import { correctSpelling } from "../utils/spellcheck"
+import checkForUpdates from "../utils/updater"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -181,6 +182,10 @@ export const mainResponses: MainResponses = {
     [Main.PCO_LOAD_SERVICES]: (data) => pcoLoadServices(data.dataPath),
     [Main.PCO_STARTUP_LOAD]: (data) => pcoStartupLoad(data.dataPath),
     [Main.PCO_DISCONNECT]: () => pcoDisconnect(),
+    // HID
+    [Main.HID_DEVICES]: () => getHidDevices(),
+    [Main.HID_AWAIT_INPUT]: (data) => hidAwaitInput(data),
+    [Main.HID_CLOSE]: (data) => hidClose(data),
 }
 
 //////////

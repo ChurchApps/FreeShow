@@ -22,6 +22,7 @@ export const customActionActivations = [
     { id: "show_opened", name: "$:actions.activate_show_opened:$" },
     { id: "audio_playlist_ended", name: "$:actions.activate_audio_playlist_ended:$" },
     { id: "midi_signal_received", name: "$:midi.activate:$", inputs: true },
+    { id: "activate_hid_input", name: "$:actions.activate_hid_input:$", inputs: true },
 ]
 
 // WIP Custom activations
