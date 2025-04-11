@@ -492,6 +492,7 @@
         "deleted_cache": "Deleted media thumbnail cache.",
         "no_songswords_easyworship": "Missing SongsWords.db file.",
         "delete_shows_empty": "No shows to delete.",
+        "reached_end": "Reached the end!",
         "output_capture_enabled": "Output screen capture enabled, this may cause performance issues. Only use if needed!",
         "midi_no_project": "Received trigger to change project, but no project found at index:",
         "midi_no_show": "Received trigger to start slide, but no show active.",
@@ -946,7 +947,8 @@
         "just_one_day": "Just one day",
         "enable_start_date": "Enable start date",
         "disable_navigation": "Disable navigation controls",
-        "progress_bar": "Progress bar"
+        "progress_bar": "Progress bar",
+        "each_number_once": "Each number only once"
     },
     "items": {
         "text": "Textbox",

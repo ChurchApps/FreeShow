@@ -222,7 +222,7 @@
     <br />
 
     <CombinedInput>
-        <Button on:click={() => sendMain(Main.IMPORT, { channel: "BIBLE", format: { name: "Bible", extensions: ["xml", "json", "fsb"] } })} style="width: 100%;" center dark>
+        <Button on:click={() => sendMain(Main.IMPORT, { channel: "BIBLE", format: { name: "Bible", extensions: ["xml", "xmm", "json", "fsb"] } })} style="width: 100%;" center dark>
             <Icon id="import" right />
             <T id="scripture.local" />
         </Button>

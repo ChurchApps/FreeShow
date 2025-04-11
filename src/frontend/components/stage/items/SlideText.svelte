@@ -46,7 +46,7 @@
             if (!showRef[layoutOffset]?.data?.disabled) offsetFromCurrentExcludingDisabled--
         }
         customOffset = layoutOffset
-    }
+    } else customOffset = null
 
     $: slideId = (customOffset !== null || slideIndex !== null) && showRef ? showRef[(customOffset ?? slideIndex)!]?.id || null : null
     $: slide = currentSlide?.id === "temp" ? getTempSlides(slideOffset) : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null

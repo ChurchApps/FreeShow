@@ -20,7 +20,7 @@
     const values = getValues()
 
     function getValues() {
-        const seperators = ["variable_", "time_", "show_", "slide_text_", "video_", "meta_"]
+        const seperators = ["$", "time_", "show_", "slide_text_", "video_", "meta_"]
 
         let list = getDynamicIds().map((id) => ({ id }))
         let newList: { [key: string]: typeof list } = {}
@@ -28,7 +28,7 @@
         let seperatorId = ""
         list.forEach((value) => {
             const seperator = seperators.find((a) => value.id.includes(a)) || ""
-            if (seperator && seperatorId !== seperator && seperatorId !== "variable_") {
+            if (seperator && seperatorId !== seperator && seperatorId !== "$") {
                 seperatorId = seperator
                 newList[seperatorId] = []
             }
@@ -44,7 +44,7 @@
         if (id === "slide_text_") return "edit.text"
         if (id === "video_") return "edit.video"
         if (id === "meta_") return "tools.metadata"
-        if (id === "variable_") return "items.variable"
+        if (id === "$") return "items.variable"
         return ""
     }
 

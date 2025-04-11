@@ -84,9 +84,9 @@
             style = percentageStylePos(style, outputResolution)
         }
 
-        // reset position styles
+        // reset item styles (as it's set in parent item)
         if (isStage) {
-            style += "left: 0;top: 0;width: 100%;height: 100%;"
+            style += "display: contents;"
         }
 
         if (!key) return style

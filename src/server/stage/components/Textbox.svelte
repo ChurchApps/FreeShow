@@ -55,7 +55,7 @@
     $: if ($variables) setTimeout(calculateAutosize, 50)
     let loopStop: any = null
     function calculateAutosize() {
-        if (loopStop || !alignElem) return
+        if (loopStop || !alignElem || !autoSize) return
         loopStop = setTimeout(() => (loopStop = null), 200)
 
         let type: AutosizeTypes = "growToFit"
@@ -150,8 +150,8 @@
     function getCustomStyle(style: string) {
         if (!style) return
 
-        // reset position styles
-        style += "left: 0;top: 0;width: 100%;height: 100%;"
+        // reset item styles (as it's set in parent item)
+        style += "display: contents;"
 
         return style
     }

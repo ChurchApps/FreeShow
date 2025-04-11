@@ -1006,7 +1006,7 @@ export function getDynamicIds() {
 
     // WIP sort by type & name
     const variablesList = Object.values(get(variables)).filter((a) => a?.name)
-    let variableValues = variablesList.map(({ name }) => `variable_` + getVariableNameId(name))
+    let variableValues = variablesList.map(({ name }) => `$` + getVariableNameId(name))
     let variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_` + getVariableNameId(name))
 
     return [...mainValues, ...metaValues, ...variableValues, ...variableSetNameValues]
@@ -1030,10 +1030,15 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     if (type === "show" && !show) return text
 
     getDynamicIds().forEach((id) => {
-        if (!text.includes(dynamicValueText(id))) return
+        let textHasValue = text.includes(dynamicValueText(id))
+        if (id.includes("$") && text.includes(dynamicValueText(id.replace("$", "variable_")))) textHasValue = true
+        if (!textHasValue) return
 
         let newValue = getDynamicValue(id, show)
         text = text.replaceAll(dynamicValueText(id), newValue)
+
+        // $ = variable_
+        if (id.includes("$")) text = text.replaceAll(dynamicValueText(id.replace("$", "variable_")), newValue)
     })
 
     return text
@@ -1048,8 +1053,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             return variable.setName || ""
         }
 
-        if (id.includes("variable_")) {
-            let nameId = id.slice(9)
+        if (id.includes("$") || id.includes("variable_")) {
+            let nameId = id.includes("$") ? id.slice(1) : id.slice(9)
             let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
             if (!variable) return ""
 

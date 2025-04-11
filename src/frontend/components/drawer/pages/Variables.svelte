@@ -52,7 +52,7 @@
 
 <div class="variables">
     {#if sortedVariables.length}
-        <div class="row" style={randomNumberVariables.length + otherVariables.length ? "" : "height: calc(100% - 10px);align-items: center;"}>
+        <div class="row" style={randomNumberVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
             {#each numberVariables as variable}
                 {@const number = Number(variable.number) || 0}
                 {@const stepSize = Number(variable.step) || 1}
@@ -137,7 +137,7 @@
             <h5><T id={typeNames.randomNumber} /></h5>
         {/if}
 
-        <div class="row" style={numberVariables.length + otherVariables.length ? "" : "height: calc(100% - 10px);align-items: center;"}>
+        <div class="row" style={numberVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
             {#each randomNumberVariables as variable}
                 {@const number = Number(variable.number) || 0}
 
