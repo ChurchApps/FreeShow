@@ -427,6 +427,7 @@
         "set_time": "Set time",
         "assign_shortcut": "Assign shortcut",
         "dynamic_values": "Dynamic values",
+        "conditions": "Conditions",
         "animate": "Animate",
         "translate": "Localization",
         "next_timer": "Next slide timer",
@@ -611,6 +612,7 @@
         "bind_to": "Specific outputs",
         "remove_binding": "Remove specific outputs",
         "dynamic_values": "Dynamic values",
+        "conditions": "Conditions",
         "rearrange": "Rearrange",
         "to_front": "Move to front",
         "forward": "Move forward",
@@ -730,6 +732,18 @@
         "activate_show_created": "Activate when show is created",
         "activate_show_opened": "Activate when show is opened",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended"
+    },
+    "conditions": {
+        "show_item": "Show item if",
+        "all_conditions": "All of the following conditions are met",
+        "some_conditions": "Some of the following conditions are met",
+        "none_conditions": "None of the following conditions are met",
+        "has": "has",
+        "has_not": "has not",
+        "is": "is",
+        "is_not": "is not",
+        "value": "value",
+        "empty": "empty"
     },
     "recording": {
         "remove": "Remove recording",

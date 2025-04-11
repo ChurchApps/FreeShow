@@ -1,14 +1,15 @@
 import { get } from "svelte/store"
-import type { Item, ItemType, Slide } from "../../../../types/Show"
-import { activeEdit, activeShow, overlays, refreshEditSlide, showsCache, templates, timers } from "../../../stores"
+import type { Condition, Item, ItemType, Slide } from "../../../../types/Show"
+import { activeEdit, activeShow, overlays, refreshEditSlide, showsCache, templates, timers, variables } from "../../../stores"
 import { addSlideAction } from "../../actions/actions"
 import { createNewTimer } from "../../drawer/timers/timers"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
+import { getLayoutRef } from "../../helpers/show"
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
 import { boxes } from "../values/boxes"
-import { getLayoutRef } from "../../helpers/show"
+import { getTextLines } from "./textStyle"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
 
@@ -152,4 +153,73 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
     })
 
     refreshEditSlide.set(true)
+}
+
+export function shouldItemBeShown(item: Item, allItems: Item[], outputId: string, _updater: any) {
+    // check bindings
+    if (item.bindings?.length && !item.bindings.includes(outputId)) return false
+
+    const slideItems = allItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
+    const itemsText = getTextLines({ items: slideItems }).join("")
+
+    // check conditions
+    const condition = item.conditions?.showItem
+    if (!isConditionMet(condition, itemsText)) return false
+
+    return true
+}
+
+function isConditionMet(condition: Condition | undefined, itemsText: string) {
+    if (!condition) return true
+
+    const conditionValues: boolean[] = condition.values.map((cVal) => {
+        const element = cVal.element || "text"
+        const elementId = cVal.elementId || ""
+        const operator = cVal.operator || "is"
+        const data = cVal.data || "value"
+        const dataValue = cVal.value ?? ""
+
+        let value = ""
+        if (element === "text") value = itemsText
+        else if (element === "variable") value = getVariableValue(elementId)
+
+        // only value data at the moment
+        if (data !== "value") return true
+
+        if (operator === "is") {
+            return value === dataValue
+        } else if (operator === "is_not") {
+            return value !== dataValue
+        } else if (operator === "has") {
+            return value.includes(dataValue)
+        } else if (operator === "has_not") {
+            return !value.includes(dataValue)
+        }
+
+        return true
+    })
+
+    const scenario = condition.scenario || "all"
+    const filteredValues = [...new Set(conditionValues)]
+
+    if (scenario === "all") {
+        return filteredValues.length === 1 && filteredValues[0] === true
+    } else if (scenario === "some") {
+        return filteredValues.includes(true)
+    } else if (scenario === "none") {
+        return filteredValues.length === 1 && filteredValues[0] === false
+    }
+
+    return true
+}
+
+function getVariableValue(variableId: string) {
+    const variable = get(variables)[variableId]
+    if (!variable) return ""
+
+    if (variable.type === "text") {
+        return variable.text || ""
+    } else {
+        return (variable.number ?? 0).toString()
+    }
 }

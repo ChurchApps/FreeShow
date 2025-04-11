@@ -131,6 +131,7 @@ export interface Item {
     fromTemplate?: boolean // these will be removed if another template is applied
     // media: fit, startAt, endAt
     // tag?: string; // p, div????
+    conditions?: { [key: string]: Condition }
 }
 
 export interface LayoutRef {
@@ -197,6 +198,11 @@ export interface DynamicEvent {
 export interface Scrolling {
     type: "none" | "top_bottom" | "bottom_top" | "left_right" | "right_left"
     speed?: number
+}
+
+export interface Condition {
+    scenario: string
+    values: { [key: string]: string }[]
 }
 
 export interface Mirror {

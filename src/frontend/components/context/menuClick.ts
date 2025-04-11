@@ -1209,6 +1209,10 @@ const actions = {
         popupData.set({ obj, caret })
         activePopup.set("dynamic_values")
     },
+    conditions: (obj: ObjData) => {
+        popupData.set({ obj })
+        activePopup.set("conditions")
+    },
     to_front: () => rearrangeItems("to_front"),
     forward: () => rearrangeItems("forward"),
     backward: () => rearrangeItems("backward"),

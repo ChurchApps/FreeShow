@@ -28,6 +28,41 @@
         menuClick("bind_item")
     }
 
+    // conditions
+    function removeConditions() {
+        let layoutRef = getLayoutRef()
+        let slideRef = layoutRef[$activeEdit.slide!] || {}
+        let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
+
+        if ($activeEdit.id) getItems()
+        function getItems() {
+            let slide = {}
+            if ($activeEdit.type === "overlay") slide = $overlays
+            else if ($activeEdit.type === "template") slide = $templates
+
+            slideItems = slide[$activeEdit.id!]?.items
+        }
+
+        if (!slideItems) return
+
+        if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {
+            history({
+                id: "UPDATE",
+                oldData: { id: $activeEdit.id },
+                newData: { key: "items", subkey: "conditions", data: [{}], indexes: [index] },
+                location: { page: "edit", id: $activeEdit.type + "_items", override: "deleteitemcondition_" + index },
+            })
+
+            return
+        }
+
+        history({
+            id: "setItems",
+            newData: { style: { key: "conditions", values: [{}] } },
+            location: { page: "edit", show: $activeShow!, slide: slideRef.id, items: [index], override: "deleteitemcondition_" + slideRef.id + "_items_" + index },
+        })
+    }
+
     // actions
     function removeAction(action) {
         // TODO: this is a duplicate of SetTime and other places
@@ -137,6 +172,15 @@
                     {/if}
                 </span>
             {/if}
+        </div>
+    {/if}
+
+    <!-- conditions -->
+    {#if Object.values(item?.conditions || {}).length}
+        <div title={$dictionary.actions?.conditions} class="actionButton" style="zoom: {1 / ratio};left: 0;right: unset;">
+            <Button on:click={removeConditions} redHover>
+                <Icon id="light" white />
+            </Button>
         </div>
     {/if}
 
