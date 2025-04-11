@@ -28,7 +28,7 @@
     let current: any = {}
     let show: boolean = false
 
-    $: filteredItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, outputId, $variables))
+    $: filteredItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, { outputId, slideIndex: outSlide?.index }, $variables))
 
     // WIP conditions does not remove items when filteredItems updates
 

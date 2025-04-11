@@ -11,6 +11,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import { clone, convertToOptions } from "../../helpers/array"
     import { getLayoutRef } from "../../helpers/show"
+    import { getDynamicIds } from "../../helpers/showActions"
 
     const obj = $popupData.obj || {}
     onMount(() => popupData.set({}))
@@ -38,12 +39,13 @@
         element: [
             { id: "text", name: "$:edit.text:$" },
             { id: "variable", name: "$:items.variable:$" },
+            { id: "dynamicValue", name: "$:actions.dynamic_value:$" },
         ],
         operator: [
             { id: "is", name: "$:conditions.is:$" },
-            { id: "is_not", name: "$:conditions.is_not:$" },
+            { id: "isNot", name: "$:conditions.is_not:$" },
             { id: "has", name: "$:conditions.has:$" },
-            { id: "has_not", name: "$:conditions.has_not:$" },
+            { id: "hasNot", name: "$:conditions.has_not:$" },
         ],
         data: [{ id: "value", name: "$:conditions.value:$" }], // { id: "state" }
     }
@@ -55,6 +57,7 @@
 
     const elementOptions = {
         variable: convertToOptions($variables),
+        dynamicValue: getDynamicIds(true).map((a) => ({ id: a, name: a })),
     }
 
     // UPDATE
@@ -156,7 +159,7 @@
                     {@const value = options.find((a) => a.id === input[conditionId]) || options[0]}
                     <Dropdown style="min-width: 150px;" value={value.name} {options} on:click={(e) => setValue("showItem", e, conditionId, i)} />
 
-                    {#if conditionId === "element" && value.id === "variable"}
+                    {#if conditionId === "element" && elementOptions[value.id]}
                         <Dropdown style="min-width: 150px;" value={elementOptions[value.id].find((a) => a.id === input.elementId)?.name || "—"} options={elementOptions[value.id]} on:click={(e) => setValue("showItem", e, "elementId", i)} />
                     {/if}
 

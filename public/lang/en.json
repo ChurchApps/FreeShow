@@ -612,6 +612,7 @@
         "bind_to": "Specific outputs",
         "remove_binding": "Remove specific outputs",
         "dynamic_values": "Dynamic values",
+        "dynamic_value": "Dynamic value",
         "conditions": "Conditions",
         "rearrange": "Rearrange",
         "to_front": "Move to front",

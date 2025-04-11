@@ -1000,9 +1000,11 @@ const customTriggers = {
 // DYNAMIC VALUES
 
 export const dynamicValueText = (id: string) => `{${id}}`
-export function getDynamicIds() {
+export function getDynamicIds(noVariables: boolean = false) {
     let mainValues = Object.keys(dynamicValues)
     let metaValues = Object.keys(initializeMetadata({})).map((id) => `meta_` + id)
+
+    if (noVariables) return [...mainValues, ...metaValues]
 
     // WIP sort by type & name
     const variablesList = Object.values(get(variables)).filter((a) => a?.name)
