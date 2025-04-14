@@ -8,7 +8,7 @@ import { _show } from "./shows"
 
 // check if name exists and add number
 export function checkName(name: string = "", showId: string = "") {
-    if (typeof name !== "string") return ""
+    if (!name || typeof name !== "string") name = get(dictionary).main?.unnamed || "Unnamed"
     name = formatToFileName(name)
 
     let number = 1

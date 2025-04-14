@@ -1,6 +1,6 @@
 <script type="ts">
     import { slide } from "svelte/transition"
-    import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, paintCache, saved, shows } from "../../stores"
+    import { activeEdit, activeShow, dictionary, drawTool, os, outputDisplay, outputs, paintCache, saved, shows } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { displayOutputs } from "../helpers/output"
     import T from "../helpers/T.svelte"
@@ -11,6 +11,7 @@
 
     // && !$editHistory.length
     $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? $shows[$activeShow?.id || ""]?.locked : $activeShow?.type === "pdf" || !$activeShow?.id
+    $: physicalOutputWindows = Object.values($outputs).filter((a) => a.enabled && !a.invisible)
 
     let confirm: boolean = false
     let disableClick: boolean = false
@@ -72,7 +73,7 @@
             on:click={toggleOutput}
             class="context #output display {$outputDisplay ? 'on' : 'off'}"
             red={$outputDisplay}
-            disabled={disableClick}
+            disabled={(!$outputDisplay && !physicalOutputWindows.length) || disableClick}
         >
             {#if $outputDisplay}
                 {#if confirm}

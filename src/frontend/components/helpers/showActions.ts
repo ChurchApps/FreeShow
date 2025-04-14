@@ -53,6 +53,7 @@ import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
 import { getSetChars } from "./randomValue"
+import { getDynamicValue } from "../edit/scripts/itemHelpers"
 
 const getProjectIndex = {
     next: (index: number | null, shows: ProjectShowRef[]) => {
@@ -1126,7 +1127,7 @@ const dynamicValues = {
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
 
-    slide_number: ({ slideIndex }) => (Number(slideIndex || 0) + 1).toString(),
+    slide_number: ({ slideIndex }) => (Number(slideIndex ?? -1) + 1).toString(),
     slide_group: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.group || "",
     slide_group_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.group || "",
     slide_notes: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.notes || "",
@@ -1146,7 +1147,7 @@ export function getVariableNameId(name: string) {
     return name.toLowerCase().trim().replaceAll(" ", "_")
 }
 
-export function getNumberVariables(updater = get(variables)) {
-    const numberVariables = Object.values(updater).filter((a) => a.type === "number" || a.type === "random_number")
-    return numberVariables.reduce((css, v) => (css += `--variable-${getVariableNameId(v.name)}: ${v.number ?? (v.default || 0)};`), "")
+export function getNumberVariables(variableUpdater = get(variables), _dynamicUpdaters: any = null) {
+    const numberVariables = Object.values(variableUpdater).filter((a) => a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{")))
+    return numberVariables.reduce((css, v) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? getDynamicValue(v.text || "") : (v.number ?? (v.default || 0))};`), "")
 }

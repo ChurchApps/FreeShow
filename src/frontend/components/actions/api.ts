@@ -5,6 +5,8 @@ import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { sendMain } from "../../IPC/main"
 import { triggerFunction } from "../../utils/common"
+import { syncDrive } from "../../utils/drive"
+import { pcoSync } from "../../utils/startup"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
@@ -251,6 +253,10 @@ export const API_ACTIONS = {
     // FUNCTIONS
     change_variable: (data: API_variable) => changeVariable(data), // BC
     start_trigger: (data: API_id) => activateTriggerSync(data.id),
+
+    // CONNECTION
+    sync_drive: () => syncDrive(true),
+    sync_pco: () => pcoSync(),
 
     // EMIT
     send_midi: (data: API_midi) => sendMidi(data),

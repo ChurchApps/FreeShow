@@ -231,18 +231,18 @@ function getVariableValue(variableId: string) {
     }
 }
 
-function getDynamicValue(id: string) {
+export function getDynamicValue(id: string) {
     let outputId = getActiveOutputs()[0]
     let outSlide = get(outputs)[outputId]?.out?.slide
 
     const ref = {
         showId: outSlide?.id || get(activeShow)?.id,
         layoutId: outSlide?.layout || _show().get("settings.activeLayout"),
-        slideIndex: outSlide?.index || get(activeEdit).slide,
+        slideIndex: outSlide?.index ?? get(activeEdit).slide ?? -1,
         type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show",
         id: get(activeEdit).id,
     }
 
-    const value = replaceDynamicValues(dynamicValueText(id), { ...ref })
+    const value = replaceDynamicValues(id.includes("{") ? id : dynamicValueText(id), { ...ref })
     return value
 }

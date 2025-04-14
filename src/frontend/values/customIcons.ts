@@ -1,7 +1,9 @@
 export const customIcons = {
     circle: '<path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2z"/>',
     triangle: '<path d="M0 0h24v24H0z" fill="none"/><path d="M1 21h22L12 2"/>',
+    right_triangle: '<path d="M0 0h24v24H0z" fill="none"/><path d="M2 22h20L2 2"/>',
     square: '<g><rect fill="none" height="24" width="24"/></g><g><g><rect height="18" width="18" x="3" y="3"/></g></g>',
+    // rectangle: '<g><rect fill="none" height="24" width="24"/></g><g><g><rect height="16" width="20" x="2" y="4"/></g></g>',
     pentagon: '<g><rect fill="none" height="24" width="24"/></g><g><polygon points="2,9 6,21 18,21 22,9 12,2"/></g>',
     hexagon: '<g><rect fill="none" height="24" width="24"/></g><g><polygon points="17.2,3 6.8,3 1.6,12 6.8,21 17.2,21 22.4,12"/></g>',
     heart: '<path d="M0 0h24v24H0z" fill="none"/><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>',
@@ -151,7 +153,9 @@ export const customIcons = {
 export const customIconsColors = {
     circle: "#91bcff",
     triangle: "#91bcff",
+    right_triangle: "#91bcff",
     square: "#91bcff",
+    rectangle: "#91bcff",
     pentagon: "#91bcff",
     hexagon: "#91bcff",
     heart: "#ff006f",

@@ -284,7 +284,7 @@
     }
 
     // give CSS access to number variable values
-    $: cssVariables = getNumberVariables($variables)
+    $: cssVariables = getNumberVariables($variables, $outputs)
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
@@ -341,9 +341,11 @@
         pointer-events: initial;
 
         /* WIP custom time based on transition duration */
+        /* filter & dynamic CSS variable transition */
         transition:
             filter 500ms,
-            backdrop-filter 500ms;
+            backdrop-filter 500ms,
+            all 0.1s;
     }
     .item.isStage {
         width: 100%;
