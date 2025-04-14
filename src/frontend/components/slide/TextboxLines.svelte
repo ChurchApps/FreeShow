@@ -174,6 +174,7 @@
 
 <div
     class="align"
+    class:isStage
     class:scrolling={!isStage && item?.scrolling?.type}
     class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"}
     class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"}
@@ -188,7 +189,7 @@
         {#each lines as line, i}
             {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
                 {#if chords && chordLines[i]}
-                    <div class:first={i === 0} class="break chords" class:stageChords={!!stageItem}>
+                    <div class:first={i === 0} class="break chords" class:stageChords={!!stageItem} style="--offsetY: {(stageItem?.chords ? stageItem.chords.offsetY : item?.chords?.offsetY) || 0}px;">
                         {@html chordLines[i]}
                     </div>
                 {/if}
@@ -341,10 +342,13 @@
         font-weight: bold;
 
         /* transform: translate(-50%, calc(0% - var(--chord-size) * 0.8)); */
-        transform: translate(-50%, calc(-55% - 2px));
+        transform: translate(-50%, calc(-8px - var(--offsetY)));
         line-height: initial;
         /* WIP chords goes over other (stage) items */
         z-index: 2;
+    }
+    .align.isStage .break.chords :global(.chord) {
+        transform: translate(-50%, calc(-55% - 2px - var(--offsetY)));
     }
     .break.chords {
         line-height: 0.5em;

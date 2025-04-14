@@ -95,7 +95,10 @@
     let editOpened: boolean = false
     let textValue = ""
     $: if (editOpened && $textCache[$activeShow?.id || ""]) setText()
-    else textValue = ""
+    else reset()
+    function reset() {
+        textValue = ""
+    }
     function setText() {
         textValue = $textCache[$activeShow?.id || ""]
     }

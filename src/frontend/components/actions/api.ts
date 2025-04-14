@@ -19,6 +19,7 @@ import { runActionId, toggleAction } from "./actions"
 import {
     getOutput,
     getOutputGroupName,
+    getOutputSlideText,
     getPlayingAudioData,
     getPlayingAudioDuration,
     getPlayingAudioTime,
@@ -270,6 +271,7 @@ export const API_ACTIONS = {
     get_groups: (data: API_id) => getShowGroups(data.id),
 
     get_output: (data: API_id_optional) => getOutput(data),
+    get_output_slide_text: () => getOutputSlideText(),
     get_output_group_name: () => getOutputGroupName(),
     get_dynamic_value: (data: API_dynamic_value) => replaceDynamicValues(data.value, data.ref || {}),
 

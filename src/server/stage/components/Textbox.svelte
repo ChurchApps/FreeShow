@@ -274,7 +274,7 @@
                     {#if !maxLines || i < maxLines}
                         <!-- WIP chords are way bigger than stage preview for some reason -->
                         {#if chordLines[i]}
-                            <div class:first={i === 0} class="break chords" style="--font-size: {fontSize}px;">
+                            <div class:first={i === 0} class="break chords" style="--font-size: {fontSize}px;--offsetY: {stageItem?.chords?.offsetY || 0}px;">
                                 {@html chordLines[i]}
                             </div>
                         {/if}
@@ -431,7 +431,7 @@
         font-size: var(--chord-size) !important;
         font-weight: bold;
 
-        transform: translate(-50%, calc(-55% - 2px));
+        transform: translate(-50%, calc(-55% - 2px - var(--offsetY)));
         line-height: initial;
         z-index: 2;
     }

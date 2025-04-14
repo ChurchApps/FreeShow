@@ -235,7 +235,6 @@ export interface MainReturnPayloads {
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
     [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | undefined>
     [Main.SLIDESHOW_GET_APPS]: string[]
-    [Main.RECEIVE_MIDI]: Promise<{ id: string; values: any; type: "noteon" | "noteoff" } | null>
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
     [Main.GET_MIDI_INPUTS]: { name: string }[]
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string }>

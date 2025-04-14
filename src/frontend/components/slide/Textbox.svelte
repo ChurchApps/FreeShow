@@ -8,6 +8,7 @@
     import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
+    import { getNumberVariables } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import SlideItems from "./SlideItems.svelte"
@@ -281,6 +282,9 @@
 
         send(OUTPUT, ["ACTION_MAIN"], { id: item.button.release })
     }
+
+    // give CSS access to number variable values
+    $: cssVariables = getNumberVariables($variables)
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
@@ -288,7 +292,7 @@
     class="item"
     style="{style ? getCustomStyle(item?.style, customOutputId, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter
         ? 'backdrop-filter: ' + backdropFilter + ';'
-        : ''}{animationStyle.item || ''}"
+        : ''}{animationStyle.item || ''}{cssVariables}"
     class:white={key && !lines?.length}
     class:key
     class:isStage

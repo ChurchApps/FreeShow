@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
 import type { Shows } from "../../../types/Show"
 import { activePlaylist, audioPlaylists, outputs, playingAudio, playingVideos, projects, shows, showsCache, videosTime } from "../../stores"
+import { getTextLines } from "../edit/scripts/textStyle"
 import { getActiveOutputs } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
+import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import type { API_id_optional, API_slide } from "./api"
-import { getLayoutRef } from "../helpers/show"
 
 export function getShows() {
     return get(shows) as Shows
@@ -30,17 +31,26 @@ export function getProject({ id }: { id: string }) {
 }
 
 export function getOutput(data: API_id_optional) {
-    let outputId = data?.id || getActiveOutputs(get(outputs))[0]
-    let output = get(outputs)[outputId]
+    const outputId = data?.id || getActiveOutputs(get(outputs))[0]
+    const output = get(outputs)[outputId]
     return output?.out || null
+}
+
+export function getOutputSlideText() {
+    const outputId = getActiveOutputs(get(outputs))[0]
+    const outputSlide = get(outputs)[outputId]?.out?.slide
+    const layoutRef = _show(outputSlide?.id).layouts([outputSlide?.layout]).ref()[0] || []
+    const slideId = layoutRef[outputSlide?.index ?? -1]?.id
+    const slide = _show(outputSlide?.id).get("slides")?.[slideId]
+    return getTextLines(slide).join("\n")
 }
 
 export function getOutputGroupName() {
     const outputId = getActiveOutputs(get(outputs))[0]
     const outputSlide = get(outputs)[outputId]?.out?.slide
-    const layoutRef = _show(outputSlide?.id).layouts([outputSlide?.layout]).ref()[0]
-    const slideId = layoutRef[outputSlide?.index || -1]?.id
-    const slide = _show(outputSlide?.id).get("slides")[slideId]
+    const layoutRef = _show(outputSlide?.id).layouts([outputSlide?.layout]).ref()[0] || []
+    const slideId = layoutRef[outputSlide?.index ?? -1]?.id
+    const slide = _show(outputSlide?.id).get("slides")?.[slideId]
     return slide?.group || ""
 }
 

@@ -85,7 +85,7 @@ export function checkInput(e: any) {
 export function selectProjectShow(select: number | "next" | "previous") {
     let shows = get(projects)[get(activeProject) || ""]?.shows
     let index: null | number = (get(focusMode) ? get(activeFocus).index : get(activeShow)?.index) ?? null
-    let newIndex: number | null = typeof select === "number" ? select : getProjectIndex[select](index, shows)
+    let newIndex: number | null = !isNaN((select as any) || 0) ? select || 0 : getProjectIndex[select](index, shows)
 
     if (newIndex === null || !shows[newIndex]) return
 
@@ -1144,4 +1144,9 @@ const dynamicValues = {
 
 export function getVariableNameId(name: string) {
     return name.toLowerCase().trim().replaceAll(" ", "_")
+}
+
+export function getNumberVariables(updater = get(variables)) {
+    const numberVariables = Object.values(updater).filter((a) => a.type === "number" || a.type === "random_number")
+    return numberVariables.reduce((css, v) => (css += `--variable-${getVariableNameId(v.name)}: ${v.number ?? (v.default || 0)};`), "")
 }

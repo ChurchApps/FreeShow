@@ -36,7 +36,7 @@
 
     function updateOutput(key: string, value: any, outputId: string = "") {
         if (!outputId) outputId = currentOutput?.id!
-        if (!outputId) return
+        if (!outputId || !$outputs[outputId]) return
 
         // auto revert special values
         if (autoRevert.includes(key) && value && !reverted.includes(key)) {
@@ -86,7 +86,7 @@
 
                     // delete a[outputId].ndiData
                     if (!a[outputId].blackmagic) {
-                        if (delete a[outputId].ndiData?.audio) delete a[outputId].ndiData.audio
+                        if (a[outputId].ndiData?.audio) delete a[outputId].ndiData.audio
                         delete a[outputId].transparent
                         delete a[outputId].invisible
                     }

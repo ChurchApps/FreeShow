@@ -4,7 +4,7 @@
 
     export let value: string
 
-    $: id = $activeShow.id
+    $: id = $activeShow?.id
     $: if (id) getText()
     function getText() {
         send("API:get_plain_text", { id })

@@ -122,7 +122,7 @@ export interface Item {
     tracker?: any // slide progress tracker item data
     bindings?: string[] // bind item to stage or an output
     actions?: any // showTime | hideTime
-    chords?: { enabled?: boolean; color?: string; size?: number }
+    chords?: { enabled?: boolean; color?: string; size?: number; offsetY?: number }
     scrolling?: Scrolling
     button?: { press?: string; release?: string } // click actions
     visualizer?: any

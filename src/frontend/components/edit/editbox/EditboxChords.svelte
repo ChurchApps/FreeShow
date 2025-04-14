@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activePopup, selected } from "../../../stores"
+    import { activePopup, selected, storedChordsData } from "../../../stores"
     import { waitForPopupData } from "../../../utils/popup"
     import { clone } from "../../helpers/array"
     import { deleteAction } from "../../helpers/clipboard"
@@ -25,6 +25,7 @@
         if (add) {
             // only left click
             if (e.button !== 0) return
+            if (e.ctrlKey || e.metaKey) storedChordsData.set({ romanKeysActive: !!$storedChordsData.romanKeysActive })
 
             let pos = add.id.split("_")
             let key = chordsAction

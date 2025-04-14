@@ -891,6 +891,7 @@
         "invert_items": "Invert items",
         "list": "List",
         "chords": "Chords",
+        "vertical_offset": "Vertical offset",
         "transpose": "Transpose",
         "auto_size": "Auto size",
         "no_wrap": "Text on one line",

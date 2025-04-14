@@ -1,11 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
+    import { Main } from "../../../types/IPC/Main"
+    import { ToMain } from "../../../types/IPC/ToMain"
+    import { destroyMain, receiveToMain, requestMain } from "../../IPC/main"
     import { popupData } from "../../stores"
     import T from "../helpers/T.svelte"
     import Checkbox from "../inputs/Checkbox.svelte"
-
-    import { Main } from "../../../types/IPC/Main"
-    import { destroyMain, receiveMain, requestMain } from "../../IPC/main"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import Dropdown from "../inputs/Dropdown.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
@@ -70,7 +70,7 @@
         setTimeout(() => setValues("note", 0), 50)
     }
 
-    let listenerId = receiveMain(Main.RECEIVE_MIDI, (data) => {
+    let listenerId = receiveToMain(ToMain.RECEIVE_MIDI2, (data) => {
         if (!autoValues || !data) return
         if (data.id === $popupData.id && data.type === midi.type) {
             midi.values = data.values

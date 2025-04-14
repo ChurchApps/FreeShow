@@ -22,7 +22,6 @@
     $: if (show?.id) createGlobalTimerFromLocalTimer(show?.id)
 
     $: position = $projects[$activeProject || ""]?.shows.findIndex((a) => a.id === show?.id)
-    $: if (show?.type === "section") console.log(position, show)
 </script>
 
 <div id="showArea" class="main">
