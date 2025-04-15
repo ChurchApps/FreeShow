@@ -39,7 +39,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
                 // handle rate limit
                 // https://developer.planning.center/docs/#/overview/rate-limiting
                 if (err.statusCode === 429) {
-                    const retryAfter = parseInt(err?.headers?.["Retry-After"]) || 2
+                    const retryAfter = parseInt(err?.headers?.["retry-after"]) || 2
                     rateLimit(retryAfter)
                     return
                 }
