@@ -384,7 +384,7 @@ export interface MidiIn extends Midi {
 export type EmitterTypes = "osc" | "http" | "midi"
 export interface EmitterTemplateValue {
     name: string
-    value: string
+    value: string | { note?: number; velocity?: number; channel?: number }
 }
 export interface EmitterTemplate {
     name: string

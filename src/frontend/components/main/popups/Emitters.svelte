@@ -14,6 +14,9 @@
     import Dropdown from "../../inputs/Dropdown.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import HRule from "../../input/HRule.svelte"
+    import { requestMain } from "../../../IPC/main"
+    import { Main } from "../../../../types/IPC/Main"
+    import MidiValues from "../../actions/MidiValues.svelte"
 
     $: emittersList = sortByName(sortByName(keysToID($emitters)), "type")
 
@@ -25,13 +28,13 @@
     $: templateInputs = (template?.inputs || []).map((a, i) => ({ ...a, id: i.toString() }))
     $: dataPreview = templateInputs.length ? formatData[emitter?.type]?.(setEmptyValues(templateInputs)) : ""
     function setEmptyValues(object) {
-        return clone(object).map((a) => ({ ...a, value: a.value || `{${a.name.toLowerCase()}}` }))
+        return clone(object).map((a) => ({ ...a, value: a.value || (a.name ? `{${a.name.toLowerCase()}}` : "") }))
     }
 
     $: emitterTypes = [
         { name: "OSC", id: "osc" },
         { name: "HTTP", id: "http" },
-        // { name: "MIDI", id: "midi" },
+        { name: "MIDI", id: "midi" },
     ]
 
     const DEFAULT_EMITTER: Emitter = { name: "", type: "osc" }
@@ -104,6 +107,16 @@
         updateValue("templates", templates)
     }
 
+    function updateMidiTemplateValue(e: any) {
+        let values = e.detail?.values
+
+        let templates = emitter?.templates || {}
+        if (!templates[editTemplate]?.inputs?.[0]) createTemplateValue()
+
+        templates[editTemplate].inputs[0] = { name: "", value: values }
+        updateValue("templates", templates)
+    }
+
     function updateValue(key: keyof Emitter, e: any) {
         if (!editEmitter || !$emitters[editEmitter]) return
 
@@ -117,6 +130,7 @@
 
     function changed(e: any, key: keyof Emitter) {
         let input = e.detail
+        if (input.type === "dropdown" && typeof input.value === "object") input.value = input.value.id
 
         let previousValue = emitter[key]
         if (typeof previousValue !== "object") previousValue = {}
@@ -127,6 +141,21 @@
     }
 
     $: signalInputs = editEmitter && emitter ? clone(getValues(emitterData[emitter.type]?.signal || [], emitter.signal)) : []
+
+    // MIDI
+
+    $: if (emitter?.type === "midi") getMidiOutputs()
+    function getMidiOutputs() {
+        if (signalInputs[0].type !== "dropdown" || signalInputs[0].options[0]?.id) return
+
+        requestMain(Main.GET_MIDI_OUTPUTS, undefined, (data) => {
+            if (!data.length || signalInputs[0].type !== "dropdown") return
+
+            signalInputs[0].options = data.map((a) => ({ id: a.name, ...a }))
+            if (!emitter?.signal?.output) updateValue("signal", { output: data[0].name })
+            // if (!signalInputs[0].value) signalInputs[0].value = data[0].name
+        })
+    }
 </script>
 
 {#if editTemplate && template}
@@ -141,12 +170,16 @@
 
     <HRule title="emitters.inputs" />
 
-    <DynamicList addDisabled={!!templateInputs.find((a) => !a.name && !a.value)} items={templateInputs} let:item={input} on:add={createTemplateValue} on:delete={(e) => removeTemplateValue(e.detail)} allowOpen={false}>
-        <div style="display: flex;width: 100%;">
-            <TextInput placeholder={$dictionary.inputs?.name} value={input.name} on:change={(e) => updateTemplateValue(input.id, "name", e)} style="width: 50%;" />
-            <TextInput placeholder={$dictionary.variables?.value} value={input.value} on:change={(e) => updateTemplateValue(input.id, "value", e)} />
-        </div>
-    </DynamicList>
+    {#if emitter.type === "midi"}
+        <MidiValues value={{ ...emitter.signal, values: typeof templateInputs[0]?.value === "object" ? templateInputs[0].value : {} }} on:change={(e) => updateMidiTemplateValue(e)} type="emitter" />
+    {:else}
+        <DynamicList addDisabled={!!templateInputs.find((a) => !a.name && !a.value)} items={templateInputs} let:item={input} on:add={createTemplateValue} on:delete={(e) => removeTemplateValue(e.detail)} allowOpen={false}>
+            <div style="display: flex;width: 100%;">
+                <TextInput placeholder={$dictionary.inputs?.name} value={input.name} on:change={(e) => updateTemplateValue(input.id, "name", e)} style="width: 50%;" />
+                <TextInput placeholder={$dictionary.variables?.value} value={input.value} on:change={(e) => updateTemplateValue(input.id, "value", e)} />
+            </div>
+        </DynamicList>
+    {/if}
 
     {#if dataPreview}
         <div class="preview">

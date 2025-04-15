@@ -67,9 +67,9 @@ export const actionData = {
     start_trigger: { canAddMultiple: true, slideId: "trigger", name: "actions.start_trigger", icon: "trigger", input: "id" },
 
     // EMIT
-    send_midi: { SECTION: "actions.emit_data", canAddMultiple: true, slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
-    send_rest_command: { canAddMultiple: true, name: "actions.send_rest_command", icon: "trigger", input: "rest" },
-    emit_action: { canAddMultiple: true, name: "actions.emit_data", icon: "emitter", input: "emitter" },
+    // send_midi: { SECTION: "actions.emit_data", canAddMultiple: true, slideId: "sendMidi", name: "actions.send_midi", icon: "music", input: "midi" },
+    // send_rest_command: { canAddMultiple: true, name: "actions.send_rest_command", icon: "trigger", input: "rest" },
+    emit_action: { SECTION: "actions.emit_data", canAddMultiple: true, name: "actions.emit_data", icon: "emitter", input: "emitter" },
 
     // ACTION
     run_action: { SECTION: "popup.action", canAddMultiple: true, name: "actions.run_action", icon: "actions", input: "id" },

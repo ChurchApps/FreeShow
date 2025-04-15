@@ -10,6 +10,7 @@
     import TextInput from "../inputs/TextInput.svelte"
     import { clone } from "../helpers/array"
     import { formatData } from "./emitters"
+    import MidiValues from "./MidiValues.svelte"
 
     export let value: API_emitter
 
@@ -41,6 +42,15 @@
         templateValues[index][key] = v
         updateValue("templateValues", templateValues)
     }
+    function setMidiTemplateValue(e: any) {
+        let values = e.detail?.values
+
+        let templateValues = value.templateValues || []
+        if (!templateValues[0]) templateValues[0] = { name: "", value: "" }
+        templateValues[0].value = values
+        updateValue("templateValues", templateValues)
+    }
+
     function createTemplateValue() {
         let templateValues = value.templateValues || []
         templateValues.push({ name: "", value: "" })
@@ -54,7 +64,7 @@
 
     $: activeTemplate = value.template || "custom"
     $: templatesList = [{ name: "$:actions.custom_key:$", id: "custom" }, ...initDropdownOptions(emitter?.templates || {})]
-    $: templateInputs = (emitter?.templates?.[activeTemplate]?.inputs || []).filter((a) => a.name)
+    $: templateInputs = (emitter?.templates?.[activeTemplate]?.inputs || []).filter((a) => emitter?.type === "midi" || a.name)
 
     $: customTemplateInputs = (value.templateValues || []).map((a, i) => ({ ...a, id: i.toString() }))
 
@@ -62,7 +72,10 @@
 </script>
 
 <CombinedInput textWidth={38}>
-    <p><T id="emitters.emitter" /></p>
+    <p>
+        <T id="emitters.emitter" />
+        {#if emitter?.type}<span style="display: flex;align-items: center;padding: 0 10px;opacity: 0.5;text-transform: uppercase;">[{emitter.type}]</span>{/if}
+    </p>
     <Dropdown options={emittersList} value={getDropdownValue(emittersList, value.emitter)} on:click={(e) => updateValue("emitter", e.detail.id)} />
 </CombinedInput>
 
@@ -73,12 +86,21 @@
     </CombinedInput>
 
     {#if templateInputs.length}
-        {#each templateInputs as input, i}
-            <CombinedInput textWidth={38}>
-                <TextInput disabled value={input.name} style="width: var(--text-width);" />
-                <TextInput disabled={!!input.value} placeholder={$dictionary.variables?.value} value={(value.templateValues?.[i] || input).value} on:change={(e) => setTemplateValue(i, e)} />
-            </CombinedInput>
-        {/each}
+        {#if emitter.type !== "midi"}
+            {#each templateInputs as input, i}
+                <CombinedInput textWidth={38}>
+                    <TextInput disabled value={input.name} style="width: var(--text-width);" />
+                    <TextInput
+                        disabled={!!input.value}
+                        placeholder={$dictionary.variables?.value}
+                        value={typeof (value.templateValues?.[i] || input).value === "string" ? (value.templateValues?.[i] || input).value : ""}
+                        on:change={(e) => setTemplateValue(i, e)}
+                    />
+                </CombinedInput>
+            {/each}
+        {/if}
+    {:else if emitter.type === "midi"}
+        <MidiValues value={{ ...emitter.signal, values: typeof customTemplateInputs[0]?.value === "object" ? customTemplateInputs[0].value : {} }} on:change={(e) => setMidiTemplateValue(e)} type="emitter" />
     {:else}
         <DynamicList
             addDisabled={!!customTemplateInputs?.find((a) => !a.name && !a.value)}

@@ -150,7 +150,7 @@ export type API_rest_command = {
 export type API_emitter = {
     emitter: string
     template?: string
-    templateValues?: { name: string; value: string }[]
+    templateValues?: { name: string; value: string | { note?: number; velocity?: number; channel?: number } }[]
 }
 
 /// ACTIONS ///

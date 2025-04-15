@@ -14,7 +14,7 @@
 
     export let value: API_midi
     export let firstActionId: string = ""
-    export let type: "input" | "output" = "input"
+    export let type: "input" | "output" | "emitter" = "input"
     export let playSlide: boolean = false
     export let simple: boolean = false
     $: midi = value
@@ -96,21 +96,25 @@
         change()
     }
 
-    $: noActionOrDefaultValues = !hasActions || (midi.defaultValues && defaultMidiActionChannels[firstActionId])
+    $: noActionOrDefaultValues = type !== "emitter" && (!hasActions || (midi.defaultValues && defaultMidiActionChannels[firstActionId]))
+
+    $: console.log(value)
 </script>
 
-<CombinedInput>
-    {#if type === "input"}
-        <p><T id="midi.input" /></p>
-        <Dropdown value={midi.input || "—"} options={inputs} on:click={(e) => setMidi("input", e.detail.name)} />
-    {:else}
-        <p><T id="midi.output" /></p>
-        <Dropdown value={midi.output || "—"} options={outputs} on:click={(e) => setMidi("output", e.detail.name)} />
-    {/if}
-</CombinedInput>
+{#if type !== "emitter"}
+    <CombinedInput>
+        {#if type === "input"}
+            <p><T id="midi.input" /></p>
+            <Dropdown value={midi.input || "—"} options={inputs} on:click={(e) => setMidi("input", e.detail.name)} />
+        {:else}
+            <p><T id="midi.output" /></p>
+            <Dropdown value={midi.output || "—"} options={outputs} on:click={(e) => setMidi("output", e.detail.name)} />
+        {/if}
+    </CombinedInput>
 
-{#if type !== "output" && !simple}
-    <br />
+    {#if type !== "output" && !simple}
+        <br />
+    {/if}
 {/if}
 
 {#if hasActions}
@@ -131,10 +135,12 @@
     </CombinedInput>
 {/if}
 
-<CombinedInput>
-    <p><T id="midi.type" /></p>
-    <Dropdown value={midi.type || "noteon"} options={types} on:click={(e) => setMidi("type", e.detail.name)} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
-</CombinedInput>
+{#if type !== "emitter"}
+    <CombinedInput>
+        <p><T id="midi.type" /></p>
+        <Dropdown value={midi.type || "noteon"} options={types} on:click={(e) => setMidi("type", e.detail.name)} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
+    </CombinedInput>
+{/if}
 
 <CombinedInput>
     <p>
@@ -143,7 +149,7 @@
     </p>
     <NumberInput value={midi.values?.note ?? 0} max={127} on:change={(e) => setValues("note", Number(e.detail))} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
 </CombinedInput>
-{#if (!noActionOrDefaultValues && firstActionId?.includes("index_")) || type === "output" || playSlide}
+{#if (!noActionOrDefaultValues && firstActionId?.includes("index_")) || type === "output" || type === "emitter" || playSlide}
     {#if type === "input"}
         <CombinedInput>
             <p style="font-size: 0.7em;opacity: 0.8;">

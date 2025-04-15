@@ -2,14 +2,31 @@ import { get } from "svelte/store"
 import type { Input } from "../../../types/Input"
 import type { EmitterInputs, EmitterTemplateValue, EmitterTypes } from "../../../types/Show"
 import { emitters } from "../../stores"
-import { INPUT_MIDI, INPUT_REST } from "../input/inputs"
-import type { API_emitter, API_rest_command } from "./api"
-import { sendRestCommandSync } from "./rest"
+import type { API_emitter, API_midi, API_rest_command } from "./api"
 import { emitOSC, type OSC_SIGNAL } from "./apiOSC"
+import { sendRestCommandSync } from "./rest"
+import { midiToNote } from "./midi"
+import { sendMidi } from "../helpers/showActions"
 
-export const OSC_SIGNAL_INPUTS: Input[] = [
-    { name: "inputs.url", id: "host", type: "string", value: "localhost" }, // ws://localhost
+const OSC_SIGNAL_INPUTS: Input[] = [
+    { name: "inputs.url", id: "host", type: "string", value: "0.0.0.0" }, // ws://127.0.0.1
     { name: "settings.port", id: "port", type: "number", value: 8080, settings: { max: 65535, buttons: false } },
+]
+
+const INPUT_REST: Input = { name: "", id: "", type: "rest", value: { url: "", method: "", contentType: "", payload: "" } }
+
+const MIDI_SIGNAL_INPUTS: Input[] = [
+    { name: "midi.output", id: "output", type: "dropdown", value: "", options: [{ id: "", name: "—" }] },
+    {
+        name: "midi.type",
+        id: "type",
+        type: "dropdown",
+        value: "noteon",
+        options: [
+            { id: "noteon", name: "noteon" },
+            { id: "noteoff", name: "noteoff" },
+        ],
+    },
 ]
 
 export const emitterData: { [key in EmitterTypes]: EmitterInputs } = {
@@ -20,22 +37,28 @@ export const emitterData: { [key in EmitterTypes]: EmitterInputs } = {
         signal: [{ ...INPUT_REST, settings: { emitter: true } }],
     },
     midi: {
-        signal: [INPUT_MIDI],
+        signal: MIDI_SIGNAL_INPUTS,
     },
 }
 
 function valueArrayToObject(values: EmitterTemplateValue[], removeEmptyValues: boolean = false) {
     let valueObject: { [key: string]: string } = {}
     values.forEach(({ name, value }) => {
-        if (!name || (removeEmptyValues && !value)) return
+        if (!name || (removeEmptyValues && !value) || typeof value !== "string") return
         valueObject[name] = value
     })
     return valueObject
 }
 
+function getMidiInfo(values: { note?: number; velocity?: number; channel?: number }) {
+    if (!values.note) return ""
+    return `${midiToNote(values.note)} - ${values.channel ?? 1}`
+}
+
 export const formatData = {
     osc: (values: EmitterTemplateValue[]) => "/" + Object.values(valueArrayToObject(values, true)).join("/"),
     http: (values: EmitterTemplateValue[]) => JSON.stringify(valueArrayToObject(values)),
+    midi: (values: EmitterTemplateValue[]) => getMidiInfo(typeof values[0]?.value === "object" ? values[0].value : {}),
 }
 
 const EMIT_DATA = {
@@ -48,6 +71,12 @@ const EMIT_DATA = {
         REST_DATA.contentType = "application/json"
         REST_DATA.payload = formatData.http(values)
         sendRestCommandSync(REST_DATA)
+    },
+    midi: (signal: { type?: "noteon" | "noteoff"; output?: string }, values: EmitterTemplateValue[]) => {
+        if (!signal.output || typeof values[0]?.value !== "object") return
+        const midiValues = { channel: 1, note: 0, velocity: 0, ...values[0].value }
+        const data: API_midi = { output: signal.output, type: signal.type || "noteon", values: midiValues }
+        sendMidi(data)
     },
 }
 
@@ -70,7 +99,7 @@ export function emitData(data: API_emitter) {
         return
     }
 
-    let signal: { [key: string]: any } = emitter.signal || {}
+    let signal: any = emitter.signal || {}
     if (signal.value) signal = signal.value
 
     EMIT_DATA[emitter.type](signal, values)
