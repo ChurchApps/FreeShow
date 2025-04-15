@@ -16,7 +16,8 @@ type PCORequestData = {
     params?: Record<string, string> // Add params type
 }
 
-export async function pcoRequest(data: PCORequestData): Promise<any> {
+export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any> {
+    const MAX_RETRIES = 3
     const PCO_ACCESS = await pcoConnect(data.scope)
     if (!PCO_ACCESS) {
         sendToMain(ToMain.ALERT, "Not authorized at Planning Center (try logging out and in again)!")
@@ -33,8 +34,16 @@ export async function pcoRequest(data: PCORequestData): Promise<any> {
     const headers = { Authorization: `Bearer ${PCO_ACCESS.access_token}` }
 
     return new Promise((resolve) => {
-        httpsRequest(PCO_API_URL, path, "GET", headers, {}, (err, result) => {
+        httpsRequest(PCO_API_URL, path, "GET", headers, {}, async (err, result) => {
             if (err) {
+                // handle rate limit
+                // https://developer.planning.center/docs/#/overview/rate-limiting
+                if (err.statusCode === 429) {
+                    const retryAfter = parseInt(err?.headers?.["Retry-After"]) || 2
+                    rateLimit(retryAfter)
+                    return
+                }
+
                 console.log(path, err)
                 let message = err.message?.includes("401") ? "Make sure you have created some 'services' in your account!" : err.message
                 sendToMain(ToMain.ALERT, "Could not get data! " + message)
@@ -49,6 +58,22 @@ export async function pcoRequest(data: PCORequestData): Promise<any> {
             // console.log("RESULT", path, data) // DEBUG
             resolve(data)
         })
+
+        function rateLimit(retryAfter: number) {
+            if (attempt >= MAX_RETRIES) {
+                sendToMain(ToMain.ALERT, "Planning Center rate limit reached! Please try again later")
+                resolve(null)
+                return
+            }
+
+            console.warn(`Rate limited. Retrying after ${retryAfter} seconds... (attempt ${attempt + 1})`)
+            sendToMain(ToMain.ALERT, `Planning Center rate limit reached! Trying again in ${retryAfter} seconds`)
+
+            setTimeout(async () => {
+                const retryResult = await pcoRequest(data, attempt + 1)
+                resolve(retryResult)
+            }, retryAfter * 1000)
+        }
     })
 }
 

@@ -26,6 +26,7 @@ import {
     showsCache,
     sortedShowsList,
     styles,
+    timers,
     variables,
     volume,
 } from "../../stores"
@@ -45,7 +46,7 @@ import { _show } from "../helpers/shows"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import { activeShow } from "./../../stores"
-import type { API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
+import type { API_edit_timer, API_group, API_id_value, API_layout, API_media, API_rearrange, API_scripture, API_slide_index, API_variable } from "./api"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { setRandomValue } from "../helpers/randomValue"
 import { clearBackground } from "../output/clear"
@@ -203,6 +204,20 @@ export function moveStageConnection(id: string) {
     if (!id) return
     send(STAGE, ["SWITCH"], { id })
 }
+
+/// EDIT
+
+export function editTimer(data: API_edit_timer) {
+    if (!data?.id || !data.key || data.value === undefined) return
+
+    timers.update((a) => {
+        if (!a[data.id]) return a
+        a[data.id][data.key] = data.value
+        return a
+    })
+}
+
+/// FUNCTIONS
 
 export function changeVariable(data: API_variable) {
     let variable: Variable | undefined

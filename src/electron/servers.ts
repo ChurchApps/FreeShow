@@ -8,6 +8,7 @@ import type { ServerData } from "../types/Socket"
 import { CaptureHelper } from "./capture/CaptureHelper"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
+import { publishPort, unpublishPorts } from "./data/bonjour"
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 interface ServerValues {
@@ -68,10 +69,15 @@ export function startServers({ ports, max, disabled, data }: MainSendPayloads[Ma
 
         servers[id]!.data = data[id.toLowerCase()] || {}
 
-        servers[id]!.server.listen(servers[id]!.port, () => console.log(id + " on: " + servers[id]!.port))
+        servers[id]!.server.listen(servers[id]!.port, started)
         servers[id]!.server.once("error", (err: Error) => {
             if ((err as any).code === "EADDRINUSE") servers[id]!.server.close()
         })
+
+        function started() {
+            console.log(id + " on: " + servers[id]!.port)
+            publishPort(id, servers[id]!.port)
+        }
     })
 }
 
@@ -87,6 +93,8 @@ export function getServerData(id: ServerName) {
 }
 
 export function closeServers() {
+    unpublishPorts()
+
     started = false
     let serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {

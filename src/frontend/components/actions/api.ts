@@ -40,6 +40,7 @@ import {
     addGroup,
     changeShowLayout,
     changeVariable,
+    editTimer,
     getClearedState,
     getPDFThumbnails,
     getPlainText,
@@ -113,6 +114,7 @@ export type API_stage_output_layout = { outputId?: string; stageLayoutId: string
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
 export type API_camera = { name?: string; id: string; groupId?: string }
 export type API_dynamic_value = { value: string; ref?: any }
+export type API_edit_timer = { id: string; key: string; value: any }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
     type?: TransitionType // default: "fade"
@@ -249,6 +251,7 @@ export const API_ACTIONS = {
     start_slide_timers: (data: API_slide) => playSlideTimers(data),
     pause_timers: () => pauseAllTimers(),
     stop_timers: () => stopTimers(),
+    edit_timer: (data: API_edit_timer) => editTimer(data),
 
     // FUNCTIONS
     change_variable: (data: API_variable) => changeVariable(data), // BC

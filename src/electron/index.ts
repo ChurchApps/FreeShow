@@ -14,7 +14,7 @@ import { saveRecording } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { callClose, exitApp } from "./utils/close"
-import { mainWindowInitialize, openDevTools, waitForBundle } from "./utils/init"
+import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, waitForBundle } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 import { spellcheck } from "./utils/spellcheck"
@@ -99,6 +99,12 @@ function createMain() {
     // should be centered to screen if x & y is not set (or bottom left on mac)
     if (bounds.x) options.x = bounds.x
     if (bounds.y) options.y = bounds.y
+
+    // check if window position is within a visible area
+    if (bounds.x && bounds.y && !isWithinDisplayBounds({ x: bounds.x, y: bounds.y })) {
+        options.x = (screenBounds.width - options.width!) / 2
+        options.y = (screenBounds.height - options.height!) / 2
+    }
 
     // create window
     mainWindow = new BrowserWindow({ ...mainOptions, ...options })
