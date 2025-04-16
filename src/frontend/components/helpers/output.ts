@@ -474,7 +474,7 @@ export function percentageStylePos(style: string, resolution: Resolution) {
     let width = resolution.width || 1920
     let height = resolution.height || 1080
 
-    if (styles.left) style += "left: " + width * (Number(styles.left) / 100) + "px;"
+    if (styles.left) style += "inset-inline-start: " + width * (Number(styles.left) / 100) + "px;"
     if (styles.top) style += "top: " + height * (Number(styles.top) / 100) + "px;"
     if (styles.width) style += "width: " + width * (Number(styles.width) / 100) + "px;"
     if (styles.height) style += "height: " + height * (Number(styles.height) / 100) + "px;"
@@ -1086,8 +1086,8 @@ export interface OutputMetadata {
     messageStyle?: string
     messageTransition?: any
 }
-const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
-const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
+const defaultMetadataStyle = "top: 910px;inset-inline-start: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
+const defaultMessageStyle = "top: 50px;inset-inline-start: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
 export function getMetadata(oldMetadata: any, show: Show | undefined, currentStyle: Styles, templatesUpdater = get(templates), outSlide: OutSlide | null) {
     let metadata: OutputMetadata = { style: getTemplateStyle("metadata", templatesUpdater) || defaultMetadataStyle }
 

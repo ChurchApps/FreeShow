@@ -47,7 +47,7 @@
 <!-- aspect-ratio: {resolution?.width || 1920}/{resolution?.height || 1080}; -->
 <div on:click={toggleFullscreen} class="multipleOutputs" class:multiple={outs.length > 1} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 6px);"}>
     {#if fullscreen}
-        <Button class="hide" on:click={() => (fullscreen = false)} style="z-index: 2;opacity: 1;right: 10px;" title={$dictionary.actions?.close} center>
+        <Button class="hide" on:click={() => (fullscreen = false)} style="z-index: 2;opacity: 1;inset-inline-end: 10px;" title={$dictionary.actions?.close} center>
             <Icon id="close" size={1.5} white />
         </Button>
 
@@ -88,7 +88,7 @@
         justify-content: center;
         background-color: var(--primary-darkest);
         top: 50%;
-        left: 50%;
+        inset-inline-start: 50%;
         transform: translate(-50%, -50%);
         /* border: 4px solid var(--secondary); */
         z-index: 5500;
@@ -97,12 +97,12 @@
     .resolution {
         position: absolute;
         bottom: 0;
-        right: 0;
+        inset-inline-end: 0;
 
         color: var(--secondary-text);
         /* background-color: var(--primary);
     background-color: black; */
-        text-align: right;
+        text-align: end;
         display: flex;
         flex-direction: column;
         gap: 5px;

@@ -49,7 +49,7 @@
 
 <main bind:clientHeight={y}>
     {#if $topContextActive}
-        <div class="contextMenu menu" style="left: {x}px; top: {y}px;" transition:fade={{ duration: 50 }}>
+        <div class="contextMenu menu" style="inset-inline-start: {x}px; top: {y}px;" transition:fade={{ duration: 50 }}>
             {#key activeMenu}
                 {#each activeMenu as id}
                     {#if id === "SEPERATOR"}

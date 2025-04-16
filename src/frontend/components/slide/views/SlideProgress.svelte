@@ -94,7 +94,7 @@
     }
     .groups.column {
         flex-direction: column;
-        text-align: left;
+        text-align: start;
         width: 100%;
     }
     .group {

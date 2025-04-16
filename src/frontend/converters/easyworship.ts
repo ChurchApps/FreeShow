@@ -205,7 +205,7 @@ function createSlides({ words }: Words) {
             layout.push({ id })
             let items = [
                 {
-                    style: "left:50px;top:120px;width:1820px;height:840px;",
+                    style: "inset-inline-start:50px;top:120px;width:1820px;height:840px;",
                     lines: lines.map((a: any) => ({ align: "", text: [{ style: "", value: a }] })),
                 },
             ]

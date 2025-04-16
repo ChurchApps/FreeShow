@@ -127,7 +127,7 @@
     p {
         margin: 5px;
         width: 100%;
-        text-align: left;
+        text-align: start;
         /* cursor: text; */
     }
     input {

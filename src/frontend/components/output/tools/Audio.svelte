@@ -153,7 +153,7 @@
         /* flex-wrap: wrap; */
         align-items: center;
         gap: 5px;
-        margin-right: 0.2em;
+        margin-inline-end: 0.2em;
     }
     .controls :global(button) {
         padding: 0.3em !important;

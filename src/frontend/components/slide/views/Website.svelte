@@ -149,10 +149,10 @@
         z-index: 1;
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
 
         background-color: black;
-        border-top-right-radius: 3px;
+        border-start-end-radius: 3px;
         display: flex;
 
         opacity: 0.4;

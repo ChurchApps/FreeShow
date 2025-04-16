@@ -80,7 +80,7 @@
 
     .group .icon {
         position: absolute;
-        right: 12px;
+        inset-inline-end: 12px;
     }
     .group .icon :global(svg) {
         fill: var(--text);

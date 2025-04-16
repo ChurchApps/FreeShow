@@ -201,7 +201,7 @@ function getDateTitle(dateString: string) {
     return date.toISOString().slice(0, 10)
 }
 
-const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
+const itemStyle = "inset-inline-start:50px;top:120px;width:1820px;height:840px;"
 function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     let layoutSlides: SlideData[] = []

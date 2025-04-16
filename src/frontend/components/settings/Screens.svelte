@@ -324,9 +324,9 @@
         {#if screens.length}
             <div class="screens" style="transform: translate(-{totalScreensWidth}px, -{totalScreensHeight}px)">
                 <!-- {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)} -->
-                <div style="position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;left: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;">
+                <div style="position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;inset-inline-start: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;">
                     {#if currentScreen.screen}
-                        <span style="z-index: 2;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);">{screens.findIndex((a) => JSON.stringify(currentScreen.bounds) === JSON.stringify(a.bounds)) + 1 || ""}</span>
+                        <span style="z-index: 2;position: absolute;top: 50%;inset-inline-start: 50%;transform: translate(-50%, -50%);">{screens.findIndex((a) => JSON.stringify(currentScreen.bounds) === JSON.stringify(a.bounds)) + 1 || ""}</span>
                     {/if}
                     <!-- Current screen position -->
                     <div class="screen noClick" style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}"></div>
@@ -345,7 +345,7 @@
                     <div
                         class="screen"
                         class:disabled={currentScreen?.forcedResolution || currentScreen.boundsLocked}
-                        style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;left: {screen.previewBounds.x}px;top: {screen.previewBounds.y}px;"
+                        style="width: {screen.bounds.width}px;height: {screen.bounds.height}px;inset-inline-start: {screen.previewBounds.x}px;top: {screen.previewBounds.y}px;"
                         on:click={() => {
                             if (currentScreen?.forcedResolution || currentScreen.boundsLocked) return
 
@@ -395,7 +395,7 @@
         /* position: relative;
         margin-top: auto; */
         position: absolute;
-        left: 50%;
+        inset-inline-start: 50%;
         top: calc(50% + 950px);
         /* transform: translateX(-1080px); */
 
@@ -409,7 +409,7 @@
         zoom: calc(1 / var(--zoom));
         position: absolute;
         top: 0;
-        right: 0;
+        inset-inline-end: 0;
 
         /* pointer-events: initial; */
         padding: 5px !important;
@@ -419,7 +419,7 @@
     .bottom {
         position: absolute;
         bottom: 20px;
-        left: 20px;
+        inset-inline-start: 20px;
     }
 
     .screen {

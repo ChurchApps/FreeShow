@@ -87,7 +87,7 @@
             center
         >
             <img style="height: 60px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
-            <p style="margin-left: 5px;">
+            <p style="margin-inline-start: 5px;">
                 {#if format.name.startsWith("$")}
                     <T id={format.name.slice(1)} />
                 {:else}

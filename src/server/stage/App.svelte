@@ -183,7 +183,7 @@
     .clicked {
         position: absolute;
         bottom: 0;
-        left: 0;
+        inset-inline-start: 0;
         width: calc(100% - 20px);
         margin: 10px;
         padding: 10px;

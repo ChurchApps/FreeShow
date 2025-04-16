@@ -250,9 +250,9 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
 
     bibles.forEach((bible, bibleIndex) => {
         let currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
-        let itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
+        let itemStyle = currentTemplate?.style || "top: 150px;inset-inline-start: 50px;width: 1820px;height: 780px;"
         let itemAlignStyle = currentTemplate?.align || ""
-        let alignStyle = currentTemplate?.lines?.[1]?.align || currentTemplate?.lines?.[0]?.align || "text-align: left;"
+        let alignStyle = currentTemplate?.lines?.[1]?.align || currentTemplate?.lines?.[0]?.align || "text-align: start;"
         let textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
         let emptyItem = { align: itemAlignStyle, lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings
@@ -451,7 +451,7 @@ export function getSlides({ bibles, sorted }, onlyOne: boolean = false, disableR
             } else {
                 slides[slideIndex].push({
                     lines,
-                    style: metaTemplate?.style || "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;",
+                    style: metaTemplate?.style || "top: 910px;inset-inline-start: 50px;width: 1820px;height: 150px;opacity: 0.8;",
                     specialStyle: metaTemplate?.specialStyle || {},
                     actions: metaTemplate?.actions || {},
                 })

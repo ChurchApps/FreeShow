@@ -165,7 +165,7 @@
             {/if}
 
             {#if show.quickAccess?.number}
-                <span style="color: var(--secondary);font-weight: bold;margin: 3px 5px;padding-right: 3px;white-space: nowrap;">{show.quickAccess.number}</span>
+                <span style="color: var(--secondary);font-weight: bold;margin: 3px 5px;padding-inline-end: 3px;white-space: nowrap;">{show.quickAccess.number}</span>
             {/if}
 
             <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!show.type || show.type === "show"} />
@@ -180,7 +180,7 @@
         </span>
 
         {#if data}
-            <span style="opacity: 0.5;padding-left: 10px;font-size: 0.9em;">{data}</span>
+            <span style="opacity: 0.5;padding-inline-start: 10px;font-size: 0.9em;">{data}</span>
         {/if}
     </Button>
 </div>
@@ -198,7 +198,7 @@
     .layout {
         opacity: 0.8;
         font-size: 0.8em;
-        padding-left: 5px;
+        padding-inline-start: 5px;
 
         /* overflow: hidden;
         text-overflow: ellipsis; */

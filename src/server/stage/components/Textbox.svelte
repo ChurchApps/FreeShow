@@ -30,7 +30,7 @@
     // custom dynamic size
     let newSizes = `;
     top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
-    left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
+    inset-inline-start: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
     width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
     height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
   `
@@ -258,7 +258,7 @@
         <div class="actions">
             {#if chordLines.length}
                 <div class="flex">
-                    <p style="margin-right: 8px;">Transpose</p>
+                    <p style="margin-inline-end: 8px;">Transpose</p>
                     <Button on:click={() => transpose("down")} title="Down one" dark>{"-1"}</Button>
                     <Button on:click={() => transpose("reset")} title="Reset" dark>{"0"}</Button>
                     <Button on:click={() => transpose("up")} title="Up one" dark>{"+1"}</Button>
@@ -359,7 +359,7 @@
     .actions {
         position: absolute;
         bottom: 0;
-        left: 50%;
+        inset-inline-start: 50%;
         /* transform: translate(-50%, 100%); */
         transform: translateX(-50%);
 

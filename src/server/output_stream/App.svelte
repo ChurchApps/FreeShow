@@ -163,13 +163,13 @@
 {/if}
 
 {#if !isFullscreen && clicked}
-    <div class="count" style="position: absolute;bottom: 4px;left: 4px;font-size: 0.5em;opacity: 0.3;">
+    <div class="count" style="position: absolute;bottom: 4px;inset-inline-start: 4px;font-size: 0.5em;opacity: 0.3;">
         FPS: {fps} | {capture?.size?.width || 1920}x{capture?.size?.height || 1080}
     </div>
 {/if}
 
 {#if (clicked || showAudioIcon) && audioSignal}
-    <button on:click={toggleMute} style="left: 20px;">
+    <button on:click={toggleMute} style="inset-inline-start: 20px;">
         <Icon id={audioMuted ? "muted" : "volume"} size={1.5} white={audioMuted} />
     </button>
 {/if}
@@ -254,7 +254,7 @@
     /* fullscreen */
     button {
         position: absolute;
-        right: 20px;
+        inset-inline-end: 20px;
         bottom: 20px;
         width: 60px;
         height: 60px;

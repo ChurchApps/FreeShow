@@ -112,7 +112,7 @@
         display: flex;
         flex-direction: column;
         position: absolute;
-        right: 2px;
+        inset-inline-end: 2px;
         z-index: 1;
         font-size: 0.9em;
 
@@ -136,7 +136,7 @@
     .button p {
         pointer-events: all;
         background-color: rgb(0 0 0 / 0.4);
-        padding-right: 5px;
+        padding-inline-end: 5px;
         font-size: 0.8em;
         font-weight: normal;
         max-width: 60px;

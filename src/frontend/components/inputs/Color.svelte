@@ -163,7 +163,7 @@
     .picker {
         position: absolute;
         bottom: 0;
-        left: -1px;
+        inset-inline-start: -1px;
         transform: translateY(100%);
 
         background-color: var(--primary-darker);
@@ -173,8 +173,8 @@
         width: 200px;
     }
     .picker.clipRight {
-        left: unset;
-        right: 0;
+        inset-inline-start: unset;
+        inset-inline-end: 0;
     }
 
     .picker.visible {
@@ -191,7 +191,7 @@
         /* justify-content: center; */
         gap: 5px;
         border: none;
-        border-right: none !important;
+        border-inline-end: none !important;
     }
 
     .picker .color p {

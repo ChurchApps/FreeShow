@@ -214,7 +214,7 @@
     <p><T id="settings.data_location" /></p>
     <span class="path" title={$dataPath || ""}>
         <FolderPicker style="width: 100%;" id="DATA" center={false} path={$dataPath}>
-            <Icon id="folder" style="margin-left: 0.5em;" right />
+            <Icon id="folder" style="margin-inline-start: 0.5em;" right />
             <p>
                 {#if $dataPath}
                     {$dataPath}
@@ -235,7 +235,7 @@
         <!-- <p style="font-size: 0.9em;opacity: 0.7;">{$showsPath}</p> -->
         <!-- title={$dictionary.inputs?.change_folder} -->
         <FolderPicker style="width: 100%;" id="SHOWS" center={false} path={$showsPath || ""}>
-            <Icon id="folder" style="margin-left: 0.5em;" right />
+            <Icon id="folder" style="margin-inline-start: 0.5em;" right />
             <p>
                 {#if $showsPath}
                     {$showsPath}
@@ -338,10 +338,10 @@
 {#if hiddenShows.length > Object.keys($shows).length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={deleteShows}>
-            <Icon id="delete" style="margin-left: 0.5em;" right />
+            <Icon id="delete" style="margin-inline-start: 0.5em;" right />
             <p>
                 <T id="actions.delete_shows_not_indexed" />
-                <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({hiddenShows.length - Object.keys($shows).length})</span>
+                <span style="display: flex;align-items: center;margin-inline-start: 10px;opacity: 0.5;">({hiddenShows.length - Object.keys($shows).length})</span>
             </p>
         </Button>
     </CombinedInput>
@@ -351,10 +351,10 @@
 {#if emptyShows.length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={deleteEmptyShows}>
-            <Icon id="delete" style="margin-left: 0.5em;" right />
+            <Icon id="delete" style="margin-inline-start: 0.5em;" right />
             <p>
                 <T id="actions.delete_empty_shows" />
-                <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({emptyShows.length})</span>
+                <span style="display: flex;align-items: center;margin-inline-start: 10px;opacity: 0.5;">({emptyShows.length})</span>
             </p>
         </Button>
     </CombinedInput>
@@ -364,10 +364,10 @@
 {#if duplicatedShows.length}
     <CombinedInput>
         <Button style="width: 100%;" on:click={deleteDuplicatedShows}>
-            <Icon id="delete" style="margin-left: 0.5em;" right />
+            <Icon id="delete" style="margin-inline-start: 0.5em;" right />
             <p>
                 <T id="popup.delete_duplicated_shows" />
-                <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({duplicatedShows.length})</span>
+                <span style="display: flex;align-items: center;margin-inline-start: 10px;opacity: 0.5;">({duplicatedShows.length})</span>
             </p>
         </Button>
     </CombinedInput>
@@ -385,7 +385,7 @@
 
 <CombinedInput title={$dictionary.media?.bundle_media_files_tip}>
     <Button style="width: 100%;" on:click={bundleMediaFiles}>
-        <Icon id="image" style="margin-left: 0.5em;" right />
+        <Icon id="image" style="margin-inline-start: 0.5em;" right />
         <p><T id="media.bundle_media_files" /></p>
     </Button>
 </CombinedInput>
@@ -394,14 +394,14 @@
     {#if usageLogExported}
         <CombinedInput title={$dictionary.actions?.reset_usage_log}>
             <Button style="width: 100%;" on:click={resetUsageLog}>
-                <Icon id="reset" style="margin-left: 0.5em;" right />
+                <Icon id="reset" style="margin-inline-start: 0.5em;" right />
                 <p><T id="actions.reset_usage_log" /></p>
             </Button>
         </CombinedInput>
     {:else}
         <CombinedInput title={$dictionary.actions?.export_usage_log}>
             <Button disabled={exportingUsageLog} style="width: 100%;" on:click={exportUsageLog}>
-                <Icon id="export" style="margin-left: 0.5em;" right />
+                <Icon id="export" style="margin-inline-start: 0.5em;" right />
                 <p><T id="actions.export_usage_log" /></p>
             </Button>
         </CombinedInput>
@@ -410,22 +410,22 @@
 
 <CombinedInput>
     <Button style="width: 50%;" on:click={openLog}>
-        <Icon id="document" style="margin-left: 0.5em;" right />
+        <Icon id="document" style="margin-inline-start: 0.5em;" right />
         <p><T id="actions.open_error_log" /></p>
     </Button>
     <Button on:click={openCache}>
-        <Icon id="folder" style="margin-left: 0.5em;" right />
+        <Icon id="folder" style="margin-inline-start: 0.5em;" right />
         <p><T id="actions.open_cache_folder" /></p>
     </Button>
 </CombinedInput>
 
 <CombinedInput>
     <Button style="width: 50%;" on:click={backup}>
-        <Icon id="export" style="margin-left: 0.5em;" right />
+        <Icon id="export" style="margin-inline-start: 0.5em;" right />
         <p><T id="settings.backup_all" /></p>
     </Button>
     <Button on:click={restore}>
-        <Icon id="import" style="margin-left: 0.5em;" right />
+        <Icon id="import" style="margin-inline-start: 0.5em;" right />
         <p><T id="settings.restore" /></p>
     </Button>
 </CombinedInput>

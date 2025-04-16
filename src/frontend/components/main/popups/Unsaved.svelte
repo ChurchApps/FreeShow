@@ -65,7 +65,7 @@
         align-items: center;
 
         position: absolute;
-        right: 10px;
+        inset-inline-end: 10px;
 
         color: var(--text);
         opacity: 0.6;

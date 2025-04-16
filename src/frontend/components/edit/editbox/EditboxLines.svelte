@@ -695,7 +695,7 @@
         position: relative; /* type something overflow */
     }
     .align.plain {
-        text-align: left;
+        text-align: start;
         position: relative;
     }
 
@@ -731,7 +731,7 @@
     .plain .edit {
         font-size: 1.5em;
         justify-content: flex-start;
-        text-align: left;
+        text-align: start;
     }
 
     .edit.height {

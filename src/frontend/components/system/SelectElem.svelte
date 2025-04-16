@@ -347,10 +347,10 @@
         border-bottom-width: var(--border-width);
     }
     .trigger.row.start {
-        border-left-width: var(--border-width);
+        border-inline-start-width: var(--border-width);
     }
     .trigger.row.end {
-        border-right-width: var(--border-width);
+        border-inline-end-width: var(--border-width);
     }
     .trigger.center {
         border-width: var(--border-width);
@@ -373,7 +373,7 @@
         height: var(--border-width);
     }
     .trigger.row .between {
-        right: calc(var(--border-width) / 2 * -1);
+        inset-inline-end: calc(var(--border-width) / 2 * -1);
         height: 100%;
         width: var(--border-width);
     }

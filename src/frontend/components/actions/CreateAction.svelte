@@ -208,7 +208,7 @@
     <CombinedInput textWidth={38} style={actionNameIndex > 1 || !actionId ? "border-top: 2px solid var(--primary-lighter);" : ""}>
         <p style="font-weight: 600;">
             <T id="midi.start_action" />
-            <span style="color: var(--secondary);display: flex;align-items: center;margin-left: 8px;">
+            <span style="color: var(--secondary);display: flex;align-items: center;margin-inline-start: 8px;">
                 {#if actionNameIndex}#{actionNameIndex}{/if}
             </span>
         </p>
@@ -218,7 +218,7 @@
         {:else}
             <Button on:click={() => dispatch("choose")} title={$dictionary.actions?.choose_action} bold={!actionId}>
                 <div style="display: flex;align-items: center;padding: 0;">
-                    <Icon id={findIcon(actionId)} style="margin-left: 0.5em;" right />
+                    <Icon id={findIcon(actionId)} style="margin-inline-start: 0.5em;" right />
                     <p>
                         {#if actionId}
                             {findName(actionId) || "—"}

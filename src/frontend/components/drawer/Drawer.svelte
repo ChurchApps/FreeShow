@@ -248,7 +248,7 @@
         overflow-y: hidden;
     }
     .top .tabs span {
-        margin-left: 0.5em;
+        margin-inline-start: 0.5em;
     }
 
     .search {
@@ -261,7 +261,7 @@
         /* width: 50%; */
         padding: 0 8px;
         border: none;
-        border-left: 4px solid var(--primary-darker);
+        border-inline-start: 4px solid var(--primary-darker);
     }
     .search:active,
     .search:focus {
@@ -290,7 +290,7 @@
         flex-direction: row-reverse;
     }
     .right.row :global(.scroll.split .border) {
-        border-right: 2px solid var(--primary-lighter);
+        border-inline-end: 2px solid var(--primary-lighter);
         overflow-y: auto;
     }
     /* scripture preview */

@@ -208,7 +208,7 @@
                     {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : null}
                     <!-- WIP this only includes "next" slide background -->
                     {#if typeof slideBackground?.path === "string"}
-                        <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
+                        <div class="image" style="position: absolute;inset-inline-start: 0;top: 0;width: 100%;height: 100%;">
                             <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
                         </div>
                     {/if}

@@ -55,7 +55,7 @@
     .toast {
         position: absolute;
         bottom: 0;
-        right: 0;
+        inset-inline-end: 0;
         max-width: var(--navigation-width);
         /* bottom: 80px;
         left: 50%;
@@ -67,7 +67,7 @@
         /* border: 2px solid var(--primary-lighter); */
         border: 2px solid var(--secondary);
         border-bottom: none;
-        border-right: none;
+        border-inline-end: none;
         font-size: 1.2em;
 
         padding: 8px 16px;
