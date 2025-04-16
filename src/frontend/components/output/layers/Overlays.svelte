@@ -4,7 +4,7 @@
 
     export let outputId: string
 
-    export let overlays: Overlays
+    export let overlays: Overlays | null
     export let activeOverlays: string[]
     export let transition: Transition
 
@@ -50,7 +50,7 @@
 </script>
 
 {#each outputtedOverlays as id (id)}
-    {#if overlays[id]}
+    {#if overlays?.[id]}
         <div class:key={isKeyOutput}>
             <Overlay {id} {outputId} {overlays} {mirror} {transition} />
         </div>

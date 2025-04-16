@@ -80,15 +80,16 @@ import { exportProject } from "../export/project"
 import { clone, removeDuplicates } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
-import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
+import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
 import { defaultOutput, getActiveOutputs, getCurrentStyle, setOutput, toggleOutput } from "../helpers/output"
 import { select } from "../helpers/select"
-import { getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
+import { checkName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
+import { ShowObj } from "../../classes/Show"
 
 interface ObjData {
     sel: Selected | null
@@ -449,6 +450,7 @@ const actions = {
         })
     },
     addToShow: (obj: ObjData) => {
+        // WIP replaced by convertToShow
         let data = obj.sel?.data || []
 
         let slides = data.map((a) => ({ id: a.id || uid(), group: removeExtension(a.name || a.path || ""), color: null, settings: {}, notes: "", items: [] }))
@@ -463,6 +465,43 @@ const actions = {
         let newData = { index: layoutLength, data: slides, layout: { backgrounds: data } }
 
         history({ id: "SLIDES", newData, location: { page: get(activePage) as HistoryPages, show: get(activeShow)!, layout: activeLayout } })
+    },
+    createSlideshow: (obj: ObjData) => {
+        let data = obj.sel?.data || []
+        let slides = data.map((a) => ({ group: removeExtension(a.name || a.path || ""), color: null, settings: {}, notes: "", items: [] }))
+
+        let layoutId = uid()
+        let show = new ShowObj(false, "presentation", layoutId, Date.now(), false)
+        let folderName = splitPath(data[0]?.path).at(-2) || ""
+        show.name = checkName(get(dictionary).create_show?.slideshow + (folderName ? `" "${folderName}` : ""))
+
+        const videoData = { muted: false, loop: false }
+        const duration = 6
+
+        let layoutSlides: SlideData[] = []
+        slides.forEach((slide, i) => {
+            let slideId = uid()
+            show.slides[slideId] = slide
+
+            let mediaId = uid(5)
+            let media = data[i]
+            show.media[mediaId] = { ...media, path: media.path || media.id, ...(media.type === "video" ? videoData : {}) }
+
+            let layoutData: SlideData = { id: slideId, background: mediaId }
+            if (media.type === "video") {
+                layoutData.actions = { nextAfterMedia: true }
+            } else if (media.type === "image") {
+                layoutData.nextTimer = duration
+                layoutData.actions = { animate: { actions: [{ type: "change", duration: duration + 2, id: "background", key: "zoom" }] } }
+            }
+            if (i === slides.length - 1) layoutData.end = true
+
+            layoutSlides.push(layoutData)
+        })
+
+        show.layouts[layoutId].slides = layoutSlides
+
+        history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
     },
     lock_show: (obj: ObjData) => {
         if (!obj.sel) return
@@ -884,7 +923,7 @@ const actions = {
     },
 
     // change slide group
-    slide_groups: (obj: ObjData) => changeSlideGroups({ sel: { data: [{ index: obj.sel?.data?.[0]?.index }] }, menu: { id: obj.menu.id! } }),
+    slide_groups: (obj: ObjData) => changeSlideGroups({ sel: { data: obj.sel?.data || [] }, menu: { id: obj.menu.id! } }),
 
     actions: (obj: ObjData) => changeSlideAction(obj, obj.menu.id || ""),
     transition: () => {
@@ -1208,6 +1247,10 @@ const actions = {
 
         popupData.set({ obj, caret })
         activePopup.set("dynamic_values")
+    },
+    conditions: (obj: ObjData) => {
+        popupData.set({ obj })
+        activePopup.set("conditions")
     },
     to_front: () => rearrangeItems("to_front"),
     forward: () => rearrangeItems("forward"),

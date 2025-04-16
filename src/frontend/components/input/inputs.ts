@@ -8,13 +8,6 @@ import Dropdown from "../inputs/Dropdown.svelte"
 import NumberInput from "../inputs/NumberInput.svelte"
 import TextInput from "../inputs/TextInput.svelte"
 
-//////
-
-export const INPUT_MIDI: Input = { name: "", id: "", type: "midi", value: { type: "noteon", values: { note: 0, velocity: -1, channel: 1 } } }
-export const INPUT_REST: Input = { name: "", id: "", type: "rest", value: { url: "", method: "", contentType: "", payload: "" } }
-
-//////
-
 const getInputValue = {
     string: (e: any) => e.target.value,
     number: (e: any) => Number(e.detail),

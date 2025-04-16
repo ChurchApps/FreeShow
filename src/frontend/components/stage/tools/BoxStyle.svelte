@@ -35,13 +35,20 @@
 
         if (type === "text") {
             setBoxInputValue(edits, "default", "font-family", "value", "Arial")
+
             removeInput(edits.default, "textFit")
             removeInput(edits.text, "nowrap")
             removeInput(edits.lines, "specialStyle.lineBg")
             removeInput(edits.lines, "specialStyle.opacity")
+
             delete edits.list
-            removeInput(edits.special, "scrolling.type")
-            removeInput(edits.special, "scrolling.speed")
+
+            if (item.type === "text") {
+                removeInput(edits.special, "scrolling.type")
+                removeInput(edits.special, "scrolling.speed")
+            } else {
+                delete edits.special
+            }
         }
 
         if (item.type === "slide_text" || activeItemId.includes("slide_text")) {
@@ -51,7 +58,7 @@
             if (item.keepStyle) {
                 let textEdits = clone(slideTextEdits)
                 removeInput(textEdits, "invertItems")
-                edits = { default: textEdits }
+                edits = { default: textEdits, chords: edits.chords }
             } else {
                 edits = { default: clone(slideTextEdits), font: edits.default, ...newEdits }
             }
@@ -91,9 +98,6 @@
         setBoxInputValue(edits, sectionId, "font-family", "styleValue", data["font"] || "")
         setBoxInputValue(edits, sectionId, "font-size", "disabled", item.type === "text" ? item.auto === true : item.auto !== false)
         // setBoxInputValue(edits, sectionId, "textFit", "hidden", item?.auto !== false)
-
-        setBoxInputValue(edits, "special", "button.press", "value", item?.button?.press || "")
-        setBoxInputValue(edits, "special", "button.release", "value", item?.button?.release || "")
     }
     $: if (item && item.type === "slide_notes") {
         setBoxInputValue(edits, "default", "slideOffset", "value", item.slideOffset || 0)
@@ -112,6 +116,9 @@
     }
     $: if (item && item.type === "text") {
         setBoxInputValue(edits, "default", "auto", "value", !!item.auto)
+
+        setBoxInputValue(edits, "special", "button.press", "value", item?.button?.press || "")
+        setBoxInputValue(edits, "special", "button.release", "value", item?.button?.release || "")
     }
 
     $: if (edits.chords) {
@@ -119,10 +126,12 @@
         setBoxInputValue(edits, "chords", "chords.enabled", "value", enabled)
         setBoxInputValue(edits, "chords", "chords.color", "hidden", !enabled)
         setBoxInputValue(edits, "chords", "chords.size", "hidden", !enabled)
+        setBoxInputValue(edits, "chords", "chords.offsetY", "hidden", !enabled)
 
         let data = (typeof item?.chords === "boolean" ? (item as any)?.chordsData : item?.chords) || {}
         if (data.color) setBoxInputValue(edits, "chords", "chords.color", "value", data.color)
         if (data.size) setBoxInputValue(edits, "chords", "chords.size", "value", data.size)
+        if (data.offsetY) setBoxInputValue(edits, "chords", "chords.offsetY", "value", data.offsetY)
     }
     $: if (item?.type === "slide_tracker" || activeItemId?.includes("tracker")) {
         if (item?.tracker?.type) setBoxInputValue(edits, "default", "tracker.type", "value", item.tracker.type)

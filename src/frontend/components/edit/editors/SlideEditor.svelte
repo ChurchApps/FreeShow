@@ -331,7 +331,7 @@
         <div class="actions" style="width: 100%;gap: 10px;">
             <div class="leftActions">
                 {#if !chordsMode}
-                    <div class="notes" style="font-size: 0.8em;">{currentShow?.name}</div>
+                    <div class="notes" style="font-size: 0.8em;">{currentShow?.name || ""}</div>
                 {/if}
                 {#if chordsMode && Slide}
                     <Button outline={!chordsAction} on:click={setDefaultChordsAction}>

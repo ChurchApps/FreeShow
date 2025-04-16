@@ -150,8 +150,10 @@
         setBoxInputValue(box, "chords", "chords.enabled", "value", item?.chords?.enabled || false)
         setBoxInputValue(box, "chords", "chords.color", "value", item?.chords?.color || "#FF851B")
         setBoxInputValue(box, "chords", "chords.size", "value", item?.chords?.size || 60)
+        setBoxInputValue(box, "chords", "chords.offsetY", "value", item?.chords?.offsetY || 0)
         setBoxInputValue(box, "chords", "chords.color", "hidden", !item?.chords?.enabled)
         setBoxInputValue(box, "chords", "chords.size", "hidden", !item?.chords?.enabled)
+        setBoxInputValue(box, "chords", "chords.offsetY", "hidden", !item?.chords?.enabled)
 
         // special
         setBoxInputValue(box, "special", "scrolling.type", "value", item?.scrolling?.type || "none")

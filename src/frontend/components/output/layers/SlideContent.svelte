@@ -1,5 +1,7 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
+    import { variables } from "../../../stores"
+    import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
     import Textbox from "../../slide/Textbox.svelte"
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
@@ -26,7 +28,9 @@
     let current: any = {}
     let show: boolean = false
 
-    $: filteredItems = currentItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
+    $: filteredItems = currentItems.filter((item) => shouldItemBeShown(item, currentItems, { outputId, slideIndex: outSlide?.index }, $variables))
+
+    // WIP conditions does not remove items when filteredItems updates
 
     // do not update if only line has changed
     $: currentOutSlide = "{}"

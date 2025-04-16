@@ -3,6 +3,7 @@
     import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, variables } from "../../../stores"
     import { deleteAction } from "../../helpers/clipboard"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../../helpers/output"
+    import { getNumberVariables } from "../../helpers/showActions"
     import SlideItems from "../../slide/SlideItems.svelte"
     import EditboxLines from "./EditboxLines.svelte"
     import EditboxPlain from "./EditboxPlain.svelte"
@@ -132,6 +133,9 @@
     $: isDisabledVariable = item.type === "variable" && $variables[item.variable?.id]?.enabled === false
     // SHOW IS LOCKED FOR EDITING
     $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked
+
+    // give CSS access to number variable values
+    $: cssVariables = getNumberVariables($variables)
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
@@ -147,11 +151,11 @@ bind:offsetWidth={width} -->
     class:selected={$activeEdit.items.includes(index)}
     class:isDisabledVariable
     class:chords={chordsMode}
-    style={plain
-        ? "width: 100%;"
-        : `${getCustomStyle(item.style || "", customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? "filter: " + filter + ";" : ""}${
-              backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""
-          }`}
+    style="{plain
+        ? 'width: 100%;'
+        : `${getCustomStyle(item.style || '', customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? 'filter: ' + filter + ';' : ''}${
+              backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''
+          }`}{cssVariables}"
     data-index={index}
     on:mousedown={mousedown}
 >

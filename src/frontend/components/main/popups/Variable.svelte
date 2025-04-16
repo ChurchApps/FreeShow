@@ -160,10 +160,17 @@
 
         <!-- WIP custom step sizes "1,8:2,10:2" ?? -->
     {:else if currentVariable.type === "random_number"}
-        <CombinedInput textWidth={30}>
-            <p><T id="popup.animate" /></p>
-            <span class="alignRight">
+        <CombinedInput>
+            <p style="flex: 1;"><T id="popup.animate" /></p>
+            <span class="alignRight" style="flex: 0;padding: 0 10px;">
                 <Checkbox checked={currentVariable.animate} on:change={(e) => updateValue(e, "animate", true)} />
+            </span>
+        </CombinedInput>
+
+        <CombinedInput>
+            <p style="flex: 1;"><T id="edit.each_number_once" /></p>
+            <span class="alignRight" style="flex: 0;padding: 0 10px;">
+                <Checkbox checked={currentVariable.eachNumberOnce} on:change={(e) => updateValue(e, "eachNumberOnce", true)} />
             </span>
         </CombinedInput>
 
@@ -203,7 +210,7 @@
         </CombinedInput>
         <!-- {/if} -->
 
-        {#if currentVariable.setLog}
+        {#if currentVariable.setLog?.length}
             <HRule title="popup.history" />
 
             <div class="log" style="overflow: auto;max-height: 250px;">

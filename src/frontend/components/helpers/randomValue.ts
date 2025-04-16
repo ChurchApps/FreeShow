@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { randomNumberVariable, variables } from "../../stores"
-import { wait } from "../../utils/common"
+import { newToast, wait } from "../../utils/common"
 
 function updateVariable(id: string, key: string, value: any) {
     variables.update((a) => {
@@ -15,20 +15,6 @@ export function setRandomValue(id: string) {
     const variable = get(variables)[id]
     if (!variable.sets) variable.sets = [{ name: "", minValue: 1, maxValue: 1000 }]
 
-    // const allSets: { name: string; number: number }[] = []
-    // variable.sets.forEach((set, i) => {
-    //     const min = Number(set.minValue ?? 1)
-    //     const max = Number(set.maxValue ?? 1000)
-    //     const name = set.name || `#${i + 1}`
-
-    //     const minNumber = Math.min(min, max)
-    //     ;[...Array(Math.abs(max - min + 1))].forEach((_, i) => {
-    //         const number = i + minNumber
-    //         allSets.push({ name, number })
-    //     })
-    // })
-    // const randomValue = allSets[Math.floor(Math.random() * allSets.length)]
-
     // map sets to ranges with counts
     const ranges = variable.sets.map((set, i) => {
         const min = Number(set.minValue ?? 1)
@@ -42,19 +28,31 @@ export function setRandomValue(id: string) {
         return { name, start, count }
     })
 
-    // get random number evenly from total number of values
     const total = ranges.reduce((sum, r) => sum + r.count, 0)
-    let randomIndex = Math.floor(Math.random() * total)
 
-    // find which range the index falls into
-    let randomValue: { name: string; number: number } | null = null
-    for (const range of ranges) {
-        if (randomIndex < range.count) {
-            randomValue = { name: range.name, number: range.start + randomIndex }
-            break
-        }
-        randomIndex -= range.count
+    if (variable.eachNumberOnce && (variable.setLog?.length || 0) >= total) {
+        newToast("$toast.reached_end")
+        return
     }
+
+    let randomValue: { name: string; number: number } | null = null
+    let loopStop = 0
+    do {
+        loopStop++
+
+        // get random number evenly from total number of values
+        let randomIndex = Math.floor(Math.random() * total)
+
+        // find which range the index falls into
+        randomValue = null
+        for (const range of ranges) {
+            if (randomIndex < range.count) {
+                randomValue = { name: range.name, number: range.start + randomIndex }
+                break
+            }
+            randomIndex -= range.count
+        }
+    } while (variable.eachNumberOnce && randomValue && variable.setLog?.find((a) => a.name === randomValue!.name && a.number === randomValue!.number) && loopStop < 50000)
 
     if (!randomValue) return
 

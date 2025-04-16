@@ -8,7 +8,7 @@ import type { Output } from "../../types/Output"
 import type { Resolution } from "../../types/Settings"
 import { sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
-import { doesPathExist, doesPathExistAsync, makeDir } from "../utils/files"
+import { createFolder, dataFolderNames, doesPathExist, doesPathExistAsync, makeDir } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { captureOptions } from "../utils/windowOptions"
 import { imageExtensions, videoExtensions } from "./media"
@@ -144,14 +144,23 @@ async function captureWithCanvas(data: { input: string; output: string; size: Re
     generationFinished()
 }
 
-export function saveImage(data: { path: string; base64?: string }) {
-    mediaBeingCaptured = Math.max(0, mediaBeingCaptured - 1)
-    // console.log("SAVE: ", data.path, data.base64?.length)
-    if (!data.base64) return
+export function saveImage(data: { path: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }) {
+    const dataURL = data.base64
+    let savePath = data.path
 
-    let dataURL = data.base64
+    if (data.filePath?.length) {
+        const fileName = data.filePath.pop()!
+        const folderPath = path.join(savePath, dataFolderNames.exports, ...data.filePath)
+        createFolder(folderPath)
+        savePath = path.join(folderPath, fileName)
+    } else {
+        mediaBeingCaptured = Math.max(0, mediaBeingCaptured - 1)
+    }
+
+    if (!dataURL || !savePath) return
+
     let image = nativeImage.createFromDataURL(dataURL)
-    saveToDisk(data.path, image, false)
+    saveToDisk(savePath, image, false, data.format || "png")
 }
 
 // https://www.electronjs.org/docs/latest/api/native-image
@@ -185,10 +194,12 @@ function parseSize(sizeStr: string): ResizeOptions {
 
 ///// SAVE /////
 
-// const jpegQuality = 90 // 0-100
-function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolean = true) {
-    // let jpgImage = image.toJPEG(jpegQuality)
-    let img = image.toPNG() // higher file size, but supports transparent images
+const jpegQuality = 90 // 0-100
+function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolean = true, format: "png" | "jpg") {
+    let img
+    if (format === "jpg") img = image.toJPEG(jpegQuality)
+    else img = image.toPNG() // higher file size, but supports transparent images
+
     fs.writeFile(savePath, img, (err) => {
         if (!err) exists.push(savePath)
         if (nextOnFinished) generationFinished()
@@ -199,7 +210,8 @@ function saveToDisk(savePath: string, image: NativeImage, nextOnFinished: boolea
 
 export function captureSlide(data: { output: { [key: string]: Output }; resolution: Resolution }): Promise<{ base64: string } | undefined> {
     return new Promise((resolve) => {
-        const OUTPUT_ID = "capture"
+        const outSlide = Object.values(data.output)[0].out?.slide
+        const OUTPUT_ID = "capture" + outSlide?.id + outSlide?.layout + outSlide?.index
         if (OutputHelper.getOutput(OUTPUT_ID)) return
 
         let window = new BrowserWindow({ ...captureOptions, width: data.resolution?.width, height: data.resolution?.height })

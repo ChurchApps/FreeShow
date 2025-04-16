@@ -6,14 +6,12 @@
     import { send } from "../util/socket"
     import { _set, active, activeProject, activeShow, activeTab, dictionary, outShow, projects, projectsOpened, scriptures, shows } from "../util/stores"
     import Lyrics from "./pages/Lyrics.svelte"
-    import Media from "./pages/Media.svelte"
     import Project from "./pages/Project.svelte"
     import Scripture from "./pages/Scripture.svelte"
     import Show from "./pages/Show.svelte"
+    import ShowContent from "./pages/ShowContent.svelte"
     import Shows from "./pages/Shows.svelte"
     import Slide from "./pages/Slide.svelte"
-    import AudioPreview from "./show/AudioPreview.svelte"
-    import OverlayPreview from "./show/OverlayPreview.svelte"
     import TabletMode from "./tablet/TabletMode.svelte"
 
     $: tab = $activeTab
@@ -80,14 +78,8 @@
         {:else if tab === "show"}
             {#if ($active.type || "show") === "show"}
                 <Show />
-            {:else if $active.type === "image" || $active.type === "video"}
-                <Media />
-            {:else if $active.type === "audio"}
-                <AudioPreview active={$active} />
-            {:else if $active.type === "overlay"}
-                <OverlayPreview show={$active} />
             {:else}
-                <p style="text-transform: capitalize;">{$active.type}</p>
+                <ShowContent />
             {/if}
         {:else if tab === "slide"}
             <Slide />

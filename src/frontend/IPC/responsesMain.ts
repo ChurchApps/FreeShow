@@ -143,7 +143,7 @@ export const mainResponses: MainResponses = {
     [ToMain.TOAST]: (a) => newToast(a),
     [ToMain.SPELL_CHECK]: (a) => spellcheck.set(a),
     [Main.CLOSE]: () => initializeClosing(),
-    [Main.RECEIVE_MIDI]: (a) => receivedMidi(a),
+    [ToMain.RECEIVE_MIDI2]: (a) => receivedMidi(a),
     [Main.DELETE_SHOWS]: (a) => {
         if (!a.deleted.length) {
             newToast("$toast.delete_shows_empty")

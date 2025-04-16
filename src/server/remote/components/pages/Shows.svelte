@@ -92,6 +92,7 @@
             send("API:index_select_slide", { showId: id, index: 0 })
             searchElem?.select()
         } else {
+            _set("active", { id, type: "show" })
             _set("activeTab", "show")
         }
     }

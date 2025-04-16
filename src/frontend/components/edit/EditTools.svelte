@@ -92,7 +92,7 @@
     $: itemType = active === "text" ? item?.type || "text" : ""
     $: type = `${active}${itemType}`
     function copyStyle() {
-        const styles = items.map((item) => getCurrentStyle(item))
+        const styles = getItemsStyle()
 
         copyPasteEdit.update((a) => {
             a[type] = styles
@@ -102,12 +102,16 @@
         console.log("COPIED STYLE", $copyPasteEdit)
     }
 
-    function getCurrentStyle(item, _updater: any = null) {
+    function getItemsStyle(_updater: any = null) {
+        return items.map((item) => getCurrentStyle(item))
+    }
+
+    function getCurrentStyle(item) {
         if (active === "text") return getBoxStyle(item)
         if (active === "item") return getItemStyle(item)
         if (active === "slide") return getSlideStyle()
         if (active === "filters") return getFilterStyle()
-        return {}
+        return null
     }
 
     // PASTE
@@ -288,16 +292,17 @@
 
     $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)
     $: isLocked = $activeEdit.id ? false : $showsCache[$activeShow?.id || ""]?.locked === true
+    $: isDefault = $activeEdit.type === "overlay" ? $overlays[$activeEdit.id || ""]?.isDefault : $activeEdit.type === "template" ? $templates[$activeEdit.id || ""]?.isDefault : false
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 
     $: currentCopied = $copyPasteEdit[type]
-    $: copiedStyleDifferent = currentCopied && JSON.stringify(currentCopied) !== JSON.stringify(getCurrentStyle(item, $showsCache[$activeEdit?.id || $activeShow?.id || ""]))
+    $: copiedStyleDifferent = currentCopied && JSON.stringify(currentCopied) !== JSON.stringify(getItemsStyle($showsCache[$activeEdit?.id || $activeShow?.id || ""]))
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 <div class="main border editTools">
-    {#if slideActive && !isLocked}
+    {#if slideActive && !isLocked && !isDefault}
         <Tabs {tabs} bind:active {overflowHidden} />
 
         {#if active === "text"}

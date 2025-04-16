@@ -11,14 +11,12 @@
     import { _set, active, activeProject, activeShow, dictionary, isCleared, outLayout, outShow, outSlide, projects, projectsOpened, scriptures, shows, textCache } from "../../util/stores"
     import AddGroups from "../pages/AddGroups.svelte"
     import GroupsEdit from "../pages/GroupsEdit.svelte"
-    import Media from "../pages/Media.svelte"
     import Project from "../pages/Project.svelte"
     import Scripture from "../pages/Scripture.svelte"
+    import ShowContent from "../pages/ShowContent.svelte"
     import Shows from "../pages/Shows.svelte"
     import TextEdit from "../pages/TextEdit.svelte"
-    import AudioPreview from "../show/AudioPreview.svelte"
     import Clear from "../show/Clear.svelte"
-    import OverlayPreview from "../show/OverlayPreview.svelte"
     import Slide from "../show/Slide.svelte"
     import Slides from "../show/Slides.svelte"
 
@@ -97,7 +95,10 @@
     let editOpened: boolean = false
     let textValue = ""
     $: if (editOpened && $textCache[$activeShow?.id || ""]) setText()
-    else textValue = ""
+    else reset()
+    function reset() {
+        textValue = ""
+    }
     function setText() {
         textValue = $textCache[$activeShow?.id || ""]
     }
@@ -260,14 +261,8 @@
         {:else}
             <Center faded>{translate("empty.show", $dictionary)}</Center>
         {/if}
-    {:else if $active.type === "image" || $active.type === "video"}
-        <Media tablet />
-    {:else if $active.type === "audio"}
-        <AudioPreview active={$active} />
-    {:else if $active.type === "overlay"}
-        <OverlayPreview show={$active} />
     {:else}
-        <p style="text-transform: capitalize;">{$active.type}</p>
+        <ShowContent tablet />
     {/if}
 </div>
 

@@ -49,7 +49,7 @@
     style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : mode !== "list" ? `border-bottom: 2px solid ${color};` : ""}
 >
     {#if icon}
-        <Icon id={icon} class="icon" {white} />
+        <Icon id={icon} class="icon" size={icon === "protected" ? 0.8 : 1} {white} />
     {/if}
 
     {#if renameId}

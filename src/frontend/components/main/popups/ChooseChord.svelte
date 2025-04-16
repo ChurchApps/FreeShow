@@ -23,6 +23,8 @@
     onMount(() => {
         if ($storedChordsData?.key) {
             chordData = $storedChordsData
+        } else if ($storedChordsData?.romanKeysActive) {
+            chordData.romanKeysActive = true
         }
         loaded = true
     })

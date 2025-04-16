@@ -8,6 +8,7 @@
     import autosize, { AutosizeTypes } from "../edit/scripts/autosize"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getOutputResolution, percentageStylePos } from "../helpers/output"
+    import { getNumberVariables } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import SlideItems from "./SlideItems.svelte"
@@ -84,9 +85,9 @@
             style = percentageStylePos(style, outputResolution)
         }
 
-        // reset position styles
+        // reset item styles (as it's set in parent item)
         if (isStage) {
-            style += "left: 0;top: 0;width: 100%;height: 100%;"
+            style += "display: contents;"
         }
 
         if (!key) return style
@@ -281,6 +282,9 @@
 
         send(OUTPUT, ["ACTION_MAIN"], { id: item.button.release })
     }
+
+    // give CSS access to number variable values
+    $: cssVariables = getNumberVariables($variables, $outputs)
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
@@ -288,7 +292,7 @@
     class="item"
     style="{style ? getCustomStyle(item?.style, customOutputId, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{filter ? 'filter: ' + filter + ';' : ''}{backdropFilter
         ? 'backdrop-filter: ' + backdropFilter + ';'
-        : ''}{animationStyle.item || ''}"
+        : ''}{animationStyle.item || ''}{cssVariables}"
     class:white={key && !lines?.length}
     class:key
     class:isStage
@@ -322,6 +326,7 @@
             {customTypeRatio}
             {maxLines}
             {maxLinesInvert}
+            on:updateAutoSize={calculateAutosize}
         />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} />
@@ -337,9 +342,11 @@
         pointer-events: initial;
 
         /* WIP custom time based on transition duration */
+        /* filter & dynamic CSS variable transition */
         transition:
             filter 500ms,
-            backdrop-filter 500ms;
+            backdrop-filter 500ms,
+            all 0.1s;
     }
     .item.isStage {
         width: 100%;

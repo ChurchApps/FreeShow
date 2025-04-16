@@ -5,6 +5,8 @@ import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { sendMain } from "../../IPC/main"
 import { triggerFunction } from "../../utils/common"
+import { syncDrive } from "../../utils/drive"
+import { pcoSync } from "../../utils/startup"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
@@ -19,6 +21,7 @@ import { runActionId, toggleAction } from "./actions"
 import {
     getOutput,
     getOutputGroupName,
+    getOutputSlideText,
     getPlayingAudioData,
     getPlayingAudioDuration,
     getPlayingAudioTime,
@@ -37,7 +40,9 @@ import {
     addGroup,
     changeShowLayout,
     changeVariable,
+    editTimer,
     getClearedState,
+    getPDFThumbnails,
     getPlainText,
     getShowGroups,
     gotoGroup,
@@ -102,13 +107,14 @@ export type API_rearrange = { showId: string; from: number; to: number }
 export type API_group = { showId: string; groupId: string }
 export type API_layout = { showId: string; layoutId: string }
 export type API_slide_thumbnail = { showId?: string; layoutId?: string; index?: number }
-export type API_media = { path: string }
+export type API_media = { path: string; index?: number; data?: any }
 export type API_scripture = { id: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputStyle?: string; styleOutputs?: any }
 export type API_camera = { name?: string; id: string; groupId?: string }
 export type API_dynamic_value = { value: string; ref?: any }
+export type API_edit_timer = { id: string; key: string; value: any }
 export type API_transition = {
     id?: "text" | "media" // default: "text"
     type?: TransitionType // default: "fade"
@@ -144,7 +150,7 @@ export type API_rest_command = {
 export type API_emitter = {
     emitter: string
     template?: string
-    templateValues?: { name: string; value: string }[]
+    templateValues?: { name: string; value: string | { note?: number; velocity?: number; channel?: number } }[]
 }
 
 /// ACTIONS ///
@@ -245,10 +251,15 @@ export const API_ACTIONS = {
     start_slide_timers: (data: API_slide) => playSlideTimers(data),
     pause_timers: () => pauseAllTimers(),
     stop_timers: () => stopTimers(),
+    edit_timer: (data: API_edit_timer) => editTimer(data),
 
     // FUNCTIONS
     change_variable: (data: API_variable) => changeVariable(data), // BC
     start_trigger: (data: API_id) => activateTriggerSync(data.id),
+
+    // CONNECTION
+    sync_drive: () => syncDrive(true),
+    sync_pco: () => pcoSync(),
 
     // EMIT
     send_midi: (data: API_midi) => sendMidi(data),
@@ -269,6 +280,7 @@ export const API_ACTIONS = {
     get_groups: (data: API_id) => getShowGroups(data.id),
 
     get_output: (data: API_id_optional) => getOutput(data),
+    get_output_slide_text: () => getOutputSlideText(),
     get_output_group_name: () => getOutputGroupName(),
     get_dynamic_value: (data: API_dynamic_value) => replaceDynamicValues(data.value, data.ref || {}),
 
@@ -286,6 +298,7 @@ export const API_ACTIONS = {
 
     get_thumbnail: (data: API_media) => getThumbnail(data),
     get_slide_thumbnail: (data: API_slide_thumbnail) => getSlideThumbnail(data),
+    get_pdf_thumbnails: (data: API_media) => getPDFThumbnails(data),
     get_cleared: () => getClearedState(),
 }
 

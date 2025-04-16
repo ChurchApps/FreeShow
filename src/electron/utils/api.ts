@@ -138,15 +138,14 @@ function startOSC(PORT: number | undefined) {
 export function emitOSC(msg: any) {
     if (typeof msg.data !== "string") return
 
-    // if (!OSC_SENDER) {
-    const OSC_SENDER = new OSC({ plugin: new OSC.DatagramPlugin() }) // UDP
+    const port = msg.signal?.port || 8080
+    const host = msg.signal?.host || "0.0.0.0"
 
-    const options = { port: msg.signal?.port || 8080, host: msg.signal?.host || "localhost" }
+    // @ts-ignore
+    const OSC_SENDER = new OSC({ plugin: new OSC.DatagramPlugin({ send: { host, port } }) })
 
     OSC_SENDER.on("open", sendMessage)
-    OSC_SENDER.open(options)
-    //     return
-    // }
+    OSC_SENDER.open()
 
     // const IS_OPEN = 1
     // if (OSC_SENDER?.status() === IS_OPEN) {
@@ -162,7 +161,7 @@ export function emitOSC(msg: any) {
         if (!OSC_SENDER) return
 
         const message = new OSC.Message(msg.data)
-        console.log(`Emitting OSC at ${options.host}:${options.port}:`, message.address)
+        console.log(`Emitting OSC at ${host}:${port}:`, message.address)
 
         OSC_SENDER.send(message)
         // ensure message is sent
