@@ -406,6 +406,7 @@ export interface Overlays {
     [key: ID]: Overlay
 }
 export interface Overlay {
+    isDefault?: boolean
     name: string
     color: null | string
     category: null | string
@@ -419,6 +420,7 @@ export interface Templates {
     [key: ID]: Template
 }
 export interface Template {
+    isDefault?: boolean
     name: string
     color: null | string
     category: null | string

@@ -326,6 +326,7 @@
             {customTypeRatio}
             {maxLines}
             {maxLinesInvert}
+            on:updateAutoSize={calculateAutosize}
         />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} />

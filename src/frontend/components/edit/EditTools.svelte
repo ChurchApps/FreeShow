@@ -292,6 +292,7 @@
 
     $: slideActive = !!((slides?.length && showIsActive && $activeEdit.slide !== null) || $activeEdit.id)
     $: isLocked = $activeEdit.id ? false : $showsCache[$activeShow?.id || ""]?.locked === true
+    $: isDefault = $activeEdit.type === "overlay" ? $overlays[$activeEdit.id || ""]?.isDefault : $activeEdit.type === "template" ? $templates[$activeEdit.id || ""]?.isDefault : false
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 
     $: currentCopied = $copyPasteEdit[type]
@@ -301,7 +302,7 @@
 <svelte:window on:keydown={keydown} />
 
 <div class="main border editTools">
-    {#if slideActive && !isLocked}
+    {#if slideActive && !isLocked && !isDefault}
         <Tabs {tabs} bind:active {overflowHidden} />
 
         {#if active === "text"}

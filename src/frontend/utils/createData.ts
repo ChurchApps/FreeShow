@@ -86,6 +86,7 @@ const randomNumber = (from: number, to: number): number => Math.floor(Math.rando
 export function setExampleOverlays() {
     overlays.update((a) => {
         a.watermark = {
+            isDefault: true,
             name: get(dictionary).example?.watermark || "Watermark",
             color: "#F0008C",
             category: "notice",
@@ -98,6 +99,7 @@ export function setExampleOverlays() {
             ],
         }
         a.visual = {
+            isDefault: true,
             name: get(dictionary).example?.recording || "Recording",
             color: "red",
             category: "visuals",
@@ -109,12 +111,14 @@ export function setExampleOverlays() {
             ],
         }
         a.clock = {
+            isDefault: true,
             name: get(dictionary).example?.clock || "Clock",
             color: "dodgerblue",
             category: "visuals",
             items: [{ style: "top:70px;left:1450px;height:150px;width:470px;", type: "clock", clock: { type: "digital", dateFormat: "none", showTime: true, seconds: false } }],
         }
         a.name = {
+            isDefault: true,
             name: get(dictionary).inputs?.name || "Name",
             color: "#0b57a2",
             category: "visuals",
@@ -142,6 +146,7 @@ export function setExampleOverlays() {
             ],
         }
         a.rounded = {
+            isDefault: true,
             name: get(dictionary).example?.rounded || "Rounded",
             color: null,
             category: "visuals",
@@ -154,6 +159,7 @@ export function setExampleOverlays() {
             ],
         }
         a.vignette = {
+            isDefault: true,
             name: "Vignette",
             color: "#dddddd",
             category: "visuals",
@@ -172,6 +178,7 @@ export function setExampleTemplates() {
     templates.update((a) => {
         // metadata
         a.metadata = {
+            isDefault: true,
             name: get(dictionary).tools?.metadata || "Metadata",
             color: null,
             category: null,
@@ -185,6 +192,7 @@ export function setExampleTemplates() {
         }
         // message
         a.message = {
+            isDefault: true,
             name: get(dictionary).meta?.message || "Message",
             color: null,
             category: null,
@@ -198,6 +206,7 @@ export function setExampleTemplates() {
         }
         // presentation
         a.header = {
+            isDefault: true,
             name: get(dictionary).example?.header || "Header",
             color: null,
             category: "presentation",
@@ -210,6 +219,7 @@ export function setExampleTemplates() {
             ],
         }
         a.text = {
+            isDefault: true,
             name: get(dictionary).example?.text || "Text",
             color: null,
             category: "presentation",
@@ -229,6 +239,7 @@ export function setExampleTemplates() {
 
         // lyrics
         a.big = {
+            isDefault: true,
             name: get(dictionary).example?.big || "Big",
             color: null,
             category: "song",
@@ -241,6 +252,7 @@ export function setExampleTemplates() {
             ],
         }
         a.default = {
+            isDefault: true,
             name: get(dictionary).example?.default || "Default",
             color: null,
             category: "song",
@@ -253,6 +265,7 @@ export function setExampleTemplates() {
             ],
         }
         a.small = {
+            isDefault: true,
             name: get(dictionary).example?.small || "Small",
             color: null,
             category: "song",
@@ -265,6 +278,7 @@ export function setExampleTemplates() {
             ],
         }
         a.bigBold = {
+            isDefault: true,
             name: get(dictionary).example ? get(dictionary).example?.big + " " + get(dictionary).example?.bold : "Big Bold",
             color: null,
             category: "song",
@@ -287,6 +301,7 @@ export function setExampleTemplates() {
             ],
         }
         a.defaultBold = {
+            isDefault: true,
             name: get(dictionary).example ? get(dictionary).example?.default + " " + get(dictionary).example?.bold : "Default Bold",
             color: null,
             category: "song",
@@ -309,6 +324,7 @@ export function setExampleTemplates() {
             ],
         }
         a.smallBold = {
+            isDefault: true,
             name: get(dictionary).example ? get(dictionary).example?.small + " " + get(dictionary).example?.bold : "Small Bold",
             color: null,
             category: "song",
@@ -331,6 +347,7 @@ export function setExampleTemplates() {
             ],
         }
         a.blur_box = {
+            isDefault: true,
             name: "Blur box",
             color: null,
             category: "song",
@@ -348,6 +365,7 @@ export function setExampleTemplates() {
             ],
         }
         a.faded = {
+            isDefault: true,
             name: "Faded",
             color: null,
             category: "song",
@@ -372,6 +390,7 @@ export function setExampleTemplates() {
             ],
         }
         a.box = {
+            isDefault: true,
             name: "Box",
             color: null,
             category: "song",
@@ -388,6 +407,7 @@ export function setExampleTemplates() {
             ],
         }
         a.trendy = {
+            isDefault: true,
             name: "Trendy",
             color: null,
             category: "song",
@@ -404,6 +424,7 @@ export function setExampleTemplates() {
             ],
         }
         a.fade = {
+            isDefault: true,
             name: "Fade",
             color: null,
             category: "song",
@@ -423,6 +444,7 @@ export function setExampleTemplates() {
 
         // lower thirds
         a.lowerThirdBlue = {
+            isDefault: true,
             name: "Lower Third Blue",
             color: "#800080",
             category: "song",
@@ -437,6 +459,7 @@ export function setExampleTemplates() {
             ],
         }
         a.lowerThirdColor = {
+            isDefault: true,
             name: "Lower Third Color",
             color: "#800080",
             category: "song",
@@ -451,6 +474,7 @@ export function setExampleTemplates() {
             ],
         }
         a.lowerThirdPastel = {
+            isDefault: true,
             name: "Lower Third Pastel",
             color: "#800080",
             category: "song",
@@ -467,6 +491,7 @@ export function setExampleTemplates() {
 
         // scripture
         a.scripture = {
+            isDefault: true,
             name: get(dictionary).category?.scripture || "Scripture",
             color: "#876543",
             category: "scripture",
@@ -485,6 +510,7 @@ export function setExampleTemplates() {
             ],
         }
         a.scripture_2 = {
+            isDefault: true,
             name: (get(dictionary).category?.scripture || "Scripture") + " 2",
             color: "#876543",
             category: "scripture",
@@ -509,6 +535,7 @@ export function setExampleTemplates() {
             ],
         }
         a.scripture_3 = {
+            isDefault: true,
             name: (get(dictionary).category?.scripture || "Scripture") + " 3",
             color: "#876543",
             category: "scripture",
@@ -539,6 +566,7 @@ export function setExampleTemplates() {
             ],
         }
         a.scripture_4 = {
+            isDefault: true,
             name: (get(dictionary).category?.scripture || "Scripture") + " 4",
             color: "#876543",
             category: "scripture",
@@ -576,6 +604,7 @@ export function setExampleTemplates() {
         }
         // blue theme
         a.blueHeader = {
+            isDefault: true,
             name: "Blue Header",
             color: "#2957ff",
             category: "presentation",
@@ -599,6 +628,7 @@ export function setExampleTemplates() {
             ],
         }
         a.blueMain = {
+            isDefault: true,
             name: "Blue Content",
             color: "#2957ff",
             category: "presentation",
@@ -628,6 +658,7 @@ export function setExampleTemplates() {
             ],
         }
         a.bullets = {
+            isDefault: true,
             name: "Bullets",
             color: "#747680",
             category: "presentation",
@@ -716,6 +747,7 @@ export function createDefaultShow() {
 export function createDoubleTemplate() {
     templates.update((a) => {
         a.double = {
+            isDefault: true,
             name: "Double",
             color: null, // "#FF6543",
             category: "song",

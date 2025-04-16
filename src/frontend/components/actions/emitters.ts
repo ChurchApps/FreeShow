@@ -52,7 +52,7 @@ function valueArrayToObject(values: EmitterTemplateValue[], removeEmptyValues: b
 
 function getMidiInfo(values: { note?: number; velocity?: number; channel?: number }) {
     if (!values.note) return ""
-    return `${midiToNote(values.note)} - ${values.channel ?? 1}`
+    return `${values.channel ?? 1}: ${midiToNote(values.note)}${values.velocity || 0 > 0 ? ` - ${values.velocity}` : ""}`
 }
 
 export const formatData = {

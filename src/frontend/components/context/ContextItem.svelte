@@ -136,9 +136,11 @@
         },
         addToProject: () => {
             if ($selected.id === "media" && $selected.data.length > 1) {
-                id = "addToShow"
-                menu = { label: "context.add_to_show", icon: "slide" }
-                if (!$activeShow || ($activeShow.type || "show") !== "show") disabled = true
+                id = "createSlideshow"
+                menu = { label: "context.create_slideshow", icon: "slide" }
+                // id = "addToShow"
+                // menu = { label: "context.add_to_show", icon: "slide" }
+                // if (!$activeShow || ($activeShow.type || "show") !== "show") disabled = true
             } else {
                 if (!$activeProject) disabled = true
             }

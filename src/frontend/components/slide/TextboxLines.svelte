@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { createEventDispatcher, onDestroy } from "svelte"
     import type { Styles } from "../../../types/Settings"
     import type { Item } from "../../../types/Show"
     import { outputs, slidesOptions, styles, variables } from "../../stores"
@@ -162,6 +162,24 @@
     // list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};
     $: listStyle = item?.list?.enabled ? `;font-size: inherit;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
 
+    const dispatch = createEventDispatcher()
+    const previousValue: { [key: string]: string } = {}
+    function getTextValue(value: string, i: number, ti: number, _updater: number) {
+        if (dynamicValues && value.includes("{")) {
+            const newValue = replaceDynamicValues(value, { ...ref, slideIndex })
+
+            const id = i + "_" + ti
+            if (previousValue[id] !== newValue) {
+                if (updateDynamic > 2) dispatch("updateAutoSize")
+                previousValue[id] = newValue
+            }
+
+            return newValue
+        }
+
+        return value
+    }
+
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
     $: if ($variables) updateDynamic++
@@ -196,7 +214,7 @@
 
                 <!-- class:height={!line.text[0]?.value.length} -->
                 <div class="break" class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style && lineBg ? `background-color: ${lineBg};` : ''}{style ? line.align : ''}{listStyle}">
-                    {#each line.text || [] as text}
+                    {#each line.text || [] as text, ti}
                         {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                         <span
                             style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
@@ -205,7 +223,7 @@
                                   ? getCustomFontSize(text.style, outputStyle)
                                   : ''}"
                         >
-                            {@html dynamicValues && value.includes("{") ? replaceDynamicValues(value, { ...ref, slideIndex }, updateDynamic) : value}
+                            {@html getTextValue(value, i, ti, updateDynamic)}
                         </span>
                     {/each}
                 </div>

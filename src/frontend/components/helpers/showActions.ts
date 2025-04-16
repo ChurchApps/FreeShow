@@ -48,7 +48,7 @@ import { clone } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { getActiveOutputs, refreshOut, setOutput } from "./output"
 import { loadShows } from "./setShow"
-import { getLayoutRef, initializeMetadata } from "./show"
+import { getGroupName, getLayoutRef, initializeMetadata } from "./show"
 import { _show } from "./shows"
 import { addZero, joinTime, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
@@ -1020,13 +1020,13 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         let outputId = Object.values(get(outputs))[0]?.stageOutput || ""
         let outSlide = get(allOutputs)[outputId]?.out?.slide
         showId = outSlide?.id
-        slideIndex = outSlide?.index
+        slideIndex = outSlide?.index ?? -1
     } else if (type === "stage") {
         let stageOutput = get(stageShows)[id]?.settings?.output
         let outputId = stageOutput || getActiveOutputs(get(outputs), false, true, true)[0]
         let outSlide = get(outputs)[outputId]?.out?.slide
         showId = outSlide?.id
-        slideIndex = outSlide?.index
+        slideIndex = outSlide?.index ?? -1
     }
 
     let show = _show(showId).get()
@@ -1128,8 +1128,18 @@ const dynamicValues = {
     layout_notes: ({ layout }) => layout.notes || "",
 
     slide_number: ({ slideIndex }) => (Number(slideIndex ?? -1) + 1).toString(),
-    slide_group: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.group || "",
-    slide_group_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.group || "",
+    slide_group: ({ show, ref, slideIndex, outSlide }) => {
+        let parentIndex = ref[slideIndex]?.parent?.layoutIndex ?? slideIndex
+        const group = show.slides?.[ref[parentIndex]?.id]?.group || ""
+        return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
+    },
+    slide_group_next: ({ show, ref, slideIndex, outSlide }) => {
+        if (slideIndex < 0) return ""
+        let nextParentIndex = slideIndex + 1
+        while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
+        const group = show.slides?.[ref[nextParentIndex]?.id]?.group || ""
+        return getGroupName({ show, showId: outSlide?.id }, ref[nextParentIndex]?.id, group, nextParentIndex, false, false)
+    },
     slide_notes: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.notes || "",
     slide_notes_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
 

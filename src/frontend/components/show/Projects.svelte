@@ -85,7 +85,7 @@
         if (!$projects[$activeProject!]?.shows) return
 
         let i = $projects[$activeProject!].shows.findIndex((p) => p.id === $activeShow?.id)
-        let pos: number = i > -1 ? i : $activeShow?.index || -1
+        let pos: number = i > -1 ? i : ($activeShow?.index ?? -1)
 
         // ($activeShow?.type !== "video" && $activeShow?.type !== "image")
         if (pos < 0 || $activeShow?.index === pos) return

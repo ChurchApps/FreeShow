@@ -75,10 +75,11 @@
             <div class="grid">
                 {#each fullFilteredTemplates as template}
                     <Card
-                        class="context #template_card"
+                        class="context #template_card{template.isDefault ? '_default' : ''}"
                         active={template.id === activeTemplate}
                         label={template.name}
                         renameId="template_{template.id}"
+                        icon={template.isDefault ? "protected" : null}
                         color={template.color}
                         {resolution}
                         on:click={(e) => {

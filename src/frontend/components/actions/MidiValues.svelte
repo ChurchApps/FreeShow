@@ -128,8 +128,8 @@
 
 {#if !noActionOrDefaultValues}
     <CombinedInput>
-        <p><T id="midi.auto_values" /></p>
-        <div class="alignRight">
+        <p style="flex: 1;"><T id="midi.auto_values" /></p>
+        <div style="flex: 0;padding: 0 10px;" class="alignRight">
             <Checkbox checked={autoValues} on:change={toggleAutoValues} />
         </div>
     </CombinedInput>

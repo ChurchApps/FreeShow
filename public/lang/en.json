@@ -117,7 +117,8 @@
         "quick_lyrics_example_tip": "Enter lyrics or any text here",
         "quick_lyrics_example_text": "Line",
         "empty": "Empty show",
-        "exists": "Found an existing show with the same name"
+        "exists": "Found an existing show with the same name",
+        "slideshow": "Slideshow"
     },
     "preview": {
         "_previous_show": "Previous show",
@@ -829,6 +830,7 @@
         "changeIcon": "Change icon",
         "changeGroup": "Change group",
         "createNew": "Create new",
+        "create_slideshow": "Create slideshow",
         "selectAll": "Select all",
         "force_outputs": "Force outputs",
         "align_with_screen": "Align with screen",

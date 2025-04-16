@@ -94,7 +94,7 @@
 
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:offsetWidth={width} bind:offsetHeight={height}>
-        {#if Slide}
+        {#if Slide && !Slide.isDefault}
             <Zoomed background="transparent" checkered border style={getStyleResolution(resolution, width, height, "fit", { zoom })} bind:ratio hideOverflow={false} center={zoom >= 1}>
                 <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
                 {#each Slide.items as item, index}
