@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import MainLayout from "./MainLayout.svelte"
     import MainOutput from "./MainOutput.svelte"
     import ContextMenu from "./components/context/ContextMenu.svelte"
@@ -13,7 +14,7 @@
     import Toast from "./components/main/Toast.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
-    import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, loaded, os, outputDisplay, outputs, timers } from "./stores"
+    import { activeTimers, autosave, closeAd, currentWindow, disabledServers, events, loaded, os, outputDisplay, outputs, timers, language, direction } from "./stores"
     import { focusArea, logerror, mainClick, startAutosave, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -43,6 +44,16 @@
     // edge blending
     let blending = ""
     $: if ($currentWindow === "output" && Object.values($outputs)[0]?.blending) blending = getBlending()
+
+    // set language direction
+    $: {
+        document.documentElement.setAttribute('dir', $direction);
+        document.documentElement.setAttribute('lang', $language);
+    }
+    onMount(() => {
+        document.documentElement.setAttribute('dir', $direction);
+        document.documentElement.setAttribute('lang', $language);
+    });
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={focusArea} on:click={mainClick} on:error={logerror} on:unhandledrejection={logerror} />
