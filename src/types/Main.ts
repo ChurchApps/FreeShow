@@ -217,6 +217,7 @@ export interface Variable {
 
     // random number
     animate?: boolean
+    eachNumberOnce?: boolean
     sets?: { name: string; minValue?: number; maxValue?: number }[]
     setName?: string // chosen random set
     setLog?: { name: string; number: number }[]
@@ -292,6 +293,7 @@ export type Popups =
     | "set_time"
     | "assign_shortcut"
     | "dynamic_values"
+    | "conditions"
     | "animate"
     | "translate"
     | "next_timer"

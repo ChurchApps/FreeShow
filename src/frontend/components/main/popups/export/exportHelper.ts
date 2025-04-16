@@ -1,12 +1,15 @@
 import { get } from "svelte/store"
 import type { Option } from "../../../../../types/Main"
-import { activeProject, activeShow, projects, selected, shows } from "../../../../stores"
+import { activeProject, activeShow, projects, selected, shows, showsCache } from "../../../../stores"
+import { getSlideThumbnail } from "../../../helpers/media"
+import { getLayoutRef } from "../../../helpers/show"
 
 export const exportFormats: Option[] = [
     { name: "$:export.project:$", id: "project" }, // many shows in one file
-    { name: "SHOW", id: "show" }, // (json) - can also just be copied from the Shows folder
-    { name: "TXT", id: "txt" },
+    { name: "$:formats.show:$", id: "show" }, // (json) - can also just be copied from the Shows folder
+    { name: "$:edit.text:$", id: "txt" },
     { name: "PDF", id: "pdf" },
+    { name: "$:items.image:$", id: "image" },
     // {name: "CSV", id: "csv"} // probably not needed
     // {name: "ChordPro", id: "chordpro"}
 ]
@@ -41,4 +44,26 @@ export const getShowIdsFromType = {
 export function getActiveShowId() {
     if (!get(activeShow) || (get(activeShow)!.type || "show") !== "show") return ""
     return get(activeShow)!.id || ""
+}
+
+export async function convertShowSlidesToImages(showId: string) {
+    const show = get(showsCache)[showId]
+    if (!show) return []
+
+    const layoutRef = getLayoutRef(showId)
+    const layoutId = show.settings.activeLayout
+
+    const thumbnails: string[] = []
+    const batchSize = 8
+    for (let i = 0; i < layoutRef.length; i += batchSize) {
+        const batch = layoutRef.slice(i, i + batchSize)
+        await Promise.all(
+            batch.map(async (ref, j) => {
+                const thumbnail = await getSlideThumbnail({ showId, layoutId, index: ref.layoutIndex })
+                thumbnails[i + j] = thumbnail
+            })
+        )
+    }
+
+    return thumbnails
 }

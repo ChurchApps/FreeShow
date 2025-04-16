@@ -3,13 +3,13 @@ import { uid } from "uid"
 import type { Chords, Item, Line, Show, Slide, SlideData } from "../../../types/Show"
 import { activeShow } from "../../stores"
 import { createChord } from "../edit/scripts/chords"
+import { DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { getItemChords, getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates } from "../helpers/array"
 import { history } from "../helpers/history"
-import { isEmptyOrSpecial } from "../helpers/output"
+import { isEmpty } from "../helpers/output"
 import { getGlobalGroup } from "../helpers/show"
 import { _show } from "../helpers/shows"
-import { DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 
 export function formatText(text: string, showId: string = "") {
     if (!showId) showId = get(activeShow)?.id || ""
@@ -391,8 +391,10 @@ export function getTextboxesIndexes(items: Item[]): number[] {
     items.forEach((item, i) => {
         if (!item?.lines) return
 
-        let special = isEmptyOrSpecial(item)
-        if (special) return
+        // add if special (otherwise it's removed on change)
+        // let special = isEmptyOrSpecial(item)
+        let empty = isEmpty(item)
+        if (empty) return
 
         indexes.push(i)
     })

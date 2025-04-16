@@ -1,4 +1,4 @@
-import { app, type BrowserWindow } from "electron"
+import { app, screen, type BrowserWindow } from "electron"
 import path from "path"
 import { isProd, isWindows } from ".."
 import { catchErrors } from "../IPC/responsesMain"
@@ -50,4 +50,12 @@ export function waitForBundle() {
             }
         }, CHECK_INTERVAL * 1000)
     })
+}
+
+export function isWithinDisplayBounds(pos: { x: number; y: number }) {
+    const displays = screen.getAllDisplays()
+    return displays.reduce((result, display) => {
+        const area = display.workArea
+        return result || (pos.x >= area.x && pos.y >= area.y && pos.x < area.x + area.width && pos.y < area.y + area.height)
+    }, false)
 }

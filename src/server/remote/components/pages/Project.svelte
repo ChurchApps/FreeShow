@@ -27,7 +27,7 @@
                     <div class="section">
                         <p style={show.name ? "" : "opacity: 0.5;"}>{show.name || translate("main.unnamed", $dictionary)}</p>
                     </div>
-                {:else if ["image", "video", "overlay", "audio"].includes(show.type)}
+                {:else if ["image", "video", "overlay", "audio", "pdf"].includes(show.type)}
                     <Button
                         on:click={() => {
                             _set("active", show)
@@ -44,7 +44,7 @@
                         </span>
                     </Button>
                 {:else if (show.type || "show") !== "show"}
-                    <!-- WIP player / PDF / PPT -->
+                    <!-- WIP player / PPT -->
                     <div class="item" style="display: flex;align-items: center;padding: 0.2em 0.8em;">
                         <Icon id={show.type} box={show.type === "ppt" ? 50 : 24} right />
                         <p style="font-size: 0.7em;opacity: 0.5;margin: 3px 5px;text-transform: uppercase;font-size: 0.8em;">{show.type}</p>

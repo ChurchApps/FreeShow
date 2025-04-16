@@ -136,6 +136,7 @@ export function storeSubscriber() {
         // let it update properly
         setTimeout(() => {
             sendData(REMOTE, { channel: "OUT" })
+            sendData(REMOTE, { channel: "OUT_DATA" })
         })
 
         // STAGE

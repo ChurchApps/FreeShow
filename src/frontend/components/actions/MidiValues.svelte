@@ -1,11 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
+    import { Main } from "../../../types/IPC/Main"
+    import { ToMain } from "../../../types/IPC/ToMain"
+    import { destroyMain, receiveToMain, requestMain } from "../../IPC/main"
     import { popupData } from "../../stores"
     import T from "../helpers/T.svelte"
     import Checkbox from "../inputs/Checkbox.svelte"
-
-    import { Main } from "../../../types/IPC/Main"
-    import { destroyMain, receiveMain, requestMain } from "../../IPC/main"
     import CombinedInput from "../inputs/CombinedInput.svelte"
     import Dropdown from "../inputs/Dropdown.svelte"
     import NumberInput from "../inputs/NumberInput.svelte"
@@ -14,7 +14,7 @@
 
     export let value: API_midi
     export let firstActionId: string = ""
-    export let type: "input" | "output" = "input"
+    export let type: "input" | "output" | "emitter" = "input"
     export let playSlide: boolean = false
     export let simple: boolean = false
     $: midi = value
@@ -70,7 +70,7 @@
         setTimeout(() => setValues("note", 0), 50)
     }
 
-    let listenerId = receiveMain(Main.RECEIVE_MIDI, (data) => {
+    let listenerId = receiveToMain(ToMain.RECEIVE_MIDI2, (data) => {
         if (!autoValues || !data) return
         if (data.id === $popupData.id && data.type === midi.type) {
             midi.values = data.values
@@ -96,21 +96,25 @@
         change()
     }
 
-    $: noActionOrDefaultValues = !hasActions || (midi.defaultValues && defaultMidiActionChannels[firstActionId])
+    $: noActionOrDefaultValues = type !== "emitter" && (!hasActions || (midi.defaultValues && defaultMidiActionChannels[firstActionId]))
+
+    $: console.log(value)
 </script>
 
-<CombinedInput>
-    {#if type === "input"}
-        <p><T id="midi.input" /></p>
-        <Dropdown value={midi.input || "—"} options={inputs} on:click={(e) => setMidi("input", e.detail.name)} />
-    {:else}
-        <p><T id="midi.output" /></p>
-        <Dropdown value={midi.output || "—"} options={outputs} on:click={(e) => setMidi("output", e.detail.name)} />
-    {/if}
-</CombinedInput>
+{#if type !== "emitter"}
+    <CombinedInput>
+        {#if type === "input"}
+            <p><T id="midi.input" /></p>
+            <Dropdown value={midi.input || "—"} options={inputs} on:click={(e) => setMidi("input", e.detail.name)} />
+        {:else}
+            <p><T id="midi.output" /></p>
+            <Dropdown value={midi.output || "—"} options={outputs} on:click={(e) => setMidi("output", e.detail.name)} />
+        {/if}
+    </CombinedInput>
 
-{#if type !== "output" && !simple}
-    <br />
+    {#if type !== "output" && !simple}
+        <br />
+    {/if}
 {/if}
 
 {#if hasActions}
@@ -124,17 +128,19 @@
 
 {#if !noActionOrDefaultValues}
     <CombinedInput>
-        <p><T id="midi.auto_values" /></p>
-        <div class="alignRight">
+        <p style="flex: 1;"><T id="midi.auto_values" /></p>
+        <div style="flex: 0;padding: 0 10px;" class="alignRight">
             <Checkbox checked={autoValues} on:change={toggleAutoValues} />
         </div>
     </CombinedInput>
 {/if}
 
-<CombinedInput>
-    <p><T id="midi.type" /></p>
-    <Dropdown value={midi.type || "noteon"} options={types} on:click={(e) => setMidi("type", e.detail.name)} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
-</CombinedInput>
+{#if type !== "emitter"}
+    <CombinedInput>
+        <p><T id="midi.type" /></p>
+        <Dropdown value={midi.type || "noteon"} options={types} on:click={(e) => setMidi("type", e.detail.name)} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
+    </CombinedInput>
+{/if}
 
 <CombinedInput>
     <p>
@@ -143,7 +149,7 @@
     </p>
     <NumberInput value={midi.values?.note ?? 0} max={127} on:change={(e) => setValues("note", Number(e.detail))} disabled={noActionOrDefaultValues && type !== "output" && !playSlide} />
 </CombinedInput>
-{#if (!noActionOrDefaultValues && firstActionId?.includes("index_")) || type === "output" || playSlide}
+{#if (!noActionOrDefaultValues && firstActionId?.includes("index_")) || type === "output" || type === "emitter" || playSlide}
     {#if type === "input"}
         <CombinedInput>
             <p style="font-size: 0.7em;opacity: 0.8;">

@@ -65,12 +65,13 @@
             <div class="grid">
                 {#each fullFilteredOverlays as overlay}
                     <Card
-                        class="context #overlay_card"
+                        class="context #overlay_card{overlay.isDefault ? '_default' : ''}"
                         preview={$activeShow?.type === "overlay" && $activeShow?.id === overlay.id}
                         outlineColor={findMatchingOut(overlay.id, $outputs)}
                         active={findMatchingOut(overlay.id, $outputs) !== null}
                         label={overlay.name}
                         renameId="overlay_{overlay.id}"
+                        icon={overlay.isDefault ? "protected" : null}
                         color={overlay.color}
                         {resolution}
                         showPlayOnHover

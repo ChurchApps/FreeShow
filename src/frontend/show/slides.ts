@@ -6,9 +6,9 @@ import { changeValues, clone, removeDuplicates, sortObjectNumbers } from "../com
 import { history } from "../components/helpers/history"
 import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/layout"
 import { addToPos } from "../components/helpers/mover"
+import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { activeEdit, activeShow, refreshEditSlide } from "../stores"
-import { getLayoutRef } from "../components/helpers/show"
 
 export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; menu: { id: string } }) {
     let ref = getLayoutRef()
@@ -113,7 +113,7 @@ function combineGroups(groups: { globalGroup: string; slides: LayoutRef[] }[], s
         let lastSlide = group.slides[group.slides.length - 1]
 
         let bothParents = firstSlide.type === "parent" && previousSlide?.type === "parent"
-        let bothSelected = selectedSlides.includes(firstSlide.layoutIndex) && selectedSlides.includes(previousSlide?.layoutIndex || -1)
+        let bothSelected = selectedSlides.includes(firstSlide.layoutIndex) && selectedSlides.includes(previousSlide?.layoutIndex ?? -1)
         if (previousSlide && firstSlide.layoutIndex === previousSlide.layoutIndex + 1 && (bothParents || bothSelected)) newGroups[newGroups.length - 1].slides.push(...group.slides)
         else newGroups.push(group)
 

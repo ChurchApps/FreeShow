@@ -1,9 +1,10 @@
 import { get, Unsubscriber } from "svelte/store"
 import type { Recording } from "../../../types/Show"
-import { activeShow, activeSlideRecording, outLocked, outputs, playingAudio } from "../../stores"
+import { activeShow, activeSlideRecording, outLocked, outputs, playingAudio, videosData, videosTime } from "../../stores"
 import { getActiveOutputs, setOutput } from "./output"
 import { updateOut } from "./showActions"
 import { _show } from "./shows"
+import { updateVideoData, updateVideoTime } from "./video"
 
 ///// SLIDE RECORDING /////
 
@@ -16,26 +17,36 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
     let layoutRef = _show(showId).layouts([layoutId]).ref()[0]
 
     let layoutData = layoutRef[recording.sequence?.[0]?.slideRef?.index]?.data || {}
-    let audio = layoutData.audio?.[0] || ""
-    if (audio || audioListener) {
-        let showMedia = _show(showId).get("media")
-        audio = showMedia[audio]?.path
-
+    let showMedia = _show(showId).get("media")
+    const audioPath = showMedia[layoutData.audio?.[0] || ""]?.path || ""
+    const backgroundPath = layoutData.background && showMedia[layoutData.background]?.muted === false ? showMedia[layoutData.background]?.path : ""
+    if (audioPath || audioListener) {
         // WIP pause / change audio duration!!
 
         // reset playing audio
         if (startIndex === 0) {
-            let playing = get(playingAudio)[audio]?.audio
+            let playing = get(playingAudio)[audioPath]?.audio
             if (playing) {
                 playingAudio.update((a) => {
-                    a[audio].audio.currentTime = 0
-                    a[audio].paused = false
+                    a[audioPath].audio.currentTime = 0
+                    a[audioPath].paused = false
                     return a
                 })
             }
         }
 
-        startAudioListener(audio)
+        startAudioListener(audioPath)
+    } else if (backgroundPath || backgroundListener) {
+        // reset playing video
+        if (startIndex === 0) {
+            const data = get(videosData)[backgroundPath]
+            if (data) {
+                updateVideoTime(0)
+                updateVideoData({ ...data, paused: false })
+            }
+        }
+
+        startBackgroundListener()
     }
 
     let rootTime = Date.now()
@@ -46,7 +57,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
     function playSequence(index: number) {
         let sequence = recording.sequence[index]
 
-        if (audio && get(playingAudio)[audio]?.audio?.paused) return
+        if (audioPath && get(playingAudio)[audioPath]?.audio?.paused) return
 
         let outputId = getActiveOutputs()[0]
         let outSlide = get(outputs)[outputId]?.out?.slide
@@ -71,7 +82,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
         let newTime = totalTime - (Date.now() - rootTime)
         timeToNext = Math.max(0, newTime)
 
-        activeSlideRecording.set({ ref: { showId, layoutId }, index, timeToNext, audio, sequence: recording.sequence, timeout: setTimeout(() => playSequence(nextIndex), timeToNext) })
+        activeSlideRecording.set({ ref: { showId, layoutId }, index, timeToNext, audioPath, backgroundPath, sequence: recording.sequence, timeout: setTimeout(() => playSequence(nextIndex), timeToNext) })
     }
 }
 
@@ -83,30 +94,48 @@ function startAudioListener(path: string) {
 
     audioListener = playingAudio.subscribe((a) => {
         let audio = a[audioPathListener]?.audio
+        // let audio = a[get(activeSlideRecording)?.audioPath]?.audio
         if (!audio || !get(activeSlideRecording)) return
 
-        let currentTime = audio.currentTime * 1000
-
-        // find closest sequence
-        let addedTime: number = 0
-        let sequenceIndex = get(activeSlideRecording).sequence.findIndex((sequence) => {
-            addedTime += sequence.time
-            return addedTime > currentTime
-        })
-        if (sequenceIndex < 0) return
-
-        let sequenceStartTime = addedTime - get(activeSlideRecording).sequence[sequenceIndex].time
-        let difference = currentTime - sequenceStartTime
-
-        let margin = 500
-        if (difference < margin) return
-
-        let ref = get(activeSlideRecording).ref
-        let recording: Recording = _show(ref.showId).layouts([ref.layoutId]).get("recording")[0]?.[0]
-
-        // change recording time if audio time changes!
-        playRecording(recording, ref, sequenceIndex, difference)
+        checkTimeDifference(audio.currentTime * 1000)
     })
+}
+
+let backgroundListener: Unsubscriber | null = null
+function startBackgroundListener() {
+    if (backgroundListener) return
+
+    // this might not get correct output if background is not playing in first output..
+    const activeOutputId = getActiveOutputs(get(outputs), true, true, true)[0]
+
+    backgroundListener = videosTime.subscribe((a) => {
+        let time = a[activeOutputId]
+        if (!time || !get(activeSlideRecording)) return
+
+        checkTimeDifference(time * 1000)
+    })
+}
+
+function checkTimeDifference(currentTime: number) {
+    // find closest sequence
+    let addedTime: number = 0
+    let sequenceIndex = get(activeSlideRecording).sequence.findIndex((sequence) => {
+        addedTime += sequence.time
+        return addedTime > currentTime
+    })
+    if (sequenceIndex < 0) return
+
+    let sequenceStartTime = addedTime - get(activeSlideRecording).sequence[sequenceIndex].time
+    let difference = currentTime - sequenceStartTime
+
+    let margin = 500
+    if (difference < margin) return
+
+    let ref = get(activeSlideRecording).ref
+    let recording: Recording = _show(ref.showId).layouts([ref.layoutId]).get("recording")[0]?.[0]
+
+    // change recording time if audio time changes!
+    playRecording(recording, ref, sequenceIndex, difference)
 }
 
 export function stopSlideRecording() {
@@ -136,8 +165,11 @@ export function getClosestRecordingSlide(ref, slideIndex: number) {
     playRecording(recording, activeRec.ref, index)
 
     // change time of playing audio
-    let audioPath = get(activeSlideRecording).audio
+    let audioPath = get(activeSlideRecording).audioPath
     if (audioPath) playAudioTrack(audioPath, index, recording)
+    // change time of playing background
+    let backgroundPath = get(activeSlideRecording).backgroundPath
+    if (backgroundPath) playVideo(backgroundPath, index, recording)
 
     // e.g: index=2, [0, 1, 2, 3, 4, 5, 6] = [2, 1, 3, 0, 4, 5, 6]
     function getClosestIndexes(index: number, length: number) {
@@ -170,8 +202,11 @@ export function updateSlideRecording(state: "next" | "previous") {
     playRecording(recording, ref, Math.min(recording.sequence.length - 1, Math.max(0, index)))
 
     // change time of playing audio
-    let audioPath = get(activeSlideRecording).audio
+    let audioPath = get(activeSlideRecording).audioPath
     if (audioPath) playAudioTrack(audioPath, index, recording)
+    // change time of playing background
+    let backgroundPath = get(activeSlideRecording).backgroundPath
+    if (backgroundPath) playVideo(backgroundPath, index, recording)
 }
 
 function playAudioTrack(path: string, index: number, recording: Recording) {
@@ -186,6 +221,17 @@ function playAudioTrack(path: string, index: number, recording: Recording) {
         a[path].audio.currentTime = newTime
         return a
     })
+}
+
+function playVideo(path: string, index: number, recording: Recording) {
+    const data = get(videosData)[path] || {}
+    if (!data) return
+
+    let recordingTime: number = recording.sequence.slice(0, index).reduce((time, value) => (time += value.time), 0)
+    let newTime = recordingTime / 1000
+    if (newTime > data.duration) return
+
+    updateVideoTime(newTime)
 }
 
 export function playSlideRecording() {

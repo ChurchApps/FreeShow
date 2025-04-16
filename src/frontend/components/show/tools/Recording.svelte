@@ -210,7 +210,12 @@
         if (!ref || !layout.length) return
 
         let layoutData = layout[ref.index]?.data || {}
-        return layoutData.audio?.[0]
+        const audioId = layoutData.audio?.[0]
+        if (audioId) return true
+
+        let mediaData = show.media
+        const backgroundId = layoutData.background
+        return backgroundId && mediaData[backgroundId]?.muted === false
     }
 
     function getTime(index: number) {

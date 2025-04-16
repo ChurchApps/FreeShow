@@ -15,19 +15,29 @@
     $: value = value ? value.replaceAll("'", "") : ""
 
     // web fonts
-    const defaultFonts = ["CMGSans", "Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Garamond", "Courier New", "Brush Script MT", "Helvetica"]
-    // "Fantasy" (does not work with '')
+    const defaultFonts = ["CMGSans", "Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Garamond", "Courier New", "Brush Script MT", "Helvetica", "Fantasy", "monospace"]
+    // does not work with ''
+    const noQuotes = ["Fantasy", "monospace"]
+
+    function getFontName(value: string) {
+        if (!value) return ""
+        if (noQuotes.includes(value)) return value
+        return `'${value}'`
+    }
 
     let fonts: Family[] = []
 
     const dispatch = createEventDispatcher()
     function setFont(family: string) {
-        dispatch("click", family ? "'" + family + "'" : "")
+        dispatch("click", getFontName(family))
     }
 
     onMount(() => {
         // { family: "CMGSans", default: 0, fonts: [{ name: "CMGSans", path: "", style: "", css: "font: 1em 'CMGSans'" }] }
-        fonts = defaultFonts.map((name) => ({ family: name, default: 0, fonts: [{ name, path: "", style: "", css: `font: 1em '${name}'` }] }))
+        fonts = defaultFonts.map((name) => {
+            const css = `font: 1em ${getFontName(name)}`
+            return { family: name, default: 0, fonts: [{ name, path: "", style: "", css }] }
+        })
 
         if ($systemFonts.length) addFonts($systemFonts)
         else loadSystemFonts()

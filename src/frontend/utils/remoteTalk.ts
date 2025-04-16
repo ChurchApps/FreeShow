@@ -135,6 +135,13 @@ export const receiveREMOTE: any = {
 
         return msg
     },
+    OUT_DATA: (msg: any) => {
+        let currentOutput = get(outputs)[getActiveOutputs()[0]]
+        let out = currentOutput?.out || {}
+        msg.data = out
+
+        return msg
+    },
     PROJECTS: (msg: any) => {
         msg.data = removeDeleted(keysToID(clone(get(projects))))
 

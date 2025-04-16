@@ -114,6 +114,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     item_actions: { label: "actions.item_actions", icon: "actions", items: ["LOAD_item_actions"] },
     transition: { label: "popup.transition", icon: "transition" },
     dynamic_values: { label: "actions.dynamic_values", icon: "star" },
+    conditions: { label: "actions.conditions", icon: "light" },
     item_bind_to: { label: "actions.bind_to", icon: "bind", items: ["LOAD_bind_item"] },
     format: { label: "actions.format", icon: "format", items: ["find_replace", "SEPERATOR", "cut_in_half", "merge", "SEPERATOR", "uppercase", "lowercase", "capitalize", "trim"] },
     rearrange: { label: "actions.rearrange", icon: "rearrange", items: ["to_front", "forward", "backward", "to_back"] },
@@ -213,8 +214,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     media_card: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "play_no_audio", "play_no_filters", "SEPERATOR", "favourite", "SEPERATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPERATOR", "system_open"],
     // "addToFirstSlide",
     overlay_card: ["edit", "preview", "SEPERATOR", "display_duration", "SEPERATOR", "lock_to_output", "place_under_slide", "SEPERATOR", "rename", "recolor", "duplicate", "delete"],
+    overlay_card_default: ["preview", "SEPERATOR", "duplicate", "delete"],
     // "addToShow",
     template_card: ["edit", "SEPERATOR", "template_actions", "SEPERATOR", "rename", "recolor", "duplicate", "delete", "SEPERATOR", "export"],
+    template_card_default: ["duplicate", "delete"],
     effect_card: ["edit"],
     player_button: ["addToProject", "SEPERATOR", "preview", "SEPERATOR", "rename", "delete"],
     audio_button: ["addToProject", "SEPERATOR", "edit", "preview", "SEPERATOR", "effects_library_add", "favourite", "SEPERATOR", "system_open"],
@@ -282,7 +285,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_text_item: ["dynamic_values", "SEPERATOR", "delete"],
 
     // EDIT
-    edit_box: ["dynamic_values", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPERATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)
+    edit_box: ["dynamic_values", "conditions", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPERATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)
     items_list_item: ["to_front", "forward", "backward", "to_back"],
 
     // CALENDAR

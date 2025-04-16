@@ -19,19 +19,6 @@ jobs:
               with:
                   node-version: 20
 
-            - name: Install Windows Signing Dependencies
-              run: |
-                  pwsh -Command "& {
-                    Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted;
-                    Install-PackageProvider -Name NuGet -Force -Scope CurrentUser;
-                    Register-PackageSource -Name nuget.org -ProviderName NuGet -Location https://www.nuget.org/api/v2/ -Trusted;
-                    Install-Module -Name PowerShellGet -Force -Scope CurrentUser -AllowClobber;
-                    Install-Module -Name Microsoft.PowerShell.Security -Force -Scope CurrentUser -AllowClobber;
-                    Install-Package Microsoft.Windows.SDK.BuildTools -ProviderName NuGet -Scope CurrentUser -Force;
-                    Install-Package Microsoft.Trusted.Signing.Client -ProviderName NuGet -Scope CurrentUser -Force;
-                    Install-Package Microsoft.SignTool -ProviderName NuGet -Scope CurrentUser -Force;
-                  }"
-
             - name: Install dependencies
               # npm ci is better, but requires package-lock.json file
               run: npm install

@@ -146,7 +146,7 @@ export interface MainSendPayloads {
     [Main.FULL_SHOWS_LIST]: { path: string }
     [Main.OUTPUT]: "true" | "false"
     [Main.GET_THUMBNAIL]: { input: string; size: number }
-    [Main.SAVE_IMAGE]: { path: string; base64?: string }
+    [Main.SAVE_IMAGE]: { path: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
@@ -235,7 +235,6 @@ export interface MainReturnPayloads {
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
     [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | undefined>
     [Main.SLIDESHOW_GET_APPS]: string[]
-    [Main.RECEIVE_MIDI]: Promise<{ id: string; values: any; type: "noteon" | "noteoff" } | null>
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
     [Main.GET_MIDI_INPUTS]: { name: string }[]
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string }>

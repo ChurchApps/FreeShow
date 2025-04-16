@@ -42,6 +42,7 @@
         time = joinTime(secondsToTime((videoData.duration || 0) * percentage))
     }
 
+    // WIP duplicate of video.ts
     let latestValue: string = "0"
     function sliderInput(e: any) {
         latestValue = e?.target?.value || e

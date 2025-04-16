@@ -58,6 +58,7 @@ import Unsaved from "../components/main/popups/Unsaved.svelte"
 import UserDataOverwrite from "../components/main/popups/UserDataOverwrite.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
+import Conditions from "../components/main/popups/Conditions.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -97,6 +98,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     set_time: SetTime,
     assign_shortcut: SlideShortcut,
     dynamic_values: DynamicValues,
+    conditions: Conditions,
     animate: Animate,
     translate: Translate,
     next_timer: NextTimer,

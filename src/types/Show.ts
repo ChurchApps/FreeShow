@@ -122,7 +122,7 @@ export interface Item {
     tracker?: any // slide progress tracker item data
     bindings?: string[] // bind item to stage or an output
     actions?: any // showTime | hideTime
-    chords?: { enabled?: boolean; color?: string; size?: number }
+    chords?: { enabled?: boolean; color?: string; size?: number; offsetY?: number }
     scrolling?: Scrolling
     button?: { press?: string; release?: string } // click actions
     visualizer?: any
@@ -131,6 +131,7 @@ export interface Item {
     fromTemplate?: boolean // these will be removed if another template is applied
     // media: fit, startAt, endAt
     // tag?: string; // p, div????
+    conditions?: { [key: string]: Condition }
 }
 
 export interface LayoutRef {
@@ -197,6 +198,11 @@ export interface DynamicEvent {
 export interface Scrolling {
     type: "none" | "top_bottom" | "bottom_top" | "left_right" | "right_left"
     speed?: number
+}
+
+export interface Condition {
+    scenario: string
+    values: { [key: string]: string }[]
 }
 
 export interface Mirror {
@@ -378,7 +384,7 @@ export interface MidiIn extends Midi {
 export type EmitterTypes = "osc" | "http" | "midi"
 export interface EmitterTemplateValue {
     name: string
-    value: string
+    value: string | { note?: number; velocity?: number; channel?: number }
 }
 export interface EmitterTemplate {
     name: string
@@ -400,6 +406,7 @@ export interface Overlays {
     [key: ID]: Overlay
 }
 export interface Overlay {
+    isDefault?: boolean
     name: string
     color: null | string
     category: null | string
@@ -413,6 +420,7 @@ export interface Templates {
     [key: ID]: Template
 }
 export interface Template {
+    isDefault?: boolean
     name: string
     color: null | string
     category: null | string

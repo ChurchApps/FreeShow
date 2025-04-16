@@ -569,14 +569,16 @@ const pasteActions = {
     overlay: (data: any) => {
         data?.forEach((slide) => {
             let newSlide = clone(slide)
-            newSlide.name += " 2"
+            delete newSlide.isDefault
+            newSlide.name += " (2)"
             history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "overlay" } })
         })
     },
     template: (data: any) => {
         data?.forEach((slide) => {
             let newSlide = clone(slide)
-            newSlide.name += " 2"
+            delete newSlide.isDefault
+            newSlide.name += " (2)"
             history({ id: "UPDATE", newData: { data: newSlide }, location: { page: "drawer", id: "template" } })
         })
     },

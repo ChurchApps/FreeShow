@@ -27,24 +27,25 @@
         mediaItemPath = await loadThumbnail(item.src, mediaSize.slideSize)
     }
 
-    $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};filter: ${item?.filter};transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
-    $: mediaStyleBlurString = `position: absolute;filter: ${item?.filter || ""} blur(6px) opacity(0.3);object-fit: cover;width: 100%;height: 100%;transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});`
+    $: mediaStyleString = `filter: ${item?.filter};object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};`
+    $: mediaStyleBlurString = `position: absolute;filter: ${item?.filter || ""} blur(6px) opacity(0.3);object-fit: cover;`
+    $: mediaStyleCombinedString = `width: 100%;height: 100%;transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});${edit ? "pointer-events: none;" : ""}`
 </script>
 
 {#if mediaItemPath}
     {#if ($currentWindow || preview) && getMediaType(getExtension(mediaItemPath)) === "video"}
         {#if item.fit === "blur"}
-            <video src={encodeFilePath(mediaItemPath)} style={mediaStyleBlurString} muted autoplay loop />
+            <video src={encodeFilePath(mediaItemPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" muted autoplay loop />
         {/if}
-        <video src={encodeFilePath(mediaItemPath)} style={mediaStyleString} muted={mirror || item.muted} volume={AudioPlayer.getVolume(null, $volume)} autoplay loop>
+        <video src={encodeFilePath(mediaItemPath)} style="{mediaStyleString}{mediaStyleCombinedString}" muted={mirror || item.muted} volume={AudioPlayer.getVolume(null, $volume)} autoplay loop>
             <track kind="captions" />
         </video>
     {:else}
         <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
         <!-- TODO: use custom transition... -->
         {#if item.fit === "blur"}
-            <Image style={mediaStyleBlurString} src={mediaItemPath} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+            <Image style="{mediaStyleBlurString}{mediaStyleCombinedString}" src={mediaItemPath} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
         {/if}
-        <Image style={mediaStyleString} src={mediaItemPath} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+        <Image style="{mediaStyleString}{mediaStyleCombinedString}" src={mediaItemPath} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
     {/if}
 {/if}
