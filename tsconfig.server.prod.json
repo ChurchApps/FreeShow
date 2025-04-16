@@ -1,0 +1,1 @@
+{"extends":"./src/server/tsconfig.json","compilerOptions":{"sourceMap":false}}

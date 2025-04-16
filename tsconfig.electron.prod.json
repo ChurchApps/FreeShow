@@ -1,0 +1,1 @@
+{"extends":"./src/electron/tsconfig.json","compilerOptions":{"sourceMap":false}}
