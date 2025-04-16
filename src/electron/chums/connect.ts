@@ -118,7 +118,7 @@ function chumsAuthenticate(scope: ChumsScopes): Promise<ChumsAuthData> {
       })
     })
 
-    const URL = `${CHUMS_API_URL}/oauth?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${scope}`
+    const URL = `${CHUMS_API_URL}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`)
     openURL(URL)
   })
 }
