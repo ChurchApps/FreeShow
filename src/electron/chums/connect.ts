@@ -11,6 +11,7 @@ const app = express()
 const CHUMS_PORT = 5502
 
 export const MEMBERSHIP_API_URL = "https://membershipapi.staging.churchapps.org"
+export const DOING_API_URL = "https://doingapi.staging.churchapps.org"
 export const CHUMS_API_URL = "http://localhost:3101"
 const clientId = getKey("chums_id")
 const clientSecret = getKey("chums_secret")

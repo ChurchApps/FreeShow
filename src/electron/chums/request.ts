@@ -1,12 +1,12 @@
-import path from "path"
+//import path from "path"
 import { uid } from "uid"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Slide, SlideData } from "../../types/Show"
-import { downloadMedia } from "../data/downloadMedia"
+//import { downloadMedia } from "../data/downloadMedia"
 import { sendToMain } from "../IPC/main"
-import { dataFolderNames, getDataFolder } from "../utils/files"
+//import { dataFolderNames, getDataFolder } from "../utils/files"
 import { httpsRequest } from "../utils/requests"
-import { MEMBERSHIP_API_URL, chumsConnect, type ChumsScopes } from "./connect"
+import { DOING_API_URL, chumsConnect, type ChumsScopes } from "./connect"
 
 
 type ChumsRequestData = {
@@ -15,71 +15,195 @@ type ChumsRequestData = {
   params?: Record<string, string> // Add params type
 }
 
-export async function chumsRequest(data: ChumsRequestData, attempt = 0): Promise<any> {
-  const MAX_RETRIES = 3
+export async function doingApiRequest(data: ChumsRequestData): Promise<any> {
   const CHUMS_ACCESS = await chumsConnect(data.scope)
   if (!CHUMS_ACCESS) {
     sendToMain(ToMain.ALERT, "Not authorized at Chums (try logging out and in again)!")
     return null
   }
 
-  // Build the path with query parameters if they exist
-  let path = `/${data.scope || "plans"}/${data.endpoint}`
-  if (data.params) {
-    const queryParams = new URLSearchParams(data.params).toString()
-    path = `${path}?${queryParams}`
-  }
-
   const headers = { Authorization: `Bearer ${CHUMS_ACCESS.access_token}` }
-
   return new Promise((resolve) => {
-    httpsRequest(MEMBERSHIP_API_URL, path, "GET", headers, {}, async (err, result) => {
+    httpsRequest(DOING_API_URL, data.endpoint, "GET", headers, {}, async (err, result) => {
       if (err) {
-        // handle rate limit
-        // https://developer.planning.center/docs/#/overview/rate-limiting
-        if (err.statusCode === 429) {
-          const retryAfter = parseInt(err?.headers?.["Retry-After"]) || 2
-          rateLimit(retryAfter)
-          return
-        }
-
-        console.log(path, err)
         let message = err.message?.includes("401") ? "Make sure you have created some 'plans' in your account!" : err.message
         sendToMain(ToMain.ALERT, "Could not get data! " + message)
         return resolve(null)
       }
-
       let data = result.data
-
-      // convert to array
       if (!Array.isArray(data)) data = [data]
-
-      // console.log("RESULT", path, data) // DEBUG
       resolve(data)
     })
-
-    function rateLimit(retryAfter: number) {
-      if (attempt >= MAX_RETRIES) {
-        sendToMain(ToMain.ALERT, "Chums rate limit reached! Please try again later")
-        resolve(null)
-        return
-      }
-
-      console.warn(`Rate limited. Retrying after ${retryAfter} seconds... (attempt ${attempt + 1})`)
-      sendToMain(ToMain.ALERT, `Chums rate limit reached! Trying again in ${retryAfter} seconds`)
-
-      setTimeout(async () => {
-        const retryResult = await chumsRequest(data, attempt + 1)
-        resolve(retryResult)
-      }, retryAfter * 1000)
-    }
   })
 }
 
 // LOAD PLANS
 
-const ONE_WEEK_MS = 604800000
+//const ONE_WEEK_MS = 604800000
+
+//let projects: any[] = []
+let shows: Show[] = []
+//let downloadableMedia: any[] = []
+
 export async function chumsLoadServices(dataPath: string) {
+  console.log("datapath", dataPath)
+
+  sendToMain(ToMain.TOAST, "Getting schedules from Chums")
+
+
+  let plansEndpoint = `/plans/presentation`
+  const SERVICE_PLANS = await doingApiRequest({
+    scope: "plans",
+    endpoint: plansEndpoint
+  })
+
+  if (!SERVICE_PLANS[0]?.id) return
+
+  await Promise.all(
+    SERVICE_PLANS.map(async (plan: any) => {
+      loadPlanItems(plan);
+    })
+  )
+}
+
+async function loadPlanItems(plan: any) {
+
+  //Amazing Grace
+  let projectItems: any[] = []
+  //projectItems.push({ type: "section", id: uid(5), name: item.attributes.title || "", scheduleLength: item.attributes.length, notes: item.attributes.description || "" })
+
+  //const show = getShow(SONG_DATA, SONG, SECTIONS)
+  //let showId = `chumssong_${SONG_DATA.id}`
+  //shows.push({ id: showId, ...show })
+  //projectItems.push({ type: "show", id: showId, scheduleLength: item.attributes.length })
+
+
+  const planItems: any = await doingApiRequest({
+    scope: "plans",
+    endpoint: "/planItems/presenter/" + plan.id
+  });
+
+  if (!planItems?.length) return
+  for (const pi of planItems) {
+
+    //Create the section for plan item headers
+    projectItems.push({ type: "section", id: uid(5), name: pi.label || "", scheduleLength: pi.seconds, notes: pi.description || "" })
+    for (const child of pi.children) {
+
+      if (child.itemType === "arrangmentKey") {
+        const { showId, show } = await loadArrangementKey(child.id);
+
+        shows.push({ id: showId, ...show })
+      }
+    }
+  }
+
+
+  //Easter Sunday
+  let projectData = {
+    id: plan.id,
+    name: plan.title || getDateTitle(plan.attributes.sort_date),
+    scheduledTo: new Date(plan.attributes.sort_date).getTime(),
+    created: new Date(plan.attributes.created_at).getTime(),
+    folderId: "",
+    folderName: "",
+    items: projectItems,
+  }
+
+}
+
+const loadArrangementKey = async (arrangementId: string) => {
+
+  const data: any = await doingApiRequest({
+    scope: "plans",
+    endpoint: "/arrangmentKeys/presenter/" + arrangementId
+  })
+
+  //if (!data?.arrangementKey) return
+
+  //const SONG = songArrangement.attributes
+
+  // let lyrics = SONG.lyrics || ""
+  //let sequence: string[] = plan.custom_arrangement_sequence || SONG.sequence || []
+  //let SECTIONS: any[] = (await chumsRequest({ scope: "plans", endpoint: `${arrangementEndpoint}/${songArrangement.id}/sections` }))[0]?.attributes.sections || []
+  //if (!SECTIONS.length) SECTIONS = sequence.map((id) => ({ label: id, lyrics: "" }))
+  const sections: any[] = []
+
+  return getShow(data.arrangementKey, data.arrangement, data.song, data.songDetails, sections)
+}
+
+
+const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
+function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS: any, SECTIONS: any[]) {
+  const slides: { [key: string]: Slide } = {}
+  let layoutSlides: SlideData[] = []
+  SECTIONS.forEach((section) => {
+    let slideId = uid()
+
+    let items = [
+      {
+        style: itemStyle,
+        lines: section.lyrics.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] })),
+      },
+    ]
+
+    slides[slideId] = {
+      group: section.label,
+      globalGroup: section.label.toLowerCase(),
+      color: null,
+      settings: {},
+      notes: "",
+      items,
+    }
+    layoutSlides.push({ id: slideId })
+  })
+
+  const title = SONG_DETAILS.title + " (" + ARRANGEMENT.name + " - " + ARRANGEMENT_KEY.keySignature + ")" || ""
+
+  const metadata = {
+    title,
+    author: SONG_DETAILS.artist || "",
+    publisher: "",
+    copyright: "",
+    CCLI: "",
+    key: SONG_DETAILS.keySignature || "",
+    BPM: SONG_DETAILS.bpm || "",
+  }
+
+  let layoutId = uid()
+
+  let show: Show = {
+    name: title || "",
+    category: "planning_center",
+    timestamps: { created: new Date(SONG.dateAdded).getTime() || Date.now(), modified: new Date(SONG.dateAdded).getTime() || null, used: null },
+    meta: metadata,
+    settings: {
+      activeLayout: layoutId,
+      template: null,
+    },
+    layouts: {
+      [layoutId]: {
+        name: "Default",
+        notes: SONG.notes || "",
+        slides: layoutSlides,
+      },
+    },
+    slides,
+    media: {},
+  }
+
+  let showId = `chumssong_${ARRANGEMENT_KEY.id}`
+  return { showId, show }
+}
+
+function getDateTitle(dateString: string) {
+  const date = new Date(dateString)
+  return date.toISOString().slice(0, 10)
+}
+
+
+/*
+export async function chumsLoadServicesSample(dataPath: string) {
   let typesEndpoint = "service_types"
   const SERVICE_TYPES = await chumsRequest({
     scope: "plans",
@@ -193,12 +317,9 @@ export async function chumsLoadServices(dataPath: string) {
   downloadMedia(downloadableMedia)
 
   sendToMain(ToMain.CHUMS_PROJECTS, { shows, projects })
-}
+}*/
+/*
 
-function getDateTitle(dateString: string) {
-  const date = new Date(dateString)
-  return date.toISOString().slice(0, 10)
-}
 
 const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
 function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
@@ -280,3 +401,4 @@ async function getMediaStreamUrl(endpoint: string): Promise<string> {
     })
   })
 }
+*/
