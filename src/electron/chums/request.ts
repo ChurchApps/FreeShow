@@ -6,9 +6,8 @@ import { downloadMedia } from "../data/downloadMedia"
 import { sendToMain } from "../IPC/main"
 import { dataFolderNames, getDataFolder } from "../utils/files"
 import { httpsRequest } from "../utils/requests"
-import { CHUMS_API_URL, chumsConnect, type ChumsScopes } from "./connect"
+import { MEMBERSHIP_API_URL, chumsConnect, type ChumsScopes } from "./connect"
 
-const CHUMS_API_version = 1
 
 type ChumsRequestData = {
   scope: ChumsScopes
@@ -20,12 +19,12 @@ export async function chumsRequest(data: ChumsRequestData, attempt = 0): Promise
   const MAX_RETRIES = 3
   const CHUMS_ACCESS = await chumsConnect(data.scope)
   if (!CHUMS_ACCESS) {
-    sendToMain(ToMain.ALERT, "Not authorized at Planning Center (try logging out and in again)!")
+    sendToMain(ToMain.ALERT, "Not authorized at Chums (try logging out and in again)!")
     return null
   }
 
   // Build the path with query parameters if they exist
-  let path = `/${data.scope || "planes"}/v${CHUMS_API_version}/${data.endpoint}`
+  let path = `/${data.scope || "plans"}/${data.endpoint}`
   if (data.params) {
     const queryParams = new URLSearchParams(data.params).toString()
     path = `${path}?${queryParams}`
@@ -34,7 +33,7 @@ export async function chumsRequest(data: ChumsRequestData, attempt = 0): Promise
   const headers = { Authorization: `Bearer ${CHUMS_ACCESS.access_token}` }
 
   return new Promise((resolve) => {
-    httpsRequest(CHUMS_API_URL, path, "GET", headers, {}, async (err, result) => {
+    httpsRequest(MEMBERSHIP_API_URL, path, "GET", headers, {}, async (err, result) => {
       if (err) {
         // handle rate limit
         // https://developer.planning.center/docs/#/overview/rate-limiting
@@ -61,13 +60,13 @@ export async function chumsRequest(data: ChumsRequestData, attempt = 0): Promise
 
     function rateLimit(retryAfter: number) {
       if (attempt >= MAX_RETRIES) {
-        sendToMain(ToMain.ALERT, "Planning Center rate limit reached! Please try again later")
+        sendToMain(ToMain.ALERT, "Chums rate limit reached! Please try again later")
         resolve(null)
         return
       }
 
       console.warn(`Rate limited. Retrying after ${retryAfter} seconds... (attempt ${attempt + 1})`)
-      sendToMain(ToMain.ALERT, `Planning Center rate limit reached! Trying again in ${retryAfter} seconds`)
+      sendToMain(ToMain.ALERT, `Chums rate limit reached! Trying again in ${retryAfter} seconds`)
 
       setTimeout(async () => {
         const retryResult = await chumsRequest(data, attempt + 1)
@@ -88,7 +87,7 @@ export async function chumsLoadServices(dataPath: string) {
   })
 
   if (!SERVICE_TYPES[0]?.id) return
-  sendToMain(ToMain.TOAST, "Getting schedules from Planning Center")
+  sendToMain(ToMain.TOAST, "Getting schedules from Chums")
 
   let projects: any[] = []
   let shows: Show[] = []
@@ -267,11 +266,11 @@ async function getMediaStreamUrl(endpoint: string): Promise<string> {
   const CHUMS_ACCESS = await chumsConnect("plans")
   if (!CHUMS_ACCESS) return ""
 
-  const path = `/plans/v${CHUMS_API_version}/${endpoint}`
+  const path = `/plans/${endpoint}`
   const headers = { Authorization: `Bearer ${CHUMS_ACCESS.access_token}` }
 
   return new Promise((resolve) => {
-    httpsRequest(CHUMS_API_URL, path, "POST", headers, {}, (err, result) => {
+    httpsRequest(MEMBERSHIP_API_URL, path, "POST", headers, {}, (err, result) => {
       if (err) {
         console.log("Could not get media stream URL:", err)
         return resolve("")

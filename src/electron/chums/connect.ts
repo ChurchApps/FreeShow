@@ -10,7 +10,7 @@ import { chumsLoadServices } from "./request"
 const app = express()
 const CHUMS_PORT = 5502
 
-export const MEMBERSHIP_API_URL = "http://localhost:8083"
+export const MEMBERSHIP_API_URL = "https://membershipapi.staging.churchapps.org"
 export const CHUMS_API_URL = "http://localhost:3101"
 const clientId = getKey("chums_id")
 const clientSecret = getKey("chums_secret")
@@ -93,7 +93,10 @@ function chumsAuthenticate(scope: ChumsScopes): Promise<ChumsAuthData> {
       console.log("OAuth code received!")
 
       const params = { grant_type: "authorization_code", code, client_id: clientId, client_secret: clientSecret, redirect_uri }
-      httpsRequest(CHUMS_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
+
+      console.log("URL", MEMBERSHIP_API_URL + "/oauth/token", params)
+
+      httpsRequest(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
         if (err) {
           res.setHeader("Content-Type", "text/html")
           const errorPage = HTML_error.replace("{error_msg}", err.message)
@@ -134,7 +137,7 @@ function refreshToken(access: ChumsAuthData): Promise<ChumsAuthData> {
     console.log("Refreshing Chums OAuth token")
 
     const params = { grant_type: "refresh_token", client_id: clientId, client_secret: clientSecret, refresh_token: access.refresh_token }
-    httpsRequest(CHUMS_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
+    httpsRequest(MEMBERSHIP_API_URL, "/oauth/token", "POST", {}, params, (err, data: ChumsAuthData) => {
       if (err || data === null) {
         sendToMain(ToMain.ALERT, "Could not refresh token! " + err?.message)
         resolve(null)
