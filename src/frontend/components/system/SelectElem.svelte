@@ -140,13 +140,13 @@
             let lastSelected = $selected.data[$selected.data.length - 1]
             if (!lastSelected) return
 
-            let lastSelectedIndex = shiftRange.length ? shiftRange.findLastIndex((a) => searchKeys.find((key) => lastSelected[key] !== undefined && lastSelected[key] === a[key])) : lastSelected.index
-            let newIndex = shiftRange.length ? shiftRange.findIndex((a) => searchKeys.find((key) => data[key] !== undefined && data[key] === a[key])) : data.index
+            let lastSelectedIndex: number = shiftRange.length ? shiftRange.findLastIndex((a) => searchKeys.find((key) => lastSelected[key] !== undefined && lastSelected[key] === a[key])) : lastSelected.index || 0
+            let newIndex: number = shiftRange.length ? shiftRange.findIndex((a) => searchKeys.find((key) => data[key] !== undefined && data[key] === a[key])) : data.index || 0
             let lowestNumber = Math.min(lastSelectedIndex, newIndex) + 1
             let highestNumber = Math.max(lastSelectedIndex, newIndex) - 1
 
             let selectedBetween: number[] = range(lowestNumber, highestNumber)
-            function range(start, end) {
+            function range(start: number, end: number) {
                 return Array(end - start + 1)
                     .fill("")
                     .map((_, idx) => start + idx)
