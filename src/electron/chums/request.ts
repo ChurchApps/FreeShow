@@ -24,13 +24,14 @@ export async function doingApiRequest(data: ChumsRequestData): Promise<any> {
 
   const headers = { Authorization: `Bearer ${CHUMS_ACCESS.access_token}` }
   return new Promise((resolve) => {
+    console.log(DOING_API_URL, data.endpoint, "GET", headers, {})
     httpsRequest(DOING_API_URL, data.endpoint, "GET", headers, {}, async (err, result) => {
       if (err) {
         let message = err.message?.includes("401") ? "Make sure you have created some 'plans' in your account!" : err.message
         sendToMain(ToMain.ALERT, "Could not get data! " + message)
         return resolve(null)
       }
-      let data = result.data
+      let data = result
       if (!Array.isArray(data)) data = [data]
       resolve(data)
     })
@@ -51,13 +52,17 @@ export async function chumsLoadServices(dataPath: string) {
   sendToMain(ToMain.TOAST, "Getting schedules from Chums")
 
 
-  let plansEndpoint = `/plans/presentation`
+  let plansEndpoint = `/plans/presenter`
   const SERVICE_PLANS = await doingApiRequest({
     scope: "plans",
     endpoint: plansEndpoint
   })
 
+  console.log("SERVICE_PLANS", SERVICE_PLANS)
+
   if (!SERVICE_PLANS[0]?.id) return
+
+  console.log("MADE IT HERE");
 
   await Promise.all(
     SERVICE_PLANS.map(async (plan: any) => {
@@ -67,6 +72,8 @@ export async function chumsLoadServices(dataPath: string) {
 }
 
 async function loadPlanItems(plan: any) {
+
+  console.log("LOAD PLAN ITEMS", plan)
 
   //Amazing Grace
   let projectItems: any[] = []
@@ -80,8 +87,9 @@ async function loadPlanItems(plan: any) {
 
   const planItems: any = await doingApiRequest({
     scope: "plans",
-    endpoint: "/planItems/presenter/" + plan.id
+    endpoint: "/planItems/presenter/" + plan.churchId + "/" + plan.id
   });
+  //http://localhost:8088/planItems/presenter/AOjIt0W-SeY/t7rNlvByhFO
 
   if (!planItems?.length) return
   for (const pi of planItems) {
@@ -91,7 +99,7 @@ async function loadPlanItems(plan: any) {
     for (const child of pi.children) {
 
       if (child.itemType === "arrangmentKey") {
-        const { showId, show } = await loadArrangementKey(child.id);
+        const { showId, show } = await loadArrangementKey(child.churchId, child.id);
 
         shows.push({ id: showId, ...show })
       }
@@ -102,22 +110,24 @@ async function loadPlanItems(plan: any) {
   //Easter Sunday
   let projectData = {
     id: plan.id,
-    name: plan.title || getDateTitle(plan.attributes.sort_date),
-    scheduledTo: new Date(plan.attributes.sort_date).getTime(),
-    created: new Date(plan.attributes.created_at).getTime(),
+    name: plan.title,
+    scheduledTo: new Date(plan.serviceDate).getTime(),
+    created: new Date(plan.serviceDate).getTime(),
     folderId: "",
     folderName: "",
     items: projectItems,
   }
+  console.log(projectData)
 
 }
 
-const loadArrangementKey = async (arrangementId: string) => {
+const loadArrangementKey = async (churchId: string, arrangementId: string) => {
 
   const data: any = await doingApiRequest({
     scope: "plans",
-    endpoint: "/arrangmentKeys/presenter/" + arrangementId
+    endpoint: "/arrangmentKeys/presenter/" + churchId + "/" + arrangementId
   })
+  //http://localhost:8089/arrangementKeys/presenter/AOjIt0W-SeY/lVKJIwjcSTL
 
   //if (!data?.arrangementKey) return
 
@@ -196,10 +206,11 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
   return { showId, show }
 }
 
+/*
 function getDateTitle(dateString: string) {
   const date = new Date(dateString)
   return date.toISOString().slice(0, 10)
-}
+}*/
 
 
 /*

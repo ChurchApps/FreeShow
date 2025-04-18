@@ -11,7 +11,9 @@ const app = express()
 const CHUMS_PORT = 5502
 
 export const MEMBERSHIP_API_URL = "https://membershipapi.staging.churchapps.org"
+//export const MEMBERSHIP_API_URL = "http://localhost:8083"
 export const DOING_API_URL = "https://doingapi.staging.churchapps.org"
+export const CONTENT_API_URL = "https://contentapi.staging.churchapps.org"
 export const CHUMS_API_URL = "http://localhost:3101"
 const clientId = getKey("chums_id")
 const clientSecret = getKey("chums_secret")
@@ -57,6 +59,7 @@ const HTML_error = `
 let CHUMS_ACCESS: ChumsAuthData = null
 export async function chumsConnect(scope: ChumsScopes): Promise<ChumsAuthData> {
   let storedAccess = CHUMS_ACCESS || stores.ACCESS.get(`chums_${scope}`)
+  console.log("Stored access", storedAccess)
   if (storedAccess?.created_at) {
     if (hasExpired(storedAccess)) {
       CHUMS_ACCESS = await refreshToken(storedAccess)
@@ -129,6 +132,7 @@ function chumsAuthenticate(scope: ChumsScopes): Promise<ChumsAuthData> {
 
 function hasExpired(access: ChumsAuthData) {
   if (access === null) return true
+  console.log((access.created_at + access.expires_in) * 1000, Date.now(), (access.created_at + access.expires_in) * 1000 < Date.now())
   return (access.created_at + access.expires_in) * 1000 < Date.now()
 }
 
