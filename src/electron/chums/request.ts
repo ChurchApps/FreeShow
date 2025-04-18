@@ -6,7 +6,7 @@ import type { Show, Slide, SlideData } from "../../types/Show"
 import { sendToMain } from "../IPC/main"
 //import { dataFolderNames, getDataFolder } from "../utils/files"
 import { httpsRequest } from "../utils/requests"
-import { DOING_API_URL, chumsConnect, type ChumsScopes } from "./connect"
+import { CONTENT_API_URL, DOING_API_URL, chumsConnect, type ChumsScopes } from "./connect"
 
 
 type ChumsRequestData = {
@@ -32,7 +32,30 @@ export async function doingApiRequest(data: ChumsRequestData): Promise<any> {
         return resolve(null)
       }
       let data = result
-      if (!Array.isArray(data)) data = [data]
+      //if (!Array.isArray(data)) data = [data]
+      resolve(data)
+    })
+  })
+}
+
+export async function contentApiRequest(data: ChumsRequestData): Promise<any> {
+  const CHUMS_ACCESS = await chumsConnect(data.scope)
+  if (!CHUMS_ACCESS) {
+    sendToMain(ToMain.ALERT, "Not authorized at Chums (try logging out and in again)!")
+    return null
+  }
+
+  const headers = { Authorization: `Bearer ${CHUMS_ACCESS.access_token}` }
+  return new Promise((resolve) => {
+    console.log(CONTENT_API_URL, data.endpoint, "GET", headers, {})
+    httpsRequest(CONTENT_API_URL, data.endpoint, "GET", headers, {}, async (err, result) => {
+      if (err) {
+        let message = err.message?.includes("401") ? "Make sure you have created some 'plans' in your account!" : err.message
+        sendToMain(ToMain.ALERT, "Could not get data! " + message)
+        return resolve(null)
+      }
+      let data = result
+      //if (!Array.isArray(data)) data = [data]
       resolve(data)
     })
   })
@@ -42,7 +65,7 @@ export async function doingApiRequest(data: ChumsRequestData): Promise<any> {
 
 //const ONE_WEEK_MS = 604800000
 
-//let projects: any[] = []
+let projects: any[] = []
 let shows: Show[] = []
 //let downloadableMedia: any[] = []
 
@@ -62,18 +85,21 @@ export async function chumsLoadServices(dataPath: string) {
 
   if (!SERVICE_PLANS[0]?.id) return
 
-  console.log("MADE IT HERE");
+
 
   await Promise.all(
     SERVICE_PLANS.map(async (plan: any) => {
       loadPlanItems(plan);
     })
   )
+
+  //console.log("SENDING CHUMS PROJECTS", projects, shows)
+  sendToMain(ToMain.CHUMS_PROJECTS, { shows, projects })
 }
 
 async function loadPlanItems(plan: any) {
 
-  console.log("LOAD PLAN ITEMS", plan)
+  //console.log("LOAD PLAN ITEMS", plan)
 
   //Amazing Grace
   let projectItems: any[] = []
@@ -98,10 +124,12 @@ async function loadPlanItems(plan: any) {
     projectItems.push({ type: "section", id: uid(5), name: pi.label || "", scheduleLength: pi.seconds, notes: pi.description || "" })
     for (const child of pi.children) {
 
-      if (child.itemType === "arrangmentKey") {
-        const { showId, show } = await loadArrangementKey(child.churchId, child.id);
+      //console.log("CHILD", child)
+      if (child.itemType === "arrangementKey") {
+        const { showId, show } = await loadArrangementKey(child.churchId, child.relatedId);
+        console.log("SHOW!!!", showId, show)
 
-        shows.push({ id: showId, ...show })
+        if (showId && show) shows.push({ id: showId, ...show })
       }
     }
   }
@@ -110,23 +138,33 @@ async function loadPlanItems(plan: any) {
   //Easter Sunday
   let projectData = {
     id: plan.id,
-    name: plan.title,
+    name: plan.name,
     scheduledTo: new Date(plan.serviceDate).getTime(),
     created: new Date(plan.serviceDate).getTime(),
     folderId: "",
     folderName: "",
     items: projectItems,
   }
+  if (Object.keys(projectData).length) projects.push(projectData)
   console.log(projectData)
 
 }
 
 const loadArrangementKey = async (churchId: string, arrangementId: string) => {
 
-  const data: any = await doingApiRequest({
-    scope: "plans",
-    endpoint: "/arrangmentKeys/presenter/" + churchId + "/" + arrangementId
-  })
+  let data: any = {};
+  try {
+    data = await contentApiRequest({
+      scope: "plans",
+      endpoint: "/arrangementKeys/presenter/" + churchId + "/" + arrangementId
+    })
+  } catch (error) {
+    console.log("ERROR!!", error);
+  }
+
+  console.log("SONG DATA IS", data)
+
+  if (!data?.arrangementKey) return { showId: "", show: null }
   //http://localhost:8089/arrangementKeys/presenter/AOjIt0W-SeY/lVKJIwjcSTL
 
   //if (!data?.arrangementKey) return
@@ -137,9 +175,28 @@ const loadArrangementKey = async (churchId: string, arrangementId: string) => {
   //let sequence: string[] = plan.custom_arrangement_sequence || SONG.sequence || []
   //let SECTIONS: any[] = (await chumsRequest({ scope: "plans", endpoint: `${arrangementEndpoint}/${songArrangement.id}/sections` }))[0]?.attributes.sections || []
   //if (!SECTIONS.length) SECTIONS = sequence.map((id) => ({ label: id, lyrics: "" }))
-  const sections: any[] = []
+  //const sections: any[] = [{ label: "Verse", lyrics: data.arrangementKey.lyrics }]
+  //const sections: any[] = []
+  const sections = parseLyrics(data.arrangement.lyrics)
 
-  return getShow(data.arrangementKey, data.arrangement, data.song, data.songDetails, sections)
+  return getShow(data.arrangementKey, data.arrangement, data.song, data.songDetail, sections)
+}
+
+const parseLyrics = (lyrics: string) => {
+  if (!lyrics) return []
+  if (!lyrics.startsWith("[")) return [{ label: "Lyrics", lyrics }]
+  const sections: any[] = []
+  const lines = lyrics.split("\n");
+  lines.forEach((line) => {
+    if (line.startsWith("[") && line.endsWith("]")) {
+      const label = line.slice(1, -1);
+      sections.push({ label, lyrics: "" });
+    } else {
+      const lastSection = sections[sections.length - 1];
+      if (lastSection) lastSection.lyrics += line + "\n";
+    }
+  });
+  return sections;
 }
 
 
@@ -148,7 +205,10 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
   const slides: { [key: string]: Slide } = {}
   let layoutSlides: SlideData[] = []
   SECTIONS.forEach((section) => {
+    console.log("Parsing section", section)
     let slideId = uid()
+
+
 
     let items = [
       {
@@ -167,6 +227,8 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
     }
     layoutSlides.push({ id: slideId })
   })
+
+  console.log("Parsed all sections")
 
   const title = SONG_DETAILS.title + " (" + ARRANGEMENT.name + " - " + ARRANGEMENT_KEY.keySignature + ")" || ""
 
