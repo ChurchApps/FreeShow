@@ -81,7 +81,6 @@ export async function chumsLoadServices(dataPath: string) {
     endpoint: plansEndpoint
   })
 
-  console.log("SERVICE_PLANS", SERVICE_PLANS)
 
   if (!SERVICE_PLANS[0]?.id) return
 
@@ -93,13 +92,11 @@ export async function chumsLoadServices(dataPath: string) {
     })
   )
 
-  //console.log("SENDING CHUMS PROJECTS", projects, shows)
   sendToMain(ToMain.CHUMS_PROJECTS, { shows, projects })
 }
 
 async function loadPlanItems(plan: any) {
 
-  //console.log("LOAD PLAN ITEMS", plan)
 
   //Amazing Grace
   let projectItems: any[] = []
@@ -124,12 +121,13 @@ async function loadPlanItems(plan: any) {
     projectItems.push({ type: "section", id: uid(5), name: pi.label || "", scheduleLength: pi.seconds, notes: pi.description || "" })
     for (const child of pi.children) {
 
-      //console.log("CHILD", child)
       if (child.itemType === "arrangementKey") {
-        const { showId, show } = await loadArrangementKey(child.churchId, child.relatedId);
-        console.log("SHOW!!!", showId, show)
+        const { showId, show, seconds } = await loadArrangementKey(child.churchId, child.relatedId);
 
-        if (showId && show) shows.push({ id: showId, ...show })
+        if (showId && show) {
+          shows.push({ id: showId, ...show })
+          projectItems.push({ type: "show", id: showId, scheduleLength: seconds })
+        }
       }
     }
   }
@@ -162,9 +160,8 @@ const loadArrangementKey = async (churchId: string, arrangementId: string) => {
     console.log("ERROR!!", error);
   }
 
-  console.log("SONG DATA IS", data)
 
-  if (!data?.arrangementKey) return { showId: "", show: null }
+  if (!data?.arrangementKey) return { showId: "", show: null, seconds: 0 }
   //http://localhost:8089/arrangementKeys/presenter/AOjIt0W-SeY/lVKJIwjcSTL
 
   //if (!data?.arrangementKey) return
@@ -205,11 +202,7 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
   const slides: { [key: string]: Slide } = {}
   let layoutSlides: SlideData[] = []
   SECTIONS.forEach((section) => {
-    console.log("Parsing section", section)
     let slideId = uid()
-
-
-
     let items = [
       {
         style: itemStyle,
@@ -228,8 +221,6 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
     layoutSlides.push({ id: slideId })
   })
 
-  console.log("Parsed all sections")
-
   const title = SONG_DETAILS.title + " (" + ARRANGEMENT.name + " - " + ARRANGEMENT_KEY.keySignature + ")" || ""
 
   const metadata = {
@@ -246,7 +237,7 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
 
   let show: Show = {
     name: title || "",
-    category: "planning_center",
+    category: "chums",
     timestamps: { created: new Date(SONG.dateAdded).getTime() || Date.now(), modified: new Date(SONG.dateAdded).getTime() || null, used: null },
     meta: metadata,
     settings: {
@@ -265,7 +256,7 @@ function getShow(ARRANGEMENT_KEY: any, ARRANGEMENT: any, SONG: any, SONG_DETAILS
   }
 
   let showId = `chumssong_${ARRANGEMENT_KEY.id}`
-  return { showId, show }
+  return { showId, show, seconds: SONG_DETAILS.seconds || 0 }
 }
 
 /*
